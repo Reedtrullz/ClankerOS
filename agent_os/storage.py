@@ -323,6 +323,40 @@ class MemoryEntry:
 
 
 @dataclass(frozen=True)
+class SkillRecord:
+    id: str
+    project_id: str | None
+    name: str
+    description: str
+    path: str
+    status: str
+    created_by_profile: str
+    source_run_id: str | None
+    source_task_id: str | None
+    verification_status: str
+    approved_by: str | None
+    approved_at: str | None
+    archived_by: str | None
+    archived_at: str | None
+    archive_reason: str | None
+    created_at: str
+    updated_at: str
+    last_used_at: str | None
+
+
+@dataclass(frozen=True)
+class SkillVersion:
+    id: str
+    skill_id: str
+    version: int
+    content_hash: str
+    path: str
+    change_summary: str
+    verification_status: str
+    created_at: str
+
+
+@dataclass(frozen=True)
 class EvalCandidate:
     id: str
     source_type: str
@@ -1419,6 +1453,38 @@ class Storage:
                     created_at text not null,
                     updated_at text not null,
                     last_used_at text
+                );
+
+                create table if not exists skills (
+                    id text primary key,
+                    project_id text,
+                    name text not null,
+                    description text not null,
+                    path text not null,
+                    status text not null,
+                    created_by_profile text not null,
+                    source_run_id text,
+                    source_task_id text,
+                    verification_status text not null,
+                    approved_by text,
+                    approved_at text,
+                    archived_by text,
+                    archived_at text,
+                    archive_reason text,
+                    created_at text not null,
+                    updated_at text not null,
+                    last_used_at text
+                );
+
+                create table if not exists skill_versions (
+                    id text primary key,
+                    skill_id text not null,
+                    version integer not null,
+                    content_hash text not null,
+                    path text not null,
+                    change_summary text not null,
+                    verification_status text not null,
+                    created_at text not null
                 );
 
                 create table if not exists eval_results (
@@ -3176,6 +3242,274 @@ class Storage:
                 (memory_id,),
             ).fetchone()
         return self._row_to_memory_entry(updated)
+
+    def run_exists(self, run_id: str) -> bool:
+        with self._connect() as connection:
+            row = connection.execute(
+                "select id from runs where id = ?",
+                (run_id,),
+            ).fetchone()
+        return row is not None
+
+    def record_skill(
+        self,
+        *,
+        skill_id: str | None = None,
+        project_id: str | None,
+        name: str,
+        description: str,
+        path: str,
+        status: str,
+        created_by_profile: str,
+        source_run_id: str | None,
+        source_task_id: str | None,
+        verification_status: str,
+    ) -> SkillRecord:
+        entry_id = skill_id or new_id("skill")
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into skills (
+                    id, project_id, name, description, path, status,
+                    created_by_profile, source_run_id, source_task_id,
+                    verification_status, approved_by, approved_at, archived_by,
+                    archived_at, archive_reason, created_at, updated_at,
+                    last_used_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    entry_id,
+                    project_id,
+                    name,
+                    description,
+                    path,
+                    status,
+                    created_by_profile,
+                    source_run_id,
+                    source_task_id,
+                    verification_status,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    created_at,
+                    created_at,
+                    None,
+                ),
+            )
+        return SkillRecord(
+            id=entry_id,
+            project_id=project_id,
+            name=name,
+            description=description,
+            path=path,
+            status=status,
+            created_by_profile=created_by_profile,
+            source_run_id=source_run_id,
+            source_task_id=source_task_id,
+            verification_status=verification_status,
+            approved_by=None,
+            approved_at=None,
+            archived_by=None,
+            archived_at=None,
+            archive_reason=None,
+            created_at=created_at,
+            updated_at=created_at,
+            last_used_at=None,
+        )
+
+    def record_skill_version(
+        self,
+        *,
+        skill_id: str,
+        version: int,
+        content_hash: str,
+        path: str,
+        change_summary: str,
+        verification_status: str,
+    ) -> SkillVersion:
+        version_id = new_id("skill_version")
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into skill_versions (
+                    id, skill_id, version, content_hash, path, change_summary,
+                    verification_status, created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    version_id,
+                    skill_id,
+                    version,
+                    content_hash,
+                    path,
+                    change_summary,
+                    verification_status,
+                    created_at,
+                ),
+            )
+        return SkillVersion(
+            id=version_id,
+            skill_id=skill_id,
+            version=version,
+            content_hash=content_hash,
+            path=path,
+            change_summary=change_summary,
+            verification_status=verification_status,
+            created_at=created_at,
+        )
+
+    def get_skill(self, skill_id: str) -> SkillRecord | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                "select * from skills where id = ?",
+                (skill_id,),
+            ).fetchone()
+        return self._row_to_skill(row) if row else None
+
+    def find_skill(
+        self,
+        *,
+        project_id: str | None,
+        name: str,
+        source_run_id: str | None,
+        source_task_id: str | None,
+        include_archived: bool = False,
+    ) -> SkillRecord | None:
+        archived_clause = "" if include_archived else "and status != 'archived'"
+        with self._connect() as connection:
+            row = connection.execute(
+                f"""
+                select * from skills
+                where project_id is ?
+                  and name = ?
+                  and source_run_id is ?
+                  and source_task_id is ?
+                  {archived_clause}
+                order by updated_at desc, id desc
+                limit 1
+                """,
+                (project_id, name, source_run_id, source_task_id),
+            ).fetchone()
+        return self._row_to_skill(row) if row else None
+
+    def list_skills(
+        self,
+        *,
+        project_id: str | None = None,
+        status: str | None = None,
+        limit: int | None = None,
+    ) -> list[SkillRecord]:
+        conditions: list[str] = []
+        parameters: list[Any] = []
+        if project_id is not None:
+            conditions.append("project_id = ?")
+            parameters.append(project_id)
+        if status is not None:
+            conditions.append("status = ?")
+            parameters.append(status)
+        where_clause = f"where {' and '.join(conditions)}" if conditions else ""
+        query = f"""
+            select * from skills
+            {where_clause}
+            order by updated_at desc, id desc
+        """
+        with self._connect() as connection:
+            if limit is None:
+                rows = connection.execute(query, parameters).fetchall()
+            else:
+                rows = connection.execute(
+                    query + " limit ?",
+                    parameters + [limit],
+                ).fetchall()
+        return [self._row_to_skill(row) for row in rows]
+
+    def list_skill_versions(self, skill_id: str) -> list[SkillVersion]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from skill_versions
+                where skill_id = ?
+                order by version desc, created_at desc
+                """,
+                (skill_id,),
+            ).fetchall()
+        return [self._row_to_skill_version(row) for row in rows]
+
+    def update_skill_status(
+        self,
+        skill_id: str,
+        *,
+        status: str,
+        decided_by: str | None = None,
+        reason: str | None = None,
+    ) -> SkillRecord:
+        updated_at = utc_now()
+        with self._connect() as connection:
+            row = connection.execute(
+                "select * from skills where id = ?",
+                (skill_id,),
+            ).fetchone()
+            if row is None:
+                raise KeyError(skill_id)
+            if status == "active":
+                if not row["path"] or not Path(row["path"]).exists():
+                    raise ValueError(f"skill {skill_id} SKILL.md is missing")
+                approved_by = decided_by
+                approved_at = updated_at
+                archived_by = row["archived_by"]
+                archived_at = row["archived_at"]
+                archive_reason = row["archive_reason"]
+                verification_status = "approved"
+            elif status == "archived":
+                approved_by = row["approved_by"]
+                approved_at = row["approved_at"]
+                archived_by = decided_by
+                archived_at = updated_at
+                archive_reason = reason
+                verification_status = row["verification_status"]
+            else:
+                approved_by = row["approved_by"]
+                approved_at = row["approved_at"]
+                archived_by = row["archived_by"]
+                archived_at = row["archived_at"]
+                archive_reason = row["archive_reason"]
+                verification_status = row["verification_status"]
+            connection.execute(
+                """
+                update skills
+                set status = ?,
+                    updated_at = ?,
+                    verification_status = ?,
+                    approved_by = ?,
+                    approved_at = ?,
+                    archived_by = ?,
+                    archived_at = ?,
+                    archive_reason = ?
+                where id = ?
+                """,
+                (
+                    status,
+                    updated_at,
+                    verification_status,
+                    approved_by,
+                    approved_at,
+                    archived_by,
+                    archived_at,
+                    archive_reason,
+                    skill_id,
+                ),
+            )
+            updated = connection.execute(
+                "select * from skills where id = ?",
+                (skill_id,),
+            ).fetchone()
+        return self._row_to_skill(updated)
 
     def record_eval_result(self, name: str, status: str, details: dict[str, Any]) -> str:
         eval_id = new_id("eval")
@@ -9490,6 +9824,40 @@ class Storage:
             created_at=row["created_at"],
             updated_at=row["updated_at"],
             last_used_at=row["last_used_at"],
+        )
+
+    def _row_to_skill(self, row: sqlite3.Row) -> SkillRecord:
+        return SkillRecord(
+            id=row["id"],
+            project_id=row["project_id"],
+            name=row["name"],
+            description=row["description"],
+            path=row["path"],
+            status=row["status"],
+            created_by_profile=row["created_by_profile"],
+            source_run_id=row["source_run_id"],
+            source_task_id=row["source_task_id"],
+            verification_status=row["verification_status"],
+            approved_by=row["approved_by"],
+            approved_at=row["approved_at"],
+            archived_by=row["archived_by"],
+            archived_at=row["archived_at"],
+            archive_reason=row["archive_reason"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+            last_used_at=row["last_used_at"],
+        )
+
+    def _row_to_skill_version(self, row: sqlite3.Row) -> SkillVersion:
+        return SkillVersion(
+            id=row["id"],
+            skill_id=row["skill_id"],
+            version=row["version"],
+            content_hash=row["content_hash"],
+            path=row["path"],
+            change_summary=row["change_summary"],
+            verification_status=row["verification_status"],
+            created_at=row["created_at"],
         )
 
     def _row_to_eval_candidate(self, row: sqlite3.Row) -> EvalCandidate:

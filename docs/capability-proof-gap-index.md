@@ -1,8 +1,8 @@
 # Capability Proof Gap Index
 
-- id: capability_proof_gap_index_cf2e70eac45e
+- id: capability_proof_gap_index_2f3b70c0af65
 - status: open_gaps
-- source_review_id: capability_readiness_review_be494759573f
+- source_review_id: capability_readiness_review_f7bf028b5951
 - source_review_status: blocked_by_missing_evidence
 - capability_count: 9
 - gaps: 9
@@ -12,7 +12,7 @@
 - approval_boundary: explicit_operator_approval_required
 - recommended_commands: none
 - report_path: docs/capability-proof-gap-index.md
-- created_at: 2026-06-22T13:42:52.292112+00:00
+- created_at: 2026-06-22T13:57:42.978094+00:00
 
 ## Recommendation
 
@@ -32,7 +32,7 @@
 
 ## Source Readiness Review
 
-- id: capability_readiness_review_be494759573f
+- id: capability_readiness_review_f7bf028b5951
 - status: blocked_by_missing_evidence
 - capabilities: 9
 - ready: 0

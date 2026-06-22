@@ -2194,6 +2194,248 @@ def test_memory_proposal_manual_approve_archive_and_list(
     assert archived.archived_at is not None
 
 
+def test_skill_proposal_writes_skill_markdown_and_dashboard(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "Add a CLI command with tests.")
+    run_id = storage.create_run(goal_id, "bootstrap", tmp_path / "runs")
+    run_dir = tmp_path / "runs" / run_id
+    run_dir.mkdir(parents=True)
+    (run_dir / "summary.md").write_text(
+        "# Run Summary\n\nTests and docs should move together.\n",
+        encoding="utf-8",
+    )
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "skill",
+                "propose",
+                "--project",
+                "bootstrap",
+                "--name",
+                "adding-cli-commands",
+                "--description",
+                "Procedure for adding tested CLI commands.",
+                "--from-run",
+                run_id,
+                "--created-by-profile",
+                "tester",
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "skill_proposal:" in output
+    assert "status: proposed" in output
+    assert "path: " in output
+    assert "version: 1" in output
+    assert "network_actions_taken: 0" in output
+
+    skills = storage.list_skills(project_id="bootstrap")
+    assert len(skills) == 1
+    skill = skills[0]
+    assert skill.project_id == "bootstrap"
+    assert skill.name == "adding-cli-commands"
+    assert skill.description == "Procedure for adding tested CLI commands."
+    assert skill.status == "proposed"
+    assert skill.created_by_profile == "tester"
+    assert skill.source_run_id == run_id
+    assert skill.source_task_id is None
+    assert skill.verification_status == "pending_operator_approval"
+    assert skill.last_used_at is None
+
+    skill_path = Path(skill.path)
+    assert skill_path == tmp_path / ".clanker" / "skills" / "adding-cli-commands" / "SKILL.md"
+    skill_text = skill_path.read_text(encoding="utf-8")
+    assert "name: adding-cli-commands" in skill_text
+    assert "# adding-cli-commands" in skill_text
+    assert "Procedure for adding tested CLI commands." in skill_text
+    assert "## When To Use" in skill_text
+    assert "## Verification Steps" in skill_text
+    assert "source_run_id: " + run_id in skill_text
+    assert "network_actions_taken: 0" in skill_text
+
+    versions = storage.list_skill_versions(skill.id)
+    assert len(versions) == 1
+    assert versions[0].version == 1
+    assert versions[0].path == str(skill_path)
+    assert versions[0].content_hash
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Skill Proposals" in dashboard
+    assert skill.id in dashboard
+    assert "status=proposed" in dashboard
+    assert "name=adding-cli-commands" in dashboard
+
+
+def test_skill_proposal_is_idempotent_and_show_reads_markdown(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "Add a CLI command with tests.")
+    run_id = storage.create_run(goal_id, "bootstrap", tmp_path / "runs")
+    (tmp_path / "runs" / run_id).mkdir(parents=True)
+    command = [
+        "--root",
+        str(tmp_path),
+        "skill",
+        "propose",
+        "--project",
+        "bootstrap",
+        "--name",
+        "adding-cli-commands",
+        "--description",
+        "Procedure for adding tested CLI commands.",
+        "--from-run",
+        run_id,
+    ]
+
+    assert main(command) == 0
+    first_output = capsys.readouterr().out
+    first_id = next(
+        line.split(": ", 1)[1]
+        for line in first_output.splitlines()
+        if line.startswith("skill_proposal: ")
+    )
+    assert main(command) == 0
+    second_output = capsys.readouterr().out
+    assert f"skill_proposal: already_recorded {first_id}" in second_output
+    assert len(storage.list_skills(project_id="bootstrap")) == 1
+
+    assert main(["--root", str(tmp_path), "skill", "show", first_id]) == 0
+    show_output = capsys.readouterr().out
+    assert f"skill: {first_id}" in show_output
+    assert "# adding-cli-commands" in show_output
+    assert "status: proposed" in show_output
+
+
+def test_skill_approve_and_archive_persist_decision_metadata(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "Add a CLI command with tests.")
+    run_id = storage.create_run(goal_id, "bootstrap", tmp_path / "runs")
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "skill",
+                "propose",
+                "--project",
+                "bootstrap",
+                "--name",
+                "adding-cli-commands",
+                "--description",
+                "Procedure for adding tested CLI commands.",
+                "--from-run",
+                run_id,
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    skill = storage.list_skills(project_id="bootstrap")[0]
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "skill",
+                "approve",
+                skill.id,
+                "--approved-by",
+                "operator",
+            ]
+        )
+        == 0
+    )
+    approve_output = capsys.readouterr().out
+    assert f"skill_approved: {skill.id}" in approve_output
+    active = storage.get_skill(skill.id)
+    assert active is not None
+    assert active.status == "active"
+    assert active.approved_by == "operator"
+    assert active.approved_at is not None
+    assert active.verification_status == "approved"
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "skill",
+                "archive",
+                skill.id,
+                "--archived-by",
+                "operator",
+                "--reason",
+                "superseded",
+            ]
+        )
+        == 0
+    )
+    archive_output = capsys.readouterr().out
+    assert f"skill_archived: {skill.id}" in archive_output
+    archived = storage.get_skill(skill.id)
+    assert archived is not None
+    assert archived.status == "archived"
+    assert archived.archived_by == "operator"
+    assert archived.archive_reason == "superseded"
+    assert archived.archived_at is not None
+
+
+def test_skill_proposal_file_failure_leaves_no_skill_rows(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "Add a CLI command with tests.")
+    run_id = storage.create_run(goal_id, "bootstrap", tmp_path / "runs")
+    original_replace = Path.replace
+
+    def fail_skill_replace(source: Path, target: Path):
+        if source.name == ".SKILL.md.tmp" and target.parent.parent.name == "skills":
+            raise OSError("simulated skill file replace failure")
+        return original_replace(source, target)
+
+    monkeypatch.setattr(Path, "replace", fail_skill_replace)
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "skill",
+                "propose",
+                "--project",
+                "bootstrap",
+                "--name",
+                "adding-cli-commands",
+                "--description",
+                "Procedure for adding tested CLI commands.",
+                "--from-run",
+                run_id,
+            ]
+        )
+        == 1
+    )
+    assert storage.list_skills(project_id="bootstrap") == []
+
+
 def test_static_dashboard_summarizes_runs_and_queue(tmp_path: Path) -> None:
     system = AgentSystem(tmp_path)
     result = system.run_goal(

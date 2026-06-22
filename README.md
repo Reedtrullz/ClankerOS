@@ -15,6 +15,7 @@ task/category -> profile routing decision -> durable selection record
 routing decision -> read-only subagent delegation contract -> evidence artifact
 delegation contract -> structured result ingestion -> completed local evidence
 completed delegation result -> proposed memory entry -> operator approval/archive
+useful run evidence -> proposed SKILL.md -> operator approval/archive
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -47,9 +48,11 @@ delegation contracts from those routing decisions without starting a subagent
 or calling a model provider, then ingest operator-supplied structured
 delegation results as completed local evidence. Completed delegation results
 can become proposed memory entries, but they do not become active memory until
-approved. Deployments and other external side effects remain blocked unless an
-implemented flow explicitly models evidence, authorization, rollback, and
-verification.
+approved. Useful run evidence can also become proposed project skills under
+`.clanker/skills/`, but those skills remain proposed until an operator
+approves them. Deployments and other external side effects remain blocked
+unless an implemented flow explicitly models evidence, authorization,
+rollback, and verification.
 
 ## Repository Metadata
 
@@ -99,6 +102,8 @@ python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevan
 python3 -m agent_os.cli record-delegation-result <delegation_id> --summary "Relevant files identified." --output-json '{"files":["agent_os/cli.py"]}'
 python3 -m agent_os.cli memory propose-from-delegation <delegation_id> --key relevant_cli_files
 python3 -m agent_os.cli memory list --project bootstrap
+python3 -m agent_os.cli skill propose --project bootstrap --name adding-cli-commands --description "Procedure for adding tested CLI commands." --from-run <run_id>
+python3 -m agent_os.cli skills --project bootstrap
 python3 -m agent_os.cli cleanup-worktrees --confirm --reason "committed branch kept"
 ```
 
@@ -117,13 +122,17 @@ existing delegation, validates the expected schema family, marks it completed,
 and writes a local result artifact while still recording `network_actions_taken=0`.
 `memory propose-from-delegation` turns a completed delegation result into a
 proposed memory entry with local JSON evidence; it does not activate memory
-until `memory approve <memory_id>` is run.
+until `memory approve <memory_id>` is run. `skill propose` turns useful run
+evidence into a proposed `.clanker/skills/<name>/SKILL.md` plus SQLite skill
+and version records; it does not make the skill active until `skill approve
+<skill_id>` is run.
 
 ## Tutorials And Suggested Use
 
 - [Run the first local loop](docs/tutorial-first-loop.md)
 - [Run an approval-gated coding task](docs/tutorial-approval-gated-coding.md)
 - [Record profile routing, delegation, and delegation results](docs/tutorial-subagent-delegation-results.md)
+- [Propose and approve reusable skills](docs/tutorial-skill-proposals.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
 - [Safety contract](contracts.md)
@@ -164,6 +173,9 @@ The repository can now:
 - propose durable memory entries manually or from completed delegation results,
   list them by project, approve them into active memory, or archive them,
   without silently promoting proposed facts;
+- propose reusable project skills from run evidence, write
+  `.clanker/skills/<name>/SKILL.md`, list/show proposed skills, approve them
+  into active skills, or archive them with decision metadata;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -296,6 +308,10 @@ python3 -m agent_os.cli record-delegation-result <delegation_id> --summary "Rele
 python3 -m agent_os.cli memory propose --project <name> --key test_command --value "python3 -m pytest -q"
 python3 -m agent_os.cli memory propose-from-delegation <delegation_id> --key relevant_cli_files
 python3 -m agent_os.cli memory approve <memory_id> --approved-by operator
+python3 -m agent_os.cli skill propose --project <name> --name adding-cli-commands --description "Procedure for adding tested CLI commands." --from-run <run_id>
+python3 -m agent_os.cli skills --project <name>
+python3 -m agent_os.cli skill show <skill_id>
+python3 -m agent_os.cli skill approve <skill_id> --approved-by operator
 python3 -m agent_os.cli cleanup-worktrees --confirm --decided-by operator --reason "terminal worktree reviewed"
 python3 -m agent_os.cli resolve-incident <incident_id> --resolved-by operator --note "local resolution note"
 python3 -m agent_os.cli queue-health

@@ -1,8 +1,8 @@
 # Handoff Review
 
-- id: handoff_review_5c3f412820e8
+- id: handoff_review_ecb077ba4918
 - status: clear
-- current_focus: Add skill proposal records and approval-gated SKILL.md writing.
+- current_focus: Add human-first `review`, `evidence`, and `replay-summary` commands for run evidence packets.
 - blocked_tasks: 0
 - stale_handoffs: 0
 - reviewed_paths: 1

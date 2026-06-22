@@ -58,10 +58,17 @@ Core layers for the bootstrap:
   proposed entry to `active`, and `memory archive` marks an entry archived.
   Delegation-sourced memory proposals require a completed delegation result and
   never silently write active memory.
+- Skill proposal lifecycle: `skill propose` creates a proposed skill row,
+  a first `skill_versions` row, and `.clanker/skills/<name>/SKILL.md` from
+  verified run evidence. `skills` lists proposals, `skill show` reads back the
+  markdown, `skill approve` promotes a proposed skill to `active`, and
+  `skill archive` records a local archive decision. Proposed skills are not
+  active until approved.
 - Operator cockpit: the dashboard starts with active runs, registered projects,
   approval inbox, proposed effects, verification status, recent worktrees,
   GitHub handoffs, CI/deploy evidence, profile routing decisions, subagent
-  delegations, memory proposals, and the next recommended operator action.
+  delegations, memory proposals, skill proposals, and the next recommended
+  operator action.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON

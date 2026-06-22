@@ -5390,3 +5390,37 @@
   external memory services, run subagents, approve code, commit, push, deploy,
   run remote workers, schedule work, promote trust, retry work, track spend, or
   mutate external systems.
+
+## 2026-06-22 Skill Proposal Records
+
+- Added an approval-gated skill lifecycle with
+  `python3 -m agent_os.cli skill propose`, `skills`, `skill show`,
+  `skill approve`, and `skill archive`.
+- `skill propose` requires an existing source run, writes
+  `.clanker/skills/<name>/SKILL.md` through a temp file before inserting the
+  SQLite rows, records a `skills` row with `status=proposed`, and records the
+  first `skill_versions` row with the content hash.
+- `skill approve` promotes a proposed skill to `active`; `skill archive`
+  preserves archive actor, timestamp, and reason. Skills are not active until
+  approved.
+- Dashboard now exposes proposed skills under `## Skill Proposals`.
+- Live smoke:
+  `skill_073a6967c3df` was proposed for project `bootstrap` with name
+  `adding-cli-commands`, source run `run_6fcdef549e8b`, and path
+  `.clanker/skills/adding-cli-commands/SKILL.md`; it remains
+  `status=proposed`.
+- Latest next item is now human-first run evidence review/replay commands.
+- Verification evidence:
+  - Red-first focused tests first failed because `skill` was not a registered
+    CLI command.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "skill_proposal or skill_approve"` -> 4 passed, 219 deselected.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "skill_proposal or skill_approve or memory_proposal or record_delegation_result or delegate or dashboard"` -> 67 passed, 156 deselected.
+  - `python3 -m pytest -q` -> 223 passed.
+  - `python3 -m py_compile agent_os/skill_entries.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py tests/test_first_milestone.py` -> passed.
+  - Generated next-iteration gate commands through `python3 -m agent_os.cli dashboard` -> passed.
+  - `python3 -m agent_os.cli handoff-review` -> `status: clear`, `blocked_tasks: 0`, `stale_handoffs: 0`.
+  - `python3 -m agent_os.cli eval-after-change --change "Add skill proposal records" --file agent_os/skill_entries.py --file agent_os/storage.py --file agent_os/cli.py --file agent_os/dashboard.py --file tests/test_first_milestone.py` -> pass as `run_ce1a7fc25cd8`.
+- Non-claims: skill proposal commands do not call model providers, install
+  global Codex skills, activate proposed skills, run subagents, approve code,
+  commit, push, deploy, run remote workers, schedule work, promote trust, retry
+  work, track spend, or mutate external systems.

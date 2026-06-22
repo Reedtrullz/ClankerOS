@@ -222,7 +222,14 @@ Latest memory proposal lifecycle:
 `.clanker/memory/memory_4bc20665a3ec.json`. It is intentionally
 `status=proposed` until an operator runs
 `python3 -m agent_os.cli memory approve <memory_id>`.
-Next implementation edge: Add skill proposal records and approval-gated SKILL.md writing.
+
+Latest skill proposal lifecycle:
+`skill_073a6967c3df` was proposed from source run `run_6fcdef549e8b`
+for project `bootstrap` with name `adding-cli-commands` and path
+`.clanker/skills/adding-cli-commands/SKILL.md`. It is intentionally
+`status=proposed` until an operator runs
+`python3 -m agent_os.cli skill approve <skill_id>`.
+Next implementation edge: Add human-first `review`, `evidence`, and `replay-summary` commands for run evidence packets.
 
 Latest Goal Completion Audit:
 `goal_completion_audit_8710791dee32` reports

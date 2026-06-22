@@ -76,6 +76,11 @@ completed delegation outputs can create inactive `memory_entries` proposals
 with JSON evidence, then an operator can approve them into active memory or
 archive them. Proposed memory is visible in the dashboard and is not silently
 activated.
+Skill proposal records now separate reusable procedures from active project
+state: verified run evidence can create inactive `skills` proposals plus
+`.clanker/skills/<name>/SKILL.md` and `skill_versions` content hashes, then an
+operator can approve them into active skills or archive them. Proposed skills
+are visible in the dashboard and are not active until approved.
 
 ## Verification Evidence
 
@@ -3345,3 +3350,15 @@ activated.
 - Goal ID: goal_4960d6e470de
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_6fcdef549e8b/summary.md
+
+## Run run_14bdf1a0b1cb
+
+- Goal ID: goal_2433e121392a
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_14bdf1a0b1cb/summary.md
+
+## Run run_ce1a7fc25cd8
+
+- Goal ID: goal_0ace8dbe994d
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_ce1a7fc25cd8/summary.md

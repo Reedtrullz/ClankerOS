@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_4db67bb0f73c
+- Packet ID: iteration_ddf7a633c7b6
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add skill proposal records and approval-gated SKILL.md writing.
+Advance the Agent System north-star goal by completing: Add human-first `review`, `evidence`, and `replay-summary` commands for run evidence packets.
 
 ## Definition Of Done
 

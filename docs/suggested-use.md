@@ -40,6 +40,10 @@ Attach this read-only delegation output to the existing contract, validate the s
 Propose a project memory entry from that completed delegation result, but leave it inactive until I approve it.
 ```
 
+```text
+Propose a reusable project skill from that verified run, but leave it inactive until I approve it.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -50,7 +54,8 @@ Propose a project memory entry from that completed delegation result, but leave 
 6. Run `python3 -m agent_os.cli eval`.
 7. Record specialist delegation results when read-only context is useful.
 8. Propose memory from completed delegation results only when the fact is small and reusable.
-9. Record non-claims before treating the work as safe.
+9. Propose skills from verified run evidence only when the procedure is reusable.
+10. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -89,7 +94,11 @@ python3 -m agent_os.cli run-goal "Make the smallest verified change" --project <
    to create an inactive memory proposal from completed delegation evidence.
 13. Use `python3 -m agent_os.cli memory approve <memory_id> --approved-by operator`
    only after reviewing the proposal.
-14. Use `python3 -m agent_os.cli cleanup-worktrees --confirm --reason "..."`
+14. Use `python3 -m agent_os.cli skill propose --project <name> --name "..." --description "..." --from-run <run_id>`
+   to create an inactive reusable `SKILL.md` proposal from run evidence.
+15. Use `python3 -m agent_os.cli skill approve <skill_id> --approved-by operator`
+   only after reviewing the generated `SKILL.md`.
+16. Use `python3 -m agent_os.cli cleanup-worktrees --confirm --reason "..."`
    after reviewing terminal effects and deciding the worktree can be removed.
 
 `commit-approved` blocks without committing if the worktree base commit, patch,
@@ -112,6 +121,9 @@ result artifact and preserves `network_actions_taken=0`.
 `memory propose-from-delegation` creates a proposed memory entry from a
 completed delegation result. It writes local JSON evidence and does not make
 the memory active until `memory approve` is run.
+`skill propose` creates a proposed skill record and writes
+`.clanker/skills/<name>/SKILL.md` from run evidence. It records a skill version
+and does not make the skill active until `skill approve` is run.
 `cleanup-worktrees` removes only clean terminal worktrees; dirty blocked
 worktrees are recorded as blocked and left in place.
 
@@ -156,11 +168,11 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 
 ## Practical Next Slices
 
-Good next slices now favor executable local approval flow, routing records, and
-memory/skill lifecycle behavior before broader autonomy:
+Good next slices now favor executable evidence review and operator steering
+behavior before broader autonomy:
 
-- skill proposal records and approval-gated `SKILL.md` writing from useful run
-  or delegation evidence;
+- `review`, `evidence`, and `replay-summary` commands for human-first run
+  evidence packets;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;
 - remote-worker, scheduler, browser/desktop adapter, budget, trust, retry, and

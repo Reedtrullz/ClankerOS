@@ -211,6 +211,13 @@ from agent_os.playbooks import (
     promote_successful_run_playbooks,
     render_playbook_line,
 )
+from agent_os.skill_entries import (
+    SkillEntryError,
+    approve_skill,
+    archive_skill,
+    propose_skill,
+    render_skill_line,
+)
 from agent_os.profile_routing import (
     RouteRequest,
     ensure_default_profiles,
@@ -257,6 +264,31 @@ def _print_memory_proposal(
     print(f"confidence: {entry.confidence:g}")
     print(f"status: {entry.status}")
     print(f"artifact: {artifact_path}")
+    print("network_actions_taken: 0")
+    print("external_mutations_taken: 0")
+
+
+def _print_skill_proposal(
+    skill,
+    version,
+    skill_path: Path,
+    *,
+    already_recorded: bool = False,
+) -> None:
+    if already_recorded:
+        print(f"skill_proposal: already_recorded {skill.id}")
+    else:
+        print(f"skill_proposal: {skill.id}")
+    print(f"project_id: {skill.project_id or 'none'}")
+    print(f"name: {skill.name}")
+    print(f"description: {skill.description}")
+    print(f"status: {skill.status}")
+    print(f"verification_status: {skill.verification_status}")
+    print(f"source_run_id: {skill.source_run_id or 'none'}")
+    print(f"source_task_id: {skill.source_task_id or 'none'}")
+    print(f"path: {skill_path}")
+    print(f"version: {version.version}")
+    print(f"content_hash: {version.content_hash}")
     print("network_actions_taken: 0")
     print("external_mutations_taken: 0")
 
@@ -341,6 +373,29 @@ def build_parser() -> argparse.ArgumentParser:
     memory_archive.add_argument("memory_id")
     memory_archive.add_argument("--archived-by", default="operator")
     memory_archive.add_argument("--reason", default="")
+    skills = subparsers.add_parser("skills", help="List proposed and active skills.")
+    skills.add_argument("--project")
+    skill = subparsers.add_parser(
+        "skill",
+        help="Propose, approve, archive, and show reusable SKILL.md records.",
+    )
+    skill_subparsers = skill.add_subparsers(dest="skill_command", required=True)
+    skill_propose = skill_subparsers.add_parser("propose")
+    skill_propose.add_argument("--project", required=True)
+    skill_propose.add_argument("--name", required=True)
+    skill_propose.add_argument("--description", required=True)
+    skill_propose.add_argument("--from-run", required=True)
+    skill_propose.add_argument("--source-task-id")
+    skill_propose.add_argument("--created-by-profile", default="operator")
+    skill_approve = skill_subparsers.add_parser("approve")
+    skill_approve.add_argument("skill_id")
+    skill_approve.add_argument("--approved-by", default="operator")
+    skill_archive = skill_subparsers.add_parser("archive")
+    skill_archive.add_argument("skill_id")
+    skill_archive.add_argument("--archived-by", default="operator")
+    skill_archive.add_argument("--reason", default="")
+    skill_show = skill_subparsers.add_parser("show")
+    skill_show.add_argument("skill_id")
     register_project_parser = subparsers.add_parser(
         "register-project",
         help="Register a local git repository for isolated coding-agent work.",
@@ -884,6 +939,88 @@ def main(argv: list[str] | None = None) -> int:
             print(f"status: {entry.status}")
             print(f"archived_by: {args.archived_by}")
             print(f"reason: {args.reason or 'none'}")
+            return 0
+
+    if args.command == "skills":
+        system = AgentSystem(root)
+        system.initialize()
+        skills = system.storage.list_skills(project_id=args.project)
+        print(f"skills: {len(skills)}")
+        for skill in skills:
+            print(render_skill_line(skill))
+        return 0
+
+    if args.command == "skill":
+        system = AgentSystem(root)
+        system.initialize()
+        if args.skill_command == "propose":
+            try:
+                skill, version, skill_path, already_recorded = propose_skill(
+                    root,
+                    system.storage,
+                    project_id=args.project,
+                    name=args.name,
+                    description=args.description,
+                    source_run_id=args.from_run,
+                    source_task_id=args.source_task_id,
+                    created_by_profile=args.created_by_profile,
+                )
+            except (SkillEntryError, OSError) as error:
+                print(f"skill_proposal_failed: {error}")
+                return 1
+            _print_skill_proposal(
+                skill,
+                version,
+                skill_path,
+                already_recorded=already_recorded,
+            )
+            return 0
+        if args.skill_command == "approve":
+            try:
+                skill = approve_skill(
+                    system.storage,
+                    args.skill_id,
+                    approved_by=args.approved_by,
+                )
+            except SkillEntryError as error:
+                print(f"skill_approve_failed: {error}")
+                return 1
+            print(f"skill_approved: {skill.id}")
+            print(f"status: {skill.status}")
+            print(f"approved_by: {args.approved_by}")
+            return 0
+        if args.skill_command == "archive":
+            try:
+                skill = archive_skill(
+                    system.storage,
+                    args.skill_id,
+                    archived_by=args.archived_by,
+                    reason=args.reason,
+                )
+            except SkillEntryError as error:
+                print(f"skill_archive_failed: {error}")
+                return 1
+            print(f"skill_archived: {skill.id}")
+            print(f"status: {skill.status}")
+            print(f"archived_by: {args.archived_by}")
+            print(f"reason: {args.reason or 'none'}")
+            return 0
+        if args.skill_command == "show":
+            skill = system.storage.get_skill(args.skill_id)
+            if skill is None:
+                print(f"skill_show_failed: skill {args.skill_id} not found")
+                return 1
+            print(f"skill: {skill.id}")
+            print(f"status: {skill.status}")
+            print(f"project_id: {skill.project_id or 'none'}")
+            print(f"name: {skill.name}")
+            print(f"path: {skill.path}")
+            print("")
+            try:
+                print(Path(skill.path).read_text(encoding="utf-8"), end="")
+            except OSError as error:
+                print(f"skill_show_failed: {error}")
+                return 1
             return 0
 
     if args.command == "register-project":

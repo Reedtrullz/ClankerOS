@@ -150,6 +150,7 @@ from agent_os.learning_distillation import (
     render_stable_learning_line,
 )
 from agent_os.memory_entries import render_memory_entry_line
+from agent_os.skill_entries import render_skill_line
 from agent_os.playbooks import render_playbook_line
 from agent_os.profile_routing import format_profile_line, format_routing_decision_line
 from agent_os.queue_health import (
@@ -309,6 +310,9 @@ def generate_static_dashboard(root: Path) -> Path:
         memory_entries = []
         if _table_exists(connection, "memory_entries"):
             memory_entries = storage.list_memory_entries(status="proposed", limit=5)
+        skill_entries = []
+        if _table_exists(connection, "skills"):
+            skill_entries = storage.list_skills(status="proposed", limit=5)
         budget_trust_reports = []
         if _table_exists(connection, "budget_trust_posture_reports"):
             budget_trust_reports = storage.list_recent_budget_trust_posture_reports(
@@ -1406,6 +1410,13 @@ def generate_static_dashboard(root: Path) -> Path:
     if memory_entries:
         for entry in memory_entries:
             lines.append(f"- {render_memory_entry_line(entry)}")
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "## Skill Proposals", ""])
+    if skill_entries:
+        for skill in skill_entries:
+            lines.append(f"- {render_skill_line(skill)}")
     else:
         lines.append("- none")
 
