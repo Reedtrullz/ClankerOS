@@ -2000,16 +2000,45 @@ work, or changing routing.
   track spend, run CI, deploy, push, open PRs, mark the active goal complete,
   or mutate external systems.
 
+## Latest Capability Activation Follow-Up Result Task Effect Task Decisions
+
+- `capability-activation-followup-result-task-result-effect-task-result-decide`
+  now records local operator decisions for downstream result effect task
+  result records.
+- Initial live decision:
+  `capability_activation_followup_result_task_result_effect_task_result_decision_f15f4d26c1d2`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_result_decisions_recorded`,
+  accepted `capability_activation_followup_result_task_result_effect_task_result_0546b7458911`
+  with `selected_action=accept_keep_blocked`.
+- Final live idempotency pass recorded
+  `capability_activation_followup_result_task_result_effect_task_result_decision_1b522b2fca5f`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_result_decisions_already_recorded`,
+  with 0 new decisions, 1 existing decision, 0 approval requests, 0 activation
+  actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-decisions.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-decisions.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Non-claims: downstream result effect task decisions do not create
+  `approval_requests`, satisfy proof, mutate activation contracts, mutate
+  downstream result effect task result records, allow activation, enable
+  capabilities, promote trust, schedule work, retry work, track spend, run CI,
+  deploy, push, open PRs, mark the active goal complete, or mutate external
+  systems.
+
 ## Next Actions
 
-Current focus: Add operator review decisions for downstream follow-up result task result effect task result records.
+Current focus: Add local downstream follow-up result task result effect task result decision effect proposals from accepted blocked result effect task results.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add operator review decisions for downstream follow-up result task result
-   effect task result records.
-2. Add an explicit local accept-keep-blocked/request-more-evidence/defer
-   decision layer for the new result records without enabling capabilities,
-   satisfying proof, creating approval rows, or allowing activation.
+   Add local downstream follow-up result task result effect task result
+   decision effect proposals from accepted blocked result effect task results.
+2. Convert accepted blocked downstream result effect task result decisions into
+   local proposed effect rows without enabling capabilities, satisfying proof,
+   creating approval rows, or allowing activation.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.

@@ -3965,3 +3965,15 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_2fe1673dd07e
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_d1ee1ffa9162/summary.md
+
+## Run run_c4553a4de66d
+
+- Goal ID: goal_db96c4d8a1b5
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_c4553a4de66d/summary.md
+
+## Run run_6623795ccd5a
+
+- Goal ID: goal_3caaeb0d100b
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_6623795ccd5a/summary.md

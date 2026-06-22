@@ -193,6 +193,12 @@ Core layers for the bootstrap:
   result, source effect, downstream task, contract, project, and capability
   links while keeping approval rows, external mutations, activation actions,
   activation allowance, capability enablement, and proof satisfaction at zero.
+- Capability activation follow-up result task result effect task result
+  decisions: operators can record local accept-keep-blocked,
+  request-more-evidence, or defer decisions for downstream result effect task
+  result records. Each decision preserves the blocked proof state while
+  keeping approval row creation, external mutations, activation actions,
+  activation allowance, and capability enablement at zero.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON
@@ -867,6 +873,15 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   writes
   `docs/capability-activation-followup-result-task-result-effect-task-results.md`,
   stores local result records and JSON artifacts, and keeps
+  `approval_requests_created: 0`, `activation_actions_taken: 0`,
+  `external_mutations_taken: 0`, `activation_allowed: false`, and
+  `capability_enabled: false`.
+- Capability activation follow-up result task result effect task result
+  decisions: available through
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-decide`
+  after downstream result effect task results exist. The command writes
+  `docs/capability-activation-followup-result-task-result-effect-task-decisions.md`,
+  stores local operator decision rows, and keeps
   `approval_requests_created: 0`, `activation_actions_taken: 0`,
   `external_mutations_taken: 0`, `activation_allowed: false`, and
   `capability_enabled: false`.

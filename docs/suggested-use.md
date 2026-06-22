@@ -92,6 +92,10 @@ Create downstream proof tasks from applied downstream result decision effects, a
 Route downstream result effect tasks to read-only evaluator delegation packets, and prove that no subagent starts.
 ```
 
+```text
+Review downstream result-effect task result records, accept keeping activation blocked, and prove that no approval rows, activation actions, or external mutations were created.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -122,7 +126,9 @@ Route downstream result effect tasks to read-only evaluator delegation packets, 
     downstream proof tasks before routing or delegation.
 21. Route downstream result effect tasks into read-only delegation packets
     before ingesting more proof-plan output.
-22. Record non-claims before treating the work as safe.
+22. Review downstream result effect task result records before treating the
+    next evidence plan as operator-accepted.
+23. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -231,6 +237,9 @@ Prefer these files when orienting:
   decisions.
 - `docs/tutorial-capability-followup-result-task-result-effect-task-results.md`
   for ingesting completed downstream result effect task delegation outputs.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-decisions.md`
+  for reviewing downstream result effect task result records while keeping
+  activation blocked.
 - `contracts.md` for safety boundaries and evidence expectations.
 - `status.md` for chronological implementation evidence.
 - `projects/bootstrap/handoff.md` for the current continuation edge.
@@ -600,6 +609,24 @@ It keeps `approval_requests_created=0`, `activation_actions_taken=0`,
 `capability_enabled=false`; the result is a preserved evidence plan, not
 capability activation or proof satisfaction.
 
+Review downstream result effect task result records with an operator decision:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-decide \
+  --operator-id operator \
+  --selected-action accept_keep_blocked \
+  --selection-note "Accepted downstream result-effect proof-plan result and kept capability activation blocked." \
+  --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-results.md
+python3 -m agent_os.cli dashboard
+```
+
+The decision command writes
+`docs/capability-activation-followup-result-task-result-effect-task-decisions.md`,
+records the operator action in SQLite, and keeps
+`approval_requests_created=0`, `activation_actions_taken=0`,
+`external_mutations_taken=0`, `activation_allowed=false`, and
+`capability_enabled=false`.
+
 ## When To Commit And Push
 
 Commit when:
@@ -618,7 +645,7 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 Good next slices now favor capability-specific guards after local delegation
 packets exist:
 
-- operator review decisions for downstream result effect task result records;
+- proposed effects from accepted downstream result effect task result decisions;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;

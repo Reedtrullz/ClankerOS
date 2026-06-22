@@ -6750,3 +6750,55 @@
 - Non-claims: local result ingestion only; no subagent start, model-provider
   call, approval-row creation, proof satisfaction, activation allowance,
   capability enablement, CI/deploy, push, PR, or external mutation.
+
+## 2026-06-22 Downstream Result Effect Task Result Decisions
+
+- Added
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-decide`
+  for operator review of downstream result effect task result records.
+- Live decision recorded
+  `capability_activation_followup_result_task_result_effect_task_result_decision_f15f4d26c1d2`
+  against
+  `capability_activation_followup_result_task_result_effect_task_result_0546b7458911`
+  with `selected_action=accept_keep_blocked`.
+- Final live idempotency pass recorded
+  `capability_activation_followup_result_task_result_effect_task_result_decision_1b522b2fca5f`
+  with 0 new decisions, 1 existing decision, 0 approval requests, 0 activation
+  actions, and 0 external mutations.
+- Evidence:
+  `docs/capability-activation-followup-result-task-result-effect-task-decisions.md`,
+  `docs/tutorial-capability-followup-result-task-result-effect-task-decisions.md`,
+  `docs/dashboard.md`, `docs/next-iteration.md`, and
+  `projects/bootstrap/handoff.md`.
+- Verification evidence:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'effect_task_result_decisions'`
+    -> failed with missing CLI command, as expected.
+  - Focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'effect_task_result_decisions'`
+    -> 3 passed, 305 deselected.
+  - Adjacent chain:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'result_task_result'`
+    -> 25 passed, 283 deselected.
+  - `python3 -m py_compile agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py agent_os/capability_activation_followup_result_task_result_effect_task_result_decisions.py tests/test_first_milestone.py`
+    -> passed.
+  - `python3 -m pytest -q` -> 308 passed in 242.68s.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result decisions" ...`
+    -> pass, run `run_c4553a4de66d`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`,
+    run `run_6623795ccd5a`.
+  - `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800` ->
+    stuck_incidents: 0.
+  - `python3 -m agent_os.cli queue-health` -> hotspots: 0.
+  - `python3 -m agent_os.cli handoff-review` -> status: clear,
+    blocked_tasks: 0, stale_handoffs: 0.
+  - `python3 -m agent_os.cli eval-candidates` -> eval_candidates: 0.
+  - `python3 -m agent_os.cli approvals` -> pending_approvals: 0.
+  - `python3 -m agent_os.cli playbooks` -> playbooks: 1.
+  - `git diff --check` -> no whitespace errors.
+- Next focus:
+  `Add local downstream follow-up result task result effect task result decision effect proposals from accepted blocked result effect task results.`
+- Non-claims: local operator decision records only; no approval-row creation,
+  proof satisfaction, activation allowance, capability enablement, CI/deploy,
+  push, PR, trust promotion, scheduler, retry, cost tracking, or external
+  mutation.

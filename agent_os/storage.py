@@ -1706,6 +1706,28 @@ class CapabilityActivationFollowupResultTaskResultEffectTaskResultBatch:
 
 
 @dataclass(frozen=True)
+class CapabilityActivationFollowupResultTaskResultEffectTaskResultDecision:
+    id: str
+    status: str
+    operator_id: str
+    selected_action: str
+    selection_note: str
+    evidence_reference: str
+    result_record_count: int
+    decision_count: int
+    accepted_keep_blocked_decision_count: int
+    more_evidence_decision_count: int
+    deferred_decision_count: int
+    existing_decision_count: int
+    created_approval_request_count: int
+    activation_action_count: int
+    external_mutation_count: int
+    decided_result_ids: list[str]
+    report_path: str
+    created_at: str
+
+
+@dataclass(frozen=True)
 class CapabilityActivationFollowupResultTaskResultRecord:
     id: str
     delegation_id: str
@@ -3536,6 +3558,27 @@ class Storage:
                     external_mutation_count integer not null,
                     created_result_ids text not null,
                     completed_delegation_ids text not null,
+                    report_path text not null,
+                    created_at text not null
+                );
+
+                create table if not exists capability_activation_followup_result_task_result_effect_task_result_decisions (
+                    id text primary key,
+                    status text not null,
+                    operator_id text not null,
+                    selected_action text not null,
+                    selection_note text not null,
+                    evidence_reference text not null,
+                    result_record_count integer not null,
+                    decision_count integer not null,
+                    accepted_keep_blocked_decision_count integer not null,
+                    more_evidence_decision_count integer not null,
+                    deferred_decision_count integer not null,
+                    existing_decision_count integer not null,
+                    created_approval_request_count integer not null,
+                    activation_action_count integer not null,
+                    external_mutation_count integer not null,
+                    decided_result_ids text not null,
                     report_path text not null,
                     created_at text not null
                 );
@@ -10830,6 +10873,114 @@ class Storage:
             for row in rows
         ]
 
+    def record_capability_activation_followup_result_task_result_effect_task_result_decision(
+        self,
+        *,
+        status: str,
+        operator_id: str,
+        selected_action: str,
+        selection_note: str,
+        evidence_reference: str,
+        result_record_count: int,
+        decision_count: int,
+        accepted_keep_blocked_decision_count: int,
+        more_evidence_decision_count: int,
+        deferred_decision_count: int,
+        existing_decision_count: int,
+        created_approval_request_count: int,
+        activation_action_count: int,
+        external_mutation_count: int,
+        decided_result_ids: list[str],
+        report_path: str,
+    ) -> CapabilityActivationFollowupResultTaskResultEffectTaskResultDecision:
+        decision_id = new_id(
+            "capability_activation_followup_result_task_result_effect_task_result_decision"
+        )
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into capability_activation_followup_result_task_result_effect_task_result_decisions (
+                    id, status, operator_id, selected_action, selection_note,
+                    evidence_reference, result_record_count, decision_count,
+                    accepted_keep_blocked_decision_count,
+                    more_evidence_decision_count, deferred_decision_count,
+                    existing_decision_count, created_approval_request_count,
+                    activation_action_count, external_mutation_count,
+                    decided_result_ids, report_path, created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    decision_id,
+                    status,
+                    operator_id,
+                    selected_action,
+                    selection_note,
+                    evidence_reference,
+                    result_record_count,
+                    decision_count,
+                    accepted_keep_blocked_decision_count,
+                    more_evidence_decision_count,
+                    deferred_decision_count,
+                    existing_decision_count,
+                    created_approval_request_count,
+                    activation_action_count,
+                    external_mutation_count,
+                    _json_dumps(decided_result_ids),
+                    report_path,
+                    created_at,
+                ),
+            )
+        return CapabilityActivationFollowupResultTaskResultEffectTaskResultDecision(
+            id=decision_id,
+            status=status,
+            operator_id=operator_id,
+            selected_action=selected_action,
+            selection_note=selection_note,
+            evidence_reference=evidence_reference,
+            result_record_count=result_record_count,
+            decision_count=decision_count,
+            accepted_keep_blocked_decision_count=accepted_keep_blocked_decision_count,
+            more_evidence_decision_count=more_evidence_decision_count,
+            deferred_decision_count=deferred_decision_count,
+            existing_decision_count=existing_decision_count,
+            created_approval_request_count=created_approval_request_count,
+            activation_action_count=activation_action_count,
+            external_mutation_count=external_mutation_count,
+            decided_result_ids=decided_result_ids,
+            report_path=report_path,
+            created_at=created_at,
+        )
+
+    def list_recent_capability_activation_followup_result_task_result_effect_task_result_decisions(
+        self,
+        limit: int | None = 5,
+    ) -> list[CapabilityActivationFollowupResultTaskResultEffectTaskResultDecision]:
+        with self._connect() as connection:
+            if limit is None:
+                rows = connection.execute(
+                    """
+                    select * from capability_activation_followup_result_task_result_effect_task_result_decisions
+                    order by created_at desc, id desc
+                    """
+                ).fetchall()
+            else:
+                rows = connection.execute(
+                    """
+                    select * from capability_activation_followup_result_task_result_effect_task_result_decisions
+                    order by created_at desc, id desc
+                    limit ?
+                    """,
+                    (limit,),
+                ).fetchall()
+        return [
+            self._row_to_capability_activation_followup_result_task_result_effect_task_result_decision(
+                row
+            )
+            for row in rows
+        ]
+
     def record_capability_activation_followup_result_task_result(
         self,
         *,
@@ -15794,6 +15945,33 @@ class Storage:
                 row["completed_delegation_ids"],
                 [],
             ),
+            report_path=row["report_path"],
+            created_at=row["created_at"],
+        )
+
+    def _row_to_capability_activation_followup_result_task_result_effect_task_result_decision(
+        self,
+        row: sqlite3.Row,
+    ) -> CapabilityActivationFollowupResultTaskResultEffectTaskResultDecision:
+        return CapabilityActivationFollowupResultTaskResultEffectTaskResultDecision(
+            id=row["id"],
+            status=row["status"],
+            operator_id=row["operator_id"],
+            selected_action=row["selected_action"],
+            selection_note=row["selection_note"],
+            evidence_reference=row["evidence_reference"],
+            result_record_count=row["result_record_count"],
+            decision_count=row["decision_count"],
+            accepted_keep_blocked_decision_count=(
+                row["accepted_keep_blocked_decision_count"]
+            ),
+            more_evidence_decision_count=row["more_evidence_decision_count"],
+            deferred_decision_count=row["deferred_decision_count"],
+            existing_decision_count=row["existing_decision_count"],
+            created_approval_request_count=row["created_approval_request_count"],
+            activation_action_count=row["activation_action_count"],
+            external_mutation_count=row["external_mutation_count"],
+            decided_result_ids=_json_loads(row["decided_result_ids"], []),
             report_path=row["report_path"],
             created_at=row["created_at"],
         )
