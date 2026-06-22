@@ -10,6 +10,10 @@ from agent_os.operator_approval_effect_proposals import (
     IDEMPOTENCY_PREFIX as OPERATOR_APPROVAL_EFFECT_IDEMPOTENCY_PREFIX,
     PROPOSALS_RECORDED as OPERATOR_APPROVAL_EFFECT_PROPOSALS_RECORDED,
 )
+from agent_os.capability_activation_followup_result_effect_proposals import (
+    IDEMPOTENCY_PREFIX as CAPABILITY_FOLLOWUP_DECISION_EFFECT_IDEMPOTENCY_PREFIX,
+    PROPOSALS_RECORDED as CAPABILITY_FOLLOWUP_DECISION_EFFECT_PROPOSALS_RECORDED,
+)
 from agent_os.storage import IterationPacket, Storage
 
 
@@ -71,6 +75,7 @@ VERIFICATION_COMMANDS = [
     "python3 -m agent_os.cli capability-activation-followup-delegations",
     "python3 -m agent_os.cli capability-activation-followup-results",
     "python3 -m agent_os.cli capability-activation-followup-result-decide --operator-id operator --selected-action accept_keep_blocked --selection-note \"Accepted evaluator result and kept capability activation blocked.\" --evidence-reference docs/capability-activation-followup-results.md",
+    "python3 -m agent_os.cli capability-activation-followup-result-effect-proposals",
     "python3 -m agent_os.cli eval",
     "python3 -m agent_os.cli playbooks",
     "python3 -m agent_os.cli dashboard",
@@ -807,6 +812,17 @@ def _current_posture(root: Path) -> list[str]:
                 capability_activation_followup_result_decisions = (
                     capability_activation_followup_result_decision_rows[0].status
                 )
+        capability_activation_followup_result_effect_proposals = "none"
+        if _table_exists(connection, "effects"):
+            capability_activation_followup_result_effect_rows = Storage(
+                db_path
+            ).list_effects_with_idempotency_prefix(
+                CAPABILITY_FOLLOWUP_DECISION_EFFECT_IDEMPOTENCY_PREFIX
+            )
+            if capability_activation_followup_result_effect_rows:
+                capability_activation_followup_result_effect_proposals = (
+                    CAPABILITY_FOLLOWUP_DECISION_EFFECT_PROPOSALS_RECORDED
+                )
         handoff_reviews = Storage(db_path).list_recent_handoff_reviews(limit=1)
 
     handoff_blocked_tasks = 0
@@ -876,6 +892,7 @@ def _current_posture(root: Path) -> list[str]:
         f"capability activation followup delegations: {capability_activation_followup_delegations}",
         f"capability activation followup results: {capability_activation_followup_results}",
         f"capability activation followup result decisions: {capability_activation_followup_result_decisions}",
+        f"capability activation followup result effect proposals: {capability_activation_followup_result_effect_proposals}",
         f"proposed eval candidates: {proposed_eval_candidates}",
         f"active playbooks: {active_playbooks}",
         f"open stuck-task incidents: {stuck_count}",

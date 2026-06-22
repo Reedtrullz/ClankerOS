@@ -6030,3 +6030,55 @@
   capabilities, promote trust, route work, schedule work, start workers, retry
   work, track spend, run CI, deploy, push, open PRs, mark the active goal
   complete, or mutate external systems.
+
+## 2026-06-22 Capability Activation Follow-Up Result Effect Proposals
+
+- Added local proposed-effect command:
+  `python3 -m agent_os.cli capability-activation-followup-result-effect-proposals`.
+- The command converts accepted `accept_keep_blocked` follow-up result
+  decisions into idempotent `proposed` rows in the generic `effects` ledger.
+- Added report and dashboard visibility:
+  `docs/capability-activation-followup-result-effect-proposals.md` and
+  `## Capability Activation Follow-Up Result Effect Proposals`.
+- Red-first tests initially failed because
+  `capability-activation-followup-result-effect-proposals` was not a
+  registered CLI command.
+- Initial live proposal:
+  `effect_0fa73f003874`, status `proposed`, source decision
+  `capability_activation_followup_result_decision_146e16543cec`, source
+  result `capability_activation_followup_result_4c9b8b0d1c43`, capability
+  `hosted_dashboard`.
+- Final live idempotency pass:
+  `capability_activation_followup_result_effect_proposals_already_recorded`,
+  with 1 accepted decision, 1 accepted result, 0 new proposals, 1 existing
+  proposal, 0 approval requests, 0 activation actions, and 0 external
+  mutations.
+- Added
+  `docs/tutorial-capability-followup-result-effect-proposals.md` and threaded
+  the new usage path through README, suggested-use docs, workflow, operating
+  summary, dashboard, task queue, and iteration posture.
+- Next packet:
+  `Add local application records for follow-up decision effect proposals.`
+- Verification evidence:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -k 'capability_activation_followup_result_effect_proposals' -q`
+    -> failed with missing CLI command, as expected.
+  - `python3 -m py_compile agent_os/capability_activation_followup_result_effect_proposals.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest tests/test_first_milestone.py -k 'capability_activation_followup_result_effect_proposals' -q` -> 3 passed, 271 deselected.
+  - `python3 -m pytest tests/test_first_milestone.py -k 'capability_activation_followup_result_decisions or capability_activation_followup_results' -q` -> 6 passed, 268 deselected.
+  - `python3 -m pytest tests/test_first_milestone.py -k 'capability_activation_followup_result_effect_proposals or capability_activation_followup_result_decisions or capability_activation_followup_results or capability_activation_followup_delegations' -q` -> 12 passed, 262 deselected.
+  - `python3 -m pytest -q` -> 274 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add capability followup result effect proposals" ...` -> pass as `run_6aaaf091a7a0`.
+  - Live idempotency command:
+    `python3 -m agent_os.cli capability-activation-followup-result-effect-proposals`
+    -> already recorded, 1 existing proposal, 0 new proposals.
+  - Live command-gate refresh passed for `sweep-stuck`, `queue-health`,
+    `approvals`, `eval-candidates`, `handoff-review`, `playbooks`,
+    `iterate`, `dashboard`, and `eval`.
+  - Final `handoff-review` status: `clear`, 0 blocked tasks, 0 stale
+    handoffs.
+- Non-claims: follow-up result effect proposals do not create
+  `approval_requests`, satisfy proof, mutate activation contracts, allow
+  activation, enable capabilities, promote trust, route work, schedule work,
+  start workers, retry work, track spend, run CI, deploy, push, open PRs, mark
+  the active goal complete, or mutate external systems.

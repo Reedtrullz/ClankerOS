@@ -68,6 +68,10 @@ Decide pending operator approval request rows after I approve the decision selec
 Review ingested capability follow-up results, accept keeping activation blocked, and prove that no approval rows or activation actions were created.
 ```
 
+```text
+Create proposed effects from accepted blocked follow-up result decisions, and prove that capability activation remains blocked.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -86,7 +90,9 @@ Review ingested capability follow-up results, accept keeping activation blocked,
 14. Decide local operator approval rows only through explicit operator approval commands.
 15. Review ingested capability follow-up results before treating them as an
     activation decision.
-16. Record non-claims before treating the work as safe.
+16. Convert accepted blocked follow-up result decisions into proposed effects
+    only after the review decision exists.
+17. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -182,6 +188,10 @@ Prefer these files when orienting:
   and conceptual replay.
 - `docs/tutorial-steering-inbox.md` for deterministic steering reviews,
   next-action output, and local inbox triage.
+- `docs/tutorial-capability-followup-result-decisions.md` for reviewing
+  ingested follow-up evidence while keeping activation blocked.
+- `docs/tutorial-capability-followup-result-effect-proposals.md` for creating
+  proposed local effects from accepted blocked follow-up decisions.
 - `contracts.md` for safety boundaries and evidence expectations.
 - `status.md` for chronological implementation evidence.
 - `projects/bootstrap/handoff.md` for the current continuation edge.
@@ -378,6 +388,22 @@ decision row for result records that have not already been reviewed. It keeps
 `accept_keep_blocked` action is an operator review state, not capability
 enablement.
 
+After accepted blocked follow-up result decisions exist, create proposed effect
+rows:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-effect-proposals
+python3 -m agent_os.cli dashboard
+```
+
+This writes
+`docs/capability-activation-followup-result-effect-proposals.md` and local
+`proposed` effect rows in the generic effects ledger. It keeps
+`approval_requests_created=0`, `activation_actions_taken=0`,
+`external_mutations_taken=0`, `activation_allowed=false`, and
+`capability_enabled=false`; the effect row is a traceable local proposal, not
+capability enablement.
+
 ## When To Commit And Push
 
 Commit when:
@@ -393,10 +419,10 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 
 ## Practical Next Slices
 
-Good next slices now favor capability-specific guards after local application
+Good next slices now favor capability-specific guards after local proposal
 records exist:
 
-- local proposed effects from accepted blocked follow-up result decisions;
+- local application records for follow-up decision effect proposals;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;

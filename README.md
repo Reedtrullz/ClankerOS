@@ -27,6 +27,7 @@ more-evidence decisions -> pending follow-up evidence tasks -> task graph
 follow-up evidence tasks -> routing decisions -> read-only delegation packets
 completed follow-up delegation results -> local result records -> blocked proof state preserved
 local result records -> operator follow-up review decisions -> blocked activation preserved
+accepted blocked follow-up decisions -> proposed effect records -> blocked activation preserved
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -103,6 +104,11 @@ as local capability follow-up result records and JSON artifacts while keeping
 Operators can then record local accept-keep-blocked, more-evidence, or defer
 decisions for those ingested follow-up results while preserving the same
 blocked proof state and creating no approval rows.
+Accepted blocked follow-up decisions can now be converted into local
+`proposed` effect rows that link back to the source result, delegation, task,
+contract, and capability while preserving `activation_allowed=false`,
+`capability_enabled=false`, `approval_requests_created=0`, and
+`activation_actions_taken=0`.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -212,6 +218,7 @@ mutate external systems.
 - [Create operator approval effects and activation tasks](docs/tutorial-operator-approval-effect-proposals.md)
 - [Create capability activation contracts](docs/tutorial-capability-activation-contracts.md)
 - [Review capability follow-up results](docs/tutorial-capability-followup-result-decisions.md)
+- [Create follow-up result effect proposals](docs/tutorial-capability-followup-result-effect-proposals.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
 - [Safety contract](contracts.md)
@@ -278,6 +285,9 @@ The repository can now:
   result records without satisfying proof or enabling capabilities;
 - record local operator decisions for ingested capability follow-up results
   without creating approval rows, satisfying proof, or enabling capabilities;
+- create proposed effect rows from accepted blocked follow-up result decisions
+  while preserving no approval rows, no activation actions, and no capability
+  enablement;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -431,6 +441,7 @@ python3 -m agent_os.cli capability-activation-followups
 python3 -m agent_os.cli capability-activation-followup-delegations
 python3 -m agent_os.cli capability-activation-followup-results
 python3 -m agent_os.cli capability-activation-followup-result-decide --operator-id operator --selected-action accept_keep_blocked --selection-note "Accepted evaluator result and kept capability activation blocked." --evidence-reference docs/capability-activation-followup-results.md
+python3 -m agent_os.cli capability-activation-followup-result-effect-proposals
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"

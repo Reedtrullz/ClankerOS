@@ -58,6 +58,21 @@ Read:
 The decision row records operator review state for ingested result records. It
 does not approve activation, satisfy proof, or create legacy approval rows.
 
+## Create Proposed Effect Rows
+
+After accepting blocked results, record local proposed effects:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-effect-proposals
+```
+
+This writes
+`docs/capability-activation-followup-result-effect-proposals.md` and adds
+`proposed` rows to the generic effects ledger. The rows preserve the accepted
+decision and source result link while keeping activation blocked. See
+`docs/tutorial-capability-followup-result-effect-proposals.md` for the full
+walkthrough.
+
 ## Other Local Decisions
 
 Use `request_more_evidence` when the evaluator result is useful but still needs

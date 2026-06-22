@@ -130,6 +130,12 @@ Core layers for the bootstrap:
   follow-up result records. The decisions preserve blocked proof state and keep
   approval row creation, activation actions, contract mutation, and capability
   enablement at zero.
+- Capability activation follow-up result effect proposals: accepted
+  keep-blocked follow-up result decisions can be converted into idempotent
+  `proposed` effect rows in the generic effects ledger. Each row links the
+  source decision, result, delegation, follow-up task, contract, and capability
+  while keeping approval row creation, external mutations, activation actions,
+  activation allowance, and capability enablement at zero.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON

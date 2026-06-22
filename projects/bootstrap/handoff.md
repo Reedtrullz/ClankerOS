@@ -1687,15 +1687,37 @@ work, or changing routing.
   work, track spend, run CI, deploy, push, open PRs, mark the active goal
   complete, or mutate external systems.
 
+## Latest Capability Activation Follow-Up Result Effect Proposals
+
+- `capability-activation-followup-result-effect-proposals` now converts
+  accepted keep-blocked follow-up result decisions into idempotent local
+  `proposed` effect rows.
+- Initial live effect proposal:
+  `effect_0fa73f003874`, status `proposed`, source decision
+  `capability_activation_followup_result_decision_146e16543cec`, source
+  result `capability_activation_followup_result_4c9b8b0d1c43`, capability
+  `hosted_dashboard`.
+- Final proposal idempotency pass:
+  `capability_activation_followup_result_effect_proposals_already_recorded`,
+  with 1 accepted decision, 1 accepted result, 0 new proposals, 1 existing
+  proposal, 0 approval requests, 0 activation actions, and 0 external
+  mutations.
+- Evidence report:
+  `docs/capability-activation-followup-result-effect-proposals.md`.
+- Non-claims: follow-up result effect proposals do not create
+  `approval_requests`, satisfy proof, mutate activation contracts, allow
+  activation, enable capabilities, promote trust, route work, schedule work,
+  start workers, retry work, track spend, run CI, deploy, push, open PRs, mark
+  the active goal complete, or mutate external systems.
+
 ## Next Actions
 
-Current focus: Add local follow-up decision effect proposals from accepted blocked results.
+Current focus: Add local application records for follow-up decision effect proposals.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add local follow-up decision effect proposals from accepted blocked results.
-2. Convert accepted blocked follow-up result decisions into local proposed
-   effect records only, preserving activation-blocking evidence and
-   idempotency.
+   Add local application records for follow-up decision effect proposals.
+2. Convert proposed follow-up decision effect rows into local application
+   records only, preserving activation-blocking evidence and idempotency.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.
