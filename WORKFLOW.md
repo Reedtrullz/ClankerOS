@@ -190,41 +190,51 @@
     decisions for downstream result effect task result records while keeping
     approval rows, external mutations, activation actions, activation
     allowance, capability enablement, and proof satisfaction blocked.
-70. Autonomous scheduling proof checklists review the latest
+70. Capability activation follow-up result task result effect task result
+    effect proposals convert accepted keep-blocked downstream result effect
+    task result decisions into idempotent `proposed` effect rows while keeping
+    approval rows, external mutations, activation actions, activation
+    allowance, capability enablement, and proof satisfaction blocked.
+71. Capability activation follow-up result task result effect task result
+    effect application records accepted keep-blocked downstream result effect
+    task result decision effects as local `applied` ledger rows while keeping
+    approval rows, external mutations, activation actions, activation
+    allowance, capability enablement, and proof satisfaction blocked.
+72. Autonomous scheduling proof checklists review the latest
     Real-Cost-sourced remote-worker proof checklist when one exists before any
     scheduler, remote worker, routing change, or claim behavior exists,
     preserving remote-worker proof metadata and the remote-worker source
     proof's own source metadata when present.
-71. Browser desktop adapter proof checklists review the latest
+73. Browser desktop adapter proof checklists review the latest
     Real-Cost-sourced autonomous-scheduling proof checklist when one exists
     before any browser/desktop adapter operation or routing change exists,
     preserving autonomous-scheduling proof metadata and the
     autonomous-scheduling source proof's own source metadata when present.
-72. CI Deploy proof checklists review browser desktop adapter proof checklists
+74. CI Deploy proof checklists review browser desktop adapter proof checklists
     before any CI run, deploy, or routing change exists, preserving
     Real-Cost-sourced browser/desktop adapter proof metadata when present.
-73. Budget Enforcement proof checklists review the latest Real-Cost-sourced
+75. Budget Enforcement proof checklists review the latest Real-Cost-sourced
     CI Deploy proof checklist when one exists before any budget enforcement,
     CI/deploy, or routing change exists, preserving CI Deploy proof metadata
     and the CI Deploy source proof's own source metadata when available.
-74. Trust Promotion proof checklists review the latest Real-Cost-sourced
+76. Trust Promotion proof checklists review the latest Real-Cost-sourced
     Budget Enforcement proof checklist when one exists before any trust
     promotion, budget enforcement, or routing change exists, preserving
     Budget Enforcement proof metadata and the Budget Enforcement source
     proof's own source metadata when available.
-75. Automatic Retry proof checklists review Trust Promotion proof checklists
+77. Automatic Retry proof checklists review Trust Promotion proof checklists
     before any retry, replay, trust promotion, or routing change exists,
     preserving Real-Cost-sourced Trust Promotion proof metadata when present.
-76. Real Cost Tracking proof checklists review Automatic Retry proof
+78. Real Cost Tracking proof checklists review Automatic Retry proof
     checklists before any spend tracking, retry, budget enforcement, or
     routing change exists.
-77. Repeated successful eval runs can be promoted into reusable playbooks.
-78. Equal-score queue choices prefer lower complexity before adding
+79. Repeated successful eval runs can be promoted into reusable playbooks.
+80. Equal-score queue choices prefer lower complexity before adding
     orchestration.
-79. Completed tasks update project memory and activity.
-80. Run summary mirrors status to project files.
-81. Learning loop records one improvement candidate.
-82. Static dashboard generation mirrors queue health, handoff reviews,
+81. Completed tasks update project memory and activity.
+82. Run summary mirrors status to project files.
+83. Learning loop records one improvement candidate.
+84. Static dashboard generation mirrors queue health, handoff reviews,
     eval-after-change checks, learning distillation, budget/trust posture,
     dispatch posture history, dispatch posture snapshot reviews, dispatch
     posture refresh recommendations, capability expansion ledgers, capability
@@ -260,8 +270,11 @@
     effect tasks, capability activation follow-up result task result effect
     task delegations, capability activation follow-up result task result
     effect task results, capability activation follow-up result task result
-    effect task result decisions, playbooks, eval candidates, approvals, stuck
-    tasks, incidents, and recent evidence.
+    effect task result decisions, capability activation follow-up result task
+    result effect task result effect proposals, capability activation
+    follow-up result task result effect task result effect applications,
+    playbooks, eval candidates, approvals, stuck tasks, incidents, and recent
+    evidence.
 
 ## Incident Resolution Lifecycle
 

@@ -134,6 +134,7 @@ from agent_os.operator_approval_request_decisions import (
 )
 from agent_os.operator_approval_effect_proposals import (
     IDEMPOTENCY_PREFIX as OPERATOR_APPROVAL_EFFECT_IDEMPOTENCY_PREFIX,
+    REPORT_PATH as OPERATOR_APPROVAL_EFFECT_REPORT_PATH,
     render_operator_approval_effect_proposal_line,
 )
 from agent_os.operator_approval_effect_application import (
@@ -163,6 +164,7 @@ from agent_os.capability_activation_followup_result_decisions import (
 )
 from agent_os.capability_activation_followup_result_effect_proposals import (
     IDEMPOTENCY_PREFIX as CAPABILITY_FOLLOWUP_DECISION_EFFECT_IDEMPOTENCY_PREFIX,
+    REPORT_PATH as CAPABILITY_FOLLOWUP_DECISION_EFFECT_REPORT_PATH,
     render_capability_activation_followup_result_effect_proposal_line,
 )
 from agent_os.capability_activation_followup_result_effect_application import (
@@ -182,6 +184,7 @@ from agent_os.capability_activation_followup_result_task_result_decisions import
 )
 from agent_os.capability_activation_followup_result_task_result_effect_proposals import (
     IDEMPOTENCY_PREFIX as CAPABILITY_FOLLOWUP_TASK_RESULT_DECISION_EFFECT_IDEMPOTENCY_PREFIX,
+    REPORT_PATH as CAPABILITY_FOLLOWUP_TASK_RESULT_DECISION_EFFECT_REPORT_PATH,
     render_capability_activation_followup_result_task_result_effect_proposal_line,
 )
 from agent_os.capability_activation_followup_result_task_result_effect_application import (
@@ -201,7 +204,11 @@ from agent_os.capability_activation_followup_result_task_result_effect_task_resu
 )
 from agent_os.capability_activation_followup_result_task_result_effect_task_result_effect_proposals import (
     IDEMPOTENCY_PREFIX as CAPABILITY_FOLLOWUP_TASK_RESULT_EFFECT_TASK_RESULT_DECISION_EFFECT_IDEMPOTENCY_PREFIX,
+    REPORT_PATH as CAPABILITY_FOLLOWUP_TASK_RESULT_EFFECT_TASK_RESULT_DECISION_EFFECT_REPORT_PATH,
     render_capability_activation_followup_result_task_result_effect_task_result_effect_proposal_line,
+)
+from agent_os.capability_activation_followup_result_task_result_effect_task_result_effect_application import (
+    render_capability_activation_followup_result_task_result_effect_task_result_effect_application_line,
 )
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
@@ -810,6 +817,16 @@ def generate_static_dashboard(root: Path) -> Path:
                     limit=1
                 )
             )
+        capability_activation_followup_result_task_result_effect_task_result_effect_applications = []
+        if _table_exists(
+            connection,
+            "capability_activation_followup_result_task_result_effect_task_result_effect_applications",
+        ):
+            capability_activation_followup_result_task_result_effect_task_result_effect_applications = (
+                storage.list_recent_capability_activation_followup_result_task_result_effect_task_result_effect_applications(
+                    limit=1
+                )
+            )
         capability_activation_followup_result_task_result_effect_task_batches = []
         if _table_exists(
             connection,
@@ -1160,6 +1177,13 @@ def generate_static_dashboard(root: Path) -> Path:
     latest_capability_activation_followup_result_task_result_effect_application = (
         capability_activation_followup_result_task_result_effect_applications[0]
         if capability_activation_followup_result_task_result_effect_applications
+        else None
+    )
+    latest_capability_activation_followup_result_task_result_effect_task_result_effect_application = (
+        capability_activation_followup_result_task_result_effect_task_result_effect_applications[
+            0
+        ]
+        if capability_activation_followup_result_task_result_effect_task_result_effect_applications
         else None
     )
     latest_capability_activation_followup_result_task_result_effect_task_batch = (
@@ -1656,7 +1680,7 @@ def generate_static_dashboard(root: Path) -> Path:
                 f"- capability_effect_proposals: {capability_effect_count}",
                 "- legacy_approval_requests_created: 0",
                 "- activation_actions_taken: 0",
-                f"- report: {latest_effect.evidence_path}",
+                f"- report: {OPERATOR_APPROVAL_EFFECT_REPORT_PATH}",
                 "",
             ]
         )
@@ -1921,7 +1945,7 @@ def generate_static_dashboard(root: Path) -> Path:
                 "- approval_requests_created: 0",
                 "- activation_actions_taken: 0",
                 "- external_mutations_taken: 0",
-                f"- report: {latest_effect.evidence_path}",
+                f"- report: {CAPABILITY_FOLLOWUP_DECISION_EFFECT_REPORT_PATH}",
                 "",
             ]
         )
@@ -2127,7 +2151,7 @@ def generate_static_dashboard(root: Path) -> Path:
                 "- approval_requests_created: 0",
                 "- activation_actions_taken: 0",
                 "- external_mutations_taken: 0",
-                f"- report: {latest_effect.evidence_path}",
+                f"- report: {CAPABILITY_FOLLOWUP_TASK_RESULT_DECISION_EFFECT_REPORT_PATH}",
                 "",
             ]
         )
@@ -2351,7 +2375,10 @@ def generate_static_dashboard(root: Path) -> Path:
                 "- approval_requests_created: 0",
                 "- activation_actions_taken: 0",
                 "- external_mutations_taken: 0",
-                f"- report: {latest_effect.evidence_path}",
+                (
+                    "- report: "
+                    f"{CAPABILITY_FOLLOWUP_TASK_RESULT_EFFECT_TASK_RESULT_DECISION_EFFECT_REPORT_PATH}"
+                ),
                 "",
             ]
         )
@@ -2360,6 +2387,43 @@ def generate_static_dashboard(root: Path) -> Path:
                 effect
             )
             for effect in proposal_effects
+        )
+    else:
+        lines.append("- none")
+
+    lines.extend(
+        [
+            "",
+            "## Capability Activation Follow-Up Result Task Result Effect Task Result Effect Application",
+            "",
+        ]
+    )
+    if (
+        latest_capability_activation_followup_result_task_result_effect_task_result_effect_application
+        is not None
+    ):
+        application = (
+            latest_capability_activation_followup_result_task_result_effect_task_result_effect_application
+        )
+        lines.extend(
+            [
+                f"- status: {application.status}",
+                f"- proposed_effects: {application.proposed_effect_count}",
+                f"- effects_applied: {application.applied_effect_count}",
+                (
+                    "- existing_applied_effects: "
+                    f"{application.existing_applied_effect_count}"
+                ),
+                f"- capability_effects_applied: {application.capability_effect_count}",
+                f"- approval_requests_created: {application.approval_request_count}",
+                f"- activation_actions_taken: {application.activation_action_count}",
+                f"- external_mutations_taken: {application.external_mutation_count}",
+                f"- report: {application.report_path}",
+                "",
+                render_capability_activation_followup_result_task_result_effect_task_result_effect_application_line(
+                    application
+                ),
+            ]
         )
     else:
         lines.append("- none")

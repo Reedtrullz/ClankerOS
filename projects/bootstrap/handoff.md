@@ -2055,16 +2055,45 @@ work, or changing routing.
   run CI, deploy, push, open PRs, mark the active goal complete, or mutate
   external systems.
 
+## Latest Downstream Result Effect Task Result Effect Application
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-apply`
+  now applies accepted downstream result effect task result decision effects
+  as local records only.
+- Initial live application:
+  `capability_activation_followup_result_task_result_effect_task_result_effect_application_b9c4c1bf9140`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_result_effect_application_recorded`,
+  applied `effect_24a2d688a662` for `hosted_dashboard`.
+- Final live idempotency pass:
+  `capability_activation_followup_result_task_result_effect_task_result_effect_application_c066fdb2e232`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_result_effect_application_already_recorded`,
+  with 0 new effects applied, 1 existing applied effect, 0 approval requests,
+  0 activation actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-application.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-application.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Non-claims: downstream result effect task result effect applications do not
+  create `approval_requests`, satisfy proof, mutate activation contracts,
+  mutate downstream result effect task result records, allow activation,
+  enable capabilities, promote trust, schedule work, retry work, track spend,
+  run CI, deploy, push, open PRs, mark the active goal complete, or mutate
+  external systems.
+
 ## Next Actions
 
-Current focus: Add local application records for downstream follow-up result task result effect task result decision effect proposals.
+Current focus: Add downstream task records from applied downstream follow-up result task result effect task result decision effect applications.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add local application records for downstream follow-up result task result
-   effect task result decision effect proposals.
-2. Convert proposed downstream result effect task result decision effects into
-   local application records without enabling capabilities, satisfying proof,
-   creating approval rows, or allowing activation.
+   Add downstream task records from applied downstream follow-up result task
+   result effect task result decision effect applications.
+2. Convert applied downstream result effect task result decision effect
+   applications into pending downstream proof tasks without enabling
+   capabilities, satisfying proof, creating approval rows, or allowing
+   activation.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.

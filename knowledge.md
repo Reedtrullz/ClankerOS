@@ -483,6 +483,11 @@
   approval rows, apply effects, satisfy proof, allow activation, or enable
   capabilities; the separate application-record slice owns durable application
   rows.
+- Accepted blocked downstream result effect task result decision effects can
+  be bridged through local application records that mark applicable effects
+  `applied` and write application evidence while still preserving zero
+  approval rows, zero activation actions, zero external mutations,
+  `activation_allowed=false`, and `capability_enabled=false`.
 - `eval` and `eval-after-change` both write the
   `first_milestone_closed_loop` result path and should be run serially, not in
   parallel. A parallel invocation can leave a failed run artifact even when the

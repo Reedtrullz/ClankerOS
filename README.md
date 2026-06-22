@@ -38,6 +38,8 @@ applied downstream result decision effect applications -> downstream proof tasks
 downstream result effect tasks -> routing decisions -> read-only delegation packets
 completed downstream result effect delegation results -> local result records -> next evidence plan preserved
 local downstream result effect task result records -> operator review decisions -> blocked activation preserved
+accepted downstream result effect task result decisions -> proposed effect records -> blocked activation preserved
+applied downstream result effect task result decision effects -> local application records -> blocked activation preserved
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -171,6 +173,17 @@ decisions for those downstream result effect task result records while
 preserving `activation_allowed=false`, `capability_enabled=false`,
 `approval_requests_created=0`, `activation_actions_taken=0`, and
 `external_mutations_taken=0`.
+Accepted blocked downstream result effect task result decisions can now be
+converted into local `proposed` effect rows that link back to the source
+decision, result record, application, effect, delegation, task, contract, and
+capability while preserving `activation_allowed=false`,
+`capability_enabled=false`, `approval_requests_created=0`,
+`activation_actions_taken=0`, and `external_mutations_taken=0`.
+Those downstream result effect task result decision effects can now be applied
+as local records only, advancing effect status to `applied` while preserving
+`activation_allowed=false`, `capability_enabled=false`,
+`approval_requests_created=0`, `activation_actions_taken=0`, and
+`external_mutations_taken=0`.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -288,6 +301,7 @@ mutate external systems.
 - [Ingest downstream result effect task delegation results](docs/tutorial-capability-followup-result-task-result-effect-task-results.md)
 - [Review downstream result effect task results](docs/tutorial-capability-followup-result-task-result-effect-task-decisions.md)
 - [Create downstream result effect task result effect proposals](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-proposals.md)
+- [Apply downstream result effect task result effect records](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-application.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Documentation index](docs/docs-index.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
@@ -371,6 +385,13 @@ The repository can now:
   result records and review those records with explicit operator decisions
   while keeping approval rows, activation actions, external mutations,
   activation allowance, and capability enablement at zero;
+- create proposed effect rows from accepted downstream result effect task
+  result decisions while keeping approval rows, activation actions, external
+  mutations, activation allowance, and capability enablement at zero;
+- apply proposed downstream result effect task result decision effects as local
+  records only while preserving applied effect evidence and keeping approval
+  rows, activation actions, external mutations, activation allowance, and
+  capability enablement at zero;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -537,6 +558,7 @@ python3 -m agent_os.cli capability-activation-followup-result-task-result-effect
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-results
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-decide --operator-id operator --selected-action accept_keep_blocked --selection-note "Accepted downstream result-effect proof-plan result and kept capability activation blocked." --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-results.md
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-proposals
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-apply --operator-id operator --selection-note "Apply accepted downstream result-effect task result effect proposals as local records only." --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-proposals.md
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
@@ -634,6 +656,9 @@ python3 -m pytest tests/test_first_milestone.py -q
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-proposals.md`:
   creating proposed effects from accepted downstream result effect task result
   decisions without enabling capabilities.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-application.md`:
+  applying proposed downstream result effect task result decision effects as
+  local records without enabling capabilities.
 - `docs/docs-index.md`: curated map of tutorials, generated reports, status
   files, and bootstrap project continuity files.
 - `docs/suggested-use.md`: operator guidance, prompts, and practical next slices.

@@ -260,6 +260,10 @@ from agent_os.capability_activation_followup_result_task_result_effect_task_resu
     render_capability_activation_followup_result_task_result_effect_task_result_effect_proposal_line,
     write_capability_activation_followup_result_task_result_effect_task_result_effect_proposals,
 )
+from agent_os.capability_activation_followup_result_task_result_effect_task_result_effect_application import (
+    apply_capability_activation_followup_result_task_result_effect_task_result_effects,
+    render_capability_activation_followup_result_task_result_effect_task_result_effect_application_line,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -924,6 +928,25 @@ def build_parser() -> argparse.ArgumentParser:
             "Create local proposed effects from accepted blocked downstream "
             "follow-up result task effect task result decisions."
         ),
+    )
+    followup_task_result_effect_task_result_effect_apply = subparsers.add_parser(
+        "capability-activation-followup-result-task-result-effect-task-result-effect-apply",
+        help=(
+            "Apply downstream follow-up result task effect task result "
+            "decision effect proposals as local records only."
+        ),
+    )
+    followup_task_result_effect_task_result_effect_apply.add_argument(
+        "--operator-id",
+        required=True,
+    )
+    followup_task_result_effect_task_result_effect_apply.add_argument(
+        "--selection-note",
+        required=True,
+    )
+    followup_task_result_effect_task_result_effect_apply.add_argument(
+        "--evidence-reference",
+        required=True,
     )
 
     approve = subparsers.add_parser("approve", help="Approve a pending local task request.")
@@ -3508,6 +3531,47 @@ def main(argv: list[str] | None = None) -> int:
         print(f"approval_requests_created: {summary.approval_request_count}")
         print(f"activation_actions_taken: {summary.activation_action_count}")
         print(f"external_mutations_taken: {summary.external_mutation_count}")
+        for effect in effects:
+            print(
+                render_capability_activation_followup_result_task_result_effect_task_result_effect_proposal_line(
+                    effect
+                ).removeprefix("- ")
+            )
+        return 0
+
+    if (
+        args.command
+        == "capability-activation-followup-result-task-result-effect-task-result-effect-apply"
+    ):
+        AgentSystem(root).initialize()
+        report_path, application, effects = (
+            apply_capability_activation_followup_result_task_result_effect_task_result_effects(
+                root,
+                operator_id=args.operator_id,
+                selection_note=args.selection_note,
+                evidence_reference=args.evidence_reference,
+            )
+        )
+        print(
+            "capability_activation_followup_result_task_result_effect_task_result_effect_apply: "
+            f"{application.status}"
+        )
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"proposed_effects: {application.proposed_effect_count}")
+        print(f"effects_applied: {application.applied_effect_count}")
+        print(
+            "existing_applied_effects: "
+            f"{application.existing_applied_effect_count}"
+        )
+        print(f"capability_effects_applied: {application.capability_effect_count}")
+        print(f"approval_requests_created: {application.approval_request_count}")
+        print(f"activation_actions_taken: {application.activation_action_count}")
+        print(f"external_mutations_taken: {application.external_mutation_count}")
+        print(
+            render_capability_activation_followup_result_task_result_effect_task_result_effect_application_line(
+                application
+            ).removeprefix("- ")
+        )
         for effect in effects:
             print(
                 render_capability_activation_followup_result_task_result_effect_task_result_effect_proposal_line(

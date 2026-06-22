@@ -4035,3 +4035,52 @@ are visible in the dashboard and are not active until approved.
   `approval_requests`, proof satisfaction, activation allowance, capability
   enablement, trust promotion, scheduler, retries, cost tracking, CI/deploy,
   push, PR, or external mutation.
+
+## Run run_26885a0289b5
+
+- Goal ID: goal_2ac4efe73160
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_26885a0289b5/summary.md
+
+## Run run_4927d5cebf25
+
+- Goal ID: goal_6477340a93b7
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_4927d5cebf25/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Application
+
+- Added
+  `capability-activation-followup-result-task-result-effect-task-result-effect-apply`
+  to apply accepted downstream result effect task result decision effects as
+  local records only.
+- Initial live application:
+  `capability_activation_followup_result_task_result_effect_task_result_effect_application_b9c4c1bf9140`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_result_effect_application_recorded`,
+  applied `effect_24a2d688a662` for `hosted_dashboard`.
+- Final live idempotency pass:
+  `capability_activation_followup_result_task_result_effect_task_result_effect_application_c066fdb2e232`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_result_effect_application_already_recorded`,
+  with 0 new effects applied, 1 existing applied effect, 0 approval requests,
+  0 activation actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-application.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-application.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `docs/handoff-review.md`
+- Verification evidence:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "effect_task_result_effect_apply"`
+    -> red before implementation, then 3 passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "result_task_result"`
+    -> 31 passed.
+  - `python3 -m pytest -q` -> 314 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result effect application" --file agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_application.py`
+    -> pass, run `run_26885a0289b5`.
+  - `python3 -m agent_os.cli eval` -> pass, run `run_4927d5cebf25`.
+- Non-claims: local application rows and applied effect status only; no
+  `approval_requests`, proof satisfaction, activation allowance, capability
+  enablement, trust promotion, scheduler, retries, cost tracking, CI/deploy,
+  push, PR, or external mutation.

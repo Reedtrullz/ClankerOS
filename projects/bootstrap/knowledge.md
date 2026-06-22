@@ -1872,8 +1872,24 @@ coverage.
   satisfy proof, allow activation, or enable capabilities in the proposal
   stage.
 
+## Learning effect application bridge
+
+- Accepted blocked downstream result effect task result decision effects should
+  be applied through a local application-record slice that marks applicable
+  effects `applied` and writes application evidence, while still preserving
+  zero approval rows, zero activation actions, zero external mutations,
+  `activation_allowed=false`, and `capability_enabled=false`.
+
 ## Learning eval serialization
 
 - Run `eval` and `eval-after-change` serially. They share the
   `first_milestone_closed_loop` result output; running them concurrently can
   create a failed run artifact even when a serial eval rerun passes.
+
+## Learning run_26885a0289b5
+
+- Learning: Run run_26885a0289b5 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_4927d5cebf25
+
+- Learning: Run run_4927d5cebf25 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
