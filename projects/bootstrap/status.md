@@ -3657,3 +3657,35 @@ are visible in the dashboard and are not active until approved.
   `docs/capability-activation-followup-result-task-results/subagent_delegation_0de281ad619c-hosted-dashboard.json`.
 - Next focus:
   Add operator review decisions for downstream follow-up result task records.
+
+## 2026-06-22 Capability Follow-Up Result Task Decisions
+
+- Added `capability-activation-followup-result-task-result-decide` to record
+  local operator decisions over downstream proof-plan result records.
+- Initial live decision recorded
+  `capability_activation_followup_result_task_result_decision_584334bef1b8`
+  and accepted keeping activation blocked for
+  `capability_activation_followup_result_task_result_749b9c23cd2f`.
+- Final idempotency run recorded
+  `capability_activation_followup_result_task_result_decision_42c78f88e49d`
+  with 0 new decisions, 1 existing decision, 0 approval requests, 0 activation
+  actions, and 0 external mutations.
+- Evidence report:
+  `docs/capability-activation-followup-result-task-decisions.md`.
+- Tutorial:
+  `docs/tutorial-capability-followup-result-task-decisions.md`.
+- Next focus:
+  Add local downstream follow-up result task decision effect proposals from
+  accepted blocked task results.
+
+## Run run_38a7d9c5354c
+
+- Goal ID: goal_f46f23ea1c14
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_38a7d9c5354c/summary.md
+
+## Run run_ea63edf343f5
+
+- Goal ID: goal_769369f9a905
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_ea63edf343f5/summary.md

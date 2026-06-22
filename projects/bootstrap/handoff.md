@@ -1826,14 +1826,41 @@ work, or changing routing.
   trust, schedule work, retry work, track spend, run CI, deploy, push, open
   PRs, mark the active goal complete, or mutate external systems.
 
+## Latest Capability Activation Follow-Up Result Task Decisions
+
+- `capability-activation-followup-result-task-result-decide` now records
+  local operator decisions over downstream proof-plan result records.
+- Initial live decision recorded
+  `capability_activation_followup_result_task_result_decision_584334bef1b8`,
+  status
+  `capability_activation_followup_result_task_result_decisions_recorded`, and
+  accepted keeping activation blocked for
+  `capability_activation_followup_result_task_result_749b9c23cd2f`.
+- Final live idempotency decision recorded
+  `capability_activation_followup_result_task_result_decision_42c78f88e49d`,
+  status
+  `capability_activation_followup_result_task_result_decisions_already_recorded`,
+  with 0 new decisions, 1 existing decision, 0 approval requests, 0 activation
+  actions, and 0 external mutations.
+- Evidence report:
+  `docs/capability-activation-followup-result-task-decisions.md`.
+- Tutorial:
+  `docs/tutorial-capability-followup-result-task-decisions.md`.
+- Non-claims: downstream follow-up result task decisions do not create
+  `approval_requests`, satisfy proof, mutate activation contracts, mutate
+  downstream result records, allow activation, enable capabilities, promote
+  trust, schedule work, retry work, track spend, run CI, deploy, push, open
+  PRs, mark the active goal complete, or mutate external systems.
+
 ## Next Actions
 
-Current focus: Add operator review decisions for downstream follow-up result task records.
+Current focus: Add local downstream follow-up result task decision effect proposals from accepted blocked task results.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add operator review decisions for downstream follow-up result task records.
-2. Record operator decisions over downstream proof-plan result records without
-   enabling capabilities, satisfying proof, or allowing activation.
+   Add local downstream follow-up result task decision effect proposals from accepted blocked task results.
+2. Convert accepted blocked downstream proof-plan result decisions into
+   proposed local effect records without enabling capabilities, satisfying
+   proof, or allowing activation.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.

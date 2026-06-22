@@ -1,8 +1,8 @@
 # Handoff Review
 
-- id: handoff_review_1945a712388e
+- id: handoff_review_328bd9920ef0
 - status: clear
-- current_focus: Add operator review decisions for downstream follow-up result task records.
+- current_focus: Add local downstream follow-up result task decision effect proposals from accepted blocked task results.
 - blocked_tasks: 0
 - stale_handoffs: 0
 - reviewed_paths: 1

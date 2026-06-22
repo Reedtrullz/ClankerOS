@@ -72,6 +72,10 @@ Review ingested capability follow-up results, accept keeping activation blocked,
 Create proposed effects from accepted blocked follow-up result decisions, and prove that capability activation remains blocked.
 ```
 
+```text
+Review downstream proof-plan result records, accept keeping activation blocked, and prove that no approval rows, activation actions, or external mutations were created.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -92,7 +96,9 @@ Create proposed effects from accepted blocked follow-up result decisions, and pr
     activation decision.
 16. Convert accepted blocked follow-up result decisions into proposed effects
     only after the review decision exists.
-17. Record non-claims before treating the work as safe.
+17. Review downstream proof-plan result records before treating the next
+    evidence plan as operator-accepted.
+18. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -192,6 +198,10 @@ Prefer these files when orienting:
   ingested follow-up evidence while keeping activation blocked.
 - `docs/tutorial-capability-followup-result-effect-proposals.md` for creating
   proposed local effects from accepted blocked follow-up decisions.
+- `docs/tutorial-capability-followup-result-task-results.md` for ingesting
+  completed downstream proof-plan delegation outputs as local result records.
+- `docs/tutorial-capability-followup-result-task-decisions.md` for reviewing
+  downstream proof-plan result records while keeping activation blocked.
 - `contracts.md` for safety boundaries and evidence expectations.
 - `status.md` for chronological implementation evidence.
 - `projects/bootstrap/handoff.md` for the current continuation edge.
@@ -454,6 +464,25 @@ result row per completed downstream delegation, and writes JSON artifacts under
 `external_mutations_taken=0`, `activation_allowed=false`, and
 `capability_enabled=false`; the result is a preserved evidence plan, not
 capability activation or proof satisfaction.
+
+Review those downstream result records explicitly before using them as accepted
+operator posture:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-decide \
+  --operator-id operator \
+  --selected-action accept_keep_blocked \
+  --selection-note "Accepted downstream proof-plan result and kept capability activation blocked." \
+  --evidence-reference docs/capability-activation-followup-result-task-results.md
+python3 -m agent_os.cli dashboard
+```
+
+The decision command writes
+`docs/capability-activation-followup-result-task-decisions.md` and records the
+selected operator action for downstream result records that have not already
+been decided. It keeps `approval_requests_created=0`,
+`activation_actions_taken=0`, `external_mutations_taken=0`,
+`activation_allowed=false`, and `capability_enabled=false`.
 
 ## When To Commit And Push
 

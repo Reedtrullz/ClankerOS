@@ -6327,3 +6327,69 @@
   mutate activation contracts, allow activation, enable capabilities, promote
   trust, schedule work, retry work, track spend, run CI, deploy, push, open
   PRs, mark the active goal complete, or mutate external systems.
+
+## 2026-06-22 Capability Activation Follow-Up Result Task Decisions
+
+- Added local downstream operator review command:
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-decide`.
+- The command records
+  `capability_activation_followup_result_task_result_decisions` rows, writes
+  `docs/capability-activation-followup-result-task-decisions.md`, scans
+  already-decided downstream result ids for idempotency, and keeps
+  `approval_requests_created=0`, `activation_actions_taken=0`, and
+  `external_mutations_taken=0`.
+- Initial live decision:
+  `capability_activation_followup_result_task_result_decision_584334bef1b8`,
+  status
+  `capability_activation_followup_result_task_result_decisions_recorded`,
+  accepted keeping activation blocked for
+  `capability_activation_followup_result_task_result_749b9c23cd2f`.
+- Final live idempotency decision:
+  `capability_activation_followup_result_task_result_decision_42c78f88e49d`,
+  status
+  `capability_activation_followup_result_task_result_decisions_already_recorded`,
+  with 0 new decisions, 1 existing decision, 0 approval requests, 0 activation
+  actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-decisions.md`
+  - `docs/tutorial-capability-followup-result-task-decisions.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `runs/run_38a7d9c5354c/`
+  - `runs/run_ea63edf343f5/`
+- Added and updated docs: README lifecycle/About/command map, suggested-use
+  docs, docs index, operating summary, workflow, bootstrap handoff/status, and
+  task queue. The next packet is:
+  `Add local downstream follow-up result task decision effect proposals from accepted blocked task results.`
+- GitHub metadata check:
+  `gh repo view Reedtrullz/ClankerOS --json description,homepageUrl,repositoryTopics,url`
+  showed the public About description, README homepage, and 20 repository
+  topics are populated for `https://github.com/Reedtrullz/ClankerOS`.
+- Verification evidence:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'capability_activation_followup_result_task_result_decisions' --tb=short`
+    -> failed with missing CLI command, as expected.
+  - `python3 -m py_compile agent_os/capability_activation_followup_result_task_result_decisions.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py tests/test_first_milestone.py`
+    -> passed.
+  - Focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'capability_activation_followup_result_task_result_decisions' --tb=short`
+    -> 3 passed, 286 deselected.
+  - Adjacent green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'capability_activation_followup_result_task_result_decisions or capability_activation_followup_result_task_results or capability_activation_followup_result_task_delegations or capability_activation_followup_result_tasks' --tb=short`
+    -> 12 passed, 277 deselected.
+  - Broader green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'capability_activation_followup_result' --tb=short`
+    -> 24 passed, 265 deselected.
+  - `python3 -m pytest -q` -> 289 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream follow-up result task decisions" ...`
+    -> pass as `run_38a7d9c5354c`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`.
+  - `python3 -m agent_os.cli queue-health` -> hotspots 0.
+  - `python3 -m agent_os.cli handoff-review` -> clear, 0 blocked tasks, 0
+    stale handoffs.
+  - `git diff --check` -> passed.
+- Non-claims: downstream follow-up result task decision recording does not
+  create `approval_requests`, satisfy proof, mutate activation contracts,
+  mutate downstream result records, allow activation, enable capabilities,
+  promote trust, schedule work, retry work, track spend, run CI, deploy, push,
+  open PRs, mark the active goal complete, or mutate external systems.
