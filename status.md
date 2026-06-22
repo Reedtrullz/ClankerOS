@@ -6630,3 +6630,94 @@
   promote trust, route/delegate work, schedule work, retry work, track spend,
   run CI, deploy, push, open PRs, mark the active goal complete, or mutate
   external systems.
+
+## 2026-06-22 Capability Activation Follow-Up Result Task Effect Task Delegations
+
+- Added local downstream result effect task delegation command:
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-delegations`.
+- The command records local
+  `capability_activation_followup_result_task_result_effect_task_delegation_batches`
+  rows, routes pending
+  `capability_activation_followup_result_task_result_effect_task` rows to the
+  read-only evaluator profile, writes pending delegation JSON artifacts under
+  `.clanker/delegations/`, writes
+  `docs/capability-activation-followup-result-task-result-effect-task-delegations.md`,
+  and preserves source application, downstream decision, downstream result,
+  upstream follow-up result, source effect, downstream task, contract,
+  project, and capability evidence.
+- Initial live batch:
+  `capability_activation_followup_result_task_result_effect_task_delegation_batch_8d31975d8bd4`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_delegations_recorded`,
+  created `subagent_delegation_eb243c5ba397` for `task_ef5cd385caf4`.
+- Final live idempotency pass:
+  `capability_activation_followup_result_task_result_effect_task_delegation_batch_7ee9ade82b99`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_delegations_already_recorded`,
+  with 1 downstream task, 0 new routing decisions, 0 new delegations, 1
+  existing delegation, 0 execution starts, 0 network actions, 0 external
+  mutations, and 0 activation actions.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-delegations.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-delegations.md`
+  - `.clanker/delegations/task_ef5cd385caf4-plan-next-downstream-proof-evidence-for-hosted-dashboard.json`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Added and updated docs: README lifecycle/About/command map, suggested-use
+  docs, docs index, operating summary, workflow, bootstrap handoff/status,
+  task queue, generated dashboard, generated handoff-review, queue-health,
+  playbooks, and generated next-iteration packet. The next packet is:
+  `Add result ingestion for downstream follow-up result task result effect delegation packets.`
+- Verification evidence:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'capability_activation_followup_result_task_result_effect_task_delegations' --tb=short`
+    -> failed with missing CLI command, as expected.
+  - `python3 -m py_compile agent_os/capability_activation_followup_result_task_result_effect_task_delegations.py agent_os/storage.py agent_os/profile_routing.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py tests/test_first_milestone.py`
+    -> passed.
+  - Focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'capability_activation_followup_result_task_result_effect_task_delegations' --tb=short`
+    -> 3 passed, 298 deselected.
+  - Adjacent green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'capability_activation_followup_result_task_result_effect_task_delegations or capability_activation_followup_result_task_result_effect_tasks or capability_activation_followup_result_task_result_effect_apply or capability_activation_followup_result_task_result_effect_proposals or capability_activation_followup_result_task_result_decisions or capability_activation_followup_result_task_results or capability_activation_followup_result_task_delegations or capability_activation_followup_result_tasks' --tb=short`
+    -> 24 passed, 277 deselected.
+  - Live command:
+    `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-delegations`
+    -> recorded 1 routing decision and 1 local read-only evaluator delegation,
+    0 execution starts, 0 network actions, 0 external mutations, and 0
+    activation actions.
+  - Live idempotency command:
+    `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-delegations`
+    -> already recorded, 1 existing delegation, 0 new routing decisions, 0
+    new delegations, 0 execution starts, 0 network actions, 0 external
+    mutations, and 0 activation actions.
+  - `python3 -m pytest -q`
+    -> 301 passed in 226.56s.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task delegations" --file agent_os/capability_activation_followup_result_task_result_effect_task_delegations.py --file agent_os/storage.py --file agent_os/profile_routing.py --file agent_os/cli.py --file agent_os/dashboard.py --file agent_os/iteration.py --file tests/test_first_milestone.py`
+    -> pass, run `run_2441e028f6c2`.
+  - `python3 -m agent_os.cli eval`
+    -> `first_milestone_closed_loop: pass`, result
+    `evals/results/first_milestone_closed_loop.json`, run
+    `run_7a03009ac0e9`.
+  - `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800`
+    -> stuck_incidents: 0.
+  - `python3 -m agent_os.cli queue-health`
+    -> hotspots: 0.
+  - `python3 -m agent_os.cli handoff-review`
+    -> status: clear, blocked_tasks: 0, stale_handoffs: 0.
+  - `python3 -m agent_os.cli eval-candidates`
+    -> eval_candidates: 0.
+  - `python3 -m agent_os.cli approvals`
+    -> pending_approvals: 0.
+  - `python3 -m agent_os.cli playbooks`
+    -> playbooks: 1.
+  - `python3 -m agent_os.cli dashboard`
+    -> regenerated `docs/dashboard.md`.
+  - `python3 -m agent_os.cli iterate`
+    -> next packet:
+    `Add result ingestion for downstream follow-up result task result effect delegation packets.`
+- Non-claims: downstream result effect task delegations do not start
+  subagents, call model providers, create `approval_requests`, satisfy proof,
+  mutate activation contracts, mutate downstream result records, allow
+  activation, enable capabilities, promote trust, schedule work, retry work,
+  track spend, run CI, deploy, push, open PRs, mark the active goal complete,
+  or mutate external systems.

@@ -3766,6 +3766,56 @@ are visible in the dashboard and are not active until approved.
   Add routing and delegation packets for downstream follow-up result task
   result effect tasks.
 
+## 2026-06-22 Capability Follow-Up Result Task Effect Task Delegations
+
+- Added
+  `capability-activation-followup-result-task-result-effect-task-delegations`
+  to route pending downstream result effect proof tasks to read-only evaluator
+  delegation packets.
+- Initial live run recorded
+  `capability_activation_followup_result_task_result_effect_task_delegation_batch_8d31975d8bd4`
+  and created `subagent_delegation_eb243c5ba397` for
+  `task_ef5cd385caf4`.
+- Final idempotency run recorded
+  `capability_activation_followup_result_task_result_effect_task_delegation_batch_7ee9ade82b99`
+  with 0 new routing decisions, 0 new delegations, 1 existing delegation, 0
+  execution starts, 0 network actions, 0 external mutations, and 0 activation
+  actions.
+- Evidence report:
+  `docs/capability-activation-followup-result-task-result-effect-task-delegations.md`.
+- Tutorial:
+  `docs/tutorial-capability-followup-result-task-result-effect-task-delegations.md`.
+- Delegation artifact:
+  `.clanker/delegations/task_ef5cd385caf4-plan-next-downstream-proof-evidence-for-hosted-dashboard.json`.
+- Verification before full gates:
+  red-first focused tests failed on the missing CLI command; `py_compile`
+  passed; focused tests passed 3; adjacent lifecycle tests passed 24; live
+  command created 1 routing decision and 1 delegation; idempotency command
+  created 0 new records and found 1 existing delegation.
+- Final verification:
+  `python3 -m pytest -q` passed with 301 tests in 226.56s;
+  `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task delegations" ...`
+  passed with run `run_2441e028f6c2`;
+  `python3 -m agent_os.cli eval` passed with run `run_7a03009ac0e9`;
+  `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800` reported 0
+  stuck incidents;
+  `python3 -m agent_os.cli queue-health` reported 0 hotspots;
+  `python3 -m agent_os.cli handoff-review` reported clear;
+  `python3 -m agent_os.cli eval-candidates` reported 0;
+  `python3 -m agent_os.cli approvals` reported 0;
+  `python3 -m agent_os.cli playbooks` reported 1 active playbook;
+  `python3 -m agent_os.cli dashboard` regenerated the dashboard;
+  `python3 -m agent_os.cli iterate` selected the result-ingestion packet.
+- Next focus:
+  Add result ingestion for downstream follow-up result task result effect
+  delegation packets.
+- Non-claims: downstream result effect task delegations do not start
+  subagents, call model providers, create `approval_requests`, satisfy proof,
+  mutate activation contracts, mutate downstream result records, allow
+  activation, enable capabilities, promote trust, schedule work, retry work,
+  track spend, run CI, deploy, push, open PRs, mark the active goal complete,
+  or mutate external systems.
+
 ## Run run_38a7d9c5354c
 
 - Goal ID: goal_f46f23ea1c14
@@ -3825,3 +3875,15 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_4529d8e03c87
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_79feca04b697/summary.md
+
+## Run run_2441e028f6c2
+
+- Goal ID: goal_d3a5e50fa2cc
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_2441e028f6c2/summary.md
+
+## Run run_7a03009ac0e9
+
+- Goal ID: goal_4780c9c16374
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_7a03009ac0e9/summary.md

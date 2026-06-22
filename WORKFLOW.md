@@ -150,7 +150,12 @@
     contracts while keeping subagent execution, provider calls, approval rows,
     external mutations, activation actions, activation allowance, and
     capability enablement blocked.
-62. Capability activation follow-up result task result ingestion records
+62. Capability activation follow-up result task result effect task delegation
+    packet creation routes pending downstream result effect proof tasks to
+    read-only evaluator delegation contracts while keeping subagent execution,
+    provider calls, approval rows, external mutations, activation actions,
+    activation allowance, and capability enablement blocked.
+63. Capability activation follow-up result task result ingestion records
     completed downstream proof-plan delegation outputs as local result records
     while keeping approval rows, external mutations, activation actions,
     activation allowance, capability enablement, and proof satisfaction
@@ -242,7 +247,8 @@
     result task decisions, capability activation follow-up result task result
     effect proposals, capability activation follow-up result task result
     effect applications, capability activation follow-up result task result
-    effect tasks, playbooks, eval candidates, approvals, stuck tasks,
+    effect tasks, capability activation follow-up result task result effect
+    task delegations, playbooks, eval candidates, approvals, stuck tasks,
     incidents, and recent evidence.
 
 ## Incident Resolution Lifecycle

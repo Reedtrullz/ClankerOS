@@ -35,6 +35,7 @@ local downstream result records -> operator review decisions -> blocked activati
 accepted downstream result decisions -> proposed effect records -> blocked activation preserved
 applied downstream result decision effects -> local application records -> blocked activation preserved
 applied downstream result decision effect applications -> downstream proof tasks -> next evidence plan
+downstream result effect tasks -> routing decisions -> read-only delegation packets
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -152,6 +153,10 @@ downstream proof tasks, keeping the next evidence plan in the task graph while
 preserving `activation_allowed=false`, `capability_enabled=false`,
 `approval_requests_created=0`, `activation_actions_taken=0`, and
 `external_mutations_taken=0`.
+Those downstream result effect tasks can now be routed to the read-only
+evaluator profile and materialized as pending delegation packets with local
+JSON artifacts, without starting a subagent, calling a model provider,
+creating approval rows, or allowing activation.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -342,6 +347,9 @@ The repository can now:
 - route pending downstream proof tasks to read-only evaluator delegation
   packets with local JSON artifacts while keeping execution, approval rows,
   external mutations, and activation actions at zero;
+- route downstream result effect tasks to read-only evaluator delegation
+  packets with local JSON artifacts while keeping execution, approval rows,
+  external mutations, and activation actions at zero;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -504,6 +512,7 @@ python3 -m agent_os.cli capability-activation-followup-result-task-result-decide
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-proposals
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-apply --operator-id operator --selection-note "Apply accepted downstream proof-plan result effect proposals as local records only." --evidence-reference docs/capability-activation-followup-result-task-result-effect-proposals.md
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-tasks
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-delegations
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
@@ -589,6 +598,9 @@ python3 -m pytest tests/test_first_milestone.py -q
 - `docs/tutorial-capability-followup-result-task-result-effect-tasks.md`:
   applying downstream result decision effects into pending proof tasks without
   enabling capabilities.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-delegations.md`:
+  routing downstream result effect tasks into read-only evaluator delegation
+  packets without starting subagents.
 - `docs/docs-index.md`: curated map of tutorials, generated reports, status
   files, and bootstrap project continuity files.
 - `docs/suggested-use.md`: operator guidance, prompts, and practical next slices.

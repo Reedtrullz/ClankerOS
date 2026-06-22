@@ -123,6 +123,7 @@ TASK_TYPE_CATEGORY_MAP = {
     "refactor": "refactor",
     "capability_activation_followup_task": "evidence_review",
     "capability_activation_followup_result_task": "evidence_review",
+    "capability_activation_followup_result_task_result_effect_task": "evidence_review",
 }
 
 

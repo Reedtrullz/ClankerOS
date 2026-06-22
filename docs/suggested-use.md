@@ -88,6 +88,10 @@ Apply proposed downstream proof-plan result decision effects as local records on
 Create downstream proof tasks from applied downstream result decision effects, and prove that activation remains blocked.
 ```
 
+```text
+Route downstream result effect tasks to read-only evaluator delegation packets, and prove that no subagent starts.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -116,7 +120,9 @@ Create downstream proof tasks from applied downstream result decision effects, a
     proposal row exists.
 20. Materialize applied downstream result decision effects into pending
     downstream proof tasks before routing or delegation.
-21. Record non-claims before treating the work as safe.
+21. Route downstream result effect tasks into read-only delegation packets
+    before ingesting more proof-plan output.
+22. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -552,6 +558,23 @@ for applied downstream result decision effects that do not already have a
 downstream task. It keeps `approval_requests_created=0`,
 `activation_actions_taken=0`, `external_mutations_taken=0`,
 `activation_allowed=false`, and `capability_enabled=false`.
+
+Route downstream result effect tasks into read-only evaluator delegation
+packets:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-delegations
+python3 -m agent_os.cli dashboard
+```
+
+The delegation command writes
+`docs/capability-activation-followup-result-task-result-effect-task-delegations.md`,
+records local routing and delegation batch rows, and writes pending delegation
+JSON artifacts under `.clanker/delegations/`. It keeps
+`execution_started=0`, `network_actions_taken=0`,
+`external_mutations_taken=0`, `approval_requests_created=0`,
+`activation_actions_taken=0`, `activation_allowed=false`, and
+`capability_enabled=false`.
 
 ## When To Commit And Push
 

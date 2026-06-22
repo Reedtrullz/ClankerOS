@@ -1,7 +1,7 @@
 # First Milestone Closed Loop Playbook
 
 - Source eval: first_milestone_closed_loop
-- Successful runs: 216
+- Successful runs: 233
 - Status: active
 
 ## Trigger
@@ -241,3 +241,20 @@ Use when validating the local goal -> task graph -> execution -> verification ->
 - run_357ca9a6d7fa: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-22T18:45:13.034610+00:00
 - run_9a36a417e092: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-22T18:45:21.585582+00:00
 - run_5abaa9a0176d: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-22T19:06:41.270567+00:00
+- run_c0a2f690460d: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-22T19:07:26.867903+00:00
+- run_30b88ff510c7: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-22T19:28:22.202168+00:00
+- run_1da58c9a62d1: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-22T19:28:57.394501+00:00
+- run_51df62621e6b: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-22T19:45:46.766087+00:00
+- run_917b14566d23: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-22T19:48:52.676605+00:00
+- run_38a7d9c5354c: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-22T20:09:57.591266+00:00
+- run_ea63edf343f5: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-22T20:09:57.691859+00:00
+- run_6688c4a689d3: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-22T20:30:30.975747+00:00
+- run_fb277f1d82df: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-22T20:30:36.928556+00:00
+- run_660cb0357548: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-22T20:50:14.871416+00:00
+- run_af75fe75ca2b: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-22T20:50:17.209294+00:00
+- run_be7bcaef132d: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-22T21:10:30.796427+00:00
+- run_1c4ddeb9652f: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-22T21:10:39.270913+00:00
+- run_82796f63f258: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-22T21:15:45.291130+00:00
+- run_79feca04b697: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-22T21:16:04.755010+00:00
+- run_2441e028f6c2: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-22T21:35:50.975429+00:00
+- run_7a03009ac0e9: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-22T21:35:59.862927+00:00

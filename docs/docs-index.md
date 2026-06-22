@@ -48,11 +48,14 @@ tutorials and operating docs are the better place to start.
 - `docs/tutorial-capability-followup-result-task-decisions.md` - review
   downstream proof-plan result records while keeping activation blocked.
 - `docs/tutorial-capability-followup-result-task-result-effect-proposals.md` -
-  create proposed local effects from accepted downstream result decisions.
+  create proposed effects from accepted downstream proof-plan result decisions.
 - `docs/tutorial-capability-followup-result-task-result-effect-application.md`
-  - apply downstream result decision effects as local records.
+  - apply accepted downstream proof-plan result decision effects locally.
 - `docs/tutorial-capability-followup-result-task-result-effect-tasks.md` -
   materialize applied downstream result decision effects into proof tasks.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-delegations.md`
+  - route downstream result effect tasks to read-only evaluator delegation
+  packets.
 
 ## Current State
 
@@ -72,6 +75,7 @@ packets, not as marketing docs:
 - `docs/capability-activation-followup-result-task-delegations.md`
 - `docs/capability-activation-followup-result-task-decisions.md`
 - `docs/capability-activation-followup-result-task-result-effect-application.md`
+- `docs/capability-activation-followup-result-task-result-effect-task-delegations.md`
 - `docs/capability-activation-followup-result-task-result-effect-tasks.md`
 - `docs/capability-activation-followup-result-task-result-effect-proposals.md`
 - `docs/capability-activation-followup-result-task-results.md`

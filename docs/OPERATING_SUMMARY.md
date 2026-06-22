@@ -180,6 +180,12 @@ Core layers for the bootstrap:
   effect, downstream task, contract, project, and capability links while
   keeping approval row creation, external mutations, activation actions,
   activation allowance, and capability enablement at zero.
+- Capability activation follow-up result task result effect task delegations:
+  pending downstream result effect tasks can be routed to read-only evaluator
+  delegation packets with local JSON artifacts. Each packet preserves the next
+  evidence-plan context while keeping subagent execution, model-provider
+  calls, approval rows, external mutations, activation actions, activation
+  allowance, and capability enablement at zero.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON
@@ -838,6 +844,15 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   `approval_requests_created: 0`, `activation_actions_taken: 0`,
   `external_mutations_taken: 0`, `activation_allowed: false`, and
   `capability_enabled: false`.
+- Capability activation follow-up result task result effect task delegations:
+  available through
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-delegations`
+  after downstream result effect tasks exist. The command writes
+  `docs/capability-activation-followup-result-task-result-effect-task-delegations.md`,
+  records read-only evaluator routing and delegation packet evidence, and
+  keeps `execution_started: 0`, `network_actions_taken: 0`,
+  `external_mutations_taken: 0`, `activation_actions_taken: 0`,
+  `activation_allowed: false`, and `capability_enabled: false`.
 - Eval candidate listing: available through
   `python3 -m agent_os.cli eval-candidates` and mirrored into
   `docs/dashboard.md`.
