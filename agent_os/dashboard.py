@@ -247,6 +247,9 @@ def generate_static_dashboard(root: Path) -> Path:
         worktree_cleanups = []
         if _table_exists(connection, "worktree_cleanup_records"):
             worktree_cleanups = storage.list_recent_worktree_cleanup_records(limit=5)
+        github_handoffs = []
+        if _table_exists(connection, "github_handoff_records"):
+            github_handoffs = storage.list_recent_github_handoff_records(limit=5)
         effects = []
         if _table_exists(connection, "effects"):
             effects = storage.list_recent_effects(limit=5)
@@ -776,6 +779,14 @@ def generate_static_dashboard(root: Path) -> Path:
         and effect.status == "awaiting_approval"
         and effect.required_approval_id in approved_approval_ids
     ]
+    handed_off_effect_ids = {handoff.effect_id for handoff in github_handoffs}
+    committed_effects_without_handoff = [
+        effect
+        for effect in effects
+        if effect.effect_type == "local_git_commit"
+        and effect.status == "committed"
+        and effect.id not in handed_off_effect_ids
+    ]
     open_incidents = [incident for incident in incidents if incident["status"] == "open"]
 
     lines = [
@@ -890,6 +901,19 @@ def generate_static_dashboard(root: Path) -> Path:
     else:
         lines.append("- none")
 
+    lines.extend(["", "### GitHub Handoffs", ""])
+    if github_handoffs:
+        for handoff in github_handoffs:
+            lines.append(
+                f"- {handoff.id}: status={handoff.status} effect={handoff.effect_id} "
+                f"branch={handoff.branch_name} commit={handoff.commit_sha} "
+                f"push=`{handoff.push_command}` "
+                f"draft_pr=`{handoff.draft_pr_command}` "
+                f"evidence={_relative_to_root(root, handoff.evidence_path)}"
+            )
+    else:
+        lines.append("- none")
+
     lines.extend(["", "### Next Recommended Action", ""])
     if pending_approvals:
         approval = pending_approvals[0]
@@ -903,6 +927,12 @@ def generate_static_dashboard(root: Path) -> Path:
         lines.append(
             f"- Run `python3 -m agent_os.cli commit-approved {effect.required_approval_id}` "
             f"to create the verified local commit for effect `{effect.id}`."
+        )
+    elif committed_effects_without_handoff:
+        effect = committed_effects_without_handoff[0]
+        lines.append(
+            f"- Run `python3 -m agent_os.cli github-handoff {effect.id}` to prepare "
+            "operator push and draft PR commands without mutating GitHub."
         )
     elif effects:
         lines.append("- Review recent proposed effects and regenerate the dashboard after decisions.")

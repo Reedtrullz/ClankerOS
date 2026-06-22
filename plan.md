@@ -27,5 +27,5 @@ research and external-intelligence loops behind explicit policies.
 
 Milestone 3 approval-gated local coding flow: project registration,
 worktree-isolated execution, verified proposed effects, operator cockpit
-visibility, approved local commit application, and terminal worktree cleanup
-before GitHub handoff.
+visibility, approved local commit application, terminal worktree cleanup, and
+GitHub handoff packets before CI/deploy proof ingestion.

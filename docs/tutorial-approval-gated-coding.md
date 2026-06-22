@@ -8,12 +8,14 @@ This tutorial walks through the first executable local coding-agent vertical:
 4. inspect the proposed `local_git_commit` effect;
 5. make an operator approval decision;
 6. create the approved local worktree commit exactly once;
-7. clean up terminal worktrees after an explicit cleanup decision.
+7. prepare a GitHub handoff packet from committed local evidence;
+8. clean up terminal worktrees after an explicit cleanup decision.
 
 The flow is intentionally conservative. It creates evidence and an approval
 packet first. It creates a local git commit only after explicit approval and a
-fresh evidence recheck. It does not push, open a PR, deploy, or mutate external
-systems.
+fresh evidence recheck. It can prepare operator commands for push and draft PR
+handoff after the commit exists. It does not push, open a PR, deploy, or mutate
+external systems.
 
 ## Prerequisites
 
@@ -149,7 +151,31 @@ The command writes `commit-approved.json` beside the original run evidence and
 updates the effect with `status=committed`, `committed_at`, `result_json`, and
 a local `git revert <commit_sha>` compensation note.
 
-## 7. Clean Up Terminal Worktrees
+## 7. Prepare A GitHub Handoff
+
+After a committed effect exists, create a local handoff packet:
+
+```bash
+python3 -m agent_os.cli github-handoff <effect_id> \
+  --remote origin \
+  --base main \
+  --title "Make a tiny verified local change"
+```
+
+ClankerOS will:
+
+- require a committed `local_git_commit` effect;
+- confirm the recorded commit object exists in the registered project;
+- read the configured remote URL;
+- write `github-handoff-<effect_id>.json`;
+- write a draft PR body beside the run evidence;
+- print exact operator commands for `git push` and `gh pr create --draft`;
+- record `network_actions_taken=0`.
+
+This step does not push the branch or open a pull request. The operator can run
+the printed commands later after reviewing the local evidence.
+
+## 8. Clean Up Terminal Worktrees
 
 Preview cleanup candidates:
 
@@ -177,8 +203,8 @@ uncommitted changes.
 - It does not commit before explicit approval.
 - It does not commit if the worktree no longer matches the captured evidence.
 - It does not force-delete dirty worktrees during cleanup.
-- It does not push a branch.
-- It does not open a pull request.
+- It does not push a branch, even when it prints a push command.
+- It does not open a pull request, even when it prints a draft PR command.
 - It does not run GitHub Actions.
 - It does not deploy anything.
 - It does not enable hosted dashboards, remote workers, scheduling, browser or

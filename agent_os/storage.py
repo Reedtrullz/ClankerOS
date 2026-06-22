@@ -135,6 +135,26 @@ class WorktreeCleanupRecord:
 
 
 @dataclass(frozen=True)
+class GitHubHandoffRecord:
+    id: str
+    effect_id: str
+    project_id: str
+    run_id: str
+    task_id: str
+    branch_name: str
+    commit_sha: str
+    remote_name: str
+    remote_url: str
+    base_branch: str
+    status: str
+    push_command: str
+    draft_pr_command: str
+    evidence_path: str
+    result_json: dict[str, Any]
+    created_at: str
+
+
+@dataclass(frozen=True)
 class Effect:
     id: str
     run_id: str
@@ -1366,6 +1386,25 @@ class Storage:
                     status text not null,
                     decided_by text not null,
                     decision_note text not null,
+                    evidence_path text not null,
+                    result_json text not null,
+                    created_at text not null
+                );
+
+                create table if not exists github_handoff_records (
+                    id text primary key,
+                    effect_id text not null unique,
+                    project_id text not null,
+                    run_id text not null,
+                    task_id text not null,
+                    branch_name text not null,
+                    commit_sha text not null,
+                    remote_name text not null,
+                    remote_url text not null,
+                    base_branch text not null,
+                    status text not null,
+                    push_command text not null,
+                    draft_pr_command text not null,
                     evidence_path text not null,
                     result_json text not null,
                     created_at text not null
@@ -7628,6 +7667,106 @@ class Storage:
             ).fetchall()
         return [self._row_to_worktree_cleanup_record(row) for row in rows]
 
+    def record_github_handoff(
+        self,
+        *,
+        effect_id: str,
+        project_id: str,
+        run_id: str,
+        task_id: str,
+        branch_name: str,
+        commit_sha: str,
+        remote_name: str,
+        remote_url: str,
+        base_branch: str,
+        status: str,
+        push_command: str,
+        draft_pr_command: str,
+        evidence_path: str,
+        result_json: dict[str, Any],
+    ) -> GitHubHandoffRecord:
+        handoff_id = new_id("github_handoff")
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into github_handoff_records (
+                    id, effect_id, project_id, run_id, task_id, branch_name,
+                    commit_sha, remote_name, remote_url, base_branch, status,
+                    push_command, draft_pr_command, evidence_path, result_json,
+                    created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    handoff_id,
+                    effect_id,
+                    project_id,
+                    run_id,
+                    task_id,
+                    branch_name,
+                    commit_sha,
+                    remote_name,
+                    remote_url,
+                    base_branch,
+                    status,
+                    push_command,
+                    draft_pr_command,
+                    evidence_path,
+                    _json_dumps(result_json),
+                    created_at,
+                ),
+            )
+        return GitHubHandoffRecord(
+            id=handoff_id,
+            effect_id=effect_id,
+            project_id=project_id,
+            run_id=run_id,
+            task_id=task_id,
+            branch_name=branch_name,
+            commit_sha=commit_sha,
+            remote_name=remote_name,
+            remote_url=remote_url,
+            base_branch=base_branch,
+            status=status,
+            push_command=push_command,
+            draft_pr_command=draft_pr_command,
+            evidence_path=evidence_path,
+            result_json=result_json,
+            created_at=created_at,
+        )
+
+    def get_github_handoff_for_effect(
+        self,
+        effect_id: str,
+    ) -> GitHubHandoffRecord | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                select * from github_handoff_records
+                where effect_id = ?
+                order by created_at desc, id desc
+                limit 1
+                """,
+                (effect_id,),
+            ).fetchone()
+        return self._row_to_github_handoff_record(row) if row else None
+
+    def list_recent_github_handoff_records(
+        self,
+        limit: int = 5,
+    ) -> list[GitHubHandoffRecord]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from github_handoff_records
+                order by created_at desc, id desc
+                limit ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [self._row_to_github_handoff_record(row) for row in rows]
+
     def create_pending_approval_request_for_task(
         self,
         task_id: str,
@@ -7759,6 +7898,16 @@ class Storage:
         if len(rows) > 1:
             raise ValueError(f"multiple effects found for approval: {approval_id}")
         return self._row_to_effect(rows[0])
+
+    def get_effect(self, effect_id: str) -> Effect:
+        with self._connect() as connection:
+            row = connection.execute(
+                "select * from effects where id = ?",
+                (effect_id,),
+            ).fetchone()
+        if row is None:
+            raise KeyError(effect_id)
+        return self._row_to_effect(row)
 
     def mark_effect_committed(
         self,
@@ -8198,6 +8347,29 @@ class Storage:
             status=row["status"],
             decided_by=row["decided_by"],
             decision_note=row["decision_note"],
+            evidence_path=row["evidence_path"],
+            result_json=_json_loads(row["result_json"], {}),
+            created_at=row["created_at"],
+        )
+
+    def _row_to_github_handoff_record(
+        self,
+        row: sqlite3.Row,
+    ) -> GitHubHandoffRecord:
+        return GitHubHandoffRecord(
+            id=row["id"],
+            effect_id=row["effect_id"],
+            project_id=row["project_id"],
+            run_id=row["run_id"],
+            task_id=row["task_id"],
+            branch_name=row["branch_name"],
+            commit_sha=row["commit_sha"],
+            remote_name=row["remote_name"],
+            remote_url=row["remote_url"],
+            base_branch=row["base_branch"],
+            status=row["status"],
+            push_command=row["push_command"],
+            draft_pr_command=row["draft_pr_command"],
             evidence_path=row["evidence_path"],
             result_json=_json_loads(row["result_json"], {}),
             created_at=row["created_at"],

@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_de757b7ab35e
+- Packet ID: iteration_db6dddc2a2ed
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add GitHub push or draft-PR handoff after local commit evidence exists.
+Advance the Agent System north-star goal by completing: Add CI/deploy proof ingestion after GitHub handoff packets exist.
 
 ## Definition Of Done
 

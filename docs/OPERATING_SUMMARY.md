@@ -28,9 +28,13 @@ Core layers for the bootstrap:
   removed only after an explicit `cleanup-worktrees --confirm` decision. The
   cleanup writes SQLite and JSON evidence, removes clean committed/blocked/
   superseded worktrees, and blocks dirty worktrees without force deletion.
+- GitHub handoff loop: a committed `local_git_commit` effect can produce a
+  local handoff packet with branch, commit, remote, push command, and draft PR
+  command while recording `network_actions_taken=0`. The loop does not push or
+  open a PR.
 - Operator cockpit: the dashboard starts with active runs, registered projects,
-  approval inbox, proposed effects, verification status, recent worktrees, and
-  the next recommended operator action.
+  approval inbox, proposed effects, verification status, recent worktrees,
+  GitHub handoffs, and the next recommended operator action.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON

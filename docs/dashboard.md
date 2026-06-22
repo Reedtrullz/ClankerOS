@@ -38,6 +38,10 @@
 
 - none
 
+### GitHub Handoffs
+
+- none
+
 ### Next Recommended Action
 
 - Run `python3 -m agent_os.cli iterate` for the next local work packet.
@@ -49,7 +53,7 @@
 - claimed: 0
 - running: 0
 - verifying: 0
-- completed: 340
+- completed: 344
 - blocked: 0
 - failed: 0
 - active: 0
@@ -58,10 +62,10 @@
 ## Iteration Loop
 
 - status: planned
-- focus: Add GitHub push or draft-PR handoff after local commit evidence exists.
+- focus: Add CI/deploy proof ingestion after GitHub handoff packets exist.
 - source: tasks.md#next
 - packet: docs/next-iteration.md
-- created_at: 2026-06-22T12:09:37.799184+00:00
+- created_at: 2026-06-22T12:23:24.397064+00:00
 
 ## Simplicity Guardrail
 
@@ -69,7 +73,7 @@
 - reason: selected only actionable item with score 7 and complexity 4
 - selected_score: 7
 - selected_complexity: 4
-- selected_focus: Add GitHub push or draft-PR handoff after local commit evidence exists.
+- selected_focus: Add CI/deploy proof ingestion after GitHub handoff packets exist.
 
 ## Expansion Operator Approval Schema Decision
 
@@ -284,7 +288,7 @@
 ## Handoff Review
 
 - status: clear
-- current_focus: Add GitHub push or draft-PR handoff after local commit evidence exists.
+- current_focus: Add CI/deploy proof ingestion after GitHub handoff packets exist.
 - blocked_tasks: 0
 - stale_handoffs: 0
 - report: docs/handoff-review.md
@@ -295,11 +299,11 @@
 
 - failed: 0
 
+- eval_after_change_077d9fe6310a: status=pass change=Add GitHub handoff packets for committed local effects files=agent_os/github_handoff.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,tests/test_first_milestone.py evals=first_milestone_closed_loop runs=run_dd35af759bf1 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_3a4273c1711f: status=pass change=Add worktree cleanup for terminal local coding effects files=agent_os/worktree_cleanup.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,tests/test_first_milestone.py,README.md,docs/tutorial-approval-gated-coding.md,docs/suggested-use.md,docs/OPERATING_SUMMARY.md,plan.md,tasks.md evals=first_milestone_closed_loop runs=run_e5fb00a2281a results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_5019943e9f1a: status=pass change=Add approval-gated commit-approved command for local_git_commit effects files=agent_os/coding_workflow.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,tests/test_first_milestone.py,README.md,docs/tutorial-approval-gated-coding.md,docs/suggested-use.md evals=first_milestone_closed_loop runs=run_a0c003d91c49 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_55b5d28285b1: status=pass change=Add approval-gated worktree coding cockpit and tutorial docs files=agent_os/coding_workflow.py,agent_os/project_registry.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,tests/test_first_milestone.py,README.md,docs/tutorial-approval-gated-coding.md,docs/suggested-use.md,docs/OPERATING_SUMMARY.md,plan.md,tasks.md evals=first_milestone_closed_loop runs=run_f53498dc62ff results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_bd85fa596ed7: status=pass change=Add Expansion Operator Approval Schema Migration Selection Input Template from selection packets files=agent_os/expansion_operator_approval_schema_migration_selection_input_template.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py evals=first_milestone_closed_loop runs=run_21b6a386585b results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
-- eval_after_change_0d383518167b: status=pass change=Add Expansion Operator Approval Schema Migration Selection Packet from action checklists files=agent_os/expansion_operator_approval_schema_migration_selection_packet.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py evals=first_milestone_closed_loop runs=run_53c46f6d9926 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 
 ## Learning Distillation
 
@@ -909,7 +913,7 @@
 
 - active: 1
 
-- first-milestone-closed-loop: active source=first_milestone_closed_loop successful_runs=169 path=playbooks/first-milestone-closed-loop.md
+- first-milestone-closed-loop: active source=first_milestone_closed_loop successful_runs=170 path=playbooks/first-milestone-closed-loop.md
 
 ## Eval Candidates
 
@@ -940,24 +944,24 @@
 
 ## Recent Runs
 
+- run_dd35af759bf1: completed project=bootstrap goal=goal_98bedd3c3462 completed=2026-06-22T12:23:25.295363+00:00 summary=runs/run_dd35af759bf1/summary.md
+- run_0083145f0860: completed project=bootstrap goal=goal_1611076816d6 completed=2026-06-22T12:23:25.028780+00:00 summary=runs/run_0083145f0860/summary.md
 - run_e5fb00a2281a: completed project=bootstrap goal=goal_78a7b44b3607 completed=2026-06-22T12:09:48.455213+00:00 summary=runs/run_e5fb00a2281a/summary.md
 - run_ec08ac8afc78: completed project=bootstrap goal=goal_38dece507c6f completed=2026-06-22T12:09:38.557571+00:00 summary=runs/run_ec08ac8afc78/summary.md
 - run_e7a7e3131ca9: completed project=bootstrap goal=goal_87358a6562a4 completed=2026-06-22T12:00:30.831405+00:00 summary=runs/run_e7a7e3131ca9/summary.md
-- run_a0c003d91c49: completed project=bootstrap goal=goal_8589b4313a68 completed=2026-06-22T11:57:36.594055+00:00 summary=runs/run_a0c003d91c49/summary.md
-- run_c97fc54ea589: completed project=bootstrap goal=goal_6fb8fab4f0f5 completed=2026-06-22T11:57:23.439523+00:00 summary=runs/run_c97fc54ea589/summary.md
 
 ## Recent Learnings
 
+- run_dd35af759bf1: Run run_dd35af759bf1 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_dd35af759bf1/learning.md)
+- run_0083145f0860: Run run_0083145f0860 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_0083145f0860/learning.md)
 - run_e5fb00a2281a: Run run_e5fb00a2281a showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_e5fb00a2281a/learning.md)
 - run_ec08ac8afc78: Run run_ec08ac8afc78 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_ec08ac8afc78/learning.md)
 - run_e7a7e3131ca9: Run run_e7a7e3131ca9 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_e7a7e3131ca9/learning.md)
-- run_a0c003d91c49: Run run_a0c003d91c49 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_a0c003d91c49/learning.md)
-- run_c97fc54ea589: Run run_c97fc54ea589 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_c97fc54ea589/learning.md)
 
 ## Recent Eval Results
 
+- first_milestone_closed_loop: pass run=run_dd35af759bf1 created_at=2026-06-22T12:23:25.300843+00:00
+- first_milestone_closed_loop: pass run=run_0083145f0860 created_at=2026-06-22T12:23:25.034492+00:00
 - first_milestone_closed_loop: pass run=run_e5fb00a2281a created_at=2026-06-22T12:09:48.462226+00:00
 - first_milestone_closed_loop: pass run=run_ec08ac8afc78 created_at=2026-06-22T12:09:38.563579+00:00
 - first_milestone_closed_loop: pass run=run_e7a7e3131ca9 created_at=2026-06-22T12:00:30.838382+00:00
-- first_milestone_closed_loop: pass run=run_a0c003d91c49 created_at=2026-06-22T11:57:36.601290+00:00
-- first_milestone_closed_loop: pass run=run_c97fc54ea589 created_at=2026-06-22T11:57:23.446486+00:00

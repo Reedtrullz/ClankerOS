@@ -824,6 +824,209 @@ def test_cleanup_worktrees_records_dirty_blocked_worktree_without_removing_it(
     assert Path(cleanup.evidence_path).exists()
 
 
+def test_github_handoff_requires_committed_local_effect(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    repo_path = tmp_path / "subject-repo"
+    _init_git_repo(repo_path)
+    subprocess.run(
+        ["git", "remote", "add", "origin", "git@github.com:example/subject.git"],
+        cwd=repo_path,
+        check=True,
+    )
+    test_command = (
+        "python3 -c \"from pathlib import Path; "
+        "assert Path('agent_output.txt').read_text() == 'hello\\\\n'\""
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "register-project",
+                "subject",
+                "--path",
+                str(repo_path),
+                "--test-command",
+                test_command,
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-goal",
+                "write a marker file",
+                "--project",
+                "subject",
+                "--isolation",
+                "worktree",
+                "--command",
+                "python3 -c \"from pathlib import Path; "
+                "Path('agent_output.txt').write_text('hello\\\\n')\"",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    effect = storage.list_recent_effects()[0]
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "github-handoff",
+                effect.id,
+                "--base",
+                "main",
+                "--title",
+                "Write marker file",
+            ]
+        )
+        == 1
+    )
+    output = capsys.readouterr().out
+    assert "github_handoff_failed: local commit evidence required" in output
+    assert storage.list_recent_github_handoff_records() == []
+
+
+def test_github_handoff_records_operator_push_and_draft_pr_commands(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    repo_path = tmp_path / "subject-repo"
+    _init_git_repo(repo_path)
+    subprocess.run(
+        ["git", "remote", "add", "origin", "git@github.com:example/subject.git"],
+        cwd=repo_path,
+        check=True,
+    )
+    test_command = (
+        "python3 -c \"from pathlib import Path; "
+        "assert Path('agent_output.txt').read_text() == 'hello\\\\n'\""
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "register-project",
+                "subject",
+                "--path",
+                str(repo_path),
+                "--test-command",
+                test_command,
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-goal",
+                "write a marker file",
+                "--project",
+                "subject",
+                "--isolation",
+                "worktree",
+                "--command",
+                "python3 -c \"from pathlib import Path; "
+                "Path('agent_output.txt').write_text('hello\\\\n')\"",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    effect = storage.list_recent_effects()[0]
+    approval = storage.list_pending_approvals()[0]
+    assert main(["--root", str(tmp_path), "approve", approval.id]) == 0
+    capsys.readouterr()
+    assert main(["--root", str(tmp_path), "commit-approved", approval.id]) == 0
+    capsys.readouterr()
+    committed_effect = storage.list_recent_effects()[0]
+    commit_sha = committed_effect.result_json["commit_sha"]
+    branch_name = committed_effect.result_json["branch_name"]
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "github-handoff",
+                effect.id,
+                "--base",
+                "main",
+                "--title",
+                "Write marker file",
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "github_handoff: ready_for_operator" in output
+    assert f"effect_id: {effect.id}" in output
+    assert f"commit: {commit_sha}" in output
+    assert f"branch: {branch_name}" in output
+    assert f"git push origin {branch_name}" in output
+    assert f"gh pr create --draft --head {branch_name} --base main" in output
+
+    handoffs = storage.list_recent_github_handoff_records()
+    assert len(handoffs) == 1
+    handoff = handoffs[0]
+    assert handoff.effect_id == effect.id
+    assert handoff.status == "ready_for_operator"
+    assert handoff.remote_url == "git@github.com:example/subject.git"
+    assert handoff.commit_sha == commit_sha
+    assert handoff.branch_name == branch_name
+    assert handoff.push_command == f"git push origin {branch_name}"
+    assert "gh pr create --draft" in handoff.draft_pr_command
+    assert handoff.result_json["network_actions_taken"] == 0
+    assert Path(handoff.evidence_path).exists()
+    evidence = json.loads(Path(handoff.evidence_path).read_text(encoding="utf-8"))
+    assert evidence["status"] == "ready_for_operator"
+    assert evidence["network_actions_taken"] == 0
+    assert evidence["operator_commands"]["push"] == handoff.push_command
+    assert evidence["operator_commands"]["draft_pr"] == handoff.draft_pr_command
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "### GitHub Handoffs" in dashboard
+    assert handoff.id in dashboard
+    assert "ready_for_operator" in dashboard
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "github-handoff",
+                effect.id,
+                "--base",
+                "main",
+                "--title",
+                "Write marker file",
+            ]
+        )
+        == 0
+    )
+    repeat_output = capsys.readouterr().out
+    assert "github_handoff: already_ready" in repeat_output
+    assert len(storage.list_recent_github_handoff_records()) == 1
+
+
 def test_static_dashboard_summarizes_runs_and_queue(tmp_path: Path) -> None:
     system = AgentSystem(tmp_path)
     result = system.run_goal(

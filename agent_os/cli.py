@@ -190,6 +190,7 @@ from agent_os.handoff_review import (
     render_stale_handoff_line,
     write_handoff_review_report,
 )
+from agent_os.github_handoff import create_github_handoff
 from agent_os.iteration import generate_next_iteration_packet
 from agent_os.learning_distillation import (
     DEFAULT_MIN_OCCURRENCES,
@@ -412,6 +413,15 @@ def build_parser() -> argparse.ArgumentParser:
     cleanup_worktrees_parser.add_argument("--confirm", action="store_true")
     cleanup_worktrees_parser.add_argument("--decided-by", default="operator")
     cleanup_worktrees_parser.add_argument("--reason", default="operator requested cleanup")
+
+    github_handoff_parser = subparsers.add_parser(
+        "github-handoff",
+        help="Prepare operator commands for pushing a committed local effect to GitHub.",
+    )
+    github_handoff_parser.add_argument("effect_id")
+    github_handoff_parser.add_argument("--remote", default="origin")
+    github_handoff_parser.add_argument("--base", default="main")
+    github_handoff_parser.add_argument("--title")
 
     resolve_incident = subparsers.add_parser(
         "resolve-incident",
@@ -1733,6 +1743,30 @@ def main(argv: list[str] | None = None) -> int:
                 f"evidence={record.evidence_path}"
             )
         return 1 if result.blocked_count else 0
+
+    if args.command == "github-handoff":
+        try:
+            result = create_github_handoff(
+                root,
+                effect_id=args.effect_id,
+                remote=args.remote,
+                base=args.base,
+                title=args.title,
+            )
+        except (KeyError, RuntimeError, ValueError) as error:
+            print(f"github_handoff_failed: {error}")
+            return 1
+        handoff = result.handoff
+        print(f"github_handoff: {result.status}")
+        print(f"handoff_id: {handoff.id}")
+        print(f"effect_id: {handoff.effect_id}")
+        print(f"commit: {handoff.commit_sha}")
+        print(f"branch: {handoff.branch_name}")
+        print(f"remote: {handoff.remote_name} {handoff.remote_url}")
+        print(f"push_command: {handoff.push_command}")
+        print(f"draft_pr_command: {handoff.draft_pr_command}")
+        print(f"evidence: {handoff.evidence_path}")
+        return 0
 
     if args.command == "resolve-incident":
         resolved = AgentSystem(root).resolve_incident(

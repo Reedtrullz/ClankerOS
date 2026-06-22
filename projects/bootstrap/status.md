@@ -3154,3 +3154,37 @@ is report-only, external decisions remain, or approvals are missing.
 - Goal ID: goal_78a7b44b3607
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_e5fb00a2281a/summary.md
+
+## Run run_0083145f0860
+
+- Goal ID: goal_1611076816d6
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_0083145f0860/summary.md
+
+## Run run_dd35af759bf1
+
+- Goal ID: goal_98bedd3c3462
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_dd35af759bf1/summary.md
+
+## 2026-06-22 GitHub Handoff Packets
+
+- `github-handoff <effect_id>` now prepares operator push and draft PR
+  commands only after committed local `local_git_commit` evidence exists.
+- Handoff packets write `github-handoff-<effect_id>.json`, a draft PR body,
+  and a `github_handoff_records` SQLite row with `network_actions_taken=0`.
+- Dashboard cockpit exposes recent handoffs under `### GitHub Handoffs`.
+- Latest iteration packet:
+  `iteration_db6dddc2a2ed` in `docs/next-iteration.md`.
+- Next selected focus:
+  `Add CI/deploy proof ingestion after GitHub handoff packets exist.`
+- Eval-after-change:
+  `eval_after_change_077d9fe6310a`, run `run_dd35af759bf1`, status `pass`.
+- Verification evidence:
+  focused GitHub handoff tests -> 2 passed, 198 deselected; focused
+  handoff/cleanup/commit/dashboard tests -> 56 passed, 144 deselected; full
+  `python3 -m pytest -q` -> 200 passed; eval-after-change -> pass; baseline
+  eval -> pass; cleanup dry run -> `eligible=0`; playbooks ->
+  `successful_runs=170`.
+- Non-claims: no push, PR, CI, deploy, external mutation, or deferred autonomy
+  capability is enabled by this slice.

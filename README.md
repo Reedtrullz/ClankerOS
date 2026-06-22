@@ -9,6 +9,7 @@ vertical:
 goal -> task graph -> execution -> verification -> memory -> visibility -> learning
 registered repo -> isolated worktree -> verified diff -> proposed effect -> approval
 approval -> freshness recheck -> local worktree commit -> committed effect evidence
+committed effect -> GitHub handoff packet -> operator push/draft-PR commands
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -29,9 +30,11 @@ project memory. It can also register local git repositories, run a constrained
 coding command inside an isolated git worktree, capture the resulting diff and
 test evidence, and record a pending `local_git_commit` effect for operator
 review. After explicit approval, it can re-check the captured evidence and
-create the local git commit exactly once in the isolated worktree. Pushing,
-opening PRs, deployments, and other external side effects remain blocked
-unless an implemented flow explicitly models evidence, authorization,
+create the local git commit exactly once in the isolated worktree. It can also
+prepare a GitHub handoff packet for a committed local effect, including exact
+operator commands for `git push` and draft PR creation while recording that no
+network action was taken. Deployments and other external side effects remain
+blocked unless an implemented flow explicitly models evidence, authorization,
 rollback, and verification.
 
 ## Repository Metadata
@@ -72,12 +75,15 @@ python3 -m agent_os.cli dashboard
 python3 -m agent_os.cli approvals
 python3 -m agent_os.cli approve <approval_id> --decided-by operator --note "reviewed diff and tests"
 python3 -m agent_os.cli commit-approved <approval_id> --committed-by operator
+python3 -m agent_os.cli github-handoff <effect_id> --base main --title "Make a tiny verified change"
 python3 -m agent_os.cli cleanup-worktrees --confirm --reason "committed branch kept"
 ```
 
 This creates a worktree and approval packet, then creates the local worktree
 commit only after approval and a fresh evidence recheck. Cleanup removes clean
-terminal worktrees only after an explicit confirmed cleanup decision.
+terminal worktrees only after an explicit confirmed cleanup decision. The
+GitHub handoff step writes local evidence and command strings; it does not push
+or open the PR for you.
 
 ## Tutorials And Suggested Use
 
@@ -103,6 +109,9 @@ The repository can now:
   captured base commit, diff, changed files, and test command;
 - record worktree cleanup decisions and remove clean terminal worktrees for
   committed, blocked, or superseded effects without forcing dirty deletions;
+- prepare a GitHub handoff packet for a committed local effect with exact
+  operator `git push` and draft PR commands while recording
+  `network_actions_taken=0`;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -226,6 +235,7 @@ python3 -m agent_os.cli run-goal "Make a verified local change" --project <name>
 python3 -m agent_os.cli approvals
 python3 -m agent_os.cli approve <approval_id> --decided-by operator --note "local approval"
 python3 -m agent_os.cli commit-approved <approval_id> --committed-by operator
+python3 -m agent_os.cli github-handoff <effect_id> --remote origin --base main --title "Draft PR title"
 python3 -m agent_os.cli cleanup-worktrees --confirm --decided-by operator --reason "terminal worktree reviewed"
 python3 -m agent_os.cli resolve-incident <incident_id> --resolved-by operator --note "local resolution note"
 python3 -m agent_os.cli queue-health
@@ -284,7 +294,7 @@ python3 -m pytest tests/test_first_milestone.py -q
 - `docs/runtime-capability-matrix.md`: detected runtime capabilities and dispositions.
 - `docs/tutorial-first-loop.md`: step-by-step local loop walkthrough.
 - `docs/tutorial-approval-gated-coding.md`: worktree-isolated coding run
-  walkthrough with evidence and approval review.
+  walkthrough with evidence, approval review, GitHub handoff, and cleanup.
 - `docs/suggested-use.md`: operator guidance, prompts, and practical next slices.
 - `docs/next-iteration.md`: generated packet for the next implementation pass.
   Queue items may include `<!-- score=N complexity=N -->`; equal scores choose
@@ -435,7 +445,8 @@ python3 -m pytest tests/test_first_milestone.py -q
   approval schema migration action checklist, expansion operator approval
   schema migration selection packet, expansion operator approval schema
   migration selection input template, playbooks, eval candidates, iteration
-  loop state, stuck tasks, incidents, and recent activity.
+  loop state, GitHub handoff packets, stuck tasks, incidents, and recent
+  activity.
 - `knowledge.md`: stable human-readable knowledge promoted from repeated local
   evidence.
 - `playbooks/`: generated reusable playbook files from repeated successful evals.

@@ -5113,3 +5113,45 @@
   browser or desktop adapters, enforce budgets, promote trust, retry work,
   track real spend, or mutate external systems beyond the explicitly confirmed
   local worktree removal action.
+
+## 2026-06-22 GitHub Handoff Packets
+
+- Added `python3 -m agent_os.cli github-handoff <effect_id>` for committed
+  `local_git_commit` effects. The command requires committed local effect
+  evidence, confirms the recorded commit object exists, reads the configured
+  remote URL, and writes `github-handoff-<effect_id>.json` plus a draft PR body.
+- Handoff records durable SQLite rows in `github_handoff_records` with
+  branch, commit, remote, base branch, push command, draft PR command,
+  evidence path, and `network_actions_taken=0`.
+- The dashboard now exposes recent handoff packets under `### GitHub Handoffs`
+  and recommends `github-handoff` after committed local effects that have no
+  packet yet.
+- Updated README, tutorial, suggested-use docs, operating summary, plan, task
+  queue, and bootstrap handoff for the GitHub handoff loop.
+- Latest iteration packet:
+  `iteration_db6dddc2a2ed` in `docs/next-iteration.md`.
+- Next selected focus:
+  `Add CI/deploy proof ingestion after GitHub handoff packets exist.`
+- Eval-after-change:
+  `eval_after_change_077d9fe6310a`, run `run_dd35af759bf1`, status `pass`.
+- Verification evidence:
+  - Red-first focused tests failed on missing `github-handoff` before
+    implementation.
+  - `python3 -m py_compile agent_os/github_handoff.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "github_handoff"` -> 2 passed, 198 deselected.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "github_handoff or cleanup_worktrees or commit_approved or worktree_isolation or dashboard"` -> 56 passed, 144 deselected.
+  - `python3 -m pytest -q` -> 200 passed.
+  - `python3 -m agent_os.cli cleanup-worktrees` -> dry run with
+    `eligible=0`.
+  - `python3 -m agent_os.cli iterate` -> selected the CI/deploy proof focus
+    from `tasks.md#next`.
+  - `python3 -m agent_os.cli approvals` -> `pending_approvals: 0`.
+  - `python3 -m agent_os.cli queue-health` -> `hotspots: 0`.
+  - `python3 -m agent_os.cli eval-candidates` -> `eval_candidates: 0`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`.
+  - `python3 -m agent_os.cli playbooks` -> `successful_runs=170`.
+  - `python3 -m agent_os.cli eval-after-change --change "Add GitHub handoff packets for committed local effects" ...` -> pass.
+- Non-claims: handoff packets do not push branches, open PRs, run CI, deploy,
+  start remote workers, schedule autonomous work, operate browser or desktop
+  adapters, enforce budgets, promote trust, retry work, track real spend, or
+  mutate external systems.

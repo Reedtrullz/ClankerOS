@@ -1330,16 +1330,15 @@ work, or changing routing.
 
 ## Next Actions
 
-1. Use `docs/next-iteration.md` packet `iteration_de757b7ab35e` to complete:
-   Add GitHub push or draft-PR handoff after local commit evidence exists.
-2. Implement GitHub handoff as the next approval-aware local coding-agent
-   control-plane slice: require committed local effect evidence, preserve
-   branch/commit metadata, produce a handoff packet, and avoid pushing or
-   opening PRs without an explicit operator action.
-3. Keep CI/deploy proof, hosted dashboard, remote workers, scheduler,
+1. Use `docs/next-iteration.md` packet `iteration_db6dddc2a2ed` to complete:
+   Add CI/deploy proof ingestion after GitHub handoff packets exist.
+2. Build CI/deploy proof ingestion as a local evidence loop: consume explicit
+   operator-supplied CI/deploy evidence for a GitHub handoff packet, preserve
+   source URLs and statuses, and avoid claiming live/deploy proof without
+   attached evidence.
+3. Keep hosted dashboard, remote workers, scheduler,
    browser/desktop adapters, budget enforcement, trust promotion, retries, and
    real-cost tracking blocked until their own evidence and approval contracts
    exist.
-4. Preserve the schema-migration report chain as historical evidence, but do
-   not continue report-only schema packets before the local coding GitHub
-   handoff path can preserve local commit evidence safely.
+4. Preserve the schema-migration report chain as historical evidence, but keep
+   the next implementation slice on the local coding-to-GitHub proof path.
