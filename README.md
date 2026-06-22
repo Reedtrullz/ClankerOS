@@ -16,6 +16,7 @@ routing decision -> read-only subagent delegation contract -> evidence artifact
 delegation contract -> structured result ingestion -> completed local evidence
 completed delegation result -> proposed memory entry -> operator approval/archive
 useful run evidence -> proposed SKILL.md -> operator approval/archive
+run evidence -> human review -> evidence index -> conceptual replay summary
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -50,9 +51,11 @@ delegation results as completed local evidence. Completed delegation results
 can become proposed memory entries, but they do not become active memory until
 approved. Useful run evidence can also become proposed project skills under
 `.clanker/skills/`, but those skills remain proposed until an operator
-approves them. Deployments and other external side effects remain blocked
-unless an implemented flow explicitly models evidence, authorization,
-rollback, and verification.
+approves them. Run evidence can now be summarized with human-first `review`,
+`evidence`, and `replay-summary` commands that write local Markdown packets
+without rerunning work or approving effects. Deployments and other external
+side effects remain blocked unless an implemented flow explicitly models
+evidence, authorization, rollback, and verification.
 
 ## Repository Metadata
 
@@ -65,7 +68,7 @@ Local-first agent operating system harness with explicit state, evidence, and ap
 Suggested GitHub topics:
 
 ```text
-agent-operating-system, agentic-ai, ai-agents, agent-os, agent-orchestration, subagent-delegation, local-first, coding-agents, automation, sqlite, approval-workflow, worktrees, verification, operator-dashboard, evals, markdown, python
+agent-operating-system, agentic-ai, ai-agents, agent-os, agent-orchestration, subagent-delegation, local-first, coding-agents, automation, sqlite, approval-workflow, human-in-the-loop, cli-tool, developer-tools, worktrees, verification, operator-dashboard, evals, markdown, python
 ```
 
 ## Quick Start
@@ -73,6 +76,9 @@ agent-operating-system, agentic-ai, ai-agents, agent-os, agent-orchestration, su
 ```bash
 python3 -m agent_os.cli init
 python3 -m agent_os.cli run-goal "Prove the first milestone closed loop" --project bootstrap
+python3 -m agent_os.cli review <run_id>
+python3 -m agent_os.cli evidence <run_id>
+python3 -m agent_os.cli replay-summary <run_id>
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route --category repo_search --project bootstrap
 python3 -m agent_os.cli dashboard
@@ -104,6 +110,9 @@ python3 -m agent_os.cli memory propose-from-delegation <delegation_id> --key rel
 python3 -m agent_os.cli memory list --project bootstrap
 python3 -m agent_os.cli skill propose --project bootstrap --name adding-cli-commands --description "Procedure for adding tested CLI commands." --from-run <run_id>
 python3 -m agent_os.cli skills --project bootstrap
+python3 -m agent_os.cli review <run_id>
+python3 -m agent_os.cli evidence <run_id>
+python3 -m agent_os.cli replay-summary <run_id>
 python3 -m agent_os.cli cleanup-worktrees --confirm --reason "committed branch kept"
 ```
 
@@ -126,6 +135,11 @@ until `memory approve <memory_id>` is run. `skill propose` turns useful run
 evidence into a proposed `.clanker/skills/<name>/SKILL.md` plus SQLite skill
 and version records; it does not make the skill active until `skill approve
 <skill_id>` is run.
+`review <run_id>` writes `runs/<run_id>/review.md` for operator decisions,
+`evidence <run_id>` writes `runs/<run_id>/evidence-index.md`, and
+`replay-summary <run_id>` writes `runs/<run_id>/replay-summary.md` as a
+conceptual replay map. These commands do not rerun work, approve effects,
+commit, push, deploy, or mutate external systems.
 
 ## Tutorials And Suggested Use
 
@@ -133,6 +147,7 @@ and version records; it does not make the skill active until `skill approve
 - [Run an approval-gated coding task](docs/tutorial-approval-gated-coding.md)
 - [Record profile routing, delegation, and delegation results](docs/tutorial-subagent-delegation-results.md)
 - [Propose and approve reusable skills](docs/tutorial-skill-proposals.md)
+- [Review run evidence and replay summaries](docs/tutorial-run-review.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
 - [Safety contract](contracts.md)
@@ -176,6 +191,9 @@ The repository can now:
 - propose reusable project skills from run evidence, write
   `.clanker/skills/<name>/SKILL.md`, list/show proposed skills, approve them
   into active skills, or archive them with decision metadata;
+- write human-first run review packets, evidence indexes, and conceptual
+  replay summaries for existing runs while preserving `network_actions_taken=0`
+  and `external_mutations_taken=0`;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;

@@ -48,6 +48,41 @@ class Task:
 
 
 @dataclass(frozen=True)
+class GoalRecord:
+    id: str
+    project_id: str
+    description: str
+    status: str
+    created_at: str
+    updated_at: str
+
+
+@dataclass(frozen=True)
+class RunRecord:
+    id: str
+    goal_id: str
+    project_id: str
+    status: str
+    started_at: str
+    completed_at: str | None
+    activity_path: str | None
+    summary_path: str | None
+    events_path: str | None
+
+
+@dataclass(frozen=True)
+class EventRecord:
+    id: int
+    run_id: str
+    goal_id: str | None
+    task_id: str | None
+    event_type: str
+    message: str
+    payload: dict[str, Any]
+    created_at: str
+
+
+@dataclass(frozen=True)
 class Incident:
     id: str
     project_id: str
@@ -2743,6 +2778,16 @@ class Storage:
             )
         return goal_id
 
+    def get_goal(self, goal_id: str) -> GoalRecord:
+        with self._connect() as connection:
+            row = connection.execute(
+                "select * from goals where id = ?",
+                (goal_id,),
+            ).fetchone()
+        if row is None:
+            raise KeyError(goal_id)
+        return self._row_to_goal(row)
+
     def set_goal_status(self, goal_id: str, status: str) -> None:
         with self._connect() as connection:
             connection.execute(
@@ -2774,6 +2819,28 @@ class Storage:
                 ),
             )
         return run_id
+
+    def get_run(self, run_id: str) -> RunRecord:
+        with self._connect() as connection:
+            row = connection.execute(
+                "select * from runs where id = ?",
+                (run_id,),
+            ).fetchone()
+        if row is None:
+            raise KeyError(run_id)
+        return self._row_to_run(row)
+
+    def list_recent_runs(self, limit: int = 5) -> list[RunRecord]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from runs
+                order by started_at desc, id desc
+                limit ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [self._row_to_run(row) for row in rows]
 
     def complete_run(self, run_id: str, status: str) -> None:
         with self._connect() as connection:
@@ -2907,6 +2974,18 @@ class Storage:
             ).fetchall()
         return [self._row_to_task(row) for row in rows]
 
+    def list_tasks_for_run(self, run_id: str) -> list[Task]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from tasks
+                where run_id = ?
+                order by created_at asc, id asc
+                """,
+                (run_id,),
+            ).fetchall()
+        return [self._row_to_task(row) for row in rows]
+
     def list_all_tasks(self) -> list[Task]:
         with self._connect() as connection:
             rows = connection.execute(
@@ -3013,6 +3092,18 @@ class Storage:
                 ),
             )
 
+    def list_events_for_run(self, run_id: str) -> list[EventRecord]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from events
+                where run_id = ?
+                order by id asc
+                """,
+                (run_id,),
+            ).fetchall()
+        return [self._row_to_event(row) for row in rows]
+
     def record_learning(self, run_id: str, project_id: str, summary: str, source: str) -> str:
         learning_id = new_id("learning")
         with self._connect() as connection:
@@ -3034,6 +3125,18 @@ class Storage:
                 limit ?
                 """,
                 (limit,),
+            ).fetchall()
+        return [self._row_to_learning(row) for row in rows]
+
+    def list_learnings_for_run(self, run_id: str) -> list[Learning]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from learnings
+                where run_id = ?
+                order by created_at desc, id desc
+                """,
+                (run_id,),
             ).fetchall()
         return [self._row_to_learning(row) for row in rows]
 
@@ -3173,7 +3276,29 @@ class Storage:
                 rows = connection.execute(
                     query + " limit ?",
                     parameters + [limit],
-                ).fetchall()
+            ).fetchall()
+        return [self._row_to_memory_entry(row) for row in rows]
+
+    def list_memory_entries_for_source(
+        self,
+        *,
+        source_type: str | None = None,
+        source_id: str,
+    ) -> list[MemoryEntry]:
+        conditions = ["source_id = ?"]
+        parameters: list[Any] = [source_id]
+        if source_type is not None:
+            conditions.append("source_type = ?")
+            parameters.append(source_type)
+        with self._connect() as connection:
+            rows = connection.execute(
+                f"""
+                select * from memory_entries
+                where {' and '.join(conditions)}
+                order by updated_at desc, id desc
+                """,
+                parameters,
+            ).fetchall()
         return [self._row_to_memory_entry(row) for row in rows]
 
     def update_memory_entry_status(
@@ -3426,7 +3551,19 @@ class Storage:
                 rows = connection.execute(
                     query + " limit ?",
                     parameters + [limit],
-                ).fetchall()
+            ).fetchall()
+        return [self._row_to_skill(row) for row in rows]
+
+    def list_skills_for_source_run(self, run_id: str) -> list[SkillRecord]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from skills
+                where source_run_id = ?
+                order by updated_at desc, id desc
+                """,
+                (run_id,),
+            ).fetchall()
         return [self._row_to_skill(row) for row in rows]
 
     def list_skill_versions(self, skill_id: str) -> list[SkillVersion]:
@@ -3604,6 +3741,23 @@ class Storage:
                 limit ?
                 """,
                 (limit,),
+            ).fetchall()
+        return [self._row_to_eval_candidate(row) for row in rows]
+
+    def list_eval_candidates_for_source(
+        self,
+        *,
+        source_type: str,
+        source_id: str,
+    ) -> list[EvalCandidate]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from eval_candidates
+                where source_type = ? and source_id = ?
+                order by updated_at desc, id desc
+                """,
+                (source_type, source_id),
             ).fetchall()
         return [self._row_to_eval_candidate(row) for row in rows]
 
@@ -8076,6 +8230,18 @@ class Storage:
             ).fetchall()
         return [self._row_to_incident(row) for row in rows]
 
+    def list_incidents_for_run(self, run_id: str) -> list[Incident]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from incidents
+                where run_id = ?
+                order by created_at desc, id desc
+                """,
+                (run_id,),
+            ).fetchall()
+        return [self._row_to_incident(row) for row in rows]
+
     def get_incident(self, incident_id: str) -> Incident:
         with self._connect() as connection:
             row = connection.execute(
@@ -8152,6 +8318,18 @@ class Storage:
                 limit ?
                 """,
                 (limit,),
+            ).fetchall()
+        return [self._row_to_approval_request(row) for row in rows]
+
+    def list_approval_requests_for_run(self, run_id: str) -> list[ApprovalRequest]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from approval_requests
+                where run_id = ?
+                order by requested_at desc, id desc
+                """,
+                (run_id,),
             ).fetchall()
         return [self._row_to_approval_request(row) for row in rows]
 
@@ -9271,6 +9449,18 @@ class Storage:
             ).fetchall()
         return [self._row_to_effect(row) for row in rows]
 
+    def list_effects_for_run(self, run_id: str) -> list[Effect]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from effects
+                where run_id = ?
+                order by created_at desc, id desc
+                """,
+                (run_id,),
+            ).fetchall()
+        return [self._row_to_effect(row) for row in rows]
+
     def list_stale_active_tasks(
         self,
         *,
@@ -9518,6 +9708,41 @@ class Storage:
         connection = sqlite3.connect(self.db_path)
         connection.row_factory = sqlite3.Row
         return connection
+
+    def _row_to_goal(self, row: sqlite3.Row) -> GoalRecord:
+        return GoalRecord(
+            id=row["id"],
+            project_id=row["project_id"],
+            description=row["description"],
+            status=row["status"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+        )
+
+    def _row_to_run(self, row: sqlite3.Row) -> RunRecord:
+        return RunRecord(
+            id=row["id"],
+            goal_id=row["goal_id"],
+            project_id=row["project_id"],
+            status=row["status"],
+            started_at=row["started_at"],
+            completed_at=row["completed_at"],
+            activity_path=row["activity_path"],
+            summary_path=row["summary_path"],
+            events_path=row["events_path"],
+        )
+
+    def _row_to_event(self, row: sqlite3.Row) -> EventRecord:
+        return EventRecord(
+            id=row["id"],
+            run_id=row["run_id"],
+            goal_id=row["goal_id"],
+            task_id=row["task_id"],
+            event_type=row["event_type"],
+            message=row["message"],
+            payload=_json_loads(row["payload"], {}),
+            created_at=row["created_at"],
+        )
 
     def _row_to_task(self, row: sqlite3.Row) -> Task:
         return Task(

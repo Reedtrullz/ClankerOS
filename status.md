@@ -5424,3 +5424,34 @@
   global Codex skills, activate proposed skills, run subagents, approve code,
   commit, push, deploy, run remote workers, schedule work, promote trust, retry
   work, track spend, or mutate external systems.
+
+## 2026-06-22 Run Evidence Review Packets
+
+- Added human-first run evidence commands:
+  `python3 -m agent_os.cli review <run_id>`,
+  `python3 -m agent_os.cli evidence <run_id>`, and
+  `python3 -m agent_os.cli replay-summary <run_id>`.
+- `review` writes `runs/<run_id>/review.md` with the original goal, current
+  task plan, verification counts, evidence links, operator signals, and a
+  recommended next action.
+- `evidence` writes `runs/<run_id>/evidence-index.md` with run files, project
+  artifacts, database row counts, proposal/effect references, and non-claims.
+- `replay-summary` writes `runs/<run_id>/replay-summary.md` as a conceptual
+  replay from recorded events; it does not rerun commands.
+- Dashboard now exposes generated packets under `## Recent Evidence Packets`.
+- Verification evidence:
+  - Red-first focused tests failed because `review`, `evidence`, and
+    `replay-summary` were not registered CLI commands.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "review_command or evidence_command or replay_summary or run_review_commands"` -> 4 passed, 223 deselected.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "review_command or evidence_command or replay_summary or run_review_commands or static_dashboard or skill_proposal or memory_proposal or delegation_result"` -> 18 passed, 209 deselected.
+  - `python3 -m py_compile agent_os/run_review.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest -q` -> 227 passed.
+  - Live smoke wrote `runs/run_ce1a7fc25cd8/review.md`,
+    `runs/run_ce1a7fc25cd8/evidence-index.md`, and
+    `runs/run_ce1a7fc25cd8/replay-summary.md`.
+  - Generated operator gates through `python3 -m agent_os.cli dashboard` -> passed; `handoff-review` was corrected from `needs_attention` to `clear`.
+  - `python3 -m agent_os.cli eval-after-change --change "Add run evidence review packets" --file agent_os/run_review.py --file agent_os/storage.py --file agent_os/cli.py --file agent_os/dashboard.py --file tests/test_first_milestone.py --file docs/tutorial-run-review.md` -> pass as `run_d52df83d4bba`.
+  - `git diff --check` -> passed.
+- Non-claims: review packet commands do not approve effects, commit, push,
+  deploy, rerun commands, start remote workers, schedule work, promote trust,
+  retry work, track spend, or mutate external systems.

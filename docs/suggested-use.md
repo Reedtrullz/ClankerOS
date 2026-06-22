@@ -44,6 +44,10 @@ Propose a project memory entry from that completed delegation result, but leave 
 Propose a reusable project skill from that verified run, but leave it inactive until I approve it.
 ```
 
+```text
+Write a human-first review, evidence index, and replay summary for this run before deciding the next action.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -55,7 +59,8 @@ Propose a reusable project skill from that verified run, but leave it inactive u
 7. Record specialist delegation results when read-only context is useful.
 8. Propose memory from completed delegation results only when the fact is small and reusable.
 9. Propose skills from verified run evidence only when the procedure is reusable.
-10. Record non-claims before treating the work as safe.
+10. Write `review`, `evidence`, and `replay-summary` packets before operator decisions on meaningful runs.
+11. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -98,7 +103,10 @@ python3 -m agent_os.cli run-goal "Make the smallest verified change" --project <
    to create an inactive reusable `SKILL.md` proposal from run evidence.
 15. Use `python3 -m agent_os.cli skill approve <skill_id> --approved-by operator`
    only after reviewing the generated `SKILL.md`.
-16. Use `python3 -m agent_os.cli cleanup-worktrees --confirm --reason "..."`
+16. Use `python3 -m agent_os.cli review <run_id>`, `evidence <run_id>`, and
+   `replay-summary <run_id>` to create operator-readable run packets before
+   making follow-up decisions.
+17. Use `python3 -m agent_os.cli cleanup-worktrees --confirm --reason "..."`
    after reviewing terminal effects and deciding the worktree can be removed.
 
 `commit-approved` blocks without committing if the worktree base commit, patch,
@@ -124,6 +132,9 @@ the memory active until `memory approve` is run.
 `skill propose` creates a proposed skill record and writes
 `.clanker/skills/<name>/SKILL.md` from run evidence. It records a skill version
 and does not make the skill active until `skill approve` is run.
+`review`, `evidence`, and `replay-summary` write local Markdown packets under
+`runs/<run_id>/` and expose them in the dashboard. They do not rerun commands,
+approve effects, commit, push, deploy, or mutate external systems.
 `cleanup-worktrees` removes only clean terminal worktrees; dirty blocked
 worktrees are recorded as blocked and left in place.
 
@@ -136,6 +147,8 @@ Prefer these files when orienting:
 - `docs/OPERATING_SUMMARY.md` for architecture and guardrails.
 - `docs/tutorial-subagent-delegation-results.md` for the profile routing,
   delegation contract, and result-ingestion loop.
+- `docs/tutorial-run-review.md` for human-first run review, evidence indexing,
+  and conceptual replay.
 - `contracts.md` for safety boundaries and evidence expectations.
 - `status.md` for chronological implementation evidence.
 - `projects/bootstrap/handoff.md` for the current continuation edge.
@@ -171,8 +184,9 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 Good next slices now favor executable evidence review and operator steering
 behavior before broader autonomy:
 
-- `review`, `evidence`, and `replay-summary` commands for human-first run
-  evidence packets;
+- deterministic steering review records plus `next-action`/`inbox` commands
+  that use existing approvals, incidents, blocked tasks, and run review
+  packets;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;
 - remote-worker, scheduler, browser/desktop adapter, budget, trust, retry, and

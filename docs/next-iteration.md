@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_ddf7a633c7b6
+- Packet ID: iteration_d3382632a359
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add human-first `review`, `evidence`, and `replay-summary` commands for run evidence packets.
+Advance the Agent System north-star goal by completing: Add deterministic steering review records plus `next-action` and `inbox` commands.
 
 ## Definition Of Done
 
@@ -68,8 +68,8 @@ Advance the Agent System north-star goal by completing: Add human-first `review`
 ## Simplicity Guardrail
 
 - selection_policy: highest-score-then-lowest-complexity
-- selection_reason: selected only actionable item with score 8 and complexity 4
-- selected_score: 8
+- selection_reason: selected only actionable item with score 9 and complexity 4
+- selected_score: 9
 - selected_complexity: 4
 
 ## Guardrails And Non-Claims

@@ -73,7 +73,7 @@
 - claimed: 0
 - running: 0
 - verifying: 0
-- completed: 369
+- completed: 373
 - blocked: 0
 - failed: 0
 - active: 0
@@ -82,30 +82,30 @@
 ## Iteration Loop
 
 - status: planned
-- focus: Add human-first `review`, `evidence`, and `replay-summary` commands for run evidence packets.
+- focus: Add deterministic steering review records plus `next-action` and `inbox` commands.
 - source: tasks.md#next
 - packet: docs/next-iteration.md
-- created_at: 2026-06-22T13:58:07.451688+00:00
+- created_at: 2026-06-22T14:16:12.176092+00:00
 
 ## Simplicity Guardrail
 
 - policy: highest-score-then-lowest-complexity
-- reason: selected only actionable item with score 8 and complexity 4
-- selected_score: 8
+- reason: selected only actionable item with score 9 and complexity 4
+- selected_score: 9
 - selected_complexity: 4
-- selected_focus: Add human-first `review`, `evidence`, and `replay-summary` commands for run evidence packets.
+- selected_focus: Add deterministic steering review records plus `next-action` and `inbox` commands.
 
 ## Expansion Operator Approval Schema Decision
 
 - status: approval_schema_decision_ready
-- source_review: expansion_operator_approval_request_review_02e86c1f3230
+- source_review: expansion_operator_approval_request_review_c9210721ec4d
 - source_status: approval_request_schema_review_required
-- source_draft: expansion_operator_approval_draft_999739e5a03d
-- source_ledger: expansion_operator_decision_ledger_c181d75ff026
-- source_checklist: expansion_operator_review_checklist_c0368f895c71
-- source_index: expansion_decision_evidence_index_392f9e3b0c33
-- source_brief: expansion_decision_brief_43d6b648a67e
-- source_audit: goal_completion_audit_e4074daba5db
+- source_draft: expansion_operator_approval_draft_92bf5d0265b4
+- source_ledger: expansion_operator_decision_ledger_b384a310e585
+- source_checklist: expansion_operator_review_checklist_69c9b02568bb
+- source_index: expansion_decision_evidence_index_eaf24cbc82ed
+- source_brief: expansion_decision_brief_28fe54d3d4eb
+- source_audit: goal_completion_audit_89ee5efcd9aa
 - affected_requests: 11
 - schema_gaps: 11
 - missing_fields: 7
@@ -121,21 +121,21 @@
 - recommended_next_step: operator_approval_schema_migration_plan_required
 - report: docs/expansion-operator-approval-schema-decision.md
 
-- expansion_operator_approval_schema_decision_0ca92d8e9579: status=approval_schema_decision_ready source_review=expansion_operator_approval_request_review_02e86c1f3230 source_status=approval_request_schema_review_required source_draft=expansion_operator_approval_draft_999739e5a03d source_ledger=expansion_operator_decision_ledger_c181d75ff026 source_checklist=expansion_operator_review_checklist_c0368f895c71 source_index=expansion_decision_evidence_index_392f9e3b0c33 source_brief=expansion_decision_brief_43d6b648a67e source_audit=goal_completion_audit_e4074daba5db affected_requests=11 schema_gaps=11 missing_fields=7 external_requests=2 capability_requests=9 decision_options=3 recommended_option=operator_approval_requests_table rejected_options=2 schema_objects=1 migration_applied=0 created_approval_requests=0 existing_approval_requests=0 recommended_next_step=operator_approval_schema_migration_plan_required report=docs/expansion-operator-approval-schema-decision.md
+- expansion_operator_approval_schema_decision_f7ca15eccf9f: status=approval_schema_decision_ready source_review=expansion_operator_approval_request_review_c9210721ec4d source_status=approval_request_schema_review_required source_draft=expansion_operator_approval_draft_92bf5d0265b4 source_ledger=expansion_operator_decision_ledger_b384a310e585 source_checklist=expansion_operator_review_checklist_69c9b02568bb source_index=expansion_decision_evidence_index_eaf24cbc82ed source_brief=expansion_decision_brief_28fe54d3d4eb source_audit=goal_completion_audit_89ee5efcd9aa affected_requests=11 schema_gaps=11 missing_fields=7 external_requests=2 capability_requests=9 decision_options=3 recommended_option=operator_approval_requests_table rejected_options=2 schema_objects=1 migration_applied=0 created_approval_requests=0 existing_approval_requests=0 recommended_next_step=operator_approval_schema_migration_plan_required report=docs/expansion-operator-approval-schema-decision.md
 
 ## Expansion Operator Approval Schema Migration Plan
 
 - status: operator_approval_schema_migration_plan_ready
-- source_decision: expansion_operator_approval_schema_decision_0ca92d8e9579
+- source_decision: expansion_operator_approval_schema_decision_f7ca15eccf9f
 - source_status: approval_schema_decision_ready
-- source_review: expansion_operator_approval_request_review_02e86c1f3230
+- source_review: expansion_operator_approval_request_review_c9210721ec4d
 - source_review_status: approval_request_schema_review_required
-- source_draft: expansion_operator_approval_draft_999739e5a03d
-- source_ledger: expansion_operator_decision_ledger_c181d75ff026
-- source_checklist: expansion_operator_review_checklist_c0368f895c71
-- source_index: expansion_decision_evidence_index_392f9e3b0c33
-- source_brief: expansion_decision_brief_43d6b648a67e
-- source_audit: goal_completion_audit_e4074daba5db
+- source_draft: expansion_operator_approval_draft_92bf5d0265b4
+- source_ledger: expansion_operator_decision_ledger_b384a310e585
+- source_checklist: expansion_operator_review_checklist_69c9b02568bb
+- source_index: expansion_decision_evidence_index_eaf24cbc82ed
+- source_brief: expansion_decision_brief_28fe54d3d4eb
+- source_audit: goal_completion_audit_89ee5efcd9aa
 - recommended_option: operator_approval_requests_table
 - target_table: operator_approval_requests
 - affected_requests: 11
@@ -154,16 +154,16 @@
 - recommended_next_step: operator_approval_schema_migration_approval_required
 - report: docs/expansion-operator-approval-schema-migration-plan.md
 
-- expansion_operator_approval_schema_migration_plan_9cbb44802f48: status=operator_approval_schema_migration_plan_ready source_decision=expansion_operator_approval_schema_decision_0ca92d8e9579 source_status=approval_schema_decision_ready source_review=expansion_operator_approval_request_review_02e86c1f3230 source_review_status=approval_request_schema_review_required source_draft=expansion_operator_approval_draft_999739e5a03d source_ledger=expansion_operator_decision_ledger_c181d75ff026 source_checklist=expansion_operator_review_checklist_c0368f895c71 source_index=expansion_decision_evidence_index_392f9e3b0c33 source_brief=expansion_decision_brief_43d6b648a67e source_audit=goal_completion_audit_e4074daba5db recommended_option=operator_approval_requests_table target_table=operator_approval_requests affected_requests=11 schema_gaps=11 missing_fields=7 external_requests=2 capability_requests=9 planned_columns=26 planned_indexes=4 migration_steps=4 migration_applied=0 table_created=0 operator_approval_rows_created=0 approval_requests_created=0 existing_approval_requests=0 recommended_next_step=operator_approval_schema_migration_approval_required report=docs/expansion-operator-approval-schema-migration-plan.md
+- expansion_operator_approval_schema_migration_plan_aff9cc09dd9b: status=operator_approval_schema_migration_plan_ready source_decision=expansion_operator_approval_schema_decision_f7ca15eccf9f source_status=approval_schema_decision_ready source_review=expansion_operator_approval_request_review_c9210721ec4d source_review_status=approval_request_schema_review_required source_draft=expansion_operator_approval_draft_92bf5d0265b4 source_ledger=expansion_operator_decision_ledger_b384a310e585 source_checklist=expansion_operator_review_checklist_69c9b02568bb source_index=expansion_decision_evidence_index_eaf24cbc82ed source_brief=expansion_decision_brief_28fe54d3d4eb source_audit=goal_completion_audit_89ee5efcd9aa recommended_option=operator_approval_requests_table target_table=operator_approval_requests affected_requests=11 schema_gaps=11 missing_fields=7 external_requests=2 capability_requests=9 planned_columns=26 planned_indexes=4 migration_steps=4 migration_applied=0 table_created=0 operator_approval_rows_created=0 approval_requests_created=0 existing_approval_requests=0 recommended_next_step=operator_approval_schema_migration_approval_required report=docs/expansion-operator-approval-schema-migration-plan.md
 
 ## Expansion Operator Approval Schema Migration Approval Request
 
 - status: operator_approval_schema_migration_approval_required
-- source_plan: expansion_operator_approval_schema_migration_plan_9cbb44802f48
+- source_plan: expansion_operator_approval_schema_migration_plan_aff9cc09dd9b
 - source_status: operator_approval_schema_migration_plan_ready
-- source_decision: expansion_operator_approval_schema_decision_0ca92d8e9579
+- source_decision: expansion_operator_approval_schema_decision_f7ca15eccf9f
 - source_decision_status: approval_schema_decision_ready
-- source_review: expansion_operator_approval_request_review_02e86c1f3230
+- source_review: expansion_operator_approval_request_review_c9210721ec4d
 - source_review_status: approval_request_schema_review_required
 - target_table: operator_approval_requests
 - planned_columns: 26
@@ -183,18 +183,18 @@
 - recommended_next_step: operator_approval_schema_migration_operator_decision_required
 - report: docs/expansion-operator-approval-schema-migration-approval-request.md
 
-- expansion_operator_approval_schema_migration_approval_request_441c15ed4b13: status=operator_approval_schema_migration_approval_required source_plan=expansion_operator_approval_schema_migration_plan_9cbb44802f48 source_status=operator_approval_schema_migration_plan_ready source_decision=expansion_operator_approval_schema_decision_0ca92d8e9579 source_decision_status=approval_schema_decision_ready source_review=expansion_operator_approval_request_review_02e86c1f3230 source_review_status=approval_request_schema_review_required target_table=operator_approval_requests planned_columns=26 planned_indexes=4 migration_steps=4 affected_requests=11 schema_gaps=11 request_count=1 approval_boundary=schema_migration requested_action=apply_operator_approval_requests_schema allowed_actions=approve,defer,request_more_evidence migration_applied=0 table_created=0 operator_approval_rows_created=0 approval_requests_created=0 existing_approval_requests=0 recommended_next_step=operator_approval_schema_migration_operator_decision_required report=docs/expansion-operator-approval-schema-migration-approval-request.md
+- expansion_operator_approval_schema_migration_approval_request_9c0b43e2b90b: status=operator_approval_schema_migration_approval_required source_plan=expansion_operator_approval_schema_migration_plan_aff9cc09dd9b source_status=operator_approval_schema_migration_plan_ready source_decision=expansion_operator_approval_schema_decision_f7ca15eccf9f source_decision_status=approval_schema_decision_ready source_review=expansion_operator_approval_request_review_c9210721ec4d source_review_status=approval_request_schema_review_required target_table=operator_approval_requests planned_columns=26 planned_indexes=4 migration_steps=4 affected_requests=11 schema_gaps=11 request_count=1 approval_boundary=schema_migration requested_action=apply_operator_approval_requests_schema allowed_actions=approve,defer,request_more_evidence migration_applied=0 table_created=0 operator_approval_rows_created=0 approval_requests_created=0 existing_approval_requests=0 recommended_next_step=operator_approval_schema_migration_operator_decision_required report=docs/expansion-operator-approval-schema-migration-approval-request.md
 
 ## Expansion Operator Approval Schema Migration Decision Ledger
 
 - status: operator_approval_schema_migration_decision_pending
-- source_request: expansion_operator_approval_schema_migration_approval_request_441c15ed4b13
+- source_request: expansion_operator_approval_schema_migration_approval_request_9c0b43e2b90b
 - source_status: operator_approval_schema_migration_approval_required
-- source_plan: expansion_operator_approval_schema_migration_plan_9cbb44802f48
+- source_plan: expansion_operator_approval_schema_migration_plan_aff9cc09dd9b
 - source_plan_status: operator_approval_schema_migration_plan_ready
-- source_decision: expansion_operator_approval_schema_decision_0ca92d8e9579
+- source_decision: expansion_operator_approval_schema_decision_f7ca15eccf9f
 - source_decision_status: approval_schema_decision_ready
-- source_review: expansion_operator_approval_request_review_02e86c1f3230
+- source_review: expansion_operator_approval_request_review_c9210721ec4d
 - source_review_status: approval_request_schema_review_required
 - target_table: operator_approval_requests
 - planned_columns: 26
@@ -219,20 +219,20 @@
 - recommended_next_step: operator_approval_schema_migration_operator_action_required
 - report: docs/expansion-operator-approval-schema-migration-decision-ledger.md
 
-- expansion_operator_approval_schema_migration_decision_ledger_ab07dd3f3044: status=operator_approval_schema_migration_decision_pending source_request=expansion_operator_approval_schema_migration_approval_request_441c15ed4b13 source_status=operator_approval_schema_migration_approval_required source_plan=expansion_operator_approval_schema_migration_plan_9cbb44802f48 source_plan_status=operator_approval_schema_migration_plan_ready source_decision=expansion_operator_approval_schema_decision_0ca92d8e9579 source_decision_status=approval_schema_decision_ready source_review=expansion_operator_approval_request_review_02e86c1f3230 source_review_status=approval_request_schema_review_required target_table=operator_approval_requests request_count=1 decision_count=1 pending_decisions=1 approved_decisions=0 deferred_decisions=0 more_evidence_decisions=0 approval_boundary=schema_migration requested_action=apply_operator_approval_requests_schema allowed_actions=approve,defer,request_more_evidence migration_applied=0 table_created=0 operator_approval_rows_created=0 approval_requests_created=0 existing_approval_requests=0 recommended_next_step=operator_approval_schema_migration_operator_action_required report=docs/expansion-operator-approval-schema-migration-decision-ledger.md
+- expansion_operator_approval_schema_migration_decision_ledger_813cc937a76b: status=operator_approval_schema_migration_decision_pending source_request=expansion_operator_approval_schema_migration_approval_request_9c0b43e2b90b source_status=operator_approval_schema_migration_approval_required source_plan=expansion_operator_approval_schema_migration_plan_aff9cc09dd9b source_plan_status=operator_approval_schema_migration_plan_ready source_decision=expansion_operator_approval_schema_decision_f7ca15eccf9f source_decision_status=approval_schema_decision_ready source_review=expansion_operator_approval_request_review_c9210721ec4d source_review_status=approval_request_schema_review_required target_table=operator_approval_requests request_count=1 decision_count=1 pending_decisions=1 approved_decisions=0 deferred_decisions=0 more_evidence_decisions=0 approval_boundary=schema_migration requested_action=apply_operator_approval_requests_schema allowed_actions=approve,defer,request_more_evidence migration_applied=0 table_created=0 operator_approval_rows_created=0 approval_requests_created=0 existing_approval_requests=0 recommended_next_step=operator_approval_schema_migration_operator_action_required report=docs/expansion-operator-approval-schema-migration-decision-ledger.md
 
 ## Expansion Operator Approval Schema Migration Action Checklist
 
 - status: operator_approval_schema_migration_manual_action_required
-- source_ledger: expansion_operator_approval_schema_migration_decision_ledger_ab07dd3f3044
+- source_ledger: expansion_operator_approval_schema_migration_decision_ledger_813cc937a76b
 - source_status: operator_approval_schema_migration_decision_pending
-- source_request: expansion_operator_approval_schema_migration_approval_request_441c15ed4b13
+- source_request: expansion_operator_approval_schema_migration_approval_request_9c0b43e2b90b
 - source_request_status: operator_approval_schema_migration_approval_required
-- source_plan: expansion_operator_approval_schema_migration_plan_9cbb44802f48
+- source_plan: expansion_operator_approval_schema_migration_plan_aff9cc09dd9b
 - source_plan_status: operator_approval_schema_migration_plan_ready
-- source_decision: expansion_operator_approval_schema_decision_0ca92d8e9579
+- source_decision: expansion_operator_approval_schema_decision_f7ca15eccf9f
 - source_decision_status: approval_schema_decision_ready
-- source_review: expansion_operator_approval_request_review_02e86c1f3230
+- source_review: expansion_operator_approval_request_review_c9210721ec4d
 - source_review_status: approval_request_schema_review_required
 - target_table: operator_approval_requests
 - request_count: 1
@@ -253,22 +253,22 @@
 - recommended_next_step: operator_approval_schema_migration_operator_selection_required
 - report: docs/expansion-operator-approval-schema-migration-action-checklist.md
 
-- expansion_operator_approval_schema_migration_action_checklist_e2f3ee84be69: status=operator_approval_schema_migration_manual_action_required source_ledger=expansion_operator_approval_schema_migration_decision_ledger_ab07dd3f3044 source_status=operator_approval_schema_migration_decision_pending source_request=expansion_operator_approval_schema_migration_approval_request_441c15ed4b13 source_request_status=operator_approval_schema_migration_approval_required source_plan=expansion_operator_approval_schema_migration_plan_9cbb44802f48 source_plan_status=operator_approval_schema_migration_plan_ready source_decision=expansion_operator_approval_schema_decision_0ca92d8e9579 source_decision_status=approval_schema_decision_ready target_table=operator_approval_requests request_count=1 decision_count=1 pending_decisions=1 action_count=1 pending_actions=1 actions_taken=0 selected_action=none approval_boundary=schema_migration requested_action=apply_operator_approval_requests_schema allowed_actions=approve,defer,request_more_evidence migration_applied=0 table_created=0 operator_approval_rows_created=0 approval_requests_created=0 existing_approval_requests=0 recommended_next_step=operator_approval_schema_migration_operator_selection_required report=docs/expansion-operator-approval-schema-migration-action-checklist.md
+- expansion_operator_approval_schema_migration_action_checklist_7d14f9039953: status=operator_approval_schema_migration_manual_action_required source_ledger=expansion_operator_approval_schema_migration_decision_ledger_813cc937a76b source_status=operator_approval_schema_migration_decision_pending source_request=expansion_operator_approval_schema_migration_approval_request_9c0b43e2b90b source_request_status=operator_approval_schema_migration_approval_required source_plan=expansion_operator_approval_schema_migration_plan_aff9cc09dd9b source_plan_status=operator_approval_schema_migration_plan_ready source_decision=expansion_operator_approval_schema_decision_f7ca15eccf9f source_decision_status=approval_schema_decision_ready target_table=operator_approval_requests request_count=1 decision_count=1 pending_decisions=1 action_count=1 pending_actions=1 actions_taken=0 selected_action=none approval_boundary=schema_migration requested_action=apply_operator_approval_requests_schema allowed_actions=approve,defer,request_more_evidence migration_applied=0 table_created=0 operator_approval_rows_created=0 approval_requests_created=0 existing_approval_requests=0 recommended_next_step=operator_approval_schema_migration_operator_selection_required report=docs/expansion-operator-approval-schema-migration-action-checklist.md
 
 ## Expansion Operator Approval Schema Migration Selection Packet
 
 - status: operator_approval_schema_migration_selection_required
-- source_checklist: expansion_operator_approval_schema_migration_action_checklist_e2f3ee84be69
+- source_checklist: expansion_operator_approval_schema_migration_action_checklist_7d14f9039953
 - source_status: operator_approval_schema_migration_manual_action_required
-- source_ledger: expansion_operator_approval_schema_migration_decision_ledger_ab07dd3f3044
+- source_ledger: expansion_operator_approval_schema_migration_decision_ledger_813cc937a76b
 - source_ledger_status: operator_approval_schema_migration_decision_pending
-- source_request: expansion_operator_approval_schema_migration_approval_request_441c15ed4b13
+- source_request: expansion_operator_approval_schema_migration_approval_request_9c0b43e2b90b
 - source_request_status: operator_approval_schema_migration_approval_required
-- source_plan: expansion_operator_approval_schema_migration_plan_9cbb44802f48
+- source_plan: expansion_operator_approval_schema_migration_plan_aff9cc09dd9b
 - source_plan_status: operator_approval_schema_migration_plan_ready
-- source_decision: expansion_operator_approval_schema_decision_0ca92d8e9579
+- source_decision: expansion_operator_approval_schema_decision_f7ca15eccf9f
 - source_decision_status: approval_schema_decision_ready
-- source_review: expansion_operator_approval_request_review_02e86c1f3230
+- source_review: expansion_operator_approval_request_review_c9210721ec4d
 - source_review_status: approval_request_schema_review_required
 - target_table: operator_approval_requests
 - request_count: 1
@@ -295,7 +295,7 @@
 - recommended_next_step: operator_approval_schema_migration_operator_selection_input_required
 - report: docs/expansion-operator-approval-schema-migration-selection-packet.md
 
-- expansion_operator_approval_schema_migration_selection_packet_ea74ca93cd28: status=operator_approval_schema_migration_selection_required source_checklist=expansion_operator_approval_schema_migration_action_checklist_e2f3ee84be69 source_status=operator_approval_schema_migration_manual_action_required source_ledger=expansion_operator_approval_schema_migration_decision_ledger_ab07dd3f3044 source_ledger_status=operator_approval_schema_migration_decision_pending source_request=expansion_operator_approval_schema_migration_approval_request_441c15ed4b13 source_request_status=operator_approval_schema_migration_approval_required source_plan=expansion_operator_approval_schema_migration_plan_9cbb44802f48 source_plan_status=operator_approval_schema_migration_plan_ready source_decision=expansion_operator_approval_schema_decision_0ca92d8e9579 source_decision_status=approval_schema_decision_ready target_table=operator_approval_requests request_count=1 decision_count=1 pending_decisions=1 action_count=1 pending_actions=1 actions_taken=0 selected_action=none selection_count=1 pending_selections=1 selections_recorded=0 approve_selections=0 defer_selections=0 more_evidence_selections=0 approval_boundary=schema_migration requested_action=apply_operator_approval_requests_schema allowed_actions=approve,defer,request_more_evidence migration_applied=0 table_created=0 operator_approval_rows_created=0 approval_requests_created=0 existing_approval_requests=0 recommended_next_step=operator_approval_schema_migration_operator_selection_input_required report=docs/expansion-operator-approval-schema-migration-selection-packet.md
+- expansion_operator_approval_schema_migration_selection_packet_8eeb92d473c2: status=operator_approval_schema_migration_selection_required source_checklist=expansion_operator_approval_schema_migration_action_checklist_7d14f9039953 source_status=operator_approval_schema_migration_manual_action_required source_ledger=expansion_operator_approval_schema_migration_decision_ledger_813cc937a76b source_ledger_status=operator_approval_schema_migration_decision_pending source_request=expansion_operator_approval_schema_migration_approval_request_9c0b43e2b90b source_request_status=operator_approval_schema_migration_approval_required source_plan=expansion_operator_approval_schema_migration_plan_aff9cc09dd9b source_plan_status=operator_approval_schema_migration_plan_ready source_decision=expansion_operator_approval_schema_decision_f7ca15eccf9f source_decision_status=approval_schema_decision_ready target_table=operator_approval_requests request_count=1 decision_count=1 pending_decisions=1 action_count=1 pending_actions=1 actions_taken=0 selected_action=none selection_count=1 pending_selections=1 selections_recorded=0 approve_selections=0 defer_selections=0 more_evidence_selections=0 approval_boundary=schema_migration requested_action=apply_operator_approval_requests_schema allowed_actions=approve,defer,request_more_evidence migration_applied=0 table_created=0 operator_approval_rows_created=0 approval_requests_created=0 existing_approval_requests=0 recommended_next_step=operator_approval_schema_migration_operator_selection_input_required report=docs/expansion-operator-approval-schema-migration-selection-packet.md
 
 ## Queue Health Checks
 
@@ -308,7 +308,7 @@
 ## Handoff Review
 
 - status: clear
-- current_focus: Add human-first `review`, `evidence`, and `replay-summary` commands for run evidence packets.
+- current_focus: Add deterministic steering review records plus `next-action` and `inbox` commands.
 - blocked_tasks: 0
 - stale_handoffs: 0
 - report: docs/handoff-review.md
@@ -319,11 +319,11 @@
 
 - failed: 0
 
+- eval_after_change_f9315f2416fb: status=pass change=Add run evidence review packets files=agent_os/run_review.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,tests/test_first_milestone.py,docs/tutorial-run-review.md evals=first_milestone_closed_loop runs=run_d52df83d4bba results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_980f121b805f: status=pass change=Add skill proposal records files=agent_os/skill_entries.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,tests/test_first_milestone.py evals=first_milestone_closed_loop runs=run_ce1a7fc25cd8 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_8b75404f8184: status=pass change=Add memory proposal records files=agent_os/memory_entries.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,tests/test_first_milestone.py evals=first_milestone_closed_loop runs=run_6fcdef549e8b results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_79430614ef3a: status=pass change=Add delegation result ingestion files=agent_os/subagent_delegation.py,agent_os/storage.py,agent_os/cli.py,tests/test_first_milestone.py,docs/tutorial-subagent-delegation-results.md evals=first_milestone_closed_loop runs=run_7a9b1e946e32 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_57383fcce489: status=pass change=Add subagent delegation records from routing decisions files=agent_os/subagent_delegation.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,tests/test_first_milestone.py evals=first_milestone_closed_loop runs=run_a013a9d6f48f results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
-- eval_after_change_f893ffee7355: status=pass change=Add profile routing decision records files=agent_os/profile_routing.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,tests/test_first_milestone.py evals=first_milestone_closed_loop runs=run_2b6b0b2f72a8 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 
 ## Learning Distillation
 
@@ -347,45 +347,45 @@
 ## Budget And Trust Posture
 
 - status: report_only
-- tasks: 365
+- tasks: 369
 - budget_state: not_tracked
 - trust_state: not_tracked
-- risk_counts: low=365
+- risk_counts: low=369
 - report: docs/budget-trust-posture.md
 
-- budget_trust_posture_564112f31998: status=report_only tasks=365 budget_state=not_tracked trust_state=not_tracked risk_counts=low=365 report=docs/budget-trust-posture.md
+- budget_trust_posture_d4bb9767839f: status=report_only tasks=369 budget_state=not_tracked trust_state=not_tracked risk_counts=low=369 report=docs/budget-trust-posture.md
 
 ## Dispatch Posture History
 
 - status: report_only
 - snapshots: 25
-- latest_tasks: 365
-- task_delta: 131
-- latest_risk_counts: low=365
+- latest_tasks: 369
+- task_delta: 135
+- latest_risk_counts: low=369
 - report: docs/dispatch-posture-history.md
 
-- dispatch_posture_history_0d2897230211: status=report_only snapshots=25 latest_tasks=365 task_delta=131 latest_risk_counts=low=365 report=docs/dispatch-posture-history.md
+- dispatch_posture_history_f683dcc269bd: status=report_only snapshots=25 latest_tasks=369 task_delta=135 latest_risk_counts=low=369 report=docs/dispatch-posture-history.md
 
 ## Dispatch Posture Snapshot Review
 
 - status: fresh
 - snapshots: 25
-- stale_snapshots: 23
+- stale_snapshots: 22
 - latest_snapshot_age_seconds: 0
 - stale_after_seconds: 3600
 - report: docs/dispatch-posture-staleness.md
 
-- dispatch_posture_staleness_ac475a1b3a65: status=fresh snapshots=25 stale_snapshots=23 latest_snapshot_age_seconds=0 stale_after_seconds=3600 latest_tasks=365 latest_risk_counts=low=365 report=docs/dispatch-posture-staleness.md
+- dispatch_posture_staleness_9f6565ab1ac4: status=fresh snapshots=25 stale_snapshots=22 latest_snapshot_age_seconds=0 stale_after_seconds=3600 latest_tasks=369 latest_risk_counts=low=369 report=docs/dispatch-posture-staleness.md
 
 ## Dispatch Posture Refresh Recommendation
 
 - status: no_refresh_needed
-- source_review: dispatch_posture_staleness_ac475a1b3a65
+- source_review: dispatch_posture_staleness_9f6565ab1ac4
 - source_status: fresh
 - recommended_commands: none
 - report: docs/dispatch-posture-refresh.md
 
-- dispatch_posture_refresh_182bb947f779: status=no_refresh_needed source_review=dispatch_posture_staleness_ac475a1b3a65 source_status=fresh recommended_commands=none report=docs/dispatch-posture-refresh.md
+- dispatch_posture_refresh_d75445f1e6f2: status=no_refresh_needed source_review=dispatch_posture_staleness_9f6565ab1ac4 source_status=fresh recommended_commands=none report=docs/dispatch-posture-refresh.md
 
 ## Capability Expansion Ledger
 
@@ -396,12 +396,12 @@
 - approval_boundary: explicit_operator_approval_required
 - report: docs/capability-expansion-ledger.md
 
-- capability_expansion_ledger_0d1130a96dfc: status=report_only capabilities=9 ready=0 deferred=9 approval_boundary=explicit_operator_approval_required report=docs/capability-expansion-ledger.md
+- capability_expansion_ledger_81205c49baa9: status=report_only capabilities=9 ready=0 deferred=9 approval_boundary=explicit_operator_approval_required report=docs/capability-expansion-ledger.md
 
 ## Capability Readiness Review
 
 - status: blocked_by_missing_evidence
-- source_ledger: capability_expansion_ledger_0d1130a96dfc
+- source_ledger: capability_expansion_ledger_81205c49baa9
 - capabilities: 9
 - ready: 0
 - not_ready: 9
@@ -409,12 +409,12 @@
 - recommended_commands: none
 - report: docs/capability-readiness-review.md
 
-- capability_readiness_review_f7bf028b5951: status=blocked_by_missing_evidence source_ledger=capability_expansion_ledger_0d1130a96dfc capabilities=9 ready=0 not_ready=9 missing_evidence=9 recommended_commands=none report=docs/capability-readiness-review.md
+- capability_readiness_review_4489ae53a7b9: status=blocked_by_missing_evidence source_ledger=capability_expansion_ledger_81205c49baa9 capabilities=9 ready=0 not_ready=9 missing_evidence=9 recommended_commands=none report=docs/capability-readiness-review.md
 
 ## Capability Proof Gap Index
 
 - status: open_gaps
-- source_review: capability_readiness_review_f7bf028b5951
+- source_review: capability_readiness_review_4489ae53a7b9
 - capabilities: 9
 - gaps: 9
 - missing_evidence: 9
@@ -423,12 +423,12 @@
 - recommended_commands: none
 - report: docs/capability-proof-gap-index.md
 
-- capability_proof_gap_index_2f3b70c0af65: status=open_gaps source_review=capability_readiness_review_f7bf028b5951 source_status=blocked_by_missing_evidence gaps=9 missing_evidence=9 blocked_capabilities=9 next_proofs=9 recommended_commands=none report=docs/capability-proof-gap-index.md
+- capability_proof_gap_index_f94849975a9e: status=open_gaps source_review=capability_readiness_review_4489ae53a7b9 source_status=blocked_by_missing_evidence gaps=9 missing_evidence=9 blocked_capabilities=9 next_proofs=9 recommended_commands=none report=docs/capability-proof-gap-index.md
 
 ## Capability Approval Boundary Matrix
 
 - status: approval_required
-- source_index: capability_proof_gap_index_2f3b70c0af65
+- source_index: capability_proof_gap_index_f94849975a9e
 - capabilities: 9
 - boundaries: 1
 - gaps: 9
@@ -437,12 +437,12 @@
 - recommended_commands: none
 - report: docs/capability-approval-boundary-matrix.md
 
-- capability_approval_boundary_matrix_cbf114b5b10c: status=approval_required source_index=capability_proof_gap_index_2f3b70c0af65 source_status=open_gaps boundaries=1 gaps=9 blocked_capabilities=9 approvals_required=9 recommended_commands=none report=docs/capability-approval-boundary-matrix.md
+- capability_approval_boundary_matrix_0130edf83a59: status=approval_required source_index=capability_proof_gap_index_f94849975a9e source_status=open_gaps boundaries=1 gaps=9 blocked_capabilities=9 approvals_required=9 recommended_commands=none report=docs/capability-approval-boundary-matrix.md
 
 ## Capability Evidence Collection Plan
 
 - status: evidence_required
-- source_matrix: capability_approval_boundary_matrix_cbf114b5b10c
+- source_matrix: capability_approval_boundary_matrix_0130edf83a59
 - capabilities: 9
 - evidence_items: 9
 - manual_collection: 9
@@ -451,12 +451,12 @@
 - recommended_commands: none
 - report: docs/capability-evidence-collection-plan.md
 
-- capability_evidence_collection_plan_67b6ebecfeb4: status=evidence_required source_matrix=capability_approval_boundary_matrix_cbf114b5b10c source_status=approval_required evidence_items=9 manual_collection=9 approvals_required=9 boundaries=1 recommended_commands=none report=docs/capability-evidence-collection-plan.md
+- capability_evidence_collection_plan_65b7a5e9548d: status=evidence_required source_matrix=capability_approval_boundary_matrix_0130edf83a59 source_status=approval_required evidence_items=9 manual_collection=9 approvals_required=9 boundaries=1 recommended_commands=none report=docs/capability-evidence-collection-plan.md
 
 ## Capability Promotion Gate Checklist
 
 - status: promotion_blocked
-- source_plan: capability_evidence_collection_plan_67b6ebecfeb4
+- source_plan: capability_evidence_collection_plan_65b7a5e9548d
 - capabilities: 9
 - gates: 9
 - blocked_promotions: 9
@@ -466,12 +466,12 @@
 - recommended_commands: none
 - report: docs/capability-promotion-gate-checklist.md
 
-- capability_promotion_gate_checklist_628eee55c662: status=promotion_blocked source_plan=capability_evidence_collection_plan_67b6ebecfeb4 source_status=evidence_required gates=9 blocked_promotions=9 missing_evidence=9 approvals_required=9 boundaries=1 recommended_commands=none report=docs/capability-promotion-gate-checklist.md
+- capability_promotion_gate_checklist_092a82c80cc8: status=promotion_blocked source_plan=capability_evidence_collection_plan_65b7a5e9548d source_status=evidence_required gates=9 blocked_promotions=9 missing_evidence=9 approvals_required=9 boundaries=1 recommended_commands=none report=docs/capability-promotion-gate-checklist.md
 
 ## Capability Promotion Decision Ledger
 
 - status: promotion_decision_blocked
-- source_checklist: capability_promotion_gate_checklist_628eee55c662
+- source_checklist: capability_promotion_gate_checklist_092a82c80cc8
 - capabilities: 9
 - decisions: 9
 - deferred_promotions: 9
@@ -483,12 +483,12 @@
 - recommended_commands: none
 - report: docs/capability-promotion-decision-ledger.md
 
-- capability_promotion_decision_ledger_0c2b8936980c: status=promotion_decision_blocked source_checklist=capability_promotion_gate_checklist_628eee55c662 source_status=promotion_blocked decisions=9 deferred_promotions=9 operator_decisions_required=0 blocked_promotions=9 missing_evidence=9 approvals_required=9 boundaries=1 recommended_commands=none report=docs/capability-promotion-decision-ledger.md
+- capability_promotion_decision_ledger_59e4c5af918b: status=promotion_decision_blocked source_checklist=capability_promotion_gate_checklist_092a82c80cc8 source_status=promotion_blocked decisions=9 deferred_promotions=9 operator_decisions_required=0 blocked_promotions=9 missing_evidence=9 approvals_required=9 boundaries=1 recommended_commands=none report=docs/capability-promotion-decision-ledger.md
 
 ## Capability Trust Promotion Audit
 
 - status: trust_promotion_blocked
-- source_ledger: capability_promotion_decision_ledger_0c2b8936980c
+- source_ledger: capability_promotion_decision_ledger_59e4c5af918b
 - capabilities: 9
 - audits: 9
 - blocked_trust_promotions: 9
@@ -500,12 +500,12 @@
 - recommended_commands: none
 - report: docs/capability-trust-promotion-audit.md
 
-- capability_trust_promotion_audit_e402af3a4b71: status=trust_promotion_blocked source_ledger=capability_promotion_decision_ledger_0c2b8936980c source_status=promotion_decision_blocked audits=9 blocked_trust_promotions=9 operator_reviews_required=0 deferred_promotions=9 missing_evidence=9 approvals_required=9 boundaries=1 recommended_commands=none report=docs/capability-trust-promotion-audit.md
+- capability_trust_promotion_audit_fc48c78c4f8b: status=trust_promotion_blocked source_ledger=capability_promotion_decision_ledger_59e4c5af918b source_status=promotion_decision_blocked audits=9 blocked_trust_promotions=9 operator_reviews_required=0 deferred_promotions=9 missing_evidence=9 approvals_required=9 boundaries=1 recommended_commands=none report=docs/capability-trust-promotion-audit.md
 
 ## Capability Automatic Retry Audit
 
 - status: automatic_retry_blocked
-- source_audit: capability_trust_promotion_audit_e402af3a4b71
+- source_audit: capability_trust_promotion_audit_fc48c78c4f8b
 - capabilities: 9
 - audits: 9
 - blocked_retries: 9
@@ -518,12 +518,12 @@
 - recommended_commands: none
 - report: docs/capability-automatic-retry-audit.md
 
-- capability_automatic_retry_audit_cf1259c79b5c: status=automatic_retry_blocked source_audit=capability_trust_promotion_audit_e402af3a4b71 source_status=trust_promotion_blocked audits=9 blocked_retries=9 operator_reviews_required=0 blocked_trust_promotions=9 deferred_promotions=9 missing_evidence=9 approvals_required=9 boundaries=1 recommended_commands=none report=docs/capability-automatic-retry-audit.md
+- capability_automatic_retry_audit_06f4ba3fdbc6: status=automatic_retry_blocked source_audit=capability_trust_promotion_audit_fc48c78c4f8b source_status=trust_promotion_blocked audits=9 blocked_retries=9 operator_reviews_required=0 blocked_trust_promotions=9 deferred_promotions=9 missing_evidence=9 approvals_required=9 boundaries=1 recommended_commands=none report=docs/capability-automatic-retry-audit.md
 
 ## Capability Real Cost Tracking Audit
 
 - status: real_cost_tracking_blocked
-- source_audit: capability_automatic_retry_audit_cf1259c79b5c
+- source_audit: capability_automatic_retry_audit_06f4ba3fdbc6
 - capabilities: 9
 - audits: 9
 - blocked_cost_tracking: 9
@@ -537,13 +537,13 @@
 - recommended_commands: none
 - report: docs/capability-real-cost-tracking-audit.md
 
-- capability_real_cost_tracking_audit_94212f420d57: status=real_cost_tracking_blocked source_audit=capability_automatic_retry_audit_cf1259c79b5c source_status=automatic_retry_blocked audits=9 blocked_cost_tracking=9 operator_reviews_required=0 blocked_retries=9 blocked_trust_promotions=9 deferred_promotions=9 missing_evidence=9 approvals_required=9 boundaries=1 recommended_commands=none report=docs/capability-real-cost-tracking-audit.md
+- capability_real_cost_tracking_audit_6f14617c98e3: status=real_cost_tracking_blocked source_audit=capability_automatic_retry_audit_06f4ba3fdbc6 source_status=automatic_retry_blocked audits=9 blocked_cost_tracking=9 operator_reviews_required=0 blocked_retries=9 blocked_trust_promotions=9 deferred_promotions=9 missing_evidence=9 approvals_required=9 boundaries=1 recommended_commands=none report=docs/capability-real-cost-tracking-audit.md
 
 ## Hosted Dashboard Proof Checklist
 
 - status: hosted_dashboard_proof_blocked
 - source_kind: real_cost_tracking_proof_checklist
-- source_checklist: real_cost_tracking_proof_checklist_ec855ff4eb33
+- source_checklist: real_cost_tracking_proof_checklist_449b1d4fb63e
 - source_audit: none
 - source_status: real_cost_tracking_proof_blocked
 - capabilities: 1
@@ -559,12 +559,12 @@
 - recommended_commands: none
 - report: docs/hosted-dashboard-proof-checklist.md
 
-- hosted_dashboard_proof_checklist_05cf5f520f8d: status=hosted_dashboard_proof_blocked source_kind=real_cost_tracking_proof_checklist source_checklist=real_cost_tracking_proof_checklist_ec855ff4eb33 source_audit=none source_status=real_cost_tracking_proof_blocked checklist_items=1 blocked_dashboard_proofs=1 operator_reviews_required=0 blocked_cost_tracking=1 blocked_retries=1 blocked_trust_promotions=1 missing_evidence=1 approvals_required=1 boundaries=1 recommended_commands=none report=docs/hosted-dashboard-proof-checklist.md
+- hosted_dashboard_proof_checklist_838d401e99f6: status=hosted_dashboard_proof_blocked source_kind=real_cost_tracking_proof_checklist source_checklist=real_cost_tracking_proof_checklist_449b1d4fb63e source_audit=none source_status=real_cost_tracking_proof_blocked checklist_items=1 blocked_dashboard_proofs=1 operator_reviews_required=0 blocked_cost_tracking=1 blocked_retries=1 blocked_trust_promotions=1 missing_evidence=1 approvals_required=1 boundaries=1 recommended_commands=none report=docs/hosted-dashboard-proof-checklist.md
 
 ## Remote Worker Proof Checklist
 
 - status: remote_worker_proof_blocked
-- source_checklist: hosted_dashboard_proof_checklist_05cf5f520f8d
+- source_checklist: hosted_dashboard_proof_checklist_838d401e99f6
 - source_status: hosted_dashboard_proof_blocked
 - capabilities: 1
 - checklist_items: 1
@@ -580,12 +580,12 @@
 - recommended_commands: none
 - report: docs/remote-worker-proof-checklist.md
 
-- remote_worker_proof_checklist_bc4391a6e072: status=remote_worker_proof_blocked source_checklist=hosted_dashboard_proof_checklist_05cf5f520f8d source_status=hosted_dashboard_proof_blocked checklist_items=1 blocked_worker_proofs=1 operator_reviews_required=0 blocked_dashboard_proofs=1 blocked_cost_tracking=1 blocked_retries=1 blocked_trust_promotions=1 missing_evidence=1 approvals_required=1 boundaries=1 recommended_commands=none report=docs/remote-worker-proof-checklist.md
+- remote_worker_proof_checklist_ac6ffadfa725: status=remote_worker_proof_blocked source_checklist=hosted_dashboard_proof_checklist_838d401e99f6 source_status=hosted_dashboard_proof_blocked checklist_items=1 blocked_worker_proofs=1 operator_reviews_required=0 blocked_dashboard_proofs=1 blocked_cost_tracking=1 blocked_retries=1 blocked_trust_promotions=1 missing_evidence=1 approvals_required=1 boundaries=1 recommended_commands=none report=docs/remote-worker-proof-checklist.md
 
 ## Autonomous Scheduling Proof Checklist
 
 - status: autonomous_scheduling_proof_blocked
-- source_checklist: remote_worker_proof_checklist_bc4391a6e072
+- source_checklist: remote_worker_proof_checklist_ac6ffadfa725
 - source_status: remote_worker_proof_blocked
 - capabilities: 1
 - checklist_items: 1
@@ -602,12 +602,12 @@
 - recommended_commands: none
 - report: docs/autonomous-scheduling-proof-checklist.md
 
-- autonomous_scheduling_proof_checklist_91a09cc80c8c: status=autonomous_scheduling_proof_blocked source_checklist=remote_worker_proof_checklist_bc4391a6e072 source_status=remote_worker_proof_blocked checklist_items=1 blocked_scheduling_proofs=1 operator_reviews_required=0 blocked_worker_proofs=1 blocked_dashboard_proofs=1 blocked_cost_tracking=1 blocked_retries=1 blocked_trust_promotions=1 missing_evidence=1 approvals_required=1 boundaries=1 recommended_commands=none report=docs/autonomous-scheduling-proof-checklist.md
+- autonomous_scheduling_proof_checklist_5d9c6b2e2f94: status=autonomous_scheduling_proof_blocked source_checklist=remote_worker_proof_checklist_ac6ffadfa725 source_status=remote_worker_proof_blocked checklist_items=1 blocked_scheduling_proofs=1 operator_reviews_required=0 blocked_worker_proofs=1 blocked_dashboard_proofs=1 blocked_cost_tracking=1 blocked_retries=1 blocked_trust_promotions=1 missing_evidence=1 approvals_required=1 boundaries=1 recommended_commands=none report=docs/autonomous-scheduling-proof-checklist.md
 
 ## Browser Desktop Adapter Proof Checklist
 
 - status: browser_desktop_adapter_proof_blocked
-- source_checklist: autonomous_scheduling_proof_checklist_91a09cc80c8c
+- source_checklist: autonomous_scheduling_proof_checklist_5d9c6b2e2f94
 - source_status: autonomous_scheduling_proof_blocked
 - capabilities: 1
 - checklist_items: 1
@@ -625,12 +625,12 @@
 - recommended_commands: none
 - report: docs/browser-desktop-adapter-proof-checklist.md
 
-- browser_desktop_adapter_proof_checklist_59c441252592: status=browser_desktop_adapter_proof_blocked source_checklist=autonomous_scheduling_proof_checklist_91a09cc80c8c source_status=autonomous_scheduling_proof_blocked checklist_items=1 blocked_adapter_proofs=1 operator_reviews_required=0 blocked_scheduling_proofs=1 blocked_worker_proofs=1 blocked_dashboard_proofs=1 blocked_cost_tracking=1 blocked_retries=1 blocked_trust_promotions=1 missing_evidence=1 approvals_required=1 boundaries=1 recommended_commands=none report=docs/browser-desktop-adapter-proof-checklist.md
+- browser_desktop_adapter_proof_checklist_47c25dc75c71: status=browser_desktop_adapter_proof_blocked source_checklist=autonomous_scheduling_proof_checklist_5d9c6b2e2f94 source_status=autonomous_scheduling_proof_blocked checklist_items=1 blocked_adapter_proofs=1 operator_reviews_required=0 blocked_scheduling_proofs=1 blocked_worker_proofs=1 blocked_dashboard_proofs=1 blocked_cost_tracking=1 blocked_retries=1 blocked_trust_promotions=1 missing_evidence=1 approvals_required=1 boundaries=1 recommended_commands=none report=docs/browser-desktop-adapter-proof-checklist.md
 
 ## CI Deploy Proof Checklist
 
 - status: ci_deploy_proof_blocked
-- source_checklist: browser_desktop_adapter_proof_checklist_59c441252592
+- source_checklist: browser_desktop_adapter_proof_checklist_47c25dc75c71
 - source_status: browser_desktop_adapter_proof_blocked
 - capabilities: 1
 - checklist_items: 1
@@ -649,12 +649,12 @@
 - recommended_commands: none
 - report: docs/ci-deploy-proof-checklist.md
 
-- ci_deploy_proof_checklist_e0a407aac55e: status=ci_deploy_proof_blocked source_checklist=browser_desktop_adapter_proof_checklist_59c441252592 source_status=browser_desktop_adapter_proof_blocked checklist_items=1 blocked_ci_deploy_proofs=1 operator_reviews_required=0 blocked_adapter_proofs=1 blocked_scheduling_proofs=1 blocked_worker_proofs=1 blocked_dashboard_proofs=1 blocked_cost_tracking=1 blocked_retries=1 blocked_trust_promotions=1 missing_evidence=1 approvals_required=1 boundaries=1 recommended_commands=none report=docs/ci-deploy-proof-checklist.md
+- ci_deploy_proof_checklist_54eacf764a88: status=ci_deploy_proof_blocked source_checklist=browser_desktop_adapter_proof_checklist_47c25dc75c71 source_status=browser_desktop_adapter_proof_blocked checklist_items=1 blocked_ci_deploy_proofs=1 operator_reviews_required=0 blocked_adapter_proofs=1 blocked_scheduling_proofs=1 blocked_worker_proofs=1 blocked_dashboard_proofs=1 blocked_cost_tracking=1 blocked_retries=1 blocked_trust_promotions=1 missing_evidence=1 approvals_required=1 boundaries=1 recommended_commands=none report=docs/ci-deploy-proof-checklist.md
 
 ## Budget Enforcement Proof Checklist
 
 - status: budget_enforcement_proof_blocked
-- source_checklist: ci_deploy_proof_checklist_e0a407aac55e
+- source_checklist: ci_deploy_proof_checklist_54eacf764a88
 - source_status: ci_deploy_proof_blocked
 - capabilities: 1
 - checklist_items: 1
@@ -674,12 +674,12 @@
 - recommended_commands: none
 - report: docs/budget-enforcement-proof-checklist.md
 
-- budget_enforcement_proof_checklist_1d2bcd44a651: status=budget_enforcement_proof_blocked source_checklist=ci_deploy_proof_checklist_e0a407aac55e source_status=ci_deploy_proof_blocked checklist_items=1 blocked_budget_enforcement_proofs=1 operator_reviews_required=0 blocked_ci_deploy_proofs=1 blocked_adapter_proofs=1 blocked_scheduling_proofs=1 blocked_worker_proofs=1 blocked_dashboard_proofs=1 blocked_cost_tracking=1 blocked_retries=1 blocked_trust_promotions=1 missing_evidence=1 approvals_required=1 boundaries=1 recommended_commands=none report=docs/budget-enforcement-proof-checklist.md
+- budget_enforcement_proof_checklist_707d7f628def: status=budget_enforcement_proof_blocked source_checklist=ci_deploy_proof_checklist_54eacf764a88 source_status=ci_deploy_proof_blocked checklist_items=1 blocked_budget_enforcement_proofs=1 operator_reviews_required=0 blocked_ci_deploy_proofs=1 blocked_adapter_proofs=1 blocked_scheduling_proofs=1 blocked_worker_proofs=1 blocked_dashboard_proofs=1 blocked_cost_tracking=1 blocked_retries=1 blocked_trust_promotions=1 missing_evidence=1 approvals_required=1 boundaries=1 recommended_commands=none report=docs/budget-enforcement-proof-checklist.md
 
 ## Trust Promotion Proof Checklist
 
 - status: trust_promotion_proof_blocked
-- source_checklist: budget_enforcement_proof_checklist_1d2bcd44a651
+- source_checklist: budget_enforcement_proof_checklist_707d7f628def
 - source_status: budget_enforcement_proof_blocked
 - capabilities: 1
 - checklist_items: 1
@@ -700,12 +700,12 @@
 - recommended_commands: none
 - report: docs/trust-promotion-proof-checklist.md
 
-- trust_promotion_proof_checklist_2c449001ec55: status=trust_promotion_proof_blocked source_checklist=budget_enforcement_proof_checklist_1d2bcd44a651 source_status=budget_enforcement_proof_blocked checklist_items=1 blocked_trust_promotion_proofs=1 operator_reviews_required=0 blocked_budget_enforcement_proofs=1 blocked_ci_deploy_proofs=1 blocked_adapter_proofs=1 blocked_scheduling_proofs=1 blocked_worker_proofs=1 blocked_dashboard_proofs=1 blocked_cost_tracking=1 blocked_retries=1 blocked_trust_promotions=1 missing_evidence=1 approvals_required=1 boundaries=1 recommended_commands=none report=docs/trust-promotion-proof-checklist.md
+- trust_promotion_proof_checklist_53ade8ae4169: status=trust_promotion_proof_blocked source_checklist=budget_enforcement_proof_checklist_707d7f628def source_status=budget_enforcement_proof_blocked checklist_items=1 blocked_trust_promotion_proofs=1 operator_reviews_required=0 blocked_budget_enforcement_proofs=1 blocked_ci_deploy_proofs=1 blocked_adapter_proofs=1 blocked_scheduling_proofs=1 blocked_worker_proofs=1 blocked_dashboard_proofs=1 blocked_cost_tracking=1 blocked_retries=1 blocked_trust_promotions=1 missing_evidence=1 approvals_required=1 boundaries=1 recommended_commands=none report=docs/trust-promotion-proof-checklist.md
 
 ## Automatic Retry Proof Checklist
 
 - status: automatic_retry_proof_blocked
-- source_checklist: trust_promotion_proof_checklist_2c449001ec55
+- source_checklist: trust_promotion_proof_checklist_53ade8ae4169
 - source_status: trust_promotion_proof_blocked
 - capabilities: 1
 - checklist_items: 1
@@ -727,12 +727,12 @@
 - recommended_commands: none
 - report: docs/automatic-retry-proof-checklist.md
 
-- automatic_retry_proof_checklist_27d5d3baf7ea: status=automatic_retry_proof_blocked source_checklist=trust_promotion_proof_checklist_2c449001ec55 source_status=trust_promotion_proof_blocked checklist_items=1 blocked_automatic_retry_proofs=1 operator_reviews_required=0 blocked_trust_promotion_proofs=1 blocked_budget_enforcement_proofs=1 blocked_ci_deploy_proofs=1 blocked_adapter_proofs=1 blocked_scheduling_proofs=1 blocked_worker_proofs=1 blocked_dashboard_proofs=1 blocked_cost_tracking=1 blocked_retries=1 blocked_trust_promotions=1 missing_evidence=1 approvals_required=1 boundaries=1 recommended_commands=none report=docs/automatic-retry-proof-checklist.md
+- automatic_retry_proof_checklist_88576e74f045: status=automatic_retry_proof_blocked source_checklist=trust_promotion_proof_checklist_53ade8ae4169 source_status=trust_promotion_proof_blocked checklist_items=1 blocked_automatic_retry_proofs=1 operator_reviews_required=0 blocked_trust_promotion_proofs=1 blocked_budget_enforcement_proofs=1 blocked_ci_deploy_proofs=1 blocked_adapter_proofs=1 blocked_scheduling_proofs=1 blocked_worker_proofs=1 blocked_dashboard_proofs=1 blocked_cost_tracking=1 blocked_retries=1 blocked_trust_promotions=1 missing_evidence=1 approvals_required=1 boundaries=1 recommended_commands=none report=docs/automatic-retry-proof-checklist.md
 
 ## Real Cost Tracking Proof Checklist
 
 - status: real_cost_tracking_proof_blocked
-- source_checklist: automatic_retry_proof_checklist_27d5d3baf7ea
+- source_checklist: automatic_retry_proof_checklist_88576e74f045
 - source_status: automatic_retry_proof_blocked
 - capabilities: 1
 - checklist_items: 1
@@ -755,7 +755,7 @@
 - recommended_commands: none
 - report: docs/real-cost-tracking-proof-checklist.md
 
-- real_cost_tracking_proof_checklist_449b1d4fb63e: status=real_cost_tracking_proof_blocked source_checklist=automatic_retry_proof_checklist_27d5d3baf7ea source_status=automatic_retry_proof_blocked checklist_items=1 blocked_real_cost_tracking_proofs=1 operator_reviews_required=0 blocked_automatic_retry_proofs=1 blocked_trust_promotion_proofs=1 blocked_budget_enforcement_proofs=1 blocked_ci_deploy_proofs=1 blocked_adapter_proofs=1 blocked_scheduling_proofs=1 blocked_worker_proofs=1 blocked_dashboard_proofs=1 blocked_cost_tracking=1 blocked_retries=1 blocked_trust_promotions=1 missing_evidence=1 approvals_required=1 boundaries=1 recommended_commands=none report=docs/real-cost-tracking-proof-checklist.md
+- real_cost_tracking_proof_checklist_9c9849ef5562: status=real_cost_tracking_proof_blocked source_checklist=automatic_retry_proof_checklist_88576e74f045 source_status=automatic_retry_proof_blocked checklist_items=1 blocked_real_cost_tracking_proofs=1 operator_reviews_required=0 blocked_automatic_retry_proofs=1 blocked_trust_promotion_proofs=1 blocked_budget_enforcement_proofs=1 blocked_ci_deploy_proofs=1 blocked_adapter_proofs=1 blocked_scheduling_proofs=1 blocked_worker_proofs=1 blocked_dashboard_proofs=1 blocked_cost_tracking=1 blocked_retries=1 blocked_trust_promotions=1 missing_evidence=1 approvals_required=1 boundaries=1 recommended_commands=none report=docs/real-cost-tracking-proof-checklist.md
 
 ## Goal Completion Audit
 
@@ -769,12 +769,12 @@
 - recommended_commands: none
 - report: docs/goal-completion-audit.md
 
-- goal_completion_audit_e4074daba5db: status=blocked_by_report_only_proofs requirements=9 satisfied_requirements=0 blocked_requirements=9 missing_evidence=9 approvals_required=9 external_decisions_required=2 recommended_commands=none report=docs/goal-completion-audit.md
+- goal_completion_audit_89ee5efcd9aa: status=blocked_by_report_only_proofs requirements=9 satisfied_requirements=0 blocked_requirements=9 missing_evidence=9 approvals_required=9 external_decisions_required=2 recommended_commands=none report=docs/goal-completion-audit.md
 
 ## Expansion Decision Brief
 
 - status: operator_decisions_required
-- source_audit: goal_completion_audit_e4074daba5db
+- source_audit: goal_completion_audit_89ee5efcd9aa
 - source_status: blocked_by_report_only_proofs
 - requirements: 9
 - blocked_requirements: 9
@@ -784,14 +784,14 @@
 - recommended_next_step: operator_review_required
 - report: docs/expansion-decision-brief.md
 
-- expansion_decision_brief_43d6b648a67e: status=operator_decisions_required source_audit=goal_completion_audit_e4074daba5db source_status=blocked_by_report_only_proofs requirements=9 blocked_requirements=9 external_decisions_required=2 approvals_required=9 decision_items=11 recommended_next_step=operator_review_required report=docs/expansion-decision-brief.md
+- expansion_decision_brief_28fe54d3d4eb: status=operator_decisions_required source_audit=goal_completion_audit_89ee5efcd9aa source_status=blocked_by_report_only_proofs requirements=9 blocked_requirements=9 external_decisions_required=2 approvals_required=9 decision_items=11 recommended_next_step=operator_review_required report=docs/expansion-decision-brief.md
 
 ## Expansion Decision Evidence Index
 
 - status: evidence_indexed
-- source_brief: expansion_decision_brief_43d6b648a67e
+- source_brief: expansion_decision_brief_28fe54d3d4eb
 - source_status: operator_decisions_required
-- source_audit: goal_completion_audit_e4074daba5db
+- source_audit: goal_completion_audit_89ee5efcd9aa
 - decision_items: 11
 - evidence_items: 11
 - external_decisions: 2
@@ -800,15 +800,15 @@
 - recommended_next_step: operator_review_required
 - report: docs/expansion-decision-evidence-index.md
 
-- expansion_decision_evidence_index_392f9e3b0c33: status=evidence_indexed source_brief=expansion_decision_brief_43d6b648a67e source_status=operator_decisions_required source_audit=goal_completion_audit_e4074daba5db decision_items=11 evidence_items=11 external_decisions=2 capability_decisions=9 missing_evidence_links=0 recommended_next_step=operator_review_required report=docs/expansion-decision-evidence-index.md
+- expansion_decision_evidence_index_eaf24cbc82ed: status=evidence_indexed source_brief=expansion_decision_brief_28fe54d3d4eb source_status=operator_decisions_required source_audit=goal_completion_audit_89ee5efcd9aa decision_items=11 evidence_items=11 external_decisions=2 capability_decisions=9 missing_evidence_links=0 recommended_next_step=operator_review_required report=docs/expansion-decision-evidence-index.md
 
 ## Expansion Operator Review Checklist
 
 - status: operator_review_required
-- source_index: expansion_decision_evidence_index_392f9e3b0c33
+- source_index: expansion_decision_evidence_index_eaf24cbc82ed
 - source_status: evidence_indexed
-- source_brief: expansion_decision_brief_43d6b648a67e
-- source_audit: goal_completion_audit_e4074daba5db
+- source_brief: expansion_decision_brief_28fe54d3d4eb
+- source_audit: goal_completion_audit_89ee5efcd9aa
 - review_items: 11
 - decision_required: 11
 - external_reviews: 2
@@ -818,16 +818,16 @@
 - recommended_next_step: operator_decision_required
 - report: docs/expansion-operator-review-checklist.md
 
-- expansion_operator_review_checklist_c0368f895c71: status=operator_review_required source_index=expansion_decision_evidence_index_392f9e3b0c33 source_status=evidence_indexed source_brief=expansion_decision_brief_43d6b648a67e source_audit=goal_completion_audit_e4074daba5db review_items=11 decision_required=11 external_reviews=2 capability_reviews=9 missing_evidence_links=0 allowed_actions=approve,defer,request_more_evidence recommended_next_step=operator_decision_required report=docs/expansion-operator-review-checklist.md
+- expansion_operator_review_checklist_69c9b02568bb: status=operator_review_required source_index=expansion_decision_evidence_index_eaf24cbc82ed source_status=evidence_indexed source_brief=expansion_decision_brief_28fe54d3d4eb source_audit=goal_completion_audit_89ee5efcd9aa review_items=11 decision_required=11 external_reviews=2 capability_reviews=9 missing_evidence_links=0 allowed_actions=approve,defer,request_more_evidence recommended_next_step=operator_decision_required report=docs/expansion-operator-review-checklist.md
 
 ## Expansion Operator Decision Ledger
 
 - status: pending_operator_decisions
-- source_checklist: expansion_operator_review_checklist_c0368f895c71
+- source_checklist: expansion_operator_review_checklist_69c9b02568bb
 - source_status: operator_review_required
-- source_index: expansion_decision_evidence_index_392f9e3b0c33
-- source_brief: expansion_decision_brief_43d6b648a67e
-- source_audit: goal_completion_audit_e4074daba5db
+- source_index: expansion_decision_evidence_index_eaf24cbc82ed
+- source_brief: expansion_decision_brief_28fe54d3d4eb
+- source_audit: goal_completion_audit_89ee5efcd9aa
 - decision_items: 11
 - pending_decisions: 11
 - approved_decisions: 0
@@ -839,17 +839,17 @@
 - recommended_next_step: operator_decision_required
 - report: docs/expansion-operator-decision-ledger.md
 
-- expansion_operator_decision_ledger_c181d75ff026: status=pending_operator_decisions source_checklist=expansion_operator_review_checklist_c0368f895c71 source_status=operator_review_required source_index=expansion_decision_evidence_index_392f9e3b0c33 source_brief=expansion_decision_brief_43d6b648a67e source_audit=goal_completion_audit_e4074daba5db decision_items=11 pending_decisions=11 approved_decisions=0 deferred_decisions=0 more_evidence_requested=0 external_decisions=2 capability_decisions=9 allowed_actions=approve,defer,request_more_evidence recommended_next_step=operator_decision_required report=docs/expansion-operator-decision-ledger.md
+- expansion_operator_decision_ledger_b384a310e585: status=pending_operator_decisions source_checklist=expansion_operator_review_checklist_69c9b02568bb source_status=operator_review_required source_index=expansion_decision_evidence_index_eaf24cbc82ed source_brief=expansion_decision_brief_28fe54d3d4eb source_audit=goal_completion_audit_89ee5efcd9aa decision_items=11 pending_decisions=11 approved_decisions=0 deferred_decisions=0 more_evidence_requested=0 external_decisions=2 capability_decisions=9 allowed_actions=approve,defer,request_more_evidence recommended_next_step=operator_decision_required report=docs/expansion-operator-decision-ledger.md
 
 ## Expansion Operator Approval Draft
 
 - status: approval_draft_ready
-- source_ledger: expansion_operator_decision_ledger_c181d75ff026
+- source_ledger: expansion_operator_decision_ledger_b384a310e585
 - source_status: pending_operator_decisions
-- source_checklist: expansion_operator_review_checklist_c0368f895c71
-- source_index: expansion_decision_evidence_index_392f9e3b0c33
-- source_brief: expansion_decision_brief_43d6b648a67e
-- source_audit: goal_completion_audit_e4074daba5db
+- source_checklist: expansion_operator_review_checklist_69c9b02568bb
+- source_index: expansion_decision_evidence_index_eaf24cbc82ed
+- source_brief: expansion_decision_brief_28fe54d3d4eb
+- source_audit: goal_completion_audit_89ee5efcd9aa
 - draft_items: 11
 - draft_requests: 11
 - created_approval_requests: 0
@@ -861,18 +861,18 @@
 - recommended_next_step: operator_approval_flow_required
 - report: docs/expansion-operator-approval-draft.md
 
-- expansion_operator_approval_draft_999739e5a03d: status=approval_draft_ready source_ledger=expansion_operator_decision_ledger_c181d75ff026 source_status=pending_operator_decisions source_checklist=expansion_operator_review_checklist_c0368f895c71 source_index=expansion_decision_evidence_index_392f9e3b0c33 source_brief=expansion_decision_brief_43d6b648a67e source_audit=goal_completion_audit_e4074daba5db draft_items=11 draft_requests=11 created_approval_requests=0 external_drafts=2 capability_drafts=9 approval_boundaries=2 pending_decisions=11 allowed_actions=approve,defer,request_more_evidence recommended_next_step=operator_approval_flow_required report=docs/expansion-operator-approval-draft.md
+- expansion_operator_approval_draft_92bf5d0265b4: status=approval_draft_ready source_ledger=expansion_operator_decision_ledger_b384a310e585 source_status=pending_operator_decisions source_checklist=expansion_operator_review_checklist_69c9b02568bb source_index=expansion_decision_evidence_index_eaf24cbc82ed source_brief=expansion_decision_brief_28fe54d3d4eb source_audit=goal_completion_audit_89ee5efcd9aa draft_items=11 draft_requests=11 created_approval_requests=0 external_drafts=2 capability_drafts=9 approval_boundaries=2 pending_decisions=11 allowed_actions=approve,defer,request_more_evidence recommended_next_step=operator_approval_flow_required report=docs/expansion-operator-approval-draft.md
 
 ## Expansion Operator Approval Request Review
 
 - status: approval_request_schema_review_required
-- source_draft: expansion_operator_approval_draft_999739e5a03d
+- source_draft: expansion_operator_approval_draft_92bf5d0265b4
 - source_status: approval_draft_ready
-- source_ledger: expansion_operator_decision_ledger_c181d75ff026
-- source_checklist: expansion_operator_review_checklist_c0368f895c71
-- source_index: expansion_decision_evidence_index_392f9e3b0c33
-- source_brief: expansion_decision_brief_43d6b648a67e
-- source_audit: goal_completion_audit_e4074daba5db
+- source_ledger: expansion_operator_decision_ledger_b384a310e585
+- source_checklist: expansion_operator_review_checklist_69c9b02568bb
+- source_index: expansion_decision_evidence_index_eaf24cbc82ed
+- source_brief: expansion_decision_brief_28fe54d3d4eb
+- source_audit: goal_completion_audit_89ee5efcd9aa
 - draft_requests: 11
 - review_items: 11
 - ready_requests: 0
@@ -886,24 +886,24 @@
 - recommended_next_step: approval_request_schema_decision_required
 - report: docs/expansion-operator-approval-request-review.md
 
-- expansion_operator_approval_request_review_02e86c1f3230: status=approval_request_schema_review_required source_draft=expansion_operator_approval_draft_999739e5a03d source_status=approval_draft_ready source_ledger=expansion_operator_decision_ledger_c181d75ff026 source_checklist=expansion_operator_review_checklist_c0368f895c71 source_index=expansion_decision_evidence_index_392f9e3b0c33 source_brief=expansion_decision_brief_43d6b648a67e source_audit=goal_completion_audit_e4074daba5db draft_requests=11 review_items=11 ready_requests=0 blocked_requests=11 schema_gaps=11 created_approval_requests=0 existing_approval_requests=0 external_requests=2 capability_requests=9 approval_boundaries=2 recommended_next_step=approval_request_schema_decision_required report=docs/expansion-operator-approval-request-review.md
+- expansion_operator_approval_request_review_c9210721ec4d: status=approval_request_schema_review_required source_draft=expansion_operator_approval_draft_92bf5d0265b4 source_status=approval_draft_ready source_ledger=expansion_operator_decision_ledger_b384a310e585 source_checklist=expansion_operator_review_checklist_69c9b02568bb source_index=expansion_decision_evidence_index_eaf24cbc82ed source_brief=expansion_decision_brief_28fe54d3d4eb source_audit=goal_completion_audit_89ee5efcd9aa draft_requests=11 review_items=11 ready_requests=0 blocked_requests=11 schema_gaps=11 created_approval_requests=0 existing_approval_requests=0 external_requests=2 capability_requests=9 approval_boundaries=2 recommended_next_step=approval_request_schema_decision_required report=docs/expansion-operator-approval-request-review.md
 
 ## Expansion Operator Approval Schema Migration Selection Input Template
 
 - status: operator_approval_schema_migration_selection_input_required
-- source_packet: expansion_operator_approval_schema_migration_selection_packet_ea74ca93cd28
+- source_packet: expansion_operator_approval_schema_migration_selection_packet_8eeb92d473c2
 - source_status: operator_approval_schema_migration_selection_required
-- source_checklist: expansion_operator_approval_schema_migration_action_checklist_e2f3ee84be69
+- source_checklist: expansion_operator_approval_schema_migration_action_checklist_7d14f9039953
 - source_checklist_status: operator_approval_schema_migration_manual_action_required
-- source_ledger: expansion_operator_approval_schema_migration_decision_ledger_ab07dd3f3044
+- source_ledger: expansion_operator_approval_schema_migration_decision_ledger_813cc937a76b
 - source_ledger_status: operator_approval_schema_migration_decision_pending
-- source_request: expansion_operator_approval_schema_migration_approval_request_441c15ed4b13
+- source_request: expansion_operator_approval_schema_migration_approval_request_9c0b43e2b90b
 - source_request_status: operator_approval_schema_migration_approval_required
-- source_plan: expansion_operator_approval_schema_migration_plan_9cbb44802f48
+- source_plan: expansion_operator_approval_schema_migration_plan_aff9cc09dd9b
 - source_plan_status: operator_approval_schema_migration_plan_ready
-- source_decision: expansion_operator_approval_schema_decision_0ca92d8e9579
+- source_decision: expansion_operator_approval_schema_decision_f7ca15eccf9f
 - source_decision_status: approval_schema_decision_ready
-- source_review: expansion_operator_approval_request_review_02e86c1f3230
+- source_review: expansion_operator_approval_request_review_c9210721ec4d
 - source_review_status: approval_request_schema_review_required
 - target_table: operator_approval_requests
 - request_count: 1
@@ -935,13 +935,13 @@
 - recommended_next_step: operator_approval_schema_migration_operator_input_required
 - report: docs/expansion-operator-approval-schema-migration-selection-input-template.md
 
-- expansion_operator_approval_schema_migration_selection_input_template_f54446755612: status=operator_approval_schema_migration_selection_input_required source_packet=expansion_operator_approval_schema_migration_selection_packet_ea74ca93cd28 source_status=operator_approval_schema_migration_selection_required source_checklist=expansion_operator_approval_schema_migration_action_checklist_e2f3ee84be69 source_checklist_status=operator_approval_schema_migration_manual_action_required source_ledger=expansion_operator_approval_schema_migration_decision_ledger_ab07dd3f3044 source_ledger_status=operator_approval_schema_migration_decision_pending source_request=expansion_operator_approval_schema_migration_approval_request_441c15ed4b13 source_request_status=operator_approval_schema_migration_approval_required source_plan=expansion_operator_approval_schema_migration_plan_9cbb44802f48 source_plan_status=operator_approval_schema_migration_plan_ready target_table=operator_approval_requests request_count=1 decision_count=1 pending_decisions=1 action_count=1 pending_actions=1 actions_taken=0 selected_action=none selection_count=1 pending_selections=1 selections_recorded=0 template_count=1 pending_inputs=1 inputs_recorded=0 required_fields_count=4 missing_required_inputs=4 approval_boundary=schema_migration requested_action=apply_operator_approval_requests_schema allowed_actions=approve,defer,request_more_evidence migration_applied=0 table_created=0 operator_approval_rows_created=0 approval_requests_created=0 existing_approval_requests=0 recommended_next_step=operator_approval_schema_migration_operator_input_required report=docs/expansion-operator-approval-schema-migration-selection-input-template.md
+- expansion_operator_approval_schema_migration_selection_input_template_c00029092c29: status=operator_approval_schema_migration_selection_input_required source_packet=expansion_operator_approval_schema_migration_selection_packet_8eeb92d473c2 source_status=operator_approval_schema_migration_selection_required source_checklist=expansion_operator_approval_schema_migration_action_checklist_7d14f9039953 source_checklist_status=operator_approval_schema_migration_manual_action_required source_ledger=expansion_operator_approval_schema_migration_decision_ledger_813cc937a76b source_ledger_status=operator_approval_schema_migration_decision_pending source_request=expansion_operator_approval_schema_migration_approval_request_9c0b43e2b90b source_request_status=operator_approval_schema_migration_approval_required source_plan=expansion_operator_approval_schema_migration_plan_aff9cc09dd9b source_plan_status=operator_approval_schema_migration_plan_ready target_table=operator_approval_requests request_count=1 decision_count=1 pending_decisions=1 action_count=1 pending_actions=1 actions_taken=0 selected_action=none selection_count=1 pending_selections=1 selections_recorded=0 template_count=1 pending_inputs=1 inputs_recorded=0 required_fields_count=4 missing_required_inputs=4 approval_boundary=schema_migration requested_action=apply_operator_approval_requests_schema allowed_actions=approve,defer,request_more_evidence migration_applied=0 table_created=0 operator_approval_rows_created=0 approval_requests_created=0 existing_approval_requests=0 recommended_next_step=operator_approval_schema_migration_operator_input_required report=docs/expansion-operator-approval-schema-migration-selection-input-template.md
 
 ## Playbooks
 
 - active: 1
 
-- first-milestone-closed-loop: active source=first_milestone_closed_loop successful_runs=182 path=playbooks/first-milestone-closed-loop.md
+- first-milestone-closed-loop: active source=first_milestone_closed_loop successful_runs=184 path=playbooks/first-milestone-closed-loop.md
 
 ## Eval Candidates
 
@@ -972,24 +972,28 @@
 
 ## Recent Runs
 
+- run_d52df83d4bba: completed project=bootstrap goal=goal_3010379344ae completed=2026-06-22T14:18:50.202555+00:00 summary=runs/run_d52df83d4bba/summary.md
+- run_03eaeada2d97: completed project=bootstrap goal=goal_fa4651adac88 completed=2026-06-22T14:18:09.200853+00:00 summary=runs/run_03eaeada2d97/summary.md
 - run_ce1a7fc25cd8: completed project=bootstrap goal=goal_0ace8dbe994d completed=2026-06-22T13:57:47.150876+00:00 summary=runs/run_ce1a7fc25cd8/summary.md
 - run_14bdf1a0b1cb: completed project=bootstrap goal=goal_2433e121392a completed=2026-06-22T13:57:46.861985+00:00 summary=runs/run_14bdf1a0b1cb/summary.md
 - run_6fcdef549e8b: completed project=bootstrap goal=goal_4960d6e470de completed=2026-06-22T13:42:56.490306+00:00 summary=runs/run_6fcdef549e8b/summary.md
-- run_dd1c529d99f5: completed project=bootstrap goal=goal_4d72116a255a completed=2026-06-22T13:42:56.197072+00:00 summary=runs/run_dd1c529d99f5/summary.md
-- run_7a9b1e946e32: completed project=bootstrap goal=goal_287b14a4f292 completed=2026-06-22T13:20:38.458349+00:00 summary=runs/run_7a9b1e946e32/summary.md
+
+## Recent Evidence Packets
+
+- run_ce1a7fc25cd8: review=runs/run_ce1a7fc25cd8/review.md evidence=runs/run_ce1a7fc25cd8/evidence-index.md replay=runs/run_ce1a7fc25cd8/replay-summary.md
 
 ## Recent Learnings
 
+- run_d52df83d4bba: Run run_d52df83d4bba showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_d52df83d4bba/learning.md)
+- run_03eaeada2d97: Run run_03eaeada2d97 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_03eaeada2d97/learning.md)
 - run_ce1a7fc25cd8: Run run_ce1a7fc25cd8 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_ce1a7fc25cd8/learning.md)
 - run_14bdf1a0b1cb: Run run_14bdf1a0b1cb showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_14bdf1a0b1cb/learning.md)
 - run_6fcdef549e8b: Run run_6fcdef549e8b showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_6fcdef549e8b/learning.md)
-- run_dd1c529d99f5: Run run_dd1c529d99f5 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_dd1c529d99f5/learning.md)
-- run_7a9b1e946e32: Run run_7a9b1e946e32 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_7a9b1e946e32/learning.md)
 
 ## Recent Eval Results
 
+- first_milestone_closed_loop: pass run=run_d52df83d4bba created_at=2026-06-22T14:18:50.210160+00:00
+- first_milestone_closed_loop: pass run=run_03eaeada2d97 created_at=2026-06-22T14:18:09.209404+00:00
 - first_milestone_closed_loop: pass run=run_ce1a7fc25cd8 created_at=2026-06-22T13:57:47.158545+00:00
 - first_milestone_closed_loop: pass run=run_14bdf1a0b1cb created_at=2026-06-22T13:57:46.868962+00:00
 - first_milestone_closed_loop: pass run=run_6fcdef549e8b created_at=2026-06-22T13:42:56.499665+00:00
-- first_milestone_closed_loop: pass run=run_dd1c529d99f5 created_at=2026-06-22T13:42:56.206731+00:00
-- first_milestone_closed_loop: pass run=run_7a9b1e946e32 created_at=2026-06-22T13:20:38.469188+00:00

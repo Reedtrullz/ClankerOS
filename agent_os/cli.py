@@ -227,6 +227,11 @@ from agent_os.profile_routing import (
 )
 from agent_os.project_registry import register_project
 from agent_os.queue_health import render_queue_health_finding, write_queue_health_report
+from agent_os.run_review import (
+    write_evidence_index,
+    write_replay_summary,
+    write_run_review,
+)
 from agent_os.runtime import detect_runtime_capabilities, write_runtime_capability_matrix
 from agent_os.subagent_delegation import (
     DelegationError,
@@ -306,6 +311,15 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("capability-matrix", help="Write the runtime capability matrix.")
     subparsers.add_parser("dashboard", help="Write the static dashboard.")
     subparsers.add_parser("iterate", help="Write the next iteration packet from repo queues.")
+    review = subparsers.add_parser("review", help="Write a human-first run review packet.")
+    review.add_argument("run_id")
+    evidence = subparsers.add_parser("evidence", help="Write a run evidence index.")
+    evidence.add_argument("run_id")
+    replay_summary = subparsers.add_parser(
+        "replay-summary",
+        help="Write a conceptual replay summary for a run.",
+    )
+    replay_summary.add_argument("run_id")
     subparsers.add_parser("approvals", help="List pending approval requests.")
     subparsers.add_parser("handoff-review", help="Review blocked tasks and stale handoffs.")
     subparsers.add_parser("profiles", help="List safe local model/profile routing defaults.")
@@ -691,6 +705,60 @@ def main(argv: list[str] | None = None) -> int:
         print(f"next_iteration: {packet.focus}")
         print(f"section: {packet.source_section}")
         print(f"packet: {packet.packet_path}")
+        return 0
+
+    if args.command == "review":
+        AgentSystem(root).initialize()
+        try:
+            report_path, packet = write_run_review(root, args.run_id)
+        except KeyError:
+            print(f"review_failed: run {args.run_id} not found")
+            return 1
+        print(f"run_review: {packet.run.id}")
+        print(f"status: {packet.run.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"tasks: {len(packet.tasks)}")
+        print(f"events: {len(packet.events)}")
+        print(f"recommended_next_action: {packet.recommended_next_action}")
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
+        return 0
+
+    if args.command == "evidence":
+        AgentSystem(root).initialize()
+        try:
+            report_path, packet = write_evidence_index(root, args.run_id)
+        except KeyError:
+            print(f"evidence_failed: run {args.run_id} not found")
+            return 1
+        print(f"evidence_packet: {packet.run.id}")
+        print(f"status: {packet.run.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(
+            "database_rows: "
+            f"tasks={len(packet.tasks)} events={len(packet.events)} "
+            f"incidents={len(packet.incidents)} approvals={len(packet.approvals)} "
+            f"effects={len(packet.effects)}"
+        )
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
+        return 0
+
+    if args.command == "replay-summary":
+        AgentSystem(root).initialize()
+        try:
+            report_path, packet = write_replay_summary(root, args.run_id)
+        except KeyError:
+            print(f"replay-summary_failed: run {args.run_id} not found")
+            return 1
+        print(f"replay_summary: {packet.run.id}")
+        print(f"status: {packet.run.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"replay_steps: {len(packet.events)}")
+        print("conceptual_replay_only: true")
+        print("commands_rerun: 0")
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
         return 0
 
     if args.command == "approvals":

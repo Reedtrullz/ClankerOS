@@ -2405,6 +2405,26 @@ def generate_static_dashboard(root: Path) -> Path:
     else:
         lines.append("- none")
 
+    lines.extend(["", "## Recent Evidence Packets", ""])
+    evidence_packet_lines = []
+    for run in runs:
+        run_dir = root / "runs" / run["id"]
+        review_path = run_dir / "review.md"
+        evidence_path = run_dir / "evidence-index.md"
+        replay_path = run_dir / "replay-summary.md"
+        if not (review_path.exists() or evidence_path.exists() or replay_path.exists()):
+            continue
+        evidence_packet_lines.append(
+            f"- {run['id']}: "
+            f"review={_relative_to_root(root, str(review_path)) if review_path.exists() else 'missing'} "
+            f"evidence={_relative_to_root(root, str(evidence_path)) if evidence_path.exists() else 'missing'} "
+            f"replay={_relative_to_root(root, str(replay_path)) if replay_path.exists() else 'missing'}"
+        )
+    if evidence_packet_lines:
+        lines.extend(evidence_packet_lines)
+    else:
+        lines.append("- none")
+
     lines.extend(["", "## Recent Learnings", ""])
     if learnings:
         for learning in learnings:

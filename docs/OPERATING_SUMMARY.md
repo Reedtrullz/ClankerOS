@@ -64,6 +64,14 @@ Core layers for the bootstrap:
   markdown, `skill approve` promotes a proposed skill to `active`, and
   `skill archive` records a local archive decision. Proposed skills are not
   active until approved.
+- Run evidence review: `review <run_id>` writes a human-first
+  `runs/<run_id>/review.md`, `evidence <run_id>` writes
+  `runs/<run_id>/evidence-index.md`, and `replay-summary <run_id>` writes
+  `runs/<run_id>/replay-summary.md`. The reports summarize existing local run
+  rows, task evidence, events, artifacts, approvals, incidents, effects,
+  delegations, memory entries, skills, and eval candidates without rerunning
+  commands, approving effects, committing, pushing, deploying, or mutating
+  external systems.
 - Operator cockpit: the dashboard starts with active runs, registered projects,
   approval inbox, proposed effects, verification status, recent worktrees,
   GitHub handoffs, CI/deploy evidence, profile routing decisions, subagent

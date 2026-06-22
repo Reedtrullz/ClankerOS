@@ -1400,18 +1400,31 @@ work, or changing routing.
   write files, approve work, commit, run remote workers, or mutate external
   systems.
 
+## Latest Run Evidence Review Packets
+
+- `review <run_id>` writes `runs/<run_id>/review.md` with the original goal,
+  task plan, verification counts, evidence links, operator signals, and
+  recommended next action.
+- `evidence <run_id>` writes `runs/<run_id>/evidence-index.md` with run files,
+  project artifacts, database row counts, proposal/effect references, and
+  non-claims.
+- `replay-summary <run_id>` writes `runs/<run_id>/replay-summary.md` from
+  recorded events as a conceptual replay map.
+- The dashboard exposes generated packets under `## Recent Evidence Packets`.
+- Non-claims: run review packets do not rerun commands, approve effects,
+  commit, push, deploy, start remote workers, schedule work, promote trust,
+  retry work, track spend, or mutate external systems.
+
 ## Next Actions
 
-1. Use `docs/next-iteration.md` packet `iteration_07fc0b9da91f` to complete:
-   Add delegation result ingestion for read-only subagent outputs.
-2. Build delegation result ingestion as the next executable control-plane
-   primitive: attach structured read-only outputs to delegation contracts,
-   keep result artifacts inspectable, and preserve no external/model-provider
-   side effects.
-3. Keep hosted dashboard, remote workers, scheduler,
-   browser/desktop adapters, budget enforcement, trust promotion, retries, and
-   real-cost tracking blocked until their own evidence and approval contracts
-   exist.
-4. Preserve the local coding-to-GitHub-to-CI evidence chain as executable
-   operator proof, but do not treat operator-supplied CI/deploy evidence as a
-   live CI/deploy action performed by ClankerOS.
+1. Use `docs/next-iteration.md` to complete:
+   Add deterministic steering review records plus `next-action` and `inbox` commands.
+2. Build steering as executable control-plane behavior from current local
+   state: approvals, incidents, blocked tasks, failed tasks, recent run review
+   packets, and stale handoffs.
+3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
+   budget enforcement, trust promotion, retries, and real-cost tracking
+   blocked until their own evidence and approval contracts exist.
+4. Preserve the local coding-to-GitHub-to-CI evidence chain as operator proof,
+   but do not treat operator-supplied CI/deploy evidence as a live CI/deploy
+   action performed by ClankerOS.

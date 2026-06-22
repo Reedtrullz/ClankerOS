@@ -2436,6 +2436,113 @@ def test_skill_proposal_file_failure_leaves_no_skill_rows(
     assert storage.list_skills(project_id="bootstrap") == []
 
 
+def test_review_command_writes_human_first_run_packet_and_dashboard(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    result = system.run_goal(
+        project_id="bootstrap",
+        description="Make run evidence easier for an operator to review.",
+    )
+
+    assert main(["--root", str(tmp_path), "review", result.run_id]) == 0
+    output = capsys.readouterr().out
+    assert f"run_review: {result.run_id}" in output
+    assert "status: completed" in output
+    assert "recommended_next_action: final_review" in output
+    assert "network_actions_taken: 0" in output
+
+    report_path = tmp_path / "runs" / result.run_id / "review.md"
+    report = report_path.read_text(encoding="utf-8")
+    assert "# Run Review" in report
+    assert "## Original Goal" in report
+    assert "Make run evidence easier" in report
+    assert "## Current Plan" in report
+    assert "write_goal_artifact" in report
+    assert "record_learning" in report
+    assert "## Verification" in report
+    assert "passed=2" in report
+    assert "## Recommended Next Action" in report
+    assert "final_review" in report
+    assert "network_actions_taken: 0" in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Recent Evidence Packets" in dashboard
+    assert result.run_id in dashboard
+    assert "review=runs/" + result.run_id + "/review.md" in dashboard
+
+
+def test_evidence_command_indexes_run_artifacts_and_database_rows(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    result = system.run_goal(
+        project_id="bootstrap",
+        description="Index all run evidence for later audit.",
+    )
+
+    assert main(["--root", str(tmp_path), "evidence", result.run_id]) == 0
+    output = capsys.readouterr().out
+    assert f"evidence_packet: {result.run_id}" in output
+    assert "report: runs/" + result.run_id + "/evidence-index.md" in output
+    assert "database_rows: tasks=2 events=" in output
+    assert "external_mutations_taken: 0" in output
+
+    report_path = tmp_path / "runs" / result.run_id / "evidence-index.md"
+    report = report_path.read_text(encoding="utf-8")
+    assert "# Evidence Index" in report
+    assert "## Run Files" in report
+    assert f"runs/{result.run_id}/activity.md" in report
+    assert f"runs/{result.run_id}/events.jsonl" in report
+    assert f"runs/{result.run_id}/summary.md" in report
+    assert "## Project Artifacts" in report
+    assert f"projects/bootstrap/artifacts/{result.run_id}/goal-artifact.md" in report
+    assert f"projects/bootstrap/artifacts/{result.run_id}/learning.md" in report
+    assert "## Database Rows" in report
+    assert "- tasks: 2" in report
+    assert "- events: " in report
+    assert "## Non-Claims" in report
+    assert "Does not replay or rerun the work." in report
+
+
+def test_replay_summary_command_explains_run_without_rerunning(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    result = system.run_goal(
+        project_id="bootstrap",
+        description="Explain a run as a replayable story.",
+    )
+
+    assert main(["--root", str(tmp_path), "replay-summary", result.run_id]) == 0
+    output = capsys.readouterr().out
+    assert f"replay_summary: {result.run_id}" in output
+    assert "conceptual_replay_only: true" in output
+    assert "commands_rerun: 0" in output
+
+    report_path = tmp_path / "runs" / result.run_id / "replay-summary.md"
+    report = report_path.read_text(encoding="utf-8")
+    assert "# Replay Summary" in report
+    assert "## Replay Steps" in report
+    assert "goal.accepted" in report
+    assert "task.claimed" in report
+    assert "task.verified" in report
+    assert "run.completed" in report
+    assert "## Replay Boundary" in report
+    assert "This report does not rerun commands, mutate files, or approve effects." in report
+
+
+def test_run_review_commands_reject_missing_run(tmp_path: Path, capsys) -> None:
+    for command in ["review", "evidence", "replay-summary"]:
+        assert main(["--root", str(tmp_path), command, "run_missing"]) == 1
+        output = capsys.readouterr().out
+        assert f"{command}_failed: run run_missing not found" in output
+
+
 def test_static_dashboard_summarizes_runs_and_queue(tmp_path: Path) -> None:
     system = AgentSystem(tmp_path)
     result = system.run_goal(

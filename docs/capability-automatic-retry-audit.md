@@ -1,8 +1,8 @@
 # Capability Automatic Retry Audit
 
-- id: capability_automatic_retry_audit_cf1259c79b5c
+- id: capability_automatic_retry_audit_06f4ba3fdbc6
 - status: automatic_retry_blocked
-- source_audit_id: capability_trust_promotion_audit_e402af3a4b71
+- source_audit_id: capability_trust_promotion_audit_fc48c78c4f8b
 - source_audit_status: trust_promotion_blocked
 - capability_count: 9
 - audits: 9
@@ -15,7 +15,7 @@
 - boundaries: 1
 - recommended_commands: none
 - report_path: docs/capability-automatic-retry-audit.md
-- created_at: 2026-06-22T13:57:43.744877+00:00
+- created_at: 2026-06-22T14:18:05.939890+00:00
 
 ## Recommendation
 
@@ -35,7 +35,7 @@
 
 ## Source Trust Promotion Audit
 
-- id: capability_trust_promotion_audit_e402af3a4b71
+- id: capability_trust_promotion_audit_fc48c78c4f8b
 - status: trust_promotion_blocked
 - audits: 9
 - blocked_trust_promotions: 9

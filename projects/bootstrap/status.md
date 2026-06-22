@@ -3362,3 +3362,24 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_0ace8dbe994d
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_ce1a7fc25cd8/summary.md
+
+## 2026-06-22 Run Evidence Review Packets
+
+- `review <run_id>` now writes `runs/<run_id>/review.md`.
+- `evidence <run_id>` now writes `runs/<run_id>/evidence-index.md`.
+- `replay-summary <run_id>` now writes `runs/<run_id>/replay-summary.md`.
+- Dashboard exposes generated packets under `## Recent Evidence Packets`.
+- Next implementation edge: deterministic steering review records plus
+  `next-action` and `inbox` commands.
+
+## Run run_03eaeada2d97
+
+- Goal ID: goal_fa4651adac88
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_03eaeada2d97/summary.md
+
+## Run run_d52df83d4bba
+
+- Goal ID: goal_3010379344ae
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_d52df83d4bba/summary.md
