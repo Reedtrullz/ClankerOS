@@ -21,7 +21,7 @@ Run the first local loop, regenerate the dashboard, and summarize what is proven
 ```
 
 ```text
-Register this git repo, run a worktree-isolated coding task, capture the diff and tests, and stop at an approval packet.
+Register this git repo, run a worktree-isolated coding task, capture the diff and tests, then ask me before creating the local worktree commit.
 ```
 
 ## Recommended Operating Loop
@@ -55,11 +55,11 @@ python3 -m agent_os.cli run-goal "Make the smallest verified change" --project <
    `verification.json`, `effect.json`, and `approval.md`.
 5. Use `python3 -m agent_os.cli approve <approval_id> --decided-by operator --note "..."`
    only after the diff, tests, and policy evidence are acceptable.
+6. Use `python3 -m agent_os.cli commit-approved <approval_id> --committed-by operator`
+   to re-check evidence and create the local worktree commit exactly once.
 
-Current limit: approval records the operator decision, but ClankerOS does not
-yet apply the proposed `local_git_commit`. The next executable slice should add
-an idempotent `commit-approved` command that revalidates evidence before
-creating a commit.
+`commit-approved` blocks without committing if the worktree base commit, patch,
+changed files, or stored test command no longer match the approved evidence.
 
 ## Reading The Reports
 
@@ -103,9 +103,6 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 Good next slices now favor executable local approval flow before broader
 autonomy:
 
-- `commit-approved`: turn an approved, verified `local_git_commit` effect into
-  an actual local commit exactly once;
-- stale-evidence checks before approval or commit application;
 - worktree cleanup after committed, rejected, or superseded effects;
 - GitHub push or draft-PR handoff after a local commit exists;
 - CI/deploy proof ingestion from GitHub Actions after the GitHub flow exists;

@@ -5018,3 +5018,54 @@
   open PRs, run CI, deploy, clean worktrees, start remote workers, schedule
   autonomous work, operate browser or desktop adapters, enforce budgets,
   promote trust, retry work, track real spend, or mutate external systems.
+
+## 2026-06-22 Approval-Gated Commit Application
+
+- Added `python3 -m agent_os.cli commit-approved <approval_id>` for approved,
+  verified `local_git_commit` effects.
+- `commit-approved` now requires an approved approval request, re-checks the
+  worktree base commit, changed files, exact `diff.patch`, and stored test
+  command before creating a local worktree commit.
+- Successful commits update the effect to `status=committed`, persist
+  `result_json` with the commit SHA, write `commit-approved.json`, complete
+  the task/run/goal, and record a local `git revert <commit_sha>` compensation
+  command.
+- Repeating `commit-approved` after success is idempotent: it returns the
+  stored commit SHA and creates no second commit.
+- Stale evidence blocks the effect without committing and records
+  `reason=stale_evidence` in `result_json`.
+- Hardened SQLite column migration against the observed duplicate-column race
+  when multiple CLI commands initialize the same DB during a new schema add.
+- Updated README, approval-gated coding tutorial, suggested-use docs, and the
+  dashboard cockpit for the committed-effect flow.
+- Latest iteration packet:
+  `iteration_3d4d738a27df` in `docs/next-iteration.md`.
+- Next selected focus:
+  `Add worktree cleanup for committed, rejected, or superseded proposed effects.`
+- Eval-after-change:
+  `eval_after_change_5019943e9f1a`, run `run_a0c003d91c49`, status `pass`.
+- Playbooks: `first-milestone-closed-loop` active with
+  `successful_runs=167`.
+- Verification evidence:
+  - Red-first focused tests failed on missing `commit-approved` CLI command
+    before implementation.
+  - `python3 -m py_compile agent_os/coding_workflow.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "commit_approved or worktree_isolation or dashboard"` -> 52 passed, 143 deselected.
+  - After migration-race hardening,
+    `python3 -m pytest tests/test_first_milestone.py -q -k "ensure_column or commit_approved or worktree_isolation or dashboard"` -> 53 passed, 143 deselected.
+  - `python3 -m pytest -q` -> 196 passed.
+  - `python3 -m agent_os.cli init` -> initialized and wrote runtime capability matrix.
+  - `python3 -m agent_os.cli iterate` -> selected the worktree-cleanup focus
+    from `tasks.md#next`.
+  - `python3 -m agent_os.cli dashboard` -> wrote `docs/dashboard.md`.
+  - `python3 -m agent_os.cli approvals` -> `pending_approvals: 0`.
+  - `python3 -m agent_os.cli queue-health` -> `hotspots: 0`.
+  - `python3 -m agent_os.cli eval-candidates` -> `eval_candidates: 0`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`.
+  - `python3 -m agent_os.cli eval-after-change --change "Add approval-gated commit-approved command for local_git_commit effects" ...` -> pass.
+  - `python3 -m agent_os.cli playbooks` -> `successful_runs=167`.
+- Non-claims: this slice creates only a local commit in the isolated worktree
+  after explicit approval and fresh evidence checks. It does not push, open a
+  PR, run CI, deploy, clean worktrees, start remote workers, schedule
+  autonomous work, operate browser or desktop adapters, enforce budgets,
+  promote trust, retry work, track real spend, or mutate external systems.

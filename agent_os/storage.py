@@ -132,6 +132,7 @@ class Effect:
     committed_at: str | None
     evidence_path: str
     compensation_plan: dict[str, Any]
+    result_json: dict[str, Any]
     created_at: str
     updated_at: str
 
@@ -1349,6 +1350,7 @@ class Storage:
                     committed_at text,
                     evidence_path text not null,
                     compensation_plan_json text not null,
+                    result_json text not null default '{}',
                     created_at text not null,
                     updated_at text not null,
                     unique(idempotency_key)
@@ -2315,6 +2317,7 @@ class Storage:
             self._ensure_column(connection, "hosted_dashboard_proof_checklists", "source_checklist_status", "text")
             self._ensure_column(connection, "iteration_packets", "selected_score", "integer")
             self._ensure_column(connection, "iteration_packets", "selected_complexity", "integer")
+            self._ensure_column(connection, "effects", "result_json", "text not null default '{}'")
             self._allow_nullable_dispatch_posture_staleness_age(connection)
             connection.execute(
                 """
@@ -7548,9 +7551,11 @@ class Storage:
         committed_at: str | None,
         evidence_path: str,
         compensation_plan: dict[str, Any],
+        result_json: dict[str, Any] | None = None,
     ) -> Effect:
         effect_id = new_id("effect")
         now = utc_now()
+        result_payload = result_json or {}
         with self._connect() as connection:
             connection.execute(
                 """
@@ -7558,9 +7563,10 @@ class Storage:
                     id, run_id, task_id, project_id, capability, effect_type,
                     idempotency_key, target, proposed_payload_json, status,
                     required_approval_id, attempted_at, committed_at,
-                    evidence_path, compensation_plan_json, created_at, updated_at
+                    evidence_path, compensation_plan_json, result_json,
+                    created_at, updated_at
                 )
-                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     effect_id,
@@ -7578,6 +7584,7 @@ class Storage:
                     committed_at,
                     evidence_path,
                     _json_dumps(compensation_plan),
+                    _json_dumps(result_payload),
                     now,
                     now,
                 ),
@@ -7598,9 +7605,96 @@ class Storage:
             committed_at=committed_at,
             evidence_path=evidence_path,
             compensation_plan=compensation_plan,
+            result_json=result_payload,
             created_at=now,
             updated_at=now,
         )
+
+    def get_effect_for_approval(self, approval_id: str) -> Effect:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from effects
+                where required_approval_id = ?
+                order by created_at desc, id desc
+                """,
+                (approval_id,),
+            ).fetchall()
+        if not rows:
+            raise KeyError(approval_id)
+        if len(rows) > 1:
+            raise ValueError(f"multiple effects found for approval: {approval_id}")
+        return self._row_to_effect(rows[0])
+
+    def mark_effect_committed(
+        self,
+        effect_id: str,
+        *,
+        result_json: dict[str, Any],
+        evidence_path: str,
+        compensation_plan: dict[str, Any],
+        attempted_at: str,
+        committed_at: str,
+    ) -> Effect:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                update effects
+                set status = 'committed',
+                    attempted_at = ?,
+                    committed_at = ?,
+                    evidence_path = ?,
+                    compensation_plan_json = ?,
+                    result_json = ?,
+                    updated_at = ?
+                where id = ?
+                """,
+                (
+                    attempted_at,
+                    committed_at,
+                    evidence_path,
+                    _json_dumps(compensation_plan),
+                    _json_dumps(result_json),
+                    utc_now(),
+                    effect_id,
+                ),
+            )
+            row = connection.execute(
+                "select * from effects where id = ?",
+                (effect_id,),
+            ).fetchone()
+            if row is None:
+                raise KeyError(effect_id)
+            return self._row_to_effect(row)
+
+    def mark_effect_blocked(
+        self,
+        effect_id: str,
+        *,
+        result_json: dict[str, Any],
+        evidence_path: str,
+        attempted_at: str,
+    ) -> Effect:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                update effects
+                set status = 'blocked',
+                    attempted_at = ?,
+                    evidence_path = ?,
+                    result_json = ?,
+                    updated_at = ?
+                where id = ?
+                """,
+                (attempted_at, evidence_path, _json_dumps(result_json), utc_now(), effect_id),
+            )
+            row = connection.execute(
+                "select * from effects where id = ?",
+                (effect_id,),
+            ).fetchone()
+            if row is None:
+                raise KeyError(effect_id)
+            return self._row_to_effect(row)
 
     def list_recent_effects(self, limit: int = 5) -> list[Effect]:
         with self._connect() as connection:
@@ -7717,9 +7811,13 @@ class Storage:
             for row in connection.execute(f"pragma table_info({table_name})").fetchall()
         }
         if column_name not in columns:
-            connection.execute(
-                f"alter table {table_name} add column {column_name} {column_type}"
-            )
+            try:
+                connection.execute(
+                    f"alter table {table_name} add column {column_name} {column_type}"
+                )
+            except sqlite3.OperationalError as error:
+                if "duplicate column name" not in str(error).lower():
+                    raise
 
     def _allow_nullable_dispatch_posture_staleness_age(
         self,
@@ -7966,6 +8064,7 @@ class Storage:
             committed_at=row["committed_at"],
             evidence_path=row["evidence_path"],
             compensation_plan=_json_loads(row["compensation_plan_json"], {}),
+            result_json=_json_loads(row["result_json"], {}),
             created_at=row["created_at"],
             updated_at=row["updated_at"],
         )

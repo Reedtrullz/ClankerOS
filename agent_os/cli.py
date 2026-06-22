@@ -168,7 +168,7 @@ from agent_os.capability_readiness import (
     write_capability_readiness_review,
 )
 from agent_os.dashboard import generate_static_dashboard
-from agent_os.coding_workflow import run_worktree_coding_goal
+from agent_os.coding_workflow import commit_approved_effect, run_worktree_coding_goal
 from agent_os.dispatch_posture_history import (
     render_dispatch_posture_history_line,
     write_dispatch_posture_history_report,
@@ -395,6 +395,14 @@ def build_parser() -> argparse.ArgumentParser:
     approve.add_argument("approval_id")
     approve.add_argument("--decided-by", default="operator")
     approve.add_argument("--note", default="")
+
+    commit_approved = subparsers.add_parser(
+        "commit-approved",
+        help="Create the approved local git commit for a verified local_git_commit effect.",
+    )
+    commit_approved.add_argument("approval_id")
+    commit_approved.add_argument("--committed-by", default="operator")
+    commit_approved.add_argument("--message")
 
     resolve_incident = subparsers.add_parser(
         "resolve-incident",
@@ -1669,6 +1677,25 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(f"approved: {approval.id}")
         print(f"task: {approval.task_id}")
+        return 0
+
+    if args.command == "commit-approved":
+        try:
+            result = commit_approved_effect(
+                root,
+                approval_id=args.approval_id,
+                committed_by=args.committed_by,
+                message=args.message,
+            )
+        except (KeyError, ValueError) as error:
+            print(f"commit_approved_failed: {error}")
+            return 1
+        print(f"commit_approved: {result.status}")
+        print(f"effect_id: {result.effect.id}")
+        print(f"approval_id: {result.approval_id}")
+        print(f"commit: {result.commit_sha or ''}")
+        print(f"worktree: {result.worktree_path}")
+        print(f"evidence: {result.evidence_path}")
         return 0
 
     if args.command == "resolve-incident":

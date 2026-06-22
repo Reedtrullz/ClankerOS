@@ -22,6 +22,17 @@ class CodingRunResult:
     evidence_dir: Path
 
 
+@dataclass(frozen=True)
+class CommitApprovedResult:
+    status: str
+    effect: Effect
+    approval_id: str
+    commit_sha: str | None
+    worktree_path: Path
+    evidence_path: Path
+    message: str
+
+
 BLOCKED_COMMAND_FRAGMENTS = [
     "rm -rf",
     "rm -fr",
@@ -305,6 +316,212 @@ def run_worktree_coding_goal(
         approval_id=approval.id,
         evidence_dir=evidence_dir,
     )
+
+
+def commit_approved_effect(
+    root: Path,
+    *,
+    approval_id: str,
+    committed_by: str,
+    message: str | None = None,
+) -> CommitApprovedResult:
+    root = root.resolve()
+    storage = Storage(root / ".agent" / "state.db")
+    storage.initialize()
+    approval = storage.get_approval_request(approval_id)
+    effect = storage.get_effect_for_approval(approval_id)
+    worktree_path = Path(effect.proposed_payload.get("worktree_path", effect.target))
+    evidence_dir = Path(effect.evidence_path).parent
+    commit_evidence_path = evidence_dir / "commit-approved.json"
+
+    if approval.status != "approved":
+        raise ValueError(f"approval is not approved: {approval_id}")
+    if effect.effect_type != "local_git_commit":
+        raise ValueError(f"unsupported effect type: {effect.effect_type}")
+    if effect.status == "committed":
+        commit_sha = effect.result_json.get("commit_sha")
+        return CommitApprovedResult(
+            status="already_committed",
+            effect=effect,
+            approval_id=approval_id,
+            commit_sha=commit_sha,
+            worktree_path=worktree_path,
+            evidence_path=commit_evidence_path,
+            message="effect already committed",
+        )
+    if effect.status != "awaiting_approval":
+        raise ValueError(f"effect is not awaiting approval: {effect.status}")
+    if not worktree_path.exists():
+        raise ValueError(f"worktree does not exist: {worktree_path}")
+
+    attempted_at = utc_now()
+    payload = effect.proposed_payload
+    expected_base_commit = payload["base_commit"]
+    current_head = _git_stdout(worktree_path, ["rev-parse", "HEAD"])
+    if current_head != expected_base_commit:
+        _block_commit_effect(
+            storage,
+            effect,
+            commit_evidence_path,
+            attempted_at=attempted_at,
+            reason="stale_evidence",
+            detail=f"worktree HEAD changed from {expected_base_commit} to {current_head}",
+        )
+        raise ValueError(
+            f"stale evidence: worktree HEAD no longer matches base commit {expected_base_commit}"
+        )
+
+    _run_git(worktree_path, ["add", "-N", "."])
+    expected_diff_path = Path(payload["diff_path"])
+    expected_diff = expected_diff_path.read_text(encoding="utf-8")
+    current_diff = _git_stdout(worktree_path, ["diff", "--no-ext-diff"])
+    expected_changed_files = payload.get("changed_files", [])
+    current_changed_files = _git_stdout(worktree_path, ["diff", "--name-only"]).splitlines()
+    if current_diff != expected_diff or current_changed_files != expected_changed_files:
+        _block_commit_effect(
+            storage,
+            effect,
+            commit_evidence_path,
+            attempted_at=attempted_at,
+            reason="stale_evidence",
+            detail=f"current worktree diff no longer matches {expected_diff_path}",
+        )
+        raise ValueError(f"stale evidence: current diff no longer matches {expected_diff_path}")
+
+    test_command = payload["test_command"]
+    _ensure_safe_command(test_command)
+    test_result = _run_shell_command(test_command, worktree_path)
+    _write_command_evidence(
+        evidence_dir,
+        "commit-approved-tests",
+        test_command,
+        worktree_path,
+        test_result,
+    )
+    if test_result.returncode != 0:
+        _block_commit_effect(
+            storage,
+            effect,
+            commit_evidence_path,
+            attempted_at=attempted_at,
+            reason="test_failed",
+            detail=f"test command exited {test_result.returncode}",
+            test_exit_code=test_result.returncode,
+        )
+        raise ValueError(f"test failed before commit: {test_result.returncode}")
+
+    changed_files = [str(path) for path in expected_changed_files]
+    _run_git(worktree_path, ["add", "--", *changed_files])
+    commit_message = message or f"Apply approved ClankerOS effect {effect.id}"
+    _run_git(
+        worktree_path,
+        [
+            "-c",
+            "user.name=ClankerOS",
+            "-c",
+            "user.email=clankeros@example.invalid",
+            "commit",
+            "-m",
+            commit_message,
+            "-m",
+            f"Approval: {approval_id}",
+            "-m",
+            f"Committed-by: {committed_by}",
+        ],
+    )
+    commit_sha = _git_stdout(worktree_path, ["rev-parse", "HEAD"])
+    committed_at = utc_now()
+    result_json = {
+        "status": "committed",
+        "effect_id": effect.id,
+        "approval_id": approval_id,
+        "commit_sha": commit_sha,
+        "base_commit": expected_base_commit,
+        "branch_name": payload["branch_name"],
+        "worktree_path": str(worktree_path),
+        "changed_files": changed_files,
+        "committed_by": committed_by,
+        "test_command": test_command,
+        "test_exit_code": test_result.returncode,
+        "attempted_at": attempted_at,
+        "committed_at": committed_at,
+    }
+    commit_evidence_path.write_text(
+        json.dumps(result_json, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    committed_effect = storage.mark_effect_committed(
+        effect.id,
+        result_json=result_json,
+        evidence_path=effect.evidence_path,
+        compensation_plan={
+            "status": "manual_revert_available",
+            "command": f"git revert {commit_sha}",
+            "scope": "local worktree branch only",
+        },
+        attempted_at=attempted_at,
+        committed_at=committed_at,
+    )
+    task = storage.get_task(effect.task_id)
+    storage.mark_task_completed(
+        effect.task_id,
+        evidence={
+            "effect_id": effect.id,
+            "approval_id": approval_id,
+            "commit_sha": commit_sha,
+            "commit_evidence": str(commit_evidence_path),
+        },
+        artifacts=[str(commit_evidence_path), effect.evidence_path],
+    )
+    storage.complete_run(effect.run_id, "completed")
+    storage.set_goal_status(task.goal_id, "completed")
+    return CommitApprovedResult(
+        status="committed",
+        effect=committed_effect,
+        approval_id=approval_id,
+        commit_sha=commit_sha,
+        worktree_path=worktree_path,
+        evidence_path=commit_evidence_path,
+        message="effect committed",
+    )
+
+
+def _block_commit_effect(
+    storage: Storage,
+    effect: Effect,
+    evidence_path: Path,
+    *,
+    attempted_at: str,
+    reason: str,
+    detail: str,
+    test_exit_code: int | None = None,
+) -> Effect:
+    result_json = {
+        "status": "blocked",
+        "reason": reason,
+        "detail": detail,
+        "effect_id": effect.id,
+        "approval_id": effect.required_approval_id,
+        "attempted_at": attempted_at,
+    }
+    if test_exit_code is not None:
+        result_json["test_exit_code"] = test_exit_code
+    evidence_path.write_text(
+        json.dumps(result_json, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    blocked = storage.mark_effect_blocked(
+        effect.id,
+        result_json=result_json,
+        evidence_path=effect.evidence_path,
+        attempted_at=attempted_at,
+    )
+    storage.mark_task_blocked(
+        effect.task_id,
+        evidence=result_json,
+        artifacts=[str(evidence_path), effect.evidence_path],
+    )
+    return blocked
 
 
 def _ensure_safe_command(command: str) -> None:

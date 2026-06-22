@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_cec0a2777ee8
+- Packet ID: iteration_3d4d738a27df
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add approval-gated `commit-approved` command for verified `local_git_commit` effects.
+Advance the Agent System north-star goal by completing: Add worktree cleanup for committed, rejected, or superseded proposed effects.
 
 ## Definition Of Done
 
@@ -68,9 +68,9 @@ Advance the Agent System north-star goal by completing: Add approval-gated `comm
 ## Simplicity Guardrail
 
 - selection_policy: highest-score-then-lowest-complexity
-- selection_reason: selected highest score 10; complexity 4 recorded for audit
-- selected_score: 10
-- selected_complexity: 4
+- selection_reason: selected lower complexity 3 among 2 candidates with equal score 7
+- selected_score: 7
+- selected_complexity: 3
 
 ## Guardrails And Non-Claims
 

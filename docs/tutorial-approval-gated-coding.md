@@ -6,11 +6,13 @@ This tutorial walks through the first executable local coding-agent vertical:
 2. run a constrained coding command in an isolated git worktree;
 3. capture diff, command, and test evidence;
 4. inspect the proposed `local_git_commit` effect;
-5. make an operator approval decision.
+5. make an operator approval decision;
+6. create the approved local worktree commit exactly once.
 
 The flow is intentionally conservative. It creates evidence and an approval
-packet, but it does not create a git commit, push, open a PR, deploy, or mutate
-external systems.
+packet first. It creates a local git commit only after explicit approval and a
+fresh evidence recheck. It does not push, open a PR, deploy, or mutate external
+systems.
 
 ## Prerequisites
 
@@ -119,14 +121,37 @@ python3 -m agent_os.cli approve <approval_id> \
   --note "reviewed diff and tests"
 ```
 
-Current behavior: this records the task approval decision. It still does not
-create a git commit. A future `commit-approved` flow should re-check the
-evidence, verify idempotency, create the local commit from the worktree, and
-record the committed effect.
+Approval records the operator decision. It does not create the commit by
+itself.
+
+## 6. Commit The Approved Effect
+
+After approval, create the local worktree commit:
+
+```bash
+python3 -m agent_os.cli commit-approved <approval_id> --committed-by operator
+```
+
+Before committing, ClankerOS re-checks:
+
+- the approval exists and is approved;
+- the effect is a `local_git_commit` still awaiting application;
+- the worktree `HEAD` still matches the captured base commit;
+- the current changed files and patch still match `diff.patch`;
+- the stored test command still passes.
+
+If any freshness check fails, the effect is blocked and no commit is created.
+If the command is repeated after a successful commit, ClankerOS returns the
+stored commit SHA instead of creating another commit.
+
+The command writes `commit-approved.json` beside the original run evidence and
+updates the effect with `status=committed`, `committed_at`, `result_json`, and
+a local `git revert <commit_sha>` compensation note.
 
 ## What This Tutorial Does Not Do
 
-- It does not create a local git commit.
+- It does not commit before explicit approval.
+- It does not commit if the worktree no longer matches the captured evidence.
 - It does not push a branch.
 - It does not open a pull request.
 - It does not run GitHub Actions.

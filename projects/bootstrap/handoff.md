@@ -1330,17 +1330,16 @@ work, or changing routing.
 
 ## Next Actions
 
-1. Use `docs/next-iteration.md` packet `iteration_cec0a2777ee8` to complete:
-   Add approval-gated `commit-approved` command for verified `local_git_commit` effects.
-2. Implement `commit-approved` as the next executable local coding-agent
-   control-plane slice: re-check the approved effect, verify the worktree
-   still matches the captured base commit and evidence, create exactly one
-   local git commit, update the effect to committed, and preserve rollback or
-   compensation notes.
-3. Keep GitHub push/PR handoff, CI/deploy proof, worktree cleanup, hosted
+1. Use `docs/next-iteration.md` packet `iteration_3d4d738a27df` to complete:
+   Add worktree cleanup for committed, rejected, or superseded proposed effects.
+2. Implement worktree cleanup as the next executable local coding-agent
+   control-plane slice: identify committed, blocked/rejected, and superseded
+   worktrees; require explicit safe conditions; preserve evidence; and avoid
+   deleting anything without a recorded cleanup decision.
+3. Keep GitHub push/PR handoff, CI/deploy proof, hosted
    dashboard, remote workers, scheduler, browser/desktop adapters, budget
    enforcement, trust promotion, retries, and real-cost tracking blocked until
    their own evidence and approval contracts exist.
 4. Preserve the schema-migration report chain as historical evidence, but do
-   not continue report-only schema packets before the local commit approval
-   path can execute safely.
+   not continue report-only schema packets before the local coding worktree
+   lifecycle can clean up safely.

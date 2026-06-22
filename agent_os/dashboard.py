@@ -763,6 +763,16 @@ def generate_static_dashboard(root: Path) -> Path:
     pending_approvals = [
         approval for approval in approvals if approval["status"] == "pending"
     ]
+    approved_approval_ids = {
+        approval["id"] for approval in approvals if approval["status"] == "approved"
+    }
+    approved_commit_effects = [
+        effect
+        for effect in effects
+        if effect.effect_type == "local_git_commit"
+        and effect.status == "awaiting_approval"
+        and effect.required_approval_id in approved_approval_ids
+    ]
     open_incidents = [incident for incident in incidents if incident["status"] == "open"]
 
     lines = [
@@ -821,9 +831,10 @@ def generate_static_dashboard(root: Path) -> Path:
     if effects:
         for effect in effects:
             committed_at = effect.committed_at or "not_committed"
+            commit_sha = effect.result_json.get("commit_sha", "none")
             lines.append(
                 f"- {effect.id}: {effect.effect_type} status={effect.status} "
-                f"committed_at={committed_at}"
+                f"committed_at={committed_at} commit={commit_sha}"
             )
     else:
         lines.append("- none")
@@ -872,8 +883,11 @@ def generate_static_dashboard(root: Path) -> Path:
             "deciding with `python3 -m agent_os.cli approve <approval_id> "
             "--decided-by operator --note \"...\"`."
         )
+    elif approved_commit_effects:
+        effect = approved_commit_effects[0]
         lines.append(
-            "- Note: applying the proposed local git commit is not enabled in this slice."
+            f"- Run `python3 -m agent_os.cli commit-approved {effect.required_approval_id}` "
+            f"to create the verified local commit for effect `{effect.id}`."
         )
     elif effects:
         lines.append("- Review recent proposed effects and regenerate the dashboard after decisions.")

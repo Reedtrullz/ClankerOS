@@ -3069,3 +3069,44 @@ is report-only, external decisions remain, or approvals are missing.
 - Non-claims: no local commit is created by the proposed-effect flow yet, no
   push or PR is opened, no CI/deploy proof is created, no worktree cleanup
   flow exists yet, and no external system is mutated.
+
+## Run run_c97fc54ea589
+
+- Goal ID: goal_6fb8fab4f0f5
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_c97fc54ea589/summary.md
+
+## Run run_a0c003d91c49
+
+- Goal ID: goal_8589b4313a68
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_a0c003d91c49/summary.md
+
+## 2026-06-22 Approval-Gated Commit Application
+
+- `commit-approved <approval_id>` now applies an approved
+  `local_git_commit` effect by re-checking base commit, exact diff, changed
+  files, and stored tests before creating a local worktree commit.
+- Committed effects persist `result_json.commit_sha`, `committed_at`,
+  `commit-approved.json`, and a local `git revert <commit_sha>` compensation
+  note.
+- Repeat invocations are idempotent and stale evidence blocks without
+  committing.
+- Latest iteration packet:
+  `iteration_3d4d738a27df` in `docs/next-iteration.md`.
+- Next selected focus:
+  `Add worktree cleanup for committed, rejected, or superseded proposed effects.`
+- Eval-after-change:
+  `eval_after_change_5019943e9f1a`, run `run_a0c003d91c49`, status `pass`.
+- Verification evidence:
+  focused commit/dashboard/migration tests -> 53 passed, 143 deselected; full
+  `python3 -m pytest -q` -> 196 passed; eval-after-change -> pass; baseline
+  eval -> pass; playbooks -> `successful_runs=167`.
+- Non-claims: no push, PR, CI, deploy, worktree cleanup, external mutation, or
+  deferred autonomy capability is enabled by this slice.
+
+## Run run_e7a7e3131ca9
+
+- Goal ID: goal_87358a6562a4
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_e7a7e3131ca9/summary.md

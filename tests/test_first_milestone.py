@@ -68,6 +68,31 @@ class ApprovalRequiredAgentSystem(AgentSystem):
         return task_id, task_id
 
 
+class ConcurrentMigrationConnection:
+    def execute(self, sql: str, *_args):
+        if sql.startswith("pragma table_info"):
+            return self
+        if sql.startswith("alter table"):
+            raise sqlite3.OperationalError("duplicate column name: result_json")
+        raise AssertionError(sql)
+
+    def fetchall(self):
+        return [{"name": "id"}]
+
+
+def test_storage_ensure_column_tolerates_concurrent_duplicate_column_race(
+    tmp_path: Path,
+) -> None:
+    storage = Storage(tmp_path / "state.db")
+
+    storage._ensure_column(
+        ConcurrentMigrationConnection(),
+        "effects",
+        "result_json",
+        "text not null default '{}'",
+    )
+
+
 def test_run_goal_completes_local_closed_loop(tmp_path: Path) -> None:
     system = AgentSystem(tmp_path)
 
@@ -370,6 +395,259 @@ def test_run_goal_with_worktree_isolation_captures_diff_and_proposes_commit_effe
     assert "local_git_commit" in dashboard
     assert "### Verification Status" in dashboard
     assert "worktree_command" in dashboard
+
+
+def test_commit_approved_creates_one_git_commit_after_approval_and_is_idempotent(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    repo_path = tmp_path / "subject-repo"
+    _init_git_repo(repo_path)
+    test_command = (
+        "python3 -c \"from pathlib import Path; "
+        "text = Path('agent_output.txt').read_text(); "
+        "assert text == 'hello\\\\n'\""
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "register-project",
+                "subject",
+                "--path",
+                str(repo_path),
+                "--test-command",
+                test_command,
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    command = (
+        "python3 -c \"from pathlib import Path; "
+        "Path('agent_output.txt').write_text('hello\\\\n')\""
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-goal",
+                "write a marker file",
+                "--project",
+                "subject",
+                "--isolation",
+                "worktree",
+                "--command",
+                command,
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    effect = storage.list_recent_effects()[0]
+    approval = storage.list_pending_approvals()[0]
+    worktree_path = Path(effect.proposed_payload["worktree_path"])
+    base_commit = effect.proposed_payload["base_commit"]
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "approve",
+                approval.id,
+                "--decided-by",
+                "operator",
+                "--note",
+                "reviewed",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "commit-approved",
+                approval.id,
+                "--committed-by",
+                "operator",
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "commit_approved: committed" in output
+    assert f"effect_id: {effect.id}" in output
+    assert "commit: " in output
+    assert "evidence: " in output
+
+    head = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=worktree_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert head != base_commit
+    commit_count = subprocess.run(
+        ["git", "rev-list", "--count", "HEAD"],
+        cwd=worktree_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert commit_count == "2"
+    message = subprocess.run(
+        ["git", "log", "-1", "--pretty=%B"],
+        cwd=worktree_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    assert effect.id in message
+    assert "agent_output.txt" in subprocess.run(
+        ["git", "show", "--name-only", "--pretty=", "HEAD"],
+        cwd=worktree_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    assert not (repo_path / "agent_output.txt").exists()
+
+    updated_effect = storage.list_recent_effects()[0]
+    assert updated_effect.status == "committed"
+    assert updated_effect.committed_at is not None
+    assert updated_effect.result_json["commit_sha"] == head
+    assert updated_effect.result_json["approval_id"] == approval.id
+    assert updated_effect.compensation_plan["command"] == f"git revert {head}"
+    commit_evidence = Path(updated_effect.evidence_path).parent / "commit-approved.json"
+    assert json.loads(commit_evidence.read_text(encoding="utf-8"))["commit_sha"] == head
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "commit-approved",
+                approval.id,
+                "--committed-by",
+                "operator",
+            ]
+        )
+        == 0
+    )
+    repeat_output = capsys.readouterr().out
+    assert "commit_approved: already_committed" in repeat_output
+    assert head in repeat_output
+    repeat_count = subprocess.run(
+        ["git", "rev-list", "--count", "HEAD"],
+        cwd=worktree_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert repeat_count == commit_count
+
+
+def test_commit_approved_blocks_stale_evidence_without_creating_commit(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    repo_path = tmp_path / "subject-repo"
+    _init_git_repo(repo_path)
+    test_command = (
+        "python3 -c \"from pathlib import Path; "
+        "text = Path('agent_output.txt').read_text(); "
+        "assert text == 'hello\\\\n'\""
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "register-project",
+                "subject",
+                "--path",
+                str(repo_path),
+                "--test-command",
+                test_command,
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    command = (
+        "python3 -c \"from pathlib import Path; "
+        "Path('agent_output.txt').write_text('hello\\\\n')\""
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-goal",
+                "write a marker file",
+                "--project",
+                "subject",
+                "--isolation",
+                "worktree",
+                "--command",
+                command,
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    effect = storage.list_recent_effects()[0]
+    approval = storage.list_pending_approvals()[0]
+    worktree_path = Path(effect.proposed_payload["worktree_path"])
+    base_commit = effect.proposed_payload["base_commit"]
+
+    assert main(["--root", str(tmp_path), "approve", approval.id]) == 0
+    capsys.readouterr()
+
+    (worktree_path / "agent_output.txt").write_text("drifted\n", encoding="utf-8")
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "commit-approved",
+                approval.id,
+                "--committed-by",
+                "operator",
+            ]
+        )
+        == 1
+    )
+    output = capsys.readouterr().out
+    assert "commit_approved_failed: stale evidence" in output
+    assert "diff.patch" in output
+
+    head = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=worktree_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert head == base_commit
+    updated_effect = storage.list_recent_effects()[0]
+    assert updated_effect.status == "blocked"
+    assert updated_effect.committed_at is None
+    assert updated_effect.result_json["status"] == "blocked"
+    assert updated_effect.result_json["reason"] == "stale_evidence"
 
 
 def test_static_dashboard_summarizes_runs_and_queue(tmp_path: Path) -> None:

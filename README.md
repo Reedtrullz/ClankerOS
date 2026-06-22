@@ -8,6 +8,7 @@ vertical:
 ```text
 goal -> task graph -> execution -> verification -> memory -> visibility -> learning
 registered repo -> isolated worktree -> verified diff -> proposed effect -> approval
+approval -> freshness recheck -> local worktree commit -> committed effect evidence
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -27,10 +28,11 @@ generated proof reports, dashboard output, evals, playbooks, and bootstrap
 project memory. It can also register local git repositories, run a constrained
 coding command inside an isolated git worktree, capture the resulting diff and
 test evidence, and record a pending `local_git_commit` effect for operator
-review. Creating the actual commit, pushing, opening PRs, deployments, and
-other external side effects remain approval-gated future steps unless an
-implemented flow explicitly models evidence, authorization, rollback, and
-verification.
+review. After explicit approval, it can re-check the captured evidence and
+create the local git commit exactly once in the isolated worktree. Pushing,
+opening PRs, deployments, and other external side effects remain blocked
+unless an implemented flow explicitly models evidence, authorization,
+rollback, and verification.
 
 ## Repository Metadata
 
@@ -68,9 +70,12 @@ python3 -m agent_os.cli register-project my-repo --path /path/to/repo --test-com
 python3 -m agent_os.cli run-goal "Make a tiny verified change" --project my-repo --isolation worktree --command "python3 -c \"from pathlib import Path; Path('agent-output.txt').write_text('hello\\n')\""
 python3 -m agent_os.cli dashboard
 python3 -m agent_os.cli approvals
+python3 -m agent_os.cli approve <approval_id> --decided-by operator --note "reviewed diff and tests"
+python3 -m agent_os.cli commit-approved <approval_id> --committed-by operator
 ```
 
-This creates a worktree and approval packet. It does not create a git commit.
+This creates a worktree and approval packet, then creates the local worktree
+commit only after approval and a fresh evidence recheck.
 
 ## Tutorials And Suggested Use
 
@@ -92,6 +97,8 @@ The repository can now:
 - capture command output, git status, patch diffs, test output, verification
   JSON, and approval packets for proposed code changes;
 - record proposed `local_git_commit` effects without creating the commit;
+- create an approved local worktree commit exactly once after re-checking the
+  captured base commit, diff, changed files, and test command;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -214,6 +221,7 @@ python3 -m agent_os.cli register-project <name> --path /path/to/git/repo --test-
 python3 -m agent_os.cli run-goal "Make a verified local change" --project <name> --isolation worktree --command "<safe local command>"
 python3 -m agent_os.cli approvals
 python3 -m agent_os.cli approve <approval_id> --decided-by operator --note "local approval"
+python3 -m agent_os.cli commit-approved <approval_id> --committed-by operator
 python3 -m agent_os.cli resolve-incident <incident_id> --resolved-by operator --note "local resolution note"
 python3 -m agent_os.cli queue-health
 python3 -m agent_os.cli handoff-review
