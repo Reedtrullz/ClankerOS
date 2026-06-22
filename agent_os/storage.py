@@ -129,6 +129,23 @@ class ApprovalRequest:
 
 
 @dataclass(frozen=True)
+class SteeringReview:
+    id: str
+    goal_id: str
+    project_id: str
+    run_id: str | None
+    reviewed_plan_version: str
+    current_task_id: str | None
+    status: str
+    drift_score: str
+    findings: list[dict[str, Any]]
+    recommended_next_action: str
+    requires_operator: bool
+    report_path: str
+    created_at: str
+
+
+@dataclass(frozen=True)
 class RegisteredProject:
     name: str
     root_path: str
@@ -2695,6 +2712,22 @@ class Storage:
                     report_path text not null,
                     created_at text not null
                 );
+
+                create table if not exists steering_reviews (
+                    id text primary key,
+                    goal_id text not null,
+                    project_id text not null,
+                    run_id text,
+                    reviewed_plan_version text not null,
+                    current_task_id text,
+                    status text not null,
+                    drift_score text not null,
+                    findings_json text not null,
+                    recommended_next_action text not null,
+                    requires_operator integer not null,
+                    report_path text not null,
+                    created_at text not null
+                );
                 """
             )
             self._ensure_column(connection, "tasks", "run_id", "text")
@@ -2841,6 +2874,19 @@ class Storage:
                 (limit,),
             ).fetchall()
         return [self._row_to_run(row) for row in rows]
+
+    def latest_goal_for_project(self, project_id: str) -> GoalRecord | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                select * from goals
+                where project_id = ?
+                order by updated_at desc, created_at desc, id desc
+                limit 1
+                """,
+                (project_id,),
+            ).fetchone()
+        return self._row_to_goal(row) if row else None
 
     def complete_run(self, run_id: str, status: str) -> None:
         with self._connect() as connection:
@@ -8333,6 +8379,18 @@ class Storage:
             ).fetchall()
         return [self._row_to_approval_request(row) for row in rows]
 
+    def list_approval_requests_for_goal(self, goal_id: str) -> list[ApprovalRequest]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from approval_requests
+                where goal_id = ?
+                order by requested_at desc, id desc
+                """,
+                (goal_id,),
+            ).fetchall()
+        return [self._row_to_approval_request(row) for row in rows]
+
     def count_approval_requests(self) -> int:
         with self._connect() as connection:
             row = connection.execute(
@@ -9552,6 +9610,100 @@ class Storage:
             ).fetchone()
         return row["id"] if row else None
 
+    def record_steering_review(
+        self,
+        *,
+        review_id: str | None = None,
+        goal_id: str,
+        project_id: str,
+        run_id: str | None,
+        reviewed_plan_version: str,
+        current_task_id: str | None,
+        status: str,
+        drift_score: str,
+        findings: list[dict[str, Any]],
+        recommended_next_action: str,
+        requires_operator: bool,
+        report_path: str,
+    ) -> SteeringReview:
+        review_id = review_id or new_id("steer")
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into steering_reviews (
+                    id, goal_id, project_id, run_id, reviewed_plan_version,
+                    current_task_id, status, drift_score, findings_json,
+                    recommended_next_action, requires_operator, report_path,
+                    created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    review_id,
+                    goal_id,
+                    project_id,
+                    run_id,
+                    reviewed_plan_version,
+                    current_task_id,
+                    status,
+                    drift_score,
+                    _json_dumps(findings),
+                    recommended_next_action,
+                    1 if requires_operator else 0,
+                    report_path,
+                    created_at,
+                ),
+            )
+        return SteeringReview(
+            id=review_id,
+            goal_id=goal_id,
+            project_id=project_id,
+            run_id=run_id,
+            reviewed_plan_version=reviewed_plan_version,
+            current_task_id=current_task_id,
+            status=status,
+            drift_score=drift_score,
+            findings=findings,
+            recommended_next_action=recommended_next_action,
+            requires_operator=requires_operator,
+            report_path=report_path,
+            created_at=created_at,
+        )
+
+    def list_recent_steering_reviews(
+        self,
+        *,
+        limit: int = 5,
+        goal_id: str | None = None,
+        project_id: str | None = None,
+        requires_operator: bool | None = None,
+    ) -> list[SteeringReview]:
+        clauses: list[str] = []
+        values: list[Any] = []
+        if goal_id is not None:
+            clauses.append("goal_id = ?")
+            values.append(goal_id)
+        if project_id is not None:
+            clauses.append("project_id = ?")
+            values.append(project_id)
+        if requires_operator is not None:
+            clauses.append("requires_operator = ?")
+            values.append(1 if requires_operator else 0)
+        where = f"where {' and '.join(clauses)}" if clauses else ""
+        values.append(limit)
+        with self._connect() as connection:
+            rows = connection.execute(
+                f"""
+                select * from steering_reviews
+                {where}
+                order by created_at desc, id desc
+                limit ?
+                """,
+                values,
+            ).fetchall()
+        return [self._row_to_steering_review(row) for row in rows]
+
     def _ensure_column(
         self,
         connection: sqlite3.Connection,
@@ -9791,6 +9943,23 @@ class Storage:
             resolved_by=row["resolved_by"],
             resolution_note=row["resolution_note"],
             resolution_evidence_path=row["resolution_evidence_path"],
+        )
+
+    def _row_to_steering_review(self, row: sqlite3.Row) -> SteeringReview:
+        return SteeringReview(
+            id=row["id"],
+            goal_id=row["goal_id"],
+            project_id=row["project_id"],
+            run_id=row["run_id"],
+            reviewed_plan_version=row["reviewed_plan_version"],
+            current_task_id=row["current_task_id"],
+            status=row["status"],
+            drift_score=row["drift_score"],
+            findings=_json_loads(row["findings_json"], []),
+            recommended_next_action=row["recommended_next_action"],
+            requires_operator=bool(row["requires_operator"]),
+            report_path=row["report_path"],
+            created_at=row["created_at"],
         )
 
     def _row_to_approval_request(self, row: sqlite3.Row) -> ApprovalRequest:

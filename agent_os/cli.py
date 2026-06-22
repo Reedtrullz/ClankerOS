@@ -233,6 +233,12 @@ from agent_os.run_review import (
     write_run_review,
 )
 from agent_os.runtime import detect_runtime_capabilities, write_runtime_capability_matrix
+from agent_os.steering import (
+    collect_inbox_items,
+    next_action_for_target,
+    render_steering_review_line,
+    write_steering_review,
+)
 from agent_os.subagent_delegation import (
     DelegationError,
     create_subagent_delegation,
@@ -313,6 +319,14 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("iterate", help="Write the next iteration packet from repo queues.")
     review = subparsers.add_parser("review", help="Write a human-first run review packet.")
     review.add_argument("run_id")
+    steer = subparsers.add_parser("steer", help="Write a deterministic steering review.")
+    steer.add_argument("goal_id")
+    next_action = subparsers.add_parser(
+        "next-action",
+        help="Recommend the next local operator action for a goal or project.",
+    )
+    next_action.add_argument("target")
+    subparsers.add_parser("inbox", help="List operator-worthy local action items.")
     evidence = subparsers.add_parser("evidence", help="Write a run evidence index.")
     evidence.add_argument("run_id")
     replay_summary = subparsers.add_parser(
@@ -720,6 +734,71 @@ def main(argv: list[str] | None = None) -> int:
         print(f"tasks: {len(packet.tasks)}")
         print(f"events: {len(packet.events)}")
         print(f"recommended_next_action: {packet.recommended_next_action}")
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
+        return 0
+
+    if args.command == "steer":
+        AgentSystem(root).initialize()
+        try:
+            report_path, review = write_steering_review(root, args.goal_id)
+        except KeyError:
+            print(f"steer_failed: goal {args.goal_id} not found")
+            return 1
+        print(f"steering_review: {review.id}")
+        print(f"goal_id: {review.goal_id}")
+        print(f"run_id: {review.run_id or 'none'}")
+        print(f"status: {review.status}")
+        print(f"drift_score: {review.drift_score}")
+        print(f"recommended_next_action: {review.recommended_next_action}")
+        print(f"requires_operator: {'true' if review.requires_operator else 'false'}")
+        print(f"report: {report_path.relative_to(root)}")
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
+        return 0
+
+    if args.command == "next-action":
+        AgentSystem(root).initialize()
+        try:
+            report_path, review = next_action_for_target(root, args.target)
+        except KeyError:
+            print(f"next_action_failed: target {args.target} not found")
+            return 1
+        print(f"next_action: {review.recommended_next_action}")
+        print("source: steering_review")
+        print(f"steering_review: {review.id}")
+        print(f"goal_id: {review.goal_id}")
+        print(f"run_id: {review.run_id or 'none'}")
+        print(f"status: {review.status}")
+        print(f"drift_score: {review.drift_score}")
+        print(f"requires_operator: {'true' if review.requires_operator else 'false'}")
+        print(f"report: {report_path.relative_to(root)}")
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
+        return 0
+
+    if args.command == "inbox":
+        AgentSystem(root).initialize()
+        inbox = collect_inbox_items(root)
+        steering_reviews = inbox["steering_reviews"]
+        pending_approvals = inbox["pending_approvals"]
+        open_incidents = inbox["open_incidents"]
+        print(f"inbox_items: {inbox['count']}")
+        print(f"steering_reviews: {len(steering_reviews)}")
+        for review in steering_reviews:
+            print(render_steering_review_line(review).removeprefix("- "))
+        print(f"pending_approvals: {len(pending_approvals)}")
+        for approval in pending_approvals:
+            print(
+                f"approval {approval.id}: goal={approval.goal_id} run={approval.run_id} "
+                f"task={approval.task_id} risk={approval.risk_level} reason={approval.reason}"
+            )
+        print(f"open_incidents: {len(open_incidents)}")
+        for incident in open_incidents:
+            print(
+                f"incident {incident.id}: goal={incident.goal_id or 'none'} "
+                f"run={incident.run_id} severity={incident.severity} summary={incident.summary}"
+            )
         print("network_actions_taken: 0")
         print("external_mutations_taken: 0")
         return 0

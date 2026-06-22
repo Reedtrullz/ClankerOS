@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_d3382632a359
+- Packet ID: iteration_de7bb8d859ed
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add deterministic steering review records plus `next-action` and `inbox` commands.
+Advance the Agent System north-star goal by completing: Add approval-gated operator approval request table creation from schema migration selection packets.
 
 ## Definition Of Done
 

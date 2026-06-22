@@ -72,11 +72,18 @@ Core layers for the bootstrap:
   delegations, memory entries, skills, and eval candidates without rerunning
   commands, approving effects, committing, pushing, deploying, or mutating
   external systems.
+- Steering review: `steer <goal_id>` writes a deterministic
+  `docs/steering-review.md` plus a `steering_reviews` row from local goal,
+  task, approval, and incident state. `next-action <goal_or_project>` refreshes
+  the review and prints the recommended operator action. `inbox` lists
+  operator-worthy steering reviews, pending approvals, and open incidents.
+  These commands do not execute tasks, approve requests, retry, commit, push,
+  deploy, or mutate external systems.
 - Operator cockpit: the dashboard starts with active runs, registered projects,
   approval inbox, proposed effects, verification status, recent worktrees,
   GitHub handoffs, CI/deploy evidence, profile routing decisions, subagent
-  delegations, memory proposals, skill proposals, and the next recommended
-  operator action.
+  delegations, steering reviews, memory proposals, skill proposals, and the
+  next recommended operator action.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON

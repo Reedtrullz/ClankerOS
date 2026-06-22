@@ -158,6 +158,7 @@ from agent_os.queue_health import (
     DEFAULT_FAILED_THRESHOLD,
     render_queue_health_finding,
 )
+from agent_os.steering import render_steering_review_line
 from agent_os.storage import Storage
 from agent_os.subagent_delegation import render_subagent_delegation_line
 
@@ -268,6 +269,9 @@ def generate_static_dashboard(root: Path) -> Path:
         subagent_delegations = []
         if _table_exists(connection, "subagent_delegations"):
             subagent_delegations = storage.list_recent_subagent_delegations(limit=5)
+        steering_reviews = []
+        if _table_exists(connection, "steering_reviews"):
+            steering_reviews = storage.list_recent_steering_reviews(limit=5)
         effects = []
         if _table_exists(connection, "effects"):
             effects = storage.list_recent_effects(limit=5)
@@ -969,6 +973,13 @@ def generate_static_dashboard(root: Path) -> Path:
     if subagent_delegations:
         for delegation in subagent_delegations:
             lines.append(f"- {render_subagent_delegation_line(delegation)}")
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "## Steering Reviews", ""])
+    if steering_reviews:
+        for review in steering_reviews:
+            lines.append(render_steering_review_line(review))
     else:
         lines.append("- none")
 

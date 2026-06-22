@@ -48,6 +48,10 @@ Propose a reusable project skill from that verified run, but leave it inactive u
 Write a human-first review, evidence index, and replay summary for this run before deciding the next action.
 ```
 
+```text
+Write a steering review for this goal, show the next action, and list the inbox without executing or approving anything.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -60,7 +64,8 @@ Write a human-first review, evidence index, and replay summary for this run befo
 8. Propose memory from completed delegation results only when the fact is small and reusable.
 9. Propose skills from verified run evidence only when the procedure is reusable.
 10. Write `review`, `evidence`, and `replay-summary` packets before operator decisions on meaningful runs.
-11. Record non-claims before treating the work as safe.
+11. Run `steer`, `next-action`, and `inbox` when the next operator move is unclear.
+12. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -135,6 +140,11 @@ and does not make the skill active until `skill approve` is run.
 `review`, `evidence`, and `replay-summary` write local Markdown packets under
 `runs/<run_id>/` and expose them in the dashboard. They do not rerun commands,
 approve effects, commit, push, deploy, or mutate external systems.
+`steer <goal_id>` writes a local steering review from existing goals, tasks,
+approvals, and incidents. `next-action <goal_or_project>` refreshes that
+review and prints the recommended operator move. `inbox` lists operator-worthy
+steering reviews, pending approvals, and open incidents. They do not execute
+tasks, approve work, retry, commit, push, deploy, or mutate external systems.
 `cleanup-worktrees` removes only clean terminal worktrees; dirty blocked
 worktrees are recorded as blocked and left in place.
 
@@ -149,6 +159,8 @@ Prefer these files when orienting:
   delegation contract, and result-ingestion loop.
 - `docs/tutorial-run-review.md` for human-first run review, evidence indexing,
   and conceptual replay.
+- `docs/tutorial-steering-inbox.md` for deterministic steering reviews,
+  next-action output, and local inbox triage.
 - `contracts.md` for safety boundaries and evidence expectations.
 - `status.md` for chronological implementation evidence.
 - `projects/bootstrap/handoff.md` for the current continuation edge.
@@ -181,12 +193,11 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 
 ## Practical Next Slices
 
-Good next slices now favor executable evidence review and operator steering
-behavior before broader autonomy:
+Good next slices now favor approval-schema and operator-decision work before
+broader autonomy:
 
-- deterministic steering review records plus `next-action`/`inbox` commands
-  that use existing approvals, incidents, blocked tasks, and run review
-  packets;
+- approval-gated operator approval request table creation after the report-only
+  schema migration selection packets;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;
 - remote-worker, scheduler, browser/desktop adapter, budget, trust, retry, and

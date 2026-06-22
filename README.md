@@ -17,6 +17,7 @@ delegation contract -> structured result ingestion -> completed local evidence
 completed delegation result -> proposed memory entry -> operator approval/archive
 useful run evidence -> proposed SKILL.md -> operator approval/archive
 run evidence -> human review -> evidence index -> conceptual replay summary
+goal state -> deterministic steering review -> next action -> operator inbox
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -53,9 +54,12 @@ approved. Useful run evidence can also become proposed project skills under
 `.clanker/skills/`, but those skills remain proposed until an operator
 approves them. Run evidence can now be summarized with human-first `review`,
 `evidence`, and `replay-summary` commands that write local Markdown packets
-without rerunning work or approving effects. Deployments and other external
-side effects remain blocked unless an implemented flow explicitly models
-evidence, authorization, rollback, and verification.
+without rerunning work or approving effects. Deterministic steering reviews
+can now inspect local goals, tasks, approvals, and incidents to recommend a
+next operator action and populate a local inbox without executing work.
+Deployments and other external side effects remain blocked unless an
+implemented flow explicitly models evidence, authorization, rollback, and
+verification.
 
 ## Repository Metadata
 
@@ -79,6 +83,9 @@ python3 -m agent_os.cli run-goal "Prove the first milestone closed loop" --proje
 python3 -m agent_os.cli review <run_id>
 python3 -m agent_os.cli evidence <run_id>
 python3 -m agent_os.cli replay-summary <run_id>
+python3 -m agent_os.cli steer <goal_id>
+python3 -m agent_os.cli next-action <goal_id>
+python3 -m agent_os.cli inbox
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route --category repo_search --project bootstrap
 python3 -m agent_os.cli dashboard
@@ -140,6 +147,12 @@ and version records; it does not make the skill active until `skill approve
 `replay-summary <run_id>` writes `runs/<run_id>/replay-summary.md` as a
 conceptual replay map. These commands do not rerun work, approve effects,
 commit, push, deploy, or mutate external systems.
+`steer <goal_id>` writes `docs/steering-review.md` and a `steering_reviews`
+SQLite row. `next-action <goal_or_project>` refreshes a steering review and
+prints the recommended operator move. `inbox` lists recent steering reviews
+that require an operator plus pending approvals and open incidents. These
+commands do not execute tasks, approve work, retry, commit, push, deploy, or
+mutate external systems.
 
 ## Tutorials And Suggested Use
 
@@ -148,6 +161,7 @@ commit, push, deploy, or mutate external systems.
 - [Record profile routing, delegation, and delegation results](docs/tutorial-subagent-delegation-results.md)
 - [Propose and approve reusable skills](docs/tutorial-skill-proposals.md)
 - [Review run evidence and replay summaries](docs/tutorial-run-review.md)
+- [Use steering reviews, next actions, and the inbox](docs/tutorial-steering-inbox.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
 - [Safety contract](contracts.md)
@@ -194,6 +208,9 @@ The repository can now:
 - write human-first run review packets, evidence indexes, and conceptual
   replay summaries for existing runs while preserving `network_actions_taken=0`
   and `external_mutations_taken=0`;
+- write deterministic steering reviews for goals, recommend the next local
+  operator action for a goal or project, and list operator-worthy inbox items
+  from steering reviews, approvals, and incidents;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;

@@ -5455,3 +5455,43 @@
 - Non-claims: review packet commands do not approve effects, commit, push,
   deploy, rerun commands, start remote workers, schedule work, promote trust,
   retry work, track spend, or mutate external systems.
+
+## 2026-06-22 Steering Reviews And Inbox
+
+- Added deterministic local steering reviews:
+  - `python3 -m agent_os.cli steer <goal_id>` writes `docs/steering-review.md`
+    and a `steering_reviews` SQLite row.
+  - `python3 -m agent_os.cli next-action <goal_or_project>` refreshes a
+    steering review and prints the recommended operator action.
+  - `python3 -m agent_os.cli inbox` lists operator-worthy steering reviews,
+    pending approvals, and open incidents.
+- Steering rules now surface pending approvals, blocked or failed work, open
+  incidents, missing evidence, completed task graphs with open goals, active
+  work, and missing task plans.
+- Static dashboard now includes `## Steering Reviews`.
+- Added `docs/tutorial-steering-inbox.md` and updated `README.md`,
+  `docs/suggested-use.md`, `docs/OPERATING_SUMMARY.md`, and `tasks.md`.
+- Verification evidence so far:
+  - Red run:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'steer or next_action or inbox'`
+    failed on missing `steer` and `next-action` commands.
+  - Focused green run:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'steer or next_action or inbox'`
+    -> 4 passed.
+  - `python3 -m py_compile agent_os/steering.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest -q` -> 231 passed.
+  - Live smoke:
+    `python3 -m agent_os.cli next-action bootstrap` -> `next_action: continue`
+    with steering review `steer_4a39cbdcc894`; `python3 -m agent_os.cli inbox`
+    -> 0 items.
+  - Generated operator gates through `python3 -m agent_os.cli dashboard` -> passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add steering reviews and inbox" --file agent_os/steering.py --file agent_os/storage.py --file agent_os/cli.py --file agent_os/dashboard.py --file tests/test_first_milestone.py --file docs/tutorial-steering-inbox.md` -> pass as `run_10ab8e90564a`.
+  - `python3 -m agent_os.cli iterate` -> selected
+    `Add approval-gated operator approval request table creation from schema migration selection packets.`
+  - `git diff --check` -> passed.
+- GitHub metadata:
+  - `gh repo edit Reedtrullz/ClankerOS ...` confirmed the repository
+    description and topics match the README metadata.
+- Non-claims: steering is local review and recommendation only; it does not
+  execute tasks, approve requests, retry work, commit, push, deploy, schedule
+  workers, or mutate external systems.

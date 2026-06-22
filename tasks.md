@@ -97,7 +97,8 @@
 - [x] Add memory proposal records from completed delegation outputs. <!-- score=8 complexity=4 -->
 - [x] Add skill proposal records and approval-gated SKILL.md writing. <!-- score=8 complexity=4 -->
 - [x] Add human-first `review`, `evidence`, and `replay-summary` commands for run evidence packets. <!-- score=8 complexity=4 -->
-- [ ] Add deterministic steering review records plus `next-action` and `inbox` commands. <!-- score=9 complexity=4 -->
+- [x] Add deterministic steering review records plus `next-action` and `inbox` commands. <!-- score=9 complexity=4 -->
+- [ ] Add approval-gated operator approval request table creation from schema migration selection packets. <!-- score=9 complexity=4 -->
 
 ## blocked
 

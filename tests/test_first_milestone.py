@@ -218,6 +218,145 @@ def test_eval_command_records_first_milestone_result(tmp_path: Path) -> None:
     assert rows == [("first_milestone_closed_loop", "pass")]
 
 
+def test_steer_records_pending_approval_next_action_and_dashboard(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = ApprovalRequiredAgentSystem(tmp_path)
+    result = system.run_goal(
+        project_id="bootstrap",
+        description="Create an approval-gated artifact.",
+    )
+
+    assert result.status == "waiting_approval"
+    assert main(["--root", str(tmp_path), "steer", result.goal_id]) == 0
+    output = capsys.readouterr().out
+
+    assert "steering_review: steer_" in output
+    assert "status: operator_required" in output
+    assert "drift_score: low" in output
+    assert "recommended_next_action: operator_approval" in output
+    assert "requires_operator: true" in output
+    assert "network_actions_taken: 0" in output
+    assert "external_mutations_taken: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    reviews = storage.list_recent_steering_reviews(limit=1)
+    assert len(reviews) == 1
+    assert reviews[0].goal_id == result.goal_id
+    assert reviews[0].run_id == result.run_id
+    assert reviews[0].recommended_next_action == "operator_approval"
+    assert reviews[0].requires_operator is True
+    assert any(finding["kind"] == "pending_approval" for finding in reviews[0].findings)
+    assert (tmp_path / reviews[0].report_path).exists()
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard_text = dashboard_path.read_text(encoding="utf-8")
+    assert "## Steering Reviews" in dashboard_text
+    assert reviews[0].id in dashboard_text
+    assert "action=operator_approval" in dashboard_text
+
+
+def test_next_action_prefers_blocked_task_review_or_replan(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "blocked steering test")
+    run_id = storage.create_run(goal_id, "bootstrap", tmp_path / "runs")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        run_id=run_id,
+        project_id="bootstrap",
+        task_type="write_goal_artifact",
+        description="blocked task",
+        verification_plan={"type": "manual"},
+    )
+    storage.set_task_status(task_id, "blocked")
+
+    assert main(["--root", str(tmp_path), "next-action", goal_id]) == 0
+    output = capsys.readouterr().out
+
+    assert "next_action: review_or_replan" in output
+    assert "drift_score: high" in output
+    assert "source: steering_review" in output
+    assert "requires_operator: true" in output
+
+
+def test_steer_final_review_when_tasks_complete_but_goal_open(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "final review steering test")
+    run_id = storage.create_run(goal_id, "bootstrap", tmp_path / "runs")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        run_id=run_id,
+        project_id="bootstrap",
+        task_type="write_goal_artifact",
+        description="completed task",
+        verification_plan={"type": "manual"},
+    )
+    storage.mark_task_completed(
+        task_id,
+        evidence={"verified": True},
+        artifacts=["projects/bootstrap/artifacts/completed.md"],
+    )
+
+    assert main(["--root", str(tmp_path), "steer", goal_id]) == 0
+    output = capsys.readouterr().out
+
+    assert "status: final_review_required" in output
+    assert "recommended_next_action: final_review" in output
+    assert "requires_operator: false" in output
+
+
+def test_inbox_lists_steering_reviews_pending_approvals_and_incidents(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = ApprovalRequiredAgentSystem(tmp_path)
+    result = system.run_goal(
+        project_id="bootstrap",
+        description="Create an inbox item.",
+    )
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.record_incident(
+        project_id="bootstrap",
+        run_id=result.run_id,
+        goal_id=result.goal_id,
+        task_id=None,
+        task_type="manual_review",
+        incident_type="operator_attention",
+        severity="medium",
+        status="open",
+        summary="Needs operator review.",
+        failure_class="manual",
+        verification_method="manual",
+        verification_path=None,
+        failed_checks=["operator_review"],
+        evidence={"source": "test"},
+        artifacts=[],
+        evidence_path="runs/test/incident.json",
+    )
+
+    assert main(["--root", str(tmp_path), "steer", result.goal_id]) == 0
+    capsys.readouterr()
+    assert main(["--root", str(tmp_path), "inbox"]) == 0
+    output = capsys.readouterr().out
+
+    assert "inbox_items: 3" in output
+    assert "steering_reviews: 1" in output
+    assert "pending_approvals: 1" in output
+    assert "open_incidents: 1" in output
+    assert "operator_approval" in output
+    assert "approval " in output
+    assert "incident " in output
+
+
 def test_register_project_records_git_repo_and_rejects_non_git_path(
     tmp_path: Path,
     capsys,
