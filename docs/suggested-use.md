@@ -64,6 +64,10 @@ Create pending operator approval request rows from the latest expansion approval
 Decide pending operator approval request rows after I approve the decision selection, and prove that no capabilities or legacy approval requests were activated.
 ```
 
+```text
+Review ingested capability follow-up results, accept keeping activation blocked, and prove that no approval rows or activation actions were created.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -80,7 +84,9 @@ Decide pending operator approval request rows after I approve the decision selec
 12. Apply local schema changes only through explicit operator approval commands.
 13. Create local operator approval rows only through explicit operator approval commands.
 14. Decide local operator approval rows only through explicit operator approval commands.
-15. Record non-claims before treating the work as safe.
+15. Review ingested capability follow-up results before treating them as an
+    activation decision.
+16. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -355,6 +361,23 @@ evaluator delegation results. It keeps `approval_requests_created=0`,
 `capability_enabled=false`; the record is evidence for operator review, not
 proof satisfaction or capability enablement.
 
+Record the local operator review decision over ingested results:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-decide \
+  --operator-id operator \
+  --selected-action accept_keep_blocked \
+  --selection-note "Accepted evaluator result and kept capability activation blocked." \
+  --evidence-reference docs/capability-activation-followup-results.md
+python3 -m agent_os.cli dashboard
+```
+
+This writes `docs/capability-activation-followup-decisions.md` and a local
+decision row for result records that have not already been reviewed. It keeps
+`approval_requests_created=0` and `activation_actions_taken=0`; the
+`accept_keep_blocked` action is an operator review state, not capability
+enablement.
+
 ## When To Commit And Push
 
 Commit when:
@@ -373,8 +396,7 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 Good next slices now favor capability-specific guards after local application
 records exist:
 
-- follow-up task generation from capability activation more-evidence
-  decisions;
+- local proposed effects from accepted blocked follow-up result decisions;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;

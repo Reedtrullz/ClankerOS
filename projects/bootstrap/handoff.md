@@ -1648,15 +1648,54 @@ work, or changing routing.
   schedule work, start workers, retry work, track spend, run CI, deploy, push,
   open PRs, mark the active goal complete, or mutate external systems.
 
+## Latest Capability Activation Follow-Up Results
+
+- `capability-activation-followup-results` ingested one completed read-only
+  evaluator delegation into a local capability follow-up result record.
+- Live result record:
+  `capability_activation_followup_result_4c9b8b0d1c43` for
+  `hosted_dashboard`, status `reviewed_missing_proof`,
+  `activation_allowed=false`, and `capability_enabled=false`.
+- Final result-ingestion idempotency batch:
+  `capability_activation_followup_result_batch_bb94fe9345a6`, status
+  `capability_activation_followup_results_already_recorded`, with 1 existing
+  result record and 0 new activation actions.
+- Evidence report: `docs/capability-activation-followup-results.md`.
+- Non-claims: result ingestion does not start subagents, call model providers,
+  create `approval_requests`, satisfy proof, allow activation, enable
+  capabilities, promote trust, schedule work, start workers, retry work, track
+  spend, run CI, deploy, push, open PRs, mark the active goal complete, or
+  mutate external systems.
+
+## Latest Capability Activation Follow-Up Result Decisions
+
+- `capability-activation-followup-result-decide` records local operator review
+  decisions for ingested follow-up result records.
+- Initial live decision:
+  `capability_activation_followup_result_decision_146e16543cec`, status
+  `capability_activation_followup_result_decisions_recorded`, selected action
+  `accept_keep_blocked`, 1 result ready, 1 decision recorded, 0 approval
+  requests created, and 0 activation actions taken.
+- Final decision idempotency row:
+  `capability_activation_followup_result_decision_bf51ed57df70`, status
+  `capability_activation_followup_result_decisions_already_recorded`, with 1
+  existing decision and 0 new activation actions.
+- Evidence report: `docs/capability-activation-followup-decisions.md`.
+- Non-claims: follow-up result decisions do not create `approval_requests`,
+  satisfy proof, mutate activation contracts, allow activation, enable
+  capabilities, promote trust, route work, schedule work, start workers, retry
+  work, track spend, run CI, deploy, push, open PRs, mark the active goal
+  complete, or mutate external systems.
+
 ## Next Actions
 
-Current focus: Add capability follow-up evidence result ingestion from completed delegation packets.
+Current focus: Add local follow-up decision effect proposals from accepted blocked results.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add capability follow-up evidence result ingestion from completed delegation packets.
-2. Ingest operator-supplied read-only evaluator delegation results back into
-   local capability follow-up evidence records without satisfying proof or
-   enabling capabilities.
+   Add local follow-up decision effect proposals from accepted blocked results.
+2. Convert accepted blocked follow-up result decisions into local proposed
+   effect records only, preserving activation-blocking evidence and
+   idempotency.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.

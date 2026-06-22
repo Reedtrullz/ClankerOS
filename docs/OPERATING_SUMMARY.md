@@ -125,6 +125,11 @@ Core layers for the bootstrap:
   artifacts. The records preserve evaluator findings for operator review while
   keeping proof satisfaction, approval rows, activation actions, and capability
   enablement blocked.
+- Capability activation follow-up result decisions: operators can record local
+  accept-keep-blocked, request-more-evidence, or defer decisions for ingested
+  follow-up result records. The decisions preserve blocked proof state and keep
+  approval row creation, activation actions, contract mutation, and capability
+  enablement at zero.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON
@@ -375,9 +380,10 @@ Core layers for the bootstrap:
   operator approval schema migration selection input templates, operator
   approval schema migration applications, operator approval request row
   applications, operator approval request decisions, capability activation
-  follow-up result batches, playbooks, eval candidates, iteration packets,
-  simplicity guardrails, approvals, proposed effects, worktrees, verification
-  status, stuck tasks, incidents, recent runs, learnings, and eval results.
+  follow-up result batches, follow-up result decisions, playbooks, eval
+  candidates, iteration packets, simplicity guardrails, approvals, proposed
+  effects, worktrees, verification status, stuck tasks, incidents, recent
+  runs, learnings, and eval results.
 
 ## First Milestone
 
@@ -711,6 +717,13 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   read-only evaluator delegation results are completed. The command writes
   `docs/capability-activation-followup-results.md`, records local result rows
   and JSON artifacts, and keeps `approval_requests_created: 0`,
+  `activation_actions_taken: 0`, `activation_allowed: false`, and
+  `capability_enabled: false`.
+- Capability activation follow-up result decisions: available through
+  `python3 -m agent_os.cli capability-activation-followup-result-decide` after
+  result records exist. The command writes
+  `docs/capability-activation-followup-decisions.md`, records local operator
+  review decisions, and keeps `approval_requests_created: 0`,
   `activation_actions_taken: 0`, `activation_allowed: false`, and
   `capability_enabled: false`.
 - Eval candidate listing: available through

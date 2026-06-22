@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_57f226ba376d
+- Packet ID: iteration_078621773366
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add operator review decisions for ingested capability follow-up results.
+Advance the Agent System north-star goal by completing: Add local follow-up decision effect proposals from accepted blocked results.
 
 ## Definition Of Done
 
@@ -70,6 +70,7 @@ Advance the Agent System north-star goal by completing: Add operator review deci
 - `python3 -m agent_os.cli capability-activation-followups`
 - `python3 -m agent_os.cli capability-activation-followup-delegations`
 - `python3 -m agent_os.cli capability-activation-followup-results`
+- `python3 -m agent_os.cli capability-activation-followup-result-decide --operator-id operator --selected-action accept_keep_blocked --selection-note "Accepted evaluator result and kept capability activation blocked." --evidence-reference docs/capability-activation-followup-results.md`
 - `python3 -m agent_os.cli eval`
 - `python3 -m agent_os.cli playbooks`
 - `python3 -m agent_os.cli dashboard`
@@ -97,7 +98,7 @@ Advance the Agent System north-star goal by completing: Add operator review deci
 - pending approvals: 0
 - queue-health hotspots: 0
 - handoff blocked tasks: 0
-- stale handoffs: 0
+- stale handoffs: 1
 - eval-after-change failures: 0
 - stable distilled learnings: 1
 - budget/trust posture: report_only
@@ -149,6 +150,7 @@ Advance the Agent System north-star goal by completing: Add operator review deci
 - capability activation followups: capability_activation_followups_already_recorded
 - capability activation followup delegations: capability_activation_followup_delegations_already_recorded
 - capability activation followup results: capability_activation_followup_results_already_recorded
+- capability activation followup result decisions: capability_activation_followup_result_decisions_already_recorded
 - proposed eval candidates: 0
 - active playbooks: 1
 - open stuck-task incidents: 0

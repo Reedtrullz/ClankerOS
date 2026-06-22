@@ -158,6 +158,9 @@ from agent_os.capability_activation_followup_delegations import (
 from agent_os.capability_activation_followup_results import (
     render_capability_activation_followup_result_batch_line,
 )
+from agent_os.capability_activation_followup_result_decisions import (
+    render_capability_activation_followup_result_decision_line,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -717,6 +720,16 @@ def generate_static_dashboard(root: Path) -> Path:
                     limit=1
                 )
             )
+        capability_activation_followup_result_decisions = []
+        if _table_exists(
+            connection,
+            "capability_activation_followup_result_decisions",
+        ):
+            capability_activation_followup_result_decisions = (
+                storage.list_recent_capability_activation_followup_result_decisions(
+                    limit=1
+                )
+            )
 
     statuses = [
         "pending",
@@ -972,6 +985,11 @@ def generate_static_dashboard(root: Path) -> Path:
     latest_capability_activation_followup_result_batch = (
         capability_activation_followup_result_batches[0]
         if capability_activation_followup_result_batches
+        else None
+    )
+    latest_capability_activation_followup_result_decision = (
+        capability_activation_followup_result_decisions[0]
+        if capability_activation_followup_result_decisions
         else None
     )
     eval_after_change_statuses = Counter(
@@ -1616,6 +1634,38 @@ def generate_static_dashboard(root: Path) -> Path:
                 f"- report: {batch.report_path}",
                 "",
                 render_capability_activation_followup_result_batch_line(batch),
+            ]
+        )
+    else:
+        lines.append("- none")
+
+    lines.extend(
+        [
+            "",
+            "## Capability Activation Follow-Up Decisions",
+            "",
+        ]
+    )
+    if latest_capability_activation_followup_result_decision is not None:
+        decision = latest_capability_activation_followup_result_decision
+        lines.extend(
+            [
+                f"- status: {decision.status}",
+                f"- selected_action: {decision.selected_action}",
+                f"- results_ready: {decision.result_record_count}",
+                f"- decisions_recorded: {decision.decision_count}",
+                (
+                    "- accepted_keep_blocked_decisions: "
+                    f"{decision.accepted_keep_blocked_decision_count}"
+                ),
+                f"- more_evidence_decisions: {decision.more_evidence_decision_count}",
+                f"- deferred_decisions: {decision.deferred_decision_count}",
+                f"- existing_decisions: {decision.existing_decision_count}",
+                f"- approval_requests_created: {decision.created_approval_request_count}",
+                f"- activation_actions_taken: {decision.activation_action_count}",
+                f"- report: {decision.report_path}",
+                "",
+                render_capability_activation_followup_result_decision_line(decision),
             ]
         )
     else:

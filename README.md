@@ -26,6 +26,7 @@ activation contracts -> operator evidence ingestion -> local more-evidence decis
 more-evidence decisions -> pending follow-up evidence tasks -> task graph
 follow-up evidence tasks -> routing decisions -> read-only delegation packets
 completed follow-up delegation results -> local result records -> blocked proof state preserved
+local result records -> operator follow-up review decisions -> blocked activation preserved
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -99,6 +100,9 @@ provider. Completed read-only evaluator delegation results can now be ingested
 as local capability follow-up result records and JSON artifacts while keeping
 `approval_requests_created=0`, `activation_actions_taken=0`,
 `activation_allowed=false`, and `capability_enabled=false`.
+Operators can then record local accept-keep-blocked, more-evidence, or defer
+decisions for those ingested follow-up results while preserving the same
+blocked proof state and creating no approval rows.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -207,6 +211,7 @@ mutate external systems.
 - [Apply the operator approval request schema](docs/tutorial-operator-approval-schema.md)
 - [Create operator approval effects and activation tasks](docs/tutorial-operator-approval-effect-proposals.md)
 - [Create capability activation contracts](docs/tutorial-capability-activation-contracts.md)
+- [Review capability follow-up results](docs/tutorial-capability-followup-result-decisions.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
 - [Safety contract](contracts.md)
@@ -271,6 +276,8 @@ The repository can now:
   packets without starting subagents or calling model providers;
 - ingest completed read-only evaluator follow-up delegation results into local
   result records without satisfying proof or enabling capabilities;
+- record local operator decisions for ingested capability follow-up results
+  without creating approval rows, satisfying proof, or enabling capabilities;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -423,6 +430,7 @@ python3 -m agent_os.cli capability-activation-decide --operator-id operator --se
 python3 -m agent_os.cli capability-activation-followups
 python3 -m agent_os.cli capability-activation-followup-delegations
 python3 -m agent_os.cli capability-activation-followup-results
+python3 -m agent_os.cli capability-activation-followup-result-decide --operator-id operator --selected-action accept_keep_blocked --selection-note "Accepted evaluator result and kept capability activation blocked." --evidence-reference docs/capability-activation-followup-results.md
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"

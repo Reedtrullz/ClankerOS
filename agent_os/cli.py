@@ -204,6 +204,10 @@ from agent_os.capability_activation_followup_results import (
     render_capability_activation_followup_result_batch_line,
     write_capability_activation_followup_results,
 )
+from agent_os.capability_activation_followup_result_decisions import (
+    decide_capability_activation_followup_results,
+    render_capability_activation_followup_result_decision_line,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -729,6 +733,18 @@ def build_parser() -> argparse.ArgumentParser:
         "capability-activation-followup-results",
         help="Ingest completed follow-up delegation results as local evidence records.",
     )
+    followup_result_decide = subparsers.add_parser(
+        "capability-activation-followup-result-decide",
+        help="Record operator decisions for ingested follow-up result records.",
+    )
+    followup_result_decide.add_argument("--operator-id", required=True)
+    followup_result_decide.add_argument(
+        "--selected-action",
+        required=True,
+        choices=["accept_keep_blocked", "request_more_evidence", "defer_review"],
+    )
+    followup_result_decide.add_argument("--selection-note", required=True)
+    followup_result_decide.add_argument("--evidence-reference", required=True)
 
     approve = subparsers.add_parser("approve", help="Approve a pending local task request.")
     approve.add_argument("approval_id")
@@ -2812,6 +2828,44 @@ def main(argv: list[str] | None = None) -> int:
             ).removeprefix("- ")
         )
         for record in created_records:
+            print(
+                f"result={record.id} delegation={record.delegation_id} "
+                f"task={record.followup_task_id} capability={record.capability} "
+                f"status={record.evidence_status}"
+            )
+        return 0
+
+    if args.command == "capability-activation-followup-result-decide":
+        AgentSystem(root).initialize()
+        report_path, decision, decided_records = (
+            decide_capability_activation_followup_results(
+                root,
+                operator_id=args.operator_id,
+                selected_action=args.selected_action,
+                selection_note=args.selection_note,
+                evidence_reference=args.evidence_reference,
+            )
+        )
+        print(f"capability_activation_followup_result_decide: {decision.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"selected_action: {decision.selected_action}")
+        print(f"results_ready: {decision.result_record_count}")
+        print(f"decisions_recorded: {decision.decision_count}")
+        print(
+            "accepted_keep_blocked_decisions: "
+            f"{decision.accepted_keep_blocked_decision_count}"
+        )
+        print(f"more_evidence_decisions: {decision.more_evidence_decision_count}")
+        print(f"deferred_decisions: {decision.deferred_decision_count}")
+        print(f"existing_decisions: {decision.existing_decision_count}")
+        print(f"approval_requests_created: {decision.created_approval_request_count}")
+        print(f"activation_actions_taken: {decision.activation_action_count}")
+        print(
+            render_capability_activation_followup_result_decision_line(
+                decision
+            ).removeprefix("- ")
+        )
+        for record in decided_records:
             print(
                 f"result={record.id} delegation={record.delegation_id} "
                 f"task={record.followup_task_id} capability={record.capability} "

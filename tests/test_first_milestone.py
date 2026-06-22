@@ -13248,11 +13248,50 @@ def _capability_activation_followup_results_command(tmp_path: Path) -> list[str]
     ]
 
 
+def _capability_activation_followup_result_decision_command(tmp_path: Path) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-followup-result-decide",
+        "--operator-id",
+        "operator",
+        "--selected-action",
+        "accept_keep_blocked",
+        "--selection-note",
+        "Accepted evaluator result and kept capability activation blocked.",
+        "--evidence-reference",
+        "docs/capability-activation-followup-results.md",
+    ]
+
+
 def _run_capability_activation_followup_chain(tmp_path: Path, capsys) -> None:
     _run_capability_activation_contract_chain(tmp_path, capsys)
     assert main(_capability_activation_evidence_command(tmp_path)) == 0
     assert main(_capability_activation_decision_command(tmp_path)) == 0
     assert main(_capability_activation_followup_command(tmp_path)) == 0
+    capsys.readouterr()
+
+
+def _record_one_capability_activation_followup_result(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    _run_capability_activation_followup_chain(tmp_path, capsys)
+    assert main(_capability_activation_followup_delegations_command(tmp_path)) == 0
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    delegation = storage.list_recent_subagent_delegations(limit=None)[0]
+    record_delegation_result(
+        tmp_path,
+        storage,
+        delegation_id=delegation.id,
+        result_summary="Evaluator result found missing proof and recommends keeping activation blocked.",
+        structured_output={
+            "evidence": [{"status": "missing", "summary": "No fresh proof yet."}],
+            "findings": [{"summary": "Keep blocked."}],
+        },
+        recorded_by="operator",
+    )
+    assert main(_capability_activation_followup_results_command(tmp_path)) == 0
     capsys.readouterr()
 
 
@@ -13980,6 +14019,143 @@ def test_capability_activation_followup_results_are_idempotent(
     assert batches[0].existing_result_record_count == 1
     assert batches[1].status == "capability_activation_followup_results_recorded"
     assert len(storage.list_capability_activation_followup_result_records()) == 1
+
+
+def test_capability_activation_followup_result_decisions_require_result_records(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(_capability_activation_followup_result_decision_command(tmp_path)) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_result_decide: "
+        "capability_activation_followup_result_decisions_no_results"
+    ) in output
+    assert "results_ready: 0" in output
+    assert "decisions_recorded: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    decisions = storage.list_recent_capability_activation_followup_result_decisions()
+    assert decisions[0].status == (
+        "capability_activation_followup_result_decisions_no_results"
+    )
+    assert decisions[0].decision_count == 0
+    assert storage.list_recent_approval_requests() == []
+
+    report = (
+        tmp_path / "docs" / "capability-activation-followup-decisions.md"
+    ).read_text(encoding="utf-8")
+    assert "# Capability Activation Follow-Up Decisions" in report
+    assert "- status: capability_activation_followup_result_decisions_no_results" in report
+    assert "- Does not create approval_requests rows." in report
+
+
+def test_capability_activation_followup_result_decisions_record_operator_review(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _record_one_capability_activation_followup_result(tmp_path, capsys)
+
+    assert main(_capability_activation_followup_result_decision_command(tmp_path)) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_result_decide: "
+        "capability_activation_followup_result_decisions_recorded"
+    ) in output
+    assert "selected_action: accept_keep_blocked" in output
+    assert "results_ready: 1" in output
+    assert "decisions_recorded: 1" in output
+    assert "accepted_keep_blocked_decisions: 1" in output
+    assert "more_evidence_decisions: 0" in output
+    assert "deferred_decisions: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+    assert "report: docs/capability-activation-followup-decisions.md" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    decisions = storage.list_recent_capability_activation_followup_result_decisions()
+    decision = decisions[0]
+    assert decision.status == "capability_activation_followup_result_decisions_recorded"
+    assert decision.operator_id == "operator"
+    assert decision.selected_action == "accept_keep_blocked"
+    assert decision.result_record_count == 1
+    assert decision.decision_count == 1
+    assert decision.accepted_keep_blocked_decision_count == 1
+    assert decision.more_evidence_decision_count == 0
+    assert decision.deferred_decision_count == 0
+    assert decision.existing_decision_count == 0
+    assert decision.created_approval_request_count == 0
+    assert decision.activation_action_count == 0
+    assert len(decision.decided_result_ids) == 1
+
+    result_record = storage.list_capability_activation_followup_result_records()[0]
+    assert decision.decided_result_ids == [result_record.id]
+    assert result_record.activation_allowed is False
+    assert result_record.capability_enabled is False
+    assert storage.list_recent_approval_requests() == []
+    assert {contract.activation_allowed for contract in storage.list_capability_activation_contracts()} == {False}
+
+    report = (
+        tmp_path / "docs" / "capability-activation-followup-decisions.md"
+    ).read_text(encoding="utf-8")
+    assert "# Capability Activation Follow-Up Decisions" in report
+    assert "- status: capability_activation_followup_result_decisions_recorded" in report
+    assert "- selected_action: accept_keep_blocked" in report
+    assert "- accepted_keep_blocked_decisions: 1" in report
+    assert f"result={result_record.id}" in report
+    assert "- Does not enable capabilities." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Capability Activation Follow-Up Decisions" in dashboard
+    assert "- status: capability_activation_followup_result_decisions_recorded" in dashboard
+    assert "- decisions_recorded: 1" in dashboard
+    assert decision.id in dashboard
+
+
+def test_capability_activation_followup_result_decisions_are_idempotent(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _record_one_capability_activation_followup_result(tmp_path, capsys)
+
+    command = _capability_activation_followup_result_decision_command(tmp_path)
+    assert main(command) == 0
+    capsys.readouterr()
+
+    assert main(command) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_result_decide: "
+        "capability_activation_followup_result_decisions_already_recorded"
+    ) in output
+    assert "results_ready: 0" in output
+    assert "decisions_recorded: 0" in output
+    assert "existing_decisions: 1" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    decisions = storage.list_recent_capability_activation_followup_result_decisions(
+        limit=2
+    )
+    assert decisions[0].status == (
+        "capability_activation_followup_result_decisions_already_recorded"
+    )
+    assert decisions[0].decision_count == 0
+    assert decisions[0].existing_decision_count == 1
+    assert decisions[1].status == "capability_activation_followup_result_decisions_recorded"
+    assert len(decisions[1].decided_result_ids) == 1
 
 
 def test_hosted_dashboard_proof_checklist_blocks_blocked_real_cost_tracking_proof(

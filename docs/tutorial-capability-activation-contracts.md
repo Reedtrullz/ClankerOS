@@ -188,6 +188,39 @@ The result record preserves the completed delegation output for operator
 review. It does not satisfy capability proof, create approval rows, or enable
 the capability.
 
+## Record Follow-Up Result Review
+
+After result ingestion, record the operator review decision:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-decide \
+  --operator-id operator \
+  --selected-action accept_keep_blocked \
+  --selection-note "Accepted evaluator result and kept capability activation blocked." \
+  --evidence-reference docs/capability-activation-followup-results.md
+```
+
+Expected output includes:
+
+```text
+capability_activation_followup_result_decide: capability_activation_followup_result_decisions_recorded
+results_ready: 1
+decisions_recorded: 1
+accepted_keep_blocked_decisions: 1
+approval_requests_created: 0
+activation_actions_taken: 0
+report: docs/capability-activation-followup-decisions.md
+```
+
+Rerunning the command should report
+`capability_activation_followup_result_decisions_already_recorded` when all
+ingested result records already have local decision rows.
+
+The decision row lets the operator accept the evaluator result while keeping
+activation blocked. See
+`docs/tutorial-capability-followup-result-decisions.md` for the focused
+decision workflow.
+
 ## Non-Claims
 
 - This does not create `approval_requests` rows.

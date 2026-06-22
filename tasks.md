@@ -109,7 +109,8 @@
 - [x] Add follow-up tasks from capability activation more-evidence decisions. <!-- score=9 complexity=4 -->
 - [x] Add routing and delegation packets for capability follow-up evidence tasks. <!-- score=9 complexity=4 -->
 - [x] Add capability follow-up evidence result ingestion from completed delegation packets. <!-- score=9 complexity=4 -->
-- [ ] Add operator review decisions for ingested capability follow-up results. <!-- score=9 complexity=4 -->
+- [x] Add operator review decisions for ingested capability follow-up results. <!-- score=9 complexity=4 -->
+- [ ] Add local follow-up decision effect proposals from accepted blocked results. <!-- score=9 complexity=4 -->
 
 ## blocked
 

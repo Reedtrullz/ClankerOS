@@ -5976,3 +5976,57 @@
   capabilities, promote trust, schedule work, start workers, retry work, track
   spend, run CI, deploy, push, open PRs, mark the active goal complete, or
   mutate external systems.
+
+## 2026-06-22 Capability Activation Follow-Up Result Decisions
+
+- Added local operator review command:
+  `python3 -m agent_os.cli capability-activation-followup-result-decide`.
+- The command records local decisions for ingested capability follow-up result
+  records using explicit actions: `accept_keep_blocked`,
+  `request_more_evidence`, or `defer_review`.
+- Added SQLite table and dataclass:
+  `capability_activation_followup_result_decisions` and
+  `CapabilityActivationFollowupResultDecision`.
+- Added report and dashboard visibility:
+  `docs/capability-activation-followup-decisions.md` and
+  `## Capability Activation Follow-Up Decisions`.
+- Red-first tests initially failed because
+  `capability-activation-followup-result-decide` was not a registered CLI
+  command.
+- Initial live decision:
+  `capability_activation_followup_result_decision_146e16543cec`, status
+  `capability_activation_followup_result_decisions_recorded`, selected action
+  `accept_keep_blocked`, 1 result ready, 1 decision recorded, 0 approval
+  requests, and 0 activation actions.
+- Final live idempotency row:
+  `capability_activation_followup_result_decision_bf51ed57df70`, status
+  `capability_activation_followup_result_decisions_already_recorded`, 1
+  existing decision, 0 new decisions, 0 approval requests, and 0 activation
+  actions.
+- Updated README, suggested-use docs, operating summary, workflow lifecycle,
+  activation-contract tutorial, added
+  `docs/tutorial-capability-followup-result-decisions.md`, task queue,
+  bootstrap handoff, generated dashboard, and next iteration packet.
+- Next packet:
+  `Add local follow-up decision effect proposals from accepted blocked results.`
+- Verification evidence:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -k 'capability_activation_followup_result_decisions' -q`
+    -> failed with missing CLI command, as expected.
+  - `python3 -m py_compile agent_os/capability_activation_followup_result_decisions.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest tests/test_first_milestone.py -k 'capability_activation_followup_result_decisions' -q` -> 3 passed, 268 deselected.
+  - `python3 -m pytest tests/test_first_milestone.py -k 'capability_activation_followup' -q` -> 13 passed, 258 deselected.
+  - `python3 -m pytest tests/test_first_milestone.py -k 'capability_activation_followup_result_decisions or capability_activation_followup_results' -q` -> 6 passed, 265 deselected.
+  - `python3 -m pytest -q` -> 271 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add capability followup result decision ledger" ...` -> pass as `eval_after_change_b789b57e03a8`, run `run_168daa0b1ab7`.
+  - Live command-gate refresh passed for idempotent
+    `capability-activation-followup-result-decide`, `queue-health`,
+    `approvals`, `eval-candidates`, `handoff-review`, `playbooks`, `iterate`,
+    `dashboard`, and `eval`.
+  - Final `handoff-review` status: `clear`, 0 blocked tasks, 0 stale handoffs.
+  - `git diff --check` -> passed.
+- Non-claims: follow-up result decisions do not create `approval_requests`,
+  satisfy proof, mutate activation contracts, allow activation, enable
+  capabilities, promote trust, route work, schedule work, start workers, retry
+  work, track spend, run CI, deploy, push, open PRs, mark the active goal
+  complete, or mutate external systems.
