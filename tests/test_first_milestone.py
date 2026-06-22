@@ -13354,6 +13354,16 @@ def _capability_activation_followup_result_task_result_effect_application_comman
     ]
 
 
+def _capability_activation_followup_result_task_result_effect_tasks_command(
+    tmp_path: Path,
+) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-followup-result-task-result-effect-tasks",
+    ]
+
+
 def _run_capability_activation_followup_chain(tmp_path: Path, capsys) -> None:
     _run_capability_activation_contract_chain(tmp_path, capsys)
     assert main(_capability_activation_evidence_command(tmp_path)) == 0
@@ -13504,6 +13514,25 @@ def _record_one_capability_activation_followup_result_task_result_effect_proposa
     assert (
         main(
             _capability_activation_followup_result_task_result_effect_proposals_command(
+                tmp_path
+            )
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+
+def _record_one_capability_activation_followup_result_task_result_effect_application(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    _record_one_capability_activation_followup_result_task_result_effect_proposal(
+        tmp_path,
+        capsys,
+    )
+    assert (
+        main(
+            _capability_activation_followup_result_task_result_effect_application_command(
                 tmp_path
             )
         )
@@ -16187,6 +16216,276 @@ def test_capability_activation_followup_result_task_result_effect_apply_is_idemp
     ) in report
     assert "- effects_applied: 0" in report
     assert "- existing_applied_effects: 1" in report
+
+
+def test_capability_activation_followup_result_task_result_effect_tasks_require_applied_effects(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert (
+        main(
+            _capability_activation_followup_result_task_result_effect_tasks_command(
+                tmp_path
+            )
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_result_task_result_effect_tasks: "
+        "capability_activation_followup_result_task_result_effect_tasks_no_applied_effects"
+    ) in output
+    assert "applied_downstream_effects: 0" in output
+    assert "tasks_created: 0" in output
+    assert "existing_downstream_tasks: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+    assert "external_mutations_taken: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batches = (
+        storage.list_recent_capability_activation_followup_result_task_result_effect_task_batches()
+    )
+    assert batches[0].status == (
+        "capability_activation_followup_result_task_result_effect_tasks_no_applied_effects"
+    )
+    assert batches[0].task_count == 0
+    assert storage.list_all_tasks() == []
+
+    report = (
+        tmp_path
+        / "docs"
+        / "capability-activation-followup-result-task-result-effect-tasks.md"
+    ).read_text(encoding="utf-8")
+    assert (
+        "# Capability Activation Follow-Up Result Task Effect Tasks"
+        in report
+    )
+    assert (
+        "- status: "
+        "capability_activation_followup_result_task_result_effect_tasks_no_applied_effects"
+    ) in report
+    assert "- tasks_created: 0" in report
+    assert "- Does not create approval_requests rows." in report
+    assert "- Does not enable capabilities." in report
+    assert "- Does not mutate downstream result task records." in report
+    assert "- Does not mutate external systems." in report
+
+
+def test_capability_activation_followup_result_task_result_effect_tasks_create_pending_tasks(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _record_one_capability_activation_followup_result_task_result_effect_application(
+        tmp_path,
+        capsys,
+    )
+
+    assert (
+        main(
+            _capability_activation_followup_result_task_result_effect_tasks_command(
+                tmp_path
+            )
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_result_task_result_effect_tasks: "
+        "capability_activation_followup_result_task_result_effect_tasks_recorded"
+    ) in output
+    assert "applied_downstream_effects: 1" in output
+    assert "tasks_created: 1" in output
+    assert "existing_downstream_tasks: 0" in output
+    assert "capability_tasks_created: 1" in output
+    assert "approval_requests_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+    assert "external_mutations_taken: 0" in output
+    assert (
+        "report: "
+        "docs/capability-activation-followup-result-task-result-effect-tasks.md"
+        in output
+    )
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batch = (
+        storage.list_recent_capability_activation_followup_result_task_result_effect_task_batches()[
+            0
+        ]
+    )
+    effect = storage.list_effects_with_idempotency_prefix(
+        "capability-followup-result-task-result-decision-effect:"
+    )[0]
+    result_record = (
+        storage.list_capability_activation_followup_result_task_result_records()[0]
+    )
+    assert batch.status == (
+        "capability_activation_followup_result_task_result_effect_tasks_recorded"
+    )
+    assert batch.applied_downstream_effect_count == 1
+    assert batch.task_count == 1
+    assert batch.existing_task_count == 0
+    assert batch.capability_task_count == 1
+    assert batch.created_approval_request_count == 0
+    assert batch.activation_action_count == 0
+    assert batch.external_mutation_count == 0
+    assert batch.source_effect_ids == [effect.id]
+    assert len(batch.created_task_ids) == 1
+
+    tasks = [
+        task
+        for task in storage.list_all_tasks()
+        if task.task_type
+        == "capability_activation_followup_result_task_result_effect_task"
+    ]
+    assert len(tasks) == 1
+    task = tasks[0]
+    assert task.status == "pending"
+    assert task.project_id == effect.project_id
+    assert task.risk_level == "high"
+    assert "capability-activation" in task.skill_tags
+    assert "downstream-result-effect" in task.skill_tags
+    assert task.artifacts == [
+        "docs/capability-activation-followup-result-task-result-effect-tasks.md"
+    ]
+    assert task.evidence["source_effect_id"] == effect.id
+    assert task.evidence["source_application_id"] == effect.result_json[
+        "application_id"
+    ]
+    assert task.evidence["source_decision_id"] == effect.result_json[
+        "source_decision_id"
+    ]
+    assert task.evidence["source_downstream_result_id"] == result_record.id
+    assert task.evidence["source_delegation_id"] == result_record.delegation_id
+    assert task.evidence["source_downstream_task_id"] == (
+        result_record.downstream_task_id
+    )
+    assert task.evidence["source_followup_result_id"] == (
+        result_record.source_result_id
+    )
+    assert task.evidence["upstream_followup_effect_id"] == (
+        result_record.source_effect_id
+    )
+    assert task.evidence["source_contract_id"] == result_record.source_contract_id
+    assert task.evidence["capability"] == "hosted_dashboard"
+    assert task.evidence["selected_action"] == "accept_keep_blocked"
+    assert task.evidence["activation_allowed"] is False
+    assert task.evidence["capability_enabled"] is False
+    assert task.evidence["activation_actions_taken"] == 0
+    assert task.evidence["approval_requests_created"] == 0
+    assert task.evidence["external_mutations_taken"] == 0
+    assert task.evidence["task_origin"] == (
+        "applied_downstream_result_decision_effect"
+    )
+    assert task.verification_plan["type"] == (
+        "capability_activation_followup_result_task_result_effect_downstream_task"
+    )
+    assert task.verification_plan["activation_allowed"] is False
+    assert task.verification_plan["capability_enabled"] is False
+    assert "next_evidence_plan" in task.verification_plan["required_gates"]
+    assert storage.list_recent_approval_requests() == []
+    assert {
+        contract.activation_allowed
+        for contract in storage.list_capability_activation_contracts()
+    } == {False}
+
+    report = (
+        tmp_path
+        / "docs"
+        / "capability-activation-followup-result-task-result-effect-tasks.md"
+    ).read_text(encoding="utf-8")
+    assert (
+        "# Capability Activation Follow-Up Result Task Effect Tasks"
+        in report
+    )
+    assert (
+        "- status: "
+        "capability_activation_followup_result_task_result_effect_tasks_recorded"
+        in report
+    )
+    assert "- tasks_created: 1" in report
+    assert f"task={task.id}" in report
+    assert f"effect={effect.id}" in report
+    assert "capability=hosted_dashboard" in report
+    assert "- Does not create approval_requests rows." in report
+    assert "- Does not enable capabilities." in report
+    assert "- Does not mutate downstream result task records." in report
+    assert "- Does not mutate external systems." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert (
+        "## Capability Activation Follow-Up Result Task Effect Tasks"
+        in dashboard
+    )
+    assert (
+        "- status: "
+        "capability_activation_followup_result_task_result_effect_tasks_recorded"
+        in dashboard
+    )
+    assert "- tasks_created: 1" in dashboard
+    assert batch.id in dashboard
+
+
+def test_capability_activation_followup_result_task_result_effect_tasks_are_idempotent(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _record_one_capability_activation_followup_result_task_result_effect_application(
+        tmp_path,
+        capsys,
+    )
+
+    command = (
+        _capability_activation_followup_result_task_result_effect_tasks_command(
+            tmp_path
+        )
+    )
+    assert main(command) == 0
+    capsys.readouterr()
+
+    assert main(command) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_result_task_result_effect_tasks: "
+        "capability_activation_followup_result_task_result_effect_tasks_already_recorded"
+    ) in output
+    assert "applied_downstream_effects: 1" in output
+    assert "tasks_created: 0" in output
+    assert "existing_downstream_tasks: 1" in output
+    assert "external_mutations_taken: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batches = (
+        storage.list_recent_capability_activation_followup_result_task_result_effect_task_batches(
+            limit=2
+        )
+    )
+    tasks = [
+        task
+        for task in storage.list_all_tasks()
+        if task.task_type
+        == "capability_activation_followup_result_task_result_effect_task"
+    ]
+    assert batches[0].status == (
+        "capability_activation_followup_result_task_result_effect_tasks_already_recorded"
+    )
+    assert batches[0].task_count == 0
+    assert batches[0].existing_task_count == 1
+    assert batches[1].status == (
+        "capability_activation_followup_result_task_result_effect_tasks_recorded"
+    )
+    assert len(tasks) == 1
 
 
 def test_hosted_dashboard_proof_checklist_blocks_blocked_real_cost_tracking_proof(

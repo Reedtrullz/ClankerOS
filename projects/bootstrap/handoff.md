@@ -1901,14 +1901,43 @@ work, or changing routing.
   promote trust, schedule work, retry work, track spend, run CI, deploy, push,
   open PRs, mark the active goal complete, or mutate external systems.
 
+## Latest Capability Activation Follow-Up Result Task Effect Tasks
+
+- `capability-activation-followup-result-task-result-effect-tasks` now
+  materializes applied downstream proof-plan result decision effects into
+  pending high-risk downstream proof tasks in the local task graph.
+- Initial live task batch
+  `capability_activation_followup_result_task_result_effect_task_batch_529ff08a48af`,
+  status
+  `capability_activation_followup_result_task_result_effect_tasks_recorded`,
+  created `task_ef5cd385caf4` for `hosted_dashboard` from
+  `effect_1204651c2a69` and downstream result
+  `capability_activation_followup_result_task_result_749b9c23cd2f`.
+- Final live idempotency pass recorded
+  `capability_activation_followup_result_task_result_effect_task_batch_9276c92ddada`,
+  status
+  `capability_activation_followup_result_task_result_effect_tasks_already_recorded`,
+  with 1 applied downstream effect, 0 new tasks, 1 existing downstream task,
+  0 approval requests, 0 activation actions, and 0 external mutations.
+- Evidence report:
+  `docs/capability-activation-followup-result-task-result-effect-tasks.md`.
+- Tutorial:
+  `docs/tutorial-capability-followup-result-task-result-effect-tasks.md`.
+- Non-claims: downstream follow-up result task result effect tasks do not
+  create `approval_requests`, satisfy proof, mutate activation contracts,
+  mutate downstream result records, allow activation, enable capabilities,
+  promote trust, route/delegate work, schedule work, retry work, track spend,
+  run CI, deploy, push, open PRs, mark the active goal complete, or mutate
+  external systems.
+
 ## Next Actions
 
-Current focus: Add downstream task records from applied downstream follow-up result task decision effect applications.
+Current focus: Add routing and delegation packets for downstream follow-up result task result effect tasks.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add downstream task records from applied downstream follow-up result task decision effect applications.
-2. Materialize applied downstream result decision effect applications into
-   pending downstream task graph records without enabling capabilities,
+   Add routing and delegation packets for downstream follow-up result task result effect tasks.
+2. Route pending downstream result task effect tasks into read-only evaluator
+   delegation packets without starting subagents, enabling capabilities,
    satisfying proof, or allowing activation.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking

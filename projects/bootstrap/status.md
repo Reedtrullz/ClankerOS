@@ -3731,6 +3731,41 @@ are visible in the dashboard and are not active until approved.
   Add downstream task records from applied downstream follow-up result task
   decision effect applications.
 
+## 2026-06-22 Capability Follow-Up Result Task Effect Tasks
+
+- Added `capability-activation-followup-result-task-result-effect-tasks` to
+  materialize applied downstream proof-plan result decision effects into
+  pending local downstream proof tasks.
+- Initial live run recorded
+  `capability_activation_followup_result_task_result_effect_task_batch_529ff08a48af`
+  and created `task_ef5cd385caf4` for `hosted_dashboard` from
+  `effect_1204651c2a69`.
+- Final idempotency run recorded
+  `capability_activation_followup_result_task_result_effect_task_batch_9276c92ddada`
+  with 0 new tasks, 1 existing downstream task, 0 approval requests, 0
+  activation actions, and 0 external mutations.
+- Evidence report:
+  `docs/capability-activation-followup-result-task-result-effect-tasks.md`.
+- Tutorial:
+  `docs/tutorial-capability-followup-result-task-result-effect-tasks.md`.
+- Verification before full gates:
+  focused tests passed 3; adjacent lifecycle tests passed 21; live command
+  created 1 task; idempotency command created 0 tasks and found 1 existing
+  task; `queue-health` reported 0 hotspots.
+- Final verification:
+  `python3 -m pytest -q` passed with 298 tests in 208.76s;
+  `python3 -m agent_os.cli eval-after-change --change "Add downstream result task effect tasks" ...`
+  passed with run `run_82796f63f258`;
+  `python3 -m agent_os.cli eval` passed with run `run_79feca04b697`;
+  `python3 -m agent_os.cli queue-health` reported 0 hotspots;
+  `python3 -m agent_os.cli handoff-review` reported clear;
+  `python3 -m agent_os.cli dashboard` regenerated the dashboard;
+  `python3 -m agent_os.cli iterate` selected the routing/delegation packet;
+  `git diff --check` passed.
+- Next focus:
+  Add routing and delegation packets for downstream follow-up result task
+  result effect tasks.
+
 ## Run run_38a7d9c5354c
 
 - Goal ID: goal_f46f23ea1c14
@@ -3766,3 +3801,27 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_a11dc8d6567e
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_af75fe75ca2b/summary.md
+
+## Run run_be7bcaef132d
+
+- Goal ID: goal_5e9a26bfe597
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_be7bcaef132d/summary.md
+
+## Run run_1c4ddeb9652f
+
+- Goal ID: goal_0b8dd713a3a7
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_1c4ddeb9652f/summary.md
+
+## Run run_82796f63f258
+
+- Goal ID: goal_0b133562067f
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_82796f63f258/summary.md
+
+## Run run_79feca04b697
+
+- Goal ID: goal_4529d8e03c87
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_79feca04b697/summary.md

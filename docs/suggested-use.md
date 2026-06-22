@@ -84,6 +84,10 @@ Create proposed effects from accepted downstream proof-plan result decisions, an
 Apply proposed downstream proof-plan result decision effects as local records only, and prove that activation remains blocked.
 ```
 
+```text
+Create downstream proof tasks from applied downstream result decision effects, and prove that activation remains blocked.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -110,7 +114,9 @@ Apply proposed downstream proof-plan result decision effects as local records on
     effects only after the downstream review decision exists.
 19. Apply downstream result decision effects as local records only after the
     proposal row exists.
-20. Record non-claims before treating the work as safe.
+20. Materialize applied downstream result decision effects into pending
+    downstream proof tasks before routing or delegation.
+21. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -529,6 +535,21 @@ The application command writes
 `docs/capability-activation-followup-result-task-result-effect-application.md`,
 records a local application row, and marks applicable proposed effects as
 `applied`. It keeps `approval_requests_created=0`,
+`activation_actions_taken=0`, `external_mutations_taken=0`,
+`activation_allowed=false`, and `capability_enabled=false`.
+
+Create downstream proof tasks from applied downstream result decision effects:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-tasks
+python3 -m agent_os.cli dashboard
+```
+
+The task command writes
+`docs/capability-activation-followup-result-task-result-effect-tasks.md`,
+records a local batch row, and creates pending high-risk task graph records
+for applied downstream result decision effects that do not already have a
+downstream task. It keeps `approval_requests_created=0`,
 `activation_actions_taken=0`, `external_mutations_taken=0`,
 `activation_allowed=false`, and `capability_enabled=false`.
 
