@@ -1,23 +1,24 @@
 # Dispatch Posture History
 
-- id: dispatch_posture_history_392a2bad256c
+- id: dispatch_posture_history_3194b33ec8da
 - status: report_only
 - snapshots: 25
-- latest_task_count: 395
+- latest_task_count: 399
 - task_count_delta: 149
 - budget_states: not_tracked
 - trust_states: not_tracked
-- first_snapshot_at: 2026-06-22T06:59:25.533068+00:00
-- latest_snapshot_at: 2026-06-22T15:36:44.682620+00:00
+- first_snapshot_at: 2026-06-22T07:15:49.956945+00:00
+- latest_snapshot_at: 2026-06-22T15:51:19.488954+00:00
 - report_path: docs/dispatch-posture-history.md
-- created_at: 2026-06-22T15:36:44.810493+00:00
+- created_at: 2026-06-22T15:51:19.618327+00:00
 
 ## Latest Risk Levels
 
-- low: 395
+- low: 399
 
 ## Recent Snapshots
 
+- budget_trust_posture_64f1c621757a: tasks=399 risk_counts=low=399 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T15:51:19.488954+00:00
 - budget_trust_posture_4bb1bfa20791: tasks=395 risk_counts=low=395 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T15:36:44.682620+00:00
 - budget_trust_posture_ba2ae8e9854a: tasks=381 risk_counts=low=381 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T14:48:45.093117+00:00
 - budget_trust_posture_8278791885c3: tasks=373 risk_counts=low=373 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T14:31:51.632052+00:00
@@ -42,7 +43,6 @@
 - budget_trust_posture_cefa180cfd98: tasks=258 risk_counts=low=258 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T07:39:31.865464+00:00
 - budget_trust_posture_95e0a22760e8: tasks=254 risk_counts=low=254 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T07:34:44.702237+00:00
 - budget_trust_posture_61b1029e591d: tasks=250 risk_counts=low=250 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T07:15:49.956945+00:00
-- budget_trust_posture_2b78eba413eb: tasks=246 risk_counts=low=246 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T06:59:25.533068+00:00
 
 ## Non-Claims
 

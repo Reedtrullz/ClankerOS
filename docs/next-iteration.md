@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_9da2aff951a8
+- Packet ID: iteration_49247cb52dc2
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add approval-gated application command for operator approval effect proposals.
+Advance the Agent System north-star goal by completing: Add capability-specific activation tasks from applied operator approval effects.
 
 ## Definition Of Done
 
@@ -62,6 +62,7 @@ Advance the Agent System north-star goal by completing: Add approval-gated appli
 - `python3 -m agent_os.cli expansion-operator-approval-schema-migration-selection-packet`
 - `python3 -m agent_os.cli expansion-operator-approval-schema-migration-selection-input-template`
 - `python3 -m agent_os.cli expansion-operator-approval-effect-proposals`
+- `python3 -m agent_os.cli expansion-operator-approval-effect-apply --operator-id operator --selection-note "Apply approved local operator approval effect proposals." --evidence-reference docs/expansion-operator-approval-effect-proposals.md`
 - `python3 -m agent_os.cli eval`
 - `python3 -m agent_os.cli playbooks`
 - `python3 -m agent_os.cli dashboard`
@@ -133,6 +134,7 @@ Advance the Agent System north-star goal by completing: Add approval-gated appli
 - operator approval request rows application: operator_approval_request_rows_applied
 - operator approval request decisions: operator_approval_request_decisions_recorded
 - operator approval effect proposals: operator_approval_effect_proposals_recorded
+- operator approval effect application: operator_approval_effect_application_already_recorded
 - proposed eval candidates: 0
 - active playbooks: 1
 - open stuck-task incidents: 0

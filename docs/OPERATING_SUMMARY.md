@@ -89,6 +89,10 @@ Core layers for the bootstrap:
   `proposed` effect records for external-decision and capability surfaces
   while taking zero activation actions and creating zero legacy
   `approval_requests` rows.
+- Operator approval effect application: proposed operator approval effects can
+  be applied as local records with per-effect `status=applied` and explicit
+  `capability_enabled=false` result evidence while still taking zero
+  activation actions and mutating no external systems.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON

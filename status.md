@@ -5647,3 +5647,43 @@
   `approval_requests` rows, enable capabilities, promote trust, route work,
   schedule work, start workers, retry work, track spend, run CI, deploy, push,
   open PRs, mark the active goal complete, or mutate external systems.
+
+## 2026-06-22 Operator Approval Effect Application
+
+- Added local application command:
+  `python3 -m agent_os.cli expansion-operator-approval-effect-apply`.
+- The command requires `operator_id`, `selection_note`, and
+  `evidence_reference`.
+- It applies approved operator approval effect proposals as local records only:
+  each applicable effect moves from `proposed` to `applied`, stores
+  `application_id`, `application_status=recorded_local_only`,
+  `capability_enabled=false`, `activation_actions_taken=0`, and
+  `external_mutations_taken=0` in `result_json`, and records an aggregate
+  `operator_approval_effect_applications` row.
+- Initial live application:
+  `operator_approval_effect_application_4a855067a8db`, status
+  `operator_approval_effect_application_recorded`, 11 proposed effects, 11
+  applied effects, 2 external effects, 9 capability effects, 0 legacy
+  `approval_requests` rows created, and 0 activation actions taken.
+- A later idempotency verification run recorded
+  `operator_approval_effect_application_a007e2ecce01`, status
+  `operator_approval_effect_application_already_recorded`, 0 proposed effects,
+  0 newly applied effects, 11 existing applied effects, 0 legacy
+  `approval_requests` rows created, and 0 activation actions taken.
+- Added dashboard visibility under
+  `## Expansion Operator Approval Effect Application`.
+- Updated README, suggested-use docs, operating summary, tutorial docs, task
+  queue, and generated application report.
+- Verification evidence so far:
+  - Red-first focused tests failed before the CLI command existed.
+  - `python3 -m py_compile agent_os/operator_approval_effect_application.py agent_os/operator_approval_effect_proposals.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'operator_approval_effect_apply'` -> 3 passed, 243 deselected.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'operator_approval_effect_proposals or operator_approval_effect_apply or operator_approval_request_decide'` -> 9 passed, 237 deselected.
+  - `python3 -m pytest -q` -> 246 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add operator approval effect application" ...` -> pass as `run_f3f628326998`.
+  - Full command-gate sweep from `sweep-stuck` through dashboard -> passed,
+    including `expansion-operator-approval-effect-apply` idempotency.
+- Non-claims: effect application does not create legacy `approval_requests`
+  rows, enable capabilities, promote trust, route work, schedule work, start
+  workers, retry work, track spend, run CI, deploy, push, open PRs, mark the
+  active goal complete, or mutate external systems.

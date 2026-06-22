@@ -62,6 +62,7 @@ VERIFICATION_COMMANDS = [
     "python3 -m agent_os.cli expansion-operator-approval-schema-migration-selection-packet",
     "python3 -m agent_os.cli expansion-operator-approval-schema-migration-selection-input-template",
     "python3 -m agent_os.cli expansion-operator-approval-effect-proposals",
+    "python3 -m agent_os.cli expansion-operator-approval-effect-apply --operator-id operator --selection-note \"Apply approved local operator approval effect proposals.\" --evidence-reference docs/expansion-operator-approval-effect-proposals.md",
     "python3 -m agent_os.cli eval",
     "python3 -m agent_os.cli playbooks",
     "python3 -m agent_os.cli dashboard",
@@ -690,6 +691,18 @@ def _current_posture(root: Path) -> list[str]:
                 operator_approval_effect_proposals = (
                     OPERATOR_APPROVAL_EFFECT_PROPOSALS_RECORDED
                 )
+        operator_approval_effect_application = "none"
+        if _table_exists(
+            connection,
+            "operator_approval_effect_applications",
+        ):
+            operator_approval_effect_application_rows = Storage(
+                db_path
+            ).list_recent_operator_approval_effect_applications(limit=1)
+            if operator_approval_effect_application_rows:
+                operator_approval_effect_application = (
+                    operator_approval_effect_application_rows[0].status
+                )
         handoff_reviews = Storage(db_path).list_recent_handoff_reviews(limit=1)
 
     handoff_blocked_tasks = 0
@@ -750,6 +763,7 @@ def _current_posture(root: Path) -> list[str]:
         f"operator approval request rows application: {operator_approval_request_rows_application}",
         f"operator approval request decisions: {operator_approval_request_decisions}",
         f"operator approval effect proposals: {operator_approval_effect_proposals}",
+        f"operator approval effect application: {operator_approval_effect_application}",
         f"proposed eval candidates: {proposed_eval_candidates}",
         f"active playbooks: {active_playbooks}",
         f"open stuck-task incidents: {stuck_count}",

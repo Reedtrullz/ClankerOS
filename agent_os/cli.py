@@ -174,6 +174,10 @@ from agent_os.operator_approval_effect_proposals import (
     render_operator_approval_effect_proposal_line,
     write_operator_approval_effect_proposals,
 )
+from agent_os.operator_approval_effect_application import (
+    apply_operator_approval_effects,
+    render_operator_approval_effect_application_line,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -641,6 +645,13 @@ def build_parser() -> argparse.ArgumentParser:
         "expansion-operator-approval-effect-proposals",
         help="Create local proposed effects from approved operator approval request decisions.",
     )
+    effect_apply = subparsers.add_parser(
+        "expansion-operator-approval-effect-apply",
+        help="Apply local operator approval effect proposals as local records only.",
+    )
+    effect_apply.add_argument("--operator-id", required=True)
+    effect_apply.add_argument("--selection-note", required=True)
+    effect_apply.add_argument("--evidence-reference", required=True)
 
     approve = subparsers.add_parser("approve", help="Approve a pending local task request.")
     approve.add_argument("approval_id")
@@ -2519,6 +2530,36 @@ def main(argv: list[str] | None = None) -> int:
             f"{summary.legacy_approval_request_count}"
         )
         print(f"activation_actions_taken: {summary.activation_action_count}")
+        for effect in effects:
+            print(render_operator_approval_effect_proposal_line(effect).removeprefix("- "))
+        return 0
+
+    if args.command == "expansion-operator-approval-effect-apply":
+        AgentSystem(root).initialize()
+        report_path, application, effects = apply_operator_approval_effects(
+            root,
+            operator_id=args.operator_id,
+            selection_note=args.selection_note,
+            evidence_reference=args.evidence_reference,
+        )
+        print(f"expansion_operator_approval_effect_apply: {application.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"operator_id: {application.operator_id}")
+        print(f"proposed_effects: {application.proposed_effect_count}")
+        print(f"effects_applied: {application.applied_effect_count}")
+        print(f"existing_applied_effects: {application.existing_applied_effect_count}")
+        print(f"external_effects_applied: {application.external_effect_count}")
+        print(f"capability_effects_applied: {application.capability_effect_count}")
+        print(
+            "legacy_approval_requests_created: "
+            f"{application.legacy_approval_request_count}"
+        )
+        print(f"activation_actions_taken: {application.activation_action_count}")
+        print(
+            render_operator_approval_effect_application_line(
+                application
+            ).removeprefix("- ")
+        )
         for effect in effects:
             print(render_operator_approval_effect_proposal_line(effect).removeprefix("- "))
         return 0

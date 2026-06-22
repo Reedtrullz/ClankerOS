@@ -1496,16 +1496,39 @@ work, or changing routing.
   schedule work, start workers, retry work, track spend, run CI, deploy, push,
   open PRs, mark the active goal complete, or mutate external systems.
 
+## Latest Operator Approval Effect Application
+
+- `expansion-operator-approval-effect-apply` now exists as the local
+  application step for proposed operator approval effects.
+- Initial application:
+  `operator_approval_effect_application_4a855067a8db`, status
+  `operator_approval_effect_application_recorded`, with 11 proposed effects,
+  11 applied effects, 2 external effects, 9 capability effects, 0 legacy
+  `approval_requests` rows created, and 0 activation actions taken.
+- Final verification reran the command idempotently, so the current report
+  status is `operator_approval_effect_application_already_recorded` in
+  `operator_approval_effect_application_a007e2ecce01`, with 11 existing
+  applied effects and 0 new activation actions.
+- Applied effects now carry `status=applied`,
+  `application_status=recorded_local_only`, `capability_enabled=false`,
+  `activation_actions_taken=0`, and `external_mutations_taken=0`.
+- Evidence report:
+  `docs/expansion-operator-approval-effect-application.md`.
+- Non-claims: application does not enable capabilities, promote trust, route
+  work, schedule work, start workers, retry work, track spend, run CI, deploy,
+  push, open PRs, mark the active goal complete, or mutate external systems.
+
 ## Next Actions
 
-Current focus: Add approval-gated application command for operator approval effect proposals.
+Current focus: Add capability-specific activation tasks from applied operator approval effects.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add approval-gated application command for operator approval effect
-   proposals.
-2. Keep proposed effects separate from applied effects; require a fresh
-   approval checkpoint before any activation, trust promotion, routing,
-   worker, scheduler, retry, spend-tracking, CI/deploy, or external action.
+   Add capability-specific activation tasks from applied operator approval
+   effects.
+2. Keep applied operator approval effects separate from active capabilities;
+   require capability-specific tasks, evidence, and approval checkpoints before
+   any activation, trust promotion, routing, worker, scheduler, retry,
+   spend-tracking, CI/deploy, or external action.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts exist.

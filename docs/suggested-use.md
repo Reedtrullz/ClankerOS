@@ -252,6 +252,22 @@ still report `legacy_approval_requests_created: 0` and
 route work, schedule workers, retry work, track spend, deploy, or mutate
 external systems.
 
+After proposed effects exist, apply them as local records:
+
+```bash
+python3 -m agent_os.cli expansion-operator-approval-effect-apply \
+  --operator-id operator \
+  --selection-note "Apply approved local operator approval effect proposals as local records only." \
+  --evidence-reference docs/expansion-operator-approval-effect-proposals.md
+```
+
+This command may move operator approval effects from `proposed` to `applied`
+and write local application evidence. It must still report
+`legacy_approval_requests_created: 0`, `activation_actions_taken: 0`, and
+`capability_enabled=false`; it does not enable hosted dashboard, remote
+workers, schedulers, adapters, CI/deploy, budget enforcement, trust promotion,
+automatic retry, real-cost tracking, or external systems.
+
 ## When To Commit And Push
 
 Commit when:
@@ -267,10 +283,10 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 
 ## Practical Next Slices
 
-Good next slices now favor applying proposed effects through a fresh approval
-checkpoint before broader autonomy:
+Good next slices now favor capability-specific guards after local application
+records exist:
 
-- approval-gated application for proposed operator approval effects;
+- capability-specific activation tasks from applied operator approval effects;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;

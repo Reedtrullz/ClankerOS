@@ -136,6 +136,9 @@ from agent_os.operator_approval_effect_proposals import (
     IDEMPOTENCY_PREFIX as OPERATOR_APPROVAL_EFFECT_IDEMPOTENCY_PREFIX,
     render_operator_approval_effect_proposal_line,
 )
+from agent_os.operator_approval_effect_application import (
+    render_operator_approval_effect_application_line,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -627,6 +630,14 @@ def generate_static_dashboard(root: Path) -> Path:
             operator_approval_request_decisions = (
                 storage.list_recent_operator_approval_request_decisions(limit=1)
             )
+        operator_approval_effect_applications = []
+        if _table_exists(
+            connection,
+            "operator_approval_effect_applications",
+        ):
+            operator_approval_effect_applications = (
+                storage.list_recent_operator_approval_effect_applications(limit=1)
+            )
 
     statuses = [
         "pending",
@@ -842,6 +853,11 @@ def generate_static_dashboard(root: Path) -> Path:
     latest_operator_approval_request_decision = (
         operator_approval_request_decisions[0]
         if operator_approval_request_decisions
+        else None
+    )
+    latest_operator_approval_effect_application = (
+        operator_approval_effect_applications[0]
+        if operator_approval_effect_applications
         else None
     )
     eval_after_change_statuses = Counter(
@@ -1273,6 +1289,34 @@ def generate_static_dashboard(root: Path) -> Path:
         lines.extend(
             render_operator_approval_effect_proposal_line(effect)
             for effect in operator_approval_effect_proposals
+        )
+    else:
+        lines.append("- none")
+
+    lines.extend(
+        [
+            "",
+            "## Expansion Operator Approval Effect Application",
+            "",
+        ]
+    )
+    if latest_operator_approval_effect_application is not None:
+        application = latest_operator_approval_effect_application
+        lines.extend(
+            [
+                f"- status: {application.status}",
+                f"- operator_id: {application.operator_id}",
+                f"- proposed_effects: {application.proposed_effect_count}",
+                f"- effects_applied: {application.applied_effect_count}",
+                f"- existing_applied_effects: {application.existing_applied_effect_count}",
+                f"- external_effects_applied: {application.external_effect_count}",
+                f"- capability_effects_applied: {application.capability_effect_count}",
+                f"- legacy_approval_requests_created: {application.legacy_approval_request_count}",
+                f"- activation_actions_taken: {application.activation_action_count}",
+                f"- report: {application.report_path}",
+                "",
+                render_operator_approval_effect_application_line(application),
+            ]
         )
     else:
         lines.append("- none")

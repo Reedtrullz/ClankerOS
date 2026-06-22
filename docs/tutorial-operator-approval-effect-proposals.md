@@ -45,11 +45,40 @@ python3 -m agent_os.cli dashboard
 Read `docs/dashboard.md` and check
 `## Expansion Operator Approval Effect Proposals`.
 
+## 4. Apply Proposed Effects Locally
+
+```bash
+python3 -m agent_os.cli expansion-operator-approval-effect-apply \
+  --operator-id operator \
+  --selection-note "Apply approved local operator approval effect proposals as local records only." \
+  --evidence-reference docs/expansion-operator-approval-effect-proposals.md
+```
+
+Expected output includes:
+
+```text
+effects_applied: 11
+legacy_approval_requests_created: 0
+activation_actions_taken: 0
+```
+
+The generated report is:
+
+```text
+docs/expansion-operator-approval-effect-application.md
+```
+
+Read `docs/dashboard.md` and check
+`## Expansion Operator Approval Effect Application` after regenerating the
+dashboard.
+
 ## Non-Claims
 
 - Proposed effects are not applied effects.
-- The command does not enable capabilities.
-- The command does not promote trust, route work, schedule work, retry work, or
-  track spend.
-- The command does not run CI, deploy, push, open pull requests, or mutate
+- Applied operator approval effects are local application records, not active
+  capabilities.
+- These commands do not enable capabilities.
+- These commands do not promote trust, route work, schedule work, retry work,
+  or track spend.
+- These commands do not run CI, deploy, push, open pull requests, or mutate
   external systems.

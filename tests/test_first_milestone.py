@@ -12493,6 +12493,209 @@ def test_expansion_operator_approval_effect_proposals_are_idempotent(
     assert len(storage.list_operator_approval_requests()) == 11
 
 
+def test_expansion_operator_approval_effect_apply_requires_proposals(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-effect-apply",
+                "--operator-id",
+                "operator",
+                "--selection-note",
+                "Apply approved local operator approval effect proposals.",
+                "--evidence-reference",
+                "docs/expansion-operator-approval-effect-proposals.md",
+            ]
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert (
+        "expansion_operator_approval_effect_apply: "
+        "operator_approval_effect_application_no_proposals"
+    ) in output
+    assert "proposed_effects: 0" in output
+    assert "effects_applied: 0" in output
+    assert "activation_actions_taken: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    applications = storage.list_recent_operator_approval_effect_applications()
+    assert applications[0].status == "operator_approval_effect_application_no_proposals"
+    assert applications[0].proposed_effect_count == 0
+    assert applications[0].applied_effect_count == 0
+
+    report = (
+        tmp_path / "docs" / "expansion-operator-approval-effect-application.md"
+    ).read_text(encoding="utf-8")
+    assert "# Expansion Operator Approval Effect Application" in report
+    assert "- status: operator_approval_effect_application_no_proposals" in report
+    assert "- effects_applied: 0" in report
+    assert "- Does not enable capabilities." in report
+    assert "- Does not mutate external systems." in report
+
+
+def test_expansion_operator_approval_effect_apply_records_local_applications(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_operator_approval_request_decision_chain(tmp_path, capsys)
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-effect-proposals",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-effect-apply",
+                "--operator-id",
+                "operator",
+                "--selection-note",
+                "Apply approved local operator approval effect proposals.",
+                "--evidence-reference",
+                "docs/expansion-operator-approval-effect-proposals.md",
+            ]
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert (
+        "expansion_operator_approval_effect_apply: "
+        "operator_approval_effect_application_recorded"
+    ) in output
+    assert "proposed_effects: 11" in output
+    assert "effects_applied: 11" in output
+    assert "external_effects_applied: 2" in output
+    assert "capability_effects_applied: 9" in output
+    assert "legacy_approval_requests_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+    assert "report: docs/expansion-operator-approval-effect-application.md" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    application = storage.list_recent_operator_approval_effect_applications()[0]
+    effects = storage.list_effects_with_idempotency_prefix("operator-approval-effect:")
+    assert application.status == "operator_approval_effect_application_recorded"
+    assert application.operator_id == "operator"
+    assert application.proposed_effect_count == 11
+    assert application.applied_effect_count == 11
+    assert application.existing_applied_effect_count == 0
+    assert application.external_effect_count == 2
+    assert application.capability_effect_count == 9
+    assert application.activation_action_count == 0
+    assert application.legacy_approval_request_count == 0
+    assert len(application.applied_effect_ids) == 11
+    assert {effect.status for effect in effects} == {"applied"}
+    assert {effect.result_json["application_id"] for effect in effects} == {
+        application.id
+    }
+    assert {effect.result_json["activation_actions_taken"] for effect in effects} == {0}
+    assert {effect.result_json["external_mutations_taken"] for effect in effects} == {0}
+    assert all(effect.attempted_at for effect in effects)
+    assert all(effect.committed_at is None for effect in effects)
+    assert storage.list_recent_approval_requests() == []
+
+    capability_effect = next(
+        effect for effect in effects if effect.capability == "hosted_dashboard"
+    )
+    assert capability_effect.result_json["capability_enabled"] is False
+    assert capability_effect.result_json["application_status"] == "recorded_local_only"
+    assert capability_effect.compensation_plan["required"] is False
+
+    report = (
+        tmp_path / "docs" / "expansion-operator-approval-effect-application.md"
+    ).read_text(encoding="utf-8")
+    assert "# Expansion Operator Approval Effect Application" in report
+    assert "- status: operator_approval_effect_application_recorded" in report
+    assert "- effects_applied: 11" in report
+    assert "effect_type=operator_capability_proposal capability=hosted_dashboard" in report
+    assert "- Does not create legacy approval_requests rows." in report
+    assert "- Does not enable capabilities." in report
+    assert "- Does not promote trust, retry, schedule, route, or dispatch work." in report
+    assert "- Does not mutate external systems." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Expansion Operator Approval Effect Application" in dashboard
+    assert "- status: operator_approval_effect_application_recorded" in dashboard
+    assert "- effects_applied: 11" in dashboard
+    assert application.id in dashboard
+
+
+def test_expansion_operator_approval_effect_apply_is_idempotent(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_operator_approval_request_decision_chain(tmp_path, capsys)
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-effect-proposals",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    command = [
+        "--root",
+        str(tmp_path),
+        "expansion-operator-approval-effect-apply",
+        "--operator-id",
+        "operator",
+        "--selection-note",
+        "Apply approved local operator approval effect proposals.",
+        "--evidence-reference",
+        "docs/expansion-operator-approval-effect-proposals.md",
+    ]
+    assert main(command) == 0
+    capsys.readouterr()
+
+    assert main(command) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "expansion_operator_approval_effect_apply: "
+        "operator_approval_effect_application_already_recorded"
+    ) in output
+    assert "proposed_effects: 0" in output
+    assert "effects_applied: 0" in output
+    assert "existing_applied_effects: 11" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    applications = storage.list_recent_operator_approval_effect_applications(limit=2)
+    effects = storage.list_effects_with_idempotency_prefix("operator-approval-effect:")
+    assert applications[0].status == "operator_approval_effect_application_already_recorded"
+    assert applications[0].applied_effect_count == 0
+    assert applications[0].existing_applied_effect_count == 11
+    assert applications[1].status == "operator_approval_effect_application_recorded"
+    assert {effect.status for effect in effects} == {"applied"}
+    assert len(effects) == 11
+
+
 def test_hosted_dashboard_proof_checklist_blocks_blocked_real_cost_tracking_proof(
     tmp_path: Path,
     capsys,

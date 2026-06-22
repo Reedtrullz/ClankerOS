@@ -1527,6 +1527,25 @@ class OperatorApprovalRequestDecision:
     created_at: str
 
 
+@dataclass(frozen=True)
+class OperatorApprovalEffectApplication:
+    id: str
+    status: str
+    operator_id: str
+    selection_note: str
+    evidence_reference: str
+    proposed_effect_count: int
+    applied_effect_count: int
+    existing_applied_effect_count: int
+    external_effect_count: int
+    capability_effect_count: int
+    legacy_approval_request_count: int
+    activation_action_count: int
+    applied_effect_ids: list[str]
+    report_path: str
+    created_at: str
+
+
 SAFE_AUTO_TASK_TYPES = {"write_goal_artifact", "record_learning"}
 SAFE_AUTO_RISK_LEVELS = {"low"}
 APPROVAL_WAITING_STATUS = "waiting_approval"
@@ -2920,6 +2939,24 @@ class Storage:
                     external_request_count integer not null,
                     capability_request_count integer not null,
                     decided_request_ids text not null,
+                    report_path text not null,
+                    created_at text not null
+                );
+
+                create table if not exists operator_approval_effect_applications (
+                    id text primary key,
+                    status text not null,
+                    operator_id text not null,
+                    selection_note text not null,
+                    evidence_reference text not null,
+                    proposed_effect_count integer not null,
+                    applied_effect_count integer not null,
+                    existing_applied_effect_count integer not null,
+                    external_effect_count integer not null,
+                    capability_effect_count integer not null,
+                    legacy_approval_request_count integer not null,
+                    activation_action_count integer not null,
+                    applied_effect_ids text not null,
                     report_path text not null,
                     created_at text not null
                 );
@@ -9073,6 +9110,92 @@ class Storage:
             ).fetchall()
         return [self._row_to_operator_approval_request_decision(row) for row in rows]
 
+    def record_operator_approval_effect_application(
+        self,
+        *,
+        status: str,
+        operator_id: str,
+        selection_note: str,
+        evidence_reference: str,
+        proposed_effect_count: int,
+        applied_effect_count: int,
+        existing_applied_effect_count: int,
+        external_effect_count: int,
+        capability_effect_count: int,
+        legacy_approval_request_count: int,
+        activation_action_count: int,
+        applied_effect_ids: list[str],
+        report_path: str,
+    ) -> OperatorApprovalEffectApplication:
+        application_id = new_id("operator_approval_effect_application")
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into operator_approval_effect_applications (
+                    id, status, operator_id, selection_note, evidence_reference,
+                    proposed_effect_count, applied_effect_count,
+                    existing_applied_effect_count, external_effect_count,
+                    capability_effect_count, legacy_approval_request_count,
+                    activation_action_count, applied_effect_ids, report_path,
+                    created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    application_id,
+                    status,
+                    operator_id,
+                    selection_note,
+                    evidence_reference,
+                    proposed_effect_count,
+                    applied_effect_count,
+                    existing_applied_effect_count,
+                    external_effect_count,
+                    capability_effect_count,
+                    legacy_approval_request_count,
+                    activation_action_count,
+                    _json_dumps(applied_effect_ids),
+                    report_path,
+                    created_at,
+                ),
+            )
+        return OperatorApprovalEffectApplication(
+            id=application_id,
+            status=status,
+            operator_id=operator_id,
+            selection_note=selection_note,
+            evidence_reference=evidence_reference,
+            proposed_effect_count=proposed_effect_count,
+            applied_effect_count=applied_effect_count,
+            existing_applied_effect_count=existing_applied_effect_count,
+            external_effect_count=external_effect_count,
+            capability_effect_count=capability_effect_count,
+            legacy_approval_request_count=legacy_approval_request_count,
+            activation_action_count=activation_action_count,
+            applied_effect_ids=applied_effect_ids,
+            report_path=report_path,
+            created_at=created_at,
+        )
+
+    def list_recent_operator_approval_effect_applications(
+        self,
+        limit: int = 5,
+    ) -> list[OperatorApprovalEffectApplication]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from operator_approval_effect_applications
+                order by created_at desc, id desc
+                limit ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [
+            self._row_to_operator_approval_effect_application(row)
+            for row in rows
+        ]
+
     def get_real_cost_tracking_proof_checklist(
         self,
         checklist_id: str | None,
@@ -10369,6 +10492,45 @@ class Storage:
                 where id = ?
                 """,
                 (attempted_at, evidence_path, _json_dumps(result_json), utc_now(), effect_id),
+            )
+            row = connection.execute(
+                "select * from effects where id = ?",
+                (effect_id,),
+            ).fetchone()
+            if row is None:
+                raise KeyError(effect_id)
+            return self._row_to_effect(row)
+
+    def mark_effect_applied(
+        self,
+        effect_id: str,
+        *,
+        result_json: dict[str, Any],
+        evidence_path: str,
+        compensation_plan: dict[str, Any],
+        attempted_at: str,
+    ) -> Effect:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                update effects
+                set status = 'applied',
+                    attempted_at = ?,
+                    committed_at = null,
+                    evidence_path = ?,
+                    compensation_plan_json = ?,
+                    result_json = ?,
+                    updated_at = ?
+                where id = ?
+                """,
+                (
+                    attempted_at,
+                    evidence_path,
+                    _json_dumps(compensation_plan),
+                    _json_dumps(result_json),
+                    utc_now(),
+                    effect_id,
+                ),
             )
             row = connection.execute(
                 "select * from effects where id = ?",
@@ -12408,6 +12570,28 @@ class Storage:
             external_request_count=row["external_request_count"],
             capability_request_count=row["capability_request_count"],
             decided_request_ids=_json_loads(row["decided_request_ids"], []),
+            report_path=row["report_path"],
+            created_at=row["created_at"],
+        )
+
+    def _row_to_operator_approval_effect_application(
+        self,
+        row: sqlite3.Row,
+    ) -> OperatorApprovalEffectApplication:
+        return OperatorApprovalEffectApplication(
+            id=row["id"],
+            status=row["status"],
+            operator_id=row["operator_id"],
+            selection_note=row["selection_note"],
+            evidence_reference=row["evidence_reference"],
+            proposed_effect_count=row["proposed_effect_count"],
+            applied_effect_count=row["applied_effect_count"],
+            existing_applied_effect_count=row["existing_applied_effect_count"],
+            external_effect_count=row["external_effect_count"],
+            capability_effect_count=row["capability_effect_count"],
+            legacy_approval_request_count=row["legacy_approval_request_count"],
+            activation_action_count=row["activation_action_count"],
+            applied_effect_ids=_json_loads(row["applied_effect_ids"], []),
             report_path=row["report_path"],
             created_at=row["created_at"],
         )

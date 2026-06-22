@@ -1,8 +1,8 @@
 # Capability Trust Promotion Audit
 
-- id: capability_trust_promotion_audit_2b73b4d66893
+- id: capability_trust_promotion_audit_2db07351b603
 - status: trust_promotion_blocked
-- source_ledger_id: capability_promotion_decision_ledger_bebd30d8366b
+- source_ledger_id: capability_promotion_decision_ledger_7454c334c39f
 - source_ledger_status: promotion_decision_blocked
 - capability_count: 9
 - audits: 9
@@ -14,7 +14,7 @@
 - boundaries: 1
 - recommended_commands: none
 - report_path: docs/capability-trust-promotion-audit.md
-- created_at: 2026-06-22T15:36:46.091754+00:00
+- created_at: 2026-06-22T15:51:20.919872+00:00
 
 ## Recommendation
 
@@ -34,7 +34,7 @@
 
 ## Source Promotion Decision Ledger
 
-- id: capability_promotion_decision_ledger_bebd30d8366b
+- id: capability_promotion_decision_ledger_7454c334c39f
 - status: promotion_decision_blocked
 - decisions: 9
 - deferred_promotions: 9

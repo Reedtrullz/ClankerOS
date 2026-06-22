@@ -1,8 +1,8 @@
 # Capability Promotion Gate Checklist
 
-- id: capability_promotion_gate_checklist_6e2193f7eea2
+- id: capability_promotion_gate_checklist_3280f4160e77
 - status: promotion_blocked
-- source_plan_id: capability_evidence_collection_plan_03009ecd0193
+- source_plan_id: capability_evidence_collection_plan_397193cdab97
 - source_plan_status: evidence_required
 - capability_count: 9
 - gates: 9
@@ -12,7 +12,7 @@
 - boundaries: 1
 - recommended_commands: none
 - report_path: docs/capability-promotion-gate-checklist.md
-- created_at: 2026-06-22T15:36:45.837536+00:00
+- created_at: 2026-06-22T15:51:20.663553+00:00
 
 ## Recommendation
 
@@ -32,7 +32,7 @@
 
 ## Source Evidence Collection Plan
 
-- id: capability_evidence_collection_plan_03009ecd0193
+- id: capability_evidence_collection_plan_397193cdab97
 - status: evidence_required
 - evidence_items: 9
 - manual_collection: 9

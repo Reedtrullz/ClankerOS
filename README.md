@@ -19,6 +19,7 @@ useful run evidence -> proposed SKILL.md -> operator approval/archive
 run evidence -> human review -> evidence index -> conceptual replay summary
 goal state -> deterministic steering review -> next action -> operator inbox
 approved operator request decisions -> proposed effect records -> blocked activation
+proposed operator effects -> local application record -> capability-specific guard
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -68,7 +69,10 @@ pending rows while still leaving legacy `approval_requests`, capability
 activation, trust promotion, and external systems untouched. Approved local
 operator request decisions can now be converted into `proposed` effect records
 for external-decision and capability surfaces, preserving the approval link
-and idempotency key while still taking zero activation actions.
+and idempotency key while still taking zero activation actions. Those proposed
+effects can then be applied as local records, advancing effect status to
+`applied` while still recording `capability_enabled=false`,
+`activation_actions_taken=0`, and no external mutation.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -340,6 +344,10 @@ The repository can now:
   rows, linking each effect to its source operator request and idempotency key
   while taking no activation, routing, scheduling, trust-promotion, retry,
   spend-tracking, CI, deploy, or external action;
+- apply proposed operator approval effects as local records only, preserving
+  per-effect `applied` status, result evidence, idempotency, and
+  `capability_enabled=false` while still taking no activation or external
+  action;
 - record proposed eval candidates when verifier or workflow gaps are discovered;
 - promote repeated successful eval runs into reusable playbook files;
 - prefer lower-complexity queue items when candidate scores tie;
@@ -365,6 +373,7 @@ python3 -m agent_os.cli commit-approved <approval_id> --committed-by operator
 python3 -m agent_os.cli github-handoff <effect_id> --remote origin --base main --title "Draft PR title"
 python3 -m agent_os.cli ci-deploy-evidence <github_handoff_id> --provider github-actions --status success --external-run-id <run_id> --url <run_url>
 python3 -m agent_os.cli expansion-operator-approval-effect-proposals
+python3 -m agent_os.cli expansion-operator-approval-effect-apply --operator-id operator --selection-note "Apply approved local operator approval effect proposals as local records only." --evidence-reference docs/expansion-operator-approval-effect-proposals.md
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"

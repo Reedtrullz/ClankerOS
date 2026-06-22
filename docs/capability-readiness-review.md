@@ -1,8 +1,8 @@
 # Capability Readiness Review
 
-- id: capability_readiness_review_9873a4df34eb
+- id: capability_readiness_review_001532903395
 - status: blocked_by_missing_evidence
-- source_ledger_id: capability_expansion_ledger_2a710236c698
+- source_ledger_id: capability_expansion_ledger_5b0420fb7aa8
 - source_ledger_status: report_only
 - capability_count: 9
 - ready: 0
@@ -11,7 +11,7 @@
 - approval_boundary: explicit_operator_approval_required
 - recommended_commands: none
 - report_path: docs/capability-readiness-review.md
-- created_at: 2026-06-22T15:36:45.326179+00:00
+- created_at: 2026-06-22T15:51:20.129575+00:00
 
 ## Recommendation
 
@@ -31,7 +31,7 @@
 
 ## Source Ledger
 
-- id: capability_expansion_ledger_2a710236c698
+- id: capability_expansion_ledger_5b0420fb7aa8
 - status: report_only
 - capabilities: 9
 - ready: 0
