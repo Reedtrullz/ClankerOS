@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_3b1d231d78c8
+- Packet ID: iteration_71dad4ce91fd
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add follow-up tasks from capability activation more-evidence decisions.
+Advance the Agent System north-star goal by completing: Add routing and delegation packets for capability follow-up evidence tasks.
 
 ## Definition Of Done
 
@@ -67,6 +67,7 @@ Advance the Agent System north-star goal by completing: Add follow-up tasks from
 - `python3 -m agent_os.cli capability-activation-contracts`
 - `python3 -m agent_os.cli capability-activation-evidence --all --evidence-kind proof_checklist --evidence-reference docs/capability-activation-contracts.md --verification-command "python3 -m agent_os.cli capability-activation-contracts" --verification-status blocked --recorded-by operator --summary "Current activation contracts are present but still missing capability-specific proof."`
 - `python3 -m agent_os.cli capability-activation-decide --operator-id operator --selected-action request_more_evidence --selection-note "Requested capability-specific proof before any activation decision." --evidence-reference docs/capability-activation-evidence.md`
+- `python3 -m agent_os.cli capability-activation-followups`
 - `python3 -m agent_os.cli eval`
 - `python3 -m agent_os.cli playbooks`
 - `python3 -m agent_os.cli dashboard`
@@ -87,7 +88,7 @@ Advance the Agent System north-star goal by completing: Add follow-up tasks from
 
 ## Current Posture
 
-- pending tasks: 9
+- pending tasks: 18
 - waiting approval: 0
 - blocked tasks: 0
 - failed tasks: 0
@@ -143,6 +144,7 @@ Advance the Agent System north-star goal by completing: Add follow-up tasks from
 - capability activation contracts: capability_activation_contracts_already_recorded
 - capability activation evidence: capability_activation_evidence_already_recorded
 - capability activation decisions: capability_activation_decisions_already_recorded
+- capability activation followups: capability_activation_followups_already_recorded
 - proposed eval candidates: 0
 - active playbooks: 1
 - open stuck-task incidents: 0

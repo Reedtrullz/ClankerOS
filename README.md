@@ -23,6 +23,7 @@ proposed operator effects -> local application record -> capability-specific gua
 applied capability effects -> pending activation tasks -> explicit evidence gates
 pending activation tasks -> capability activation contracts -> blocked evidence/approval packets
 activation contracts -> operator evidence ingestion -> local more-evidence decisions
+more-evidence decisions -> pending follow-up evidence tasks -> task graph
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -86,7 +87,10 @@ while keeping `approval_requests_created=0`, `activation_actions_taken=0`,
 and `activation_allowed=false`. Operators can now attach local evidence to
 those contracts and record approve/defer/more-evidence decisions; the current
 safe path records `request_more_evidence` for the blocked proof state while
-still creating no approval rows and taking no activation actions.
+still creating no approval rows and taking no activation actions. Those
+more-evidence decisions can now become pending high-risk follow-up evidence
+tasks in the task graph, so the next proof work is executable queue state
+rather than a chat reminder.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -253,6 +257,8 @@ The repository can now:
   capability enablement blocked;
 - attach operator-supplied evidence to capability activation contracts and
   record local operator decisions without enabling capabilities;
+- create pending follow-up evidence tasks from activation contracts that need
+  more evidence, without enabling capabilities or creating approval rows;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -402,6 +408,7 @@ python3 -m agent_os.cli capability-activation-tasks
 python3 -m agent_os.cli capability-activation-contracts
 python3 -m agent_os.cli capability-activation-evidence --all --evidence-kind proof_checklist --evidence-reference docs/capability-activation-contracts.md --verification-command "python3 -m agent_os.cli capability-activation-contracts" --verification-status blocked --recorded-by operator --summary "Current activation contracts are present but still missing capability-specific proof."
 python3 -m agent_os.cli capability-activation-decide --operator-id operator --selected-action request_more_evidence --selection-note "Requested capability-specific proof before any activation decision." --evidence-reference docs/capability-activation-evidence.md
+python3 -m agent_os.cli capability-activation-followups
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"

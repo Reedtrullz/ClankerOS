@@ -101,6 +101,31 @@ report: docs/capability-activation-decisions.md
 Rerunning the command should report
 `capability_activation_decisions_already_recorded`.
 
+## Create Follow-Up Tasks
+
+```bash
+python3 -m agent_os.cli capability-activation-followups
+```
+
+Expected output includes:
+
+```text
+capability_activation_followups: capability_activation_followups_recorded
+contracts_selected: 9
+followup_tasks_created: 9
+approval_requests_created: 0
+activation_actions_taken: 0
+report: docs/capability-activation-followups.md
+```
+
+Rerunning the command should report
+`capability_activation_followups_already_recorded`.
+
+The generated tasks are pending high-risk
+`capability_activation_followup_task` rows that point back to the source
+activation contract and decision. They make the next evidence-collection work
+visible to the task graph without enabling the capability.
+
 ## Non-Claims
 
 - This does not create `approval_requests` rows.

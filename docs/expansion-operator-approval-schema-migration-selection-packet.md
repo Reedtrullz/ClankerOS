@@ -1,18 +1,18 @@
 # Expansion Operator Approval Schema Migration Selection Packet
 
-- id: expansion_operator_approval_schema_migration_selection_packet_7b9bc482b34d
+- id: expansion_operator_approval_schema_migration_selection_packet_f0e16ed73e65
 - status: operator_approval_schema_migration_selection_required
-- source_checklist: expansion_operator_approval_schema_migration_action_checklist_3f8b71a7d727
+- source_checklist: expansion_operator_approval_schema_migration_action_checklist_3ed14ff796c8
 - source_status: operator_approval_schema_migration_manual_action_required
-- source_ledger: expansion_operator_approval_schema_migration_decision_ledger_1240cc019b88
+- source_ledger: expansion_operator_approval_schema_migration_decision_ledger_c183dc4699a8
 - source_ledger_status: operator_approval_schema_migration_decision_pending
-- source_request: expansion_operator_approval_schema_migration_approval_request_a7ac7e6869de
+- source_request: expansion_operator_approval_schema_migration_approval_request_9823d6efd3eb
 - source_request_status: operator_approval_schema_migration_approval_required
-- source_plan: expansion_operator_approval_schema_migration_plan_91b9d5138c81
+- source_plan: expansion_operator_approval_schema_migration_plan_ff20ec525835
 - source_plan_status: operator_approval_schema_migration_plan_ready
-- source_decision: expansion_operator_approval_schema_decision_6707f6b08f24
+- source_decision: expansion_operator_approval_schema_decision_b4d9e8170a5d
 - source_decision_status: approval_schema_decision_ready
-- source_review: expansion_operator_approval_request_review_6a0e8ac595f8
+- source_review: expansion_operator_approval_request_review_4f96fb8c6a87
 - source_review_status: approval_request_schema_review_required
 - target_table: operator_approval_requests
 - request_count: 1
@@ -38,7 +38,7 @@
 - existing_approval_requests: 0
 - recommended_next_step: operator_approval_schema_migration_operator_selection_input_required
 - report_path: docs/expansion-operator-approval-schema-migration-selection-packet.md
-- created_at: 2026-06-22T16:46:29.572995+00:00
+- created_at: 2026-06-22T17:03:53.117302+00:00
 
 ## Selection Items
 

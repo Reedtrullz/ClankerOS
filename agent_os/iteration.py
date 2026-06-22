@@ -67,6 +67,7 @@ VERIFICATION_COMMANDS = [
     "python3 -m agent_os.cli capability-activation-contracts",
     "python3 -m agent_os.cli capability-activation-evidence --all --evidence-kind proof_checklist --evidence-reference docs/capability-activation-contracts.md --verification-command \"python3 -m agent_os.cli capability-activation-contracts\" --verification-status blocked --recorded-by operator --summary \"Current activation contracts are present but still missing capability-specific proof.\"",
     "python3 -m agent_os.cli capability-activation-decide --operator-id operator --selected-action request_more_evidence --selection-note \"Requested capability-specific proof before any activation decision.\" --evidence-reference docs/capability-activation-evidence.md",
+    "python3 -m agent_os.cli capability-activation-followups",
     "python3 -m agent_os.cli eval",
     "python3 -m agent_os.cli playbooks",
     "python3 -m agent_os.cli dashboard",
@@ -755,6 +756,18 @@ def _current_posture(root: Path) -> list[str]:
                 capability_activation_decisions = (
                     capability_activation_decision_rows[0].status
                 )
+        capability_activation_followups = "none"
+        if _table_exists(
+            connection,
+            "capability_activation_followup_task_batches",
+        ):
+            capability_activation_followup_rows = Storage(
+                db_path
+            ).list_recent_capability_activation_followup_task_batches(limit=1)
+            if capability_activation_followup_rows:
+                capability_activation_followups = (
+                    capability_activation_followup_rows[0].status
+                )
         handoff_reviews = Storage(db_path).list_recent_handoff_reviews(limit=1)
 
     handoff_blocked_tasks = 0
@@ -820,6 +833,7 @@ def _current_posture(root: Path) -> list[str]:
         f"capability activation contracts: {capability_activation_contracts}",
         f"capability activation evidence: {capability_activation_evidence}",
         f"capability activation decisions: {capability_activation_decisions}",
+        f"capability activation followups: {capability_activation_followups}",
         f"proposed eval candidates: {proposed_eval_candidates}",
         f"active playbooks: {active_playbooks}",
         f"open stuck-task incidents: {stuck_count}",

@@ -192,6 +192,10 @@ from agent_os.capability_activation_evidence import (
     render_capability_activation_decision_line,
     render_capability_activation_evidence_batch_line,
 )
+from agent_os.capability_activation_followups import (
+    render_capability_activation_followup_batch_line,
+    write_capability_activation_followups,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -705,6 +709,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     activation_decide.add_argument("--selection-note", required=True)
     activation_decide.add_argument("--evidence-reference", required=True)
+    subparsers.add_parser(
+        "capability-activation-followups",
+        help="Create pending follow-up evidence tasks from more-evidence decisions.",
+    )
 
     approve = subparsers.add_parser("approve", help="Approve a pending local task request.")
     approve.add_argument("approval_id")
@@ -2716,6 +2724,30 @@ def main(argv: list[str] | None = None) -> int:
         print(f"approval_requests_created: {decision.created_approval_request_count}")
         print(f"activation_actions_taken: {decision.activation_action_count}")
         print(render_capability_activation_decision_line(decision).removeprefix("- "))
+        return 0
+
+    if args.command == "capability-activation-followups":
+        AgentSystem(root).initialize()
+        report_path, batch, created_tasks, _existing_tasks, _contracts = (
+            write_capability_activation_followups(root)
+        )
+        print(f"capability_activation_followups: {batch.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_decision: {batch.source_decision_id}")
+        print(f"contracts_selected: {batch.contract_count}")
+        print(f"followup_tasks_created: {batch.followup_task_count}")
+        print(f"existing_followup_tasks: {batch.existing_followup_task_count}")
+        print(f"approval_requests_created: {batch.created_approval_request_count}")
+        print(f"activation_actions_taken: {batch.activation_action_count}")
+        print(
+            render_capability_activation_followup_batch_line(batch).removeprefix("- ")
+        )
+        for task in created_tasks:
+            print(
+                f"task={task.id} capability={task.evidence.get('capability')} "
+                f"contract={task.evidence.get('source_contract_id')} "
+                f"status={task.status}"
+            )
         return 0
 
     if args.command == "approve":

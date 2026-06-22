@@ -316,6 +316,18 @@ This records local evidence rows and a local decision state for each contract.
 It does not approve capability activation. In the current blocked proof state,
 the safe decision is `request_more_evidence`.
 
+Turn the `request_more_evidence` decisions into pending queue work:
+
+```bash
+python3 -m agent_os.cli capability-activation-followups
+python3 -m agent_os.cli dashboard
+```
+
+This creates one pending high-risk `capability_activation_followup_task` per
+contract that needs more evidence. It is task graph state for future evidence
+collection; it does not create approval rows, satisfy proof, or enable
+capabilities.
+
 ## When To Commit And Push
 
 Commit when:

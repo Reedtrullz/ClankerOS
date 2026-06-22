@@ -5826,3 +5826,52 @@
   trust, route work, schedule work, start workers, retry work, track spend,
   run CI, deploy, push, open PRs, mark the active goal complete, or mutate
   external systems.
+
+## 2026-06-22 Capability Activation Follow-Up Tasks
+
+- Added local follow-up task command:
+  `python3 -m agent_os.cli capability-activation-followups`.
+- The command reads capability activation contracts with
+  `status=more_evidence_requested`, selects the latest decision row that
+  actually recorded more-evidence decisions, and creates pending high-risk
+  `capability_activation_followup_task` rows linked to the source contract and
+  decision.
+- Initial live follow-up batch:
+  `capability_activation_followup_batch_29ca2737cb0d`, status
+  `capability_activation_followups_recorded`, source decision
+  `capability_activation_decision_7e9a89479c7b`, 9 contracts selected, 9
+  follow-up tasks created, 0 existing follow-up tasks, 0 approval requests
+  created, and 0 activation actions taken.
+- Selector hardening now ignores no-op idempotency decision rows and prefers
+  the decision that actually recorded 9 more-evidence decisions:
+  `capability_activation_decision_f601a69d076e`.
+- Final idempotency follow-up batch:
+  `capability_activation_followup_batch_b2e49c8d5124`, status
+  `capability_activation_followups_already_recorded`, source decision
+  `capability_activation_decision_f601a69d076e`, 9 existing follow-up tasks, 0
+  new tasks, 0 approval requests created, and 0 activation actions taken.
+- The live follow-up tasks are pending high-risk task graph work for hosted
+  dashboard, remote workers, autonomous scheduling, browser/desktop adapters,
+  CI/deploy proof, budget enforcement, trust promotion, automatic retries, and
+  real cost tracking.
+- Added dashboard visibility under `## Capability Activation Follow-Up Tasks`.
+- Updated README, suggested-use docs, operating summary, workflow lifecycle,
+  activation-contract tutorial, task queue, generated dashboard, and next
+  iteration packet.
+- Next packet:
+  `Add routing and delegation packets for capability follow-up evidence tasks.`
+- Verification evidence:
+  - Red-first focused tests failed before the CLI command existed.
+  - Follow-up selector regression failed until no-op idempotency decision rows
+    were ignored.
+  - `python3 -m py_compile agent_os/capability_activation_followups.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest tests/test_first_milestone.py -k 'capability_activation_followups' -q` -> 4 passed, 258 deselected.
+  - `python3 -m pytest tests/test_first_milestone.py -k 'capability_activation_tasks or capability_activation_contracts or capability_activation_evidence or capability_activation_decide or capability_activation_decisions or capability_activation_followups' -q` -> 16 passed, 246 deselected.
+  - `python3 -m pytest -q` -> 262 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add capability activation followup tasks" ...` -> pass as `run_ea9f8f455264`.
+  - Command-gate sweep excluding the already-run full pytest and eval passed
+    51 commands, including idempotent `capability-activation-followups`.
+- Non-claims: follow-up task creation does not create `approval_requests`,
+  satisfy capability proof, enable capabilities, promote trust, route work,
+  schedule work, start workers, retry work, track spend, run CI, deploy, push,
+  open PRs, mark the active goal complete, or mutate external systems.

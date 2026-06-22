@@ -13224,6 +13224,14 @@ def _capability_activation_decision_command(tmp_path: Path) -> list[str]:
     ]
 
 
+def _capability_activation_followup_command(tmp_path: Path) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-followups",
+    ]
+
+
 def test_capability_activation_decisions_require_evidence(
     tmp_path: Path,
     capsys,
@@ -13352,6 +13360,199 @@ def test_capability_activation_decisions_are_idempotent(
     assert decisions[0].existing_decision_count == 9
     assert decisions[1].status == "capability_activation_decisions_recorded"
     assert len(storage.list_capability_activation_evidence_records()) == 9
+
+
+def test_capability_activation_followups_require_more_evidence_decisions(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_capability_activation_contract_chain(tmp_path, capsys)
+
+    assert main(_capability_activation_followup_command(tmp_path)) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followups: "
+        "capability_activation_followups_no_more_evidence_decisions"
+    ) in output
+    assert "contracts_selected: 0" in output
+    assert "followup_tasks_created: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batches = storage.list_recent_capability_activation_followup_task_batches()
+    assert batches[0].status == (
+        "capability_activation_followups_no_more_evidence_decisions"
+    )
+    assert batches[0].followup_task_count == 0
+    assert [
+        task
+        for task in storage.list_all_tasks()
+        if task.task_type == "capability_activation_followup_task"
+    ] == []
+    assert storage.list_recent_approval_requests() == []
+
+    report = (tmp_path / "docs" / "capability-activation-followups.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Capability Activation Follow-Up Tasks" in report
+    assert "- status: capability_activation_followups_no_more_evidence_decisions" in report
+    assert "- Does not create approval_requests rows." in report
+
+
+def test_capability_activation_followups_create_pending_evidence_tasks(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_capability_activation_contract_chain(tmp_path, capsys)
+    assert main(_capability_activation_evidence_command(tmp_path)) == 0
+    assert main(_capability_activation_decision_command(tmp_path)) == 0
+    capsys.readouterr()
+
+    assert main(_capability_activation_followup_command(tmp_path)) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followups: "
+        "capability_activation_followups_recorded"
+    ) in output
+    assert "contracts_selected: 9" in output
+    assert "followup_tasks_created: 9" in output
+    assert "existing_followup_tasks: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+    assert "report: docs/capability-activation-followups.md" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batches = storage.list_recent_capability_activation_followup_task_batches()
+    batch = batches[0]
+    assert batch.status == "capability_activation_followups_recorded"
+    assert batch.contract_count == 9
+    assert batch.followup_task_count == 9
+    assert batch.existing_followup_task_count == 0
+    assert batch.created_approval_request_count == 0
+    assert batch.activation_action_count == 0
+    assert len(batch.created_task_ids) == 9
+
+    followup_tasks = [
+        task
+        for task in storage.list_all_tasks()
+        if task.task_type == "capability_activation_followup_task"
+    ]
+    assert len(followup_tasks) == 9
+    assert {task.status for task in followup_tasks} == {"pending"}
+    assert {task.risk_level for task in followup_tasks} == {"high"}
+    assert all("capability-activation" in task.skill_tags for task in followup_tasks)
+    assert all("evidence-collection" in task.skill_tags for task in followup_tasks)
+    assert all(task.evidence["source_decision_id"].startswith(
+        "capability_activation_decision_"
+    ) for task in followup_tasks)
+    assert all(task.evidence["source_contract_id"].startswith(
+        "capability_activation_contract_"
+    ) for task in followup_tasks)
+    assert {task.evidence["activation_allowed"] for task in followup_tasks} == {False}
+    assert {task.evidence["capability_enabled"] for task in followup_tasks} == {False}
+    assert {task.evidence["approval_requests_created"] for task in followup_tasks} == {0}
+    assert storage.list_recent_approval_requests() == []
+
+    report = (tmp_path / "docs" / "capability-activation-followups.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Capability Activation Follow-Up Tasks" in report
+    assert "- status: capability_activation_followups_recorded" in report
+    assert "- followup_tasks_created: 9" in report
+    assert "task_type=capability_activation_followup_task" in report
+    assert "- Does not enable capabilities." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Capability Activation Follow-Up Tasks" in dashboard
+    assert "- status: capability_activation_followups_recorded" in dashboard
+    assert "- followup_tasks_created: 9" in dashboard
+    assert batch.id in dashboard
+
+
+def test_capability_activation_followups_are_idempotent(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_capability_activation_contract_chain(tmp_path, capsys)
+    assert main(_capability_activation_evidence_command(tmp_path)) == 0
+    assert main(_capability_activation_decision_command(tmp_path)) == 0
+    capsys.readouterr()
+
+    command = _capability_activation_followup_command(tmp_path)
+    assert main(command) == 0
+    capsys.readouterr()
+
+    assert main(command) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followups: "
+        "capability_activation_followups_already_recorded"
+    ) in output
+    assert "contracts_selected: 9" in output
+    assert "followup_tasks_created: 0" in output
+    assert "existing_followup_tasks: 9" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batches = storage.list_recent_capability_activation_followup_task_batches(limit=2)
+    assert batches[0].status == "capability_activation_followups_already_recorded"
+    assert batches[0].followup_task_count == 0
+    assert batches[0].existing_followup_task_count == 9
+    assert batches[1].status == "capability_activation_followups_recorded"
+    assert len(
+        [
+            task
+            for task in storage.list_all_tasks()
+            if task.task_type == "capability_activation_followup_task"
+        ]
+    ) == 9
+
+
+def test_capability_activation_followups_use_recorded_more_evidence_decision(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_capability_activation_contract_chain(tmp_path, capsys)
+    assert main(_capability_activation_evidence_command(tmp_path)) == 0
+    decision_command = _capability_activation_decision_command(tmp_path)
+    assert main(decision_command) == 0
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    recorded_decision_id = storage.list_recent_capability_activation_decisions()[0].id
+    capsys.readouterr()
+
+    assert main(decision_command) == 0
+    noop_decision = storage.list_recent_capability_activation_decisions()[0]
+    assert noop_decision.status == "capability_activation_decisions_already_recorded"
+    assert noop_decision.more_evidence_decision_count == 0
+    capsys.readouterr()
+
+    assert main(_capability_activation_followup_command(tmp_path)) == 0
+
+    output = capsys.readouterr().out
+    assert f"source_decision: {recorded_decision_id}" in output
+
+    batch = storage.list_recent_capability_activation_followup_task_batches()[0]
+    assert batch.source_decision_id == recorded_decision_id
+    followup_tasks = [
+        task
+        for task in storage.list_all_tasks()
+        if task.task_type == "capability_activation_followup_task"
+    ]
+    assert {task.evidence["source_decision_id"] for task in followup_tasks} == {
+        recorded_decision_id
+    }
 
 
 def test_hosted_dashboard_proof_checklist_blocks_blocked_real_cost_tracking_proof(

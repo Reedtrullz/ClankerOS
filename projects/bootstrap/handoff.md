@@ -1600,14 +1600,38 @@ work, or changing routing.
   deploy, push, open PRs, mark the active goal complete, or mutate external
   systems.
 
+## Latest Capability Activation Follow-Up Tasks
+
+- `capability-activation-followups` now turns activation contracts with
+  `request_more_evidence` decisions into pending high-risk task graph work.
+- Initial follow-up batch:
+  `capability_activation_followup_batch_29ca2737cb0d`, status
+  `capability_activation_followups_recorded`, with 9 selected contracts, 9
+  follow-up tasks created, 0 approval requests created, and 0 activation
+  actions taken.
+- Final follow-up idempotency batch:
+  `capability_activation_followup_batch_b2e49c8d5124`, status
+  `capability_activation_followups_already_recorded`, source decision
+  `capability_activation_decision_f601a69d076e`, with 9 existing follow-up
+  tasks and 0 new activation actions.
+- The pending follow-up task capabilities are hosted dashboard, remote
+  workers, autonomous scheduling, browser/desktop adapters, CI/deploy proof,
+  budget enforcement, trust promotion, automatic retries, and real cost
+  tracking.
+- Evidence report: `docs/capability-activation-followups.md`.
+- Non-claims: follow-up tasks do not create `approval_requests`, satisfy
+  proof, enable capabilities, route work, schedule work, start workers, retry
+  work, track spend, run CI, deploy, push, open PRs, mark the active goal
+  complete, or mutate external systems.
+
 ## Next Actions
 
-Current focus: Add follow-up tasks from capability activation more-evidence decisions.
+Current focus: Add routing and delegation packets for capability follow-up evidence tasks.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add follow-up tasks from capability activation more-evidence decisions.
-2. Convert the 9 more-evidence decisions into explicit task-graph work without
-   enabling capabilities or creating approval rows.
+   Add routing and delegation packets for capability follow-up evidence tasks.
+2. Route the 9 pending follow-up evidence tasks into scoped local profile or
+   delegation packets without starting remote workers or enabling capabilities.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.

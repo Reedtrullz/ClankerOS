@@ -1,13 +1,13 @@
 # Capability Expansion Ledger
 
-- id: capability_expansion_ledger_06b42d2c0f1f
+- id: capability_expansion_ledger_62efedee77d5
 - status: report_only
 - capability_count: 9
 - ready: 0
 - deferred: 9
 - approval_boundary: explicit_operator_approval_required
 - report_path: docs/capability-expansion-ledger.md
-- created_at: 2026-06-22T16:46:25.241157+00:00
+- created_at: 2026-06-22T17:03:48.790182+00:00
 
 ## Capabilities
 

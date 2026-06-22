@@ -1,8 +1,8 @@
 # Handoff Review
 
-- id: handoff_review_970c7ad607e7
+- id: handoff_review_bca6c0e2722f
 - status: clear
-- current_focus: Add follow-up tasks from capability activation more-evidence decisions.
+- current_focus: Add routing and delegation packets for capability follow-up evidence tasks.
 - blocked_tasks: 0
 - stale_handoffs: 0
 - reviewed_paths: 1

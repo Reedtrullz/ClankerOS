@@ -149,6 +149,9 @@ from agent_os.capability_activation_evidence import (
     render_capability_activation_decision_line,
     render_capability_activation_evidence_batch_line,
 )
+from agent_os.capability_activation_followups import (
+    render_capability_activation_followup_batch_line,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -680,6 +683,14 @@ def generate_static_dashboard(root: Path) -> Path:
             capability_activation_decisions = (
                 storage.list_recent_capability_activation_decisions(limit=1)
             )
+        capability_activation_followup_task_batches = []
+        if _table_exists(
+            connection,
+            "capability_activation_followup_task_batches",
+        ):
+            capability_activation_followup_task_batches = (
+                storage.list_recent_capability_activation_followup_task_batches(limit=1)
+            )
 
     statuses = [
         "pending",
@@ -920,6 +931,11 @@ def generate_static_dashboard(root: Path) -> Path:
     latest_capability_activation_decision = (
         capability_activation_decisions[0]
         if capability_activation_decisions
+        else None
+    )
+    latest_capability_activation_followup_task_batch = (
+        capability_activation_followup_task_batches[0]
+        if capability_activation_followup_task_batches
         else None
     )
     eval_after_change_statuses = Counter(
@@ -1485,6 +1501,32 @@ def generate_static_dashboard(root: Path) -> Path:
                 f"- report: {decision.report_path}",
                 "",
                 render_capability_activation_decision_line(decision),
+            ]
+        )
+    else:
+        lines.append("- none")
+
+    lines.extend(
+        [
+            "",
+            "## Capability Activation Follow-Up Tasks",
+            "",
+        ]
+    )
+    if latest_capability_activation_followup_task_batch is not None:
+        batch = latest_capability_activation_followup_task_batch
+        lines.extend(
+            [
+                f"- status: {batch.status}",
+                f"- source_decision: {batch.source_decision_id}",
+                f"- contracts_selected: {batch.contract_count}",
+                f"- followup_tasks_created: {batch.followup_task_count}",
+                f"- existing_followup_tasks: {batch.existing_followup_task_count}",
+                f"- approval_requests_created: {batch.created_approval_request_count}",
+                f"- activation_actions_taken: {batch.activation_action_count}",
+                f"- report: {batch.report_path}",
+                "",
+                render_capability_activation_followup_batch_line(batch),
             ]
         )
     else:
