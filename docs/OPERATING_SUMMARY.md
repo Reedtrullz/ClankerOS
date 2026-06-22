@@ -136,6 +136,12 @@ Core layers for the bootstrap:
   source decision, result, delegation, follow-up task, contract, and capability
   while keeping approval row creation, external mutations, activation actions,
   activation allowance, and capability enablement at zero.
+- Capability activation follow-up result effect application: proposed
+  accepted-blocked follow-up decision effects can be applied as local ledger
+  records only. Application rows and applied effects preserve source decision,
+  result, delegation, follow-up task, contract, and capability links while
+  keeping approval row creation, external mutations, activation actions,
+  activation allowance, and capability enablement at zero.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON

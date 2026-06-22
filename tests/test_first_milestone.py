@@ -13274,6 +13274,22 @@ def _capability_activation_followup_result_effect_proposals_command(
     ]
 
 
+def _capability_activation_followup_result_effect_application_command(
+    tmp_path: Path,
+) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-followup-result-effect-apply",
+        "--operator-id",
+        "operator",
+        "--selection-note",
+        "Apply accepted blocked follow-up result effect proposals as local records only.",
+        "--evidence-reference",
+        "docs/capability-activation-followup-result-effect-proposals.md",
+    ]
+
+
 def _run_capability_activation_followup_chain(tmp_path: Path, capsys) -> None:
     _run_capability_activation_contract_chain(tmp_path, capsys)
     assert main(_capability_activation_evidence_command(tmp_path)) == 0
@@ -13311,6 +13327,18 @@ def _record_one_capability_activation_followup_result_decision(
 ) -> None:
     _record_one_capability_activation_followup_result(tmp_path, capsys)
     assert main(_capability_activation_followup_result_decision_command(tmp_path)) == 0
+    capsys.readouterr()
+
+
+def _record_one_capability_activation_followup_result_effect_proposal(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    _record_one_capability_activation_followup_result_decision(tmp_path, capsys)
+    assert (
+        main(_capability_activation_followup_result_effect_proposals_command(tmp_path))
+        == 0
+    )
     capsys.readouterr()
 
 
@@ -14349,6 +14377,216 @@ def test_capability_activation_followup_result_effect_proposals_are_idempotent(
     ) in report
     assert "- effect_proposals_created: 0" in report
     assert "- existing_effect_proposals: 1" in report
+
+
+def test_capability_activation_followup_result_effect_apply_requires_proposals(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert (
+        main(_capability_activation_followup_result_effect_application_command(tmp_path))
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_result_effect_apply: "
+        "capability_activation_followup_result_effect_application_no_proposals"
+    ) in output
+    assert "proposed_effects: 0" in output
+    assert "effects_applied: 0" in output
+    assert "existing_applied_effects: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+    assert "external_mutations_taken: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    applications = (
+        storage.list_recent_capability_activation_followup_result_effect_applications()
+    )
+    assert applications[0].status == (
+        "capability_activation_followup_result_effect_application_no_proposals"
+    )
+    assert applications[0].proposed_effect_count == 0
+    assert applications[0].applied_effect_count == 0
+
+    report = (
+        tmp_path
+        / "docs"
+        / "capability-activation-followup-result-effect-application.md"
+    ).read_text(encoding="utf-8")
+    assert "# Capability Activation Follow-Up Result Effect Application" in report
+    assert (
+        "- status: "
+        "capability_activation_followup_result_effect_application_no_proposals"
+    ) in report
+    assert "- effects_applied: 0" in report
+    assert "- Does not create approval_requests rows." in report
+    assert "- Does not enable capabilities." in report
+    assert "- Does not mutate external systems." in report
+
+
+def test_capability_activation_followup_result_effect_apply_records_local_applications(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _record_one_capability_activation_followup_result_effect_proposal(
+        tmp_path,
+        capsys,
+    )
+
+    assert (
+        main(_capability_activation_followup_result_effect_application_command(tmp_path))
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_result_effect_apply: "
+        "capability_activation_followup_result_effect_application_recorded"
+    ) in output
+    assert "proposed_effects: 1" in output
+    assert "effects_applied: 1" in output
+    assert "existing_applied_effects: 0" in output
+    assert "capability_effects_applied: 1" in output
+    assert "approval_requests_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+    assert "external_mutations_taken: 0" in output
+    assert (
+        "report: docs/capability-activation-followup-result-effect-application.md"
+        in output
+    )
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    application = (
+        storage.list_recent_capability_activation_followup_result_effect_applications()[
+            0
+        ]
+    )
+    decision = storage.list_recent_capability_activation_followup_result_decisions()[0]
+    result_record = storage.list_capability_activation_followup_result_records()[0]
+    effects = storage.list_effects_with_idempotency_prefix(
+        "capability-followup-decision-effect:"
+    )
+    effect = effects[0]
+    assert application.status == (
+        "capability_activation_followup_result_effect_application_recorded"
+    )
+    assert application.operator_id == "operator"
+    assert application.proposed_effect_count == 1
+    assert application.applied_effect_count == 1
+    assert application.existing_applied_effect_count == 0
+    assert application.capability_effect_count == 1
+    assert application.approval_request_count == 0
+    assert application.activation_action_count == 0
+    assert application.external_mutation_count == 0
+    assert application.applied_effect_ids == [effect.id]
+    assert effect.status == "applied"
+    assert effect.attempted_at
+    assert effect.committed_at is None
+    assert effect.evidence_path == (
+        "docs/capability-activation-followup-result-effect-application.md"
+    )
+    assert effect.result_json["application_id"] == application.id
+    assert effect.result_json["application_status"] == "recorded_local_only"
+    assert effect.result_json["source_decision_id"] == decision.id
+    assert effect.result_json["source_result_id"] == result_record.id
+    assert effect.result_json["selected_action"] == "accept_keep_blocked"
+    assert effect.result_json["activation_allowed"] is False
+    assert effect.result_json["capability_enabled"] is False
+    assert effect.result_json["approval_requests_created"] == 0
+    assert effect.result_json["activation_actions_taken"] == 0
+    assert effect.result_json["external_mutations_taken"] == 0
+    assert effect.compensation_plan["required"] is False
+    assert effect.compensation_plan["reason"] == (
+        "local_application_record_only_blocked_activation_preserved"
+    )
+    assert storage.list_recent_approval_requests() == []
+    assert {contract.activation_allowed for contract in storage.list_capability_activation_contracts()} == {False}
+    assert result_record.activation_allowed is False
+    assert result_record.capability_enabled is False
+
+    report = (
+        tmp_path
+        / "docs"
+        / "capability-activation-followup-result-effect-application.md"
+    ).read_text(encoding="utf-8")
+    assert "# Capability Activation Follow-Up Result Effect Application" in report
+    assert (
+        "- status: "
+        "capability_activation_followup_result_effect_application_recorded"
+    ) in report
+    assert "- effects_applied: 1" in report
+    assert f"effect={effect.id}" in report
+    assert f"decision={decision.id}" in report
+    assert f"result={result_record.id}" in report
+    assert "- Does not create approval_requests rows." in report
+    assert "- Does not enable capabilities." in report
+    assert "- Does not mutate external systems." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Capability Activation Follow-Up Result Effect Application" in dashboard
+    assert (
+        "- status: "
+        "capability_activation_followup_result_effect_application_recorded"
+    ) in dashboard
+    assert "- effects_applied: 1" in dashboard
+    assert application.id in dashboard
+
+
+def test_capability_activation_followup_result_effect_apply_is_idempotent(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _record_one_capability_activation_followup_result_effect_proposal(
+        tmp_path,
+        capsys,
+    )
+
+    command = _capability_activation_followup_result_effect_application_command(
+        tmp_path,
+    )
+    assert main(command) == 0
+    capsys.readouterr()
+
+    assert main(command) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_result_effect_apply: "
+        "capability_activation_followup_result_effect_application_already_recorded"
+    ) in output
+    assert "proposed_effects: 0" in output
+    assert "effects_applied: 0" in output
+    assert "existing_applied_effects: 1" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    applications = (
+        storage.list_recent_capability_activation_followup_result_effect_applications(
+            limit=2
+        )
+    )
+    effects = storage.list_effects_with_idempotency_prefix(
+        "capability-followup-decision-effect:"
+    )
+    assert applications[0].status == (
+        "capability_activation_followup_result_effect_application_already_recorded"
+    )
+    assert applications[0].applied_effect_count == 0
+    assert applications[0].existing_applied_effect_count == 1
+    assert applications[1].status == (
+        "capability_activation_followup_result_effect_application_recorded"
+    )
+    assert {effect.status for effect in effects} == {"applied"}
+    assert len(effects) == 1
 
 
 def test_hosted_dashboard_proof_checklist_blocks_blocked_real_cost_tracking_proof(

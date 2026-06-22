@@ -219,6 +219,7 @@ mutate external systems.
 - [Create capability activation contracts](docs/tutorial-capability-activation-contracts.md)
 - [Review capability follow-up results](docs/tutorial-capability-followup-result-decisions.md)
 - [Create follow-up result effect proposals](docs/tutorial-capability-followup-result-effect-proposals.md)
+- [Apply follow-up result effect records](docs/tutorial-capability-followup-result-effect-application.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
 - [Safety contract](contracts.md)

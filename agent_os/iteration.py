@@ -76,6 +76,7 @@ VERIFICATION_COMMANDS = [
     "python3 -m agent_os.cli capability-activation-followup-results",
     "python3 -m agent_os.cli capability-activation-followup-result-decide --operator-id operator --selected-action accept_keep_blocked --selection-note \"Accepted evaluator result and kept capability activation blocked.\" --evidence-reference docs/capability-activation-followup-results.md",
     "python3 -m agent_os.cli capability-activation-followup-result-effect-proposals",
+    "python3 -m agent_os.cli capability-activation-followup-result-effect-apply --operator-id operator --selection-note \"Apply accepted blocked follow-up result effect proposals as local records only.\" --evidence-reference docs/capability-activation-followup-result-effect-proposals.md",
     "python3 -m agent_os.cli eval",
     "python3 -m agent_os.cli playbooks",
     "python3 -m agent_os.cli dashboard",
@@ -823,6 +824,22 @@ def _current_posture(root: Path) -> list[str]:
                 capability_activation_followup_result_effect_proposals = (
                     CAPABILITY_FOLLOWUP_DECISION_EFFECT_PROPOSALS_RECORDED
                 )
+        capability_activation_followup_result_effect_application = "none"
+        if _table_exists(
+            connection,
+            "capability_activation_followup_result_effect_applications",
+        ):
+            capability_activation_followup_result_effect_application_rows = Storage(
+                db_path
+            ).list_recent_capability_activation_followup_result_effect_applications(
+                limit=1
+            )
+            if capability_activation_followup_result_effect_application_rows:
+                capability_activation_followup_result_effect_application = (
+                    capability_activation_followup_result_effect_application_rows[
+                        0
+                    ].status
+                )
         handoff_reviews = Storage(db_path).list_recent_handoff_reviews(limit=1)
 
     handoff_blocked_tasks = 0
@@ -893,6 +910,7 @@ def _current_posture(root: Path) -> list[str]:
         f"capability activation followup results: {capability_activation_followup_results}",
         f"capability activation followup result decisions: {capability_activation_followup_result_decisions}",
         f"capability activation followup result effect proposals: {capability_activation_followup_result_effect_proposals}",
+        f"capability activation followup result effect application: {capability_activation_followup_result_effect_application}",
         f"proposed eval candidates: {proposed_eval_candidates}",
         f"active playbooks: {active_playbooks}",
         f"open stuck-task incidents: {stuck_count}",

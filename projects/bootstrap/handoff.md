@@ -1710,14 +1710,38 @@ work, or changing routing.
   start workers, retry work, track spend, run CI, deploy, push, open PRs, mark
   the active goal complete, or mutate external systems.
 
+## Latest Capability Activation Follow-Up Result Effect Application
+
+- `capability-activation-followup-result-effect-apply` now records local
+  application rows for accepted-blocked follow-up decision effect proposals.
+- Initial live application:
+  `capability_activation_followup_result_effect_application_4f187a56bc17`,
+  status
+  `capability_activation_followup_result_effect_application_recorded`, applied
+  `effect_0fa73f003874` for `hosted_dashboard`, and recorded 0 approval
+  requests, 0 activation actions, and 0 external mutations.
+- Final live idempotency pass:
+  `capability_activation_followup_result_effect_application_already_recorded`,
+  with 1 existing applied effect and no new activation, approval, or external
+  mutation actions.
+- Evidence report:
+  `docs/capability-activation-followup-result-effect-application.md`.
+- Tutorial:
+  `docs/tutorial-capability-followup-result-effect-application.md`.
+- Non-claims: follow-up result effect applications do not create
+  `approval_requests`, satisfy proof, mutate activation contracts, allow
+  activation, enable capabilities, promote trust, route work, schedule work,
+  start workers, retry work, track spend, run CI, deploy, push, open PRs, mark
+  the active goal complete, or mutate external systems.
+
 ## Next Actions
 
-Current focus: Add local application records for follow-up decision effect proposals.
+Current focus: Add downstream task records from applied follow-up decision effect applications.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add local application records for follow-up decision effect proposals.
-2. Convert proposed follow-up decision effect rows into local application
-   records only, preserving activation-blocking evidence and idempotency.
+   Add downstream task records from applied follow-up decision effect applications.
+2. Convert applied follow-up decision effect applications into downstream
+   local task records without enabling capabilities or allowing activation.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.

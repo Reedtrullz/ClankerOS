@@ -422,7 +422,7 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 Good next slices now favor capability-specific guards after local proposal
 records exist:
 
-- local application records for follow-up decision effect proposals;
+- downstream task creation from local follow-up decision effect applications;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;
