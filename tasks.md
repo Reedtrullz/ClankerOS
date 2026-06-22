@@ -107,7 +107,8 @@
 - [x] Add capability-specific evidence and approval contracts for activation tasks. <!-- score=9 complexity=4 -->
 - [x] Add evidence ingestion and operator decisions for capability activation contracts. <!-- score=9 complexity=4 -->
 - [x] Add follow-up tasks from capability activation more-evidence decisions. <!-- score=9 complexity=4 -->
-- [ ] Add routing and delegation packets for capability follow-up evidence tasks. <!-- score=9 complexity=4 -->
+- [x] Add routing and delegation packets for capability follow-up evidence tasks. <!-- score=9 complexity=4 -->
+- [ ] Add capability follow-up evidence result ingestion from completed delegation packets. <!-- score=9 complexity=4 -->
 
 ## blocked
 

@@ -1674,6 +1674,25 @@ class CapabilityActivationFollowupTaskBatch:
     created_at: str
 
 
+@dataclass(frozen=True)
+class CapabilityActivationFollowupDelegationBatch:
+    id: str
+    status: str
+    followup_task_count: int
+    routing_decision_count: int
+    delegation_count: int
+    existing_delegation_count: int
+    execution_started_count: int
+    network_action_count: int
+    external_mutation_count: int
+    activation_action_count: int
+    created_routing_decision_ids: list[str]
+    created_delegation_ids: list[str]
+    followup_task_ids: list[str]
+    report_path: str
+    created_at: str
+
+
 SAFE_AUTO_TASK_TYPES = {"write_goal_artifact", "record_learning"}
 SAFE_AUTO_RISK_LEVELS = {"low"}
 APPROVAL_WAITING_STATUS = "waiting_approval"
@@ -3206,6 +3225,24 @@ class Storage:
                     activation_action_count integer not null,
                     created_task_ids text not null,
                     contract_ids text not null,
+                    report_path text not null,
+                    created_at text not null
+                );
+
+                create table if not exists capability_activation_followup_delegation_batches (
+                    id text primary key,
+                    status text not null,
+                    followup_task_count integer not null,
+                    routing_decision_count integer not null,
+                    delegation_count integer not null,
+                    existing_delegation_count integer not null,
+                    execution_started_count integer not null,
+                    network_action_count integer not null,
+                    external_mutation_count integer not null,
+                    activation_action_count integer not null,
+                    created_routing_decision_ids text not null,
+                    created_delegation_ids text not null,
+                    followup_task_ids text not null,
                     report_path text not null,
                     created_at text not null
                 );
@@ -10133,6 +10170,92 @@ class Storage:
             for row in rows
         ]
 
+    def record_capability_activation_followup_delegation_batch(
+        self,
+        *,
+        status: str,
+        followup_task_count: int,
+        routing_decision_count: int,
+        delegation_count: int,
+        existing_delegation_count: int,
+        execution_started_count: int,
+        network_action_count: int,
+        external_mutation_count: int,
+        activation_action_count: int,
+        created_routing_decision_ids: list[str],
+        created_delegation_ids: list[str],
+        followup_task_ids: list[str],
+        report_path: str,
+    ) -> CapabilityActivationFollowupDelegationBatch:
+        batch_id = new_id("capability_activation_followup_delegation_batch")
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into capability_activation_followup_delegation_batches (
+                    id, status, followup_task_count, routing_decision_count,
+                    delegation_count, existing_delegation_count,
+                    execution_started_count, network_action_count,
+                    external_mutation_count, activation_action_count,
+                    created_routing_decision_ids, created_delegation_ids,
+                    followup_task_ids, report_path, created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    batch_id,
+                    status,
+                    followup_task_count,
+                    routing_decision_count,
+                    delegation_count,
+                    existing_delegation_count,
+                    execution_started_count,
+                    network_action_count,
+                    external_mutation_count,
+                    activation_action_count,
+                    _json_dumps(created_routing_decision_ids),
+                    _json_dumps(created_delegation_ids),
+                    _json_dumps(followup_task_ids),
+                    report_path,
+                    created_at,
+                ),
+            )
+        return CapabilityActivationFollowupDelegationBatch(
+            id=batch_id,
+            status=status,
+            followup_task_count=followup_task_count,
+            routing_decision_count=routing_decision_count,
+            delegation_count=delegation_count,
+            existing_delegation_count=existing_delegation_count,
+            execution_started_count=execution_started_count,
+            network_action_count=network_action_count,
+            external_mutation_count=external_mutation_count,
+            activation_action_count=activation_action_count,
+            created_routing_decision_ids=created_routing_decision_ids,
+            created_delegation_ids=created_delegation_ids,
+            followup_task_ids=followup_task_ids,
+            report_path=report_path,
+            created_at=created_at,
+        )
+
+    def list_recent_capability_activation_followup_delegation_batches(
+        self,
+        limit: int = 5,
+    ) -> list[CapabilityActivationFollowupDelegationBatch]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from capability_activation_followup_delegation_batches
+                order by created_at desc, id desc
+                limit ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [
+            self._row_to_capability_activation_followup_delegation_batch(row)
+            for row in rows
+        ]
+
     def get_real_cost_tracking_proof_checklist(
         self,
         checklist_id: str | None,
@@ -13681,6 +13804,31 @@ class Storage:
             activation_action_count=row["activation_action_count"],
             created_task_ids=_json_loads(row["created_task_ids"], []),
             contract_ids=_json_loads(row["contract_ids"], []),
+            report_path=row["report_path"],
+            created_at=row["created_at"],
+        )
+
+    def _row_to_capability_activation_followup_delegation_batch(
+        self,
+        row: sqlite3.Row,
+    ) -> CapabilityActivationFollowupDelegationBatch:
+        return CapabilityActivationFollowupDelegationBatch(
+            id=row["id"],
+            status=row["status"],
+            followup_task_count=row["followup_task_count"],
+            routing_decision_count=row["routing_decision_count"],
+            delegation_count=row["delegation_count"],
+            existing_delegation_count=row["existing_delegation_count"],
+            execution_started_count=row["execution_started_count"],
+            network_action_count=row["network_action_count"],
+            external_mutation_count=row["external_mutation_count"],
+            activation_action_count=row["activation_action_count"],
+            created_routing_decision_ids=_json_loads(
+                row["created_routing_decision_ids"],
+                [],
+            ),
+            created_delegation_ids=_json_loads(row["created_delegation_ids"], []),
+            followup_task_ids=_json_loads(row["followup_task_ids"], []),
             report_path=row["report_path"],
             created_at=row["created_at"],
         )

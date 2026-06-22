@@ -5875,3 +5875,48 @@
   satisfy capability proof, enable capabilities, promote trust, route work,
   schedule work, start workers, retry work, track spend, run CI, deploy, push,
   open PRs, mark the active goal complete, or mutate external systems.
+
+## 2026-06-22 Capability Activation Follow-Up Delegations
+
+- Added local routing/delegation packet command:
+  `python3 -m agent_os.cli capability-activation-followup-delegations`.
+- The command reads pending `capability_activation_followup_task` rows, maps
+  them to `category=evidence_review`, selects the read-only `evaluator`
+  profile, and creates pending `subagent_delegation` JSON packets under
+  `.clanker/delegations/`.
+- Updated delegation packet input context to include source task evidence and
+  artifacts so the packet carries capability, source contract, source
+  decision, required artifacts, required commands, and activation-blocking
+  non-claims.
+- Initial live delegation batch:
+  `capability_activation_followup_delegation_batch_11c82b7d0dd6`, status
+  `capability_activation_followup_delegations_recorded`, with 9 follow-up
+  tasks selected, 9 routing decisions created, 9 delegation packets created,
+  0 executions started, 0 network actions, 0 external mutations, and 0
+  activation actions.
+- Final idempotency delegation batch:
+  `capability_activation_followup_delegation_batch_4094880bdfae`, status
+  `capability_activation_followup_delegations_already_recorded`, with 9
+  existing delegation packets and 0 new routing or delegation rows.
+- Added dashboard visibility under
+  `## Capability Activation Follow-Up Delegations`.
+- Updated README, suggested-use docs, operating summary, workflow lifecycle,
+  activation-contract tutorial, task queue, generated dashboard, and next
+  iteration packet.
+- Next packet:
+  `Add capability follow-up evidence result ingestion from completed delegation packets.`
+- Verification evidence:
+  - Red-first focused tests failed before the CLI command existed.
+  - `python3 -m py_compile agent_os/capability_activation_followup_delegations.py agent_os/capability_activation_followups.py agent_os/profile_routing.py agent_os/subagent_delegation.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest tests/test_first_milestone.py -k 'capability_activation_followup_delegations' -q` -> 3 passed, 262 deselected.
+  - `python3 -m pytest tests/test_first_milestone.py -k 'capability_activation_followup_delegations or capability_activation_followups or route_task or delegate_creates or delegations_command_result or record_delegation_result or dashboard_reports' -q` -> 42 passed, 223 deselected.
+  - `python3 -m pytest -q` -> 265 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add capability followup delegation packets" ...` -> pass as `run_b96ce8f34c7b`.
+  - Compact live gate passed for idempotent
+    `capability-activation-followup-delegations`, queue-health, approvals,
+    eval-candidates, handoff-review, playbooks, and dashboard.
+- Non-claims: delegation packet creation does not start subagents, call model
+  providers, create `approval_requests`, satisfy proof, enable capabilities,
+  promote trust, schedule work, start workers, retry work, track spend, run CI,
+  deploy, push, open PRs, mark the active goal complete, or mutate external
+  systems.

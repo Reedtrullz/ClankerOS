@@ -126,10 +126,37 @@ The generated tasks are pending high-risk
 activation contract and decision. They make the next evidence-collection work
 visible to the task graph without enabling the capability.
 
+## Create Follow-Up Delegation Packets
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-delegations
+```
+
+Expected output includes:
+
+```text
+capability_activation_followup_delegations: capability_activation_followup_delegations_recorded
+followup_tasks: 9
+routing_decisions_created: 9
+delegations_created: 9
+execution_started: 0
+network_actions_taken: 0
+activation_actions_taken: 0
+report: docs/capability-activation-followup-delegations.md
+```
+
+Rerunning the command should report
+`capability_activation_followup_delegations_already_recorded`.
+
+The generated delegation packets are pending read-only evaluator contracts.
+They include the source follow-up task evidence, required artifacts, required
+commands, and non-claims, but they do not start a subagent or call a model
+provider.
+
 ## Non-Claims
 
 - This does not create `approval_requests` rows.
 - This does not satisfy capability evidence.
 - This does not enable capabilities.
-- This does not route, schedule, retry, dispatch, run CI, deploy, push, or
+- This does not start subagents, schedule, retry, run CI, deploy, push, or
   mutate external systems.

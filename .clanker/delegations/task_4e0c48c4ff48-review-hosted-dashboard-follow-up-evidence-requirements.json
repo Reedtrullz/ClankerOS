@@ -1,0 +1,128 @@
+{
+  "allowed_tools": [
+    "read",
+    "grep",
+    "evidence_read"
+  ],
+  "assigned_profile": "evaluator",
+  "budget": {
+    "seconds": 420,
+    "tokens": 20000
+  },
+  "category": "evidence_review",
+  "execution_started": false,
+  "expected_output_schema": "evidence_review",
+  "external_mutations_taken": 0,
+  "forbidden_actions": [
+    "approve",
+    "commit",
+    "external_state_mutation",
+    "shell",
+    "write"
+  ],
+  "id": "subagent_delegation_48d1cc9f63ae",
+  "input_context": {
+    "model": "configurable/strong-reasoning-model",
+    "parent_goal_id": "goal_b25a107a53a9",
+    "parent_task_id": "task_4e0c48c4ff48",
+    "profile": "evaluator",
+    "project_id": "bootstrap",
+    "routing_decision_id": "routing_decision_17a5d6070d70",
+    "routing_reason": "task_rule: task_type capability_activation_followup_task mapped to category evidence_review selected evaluator",
+    "task_artifacts": [
+      "docs/capability-activation-followups.md"
+    ],
+    "task_description": "Collect capability-specific evidence requested for hosted_dashboard activation contract capability_activation_contract_5f51a9f00ad5; keep activation blocked until proof and explicit approval exist.",
+    "task_evidence": {
+      "activation_actions_taken": 0,
+      "activation_allowed": false,
+      "approval_requests_created": 0,
+      "capability": "hosted_dashboard",
+      "evidence_requirements": {
+        "activation_action_count": 0,
+        "activation_allowed": false,
+        "approval_boundary": "explicit_operator_approval_required",
+        "approval_status": "blocked_until_evidence_verified",
+        "capability": "hosted_dashboard",
+        "created_approval_request_count": 0,
+        "non_claims": [
+          "does_not_enable_capability",
+          "does_not_create_approval_requests_yet",
+          "does_not_satisfy_evidence",
+          "does_not_mutate_external_systems",
+          "does_not_run_ci_or_deploy",
+          "does_not_promote_trust"
+        ],
+        "required_artifacts": [
+          "docs/capability-activation-tasks.md",
+          "docs/hosted-dashboard-proof-checklist.md",
+          "docs/capability-activation-contracts.md"
+        ],
+        "required_commands": [
+          "python3 -m agent_os.cli hosted-dashboard-proof-checklist",
+          "python3 -m agent_os.cli dashboard",
+          "python3 -m agent_os.cli eval-after-change --change \"Assess hosted_dashboard activation evidence\""
+        ],
+        "required_gates": [
+          "capability_specific_evidence",
+          "fresh_verification",
+          "explicit_operator_approval",
+          "non_claim_review",
+          "rollback_or_disable_plan"
+        ],
+        "source_application_id": "operator_approval_effect_application_4a855067a8db",
+        "source_effect_id": "effect_f150fdc78c97",
+        "source_task_id": "task_f26a1635d5f1",
+        "type": "capability_activation_contract"
+      },
+      "external_mutations_taken": 0,
+      "source_activation_task_id": "task_f26a1635d5f1",
+      "source_application_id": "operator_approval_effect_application_4a855067a8db",
+      "source_contract_id": "capability_activation_contract_5f51a9f00ad5",
+      "source_decision_id": "capability_activation_decision_7e9a89479c7b",
+      "source_effect_id": "effect_f150fdc78c97",
+      "task_origin": "capability_activation_more_evidence_decision"
+    },
+    "task_type": "capability_activation_followup_task",
+    "verification_plan": {
+      "activation_allowed": false,
+      "capability": "hosted_dashboard",
+      "non_claims": [
+        "does_not_enable_capability",
+        "does_not_create_approval_requests",
+        "does_not_mutate_external_systems"
+      ],
+      "required_artifacts": [
+        "docs/capability-activation-tasks.md",
+        "docs/hosted-dashboard-proof-checklist.md",
+        "docs/capability-activation-contracts.md"
+      ],
+      "required_commands": [
+        "python3 -m agent_os.cli hosted-dashboard-proof-checklist",
+        "python3 -m agent_os.cli dashboard",
+        "python3 -m agent_os.cli eval-after-change --change \"Assess hosted_dashboard activation evidence\""
+      ],
+      "required_gates": [
+        "capability_specific_evidence",
+        "fresh_verification",
+        "explicit_operator_approval",
+        "non_claim_review"
+      ],
+      "source_contract_id": "capability_activation_contract_5f51a9f00ad5",
+      "source_decision_id": "capability_activation_decision_7e9a89479c7b",
+      "type": "capability_activation_more_evidence_followup"
+    }
+  },
+  "network_actions_taken": 0,
+  "non_claims": [
+    "No subagent was started.",
+    "No model provider was called.",
+    "No file, git, approval, or external state was mutated."
+  ],
+  "parent_goal_id": "goal_b25a107a53a9",
+  "parent_task_id": "task_4e0c48c4ff48",
+  "prompt": "/goal Review hosted_dashboard follow-up evidence requirements\n\nContext:\n- parent_goal_id: goal_b25a107a53a9\n- parent_task_id: task_4e0c48c4ff48\n- project_id: bootstrap\n- task_type: capability_activation_followup_task\n- task_description: Collect capability-specific evidence requested for hosted_dashboard activation contract capability_activation_contract_5f51a9f00ad5; keep activation blocked until proof and explicit approval exist.\n- routing_category: evidence_review\n- assigned_profile: evaluator\n\nBoundaries:\n- Read-only context gathering only.\n- Do not write files, commit, approve, call external services, or mutate state.\n\nDeliverable:\n- Return structured output matching `evidence_review`.",
+  "routing_decision_id": "routing_decision_17a5d6070d70",
+  "status": "pending",
+  "title": "Review hosted_dashboard follow-up evidence requirements"
+}

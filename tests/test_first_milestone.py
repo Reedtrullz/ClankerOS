@@ -13232,6 +13232,22 @@ def _capability_activation_followup_command(tmp_path: Path) -> list[str]:
     ]
 
 
+def _capability_activation_followup_delegations_command(tmp_path: Path) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-followup-delegations",
+    ]
+
+
+def _run_capability_activation_followup_chain(tmp_path: Path, capsys) -> None:
+    _run_capability_activation_contract_chain(tmp_path, capsys)
+    assert main(_capability_activation_evidence_command(tmp_path)) == 0
+    assert main(_capability_activation_decision_command(tmp_path)) == 0
+    assert main(_capability_activation_followup_command(tmp_path)) == 0
+    capsys.readouterr()
+
+
 def test_capability_activation_decisions_require_evidence(
     tmp_path: Path,
     capsys,
@@ -13553,6 +13569,203 @@ def test_capability_activation_followups_use_recorded_more_evidence_decision(
     assert {task.evidence["source_decision_id"] for task in followup_tasks} == {
         recorded_decision_id
     }
+
+
+def test_capability_activation_followup_delegations_require_followup_tasks(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(_capability_activation_followup_delegations_command(tmp_path)) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_delegations: "
+        "capability_activation_followup_delegations_no_followup_tasks"
+    ) in output
+    assert "followup_tasks: 0" in output
+    assert "routing_decisions_created: 0" in output
+    assert "delegations_created: 0" in output
+    assert "execution_started: 0" in output
+    assert "network_actions_taken: 0" in output
+    assert "activation_actions_taken: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batches = storage.list_recent_capability_activation_followup_delegation_batches()
+    assert batches[0].status == (
+        "capability_activation_followup_delegations_no_followup_tasks"
+    )
+    assert batches[0].followup_task_count == 0
+    assert batches[0].delegation_count == 0
+    assert storage.list_recent_subagent_delegations(limit=None) == []
+    assert storage.list_recent_approval_requests() == []
+
+    report = (
+        tmp_path / "docs" / "capability-activation-followup-delegations.md"
+    ).read_text(encoding="utf-8")
+    assert "# Capability Activation Follow-Up Delegations" in report
+    assert (
+        "- status: capability_activation_followup_delegations_no_followup_tasks"
+        in report
+    )
+    assert "- Does not start subagents." in report
+
+
+def test_capability_activation_followup_delegations_create_read_only_packets(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_capability_activation_followup_chain(tmp_path, capsys)
+
+    assert main(_capability_activation_followup_delegations_command(tmp_path)) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_delegations: "
+        "capability_activation_followup_delegations_recorded"
+    ) in output
+    assert "followup_tasks: 9" in output
+    assert "routing_decisions_created: 9" in output
+    assert "delegations_created: 9" in output
+    assert "existing_delegations: 0" in output
+    assert "execution_started: 0" in output
+    assert "network_actions_taken: 0" in output
+    assert "activation_actions_taken: 0" in output
+    assert "report: docs/capability-activation-followup-delegations.md" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batches = storage.list_recent_capability_activation_followup_delegation_batches()
+    batch = batches[0]
+    assert batch.status == "capability_activation_followup_delegations_recorded"
+    assert batch.followup_task_count == 9
+    assert batch.routing_decision_count == 9
+    assert batch.delegation_count == 9
+    assert batch.existing_delegation_count == 0
+    assert batch.execution_started_count == 0
+    assert batch.network_action_count == 0
+    assert batch.activation_action_count == 0
+    assert len(batch.created_routing_decision_ids) == 9
+    assert len(batch.created_delegation_ids) == 9
+
+    followup_tasks = [
+        task
+        for task in storage.list_all_tasks()
+        if task.task_type == "capability_activation_followup_task"
+    ]
+    assert len(followup_tasks) == 9
+
+    routing_decisions = storage.list_recent_routing_decisions(limit=None)
+    followup_routing_decisions = [
+        decision
+        for decision in routing_decisions
+        if decision.task_id in {task.id for task in followup_tasks}
+    ]
+    assert len(followup_routing_decisions) == 9
+    assert {decision.category for decision in followup_routing_decisions} == {
+        "evidence_review"
+    }
+    assert {decision.selected_profile for decision in followup_routing_decisions} == {
+        "evaluator"
+    }
+    assert {decision.status for decision in followup_routing_decisions} == {"selected"}
+
+    delegations = storage.list_recent_subagent_delegations(limit=None)
+    followup_delegations = [
+        delegation
+        for delegation in delegations
+        if delegation.parent_task_id in {task.id for task in followup_tasks}
+    ]
+    assert len(followup_delegations) == 9
+    assert {delegation.assigned_profile for delegation in followup_delegations} == {
+        "evaluator"
+    }
+    assert {delegation.category for delegation in followup_delegations} == {
+        "evidence_review"
+    }
+    assert {delegation.expected_output_schema for delegation in followup_delegations} == {
+        "evidence_review"
+    }
+    assert {delegation.status for delegation in followup_delegations} == {"pending"}
+    assert {delegation.started_at for delegation in followup_delegations} == {None}
+    assert all("write" in delegation.forbidden_actions_json for delegation in followup_delegations)
+    assert all("commit" in delegation.forbidden_actions_json for delegation in followup_delegations)
+    assert all("evidence_read" in delegation.allowed_tools_json for delegation in followup_delegations)
+
+    sample_delegation = followup_delegations[0]
+    sample_artifact = json.loads(Path(sample_delegation.result_artifact_path).read_text())
+    assert sample_artifact["execution_started"] is False
+    assert sample_artifact["network_actions_taken"] == 0
+    assert sample_artifact["external_mutations_taken"] == 0
+    assert sample_artifact["input_context"]["task_evidence"]["source_contract_id"].startswith(
+        "capability_activation_contract_"
+    )
+    assert sample_artifact["input_context"]["task_evidence"]["activation_allowed"] is False
+    assert sample_artifact["input_context"]["task_evidence"]["capability_enabled"] is False
+    assert "evidence_requirements" in sample_artifact["input_context"]["task_evidence"]
+    assert storage.list_recent_approval_requests() == []
+
+    report = (
+        tmp_path / "docs" / "capability-activation-followup-delegations.md"
+    ).read_text(encoding="utf-8")
+    assert "# Capability Activation Follow-Up Delegations" in report
+    assert "- status: capability_activation_followup_delegations_recorded" in report
+    assert "- delegations_created: 9" in report
+    assert "schema=evidence_review" in report
+    assert "- Does not start subagents." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Capability Activation Follow-Up Delegations" in dashboard
+    assert "- status: capability_activation_followup_delegations_recorded" in dashboard
+    assert "- delegations_created: 9" in dashboard
+    assert batch.id in dashboard
+
+
+def test_capability_activation_followup_delegations_are_idempotent(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_capability_activation_followup_chain(tmp_path, capsys)
+
+    command = _capability_activation_followup_delegations_command(tmp_path)
+    assert main(command) == 0
+    capsys.readouterr()
+
+    assert main(command) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_delegations: "
+        "capability_activation_followup_delegations_already_recorded"
+    ) in output
+    assert "followup_tasks: 9" in output
+    assert "routing_decisions_created: 0" in output
+    assert "delegations_created: 0" in output
+    assert "existing_delegations: 9" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batches = storage.list_recent_capability_activation_followup_delegation_batches(
+        limit=2
+    )
+    assert batches[0].status == "capability_activation_followup_delegations_already_recorded"
+    assert batches[0].routing_decision_count == 0
+    assert batches[0].delegation_count == 0
+    assert batches[0].existing_delegation_count == 9
+    assert batches[1].status == "capability_activation_followup_delegations_recorded"
+
+    followup_delegations = [
+        delegation
+        for delegation in storage.list_recent_subagent_delegations(limit=None)
+        if delegation.parent_task_id
+    ]
+    assert len(followup_delegations) == 9
+    assert len(storage.list_recent_routing_decisions(limit=None)) == 9
 
 
 def test_hosted_dashboard_proof_checklist_blocks_blocked_real_cost_tracking_proof(

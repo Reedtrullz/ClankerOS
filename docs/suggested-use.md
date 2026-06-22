@@ -328,6 +328,18 @@ contract that needs more evidence. It is task graph state for future evidence
 collection; it does not create approval rows, satisfy proof, or enable
 capabilities.
 
+Turn the pending follow-up evidence tasks into read-only delegation packets:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-delegations
+python3 -m agent_os.cli dashboard
+```
+
+This records routing decisions to the `evidence_review` category and creates
+pending evaluator delegation packets with local JSON artifacts. It does not
+start subagents, call model providers, create approval rows, satisfy proof, or
+enable capabilities.
+
 ## When To Commit And Push
 
 Commit when:

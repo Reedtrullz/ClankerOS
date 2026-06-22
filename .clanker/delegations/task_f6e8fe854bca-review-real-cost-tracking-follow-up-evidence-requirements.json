@@ -1,0 +1,128 @@
+{
+  "allowed_tools": [
+    "read",
+    "grep",
+    "evidence_read"
+  ],
+  "assigned_profile": "evaluator",
+  "budget": {
+    "seconds": 420,
+    "tokens": 20000
+  },
+  "category": "evidence_review",
+  "execution_started": false,
+  "expected_output_schema": "evidence_review",
+  "external_mutations_taken": 0,
+  "forbidden_actions": [
+    "approve",
+    "commit",
+    "external_state_mutation",
+    "shell",
+    "write"
+  ],
+  "id": "subagent_delegation_ff3356ceef0b",
+  "input_context": {
+    "model": "configurable/strong-reasoning-model",
+    "parent_goal_id": "goal_b25a107a53a9",
+    "parent_task_id": "task_f6e8fe854bca",
+    "profile": "evaluator",
+    "project_id": "bootstrap",
+    "routing_decision_id": "routing_decision_67db57e6200f",
+    "routing_reason": "task_rule: task_type capability_activation_followup_task mapped to category evidence_review selected evaluator",
+    "task_artifacts": [
+      "docs/capability-activation-followups.md"
+    ],
+    "task_description": "Collect capability-specific evidence requested for real_cost_tracking activation contract capability_activation_contract_5bae92de4e50; keep activation blocked until proof and explicit approval exist.",
+    "task_evidence": {
+      "activation_actions_taken": 0,
+      "activation_allowed": false,
+      "approval_requests_created": 0,
+      "capability": "real_cost_tracking",
+      "evidence_requirements": {
+        "activation_action_count": 0,
+        "activation_allowed": false,
+        "approval_boundary": "explicit_operator_approval_required",
+        "approval_status": "blocked_until_evidence_verified",
+        "capability": "real_cost_tracking",
+        "created_approval_request_count": 0,
+        "non_claims": [
+          "does_not_enable_capability",
+          "does_not_create_approval_requests_yet",
+          "does_not_satisfy_evidence",
+          "does_not_mutate_external_systems",
+          "does_not_run_ci_or_deploy",
+          "does_not_promote_trust"
+        ],
+        "required_artifacts": [
+          "docs/capability-activation-tasks.md",
+          "docs/real-cost-tracking-proof-checklist.md",
+          "docs/capability-activation-contracts.md"
+        ],
+        "required_commands": [
+          "python3 -m agent_os.cli real-cost-tracking-proof-checklist",
+          "python3 -m agent_os.cli dashboard",
+          "python3 -m agent_os.cli eval-after-change --change \"Assess real_cost_tracking activation evidence\""
+        ],
+        "required_gates": [
+          "capability_specific_evidence",
+          "fresh_verification",
+          "explicit_operator_approval",
+          "non_claim_review",
+          "rollback_or_disable_plan"
+        ],
+        "source_application_id": "operator_approval_effect_application_4a855067a8db",
+        "source_effect_id": "effect_1a41ff7c5cca",
+        "source_task_id": "task_8bcbf504e7d4",
+        "type": "capability_activation_contract"
+      },
+      "external_mutations_taken": 0,
+      "source_activation_task_id": "task_8bcbf504e7d4",
+      "source_application_id": "operator_approval_effect_application_4a855067a8db",
+      "source_contract_id": "capability_activation_contract_5bae92de4e50",
+      "source_decision_id": "capability_activation_decision_7e9a89479c7b",
+      "source_effect_id": "effect_1a41ff7c5cca",
+      "task_origin": "capability_activation_more_evidence_decision"
+    },
+    "task_type": "capability_activation_followup_task",
+    "verification_plan": {
+      "activation_allowed": false,
+      "capability": "real_cost_tracking",
+      "non_claims": [
+        "does_not_enable_capability",
+        "does_not_create_approval_requests",
+        "does_not_mutate_external_systems"
+      ],
+      "required_artifacts": [
+        "docs/capability-activation-tasks.md",
+        "docs/real-cost-tracking-proof-checklist.md",
+        "docs/capability-activation-contracts.md"
+      ],
+      "required_commands": [
+        "python3 -m agent_os.cli real-cost-tracking-proof-checklist",
+        "python3 -m agent_os.cli dashboard",
+        "python3 -m agent_os.cli eval-after-change --change \"Assess real_cost_tracking activation evidence\""
+      ],
+      "required_gates": [
+        "capability_specific_evidence",
+        "fresh_verification",
+        "explicit_operator_approval",
+        "non_claim_review"
+      ],
+      "source_contract_id": "capability_activation_contract_5bae92de4e50",
+      "source_decision_id": "capability_activation_decision_7e9a89479c7b",
+      "type": "capability_activation_more_evidence_followup"
+    }
+  },
+  "network_actions_taken": 0,
+  "non_claims": [
+    "No subagent was started.",
+    "No model provider was called.",
+    "No file, git, approval, or external state was mutated."
+  ],
+  "parent_goal_id": "goal_b25a107a53a9",
+  "parent_task_id": "task_f6e8fe854bca",
+  "prompt": "/goal Review real_cost_tracking follow-up evidence requirements\n\nContext:\n- parent_goal_id: goal_b25a107a53a9\n- parent_task_id: task_f6e8fe854bca\n- project_id: bootstrap\n- task_type: capability_activation_followup_task\n- task_description: Collect capability-specific evidence requested for real_cost_tracking activation contract capability_activation_contract_5bae92de4e50; keep activation blocked until proof and explicit approval exist.\n- routing_category: evidence_review\n- assigned_profile: evaluator\n\nBoundaries:\n- Read-only context gathering only.\n- Do not write files, commit, approve, call external services, or mutate state.\n\nDeliverable:\n- Return structured output matching `evidence_review`.",
+  "routing_decision_id": "routing_decision_67db57e6200f",
+  "status": "pending",
+  "title": "Review real_cost_tracking follow-up evidence requirements"
+}

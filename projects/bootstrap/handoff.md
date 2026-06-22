@@ -1624,14 +1624,39 @@ work, or changing routing.
   work, track spend, run CI, deploy, push, open PRs, mark the active goal
   complete, or mutate external systems.
 
+## Latest Capability Activation Follow-Up Delegations
+
+- `capability-activation-followup-delegations` now turns the 9 pending
+  follow-up evidence tasks into local routing decisions and pending read-only
+  evaluator delegation packets.
+- Initial delegation batch:
+  `capability_activation_followup_delegation_batch_11c82b7d0dd6`, status
+  `capability_activation_followup_delegations_recorded`, with 9 selected
+  follow-up tasks, 9 routing decisions created, 9 delegation packets created,
+  0 executions started, 0 network actions, and 0 activation actions.
+- Final delegation idempotency batch:
+  `capability_activation_followup_delegation_batch_4094880bdfae`, status
+  `capability_activation_followup_delegations_already_recorded`, with 9
+  existing delegation packets and 0 new routing or delegation rows.
+- The packets use `category=evidence_review`, `profile=evaluator`, and
+  `schema=evidence_review`, and each JSON artifact preserves the source
+  follow-up task evidence, required proof artifacts, required proof commands,
+  and activation-blocking non-claims.
+- Evidence report: `docs/capability-activation-followup-delegations.md`.
+- Non-claims: delegation packet creation does not start subagents, call model
+  providers, create `approval_requests`, satisfy proof, enable capabilities,
+  schedule work, start workers, retry work, track spend, run CI, deploy, push,
+  open PRs, mark the active goal complete, or mutate external systems.
+
 ## Next Actions
 
-Current focus: Add routing and delegation packets for capability follow-up evidence tasks.
+Current focus: Add capability follow-up evidence result ingestion from completed delegation packets.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add routing and delegation packets for capability follow-up evidence tasks.
-2. Route the 9 pending follow-up evidence tasks into scoped local profile or
-   delegation packets without starting remote workers or enabling capabilities.
+   Add capability follow-up evidence result ingestion from completed delegation packets.
+2. Ingest operator-supplied read-only evaluator delegation results back into
+   local capability follow-up evidence records without satisfying proof or
+   enabling capabilities.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.

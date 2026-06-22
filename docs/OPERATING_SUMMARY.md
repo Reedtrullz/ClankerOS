@@ -115,6 +115,11 @@ Core layers for the bootstrap:
   rows that point back to the source contract and decision. This turns blocked
   proof decisions into task graph work while still creating no approval rows
   and taking no activation actions.
+- Capability activation follow-up delegations: pending follow-up evidence tasks
+  can be routed to `evidence_review` and materialized as read-only evaluator
+  delegation packets with local JSON artifacts. The packets preserve source
+  task evidence and required proof commands while keeping subagent execution,
+  model-provider calls, approval rows, and activation actions at zero.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON
@@ -690,6 +695,12 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   `docs/capability-activation-followups.md` and creates pending high-risk
   follow-up evidence tasks while keeping `approval_requests_created: 0` and
   `activation_actions_taken: 0`.
+- Capability activation follow-up delegations: available through
+  `python3 -m agent_os.cli capability-activation-followup-delegations` after
+  follow-up evidence tasks exist. The command writes
+  `docs/capability-activation-followup-delegations.md`, records
+  `evidence_review` routing decisions, and creates pending read-only evaluator
+  delegation packets while keeping execution and activation actions at zero.
 - Eval candidate listing: available through
   `python3 -m agent_os.cli eval-candidates` and mirrored into
   `docs/dashboard.md`.

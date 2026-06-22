@@ -121,6 +121,7 @@ TASK_TYPE_CATEGORY_MAP = {
     "coding_change": "implementation",
     "bugfix": "bugfix",
     "refactor": "refactor",
+    "capability_activation_followup_task": "evidence_review",
 }
 
 

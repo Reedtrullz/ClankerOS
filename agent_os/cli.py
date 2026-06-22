@@ -196,6 +196,10 @@ from agent_os.capability_activation_followups import (
     render_capability_activation_followup_batch_line,
     write_capability_activation_followups,
 )
+from agent_os.capability_activation_followup_delegations import (
+    render_capability_activation_followup_delegation_batch_line,
+    write_capability_activation_followup_delegations,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -712,6 +716,10 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "capability-activation-followups",
         help="Create pending follow-up evidence tasks from more-evidence decisions.",
+    )
+    subparsers.add_parser(
+        "capability-activation-followup-delegations",
+        help="Create read-only routing and delegation packets for follow-up evidence tasks.",
     )
 
     approve = subparsers.add_parser("approve", help="Approve a pending local task request.")
@@ -2747,6 +2755,34 @@ def main(argv: list[str] | None = None) -> int:
                 f"task={task.id} capability={task.evidence.get('capability')} "
                 f"contract={task.evidence.get('source_contract_id')} "
                 f"status={task.status}"
+            )
+        return 0
+
+    if args.command == "capability-activation-followup-delegations":
+        AgentSystem(root).initialize()
+        report_path, batch, created_delegations, _existing_delegations, _tasks = (
+            write_capability_activation_followup_delegations(root)
+        )
+        print(f"capability_activation_followup_delegations: {batch.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"followup_tasks: {batch.followup_task_count}")
+        print(f"routing_decisions_created: {batch.routing_decision_count}")
+        print(f"delegations_created: {batch.delegation_count}")
+        print(f"existing_delegations: {batch.existing_delegation_count}")
+        print(f"execution_started: {batch.execution_started_count}")
+        print(f"network_actions_taken: {batch.network_action_count}")
+        print(f"external_mutations_taken: {batch.external_mutation_count}")
+        print(f"activation_actions_taken: {batch.activation_action_count}")
+        print(
+            render_capability_activation_followup_delegation_batch_line(
+                batch
+            ).removeprefix("- ")
+        )
+        for delegation in created_delegations:
+            print(
+                f"delegation={delegation.id} task={delegation.parent_task_id} "
+                f"profile={delegation.assigned_profile} category={delegation.category} "
+                f"status={delegation.status}"
             )
         return 0
 

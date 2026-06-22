@@ -241,6 +241,8 @@ def _build_input_context(
         "task_type": task.task_type,
         "task_description": task.description,
         "verification_plan": task.verification_plan,
+        "task_evidence": task.evidence,
+        "task_artifacts": task.artifacts,
         "routing_decision_id": decision.id,
         "routing_reason": decision.reason,
         "profile": profile.name,
