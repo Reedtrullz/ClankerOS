@@ -7,7 +7,8 @@ This tutorial walks through the first executable local coding-agent vertical:
 3. capture diff, command, and test evidence;
 4. inspect the proposed `local_git_commit` effect;
 5. make an operator approval decision;
-6. create the approved local worktree commit exactly once.
+6. create the approved local worktree commit exactly once;
+7. clean up terminal worktrees after an explicit cleanup decision.
 
 The flow is intentionally conservative. It creates evidence and an approval
 packet first. It creates a local git commit only after explicit approval and a
@@ -148,10 +149,34 @@ The command writes `commit-approved.json` beside the original run evidence and
 updates the effect with `status=committed`, `committed_at`, `result_json`, and
 a local `git revert <commit_sha>` compensation note.
 
+## 7. Clean Up Terminal Worktrees
+
+Preview cleanup candidates:
+
+```bash
+python3 -m agent_os.cli cleanup-worktrees
+```
+
+After reviewing the terminal effects and evidence, confirm cleanup:
+
+```bash
+python3 -m agent_os.cli cleanup-worktrees \
+  --confirm \
+  --decided-by operator \
+  --reason "committed branch kept, worktree no longer needed"
+```
+
+Cleanup writes a `worktree-cleanup-<effect_id>.json` evidence file and a
+SQLite `worktree_cleanup_records` row. It removes clean worktrees for terminal
+`local_git_commit` effects such as `committed`, `blocked`, or `superseded`.
+Dirty worktrees are blocked and left in place; ClankerOS does not force-delete
+uncommitted changes.
+
 ## What This Tutorial Does Not Do
 
 - It does not commit before explicit approval.
 - It does not commit if the worktree no longer matches the captured evidence.
+- It does not force-delete dirty worktrees during cleanup.
 - It does not push a branch.
 - It does not open a pull request.
 - It does not run GitHub Actions.

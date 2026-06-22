@@ -1330,16 +1330,16 @@ work, or changing routing.
 
 ## Next Actions
 
-1. Use `docs/next-iteration.md` packet `iteration_3d4d738a27df` to complete:
-   Add worktree cleanup for committed, rejected, or superseded proposed effects.
-2. Implement worktree cleanup as the next executable local coding-agent
-   control-plane slice: identify committed, blocked/rejected, and superseded
-   worktrees; require explicit safe conditions; preserve evidence; and avoid
-   deleting anything without a recorded cleanup decision.
-3. Keep GitHub push/PR handoff, CI/deploy proof, hosted
-   dashboard, remote workers, scheduler, browser/desktop adapters, budget
-   enforcement, trust promotion, retries, and real-cost tracking blocked until
-   their own evidence and approval contracts exist.
+1. Use `docs/next-iteration.md` packet `iteration_de757b7ab35e` to complete:
+   Add GitHub push or draft-PR handoff after local commit evidence exists.
+2. Implement GitHub handoff as the next approval-aware local coding-agent
+   control-plane slice: require committed local effect evidence, preserve
+   branch/commit metadata, produce a handoff packet, and avoid pushing or
+   opening PRs without an explicit operator action.
+3. Keep CI/deploy proof, hosted dashboard, remote workers, scheduler,
+   browser/desktop adapters, budget enforcement, trust promotion, retries, and
+   real-cost tracking blocked until their own evidence and approval contracts
+   exist.
 4. Preserve the schema-migration report chain as historical evidence, but do
-   not continue report-only schema packets before the local coding worktree
-   lifecycle can clean up safely.
+   not continue report-only schema packets before the local coding GitHub
+   handoff path can preserve local commit evidence safely.

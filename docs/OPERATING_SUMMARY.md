@@ -24,6 +24,10 @@ Core layers for the bootstrap:
 - Worktree coding loop: a high-risk coding goal can run a constrained command
   inside an isolated git worktree, capture command/test/diff evidence, and
   record a proposed `local_git_commit` effect that waits for operator approval.
+- Worktree cleanup loop: terminal local coding worktrees can be previewed and
+  removed only after an explicit `cleanup-worktrees --confirm` decision. The
+  cleanup writes SQLite and JSON evidence, removes clean committed/blocked/
+  superseded worktrees, and blocks dirty worktrees without force deletion.
 - Operator cockpit: the dashboard starts with active runs, registered projects,
   approval inbox, proposed effects, verification status, recent worktrees, and
   the next recommended operator action.

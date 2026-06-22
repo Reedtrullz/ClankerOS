@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_3d4d738a27df
+- Packet ID: iteration_de757b7ab35e
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add worktree cleanup for committed, rejected, or superseded proposed effects.
+Advance the Agent System north-star goal by completing: Add GitHub push or draft-PR handoff after local commit evidence exists.
 
 ## Definition Of Done
 
@@ -68,9 +68,9 @@ Advance the Agent System north-star goal by completing: Add worktree cleanup for
 ## Simplicity Guardrail
 
 - selection_policy: highest-score-then-lowest-complexity
-- selection_reason: selected lower complexity 3 among 2 candidates with equal score 7
+- selection_reason: selected only actionable item with score 7 and complexity 4
 - selected_score: 7
-- selected_complexity: 3
+- selected_complexity: 4
 
 ## Guardrails And Non-Claims
 

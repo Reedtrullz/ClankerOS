@@ -650,6 +650,180 @@ def test_commit_approved_blocks_stale_evidence_without_creating_commit(
     assert updated_effect.result_json["reason"] == "stale_evidence"
 
 
+def test_cleanup_worktrees_removes_committed_worktree_after_confirm_and_is_idempotent(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    repo_path = tmp_path / "subject-repo"
+    _init_git_repo(repo_path)
+    test_command = (
+        "python3 -c \"from pathlib import Path; "
+        "assert Path('agent_output.txt').read_text() == 'hello\\\\n'\""
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "register-project",
+                "subject",
+                "--path",
+                str(repo_path),
+                "--test-command",
+                test_command,
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-goal",
+                "write a marker file",
+                "--project",
+                "subject",
+                "--isolation",
+                "worktree",
+                "--command",
+                "python3 -c \"from pathlib import Path; "
+                "Path('agent_output.txt').write_text('hello\\\\n')\"",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    effect = storage.list_recent_effects()[0]
+    approval = storage.list_pending_approvals()[0]
+    worktree_path = Path(effect.proposed_payload["worktree_path"])
+    assert worktree_path.exists()
+
+    assert main(["--root", str(tmp_path), "approve", approval.id]) == 0
+    capsys.readouterr()
+    assert main(["--root", str(tmp_path), "commit-approved", approval.id]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "cleanup-worktrees"]) == 0
+    dry_run_output = capsys.readouterr().out
+    assert "worktree_cleanup: dry_run" in dry_run_output
+    assert "eligible=1" in dry_run_output
+    assert worktree_path.exists()
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "cleanup-worktrees",
+                "--confirm",
+                "--decided-by",
+                "operator",
+                "--reason",
+                "committed branch kept, worktree no longer needed",
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "worktree_cleanup: applied" in output
+    assert "removed=1" in output
+    assert "blocked=0" in output
+    assert not worktree_path.exists()
+
+    cleanup = storage.list_recent_worktree_cleanup_records()[0]
+    assert cleanup.effect_id == effect.id
+    assert cleanup.status == "removed"
+    assert cleanup.cleanup_reason == "committed"
+    assert cleanup.decided_by == "operator"
+    assert cleanup.result_json["worktree_removed"] is True
+    assert Path(cleanup.evidence_path).exists()
+    assert json.loads(Path(cleanup.evidence_path).read_text())["status"] == "removed"
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "### Worktree Cleanup" in dashboard
+    assert cleanup.id in dashboard
+
+    assert main(["--root", str(tmp_path), "cleanup-worktrees", "--confirm"]) == 0
+    repeat_output = capsys.readouterr().out
+    assert "already_removed=1" in repeat_output
+
+
+def test_cleanup_worktrees_records_dirty_blocked_worktree_without_removing_it(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    repo_path = tmp_path / "subject-repo"
+    _init_git_repo(repo_path)
+    test_command = (
+        "python3 -c \"from pathlib import Path; "
+        "assert Path('agent_output.txt').read_text() == 'hello\\\\n'\""
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "register-project",
+                "subject",
+                "--path",
+                str(repo_path),
+                "--test-command",
+                test_command,
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-goal",
+                "write a marker file",
+                "--project",
+                "subject",
+                "--isolation",
+                "worktree",
+                "--command",
+                "python3 -c \"from pathlib import Path; "
+                "Path('agent_output.txt').write_text('hello\\\\n')\"",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    effect = storage.list_recent_effects()[0]
+    approval = storage.list_pending_approvals()[0]
+    worktree_path = Path(effect.proposed_payload["worktree_path"])
+    assert main(["--root", str(tmp_path), "approve", approval.id]) == 0
+    capsys.readouterr()
+    (worktree_path / "agent_output.txt").write_text("drifted\n", encoding="utf-8")
+    assert main(["--root", str(tmp_path), "commit-approved", approval.id]) == 1
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "cleanup-worktrees", "--confirm"]) == 1
+    output = capsys.readouterr().out
+    assert "worktree_cleanup: blocked" in output
+    assert "blocked=1" in output
+    assert worktree_path.exists()
+
+    cleanup = storage.list_recent_worktree_cleanup_records()[0]
+    assert cleanup.effect_id == effect.id
+    assert cleanup.status == "blocked"
+    assert cleanup.cleanup_reason == "blocked"
+    assert cleanup.result_json["reason"] == "dirty_worktree"
+    assert cleanup.result_json["worktree_removed"] is False
+    assert Path(cleanup.evidence_path).exists()
+
+
 def test_static_dashboard_summarizes_runs_and_queue(tmp_path: Path) -> None:
     system = AgentSystem(tmp_path)
     result = system.run_goal(

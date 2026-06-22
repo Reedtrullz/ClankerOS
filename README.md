@@ -72,10 +72,12 @@ python3 -m agent_os.cli dashboard
 python3 -m agent_os.cli approvals
 python3 -m agent_os.cli approve <approval_id> --decided-by operator --note "reviewed diff and tests"
 python3 -m agent_os.cli commit-approved <approval_id> --committed-by operator
+python3 -m agent_os.cli cleanup-worktrees --confirm --reason "committed branch kept"
 ```
 
 This creates a worktree and approval packet, then creates the local worktree
-commit only after approval and a fresh evidence recheck.
+commit only after approval and a fresh evidence recheck. Cleanup removes clean
+terminal worktrees only after an explicit confirmed cleanup decision.
 
 ## Tutorials And Suggested Use
 
@@ -99,6 +101,8 @@ The repository can now:
 - record proposed `local_git_commit` effects without creating the commit;
 - create an approved local worktree commit exactly once after re-checking the
   captured base commit, diff, changed files, and test command;
+- record worktree cleanup decisions and remove clean terminal worktrees for
+  committed, blocked, or superseded effects without forcing dirty deletions;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -222,6 +226,7 @@ python3 -m agent_os.cli run-goal "Make a verified local change" --project <name>
 python3 -m agent_os.cli approvals
 python3 -m agent_os.cli approve <approval_id> --decided-by operator --note "local approval"
 python3 -m agent_os.cli commit-approved <approval_id> --committed-by operator
+python3 -m agent_os.cli cleanup-worktrees --confirm --decided-by operator --reason "terminal worktree reviewed"
 python3 -m agent_os.cli resolve-incident <incident_id> --resolved-by operator --note "local resolution note"
 python3 -m agent_os.cli queue-health
 python3 -m agent_os.cli handoff-review

@@ -57,9 +57,13 @@ python3 -m agent_os.cli run-goal "Make the smallest verified change" --project <
    only after the diff, tests, and policy evidence are acceptable.
 6. Use `python3 -m agent_os.cli commit-approved <approval_id> --committed-by operator`
    to re-check evidence and create the local worktree commit exactly once.
+7. Use `python3 -m agent_os.cli cleanup-worktrees --confirm --reason "..."`
+   after reviewing terminal effects and deciding the worktree can be removed.
 
 `commit-approved` blocks without committing if the worktree base commit, patch,
 changed files, or stored test command no longer match the approved evidence.
+`cleanup-worktrees` removes only clean terminal worktrees; dirty blocked
+worktrees are recorded as blocked and left in place.
 
 ## Reading The Reports
 
@@ -103,7 +107,6 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 Good next slices now favor executable local approval flow before broader
 autonomy:
 
-- worktree cleanup after committed, rejected, or superseded effects;
 - GitHub push or draft-PR handoff after a local commit exists;
 - CI/deploy proof ingestion from GitHub Actions after the GitHub flow exists;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is

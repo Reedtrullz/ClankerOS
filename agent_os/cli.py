@@ -204,6 +204,7 @@ from agent_os.playbooks import (
 from agent_os.project_registry import register_project
 from agent_os.queue_health import render_queue_health_finding, write_queue_health_report
 from agent_os.runtime import detect_runtime_capabilities, write_runtime_capability_matrix
+from agent_os.worktree_cleanup import cleanup_worktrees
 
 
 def render_eval_candidate_line(candidate) -> str:
@@ -403,6 +404,14 @@ def build_parser() -> argparse.ArgumentParser:
     commit_approved.add_argument("approval_id")
     commit_approved.add_argument("--committed-by", default="operator")
     commit_approved.add_argument("--message")
+
+    cleanup_worktrees_parser = subparsers.add_parser(
+        "cleanup-worktrees",
+        help="Clean up terminal local coding worktrees after an explicit confirmation.",
+    )
+    cleanup_worktrees_parser.add_argument("--confirm", action="store_true")
+    cleanup_worktrees_parser.add_argument("--decided-by", default="operator")
+    cleanup_worktrees_parser.add_argument("--reason", default="operator requested cleanup")
 
     resolve_incident = subparsers.add_parser(
         "resolve-incident",
@@ -1697,6 +1706,33 @@ def main(argv: list[str] | None = None) -> int:
         print(f"worktree: {result.worktree_path}")
         print(f"evidence: {result.evidence_path}")
         return 0
+
+    if args.command == "cleanup-worktrees":
+        try:
+            result = cleanup_worktrees(
+                root,
+                confirm=args.confirm,
+                decided_by=args.decided_by,
+                reason=args.reason,
+            )
+        except (KeyError, RuntimeError, ValueError) as error:
+            print(f"worktree_cleanup_failed: {error}")
+            return 1
+        print(
+            f"worktree_cleanup: {result.status} "
+            f"eligible={result.eligible_count} "
+            f"removed={result.removed_count} "
+            f"blocked={result.blocked_count} "
+            f"already_removed={result.already_removed_count} "
+            f"skipped={result.skipped_count}"
+        )
+        for record in result.records:
+            print(
+                f"{record.id}: status={record.status} effect={record.effect_id} "
+                f"reason={record.cleanup_reason} worktree={record.worktree_path} "
+                f"evidence={record.evidence_path}"
+            )
+        return 1 if result.blocked_count else 0
 
     if args.command == "resolve-incident":
         resolved = AgentSystem(root).resolve_incident(

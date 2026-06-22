@@ -116,6 +116,25 @@ class WorktreeRecord:
 
 
 @dataclass(frozen=True)
+class WorktreeCleanupRecord:
+    id: str
+    worktree_id: str
+    effect_id: str
+    project_id: str
+    run_id: str
+    task_id: str
+    worktree_path: str
+    branch_name: str
+    cleanup_reason: str
+    status: str
+    decided_by: str
+    decision_note: str
+    evidence_path: str
+    result_json: dict[str, Any]
+    created_at: str
+
+
+@dataclass(frozen=True)
 class Effect:
     id: str
     run_id: str
@@ -1331,6 +1350,24 @@ class Storage:
                     base_commit text not null,
                     branch_name text not null,
                     worktree_path text not null,
+                    created_at text not null
+                );
+
+                create table if not exists worktree_cleanup_records (
+                    id text primary key,
+                    worktree_id text not null,
+                    effect_id text not null,
+                    project_id text not null,
+                    run_id text not null,
+                    task_id text not null,
+                    worktree_path text not null,
+                    branch_name text not null,
+                    cleanup_reason text not null,
+                    status text not null,
+                    decided_by text not null,
+                    decision_note text not null,
+                    evidence_path text not null,
+                    result_json text not null,
                     created_at text not null
                 );
 
@@ -7494,6 +7531,103 @@ class Storage:
             ).fetchall()
         return [self._row_to_worktree_record(row) for row in rows]
 
+    def record_worktree_cleanup(
+        self,
+        *,
+        worktree_id: str,
+        effect_id: str,
+        project_id: str,
+        run_id: str,
+        task_id: str,
+        worktree_path: str,
+        branch_name: str,
+        cleanup_reason: str,
+        status: str,
+        decided_by: str,
+        decision_note: str,
+        evidence_path: str,
+        result_json: dict[str, Any],
+    ) -> WorktreeCleanupRecord:
+        cleanup_id = new_id("worktree_cleanup")
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into worktree_cleanup_records (
+                    id, worktree_id, effect_id, project_id, run_id, task_id,
+                    worktree_path, branch_name, cleanup_reason, status,
+                    decided_by, decision_note, evidence_path, result_json,
+                    created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    cleanup_id,
+                    worktree_id,
+                    effect_id,
+                    project_id,
+                    run_id,
+                    task_id,
+                    worktree_path,
+                    branch_name,
+                    cleanup_reason,
+                    status,
+                    decided_by,
+                    decision_note,
+                    evidence_path,
+                    _json_dumps(result_json),
+                    created_at,
+                ),
+            )
+        return WorktreeCleanupRecord(
+            id=cleanup_id,
+            worktree_id=worktree_id,
+            effect_id=effect_id,
+            project_id=project_id,
+            run_id=run_id,
+            task_id=task_id,
+            worktree_path=worktree_path,
+            branch_name=branch_name,
+            cleanup_reason=cleanup_reason,
+            status=status,
+            decided_by=decided_by,
+            decision_note=decision_note,
+            evidence_path=evidence_path,
+            result_json=result_json,
+            created_at=created_at,
+        )
+
+    def get_removed_worktree_cleanup_for_effect(
+        self,
+        effect_id: str,
+    ) -> WorktreeCleanupRecord | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                select * from worktree_cleanup_records
+                where effect_id = ? and status = 'removed'
+                order by created_at desc, id desc
+                limit 1
+                """,
+                (effect_id,),
+            ).fetchone()
+        return self._row_to_worktree_cleanup_record(row) if row else None
+
+    def list_recent_worktree_cleanup_records(
+        self,
+        limit: int = 5,
+    ) -> list[WorktreeCleanupRecord]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from worktree_cleanup_records
+                order by created_at desc, id desc
+                limit ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [self._row_to_worktree_cleanup_record(row) for row in rows]
+
     def create_pending_approval_request_for_task(
         self,
         task_id: str,
@@ -8044,6 +8178,28 @@ class Storage:
             base_commit=row["base_commit"],
             branch_name=row["branch_name"],
             worktree_path=row["worktree_path"],
+            created_at=row["created_at"],
+        )
+
+    def _row_to_worktree_cleanup_record(
+        self,
+        row: sqlite3.Row,
+    ) -> WorktreeCleanupRecord:
+        return WorktreeCleanupRecord(
+            id=row["id"],
+            worktree_id=row["worktree_id"],
+            effect_id=row["effect_id"],
+            project_id=row["project_id"],
+            run_id=row["run_id"],
+            task_id=row["task_id"],
+            worktree_path=row["worktree_path"],
+            branch_name=row["branch_name"],
+            cleanup_reason=row["cleanup_reason"],
+            status=row["status"],
+            decided_by=row["decided_by"],
+            decision_note=row["decision_note"],
+            evidence_path=row["evidence_path"],
+            result_json=_json_loads(row["result_json"], {}),
             created_at=row["created_at"],
         )
 

@@ -88,7 +88,7 @@
 - [x] Add report-only Expansion Operator Approval Schema Migration Selection Input Template from selection packets. <!-- score=8 complexity=3 -->
 - [x] Add approval-gated `commit-approved` command for verified `local_git_commit` effects. <!-- score=10 complexity=4 -->
 - [x] Add stale-evidence and idempotency checks before applying approved local commit effects. <!-- score=9 complexity=3 -->
-- [ ] Add worktree cleanup for committed, rejected, or superseded proposed effects. <!-- score=7 complexity=3 -->
+- [x] Add worktree cleanup for committed, rejected, or superseded proposed effects. <!-- score=7 complexity=3 -->
 - [ ] Add GitHub push or draft-PR handoff after local commit evidence exists. <!-- score=7 complexity=4 -->
 
 ## blocked

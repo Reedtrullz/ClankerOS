@@ -3110,3 +3110,47 @@ is report-only, external decisions remain, or approvals are missing.
 - Goal ID: goal_87358a6562a4
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_e7a7e3131ca9/summary.md
+
+## Run run_e5fb00a2281a
+
+- Goal ID: goal_78a7b44b3607
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_e5fb00a2281a/summary.md
+
+## 2026-06-22 Terminal Worktree Cleanup
+
+- `cleanup-worktrees` now previews terminal local coding worktrees and
+  `cleanup-worktrees --confirm` records a cleanup decision before removing
+  clean terminal worktrees for `committed`, `blocked`, or `superseded`
+  `local_git_commit` effects.
+- Cleanup writes `worktree-cleanup-<effect_id>.json`, records
+  `worktree_cleanup_records`, and exposes recent cleanup decisions in the
+  dashboard cockpit.
+- Dirty terminal worktrees are blocked and left in place; cleanup does not
+  force-delete uncommitted changes.
+- Latest iteration packet:
+  `iteration_de757b7ab35e` in `docs/next-iteration.md`.
+- Next selected focus:
+  `Add GitHub push or draft-PR handoff after local commit evidence exists.`
+- Eval-after-change:
+  `eval_after_change_3a4273c1711f`, run `run_e5fb00a2281a`, status `pass`.
+- Verification evidence:
+  focused cleanup tests -> 2 passed, 196 deselected; focused
+  cleanup/commit/dashboard tests -> 54 passed, 144 deselected; full
+  `python3 -m pytest -q` -> 198 passed; cleanup dry run -> `eligible=0`;
+  eval-after-change -> pass; baseline eval -> pass; handoff-review -> clear;
+  playbooks -> `successful_runs=169`.
+- Non-claims: no push, PR, CI, deploy, forced deletion, external mutation, or
+  deferred autonomy capability is enabled by this slice.
+
+## Run run_ec08ac8afc78
+
+- Goal ID: goal_38dece507c6f
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_ec08ac8afc78/summary.md
+
+## Run run_e5fb00a2281a
+
+- Goal ID: goal_78a7b44b3607
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_e5fb00a2281a/summary.md

@@ -244,6 +244,9 @@ def generate_static_dashboard(root: Path) -> Path:
         worktrees = []
         if _table_exists(connection, "worktree_records"):
             worktrees = storage.list_recent_worktree_records(limit=5)
+        worktree_cleanups = []
+        if _table_exists(connection, "worktree_cleanup_records"):
+            worktree_cleanups = storage.list_recent_worktree_cleanup_records(limit=5)
         effects = []
         if _table_exists(connection, "effects"):
             effects = storage.list_recent_effects(limit=5)
@@ -871,6 +874,18 @@ def generate_static_dashboard(root: Path) -> Path:
                 f"- {worktree.id}: project={worktree.project_id} "
                 f"run={worktree.run_id} branch={worktree.branch_name} "
                 f"base={worktree.base_commit} path={_relative_to_root(root, worktree.worktree_path)}"
+            )
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "### Worktree Cleanup", ""])
+    if worktree_cleanups:
+        for cleanup in worktree_cleanups:
+            lines.append(
+                f"- {cleanup.id}: status={cleanup.status} "
+                f"reason={cleanup.cleanup_reason} effect={cleanup.effect_id} "
+                f"path={_relative_to_root(root, cleanup.worktree_path)} "
+                f"evidence={_relative_to_root(root, cleanup.evidence_path)}"
             )
     else:
         lines.append("- none")

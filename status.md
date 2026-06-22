@@ -5069,3 +5069,47 @@
   PR, run CI, deploy, clean worktrees, start remote workers, schedule
   autonomous work, operate browser or desktop adapters, enforce budgets,
   promote trust, retry work, track real spend, or mutate external systems.
+
+## 2026-06-22 Terminal Worktree Cleanup
+
+- Added `python3 -m agent_os.cli cleanup-worktrees` for dry-run previews of
+  terminal local coding worktrees.
+- Added `python3 -m agent_os.cli cleanup-worktrees --confirm` to record an
+  explicit cleanup decision, write `worktree-cleanup-<effect_id>.json`, and
+  remove clean terminal worktrees for `local_git_commit` effects with status
+  `committed`, `blocked`, or `superseded`.
+- Cleanup records durable SQLite rows in `worktree_cleanup_records` and the
+  dashboard now shows recent cleanup decisions under `### Worktree Cleanup`.
+- Dirty terminal worktrees are blocked and left in place; cleanup does not use
+  forced deletion.
+- Updated README, tutorial, suggested-use docs, operating summary, plan, and
+  task queue for the cleanup flow.
+- Latest iteration packet:
+  `iteration_de757b7ab35e` in `docs/next-iteration.md`.
+- Next selected focus:
+  `Add GitHub push or draft-PR handoff after local commit evidence exists.`
+- Eval-after-change:
+  `eval_after_change_3a4273c1711f`, run `run_e5fb00a2281a`, status `pass`.
+- Verification evidence:
+  - Red-first focused cleanup tests failed on missing `cleanup-worktrees`
+    before implementation.
+  - `python3 -m py_compile agent_os/worktree_cleanup.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "cleanup_worktrees"` -> 2 passed, 196 deselected.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "cleanup_worktrees or commit_approved or worktree_isolation or dashboard"` -> 54 passed, 144 deselected.
+  - `python3 -m pytest -q` -> 198 passed.
+  - `python3 -m agent_os.cli cleanup-worktrees` -> dry run with
+    `eligible=0`.
+  - `python3 -m agent_os.cli iterate` -> selected the GitHub handoff focus
+    from `tasks.md#next`.
+  - `python3 -m agent_os.cli approvals` -> `pending_approvals: 0`.
+  - `python3 -m agent_os.cli queue-health` -> `hotspots: 0`.
+  - `python3 -m agent_os.cli eval-candidates` -> `eval_candidates: 0`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`.
+  - `python3 -m agent_os.cli playbooks` -> `successful_runs=169`.
+  - `python3 -m agent_os.cli handoff-review` -> `status: clear`.
+  - `python3 -m agent_os.cli eval-after-change --change "Add worktree cleanup for terminal local coding effects" ...` -> pass.
+- Non-claims: cleanup does not push, open PRs, run CI, deploy, force-delete
+  dirty worktrees, start remote workers, schedule autonomous work, operate
+  browser or desktop adapters, enforce budgets, promote trust, retry work,
+  track real spend, or mutate external systems beyond the explicitly confirmed
+  local worktree removal action.

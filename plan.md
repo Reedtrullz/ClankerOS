@@ -27,5 +27,5 @@ research and external-intelligence loops behind explicit policies.
 
 Milestone 3 approval-gated local coding flow: project registration,
 worktree-isolated execution, verified proposed effects, operator cockpit
-visibility, and the next `commit-approved` step that can turn an approved
-effect into exactly one local git commit.
+visibility, approved local commit application, and terminal worktree cleanup
+before GitHub handoff.
