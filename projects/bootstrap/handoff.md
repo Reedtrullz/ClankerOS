@@ -1330,15 +1330,16 @@ work, or changing routing.
 
 ## Next Actions
 
-1. Use `docs/next-iteration.md` packet `iteration_db6dddc2a2ed` to complete:
-   Add CI/deploy proof ingestion after GitHub handoff packets exist.
-2. Build CI/deploy proof ingestion as a local evidence loop: consume explicit
-   operator-supplied CI/deploy evidence for a GitHub handoff packet, preserve
-   source URLs and statuses, and avoid claiming live/deploy proof without
-   attached evidence.
+1. Use `docs/next-iteration.md` packet `iteration_ea5feef799e1` to complete:
+   Add default profile config and routing decision records.
+2. Build profile/routing as the next executable control-plane primitive:
+   create safe default planner/coder/scout/tester/evaluator profiles, persist
+   routing rules and routing decisions, and route repo-search/test-triage
+   tasks to cheaper read-only profiles before subagent delegation work.
 3. Keep hosted dashboard, remote workers, scheduler,
    browser/desktop adapters, budget enforcement, trust promotion, retries, and
    real-cost tracking blocked until their own evidence and approval contracts
    exist.
-4. Preserve the schema-migration report chain as historical evidence, but keep
-   the next implementation slice on the local coding-to-GitHub proof path.
+4. Preserve the local coding-to-GitHub-to-CI evidence chain as executable
+   operator proof, but do not treat operator-supplied CI/deploy evidence as a
+   live CI/deploy action performed by ClankerOS.

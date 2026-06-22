@@ -32,9 +32,15 @@ Core layers for the bootstrap:
   local handoff packet with branch, commit, remote, push command, and draft PR
   command while recording `network_actions_taken=0`. The loop does not push or
   open a PR.
+- CI/deploy evidence ingestion: an operator can attach CI or deploy proof to a
+  GitHub handoff packet with `ci-deploy-evidence`. The record preserves
+  provider, external run id, URL, commit, branch, handoff, and JSON evidence
+  while recording `network_actions_taken=0`; it does not fetch CI, run CI, or
+  deploy.
 - Operator cockpit: the dashboard starts with active runs, registered projects,
   approval inbox, proposed effects, verification status, recent worktrees,
-  GitHub handoffs, and the next recommended operator action.
+  GitHub handoffs, CI/deploy evidence, and the next recommended operator
+  action.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON

@@ -9,13 +9,15 @@ This tutorial walks through the first executable local coding-agent vertical:
 5. make an operator approval decision;
 6. create the approved local worktree commit exactly once;
 7. prepare a GitHub handoff packet from committed local evidence;
-8. clean up terminal worktrees after an explicit cleanup decision.
+8. record operator-supplied CI/deploy evidence for the handoff;
+9. clean up terminal worktrees after an explicit cleanup decision.
 
 The flow is intentionally conservative. It creates evidence and an approval
 packet first. It creates a local git commit only after explicit approval and a
 fresh evidence recheck. It can prepare operator commands for push and draft PR
-handoff after the commit exists. It does not push, open a PR, deploy, or mutate
-external systems.
+handoff after the commit exists and later record operator-supplied CI/deploy
+evidence. It does not push, open a PR, run CI, deploy, or mutate external
+systems.
 
 ## Prerequisites
 
@@ -175,7 +177,34 @@ ClankerOS will:
 This step does not push the branch or open a pull request. The operator can run
 the printed commands later after reviewing the local evidence.
 
-## 8. Clean Up Terminal Worktrees
+## 8. Record CI/Deploy Evidence
+
+After an operator has real CI or deploy evidence for the handoff, record it
+locally:
+
+```bash
+python3 -m agent_os.cli ci-deploy-evidence <github_handoff_id> \
+  --provider github-actions \
+  --status success \
+  --external-run-id 123 \
+  --url https://github.com/owner/repo/actions/runs/123 \
+  --recorded-by operator \
+  --note "GitHub Actions run was green."
+```
+
+ClankerOS will:
+
+- require a GitHub handoff packet;
+- copy branch, commit, effect, run, task, and project metadata from the handoff;
+- write `ci-deploy-evidence-<handoff_id>-<provider>-<run_id>.json`;
+- store a `ci_deploy_evidence_records` row;
+- record `network_actions_taken=0`.
+
+This step does not fetch the URL, call GitHub Actions, run CI, deploy, or
+mutate an external system. It records operator-supplied proof so the local
+control plane can preserve the evidence trail.
+
+## 9. Clean Up Terminal Worktrees
 
 Preview cleanup candidates:
 
@@ -205,8 +234,8 @@ uncommitted changes.
 - It does not force-delete dirty worktrees during cleanup.
 - It does not push a branch, even when it prints a push command.
 - It does not open a pull request, even when it prints a draft PR command.
-- It does not run GitHub Actions.
-- It does not deploy anything.
+- It does not run GitHub Actions, even when it records a GitHub Actions URL.
+- It does not deploy anything, even when it records deploy evidence.
 - It does not enable hosted dashboards, remote workers, scheduling, browser or
   desktop adapters, budget enforcement, trust promotion, retries, or real cost
   tracking.

@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_db6dddc2a2ed
+- Packet ID: iteration_ea5feef799e1
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add CI/deploy proof ingestion after GitHub handoff packets exist.
+Advance the Agent System north-star goal by completing: Add default profile config and routing decision records.
 
 ## Definition Of Done
 
@@ -68,8 +68,8 @@ Advance the Agent System north-star goal by completing: Add CI/deploy proof inge
 ## Simplicity Guardrail
 
 - selection_policy: highest-score-then-lowest-complexity
-- selection_reason: selected only actionable item with score 7 and complexity 4
-- selected_score: 7
+- selection_reason: selected only actionable item with score 9 and complexity 4
+- selected_score: 9
 - selected_complexity: 4
 
 ## Guardrails And Non-Claims

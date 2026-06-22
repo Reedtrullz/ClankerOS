@@ -10,6 +10,7 @@ goal -> task graph -> execution -> verification -> memory -> visibility -> learn
 registered repo -> isolated worktree -> verified diff -> proposed effect -> approval
 approval -> freshness recheck -> local worktree commit -> committed effect evidence
 committed effect -> GitHub handoff packet -> operator push/draft-PR commands
+GitHub handoff -> operator-supplied CI/deploy evidence -> local evidence record
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -33,9 +34,11 @@ review. After explicit approval, it can re-check the captured evidence and
 create the local git commit exactly once in the isolated worktree. It can also
 prepare a GitHub handoff packet for a committed local effect, including exact
 operator commands for `git push` and draft PR creation while recording that no
-network action was taken. Deployments and other external side effects remain
-blocked unless an implemented flow explicitly models evidence, authorization,
-rollback, and verification.
+network action was taken. After a handoff exists, it can ingest
+operator-supplied CI/deploy evidence as a local record without calling CI,
+deploying, or mutating GitHub. Deployments and other external side effects
+remain blocked unless an implemented flow explicitly models evidence,
+authorization, rollback, and verification.
 
 ## Repository Metadata
 
@@ -76,6 +79,7 @@ python3 -m agent_os.cli approvals
 python3 -m agent_os.cli approve <approval_id> --decided-by operator --note "reviewed diff and tests"
 python3 -m agent_os.cli commit-approved <approval_id> --committed-by operator
 python3 -m agent_os.cli github-handoff <effect_id> --base main --title "Make a tiny verified change"
+python3 -m agent_os.cli ci-deploy-evidence <github_handoff_id> --provider github-actions --status success --external-run-id 123 --url https://github.com/owner/repo/actions/runs/123
 python3 -m agent_os.cli cleanup-worktrees --confirm --reason "committed branch kept"
 ```
 
@@ -83,7 +87,8 @@ This creates a worktree and approval packet, then creates the local worktree
 commit only after approval and a fresh evidence recheck. Cleanup removes clean
 terminal worktrees only after an explicit confirmed cleanup decision. The
 GitHub handoff step writes local evidence and command strings; it does not push
-or open the PR for you.
+or open the PR for you. The CI/deploy evidence step records what the operator
+supplies; it does not call GitHub Actions, run CI, or deploy.
 
 ## Tutorials And Suggested Use
 
@@ -112,6 +117,8 @@ The repository can now:
 - prepare a GitHub handoff packet for a committed local effect with exact
   operator `git push` and draft PR commands while recording
   `network_actions_taken=0`;
+- ingest operator-supplied CI/deploy evidence for a GitHub handoff packet,
+  store it in SQLite and JSON, and preserve `network_actions_taken=0`;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -236,6 +243,7 @@ python3 -m agent_os.cli approvals
 python3 -m agent_os.cli approve <approval_id> --decided-by operator --note "local approval"
 python3 -m agent_os.cli commit-approved <approval_id> --committed-by operator
 python3 -m agent_os.cli github-handoff <effect_id> --remote origin --base main --title "Draft PR title"
+python3 -m agent_os.cli ci-deploy-evidence <github_handoff_id> --provider github-actions --status success --external-run-id <run_id> --url <run_url>
 python3 -m agent_os.cli cleanup-worktrees --confirm --decided-by operator --reason "terminal worktree reviewed"
 python3 -m agent_os.cli resolve-incident <incident_id> --resolved-by operator --note "local resolution note"
 python3 -m agent_os.cli queue-health

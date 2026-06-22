@@ -3188,3 +3188,40 @@ is report-only, external decisions remain, or approvals are missing.
   `successful_runs=170`.
 - Non-claims: no push, PR, CI, deploy, external mutation, or deferred autonomy
   capability is enabled by this slice.
+
+## Run run_8446c13ffdf5
+
+- Goal ID: goal_3277bbd36562
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_8446c13ffdf5/summary.md
+
+## Run run_c9f27563004a
+
+- Goal ID: goal_f54ac7e8944f
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_c9f27563004a/summary.md
+
+## 2026-06-22 CI/Deploy Evidence Ingestion
+
+- `ci-deploy-evidence <github_handoff_id>` now records operator-supplied
+  CI/deploy proof for an existing GitHub handoff packet.
+- Evidence records preserve handoff, effect, project, run, task, branch,
+  commit, provider, external run id, URL, status, note, and
+  `network_actions_taken=0`.
+- Repeating the same handoff/provider/run/URL/status evidence is idempotent
+  and returns `already_recorded`.
+- Dashboard cockpit exposes recent records under `### CI/Deploy Evidence`.
+- Latest iteration packet:
+  `iteration_ea5feef799e1` in `docs/next-iteration.md`.
+- Next selected focus:
+  `Add default profile config and routing decision records.`
+- Eval-after-change:
+  `eval_after_change_2829c6a57628`, run `run_c9f27563004a`, status `pass`.
+- Verification evidence:
+  focused CI/deploy evidence tests -> 2 passed, 200 deselected; focused
+  evidence/handoff/cleanup/commit/dashboard tests -> 58 passed, 144 deselected;
+  full `python3 -m pytest -q` -> 202 passed; eval-after-change -> pass;
+  baseline eval -> pass; cleanup dry run -> `eligible=0`; playbooks ->
+  `successful_runs=172`.
+- Non-claims: no CI provider call, CI run, deploy, push, PR, external
+  mutation, or deferred autonomy capability is enabled by this slice.

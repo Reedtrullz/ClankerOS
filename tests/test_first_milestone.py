@@ -1027,6 +1027,198 @@ def test_github_handoff_records_operator_push_and_draft_pr_commands(
     assert len(storage.list_recent_github_handoff_records()) == 1
 
 
+def test_ci_deploy_evidence_requires_github_handoff(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "ci-deploy-evidence",
+                "github_handoff_missing",
+                "--provider",
+                "github-actions",
+                "--status",
+                "success",
+                "--external-run-id",
+                "123",
+                "--url",
+                "https://github.com/example/subject/actions/runs/123",
+            ]
+        )
+        == 1
+    )
+    output = capsys.readouterr().out
+    assert "ci_deploy_evidence_failed:" in output
+    assert "github_handoff_missing" in output
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    assert storage.list_recent_ci_deploy_evidence_records() == []
+
+
+def test_ci_deploy_evidence_records_operator_supplied_proof_for_github_handoff(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    repo_path = tmp_path / "subject-repo"
+    _init_git_repo(repo_path)
+    subprocess.run(
+        ["git", "remote", "add", "origin", "git@github.com:example/subject.git"],
+        cwd=repo_path,
+        check=True,
+    )
+    test_command = (
+        "python3 -c \"from pathlib import Path; "
+        "assert Path('agent_output.txt').read_text() == 'hello\\\\n'\""
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "register-project",
+                "subject",
+                "--path",
+                str(repo_path),
+                "--test-command",
+                test_command,
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-goal",
+                "write a marker file",
+                "--project",
+                "subject",
+                "--isolation",
+                "worktree",
+                "--command",
+                "python3 -c \"from pathlib import Path; "
+                "Path('agent_output.txt').write_text('hello\\\\n')\"",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    effect = storage.list_recent_effects()[0]
+    approval = storage.list_pending_approvals()[0]
+    assert main(["--root", str(tmp_path), "approve", approval.id]) == 0
+    capsys.readouterr()
+    assert main(["--root", str(tmp_path), "commit-approved", approval.id]) == 0
+    capsys.readouterr()
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "github-handoff",
+                effect.id,
+                "--base",
+                "main",
+                "--title",
+                "Write marker file",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    handoff = storage.list_recent_github_handoff_records()[0]
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "ci-deploy-evidence",
+                handoff.id,
+                "--provider",
+                "github-actions",
+                "--status",
+                "success",
+                "--external-run-id",
+                "123",
+                "--url",
+                "https://github.com/example/subject/actions/runs/123",
+                "--recorded-by",
+                "operator",
+                "--note",
+                "GitHub Actions run was green.",
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "ci_deploy_evidence: recorded" in output
+    assert f"github_handoff_id: {handoff.id}" in output
+    assert f"commit: {handoff.commit_sha}" in output
+    assert "provider: github-actions" in output
+    assert "status: success" in output
+    assert "network_actions_taken: 0" in output
+
+    records = storage.list_recent_ci_deploy_evidence_records()
+    assert len(records) == 1
+    record = records[0]
+    assert record.github_handoff_id == handoff.id
+    assert record.effect_id == handoff.effect_id
+    assert record.project_id == "subject"
+    assert record.commit_sha == handoff.commit_sha
+    assert record.branch_name == handoff.branch_name
+    assert record.provider == "github-actions"
+    assert record.external_run_id == "123"
+    assert record.external_url == "https://github.com/example/subject/actions/runs/123"
+    assert record.status == "success"
+    assert record.recorded_by == "operator"
+    assert record.result_json["network_actions_taken"] == 0
+    assert record.result_json["note"] == "GitHub Actions run was green."
+    assert Path(record.evidence_path).exists()
+    evidence = json.loads(Path(record.evidence_path).read_text(encoding="utf-8"))
+    assert evidence["status"] == "success"
+    assert evidence["network_actions_taken"] == 0
+    assert evidence["source"]["github_handoff_id"] == handoff.id
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "### CI/Deploy Evidence" in dashboard
+    assert record.id in dashboard
+    assert "github-actions" in dashboard
+    assert "success" in dashboard
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "ci-deploy-evidence",
+                handoff.id,
+                "--provider",
+                "github-actions",
+                "--status",
+                "success",
+                "--external-run-id",
+                "123",
+                "--url",
+                "https://github.com/example/subject/actions/runs/123",
+            ]
+        )
+        == 0
+    )
+    repeat_output = capsys.readouterr().out
+    assert "ci_deploy_evidence: already_recorded" in repeat_output
+    assert len(storage.list_recent_ci_deploy_evidence_records()) == 1
+
+
 def test_static_dashboard_summarizes_runs_and_queue(tmp_path: Path) -> None:
     system = AgentSystem(tmp_path)
     result = system.run_goal(

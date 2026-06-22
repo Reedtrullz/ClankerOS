@@ -5155,3 +5155,46 @@
   start remote workers, schedule autonomous work, operate browser or desktop
   adapters, enforce budgets, promote trust, retry work, track real spend, or
   mutate external systems.
+
+## 2026-06-22 CI/Deploy Evidence Ingestion
+
+- Added `python3 -m agent_os.cli ci-deploy-evidence <github_handoff_id>` for
+  operator-supplied CI/deploy proof attached to a GitHub handoff packet.
+- The command requires an existing `github_handoff_records` row, copies branch,
+  commit, effect, run, task, and project metadata, writes
+  `ci-deploy-evidence-<handoff_id>-<provider>-<run_id>.json`, and stores a
+  durable `ci_deploy_evidence_records` row with `network_actions_taken=0`.
+- Evidence records are idempotent by handoff, provider, external run id, URL,
+  and status. Repeating the same evidence returns `already_recorded`.
+- The dashboard now exposes recent CI/deploy evidence under
+  `### CI/Deploy Evidence`.
+- Updated README, approval-gated coding tutorial, suggested-use docs,
+  operating summary, plan, task queue, and bootstrap handoff for the
+  CI/deploy evidence ingestion loop.
+- Latest iteration packet:
+  `iteration_ea5feef799e1` in `docs/next-iteration.md`.
+- Next selected focus:
+  `Add default profile config and routing decision records.`
+- Eval-after-change:
+  `eval_after_change_2829c6a57628`, run `run_c9f27563004a`, status `pass`.
+- Verification evidence:
+  - Red-first focused tests failed on missing `ci-deploy-evidence` before
+    implementation.
+  - `python3 -m py_compile agent_os/ci_deploy_evidence.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "ci_deploy_evidence"` -> 2 passed, 200 deselected.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "ci_deploy_evidence or github_handoff or cleanup_worktrees or commit_approved or worktree_isolation or dashboard"` -> 58 passed, 144 deselected.
+  - `python3 -m pytest -q` -> 202 passed.
+  - `python3 -m agent_os.cli cleanup-worktrees` -> dry run with
+    `eligible=0`.
+  - `python3 -m agent_os.cli iterate` -> selected the profile/routing focus
+    from `tasks.md#next`.
+  - `python3 -m agent_os.cli approvals` -> `pending_approvals: 0`.
+  - `python3 -m agent_os.cli queue-health` -> `hotspots: 0`.
+  - `python3 -m agent_os.cli eval-candidates` -> `eval_candidates: 0`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`.
+  - `python3 -m agent_os.cli playbooks` -> `successful_runs=172`.
+  - `python3 -m agent_os.cli eval-after-change --change "Add CI/deploy evidence ingestion for GitHub handoff packets" ...` -> pass.
+- Non-claims: CI/deploy evidence ingestion does not call CI providers, run CI,
+  deploy, push branches, open PRs, start remote workers, schedule autonomous
+  work, operate browser or desktop adapters, enforce budgets, promote trust,
+  retry work, track real spend, or mutate external systems.

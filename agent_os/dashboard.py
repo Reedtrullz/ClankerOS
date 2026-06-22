@@ -250,6 +250,11 @@ def generate_static_dashboard(root: Path) -> Path:
         github_handoffs = []
         if _table_exists(connection, "github_handoff_records"):
             github_handoffs = storage.list_recent_github_handoff_records(limit=5)
+        ci_deploy_evidence_records = []
+        if _table_exists(connection, "ci_deploy_evidence_records"):
+            ci_deploy_evidence_records = (
+                storage.list_recent_ci_deploy_evidence_records(limit=5)
+            )
         effects = []
         if _table_exists(connection, "effects"):
             effects = storage.list_recent_effects(limit=5)
@@ -910,6 +915,19 @@ def generate_static_dashboard(root: Path) -> Path:
                 f"push=`{handoff.push_command}` "
                 f"draft_pr=`{handoff.draft_pr_command}` "
                 f"evidence={_relative_to_root(root, handoff.evidence_path)}"
+            )
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "### CI/Deploy Evidence", ""])
+    if ci_deploy_evidence_records:
+        for record in ci_deploy_evidence_records:
+            lines.append(
+                f"- {record.id}: status={record.status} provider={record.provider} "
+                f"handoff={record.github_handoff_id} commit={record.commit_sha} "
+                f"external_run={record.external_run_id} url={record.external_url} "
+                f"network_actions_taken={record.result_json.get('network_actions_taken', 'unknown')} "
+                f"evidence={_relative_to_root(root, record.evidence_path)}"
             )
     else:
         lines.append("- none")

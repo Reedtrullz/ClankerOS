@@ -155,6 +155,27 @@ class GitHubHandoffRecord:
 
 
 @dataclass(frozen=True)
+class CiDeployEvidenceRecord:
+    id: str
+    github_handoff_id: str
+    effect_id: str
+    project_id: str
+    run_id: str
+    task_id: str
+    branch_name: str
+    commit_sha: str
+    provider: str
+    external_run_id: str
+    external_url: str
+    status: str
+    recorded_by: str
+    evidence_path: str
+    result_json: dict[str, Any]
+    idempotency_key: str
+    created_at: str
+
+
+@dataclass(frozen=True)
 class Effect:
     id: str
     run_id: str
@@ -1407,6 +1428,26 @@ class Storage:
                     draft_pr_command text not null,
                     evidence_path text not null,
                     result_json text not null,
+                    created_at text not null
+                );
+
+                create table if not exists ci_deploy_evidence_records (
+                    id text primary key,
+                    github_handoff_id text not null,
+                    effect_id text not null,
+                    project_id text not null,
+                    run_id text not null,
+                    task_id text not null,
+                    branch_name text not null,
+                    commit_sha text not null,
+                    provider text not null,
+                    external_run_id text not null,
+                    external_url text not null,
+                    status text not null,
+                    recorded_by text not null,
+                    evidence_path text not null,
+                    result_json text not null,
+                    idempotency_key text not null unique,
                     created_at text not null
                 );
 
@@ -7767,6 +7808,118 @@ class Storage:
             ).fetchall()
         return [self._row_to_github_handoff_record(row) for row in rows]
 
+    def get_github_handoff(
+        self,
+        handoff_id: str,
+    ) -> GitHubHandoffRecord | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                "select * from github_handoff_records where id = ?",
+                (handoff_id,),
+            ).fetchone()
+        return self._row_to_github_handoff_record(row) if row else None
+
+    def record_ci_deploy_evidence(
+        self,
+        *,
+        github_handoff_id: str,
+        effect_id: str,
+        project_id: str,
+        run_id: str,
+        task_id: str,
+        branch_name: str,
+        commit_sha: str,
+        provider: str,
+        external_run_id: str,
+        external_url: str,
+        status: str,
+        recorded_by: str,
+        evidence_path: str,
+        result_json: dict[str, Any],
+        idempotency_key: str,
+    ) -> CiDeployEvidenceRecord:
+        record_id = new_id("ci_deploy_evidence")
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into ci_deploy_evidence_records (
+                    id, github_handoff_id, effect_id, project_id, run_id,
+                    task_id, branch_name, commit_sha, provider, external_run_id,
+                    external_url, status, recorded_by, evidence_path,
+                    result_json, idempotency_key, created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    record_id,
+                    github_handoff_id,
+                    effect_id,
+                    project_id,
+                    run_id,
+                    task_id,
+                    branch_name,
+                    commit_sha,
+                    provider,
+                    external_run_id,
+                    external_url,
+                    status,
+                    recorded_by,
+                    evidence_path,
+                    _json_dumps(result_json),
+                    idempotency_key,
+                    created_at,
+                ),
+            )
+        return CiDeployEvidenceRecord(
+            id=record_id,
+            github_handoff_id=github_handoff_id,
+            effect_id=effect_id,
+            project_id=project_id,
+            run_id=run_id,
+            task_id=task_id,
+            branch_name=branch_name,
+            commit_sha=commit_sha,
+            provider=provider,
+            external_run_id=external_run_id,
+            external_url=external_url,
+            status=status,
+            recorded_by=recorded_by,
+            evidence_path=evidence_path,
+            result_json=result_json,
+            idempotency_key=idempotency_key,
+            created_at=created_at,
+        )
+
+    def get_ci_deploy_evidence_by_idempotency_key(
+        self,
+        idempotency_key: str,
+    ) -> CiDeployEvidenceRecord | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                select * from ci_deploy_evidence_records
+                where idempotency_key = ?
+                """,
+                (idempotency_key,),
+            ).fetchone()
+        return self._row_to_ci_deploy_evidence_record(row) if row else None
+
+    def list_recent_ci_deploy_evidence_records(
+        self,
+        limit: int | None = 5,
+    ) -> list[CiDeployEvidenceRecord]:
+        with self._connect() as connection:
+            query = """
+                select * from ci_deploy_evidence_records
+                order by created_at desc, id desc
+            """
+            if limit is None:
+                rows = connection.execute(query).fetchall()
+            else:
+                rows = connection.execute(query + " limit ?", (limit,)).fetchall()
+        return [self._row_to_ci_deploy_evidence_record(row) for row in rows]
+
     def create_pending_approval_request_for_task(
         self,
         task_id: str,
@@ -8372,6 +8525,30 @@ class Storage:
             draft_pr_command=row["draft_pr_command"],
             evidence_path=row["evidence_path"],
             result_json=_json_loads(row["result_json"], {}),
+            created_at=row["created_at"],
+        )
+
+    def _row_to_ci_deploy_evidence_record(
+        self,
+        row: sqlite3.Row,
+    ) -> CiDeployEvidenceRecord:
+        return CiDeployEvidenceRecord(
+            id=row["id"],
+            github_handoff_id=row["github_handoff_id"],
+            effect_id=row["effect_id"],
+            project_id=row["project_id"],
+            run_id=row["run_id"],
+            task_id=row["task_id"],
+            branch_name=row["branch_name"],
+            commit_sha=row["commit_sha"],
+            provider=row["provider"],
+            external_run_id=row["external_run_id"],
+            external_url=row["external_url"],
+            status=row["status"],
+            recorded_by=row["recorded_by"],
+            evidence_path=row["evidence_path"],
+            result_json=_json_loads(row["result_json"], {}),
+            idempotency_key=row["idempotency_key"],
             created_at=row["created_at"],
         )
 

@@ -72,6 +72,7 @@ from agent_os.ci_deploy_proof import (
     render_ci_deploy_proof_checklist_line,
     write_ci_deploy_proof_checklist,
 )
+from agent_os.ci_deploy_evidence import record_ci_deploy_evidence
 from agent_os.budget_enforcement_proof import (
     format_recommended_commands as format_budget_enforcement_commands,
     render_budget_enforcement_proof_checklist_line,
@@ -422,6 +423,18 @@ def build_parser() -> argparse.ArgumentParser:
     github_handoff_parser.add_argument("--remote", default="origin")
     github_handoff_parser.add_argument("--base", default="main")
     github_handoff_parser.add_argument("--title")
+
+    ci_deploy_evidence_parser = subparsers.add_parser(
+        "ci-deploy-evidence",
+        help="Record operator-supplied CI/deploy evidence for a GitHub handoff.",
+    )
+    ci_deploy_evidence_parser.add_argument("github_handoff_id")
+    ci_deploy_evidence_parser.add_argument("--provider", required=True)
+    ci_deploy_evidence_parser.add_argument("--status", required=True)
+    ci_deploy_evidence_parser.add_argument("--external-run-id", required=True)
+    ci_deploy_evidence_parser.add_argument("--url", required=True)
+    ci_deploy_evidence_parser.add_argument("--recorded-by", default="operator")
+    ci_deploy_evidence_parser.add_argument("--note", default="")
 
     resolve_incident = subparsers.add_parser(
         "resolve-incident",
@@ -1766,6 +1779,36 @@ def main(argv: list[str] | None = None) -> int:
         print(f"push_command: {handoff.push_command}")
         print(f"draft_pr_command: {handoff.draft_pr_command}")
         print(f"evidence: {handoff.evidence_path}")
+        return 0
+
+    if args.command == "ci-deploy-evidence":
+        try:
+            result = record_ci_deploy_evidence(
+                root,
+                github_handoff_id=args.github_handoff_id,
+                provider=args.provider,
+                status=args.status,
+                external_run_id=args.external_run_id,
+                external_url=args.url,
+                recorded_by=args.recorded_by,
+                note=args.note,
+            )
+        except (KeyError, ValueError) as error:
+            print(f"ci_deploy_evidence_failed: {error}")
+            return 1
+        record = result.record
+        print(f"ci_deploy_evidence: {result.status}")
+        print(f"record_id: {record.id}")
+        print(f"github_handoff_id: {record.github_handoff_id}")
+        print(f"effect_id: {record.effect_id}")
+        print(f"commit: {record.commit_sha}")
+        print(f"branch: {record.branch_name}")
+        print(f"provider: {record.provider}")
+        print(f"status: {record.status}")
+        print(f"external_run_id: {record.external_run_id}")
+        print(f"external_url: {record.external_url}")
+        print(f"network_actions_taken: {record.result_json['network_actions_taken']}")
+        print(f"evidence: {record.evidence_path}")
         return 0
 
     if args.command == "resolve-incident":
