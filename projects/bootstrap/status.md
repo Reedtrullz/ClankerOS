@@ -3816,6 +3816,60 @@ are visible in the dashboard and are not active until approved.
   track spend, run CI, deploy, push, open PRs, mark the active goal complete,
   or mutate external systems.
 
+## 2026-06-22 Capability Activation Follow-Up Result Task Effect Task Results
+
+- Added `capability-activation-followup-result-task-result-effect-task-results`
+  to ingest completed downstream result effect task delegation outputs as local
+  result records and JSON artifacts.
+- Added SQLite tables and storage methods for
+  `capability_activation_followup_result_task_result_effect_task_result_records`
+  and
+  `capability_activation_followup_result_task_result_effect_task_result_batches`.
+- Recorded live read-only evaluator output for
+  `subagent_delegation_eb243c5ba397` with
+  `.clanker/delegations/subagent_delegation_eb243c5ba397-result.json`.
+- Initial live result batch
+  `capability_activation_followup_result_task_result_effect_task_result_batch_002c3a0eb1f2`
+  created result
+  `capability_activation_followup_result_task_result_effect_task_result_0546b7458911`
+  for `hosted_dashboard`.
+- Final live idempotency batch
+  `capability_activation_followup_result_task_result_effect_task_result_batch_007954fa5f2b`
+  reports 1 completed delegation, 0 new result records, 1 existing result
+  record, 0 approval requests, 0 activation actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-results.md`
+  - `docs/capability-activation-followup-result-task-result-effect-task-results/subagent_delegation_eb243c5ba397-hosted-dashboard.json`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-results.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Verification evidence:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'result_effect_task_results'`
+    -> failed on missing CLI command.
+  - Focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'result_effect_task_results'`
+    -> 3 passed, 301 deselected.
+  - Adjacent green command:
+    `python3 -m py_compile agent_os/capability_activation_followup_result_task_result_effect_task_results.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py tests/test_first_milestone.py && python3 -m pytest tests/test_first_milestone.py -q -k 'result_task_results or result_effect_task_delegations or result_effect_task_results'`
+    -> 9 passed, 295 deselected.
+  - Full suite:
+    `python3 -m pytest -q`
+    -> 305 passed in 243.82s.
+  - Eval-after-change:
+    `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result ingestion" ...`
+    -> pass, run `run_7018e86ea326`.
+  - `python3 -m agent_os.cli eval`
+    -> `first_milestone_closed_loop: pass`, run `run_d1ee1ffa9162`.
+- Next packet:
+  `Add operator review decisions for downstream follow-up result task result effect task result records.`
+- Non-claims: downstream result effect task results do not start subagents,
+  call model providers, create `approval_requests`, satisfy proof, mutate
+  activation contracts, mutate downstream result task records, allow
+  activation, enable capabilities, promote trust, schedule work, retry work,
+  track spend, run CI, deploy, push, open PRs, mark the active goal complete,
+  or mutate external systems.
+
 ## Run run_38a7d9c5354c
 
 - Goal ID: goal_f46f23ea1c14
@@ -3887,3 +3941,27 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_4780c9c16374
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_7a03009ac0e9/summary.md
+
+## Run run_3259313197c0
+
+- Goal ID: goal_afdad754d78c
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_3259313197c0/summary.md
+
+## Run run_56e58e2665fa
+
+- Goal ID: goal_76c2c5ee1a93
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_56e58e2665fa/summary.md
+
+## Run run_7018e86ea326
+
+- Goal ID: goal_06d074336209
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_7018e86ea326/summary.md
+
+## Run run_d1ee1ffa9162
+
+- Goal ID: goal_2fe1673dd07e
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_d1ee1ffa9162/summary.md

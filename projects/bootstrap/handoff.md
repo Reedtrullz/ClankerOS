@@ -1961,16 +1961,55 @@ work, or changing routing.
   track spend, run CI, deploy, push, open PRs, mark the active goal complete,
   or mutate external systems.
 
+## Latest Capability Activation Follow-Up Result Task Effect Task Results
+
+- `record-delegation-result subagent_delegation_eb243c5ba397` completed the
+  pending read-only evaluator delegation with operator-supplied
+  `evidence_review` output and wrote
+  `.clanker/delegations/subagent_delegation_eb243c5ba397-result.json`.
+- `capability-activation-followup-result-task-result-effect-task-results` now
+  ingests completed downstream result effect task delegation outputs as local
+  result records and JSON artifacts.
+- Initial live no-completed batch:
+  `capability_activation_followup_result_task_result_effect_task_result_batch_77bffac83ed0`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_results_no_completed_delegations`.
+- Initial live result batch:
+  `capability_activation_followup_result_task_result_effect_task_result_batch_002c3a0eb1f2`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_results_recorded`,
+  created
+  `capability_activation_followup_result_task_result_effect_task_result_0546b7458911`
+  for `hosted_dashboard`.
+- Final live idempotency pass recorded
+  `capability_activation_followup_result_task_result_effect_task_result_batch_007954fa5f2b`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_results_already_recorded`,
+  with 1 completed delegation, 0 new result records, 1 existing result record,
+  0 approval requests, 0 activation actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-results.md`
+  - `docs/capability-activation-followup-result-task-result-effect-task-results/subagent_delegation_eb243c5ba397-hosted-dashboard.json`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-results.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Non-claims: downstream result effect task results do not start subagents,
+  call model providers, create `approval_requests`, satisfy proof, mutate
+  activation contracts, mutate downstream result task records, allow
+  activation, enable capabilities, promote trust, schedule work, retry work,
+  track spend, run CI, deploy, push, open PRs, mark the active goal complete,
+  or mutate external systems.
+
 ## Next Actions
 
-Current focus: Add result ingestion for downstream follow-up result task result effect delegation packets.
+Current focus: Add operator review decisions for downstream follow-up result task result effect task result records.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add result ingestion for downstream follow-up result task result effect
-   delegation packets.
-2. Ingest completed read-only evaluator output for downstream result effect
-   task packets without enabling capabilities, satisfying proof, creating
-   approval rows, or allowing activation.
+   Add operator review decisions for downstream follow-up result task result
+   effect task result records.
+2. Add an explicit local accept-keep-blocked/request-more-evidence/defer
+   decision layer for the new result records without enabling capabilities,
+   satisfying proof, creating approval rows, or allowing activation.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.

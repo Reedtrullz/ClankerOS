@@ -186,6 +186,13 @@ Core layers for the bootstrap:
   evidence-plan context while keeping subagent execution, model-provider
   calls, approval rows, external mutations, activation actions, activation
   allowance, and capability enablement at zero.
+- Capability activation follow-up result task result effect task results:
+  completed downstream result effect delegation packets can be ingested as
+  local result records and JSON artifacts. Each result preserves the source
+  application, downstream decision, downstream result, upstream follow-up
+  result, source effect, downstream task, contract, project, and capability
+  links while keeping approval rows, external mutations, activation actions,
+  activation allowance, capability enablement, and proof satisfaction at zero.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON
@@ -853,6 +860,16 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   keeps `execution_started: 0`, `network_actions_taken: 0`,
   `external_mutations_taken: 0`, `activation_actions_taken: 0`,
   `activation_allowed: false`, and `capability_enabled: false`.
+- Capability activation follow-up result task result effect task results:
+  available through
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-results`
+  after downstream result effect task delegations have completed. The command
+  writes
+  `docs/capability-activation-followup-result-task-result-effect-task-results.md`,
+  stores local result records and JSON artifacts, and keeps
+  `approval_requests_created: 0`, `activation_actions_taken: 0`,
+  `external_mutations_taken: 0`, `activation_allowed: false`, and
+  `capability_enabled: false`.
 - Eval candidate listing: available through
   `python3 -m agent_os.cli eval-candidates` and mirrored into
   `docs/dashboard.md`.

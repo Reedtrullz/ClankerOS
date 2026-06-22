@@ -229,6 +229,8 @@ Prefer these files when orienting:
 - `docs/tutorial-capability-followup-result-task-result-effect-proposals.md`
   for creating proposed local effects from accepted downstream result
   decisions.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-results.md`
+  for ingesting completed downstream result effect task delegation outputs.
 - `contracts.md` for safety boundaries and evidence expectations.
 - `status.md` for chronological implementation evidence.
 - `projects/bootstrap/handoff.md` for the current continuation edge.
@@ -576,6 +578,28 @@ JSON artifacts under `.clanker/delegations/`. It keeps
 `activation_actions_taken=0`, `activation_allowed=false`, and
 `capability_enabled=false`.
 
+After a downstream result effect task delegation has been completed by
+recording an operator-supplied structured result, ingest it as a local result
+record:
+
+```bash
+python3 -m agent_os.cli record-delegation-result <delegation_id> \
+  --summary "Evaluator drafted downstream result-effect proof evidence while keeping activation blocked." \
+  --output-json '{"evidence":[{"status":"planned","summary":"Collect downstream result-effect proof evidence."}],"findings":[{"summary":"Keep activation blocked."}]}'
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-results
+python3 -m agent_os.cli dashboard
+```
+
+The result command writes
+`docs/capability-activation-followup-result-task-result-effect-task-results.md`,
+stores one local result row per completed downstream result effect task
+delegation, and writes JSON artifacts under
+`docs/capability-activation-followup-result-task-result-effect-task-results/`.
+It keeps `approval_requests_created=0`, `activation_actions_taken=0`,
+`external_mutations_taken=0`, `activation_allowed=false`, and
+`capability_enabled=false`; the result is a preserved evidence plan, not
+capability activation or proof satisfaction.
+
 ## When To Commit And Push
 
 Commit when:
@@ -594,7 +618,7 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 Good next slices now favor capability-specific guards after local delegation
 packets exist:
 
-- result ingestion from downstream follow-up result delegation packets;
+- operator review decisions for downstream result effect task result records;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;

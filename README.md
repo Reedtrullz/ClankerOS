@@ -36,6 +36,7 @@ accepted downstream result decisions -> proposed effect records -> blocked activ
 applied downstream result decision effects -> local application records -> blocked activation preserved
 applied downstream result decision effect applications -> downstream proof tasks -> next evidence plan
 downstream result effect tasks -> routing decisions -> read-only delegation packets
+completed downstream result effect delegation results -> local result records -> next evidence plan preserved
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -157,6 +158,13 @@ Those downstream result effect tasks can now be routed to the read-only
 evaluator profile and materialized as pending delegation packets with local
 JSON artifacts, without starting a subagent, calling a model provider,
 creating approval rows, or allowing activation.
+Completed downstream result effect task delegation outputs can now be ingested
+as local result records and JSON artifacts while preserving source
+application, downstream decision, downstream result, upstream follow-up result,
+source effect, task, contract, project, and capability links. The ingestion
+keeps `activation_allowed=false`, `capability_enabled=false`,
+`approval_requests_created=0`, `activation_actions_taken=0`, and
+`external_mutations_taken=0`.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -271,6 +279,7 @@ mutate external systems.
 - [Create downstream tasks from applied follow-up result effects](docs/tutorial-capability-followup-result-tasks.md)
 - [Route downstream follow-up result tasks to delegation packets](docs/tutorial-capability-followup-result-task-delegations.md)
 - [Create downstream tasks from applied downstream result decision effects](docs/tutorial-capability-followup-result-task-result-effect-tasks.md)
+- [Ingest downstream result effect task delegation results](docs/tutorial-capability-followup-result-task-result-effect-task-results.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Documentation index](docs/docs-index.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
@@ -513,6 +522,7 @@ python3 -m agent_os.cli capability-activation-followup-result-task-result-effect
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-apply --operator-id operator --selection-note "Apply accepted downstream proof-plan result effect proposals as local records only." --evidence-reference docs/capability-activation-followup-result-task-result-effect-proposals.md
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-tasks
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-delegations
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-results
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
@@ -601,6 +611,9 @@ python3 -m pytest tests/test_first_milestone.py -q
 - `docs/tutorial-capability-followup-result-task-result-effect-task-delegations.md`:
   routing downstream result effect tasks into read-only evaluator delegation
   packets without starting subagents.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-results.md`:
+  ingesting completed downstream result effect task delegation outputs as
+  local result records without enabling capabilities.
 - `docs/docs-index.md`: curated map of tutorials, generated reports, status
   files, and bootstrap project continuity files.
 - `docs/suggested-use.md`: operator guidance, prompts, and practical next slices.

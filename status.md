@@ -6721,3 +6721,32 @@
   activation, enable capabilities, promote trust, schedule work, retry work,
   track spend, run CI, deploy, push, open PRs, mark the active goal complete,
   or mutate external systems.
+
+## 2026-06-22 Downstream Result Effect Task Result Ingestion
+
+- Added
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-results`
+  for completed downstream result effect task delegation outputs.
+- Live result ingestion completed `subagent_delegation_eb243c5ba397` and
+  created
+  `capability_activation_followup_result_task_result_effect_task_result_0546b7458911`.
+- Final idempotency batch:
+  `capability_activation_followup_result_task_result_effect_task_result_batch_007954fa5f2b`
+  with 1 completed delegation, 0 new result records, 1 existing result record,
+  0 approval requests, 0 activation actions, and 0 external mutations.
+- Evidence:
+  `docs/capability-activation-followup-result-task-result-effect-task-results.md`,
+  `docs/capability-activation-followup-result-task-result-effect-task-results/subagent_delegation_eb243c5ba397-hosted-dashboard.json`,
+  and
+  `docs/tutorial-capability-followup-result-task-result-effect-task-results.md`.
+- Verification evidence:
+  `python3 -m pytest -q` -> 305 passed in 243.82s;
+  `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result ingestion" ...`
+  -> pass, run `run_7018e86ea326`;
+  `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`,
+  run `run_d1ee1ffa9162`.
+- Next focus:
+  `Add operator review decisions for downstream follow-up result task result effect task result records.`
+- Non-claims: local result ingestion only; no subagent start, model-provider
+  call, approval-row creation, proof satisfaction, activation allowance,
+  capability enablement, CI/deploy, push, PR, or external mutation.

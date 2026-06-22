@@ -154,7 +154,11 @@
     packet creation routes pending downstream result effect proof tasks to
     read-only evaluator delegation contracts while keeping subagent execution,
     provider calls, approval rows, external mutations, activation actions,
-    activation allowance, and capability enablement blocked.
+    activation allowance, and capability enablement blocked. Completed
+    downstream result effect task delegation outputs can then be ingested as
+    local result records while preserving the same blocked proof state and
+    source application, decision, result, task, contract, project, and
+    capability links.
 63. Capability activation follow-up result task result ingestion records
     completed downstream proof-plan delegation outputs as local result records
     while keeping approval rows, external mutations, activation actions,
