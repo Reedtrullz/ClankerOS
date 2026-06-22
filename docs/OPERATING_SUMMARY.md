@@ -47,6 +47,11 @@ Core layers for the bootstrap:
   allowed tools, forbidden actions, expected output schema, budget hints, and
   a JSON artifact. Delegation records do not start subagents, call model
   providers, approve work, commit, write files, or mutate external state.
+- Delegation result ingestion: `record-delegation-result` attaches structured
+  operator-supplied output to an existing delegation, validates the expected
+  schema family, marks the delegation completed, and writes a local result
+  artifact while preserving no-provider, no-network, and no-external-mutation
+  non-claims.
 - Operator cockpit: the dashboard starts with active runs, registered projects,
   approval inbox, proposed effects, verification status, recent worktrees,
   GitHub handoffs, CI/deploy evidence, profile routing decisions, subagent

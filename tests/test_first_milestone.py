@@ -7,6 +7,7 @@ from agent_os.dashboard import generate_static_dashboard
 from agent_os.cli import main
 from agent_os.engine import AgentSystem
 from agent_os.eval import run_first_milestone_eval
+from agent_os.subagent_delegation import record_delegation_result
 from agent_os.storage import Storage, Task
 
 
@@ -1494,6 +1495,355 @@ def test_delegate_rejects_mutating_primary_profile(
     output = capsys.readouterr().out
     assert "delegation_failed: profile coder is not a read-only subagent" in output
     assert storage.list_subagent_delegations(goal_id) == []
+
+
+def test_record_delegation_result_completes_contract_and_writes_result_artifact(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "triage failing test")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        project_id="bootstrap",
+        task_type="test_triage",
+        description="Summarize a failing test run.",
+        verification_plan={"type": "manual_review"},
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "delegate",
+                task_id,
+                "--title",
+                "Summarize failing test output",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    delegation = storage.list_subagent_delegations(goal_id)[0]
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "record-delegation-result",
+                delegation.id,
+                "--summary",
+                "Two failing tests point at agent_os/cli.py.",
+                "--output-json",
+                '{"failures":[{"test":"test_cli","file":"agent_os/cli.py"}]}',
+                "--recorded-by",
+                "operator",
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert f"delegation_result_recorded: {delegation.id}" in output
+    assert "status: completed" in output
+    assert "network_actions_taken: 0" in output
+
+    completed = storage.get_subagent_delegation(delegation.id)
+    assert completed is not None
+    assert completed.status == "completed"
+    assert completed.result_summary == "Two failing tests point at agent_os/cli.py."
+    assert completed.completed_at is not None
+
+    artifact = json.loads(Path(completed.result_artifact_path).read_text())
+    assert artifact["id"] == delegation.id
+    assert artifact["status"] == "completed"
+    assert artifact["recorded_by"] == "operator"
+    assert artifact["result_summary"] == "Two failing tests point at agent_os/cli.py."
+    assert artifact["structured_output"]["failures"][0]["file"] == "agent_os/cli.py"
+    assert artifact["execution_started"] is False
+    assert artifact["network_actions_taken"] == 0
+    assert artifact["external_mutations_taken"] == 0
+
+    assert main(["--root", str(tmp_path), "delegation-result", delegation.id]) == 0
+    result_output = capsys.readouterr().out
+    assert "status: completed" in result_output
+    assert "result_summary: Two failing tests point at agent_os/cli.py." in result_output
+
+
+def test_record_delegation_result_is_idempotent_and_dashboard_shows_completed(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "triage failing test")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        project_id="bootstrap",
+        task_type="test_triage",
+        description="Summarize a failing test run.",
+        verification_plan={"type": "manual_review"},
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "delegate",
+                task_id,
+                "--title",
+                "Summarize failing test output",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    delegation = storage.list_subagent_delegations(goal_id)[0]
+    command = [
+        "--root",
+        str(tmp_path),
+        "record-delegation-result",
+        delegation.id,
+        "--summary",
+        "Captured the failing assertion.",
+        "--output-json",
+        '{"failures":[{"test":"test_dashboard"}]}',
+    ]
+
+    assert main(command) == 0
+    capsys.readouterr()
+    first = storage.get_subagent_delegation(delegation.id)
+    assert first is not None
+    assert main(command) == 0
+    output = capsys.readouterr().out
+    assert f"delegation_result_recorded: already_recorded {delegation.id}" in output
+    second = storage.get_subagent_delegation(delegation.id)
+    assert second is not None
+    assert second.completed_at == first.completed_at
+    assert second.result_artifact_path == first.result_artifact_path
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "### Subagent Delegations" in dashboard
+    assert delegation.id in dashboard
+    assert "status=completed" in dashboard
+    assert "summary=Captured the failing assertion." in dashboard
+
+
+def test_record_delegation_result_rejects_wrong_schema_payload(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "triage failing test")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        project_id="bootstrap",
+        task_type="test_triage",
+        description="Summarize a failing test run.",
+        verification_plan={"type": "manual_review"},
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "delegate",
+                task_id,
+                "--title",
+                "Summarize failing test output",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    delegation = storage.list_subagent_delegations(goal_id)[0]
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "record-delegation-result",
+                delegation.id,
+                "--summary",
+                "Wrong schema.",
+                "--output-json",
+                '{"files":["agent_os/cli.py"]}',
+            ]
+        )
+        == 1
+    )
+    output = capsys.readouterr().out
+    assert (
+        "delegation_result_failed: output does not match expected schema "
+        "failing_test_summary"
+    ) in output
+    pending = storage.get_subagent_delegation(delegation.id)
+    assert pending is not None
+    assert pending.status == "pending"
+    assert pending.result_summary is None
+
+
+def test_record_delegation_result_write_failure_leaves_delegation_pending(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "triage failing test")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        project_id="bootstrap",
+        task_type="test_triage",
+        description="Summarize a failing test run.",
+        verification_plan={"type": "manual_review"},
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "delegate",
+                task_id,
+                "--title",
+                "Summarize failing test output",
+            ]
+        )
+        == 0
+    )
+    delegation = storage.list_subagent_delegations(goal_id)[0]
+    original_replace = Path.replace
+
+    def fail_result_replace(source: Path, target: Path):
+        if source.name.endswith(".tmp") and target.name.endswith("-result.json"):
+            raise OSError("simulated artifact replace failure")
+        return original_replace(source, target)
+
+    monkeypatch.setattr(Path, "replace", fail_result_replace)
+
+    try:
+        record_delegation_result(
+            tmp_path,
+            storage,
+            delegation_id=delegation.id,
+            result_summary="Should not complete.",
+            structured_output={"failures": [{"test": "test_cli"}]},
+        )
+    except OSError as error:
+        assert "simulated artifact replace failure" in str(error)
+    else:
+        raise AssertionError("expected artifact replace failure")
+
+    pending = storage.get_subagent_delegation(delegation.id)
+    assert pending is not None
+    assert pending.status == "pending"
+    assert pending.result_summary is None
+    assert pending.completed_at is None
+
+
+def test_complete_subagent_delegation_rejects_completed_overwrite(
+    tmp_path: Path,
+) -> None:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "triage failing test")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        project_id="bootstrap",
+        task_type="test_triage",
+        description="Summarize a failing test run.",
+        verification_plan={"type": "manual_review"},
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "delegate",
+                task_id,
+                "--title",
+                "Summarize failing test output",
+            ]
+        )
+        == 0
+    )
+    delegation = storage.list_subagent_delegations(goal_id)[0]
+    first = storage.complete_subagent_delegation(
+        delegation.id,
+        result_summary="First result.",
+        result_artifact_path=str(tmp_path / "first.json"),
+    )
+    try:
+        storage.complete_subagent_delegation(
+            delegation.id,
+            result_summary="Second result.",
+            result_artifact_path=str(tmp_path / "second.json"),
+        )
+    except ValueError as error:
+        assert "already completed" in str(error)
+    else:
+        raise AssertionError("expected completed delegation overwrite rejection")
+
+    unchanged = storage.get_subagent_delegation(delegation.id)
+    assert unchanged is not None
+    assert unchanged.result_summary == first.result_summary
+    assert unchanged.result_artifact_path == first.result_artifact_path
+    assert unchanged.completed_at == first.completed_at
+
+
+def test_record_delegation_result_rejects_empty_or_malformed_schema_values(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "triage failing test")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        project_id="bootstrap",
+        task_type="test_triage",
+        description="Summarize a failing test run.",
+        verification_plan={"type": "manual_review"},
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "delegate",
+                task_id,
+                "--title",
+                "Summarize failing test output",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    delegation = storage.list_subagent_delegations(goal_id)[0]
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "record-delegation-result",
+                delegation.id,
+                "--summary",
+                "Malformed schema.",
+                "--output-json",
+                '{"failures":"not a list"}',
+            ]
+        )
+        == 1
+    )
+    output = capsys.readouterr().out
+    assert (
+        "delegation_result_failed: output does not match expected schema "
+        "failing_test_summary"
+    ) in output
 
 
 def test_static_dashboard_summarizes_runs_and_queue(tmp_path: Path) -> None:

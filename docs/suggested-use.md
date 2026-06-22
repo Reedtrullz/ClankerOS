@@ -32,6 +32,10 @@ List the safe default profiles and record a scout routing decision for repo sear
 Record a read-only scout delegation contract for this task and show me the delegation artifact, but do not start a subagent.
 ```
 
+```text
+Attach this read-only delegation output to the existing contract, validate the schema, and keep the no-provider/non-network claims explicit.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -40,7 +44,8 @@ Record a read-only scout delegation contract for this task and show me the deleg
 4. Regenerate the relevant report and `docs/dashboard.md`.
 5. Run `python3 -m pytest -q`.
 6. Run `python3 -m agent_os.cli eval`.
-7. Record non-claims before treating the work as safe.
+7. Record specialist delegation results when read-only context is useful.
+8. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -73,7 +78,9 @@ python3 -m agent_os.cli run-goal "Make the smallest verified change" --project <
    `route ...` to record profile routing choices before specialist work.
 10. Use `python3 -m agent_os.cli delegate <task_id> --profile scout --title "..."`
    to create a read-only delegation contract when specialist prep is useful.
-11. Use `python3 -m agent_os.cli cleanup-worktrees --confirm --reason "..."`
+11. Use `python3 -m agent_os.cli record-delegation-result <delegation_id> --summary "..." --output-json '{...}'`
+   to attach structured read-only output to an existing delegation.
+12. Use `python3 -m agent_os.cli cleanup-worktrees --confirm --reason "..."`
    after reviewing terminal effects and deciding the worktree can be removed.
 
 `commit-approved` blocks without committing if the worktree base commit, patch,
@@ -90,6 +97,9 @@ providers.
 `delegate` stores a scoped pending delegation contract and JSON artifact under
 `.clanker/delegations/`; it does not start a subagent, call a model provider,
 write files, approve work, commit, or mutate external state.
+`record-delegation-result` marks a delegation completed only after structured
+operator-supplied output matches the expected schema family. It writes a local
+result artifact and preserves `network_actions_taken=0`.
 `cleanup-worktrees` removes only clean terminal worktrees; dirty blocked
 worktrees are recorded as blocked and left in place.
 
@@ -100,6 +110,8 @@ Prefer these files when orienting:
 - `docs/next-iteration.md` for the next suggested local work packet.
 - `docs/dashboard.md` for the current operational view.
 - `docs/OPERATING_SUMMARY.md` for architecture and guardrails.
+- `docs/tutorial-subagent-delegation-results.md` for the profile routing,
+  delegation contract, and result-ingestion loop.
 - `contracts.md` for safety boundaries and evidence expectations.
 - `status.md` for chronological implementation evidence.
 - `projects/bootstrap/handoff.md` for the current continuation edge.
@@ -133,11 +145,11 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 ## Practical Next Slices
 
 Good next slices now favor executable local approval flow, routing records, and
-delegation contracts before broader autonomy:
+delegation evidence before broader autonomy:
 
-- delegation result ingestion that lets an operator attach structured
-  read-only subagent output without starting remote workers or external
-  model-provider APIs;
+- memory proposal records and approval flow that can safely summarize useful
+  completed delegation output without silently promoting it into durable
+  knowledge;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;
 - remote-worker, scheduler, browser/desktop adapter, budget, trust, retry, and

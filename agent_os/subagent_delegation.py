@@ -3,9 +3,17 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
+from typing import Any
 
 from agent_os.profile_routing import RouteRequest, route_work
-from agent_os.storage import AgentProfile, RoutingDecision, Storage, SubagentDelegation, Task
+from agent_os.storage import (
+    AgentProfile,
+    RoutingDecision,
+    Storage,
+    SubagentDelegation,
+    Task,
+    utc_now,
+)
 
 
 class DelegationError(ValueError):
@@ -24,6 +32,16 @@ EXPECTED_OUTPUT_BY_CATEGORY = {
     "alignment_review": "risk_review",
     "evidence_review": "evidence_review",
     "final_review": "evidence_review",
+}
+
+
+REQUIRED_KEYS_BY_SCHEMA = {
+    "file_relevance_report": {"files", "findings", "relevant_files"},
+    "dependency_map": {"dependencies", "edges"},
+    "failing_test_summary": {"failures", "failing_tests", "findings"},
+    "implementation_options": {"options"},
+    "risk_review": {"risks", "findings"},
+    "evidence_review": {"evidence", "findings"},
 }
 
 
@@ -115,13 +133,59 @@ def create_subagent_delegation(
     return delegation
 
 
+def record_delegation_result(
+    root: Path,
+    storage: Storage,
+    *,
+    delegation_id: str,
+    result_summary: str,
+    structured_output: dict[str, Any],
+    recorded_by: str = "operator",
+) -> tuple[SubagentDelegation, bool]:
+    delegation = storage.get_subagent_delegation(delegation_id)
+    if delegation is None:
+        raise DelegationError(f"delegation {delegation_id} not found")
+    _validate_structured_output(delegation.expected_output_schema, structured_output)
+
+    artifact_path = root / ".clanker" / "delegations" / f"{delegation.id}-result.json"
+    if delegation.status == "completed":
+        artifact_path = Path(delegation.result_artifact_path)
+        _validate_idempotent_result(
+            artifact_path,
+            result_summary=result_summary,
+            structured_output=structured_output,
+        )
+        return delegation, True
+
+    artifact_path.parent.mkdir(parents=True, exist_ok=True)
+    completed_at = utc_now()
+    _write_result_artifact(
+        artifact_path,
+        delegation=delegation,
+        result_summary=result_summary,
+        structured_output=structured_output,
+        recorded_by=recorded_by,
+        completed_at=completed_at,
+    )
+    completed = storage.complete_subagent_delegation(
+        delegation.id,
+        result_summary=result_summary,
+        result_artifact_path=str(artifact_path),
+        completed_at=completed_at,
+    )
+    return completed, False
+
+
 def render_subagent_delegation_line(delegation: SubagentDelegation) -> str:
-    return (
+    line = (
         f"{delegation.id}: status={delegation.status} "
         f"profile={delegation.assigned_profile} category={delegation.category} "
         f"task={delegation.parent_task_id} schema={delegation.expected_output_schema} "
         f"artifact={delegation.result_artifact_path}"
     )
+    if delegation.result_summary:
+        line += f" summary={delegation.result_summary}"
+    return line
 
 
 def _validate_read_only_subagent(profile: AgentProfile) -> None:
@@ -191,6 +255,95 @@ def _forbidden_actions(profile: AgentProfile) -> list[str]:
         if permissions.get(action) == "deny":
             forbidden.add(action)
     return sorted(forbidden)
+
+
+def _validate_structured_output(
+    expected_schema: str,
+    structured_output: dict[str, Any],
+) -> None:
+    if not isinstance(structured_output, dict):
+        raise DelegationError(
+            f"output does not match expected schema {expected_schema}"
+        )
+    required_keys = REQUIRED_KEYS_BY_SCHEMA.get(expected_schema)
+    if required_keys is None:
+        return
+    if not any(
+        _is_non_empty_structured_value(structured_output.get(key))
+        for key in required_keys
+    ):
+        raise DelegationError(
+            f"output does not match expected schema {expected_schema}"
+        )
+
+
+def _validate_idempotent_result(
+    artifact_path: Path,
+    *,
+    result_summary: str,
+    structured_output: dict[str, Any],
+) -> None:
+    if not artifact_path.exists():
+        raise DelegationError("delegation already completed with missing result artifact")
+    artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
+    if (
+        artifact.get("result_summary") != result_summary
+        or artifact.get("structured_output") != structured_output
+    ):
+        raise DelegationError("delegation already completed with different result")
+
+
+def _write_result_artifact(
+    artifact_path: Path,
+    *,
+    delegation: SubagentDelegation,
+    result_summary: str,
+    structured_output: dict[str, Any],
+    recorded_by: str,
+    completed_at: str,
+) -> None:
+    temp_path = artifact_path.with_name(f".{artifact_path.name}.tmp")
+    temp_path.write_text(
+        json.dumps(
+            {
+                "id": delegation.id,
+                "routing_decision_id": delegation.routing_decision_id,
+                "parent_goal_id": delegation.parent_goal_id,
+                "parent_task_id": delegation.parent_task_id,
+                "assigned_profile": delegation.assigned_profile,
+                "category": delegation.category,
+                "title": delegation.title,
+                "expected_output_schema": delegation.expected_output_schema,
+                "status": "completed",
+                "recorded_by": recorded_by,
+                "result_summary": result_summary,
+                "structured_output": structured_output,
+                "created_at": delegation.created_at,
+                "completed_at": completed_at,
+                "execution_started": delegation.started_at is not None,
+                "network_actions_taken": 0,
+                "external_mutations_taken": 0,
+                "non_claims": [
+                    "No subagent was started by this ingestion command.",
+                    "No model provider was called by this ingestion command.",
+                    "No file, git, approval, or external state was mutated beyond this local result record.",
+                ],
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    temp_path.replace(artifact_path)
+
+
+def _is_non_empty_structured_value(value: Any) -> bool:
+    if isinstance(value, list):
+        return len(value) > 0
+    if isinstance(value, dict):
+        return len(value) > 0
+    return False
 
 
 def _slug(value: str) -> str:

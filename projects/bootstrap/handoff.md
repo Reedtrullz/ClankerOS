@@ -203,7 +203,16 @@ Dashboard proof row when one exists and skips newer legacy or dangling Hosted
 Dashboard rows that would lose the Real Cost Tracking -> Automatic Retry proof
 chain, without starting remote workers, claiming remote work, or changing
 routing.
-Current iteration packet: Review current evidence and add the next actionable queue item.
+Current iteration packet:
+`docs/next-iteration.md` selects
+`Add memory proposal records from completed delegation outputs.`
+
+Latest delegation result ingestion:
+`subagent_delegation_7c3ac6139928` is completed with
+`.clanker/delegations/subagent_delegation_7c3ac6139928-result.json`.
+The command path writes the result artifact before completing the SQLite row,
+rejects direct completed-row overwrites, validates non-empty schema-family
+payloads, and keeps `network_actions_taken=0`.
 
 Latest Goal Completion Audit:
 `goal_completion_audit_8710791dee32` reports

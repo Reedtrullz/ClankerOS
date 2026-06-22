@@ -216,6 +216,7 @@ from agent_os.runtime import detect_runtime_capabilities, write_runtime_capabili
 from agent_os.subagent_delegation import (
     DelegationError,
     create_subagent_delegation,
+    record_delegation_result,
     render_subagent_delegation_line,
 )
 from agent_os.worktree_cleanup import cleanup_worktrees
@@ -269,6 +270,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Show a subagent delegation contract and current result state.",
     )
     delegation_result.add_argument("delegation_id")
+    record_delegation_result_parser = subparsers.add_parser(
+        "record-delegation-result",
+        help="Ingest structured read-only subagent output for a delegation.",
+    )
+    record_delegation_result_parser.add_argument("delegation_id")
+    record_delegation_result_parser.add_argument("--summary", required=True)
+    record_delegation_result_parser.add_argument("--output-json", required=True)
+    record_delegation_result_parser.add_argument(
+        "--recorded-by",
+        default="operator",
+    )
     register_project_parser = subparsers.add_parser(
         "register-project",
         help="Register a local git repository for isolated coding-agent work.",
@@ -707,6 +719,36 @@ def main(argv: list[str] | None = None) -> int:
         print(f"result_summary: {delegation.result_summary or 'none'}")
         print(f"result_artifact_path: {delegation.result_artifact_path}")
         print(f"completed_at: {delegation.completed_at or 'none'}")
+        return 0
+
+    if args.command == "record-delegation-result":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            structured_output = json.loads(args.output_json)
+            delegation, already_recorded = record_delegation_result(
+                root,
+                system.storage,
+                delegation_id=args.delegation_id,
+                result_summary=args.summary,
+                structured_output=structured_output,
+                recorded_by=args.recorded_by,
+            )
+        except json.JSONDecodeError as error:
+            print(f"delegation_result_failed: invalid output json: {error}")
+            return 1
+        except (DelegationError, KeyError, OSError, ValueError) as error:
+            print(f"delegation_result_failed: {error}")
+            return 1
+        if already_recorded:
+            print(f"delegation_result_recorded: already_recorded {delegation.id}")
+        else:
+            print(f"delegation_result_recorded: {delegation.id}")
+        print(f"status: {delegation.status}")
+        print(f"result_summary: {delegation.result_summary or 'none'}")
+        print(f"result_artifact: {delegation.result_artifact_path}")
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
         return 0
 
     if args.command == "register-project":

@@ -5301,3 +5301,55 @@
   write files, approve work, commit, run remote workers, enforce budgets,
   promote trust, retry work, mutate external systems, or change approval
   gates.
+
+## 2026-06-22 Delegation Result Ingestion
+
+- Added structured result ingestion for read-only delegation contracts with
+  `python3 -m agent_os.cli record-delegation-result <delegation_id>
+  --summary "..." --output-json '{...}'`.
+- `record-delegation-result` validates the delegation's expected output schema
+  family, writes `.clanker/delegations/<delegation_id>-result.json`, marks the
+  delegation `completed`, and preserves `network_actions_taken=0` and
+  `external_mutations_taken=0`.
+- Result ingestion is idempotent for identical summary/output pairs and rejects
+  divergent repeats for completed delegations.
+- A parallel review found a durability gap where SQLite completion happened
+  before artifact write; the implementation was hardened to write the result
+  artifact through a temp file and atomic replace before completing the DB row.
+- `Storage.complete_subagent_delegation` now rejects direct completed-row
+  overwrites, and schema validation now requires a recognized key with a
+  non-empty list or object value.
+- Added tutorial docs:
+  `docs/tutorial-subagent-delegation-results.md`, plus updates to
+  `README.md`, `docs/suggested-use.md`, `docs/tutorial-first-loop.md`,
+  `docs/tutorial-approval-gated-coding.md`, and
+  `docs/OPERATING_SUMMARY.md`.
+- Live smoke completed `subagent_delegation_7c3ac6139928` with result artifact
+  `.clanker/delegations/subagent_delegation_7c3ac6139928-result.json`, then
+  repeated the same command and got `already_recorded`.
+- Latest iteration packet:
+  `iteration_d3db10d4646b` in `docs/next-iteration.md`.
+- Next selected focus:
+  `Add memory proposal records from completed delegation outputs.`
+- Verification evidence:
+  - Red-first focused tests failed on missing `record-delegation-result`.
+  - Review-hardening tests failed on missing artifact-write atomicity, direct
+    storage overwrite protection, and malformed schema rejection before fixes.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "record_delegation_result or complete_subagent_delegation"` -> 6 passed, 208 deselected.
+  - `python3 -m py_compile agent_os/subagent_delegation.py agent_os/storage.py agent_os/cli.py` -> passed.
+  - `python3 -m pytest -q` -> 214 passed.
+  - `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800` -> `stuck_incidents: 0`.
+  - `python3 -m agent_os.cli queue-health` -> `hotspots: 0`.
+  - `python3 -m agent_os.cli handoff-review` -> `status: clear`, `blocked_tasks: 0`, `stale_handoffs: 0`.
+  - `python3 -m agent_os.cli approvals` -> `pending_approvals: 0`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`.
+  - `python3 -m agent_os.cli playbooks` -> `successful_runs=178`.
+  - `python3 -m agent_os.cli eval-candidates` -> `eval_candidates: 0`.
+  - `python3 -m agent_os.cli eval-after-change --change "Add delegation result ingestion" ...` -> pass as `run_7a9b1e946e32`.
+  - `python3 -m agent_os.cli iterate` -> selected `Add memory proposal records from completed delegation outputs.`
+  - `python3 -m agent_os.cli dashboard` -> wrote `docs/dashboard.md`.
+  - `git diff --check` -> passed.
+- Non-claims: result ingestion does not start subagents, call model providers,
+  approve work, commit, push, run CI, deploy, run remote workers, enforce
+  budgets, promote trust, retry work, track spend, mutate external systems, or
+  change approval gates.

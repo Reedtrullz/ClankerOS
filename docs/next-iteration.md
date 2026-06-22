@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_07fc0b9da91f
+- Packet ID: iteration_76b02735875a
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add delegation result ingestion for read-only subagent outputs.
+Advance the Agent System north-star goal by completing: Add memory proposal records from completed delegation outputs.
 
 ## Definition Of Done
 

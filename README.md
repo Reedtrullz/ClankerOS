@@ -13,6 +13,7 @@ committed effect -> GitHub handoff packet -> operator push/draft-PR commands
 GitHub handoff -> operator-supplied CI/deploy evidence -> local evidence record
 task/category -> profile routing decision -> durable selection record
 routing decision -> read-only subagent delegation contract -> evidence artifact
+delegation contract -> structured result ingestion -> completed local evidence
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -42,9 +43,10 @@ deploying, or mutating GitHub. It now also creates safe local profile defaults
 for planner/coder/scout/tester/evaluator work and records routing decisions
 for task or category selection. It can also create read-only subagent
 delegation contracts from those routing decisions without starting a subagent
-or calling a model provider. Deployments and other external side effects
-remain blocked unless an implemented flow explicitly models evidence,
-authorization, rollback, and verification.
+or calling a model provider, then ingest operator-supplied structured
+delegation results as completed local evidence. Deployments and other external
+side effects remain blocked unless an implemented flow explicitly models
+evidence, authorization, rollback, and verification.
 
 ## Repository Metadata
 
@@ -57,7 +59,7 @@ Local-first agent operating system harness with explicit state, evidence, and ap
 Suggested GitHub topics:
 
 ```text
-agent-operating-system, agentic-ai, ai-agents, agent-os, local-first, coding-agents, automation, sqlite, approval-workflow, worktrees, verification, operator-dashboard, evals, markdown, python
+agent-operating-system, agentic-ai, ai-agents, agent-os, agent-orchestration, subagent-delegation, local-first, coding-agents, automation, sqlite, approval-workflow, worktrees, verification, operator-dashboard, evals, markdown, python
 ```
 
 ## Quick Start
@@ -91,6 +93,7 @@ python3 -m agent_os.cli ci-deploy-evidence <github_handoff_id> --provider github
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
+python3 -m agent_os.cli record-delegation-result <delegation_id> --summary "Relevant files identified." --output-json '{"files":["agent_os/cli.py"]}'
 python3 -m agent_os.cli cleanup-worktrees --confirm --reason "committed branch kept"
 ```
 
@@ -104,11 +107,15 @@ routing commands create `.clanker/profiles.yml`, store safe default profiles
 and routing rules in SQLite, and record selection decisions. The delegation
 command stores a scoped read-only contract and evidence artifact; it does not
 start a subagent, call external models, approve work, commit, or mutate files.
+`record-delegation-result` attaches structured operator-supplied output to an
+existing delegation, validates the expected schema family, marks it completed,
+and writes a local result artifact while still recording `network_actions_taken=0`.
 
 ## Tutorials And Suggested Use
 
 - [Run the first local loop](docs/tutorial-first-loop.md)
 - [Run an approval-gated coding task](docs/tutorial-approval-gated-coding.md)
+- [Record profile routing, delegation, and delegation results](docs/tutorial-subagent-delegation-results.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
 - [Safety contract](contracts.md)
@@ -143,6 +150,9 @@ The repository can now:
   including scoped prompts, input context, allowed tools, forbidden actions,
   expected output schema, local budget hints, and JSON artifacts, without
   starting subagents or mutating state;
+- ingest structured read-only delegation results, validate them against the
+  expected schema family, mark delegations completed, and write local result
+  artifacts while preserving no-provider and no-network non-claims;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -268,6 +278,10 @@ python3 -m agent_os.cli approve <approval_id> --decided-by operator --note "loca
 python3 -m agent_os.cli commit-approved <approval_id> --committed-by operator
 python3 -m agent_os.cli github-handoff <effect_id> --remote origin --base main --title "Draft PR title"
 python3 -m agent_os.cli ci-deploy-evidence <github_handoff_id> --provider github-actions --status success --external-run-id <run_id> --url <run_url>
+python3 -m agent_os.cli profiles
+python3 -m agent_os.cli route <task_id>
+python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
+python3 -m agent_os.cli record-delegation-result <delegation_id> --summary "Relevant files identified." --output-json '{"files":["agent_os/cli.py"]}'
 python3 -m agent_os.cli cleanup-worktrees --confirm --decided-by operator --reason "terminal worktree reviewed"
 python3 -m agent_os.cli resolve-incident <incident_id> --resolved-by operator --note "local resolution note"
 python3 -m agent_os.cli queue-health
@@ -327,6 +341,8 @@ python3 -m pytest tests/test_first_milestone.py -q
 - `docs/tutorial-first-loop.md`: step-by-step local loop walkthrough.
 - `docs/tutorial-approval-gated-coding.md`: worktree-isolated coding run
   walkthrough with evidence, approval review, GitHub handoff, and cleanup.
+- `docs/tutorial-subagent-delegation-results.md`: profile routing,
+  read-only delegation contracts, and structured result ingestion walkthrough.
 - `docs/suggested-use.md`: operator guidance, prompts, and practical next slices.
 - `docs/next-iteration.md`: generated packet for the next implementation pass.
   Queue items may include `<!-- score=N complexity=N -->`; equal scores choose

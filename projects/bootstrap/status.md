@@ -65,6 +65,12 @@ side effect exists.
 Goal Completion Audit now reports expansion-goal completion posture from the
 latest proof checklist rows and keeps the goal blocked while the proof ladder
 is report-only, external decisions remain, or approvals are missing.
+Profile routing now records safe local planner/coder/scout/tester/evaluator
+selection decisions without dispatching models. Subagent delegation now stores
+read-only specialist contracts from routing decisions. Delegation result
+ingestion now records structured operator-supplied outputs for completed
+delegations, writes local JSON evidence, validates non-empty schema-family
+payloads, and preserves no-provider/no-network non-claims.
 
 ## Verification Evidence
 
@@ -3310,3 +3316,15 @@ is report-only, external decisions remain, or approvals are missing.
 - Goal ID: goal_7c2d1ecd0307
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_a013a9d6f48f/summary.md
+
+## Run run_06e1465cad6d
+
+- Goal ID: goal_9d5f045710b2
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_06e1465cad6d/summary.md
+
+## Run run_7a9b1e946e32
+
+- Goal ID: goal_287b14a4f292
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_7a9b1e946e32/summary.md

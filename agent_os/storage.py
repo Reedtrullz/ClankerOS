@@ -8408,6 +8408,54 @@ class Storage:
             ).fetchone()
         return self._row_to_subagent_delegation(row) if row else None
 
+    def complete_subagent_delegation(
+        self,
+        delegation_id: str,
+        *,
+        result_summary: str,
+        result_artifact_path: str,
+        completed_at: str | None = None,
+    ) -> SubagentDelegation:
+        completed_at = completed_at or utc_now()
+        with self._connect() as connection:
+            row = connection.execute(
+                "select * from subagent_delegations where id = ?",
+                (delegation_id,),
+            ).fetchone()
+            if row is None:
+                raise KeyError(delegation_id)
+            if row["status"] == "completed":
+                raise ValueError(f"delegation {delegation_id} is already completed")
+            if row["status"] != "pending":
+                raise ValueError(
+                    f"delegation {delegation_id} is not pending: {row['status']}"
+                )
+            started_at = row["started_at"]
+            connection.execute(
+                """
+                update subagent_delegations
+                set status = ?,
+                    result_summary = ?,
+                    result_artifact_path = ?,
+                    started_at = ?,
+                    completed_at = ?
+                where id = ?
+                """,
+                (
+                    "completed",
+                    result_summary,
+                    result_artifact_path,
+                    started_at,
+                    completed_at,
+                    delegation_id,
+                ),
+            )
+            updated = connection.execute(
+                "select * from subagent_delegations where id = ?",
+                (delegation_id,),
+            ).fetchone()
+        return self._row_to_subagent_delegation(updated)
+
     def create_pending_approval_request_for_task(
         self,
         task_id: str,

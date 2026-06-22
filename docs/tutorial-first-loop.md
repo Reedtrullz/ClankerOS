@@ -8,7 +8,8 @@ This tutorial walks through the smallest useful ClankerOS loop:
 4. inspect the evidence;
 5. record a safe profile routing decision;
 6. optionally record a read-only delegation contract;
-7. regenerate the dashboard.
+7. optionally ingest a structured delegation result;
+8. regenerate the dashboard.
 
 ClankerOS is local-first. These commands write SQLite rows and markdown
 reports in this checkout. They do not start remote workers, deploy services,
@@ -89,7 +90,22 @@ This stores a pending `subagent_delegations` row and a JSON artifact under
 `.clanker/delegations/`. It does not start a subagent, call a model provider,
 write files, approve work, commit, or mutate external systems.
 
-## 6. Regenerate The Operator Dashboard
+## 6. Record A Delegation Result
+
+If read-only specialist output exists, attach it to the delegation:
+
+```bash
+python3 -m agent_os.cli record-delegation-result <delegation_id> \
+  --summary "Relevant files identified." \
+  --output-json '{"files":["agent_os/cli.py"]}'
+```
+
+This validates the payload against the expected schema family, marks the
+delegation completed, and writes a result artifact under `.clanker/delegations/`.
+It does not start a subagent, call a model provider, take a network action, or
+mutate external systems.
+
+## 7. Regenerate The Operator Dashboard
 
 ```bash
 python3 -m agent_os.cli dashboard
@@ -99,7 +115,7 @@ Open `docs/dashboard.md` to inspect queue health, proof checklists, approval
 boundaries, profile routing decisions, subagent delegation contracts,
 playbooks, eval results, and the latest generated reports.
 
-## 7. Run Verification
+## 8. Run Verification
 
 ```bash
 python3 -m pytest -q
@@ -122,6 +138,8 @@ eval runs and remain guidance only; they are not automatic executors.
   profile routing decision.
 - It does not start subagents or call model providers when recording a
   delegation contract.
+- It does not start subagents or call model providers when recording a
+  delegation result.
 - It does not enforce budgets, promote trust, retry work, or track real spend.
 - It does not apply the future `operator_approval_requests` schema migration.
 

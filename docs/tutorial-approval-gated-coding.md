@@ -12,7 +12,8 @@ This tutorial walks through the first executable local coding-agent vertical:
 8. record operator-supplied CI/deploy evidence for the handoff;
 9. record profile routing decisions for future specialist work;
 10. record read-only subagent delegation contracts;
-11. clean up terminal worktrees after an explicit cleanup decision.
+11. ingest structured read-only delegation results;
+12. clean up terminal worktrees after an explicit cleanup decision.
 
 The flow is intentionally conservative. It creates evidence and an approval
 packet first. It creates a local git commit only after explicit approval and a
@@ -250,7 +251,31 @@ ClankerOS will:
 This step does not start a subagent, call a model provider, write files,
 approve work, commit, or mutate external state.
 
-## 11. Clean Up Terminal Worktrees
+## 11. Record Delegation Results
+
+When read-only specialist output exists, attach it to the delegation:
+
+```bash
+python3 -m agent_os.cli record-delegation-result <delegation_id> \
+  --summary "Relevant files identified." \
+  --output-json '{"files":["agent_os/cli.py","tests/test_first_milestone.py"]}' \
+  --recorded-by operator
+```
+
+ClankerOS will:
+
+- validate the payload against the delegation's expected schema family;
+- mark the delegation `completed`;
+- write `.clanker/delegations/<delegation_id>-result.json`;
+- keep `network_actions_taken=0` and external mutation non-claims explicit.
+
+Repeating the same result is idempotent. A different result for a completed
+delegation is rejected.
+
+This step does not start a subagent, call a model provider, approve work,
+commit, push, run CI, deploy, or mutate external state.
+
+## 12. Clean Up Terminal Worktrees
 
 Preview cleanup candidates:
 
