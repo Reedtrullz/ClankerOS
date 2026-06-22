@@ -166,6 +166,10 @@ from agent_os.operator_approval_request_rows import (
     apply_operator_approval_request_rows,
     render_operator_approval_request_rows_application_line,
 )
+from agent_os.operator_approval_request_decisions import (
+    decide_operator_approval_requests,
+    render_operator_approval_request_decision_line,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -617,6 +621,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     request_rows_apply.add_argument("--selection-note", required=True)
     request_rows_apply.add_argument("--evidence-reference", required=True)
+    request_decide = subparsers.add_parser(
+        "expansion-operator-approval-request-decide",
+        help="Record local decisions for pending operator approval request rows.",
+    )
+    request_decide.add_argument("--operator-id", required=True)
+    request_decide.add_argument(
+        "--selected-action",
+        required=True,
+        choices=["approve", "defer", "request_more_evidence"],
+    )
+    request_decide.add_argument("--selection-note", required=True)
+    request_decide.add_argument("--evidence-reference", required=True)
 
     approve = subparsers.add_parser("approve", help="Approve a pending local task request.")
     approve.add_argument("approval_id")
@@ -2430,6 +2446,45 @@ def main(argv: list[str] | None = None) -> int:
             render_operator_approval_request_rows_application_line(
                 application
             ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "expansion-operator-approval-request-decide":
+        AgentSystem(root).initialize()
+        report_path, decision = decide_operator_approval_requests(
+            root,
+            operator_id=args.operator_id,
+            selected_action=args.selected_action,
+            selection_note=args.selection_note,
+            evidence_reference=args.evidence_reference,
+        )
+        print(f"expansion_operator_approval_request_decide: {decision.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_row_application: {decision.source_row_application_id}")
+        print(f"source_status: {decision.source_row_application_status}")
+        print(f"source_draft: {decision.source_draft_id}")
+        print(f"source_schema_application: {decision.source_schema_application_id}")
+        print(f"source_ledger: {decision.source_ledger_id}")
+        print(f"source_checklist: {decision.source_checklist_id}")
+        print(f"source_index: {decision.source_index_id}")
+        print(f"source_brief: {decision.source_brief_id}")
+        print(f"source_audit: {decision.source_audit_id}")
+        print(f"operator_id: {decision.operator_id}")
+        print(f"selected_action: {decision.selected_action}")
+        print(f"pending_requests_before: {decision.pending_request_count_before}")
+        print(f"decisions_recorded: {decision.decision_count}")
+        print(f"approved_decisions: {decision.approved_decision_count}")
+        print(f"deferred_decisions: {decision.deferred_decision_count}")
+        print(f"more_evidence_decisions: {decision.more_evidence_decision_count}")
+        print(f"pending_requests_after: {decision.pending_request_count_after}")
+        print(f"existing_decisions: {decision.existing_decision_count}")
+        print(f"approval_requests_created: {decision.created_approval_request_count}")
+        print(f"external_requests: {decision.external_request_count}")
+        print(f"capability_requests: {decision.capability_request_count}")
+        print(
+            render_operator_approval_request_decision_line(decision).removeprefix(
+                "- "
+            )
         )
         return 0
 

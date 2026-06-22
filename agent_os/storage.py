@@ -1495,6 +1495,38 @@ class OperatorApprovalRequestRowApplication:
     created_at: str
 
 
+@dataclass(frozen=True)
+class OperatorApprovalRequestDecision:
+    id: str
+    status: str
+    source_row_application_id: str
+    source_row_application_status: str
+    source_draft_id: str
+    source_schema_application_id: str
+    source_ledger_id: str
+    source_checklist_id: str
+    source_index_id: str
+    source_brief_id: str
+    source_audit_id: str
+    operator_id: str
+    selected_action: str
+    selection_note: str
+    evidence_reference: str
+    pending_request_count_before: int
+    decision_count: int
+    approved_decision_count: int
+    deferred_decision_count: int
+    more_evidence_decision_count: int
+    pending_request_count_after: int
+    existing_decision_count: int
+    created_approval_request_count: int
+    external_request_count: int
+    capability_request_count: int
+    decided_request_ids: list[str]
+    report_path: str
+    created_at: str
+
+
 SAFE_AUTO_TASK_TYPES = {"write_goal_artifact", "record_learning"}
 SAFE_AUTO_RISK_LEVELS = {"low"}
 APPROVAL_WAITING_STATUS = "waiting_approval"
@@ -2857,6 +2889,37 @@ class Storage:
                     external_request_count integer not null,
                     capability_request_count integer not null,
                     created_request_ids text not null,
+                    report_path text not null,
+                    created_at text not null
+                );
+
+                create table if not exists operator_approval_request_decisions (
+                    id text primary key,
+                    status text not null,
+                    source_row_application_id text not null,
+                    source_row_application_status text not null,
+                    source_draft_id text not null,
+                    source_schema_application_id text not null,
+                    source_ledger_id text not null,
+                    source_checklist_id text not null,
+                    source_index_id text not null,
+                    source_brief_id text not null,
+                    source_audit_id text not null,
+                    operator_id text not null,
+                    selected_action text not null,
+                    selection_note text not null,
+                    evidence_reference text not null,
+                    pending_request_count_before integer not null,
+                    decision_count integer not null,
+                    approved_decision_count integer not null,
+                    deferred_decision_count integer not null,
+                    more_evidence_decision_count integer not null,
+                    pending_request_count_after integer not null,
+                    existing_decision_count integer not null,
+                    created_approval_request_count integer not null,
+                    external_request_count integer not null,
+                    capability_request_count integer not null,
+                    decided_request_ids text not null,
                     report_path text not null,
                     created_at text not null
                 );
@@ -8801,6 +8864,215 @@ class Storage:
             for row in rows
         ]
 
+    def count_operator_approval_requests_with_status(
+        self,
+        *,
+        source_draft_id: str,
+        statuses: list[str],
+    ) -> int:
+        if not statuses:
+            return 0
+        placeholders = ",".join("?" for _ in statuses)
+        with self._connect() as connection:
+            if not self._table_exists(connection, "operator_approval_requests"):
+                return 0
+            row = connection.execute(
+                f"""
+                select count(*) as count from operator_approval_requests
+                where source_draft_id = ? and status in ({placeholders})
+                """,
+                (source_draft_id, *statuses),
+            ).fetchone()
+        return int(row["count"])
+
+    def decide_pending_operator_approval_requests(
+        self,
+        *,
+        source_draft_id: str,
+        selected_action: str,
+        decided_by: str,
+        decision_note: str,
+    ) -> list[OperatorApprovalRequest]:
+        status_by_action = {
+            "approve": "approved",
+            "defer": "deferred",
+            "request_more_evidence": "more_evidence_requested",
+        }
+        decided_status = status_by_action[selected_action]
+        decided_at = utc_now()
+        with self._connect() as connection:
+            if not self._table_exists(connection, "operator_approval_requests"):
+                return []
+            pending_rows = connection.execute(
+                """
+                select * from operator_approval_requests
+                where source_draft_id = ? and status = 'pending'
+                order by requested_at asc, id asc
+                """,
+                (source_draft_id,),
+            ).fetchall()
+            if not pending_rows:
+                return []
+            pending_ids = [row["id"] for row in pending_rows]
+            connection.executemany(
+                """
+                update operator_approval_requests
+                set status = ?,
+                    decided_by = ?,
+                    decision_note = ?,
+                    decided_at = ?
+                where id = ?
+                """,
+                [
+                    (
+                        decided_status,
+                        decided_by,
+                        decision_note,
+                        decided_at,
+                        request_id,
+                    )
+                    for request_id in pending_ids
+                ],
+            )
+            placeholders = ",".join("?" for _ in pending_ids)
+            rows = connection.execute(
+                f"""
+                select * from operator_approval_requests
+                where id in ({placeholders})
+                order by requested_at asc, id asc
+                """,
+                tuple(pending_ids),
+            ).fetchall()
+        return [self._row_to_operator_approval_request(row) for row in rows]
+
+    def record_operator_approval_request_decision(
+        self,
+        *,
+        status: str,
+        source_row_application_id: str,
+        source_row_application_status: str,
+        source_draft_id: str,
+        source_schema_application_id: str,
+        source_ledger_id: str,
+        source_checklist_id: str,
+        source_index_id: str,
+        source_brief_id: str,
+        source_audit_id: str,
+        operator_id: str,
+        selected_action: str,
+        selection_note: str,
+        evidence_reference: str,
+        pending_request_count_before: int,
+        decision_count: int,
+        approved_decision_count: int,
+        deferred_decision_count: int,
+        more_evidence_decision_count: int,
+        pending_request_count_after: int,
+        existing_decision_count: int,
+        created_approval_request_count: int,
+        external_request_count: int,
+        capability_request_count: int,
+        decided_request_ids: list[str],
+        report_path: str,
+    ) -> OperatorApprovalRequestDecision:
+        decision_id = new_id("operator_approval_request_decision")
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into operator_approval_request_decisions (
+                    id, status, source_row_application_id,
+                    source_row_application_status, source_draft_id,
+                    source_schema_application_id, source_ledger_id,
+                    source_checklist_id, source_index_id, source_brief_id,
+                    source_audit_id, operator_id, selected_action,
+                    selection_note, evidence_reference,
+                    pending_request_count_before, decision_count,
+                    approved_decision_count, deferred_decision_count,
+                    more_evidence_decision_count, pending_request_count_after,
+                    existing_decision_count, created_approval_request_count,
+                    external_request_count, capability_request_count,
+                    decided_request_ids, report_path, created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    decision_id,
+                    status,
+                    source_row_application_id,
+                    source_row_application_status,
+                    source_draft_id,
+                    source_schema_application_id,
+                    source_ledger_id,
+                    source_checklist_id,
+                    source_index_id,
+                    source_brief_id,
+                    source_audit_id,
+                    operator_id,
+                    selected_action,
+                    selection_note,
+                    evidence_reference,
+                    pending_request_count_before,
+                    decision_count,
+                    approved_decision_count,
+                    deferred_decision_count,
+                    more_evidence_decision_count,
+                    pending_request_count_after,
+                    existing_decision_count,
+                    created_approval_request_count,
+                    external_request_count,
+                    capability_request_count,
+                    _json_dumps(decided_request_ids),
+                    report_path,
+                    created_at,
+                ),
+            )
+        return OperatorApprovalRequestDecision(
+            id=decision_id,
+            status=status,
+            source_row_application_id=source_row_application_id,
+            source_row_application_status=source_row_application_status,
+            source_draft_id=source_draft_id,
+            source_schema_application_id=source_schema_application_id,
+            source_ledger_id=source_ledger_id,
+            source_checklist_id=source_checklist_id,
+            source_index_id=source_index_id,
+            source_brief_id=source_brief_id,
+            source_audit_id=source_audit_id,
+            operator_id=operator_id,
+            selected_action=selected_action,
+            selection_note=selection_note,
+            evidence_reference=evidence_reference,
+            pending_request_count_before=pending_request_count_before,
+            decision_count=decision_count,
+            approved_decision_count=approved_decision_count,
+            deferred_decision_count=deferred_decision_count,
+            more_evidence_decision_count=more_evidence_decision_count,
+            pending_request_count_after=pending_request_count_after,
+            existing_decision_count=existing_decision_count,
+            created_approval_request_count=created_approval_request_count,
+            external_request_count=external_request_count,
+            capability_request_count=capability_request_count,
+            decided_request_ids=decided_request_ids,
+            report_path=report_path,
+            created_at=created_at,
+        )
+
+    def list_recent_operator_approval_request_decisions(
+        self,
+        limit: int = 5,
+    ) -> list[OperatorApprovalRequestDecision]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from operator_approval_request_decisions
+                order by created_at desc, id desc
+                limit ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [self._row_to_operator_approval_request_decision(row) for row in rows]
+
     def get_real_cost_tracking_proof_checklist(
         self,
         checklist_id: str | None,
@@ -12089,6 +12361,41 @@ class Storage:
             external_request_count=row["external_request_count"],
             capability_request_count=row["capability_request_count"],
             created_request_ids=_json_loads(row["created_request_ids"], []),
+            report_path=row["report_path"],
+            created_at=row["created_at"],
+        )
+
+    def _row_to_operator_approval_request_decision(
+        self,
+        row: sqlite3.Row,
+    ) -> OperatorApprovalRequestDecision:
+        return OperatorApprovalRequestDecision(
+            id=row["id"],
+            status=row["status"],
+            source_row_application_id=row["source_row_application_id"],
+            source_row_application_status=row["source_row_application_status"],
+            source_draft_id=row["source_draft_id"],
+            source_schema_application_id=row["source_schema_application_id"],
+            source_ledger_id=row["source_ledger_id"],
+            source_checklist_id=row["source_checklist_id"],
+            source_index_id=row["source_index_id"],
+            source_brief_id=row["source_brief_id"],
+            source_audit_id=row["source_audit_id"],
+            operator_id=row["operator_id"],
+            selected_action=row["selected_action"],
+            selection_note=row["selection_note"],
+            evidence_reference=row["evidence_reference"],
+            pending_request_count_before=row["pending_request_count_before"],
+            decision_count=row["decision_count"],
+            approved_decision_count=row["approved_decision_count"],
+            deferred_decision_count=row["deferred_decision_count"],
+            more_evidence_decision_count=row["more_evidence_decision_count"],
+            pending_request_count_after=row["pending_request_count_after"],
+            existing_decision_count=row["existing_decision_count"],
+            created_approval_request_count=row["created_approval_request_count"],
+            external_request_count=row["external_request_count"],
+            capability_request_count=row["capability_request_count"],
+            decided_request_ids=_json_loads(row["decided_request_ids"], []),
             report_path=row["report_path"],
             created_at=row["created_at"],
         )

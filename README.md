@@ -61,8 +61,10 @@ operator approval schema chain can now cross its first explicit approval
 boundary by creating the local `operator_approval_requests` table only after
 an operator supplies an approved selection. After that table exists, an
 approved row-application command can create pending local
-`operator_approval_requests` rows from expansion approval drafts while still
-leaving legacy `approval_requests`, decisions, and external systems untouched.
+`operator_approval_requests` rows from expansion approval drafts. A decision
+command can then record local approve/defer/more-evidence decisions for those
+pending rows while still leaving legacy `approval_requests`, capability
+activation, trust promotion, and external systems untouched.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -327,6 +329,9 @@ The repository can now:
   approval drafts only after the schema exists and an operator supplies an
   approved row-creation selection, while creating no legacy
   `approval_requests` rows and deciding nothing;
+- record local decisions on pending `operator_approval_requests` rows with
+  explicit operator input while still creating no legacy `approval_requests`
+  rows, enabling no capability, and taking no external action;
 - record proposed eval candidates when verifier or workflow gaps are discovered;
 - promote repeated successful eval runs into reusable playbook files;
 - prefer lower-complexity queue items when candidate scores tie;
@@ -407,6 +412,7 @@ python3 -m agent_os.cli expansion-operator-approval-schema-migration-selection-p
 python3 -m agent_os.cli expansion-operator-approval-schema-migration-selection-input-template
 python3 -m agent_os.cli expansion-operator-approval-schema-migration-apply --operator-id operator --selected-action approve --selection-note "Approved local operator approval request schema." --evidence-reference docs/expansion-operator-approval-schema-migration-selection-input-template.md
 python3 -m agent_os.cli expansion-operator-approval-request-rows-apply --operator-id operator --selected-action approve --selection-note "Approved local operator approval request row creation after reviewing the draft packet." --evidence-reference docs/expansion-operator-approval-draft.md
+python3 -m agent_os.cli expansion-operator-approval-request-decide --operator-id operator --selected-action approve --selection-note "Approved pending operator approval requests after reviewing evidence." --evidence-reference docs/expansion-operator-approval-request-rows-application.md
 python3 -m agent_os.cli eval-candidates
 python3 -m agent_os.cli playbooks
 python3 -m agent_os.cli iterate
@@ -561,6 +567,10 @@ python3 -m pytest tests/test_first_milestone.py -q
   selection; an approved selection can create pending local
   `operator_approval_requests` rows while still creating zero legacy
   `approval_requests` rows and deciding nothing.
+- `docs/expansion-operator-approval-request-decisions.md`: generated decision
+  evidence for explicit operator selections on pending
+  `operator_approval_requests` rows; decisions update local row status while
+  still creating zero legacy `approval_requests` rows and enabling nothing.
 - `docs/dashboard.md`: generated operational view with an operator cockpit for
   active runs, registered projects, approval inbox, proposed effects,
   verification status, recent worktrees, queue health, approvals, handoff
@@ -585,9 +595,9 @@ python3 -m pytest tests/test_first_milestone.py -q
   approval schema migration action checklist, expansion operator approval
   schema migration selection packet, expansion operator approval schema
   migration selection input template, operator approval schema migration
-  applications, operator approval request row applications, playbooks, eval
-  candidates, iteration loop state, GitHub handoff packets, stuck tasks,
-  incidents, and recent activity.
+  applications, operator approval request row applications, operator approval
+  request decisions, playbooks, eval candidates, iteration loop state, GitHub
+  handoff packets, stuck tasks, incidents, and recent activity.
 - `knowledge.md`: stable human-readable knowledge promoted from repeated local
   evidence.
 - `playbooks/`: generated reusable playbook files from repeated successful evals.

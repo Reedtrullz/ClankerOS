@@ -5565,3 +5565,47 @@
   capabilities, promote trust, run CI, deploy, push, open PRs, start workers,
   schedule work, retry work, track spend, create legacy `approval_requests`
   rows, or mutate external systems.
+
+## 2026-06-22 Operator Approval Request Decisions
+
+- Added explicit local decision command:
+  `python3 -m agent_os.cli expansion-operator-approval-request-decide`.
+- The command requires `operator_id`, `selected_action`, `selection_note`, and
+  `evidence_reference`.
+- `selected_action=approve`, `defer`, or `request_more_evidence` updates
+  pending local `operator_approval_requests` rows to `approved`, `deferred`,
+  or `more_evidence_requested`.
+- Repeating a decision run is idempotent and records
+  `operator_approval_request_decisions_already_recorded` without rewriting
+  existing row decisions.
+- Latest live decision:
+  `operator_approval_request_decision_560d5914977d`, status
+  `operator_approval_request_decisions_recorded`, 11 pending requests before,
+  11 decisions recorded, 11 approved decisions, 0 pending requests after,
+  0 legacy `approval_requests` rows created, 2 external requests, and
+  9 capability requests.
+- Added dashboard visibility under
+  `## Expansion Operator Approval Request Decisions`.
+- Updated README, suggested-use docs, operating summary, tutorial docs, task
+  queue, generated dashboard, eval-after-change report, and next iteration
+  packet.
+- Verification evidence:
+  - Red-first focused tests failed before the CLI command existed.
+  - `python3 -m py_compile agent_os/operator_approval_request_decisions.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'approval_request_decide'` -> 3 passed, 237 deselected.
+  - `python3 -m pytest -q` -> 240 passed.
+  - Live command:
+    `python3 -m agent_os.cli expansion-operator-approval-request-decide --operator-id operator --selected-action approve --selection-note "Approved pending operator approval requests after reviewing evidence." --evidence-reference docs/expansion-operator-approval-request-rows-application.md` -> `operator_approval_request_decisions_recorded`.
+  - `python3 -m agent_os.cli dashboard` -> wrote `docs/dashboard.md`.
+  - `python3 -m agent_os.cli iterate` -> selected
+    `Add effect proposal records from approved operator approval request decisions.`
+  - `python3 -m agent_os.cli eval-after-change --change "Add operator approval request decisions" ...` -> pass as `run_0080e0fe7462`.
+  - `python3 -m agent_os.cli eval` -> pass.
+  - `python3 -m agent_os.cli playbooks` -> 1 active playbook.
+  - `python3 -m agent_os.cli queue-health` -> hotspots 0.
+  - `python3 -m agent_os.cli handoff-review` -> clear.
+  - `git diff --check` -> passed.
+- Non-claims: operator approval request decisions do not create legacy
+  `approval_requests` rows, enable capabilities, promote trust, run CI,
+  deploy, push, open PRs, start workers, schedule work, retry work, track
+  spend, mark the active goal complete, or mutate external systems.

@@ -1452,16 +1452,39 @@ work, or changing routing.
   retry work, track spend, create legacy `approval_requests` rows, or mutate
   external systems.
 
+## Latest Operator Approval Request Decisions
+
+- `expansion-operator-approval-request-decide` now exists as the explicit
+  operator decision crossing for pending local `operator_approval_requests`
+  rows.
+- The command records `approve`, `defer`, or `request_more_evidence` decisions
+  on local rows and writes a durable decision report.
+- Latest decision:
+  `operator_approval_request_decision_560d5914977d`, status
+  `operator_approval_request_decisions_recorded`, 11 pending requests before,
+  11 approved decisions, 0 pending requests after, 0 legacy
+  `approval_requests` rows created, 2 external requests, and
+  9 capability requests.
+- The dashboard exposes the latest decision under
+  `## Expansion Operator Approval Request Decisions`.
+- Latest eval-after-change:
+  `eval_after_change_9826c9e77cfc`, run `run_0080e0fe7462`, status `pass`.
+- Non-claims: request decisions do not enable capabilities, promote trust,
+  push, deploy, start workers, schedule work, retry work, track spend, create
+  legacy `approval_requests` rows, mark the active goal complete, or mutate
+  external systems.
+
 ## Next Actions
 
-Current focus: Add approval-gated decision command for pending operator approval request rows.
+Current focus: Add effect proposal records from approved operator approval request decisions.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add approval-gated decision command for pending operator approval request
-   rows.
-2. Build row decision as an approval-gated local effect sourced from pending
-   `operator_approval_requests` rows, with explicit allowed actions and
-   evidence-backed non-claims.
+   Add effect proposal records from approved operator approval request
+   decisions.
+2. Build effect proposal records sourced from approved
+   `operator_approval_requests` rows while keeping actual capability
+   activation, trust promotion, routing, workers, schedulers, and external
+   side effects blocked.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts exist.

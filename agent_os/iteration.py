@@ -660,6 +660,20 @@ def _current_posture(root: Path) -> list[str]:
                 operator_approval_request_rows_application = (
                     operator_approval_request_rows_application_rows[0].status
                 )
+        operator_approval_request_decisions = "none"
+        if _table_exists(
+            connection,
+            "operator_approval_request_decisions",
+        ):
+            operator_approval_request_decision_rows = Storage(
+                db_path
+            ).list_recent_operator_approval_request_decisions(
+                limit=1,
+            )
+            if operator_approval_request_decision_rows:
+                operator_approval_request_decisions = (
+                    operator_approval_request_decision_rows[0].status
+                )
         handoff_reviews = Storage(db_path).list_recent_handoff_reviews(limit=1)
 
     handoff_blocked_tasks = 0
@@ -718,6 +732,7 @@ def _current_posture(root: Path) -> list[str]:
         f"expansion operator approval schema migration selection input template: {expansion_operator_approval_schema_migration_selection_input_template}",
         f"operator approval schema migration application: {operator_approval_schema_migration_application}",
         f"operator approval request rows application: {operator_approval_request_rows_application}",
+        f"operator approval request decisions: {operator_approval_request_decisions}",
         f"proposed eval candidates: {proposed_eval_candidates}",
         f"active playbooks: {active_playbooks}",
         f"open stuck-task incidents: {stuck_count}",

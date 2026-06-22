@@ -296,6 +296,12 @@ Core layers for the bootstrap:
   approval request rows from the latest expansion approval draft. It creates
   no legacy `approval_requests` rows, decides no requests, promotes nothing,
   and takes no external action.
+- Operator approval request decisions: after pending local
+  `operator_approval_requests` rows exist, an explicit operator decision
+  selection can mark those rows `approved`, `deferred`, or
+  `more_evidence_requested`. The command records durable decision evidence
+  while creating no legacy `approval_requests` rows, enabling no capability,
+  promoting no trust, and taking no external action.
 - Iteration loop: `iterate` selects the next actionable queue item and writes a
   non-executing `docs/next-iteration.md` packet with verification commands.
 - Simplicity guardrail: when queue items have equal score metadata, `iterate`
@@ -327,9 +333,10 @@ Core layers for the bootstrap:
   expansion operator approval schema migration selection packets, expansion
   operator approval schema migration selection input templates, operator
   approval schema migration applications, operator approval request row
-  applications, playbooks, eval candidates, iteration packets, simplicity guardrails, approvals, proposed
-  effects, worktrees, verification status, stuck tasks, incidents, recent runs,
-  learnings, and eval results.
+  applications, operator approval request decisions, playbooks, eval
+  candidates, iteration packets, simplicity guardrails, approvals, proposed
+  effects, worktrees, verification status, stuck tasks, incidents, recent
+  runs, learnings, and eval results.
 
 ## First Milestone
 
@@ -625,6 +632,12 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   once for the latest draft, records evidence in
   `docs/expansion-operator-approval-request-rows-application.md`, and keeps
   `approval_requests_created: 0`.
+- Operator approval request decisions: available through
+  `python3 -m agent_os.cli expansion-operator-approval-request-decide`
+  after pending operator approval request rows exist. The command records
+  approve/defer/more-evidence decisions on local rows, writes evidence to
+  `docs/expansion-operator-approval-request-decisions.md`, and keeps
+  `approval_requests_created: 0` without enabling capabilities.
 - Eval candidate listing: available through
   `python3 -m agent_os.cli eval-candidates` and mirrored into
   `docs/dashboard.md`.

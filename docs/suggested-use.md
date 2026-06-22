@@ -60,6 +60,10 @@ Apply the operator approval request schema after I approve the generated selecti
 Create pending operator approval request rows from the latest expansion approval draft after I approve the row-creation selection, and prove no legacy approval requests were created.
 ```
 
+```text
+Decide pending operator approval request rows after I approve the decision selection, and prove that no capabilities or legacy approval requests were activated.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -75,7 +79,8 @@ Create pending operator approval request rows from the latest expansion approval
 11. Run `steer`, `next-action`, and `inbox` when the next operator move is unclear.
 12. Apply local schema changes only through explicit operator approval commands.
 13. Create local operator approval rows only through explicit operator approval commands.
-14. Record non-claims before treating the work as safe.
+14. Decide local operator approval rows only through explicit operator approval commands.
+15. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -218,6 +223,22 @@ the latest expansion approval draft. It must still report
 `approval_requests_created: 0`, and it does not decide, promote, route,
 deploy, or mutate external systems.
 
+After pending rows exist, the narrow local decision crossing is:
+
+```bash
+python3 -m agent_os.cli expansion-operator-approval-request-decide \
+  --operator-id operator \
+  --selected-action approve \
+  --selection-note "Approved pending operator approval requests after reviewing evidence." \
+  --evidence-reference docs/expansion-operator-approval-request-rows-application.md
+```
+
+That command may update pending local `operator_approval_requests` rows to
+`approved`, `deferred`, or `more_evidence_requested` depending on the selected
+action. It must still report `approval_requests_created: 0`, and it does not
+enable capabilities, promote trust, route work, deploy, or mutate external
+systems.
+
 ## When To Commit And Push
 
 Commit when:
@@ -233,11 +254,10 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 
 ## Practical Next Slices
 
-Good next slices now favor operator-decision work before broader autonomy:
+Good next slices now favor effect proposal work before broader autonomy:
 
-- approval-gated decision commands for pending `operator_approval_requests`
-  rows;
-- dashboard and review surfaces for pending row decisions;
+- effect proposal records from approved `operator_approval_requests` rows;
+- per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;
 - remote-worker, scheduler, browser/desktop adapter, budget, trust, retry, and

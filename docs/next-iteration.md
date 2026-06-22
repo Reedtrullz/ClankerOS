@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_c5bc7795faf5
+- Packet ID: iteration_6a631b6ef0c3
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add approval-gated decision command for pending operator approval request rows.
+Advance the Agent System north-star goal by completing: Add effect proposal records from approved operator approval request decisions.
 
 ## Definition Of Done
 
@@ -130,6 +130,7 @@ Advance the Agent System north-star goal by completing: Add approval-gated decis
 - expansion operator approval schema migration selection input template: operator_approval_schema_migration_selection_input_required
 - operator approval schema migration application: operator_approval_schema_migration_applied
 - operator approval request rows application: operator_approval_request_rows_applied
+- operator approval request decisions: operator_approval_request_decisions_recorded
 - proposed eval candidates: 0
 - active playbooks: 1
 - open stuck-task incidents: 0

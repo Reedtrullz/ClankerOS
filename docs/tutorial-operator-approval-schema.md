@@ -125,7 +125,36 @@ The legacy task-scoped `approval_requests` table remains untouched.
 Repeating the command is idempotent and reports
 `operator_approval_request_rows_already_applied`.
 
-## 6. Refresh Visibility
+## 6. Decide Pending Operator Approval Rows
+
+After pending rows exist, record a local operator decision for them:
+
+```bash
+python3 -m agent_os.cli expansion-operator-approval-request-decide \
+  --operator-id operator \
+  --selected-action approve \
+  --selection-note "Approved pending operator approval requests after reviewing evidence." \
+  --evidence-reference docs/expansion-operator-approval-request-rows-application.md
+```
+
+Expected output includes:
+
+```text
+expansion_operator_approval_request_decide: operator_approval_request_decisions_recorded
+pending_requests_before: 11
+decisions_recorded: 11
+approved_decisions: 11
+approval_requests_created: 0
+```
+
+The pending rows are updated in `operator_approval_requests`. The legacy
+task-scoped `approval_requests` table remains untouched, and approved local
+operator request rows do not enable capabilities by themselves.
+
+Repeating the command is idempotent and reports
+`operator_approval_request_decisions_already_recorded`.
+
+## 7. Refresh Visibility
 
 Regenerate the dashboard:
 
@@ -138,19 +167,19 @@ Read `docs/dashboard.md` under:
 ```text
 ## Expansion Operator Approval Schema Migration Application
 ## Expansion Operator Approval Request Rows Application
+## Expansion Operator Approval Request Decisions
 ```
 
 The dashboard should show the latest schema selection, whether the local table
-was created, how many pending operator approval rows were created, and the
-explicit zero count for legacy approval rows.
+was created, how many pending operator approval rows were created, the latest
+row decisions, and the explicit zero count for legacy approval rows.
 
 ## Non-Claims
 
 This flow does not:
 
-- decide pending operator approval request rows;
 - create legacy `approval_requests` rows;
-- approve pending decisions;
+- enable capabilities from approved local operator approval request rows;
 - promote a capability or trust level;
 - run CI, deploy, push, or open a pull request;
 - start workers, subagents, browser adapters, desktop adapters, retries, or

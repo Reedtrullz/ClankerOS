@@ -129,6 +129,9 @@ from agent_os.operator_approval_schema_migration import (
 from agent_os.operator_approval_request_rows import (
     render_operator_approval_request_rows_application_line,
 )
+from agent_os.operator_approval_request_decisions import (
+    render_operator_approval_request_decision_line,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -606,6 +609,14 @@ def generate_static_dashboard(root: Path) -> Path:
                     limit=1,
                 )
             )
+        operator_approval_request_decisions = []
+        if _table_exists(
+            connection,
+            "operator_approval_request_decisions",
+        ):
+            operator_approval_request_decisions = (
+                storage.list_recent_operator_approval_request_decisions(limit=1)
+            )
 
     statuses = [
         "pending",
@@ -816,6 +827,11 @@ def generate_static_dashboard(root: Path) -> Path:
     latest_operator_approval_request_row_application = (
         operator_approval_request_row_applications[0]
         if operator_approval_request_row_applications
+        else None
+    )
+    latest_operator_approval_request_decision = (
+        operator_approval_request_decisions[0]
+        if operator_approval_request_decisions
         else None
     )
     eval_after_change_statuses = Counter(
@@ -1164,6 +1180,47 @@ def generate_static_dashboard(root: Path) -> Path:
                 render_expansion_operator_approval_schema_migration_plan_line(
                     latest_expansion_operator_approval_schema_migration_plan
                 ),
+            ]
+        )
+    else:
+        lines.append("- none")
+
+    lines.extend(
+        [
+            "",
+            "## Expansion Operator Approval Request Decisions",
+            "",
+        ]
+    )
+    if latest_operator_approval_request_decision is not None:
+        decision = latest_operator_approval_request_decision
+        lines.extend(
+            [
+                f"- status: {decision.status}",
+                f"- source_row_application: {decision.source_row_application_id}",
+                f"- source_status: {decision.source_row_application_status}",
+                f"- source_draft: {decision.source_draft_id}",
+                f"- source_schema_application: {decision.source_schema_application_id}",
+                f"- source_ledger: {decision.source_ledger_id}",
+                f"- source_checklist: {decision.source_checklist_id}",
+                f"- source_index: {decision.source_index_id}",
+                f"- source_brief: {decision.source_brief_id}",
+                f"- source_audit: {decision.source_audit_id}",
+                f"- operator_id: {decision.operator_id}",
+                f"- selected_action: {decision.selected_action}",
+                f"- pending_requests_before: {decision.pending_request_count_before}",
+                f"- decisions_recorded: {decision.decision_count}",
+                f"- approved_decisions: {decision.approved_decision_count}",
+                f"- deferred_decisions: {decision.deferred_decision_count}",
+                f"- more_evidence_decisions: {decision.more_evidence_decision_count}",
+                f"- pending_requests_after: {decision.pending_request_count_after}",
+                f"- existing_decisions: {decision.existing_decision_count}",
+                f"- approval_requests_created: {decision.created_approval_request_count}",
+                f"- external_requests: {decision.external_request_count}",
+                f"- capability_requests: {decision.capability_request_count}",
+                f"- report: {decision.report_path}",
+                "",
+                render_operator_approval_request_decision_line(decision),
             ]
         )
     else:
