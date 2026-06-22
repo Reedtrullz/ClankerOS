@@ -6257,3 +6257,73 @@
   proof, mutate activation contracts, allow activation, enable capabilities,
   promote trust, schedule work, retry work, track spend, run CI, deploy, push,
   open PRs, mark the active goal complete, or mutate external systems.
+
+## 2026-06-22 Capability Activation Follow-Up Result Task Results
+
+- Added local downstream result ingestion command:
+  `python3 -m agent_os.cli capability-activation-followup-result-task-results`.
+- The command records
+  `capability_activation_followup_result_task_result_records` rows plus
+  `capability_activation_followup_result_task_result_batches`, writes JSON
+  artifacts under
+  `docs/capability-activation-followup-result-task-results/`, and preserves
+  source effect, application, result, delegation, downstream task, contract,
+  and capability links.
+- Live pre-completion batch:
+  `capability_activation_followup_result_task_result_batch_11dde4be00ba`,
+  status
+  `capability_activation_followup_result_task_results_no_completed_delegations`,
+  with 0 completed delegations and 0 result records.
+- Recorded downstream delegation result:
+  `subagent_delegation_0de281ad619c`, summary
+  `Evaluator drafted the next hosted dashboard evidence plan while keeping activation blocked.`,
+  result artifact
+  `.clanker/delegations/subagent_delegation_0de281ad619c-result.json`,
+  0 network actions and 0 external mutations.
+- Initial live ingestion batch:
+  `capability_activation_followup_result_task_result_batch_f94f267f012d`,
+  status
+  `capability_activation_followup_result_task_results_recorded`, created
+  result `capability_activation_followup_result_task_result_749b9c23cd2f`
+  for `subagent_delegation_0de281ad619c` /
+  `task_b18120b40e5e` / `hosted_dashboard`.
+- Final live idempotency batch:
+  `capability_activation_followup_result_task_result_batch_1a759325fee5`,
+  status
+  `capability_activation_followup_result_task_results_already_recorded`,
+  with 1 completed delegation, 0 new result records, 1 existing result
+  record, 0 approval requests, 0 activation actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-results.md`
+  - `docs/capability-activation-followup-result-task-results/subagent_delegation_0de281ad619c-hosted-dashboard.json`
+  - `.clanker/delegations/subagent_delegation_0de281ad619c-result.json`
+- Added `docs/tutorial-capability-followup-result-task-results.md` and updated
+  docs index, README, suggested-use docs, operating summary, workflow, task
+  queue, generated dashboard, and generated next-iteration packet.
+- Next packet:
+  `Add operator review decisions for downstream follow-up result task records.`
+- Verification evidence:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'capability_activation_followup_result_task_results'`
+    -> failed with missing CLI command, as expected.
+  - `python3 -m py_compile agent_os/capability_activation_followup_result_task_results.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py tests/test_first_milestone.py`
+    -> passed.
+  - Focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'capability_activation_followup_result_task_results'`
+    -> 3 passed, 283 deselected.
+  - Adjacent green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'capability_activation_followup_result_task_results or capability_activation_followup_result_task_delegations or capability_activation_followup_result_tasks'`
+    -> 9 passed, 277 deselected.
+  - Broader green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'capability_activation_followup_result'`
+    -> 21 passed, 265 deselected.
+  - `python3 -m pytest -q` -> 286 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add capability followup result task result ingestion" ...`
+    -> pass as `run_917b14566d23`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`.
+  - `python3 -m agent_os.cli queue-health` -> hotspots 0.
+- Non-claims: downstream follow-up result task result ingestion does not start
+  subagents, call model providers, create `approval_requests`, satisfy proof,
+  mutate activation contracts, allow activation, enable capabilities, promote
+  trust, schedule work, retry work, track spend, run CI, deploy, push, open
+  PRs, mark the active goal complete, or mutate external systems.

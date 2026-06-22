@@ -30,6 +30,7 @@ local result records -> operator follow-up review decisions -> blocked activatio
 accepted blocked follow-up decisions -> proposed effect records -> blocked activation preserved
 applied follow-up result effects -> downstream proof tasks -> next evidence plan
 downstream proof tasks -> routing decisions -> read-only delegation packets
+completed downstream proof-plan delegation results -> local result records -> next evidence plan preserved
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -120,6 +121,12 @@ Those downstream proof tasks can now be routed to the read-only evaluator
 profile and materialized as pending delegation packets with local JSON
 artifacts, without starting a subagent, calling a model provider, or allowing
 activation.
+Completed downstream proof-plan delegation results can now be ingested as
+local result records and JSON artifacts, preserving the source effect, result,
+contract, task, and capability links while still keeping
+`activation_allowed=false`, `capability_enabled=false`,
+`approval_requests_created=0`, `activation_actions_taken=0`, and
+`external_mutations_taken=0`.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -129,7 +136,7 @@ verification.
 GitHub description:
 
 ```text
-Local-first agent operating system harness for goal loops, task graphs, verification evidence, approvals, and operator-visible autonomy.
+Local-first agent OS harness for durable AI coding work: task graphs, verification evidence, approvals, and operator-visible autonomy.
 ```
 
 Suggested GitHub topics:
@@ -466,6 +473,7 @@ python3 -m agent_os.cli capability-activation-followup-result-effect-proposals
 python3 -m agent_os.cli capability-activation-followup-result-effect-apply --operator-id operator --selection-note "Apply accepted blocked follow-up result effect proposals as local records only." --evidence-reference docs/capability-activation-followup-result-effect-proposals.md
 python3 -m agent_os.cli capability-activation-followup-result-tasks
 python3 -m agent_os.cli capability-activation-followup-result-task-delegations
+python3 -m agent_os.cli capability-activation-followup-result-task-results
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"

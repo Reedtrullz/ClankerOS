@@ -1,8 +1,8 @@
 # Handoff Review
 
-- id: handoff_review_d25019c425a8
+- id: handoff_review_1945a712388e
 - status: clear
-- current_focus: Add result ingestion for downstream follow-up result delegation packets.
+- current_focus: Add operator review decisions for downstream follow-up result task records.
 - blocked_tasks: 0
 - stale_handoffs: 0
 - reviewed_paths: 1

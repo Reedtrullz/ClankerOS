@@ -1,0 +1,91 @@
+{
+  "activation_actions_taken": 0,
+  "activation_allowed": false,
+  "approval_requests_created": 0,
+  "assigned_profile": "evaluator",
+  "capability": "hosted_dashboard",
+  "capability_enabled": false,
+  "delegation_id": "subagent_delegation_0de281ad619c",
+  "delegation_result": {
+    "artifact_path": "/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_0de281ad619c-result.json",
+    "completed_at": "2026-06-22T19:45:19.068576+00:00",
+    "recorded_by": "operator",
+    "result_summary": "Evaluator drafted the next hosted dashboard evidence plan while keeping activation blocked.",
+    "structured_output": {
+      "evidence": [
+        {
+          "status": "planned",
+          "summary": "Collect fresh hosted dashboard proof packet before any activation."
+        }
+      ],
+      "findings": [
+        {
+          "severity": "medium",
+          "summary": "Keep hosted dashboard activation blocked until proof and approval gates are satisfied."
+        }
+      ]
+    }
+  },
+  "downstream_task_id": "task_b18120b40e5e",
+  "evidence_status": "next_evidence_plan_recorded",
+  "external_mutations_taken": 0,
+  "goal_id": "goal_93142fb93eca",
+  "non_claims": [
+    "No subagent was started by this ingestion command.",
+    "No model provider was called by this ingestion command.",
+    "No approval request was created.",
+    "Capability activation remains blocked.",
+    "Capability proof is not satisfied by this result record.",
+    "No external system was mutated by this ingestion command."
+  ],
+  "project_id": "bootstrap",
+  "result_summary": "Evaluator drafted the next hosted dashboard evidence plan while keeping activation blocked.",
+  "source_application_id": "capability_activation_followup_result_effect_application_4f187a56bc17",
+  "source_contract_id": "capability_activation_contract_5f51a9f00ad5",
+  "source_decision_id": "capability_activation_followup_result_decision_146e16543cec",
+  "source_delegation_id": "subagent_delegation_48d1cc9f63ae",
+  "source_effect_id": "effect_0fa73f003874",
+  "source_followup_task_id": "task_4e0c48c4ff48",
+  "source_result_id": "capability_activation_followup_result_4c9b8b0d1c43",
+  "source_task_evidence": {
+    "activation_actions_taken": 0,
+    "activation_allowed": false,
+    "approval_requests_created": 0,
+    "capability": "hosted_dashboard",
+    "capability_enabled": false,
+    "external_mutations_taken": 0,
+    "selected_action": "accept_keep_blocked",
+    "source_activation_decision_id": "capability_activation_decision_7e9a89479c7b",
+    "source_application_id": "capability_activation_followup_result_effect_application_4f187a56bc17",
+    "source_contract_id": "capability_activation_contract_5f51a9f00ad5",
+    "source_decision_id": "capability_activation_followup_result_decision_146e16543cec",
+    "source_delegation_id": "subagent_delegation_48d1cc9f63ae",
+    "source_effect_id": "effect_0fa73f003874",
+    "source_followup_task_id": "task_4e0c48c4ff48",
+    "source_result_id": "capability_activation_followup_result_4c9b8b0d1c43",
+    "task_origin": "applied_capability_followup_result_effect"
+  },
+  "source_verification_plan": {
+    "activation_allowed": false,
+    "capability": "hosted_dashboard",
+    "capability_enabled": false,
+    "non_claims": [
+      "does_not_enable_capability",
+      "does_not_allow_activation",
+      "does_not_satisfy_capability_proof",
+      "does_not_mutate_external_systems",
+      "does_not_create_approval_requests"
+    ],
+    "required_gates": [
+      "next_evidence_plan",
+      "fresh_verification",
+      "explicit_operator_approval",
+      "non_claim_review"
+    ],
+    "selected_action": "accept_keep_blocked",
+    "source_application_id": "capability_activation_followup_result_effect_application_4f187a56bc17",
+    "source_effect_id": "effect_0fa73f003874",
+    "source_result_id": "capability_activation_followup_result_4c9b8b0d1c43",
+    "type": "capability_activation_followup_result_downstream_task"
+  }
+}

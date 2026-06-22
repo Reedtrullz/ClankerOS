@@ -3620,3 +3620,40 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_1b3d8992b809
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_1da58c9a62d1/summary.md
+
+## Run run_51df62621e6b
+
+- Goal ID: goal_f2d4dece3fc9
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_51df62621e6b/summary.md
+
+## Run run_917b14566d23
+
+- Goal ID: goal_5dfd880d8d1b
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_917b14566d23/summary.md
+
+## 2026-06-22 Capability Follow-Up Result Task Results
+
+- Added `capability-activation-followup-result-task-results` to ingest
+  completed downstream proof-plan delegation outputs into local result
+  records.
+- Pre-completion live run recorded
+  `capability_activation_followup_result_task_result_batch_11dde4be00ba`
+  with 0 completed delegations.
+- Recorded structured local result for `subagent_delegation_0de281ad619c`
+  with 0 network actions and 0 external mutations.
+- Initial live ingestion recorded
+  `capability_activation_followup_result_task_result_batch_f94f267f012d`
+  and created
+  `capability_activation_followup_result_task_result_749b9c23cd2f` for
+  `task_b18120b40e5e` / `hosted_dashboard`.
+- Final idempotency run recorded
+  `capability_activation_followup_result_task_result_batch_1a759325fee5`
+  with 0 new records and 1 existing result record.
+- Evidence report:
+  `docs/capability-activation-followup-result-task-results.md`.
+- Evidence artifact:
+  `docs/capability-activation-followup-result-task-results/subagent_delegation_0de281ad619c-hosted-dashboard.json`.
+- Next focus:
+  Add operator review decisions for downstream follow-up result task records.

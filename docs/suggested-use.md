@@ -434,6 +434,27 @@ packet. It keeps `execution_started=0`, `network_actions_taken=0`,
 `external_mutations_taken=0`, and `activation_actions_taken=0`; the packets
 are local proof-planning contracts, not worker execution.
 
+After a downstream proof-plan delegation has been completed by recording an
+operator-supplied structured result, ingest it as a local downstream result
+record:
+
+```bash
+python3 -m agent_os.cli record-delegation-result <delegation_id> \
+  --summary "Evaluator drafted the next evidence plan while keeping activation blocked." \
+  --output-json '{"evidence":[{"status":"planned","summary":"Collect hosted dashboard proof."}],"findings":[{"summary":"Keep activation blocked."}]}'
+python3 -m agent_os.cli capability-activation-followup-result-task-results
+python3 -m agent_os.cli dashboard
+```
+
+The result command writes
+`docs/capability-activation-followup-result-task-results.md`, stores one local
+result row per completed downstream delegation, and writes JSON artifacts under
+`docs/capability-activation-followup-result-task-results/`. It keeps
+`approval_requests_created=0`, `activation_actions_taken=0`,
+`external_mutations_taken=0`, `activation_allowed=false`, and
+`capability_enabled=false`; the result is a preserved evidence plan, not
+capability activation or proof satisfaction.
+
 ## When To Commit And Push
 
 Commit when:

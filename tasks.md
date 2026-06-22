@@ -114,7 +114,8 @@
 - [x] Add local application records for follow-up decision effect proposals. <!-- score=9 complexity=4 -->
 - [x] Add downstream task records from applied follow-up decision effect applications. <!-- score=9 complexity=4 -->
 - [x] Add routing and delegation packets for downstream follow-up result tasks. <!-- score=9 complexity=4 -->
-- [ ] Add result ingestion for downstream follow-up result delegation packets. <!-- score=9 complexity=4 -->
+- [x] Add result ingestion for downstream follow-up result delegation packets. <!-- score=9 complexity=4 -->
+- [ ] Add operator review decisions for downstream follow-up result task records. <!-- score=9 complexity=4 -->
 
 ## blocked
 

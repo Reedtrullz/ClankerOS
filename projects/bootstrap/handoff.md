@@ -1790,15 +1790,50 @@ work, or changing routing.
   promote trust, schedule work, retry work, track spend, run CI, deploy, push,
   open PRs, mark the active goal complete, or mutate external systems.
 
+## Latest Capability Activation Follow-Up Result Task Results
+
+- `capability-activation-followup-result-task-results` now ingests completed
+  downstream proof-plan delegation outputs into durable local result records.
+- Pre-completion live batch:
+  `capability_activation_followup_result_task_result_batch_11dde4be00ba`,
+  status
+  `capability_activation_followup_result_task_results_no_completed_delegations`.
+- Recorded local delegation result:
+  `subagent_delegation_0de281ad619c`, result artifact
+  `.clanker/delegations/subagent_delegation_0de281ad619c-result.json`, 0
+  network actions, and 0 external mutations.
+- Initial live ingestion batch:
+  `capability_activation_followup_result_task_result_batch_f94f267f012d`,
+  status
+  `capability_activation_followup_result_task_results_recorded`, created
+  `capability_activation_followup_result_task_result_749b9c23cd2f` for
+  `task_b18120b40e5e` / `hosted_dashboard`.
+- Final live idempotency batch:
+  `capability_activation_followup_result_task_result_batch_1a759325fee5`,
+  status
+  `capability_activation_followup_result_task_results_already_recorded`, with
+  1 completed delegation, 0 new result records, 1 existing result record, 0
+  approval requests, 0 activation actions, and 0 external mutations.
+- Evidence report:
+  `docs/capability-activation-followup-result-task-results.md`.
+- Evidence artifact:
+  `docs/capability-activation-followup-result-task-results/subagent_delegation_0de281ad619c-hosted-dashboard.json`.
+- Tutorial:
+  `docs/tutorial-capability-followup-result-task-results.md`.
+- Non-claims: downstream follow-up result task result ingestion does not start
+  subagents, call model providers, create `approval_requests`, satisfy proof,
+  mutate activation contracts, allow activation, enable capabilities, promote
+  trust, schedule work, retry work, track spend, run CI, deploy, push, open
+  PRs, mark the active goal complete, or mutate external systems.
+
 ## Next Actions
 
-Current focus: Add result ingestion for downstream follow-up result delegation packets.
+Current focus: Add operator review decisions for downstream follow-up result task records.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add result ingestion for downstream follow-up result delegation packets.
-2. Ingest completed downstream proof-plan delegation output into local result
-   records without starting workers, enabling capabilities, or allowing
-   activation.
+   Add operator review decisions for downstream follow-up result task records.
+2. Record operator decisions over downstream proof-plan result records without
+   enabling capabilities, satisfying proof, or allowing activation.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.

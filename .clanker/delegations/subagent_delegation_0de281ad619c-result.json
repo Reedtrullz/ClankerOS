@@ -1,0 +1,37 @@
+{
+  "assigned_profile": "evaluator",
+  "category": "evidence_review",
+  "completed_at": "2026-06-22T19:45:19.068576+00:00",
+  "created_at": "2026-06-22T19:21:41.683139+00:00",
+  "execution_started": false,
+  "expected_output_schema": "evidence_review",
+  "external_mutations_taken": 0,
+  "id": "subagent_delegation_0de281ad619c",
+  "network_actions_taken": 0,
+  "non_claims": [
+    "No subagent was started by this ingestion command.",
+    "No model provider was called by this ingestion command.",
+    "No file, git, approval, or external state was mutated beyond this local result record."
+  ],
+  "parent_goal_id": "goal_93142fb93eca",
+  "parent_task_id": "task_b18120b40e5e",
+  "recorded_by": "operator",
+  "result_summary": "Evaluator drafted the next hosted dashboard evidence plan while keeping activation blocked.",
+  "routing_decision_id": "routing_decision_385ccbd6918c",
+  "status": "completed",
+  "structured_output": {
+    "evidence": [
+      {
+        "status": "planned",
+        "summary": "Collect fresh hosted dashboard proof packet before any activation."
+      }
+    ],
+    "findings": [
+      {
+        "severity": "medium",
+        "summary": "Keep hosted dashboard activation blocked until proof and approval gates are satisfied."
+      }
+    ]
+  },
+  "title": "Plan next proof evidence for hosted_dashboard"
+}

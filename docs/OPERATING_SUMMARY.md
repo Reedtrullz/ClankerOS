@@ -153,6 +153,12 @@ Core layers for the bootstrap:
   packets. Each packet preserves the next evidence-plan context while keeping
   subagent execution, model-provider calls, approval rows, external mutations,
   activation actions, activation allowance, and capability enablement at zero.
+- Capability activation follow-up result task results: completed downstream
+  proof-plan delegation packets can be ingested as local result records and
+  JSON artifacts. Each result preserves the source effect, result, delegation,
+  downstream task, contract, and capability links while keeping approval rows,
+  external mutations, activation actions, activation allowance, capability
+  enablement, and proof satisfaction at zero.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON
@@ -766,6 +772,15 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   `execution_started: 0`, `network_actions_taken: 0`,
   `external_mutations_taken: 0`, `activation_actions_taken: 0`,
   `activation_allowed: false`, and `capability_enabled: false`.
+- Capability activation follow-up result task results: available through
+  `python3 -m agent_os.cli capability-activation-followup-result-task-results`
+  after downstream proof-plan delegation packets have completed results. The
+  command writes
+  `docs/capability-activation-followup-result-task-results.md`, stores local
+  result records and JSON artifacts, and keeps
+  `approval_requests_created: 0`, `activation_actions_taken: 0`,
+  `external_mutations_taken: 0`, `activation_allowed: false`, and
+  `capability_enabled: false`.
 - Eval candidate listing: available through
   `python3 -m agent_os.cli eval-candidates` and mirrored into
   `docs/dashboard.md`.
