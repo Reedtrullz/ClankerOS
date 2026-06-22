@@ -1,0 +1,6 @@
+{
+  "created_at": "2026-06-22T02:56:13.447751+00:00",
+  "reason": "The local closed loop is the core regression boundary for future changes.",
+  "source_run_id": "run_ee31e7ccd86f",
+  "suggested_eval": "closed_loop_regression"
+}

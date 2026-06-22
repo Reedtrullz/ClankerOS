@@ -1,0 +1,1670 @@
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+from agent_os.budget_trust import (
+    format_risk_counts,
+    write_budget_trust_posture_report,
+)
+from agent_os.capability_expansion import (
+    render_capability_expansion_ledger_line,
+    write_capability_expansion_ledger,
+)
+from agent_os.capability_approval_boundary import (
+    format_recommended_commands as format_approval_boundary_commands,
+    render_capability_approval_boundary_matrix_line,
+    write_capability_approval_boundary_matrix,
+)
+from agent_os.capability_evidence_collection import (
+    format_recommended_commands as format_evidence_collection_commands,
+    render_capability_evidence_collection_plan_line,
+    write_capability_evidence_collection_plan,
+)
+from agent_os.capability_promotion_gate import (
+    format_recommended_commands as format_promotion_gate_commands,
+    render_capability_promotion_gate_checklist_line,
+    write_capability_promotion_gate_checklist,
+)
+from agent_os.capability_promotion_decision import (
+    format_recommended_commands as format_promotion_decision_commands,
+    render_capability_promotion_decision_ledger_line,
+    write_capability_promotion_decision_ledger,
+)
+from agent_os.capability_trust_promotion import (
+    format_recommended_commands as format_trust_promotion_commands,
+    render_capability_trust_promotion_audit_line,
+    write_capability_trust_promotion_audit,
+)
+from agent_os.capability_automatic_retry import (
+    format_recommended_commands as format_automatic_retry_commands,
+    render_capability_automatic_retry_audit_line,
+    write_capability_automatic_retry_audit,
+)
+from agent_os.capability_real_cost_tracking import (
+    format_recommended_commands as format_real_cost_tracking_commands,
+    render_capability_real_cost_tracking_audit_line,
+    write_capability_real_cost_tracking_audit,
+)
+from agent_os.hosted_dashboard_proof import (
+    format_recommended_commands as format_hosted_dashboard_commands,
+    render_hosted_dashboard_proof_checklist_line,
+    write_hosted_dashboard_proof_checklist,
+)
+from agent_os.remote_worker_proof import (
+    format_recommended_commands as format_remote_worker_commands,
+    render_remote_worker_proof_checklist_line,
+    write_remote_worker_proof_checklist,
+)
+from agent_os.autonomous_scheduling_proof import (
+    format_recommended_commands as format_autonomous_scheduling_commands,
+    render_autonomous_scheduling_proof_checklist_line,
+    write_autonomous_scheduling_proof_checklist,
+)
+from agent_os.browser_desktop_adapter_proof import (
+    format_recommended_commands as format_browser_desktop_adapter_commands,
+    render_browser_desktop_adapter_proof_checklist_line,
+    write_browser_desktop_adapter_proof_checklist,
+)
+from agent_os.ci_deploy_proof import (
+    format_recommended_commands as format_ci_deploy_commands,
+    render_ci_deploy_proof_checklist_line,
+    write_ci_deploy_proof_checklist,
+)
+from agent_os.budget_enforcement_proof import (
+    format_recommended_commands as format_budget_enforcement_commands,
+    render_budget_enforcement_proof_checklist_line,
+    write_budget_enforcement_proof_checklist,
+)
+from agent_os.trust_promotion_proof import (
+    format_recommended_commands as format_trust_promotion_proof_commands,
+    render_trust_promotion_proof_checklist_line,
+    write_trust_promotion_proof_checklist,
+)
+from agent_os.automatic_retry_proof import (
+    format_recommended_commands as format_automatic_retry_proof_commands,
+    render_automatic_retry_proof_checklist_line,
+    write_automatic_retry_proof_checklist,
+)
+from agent_os.real_cost_tracking_proof import (
+    format_recommended_commands as format_real_cost_tracking_proof_commands,
+    render_real_cost_tracking_proof_checklist_line,
+    write_real_cost_tracking_proof_checklist,
+)
+from agent_os.goal_completion_audit import (
+    format_recommended_commands as format_goal_completion_audit_commands,
+    render_goal_completion_audit_line,
+    write_goal_completion_audit,
+)
+from agent_os.expansion_decision_brief import (
+    render_expansion_decision_brief_line,
+    write_expansion_decision_brief,
+)
+from agent_os.expansion_decision_evidence_index import (
+    render_expansion_decision_evidence_index_line,
+    write_expansion_decision_evidence_index,
+)
+from agent_os.expansion_operator_review_checklist import (
+    format_allowed_actions as format_operator_review_allowed_actions,
+    render_expansion_operator_review_checklist_line,
+    write_expansion_operator_review_checklist,
+)
+from agent_os.expansion_operator_decision_ledger import (
+    format_allowed_actions as format_operator_decision_allowed_actions,
+    render_expansion_operator_decision_ledger_line,
+    write_expansion_operator_decision_ledger,
+)
+from agent_os.expansion_operator_approval_draft import (
+    format_allowed_actions as format_operator_approval_allowed_actions,
+    render_expansion_operator_approval_draft_line,
+    write_expansion_operator_approval_draft,
+)
+from agent_os.expansion_operator_approval_request_review import (
+    render_expansion_operator_approval_request_review_line,
+    write_expansion_operator_approval_request_review,
+)
+from agent_os.expansion_operator_approval_schema_decision import (
+    render_expansion_operator_approval_schema_decision_line,
+    write_expansion_operator_approval_schema_decision,
+)
+from agent_os.expansion_operator_approval_schema_migration_plan import (
+    render_expansion_operator_approval_schema_migration_plan_line,
+    write_expansion_operator_approval_schema_migration_plan,
+)
+from agent_os.expansion_operator_approval_schema_migration_approval_request import (
+    format_allowed_actions as format_schema_migration_approval_actions,
+    render_expansion_operator_approval_schema_migration_approval_request_line,
+    write_expansion_operator_approval_schema_migration_approval_request,
+)
+from agent_os.expansion_operator_approval_schema_migration_decision_ledger import (
+    format_allowed_actions as format_schema_migration_decision_actions,
+    render_expansion_operator_approval_schema_migration_decision_ledger_line,
+    write_expansion_operator_approval_schema_migration_decision_ledger,
+)
+from agent_os.expansion_operator_approval_schema_migration_action_checklist import (
+    format_allowed_actions as format_schema_migration_action_actions,
+    render_expansion_operator_approval_schema_migration_action_checklist_line,
+    write_expansion_operator_approval_schema_migration_action_checklist,
+)
+from agent_os.expansion_operator_approval_schema_migration_selection_packet import (
+    format_allowed_actions as format_schema_migration_selection_actions,
+    render_expansion_operator_approval_schema_migration_selection_packet_line,
+    write_expansion_operator_approval_schema_migration_selection_packet,
+)
+from agent_os.capability_proof_gap import (
+    format_recommended_commands as format_proof_gap_commands,
+    render_capability_proof_gap_index_line,
+    write_capability_proof_gap_index,
+)
+from agent_os.capability_readiness import (
+    format_recommended_commands as format_readiness_commands,
+    render_capability_readiness_review_line,
+    write_capability_readiness_review,
+)
+from agent_os.dashboard import generate_static_dashboard
+from agent_os.dispatch_posture_history import (
+    render_dispatch_posture_history_line,
+    write_dispatch_posture_history_report,
+)
+from agent_os.dispatch_posture_refresh import (
+    format_recommended_commands,
+    render_dispatch_posture_refresh_line,
+    write_dispatch_posture_refresh_report,
+)
+from agent_os.dispatch_posture_staleness import (
+    format_optional_age_seconds,
+    render_dispatch_posture_staleness_line,
+    write_dispatch_posture_staleness_report,
+)
+from agent_os.engine import AgentSystem
+from agent_os.eval import run_first_milestone_eval
+from agent_os.eval_after_change import run_eval_after_change
+from agent_os.handoff_review import (
+    render_stale_handoff_line,
+    write_handoff_review_report,
+)
+from agent_os.iteration import generate_next_iteration_packet
+from agent_os.learning_distillation import (
+    DEFAULT_MIN_OCCURRENCES,
+    distill_learnings,
+    render_stable_learning_line,
+)
+from agent_os.playbooks import (
+    DEFAULT_MIN_SUCCESSES,
+    promote_successful_run_playbooks,
+    render_playbook_line,
+)
+from agent_os.queue_health import render_queue_health_finding, write_queue_health_report
+from agent_os.runtime import detect_runtime_capabilities, write_runtime_capability_matrix
+
+
+def render_eval_candidate_line(candidate) -> str:
+    return (
+        f"{candidate.id}: {candidate.status} "
+        f"source={candidate.source_type}:{candidate.source_id} "
+        f"suggested={candidate.suggested_eval} path={candidate.candidate_path}"
+    )
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="agent-os")
+    parser.add_argument(
+        "--root",
+        default=".",
+        help="Repository root for state and artifacts.",
+    )
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    subparsers.add_parser("init", help="Initialize local harness files and database.")
+    subparsers.add_parser("capability-matrix", help="Write the runtime capability matrix.")
+    subparsers.add_parser("dashboard", help="Write the static dashboard.")
+    subparsers.add_parser("iterate", help="Write the next iteration packet from repo queues.")
+    subparsers.add_parser("approvals", help="List pending approval requests.")
+    subparsers.add_parser("handoff-review", help="Review blocked tasks and stale handoffs.")
+    subparsers.add_parser(
+        "budget-trust-posture",
+        help="Report local budget/trust posture metadata without enforcement.",
+    )
+    subparsers.add_parser(
+        "dispatch-posture-history",
+        help="Summarize recent report-only dispatch posture snapshots.",
+    )
+    dispatch_posture_staleness = subparsers.add_parser(
+        "dispatch-posture-staleness",
+        help="Review local dispatch posture snapshot freshness.",
+    )
+    dispatch_posture_staleness.add_argument("--now")
+    dispatch_posture_staleness.add_argument("--stale-after-minutes", type=int, default=60)
+    subparsers.add_parser(
+        "dispatch-posture-refresh",
+        help="Recommend manual dispatch posture refresh commands without running them.",
+    )
+    subparsers.add_parser(
+        "capability-expansion-ledger",
+        help="Write a report-only ledger for deferred autonomy capabilities.",
+    )
+    subparsers.add_parser(
+        "capability-readiness-review",
+        help="Review capability ledger readiness evidence without enabling capabilities.",
+    )
+    subparsers.add_parser(
+        "capability-proof-gap-index",
+        help="Index proof gaps from the latest capability readiness review.",
+    )
+    subparsers.add_parser(
+        "capability-approval-boundary-matrix",
+        help="Map capability proof gaps to explicit approval boundaries.",
+    )
+    subparsers.add_parser(
+        "capability-evidence-collection-plan",
+        help="Plan manual evidence collection from capability approval boundaries.",
+    )
+    subparsers.add_parser(
+        "capability-promotion-gate-checklist",
+        help="Review promotion gates from capability evidence collection plans.",
+    )
+    subparsers.add_parser(
+        "capability-promotion-decision-ledger",
+        help="Record report-only promotion decisions from promotion gate checklists.",
+    )
+    subparsers.add_parser(
+        "capability-trust-promotion-audit",
+        help="Audit trust-promotion readiness from promotion decision ledgers.",
+    )
+    subparsers.add_parser(
+        "capability-automatic-retry-audit",
+        help="Audit automatic-retry readiness from trust promotion audits.",
+    )
+    subparsers.add_parser(
+        "capability-real-cost-tracking-audit",
+        help="Audit real-cost-tracking readiness from automatic retry audits.",
+    )
+    subparsers.add_parser(
+        "hosted-dashboard-proof-checklist",
+        help=(
+            "Check hosted-dashboard proof readiness from real cost tracking "
+            "proof checklists, falling back to real cost tracking audits."
+        ),
+    )
+    subparsers.add_parser(
+        "remote-worker-proof-checklist",
+        help="Check remote-worker proof readiness from hosted dashboard proof checklists.",
+    )
+    subparsers.add_parser(
+        "autonomous-scheduling-proof-checklist",
+        help="Check autonomous-scheduling proof readiness from remote worker proof checklists.",
+    )
+    subparsers.add_parser(
+        "browser-desktop-adapter-proof-checklist",
+        help="Check browser/desktop adapter proof readiness from autonomous scheduling proof checklists.",
+    )
+    subparsers.add_parser(
+        "ci-deploy-proof-checklist",
+        help="Check CI Deploy proof readiness from browser/desktop adapter proof checklists.",
+    )
+    subparsers.add_parser(
+        "budget-enforcement-proof-checklist",
+        help="Check budget enforcement proof readiness from CI Deploy proof checklists.",
+    )
+    subparsers.add_parser(
+        "trust-promotion-proof-checklist",
+        help="Check trust-promotion proof readiness from Budget Enforcement proof checklists.",
+    )
+    subparsers.add_parser(
+        "automatic-retry-proof-checklist",
+        help="Check automatic-retry proof readiness from Trust Promotion proof checklists.",
+    )
+    subparsers.add_parser(
+        "real-cost-tracking-proof-checklist",
+        help="Check real-cost-tracking proof readiness from Automatic Retry proof checklists.",
+    )
+    subparsers.add_parser(
+        "goal-completion-audit",
+        help="Audit the active expansion goal against local proof reports.",
+    )
+    subparsers.add_parser(
+        "expansion-decision-brief",
+        help="Summarize operator decisions required by the latest goal completion audit.",
+    )
+    subparsers.add_parser(
+        "expansion-decision-evidence-index",
+        help="Index evidence links for decisions in the latest expansion decision brief.",
+    )
+    subparsers.add_parser(
+        "expansion-operator-review-checklist",
+        help="Prepare manual operator review choices from the latest expansion evidence index.",
+    )
+    subparsers.add_parser(
+        "expansion-operator-decision-ledger",
+        help="Record pending operator decisions from the latest expansion review checklist.",
+    )
+    subparsers.add_parser(
+        "expansion-operator-approval-draft",
+        help="Draft approval packets from pending expansion operator decisions without creating approvals.",
+    )
+    subparsers.add_parser(
+        "expansion-operator-approval-request-review",
+        help="Review expansion approval drafts against the local approval request contract.",
+    )
+    subparsers.add_parser(
+        "expansion-operator-approval-schema-decision",
+        help="Prepare a report-only schema decision from approval request review gaps.",
+    )
+    subparsers.add_parser(
+        "expansion-operator-approval-schema-migration-plan",
+        help="Prepare a report-only operator approval schema migration plan.",
+    )
+    subparsers.add_parser(
+        "expansion-operator-approval-schema-migration-approval-request",
+        help="Prepare a report-only approval request for the schema migration plan.",
+    )
+    subparsers.add_parser(
+        "expansion-operator-approval-schema-migration-decision-ledger",
+        help="Record a report-only pending decision ledger for schema migration approval requests.",
+    )
+    subparsers.add_parser(
+        "expansion-operator-approval-schema-migration-action-checklist",
+        help="Prepare a report-only manual action checklist for schema migration decisions.",
+    )
+    subparsers.add_parser(
+        "expansion-operator-approval-schema-migration-selection-packet",
+        help="Prepare a report-only operator selection input packet from schema migration action checklists.",
+    )
+
+    approve = subparsers.add_parser("approve", help="Approve a pending local task request.")
+    approve.add_argument("approval_id")
+    approve.add_argument("--decided-by", default="operator")
+    approve.add_argument("--note", default="")
+
+    resolve_incident = subparsers.add_parser(
+        "resolve-incident",
+        help="Resolve an open incident with operator evidence.",
+    )
+    resolve_incident.add_argument("incident_id")
+    resolve_incident.add_argument("--resolved-by", default="operator")
+    resolve_incident.add_argument("--note", required=True)
+
+    sweep_stuck = subparsers.add_parser(
+        "sweep-stuck",
+        help="Detect active tasks older than the timeout and open incidents.",
+    )
+    sweep_stuck.add_argument("--timeout-seconds", type=int, default=1800)
+    sweep_stuck.add_argument("--now", help="Optional ISO timestamp for deterministic sweeps.")
+
+    queue_health = subparsers.add_parser(
+        "queue-health",
+        help="Report repeated blocked or failed task hotspots.",
+    )
+    queue_health.add_argument("--blocked-threshold", type=int, default=2)
+    queue_health.add_argument("--failed-threshold", type=int, default=2)
+
+    playbooks = subparsers.add_parser(
+        "playbooks",
+        help="Promote repeated successful eval runs into reusable playbooks.",
+    )
+    playbooks.add_argument("--min-successes", type=int, default=DEFAULT_MIN_SUCCESSES)
+
+    eval_after_change = subparsers.add_parser(
+        "eval-after-change",
+        help="Run local evals and record evidence for a harness behavior change.",
+    )
+    eval_after_change.add_argument("--change", required=True)
+    eval_after_change.add_argument("--file", action="append", default=[])
+
+    distill_learnings_parser = subparsers.add_parser(
+        "distill-learnings",
+        help="Promote stable repeated run learnings into root knowledge.",
+    )
+    distill_learnings_parser.add_argument(
+        "--min-occurrences",
+        type=int,
+        default=DEFAULT_MIN_OCCURRENCES,
+    )
+
+    run_goal = subparsers.add_parser("run-goal", help="Run a goal through the local loop.")
+    run_goal.add_argument("description")
+    run_goal.add_argument("--project", default="bootstrap")
+
+    eval_parser = subparsers.add_parser("eval", help="Run evals.")
+    eval_parser.add_argument("--name", default="first_milestone_closed_loop")
+
+    subparsers.add_parser(
+        "eval-candidates",
+        help="List proposed eval cases discovered from verifier or workflow gaps.",
+    )
+
+    subparsers.add_parser("capabilities-json", help="Print detected capabilities as JSON.")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    root = Path(args.root).resolve()
+
+    if args.command == "init":
+        AgentSystem(root).initialize()
+        matrix_path = write_runtime_capability_matrix(root)
+        print(f"initialized agent system at {root}")
+        print(f"runtime capability matrix: {matrix_path}")
+        return 0
+
+    if args.command == "capability-matrix":
+        matrix_path = write_runtime_capability_matrix(root)
+        print(matrix_path)
+        return 0
+
+    if args.command == "dashboard":
+        dashboard_path = generate_static_dashboard(root)
+        print(dashboard_path)
+        return 0
+
+    if args.command == "iterate":
+        AgentSystem(root).initialize()
+        packet = generate_next_iteration_packet(root)
+        print(f"next_iteration: {packet.focus}")
+        print(f"section: {packet.source_section}")
+        print(f"packet: {packet.packet_path}")
+        return 0
+
+    if args.command == "approvals":
+        system = AgentSystem(root)
+        system.initialize()
+        approvals = system.storage.list_pending_approvals()
+        print(f"pending_approvals: {len(approvals)}")
+        for approval in approvals:
+            print(
+                f"{approval.id}: task={approval.task_id} run={approval.run_id} "
+                f"type={approval.task_type} risk={approval.risk_level} "
+                f"reason={approval.reason}"
+            )
+        return 0
+
+    if args.command == "handoff-review":
+        AgentSystem(root).initialize()
+        report_path, review = write_handoff_review_report(root)
+        print(f"handoff_review: {report_path.relative_to(root)}")
+        print(f"status: {review.status}")
+        print(f"blocked_tasks: {review.blocked_task_count}")
+        print(f"stale_handoffs: {review.stale_handoff_count}")
+        for handoff in review.stale_handoffs:
+            print(render_stale_handoff_line(handoff).removeprefix("- "))
+        return 0
+
+    if args.command == "budget-trust-posture":
+        AgentSystem(root).initialize()
+        report_path, posture = write_budget_trust_posture_report(root)
+        print(f"budget_trust_posture: {posture.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"tasks: {posture.task_count}")
+        print(f"budget_state: {posture.budget_state}")
+        print(f"trust_state: {posture.trust_state}")
+        print(f"risk_counts: {format_risk_counts(posture.risk_counts)}")
+        return 0
+
+    if args.command == "dispatch-posture-history":
+        AgentSystem(root).initialize()
+        report_path, summary = write_dispatch_posture_history_report(root)
+        print(f"dispatch_posture_history: {summary.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"snapshots: {summary.snapshot_count}")
+        print(f"latest_tasks: {summary.latest_task_count}")
+        print(f"task_delta: {summary.task_count_delta}")
+        print(f"latest_risk_counts: {format_risk_counts(summary.latest_risk_counts)}")
+        print(f"budget_states: {','.join(summary.budget_states) or 'none'}")
+        print(f"trust_states: {','.join(summary.trust_states) or 'none'}")
+        print(render_dispatch_posture_history_line(summary).removeprefix("- "))
+        return 0
+
+    if args.command == "dispatch-posture-staleness":
+        AgentSystem(root).initialize()
+        report_path, review = write_dispatch_posture_staleness_report(
+            root,
+            now=args.now,
+            stale_after_minutes=args.stale_after_minutes,
+        )
+        print(f"dispatch_posture_staleness: {review.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"snapshots: {review.snapshot_count}")
+        print(f"stale_snapshots: {review.stale_snapshot_count}")
+        print(
+            "latest_snapshot_age_seconds: "
+            f"{format_optional_age_seconds(review.latest_snapshot_age_seconds)}"
+        )
+        print(f"stale_after_seconds: {review.stale_after_seconds}")
+        print(f"latest_tasks: {review.latest_task_count}")
+        print(f"latest_risk_counts: {format_risk_counts(review.latest_risk_counts)}")
+        print(render_dispatch_posture_staleness_line(review).removeprefix("- "))
+        return 0
+
+    if args.command == "dispatch-posture-refresh":
+        AgentSystem(root).initialize()
+        report_path, recommendation = write_dispatch_posture_refresh_report(root)
+        print(f"dispatch_posture_refresh: {recommendation.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_review: {recommendation.source_review_id or 'none'}")
+        print(f"source_status: {recommendation.source_review_status}")
+        print(f"snapshots: {recommendation.snapshot_count}")
+        print(f"stale_snapshots: {recommendation.stale_snapshot_count}")
+        print(
+            "latest_snapshot_age_seconds: "
+            f"{format_optional_age_seconds(recommendation.latest_snapshot_age_seconds)}"
+        )
+        print(f"stale_after_seconds: {recommendation.stale_after_seconds}")
+        print(
+            "recommended_commands: "
+            f"{format_recommended_commands(recommendation.recommended_commands)}"
+        )
+        print(render_dispatch_posture_refresh_line(recommendation).removeprefix("- "))
+        return 0
+
+    if args.command == "capability-expansion-ledger":
+        AgentSystem(root).initialize()
+        report_path, ledger = write_capability_expansion_ledger(root)
+        print(f"capability_expansion_ledger: {ledger.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"capabilities: {ledger.capability_count}")
+        print(f"ready: {ledger.ready_count}")
+        print(f"deferred: {ledger.deferred_count}")
+        print(f"approval_boundary: {ledger.approval_boundary}")
+        print(render_capability_expansion_ledger_line(ledger).removeprefix("- "))
+        return 0
+
+    if args.command == "capability-readiness-review":
+        AgentSystem(root).initialize()
+        report_path, review = write_capability_readiness_review(root)
+        print(f"capability_readiness_review: {review.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_ledger: {review.source_ledger_id or 'none'}")
+        print(f"source_status: {review.source_ledger_status}")
+        print(f"capabilities: {review.capability_count}")
+        print(f"ready: {review.ready_count}")
+        print(f"not_ready: {review.not_ready_count}")
+        print(f"missing_evidence: {review.missing_evidence_count}")
+        print(
+            "recommended_commands: "
+            f"{format_readiness_commands(review.recommended_commands)}"
+        )
+        print(render_capability_readiness_review_line(review).removeprefix("- "))
+        return 0
+
+    if args.command == "capability-proof-gap-index":
+        AgentSystem(root).initialize()
+        report_path, index = write_capability_proof_gap_index(root)
+        print(f"capability_proof_gap_index: {index.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_review: {index.source_review_id or 'none'}")
+        print(f"source_status: {index.source_review_status}")
+        print(f"capabilities: {index.capability_count}")
+        print(f"gaps: {index.gap_count}")
+        print(f"missing_evidence: {index.missing_evidence_count}")
+        print(f"blocked_capabilities: {index.blocked_capability_count}")
+        print(f"next_proofs: {index.next_proof_count}")
+        print(
+            "recommended_commands: "
+            f"{format_proof_gap_commands(index.recommended_commands)}"
+        )
+        print(render_capability_proof_gap_index_line(index).removeprefix("- "))
+        return 0
+
+    if args.command == "capability-approval-boundary-matrix":
+        AgentSystem(root).initialize()
+        report_path, matrix = write_capability_approval_boundary_matrix(root)
+        print(f"capability_approval_boundary_matrix: {matrix.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_index: {matrix.source_index_id or 'none'}")
+        print(f"source_status: {matrix.source_index_status}")
+        print(f"capabilities: {matrix.capability_count}")
+        print(f"boundaries: {matrix.boundary_count}")
+        print(f"gaps: {matrix.gap_count}")
+        print(f"blocked_capabilities: {matrix.blocked_capability_count}")
+        print(f"approvals_required: {matrix.approval_required_count}")
+        print(
+            "recommended_commands: "
+            f"{format_approval_boundary_commands(matrix.recommended_commands)}"
+        )
+        print(
+            render_capability_approval_boundary_matrix_line(matrix).removeprefix(
+                "- "
+            )
+        )
+        return 0
+
+    if args.command == "capability-evidence-collection-plan":
+        AgentSystem(root).initialize()
+        report_path, plan = write_capability_evidence_collection_plan(root)
+        print(f"capability_evidence_collection_plan: {plan.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_matrix: {plan.source_matrix_id or 'none'}")
+        print(f"source_status: {plan.source_matrix_status}")
+        print(f"capabilities: {plan.capability_count}")
+        print(f"evidence_items: {plan.evidence_item_count}")
+        print(f"manual_collection: {plan.manual_collection_count}")
+        print(f"approvals_required: {plan.approval_required_count}")
+        print(f"boundaries: {plan.boundary_count}")
+        print(
+            "recommended_commands: "
+            f"{format_evidence_collection_commands(plan.recommended_commands)}"
+        )
+        print(
+            render_capability_evidence_collection_plan_line(plan).removeprefix(
+                "- "
+            )
+        )
+        return 0
+
+    if args.command == "capability-promotion-gate-checklist":
+        AgentSystem(root).initialize()
+        report_path, checklist = write_capability_promotion_gate_checklist(root)
+        print(f"capability_promotion_gate_checklist: {checklist.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_plan: {checklist.source_plan_id or 'none'}")
+        print(f"source_status: {checklist.source_plan_status}")
+        print(f"capabilities: {checklist.capability_count}")
+        print(f"gates: {checklist.gate_count}")
+        print(f"blocked_promotions: {checklist.blocked_promotion_count}")
+        print(f"missing_evidence: {checklist.missing_evidence_count}")
+        print(f"approvals_required: {checklist.approval_required_count}")
+        print(f"boundaries: {checklist.boundary_count}")
+        print(
+            "recommended_commands: "
+            f"{format_promotion_gate_commands(checklist.recommended_commands)}"
+        )
+        print(
+            render_capability_promotion_gate_checklist_line(
+                checklist
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "capability-promotion-decision-ledger":
+        AgentSystem(root).initialize()
+        report_path, ledger = write_capability_promotion_decision_ledger(root)
+        print(f"capability_promotion_decision_ledger: {ledger.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_checklist: {ledger.source_checklist_id or 'none'}")
+        print(f"source_status: {ledger.source_checklist_status}")
+        print(f"capabilities: {ledger.capability_count}")
+        print(f"decisions: {ledger.decision_count}")
+        print(f"deferred_promotions: {ledger.deferred_promotion_count}")
+        print(
+            "operator_decisions_required: "
+            f"{ledger.operator_decision_required_count}"
+        )
+        print(f"blocked_promotions: {ledger.blocked_promotion_count}")
+        print(f"missing_evidence: {ledger.missing_evidence_count}")
+        print(f"approvals_required: {ledger.approval_required_count}")
+        print(f"boundaries: {ledger.boundary_count}")
+        print(
+            "recommended_commands: "
+            f"{format_promotion_decision_commands(ledger.recommended_commands)}"
+        )
+        print(
+            render_capability_promotion_decision_ledger_line(
+                ledger
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "capability-trust-promotion-audit":
+        AgentSystem(root).initialize()
+        report_path, audit = write_capability_trust_promotion_audit(root)
+        print(f"capability_trust_promotion_audit: {audit.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_ledger: {audit.source_ledger_id or 'none'}")
+        print(f"source_status: {audit.source_ledger_status}")
+        print(f"capabilities: {audit.capability_count}")
+        print(f"audits: {audit.audit_count}")
+        print(f"blocked_trust_promotions: {audit.blocked_trust_promotion_count}")
+        print(f"operator_reviews_required: {audit.operator_review_required_count}")
+        print(f"deferred_promotions: {audit.deferred_promotion_count}")
+        print(f"missing_evidence: {audit.missing_evidence_count}")
+        print(f"approvals_required: {audit.approval_required_count}")
+        print(f"boundaries: {audit.boundary_count}")
+        print(
+            "recommended_commands: "
+            f"{format_trust_promotion_commands(audit.recommended_commands)}"
+        )
+        print(
+            render_capability_trust_promotion_audit_line(
+                audit
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "capability-automatic-retry-audit":
+        AgentSystem(root).initialize()
+        report_path, audit = write_capability_automatic_retry_audit(root)
+        print(f"capability_automatic_retry_audit: {audit.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_audit: {audit.source_audit_id or 'none'}")
+        print(f"source_status: {audit.source_audit_status}")
+        print(f"capabilities: {audit.capability_count}")
+        print(f"audits: {audit.audit_count}")
+        print(f"blocked_retries: {audit.blocked_retry_count}")
+        print(f"operator_reviews_required: {audit.operator_review_required_count}")
+        print(f"blocked_trust_promotions: {audit.blocked_trust_promotion_count}")
+        print(f"deferred_promotions: {audit.deferred_promotion_count}")
+        print(f"missing_evidence: {audit.missing_evidence_count}")
+        print(f"approvals_required: {audit.approval_required_count}")
+        print(f"boundaries: {audit.boundary_count}")
+        print(
+            "recommended_commands: "
+            f"{format_automatic_retry_commands(audit.recommended_commands)}"
+        )
+        print(
+            render_capability_automatic_retry_audit_line(
+                audit
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "capability-real-cost-tracking-audit":
+        AgentSystem(root).initialize()
+        report_path, audit = write_capability_real_cost_tracking_audit(root)
+        print(f"capability_real_cost_tracking_audit: {audit.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_audit: {audit.source_audit_id or 'none'}")
+        print(f"source_status: {audit.source_audit_status}")
+        print(f"capabilities: {audit.capability_count}")
+        print(f"audits: {audit.audit_count}")
+        print(f"blocked_cost_tracking: {audit.blocked_cost_tracking_count}")
+        print(f"operator_reviews_required: {audit.operator_review_required_count}")
+        print(f"blocked_retries: {audit.blocked_retry_count}")
+        print(f"blocked_trust_promotions: {audit.blocked_trust_promotion_count}")
+        print(f"deferred_promotions: {audit.deferred_promotion_count}")
+        print(f"missing_evidence: {audit.missing_evidence_count}")
+        print(f"approvals_required: {audit.approval_required_count}")
+        print(f"boundaries: {audit.boundary_count}")
+        print(
+            "recommended_commands: "
+            f"{format_real_cost_tracking_commands(audit.recommended_commands)}"
+        )
+        print(
+            render_capability_real_cost_tracking_audit_line(
+                audit
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "hosted-dashboard-proof-checklist":
+        AgentSystem(root).initialize()
+        report_path, checklist = write_hosted_dashboard_proof_checklist(root)
+        print(f"hosted_dashboard_proof_checklist: {checklist.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_kind: {checklist.source_kind}")
+        print(f"source_checklist: {checklist.source_checklist_id or 'none'}")
+        print(f"source_audit: {checklist.source_audit_id or 'none'}")
+        source_status = (
+            checklist.source_checklist_status
+            if checklist.source_kind == "real_cost_tracking_proof_checklist"
+            else checklist.source_audit_status
+        )
+        print(f"source_status: {source_status}")
+        print(f"capabilities: {checklist.capability_count}")
+        print(f"checklist_items: {checklist.checklist_count}")
+        print(f"blocked_dashboard_proofs: {checklist.blocked_dashboard_proof_count}")
+        print(f"operator_reviews_required: {checklist.operator_review_required_count}")
+        print(f"blocked_cost_tracking: {checklist.blocked_cost_tracking_count}")
+        print(f"blocked_retries: {checklist.blocked_retry_count}")
+        print(f"blocked_trust_promotions: {checklist.blocked_trust_promotion_count}")
+        print(f"missing_evidence: {checklist.missing_evidence_count}")
+        print(f"approvals_required: {checklist.approval_required_count}")
+        print(f"boundaries: {checklist.boundary_count}")
+        print(
+            "recommended_commands: "
+            f"{format_hosted_dashboard_commands(checklist.recommended_commands)}"
+        )
+        print(
+            render_hosted_dashboard_proof_checklist_line(
+                checklist
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "remote-worker-proof-checklist":
+        AgentSystem(root).initialize()
+        report_path, checklist = write_remote_worker_proof_checklist(root)
+        print(f"remote_worker_proof_checklist: {checklist.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_checklist: {checklist.source_checklist_id or 'none'}")
+        print(f"source_status: {checklist.source_checklist_status}")
+        print(f"capabilities: {checklist.capability_count}")
+        print(f"checklist_items: {checklist.checklist_count}")
+        print(f"blocked_worker_proofs: {checklist.blocked_worker_proof_count}")
+        print(f"operator_reviews_required: {checklist.operator_review_required_count}")
+        print(f"blocked_dashboard_proofs: {checklist.blocked_dashboard_proof_count}")
+        print(f"blocked_cost_tracking: {checklist.blocked_cost_tracking_count}")
+        print(f"blocked_retries: {checklist.blocked_retry_count}")
+        print(f"blocked_trust_promotions: {checklist.blocked_trust_promotion_count}")
+        print(f"missing_evidence: {checklist.missing_evidence_count}")
+        print(f"approvals_required: {checklist.approval_required_count}")
+        print(f"boundaries: {checklist.boundary_count}")
+        print(
+            "recommended_commands: "
+            f"{format_remote_worker_commands(checklist.recommended_commands)}"
+        )
+        print(
+            render_remote_worker_proof_checklist_line(
+                checklist
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "autonomous-scheduling-proof-checklist":
+        AgentSystem(root).initialize()
+        report_path, checklist = write_autonomous_scheduling_proof_checklist(root)
+        print(f"autonomous_scheduling_proof_checklist: {checklist.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_checklist: {checklist.source_checklist_id or 'none'}")
+        print(f"source_status: {checklist.source_checklist_status}")
+        print(f"capabilities: {checklist.capability_count}")
+        print(f"checklist_items: {checklist.checklist_count}")
+        print(f"blocked_scheduling_proofs: {checklist.blocked_scheduling_proof_count}")
+        print(f"operator_reviews_required: {checklist.operator_review_required_count}")
+        print(f"blocked_worker_proofs: {checklist.blocked_worker_proof_count}")
+        print(f"blocked_dashboard_proofs: {checklist.blocked_dashboard_proof_count}")
+        print(f"blocked_cost_tracking: {checklist.blocked_cost_tracking_count}")
+        print(f"blocked_retries: {checklist.blocked_retry_count}")
+        print(f"blocked_trust_promotions: {checklist.blocked_trust_promotion_count}")
+        print(f"missing_evidence: {checklist.missing_evidence_count}")
+        print(f"approvals_required: {checklist.approval_required_count}")
+        print(f"boundaries: {checklist.boundary_count}")
+        print(
+            "recommended_commands: "
+            f"{format_autonomous_scheduling_commands(checklist.recommended_commands)}"
+        )
+        print(
+            render_autonomous_scheduling_proof_checklist_line(
+                checklist
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "browser-desktop-adapter-proof-checklist":
+        AgentSystem(root).initialize()
+        report_path, checklist = write_browser_desktop_adapter_proof_checklist(root)
+        print(f"browser_desktop_adapter_proof_checklist: {checklist.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_checklist: {checklist.source_checklist_id or 'none'}")
+        print(f"source_status: {checklist.source_checklist_status}")
+        print(f"capabilities: {checklist.capability_count}")
+        print(f"checklist_items: {checklist.checklist_count}")
+        print(f"blocked_adapter_proofs: {checklist.blocked_adapter_proof_count}")
+        print(f"operator_reviews_required: {checklist.operator_review_required_count}")
+        print(f"blocked_scheduling_proofs: {checklist.blocked_scheduling_proof_count}")
+        print(f"blocked_worker_proofs: {checklist.blocked_worker_proof_count}")
+        print(f"blocked_dashboard_proofs: {checklist.blocked_dashboard_proof_count}")
+        print(f"blocked_cost_tracking: {checklist.blocked_cost_tracking_count}")
+        print(f"blocked_retries: {checklist.blocked_retry_count}")
+        print(f"blocked_trust_promotions: {checklist.blocked_trust_promotion_count}")
+        print(f"missing_evidence: {checklist.missing_evidence_count}")
+        print(f"approvals_required: {checklist.approval_required_count}")
+        print(f"boundaries: {checklist.boundary_count}")
+        print(
+            "recommended_commands: "
+            f"{format_browser_desktop_adapter_commands(checklist.recommended_commands)}"
+        )
+        print(
+            render_browser_desktop_adapter_proof_checklist_line(
+                checklist
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "ci-deploy-proof-checklist":
+        AgentSystem(root).initialize()
+        report_path, checklist = write_ci_deploy_proof_checklist(root)
+        print(f"ci_deploy_proof_checklist: {checklist.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_checklist: {checklist.source_checklist_id or 'none'}")
+        print(f"source_status: {checklist.source_checklist_status}")
+        print(f"capabilities: {checklist.capability_count}")
+        print(f"checklist_items: {checklist.checklist_count}")
+        print(f"blocked_ci_deploy_proofs: {checklist.blocked_ci_deploy_proof_count}")
+        print(f"operator_reviews_required: {checklist.operator_review_required_count}")
+        print(f"blocked_adapter_proofs: {checklist.blocked_adapter_proof_count}")
+        print(f"blocked_scheduling_proofs: {checklist.blocked_scheduling_proof_count}")
+        print(f"blocked_worker_proofs: {checklist.blocked_worker_proof_count}")
+        print(f"blocked_dashboard_proofs: {checklist.blocked_dashboard_proof_count}")
+        print(f"blocked_cost_tracking: {checklist.blocked_cost_tracking_count}")
+        print(f"blocked_retries: {checklist.blocked_retry_count}")
+        print(f"blocked_trust_promotions: {checklist.blocked_trust_promotion_count}")
+        print(f"missing_evidence: {checklist.missing_evidence_count}")
+        print(f"approvals_required: {checklist.approval_required_count}")
+        print(f"boundaries: {checklist.boundary_count}")
+        print(
+            "recommended_commands: "
+            f"{format_ci_deploy_commands(checklist.recommended_commands)}"
+        )
+        print(
+            render_ci_deploy_proof_checklist_line(checklist).removeprefix(
+                "- "
+            )
+        )
+        return 0
+
+    if args.command == "budget-enforcement-proof-checklist":
+        AgentSystem(root).initialize()
+        report_path, checklist = write_budget_enforcement_proof_checklist(root)
+        print(f"budget_enforcement_proof_checklist: {checklist.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_checklist: {checklist.source_checklist_id or 'none'}")
+        print(f"source_status: {checklist.source_checklist_status}")
+        print(f"capabilities: {checklist.capability_count}")
+        print(f"checklist_items: {checklist.checklist_count}")
+        print(
+            "blocked_budget_enforcement_proofs: "
+            f"{checklist.blocked_budget_enforcement_proof_count}"
+        )
+        print(f"operator_reviews_required: {checklist.operator_review_required_count}")
+        print(f"blocked_ci_deploy_proofs: {checklist.blocked_ci_deploy_proof_count}")
+        print(f"blocked_adapter_proofs: {checklist.blocked_adapter_proof_count}")
+        print(f"blocked_scheduling_proofs: {checklist.blocked_scheduling_proof_count}")
+        print(f"blocked_worker_proofs: {checklist.blocked_worker_proof_count}")
+        print(f"blocked_dashboard_proofs: {checklist.blocked_dashboard_proof_count}")
+        print(f"blocked_cost_tracking: {checklist.blocked_cost_tracking_count}")
+        print(f"blocked_retries: {checklist.blocked_retry_count}")
+        print(f"blocked_trust_promotions: {checklist.blocked_trust_promotion_count}")
+        print(f"missing_evidence: {checklist.missing_evidence_count}")
+        print(f"approvals_required: {checklist.approval_required_count}")
+        print(f"boundaries: {checklist.boundary_count}")
+        print(
+            "recommended_commands: "
+            f"{format_budget_enforcement_commands(checklist.recommended_commands)}"
+        )
+        print(
+            render_budget_enforcement_proof_checklist_line(
+                checklist
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "trust-promotion-proof-checklist":
+        AgentSystem(root).initialize()
+        report_path, checklist = write_trust_promotion_proof_checklist(root)
+        print(f"trust_promotion_proof_checklist: {checklist.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_checklist: {checklist.source_checklist_id or 'none'}")
+        print(f"source_status: {checklist.source_checklist_status}")
+        print(f"capabilities: {checklist.capability_count}")
+        print(f"checklist_items: {checklist.checklist_count}")
+        print(
+            "blocked_trust_promotion_proofs: "
+            f"{checklist.blocked_trust_promotion_proof_count}"
+        )
+        print(f"operator_reviews_required: {checklist.operator_review_required_count}")
+        print(
+            "blocked_budget_enforcement_proofs: "
+            f"{checklist.blocked_budget_enforcement_proof_count}"
+        )
+        print(f"blocked_ci_deploy_proofs: {checklist.blocked_ci_deploy_proof_count}")
+        print(f"blocked_adapter_proofs: {checklist.blocked_adapter_proof_count}")
+        print(f"blocked_scheduling_proofs: {checklist.blocked_scheduling_proof_count}")
+        print(f"blocked_worker_proofs: {checklist.blocked_worker_proof_count}")
+        print(f"blocked_dashboard_proofs: {checklist.blocked_dashboard_proof_count}")
+        print(f"blocked_cost_tracking: {checklist.blocked_cost_tracking_count}")
+        print(f"blocked_retries: {checklist.blocked_retry_count}")
+        print(f"blocked_trust_promotions: {checklist.blocked_trust_promotion_count}")
+        print(f"missing_evidence: {checklist.missing_evidence_count}")
+        print(f"approvals_required: {checklist.approval_required_count}")
+        print(f"boundaries: {checklist.boundary_count}")
+        print(
+            "recommended_commands: "
+            f"{format_trust_promotion_proof_commands(checklist.recommended_commands)}"
+        )
+        print(
+            render_trust_promotion_proof_checklist_line(
+                checklist
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "automatic-retry-proof-checklist":
+        AgentSystem(root).initialize()
+        report_path, checklist = write_automatic_retry_proof_checklist(root)
+        print(f"automatic_retry_proof_checklist: {checklist.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_checklist: {checklist.source_checklist_id or 'none'}")
+        print(f"source_status: {checklist.source_checklist_status}")
+        print(f"capabilities: {checklist.capability_count}")
+        print(f"checklist_items: {checklist.checklist_count}")
+        print(
+            "blocked_automatic_retry_proofs: "
+            f"{checklist.blocked_automatic_retry_proof_count}"
+        )
+        print(f"operator_reviews_required: {checklist.operator_review_required_count}")
+        print(
+            "blocked_trust_promotion_proofs: "
+            f"{checklist.blocked_trust_promotion_proof_count}"
+        )
+        print(
+            "blocked_budget_enforcement_proofs: "
+            f"{checklist.blocked_budget_enforcement_proof_count}"
+        )
+        print(f"blocked_ci_deploy_proofs: {checklist.blocked_ci_deploy_proof_count}")
+        print(f"blocked_adapter_proofs: {checklist.blocked_adapter_proof_count}")
+        print(f"blocked_scheduling_proofs: {checklist.blocked_scheduling_proof_count}")
+        print(f"blocked_worker_proofs: {checklist.blocked_worker_proof_count}")
+        print(f"blocked_dashboard_proofs: {checklist.blocked_dashboard_proof_count}")
+        print(f"blocked_cost_tracking: {checklist.blocked_cost_tracking_count}")
+        print(f"blocked_retries: {checklist.blocked_retry_count}")
+        print(f"blocked_trust_promotions: {checklist.blocked_trust_promotion_count}")
+        print(f"missing_evidence: {checklist.missing_evidence_count}")
+        print(f"approvals_required: {checklist.approval_required_count}")
+        print(f"boundaries: {checklist.boundary_count}")
+        print(
+            "recommended_commands: "
+            f"{format_automatic_retry_proof_commands(checklist.recommended_commands)}"
+        )
+        print(
+            render_automatic_retry_proof_checklist_line(
+                checklist
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "real-cost-tracking-proof-checklist":
+        AgentSystem(root).initialize()
+        report_path, checklist = write_real_cost_tracking_proof_checklist(root)
+        print(f"real_cost_tracking_proof_checklist: {checklist.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_checklist: {checklist.source_checklist_id or 'none'}")
+        print(f"source_status: {checklist.source_checklist_status}")
+        print(f"capabilities: {checklist.capability_count}")
+        print(f"checklist_items: {checklist.checklist_count}")
+        print(
+            "blocked_real_cost_tracking_proofs: "
+            f"{checklist.blocked_real_cost_tracking_proof_count}"
+        )
+        print(f"operator_reviews_required: {checklist.operator_review_required_count}")
+        print(
+            "blocked_automatic_retry_proofs: "
+            f"{checklist.blocked_automatic_retry_proof_count}"
+        )
+        print(
+            "blocked_trust_promotion_proofs: "
+            f"{checklist.blocked_trust_promotion_proof_count}"
+        )
+        print(
+            "blocked_budget_enforcement_proofs: "
+            f"{checklist.blocked_budget_enforcement_proof_count}"
+        )
+        print(f"blocked_ci_deploy_proofs: {checklist.blocked_ci_deploy_proof_count}")
+        print(f"blocked_adapter_proofs: {checklist.blocked_adapter_proof_count}")
+        print(f"blocked_scheduling_proofs: {checklist.blocked_scheduling_proof_count}")
+        print(f"blocked_worker_proofs: {checklist.blocked_worker_proof_count}")
+        print(f"blocked_dashboard_proofs: {checklist.blocked_dashboard_proof_count}")
+        print(f"blocked_cost_tracking: {checklist.blocked_cost_tracking_count}")
+        print(f"blocked_retries: {checklist.blocked_retry_count}")
+        print(f"blocked_trust_promotions: {checklist.blocked_trust_promotion_count}")
+        print(f"missing_evidence: {checklist.missing_evidence_count}")
+        print(f"approvals_required: {checklist.approval_required_count}")
+        print(f"boundaries: {checklist.boundary_count}")
+        print(
+            "recommended_commands: "
+            f"{format_real_cost_tracking_proof_commands(checklist.recommended_commands)}"
+        )
+        print(
+            render_real_cost_tracking_proof_checklist_line(
+                checklist
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "goal-completion-audit":
+        AgentSystem(root).initialize()
+        report_path, audit = write_goal_completion_audit(root)
+        print(f"goal_completion_audit: {audit.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"requirements: {audit.requirement_count}")
+        print(f"satisfied_requirements: {audit.satisfied_requirement_count}")
+        print(f"blocked_requirements: {audit.blocked_requirement_count}")
+        print(f"missing_evidence: {audit.missing_evidence_count}")
+        print(f"approvals_required: {audit.approval_required_count}")
+        print(f"external_decisions_required: {audit.external_decision_count}")
+        print(
+            "recommended_commands: "
+            f"{format_goal_completion_audit_commands(audit.recommended_commands)}"
+        )
+        print(render_goal_completion_audit_line(audit).removeprefix("- "))
+        return 0
+
+    if args.command == "expansion-decision-brief":
+        AgentSystem(root).initialize()
+        report_path, brief = write_expansion_decision_brief(root)
+        print(f"expansion_decision_brief: {brief.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_audit: {brief.source_audit_id}")
+        print(f"source_status: {brief.source_audit_status}")
+        print(f"requirements: {brief.requirement_count}")
+        print(f"blocked_requirements: {brief.blocked_requirement_count}")
+        print(f"external_decisions_required: {brief.external_decision_count}")
+        print(f"approvals_required: {brief.approval_required_count}")
+        print(f"decision_items: {brief.decision_item_count}")
+        print(f"recommended_next_step: {brief.recommended_next_step}")
+        print(render_expansion_decision_brief_line(brief).removeprefix("- "))
+        return 0
+
+    if args.command == "expansion-decision-evidence-index":
+        AgentSystem(root).initialize()
+        report_path, index = write_expansion_decision_evidence_index(root)
+        print(f"expansion_decision_evidence_index: {index.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_brief: {index.source_brief_id}")
+        print(f"source_status: {index.source_brief_status}")
+        print(f"source_audit: {index.source_audit_id}")
+        print(f"decision_items: {index.decision_item_count}")
+        print(f"evidence_items: {index.evidence_item_count}")
+        print(f"external_decisions: {index.external_decision_count}")
+        print(f"capability_decisions: {index.capability_decision_count}")
+        print(f"missing_evidence_links: {index.missing_evidence_link_count}")
+        print(f"recommended_next_step: {index.recommended_next_step}")
+        print(render_expansion_decision_evidence_index_line(index).removeprefix("- "))
+        return 0
+
+    if args.command == "expansion-operator-review-checklist":
+        AgentSystem(root).initialize()
+        report_path, checklist = write_expansion_operator_review_checklist(root)
+        print(f"expansion_operator_review_checklist: {checklist.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_index: {checklist.source_index_id}")
+        print(f"source_status: {checklist.source_index_status}")
+        print(f"source_brief: {checklist.source_brief_id}")
+        print(f"source_audit: {checklist.source_audit_id}")
+        print(f"review_items: {checklist.review_item_count}")
+        print(f"decision_required: {checklist.decision_required_count}")
+        print(f"external_reviews: {checklist.external_review_count}")
+        print(f"capability_reviews: {checklist.capability_review_count}")
+        print(f"missing_evidence_links: {checklist.missing_evidence_link_count}")
+        print(
+            "allowed_actions: "
+            f"{format_operator_review_allowed_actions(checklist.allowed_actions)}"
+        )
+        print(f"recommended_next_step: {checklist.recommended_next_step}")
+        print(render_expansion_operator_review_checklist_line(checklist).removeprefix("- "))
+        return 0
+
+    if args.command == "expansion-operator-decision-ledger":
+        AgentSystem(root).initialize()
+        report_path, ledger = write_expansion_operator_decision_ledger(root)
+        print(f"expansion_operator_decision_ledger: {ledger.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_checklist: {ledger.source_checklist_id}")
+        print(f"source_status: {ledger.source_checklist_status}")
+        print(f"source_index: {ledger.source_index_id}")
+        print(f"source_brief: {ledger.source_brief_id}")
+        print(f"source_audit: {ledger.source_audit_id}")
+        print(f"decision_items: {ledger.decision_item_count}")
+        print(f"pending_decisions: {ledger.pending_decision_count}")
+        print(f"approved_decisions: {ledger.approved_decision_count}")
+        print(f"deferred_decisions: {ledger.deferred_decision_count}")
+        print(f"more_evidence_requested: {ledger.more_evidence_requested_count}")
+        print(f"external_decisions: {ledger.external_decision_count}")
+        print(f"capability_decisions: {ledger.capability_decision_count}")
+        print(
+            "allowed_actions: "
+            f"{format_operator_decision_allowed_actions(ledger.allowed_actions)}"
+        )
+        print(f"recommended_next_step: {ledger.recommended_next_step}")
+        print(render_expansion_operator_decision_ledger_line(ledger).removeprefix("- "))
+        return 0
+
+    if args.command == "expansion-operator-approval-draft":
+        AgentSystem(root).initialize()
+        report_path, draft = write_expansion_operator_approval_draft(root)
+        print(f"expansion_operator_approval_draft: {draft.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_ledger: {draft.source_ledger_id}")
+        print(f"source_status: {draft.source_ledger_status}")
+        print(f"source_checklist: {draft.source_checklist_id}")
+        print(f"source_index: {draft.source_index_id}")
+        print(f"source_brief: {draft.source_brief_id}")
+        print(f"source_audit: {draft.source_audit_id}")
+        print(f"draft_items: {draft.draft_item_count}")
+        print(f"draft_requests: {draft.draft_request_count}")
+        print(f"created_approval_requests: {draft.created_approval_request_count}")
+        print(f"external_drafts: {draft.external_draft_count}")
+        print(f"capability_drafts: {draft.capability_draft_count}")
+        print(f"approval_boundaries: {draft.approval_boundary_count}")
+        print(f"pending_decisions: {draft.pending_decision_count}")
+        print(
+            "allowed_actions: "
+            f"{format_operator_approval_allowed_actions(draft.allowed_actions)}"
+        )
+        print(f"recommended_next_step: {draft.recommended_next_step}")
+        print(render_expansion_operator_approval_draft_line(draft).removeprefix("- "))
+        return 0
+
+    if args.command == "expansion-operator-approval-request-review":
+        AgentSystem(root).initialize()
+        report_path, review = write_expansion_operator_approval_request_review(root)
+        print(f"expansion_operator_approval_request_review: {review.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_draft: {review.source_draft_id}")
+        print(f"source_status: {review.source_draft_status}")
+        print(f"source_ledger: {review.source_ledger_id}")
+        print(f"source_checklist: {review.source_checklist_id}")
+        print(f"source_index: {review.source_index_id}")
+        print(f"source_brief: {review.source_brief_id}")
+        print(f"source_audit: {review.source_audit_id}")
+        print(f"draft_requests: {review.draft_request_count}")
+        print(f"review_items: {review.review_item_count}")
+        print(f"ready_requests: {review.ready_request_count}")
+        print(f"blocked_requests: {review.blocked_request_count}")
+        print(f"schema_gaps: {review.schema_gap_count}")
+        print(f"created_approval_requests: {review.created_approval_request_count}")
+        print(f"existing_approval_requests: {review.existing_approval_request_count}")
+        print(f"external_requests: {review.external_request_count}")
+        print(f"capability_requests: {review.capability_request_count}")
+        print(f"approval_boundaries: {review.approval_boundary_count}")
+        print(f"recommended_next_step: {review.recommended_next_step}")
+        print(
+            render_expansion_operator_approval_request_review_line(
+                review
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "expansion-operator-approval-schema-decision":
+        AgentSystem(root).initialize()
+        report_path, decision = write_expansion_operator_approval_schema_decision(root)
+        print(f"expansion_operator_approval_schema_decision: {decision.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_review: {decision.source_review_id}")
+        print(f"source_status: {decision.source_review_status}")
+        print(f"source_draft: {decision.source_draft_id}")
+        print(f"source_ledger: {decision.source_ledger_id}")
+        print(f"source_checklist: {decision.source_checklist_id}")
+        print(f"source_index: {decision.source_index_id}")
+        print(f"source_brief: {decision.source_brief_id}")
+        print(f"source_audit: {decision.source_audit_id}")
+        print(f"affected_requests: {decision.affected_request_count}")
+        print(f"schema_gaps: {decision.schema_gap_count}")
+        print(f"missing_fields: {decision.missing_field_count}")
+        print(f"external_requests: {decision.external_request_count}")
+        print(f"capability_requests: {decision.capability_request_count}")
+        print(f"decision_options: {decision.decision_option_count}")
+        print(f"recommended_option: {decision.recommended_option}")
+        print(f"rejected_options: {decision.rejected_option_count}")
+        print(f"schema_objects: {decision.schema_object_count}")
+        print(f"migration_applied: {decision.migration_applied_count}")
+        print(f"created_approval_requests: {decision.created_approval_request_count}")
+        print(f"existing_approval_requests: {decision.existing_approval_request_count}")
+        print(f"recommended_next_step: {decision.recommended_next_step}")
+        print(
+            render_expansion_operator_approval_schema_decision_line(
+                decision
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "expansion-operator-approval-schema-migration-plan":
+        AgentSystem(root).initialize()
+        report_path, plan = write_expansion_operator_approval_schema_migration_plan(
+            root
+        )
+        print(f"expansion_operator_approval_schema_migration_plan: {plan.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_decision: {plan.source_decision_id}")
+        print(f"source_status: {plan.source_decision_status}")
+        print(f"source_review: {plan.source_review_id}")
+        print(f"source_review_status: {plan.source_review_status}")
+        print(f"source_draft: {plan.source_draft_id}")
+        print(f"source_ledger: {plan.source_ledger_id}")
+        print(f"source_checklist: {plan.source_checklist_id}")
+        print(f"source_index: {plan.source_index_id}")
+        print(f"source_brief: {plan.source_brief_id}")
+        print(f"source_audit: {plan.source_audit_id}")
+        print(f"recommended_option: {plan.recommended_option}")
+        print(f"target_table: {plan.target_table}")
+        print(f"affected_requests: {plan.affected_request_count}")
+        print(f"schema_gaps: {plan.schema_gap_count}")
+        print(f"missing_fields: {plan.missing_field_count}")
+        print(f"external_requests: {plan.external_request_count}")
+        print(f"capability_requests: {plan.capability_request_count}")
+        print(f"planned_columns: {plan.planned_column_count}")
+        print(f"planned_indexes: {plan.planned_index_count}")
+        print(f"migration_steps: {plan.migration_step_count}")
+        print(f"migration_applied: {plan.migration_applied_count}")
+        print(f"table_created: {plan.table_created_count}")
+        print(f"operator_approval_rows_created: {plan.operator_approval_row_count}")
+        print(f"approval_requests_created: {plan.created_approval_request_count}")
+        print(f"existing_approval_requests: {plan.existing_approval_request_count}")
+        print(f"recommended_next_step: {plan.recommended_next_step}")
+        print(
+            render_expansion_operator_approval_schema_migration_plan_line(
+                plan
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "expansion-operator-approval-schema-migration-approval-request":
+        AgentSystem(root).initialize()
+        report_path, request = (
+            write_expansion_operator_approval_schema_migration_approval_request(
+                root
+            )
+        )
+        print(
+            "expansion_operator_approval_schema_migration_approval_request: "
+            f"{request.status}"
+        )
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_plan: {request.source_plan_id}")
+        print(f"source_status: {request.source_plan_status}")
+        print(f"source_decision: {request.source_decision_id}")
+        print(f"source_decision_status: {request.source_decision_status}")
+        print(f"source_review: {request.source_review_id}")
+        print(f"source_review_status: {request.source_review_status}")
+        print(f"target_table: {request.target_table}")
+        print(f"planned_columns: {request.planned_column_count}")
+        print(f"planned_indexes: {request.planned_index_count}")
+        print(f"migration_steps: {request.migration_step_count}")
+        print(f"affected_requests: {request.affected_request_count}")
+        print(f"schema_gaps: {request.schema_gap_count}")
+        print(f"request_count: {request.request_count}")
+        print(f"approval_boundary: {request.approval_boundary}")
+        print(f"requested_action: {request.requested_action}")
+        print(
+            "allowed_actions: "
+            f"{format_schema_migration_approval_actions(request.allowed_actions)}"
+        )
+        print(f"migration_applied: {request.migration_applied_count}")
+        print(f"table_created: {request.table_created_count}")
+        print(f"operator_approval_rows_created: {request.operator_approval_row_count}")
+        print(f"approval_requests_created: {request.created_approval_request_count}")
+        print(f"existing_approval_requests: {request.existing_approval_request_count}")
+        print(f"recommended_next_step: {request.recommended_next_step}")
+        print(
+            render_expansion_operator_approval_schema_migration_approval_request_line(
+                request
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "expansion-operator-approval-schema-migration-decision-ledger":
+        AgentSystem(root).initialize()
+        report_path, ledger = (
+            write_expansion_operator_approval_schema_migration_decision_ledger(root)
+        )
+        print(
+            "expansion_operator_approval_schema_migration_decision_ledger: "
+            f"{ledger.status}"
+        )
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_request: {ledger.source_request_id}")
+        print(f"source_status: {ledger.source_request_status}")
+        print(f"source_plan: {ledger.source_plan_id}")
+        print(f"source_plan_status: {ledger.source_plan_status}")
+        print(f"source_decision: {ledger.source_decision_id}")
+        print(f"source_decision_status: {ledger.source_decision_status}")
+        print(f"source_review: {ledger.source_review_id}")
+        print(f"source_review_status: {ledger.source_review_status}")
+        print(f"target_table: {ledger.target_table}")
+        print(f"planned_columns: {ledger.planned_column_count}")
+        print(f"planned_indexes: {ledger.planned_index_count}")
+        print(f"migration_steps: {ledger.migration_step_count}")
+        print(f"affected_requests: {ledger.affected_request_count}")
+        print(f"schema_gaps: {ledger.schema_gap_count}")
+        print(f"request_count: {ledger.request_count}")
+        print(f"decision_count: {ledger.decision_count}")
+        print(f"pending_decisions: {ledger.pending_decision_count}")
+        print(f"approved_decisions: {ledger.approved_decision_count}")
+        print(f"deferred_decisions: {ledger.deferred_decision_count}")
+        print(f"more_evidence_decisions: {ledger.more_evidence_decision_count}")
+        print(f"approval_boundary: {ledger.approval_boundary}")
+        print(f"requested_action: {ledger.requested_action}")
+        print(
+            "allowed_actions: "
+            f"{format_schema_migration_decision_actions(ledger.allowed_actions)}"
+        )
+        print(f"migration_applied: {ledger.migration_applied_count}")
+        print(f"table_created: {ledger.table_created_count}")
+        print(f"operator_approval_rows_created: {ledger.operator_approval_row_count}")
+        print(f"approval_requests_created: {ledger.created_approval_request_count}")
+        print(f"existing_approval_requests: {ledger.existing_approval_request_count}")
+        print(f"recommended_next_step: {ledger.recommended_next_step}")
+        print(
+            render_expansion_operator_approval_schema_migration_decision_ledger_line(
+                ledger
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "expansion-operator-approval-schema-migration-action-checklist":
+        AgentSystem(root).initialize()
+        report_path, checklist = (
+            write_expansion_operator_approval_schema_migration_action_checklist(
+                root
+            )
+        )
+        print(
+            "expansion_operator_approval_schema_migration_action_checklist: "
+            f"{checklist.status}"
+        )
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_ledger: {checklist.source_ledger_id}")
+        print(f"source_status: {checklist.source_ledger_status}")
+        print(f"source_request: {checklist.source_request_id}")
+        print(f"source_request_status: {checklist.source_request_status}")
+        print(f"source_plan: {checklist.source_plan_id}")
+        print(f"source_plan_status: {checklist.source_plan_status}")
+        print(f"source_decision: {checklist.source_decision_id}")
+        print(f"source_decision_status: {checklist.source_decision_status}")
+        print(f"source_review: {checklist.source_review_id}")
+        print(f"source_review_status: {checklist.source_review_status}")
+        print(f"target_table: {checklist.target_table}")
+        print(f"request_count: {checklist.request_count}")
+        print(f"decision_count: {checklist.decision_count}")
+        print(f"pending_decisions: {checklist.pending_decision_count}")
+        print(f"action_count: {checklist.action_count}")
+        print(f"pending_actions: {checklist.pending_action_count}")
+        print(f"actions_taken: {checklist.actions_taken_count}")
+        print(f"selected_action: {checklist.selected_action}")
+        print(f"approval_boundary: {checklist.approval_boundary}")
+        print(f"requested_action: {checklist.requested_action}")
+        print(
+            "allowed_actions: "
+            f"{format_schema_migration_action_actions(checklist.allowed_actions)}"
+        )
+        print(f"migration_applied: {checklist.migration_applied_count}")
+        print(f"table_created: {checklist.table_created_count}")
+        print(
+            "operator_approval_rows_created: "
+            f"{checklist.operator_approval_row_count}"
+        )
+        print(f"approval_requests_created: {checklist.created_approval_request_count}")
+        print(f"existing_approval_requests: {checklist.existing_approval_request_count}")
+        print(f"recommended_next_step: {checklist.recommended_next_step}")
+        print(
+            render_expansion_operator_approval_schema_migration_action_checklist_line(
+                checklist
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "expansion-operator-approval-schema-migration-selection-packet":
+        AgentSystem(root).initialize()
+        report_path, packet = (
+            write_expansion_operator_approval_schema_migration_selection_packet(
+                root
+            )
+        )
+        print(
+            "expansion_operator_approval_schema_migration_selection_packet: "
+            f"{packet.status}"
+        )
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_checklist: {packet.source_checklist_id}")
+        print(f"source_status: {packet.source_checklist_status}")
+        print(f"source_ledger: {packet.source_ledger_id}")
+        print(f"source_ledger_status: {packet.source_ledger_status}")
+        print(f"source_request: {packet.source_request_id}")
+        print(f"source_request_status: {packet.source_request_status}")
+        print(f"source_plan: {packet.source_plan_id}")
+        print(f"source_plan_status: {packet.source_plan_status}")
+        print(f"source_decision: {packet.source_decision_id}")
+        print(f"source_decision_status: {packet.source_decision_status}")
+        print(f"source_review: {packet.source_review_id}")
+        print(f"source_review_status: {packet.source_review_status}")
+        print(f"target_table: {packet.target_table}")
+        print(f"request_count: {packet.request_count}")
+        print(f"decision_count: {packet.decision_count}")
+        print(f"pending_decisions: {packet.pending_decision_count}")
+        print(f"action_count: {packet.action_count}")
+        print(f"pending_actions: {packet.pending_action_count}")
+        print(f"actions_taken: {packet.actions_taken_count}")
+        print(f"selected_action: {packet.selected_action}")
+        print(f"selection_count: {packet.selection_count}")
+        print(f"pending_selections: {packet.pending_selection_count}")
+        print(f"selections_recorded: {packet.selections_recorded_count}")
+        print(f"approve_selections: {packet.approve_selection_count}")
+        print(f"defer_selections: {packet.defer_selection_count}")
+        print(f"more_evidence_selections: {packet.more_evidence_selection_count}")
+        print(f"approval_boundary: {packet.approval_boundary}")
+        print(f"requested_action: {packet.requested_action}")
+        print(
+            "allowed_actions: "
+            f"{format_schema_migration_selection_actions(packet.allowed_actions)}"
+        )
+        print(f"migration_applied: {packet.migration_applied_count}")
+        print(f"table_created: {packet.table_created_count}")
+        print(
+            "operator_approval_rows_created: "
+            f"{packet.operator_approval_row_count}"
+        )
+        print(f"approval_requests_created: {packet.created_approval_request_count}")
+        print(f"existing_approval_requests: {packet.existing_approval_request_count}")
+        print(f"recommended_next_step: {packet.recommended_next_step}")
+        print(
+            render_expansion_operator_approval_schema_migration_selection_packet_line(
+                packet
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "approve":
+        system = AgentSystem(root)
+        system.initialize()
+        approval = system.storage.approve_approval_request(
+            args.approval_id,
+            decided_by=args.decided_by,
+            decision_note=args.note,
+        )
+        print(f"approved: {approval.id}")
+        print(f"task: {approval.task_id}")
+        return 0
+
+    if args.command == "resolve-incident":
+        resolved = AgentSystem(root).resolve_incident(
+            args.incident_id,
+            resolved_by=args.resolved_by,
+            resolution_note=args.note,
+        )
+        print(f"resolved_incident: {resolved.id}")
+        print(f"status: {resolved.status}")
+        print(f"resolution_evidence: {resolved.resolution_evidence_path}")
+        return 0
+
+    if args.command == "sweep-stuck":
+        incident_ids = AgentSystem(root).detect_stuck_tasks(
+            timeout_seconds=args.timeout_seconds,
+            now=args.now,
+        )
+        print(f"stuck_incidents: {len(incident_ids)}")
+        for incident_id in incident_ids:
+            print(incident_id)
+        return 0
+
+    if args.command == "queue-health":
+        AgentSystem(root).initialize()
+        report_path, findings = write_queue_health_report(
+            root,
+            blocked_threshold=args.blocked_threshold,
+            failed_threshold=args.failed_threshold,
+        )
+        print(f"queue_health: {report_path.relative_to(root)}")
+        print(f"hotspots: {len(findings)}")
+        for finding in findings:
+            print(render_queue_health_finding(finding).removeprefix("- "))
+        return 0
+
+    if args.command == "playbooks":
+        playbooks = promote_successful_run_playbooks(
+            root,
+            min_successes=args.min_successes,
+        )
+        print(f"playbooks: {len(playbooks)}")
+        for playbook in playbooks:
+            print(render_playbook_line(playbook).removeprefix("- "))
+        return 0
+
+    if args.command == "eval-after-change":
+        report_path, check = run_eval_after_change(
+            root,
+            change_summary=args.change,
+            changed_paths=args.file,
+        )
+        print(f"eval_after_change: {check.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"evals: {','.join(check.eval_names)}")
+        print(f"run_ids: {','.join(check.run_ids)}")
+        print(f"result_paths: {','.join(check.result_paths)}")
+        return 0 if check.status == "pass" else 1
+
+    if args.command == "distill-learnings":
+        report_path, distillation = distill_learnings(
+            root,
+            min_occurrences=args.min_occurrences,
+        )
+        print(f"learning_distillation: {distillation.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"stable_learnings: {distillation.stable_learning_count}")
+        print(f"source_learnings: {distillation.source_learning_count}")
+        for learning in distillation.stable_learnings:
+            print(render_stable_learning_line(learning).removeprefix("- "))
+        return 0
+
+    if args.command == "eval-candidates":
+        system = AgentSystem(root)
+        system.initialize()
+        candidates = system.storage.list_recent_eval_candidates()
+        print(f"eval_candidates: {len(candidates)}")
+        for candidate in candidates:
+            print(render_eval_candidate_line(candidate))
+        return 0
+
+    if args.command == "capabilities-json":
+        capabilities = [
+            capability.__dict__ for capability in detect_runtime_capabilities(root)
+        ]
+        print(json.dumps(capabilities, indent=2, sort_keys=True))
+        return 0
+
+    if args.command == "run-goal":
+        result = AgentSystem(root).run_goal(args.project, args.description)
+        print(f"status: {result.status}")
+        print(f"goal_id: {result.goal_id}")
+        print(f"run_id: {result.run_id}")
+        print(f"activity: {result.activity_path}")
+        print(f"summary: {result.summary_path}")
+        print(f"learning: {result.learning_path}")
+        print(f"eval_candidate: {result.eval_candidate_path}")
+        return 0 if result.status == "completed" else 1
+
+    if args.command == "eval":
+        if args.name != "first_milestone_closed_loop":
+            parser.error(f"unknown eval: {args.name}")
+        result = run_first_milestone_eval(root)
+        print(f"{result.name}: {result.status}")
+        print(f"result: {result.result_path}")
+        return 0 if result.status == "pass" else 1
+
+    parser.error(f"unknown command: {args.command}")
+    return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

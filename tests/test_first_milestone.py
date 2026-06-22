@@ -1,0 +1,12656 @@
+import json
+import sqlite3
+from pathlib import Path
+
+from agent_os.dashboard import generate_static_dashboard
+from agent_os.cli import main
+from agent_os.engine import AgentSystem
+from agent_os.eval import run_first_milestone_eval
+from agent_os.storage import Storage, Task
+
+
+class CorruptingAgentSystem(AgentSystem):
+    def _execute_task(
+        self,
+        task: Task,
+        run_id: str,
+        goal_description: str,
+        learning_task_id: str,
+    ) -> list[Path]:
+        artifacts = super()._execute_task(task, run_id, goal_description, learning_task_id)
+        if task.task_type == "write_goal_artifact":
+            artifacts[0].write_text(f"corrupted artifact for {task.id}", encoding="utf-8")
+        return artifacts
+
+
+class ApprovalRequiredAgentSystem(AgentSystem):
+    def _decompose_goal(
+        self,
+        goal_id: str,
+        project_id: str,
+        description: str,
+        run_id: str,
+        activity_path: Path,
+        events_path: Path,
+    ) -> tuple[str, str]:
+        artifact_path = (
+            self.root
+            / "projects"
+            / project_id
+            / "artifacts"
+            / run_id
+            / "risky-artifact.md"
+        )
+        task_id = self.storage.create_task(
+            goal_id=goal_id,
+            run_id=run_id,
+            project_id=project_id,
+            task_type="write_goal_artifact",
+            description="Write a risky artifact that needs approval first.",
+            verification_plan={
+                "type": "file_contains",
+                "path": str(artifact_path),
+                "contains": [description],
+            },
+            risk_level="high",
+        )
+        self._emit(
+            run_id,
+            goal_id,
+            task_id,
+            "task.created",
+            f"created task {task_id} (write_goal_artifact)",
+            {"depends_on": [], "risk_level": "high"},
+            activity_path,
+            events_path,
+        )
+        return task_id, task_id
+
+
+def test_run_goal_completes_local_closed_loop(tmp_path: Path) -> None:
+    system = AgentSystem(tmp_path)
+
+    result = system.run_goal(
+        project_id="bootstrap",
+        description="Prove the first milestone closed loop",
+    )
+
+    assert result.status == "completed"
+    assert result.goal_id.startswith("goal_")
+    assert result.run_id.startswith("run_")
+    assert result.activity_path.exists()
+    assert result.events_path.exists()
+    assert result.summary_path.exists()
+    assert result.learning_path.exists()
+    assert result.eval_candidate_path.exists()
+
+    tasks = Storage(tmp_path / ".agent" / "state.db").list_tasks(result.goal_id)
+    assert [task.status for task in tasks] == ["completed", "completed"]
+    assert all(task.run_id == result.run_id for task in tasks)
+    assert [task.task_type for task in tasks] == [
+        "write_goal_artifact",
+        "record_learning",
+    ]
+    assert all(task.evidence for task in tasks)
+    assert all(task.artifacts for task in tasks)
+
+    goal_artifact = Path(tasks[0].artifacts[0])
+    assert goal_artifact.exists()
+    assert "Prove the first milestone closed loop" in goal_artifact.read_text()
+
+    memory_text = (tmp_path / "memory.md").read_text()
+    assert result.run_id in memory_text
+    assert "closed loop" in memory_text
+
+    project_knowledge = (tmp_path / "projects" / "bootstrap" / "knowledge.md").read_text()
+    assert result.run_id in project_knowledge
+    assert "Learning" in project_knowledge
+
+    activity_text = result.activity_path.read_text()
+    assert "accepted goal" in activity_text
+    assert "verified task" in activity_text
+    assert "recorded learning" in activity_text
+
+    events = [json.loads(line) for line in result.events_path.read_text().splitlines()]
+    assert {event["event_type"] for event in events} >= {
+        "goal.accepted",
+        "task.created",
+        "task.claimed",
+        "task.verified",
+        "learning.recorded",
+        "run.completed",
+    }
+
+    eval_candidate = json.loads(result.eval_candidate_path.read_text())
+    assert eval_candidate["source_run_id"] == result.run_id
+    assert eval_candidate["suggested_eval"] == "closed_loop_regression"
+
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        run_paths = connection.execute(
+            "select activity_path, events_path, summary_path from runs where id = ?",
+            (result.run_id,),
+        ).fetchone()
+
+    assert run_paths is not None
+    assert all(result.run_id in path for path in run_paths)
+
+
+def test_claim_next_task_respects_dependencies(tmp_path: Path) -> None:
+    storage = Storage(tmp_path / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "dependency test")
+    first_id = storage.create_task(
+        goal_id=goal_id,
+        project_id="bootstrap",
+        task_type="write_goal_artifact",
+        description="first",
+        verification_plan={"type": "file_contains", "path": "artifact.md"},
+    )
+    second_id = storage.create_task(
+        goal_id=goal_id,
+        project_id="bootstrap",
+        task_type="record_learning",
+        description="second",
+        verification_plan={"type": "file_contains", "path": "learning.md"},
+        depends_on=[first_id],
+    )
+
+    claimed = storage.claim_next_task(worker_id="worker-1", skill_tags=["local-files"])
+    assert claimed is not None
+    assert claimed.id == first_id
+
+    assert storage.claim_next_task(worker_id="worker-1", skill_tags=["local-files"]) is None
+
+    storage.mark_task_completed(
+        first_id,
+        evidence={"verified": True},
+        artifacts=["artifact.md"],
+    )
+
+    claimed_after_dependency = storage.claim_next_task(
+        worker_id="worker-1",
+        skill_tags=["local-files"],
+    )
+    assert claimed_after_dependency is not None
+    assert claimed_after_dependency.id == second_id
+
+
+def test_eval_command_records_first_milestone_result(tmp_path: Path) -> None:
+    result = run_first_milestone_eval(tmp_path)
+
+    assert result.status == "pass"
+    assert result.result_path.exists()
+    result_payload = json.loads(result.result_path.read_text())
+    assert result_payload["name"] == "first_milestone_closed_loop"
+    assert result_payload["status"] == "pass"
+    assert result_payload["checks"]["tasks_completed"] == 2
+
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        rows = connection.execute("select name, status from eval_results").fetchall()
+
+    assert rows == [("first_milestone_closed_loop", "pass")]
+
+
+def test_static_dashboard_summarizes_runs_and_queue(tmp_path: Path) -> None:
+    system = AgentSystem(tmp_path)
+    result = system.run_goal(
+        project_id="bootstrap",
+        description="Show current system visibility",
+    )
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+
+    assert dashboard_path == tmp_path / "docs" / "dashboard.md"
+    assert dashboard_path.exists()
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "# Agent System Dashboard" in dashboard
+    assert "## Queue Health" in dashboard
+    assert "- pending: 0" in dashboard
+    assert "- completed: 2" in dashboard
+    assert "## Recent Runs" in dashboard
+    assert result.run_id in dashboard
+    assert "completed" in dashboard
+    assert "## Recent Learnings" in dashboard
+    assert "first closed loop" in dashboard
+
+
+def test_failed_verification_records_incident_and_dashboard_visibility(tmp_path: Path) -> None:
+    system = CorruptingAgentSystem(tmp_path)
+
+    result = system.run_goal(
+        project_id="bootstrap",
+        description="Trigger failed verification incident",
+    )
+
+    assert result.status == "failed"
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    incidents = storage.list_recent_incidents()
+    assert len(incidents) == 1
+    incident = incidents[0]
+    assert incident.run_id == result.run_id
+    assert incident.project_id == "bootstrap"
+    assert incident.status == "open"
+    assert incident.severity == "high"
+    assert incident.incident_type == "verification_failed"
+    assert incident.failure_class == "bad verification"
+    assert "failed verification" in incident.summary
+    assert incident.evidence["passed"] is False
+    assert incident.failed_checks == ["contains_goal"]
+    assert incident.evidence_path is not None
+    assert Path(incident.evidence_path).exists()
+
+    events = [json.loads(line) for line in result.events_path.read_text().splitlines()]
+    event_types = {event["event_type"] for event in events}
+    assert "incident.opened" in event_types
+    task_failed = [event for event in events if event["event_type"] == "task.failed"][0]
+    assert task_failed["payload"]["incident_id"] == incident.id
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Incidents" in dashboard
+    assert "- open: 1" in dashboard
+    assert incident.id in dashboard
+    assert "verification_failed" in dashboard
+    assert result.run_id in dashboard
+    assert "contains_goal" in dashboard
+
+
+def test_failed_verification_records_eval_candidate_for_verifier_gap(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = CorruptingAgentSystem(tmp_path)
+
+    result = system.run_goal(
+        project_id="bootstrap",
+        description="Create eval candidate from verifier gap",
+    )
+
+    assert result.status == "failed"
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    incident = storage.list_recent_incidents()[0]
+    candidates = storage.list_recent_eval_candidates()
+    assert len(candidates) == 1
+    candidate = candidates[0]
+    assert candidate.source_type == "incident"
+    assert candidate.source_id == incident.id
+    assert candidate.suggested_eval == "verification_failed_write_goal_artifact_regression"
+    assert candidate.status == "proposed"
+    candidate_path = tmp_path / candidate.candidate_path
+    assert candidate_path.exists()
+
+    payload = json.loads(candidate_path.read_text(encoding="utf-8"))
+    assert payload["source_incident_id"] == incident.id
+    assert payload["source_run_id"] == result.run_id
+    assert payload["gap_type"] == "verification_failed"
+    assert payload["task_type"] == "write_goal_artifact"
+    assert payload["failed_checks"] == ["contains_goal"]
+    assert payload["suggested_eval"] == candidate.suggested_eval
+
+    assert main(["--root", str(tmp_path), "eval-candidates"]) == 0
+    output = capsys.readouterr().out
+    assert "eval_candidates: 1" in output
+    assert "source=incident:" in output
+    assert incident.id in output
+    assert "verification_failed_write_goal_artifact_regression" in output
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Eval Candidates" in dashboard
+    assert "- proposed: 1" in dashboard
+    assert incident.id in dashboard
+    assert "verification_failed_write_goal_artifact_regression" in dashboard
+
+
+def test_resolve_incident_records_operator_evidence_and_dashboard_state(
+    tmp_path: Path,
+) -> None:
+    system = CorruptingAgentSystem(tmp_path)
+
+    result = system.run_goal(
+        project_id="bootstrap",
+        description="Resolve failed verification incident",
+    )
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    incident = storage.list_recent_incidents()[0]
+
+    resolved = system.resolve_incident(
+        incident.id,
+        resolved_by="operator",
+        resolution_note="confirmed regression covered by follow-up task",
+    )
+
+    assert result.status == "failed"
+    assert resolved.id == incident.id
+    assert resolved.status == "resolved"
+    assert resolved.resolved_at is not None
+    assert resolved.resolved_by == "operator"
+    assert resolved.resolution_note == "confirmed regression covered by follow-up task"
+    assert resolved.resolution_evidence_path is not None
+    resolution_path = Path(resolved.resolution_evidence_path)
+    assert resolution_path.exists()
+    resolution_payload = json.loads(resolution_path.read_text(encoding="utf-8"))
+    assert resolution_payload["id"] == incident.id
+    assert resolution_payload["status"] == "resolved"
+    assert resolution_payload["resolved_by"] == "operator"
+    assert resolution_payload["resolution_note"] == (
+        "confirmed regression covered by follow-up task"
+    )
+    assert resolution_payload["original_evidence_path"] == incident.evidence_path
+
+    refreshed = storage.list_recent_incidents()[0]
+    assert refreshed.status == "resolved"
+    assert refreshed.resolution_evidence_path == str(resolution_path)
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "- open: 0" in dashboard
+    assert "- resolved: 1" in dashboard
+    assert incident.id in dashboard
+    assert "resolved_by=operator" in dashboard
+    assert "resolution_evidence=runs/" in dashboard
+    assert "confirmed regression covered by follow-up task" in dashboard
+
+
+def test_cli_resolve_incident_closes_open_incident(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = CorruptingAgentSystem(tmp_path)
+    system.run_goal(
+        project_id="bootstrap",
+        description="Resolve incident from CLI",
+    )
+    incident = Storage(tmp_path / ".agent" / "state.db").list_recent_incidents()[0]
+
+    assert main(
+        [
+            "--root",
+            str(tmp_path),
+            "resolve-incident",
+            incident.id,
+            "--resolved-by",
+            "operator",
+            "--note",
+            "closed after reviewing local evidence",
+        ]
+    ) == 0
+
+    output = capsys.readouterr().out
+    assert f"resolved_incident: {incident.id}" in output
+    assert "status: resolved" in output
+    assert "resolution_evidence:" in output
+
+    resolved = Storage(tmp_path / ".agent" / "state.db").list_recent_incidents()[0]
+    assert resolved.status == "resolved"
+    assert resolved.resolved_by == "operator"
+    assert resolved.resolution_note == "closed after reviewing local evidence"
+    assert resolved.resolution_evidence_path is not None
+    assert Path(resolved.resolution_evidence_path).exists()
+
+
+def test_stale_running_task_is_blocked_and_reported_on_dashboard(tmp_path: Path) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    goal_id = storage.create_goal("bootstrap", "stuck task detection")
+    run_id = storage.create_run(goal_id, "bootstrap", tmp_path / "runs")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        project_id="bootstrap",
+        task_type="write_goal_artifact",
+        description="simulate stuck task",
+        verification_plan={"type": "file_contains", "path": "artifact.md"},
+    )
+    claimed = storage.claim_next_task(worker_id="worker-1", skill_tags=["local-files"])
+    assert claimed is not None
+    assert claimed.id == task_id
+
+    stale_at = "2026-06-21T10:00:00.000000+00:00"
+    now = "2026-06-21T11:01:00.000000+00:00"
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        connection.execute(
+            """
+            update tasks
+            set status = 'running', claimed_at = ?, updated_at = ?
+            where id = ?
+            """,
+            (stale_at, stale_at, task_id),
+        )
+
+    incident_ids = system.detect_stuck_tasks(timeout_seconds=1800, now=now)
+
+    assert len(incident_ids) == 1
+    task = storage.get_task(task_id)
+    assert task.status == "blocked"
+    incidents = storage.list_recent_incidents()
+    assert len(incidents) == 1
+    incident = incidents[0]
+    assert incident.id == incident_ids[0]
+    assert incident.run_id == run_id
+    assert incident.task_id == task_id
+    assert incident.incident_type == "task_stuck"
+    assert incident.status == "open"
+    assert incident.failure_class == "stuck task"
+    assert incident.evidence["timeout_seconds"] == 1800
+    assert incident.evidence["last_activity_at"] == stale_at
+    assert incident.evidence_path is not None
+    assert Path(incident.evidence_path).exists()
+    assert system.detect_stuck_tasks(timeout_seconds=1800, now=now) == []
+    assert len(storage.list_recent_incidents()) == 1
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "- blocked: 1" in dashboard
+    assert "- needs_attention: 1" in dashboard
+    assert "## Stuck Tasks" in dashboard
+    assert "- open: 1" in dashboard
+    assert incident.id in dashboard
+    assert "task_stuck" in dashboard
+    assert task_id in dashboard
+    assert "worker-1" in dashboard
+    assert stale_at in dashboard
+    assert "timeout_seconds=1800" in dashboard
+
+
+def test_cli_sweep_stuck_detects_stale_tasks(tmp_path: Path) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    goal_id = storage.create_goal("bootstrap", "cli stuck task detection")
+    storage.create_run(goal_id, "bootstrap", tmp_path / "runs")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        project_id="bootstrap",
+        task_type="write_goal_artifact",
+        description="simulate cli stuck task",
+        verification_plan={"type": "file_contains", "path": "artifact.md"},
+    )
+    assert storage.claim_next_task(worker_id="worker-1", skill_tags=["local-files"]) is not None
+
+    stale_at = "2026-06-21T10:00:00.000000+00:00"
+    now = "2026-06-21T11:01:00.000000+00:00"
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        connection.execute(
+            """
+            update tasks
+            set status = 'claimed', claimed_at = ?, updated_at = ?
+            where id = ?
+            """,
+            (stale_at, stale_at, task_id),
+        )
+
+    result = main(
+        [
+            "--root",
+            str(tmp_path),
+            "sweep-stuck",
+            "--timeout-seconds",
+            "1800",
+            "--now",
+            now,
+        ]
+    )
+
+    assert result == 0
+    assert storage.get_task(task_id).status == "blocked"
+    incidents = storage.list_recent_incidents()
+    assert len(incidents) == 1
+    assert incidents[0].incident_type == "task_stuck"
+
+
+def test_stuck_task_records_eval_candidate_for_workflow_gap(tmp_path: Path) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    goal_id = storage.create_goal("bootstrap", "workflow gap eval candidate")
+    storage.create_run(goal_id, "bootstrap", tmp_path / "runs")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        project_id="bootstrap",
+        task_type="write_goal_artifact",
+        description="simulate workflow gap",
+        verification_plan={"type": "file_contains", "path": "artifact.md"},
+    )
+    assert storage.claim_next_task(worker_id="worker-1", skill_tags=["local-files"]) is not None
+
+    stale_at = "2026-06-21T10:00:00.000000+00:00"
+    now = "2026-06-21T11:01:00.000000+00:00"
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        connection.execute(
+            """
+            update tasks
+            set status = 'running', claimed_at = ?, updated_at = ?
+            where id = ?
+            """,
+            (stale_at, stale_at, task_id),
+        )
+
+    incident_ids = system.detect_stuck_tasks(timeout_seconds=1800, now=now)
+
+    assert len(incident_ids) == 1
+    candidates = storage.list_recent_eval_candidates()
+    assert len(candidates) == 1
+    candidate = candidates[0]
+    assert candidate.source_type == "incident"
+    assert candidate.source_id == incident_ids[0]
+    assert candidate.suggested_eval == "task_stuck_write_goal_artifact_regression"
+    candidate_payload = json.loads(
+        (tmp_path / candidate.candidate_path).read_text(encoding="utf-8")
+    )
+    assert candidate_payload["gap_type"] == "task_stuck"
+    assert candidate_payload["failed_checks"] == ["active_timeout"]
+    assert candidate_payload["timeout_seconds"] == 1800
+
+
+def test_queue_health_reports_repeated_blocked_and_failed_work(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    goal_id = storage.create_goal("bootstrap", "queue health repeated failures")
+    run_id = storage.create_run(goal_id, "bootstrap", tmp_path / "runs")
+    failed_task_ids = [
+        storage.create_task(
+            goal_id=goal_id,
+            run_id=run_id,
+            project_id="bootstrap",
+            task_type="write_goal_artifact",
+            description=f"failed task {index}",
+            verification_plan={"type": "file_contains", "path": f"failed-{index}.md"},
+        )
+        for index in range(2)
+    ]
+    blocked_task_ids = [
+        storage.create_task(
+            goal_id=goal_id,
+            run_id=run_id,
+            project_id="bootstrap",
+            task_type="record_learning",
+            description=f"blocked task {index}",
+            verification_plan={"type": "file_contains", "path": f"blocked-{index}.md"},
+        )
+        for index in range(2)
+    ]
+    for task_id in failed_task_ids:
+        storage.mark_task_failed(
+            task_id,
+            evidence={"passed": False, "method": "queue_health_fixture"},
+            artifacts=[],
+        )
+    for task_id in blocked_task_ids:
+        storage.mark_task_blocked(
+            task_id,
+            evidence={"passed": False, "method": "queue_health_fixture"},
+            artifacts=[],
+        )
+
+    findings = storage.list_queue_health_findings(
+        blocked_threshold=2,
+        failed_threshold=2,
+    )
+
+    assert [(finding.status, finding.task_type, finding.count) for finding in findings] == [
+        ("blocked", "record_learning", 2),
+        ("failed", "write_goal_artifact", 2),
+    ]
+    assert findings[0].project_id == "bootstrap"
+    assert findings[0].threshold == 2
+    assert findings[0].task_ids == blocked_task_ids
+    assert findings[1].task_ids == failed_task_ids
+
+    assert main(
+        [
+            "--root",
+            str(tmp_path),
+            "queue-health",
+            "--blocked-threshold",
+            "2",
+            "--failed-threshold",
+            "2",
+        ]
+    ) == 0
+    output = capsys.readouterr().out
+    assert "queue_health: docs/queue-health.md" in output
+    assert "hotspots: 2" in output
+    assert "blocked project=bootstrap type=record_learning count=2 threshold=2" in output
+    assert "failed project=bootstrap type=write_goal_artifact count=2 threshold=2" in output
+
+    report = (tmp_path / "docs" / "queue-health.md").read_text(encoding="utf-8")
+    assert "# Queue Health Report" in report
+    assert "## Hotspots" in report
+    assert "blocked project=bootstrap type=record_learning count=2 threshold=2" in report
+    assert "failed project=bootstrap type=write_goal_artifact count=2 threshold=2" in report
+    for task_id in failed_task_ids + blocked_task_ids:
+        assert task_id in report
+
+
+def test_dashboard_exposes_queue_health_hotspots(tmp_path: Path) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    goal_id = storage.create_goal("bootstrap", "dashboard queue health")
+    run_id = storage.create_run(goal_id, "bootstrap", tmp_path / "runs")
+    task_ids = [
+        storage.create_task(
+            goal_id=goal_id,
+            run_id=run_id,
+            project_id="bootstrap",
+            task_type="write_goal_artifact",
+            description=f"failed dashboard task {index}",
+            verification_plan={"type": "file_contains", "path": f"dashboard-{index}.md"},
+        )
+        for index in range(2)
+    ]
+    for task_id in task_ids:
+        storage.mark_task_failed(
+            task_id,
+            evidence={"passed": False, "method": "queue_health_fixture"},
+            artifacts=[],
+        )
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+
+    assert "## Queue Health Checks" in dashboard
+    assert "- hotspots: 1" in dashboard
+    assert "failed project=bootstrap type=write_goal_artifact count=2 threshold=2" in dashboard
+    for task_id in task_ids:
+        assert task_id in dashboard
+
+
+def test_playbook_promotion_writes_reusable_playbook_from_repeated_successes(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    first = run_first_milestone_eval(tmp_path)
+    first_payload = json.loads(first.result_path.read_text(encoding="utf-8"))
+    second = run_first_milestone_eval(tmp_path)
+    second_payload = json.loads(second.result_path.read_text(encoding="utf-8"))
+
+    assert main(["--root", str(tmp_path), "playbooks", "--min-successes", "2"]) == 0
+
+    output = capsys.readouterr().out
+    assert "playbooks: 1" in output
+    assert "first-milestone-closed-loop" in output
+    assert "successful_runs=2" in output
+    assert "path=playbooks/first-milestone-closed-loop.md" in output
+
+    playbook_path = tmp_path / "playbooks" / "first-milestone-closed-loop.md"
+    assert playbook_path.exists()
+    playbook = playbook_path.read_text(encoding="utf-8")
+    assert "# First Milestone Closed Loop Playbook" in playbook
+    assert "- Source eval: first_milestone_closed_loop" in playbook
+    assert "- Successful runs: 2" in playbook
+    assert first_payload["run_id"] in playbook
+    assert second_payload["run_id"] in playbook
+    assert "python3 -m agent_os.cli eval" in playbook
+    assert "python3 -m agent_os.cli dashboard" in playbook
+
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        rows = connection.execute(
+            """
+            select slug, source_eval_name, successful_run_count, playbook_path, status
+            from playbooks
+            """
+        ).fetchall()
+
+    assert rows == [
+        (
+            "first-milestone-closed-loop",
+            "first_milestone_closed_loop",
+            2,
+            "playbooks/first-milestone-closed-loop.md",
+            "active",
+        )
+    ]
+
+
+def test_playbook_promotion_waits_for_repeated_success(tmp_path: Path, capsys) -> None:
+    run_first_milestone_eval(tmp_path)
+
+    assert main(["--root", str(tmp_path), "playbooks", "--min-successes", "2"]) == 0
+
+    output = capsys.readouterr().out
+    assert "playbooks: 0" in output
+    assert not (tmp_path / "playbooks" / "first-milestone-closed-loop.md").exists()
+
+
+def test_dashboard_exposes_promoted_playbooks(tmp_path: Path) -> None:
+    run_first_milestone_eval(tmp_path)
+    run_first_milestone_eval(tmp_path)
+    assert main(["--root", str(tmp_path), "playbooks", "--min-successes", "2"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+
+    assert "## Playbooks" in dashboard
+    assert "- active: 1" in dashboard
+    assert "first-milestone-closed-loop" in dashboard
+    assert "source=first_milestone_closed_loop" in dashboard
+    assert "successful_runs=2" in dashboard
+    assert "path=playbooks/first-milestone-closed-loop.md" in dashboard
+
+
+def test_high_risk_task_requires_approval_before_claim(tmp_path: Path) -> None:
+    storage = Storage(tmp_path / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "approval gate")
+    run_id = storage.create_run(goal_id, "bootstrap", tmp_path / "runs")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        run_id=run_id,
+        project_id="bootstrap",
+        task_type="write_goal_artifact",
+        description="simulate risky local dispatch",
+        verification_plan={"type": "file_contains", "path": "artifact.md"},
+        risk_level="high",
+    )
+
+    assert storage.claim_next_task(worker_id="worker-1", skill_tags=["local-files"]) is None
+    task = storage.get_task(task_id)
+    assert task.status == "waiting_approval"
+    assert task.owner is None
+    assert task.attempts == 0
+    assert task.risk_level == "high"
+
+    approvals = storage.list_pending_approvals()
+    assert len(approvals) == 1
+    approval = approvals[0]
+    assert approval.task_id == task_id
+    assert approval.run_id == run_id
+    assert approval.status == "pending"
+    assert approval.risk_level == "high"
+    assert approval.policy_name == "static_dispatch_policy"
+    assert approval.policy_version == "v1"
+    assert approval.task_type == "write_goal_artifact"
+    assert "risk_level=high" in approval.reason
+
+    assert storage.claim_next_task(worker_id="worker-1", skill_tags=["local-files"]) is None
+    assert [request.id for request in storage.list_pending_approvals()] == [approval.id]
+
+    approved = storage.approve_approval_request(
+        approval.id,
+        decided_by="operator",
+        decision_note="approved for local regression coverage",
+    )
+
+    assert approved.status == "approved"
+    assert approved.decided_by == "operator"
+    assert approved.decision_note == "approved for local regression coverage"
+    assert storage.get_task(task_id).status == "pending"
+
+    claimed = storage.claim_next_task(worker_id="worker-1", skill_tags=["local-files"])
+    assert claimed is not None
+    assert claimed.id == task_id
+    assert claimed.status == "claimed"
+    assert claimed.owner == "worker-1"
+
+
+def test_cli_and_dashboard_report_pending_approvals(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    goal_id = storage.create_goal("bootstrap", "approval visibility")
+    run_id = storage.create_run(goal_id, "bootstrap", tmp_path / "runs")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        run_id=run_id,
+        project_id="bootstrap",
+        task_type="write_goal_artifact",
+        description="simulate risky dashboard dispatch",
+        verification_plan={"type": "file_contains", "path": "artifact.md"},
+        risk_level="high",
+    )
+    assert storage.claim_next_task(worker_id="worker-1", skill_tags=["local-files"]) is None
+    approval = storage.list_pending_approvals()[0]
+
+    assert main(["--root", str(tmp_path), "approvals"]) == 0
+    approvals_output = capsys.readouterr().out
+    assert "pending_approvals: 1" in approvals_output
+    assert approval.id in approvals_output
+    assert task_id in approvals_output
+    assert "risk=high" in approvals_output
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Approvals" in dashboard
+    assert "- pending: 1" in dashboard
+    assert approval.id in dashboard
+    assert task_id in dashboard
+    assert run_id in dashboard
+    assert "risk=high" in dashboard
+
+    assert main(
+        [
+            "--root",
+            str(tmp_path),
+            "approve",
+            approval.id,
+            "--decided-by",
+            "operator",
+            "--note",
+            "approved from CLI regression",
+        ]
+    ) == 0
+    approve_output = capsys.readouterr().out
+    assert f"approved: {approval.id}" in approve_output
+    assert storage.get_task(task_id).status == "pending"
+
+
+def test_run_goal_waits_for_approval_instead_of_failing(tmp_path: Path) -> None:
+    system = ApprovalRequiredAgentSystem(tmp_path)
+
+    result = system.run_goal(
+        project_id="bootstrap",
+        description="Wait for an operator before dispatching risky work",
+    )
+
+    assert result.status == "waiting_approval"
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    tasks = storage.list_tasks(result.goal_id)
+    assert [task.status for task in tasks] == ["waiting_approval"]
+    approvals = storage.list_pending_approvals()
+    assert len(approvals) == 1
+    assert approvals[0].task_id == tasks[0].id
+    assert approvals[0].run_id == result.run_id
+
+    summary = result.summary_path.read_text(encoding="utf-8")
+    assert "- Status: waiting_approval" in summary
+    assert "waiting_approval" in summary
+
+
+def test_iterate_writes_next_iteration_packet_from_momentum_queue(tmp_path: Path) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## now",
+                "",
+                "- [x] Existing completed work.",
+                "",
+                "## next",
+                "",
+                "- [ ] Add a compact incident resolution path after more failure modes exist.",
+                "- [ ] Add queue-health checks for repeated blocked or failed work.",
+                "",
+                "## blocked",
+                "",
+                "- [ ] Choose deployment target before hosted dashboard work.",
+                "",
+                "## improve",
+                "",
+                "- [ ] Promote repeated successful runs into reusable playbooks.",
+                "",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet_path = tmp_path / "docs" / "next-iteration.md"
+    assert packet_path.exists()
+    packet = packet_path.read_text(encoding="utf-8")
+    assert "# Next Iteration Packet" in packet
+    assert "Add a compact incident resolution path after more failure modes exist." in packet
+    assert "Choose deployment target before hosted dashboard work." not in packet
+    assert "## Objective" in packet
+    assert "## Definition Of Done" in packet
+    assert "## Verification Commands" in packet
+    assert "python3 -m pytest -q" in packet
+    assert "python3 -m agent_os.cli eval" in packet
+    assert "python3 -m agent_os.cli dashboard" in packet
+    assert "## Guardrails And Non-Claims" in packet
+    assert "No external side effects" in packet
+    assert "## Current Posture" in packet
+
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        connection.row_factory = sqlite3.Row
+        rows = connection.execute(
+            """
+            select focus, source_section, status, packet_path
+            from iteration_packets
+            order by created_at desc
+            """
+        ).fetchall()
+
+    assert len(rows) == 1
+    assert rows[0]["focus"] == "Add a compact incident resolution path after more failure modes exist."
+    assert rows[0]["source_section"] == "next"
+    assert rows[0]["status"] == "planned"
+    assert rows[0]["packet_path"].endswith("docs/next-iteration.md")
+
+
+def test_dashboard_reports_current_iteration_loop_packet(tmp_path: Path, capsys) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## next",
+                "",
+                "- [ ] Add a compact incident resolution path after more failure modes exist.",
+                "",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+    output = capsys.readouterr().out
+    assert "next_iteration:" in output
+    assert "Add a compact incident resolution path after more failure modes exist." in output
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Iteration Loop" in dashboard
+    assert "- status: planned" in dashboard
+    assert "Add a compact incident resolution path after more failure modes exist." in dashboard
+    assert "docs/next-iteration.md" in dashboard
+
+
+def test_iterate_prefers_lower_complexity_when_scores_tie(tmp_path: Path) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## improve",
+                "",
+                "- [ ] Add coordinator fanout for equal-score work. <!-- score=10 complexity=8 -->",
+                "- [ ] Keep equal-score changes local and simple. <!-- score=10 complexity=2 -->",
+                "",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "Keep equal-score changes local and simple." in packet
+    assert "Add coordinator fanout for equal-score work." not in packet
+    assert "## Simplicity Guardrail" in packet
+    assert "- selection_policy: highest-score-then-lowest-complexity" in packet
+    assert "- selected_score: 10" in packet
+    assert "- selected_complexity: 2" in packet
+    assert "equal score 10" in packet
+
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        connection.row_factory = sqlite3.Row
+        row = connection.execute(
+            """
+            select focus, selection_policy, selection_reason,
+                   selected_score, selected_complexity
+            from iteration_packets
+            order by created_at desc
+            limit 1
+            """
+        ).fetchone()
+
+    assert row is not None
+    assert row["focus"] == "Keep equal-score changes local and simple."
+    assert row["selection_policy"] == "highest-score-then-lowest-complexity"
+    assert row["selected_score"] == 10
+    assert row["selected_complexity"] == 2
+    assert "lower complexity" in row["selection_reason"]
+
+
+def test_dashboard_reports_simplicity_guardrail_for_iteration_selection(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## improve",
+                "",
+                "- [ ] Add remote coordinator branch. <!-- score=7 complexity=6 -->",
+                "- [ ] Add local helper function. <!-- score=7 complexity=1 -->",
+                "",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Simplicity Guardrail" in dashboard
+    assert "- policy: highest-score-then-lowest-complexity" in dashboard
+    assert "- selected_score: 7" in dashboard
+    assert "- selected_complexity: 1" in dashboard
+    assert "equal score 7" in dashboard
+    assert "Add local helper function." in dashboard
+
+
+def test_handoff_review_reports_blocked_tasks_and_stale_handoffs(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    goal_id = storage.create_goal("bootstrap", "handoff review visibility")
+    run_id = storage.create_run(goal_id, "bootstrap", tmp_path / "runs")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        run_id=run_id,
+        project_id="bootstrap",
+        task_type="record_learning",
+        description="blocked handoff fixture",
+        verification_plan={"type": "file_contains", "path": "blocked.md"},
+    )
+    storage.mark_task_blocked(
+        task_id,
+        evidence={"passed": False, "method": "handoff_review_fixture"},
+        artifacts=[],
+    )
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## recurring",
+                "",
+                "- [ ] Review blocked tasks and stale handoffs.",
+                "",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    handoff_path = tmp_path / "projects" / "bootstrap" / "handoff.md"
+    handoff_path.write_text(
+        "\n".join(
+            [
+                "# Bootstrap Handoff",
+                "",
+                "## Next Actions",
+                "",
+                "1. Continue old work that no longer matches the current packet.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    assert main(["--root", str(tmp_path), "handoff-review"]) == 0
+    output = capsys.readouterr().out
+    assert "handoff_review: docs/handoff-review.md" in output
+    assert "blocked_tasks: 1" in output
+    assert "stale_handoffs: 1" in output
+    assert "projects/bootstrap/handoff.md" in output
+
+    reviews = storage.list_recent_handoff_reviews()
+    assert len(reviews) == 1
+    review = reviews[0]
+    assert review.blocked_task_count == 1
+    assert review.stale_handoff_count == 1
+    assert review.status == "needs_attention"
+    assert review.report_path == "docs/handoff-review.md"
+    assert review.current_focus == "Review blocked tasks and stale handoffs."
+    assert review.blocked_tasks[0]["id"] == task_id
+    assert review.stale_handoffs[0]["path"] == "projects/bootstrap/handoff.md"
+    assert "does_not_reference_current_focus" in review.stale_handoffs[0]["reason"]
+
+    report = (tmp_path / "docs" / "handoff-review.md").read_text(encoding="utf-8")
+    assert "# Handoff Review" in report
+    assert "- blocked_tasks: 1" in report
+    assert "- stale_handoffs: 1" in report
+    assert task_id in report
+    assert "projects/bootstrap/handoff.md" in report
+    assert "does_not_reference_current_focus" in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Handoff Review" in dashboard
+    assert "- status: needs_attention" in dashboard
+    assert "- blocked_tasks: 1" in dashboard
+    assert "- stale_handoffs: 1" in dashboard
+    assert task_id in dashboard
+    assert "projects/bootstrap/handoff.md" in dashboard
+
+
+def test_eval_after_change_runs_suite_and_records_evidence(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    assert main(
+        [
+            "--root",
+            str(tmp_path),
+            "eval-after-change",
+            "--change",
+            "Add eval cadence command",
+            "--file",
+            "agent_os/cli.py",
+            "--file",
+            "agent_os/storage.py",
+        ]
+    ) == 0
+    output = capsys.readouterr().out
+    assert "eval_after_change: pass" in output
+    assert "report: docs/eval-after-change.md" in output
+    assert "first_milestone_closed_loop" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    checks = storage.list_recent_eval_after_change_checks()
+    assert len(checks) == 1
+    check = checks[0]
+    assert check.status == "pass"
+    assert check.change_summary == "Add eval cadence command"
+    assert check.changed_paths == ["agent_os/cli.py", "agent_os/storage.py"]
+    assert check.eval_names == ["first_milestone_closed_loop"]
+    assert check.result_paths == ["evals/results/first_milestone_closed_loop.json"]
+    assert len(check.run_ids) == 1
+    assert check.report_path == "docs/eval-after-change.md"
+
+    report = (tmp_path / "docs" / "eval-after-change.md").read_text(encoding="utf-8")
+    assert "# Eval After Change" in report
+    assert "- status: pass" in report
+    assert "Add eval cadence command" in report
+    assert "agent_os/cli.py,agent_os/storage.py" in report
+    assert "evals/results/first_milestone_closed_loop.json" in report
+    assert check.run_ids[0] in report
+
+
+def test_dashboard_reports_eval_after_change_checks(
+    tmp_path: Path,
+) -> None:
+    assert main(
+        [
+            "--root",
+            str(tmp_path),
+            "eval-after-change",
+            "--change",
+            "Show eval cadence on dashboard",
+            "--file",
+            "agent_os/dashboard.py",
+        ]
+    ) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Eval After Change" in dashboard
+    assert "- failed: 0" in dashboard
+    assert "Show eval cadence on dashboard" in dashboard
+    assert "agent_os/dashboard.py" in dashboard
+    assert "first_milestone_closed_loop" in dashboard
+    assert "evals/results/first_milestone_closed_loop.json" in dashboard
+
+
+def test_distill_learnings_promotes_repeated_learning_to_knowledge(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    for run_id in ["run_111", "run_222", "run_333"]:
+        storage.record_learning(
+            run_id=run_id,
+            project_id="bootstrap",
+            summary=f"Run {run_id} showed that file evidence stays durable.",
+            source=f"projects/bootstrap/artifacts/{run_id}/learning.md",
+        )
+
+    assert main(
+        [
+            "--root",
+            str(tmp_path),
+            "distill-learnings",
+            "--min-occurrences",
+            "3",
+        ]
+    ) == 0
+
+    output = capsys.readouterr().out
+    assert "learning_distillation: stable" in output
+    assert "stable_learnings: 1" in output
+    assert "report: docs/learning-distillation.md" in output
+
+    distillations = storage.list_recent_learning_distillations()
+    assert len(distillations) == 1
+    distillation = distillations[0]
+    assert distillation.status == "stable"
+    assert distillation.min_occurrences == 3
+    assert distillation.stable_learning_count == 1
+    assert distillation.source_learning_count == 3
+    assert distillation.report_path == "docs/learning-distillation.md"
+    assert distillation.stable_learnings[0]["summary"] == (
+        "Run run_<id> showed that file evidence stays durable."
+    )
+    assert distillation.stable_learnings[0]["occurrences"] == 3
+
+    report = (tmp_path / "docs" / "learning-distillation.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Learning Distillation" in report
+    assert "- status: stable" in report
+    assert "Run run_<id> showed that file evidence stays durable." in report
+    assert "occurrences=3" in report
+
+    knowledge = (tmp_path / "knowledge.md").read_text(encoding="utf-8")
+    assert "## Stable Distilled Learnings" in knowledge
+    assert "Run run_<id> showed that file evidence stays durable." in knowledge
+    assert "docs/learning-distillation.md" in knowledge
+
+
+def test_dashboard_reports_learning_distillation(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    for run_id in ["run_aaa", "run_bbb", "run_ccc"]:
+        storage.record_learning(
+            run_id=run_id,
+            project_id="bootstrap",
+            summary=f"Run {run_id} showed that repeated evidence can become knowledge.",
+            source=f"projects/bootstrap/artifacts/{run_id}/learning.md",
+        )
+
+    assert main(["--root", str(tmp_path), "distill-learnings"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Learning Distillation" in dashboard
+    assert "- status: stable" in dashboard
+    assert "- stable_learnings: 1" in dashboard
+    assert "- report: docs/learning-distillation.md" in dashboard
+    assert "Run run_<id> showed that repeated evidence can become knowledge." in dashboard
+
+
+def test_budget_trust_posture_reports_dispatch_metadata(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    goal_id = storage.create_goal("bootstrap", "budget trust posture")
+    run_id = storage.create_run(goal_id, "bootstrap", tmp_path / "runs")
+    storage.create_task(
+        goal_id=goal_id,
+        run_id=run_id,
+        project_id="bootstrap",
+        task_type="write_goal_artifact",
+        description="safe local task",
+        verification_plan={"type": "file_contains", "path": "safe.md"},
+        risk_level="low",
+    )
+    storage.create_task(
+        goal_id=goal_id,
+        run_id=run_id,
+        project_id="bootstrap",
+        task_type="send_email",
+        description="unknown external task",
+        verification_plan={"type": "manual_review", "path": "none"},
+        risk_level="high",
+    )
+
+    assert main(["--root", str(tmp_path), "budget-trust-posture"]) == 0
+
+    output = capsys.readouterr().out
+    assert "budget_trust_posture: report_only" in output
+    assert "report: docs/budget-trust-posture.md" in output
+    assert "tasks: 2" in output
+    assert "budget_state: not_tracked" in output
+    assert "trust_state: not_tracked" in output
+    assert "risk_counts: high=1,low=1" in output
+
+    reports = storage.list_recent_budget_trust_posture_reports()
+    assert len(reports) == 1
+    report_row = reports[0]
+    assert report_row.status == "report_only"
+    assert report_row.task_count == 2
+    assert report_row.risk_counts == {"high": 1, "low": 1}
+    assert report_row.budget_state == "not_tracked"
+    assert report_row.trust_state == "not_tracked"
+    assert report_row.report_path == "docs/budget-trust-posture.md"
+    assert report_row.budget_summary["enforcement"] == "not_enabled"
+    assert report_row.trust_summary["routing_effect"] == "none"
+
+    report = (tmp_path / "docs" / "budget-trust-posture.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Budget And Trust Posture" in report
+    assert "- status: report_only" in report
+    assert "- task_count: 2" in report
+    assert "- high: 1" in report
+    assert "- low: 1" in report
+    assert "- enforcement: not_enabled" in report
+    assert "- routing_effect: none" in report
+    assert "Does not enforce budgets" in report
+    assert "Does not promote trust" in report
+
+
+def test_dashboard_reports_budget_trust_posture(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    goal_id = storage.create_goal("bootstrap", "dashboard budget trust posture")
+    run_id = storage.create_run(goal_id, "bootstrap", tmp_path / "runs")
+    storage.create_task(
+        goal_id=goal_id,
+        run_id=run_id,
+        project_id="bootstrap",
+        task_type="write_goal_artifact",
+        description="safe dashboard task",
+        verification_plan={"type": "file_contains", "path": "dashboard.md"},
+        risk_level="medium",
+    )
+
+    assert main(["--root", str(tmp_path), "budget-trust-posture"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Budget And Trust Posture" in dashboard
+    assert "- status: report_only" in dashboard
+    assert "- tasks: 1" in dashboard
+    assert "- budget_state: not_tracked" in dashboard
+    assert "- trust_state: not_tracked" in dashboard
+    assert "- risk_counts: medium=1" in dashboard
+    assert "- report: docs/budget-trust-posture.md" in dashboard
+
+
+def test_dispatch_posture_history_summarizes_recent_snapshots(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.record_budget_trust_posture_report(
+        status="report_only",
+        task_count=2,
+        risk_counts={"low": 2},
+        budget_state="not_tracked",
+        budget_summary={"enforcement": "not_enabled"},
+        trust_state="not_tracked",
+        trust_summary={"routing_effect": "none"},
+        report_path="docs/budget-trust-posture.md",
+    )
+    storage.record_budget_trust_posture_report(
+        status="report_only",
+        task_count=5,
+        risk_counts={"high": 1, "low": 4},
+        budget_state="not_tracked",
+        budget_summary={"enforcement": "not_enabled"},
+        trust_state="not_tracked",
+        trust_summary={"routing_effect": "none"},
+        report_path="docs/budget-trust-posture.md",
+    )
+
+    assert main(["--root", str(tmp_path), "dispatch-posture-history"]) == 0
+
+    output = capsys.readouterr().out
+    assert "dispatch_posture_history: report_only" in output
+    assert "report: docs/dispatch-posture-history.md" in output
+    assert "snapshots: 2" in output
+    assert "latest_tasks: 5" in output
+    assert "task_delta: 3" in output
+    assert "latest_risk_counts: high=1,low=4" in output
+    assert "budget_states: not_tracked" in output
+    assert "trust_states: not_tracked" in output
+
+    summaries = storage.list_recent_dispatch_posture_history_summaries()
+    assert len(summaries) == 1
+    summary = summaries[0]
+    assert summary.status == "report_only"
+    assert summary.snapshot_count == 2
+    assert summary.latest_task_count == 5
+    assert summary.task_count_delta == 3
+    assert summary.latest_risk_counts == {"high": 1, "low": 4}
+    assert summary.budget_states == ["not_tracked"]
+    assert summary.trust_states == ["not_tracked"]
+    assert summary.report_path == "docs/dispatch-posture-history.md"
+
+    report = (tmp_path / "docs" / "dispatch-posture-history.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Dispatch Posture History" in report
+    assert "- status: report_only" in report
+    assert "- snapshots: 2" in report
+    assert "- latest_task_count: 5" in report
+    assert "- task_count_delta: 3" in report
+    assert "- high: 1" in report
+    assert "- low: 4" in report
+    assert "Does not change task routing" in report
+    assert "Does not enforce budgets" in report
+    assert "Does not promote trust" in report
+
+
+def test_dashboard_reports_dispatch_posture_history(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.record_budget_trust_posture_report(
+        status="report_only",
+        task_count=1,
+        risk_counts={"low": 1},
+        budget_state="not_tracked",
+        budget_summary={"enforcement": "not_enabled"},
+        trust_state="not_tracked",
+        trust_summary={"routing_effect": "none"},
+        report_path="docs/budget-trust-posture.md",
+    )
+
+    assert main(["--root", str(tmp_path), "dispatch-posture-history"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Dispatch Posture History" in dashboard
+    assert "- status: report_only" in dashboard
+    assert "- snapshots: 1" in dashboard
+    assert "- latest_tasks: 1" in dashboard
+    assert "- task_delta: 0" in dashboard
+    assert "- latest_risk_counts: low=1" in dashboard
+    assert "- report: docs/dispatch-posture-history.md" in dashboard
+
+
+def test_dispatch_posture_staleness_reviews_snapshot_timestamps(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    old_snapshot = storage.record_budget_trust_posture_report(
+        status="report_only",
+        task_count=2,
+        risk_counts={"low": 2},
+        budget_state="not_tracked",
+        budget_summary={"enforcement": "not_enabled"},
+        trust_state="not_tracked",
+        trust_summary={"routing_effect": "none"},
+        report_path="docs/budget-trust-posture.md",
+    )
+    fresh_snapshot = storage.record_budget_trust_posture_report(
+        status="report_only",
+        task_count=4,
+        risk_counts={"low": 4},
+        budget_state="not_tracked",
+        budget_summary={"enforcement": "not_enabled"},
+        trust_state="not_tracked",
+        trust_summary={"routing_effect": "none"},
+        report_path="docs/budget-trust-posture.md",
+    )
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        connection.execute(
+            "update budget_trust_posture_reports set created_at = ? where id = ?",
+            ("2026-06-21T10:00:00+00:00", old_snapshot.id),
+        )
+        connection.execute(
+            "update budget_trust_posture_reports set created_at = ? where id = ?",
+            ("2026-06-21T11:55:00+00:00", fresh_snapshot.id),
+        )
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "dispatch-posture-staleness",
+                "--now",
+                "2026-06-21T12:00:00+00:00",
+                "--stale-after-minutes",
+                "30",
+            ]
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert "dispatch_posture_staleness: fresh" in output
+    assert "report: docs/dispatch-posture-staleness.md" in output
+    assert "snapshots: 2" in output
+    assert "stale_snapshots: 1" in output
+    assert "latest_snapshot_age_seconds: 300" in output
+    assert "stale_after_seconds: 1800" in output
+    assert "latest_tasks: 4" in output
+    assert "latest_risk_counts: low=4" in output
+
+    reviews = storage.list_recent_dispatch_posture_staleness_reviews()
+    assert len(reviews) == 1
+    review = reviews[0]
+    assert review.status == "fresh"
+    assert review.snapshot_count == 2
+    assert review.stale_snapshot_count == 1
+    assert review.latest_snapshot_age_seconds == 300
+    assert review.stale_after_seconds == 1800
+    assert review.latest_task_count == 4
+    assert review.latest_risk_counts == {"low": 4}
+    assert review.report_path == "docs/dispatch-posture-staleness.md"
+
+    report = (tmp_path / "docs" / "dispatch-posture-staleness.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Dispatch Posture Snapshot Review" in report
+    assert "- status: fresh" in report
+    assert "- snapshots: 2" in report
+    assert "- stale_snapshots: 1" in report
+    assert "- latest_snapshot_age_seconds: 300" in report
+    assert "- stale_after_seconds: 1800" in report
+    assert "- latest_task_count: 4" in report
+    assert "status=fresh age_seconds=300 tasks=4" in report
+    assert "status=stale age_seconds=7200 tasks=2" in report
+    assert "Does not schedule snapshot refreshes" in report
+    assert "Does not change task routing" in report
+
+
+def test_dispatch_posture_staleness_reports_missing_history(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "dispatch-posture-staleness",
+                "--now",
+                "2026-06-21T12:00:00+00:00",
+            ]
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert "dispatch_posture_staleness: missing_history" in output
+    assert "snapshots: 0" in output
+    assert "stale_snapshots: 0" in output
+    assert "latest_snapshot_age_seconds: none" in output
+    assert "latest_tasks: 0" in output
+    assert "latest_risk_counts: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    reviews = storage.list_recent_dispatch_posture_staleness_reviews()
+    assert len(reviews) == 1
+    review = reviews[0]
+    assert review.status == "missing_history"
+    assert review.snapshot_count == 0
+    assert review.latest_snapshot_age_seconds is None
+    assert review.latest_snapshot_at is None
+
+    report = (tmp_path / "docs" / "dispatch-posture-staleness.md").read_text(
+        encoding="utf-8"
+    )
+    assert "- status: missing_history" in report
+    assert "- latest_snapshot_age_seconds: none" in report
+    assert "- none" in report
+
+
+def test_dashboard_reports_dispatch_posture_staleness(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    snapshot = storage.record_budget_trust_posture_report(
+        status="report_only",
+        task_count=1,
+        risk_counts={"low": 1},
+        budget_state="not_tracked",
+        budget_summary={"enforcement": "not_enabled"},
+        trust_state="not_tracked",
+        trust_summary={"routing_effect": "none"},
+        report_path="docs/budget-trust-posture.md",
+    )
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        connection.execute(
+            "update budget_trust_posture_reports set created_at = ? where id = ?",
+            ("2026-06-21T10:00:00+00:00", snapshot.id),
+        )
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "dispatch-posture-staleness",
+                "--now",
+                "2026-06-21T12:00:00+00:00",
+                "--stale-after-minutes",
+                "30",
+            ]
+        )
+        == 0
+    )
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Dispatch Posture Snapshot Review" in dashboard
+    assert "- status: stale" in dashboard
+    assert "- snapshots: 1" in dashboard
+    assert "- stale_snapshots: 1" in dashboard
+    assert "- latest_snapshot_age_seconds: 7200" in dashboard
+    assert "- stale_after_seconds: 1800" in dashboard
+    assert "- report: docs/dispatch-posture-staleness.md" in dashboard
+
+
+def test_dispatch_posture_refresh_recommends_manual_refresh_for_stale_review(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_review = storage.record_dispatch_posture_staleness_review(
+        status="stale",
+        snapshot_count=2,
+        stale_snapshot_count=2,
+        latest_snapshot_age_seconds=7200,
+        stale_after_seconds=3600,
+        latest_task_count=5,
+        latest_risk_counts={"low": 5},
+        latest_snapshot_at="2026-06-21T10:00:00+00:00",
+        oldest_snapshot_at="2026-06-21T09:00:00+00:00",
+        report_path="docs/dispatch-posture-staleness.md",
+    )
+
+    assert main(["--root", str(tmp_path), "dispatch-posture-refresh"]) == 0
+
+    output = capsys.readouterr().out
+    assert "dispatch_posture_refresh: manual_refresh_recommended" in output
+    assert "report: docs/dispatch-posture-refresh.md" in output
+    assert f"source_review: {source_review.id}" in output
+    assert "source_status: stale" in output
+    assert (
+        "recommended_commands: budget-trust-posture,dispatch-posture-history,"
+        "dispatch-posture-staleness,dispatch-posture-refresh"
+    ) in output
+
+    recommendations = storage.list_recent_dispatch_posture_refresh_recommendations()
+    assert len(recommendations) == 1
+    recommendation = recommendations[0]
+    assert recommendation.status == "manual_refresh_recommended"
+    assert recommendation.source_review_id == source_review.id
+    assert recommendation.source_review_status == "stale"
+    assert recommendation.snapshot_count == 2
+    assert recommendation.stale_snapshot_count == 2
+    assert recommendation.latest_snapshot_age_seconds == 7200
+    assert recommendation.recommended_commands == [
+        "budget-trust-posture",
+        "dispatch-posture-history",
+        "dispatch-posture-staleness",
+        "dispatch-posture-refresh",
+    ]
+    assert recommendation.report_path == "docs/dispatch-posture-refresh.md"
+
+    report = (tmp_path / "docs" / "dispatch-posture-refresh.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Dispatch Posture Refresh Recommendation" in report
+    assert "- status: manual_refresh_recommended" in report
+    assert f"- source_review_id: {source_review.id}" in report
+    assert "Manual refresh is recommended" in report
+    assert "budget-trust-posture" in report
+    assert "Does not run refresh commands automatically" in report
+    assert "Does not schedule refreshes" in report
+    assert "Does not change task routing" in report
+
+
+def test_dispatch_posture_refresh_reports_missing_staleness_review_without_creating_one(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    assert main(["--root", str(tmp_path), "dispatch-posture-refresh"]) == 0
+
+    output = capsys.readouterr().out
+    assert "dispatch_posture_refresh: staleness_review_missing" in output
+    assert "source_review: none" in output
+    assert "recommended_commands: dispatch-posture-staleness" in output
+    assert storage.list_recent_dispatch_posture_staleness_reviews() == []
+
+    recommendations = storage.list_recent_dispatch_posture_refresh_recommendations()
+    assert len(recommendations) == 1
+    recommendation = recommendations[0]
+    assert recommendation.status == "staleness_review_missing"
+    assert recommendation.source_review_id is None
+    assert recommendation.source_review_status == "none"
+    assert recommendation.latest_snapshot_age_seconds is None
+    assert recommendation.recommended_commands == ["dispatch-posture-staleness"]
+
+    report = (tmp_path / "docs" / "dispatch-posture-refresh.md").read_text(
+        encoding="utf-8"
+    )
+    assert "- status: staleness_review_missing" in report
+    assert "- source_review_id: none" in report
+    assert "No dispatch posture staleness review exists yet" in report
+    assert "Does not create staleness reviews as a side effect" in report
+
+
+def test_dispatch_posture_refresh_needs_no_action_for_fresh_review(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_review = storage.record_dispatch_posture_staleness_review(
+        status="fresh",
+        snapshot_count=3,
+        stale_snapshot_count=0,
+        latest_snapshot_age_seconds=120,
+        stale_after_seconds=3600,
+        latest_task_count=7,
+        latest_risk_counts={"low": 7},
+        latest_snapshot_at="2026-06-21T11:58:00+00:00",
+        oldest_snapshot_at="2026-06-21T11:00:00+00:00",
+        report_path="docs/dispatch-posture-staleness.md",
+    )
+
+    assert main(["--root", str(tmp_path), "dispatch-posture-refresh"]) == 0
+
+    output = capsys.readouterr().out
+    assert "dispatch_posture_refresh: no_refresh_needed" in output
+    assert f"source_review: {source_review.id}" in output
+    assert "recommended_commands: none" in output
+
+    recommendation = storage.list_recent_dispatch_posture_refresh_recommendations()[0]
+    assert recommendation.status == "no_refresh_needed"
+    assert recommendation.source_review_id == source_review.id
+    assert recommendation.recommended_commands == []
+
+    report = (tmp_path / "docs" / "dispatch-posture-refresh.md").read_text(
+        encoding="utf-8"
+    )
+    assert "- status: no_refresh_needed" in report
+    assert "No refresh is currently recommended" in report
+    assert "Does not run refresh commands automatically" in report
+
+
+def test_dashboard_reports_dispatch_posture_refresh_recommendation(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_review = storage.record_dispatch_posture_staleness_review(
+        status="stale",
+        snapshot_count=1,
+        stale_snapshot_count=1,
+        latest_snapshot_age_seconds=7200,
+        stale_after_seconds=3600,
+        latest_task_count=2,
+        latest_risk_counts={"low": 2},
+        latest_snapshot_at="2026-06-21T10:00:00+00:00",
+        oldest_snapshot_at="2026-06-21T10:00:00+00:00",
+        report_path="docs/dispatch-posture-staleness.md",
+    )
+
+    assert main(["--root", str(tmp_path), "dispatch-posture-refresh"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Dispatch Posture Refresh Recommendation" in dashboard
+    assert "- status: manual_refresh_recommended" in dashboard
+    assert f"- source_review: {source_review.id}" in dashboard
+    assert "- source_status: stale" in dashboard
+    assert "- recommended_commands: budget-trust-posture,dispatch-posture-history,dispatch-posture-staleness,dispatch-posture-refresh" in dashboard
+    assert "- report: docs/dispatch-posture-refresh.md" in dashboard
+
+
+def test_capability_expansion_ledger_reports_deferred_surfaces(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+
+    output = capsys.readouterr().out
+    assert "capability_expansion_ledger: report_only" in output
+    assert "report: docs/capability-expansion-ledger.md" in output
+    assert "capabilities: 9" in output
+    assert "ready: 0" in output
+    assert "deferred: 9" in output
+    assert "approval_boundary: explicit_operator_approval_required" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    ledgers = storage.list_recent_capability_expansion_ledgers()
+    assert len(ledgers) == 1
+    ledger = ledgers[0]
+    assert ledger.status == "report_only"
+    assert ledger.capability_count == 9
+    assert ledger.ready_count == 0
+    assert ledger.deferred_count == 9
+    assert ledger.approval_boundary == "explicit_operator_approval_required"
+    assert ledger.report_path == "docs/capability-expansion-ledger.md"
+    assert [entry["capability"] for entry in ledger.capabilities] == [
+        "hosted_dashboard",
+        "remote_workers",
+        "autonomous_scheduling",
+        "browser_desktop_adapters",
+        "ci_deploy_proof",
+        "budget_enforcement",
+        "trust_promotion",
+        "automatic_retries",
+        "real_cost_tracking",
+    ]
+    assert all(entry["state"] == "deferred" for entry in ledger.capabilities)
+    assert all(entry["routing_effect"] == "none" for entry in ledger.capabilities)
+
+    report = (tmp_path / "docs" / "capability-expansion-ledger.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Capability Expansion Ledger" in report
+    assert "- status: report_only" in report
+    assert "- capability_count: 9" in report
+    assert "- hosted_dashboard: state=deferred" in report
+    assert "- real_cost_tracking: state=deferred" in report
+    assert "Does not enable hosted dashboard" in report
+    assert "Does not start remote workers" in report
+    assert "Does not schedule autonomous work" in report
+
+
+def test_dashboard_reports_capability_expansion_ledger(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Capability Expansion Ledger" in dashboard
+    assert "- status: report_only" in dashboard
+    assert "- capabilities: 9" in dashboard
+    assert "- ready: 0" in dashboard
+    assert "- deferred: 9" in dashboard
+    assert "- approval_boundary: explicit_operator_approval_required" in dashboard
+    assert "- report: docs/capability-expansion-ledger.md" in dashboard
+
+
+def test_iteration_packet_reports_capability_expansion_ledger_posture(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli capability-expansion-ledger`" in packet
+    assert "- capability expansion ledger: report_only" in packet
+
+
+def test_capability_readiness_review_reports_missing_evidence_from_ledger(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+
+    output = capsys.readouterr().out
+    assert "capability_readiness_review: blocked_by_missing_evidence" in output
+    assert "report: docs/capability-readiness-review.md" in output
+    assert "capabilities: 9" in output
+    assert "ready: 0" in output
+    assert "not_ready: 9" in output
+    assert "missing_evidence: 9" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    ledger = storage.list_recent_capability_expansion_ledgers()[0]
+    reviews = storage.list_recent_capability_readiness_reviews()
+    assert len(reviews) == 1
+    review = reviews[0]
+    assert review.status == "blocked_by_missing_evidence"
+    assert review.source_ledger_id == ledger.id
+    assert review.source_ledger_status == "report_only"
+    assert review.capability_count == 9
+    assert review.ready_count == 0
+    assert review.not_ready_count == 9
+    assert review.missing_evidence_count == 9
+    assert review.recommended_commands == []
+    assert review.report_path == "docs/capability-readiness-review.md"
+    assert [item["capability"] for item in review.review_items] == [
+        "hosted_dashboard",
+        "remote_workers",
+        "autonomous_scheduling",
+        "browser_desktop_adapters",
+        "ci_deploy_proof",
+        "budget_enforcement",
+        "trust_promotion",
+        "automatic_retries",
+        "real_cost_tracking",
+    ]
+    assert all(item["readiness"] == "not_ready" for item in review.review_items)
+    assert all(item["evidence_state"] == "missing" for item in review.review_items)
+    assert all(item["routing_effect"] == "none" for item in review.review_items)
+
+    report = (tmp_path / "docs" / "capability-readiness-review.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Capability Readiness Review" in report
+    assert "- status: blocked_by_missing_evidence" in report
+    assert f"- source_ledger_id: {ledger.id}" in report
+    assert "- missing_evidence: 9" in report
+    assert "- hosted_dashboard: readiness=not_ready evidence_state=missing" in report
+    assert "- real_cost_tracking: readiness=not_ready evidence_state=missing" in report
+    assert "Does not enable hosted dashboard" in report
+    assert "Does not start remote workers" in report
+    assert "Does not promote trust" in report
+
+
+def test_capability_readiness_review_reports_missing_ledger_without_creating_one(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+
+    output = capsys.readouterr().out
+    assert "capability_readiness_review: ledger_missing" in output
+    assert "source_ledger: none" in output
+    assert "recommended_commands: capability-expansion-ledger" in output
+    assert storage.list_recent_capability_expansion_ledgers() == []
+
+    reviews = storage.list_recent_capability_readiness_reviews()
+    assert len(reviews) == 1
+    review = reviews[0]
+    assert review.status == "ledger_missing"
+    assert review.source_ledger_id is None
+    assert review.source_ledger_status == "none"
+    assert review.capability_count == 0
+    assert review.ready_count == 0
+    assert review.not_ready_count == 0
+    assert review.missing_evidence_count == 0
+    assert review.recommended_commands == ["capability-expansion-ledger"]
+
+    report = (tmp_path / "docs" / "capability-readiness-review.md").read_text(
+        encoding="utf-8"
+    )
+    assert "- status: ledger_missing" in report
+    assert "- source_ledger_id: none" in report
+    assert "No capability expansion ledger exists yet" in report
+    assert "Does not create capability ledgers as a side effect" in report
+
+
+def test_dashboard_reports_capability_readiness_review(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Capability Readiness Review" in dashboard
+    assert "- status: blocked_by_missing_evidence" in dashboard
+    assert "- capabilities: 9" in dashboard
+    assert "- ready: 0" in dashboard
+    assert "- not_ready: 9" in dashboard
+    assert "- missing_evidence: 9" in dashboard
+    assert "- recommended_commands: none" in dashboard
+    assert "- report: docs/capability-readiness-review.md" in dashboard
+
+
+def test_iteration_packet_reports_capability_readiness_review_posture(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli capability-readiness-review`" in packet
+    assert "- capability readiness review: blocked_by_missing_evidence" in packet
+
+
+def test_capability_proof_gap_index_reports_open_gaps_from_readiness_review(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+
+    output = capsys.readouterr().out
+    assert "capability_proof_gap_index: open_gaps" in output
+    assert "report: docs/capability-proof-gap-index.md" in output
+    assert "source_status: blocked_by_missing_evidence" in output
+    assert "gaps: 9" in output
+    assert "missing_evidence: 9" in output
+    assert "blocked_capabilities: 9" in output
+    assert "next_proofs: 9" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    review = storage.list_recent_capability_readiness_reviews()[0]
+    indexes = storage.list_recent_capability_proof_gap_indexes()
+    assert len(indexes) == 1
+    index = indexes[0]
+    assert index.status == "open_gaps"
+    assert index.source_review_id == review.id
+    assert index.source_review_status == "blocked_by_missing_evidence"
+    assert index.gap_count == 9
+    assert index.missing_evidence_count == 9
+    assert index.blocked_capability_count == 9
+    assert index.next_proof_count == 9
+    assert index.recommended_commands == []
+    assert index.report_path == "docs/capability-proof-gap-index.md"
+    assert [gap["capability"] for gap in index.proof_gaps] == [
+        "hosted_dashboard",
+        "remote_workers",
+        "autonomous_scheduling",
+        "browser_desktop_adapters",
+        "ci_deploy_proof",
+        "budget_enforcement",
+        "trust_promotion",
+        "automatic_retries",
+        "real_cost_tracking",
+    ]
+    assert all(gap["gap"] == "missing_evidence" for gap in index.proof_gaps)
+    assert all(gap["routing_effect"] == "none" for gap in index.proof_gaps)
+
+    report = (tmp_path / "docs" / "capability-proof-gap-index.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Capability Proof Gap Index" in report
+    assert "- status: open_gaps" in report
+    assert f"- source_review_id: {review.id}" in report
+    assert "- gaps: 9" in report
+    assert "- hosted_dashboard: gap=missing_evidence readiness=not_ready" in report
+    assert "- real_cost_tracking: gap=missing_evidence readiness=not_ready" in report
+    assert "Does not create readiness reviews as a side effect" in report
+    assert "Does not generate proof artifacts automatically" in report
+    assert "Does not enable hosted dashboard" in report
+
+
+def test_capability_proof_gap_index_reports_missing_review_without_creating_one(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+
+    output = capsys.readouterr().out
+    assert "capability_proof_gap_index: readiness_review_missing" in output
+    assert "source_review: none" in output
+    assert "recommended_commands: capability-readiness-review" in output
+    assert storage.list_recent_capability_readiness_reviews() == []
+    assert storage.list_recent_capability_expansion_ledgers() == []
+
+    indexes = storage.list_recent_capability_proof_gap_indexes()
+    assert len(indexes) == 1
+    index = indexes[0]
+    assert index.status == "readiness_review_missing"
+    assert index.source_review_id is None
+    assert index.source_review_status == "none"
+    assert index.gap_count == 0
+    assert index.missing_evidence_count == 0
+    assert index.blocked_capability_count == 0
+    assert index.next_proof_count == 0
+    assert index.recommended_commands == ["capability-readiness-review"]
+
+    report = (tmp_path / "docs" / "capability-proof-gap-index.md").read_text(
+        encoding="utf-8"
+    )
+    assert "- status: readiness_review_missing" in report
+    assert "- source_review_id: none" in report
+    assert "No capability readiness review exists yet" in report
+    assert "Does not create readiness reviews as a side effect" in report
+
+
+def test_dashboard_reports_capability_proof_gap_index(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Capability Proof Gap Index" in dashboard
+    assert "- status: open_gaps" in dashboard
+    assert "- gaps: 9" in dashboard
+    assert "- missing_evidence: 9" in dashboard
+    assert "- blocked_capabilities: 9" in dashboard
+    assert "- next_proofs: 9" in dashboard
+    assert "- recommended_commands: none" in dashboard
+    assert "- report: docs/capability-proof-gap-index.md" in dashboard
+
+
+def test_iteration_packet_reports_capability_proof_gap_index_posture(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli capability-proof-gap-index`" in packet
+    assert "- capability proof gap index: open_gaps" in packet
+
+
+def test_capability_approval_boundary_matrix_reports_boundaries_from_proof_gaps(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+
+    output = capsys.readouterr().out
+    assert "capability_approval_boundary_matrix: approval_required" in output
+    assert "report: docs/capability-approval-boundary-matrix.md" in output
+    assert "source_status: open_gaps" in output
+    assert "boundaries: 1" in output
+    assert "gaps: 9" in output
+    assert "blocked_capabilities: 9" in output
+    assert "approvals_required: 9" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    index = storage.list_recent_capability_proof_gap_indexes()[0]
+    matrices = storage.list_recent_capability_approval_boundary_matrices()
+    assert len(matrices) == 1
+    matrix = matrices[0]
+    assert matrix.status == "approval_required"
+    assert matrix.source_index_id == index.id
+    assert matrix.source_index_status == "open_gaps"
+    assert matrix.boundary_count == 1
+    assert matrix.gap_count == 9
+    assert matrix.blocked_capability_count == 9
+    assert matrix.approval_required_count == 9
+    assert matrix.recommended_commands == []
+    assert matrix.report_path == "docs/capability-approval-boundary-matrix.md"
+    assert len(matrix.boundary_rows) == 1
+    assert matrix.boundary_rows[0]["approval_boundary"] == (
+        "explicit_operator_approval_required"
+    )
+    assert matrix.boundary_rows[0]["capability_count"] == 9
+    assert [entry["capability"] for entry in matrix.matrix_entries] == [
+        "hosted_dashboard",
+        "remote_workers",
+        "autonomous_scheduling",
+        "browser_desktop_adapters",
+        "ci_deploy_proof",
+        "budget_enforcement",
+        "trust_promotion",
+        "automatic_retries",
+        "real_cost_tracking",
+    ]
+    assert all(
+        entry["decision_state"] == "blocked_until_proof_and_operator_approval"
+        for entry in matrix.matrix_entries
+    )
+    assert all(entry["routing_effect"] == "none" for entry in matrix.matrix_entries)
+
+    report = (tmp_path / "docs" / "capability-approval-boundary-matrix.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Capability Approval Boundary Matrix" in report
+    assert "- status: approval_required" in report
+    assert f"- source_index_id: {index.id}" in report
+    assert "- boundaries: 1" in report
+    assert "- approvals_required: 9" in report
+    assert (
+        "- explicit_operator_approval_required: capabilities=9 gaps=9 "
+        "approvals_required=9"
+    ) in report
+    assert (
+        "- hosted_dashboard: approval_boundary=explicit_operator_approval_required "
+        "decision_state=blocked_until_proof_and_operator_approval"
+    ) in report
+    assert "Does not approve capabilities automatically" in report
+    assert "Does not generate proof artifacts automatically" in report
+    assert "Does not change routing or claims" in report
+
+
+def test_capability_approval_boundary_matrix_reports_missing_index_without_creating_one(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+
+    output = capsys.readouterr().out
+    assert "capability_approval_boundary_matrix: proof_gap_index_missing" in output
+    assert "source_index: none" in output
+    assert "recommended_commands: capability-proof-gap-index" in output
+    assert storage.list_recent_capability_proof_gap_indexes() == []
+    assert storage.list_recent_capability_readiness_reviews() == []
+    assert storage.list_recent_capability_expansion_ledgers() == []
+
+    matrices = storage.list_recent_capability_approval_boundary_matrices()
+    assert len(matrices) == 1
+    matrix = matrices[0]
+    assert matrix.status == "proof_gap_index_missing"
+    assert matrix.source_index_id is None
+    assert matrix.source_index_status == "none"
+    assert matrix.boundary_count == 0
+    assert matrix.gap_count == 0
+    assert matrix.blocked_capability_count == 0
+    assert matrix.approval_required_count == 0
+    assert matrix.recommended_commands == ["capability-proof-gap-index"]
+
+    report = (tmp_path / "docs" / "capability-approval-boundary-matrix.md").read_text(
+        encoding="utf-8"
+    )
+    assert "- status: proof_gap_index_missing" in report
+    assert "- source_index_id: none" in report
+    assert "No capability proof gap index exists yet" in report
+    assert "Does not create proof gap indexes as a side effect" in report
+
+
+def test_dashboard_reports_capability_approval_boundary_matrix(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Capability Approval Boundary Matrix" in dashboard
+    assert "- status: approval_required" in dashboard
+    assert "- boundaries: 1" in dashboard
+    assert "- gaps: 9" in dashboard
+    assert "- blocked_capabilities: 9" in dashboard
+    assert "- approvals_required: 9" in dashboard
+    assert "- recommended_commands: none" in dashboard
+    assert "- report: docs/capability-approval-boundary-matrix.md" in dashboard
+
+
+def test_iteration_packet_reports_capability_approval_boundary_matrix_posture(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli capability-approval-boundary-matrix`" in packet
+    assert "- capability approval boundary matrix: approval_required" in packet
+
+
+def test_capability_evidence_collection_plan_reports_manual_items_from_boundaries(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+
+    output = capsys.readouterr().out
+    assert "capability_evidence_collection_plan: evidence_required" in output
+    assert "report: docs/capability-evidence-collection-plan.md" in output
+    assert "source_status: approval_required" in output
+    assert "capabilities: 9" in output
+    assert "evidence_items: 9" in output
+    assert "manual_collection: 9" in output
+    assert "approvals_required: 9" in output
+    assert "boundaries: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    matrix = storage.list_recent_capability_approval_boundary_matrices()[0]
+    plans = storage.list_recent_capability_evidence_collection_plans()
+    assert len(plans) == 1
+    plan = plans[0]
+    assert plan.status == "evidence_required"
+    assert plan.source_matrix_id == matrix.id
+    assert plan.source_matrix_status == "approval_required"
+    assert plan.capability_count == 9
+    assert plan.evidence_item_count == 9
+    assert plan.manual_collection_count == 9
+    assert plan.approval_required_count == 9
+    assert plan.boundary_count == 1
+    assert plan.recommended_commands == []
+    assert plan.report_path == "docs/capability-evidence-collection-plan.md"
+    assert [item["capability"] for item in plan.evidence_items] == [
+        "hosted_dashboard",
+        "remote_workers",
+        "autonomous_scheduling",
+        "browser_desktop_adapters",
+        "ci_deploy_proof",
+        "budget_enforcement",
+        "trust_promotion",
+        "automatic_retries",
+        "real_cost_tracking",
+    ]
+    assert all(
+        item["collection_mode"] == "manual_operator_supplied"
+        for item in plan.evidence_items
+    )
+    assert all(item["evidence_state"] == "missing" for item in plan.evidence_items)
+    assert all(item["routing_effect"] == "none" for item in plan.evidence_items)
+
+    report = (tmp_path / "docs" / "capability-evidence-collection-plan.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Capability Evidence Collection Plan" in report
+    assert "- status: evidence_required" in report
+    assert f"- source_matrix_id: {matrix.id}" in report
+    assert "- evidence_items: 9" in report
+    assert "- manual_collection: 9" in report
+    assert "- approvals_required: 9" in report
+    assert (
+        "- hosted_dashboard: evidence_item=hosted_dashboard_design_review "
+        "collection_mode=manual_operator_supplied evidence_state=missing"
+    ) in report
+    assert (
+        "- real_cost_tracking: evidence_item=cost_accounting_source_review "
+        "collection_mode=manual_operator_supplied evidence_state=missing"
+    ) in report
+    assert "Does not collect evidence automatically" in report
+    assert "Does not approve capabilities automatically" in report
+    assert "Does not change routing or claims" in report
+
+
+def test_capability_evidence_collection_plan_reports_missing_matrix_without_creating_one(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_evidence_collection_plan: approval_boundary_matrix_missing"
+        in output
+    )
+    assert "source_matrix: none" in output
+    assert "recommended_commands: capability-approval-boundary-matrix" in output
+    assert storage.list_recent_capability_approval_boundary_matrices() == []
+    assert storage.list_recent_capability_proof_gap_indexes() == []
+    assert storage.list_recent_capability_readiness_reviews() == []
+    assert storage.list_recent_capability_expansion_ledgers() == []
+
+    plans = storage.list_recent_capability_evidence_collection_plans()
+    assert len(plans) == 1
+    plan = plans[0]
+    assert plan.status == "approval_boundary_matrix_missing"
+    assert plan.source_matrix_id is None
+    assert plan.source_matrix_status == "none"
+    assert plan.capability_count == 0
+    assert plan.evidence_item_count == 0
+    assert plan.manual_collection_count == 0
+    assert plan.approval_required_count == 0
+    assert plan.boundary_count == 0
+    assert plan.recommended_commands == ["capability-approval-boundary-matrix"]
+
+    report = (tmp_path / "docs" / "capability-evidence-collection-plan.md").read_text(
+        encoding="utf-8"
+    )
+    assert "- status: approval_boundary_matrix_missing" in report
+    assert "- source_matrix_id: none" in report
+    assert "No capability approval boundary matrix exists yet" in report
+    assert "Does not create approval boundary matrices as a side effect" in report
+
+
+def test_capability_evidence_collection_plan_reports_incomplete_placeholder_matrix(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_evidence_collection_plan: approval_boundary_matrix_missing"
+        in output
+    )
+    assert "source_status: proof_gap_index_missing" in output
+    assert "recommended_commands: capability-proof-gap-index" in output
+    assert storage.list_recent_capability_proof_gap_indexes() == []
+    assert storage.list_recent_capability_readiness_reviews() == []
+    assert storage.list_recent_capability_expansion_ledgers() == []
+
+    matrix = storage.list_recent_capability_approval_boundary_matrices()[0]
+    plans = storage.list_recent_capability_evidence_collection_plans()
+    assert len(plans) == 1
+    plan = plans[0]
+    assert plan.status == "approval_boundary_matrix_missing"
+    assert plan.source_matrix_id == matrix.id
+    assert plan.source_matrix_status == "proof_gap_index_missing"
+    assert plan.evidence_item_count == 0
+    assert plan.recommended_commands == ["capability-proof-gap-index"]
+
+    report = (tmp_path / "docs" / "capability-evidence-collection-plan.md").read_text(
+        encoding="utf-8"
+    )
+    assert "- status: approval_boundary_matrix_missing" in report
+    assert f"- source_matrix_id: {matrix.id}" in report
+    assert "Latest capability approval boundary matrix is incomplete" in report
+
+
+def test_dashboard_reports_capability_evidence_collection_plan(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Capability Evidence Collection Plan" in dashboard
+    assert "- status: evidence_required" in dashboard
+    assert "- evidence_items: 9" in dashboard
+    assert "- manual_collection: 9" in dashboard
+    assert "- approvals_required: 9" in dashboard
+    assert "- boundaries: 1" in dashboard
+    assert "- recommended_commands: none" in dashboard
+    assert "- report: docs/capability-evidence-collection-plan.md" in dashboard
+
+
+def test_iteration_packet_reports_capability_evidence_collection_plan_posture(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli capability-evidence-collection-plan`" in packet
+    assert "- capability evidence collection plan: evidence_required" in packet
+
+
+def test_capability_promotion_gate_checklist_blocks_missing_manual_evidence(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert "capability_promotion_gate_checklist: promotion_blocked" in output
+    assert "report: docs/capability-promotion-gate-checklist.md" in output
+    assert "source_status: evidence_required" in output
+    assert "capabilities: 9" in output
+    assert "gates: 9" in output
+    assert "blocked_promotions: 9" in output
+    assert "missing_evidence: 9" in output
+    assert "approvals_required: 9" in output
+    assert "boundaries: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_plan = storage.list_recent_capability_evidence_collection_plans()[0]
+    checklists = storage.list_recent_capability_promotion_gate_checklists()
+    assert len(checklists) == 1
+    checklist = checklists[0]
+    assert checklist.status == "promotion_blocked"
+    assert checklist.source_plan_id == source_plan.id
+    assert checklist.source_plan_status == "evidence_required"
+    assert checklist.capability_count == 9
+    assert checklist.gate_count == 9
+    assert checklist.blocked_promotion_count == 9
+    assert checklist.missing_evidence_count == 9
+    assert checklist.approval_required_count == 9
+    assert checklist.boundary_count == 1
+    assert checklist.recommended_commands == []
+    assert checklist.report_path == "docs/capability-promotion-gate-checklist.md"
+    assert all(
+        item["promotion_gate"] == "blocked_until_evidence_and_operator_approval"
+        for item in checklist.checklist_items
+    )
+    assert all(
+        item["evidence_state"] == "missing"
+        for item in checklist.checklist_items
+    )
+    assert all(item["routing_effect"] == "none" for item in checklist.checklist_items)
+
+    report = (tmp_path / "docs" / "capability-promotion-gate-checklist.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Capability Promotion Gate Checklist" in report
+    assert "- status: promotion_blocked" in report
+    assert f"- source_plan_id: {source_plan.id}" in report
+    assert "- gates: 9" in report
+    assert "- blocked_promotions: 9" in report
+    assert "- missing_evidence: 9" in report
+    assert (
+        "- hosted_dashboard: promotion_gate=blocked_until_evidence_and_operator_approval "
+        "evidence_item=hosted_dashboard_design_review "
+        "required_evidence=authenticated read-only deployment plan and local dashboard "
+        "parity proof evidence_state=missing approval_state=approval_required"
+    ) in report
+    assert "Does not collect evidence automatically" in report
+    assert "Does not approve capabilities automatically" in report
+    assert "Does not promote capabilities automatically" in report
+    assert "Does not change routing or claims" in report
+
+
+def test_capability_promotion_gate_checklist_reports_missing_plan_without_creating_one(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_promotion_gate_checklist: evidence_collection_plan_missing"
+        in output
+    )
+    assert "source_plan: none" in output
+    assert "recommended_commands: capability-evidence-collection-plan" in output
+    assert storage.list_recent_capability_evidence_collection_plans() == []
+    assert storage.list_recent_capability_approval_boundary_matrices() == []
+    assert storage.list_recent_capability_proof_gap_indexes() == []
+    assert storage.list_recent_capability_readiness_reviews() == []
+    assert storage.list_recent_capability_expansion_ledgers() == []
+
+    checklists = storage.list_recent_capability_promotion_gate_checklists()
+    assert len(checklists) == 1
+    checklist = checklists[0]
+    assert checklist.status == "evidence_collection_plan_missing"
+    assert checklist.source_plan_id is None
+    assert checklist.source_plan_status == "none"
+    assert checklist.capability_count == 0
+    assert checklist.gate_count == 0
+    assert checklist.blocked_promotion_count == 0
+    assert checklist.missing_evidence_count == 0
+    assert checklist.approval_required_count == 0
+    assert checklist.boundary_count == 0
+    assert checklist.recommended_commands == ["capability-evidence-collection-plan"]
+
+
+def test_capability_promotion_gate_checklist_blocks_explicit_approval_boundary(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_plan = storage.record_capability_evidence_collection_plan(
+        status="evidence_required",
+        source_matrix_id="matrix_1",
+        source_matrix_status="approval_required",
+        capability_count=1,
+        evidence_item_count=1,
+        manual_collection_count=0,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Evidence is present but operator approval is still required.",
+        evidence_items=[
+            {
+                "capability": "hosted_dashboard",
+                "evidence_item": "operator_approval",
+                "required_evidence": "operator approval recorded in local evidence",
+                "next_proof": "operator approval",
+                "collection_mode": "manual",
+                "evidence_state": "present",
+                "approval_boundary": "explicit_operator_approval_required",
+                "decision_state": "proof_present_but_approval_pending",
+                "routing_effect": "none",
+            }
+        ],
+        report_path="docs/capability-evidence-collection-plan.md",
+    )
+
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert "capability_promotion_gate_checklist: promotion_blocked" in output
+    assert f"source_plan: {source_plan.id}" in output
+    assert "blocked_promotions: 1" in output
+    assert "missing_evidence: 0" in output
+    assert "approvals_required: 1" in output
+
+    checklist = storage.list_recent_capability_promotion_gate_checklists()[0]
+    assert checklist.status == "promotion_blocked"
+    assert checklist.blocked_promotion_count == 1
+    assert checklist.missing_evidence_count == 0
+    assert checklist.approval_required_count == 1
+    assert checklist.checklist_items == [
+        {
+            "capability": "hosted_dashboard",
+            "promotion_gate": "blocked_until_evidence_and_operator_approval",
+            "evidence_item": "operator_approval",
+            "required_evidence": "operator approval recorded in local evidence",
+            "evidence_state": "present",
+            "approval_state": "approval_required",
+            "approval_boundary": "explicit_operator_approval_required",
+            "routing_effect": "none",
+        }
+    ]
+
+
+def test_capability_promotion_gate_checklist_reports_incomplete_source_plan(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_plan = storage.record_capability_evidence_collection_plan(
+        status="approval_boundary_matrix_missing",
+        source_matrix_id="matrix_1",
+        source_matrix_status="proof_gap_index_missing",
+        capability_count=2,
+        evidence_item_count=0,
+        manual_collection_count=0,
+        approval_required_count=2,
+        boundary_count=1,
+        recommended_commands=["capability-proof-gap-index"],
+        reason="Latest capability approval boundary matrix is incomplete.",
+        evidence_items=[],
+        report_path="docs/capability-evidence-collection-plan.md",
+    )
+
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_promotion_gate_checklist: evidence_collection_plan_missing"
+        in output
+    )
+    assert f"source_plan: {source_plan.id}" in output
+    assert "source_status: approval_boundary_matrix_missing" in output
+    assert "capabilities: 2" in output
+    assert "gates: 0" in output
+    assert "approvals_required: 2" in output
+    assert "boundaries: 1" in output
+    assert "recommended_commands: capability-proof-gap-index" in output
+
+    checklist = storage.list_recent_capability_promotion_gate_checklists()[0]
+    assert checklist.status == "evidence_collection_plan_missing"
+    assert checklist.source_plan_id == source_plan.id
+    assert checklist.source_plan_status == "approval_boundary_matrix_missing"
+    assert checklist.capability_count == 2
+    assert checklist.gate_count == 0
+    assert checklist.approval_required_count == 2
+    assert checklist.boundary_count == 1
+    assert checklist.recommended_commands == ["capability-proof-gap-index"]
+
+
+def test_dashboard_reports_capability_promotion_gate_checklist(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Capability Promotion Gate Checklist" in dashboard
+    assert "- status: promotion_blocked" in dashboard
+    assert "- gates: 9" in dashboard
+    assert "- blocked_promotions: 9" in dashboard
+    assert "- missing_evidence: 9" in dashboard
+    assert "- approvals_required: 9" in dashboard
+    assert "- boundaries: 1" in dashboard
+    assert "- recommended_commands: none" in dashboard
+    assert "- report: docs/capability-promotion-gate-checklist.md" in dashboard
+
+
+def test_iteration_packet_reports_capability_promotion_gate_checklist_posture(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli capability-promotion-gate-checklist`" in packet
+    assert "- capability promotion gate checklist: promotion_blocked" in packet
+
+
+def test_capability_promotion_decision_ledger_defers_blocked_gate_checklist(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "capability-promotion-decision-ledger"]) == 0
+
+    output = capsys.readouterr().out
+    assert "capability_promotion_decision_ledger: promotion_decision_blocked" in output
+    assert "report: docs/capability-promotion-decision-ledger.md" in output
+    assert "source_status: promotion_blocked" in output
+    assert "capabilities: 9" in output
+    assert "decisions: 9" in output
+    assert "deferred_promotions: 9" in output
+    assert "operator_decisions_required: 0" in output
+    assert "blocked_promotions: 9" in output
+    assert "missing_evidence: 9" in output
+    assert "approvals_required: 9" in output
+    assert "boundaries: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_capability_promotion_gate_checklists()[0]
+    ledgers = storage.list_recent_capability_promotion_decision_ledgers()
+    assert len(ledgers) == 1
+    ledger = ledgers[0]
+    assert ledger.status == "promotion_decision_blocked"
+    assert ledger.source_checklist_id == source_checklist.id
+    assert ledger.source_checklist_status == "promotion_blocked"
+    assert ledger.capability_count == 9
+    assert ledger.decision_count == 9
+    assert ledger.deferred_promotion_count == 9
+    assert ledger.operator_decision_required_count == 0
+    assert ledger.blocked_promotion_count == 9
+    assert ledger.missing_evidence_count == 9
+    assert ledger.approval_required_count == 9
+    assert ledger.boundary_count == 1
+    assert ledger.recommended_commands == []
+    assert ledger.report_path == "docs/capability-promotion-decision-ledger.md"
+    assert all(
+        item["recommended_decision"] == "defer_promotion"
+        for item in ledger.decision_items
+    )
+    assert all(item["decision_effect"] == "none" for item in ledger.decision_items)
+    assert all(item["routing_effect"] == "none" for item in ledger.decision_items)
+
+    report = (tmp_path / "docs" / "capability-promotion-decision-ledger.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Capability Promotion Decision Ledger" in report
+    assert "- status: promotion_decision_blocked" in report
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert "- decisions: 9" in report
+    assert "- deferred_promotions: 9" in report
+    assert (
+        "- hosted_dashboard: recommended_decision=defer_promotion "
+        "decision_state=blocked_until_evidence_and_operator_approval "
+        "promotion_gate=blocked_until_evidence_and_operator_approval"
+    ) in report
+    assert "Does not approve capabilities automatically" in report
+    assert "Does not promote capabilities automatically" in report
+    assert "Does not change routing or claims" in report
+
+
+def test_capability_promotion_decision_ledger_reports_missing_checklist_without_creating_one(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    assert main(["--root", str(tmp_path), "capability-promotion-decision-ledger"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_promotion_decision_ledger: promotion_gate_checklist_missing"
+        in output
+    )
+    assert "source_checklist: none" in output
+    assert "recommended_commands: capability-promotion-gate-checklist" in output
+    assert storage.list_recent_capability_promotion_gate_checklists() == []
+    assert storage.list_recent_capability_evidence_collection_plans() == []
+    assert storage.list_recent_capability_approval_boundary_matrices() == []
+    assert storage.list_recent_capability_proof_gap_indexes() == []
+    assert storage.list_recent_capability_readiness_reviews() == []
+    assert storage.list_recent_capability_expansion_ledgers() == []
+
+    ledgers = storage.list_recent_capability_promotion_decision_ledgers()
+    assert len(ledgers) == 1
+    ledger = ledgers[0]
+    assert ledger.status == "promotion_gate_checklist_missing"
+    assert ledger.source_checklist_id is None
+    assert ledger.source_checklist_status == "none"
+    assert ledger.capability_count == 0
+    assert ledger.decision_count == 0
+    assert ledger.deferred_promotion_count == 0
+    assert ledger.operator_decision_required_count == 0
+    assert ledger.recommended_commands == ["capability-promotion-gate-checklist"]
+
+
+def test_dashboard_reports_capability_promotion_decision_ledger(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-decision-ledger"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Capability Promotion Decision Ledger" in dashboard
+    assert "- status: promotion_decision_blocked" in dashboard
+    assert "- decisions: 9" in dashboard
+    assert "- deferred_promotions: 9" in dashboard
+    assert "- operator_decisions_required: 0" in dashboard
+    assert "- blocked_promotions: 9" in dashboard
+    assert "- missing_evidence: 9" in dashboard
+    assert "- approvals_required: 9" in dashboard
+    assert "- boundaries: 1" in dashboard
+    assert "- recommended_commands: none" in dashboard
+    assert "- report: docs/capability-promotion-decision-ledger.md" in dashboard
+
+
+def test_iteration_packet_reports_capability_promotion_decision_ledger_posture(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli capability-promotion-decision-ledger`" in packet
+    assert "- capability promotion decision ledger: promotion_decision_blocked" in packet
+
+
+def test_capability_trust_promotion_audit_blocks_deferred_decision_ledger(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-decision-ledger"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "capability-trust-promotion-audit"]) == 0
+
+    output = capsys.readouterr().out
+    assert "capability_trust_promotion_audit: trust_promotion_blocked" in output
+    assert "report: docs/capability-trust-promotion-audit.md" in output
+    assert "source_status: promotion_decision_blocked" in output
+    assert "capabilities: 9" in output
+    assert "audits: 9" in output
+    assert "blocked_trust_promotions: 9" in output
+    assert "operator_reviews_required: 0" in output
+    assert "deferred_promotions: 9" in output
+    assert "missing_evidence: 9" in output
+    assert "approvals_required: 9" in output
+    assert "boundaries: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_ledger = storage.list_recent_capability_promotion_decision_ledgers()[0]
+    audits = storage.list_recent_capability_trust_promotion_audits()
+    assert len(audits) == 1
+    audit = audits[0]
+    assert audit.status == "trust_promotion_blocked"
+    assert audit.source_ledger_id == source_ledger.id
+    assert audit.source_ledger_status == "promotion_decision_blocked"
+    assert audit.capability_count == 9
+    assert audit.audit_count == 9
+    assert audit.blocked_trust_promotion_count == 9
+    assert audit.operator_review_required_count == 0
+    assert audit.deferred_promotion_count == 9
+    assert audit.missing_evidence_count == 9
+    assert audit.approval_required_count == 9
+    assert audit.boundary_count == 1
+    assert audit.recommended_commands == []
+    assert audit.report_path == "docs/capability-trust-promotion-audit.md"
+    assert all(
+        item["recommended_trust_action"] == "keep_trust_unpromoted"
+        for item in audit.audit_items
+    )
+    assert all(
+        item["trust_promotion_state"]
+        == "blocked_until_promotion_decision_and_operator_approval"
+        for item in audit.audit_items
+    )
+    assert all(item["trust_effect"] == "none" for item in audit.audit_items)
+    assert all(item["routing_effect"] == "none" for item in audit.audit_items)
+
+    report = (tmp_path / "docs" / "capability-trust-promotion-audit.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Capability Trust Promotion Audit" in report
+    assert "- status: trust_promotion_blocked" in report
+    assert f"- source_ledger_id: {source_ledger.id}" in report
+    assert "- audits: 9" in report
+    assert "- blocked_trust_promotions: 9" in report
+    assert (
+        "- hosted_dashboard: recommended_trust_action=keep_trust_unpromoted "
+        "trust_promotion_state=blocked_until_promotion_decision_and_operator_approval "
+        "source_decision=defer_promotion"
+    ) in report
+    assert "Does not promote trust automatically" in report
+    assert "Does not promote capabilities automatically" in report
+    assert "Does not change routing or claims" in report
+
+
+def test_capability_trust_promotion_audit_reports_missing_ledger_without_creating_one(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    assert main(["--root", str(tmp_path), "capability-trust-promotion-audit"]) == 0
+
+    output = capsys.readouterr().out
+    assert "capability_trust_promotion_audit: promotion_decision_ledger_missing" in output
+    assert "source_ledger: none" in output
+    assert "recommended_commands: capability-promotion-decision-ledger" in output
+    assert storage.list_recent_capability_promotion_decision_ledgers() == []
+    assert storage.list_recent_capability_promotion_gate_checklists() == []
+    assert storage.list_recent_capability_evidence_collection_plans() == []
+    assert storage.list_recent_capability_approval_boundary_matrices() == []
+    assert storage.list_recent_capability_proof_gap_indexes() == []
+    assert storage.list_recent_capability_readiness_reviews() == []
+    assert storage.list_recent_capability_expansion_ledgers() == []
+
+    audits = storage.list_recent_capability_trust_promotion_audits()
+    assert len(audits) == 1
+    audit = audits[0]
+    assert audit.status == "promotion_decision_ledger_missing"
+    assert audit.source_ledger_id is None
+    assert audit.source_ledger_status == "none"
+    assert audit.capability_count == 0
+    assert audit.audit_count == 0
+    assert audit.blocked_trust_promotion_count == 0
+    assert audit.operator_review_required_count == 0
+    assert audit.recommended_commands == ["capability-promotion-decision-ledger"]
+
+
+def test_dashboard_reports_capability_trust_promotion_audit(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-trust-promotion-audit"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Capability Trust Promotion Audit" in dashboard
+    assert "- status: trust_promotion_blocked" in dashboard
+    assert "- audits: 9" in dashboard
+    assert "- blocked_trust_promotions: 9" in dashboard
+    assert "- operator_reviews_required: 0" in dashboard
+    assert "- deferred_promotions: 9" in dashboard
+    assert "- missing_evidence: 9" in dashboard
+    assert "- approvals_required: 9" in dashboard
+    assert "- boundaries: 1" in dashboard
+    assert "- recommended_commands: none" in dashboard
+    assert "- report: docs/capability-trust-promotion-audit.md" in dashboard
+
+
+def test_iteration_packet_reports_capability_trust_promotion_audit_posture(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-trust-promotion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli capability-trust-promotion-audit`" in packet
+    assert "- capability trust promotion audit: trust_promotion_blocked" in packet
+
+
+def test_capability_automatic_retry_audit_blocks_blocked_trust_audit(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-trust-promotion-audit"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "capability-automatic-retry-audit"]) == 0
+
+    output = capsys.readouterr().out
+    assert "capability_automatic_retry_audit: automatic_retry_blocked" in output
+    assert "report: docs/capability-automatic-retry-audit.md" in output
+    assert "source_status: trust_promotion_blocked" in output
+    assert "capabilities: 9" in output
+    assert "audits: 9" in output
+    assert "blocked_retries: 9" in output
+    assert "operator_reviews_required: 0" in output
+    assert "blocked_trust_promotions: 9" in output
+    assert "deferred_promotions: 9" in output
+    assert "missing_evidence: 9" in output
+    assert "approvals_required: 9" in output
+    assert "boundaries: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_audit = storage.list_recent_capability_trust_promotion_audits()[0]
+    retry_audits = storage.list_recent_capability_automatic_retry_audits()
+    assert len(retry_audits) == 1
+    audit = retry_audits[0]
+    assert audit.status == "automatic_retry_blocked"
+    assert audit.source_audit_id == source_audit.id
+    assert audit.source_audit_status == "trust_promotion_blocked"
+    assert audit.capability_count == 9
+    assert audit.audit_count == 9
+    assert audit.blocked_retry_count == 9
+    assert audit.operator_review_required_count == 0
+    assert audit.blocked_trust_promotion_count == 9
+    assert audit.deferred_promotion_count == 9
+    assert audit.missing_evidence_count == 9
+    assert audit.approval_required_count == 9
+    assert audit.boundary_count == 1
+    assert audit.recommended_commands == []
+    assert audit.report_path == "docs/capability-automatic-retry-audit.md"
+    assert all(
+        item["recommended_retry_action"] == "keep_retry_disabled"
+        for item in audit.audit_items
+    )
+    assert all(
+        item["retry_state"] == "blocked_until_trust_promotion_and_operator_approval"
+        for item in audit.audit_items
+    )
+    assert all(item["retry_effect"] == "none" for item in audit.audit_items)
+    assert all(item["routing_effect"] == "none" for item in audit.audit_items)
+
+    report = (
+        tmp_path / "docs" / "capability-automatic-retry-audit.md"
+    ).read_text(encoding="utf-8")
+    assert "# Capability Automatic Retry Audit" in report
+    assert "- status: automatic_retry_blocked" in report
+    assert f"- source_audit_id: {source_audit.id}" in report
+    assert "- audits: 9" in report
+    assert "- blocked_retries: 9" in report
+    assert (
+        "- hosted_dashboard: recommended_retry_action=keep_retry_disabled "
+        "retry_state=blocked_until_trust_promotion_and_operator_approval "
+        "source_trust_action=keep_trust_unpromoted"
+    ) in report
+    assert "Does not retry or replay work automatically" in report
+    assert "Does not promote trust automatically" in report
+    assert "Does not change routing or claims" in report
+
+
+def test_capability_automatic_retry_audit_reports_missing_trust_audit_without_creating_one(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    assert main(["--root", str(tmp_path), "capability-automatic-retry-audit"]) == 0
+
+    output = capsys.readouterr().out
+    assert "capability_automatic_retry_audit: trust_promotion_audit_missing" in output
+    assert "source_audit: none" in output
+    assert "recommended_commands: capability-trust-promotion-audit" in output
+    assert storage.list_recent_capability_trust_promotion_audits() == []
+    assert storage.list_recent_capability_promotion_decision_ledgers() == []
+    assert storage.list_recent_capability_promotion_gate_checklists() == []
+    assert storage.list_recent_capability_evidence_collection_plans() == []
+    assert storage.list_recent_capability_approval_boundary_matrices() == []
+    assert storage.list_recent_capability_proof_gap_indexes() == []
+    assert storage.list_recent_capability_readiness_reviews() == []
+    assert storage.list_recent_capability_expansion_ledgers() == []
+
+    retry_audits = storage.list_recent_capability_automatic_retry_audits()
+    assert len(retry_audits) == 1
+    audit = retry_audits[0]
+    assert audit.status == "trust_promotion_audit_missing"
+    assert audit.source_audit_id is None
+    assert audit.source_audit_status == "none"
+    assert audit.capability_count == 0
+    assert audit.audit_count == 0
+    assert audit.blocked_retry_count == 0
+    assert audit.operator_review_required_count == 0
+    assert audit.recommended_commands == ["capability-trust-promotion-audit"]
+
+
+def test_dashboard_reports_capability_automatic_retry_audit(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-trust-promotion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "capability-automatic-retry-audit"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Capability Automatic Retry Audit" in dashboard
+    assert "- status: automatic_retry_blocked" in dashboard
+    assert "- audits: 9" in dashboard
+    assert "- blocked_retries: 9" in dashboard
+    assert "- operator_reviews_required: 0" in dashboard
+    assert "- blocked_trust_promotions: 9" in dashboard
+    assert "- deferred_promotions: 9" in dashboard
+    assert "- missing_evidence: 9" in dashboard
+    assert "- approvals_required: 9" in dashboard
+    assert "- boundaries: 1" in dashboard
+    assert "- recommended_commands: none" in dashboard
+    assert "- report: docs/capability-automatic-retry-audit.md" in dashboard
+
+
+def test_iteration_packet_reports_capability_automatic_retry_audit_posture(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-trust-promotion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "capability-automatic-retry-audit"]) == 0
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli capability-automatic-retry-audit`" in packet
+    assert "- capability automatic retry audit: automatic_retry_blocked" in packet
+
+
+def test_capability_real_cost_tracking_audit_blocks_blocked_retry_audit(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-trust-promotion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "capability-automatic-retry-audit"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "capability-real-cost-tracking-audit"]) == 0
+
+    output = capsys.readouterr().out
+    assert "capability_real_cost_tracking_audit: real_cost_tracking_blocked" in output
+    assert "report: docs/capability-real-cost-tracking-audit.md" in output
+    assert "source_status: automatic_retry_blocked" in output
+    assert "capabilities: 9" in output
+    assert "audits: 9" in output
+    assert "blocked_cost_tracking: 9" in output
+    assert "operator_reviews_required: 0" in output
+    assert "blocked_retries: 9" in output
+    assert "blocked_trust_promotions: 9" in output
+    assert "deferred_promotions: 9" in output
+    assert "missing_evidence: 9" in output
+    assert "approvals_required: 9" in output
+    assert "boundaries: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_audit = storage.list_recent_capability_automatic_retry_audits()[0]
+    cost_audits = storage.list_recent_capability_real_cost_tracking_audits()
+    assert len(cost_audits) == 1
+    audit = cost_audits[0]
+    assert audit.status == "real_cost_tracking_blocked"
+    assert audit.source_audit_id == source_audit.id
+    assert audit.source_audit_status == "automatic_retry_blocked"
+    assert audit.capability_count == 9
+    assert audit.audit_count == 9
+    assert audit.blocked_cost_tracking_count == 9
+    assert audit.operator_review_required_count == 0
+    assert audit.blocked_retry_count == 9
+    assert audit.blocked_trust_promotion_count == 9
+    assert audit.deferred_promotion_count == 9
+    assert audit.missing_evidence_count == 9
+    assert audit.approval_required_count == 9
+    assert audit.boundary_count == 1
+    assert audit.recommended_commands == []
+    assert audit.report_path == "docs/capability-real-cost-tracking-audit.md"
+    assert all(
+        item["recommended_cost_action"] == "keep_cost_tracking_disabled"
+        for item in audit.audit_items
+    )
+    assert all(
+        item["cost_tracking_state"]
+        == "blocked_until_retry_review_and_operator_approval"
+        for item in audit.audit_items
+    )
+    assert all(item["cost_effect"] == "none" for item in audit.audit_items)
+    assert all(item["routing_effect"] == "none" for item in audit.audit_items)
+
+    report = (
+        tmp_path / "docs" / "capability-real-cost-tracking-audit.md"
+    ).read_text(encoding="utf-8")
+    assert "# Capability Real Cost Tracking Audit" in report
+    assert "- status: real_cost_tracking_blocked" in report
+    assert f"- source_audit_id: {source_audit.id}" in report
+    assert "- audits: 9" in report
+    assert "- blocked_cost_tracking: 9" in report
+    assert (
+        "- hosted_dashboard: recommended_cost_action=keep_cost_tracking_disabled "
+        "cost_tracking_state=blocked_until_retry_review_and_operator_approval "
+        "source_retry_action=keep_retry_disabled"
+    ) in report
+    assert "Does not track real spend automatically" in report
+    assert "Does not retry or replay work automatically" in report
+    assert "Does not enforce budgets" in report
+    assert "Does not mutate external systems" in report
+
+
+def test_capability_real_cost_tracking_audit_reports_missing_retry_audit_without_creating_one(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    assert main(["--root", str(tmp_path), "capability-real-cost-tracking-audit"]) == 0
+
+    output = capsys.readouterr().out
+    assert "capability_real_cost_tracking_audit: automatic_retry_audit_missing" in output
+    assert "source_audit: none" in output
+    assert "recommended_commands: capability-automatic-retry-audit" in output
+    assert storage.list_recent_capability_automatic_retry_audits() == []
+    assert storage.list_recent_capability_trust_promotion_audits() == []
+    assert storage.list_recent_capability_promotion_decision_ledgers() == []
+    assert storage.list_recent_capability_promotion_gate_checklists() == []
+    assert storage.list_recent_capability_evidence_collection_plans() == []
+    assert storage.list_recent_capability_approval_boundary_matrices() == []
+    assert storage.list_recent_capability_proof_gap_indexes() == []
+    assert storage.list_recent_capability_readiness_reviews() == []
+    assert storage.list_recent_capability_expansion_ledgers() == []
+
+    cost_audits = storage.list_recent_capability_real_cost_tracking_audits()
+    assert len(cost_audits) == 1
+    audit = cost_audits[0]
+    assert audit.status == "automatic_retry_audit_missing"
+    assert audit.source_audit_id is None
+    assert audit.source_audit_status == "none"
+    assert audit.capability_count == 0
+    assert audit.audit_count == 0
+    assert audit.blocked_cost_tracking_count == 0
+    assert audit.operator_review_required_count == 0
+    assert audit.recommended_commands == ["capability-automatic-retry-audit"]
+
+
+def test_dashboard_reports_capability_real_cost_tracking_audit(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-trust-promotion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "capability-automatic-retry-audit"]) == 0
+    assert main(["--root", str(tmp_path), "capability-real-cost-tracking-audit"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Capability Real Cost Tracking Audit" in dashboard
+    assert "- status: real_cost_tracking_blocked" in dashboard
+    assert "- audits: 9" in dashboard
+    assert "- blocked_cost_tracking: 9" in dashboard
+    assert "- operator_reviews_required: 0" in dashboard
+    assert "- blocked_retries: 9" in dashboard
+    assert "- blocked_trust_promotions: 9" in dashboard
+    assert "- deferred_promotions: 9" in dashboard
+    assert "- missing_evidence: 9" in dashboard
+    assert "- approvals_required: 9" in dashboard
+    assert "- boundaries: 1" in dashboard
+    assert "- recommended_commands: none" in dashboard
+    assert "- report: docs/capability-real-cost-tracking-audit.md" in dashboard
+
+
+def test_iteration_packet_reports_capability_real_cost_tracking_audit_posture(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-trust-promotion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "capability-automatic-retry-audit"]) == 0
+    assert main(["--root", str(tmp_path), "capability-real-cost-tracking-audit"]) == 0
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli capability-real-cost-tracking-audit`" in packet
+    assert "- capability real cost tracking audit: real_cost_tracking_blocked" in packet
+
+
+def test_hosted_dashboard_proof_checklist_blocks_blocked_cost_audit(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-trust-promotion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "capability-automatic-retry-audit"]) == 0
+    assert main(["--root", str(tmp_path), "capability-real-cost-tracking-audit"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert "hosted_dashboard_proof_checklist: hosted_dashboard_proof_blocked" in output
+    assert "report: docs/hosted-dashboard-proof-checklist.md" in output
+    assert "source_status: real_cost_tracking_blocked" in output
+    assert "capabilities: 1" in output
+    assert "checklist_items: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "operator_reviews_required: 0" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "boundaries: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_audit = storage.list_recent_capability_real_cost_tracking_audits()[0]
+    checklists = storage.list_recent_hosted_dashboard_proof_checklists()
+    assert len(checklists) == 1
+    checklist = checklists[0]
+    assert checklist.status == "hosted_dashboard_proof_blocked"
+    assert checklist.source_audit_id == source_audit.id
+    assert checklist.source_audit_status == "real_cost_tracking_blocked"
+    assert checklist.capability_count == 1
+    assert checklist.checklist_count == 1
+    assert checklist.blocked_dashboard_proof_count == 1
+    assert checklist.operator_review_required_count == 0
+    assert checklist.blocked_cost_tracking_count == 1
+    assert checklist.blocked_retry_count == 1
+    assert checklist.blocked_trust_promotion_count == 1
+    assert checklist.missing_evidence_count == 1
+    assert checklist.approval_required_count == 1
+    assert checklist.boundary_count == 1
+    assert checklist.recommended_commands == []
+    assert checklist.report_path == "docs/hosted-dashboard-proof-checklist.md"
+    assert checklist.checklist_items == [
+        {
+            "capability": "hosted_dashboard",
+            "proof_item": "hosted_dashboard_design_review",
+            "recommended_dashboard_action": "keep_hosted_dashboard_disabled",
+            "dashboard_state": "blocked_until_cost_tracking_and_operator_approval",
+            "source_cost_action": "keep_cost_tracking_disabled",
+            "cost_tracking_state": "blocked_until_retry_review_and_operator_approval",
+            "source_retry_action": "keep_retry_disabled",
+            "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+            "source_trust_action": "keep_trust_unpromoted",
+            "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+            "evidence_state": "missing",
+            "approval_state": "approval_required",
+            "approval_boundary": "explicit_operator_approval_required",
+            "dashboard_effect": "none",
+            "routing_effect": "none",
+        }
+    ]
+
+    report = (
+        tmp_path / "docs" / "hosted-dashboard-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert "# Hosted Dashboard Proof Checklist" in report
+    assert "- status: hosted_dashboard_proof_blocked" in report
+    assert f"- source_audit_id: {source_audit.id}" in report
+    assert "- checklist_items: 1" in report
+    assert "- blocked_dashboard_proofs: 1" in report
+    assert (
+        "- hosted_dashboard: proof_item=hosted_dashboard_design_review "
+        "recommended_dashboard_action=keep_hosted_dashboard_disabled "
+        "dashboard_state=blocked_until_cost_tracking_and_operator_approval "
+        "source_cost_action=keep_cost_tracking_disabled"
+    ) in report
+    assert "Does not enable hosted dashboard" in report
+    assert "Does not deploy hosted dashboard" in report
+    assert "Does not track real spend automatically" in report
+    assert "Does not mutate external systems" in report
+
+
+def test_hosted_dashboard_proof_checklist_reports_missing_cost_audit_without_creating_one(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "hosted_dashboard_proof_checklist: "
+        "real_cost_tracking_proof_checklist_missing"
+    ) in output
+    assert "source_checklist: none" in output
+    assert "source_audit: none" in output
+    assert "recommended_commands: real-cost-tracking-proof-checklist" in output
+    assert storage.list_recent_real_cost_tracking_proof_checklists() == []
+    assert storage.list_recent_automatic_retry_proof_checklists() == []
+    assert storage.list_recent_trust_promotion_proof_checklists() == []
+    assert storage.list_recent_budget_enforcement_proof_checklists() == []
+    assert storage.list_recent_ci_deploy_proof_checklists() == []
+    assert storage.list_recent_browser_desktop_adapter_proof_checklists() == []
+    assert storage.list_recent_autonomous_scheduling_proof_checklists() == []
+    assert storage.list_recent_remote_worker_proof_checklists() == []
+    assert storage.list_recent_capability_real_cost_tracking_audits() == []
+    assert storage.list_recent_capability_automatic_retry_audits() == []
+    assert storage.list_recent_capability_trust_promotion_audits() == []
+    assert storage.list_recent_capability_promotion_decision_ledgers() == []
+    assert storage.list_recent_capability_promotion_gate_checklists() == []
+    assert storage.list_recent_capability_evidence_collection_plans() == []
+    assert storage.list_recent_capability_approval_boundary_matrices() == []
+    assert storage.list_recent_capability_proof_gap_indexes() == []
+    assert storage.list_recent_capability_readiness_reviews() == []
+    assert storage.list_recent_capability_expansion_ledgers() == []
+
+    checklists = storage.list_recent_hosted_dashboard_proof_checklists()
+    assert len(checklists) == 1
+    checklist = checklists[0]
+    assert checklist.status == "real_cost_tracking_proof_checklist_missing"
+    assert checklist.source_kind == "real_cost_tracking_proof_checklist"
+    assert checklist.source_checklist_id is None
+    assert checklist.source_checklist_status == "none"
+    assert checklist.source_audit_id is None
+    assert checklist.source_audit_status == "none"
+    assert checklist.capability_count == 0
+    assert checklist.checklist_count == 0
+    assert checklist.blocked_dashboard_proof_count == 0
+    assert checklist.operator_review_required_count == 0
+    assert checklist.recommended_commands == ["real-cost-tracking-proof-checklist"]
+
+
+def test_dashboard_reports_hosted_dashboard_proof_checklist(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-trust-promotion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "capability-automatic-retry-audit"]) == 0
+    assert main(["--root", str(tmp_path), "capability-real-cost-tracking-audit"]) == 0
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Hosted Dashboard Proof Checklist" in dashboard
+    assert "- status: hosted_dashboard_proof_blocked" in dashboard
+    assert "- checklist_items: 1" in dashboard
+    assert "- blocked_dashboard_proofs: 1" in dashboard
+    assert "- operator_reviews_required: 0" in dashboard
+    assert "- blocked_cost_tracking: 1" in dashboard
+    assert "- blocked_retries: 1" in dashboard
+    assert "- blocked_trust_promotions: 1" in dashboard
+    assert "- missing_evidence: 1" in dashboard
+    assert "- approvals_required: 1" in dashboard
+    assert "- boundaries: 1" in dashboard
+    assert "- recommended_commands: none" in dashboard
+    assert "- report: docs/hosted-dashboard-proof-checklist.md" in dashboard
+
+
+def test_iteration_packet_reports_hosted_dashboard_proof_checklist_posture(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-trust-promotion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "capability-automatic-retry-audit"]) == 0
+    assert main(["--root", str(tmp_path), "capability-real-cost-tracking-audit"]) == 0
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli hosted-dashboard-proof-checklist`" in packet
+    assert "- hosted dashboard proof checklist: hosted_dashboard_proof_blocked" in packet
+
+
+def test_remote_worker_proof_checklist_blocks_blocked_dashboard_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-trust-promotion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "capability-automatic-retry-audit"]) == 0
+    assert main(["--root", str(tmp_path), "capability-real-cost-tracking-audit"]) == 0
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert "remote_worker_proof_checklist: remote_worker_proof_blocked" in output
+    assert "report: docs/remote-worker-proof-checklist.md" in output
+    assert "source_status: hosted_dashboard_proof_blocked" in output
+    assert "capabilities: 1" in output
+    assert "checklist_items: 1" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "operator_reviews_required: 0" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "boundaries: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_hosted_dashboard_proof_checklists()[0]
+    checklists = storage.list_recent_remote_worker_proof_checklists()
+    assert len(checklists) == 1
+    checklist = checklists[0]
+    assert checklist.status == "remote_worker_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "hosted_dashboard_proof_blocked"
+    assert checklist.capability_count == 1
+    assert checklist.checklist_count == 1
+    assert checklist.blocked_worker_proof_count == 1
+    assert checklist.operator_review_required_count == 0
+    assert checklist.blocked_dashboard_proof_count == 1
+    assert checklist.blocked_cost_tracking_count == 1
+    assert checklist.blocked_retry_count == 1
+    assert checklist.blocked_trust_promotion_count == 1
+    assert checklist.missing_evidence_count == 1
+    assert checklist.approval_required_count == 1
+    assert checklist.boundary_count == 1
+    assert checklist.recommended_commands == []
+    assert checklist.report_path == "docs/remote-worker-proof-checklist.md"
+    assert checklist.checklist_items == [
+        {
+            "capability": "remote_workers",
+            "proof_item": "remote_worker_dispatch_review",
+            "recommended_worker_action": "keep_remote_workers_disabled",
+            "worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+            "source_dashboard_action": "keep_hosted_dashboard_disabled",
+            "source_dashboard_state": "blocked_until_cost_tracking_and_operator_approval",
+            "source_cost_action": "keep_cost_tracking_disabled",
+            "cost_tracking_state": "blocked_until_retry_review_and_operator_approval",
+            "source_retry_action": "keep_retry_disabled",
+            "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+            "source_trust_action": "keep_trust_unpromoted",
+            "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+            "evidence_state": "missing",
+            "approval_state": "approval_required",
+            "approval_boundary": "explicit_operator_approval_required",
+            "worker_effect": "none",
+            "routing_effect": "none",
+        }
+    ]
+
+    report = (tmp_path / "docs" / "remote-worker-proof-checklist.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Remote Worker Proof Checklist" in report
+    assert "- status: remote_worker_proof_blocked" in report
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert "- checklist_items: 1" in report
+    assert "- blocked_worker_proofs: 1" in report
+    assert (
+        "- remote_workers: proof_item=remote_worker_dispatch_review "
+        "recommended_worker_action=keep_remote_workers_disabled "
+        "worker_state=blocked_until_hosted_dashboard_proof_and_operator_approval "
+        "source_dashboard_action=keep_hosted_dashboard_disabled"
+    ) in report
+    assert "Does not start remote workers" in report
+    assert "Does not enable hosted dashboard" in report
+    assert "Does not track real spend automatically" in report
+    assert "Does not mutate external systems" in report
+
+
+def test_remote_worker_proof_checklist_reports_missing_dashboard_checklist_without_creating_one(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert "remote_worker_proof_checklist: hosted_dashboard_proof_checklist_missing" in output
+    assert "source_checklist: none" in output
+    assert "recommended_commands: hosted-dashboard-proof-checklist" in output
+    assert storage.list_recent_hosted_dashboard_proof_checklists() == []
+    assert storage.list_recent_capability_real_cost_tracking_audits() == []
+    assert storage.list_recent_capability_automatic_retry_audits() == []
+    assert storage.list_recent_capability_trust_promotion_audits() == []
+    assert storage.list_recent_capability_promotion_decision_ledgers() == []
+    assert storage.list_recent_capability_promotion_gate_checklists() == []
+    assert storage.list_recent_capability_evidence_collection_plans() == []
+    assert storage.list_recent_capability_approval_boundary_matrices() == []
+    assert storage.list_recent_capability_proof_gap_indexes() == []
+    assert storage.list_recent_capability_readiness_reviews() == []
+    assert storage.list_recent_capability_expansion_ledgers() == []
+
+    checklists = storage.list_recent_remote_worker_proof_checklists()
+    assert len(checklists) == 1
+    checklist = checklists[0]
+    assert checklist.status == "hosted_dashboard_proof_checklist_missing"
+    assert checklist.source_checklist_id is None
+    assert checklist.source_checklist_status == "none"
+    assert checklist.capability_count == 0
+    assert checklist.checklist_count == 0
+    assert checklist.blocked_worker_proof_count == 0
+    assert checklist.operator_review_required_count == 0
+    assert checklist.recommended_commands == ["hosted-dashboard-proof-checklist"]
+
+
+def test_dashboard_reports_remote_worker_proof_checklist(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-trust-promotion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "capability-automatic-retry-audit"]) == 0
+    assert main(["--root", str(tmp_path), "capability-real-cost-tracking-audit"]) == 0
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Remote Worker Proof Checklist" in dashboard
+    assert "- status: remote_worker_proof_blocked" in dashboard
+    assert "- checklist_items: 1" in dashboard
+    assert "- blocked_worker_proofs: 1" in dashboard
+    assert "- operator_reviews_required: 0" in dashboard
+    assert "- blocked_dashboard_proofs: 1" in dashboard
+    assert "- blocked_cost_tracking: 1" in dashboard
+    assert "- blocked_retries: 1" in dashboard
+    assert "- blocked_trust_promotions: 1" in dashboard
+    assert "- missing_evidence: 1" in dashboard
+    assert "- approvals_required: 1" in dashboard
+    assert "- boundaries: 1" in dashboard
+    assert "- recommended_commands: none" in dashboard
+    assert "- report: docs/remote-worker-proof-checklist.md" in dashboard
+
+
+def test_iteration_packet_reports_remote_worker_proof_checklist_posture(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-trust-promotion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "capability-automatic-retry-audit"]) == 0
+    assert main(["--root", str(tmp_path), "capability-real-cost-tracking-audit"]) == 0
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli remote-worker-proof-checklist`" in packet
+    assert "- remote worker proof checklist: remote_worker_proof_blocked" in packet
+
+
+def _run_remote_worker_proof_chain(tmp_path: Path) -> None:
+    assert main(["--root", str(tmp_path), "capability-expansion-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-readiness-review"]) == 0
+    assert main(["--root", str(tmp_path), "capability-proof-gap-index"]) == 0
+    assert main(["--root", str(tmp_path), "capability-approval-boundary-matrix"]) == 0
+    assert main(["--root", str(tmp_path), "capability-evidence-collection-plan"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-gate-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "capability-promotion-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "capability-trust-promotion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "capability-automatic-retry-audit"]) == 0
+    assert main(["--root", str(tmp_path), "capability-real-cost-tracking-audit"]) == 0
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+
+
+def test_autonomous_scheduling_proof_checklist_blocks_blocked_remote_worker_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_remote_worker_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "autonomous_scheduling_proof_checklist: "
+        "autonomous_scheduling_proof_blocked"
+    ) in output
+    assert "report: docs/autonomous-scheduling-proof-checklist.md" in output
+    assert "source_status: remote_worker_proof_blocked" in output
+    assert "capabilities: 1" in output
+    assert "checklist_items: 1" in output
+    assert "blocked_scheduling_proofs: 1" in output
+    assert "operator_reviews_required: 0" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "boundaries: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_remote_worker_proof_checklists()[0]
+    checklists = storage.list_recent_autonomous_scheduling_proof_checklists()
+    assert len(checklists) == 1
+    checklist = checklists[0]
+    assert checklist.status == "autonomous_scheduling_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "remote_worker_proof_blocked"
+    assert checklist.capability_count == 1
+    assert checklist.checklist_count == 1
+    assert checklist.blocked_scheduling_proof_count == 1
+    assert checklist.operator_review_required_count == 0
+    assert checklist.blocked_worker_proof_count == 1
+    assert checklist.blocked_dashboard_proof_count == 1
+    assert checklist.blocked_cost_tracking_count == 1
+    assert checklist.blocked_retry_count == 1
+    assert checklist.blocked_trust_promotion_count == 1
+    assert checklist.missing_evidence_count == 1
+    assert checklist.approval_required_count == 1
+    assert checklist.boundary_count == 1
+    assert checklist.recommended_commands == []
+    assert checklist.report_path == "docs/autonomous-scheduling-proof-checklist.md"
+    assert checklist.checklist_items == [
+        {
+            "capability": "autonomous_scheduling",
+            "proof_item": "scheduler_policy_dry_run",
+            "recommended_scheduling_action": "keep_autonomous_scheduling_disabled",
+            "scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+            "source_worker_action": "keep_remote_workers_disabled",
+            "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+            "source_dashboard_action": "keep_hosted_dashboard_disabled",
+            "source_dashboard_state": "blocked_until_cost_tracking_and_operator_approval",
+            "source_cost_action": "keep_cost_tracking_disabled",
+            "cost_tracking_state": "blocked_until_retry_review_and_operator_approval",
+            "source_retry_action": "keep_retry_disabled",
+            "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+            "source_trust_action": "keep_trust_unpromoted",
+            "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+            "evidence_state": "missing",
+            "approval_state": "approval_required",
+            "approval_boundary": "explicit_operator_approval_required",
+            "scheduling_effect": "none",
+            "routing_effect": "none",
+        }
+    ]
+
+    report = (
+        tmp_path / "docs" / "autonomous-scheduling-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert "# Autonomous Scheduling Proof Checklist" in report
+    assert "- status: autonomous_scheduling_proof_blocked" in report
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert "- checklist_items: 1" in report
+    assert "- blocked_scheduling_proofs: 1" in report
+    assert (
+        "- autonomous_scheduling: proof_item=scheduler_policy_dry_run "
+        "recommended_scheduling_action=keep_autonomous_scheduling_disabled "
+        "scheduling_state=blocked_until_remote_worker_proof_and_operator_approval "
+        "source_worker_action=keep_remote_workers_disabled"
+    ) in report
+    assert "Does not schedule autonomous work" in report
+    assert "Does not start remote workers" in report
+    assert "Does not operate browser or desktop adapters" in report
+    assert "Does not mutate external systems" in report
+
+
+def test_autonomous_scheduling_proof_checklist_reports_missing_remote_worker_checklist_without_creating_one(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "autonomous_scheduling_proof_checklist: "
+        "remote_worker_proof_checklist_missing"
+    ) in output
+    assert "source_checklist: none" in output
+    assert "recommended_commands: remote-worker-proof-checklist" in output
+    assert storage.list_recent_remote_worker_proof_checklists() == []
+    assert storage.list_recent_hosted_dashboard_proof_checklists() == []
+    assert storage.list_recent_capability_real_cost_tracking_audits() == []
+    assert storage.list_recent_capability_automatic_retry_audits() == []
+    assert storage.list_recent_capability_trust_promotion_audits() == []
+    assert storage.list_recent_capability_promotion_decision_ledgers() == []
+    assert storage.list_recent_capability_promotion_gate_checklists() == []
+    assert storage.list_recent_capability_evidence_collection_plans() == []
+    assert storage.list_recent_capability_approval_boundary_matrices() == []
+    assert storage.list_recent_capability_proof_gap_indexes() == []
+    assert storage.list_recent_capability_readiness_reviews() == []
+    assert storage.list_recent_capability_expansion_ledgers() == []
+
+    checklists = storage.list_recent_autonomous_scheduling_proof_checklists()
+    assert len(checklists) == 1
+    checklist = checklists[0]
+    assert checklist.status == "remote_worker_proof_checklist_missing"
+    assert checklist.source_checklist_id is None
+    assert checklist.source_checklist_status == "none"
+    assert checklist.capability_count == 0
+    assert checklist.checklist_count == 0
+    assert checklist.blocked_scheduling_proof_count == 0
+    assert checklist.operator_review_required_count == 0
+    assert checklist.recommended_commands == ["remote-worker-proof-checklist"]
+
+
+def test_dashboard_reports_autonomous_scheduling_proof_checklist(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_remote_worker_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Autonomous Scheduling Proof Checklist" in dashboard
+    assert "- status: autonomous_scheduling_proof_blocked" in dashboard
+    assert "- source_status: remote_worker_proof_blocked" in dashboard
+    assert "- checklist_items: 1" in dashboard
+    assert "- blocked_scheduling_proofs: 1" in dashboard
+    assert "- operator_reviews_required: 0" in dashboard
+    assert "- blocked_worker_proofs: 1" in dashboard
+    assert "- blocked_dashboard_proofs: 1" in dashboard
+    assert "- blocked_cost_tracking: 1" in dashboard
+    assert "- blocked_retries: 1" in dashboard
+    assert "- blocked_trust_promotions: 1" in dashboard
+    assert "- missing_evidence: 1" in dashboard
+    assert "- approvals_required: 1" in dashboard
+    assert "- boundaries: 1" in dashboard
+    assert "- recommended_commands: none" in dashboard
+    assert "- report: docs/autonomous-scheduling-proof-checklist.md" in dashboard
+
+
+def test_iteration_packet_reports_autonomous_scheduling_proof_checklist_posture(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_remote_worker_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli autonomous-scheduling-proof-checklist`" in packet
+    assert (
+        "- autonomous scheduling proof checklist: "
+        "autonomous_scheduling_proof_blocked"
+    ) in packet
+
+
+def _run_autonomous_scheduling_proof_chain(tmp_path: Path) -> None:
+    _run_remote_worker_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+
+
+def test_browser_desktop_adapter_proof_checklist_blocks_blocked_scheduling_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_autonomous_scheduling_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "browser_desktop_adapter_proof_checklist: "
+        "browser_desktop_adapter_proof_blocked"
+    ) in output
+    assert "report: docs/browser-desktop-adapter-proof-checklist.md" in output
+    assert "source_status: autonomous_scheduling_proof_blocked" in output
+    assert "capabilities: 1" in output
+    assert "checklist_items: 1" in output
+    assert "blocked_adapter_proofs: 1" in output
+    assert "operator_reviews_required: 0" in output
+    assert "blocked_scheduling_proofs: 1" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "boundaries: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_autonomous_scheduling_proof_checklists()[0]
+    checklists = storage.list_recent_browser_desktop_adapter_proof_checklists()
+    assert len(checklists) == 1
+    checklist = checklists[0]
+    assert checklist.status == "browser_desktop_adapter_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "autonomous_scheduling_proof_blocked"
+    assert checklist.capability_count == 1
+    assert checklist.checklist_count == 1
+    assert checklist.blocked_adapter_proof_count == 1
+    assert checklist.operator_review_required_count == 0
+    assert checklist.blocked_scheduling_proof_count == 1
+    assert checklist.blocked_worker_proof_count == 1
+    assert checklist.blocked_dashboard_proof_count == 1
+    assert checklist.blocked_cost_tracking_count == 1
+    assert checklist.blocked_retry_count == 1
+    assert checklist.blocked_trust_promotion_count == 1
+    assert checklist.missing_evidence_count == 1
+    assert checklist.approval_required_count == 1
+    assert checklist.boundary_count == 1
+    assert checklist.recommended_commands == []
+    assert checklist.report_path == "docs/browser-desktop-adapter-proof-checklist.md"
+    assert checklist.checklist_items == [
+        {
+            "capability": "browser_desktop_adapters",
+            "proof_item": "adapter_permission_boundary_review",
+            "recommended_adapter_action": "keep_browser_desktop_adapters_disabled",
+            "adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+            "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+            "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+            "source_worker_action": "keep_remote_workers_disabled",
+            "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+            "source_dashboard_action": "keep_hosted_dashboard_disabled",
+            "source_dashboard_state": "blocked_until_cost_tracking_and_operator_approval",
+            "source_cost_action": "keep_cost_tracking_disabled",
+            "cost_tracking_state": "blocked_until_retry_review_and_operator_approval",
+            "source_retry_action": "keep_retry_disabled",
+            "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+            "source_trust_action": "keep_trust_unpromoted",
+            "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+            "evidence_state": "missing",
+            "approval_state": "approval_required",
+            "approval_boundary": "explicit_operator_approval_required",
+            "adapter_effect": "none",
+            "routing_effect": "none",
+        }
+    ]
+
+    report = (
+        tmp_path / "docs" / "browser-desktop-adapter-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert "# Browser Desktop Adapter Proof Checklist" in report
+    assert "- status: browser_desktop_adapter_proof_blocked" in report
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert "- checklist_items: 1" in report
+    assert "- blocked_adapter_proofs: 1" in report
+    assert (
+        "- browser_desktop_adapters: proof_item=adapter_permission_boundary_review "
+        "recommended_adapter_action=keep_browser_desktop_adapters_disabled "
+        "adapter_state=blocked_until_autonomous_scheduling_proof_and_operator_approval "
+        "source_scheduling_action=keep_autonomous_scheduling_disabled"
+    ) in report
+    assert "Does not operate browser or desktop adapters" in report
+    assert "Does not schedule autonomous work" in report
+    assert "Does not mutate external systems" in report
+
+
+def test_browser_desktop_adapter_proof_checklist_reports_missing_scheduling_checklist_without_creating_one(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "browser_desktop_adapter_proof_checklist: "
+        "autonomous_scheduling_proof_checklist_missing"
+    ) in output
+    assert "source_checklist: none" in output
+    assert "recommended_commands: autonomous-scheduling-proof-checklist" in output
+    assert storage.list_recent_autonomous_scheduling_proof_checklists() == []
+    assert storage.list_recent_remote_worker_proof_checklists() == []
+    assert storage.list_recent_hosted_dashboard_proof_checklists() == []
+    assert storage.list_recent_capability_real_cost_tracking_audits() == []
+    assert storage.list_recent_capability_automatic_retry_audits() == []
+    assert storage.list_recent_capability_trust_promotion_audits() == []
+    assert storage.list_recent_capability_promotion_decision_ledgers() == []
+    assert storage.list_recent_capability_promotion_gate_checklists() == []
+    assert storage.list_recent_capability_evidence_collection_plans() == []
+    assert storage.list_recent_capability_approval_boundary_matrices() == []
+    assert storage.list_recent_capability_proof_gap_indexes() == []
+    assert storage.list_recent_capability_readiness_reviews() == []
+    assert storage.list_recent_capability_expansion_ledgers() == []
+
+    checklists = storage.list_recent_browser_desktop_adapter_proof_checklists()
+    assert len(checklists) == 1
+    checklist = checklists[0]
+    assert checklist.status == "autonomous_scheduling_proof_checklist_missing"
+    assert checklist.source_checklist_id is None
+    assert checklist.source_checklist_status == "none"
+    assert checklist.capability_count == 0
+    assert checklist.checklist_count == 0
+    assert checklist.blocked_adapter_proof_count == 0
+    assert checklist.operator_review_required_count == 0
+    assert checklist.recommended_commands == [
+        "autonomous-scheduling-proof-checklist"
+    ]
+
+
+def test_dashboard_reports_browser_desktop_adapter_proof_checklist(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_autonomous_scheduling_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Browser Desktop Adapter Proof Checklist" in dashboard
+    assert "- status: browser_desktop_adapter_proof_blocked" in dashboard
+    assert "- source_status: autonomous_scheduling_proof_blocked" in dashboard
+    assert "- checklist_items: 1" in dashboard
+    assert "- blocked_adapter_proofs: 1" in dashboard
+    assert "- operator_reviews_required: 0" in dashboard
+    assert "- blocked_scheduling_proofs: 1" in dashboard
+    assert "- blocked_worker_proofs: 1" in dashboard
+    assert "- blocked_dashboard_proofs: 1" in dashboard
+    assert "- blocked_cost_tracking: 1" in dashboard
+    assert "- blocked_retries: 1" in dashboard
+    assert "- blocked_trust_promotions: 1" in dashboard
+    assert "- missing_evidence: 1" in dashboard
+    assert "- approvals_required: 1" in dashboard
+    assert "- boundaries: 1" in dashboard
+    assert "- recommended_commands: none" in dashboard
+    assert "- report: docs/browser-desktop-adapter-proof-checklist.md" in dashboard
+
+
+def test_iteration_packet_reports_browser_desktop_adapter_proof_checklist_posture(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_autonomous_scheduling_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli browser-desktop-adapter-proof-checklist`" in packet
+    assert (
+        "- browser desktop adapter proof checklist: "
+        "browser_desktop_adapter_proof_blocked"
+    ) in packet
+
+
+def _run_browser_desktop_adapter_proof_chain(tmp_path: Path) -> None:
+    _run_autonomous_scheduling_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+
+
+def test_ci_deploy_proof_checklist_blocks_blocked_adapter_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_browser_desktop_adapter_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert "ci_deploy_proof_checklist: ci_deploy_proof_blocked" in output
+    assert "report: docs/ci-deploy-proof-checklist.md" in output
+    assert "source_status: browser_desktop_adapter_proof_blocked" in output
+    assert "capabilities: 1" in output
+    assert "checklist_items: 1" in output
+    assert "blocked_ci_deploy_proofs: 1" in output
+    assert "operator_reviews_required: 0" in output
+    assert "blocked_adapter_proofs: 1" in output
+    assert "blocked_scheduling_proofs: 1" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "boundaries: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_browser_desktop_adapter_proof_checklists()[0]
+    checklists = storage.list_recent_ci_deploy_proof_checklists()
+    assert len(checklists) == 1
+    checklist = checklists[0]
+    assert checklist.status == "ci_deploy_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "browser_desktop_adapter_proof_blocked"
+    assert checklist.capability_count == 1
+    assert checklist.checklist_count == 1
+    assert checklist.blocked_ci_deploy_proof_count == 1
+    assert checklist.operator_review_required_count == 0
+    assert checklist.blocked_adapter_proof_count == 1
+    assert checklist.blocked_scheduling_proof_count == 1
+    assert checklist.blocked_worker_proof_count == 1
+    assert checklist.blocked_dashboard_proof_count == 1
+    assert checklist.blocked_cost_tracking_count == 1
+    assert checklist.blocked_retry_count == 1
+    assert checklist.blocked_trust_promotion_count == 1
+    assert checklist.missing_evidence_count == 1
+    assert checklist.approval_required_count == 1
+    assert checklist.boundary_count == 1
+    assert checklist.recommended_commands == []
+    assert checklist.report_path == "docs/ci-deploy-proof-checklist.md"
+    assert checklist.checklist_items == [
+        {
+            "capability": "ci_deploy_proof",
+            "proof_item": "ci_deploy_evidence_contract",
+            "recommended_ci_deploy_action": "keep_ci_deploy_disabled",
+            "ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+            "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+            "source_adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+            "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+            "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+            "source_worker_action": "keep_remote_workers_disabled",
+            "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+            "source_dashboard_action": "keep_hosted_dashboard_disabled",
+            "source_dashboard_state": "blocked_until_cost_tracking_and_operator_approval",
+            "source_cost_action": "keep_cost_tracking_disabled",
+            "cost_tracking_state": "blocked_until_retry_review_and_operator_approval",
+            "source_retry_action": "keep_retry_disabled",
+            "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+            "source_trust_action": "keep_trust_unpromoted",
+            "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+            "evidence_state": "missing",
+            "approval_state": "approval_required",
+            "approval_boundary": "explicit_operator_approval_required",
+            "ci_deploy_effect": "none",
+            "routing_effect": "none",
+        }
+    ]
+
+    report = (tmp_path / "docs" / "ci-deploy-proof-checklist.md").read_text(
+        encoding="utf-8",
+    )
+    assert "# CI Deploy Proof Checklist" in report
+    assert "- status: ci_deploy_proof_blocked" in report
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert "- checklist_items: 1" in report
+    assert "- blocked_ci_deploy_proofs: 1" in report
+    assert (
+        "- ci_deploy_proof: proof_item=ci_deploy_evidence_contract "
+        "recommended_ci_deploy_action=keep_ci_deploy_disabled "
+        "ci_deploy_state=blocked_until_browser_desktop_adapter_proof_and_operator_approval "
+        "source_adapter_action=keep_browser_desktop_adapters_disabled"
+    ) in report
+    assert "Does not run CI or deploys" in report
+    assert "Does not operate browser or desktop adapters" in report
+    assert "Does not mutate external systems" in report
+
+
+def test_ci_deploy_proof_checklist_reports_missing_adapter_checklist_without_creating_one(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "ci_deploy_proof_checklist: "
+        "browser_desktop_adapter_proof_checklist_missing"
+    ) in output
+    assert "source_checklist: none" in output
+    assert "recommended_commands: browser-desktop-adapter-proof-checklist" in output
+    assert storage.list_recent_browser_desktop_adapter_proof_checklists() == []
+    assert storage.list_recent_autonomous_scheduling_proof_checklists() == []
+    assert storage.list_recent_remote_worker_proof_checklists() == []
+    assert storage.list_recent_hosted_dashboard_proof_checklists() == []
+    assert storage.list_recent_capability_real_cost_tracking_audits() == []
+    assert storage.list_recent_capability_automatic_retry_audits() == []
+    assert storage.list_recent_capability_trust_promotion_audits() == []
+    assert storage.list_recent_capability_promotion_decision_ledgers() == []
+    assert storage.list_recent_capability_promotion_gate_checklists() == []
+    assert storage.list_recent_capability_evidence_collection_plans() == []
+    assert storage.list_recent_capability_approval_boundary_matrices() == []
+    assert storage.list_recent_capability_proof_gap_indexes() == []
+    assert storage.list_recent_capability_readiness_reviews() == []
+    assert storage.list_recent_capability_expansion_ledgers() == []
+
+    checklists = storage.list_recent_ci_deploy_proof_checklists()
+    assert len(checklists) == 1
+    checklist = checklists[0]
+    assert checklist.status == "browser_desktop_adapter_proof_checklist_missing"
+    assert checklist.source_checklist_id is None
+    assert checklist.source_checklist_status == "none"
+    assert checklist.capability_count == 0
+    assert checklist.checklist_count == 0
+    assert checklist.blocked_ci_deploy_proof_count == 0
+    assert checklist.operator_review_required_count == 0
+    assert checklist.recommended_commands == [
+        "browser-desktop-adapter-proof-checklist"
+    ]
+
+
+def test_dashboard_reports_ci_deploy_proof_checklist(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_browser_desktop_adapter_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## CI Deploy Proof Checklist" in dashboard
+    assert "- status: ci_deploy_proof_blocked" in dashboard
+    assert "- source_status: browser_desktop_adapter_proof_blocked" in dashboard
+    assert "- checklist_items: 1" in dashboard
+    assert "- blocked_ci_deploy_proofs: 1" in dashboard
+    assert "- operator_reviews_required: 0" in dashboard
+    assert "- blocked_adapter_proofs: 1" in dashboard
+    assert "- blocked_scheduling_proofs: 1" in dashboard
+    assert "- blocked_worker_proofs: 1" in dashboard
+    assert "- blocked_dashboard_proofs: 1" in dashboard
+    assert "- blocked_cost_tracking: 1" in dashboard
+    assert "- blocked_retries: 1" in dashboard
+    assert "- blocked_trust_promotions: 1" in dashboard
+    assert "- missing_evidence: 1" in dashboard
+    assert "- approvals_required: 1" in dashboard
+    assert "- boundaries: 1" in dashboard
+    assert "- recommended_commands: none" in dashboard
+    assert "- report: docs/ci-deploy-proof-checklist.md" in dashboard
+
+
+def test_iteration_packet_reports_ci_deploy_proof_checklist_posture(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_browser_desktop_adapter_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli ci-deploy-proof-checklist`" in packet
+    assert "- ci deploy proof checklist: ci_deploy_proof_blocked" in packet
+
+
+def _run_ci_deploy_proof_chain(tmp_path: Path) -> None:
+    _run_browser_desktop_adapter_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+
+
+def test_budget_enforcement_proof_checklist_blocks_blocked_ci_deploy_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_ci_deploy_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "budget_enforcement_proof_checklist: "
+        "budget_enforcement_proof_blocked"
+    ) in output
+    assert "report: docs/budget-enforcement-proof-checklist.md" in output
+    assert "source_status: ci_deploy_proof_blocked" in output
+    assert "capabilities: 1" in output
+    assert "checklist_items: 1" in output
+    assert "blocked_budget_enforcement_proofs: 1" in output
+    assert "operator_reviews_required: 0" in output
+    assert "blocked_ci_deploy_proofs: 1" in output
+    assert "blocked_adapter_proofs: 1" in output
+    assert "blocked_scheduling_proofs: 1" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "boundaries: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_ci_deploy_proof_checklists()[0]
+    checklists = storage.list_recent_budget_enforcement_proof_checklists()
+    assert len(checklists) == 1
+    checklist = checklists[0]
+    assert checklist.status == "budget_enforcement_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "ci_deploy_proof_blocked"
+    assert checklist.capability_count == 1
+    assert checklist.checklist_count == 1
+    assert checklist.blocked_budget_enforcement_proof_count == 1
+    assert checklist.operator_review_required_count == 0
+    assert checklist.blocked_ci_deploy_proof_count == 1
+    assert checklist.blocked_adapter_proof_count == 1
+    assert checklist.blocked_scheduling_proof_count == 1
+    assert checklist.blocked_worker_proof_count == 1
+    assert checklist.blocked_dashboard_proof_count == 1
+    assert checklist.blocked_cost_tracking_count == 1
+    assert checklist.blocked_retry_count == 1
+    assert checklist.blocked_trust_promotion_count == 1
+    assert checklist.missing_evidence_count == 1
+    assert checklist.approval_required_count == 1
+    assert checklist.boundary_count == 1
+    assert checklist.recommended_commands == []
+    assert checklist.report_path == "docs/budget-enforcement-proof-checklist.md"
+    assert checklist.checklist_items == [
+        {
+            "capability": "budget_enforcement",
+            "proof_item": "budget_policy_simulation_contract",
+            "recommended_budget_action": "keep_budget_enforcement_disabled",
+            "budget_enforcement_state": "blocked_until_ci_deploy_proof_and_operator_approval",
+            "source_ci_deploy_action": "keep_ci_deploy_disabled",
+            "source_ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+            "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+            "source_adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+            "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+            "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+            "source_worker_action": "keep_remote_workers_disabled",
+            "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+            "source_dashboard_action": "keep_hosted_dashboard_disabled",
+            "source_dashboard_state": "blocked_until_cost_tracking_and_operator_approval",
+            "source_cost_action": "keep_cost_tracking_disabled",
+            "cost_tracking_state": "blocked_until_retry_review_and_operator_approval",
+            "source_retry_action": "keep_retry_disabled",
+            "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+            "source_trust_action": "keep_trust_unpromoted",
+            "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+            "evidence_state": "missing",
+            "approval_state": "approval_required",
+            "approval_boundary": "explicit_operator_approval_required",
+            "budget_enforcement_effect": "none",
+            "routing_effect": "none",
+        }
+    ]
+
+    report = (
+        tmp_path / "docs" / "budget-enforcement-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert "# Budget Enforcement Proof Checklist" in report
+    assert "- status: budget_enforcement_proof_blocked" in report
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert "- checklist_items: 1" in report
+    assert "- blocked_budget_enforcement_proofs: 1" in report
+    assert (
+        "- budget_enforcement: proof_item=budget_policy_simulation_contract "
+        "recommended_budget_action=keep_budget_enforcement_disabled "
+        "budget_enforcement_state=blocked_until_ci_deploy_proof_and_operator_approval "
+        "source_ci_deploy_action=keep_ci_deploy_disabled"
+    ) in report
+    assert "Does not enforce budgets" in report
+    assert "Does not run CI or deploys" in report
+    assert "Does not mutate external systems" in report
+
+
+def test_budget_enforcement_proof_checklist_reports_missing_ci_deploy_checklist_without_creating_one(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "budget_enforcement_proof_checklist: "
+        "ci_deploy_proof_checklist_missing"
+    ) in output
+    assert "source_checklist: none" in output
+    assert "recommended_commands: ci-deploy-proof-checklist" in output
+    assert storage.list_recent_ci_deploy_proof_checklists() == []
+    assert storage.list_recent_browser_desktop_adapter_proof_checklists() == []
+    assert storage.list_recent_autonomous_scheduling_proof_checklists() == []
+    assert storage.list_recent_remote_worker_proof_checklists() == []
+    assert storage.list_recent_hosted_dashboard_proof_checklists() == []
+    assert storage.list_recent_capability_real_cost_tracking_audits() == []
+    assert storage.list_recent_capability_automatic_retry_audits() == []
+    assert storage.list_recent_capability_trust_promotion_audits() == []
+    assert storage.list_recent_capability_promotion_decision_ledgers() == []
+    assert storage.list_recent_capability_promotion_gate_checklists() == []
+    assert storage.list_recent_capability_evidence_collection_plans() == []
+    assert storage.list_recent_capability_approval_boundary_matrices() == []
+    assert storage.list_recent_capability_proof_gap_indexes() == []
+    assert storage.list_recent_capability_readiness_reviews() == []
+    assert storage.list_recent_capability_expansion_ledgers() == []
+
+    checklists = storage.list_recent_budget_enforcement_proof_checklists()
+    assert len(checklists) == 1
+    checklist = checklists[0]
+    assert checklist.status == "ci_deploy_proof_checklist_missing"
+    assert checklist.source_checklist_id is None
+    assert checklist.source_checklist_status == "none"
+    assert checklist.capability_count == 0
+    assert checklist.checklist_count == 0
+    assert checklist.blocked_budget_enforcement_proof_count == 0
+    assert checklist.operator_review_required_count == 0
+    assert checklist.recommended_commands == ["ci-deploy-proof-checklist"]
+
+
+def test_dashboard_reports_budget_enforcement_proof_checklist(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_ci_deploy_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Budget Enforcement Proof Checklist" in dashboard
+    assert "- status: budget_enforcement_proof_blocked" in dashboard
+    assert "- source_status: ci_deploy_proof_blocked" in dashboard
+    assert "- checklist_items: 1" in dashboard
+    assert "- blocked_budget_enforcement_proofs: 1" in dashboard
+    assert "- operator_reviews_required: 0" in dashboard
+    assert "- blocked_ci_deploy_proofs: 1" in dashboard
+    assert "- blocked_adapter_proofs: 1" in dashboard
+    assert "- blocked_scheduling_proofs: 1" in dashboard
+    assert "- blocked_worker_proofs: 1" in dashboard
+    assert "- blocked_dashboard_proofs: 1" in dashboard
+    assert "- blocked_cost_tracking: 1" in dashboard
+    assert "- blocked_retries: 1" in dashboard
+    assert "- blocked_trust_promotions: 1" in dashboard
+    assert "- missing_evidence: 1" in dashboard
+    assert "- approvals_required: 1" in dashboard
+    assert "- boundaries: 1" in dashboard
+    assert "- recommended_commands: none" in dashboard
+    assert "- report: docs/budget-enforcement-proof-checklist.md" in dashboard
+
+
+def test_iteration_packet_reports_budget_enforcement_proof_checklist_posture(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_ci_deploy_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli budget-enforcement-proof-checklist`" in packet
+    assert (
+        "- budget enforcement proof checklist: "
+        "budget_enforcement_proof_blocked"
+    ) in packet
+
+
+def test_budget_enforcement_proof_checklist_blocks_real_cost_sourced_ci_deploy_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "budget_enforcement_proof_checklist: "
+        "budget_enforcement_proof_blocked"
+    ) in output
+    assert "source_status: ci_deploy_proof_blocked" in output
+    assert "blocked_budget_enforcement_proofs: 1" in output
+    assert "blocked_ci_deploy_proofs: 1" in output
+    assert "blocked_adapter_proofs: 1" in output
+    assert "blocked_scheduling_proofs: 1" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_ci_deploy_proof_checklists()[0]
+    checklist = storage.list_recent_budget_enforcement_proof_checklists()[0]
+    assert checklist.status == "budget_enforcement_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "ci_deploy_proof_blocked"
+    assert checklist.checklist_items == [
+        {
+            "capability": "budget_enforcement",
+            "proof_item": "budget_policy_simulation_contract",
+            "recommended_budget_action": "keep_budget_enforcement_disabled",
+            "budget_enforcement_state": "blocked_until_ci_deploy_proof_and_operator_approval",
+            "source_ci_deploy_action": "keep_ci_deploy_disabled",
+            "source_ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+            "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+            "source_adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+            "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+            "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+            "source_worker_action": "keep_remote_workers_disabled",
+            "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+            "source_dashboard_action": "keep_hosted_dashboard_disabled",
+            "source_dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+            "source_real_cost_tracking_proof_action": "keep_cost_tracking_disabled",
+            "source_real_cost_tracking_proof_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_automatic_retry_proof_action": "keep_retry_disabled",
+            "source_automatic_retry_proof_state": "blocked_until_trust_promotion_proof_and_operator_approval",
+            "source_trust_proof_action": "keep_trust_unpromoted",
+            "source_trust_proof_state": "blocked_until_budget_enforcement_proof_and_operator_approval",
+            "source_budget_action": "keep_budget_enforcement_disabled",
+            "source_budget_state": "blocked_until_ci_deploy_proof_and_operator_approval",
+            "source_cost_action": "keep_cost_tracking_disabled",
+            "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_retry_action": "keep_retry_disabled",
+            "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+            "source_trust_action": "keep_trust_unpromoted",
+            "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+            "evidence_state": "missing",
+            "approval_state": "approval_required",
+            "approval_boundary": "explicit_operator_approval_required",
+            "budget_enforcement_effect": "none",
+            "routing_effect": "none",
+        }
+    ]
+
+    report = (
+        tmp_path / "docs" / "budget-enforcement-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert (
+        "- source_checklist_source_checklist_id: "
+        "browser_desktop_adapter_proof_checklist_"
+    ) in report
+    assert (
+        "source_real_cost_tracking_proof_action=keep_cost_tracking_disabled"
+    ) in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "- source_status: ci_deploy_proof_blocked" in dashboard
+
+
+def test_trust_promotion_proof_checklist_blocks_real_cost_sourced_budget_enforcement_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "trust_promotion_proof_checklist: "
+        "trust_promotion_proof_blocked"
+    ) in output
+    assert "source_status: budget_enforcement_proof_blocked" in output
+    assert "blocked_trust_promotion_proofs: 1" in output
+    assert "blocked_budget_enforcement_proofs: 1" in output
+    assert "blocked_ci_deploy_proofs: 1" in output
+    assert "blocked_adapter_proofs: 1" in output
+    assert "blocked_scheduling_proofs: 1" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_budget_enforcement_proof_checklists()[0]
+    checklist = storage.list_recent_trust_promotion_proof_checklists()[0]
+    assert checklist.status == "trust_promotion_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "budget_enforcement_proof_blocked"
+    assert checklist.checklist_items == [
+        {
+            "capability": "trust_promotion",
+            "proof_item": "trust_promotion_decision_contract",
+            "recommended_trust_action": "keep_trust_unpromoted",
+            "trust_promotion_state": "blocked_until_budget_enforcement_proof_and_operator_approval",
+            "source_budget_action": "keep_budget_enforcement_disabled",
+            "source_budget_state": "blocked_until_ci_deploy_proof_and_operator_approval",
+            "source_ci_deploy_action": "keep_ci_deploy_disabled",
+            "source_ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+            "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+            "source_adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+            "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+            "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+            "source_worker_action": "keep_remote_workers_disabled",
+            "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+            "source_dashboard_action": "keep_hosted_dashboard_disabled",
+            "source_dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+            "source_real_cost_tracking_proof_action": "keep_cost_tracking_disabled",
+            "source_real_cost_tracking_proof_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_automatic_retry_proof_action": "keep_retry_disabled",
+            "source_automatic_retry_proof_state": "blocked_until_trust_promotion_proof_and_operator_approval",
+            "source_trust_proof_action": "keep_trust_unpromoted",
+            "source_trust_proof_state": "blocked_until_budget_enforcement_proof_and_operator_approval",
+            "source_cost_action": "keep_cost_tracking_disabled",
+            "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_retry_action": "keep_retry_disabled",
+            "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+            "source_trust_action": "keep_trust_unpromoted",
+            "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+            "evidence_state": "missing",
+            "approval_state": "approval_required",
+            "approval_boundary": "explicit_operator_approval_required",
+            "trust_promotion_effect": "none",
+            "routing_effect": "none",
+        }
+    ]
+
+    report = (
+        tmp_path / "docs" / "trust-promotion-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert (
+        "- source_checklist_source_checklist_id: "
+        "ci_deploy_proof_checklist_"
+    ) in report
+    assert (
+        "source_real_cost_tracking_proof_action=keep_cost_tracking_disabled"
+    ) in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "- source_status: budget_enforcement_proof_blocked" in dashboard
+
+
+def _run_budget_enforcement_proof_chain(tmp_path: Path) -> None:
+    _run_ci_deploy_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+
+
+def test_trust_promotion_proof_checklist_blocks_blocked_budget_enforcement_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_budget_enforcement_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "trust_promotion_proof_checklist: "
+        "trust_promotion_proof_blocked"
+    ) in output
+    assert "report: docs/trust-promotion-proof-checklist.md" in output
+    assert "source_status: budget_enforcement_proof_blocked" in output
+    assert "capabilities: 1" in output
+    assert "checklist_items: 1" in output
+    assert "blocked_trust_promotion_proofs: 1" in output
+    assert "operator_reviews_required: 0" in output
+    assert "blocked_budget_enforcement_proofs: 1" in output
+    assert "blocked_ci_deploy_proofs: 1" in output
+    assert "blocked_adapter_proofs: 1" in output
+    assert "blocked_scheduling_proofs: 1" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "boundaries: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_budget_enforcement_proof_checklists()[0]
+    checklists = storage.list_recent_trust_promotion_proof_checklists()
+    assert len(checklists) == 1
+    checklist = checklists[0]
+    assert checklist.status == "trust_promotion_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "budget_enforcement_proof_blocked"
+    assert checklist.capability_count == 1
+    assert checklist.checklist_count == 1
+    assert checklist.blocked_trust_promotion_proof_count == 1
+    assert checklist.operator_review_required_count == 0
+    assert checklist.blocked_budget_enforcement_proof_count == 1
+    assert checklist.blocked_ci_deploy_proof_count == 1
+    assert checklist.blocked_adapter_proof_count == 1
+    assert checklist.blocked_scheduling_proof_count == 1
+    assert checklist.blocked_worker_proof_count == 1
+    assert checklist.blocked_dashboard_proof_count == 1
+    assert checklist.blocked_cost_tracking_count == 1
+    assert checklist.blocked_retry_count == 1
+    assert checklist.blocked_trust_promotion_count == 1
+    assert checklist.missing_evidence_count == 1
+    assert checklist.approval_required_count == 1
+    assert checklist.boundary_count == 1
+    assert checklist.recommended_commands == []
+    assert checklist.report_path == "docs/trust-promotion-proof-checklist.md"
+    assert checklist.checklist_items == [
+        {
+            "capability": "trust_promotion",
+            "proof_item": "trust_promotion_decision_contract",
+            "recommended_trust_action": "keep_trust_unpromoted",
+            "trust_promotion_state": "blocked_until_budget_enforcement_proof_and_operator_approval",
+            "source_budget_action": "keep_budget_enforcement_disabled",
+            "source_budget_state": "blocked_until_ci_deploy_proof_and_operator_approval",
+            "source_ci_deploy_action": "keep_ci_deploy_disabled",
+            "source_ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+            "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+            "source_adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+            "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+            "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+            "source_worker_action": "keep_remote_workers_disabled",
+            "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+            "source_dashboard_action": "keep_hosted_dashboard_disabled",
+            "source_dashboard_state": "blocked_until_cost_tracking_and_operator_approval",
+            "source_cost_action": "keep_cost_tracking_disabled",
+            "cost_tracking_state": "blocked_until_retry_review_and_operator_approval",
+            "source_retry_action": "keep_retry_disabled",
+            "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+            "source_trust_action": "keep_trust_unpromoted",
+            "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+            "evidence_state": "missing",
+            "approval_state": "approval_required",
+            "approval_boundary": "explicit_operator_approval_required",
+            "trust_promotion_effect": "none",
+            "routing_effect": "none",
+        }
+    ]
+
+    report = (
+        tmp_path / "docs" / "trust-promotion-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert "# Trust Promotion Proof Checklist" in report
+    assert "- status: trust_promotion_proof_blocked" in report
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert "- checklist_items: 1" in report
+    assert "- blocked_trust_promotion_proofs: 1" in report
+    assert (
+        "- trust_promotion: proof_item=trust_promotion_decision_contract "
+        "recommended_trust_action=keep_trust_unpromoted "
+        "trust_promotion_state=blocked_until_budget_enforcement_proof_and_operator_approval "
+        "source_budget_action=keep_budget_enforcement_disabled"
+    ) in report
+    assert "Does not promote trust" in report
+    assert "Does not enforce budgets" in report
+    assert "Does not mutate external systems" in report
+
+
+def test_trust_promotion_proof_checklist_reports_missing_budget_enforcement_checklist_without_creating_one(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "trust_promotion_proof_checklist: "
+        "budget_enforcement_proof_checklist_missing"
+    ) in output
+    assert "source_checklist: none" in output
+    assert "recommended_commands: budget-enforcement-proof-checklist" in output
+    assert storage.list_recent_budget_enforcement_proof_checklists() == []
+    assert storage.list_recent_ci_deploy_proof_checklists() == []
+    assert storage.list_recent_browser_desktop_adapter_proof_checklists() == []
+    assert storage.list_recent_autonomous_scheduling_proof_checklists() == []
+    assert storage.list_recent_remote_worker_proof_checklists() == []
+    assert storage.list_recent_hosted_dashboard_proof_checklists() == []
+    assert storage.list_recent_capability_real_cost_tracking_audits() == []
+    assert storage.list_recent_capability_automatic_retry_audits() == []
+    assert storage.list_recent_capability_trust_promotion_audits() == []
+    assert storage.list_recent_capability_promotion_decision_ledgers() == []
+    assert storage.list_recent_capability_promotion_gate_checklists() == []
+    assert storage.list_recent_capability_evidence_collection_plans() == []
+    assert storage.list_recent_capability_approval_boundary_matrices() == []
+    assert storage.list_recent_capability_proof_gap_indexes() == []
+    assert storage.list_recent_capability_readiness_reviews() == []
+    assert storage.list_recent_capability_expansion_ledgers() == []
+
+    checklists = storage.list_recent_trust_promotion_proof_checklists()
+    assert len(checklists) == 1
+    checklist = checklists[0]
+    assert checklist.status == "budget_enforcement_proof_checklist_missing"
+    assert checklist.source_checklist_id is None
+    assert checklist.source_checklist_status == "none"
+    assert checklist.capability_count == 0
+    assert checklist.checklist_count == 0
+    assert checklist.blocked_trust_promotion_proof_count == 0
+    assert checklist.operator_review_required_count == 0
+    assert checklist.recommended_commands == ["budget-enforcement-proof-checklist"]
+
+
+def test_dashboard_reports_trust_promotion_proof_checklist(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_budget_enforcement_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Trust Promotion Proof Checklist" in dashboard
+    assert "- status: trust_promotion_proof_blocked" in dashboard
+    assert "- checklist_items: 1" in dashboard
+    assert "- blocked_trust_promotion_proofs: 1" in dashboard
+    assert "- operator_reviews_required: 0" in dashboard
+    assert "- blocked_budget_enforcement_proofs: 1" in dashboard
+    assert "- blocked_ci_deploy_proofs: 1" in dashboard
+    assert "- blocked_adapter_proofs: 1" in dashboard
+    assert "- blocked_scheduling_proofs: 1" in dashboard
+    assert "- blocked_worker_proofs: 1" in dashboard
+    assert "- blocked_dashboard_proofs: 1" in dashboard
+    assert "- blocked_cost_tracking: 1" in dashboard
+    assert "- blocked_retries: 1" in dashboard
+    assert "- blocked_trust_promotions: 1" in dashboard
+    assert "- missing_evidence: 1" in dashboard
+    assert "- approvals_required: 1" in dashboard
+    assert "- boundaries: 1" in dashboard
+    assert "- recommended_commands: none" in dashboard
+    assert "- report: docs/trust-promotion-proof-checklist.md" in dashboard
+
+
+def test_iteration_packet_reports_trust_promotion_proof_checklist_posture(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_budget_enforcement_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli trust-promotion-proof-checklist`" in packet
+    assert (
+        "- trust promotion proof checklist: "
+        "trust_promotion_proof_blocked"
+    ) in packet
+
+
+def _run_trust_promotion_proof_chain(tmp_path: Path) -> None:
+    _run_budget_enforcement_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+
+
+def _run_latest_real_cost_sourced_trust_promotion_proof_chain(
+    tmp_path: Path,
+) -> None:
+    _run_latest_real_cost_sourced_budget_enforcement_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+
+
+def test_automatic_retry_proof_checklist_blocks_real_cost_sourced_trust_promotion_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "automatic-retry-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "automatic_retry_proof_checklist: "
+        "automatic_retry_proof_blocked"
+    ) in output
+    assert "source_status: trust_promotion_proof_blocked" in output
+    assert "blocked_automatic_retry_proofs: 1" in output
+    assert "blocked_trust_promotion_proofs: 1" in output
+    assert "blocked_budget_enforcement_proofs: 1" in output
+    assert "blocked_ci_deploy_proofs: 1" in output
+    assert "blocked_adapter_proofs: 1" in output
+    assert "blocked_scheduling_proofs: 1" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_trust_promotion_proof_checklists()[0]
+    checklist = storage.list_recent_automatic_retry_proof_checklists()[0]
+    assert checklist.status == "automatic_retry_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "trust_promotion_proof_blocked"
+    assert checklist.checklist_items == [
+        {
+            "capability": "automatic_retry",
+            "proof_item": "automatic_retry_policy_contract",
+            "recommended_retry_action": "keep_retry_disabled",
+            "automatic_retry_state": "blocked_until_trust_promotion_proof_and_operator_approval",
+            "source_trust_proof_action": "keep_trust_unpromoted",
+            "source_trust_proof_state": "blocked_until_budget_enforcement_proof_and_operator_approval",
+            "source_budget_action": "keep_budget_enforcement_disabled",
+            "source_budget_state": "blocked_until_ci_deploy_proof_and_operator_approval",
+            "source_ci_deploy_action": "keep_ci_deploy_disabled",
+            "source_ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+            "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+            "source_adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+            "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+            "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+            "source_worker_action": "keep_remote_workers_disabled",
+            "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+            "source_dashboard_action": "keep_hosted_dashboard_disabled",
+            "source_dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+            "source_real_cost_tracking_proof_action": "keep_cost_tracking_disabled",
+            "source_real_cost_tracking_proof_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_automatic_retry_proof_action": "keep_retry_disabled",
+            "source_automatic_retry_proof_state": "blocked_until_trust_promotion_proof_and_operator_approval",
+            "source_trust_action": "keep_trust_unpromoted",
+            "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+            "source_cost_action": "keep_cost_tracking_disabled",
+            "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_retry_action": "keep_retry_disabled",
+            "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+            "evidence_state": "missing",
+            "approval_state": "approval_required",
+            "approval_boundary": "explicit_operator_approval_required",
+            "automatic_retry_effect": "none",
+            "routing_effect": "none",
+        }
+    ]
+
+    report = (
+        tmp_path / "docs" / "automatic-retry-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert (
+        "- source_checklist_source_checklist_id: "
+        "budget_enforcement_proof_checklist_"
+    ) in report
+    assert (
+        "source_real_cost_tracking_proof_action=keep_cost_tracking_disabled"
+    ) in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "- source_status: trust_promotion_proof_blocked" in dashboard
+
+
+def test_automatic_retry_proof_checklist_blocks_latest_real_cost_sourced_trust_promotion_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_real_cost_sourced_trust_promotion_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "automatic-retry-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "automatic_retry_proof_checklist: "
+        "automatic_retry_proof_blocked"
+    ) in output
+    assert "source_status: trust_promotion_proof_blocked" in output
+    assert "blocked_automatic_retry_proofs: 1" in output
+    assert "blocked_trust_promotion_proofs: 1" in output
+    assert "blocked_budget_enforcement_proofs: 1" in output
+    assert "blocked_ci_deploy_proofs: 1" in output
+    assert "blocked_adapter_proofs: 1" in output
+    assert "blocked_scheduling_proofs: 1" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_trust_promotion_proof_checklists()[0]
+    source_budget_checklist = (
+        storage.list_recent_budget_enforcement_proof_checklists()[0]
+    )
+    source_ci_deploy_checklist = storage.list_recent_ci_deploy_proof_checklists()[0]
+    source_adapter_checklist = (
+        storage.list_recent_browser_desktop_adapter_proof_checklists()[0]
+    )
+    source_autonomous_checklist = (
+        storage.list_recent_autonomous_scheduling_proof_checklists()[0]
+    )
+    source_remote_checklist = storage.list_recent_remote_worker_proof_checklists()[0]
+    source_hosted_checklist = (
+        storage.list_recent_hosted_dashboard_proof_checklists()[0]
+    )
+    source_real_cost_checklist = storage.get_real_cost_tracking_proof_checklist(
+        source_hosted_checklist.source_checklist_id
+    )
+    assert source_real_cost_checklist is not None
+    assert source_checklist.source_checklist_id == source_budget_checklist.id
+    assert source_budget_checklist.source_checklist_id == source_ci_deploy_checklist.id
+    assert (
+        source_ci_deploy_checklist.source_checklist_id
+        == source_adapter_checklist.id
+    )
+    assert (
+        source_adapter_checklist.source_checklist_id
+        == source_autonomous_checklist.id
+    )
+    assert (
+        source_autonomous_checklist.source_checklist_id
+        == source_remote_checklist.id
+    )
+    assert source_remote_checklist.source_checklist_id == source_hosted_checklist.id
+    assert source_hosted_checklist.source_kind == "real_cost_tracking_proof_checklist"
+    assert source_hosted_checklist.source_checklist_id == source_real_cost_checklist.id
+    assert (
+        source_real_cost_checklist.source_checklist_status
+        == "automatic_retry_proof_blocked"
+    )
+
+    checklist = storage.list_recent_automatic_retry_proof_checklists()[0]
+    assert checklist.status == "automatic_retry_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "trust_promotion_proof_blocked"
+    assert (
+        checklist.checklist_items[0]["source_real_cost_tracking_proof_action"]
+        == "keep_cost_tracking_disabled"
+    )
+    assert (
+        checklist.checklist_items[0]["source_automatic_retry_proof_action"]
+        == "keep_retry_disabled"
+    )
+    assert (
+        checklist.checklist_items[0]["source_trust_proof_action"]
+        == "keep_trust_unpromoted"
+    )
+
+    report = (
+        tmp_path / "docs" / "automatic-retry-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert (
+        f"- source_checklist_source_checklist_id: "
+        f"{source_budget_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_status: "
+        "budget_enforcement_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_id: "
+        f"{source_ci_deploy_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_status: "
+        "ci_deploy_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_adapter_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "browser_desktop_adapter_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_autonomous_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "autonomous_scheduling_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_remote_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "remote_worker_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_hosted_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "hosted_dashboard_proof_blocked"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        "real_cost_tracking_proof_checklist_"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "real_cost_tracking_proof_blocked"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        "automatic_retry_proof_checklist_"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "automatic_retry_proof_blocked"
+    ) in report
+    assert "source_real_cost_tracking_proof_action=keep_cost_tracking_disabled" in report
+    assert "source_automatic_retry_proof_action=keep_retry_disabled" in report
+    assert "source_trust_proof_action=keep_trust_unpromoted" in report
+
+
+def test_automatic_retry_proof_checklist_skips_newer_non_real_cost_sourced_trust_promotion_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_real_cost_sourced_trust_promotion_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_cost_sourced_trust = storage.list_recent_trust_promotion_proof_checklists()[0]
+    newer_legacy_trusts = [
+        _record_synthetic_trust_promotion_proof_checklist(
+            storage,
+            source_checklist_id=f"budget_enforcement_proof_checklist_legacy_{index}",
+            reason="Synthetic newer legacy Trust Promotion proof row.",
+            source_budget_state="legacy_without_real_cost_proof",
+        )
+        for index in range(26)
+    ]
+    assert newer_legacy_trusts[0].id != real_cost_sourced_trust.id
+
+    assert main(["--root", str(tmp_path), "automatic-retry-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "automatic_retry_proof_checklist: "
+        "automatic_retry_proof_blocked"
+    ) in output
+    assert f"source_checklist: {real_cost_sourced_trust.id}" in output
+    assert f"source_checklist: {newer_legacy_trusts[-1].id}" not in output
+
+    checklist = storage.list_recent_automatic_retry_proof_checklists()[0]
+    assert checklist.source_checklist_id == real_cost_sourced_trust.id
+    assert (
+        checklist.checklist_items[0]["source_real_cost_tracking_proof_action"]
+        == "keep_cost_tracking_disabled"
+    )
+
+    report = (
+        tmp_path / "docs" / "automatic-retry-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert f"- source_checklist_id: {real_cost_sourced_trust.id}" in report
+    assert f"- source_checklist_id: {newer_legacy_trusts[-1].id}" not in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        "real_cost_tracking_proof_checklist_"
+    ) in report
+
+
+def test_automatic_retry_proof_checklist_skips_newer_trust_with_non_real_cost_hosted_source(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_real_cost_sourced_trust_promotion_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_cost_sourced_trust = storage.list_recent_trust_promotion_proof_checklists()[0]
+    hosted = storage.record_hosted_dashboard_proof_checklist(
+        status="hosted_dashboard_proof_blocked",
+        source_audit_id="capability_real_cost_tracking_audit_legacy",
+        source_audit_status="real_cost_tracking_blocked",
+        source_kind="real_cost_tracking_audit",
+        source_checklist_id=None,
+        source_checklist_status="none",
+        capability_count=1,
+        checklist_count=1,
+        blocked_dashboard_proof_count=1,
+        operator_review_required_count=0,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic hosted proof row without Real Cost Tracking proof source.",
+        checklist_items=[],
+        report_path="docs/hosted-dashboard-proof-checklist.md",
+    )
+    remote = storage.record_remote_worker_proof_checklist(
+        status="remote_worker_proof_blocked",
+        source_checklist_id=hosted.id,
+        source_checklist_status="hosted_dashboard_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_worker_proof_count=1,
+        operator_review_required_count=0,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic remote proof row with non-Real-Cost hosted source.",
+        checklist_items=[],
+        report_path="docs/remote-worker-proof-checklist.md",
+    )
+    autonomous = storage.record_autonomous_scheduling_proof_checklist(
+        status="autonomous_scheduling_proof_blocked",
+        source_checklist_id=remote.id,
+        source_checklist_status="remote_worker_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_scheduling_proof_count=1,
+        operator_review_required_count=0,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic scheduling proof row with non-Real-Cost hosted source.",
+        checklist_items=[],
+        report_path="docs/autonomous-scheduling-proof-checklist.md",
+    )
+    adapter = storage.record_browser_desktop_adapter_proof_checklist(
+        status="browser_desktop_adapter_proof_blocked",
+        source_checklist_id=autonomous.id,
+        source_checklist_status="autonomous_scheduling_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_adapter_proof_count=1,
+        operator_review_required_count=0,
+        blocked_scheduling_proof_count=1,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic adapter proof row with non-Real-Cost hosted source.",
+        checklist_items=[],
+        report_path="docs/browser-desktop-adapter-proof-checklist.md",
+    )
+    ci_deploy = storage.record_ci_deploy_proof_checklist(
+        status="ci_deploy_proof_blocked",
+        source_checklist_id=adapter.id,
+        source_checklist_status="browser_desktop_adapter_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_ci_deploy_proof_count=1,
+        operator_review_required_count=0,
+        blocked_adapter_proof_count=1,
+        blocked_scheduling_proof_count=1,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic CI proof row with non-Real-Cost hosted source.",
+        checklist_items=[],
+        report_path="docs/ci-deploy-proof-checklist.md",
+    )
+    newer_non_real_cost_budget = _record_synthetic_budget_enforcement_proof_checklist(
+        storage,
+        source_checklist_id=ci_deploy.id,
+        reason="Synthetic newer Budget proof row with non-Real-Cost hosted source.",
+        source_ci_deploy_state="blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+    )
+    newer_non_real_cost_trust = _record_synthetic_trust_promotion_proof_checklist(
+        storage,
+        source_checklist_id=newer_non_real_cost_budget.id,
+        reason="Synthetic newer Trust proof row with non-Real-Cost hosted source.",
+        source_budget_state="blocked_until_ci_deploy_proof_and_operator_approval",
+    )
+
+    assert main(["--root", str(tmp_path), "automatic-retry-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert f"source_checklist: {real_cost_sourced_trust.id}" in output
+    assert f"source_checklist: {newer_non_real_cost_trust.id}" not in output
+
+    checklist = storage.list_recent_automatic_retry_proof_checklists()[0]
+    assert checklist.source_checklist_id == real_cost_sourced_trust.id
+
+
+def test_automatic_retry_proof_checklist_skips_newer_trust_with_dangling_real_cost_source(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_real_cost_sourced_trust_promotion_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_cost_sourced_trust = storage.list_recent_trust_promotion_proof_checklists()[0]
+    dangling_trust = _record_dangling_real_cost_sourced_trust_promotion_chain(
+        storage
+    )
+
+    assert main(["--root", str(tmp_path), "automatic-retry-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert f"source_checklist: {real_cost_sourced_trust.id}" in output
+    assert f"source_checklist: {dangling_trust.id}" not in output
+
+    checklist = storage.list_recent_automatic_retry_proof_checklists()[0]
+    assert checklist.source_checklist_id == real_cost_sourced_trust.id
+
+
+def test_automatic_retry_proof_checklist_reports_missing_when_only_dangling_real_cost_trust_exists(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    dangling_trust = _record_dangling_real_cost_sourced_trust_promotion_chain(
+        storage
+    )
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "automatic-retry-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "automatic_retry_proof_checklist: "
+        "trust_promotion_proof_checklist_missing"
+    ) in output
+    assert "source_checklist: none" in output
+    assert f"source_checklist: {dangling_trust.id}" not in output
+    assert "blocked_automatic_retry_proofs: 0" in output
+    assert "recommended_commands: trust-promotion-proof-checklist" in output
+
+    checklist = storage.list_recent_automatic_retry_proof_checklists()[0]
+    assert checklist.status == "trust_promotion_proof_checklist_missing"
+    assert checklist.source_checklist_id is None
+    assert checklist.checklist_items == []
+
+
+def test_automatic_retry_item_rendering_omits_partial_optional_proof_metadata() -> None:
+    from agent_os.automatic_retry_proof import render_checklist_item_line
+
+    item = {
+        "capability": "automatic_retry",
+        "proof_item": "automatic_retry_policy_contract",
+        "recommended_retry_action": "keep_retry_disabled",
+        "automatic_retry_state": "blocked_until_trust_promotion_proof_and_operator_approval",
+        "source_trust_proof_action": "keep_trust_unpromoted",
+        "source_trust_proof_state": "blocked_until_budget_enforcement_proof_and_operator_approval",
+        "source_budget_action": "keep_budget_enforcement_disabled",
+        "source_budget_state": "blocked_until_ci_deploy_proof_and_operator_approval",
+        "source_ci_deploy_action": "keep_ci_deploy_disabled",
+        "source_ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+        "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+        "source_adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+        "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+        "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+        "source_worker_action": "keep_remote_workers_disabled",
+        "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+        "source_dashboard_action": "keep_hosted_dashboard_disabled",
+        "source_dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+        "source_real_cost_tracking_proof_action": "keep_cost_tracking_disabled",
+        "source_cost_action": "keep_cost_tracking_disabled",
+        "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+        "source_retry_action": "keep_retry_disabled",
+        "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+        "source_trust_action": "keep_trust_unpromoted",
+        "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+        "evidence_state": "missing",
+        "approval_state": "approval_required",
+        "approval_boundary": "explicit_operator_approval_required",
+        "automatic_retry_effect": "none",
+        "routing_effect": "none",
+    }
+
+    line = render_checklist_item_line(item)
+
+    assert "source_cost_action=keep_cost_tracking_disabled" in line
+    assert "source_real_cost_tracking_proof_action" not in line
+
+
+def test_automatic_retry_proof_checklist_blocks_blocked_trust_promotion_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_trust_promotion_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "automatic-retry-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "automatic_retry_proof_checklist: "
+        "automatic_retry_proof_blocked"
+    ) in output
+    assert "report: docs/automatic-retry-proof-checklist.md" in output
+    assert "source_status: trust_promotion_proof_blocked" in output
+    assert "capabilities: 1" in output
+    assert "checklist_items: 1" in output
+    assert "blocked_automatic_retry_proofs: 1" in output
+    assert "operator_reviews_required: 0" in output
+    assert "blocked_trust_promotion_proofs: 1" in output
+    assert "blocked_budget_enforcement_proofs: 1" in output
+    assert "blocked_ci_deploy_proofs: 1" in output
+    assert "blocked_adapter_proofs: 1" in output
+    assert "blocked_scheduling_proofs: 1" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "boundaries: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_trust_promotion_proof_checklists()[0]
+    checklists = storage.list_recent_automatic_retry_proof_checklists()
+    assert len(checklists) == 1
+    checklist = checklists[0]
+    assert checklist.status == "automatic_retry_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "trust_promotion_proof_blocked"
+    assert checklist.capability_count == 1
+    assert checklist.checklist_count == 1
+    assert checklist.blocked_automatic_retry_proof_count == 1
+    assert checklist.operator_review_required_count == 0
+    assert checklist.blocked_trust_promotion_proof_count == 1
+    assert checklist.blocked_budget_enforcement_proof_count == 1
+    assert checklist.blocked_ci_deploy_proof_count == 1
+    assert checklist.blocked_adapter_proof_count == 1
+    assert checklist.blocked_scheduling_proof_count == 1
+    assert checklist.blocked_worker_proof_count == 1
+    assert checklist.blocked_dashboard_proof_count == 1
+    assert checklist.blocked_cost_tracking_count == 1
+    assert checklist.blocked_retry_count == 1
+    assert checklist.blocked_trust_promotion_count == 1
+    assert checklist.missing_evidence_count == 1
+    assert checklist.approval_required_count == 1
+    assert checklist.boundary_count == 1
+    assert checklist.recommended_commands == []
+    assert checklist.report_path == "docs/automatic-retry-proof-checklist.md"
+    assert checklist.checklist_items == [
+        {
+            "capability": "automatic_retry",
+            "proof_item": "automatic_retry_policy_contract",
+            "recommended_retry_action": "keep_retry_disabled",
+            "automatic_retry_state": "blocked_until_trust_promotion_proof_and_operator_approval",
+            "source_trust_proof_action": "keep_trust_unpromoted",
+            "source_trust_proof_state": "blocked_until_budget_enforcement_proof_and_operator_approval",
+            "source_budget_action": "keep_budget_enforcement_disabled",
+            "source_budget_state": "blocked_until_ci_deploy_proof_and_operator_approval",
+            "source_ci_deploy_action": "keep_ci_deploy_disabled",
+            "source_ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+            "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+            "source_adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+            "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+            "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+            "source_worker_action": "keep_remote_workers_disabled",
+            "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+            "source_dashboard_action": "keep_hosted_dashboard_disabled",
+            "source_dashboard_state": "blocked_until_cost_tracking_and_operator_approval",
+            "source_cost_action": "keep_cost_tracking_disabled",
+            "cost_tracking_state": "blocked_until_retry_review_and_operator_approval",
+            "source_retry_action": "keep_retry_disabled",
+            "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+            "source_trust_action": "keep_trust_unpromoted",
+            "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+            "evidence_state": "missing",
+            "approval_state": "approval_required",
+            "approval_boundary": "explicit_operator_approval_required",
+            "automatic_retry_effect": "none",
+            "routing_effect": "none",
+        }
+    ]
+
+    report = (
+        tmp_path / "docs" / "automatic-retry-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert "# Automatic Retry Proof Checklist" in report
+    assert "- status: automatic_retry_proof_blocked" in report
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert "- checklist_items: 1" in report
+    assert "- blocked_automatic_retry_proofs: 1" in report
+    assert (
+        "- automatic_retry: proof_item=automatic_retry_policy_contract "
+        "recommended_retry_action=keep_retry_disabled "
+        "automatic_retry_state=blocked_until_trust_promotion_proof_and_operator_approval "
+        "source_trust_proof_action=keep_trust_unpromoted"
+    ) in report
+    assert "Does not retry or replay work" in report
+    assert "Does not promote trust" in report
+    assert "Does not mutate external systems" in report
+
+
+def test_automatic_retry_proof_checklist_reports_missing_trust_promotion_checklist_without_creating_one(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    assert main(["--root", str(tmp_path), "automatic-retry-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "automatic_retry_proof_checklist: "
+        "trust_promotion_proof_checklist_missing"
+    ) in output
+    assert "source_checklist: none" in output
+    assert "recommended_commands: trust-promotion-proof-checklist" in output
+    assert storage.list_recent_trust_promotion_proof_checklists() == []
+    assert storage.list_recent_budget_enforcement_proof_checklists() == []
+    assert storage.list_recent_ci_deploy_proof_checklists() == []
+    assert storage.list_recent_browser_desktop_adapter_proof_checklists() == []
+    assert storage.list_recent_autonomous_scheduling_proof_checklists() == []
+    assert storage.list_recent_remote_worker_proof_checklists() == []
+    assert storage.list_recent_hosted_dashboard_proof_checklists() == []
+    assert storage.list_recent_capability_real_cost_tracking_audits() == []
+    assert storage.list_recent_capability_automatic_retry_audits() == []
+    assert storage.list_recent_capability_trust_promotion_audits() == []
+    assert storage.list_recent_capability_promotion_decision_ledgers() == []
+    assert storage.list_recent_capability_promotion_gate_checklists() == []
+    assert storage.list_recent_capability_evidence_collection_plans() == []
+    assert storage.list_recent_capability_approval_boundary_matrices() == []
+    assert storage.list_recent_capability_proof_gap_indexes() == []
+    assert storage.list_recent_capability_readiness_reviews() == []
+    assert storage.list_recent_capability_expansion_ledgers() == []
+
+    checklists = storage.list_recent_automatic_retry_proof_checklists()
+    assert len(checklists) == 1
+    checklist = checklists[0]
+    assert checklist.status == "trust_promotion_proof_checklist_missing"
+    assert checklist.source_checklist_id is None
+    assert checklist.source_checklist_status == "none"
+    assert checklist.capability_count == 0
+    assert checklist.checklist_count == 0
+    assert checklist.blocked_automatic_retry_proof_count == 0
+    assert checklist.operator_review_required_count == 0
+    assert checklist.recommended_commands == ["trust-promotion-proof-checklist"]
+
+
+def test_dashboard_reports_automatic_retry_proof_checklist(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_trust_promotion_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "automatic-retry-proof-checklist"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Automatic Retry Proof Checklist" in dashboard
+    assert "- status: automatic_retry_proof_blocked" in dashboard
+    assert "- checklist_items: 1" in dashboard
+    assert "- blocked_automatic_retry_proofs: 1" in dashboard
+    assert "- operator_reviews_required: 0" in dashboard
+    assert "- blocked_trust_promotion_proofs: 1" in dashboard
+    assert "- blocked_budget_enforcement_proofs: 1" in dashboard
+    assert "- blocked_ci_deploy_proofs: 1" in dashboard
+    assert "- blocked_adapter_proofs: 1" in dashboard
+    assert "- blocked_scheduling_proofs: 1" in dashboard
+    assert "- blocked_worker_proofs: 1" in dashboard
+    assert "- blocked_dashboard_proofs: 1" in dashboard
+    assert "- blocked_cost_tracking: 1" in dashboard
+    assert "- blocked_retries: 1" in dashboard
+    assert "- blocked_trust_promotions: 1" in dashboard
+    assert "- missing_evidence: 1" in dashboard
+    assert "- approvals_required: 1" in dashboard
+    assert "- boundaries: 1" in dashboard
+    assert "- recommended_commands: none" in dashboard
+    assert "- report: docs/automatic-retry-proof-checklist.md" in dashboard
+
+
+def test_iteration_packet_reports_automatic_retry_proof_checklist_posture(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_trust_promotion_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "automatic-retry-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli automatic-retry-proof-checklist`" in packet
+    assert (
+        "- automatic retry proof checklist: "
+        "automatic_retry_proof_blocked"
+    ) in packet
+
+
+def _run_automatic_retry_proof_chain(tmp_path: Path) -> None:
+    _run_trust_promotion_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "automatic-retry-proof-checklist"]) == 0
+
+
+def _run_latest_real_cost_sourced_automatic_retry_proof_chain(
+    tmp_path: Path,
+) -> None:
+    _run_latest_real_cost_sourced_trust_promotion_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "automatic-retry-proof-checklist"]) == 0
+
+
+def test_real_cost_tracking_proof_checklist_blocks_real_cost_sourced_automatic_retry_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "automatic-retry-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "real-cost-tracking-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "real_cost_tracking_proof_checklist: "
+        "real_cost_tracking_proof_blocked"
+    ) in output
+    assert "source_status: automatic_retry_proof_blocked" in output
+    assert "blocked_real_cost_tracking_proofs: 1" in output
+    assert "blocked_automatic_retry_proofs: 1" in output
+    assert "blocked_trust_promotion_proofs: 1" in output
+    assert "blocked_budget_enforcement_proofs: 1" in output
+    assert "blocked_ci_deploy_proofs: 1" in output
+    assert "blocked_adapter_proofs: 1" in output
+    assert "blocked_scheduling_proofs: 1" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_automatic_retry_proof_checklists()[0]
+    checklist = storage.list_recent_real_cost_tracking_proof_checklists()[0]
+    assert checklist.status == "real_cost_tracking_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "automatic_retry_proof_blocked"
+    assert checklist.checklist_items == [
+        {
+            "capability": "real_cost_tracking",
+            "proof_item": "real_cost_tracking_spend_contract",
+            "recommended_cost_action": "keep_cost_tracking_disabled",
+            "real_cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_automatic_retry_proof_action": "keep_retry_disabled",
+            "source_automatic_retry_proof_state": "blocked_until_trust_promotion_proof_and_operator_approval",
+            "source_trust_proof_action": "keep_trust_unpromoted",
+            "source_trust_proof_state": "blocked_until_budget_enforcement_proof_and_operator_approval",
+            "source_budget_action": "keep_budget_enforcement_disabled",
+            "source_budget_state": "blocked_until_ci_deploy_proof_and_operator_approval",
+            "source_ci_deploy_action": "keep_ci_deploy_disabled",
+            "source_ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+            "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+            "source_adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+            "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+            "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+            "source_worker_action": "keep_remote_workers_disabled",
+            "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+            "source_dashboard_action": "keep_hosted_dashboard_disabled",
+            "source_dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+            "source_real_cost_tracking_proof_action": "keep_cost_tracking_disabled",
+            "source_real_cost_tracking_proof_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_cost_action": "keep_cost_tracking_disabled",
+            "source_cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_retry_action": "keep_retry_disabled",
+            "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+            "source_trust_action": "keep_trust_unpromoted",
+            "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+            "evidence_state": "missing",
+            "approval_state": "approval_required",
+            "approval_boundary": "explicit_operator_approval_required",
+            "real_cost_tracking_effect": "none",
+            "routing_effect": "none",
+        }
+    ]
+
+    report = (
+        tmp_path / "docs" / "real-cost-tracking-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert (
+        "- source_checklist_source_checklist_id: "
+        "trust_promotion_proof_checklist_"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_status: "
+        "trust_promotion_proof_blocked"
+    ) in report
+    assert (
+        "source_real_cost_tracking_proof_action=keep_cost_tracking_disabled"
+    ) in report
+    assert (
+        "source_automatic_retry_proof_action=keep_retry_disabled"
+    ) in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "- source_status: automatic_retry_proof_blocked" in dashboard
+
+
+def test_real_cost_tracking_proof_checklist_blocks_latest_real_cost_sourced_automatic_retry_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_real_cost_sourced_automatic_retry_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "real-cost-tracking-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "real_cost_tracking_proof_checklist: "
+        "real_cost_tracking_proof_blocked"
+    ) in output
+    assert "source_status: automatic_retry_proof_blocked" in output
+    assert "blocked_real_cost_tracking_proofs: 1" in output
+    assert "blocked_automatic_retry_proofs: 1" in output
+    assert "blocked_trust_promotion_proofs: 1" in output
+    assert "blocked_budget_enforcement_proofs: 1" in output
+    assert "blocked_ci_deploy_proofs: 1" in output
+    assert "blocked_adapter_proofs: 1" in output
+    assert "blocked_scheduling_proofs: 1" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_automatic_retry_proof_checklists()[0]
+    source_trust_checklist = storage.list_recent_trust_promotion_proof_checklists()[0]
+    source_budget_checklist = (
+        storage.list_recent_budget_enforcement_proof_checklists()[0]
+    )
+    source_ci_deploy_checklist = storage.list_recent_ci_deploy_proof_checklists()[0]
+    source_adapter_checklist = (
+        storage.list_recent_browser_desktop_adapter_proof_checklists()[0]
+    )
+    source_autonomous_checklist = (
+        storage.list_recent_autonomous_scheduling_proof_checklists()[0]
+    )
+    source_remote_checklist = storage.list_recent_remote_worker_proof_checklists()[0]
+    source_hosted_checklist = (
+        storage.list_recent_hosted_dashboard_proof_checklists()[0]
+    )
+    source_real_cost_checklist = storage.get_real_cost_tracking_proof_checklist(
+        source_hosted_checklist.source_checklist_id
+    )
+    assert source_real_cost_checklist is not None
+    assert source_checklist.source_checklist_id == source_trust_checklist.id
+    assert source_trust_checklist.source_checklist_id == source_budget_checklist.id
+    assert source_budget_checklist.source_checklist_id == source_ci_deploy_checklist.id
+    assert (
+        source_ci_deploy_checklist.source_checklist_id
+        == source_adapter_checklist.id
+    )
+    assert (
+        source_adapter_checklist.source_checklist_id
+        == source_autonomous_checklist.id
+    )
+    assert (
+        source_autonomous_checklist.source_checklist_id
+        == source_remote_checklist.id
+    )
+    assert source_remote_checklist.source_checklist_id == source_hosted_checklist.id
+    assert source_hosted_checklist.source_kind == "real_cost_tracking_proof_checklist"
+    assert source_hosted_checklist.source_checklist_id == source_real_cost_checklist.id
+    assert (
+        source_real_cost_checklist.source_checklist_status
+        == "automatic_retry_proof_blocked"
+    )
+
+    checklist = storage.list_recent_real_cost_tracking_proof_checklists()[0]
+    assert checklist.status == "real_cost_tracking_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "automatic_retry_proof_blocked"
+    assert (
+        checklist.checklist_items[0]["source_real_cost_tracking_proof_action"]
+        == "keep_cost_tracking_disabled"
+    )
+    assert (
+        checklist.checklist_items[0]["source_automatic_retry_proof_action"]
+        == "keep_retry_disabled"
+    )
+    assert (
+        checklist.checklist_items[0]["source_trust_proof_action"]
+        == "keep_trust_unpromoted"
+    )
+
+    report = (
+        tmp_path / "docs" / "real-cost-tracking-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert (
+        f"- source_checklist_source_checklist_id: "
+        f"{source_trust_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_status: "
+        "trust_promotion_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_id: "
+        f"{source_budget_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_status: "
+        "budget_enforcement_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_ci_deploy_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "ci_deploy_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_adapter_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "browser_desktop_adapter_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_autonomous_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "autonomous_scheduling_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_remote_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "remote_worker_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_hosted_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "hosted_dashboard_proof_blocked"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        "real_cost_tracking_proof_checklist_"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "real_cost_tracking_proof_blocked"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        "automatic_retry_proof_checklist_"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "automatic_retry_proof_blocked"
+    ) in report
+    assert "source_real_cost_tracking_proof_action=keep_cost_tracking_disabled" in report
+    assert "source_automatic_retry_proof_action=keep_retry_disabled" in report
+    assert "source_trust_proof_action=keep_trust_unpromoted" in report
+
+
+def test_real_cost_tracking_proof_checklist_skips_newer_non_real_cost_sourced_automatic_retry_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_real_cost_sourced_automatic_retry_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_cost_sourced_automatic = (
+        storage.list_recent_automatic_retry_proof_checklists()[0]
+    )
+    newer_legacy_automatic = [
+        _record_synthetic_automatic_retry_proof_checklist(
+            storage,
+            source_checklist_id=f"trust_promotion_proof_checklist_legacy_{index}",
+            reason="Synthetic newer legacy Automatic Retry proof row.",
+            source_trust_proof_state="legacy_without_real_cost_proof",
+        )
+        for index in range(26)
+    ]
+    assert newer_legacy_automatic[0].id != real_cost_sourced_automatic.id
+
+    assert main(["--root", str(tmp_path), "real-cost-tracking-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "real_cost_tracking_proof_checklist: "
+        "real_cost_tracking_proof_blocked"
+    ) in output
+    assert f"source_checklist: {real_cost_sourced_automatic.id}" in output
+    assert f"source_checklist: {newer_legacy_automatic[-1].id}" not in output
+
+    checklist = storage.list_recent_real_cost_tracking_proof_checklists()[0]
+    assert checklist.source_checklist_id == real_cost_sourced_automatic.id
+    assert (
+        checklist.checklist_items[0]["source_real_cost_tracking_proof_action"]
+        == "keep_cost_tracking_disabled"
+    )
+
+    report = (
+        tmp_path / "docs" / "real-cost-tracking-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert f"- source_checklist_id: {real_cost_sourced_automatic.id}" in report
+    assert f"- source_checklist_id: {newer_legacy_automatic[-1].id}" not in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        "real_cost_tracking_proof_checklist_"
+    ) in report
+
+
+def test_real_cost_tracking_proof_checklist_skips_newer_automatic_retry_with_non_real_cost_hosted_source(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_real_cost_sourced_automatic_retry_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_cost_sourced_automatic = (
+        storage.list_recent_automatic_retry_proof_checklists()[0]
+    )
+    hosted = storage.record_hosted_dashboard_proof_checklist(
+        status="hosted_dashboard_proof_blocked",
+        source_audit_id="capability_real_cost_tracking_audit_legacy",
+        source_audit_status="real_cost_tracking_blocked",
+        source_kind="real_cost_tracking_audit",
+        source_checklist_id=None,
+        source_checklist_status="none",
+        capability_count=1,
+        checklist_count=1,
+        blocked_dashboard_proof_count=1,
+        operator_review_required_count=0,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic hosted proof row without Real Cost Tracking proof source.",
+        checklist_items=[],
+        report_path="docs/hosted-dashboard-proof-checklist.md",
+    )
+    remote = storage.record_remote_worker_proof_checklist(
+        status="remote_worker_proof_blocked",
+        source_checklist_id=hosted.id,
+        source_checklist_status="hosted_dashboard_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_worker_proof_count=1,
+        operator_review_required_count=0,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic remote proof row with non-Real-Cost hosted source.",
+        checklist_items=[],
+        report_path="docs/remote-worker-proof-checklist.md",
+    )
+    autonomous = storage.record_autonomous_scheduling_proof_checklist(
+        status="autonomous_scheduling_proof_blocked",
+        source_checklist_id=remote.id,
+        source_checklist_status="remote_worker_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_scheduling_proof_count=1,
+        operator_review_required_count=0,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic scheduling proof row with non-Real-Cost hosted source.",
+        checklist_items=[],
+        report_path="docs/autonomous-scheduling-proof-checklist.md",
+    )
+    adapter = storage.record_browser_desktop_adapter_proof_checklist(
+        status="browser_desktop_adapter_proof_blocked",
+        source_checklist_id=autonomous.id,
+        source_checklist_status="autonomous_scheduling_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_adapter_proof_count=1,
+        operator_review_required_count=0,
+        blocked_scheduling_proof_count=1,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic adapter proof row with non-Real-Cost hosted source.",
+        checklist_items=[],
+        report_path="docs/browser-desktop-adapter-proof-checklist.md",
+    )
+    ci_deploy = storage.record_ci_deploy_proof_checklist(
+        status="ci_deploy_proof_blocked",
+        source_checklist_id=adapter.id,
+        source_checklist_status="browser_desktop_adapter_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_ci_deploy_proof_count=1,
+        operator_review_required_count=0,
+        blocked_adapter_proof_count=1,
+        blocked_scheduling_proof_count=1,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic CI proof row with non-Real-Cost hosted source.",
+        checklist_items=[],
+        report_path="docs/ci-deploy-proof-checklist.md",
+    )
+    newer_non_real_cost_budget = _record_synthetic_budget_enforcement_proof_checklist(
+        storage,
+        source_checklist_id=ci_deploy.id,
+        reason="Synthetic newer Budget proof row with non-Real-Cost hosted source.",
+        source_ci_deploy_state="blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+    )
+    newer_non_real_cost_trust = _record_synthetic_trust_promotion_proof_checklist(
+        storage,
+        source_checklist_id=newer_non_real_cost_budget.id,
+        reason="Synthetic newer Trust proof row with non-Real-Cost hosted source.",
+        source_budget_state="blocked_until_ci_deploy_proof_and_operator_approval",
+    )
+    newer_non_real_cost_automatic = _record_synthetic_automatic_retry_proof_checklist(
+        storage,
+        source_checklist_id=newer_non_real_cost_trust.id,
+        reason="Synthetic newer Automatic Retry proof row with non-Real-Cost hosted source.",
+        source_trust_proof_state="blocked_until_budget_enforcement_proof_and_operator_approval",
+    )
+
+    assert main(["--root", str(tmp_path), "real-cost-tracking-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert f"source_checklist: {real_cost_sourced_automatic.id}" in output
+    assert f"source_checklist: {newer_non_real_cost_automatic.id}" not in output
+
+    checklist = storage.list_recent_real_cost_tracking_proof_checklists()[0]
+    assert checklist.source_checklist_id == real_cost_sourced_automatic.id
+
+
+def test_real_cost_tracking_item_rendering_omits_partial_optional_proof_metadata() -> None:
+    from agent_os.real_cost_tracking_proof import render_checklist_item_line
+
+    item = {
+        "capability": "real_cost_tracking",
+        "proof_item": "real_cost_tracking_spend_contract",
+        "recommended_cost_action": "keep_cost_tracking_disabled",
+        "real_cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+        "source_automatic_retry_proof_action": "keep_retry_disabled",
+        "source_automatic_retry_proof_state": "blocked_until_trust_promotion_proof_and_operator_approval",
+        "source_trust_proof_action": "keep_trust_unpromoted",
+        "source_trust_proof_state": "blocked_until_budget_enforcement_proof_and_operator_approval",
+        "source_budget_action": "keep_budget_enforcement_disabled",
+        "source_budget_state": "blocked_until_ci_deploy_proof_and_operator_approval",
+        "source_ci_deploy_action": "keep_ci_deploy_disabled",
+        "source_ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+        "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+        "source_adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+        "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+        "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+        "source_worker_action": "keep_remote_workers_disabled",
+        "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+        "source_dashboard_action": "keep_hosted_dashboard_disabled",
+        "source_dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+        "source_real_cost_tracking_proof_action": "keep_cost_tracking_disabled",
+        "source_cost_action": "keep_cost_tracking_disabled",
+        "source_cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+        "source_retry_action": "keep_retry_disabled",
+        "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+        "source_trust_action": "keep_trust_unpromoted",
+        "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+        "evidence_state": "missing",
+        "approval_state": "approval_required",
+        "approval_boundary": "explicit_operator_approval_required",
+        "real_cost_tracking_effect": "none",
+        "routing_effect": "none",
+    }
+
+    line = render_checklist_item_line(item)
+
+    assert "source_cost_action=keep_cost_tracking_disabled" in line
+    assert "source_real_cost_tracking_proof_action" not in line
+
+
+def test_real_cost_tracking_proof_checklist_blocks_blocked_automatic_retry_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_automatic_retry_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "real-cost-tracking-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "real_cost_tracking_proof_checklist: "
+        "real_cost_tracking_proof_blocked"
+    ) in output
+    assert "report: docs/real-cost-tracking-proof-checklist.md" in output
+    assert "source_status: automatic_retry_proof_blocked" in output
+    assert "capabilities: 1" in output
+    assert "checklist_items: 1" in output
+    assert "blocked_real_cost_tracking_proofs: 1" in output
+    assert "operator_reviews_required: 0" in output
+    assert "blocked_automatic_retry_proofs: 1" in output
+    assert "blocked_trust_promotion_proofs: 1" in output
+    assert "blocked_budget_enforcement_proofs: 1" in output
+    assert "blocked_ci_deploy_proofs: 1" in output
+    assert "blocked_adapter_proofs: 1" in output
+    assert "blocked_scheduling_proofs: 1" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "boundaries: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_automatic_retry_proof_checklists()[0]
+    checklists = storage.list_recent_real_cost_tracking_proof_checklists()
+    assert len(checklists) == 1
+    checklist = checklists[0]
+    assert checklist.status == "real_cost_tracking_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "automatic_retry_proof_blocked"
+    assert checklist.capability_count == 1
+    assert checklist.checklist_count == 1
+    assert checklist.blocked_real_cost_tracking_proof_count == 1
+    assert checklist.operator_review_required_count == 0
+    assert checklist.blocked_automatic_retry_proof_count == 1
+    assert checklist.blocked_trust_promotion_proof_count == 1
+    assert checklist.blocked_budget_enforcement_proof_count == 1
+    assert checklist.blocked_ci_deploy_proof_count == 1
+    assert checklist.blocked_adapter_proof_count == 1
+    assert checklist.blocked_scheduling_proof_count == 1
+    assert checklist.blocked_worker_proof_count == 1
+    assert checklist.blocked_dashboard_proof_count == 1
+    assert checklist.blocked_cost_tracking_count == 1
+    assert checklist.blocked_retry_count == 1
+    assert checklist.blocked_trust_promotion_count == 1
+    assert checklist.missing_evidence_count == 1
+    assert checklist.approval_required_count == 1
+    assert checklist.boundary_count == 1
+    assert checklist.recommended_commands == []
+    assert checklist.report_path == "docs/real-cost-tracking-proof-checklist.md"
+    assert checklist.checklist_items == [
+        {
+            "capability": "real_cost_tracking",
+            "proof_item": "real_cost_tracking_spend_contract",
+            "recommended_cost_action": "keep_cost_tracking_disabled",
+            "real_cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_automatic_retry_proof_action": "keep_retry_disabled",
+            "source_automatic_retry_proof_state": "blocked_until_trust_promotion_proof_and_operator_approval",
+            "source_trust_proof_action": "keep_trust_unpromoted",
+            "source_trust_proof_state": "blocked_until_budget_enforcement_proof_and_operator_approval",
+            "source_budget_action": "keep_budget_enforcement_disabled",
+            "source_budget_state": "blocked_until_ci_deploy_proof_and_operator_approval",
+            "source_ci_deploy_action": "keep_ci_deploy_disabled",
+            "source_ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+            "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+            "source_adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+            "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+            "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+            "source_worker_action": "keep_remote_workers_disabled",
+            "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+            "source_dashboard_action": "keep_hosted_dashboard_disabled",
+            "source_dashboard_state": "blocked_until_cost_tracking_and_operator_approval",
+            "source_cost_action": "keep_cost_tracking_disabled",
+            "source_cost_tracking_state": "blocked_until_retry_review_and_operator_approval",
+            "source_retry_action": "keep_retry_disabled",
+            "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+            "source_trust_action": "keep_trust_unpromoted",
+            "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+            "evidence_state": "missing",
+            "approval_state": "approval_required",
+            "approval_boundary": "explicit_operator_approval_required",
+            "real_cost_tracking_effect": "none",
+            "routing_effect": "none",
+        }
+    ]
+
+    report = (
+        tmp_path / "docs" / "real-cost-tracking-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert "# Real Cost Tracking Proof Checklist" in report
+    assert "- status: real_cost_tracking_proof_blocked" in report
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert "- checklist_items: 1" in report
+    assert "- blocked_real_cost_tracking_proofs: 1" in report
+    assert (
+        "- real_cost_tracking: proof_item=real_cost_tracking_spend_contract "
+        "recommended_cost_action=keep_cost_tracking_disabled "
+        "real_cost_tracking_state=blocked_until_automatic_retry_proof_and_operator_approval "
+        "source_automatic_retry_proof_action=keep_retry_disabled"
+    ) in report
+    assert "Does not track real spend" in report
+    assert "Does not retry or replay work" in report
+    assert "Does not mutate external systems" in report
+
+
+def test_real_cost_tracking_proof_checklist_reports_missing_automatic_retry_checklist_without_creating_one(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    assert main(["--root", str(tmp_path), "real-cost-tracking-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "real_cost_tracking_proof_checklist: "
+        "automatic_retry_proof_checklist_missing"
+    ) in output
+    assert "source_checklist: none" in output
+    assert "recommended_commands: automatic-retry-proof-checklist" in output
+    assert storage.list_recent_automatic_retry_proof_checklists() == []
+    assert storage.list_recent_trust_promotion_proof_checklists() == []
+    assert storage.list_recent_budget_enforcement_proof_checklists() == []
+    assert storage.list_recent_ci_deploy_proof_checklists() == []
+    assert storage.list_recent_browser_desktop_adapter_proof_checklists() == []
+    assert storage.list_recent_autonomous_scheduling_proof_checklists() == []
+    assert storage.list_recent_remote_worker_proof_checklists() == []
+    assert storage.list_recent_hosted_dashboard_proof_checklists() == []
+    assert storage.list_recent_capability_real_cost_tracking_audits() == []
+    assert storage.list_recent_capability_automatic_retry_audits() == []
+    assert storage.list_recent_capability_trust_promotion_audits() == []
+    assert storage.list_recent_capability_promotion_decision_ledgers() == []
+    assert storage.list_recent_capability_promotion_gate_checklists() == []
+    assert storage.list_recent_capability_evidence_collection_plans() == []
+    assert storage.list_recent_capability_approval_boundary_matrices() == []
+    assert storage.list_recent_capability_proof_gap_indexes() == []
+    assert storage.list_recent_capability_readiness_reviews() == []
+    assert storage.list_recent_capability_expansion_ledgers() == []
+
+    checklists = storage.list_recent_real_cost_tracking_proof_checklists()
+    assert len(checklists) == 1
+    checklist = checklists[0]
+    assert checklist.status == "automatic_retry_proof_checklist_missing"
+    assert checklist.source_checklist_id is None
+    assert checklist.source_checklist_status == "none"
+    assert checklist.capability_count == 0
+    assert checklist.checklist_count == 0
+    assert checklist.blocked_real_cost_tracking_proof_count == 0
+    assert checklist.operator_review_required_count == 0
+    assert checklist.recommended_commands == ["automatic-retry-proof-checklist"]
+
+
+def test_dashboard_reports_real_cost_tracking_proof_checklist(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_automatic_retry_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "real-cost-tracking-proof-checklist"]) == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Real Cost Tracking Proof Checklist" in dashboard
+    assert "- status: real_cost_tracking_proof_blocked" in dashboard
+    assert "- source_status: automatic_retry_proof_blocked" in dashboard
+    assert "- checklist_items: 1" in dashboard
+    assert "- blocked_real_cost_tracking_proofs: 1" in dashboard
+    assert "- operator_reviews_required: 0" in dashboard
+    assert "- blocked_automatic_retry_proofs: 1" in dashboard
+    assert "- blocked_trust_promotion_proofs: 1" in dashboard
+    assert "- blocked_budget_enforcement_proofs: 1" in dashboard
+    assert "- blocked_ci_deploy_proofs: 1" in dashboard
+    assert "- blocked_adapter_proofs: 1" in dashboard
+    assert "- blocked_scheduling_proofs: 1" in dashboard
+    assert "- blocked_worker_proofs: 1" in dashboard
+    assert "- blocked_dashboard_proofs: 1" in dashboard
+    assert "- blocked_cost_tracking: 1" in dashboard
+    assert "- blocked_retries: 1" in dashboard
+    assert "- blocked_trust_promotions: 1" in dashboard
+    assert "- missing_evidence: 1" in dashboard
+    assert "- approvals_required: 1" in dashboard
+    assert "- boundaries: 1" in dashboard
+    assert "- recommended_commands: none" in dashboard
+    assert "- report: docs/real-cost-tracking-proof-checklist.md" in dashboard
+
+
+def test_iteration_packet_reports_real_cost_tracking_proof_checklist_posture(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_automatic_retry_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "real-cost-tracking-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli real-cost-tracking-proof-checklist`" in packet
+    assert (
+        "- real cost tracking proof checklist: "
+        "real_cost_tracking_proof_blocked"
+    ) in packet
+
+
+def _run_real_cost_tracking_proof_chain(tmp_path: Path) -> None:
+    _run_automatic_retry_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "real-cost-tracking-proof-checklist"]) == 0
+
+
+def _run_latest_real_cost_sourced_real_cost_tracking_proof_chain(
+    tmp_path: Path,
+) -> None:
+    _run_latest_real_cost_sourced_automatic_retry_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "real-cost-tracking-proof-checklist"]) == 0
+
+
+def _run_latest_expansion_proof_ladder(tmp_path: Path) -> None:
+    _run_latest_real_cost_sourced_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "automatic-retry-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "real-cost-tracking-proof-checklist"]) == 0
+
+
+def test_goal_completion_audit_reports_blocked_expansion_goal(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_expansion_proof_ladder(tmp_path)
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## next",
+                "",
+                "- [x] Add report-only Goal Completion Audit from expansion proof reports.",
+                "",
+                "## blocked",
+                "",
+                "- [ ] Choose external model providers and API policies before adding remote",
+                "  model routing.",
+                "- [ ] Choose deployment target before hosted dashboard work.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "goal-completion-audit"]) == 0
+
+    output = capsys.readouterr().out
+    assert "goal_completion_audit: blocked_by_report_only_proofs" in output
+    assert "report: docs/goal-completion-audit.md" in output
+    assert "requirements: 9" in output
+    assert "blocked_requirements: 9" in output
+    assert "missing_evidence: 9" in output
+    assert "approvals_required: 9" in output
+    assert "external_decisions_required: 2" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    audit = storage.list_recent_goal_completion_audits()[0]
+    assert audit.status == "blocked_by_report_only_proofs"
+    assert audit.requirement_count == 9
+    assert audit.blocked_requirement_count == 9
+    assert audit.missing_evidence_count == 9
+    assert audit.approval_required_count == 9
+    assert audit.external_decision_count == 2
+    assert audit.audit_items[0]["requirement"] == "hosted_dashboard"
+    assert audit.audit_items[0]["completion_state"] == "blocked_report_only"
+    assert audit.audit_items[0]["routing_effect"] == "none"
+
+    report = (tmp_path / "docs" / "goal-completion-audit.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Goal Completion Audit" in report
+    assert "- status: blocked_by_report_only_proofs" in report
+    assert "- external_decisions_required: 2" in report
+    assert "hosted_dashboard: completion_state=blocked_report_only" in report
+    assert "automatic_retries: completion_state=blocked_report_only" in report
+    assert "real_cost_tracking: completion_state=blocked_report_only" in report
+    assert (
+        "Choose external model providers and API policies before adding remote model routing."
+        in report
+    )
+    assert "Choose deployment target before hosted dashboard work." in report
+    assert "- Does not enable hosted dashboard." in report
+    assert "- Does not mark the active goal complete." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Goal Completion Audit" in dashboard
+    assert "- status: blocked_by_report_only_proofs" in dashboard
+    assert "- requirements: 9" in dashboard
+    assert "- blocked_requirements: 9" in dashboard
+    assert "- external_decisions_required: 2" in dashboard
+    assert audit.id in dashboard
+
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli goal-completion-audit`" in packet
+    assert "- goal completion audit: blocked_by_report_only_proofs" in packet
+
+
+def test_goal_completion_audit_reports_missing_required_proofs(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "goal-completion-audit"]) == 0
+
+    output = capsys.readouterr().out
+    assert "goal_completion_audit: missing_required_proofs" in output
+    assert "requirements: 9" in output
+    assert "missing_evidence: 9" in output
+    assert (
+        "recommended_commands: "
+        "hosted-dashboard-proof-checklist,remote-worker-proof-checklist,"
+        "autonomous-scheduling-proof-checklist,browser-desktop-adapter-proof-checklist,"
+        "ci-deploy-proof-checklist,budget-enforcement-proof-checklist,"
+        "trust-promotion-proof-checklist,automatic-retry-proof-checklist,"
+        "real-cost-tracking-proof-checklist"
+    ) in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    audit = storage.list_recent_goal_completion_audits()[0]
+    assert audit.status == "missing_required_proofs"
+    assert audit.blocked_requirement_count == 0
+    assert audit.missing_evidence_count == 9
+    assert audit.recommended_commands == [
+        "hosted-dashboard-proof-checklist",
+        "remote-worker-proof-checklist",
+        "autonomous-scheduling-proof-checklist",
+        "browser-desktop-adapter-proof-checklist",
+        "ci-deploy-proof-checklist",
+        "budget-enforcement-proof-checklist",
+        "trust-promotion-proof-checklist",
+        "automatic-retry-proof-checklist",
+        "real-cost-tracking-proof-checklist",
+    ]
+
+
+def test_expansion_decision_brief_reports_operator_decisions_from_goal_audit(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_expansion_proof_ladder(tmp_path)
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## next",
+                "",
+                "- [x] Add report-only Goal Completion Audit from expansion proof reports.",
+                "- [x] Add report-only Expansion Decision Brief from goal completion audits.",
+                "",
+                "## blocked",
+                "",
+                "- [ ] Choose external model providers and API policies before adding remote",
+                "  model routing.",
+                "- [ ] Choose deployment target before hosted dashboard work.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    assert main(["--root", str(tmp_path), "goal-completion-audit"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "expansion-decision-brief"]) == 0
+
+    output = capsys.readouterr().out
+    assert "expansion_decision_brief: operator_decisions_required" in output
+    assert "report: docs/expansion-decision-brief.md" in output
+    assert "source_status: blocked_by_report_only_proofs" in output
+    assert "requirements: 9" in output
+    assert "blocked_requirements: 9" in output
+    assert "external_decisions_required: 2" in output
+    assert "approvals_required: 9" in output
+    assert "decision_items: 11" in output
+    assert "recommended_next_step: operator_review_required" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    brief = storage.list_recent_expansion_decision_briefs()[0]
+    audit = storage.list_recent_goal_completion_audits()[0]
+    assert brief.status == "operator_decisions_required"
+    assert brief.source_audit_id == audit.id
+    assert brief.source_audit_status == "blocked_by_report_only_proofs"
+    assert brief.requirement_count == 9
+    assert brief.blocked_requirement_count == 9
+    assert brief.external_decision_count == 2
+    assert brief.approval_required_count == 9
+    assert brief.decision_item_count == 11
+    assert brief.recommended_next_step == "operator_review_required"
+    assert brief.decision_items[0]["decision_type"] == "external_decision"
+    assert (
+        brief.decision_items[0]["decision"]
+        == "Choose external model providers and API policies before adding remote model routing."
+    )
+    assert brief.decision_items[-1]["decision_type"] == "capability_approval"
+    assert brief.decision_items[-1]["requirement"] == "real_cost_tracking"
+
+    report = (tmp_path / "docs" / "expansion-decision-brief.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Expansion Decision Brief" in report
+    assert "- status: operator_decisions_required" in report
+    assert f"- source_audit: {audit.id}" in report
+    assert "- decision_items: 11" in report
+    assert "decision_type=external_decision" in report
+    assert (
+        "decision=Choose external model providers and API policies before adding remote model routing."
+        in report
+    )
+    assert "decision_type=capability_approval requirement=hosted_dashboard" in report
+    assert "decision_type=capability_approval requirement=real_cost_tracking" in report
+    assert "- Does not approve capabilities." in report
+    assert "- Does not mutate external systems." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Expansion Decision Brief" in dashboard
+    assert "- status: operator_decisions_required" in dashboard
+    assert "- decision_items: 11" in dashboard
+    assert brief.id in dashboard
+
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli expansion-decision-brief`" in packet
+    assert "- expansion decision brief: operator_decisions_required" in packet
+
+
+def test_expansion_decision_evidence_index_links_brief_to_source_reports(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_expansion_proof_ladder(tmp_path)
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## next",
+                "",
+                "- [x] Add report-only Goal Completion Audit from expansion proof reports.",
+                "- [x] Add report-only Expansion Decision Brief from goal completion audits.",
+                "- [x] Add report-only Expansion Decision Evidence Index from decision briefs.",
+                "",
+                "## blocked",
+                "",
+                "- [ ] Choose external model providers and API policies before adding remote",
+                "  model routing.",
+                "- [ ] Choose deployment target before hosted dashboard work.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    assert main(["--root", str(tmp_path), "goal-completion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-brief"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "expansion-decision-evidence-index"]) == 0
+
+    output = capsys.readouterr().out
+    assert "expansion_decision_evidence_index: evidence_indexed" in output
+    assert "report: docs/expansion-decision-evidence-index.md" in output
+    assert "source_status: operator_decisions_required" in output
+    assert "decision_items: 11" in output
+    assert "evidence_items: 11" in output
+    assert "external_decisions: 2" in output
+    assert "capability_decisions: 9" in output
+    assert "missing_evidence_links: 0" in output
+    assert "recommended_next_step: operator_review_required" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    index = storage.list_recent_expansion_decision_evidence_indexes()[0]
+    brief = storage.list_recent_expansion_decision_briefs()[0]
+    audit = storage.list_recent_goal_completion_audits()[0]
+    assert index.status == "evidence_indexed"
+    assert index.source_brief_id == brief.id
+    assert index.source_brief_status == "operator_decisions_required"
+    assert index.source_audit_id == audit.id
+    assert index.decision_item_count == 11
+    assert index.evidence_item_count == 11
+    assert index.external_decision_count == 2
+    assert index.capability_decision_count == 9
+    assert index.missing_evidence_link_count == 0
+    assert index.recommended_next_step == "operator_review_required"
+    assert index.evidence_items[0]["decision_type"] == "external_decision"
+    assert index.evidence_items[0]["evidence_path"] == "tasks.md"
+    assert index.evidence_items[0]["evidence_status"] == "blocked_task"
+    assert index.evidence_items[-1]["decision_type"] == "capability_approval"
+    assert index.evidence_items[-1]["requirement"] == "real_cost_tracking"
+    assert index.evidence_items[-1]["evidence_path"] == (
+        "docs/real-cost-tracking-proof-checklist.md"
+    )
+    assert index.evidence_items[-1]["source_audit"] == audit.id
+
+    report = (tmp_path / "docs" / "expansion-decision-evidence-index.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Expansion Decision Evidence Index" in report
+    assert "- status: evidence_indexed" in report
+    assert f"- source_brief: {brief.id}" in report
+    assert f"- source_audit: {audit.id}" in report
+    assert "- evidence_items: 11" in report
+    assert "decision_type=external_decision evidence_path=tasks.md" in report
+    assert (
+        "decision_type=capability_approval requirement=hosted_dashboard "
+        "evidence_path=docs/hosted-dashboard-proof-checklist.md"
+    ) in report
+    assert (
+        "decision_type=capability_approval requirement=real_cost_tracking "
+        "evidence_path=docs/real-cost-tracking-proof-checklist.md"
+    ) in report
+    assert "- Does not approve decisions." in report
+    assert "- Does not mutate external systems." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Expansion Decision Evidence Index" in dashboard
+    assert "- status: evidence_indexed" in dashboard
+    assert "- evidence_items: 11" in dashboard
+    assert index.id in dashboard
+
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli expansion-decision-evidence-index`" in packet
+    assert "- expansion decision evidence index: evidence_indexed" in packet
+
+
+def test_expansion_operator_review_checklist_prepares_manual_choices_from_evidence_index(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_expansion_proof_ladder(tmp_path)
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## next",
+                "",
+                "- [x] Add report-only Goal Completion Audit from expansion proof reports.",
+                "- [x] Add report-only Expansion Decision Brief from goal completion audits.",
+                "- [x] Add report-only Expansion Decision Evidence Index from decision briefs.",
+                "- [x] Add report-only Expansion Operator Review Checklist from evidence indexes.",
+                "",
+                "## blocked",
+                "",
+                "- [ ] Choose external model providers and API policies before adding remote",
+                "  model routing.",
+                "- [ ] Choose deployment target before hosted dashboard work.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    assert main(["--root", str(tmp_path), "goal-completion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-brief"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-evidence-index"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "expansion-operator-review-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert "expansion_operator_review_checklist: operator_review_required" in output
+    assert "report: docs/expansion-operator-review-checklist.md" in output
+    assert "source_status: evidence_indexed" in output
+    assert "review_items: 11" in output
+    assert "decision_required: 11" in output
+    assert "external_reviews: 2" in output
+    assert "capability_reviews: 9" in output
+    assert "missing_evidence_links: 0" in output
+    assert "allowed_actions: approve,defer,request_more_evidence" in output
+    assert "recommended_next_step: operator_decision_required" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    checklist = storage.list_recent_expansion_operator_review_checklists()[0]
+    index = storage.list_recent_expansion_decision_evidence_indexes()[0]
+    assert checklist.status == "operator_review_required"
+    assert checklist.source_index_id == index.id
+    assert checklist.source_index_status == "evidence_indexed"
+    assert checklist.source_brief_id == index.source_brief_id
+    assert checklist.source_audit_id == index.source_audit_id
+    assert checklist.review_item_count == 11
+    assert checklist.decision_required_count == 11
+    assert checklist.external_review_count == 2
+    assert checklist.capability_review_count == 9
+    assert checklist.missing_evidence_link_count == 0
+    assert checklist.allowed_actions == ["approve", "defer", "request_more_evidence"]
+    assert checklist.recommended_next_step == "operator_decision_required"
+    assert checklist.review_items[0]["review_type"] == "external_decision"
+    assert checklist.review_items[0]["operator_action_required"] == "choose_policy_or_defer"
+    assert checklist.review_items[0]["allowed_actions"] == [
+        "approve",
+        "defer",
+        "request_more_evidence",
+    ]
+    assert checklist.review_items[-1]["review_type"] == "capability_approval"
+    assert checklist.review_items[-1]["requirement"] == "real_cost_tracking"
+    assert checklist.review_items[-1]["operator_action_required"] == (
+        "approve_defer_or_request_more_evidence"
+    )
+
+    report = (tmp_path / "docs" / "expansion-operator-review-checklist.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Expansion Operator Review Checklist" in report
+    assert "- status: operator_review_required" in report
+    assert f"- source_index: {index.id}" in report
+    assert "- review_items: 11" in report
+    assert "- allowed_actions: approve,defer,request_more_evidence" in report
+    assert (
+        "review_type=external_decision operator_action_required=choose_policy_or_defer"
+        in report
+    )
+    assert (
+        "review_type=capability_approval requirement=hosted_dashboard "
+        "operator_action_required=approve_defer_or_request_more_evidence"
+    ) in report
+    assert (
+        "review_type=capability_approval requirement=real_cost_tracking "
+        "operator_action_required=approve_defer_or_request_more_evidence"
+    ) in report
+    assert "- Does not approve decisions." in report
+    assert "- Does not mutate external systems." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Expansion Operator Review Checklist" in dashboard
+    assert "- status: operator_review_required" in dashboard
+    assert "- review_items: 11" in dashboard
+    assert checklist.id in dashboard
+
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli expansion-operator-review-checklist`" in packet
+    assert "- expansion operator review checklist: operator_review_required" in packet
+
+
+def test_expansion_operator_decision_ledger_records_pending_decisions_from_review_checklist(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_expansion_proof_ladder(tmp_path)
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## next",
+                "",
+                "- [x] Add report-only Goal Completion Audit from expansion proof reports.",
+                "- [x] Add report-only Expansion Decision Brief from goal completion audits.",
+                "- [x] Add report-only Expansion Decision Evidence Index from decision briefs.",
+                "- [x] Add report-only Expansion Operator Review Checklist from evidence indexes.",
+                "- [x] Add report-only Expansion Operator Decision Ledger from review checklists.",
+                "",
+                "## blocked",
+                "",
+                "- [ ] Choose external model providers and API policies before adding remote",
+                "  model routing.",
+                "- [ ] Choose deployment target before hosted dashboard work.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    assert main(["--root", str(tmp_path), "goal-completion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-brief"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-evidence-index"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-review-checklist"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "expansion-operator-decision-ledger"]) == 0
+
+    output = capsys.readouterr().out
+    assert "expansion_operator_decision_ledger: pending_operator_decisions" in output
+    assert "report: docs/expansion-operator-decision-ledger.md" in output
+    assert "source_status: operator_review_required" in output
+    assert "decision_items: 11" in output
+    assert "pending_decisions: 11" in output
+    assert "approved_decisions: 0" in output
+    assert "deferred_decisions: 0" in output
+    assert "more_evidence_requested: 0" in output
+    assert "external_decisions: 2" in output
+    assert "capability_decisions: 9" in output
+    assert "allowed_actions: approve,defer,request_more_evidence" in output
+    assert "recommended_next_step: operator_decision_required" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    ledger = storage.list_recent_expansion_operator_decision_ledgers()[0]
+    checklist = storage.list_recent_expansion_operator_review_checklists()[0]
+    assert ledger.status == "pending_operator_decisions"
+    assert ledger.source_checklist_id == checklist.id
+    assert ledger.source_checklist_status == "operator_review_required"
+    assert ledger.source_index_id == checklist.source_index_id
+    assert ledger.source_brief_id == checklist.source_brief_id
+    assert ledger.source_audit_id == checklist.source_audit_id
+    assert ledger.decision_item_count == 11
+    assert ledger.pending_decision_count == 11
+    assert ledger.approved_decision_count == 0
+    assert ledger.deferred_decision_count == 0
+    assert ledger.more_evidence_requested_count == 0
+    assert ledger.external_decision_count == 2
+    assert ledger.capability_decision_count == 9
+    assert ledger.allowed_actions == ["approve", "defer", "request_more_evidence"]
+    assert ledger.decision_items[0]["decision_state"] == "pending_operator_decision"
+    assert ledger.decision_items[0]["review_type"] == "external_decision"
+    assert ledger.decision_items[0]["selected_action"] == "pending"
+    assert ledger.decision_items[-1]["review_type"] == "capability_approval"
+    assert ledger.decision_items[-1]["requirement"] == "real_cost_tracking"
+    assert ledger.decision_items[-1]["decision_state"] == "pending_operator_decision"
+
+    report = (tmp_path / "docs" / "expansion-operator-decision-ledger.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Expansion Operator Decision Ledger" in report
+    assert "- status: pending_operator_decisions" in report
+    assert f"- source_checklist: {checklist.id}" in report
+    assert "- pending_decisions: 11" in report
+    assert "decision_state=pending_operator_decision selected_action=pending" in report
+    assert "review_type=external_decision" in report
+    assert "review_type=capability_approval requirement=hosted_dashboard" in report
+    assert "review_type=capability_approval requirement=real_cost_tracking" in report
+    assert "- Does not approve decisions." in report
+    assert "- Does not mutate external systems." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Expansion Operator Decision Ledger" in dashboard
+    assert "- status: pending_operator_decisions" in dashboard
+    assert "- pending_decisions: 11" in dashboard
+    assert ledger.id in dashboard
+
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli expansion-operator-decision-ledger`" in packet
+    assert "- expansion operator decision ledger: pending_operator_decisions" in packet
+
+
+def test_expansion_operator_approval_draft_prepares_no_action_approval_packet(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_expansion_proof_ladder(tmp_path)
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## next",
+                "",
+                "- [x] Add report-only Goal Completion Audit from expansion proof reports.",
+                "- [x] Add report-only Expansion Decision Brief from goal completion audits.",
+                "- [x] Add report-only Expansion Decision Evidence Index from decision briefs.",
+                "- [x] Add report-only Expansion Operator Review Checklist from evidence indexes.",
+                "- [x] Add report-only Expansion Operator Decision Ledger from review checklists.",
+                "- [x] Add report-only Expansion Operator Approval Draft from decision ledgers.",
+                "",
+                "## blocked",
+                "",
+                "- [ ] Choose external model providers and API policies before adding remote",
+                "  model routing.",
+                "- [ ] Choose deployment target before hosted dashboard work.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    assert main(["--root", str(tmp_path), "goal-completion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-brief"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-evidence-index"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-review-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-decision-ledger"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-draft"]) == 0
+
+    output = capsys.readouterr().out
+    assert "expansion_operator_approval_draft: approval_draft_ready" in output
+    assert "report: docs/expansion-operator-approval-draft.md" in output
+    assert "source_status: pending_operator_decisions" in output
+    assert "draft_items: 11" in output
+    assert "draft_requests: 11" in output
+    assert "created_approval_requests: 0" in output
+    assert "external_drafts: 2" in output
+    assert "capability_drafts: 9" in output
+    assert "approval_boundaries: 2" in output
+    assert "pending_decisions: 11" in output
+    assert "allowed_actions: approve,defer,request_more_evidence" in output
+    assert "recommended_next_step: operator_approval_flow_required" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    draft = storage.list_recent_expansion_operator_approval_drafts()[0]
+    ledger = storage.list_recent_expansion_operator_decision_ledgers()[0]
+    assert draft.status == "approval_draft_ready"
+    assert draft.source_ledger_id == ledger.id
+    assert draft.source_ledger_status == "pending_operator_decisions"
+    assert draft.source_checklist_id == ledger.source_checklist_id
+    assert draft.source_index_id == ledger.source_index_id
+    assert draft.source_brief_id == ledger.source_brief_id
+    assert draft.source_audit_id == ledger.source_audit_id
+    assert draft.draft_item_count == 11
+    assert draft.draft_request_count == 11
+    assert draft.created_approval_request_count == 0
+    assert draft.external_draft_count == 2
+    assert draft.capability_draft_count == 9
+    assert draft.approval_boundary_count == 2
+    assert draft.pending_decision_count == 11
+    assert draft.allowed_actions == ["approve", "defer", "request_more_evidence"]
+    assert draft.draft_items[0]["draft_state"] == "draft_only"
+    assert draft.draft_items[0]["approval_request_status"] == "not_created"
+    assert draft.draft_items[0]["review_type"] == "external_decision"
+    assert draft.draft_items[-1]["review_type"] == "capability_approval"
+    assert draft.draft_items[-1]["requirement"] == "real_cost_tracking"
+    assert draft.draft_items[-1]["approval_request_status"] == "not_created"
+    assert storage.list_recent_approval_requests() == []
+
+    report = (tmp_path / "docs" / "expansion-operator-approval-draft.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Expansion Operator Approval Draft" in report
+    assert "- status: approval_draft_ready" in report
+    assert f"- source_ledger: {ledger.id}" in report
+    assert "- draft_requests: 11" in report
+    assert "- created_approval_requests: 0" in report
+    assert "draft_state=draft_only approval_request_status=not_created" in report
+    assert "review_type=external_decision" in report
+    assert "review_type=capability_approval requirement=hosted_dashboard" in report
+    assert "review_type=capability_approval requirement=real_cost_tracking" in report
+    assert "- Does not create approval_requests rows." in report
+    assert "- Does not approve decisions." in report
+    assert "- Does not mutate external systems." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Expansion Operator Approval Draft" in dashboard
+    assert "- status: approval_draft_ready" in dashboard
+    assert "- draft_requests: 11" in dashboard
+    assert "- created_approval_requests: 0" in dashboard
+    assert draft.id in dashboard
+
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli expansion-operator-approval-draft`" in packet
+    assert "- expansion operator approval draft: approval_draft_ready" in packet
+
+
+def test_expansion_operator_approval_draft_blocks_unready_decision_ledger(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "expansion-operator-decision-ledger"]) == 0
+    ledger_output = capsys.readouterr().out
+    assert (
+        "expansion_operator_decision_ledger: missing_operator_review_checklist"
+        in ledger_output
+    )
+
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-draft"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "expansion_operator_approval_draft: operator_decision_ledger_not_ready"
+        in output
+    )
+    assert "source_status: missing_operator_review_checklist" in output
+    assert "draft_items: 0" in output
+    assert "draft_requests: 0" in output
+    assert "created_approval_requests: 0" in output
+    assert "pending_decisions: 0" in output
+    assert "allowed_actions: none" in output
+    assert "recommended_next_step: expansion-operator-review-checklist" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    draft = storage.list_recent_expansion_operator_approval_drafts()[0]
+    ledger = storage.list_recent_expansion_operator_decision_ledgers()[0]
+    assert draft.status == "operator_decision_ledger_not_ready"
+    assert draft.source_ledger_id == ledger.id
+    assert draft.source_ledger_status == "missing_operator_review_checklist"
+    assert draft.draft_item_count == 0
+    assert draft.draft_request_count == 0
+    assert draft.created_approval_request_count == 0
+    assert draft.pending_decision_count == 0
+    assert draft.allowed_actions == []
+    assert draft.recommended_next_step == "expansion-operator-review-checklist"
+    assert draft.draft_items == []
+    assert storage.list_recent_approval_requests() == []
+
+    report = (tmp_path / "docs" / "expansion-operator-approval-draft.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Expansion Operator Approval Draft" in report
+    assert "- status: operator_decision_ledger_not_ready" in report
+    assert f"- source_ledger: {ledger.id}" in report
+    assert "- draft_requests: 0" in report
+    assert "- created_approval_requests: 0" in report
+    assert "- none" in report
+    assert "- Does not create approval_requests rows." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Expansion Operator Approval Draft" in dashboard
+    assert "- status: operator_decision_ledger_not_ready" in dashboard
+    assert "- draft_requests: 0" in dashboard
+    assert draft.id in dashboard
+
+
+def test_expansion_operator_approval_request_review_reports_missing_draft(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-request-review"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "expansion_operator_approval_request_review: missing_operator_approval_draft"
+        in output
+    )
+    assert "source_draft: none" in output
+    assert "draft_requests: 0" in output
+    assert "review_items: 0" in output
+    assert "blocked_requests: 0" in output
+    assert "schema_gaps: 0" in output
+    assert "created_approval_requests: 0" in output
+    assert "existing_approval_requests: 0" in output
+    assert "recommended_next_step: expansion-operator-approval-draft" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    review = storage.list_recent_expansion_operator_approval_request_reviews()[0]
+    assert review.status == "missing_operator_approval_draft"
+    assert review.source_draft_id == "none"
+    assert review.review_item_count == 0
+    assert review.blocked_request_count == 0
+    assert review.schema_gap_count == 0
+    assert review.created_approval_request_count == 0
+    assert review.existing_approval_request_count == 0
+    assert review.recommended_next_step == "expansion-operator-approval-draft"
+    assert review.review_items == []
+
+    report = (
+        tmp_path / "docs" / "expansion-operator-approval-request-review.md"
+    ).read_text(encoding="utf-8")
+    assert "- status: missing_operator_approval_draft" in report
+    assert "- source_draft: none" in report
+    assert "- none" in report
+    assert "- Does not create approval_requests rows." in report
+
+
+def test_expansion_operator_approval_request_review_blocks_unready_draft(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "expansion-operator-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-draft"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-request-review"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "expansion_operator_approval_request_review: "
+        "operator_approval_draft_not_ready"
+    ) in output
+    assert "source_status: operator_decision_ledger_not_ready" in output
+    assert "draft_requests: 0" in output
+    assert "review_items: 0" in output
+    assert "blocked_requests: 0" in output
+    assert "schema_gaps: 0" in output
+    assert "created_approval_requests: 0" in output
+    assert "existing_approval_requests: 0" in output
+    assert "recommended_next_step: expansion-operator-review-checklist" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    review = storage.list_recent_expansion_operator_approval_request_reviews()[0]
+    draft = storage.list_recent_expansion_operator_approval_drafts()[0]
+    assert review.status == "operator_approval_draft_not_ready"
+    assert review.source_draft_id == draft.id
+    assert review.source_draft_status == "operator_decision_ledger_not_ready"
+    assert review.source_ledger_id == draft.source_ledger_id
+    assert review.review_item_count == 0
+    assert review.blocked_request_count == 0
+    assert review.schema_gap_count == 0
+    assert review.created_approval_request_count == 0
+    assert review.existing_approval_request_count == 0
+    assert review.recommended_next_step == "expansion-operator-review-checklist"
+    assert review.review_items == []
+
+    report = (
+        tmp_path / "docs" / "expansion-operator-approval-request-review.md"
+    ).read_text(encoding="utf-8")
+    assert "- status: operator_approval_draft_not_ready" in report
+    assert f"- source_draft: {draft.id}" in report
+    assert "- source_status: operator_decision_ledger_not_ready" in report
+    assert "- none" in report
+    assert "- Does not create approval_requests rows." in report
+
+
+def test_expansion_operator_approval_request_review_reports_schema_gap_from_drafts(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_expansion_proof_ladder(tmp_path)
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## next",
+                "",
+                "- [x] Add report-only Goal Completion Audit from expansion proof reports.",
+                "- [x] Add report-only Expansion Decision Brief from goal completion audits.",
+                "- [x] Add report-only Expansion Decision Evidence Index from decision briefs.",
+                "- [x] Add report-only Expansion Operator Review Checklist from evidence indexes.",
+                "- [x] Add report-only Expansion Operator Decision Ledger from review checklists.",
+                "- [x] Add report-only Expansion Operator Approval Draft from decision ledgers.",
+                "- [x] Add report-only Expansion Operator Approval Request Review from approval drafts.",
+                "",
+                "## blocked",
+                "",
+                "- [ ] Choose external model providers and API policies before adding remote",
+                "  model routing.",
+                "- [ ] Choose deployment target before hosted dashboard work.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    assert main(["--root", str(tmp_path), "goal-completion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-brief"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-evidence-index"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-review-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-draft"]) == 0
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    preexisting_goal_id = storage.create_goal("bootstrap", "preexisting approval")
+    preexisting_run_id = storage.create_run(
+        preexisting_goal_id,
+        "bootstrap",
+        tmp_path / "runs",
+    )
+    storage.create_task(
+        goal_id=preexisting_goal_id,
+        run_id=preexisting_run_id,
+        project_id="bootstrap",
+        task_type="write_goal_artifact",
+        description="Create a real approval row before the report-only review.",
+        verification_plan={"type": "file_contains", "path": "preexisting.md"},
+        risk_level="high",
+    )
+    assert storage.claim_next_task(worker_id="worker-1", skill_tags=["local-files"]) is None
+    assert storage.count_approval_requests() == 1
+
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-request-review"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "expansion_operator_approval_request_review: "
+        "approval_request_schema_review_required"
+    ) in output
+    assert "report: docs/expansion-operator-approval-request-review.md" in output
+    assert "source_status: approval_draft_ready" in output
+    assert "draft_requests: 11" in output
+    assert "review_items: 11" in output
+    assert "ready_requests: 0" in output
+    assert "blocked_requests: 11" in output
+    assert "schema_gaps: 11" in output
+    assert "created_approval_requests: 0" in output
+    assert "existing_approval_requests: 1" in output
+    assert "external_requests: 2" in output
+    assert "capability_requests: 9" in output
+    assert "approval_boundaries: 2" in output
+    assert "recommended_next_step: approval_request_schema_decision_required" in output
+
+    review = storage.list_recent_expansion_operator_approval_request_reviews()[0]
+    draft = storage.list_recent_expansion_operator_approval_drafts()[0]
+    assert review.status == "approval_request_schema_review_required"
+    assert review.source_draft_id == draft.id
+    assert review.source_draft_status == "approval_draft_ready"
+    assert review.source_ledger_id == draft.source_ledger_id
+    assert review.draft_request_count == 11
+    assert review.review_item_count == 11
+    assert review.ready_request_count == 0
+    assert review.blocked_request_count == 11
+    assert review.schema_gap_count == 11
+    assert review.created_approval_request_count == 0
+    assert review.existing_approval_request_count == 1
+    assert review.external_request_count == 2
+    assert review.capability_request_count == 9
+    assert review.approval_boundary_count == 2
+    assert review.recommended_next_step == "approval_request_schema_decision_required"
+    assert review.review_items[0]["request_state"] == "schema_gap"
+    assert review.review_items[0]["creation_status"] == "not_created"
+    assert (
+        review.review_items[0]["schema_gap"]
+        == "approval_request_subject_not_modeled"
+    )
+    expected_missing_fields = [
+        "task_id",
+        "goal_id",
+        "project_id",
+        "task_type",
+        "risk_level",
+        "policy_name",
+        "policy_version",
+    ]
+    assert (
+        review.review_items[0]["missing_approval_request_fields"]
+        == expected_missing_fields
+    )
+    assert review.review_items[0]["review_type"] == "external_decision"
+    assert review.review_items[-1]["review_type"] == "capability_approval"
+    assert review.review_items[-1]["requirement"] == "real_cost_tracking"
+    assert storage.count_approval_requests() == 1
+
+    report = (
+        tmp_path / "docs" / "expansion-operator-approval-request-review.md"
+    ).read_text(encoding="utf-8")
+    assert "# Expansion Operator Approval Request Review" in report
+    assert "- status: approval_request_schema_review_required" in report
+    assert f"- source_draft: {draft.id}" in report
+    assert "- draft_requests: 11" in report
+    assert "- ready_requests: 0" in report
+    assert "- blocked_requests: 11" in report
+    assert "- schema_gaps: 11" in report
+    assert "- created_approval_requests: 0" in report
+    assert "- existing_approval_requests: 1" in report
+    assert (
+        "request_state=schema_gap creation_status=not_created "
+        "schema_gap=approval_request_subject_not_modeled "
+        "missing_approval_request_fields=task_id,goal_id,project_id,task_type,"
+        "risk_level,policy_name,policy_version"
+    ) in report
+    assert "review_type=external_decision" in report
+    assert "review_type=capability_approval requirement=hosted_dashboard" in report
+    assert "review_type=capability_approval requirement=real_cost_tracking" in report
+    assert "- Does not create approval_requests rows." in report
+    assert "- Does not approve decisions." in report
+    assert "- Does not mutate external systems." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Expansion Operator Approval Request Review" in dashboard
+    assert "- status: approval_request_schema_review_required" in dashboard
+    assert "- blocked_requests: 11" in dashboard
+    assert "- created_approval_requests: 0" in dashboard
+    assert review.id in dashboard
+
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli expansion-operator-approval-request-review`" in packet
+    assert (
+        "- expansion operator approval request review: "
+        "approval_request_schema_review_required"
+    ) in packet
+
+
+def test_expansion_operator_approval_schema_decision_recommends_subject_table(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_expansion_proof_ladder(tmp_path)
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## next",
+                "",
+                "- [x] Add report-only Goal Completion Audit from expansion proof reports.",
+                "- [x] Add report-only Expansion Decision Brief from goal completion audits.",
+                "- [x] Add report-only Expansion Decision Evidence Index from decision briefs.",
+                "- [x] Add report-only Expansion Operator Review Checklist from evidence indexes.",
+                "- [x] Add report-only Expansion Operator Decision Ledger from review checklists.",
+                "- [x] Add report-only Expansion Operator Approval Draft from decision ledgers.",
+                "- [x] Add report-only Expansion Operator Approval Request Review from approval drafts.",
+                "- [x] Add report-only Expansion Operator Approval Schema Decision from approval request reviews.",
+                "",
+                "## blocked",
+                "",
+                "- [ ] Choose external model providers and API policies before adding remote",
+                "  model routing.",
+                "- [ ] Choose deployment target before hosted dashboard work.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    assert main(["--root", str(tmp_path), "goal-completion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-brief"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-evidence-index"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-review-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-draft"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-request-review"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-schema-decision"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "expansion_operator_approval_schema_decision: "
+        "approval_schema_decision_ready"
+    ) in output
+    assert "report: docs/expansion-operator-approval-schema-decision.md" in output
+    assert "source_status: approval_request_schema_review_required" in output
+    assert "affected_requests: 11" in output
+    assert "schema_gaps: 11" in output
+    assert "missing_fields: 7" in output
+    assert "decision_options: 3" in output
+    assert "recommended_option: operator_approval_requests_table" in output
+    assert "rejected_options: 2" in output
+    assert "schema_objects: 1" in output
+    assert "migration_applied: 0" in output
+    assert "created_approval_requests: 0" in output
+    assert "existing_approval_requests: 0" in output
+    assert (
+        "recommended_next_step: operator_approval_schema_migration_plan_required"
+        in output
+    )
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    decision = storage.list_recent_expansion_operator_approval_schema_decisions()[0]
+    review = storage.list_recent_expansion_operator_approval_request_reviews()[0]
+    assert decision.status == "approval_schema_decision_ready"
+    assert decision.source_review_id == review.id
+    assert decision.source_review_status == "approval_request_schema_review_required"
+    assert decision.source_draft_id == review.source_draft_id
+    assert decision.source_ledger_id == review.source_ledger_id
+    assert decision.affected_request_count == 11
+    assert decision.schema_gap_count == 11
+    assert decision.missing_field_count == 7
+    assert decision.external_request_count == 2
+    assert decision.capability_request_count == 9
+    assert decision.decision_option_count == 3
+    assert decision.recommended_option == "operator_approval_requests_table"
+    assert decision.rejected_option_count == 2
+    assert decision.schema_object_count == 1
+    assert decision.migration_applied_count == 0
+    assert decision.created_approval_request_count == 0
+    assert decision.existing_approval_request_count == 0
+    assert (
+        decision.recommended_next_step
+        == "operator_approval_schema_migration_plan_required"
+    )
+    assert decision.decision_options[0]["option"] == "operator_approval_requests_table"
+    assert decision.decision_options[0]["disposition"] == "recommended"
+    assert decision.decision_options[0]["schema_object"] == "operator_approval_requests"
+    assert decision.decision_options[0]["schema_status"] == "not_applied"
+    assert decision.decision_options[1]["disposition"] == "rejected"
+    assert decision.decision_options[2]["disposition"] == "rejected"
+    assert storage.count_approval_requests() == 0
+
+    report = (
+        tmp_path / "docs" / "expansion-operator-approval-schema-decision.md"
+    ).read_text(encoding="utf-8")
+    assert "# Expansion Operator Approval Schema Decision" in report
+    assert "- status: approval_schema_decision_ready" in report
+    assert f"- source_review: {review.id}" in report
+    assert "- recommended_option: operator_approval_requests_table" in report
+    assert (
+        "- option=operator_approval_requests_table disposition=recommended "
+        "schema_object=operator_approval_requests schema_status=not_applied"
+    ) in report
+    assert "missing_fields=task_id,goal_id,project_id,task_type,risk_level,policy_name,policy_version" in report
+    assert "- Does not apply schema migrations." in report
+    assert "- Does not create approval_requests rows." in report
+    assert "- Does not approve decisions." in report
+    assert "- Does not mutate external systems." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Expansion Operator Approval Schema Decision" in dashboard
+    assert "- status: approval_schema_decision_ready" in dashboard
+    assert "- recommended_option: operator_approval_requests_table" in dashboard
+    assert "- migration_applied: 0" in dashboard
+    assert decision.id in dashboard
+
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "`python3 -m agent_os.cli expansion-operator-approval-schema-decision`" in packet
+    assert (
+        "- expansion operator approval schema decision: "
+        "approval_schema_decision_ready"
+    ) in packet
+
+
+def test_expansion_operator_approval_schema_migration_plan_is_report_only(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_expansion_proof_ladder(tmp_path)
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## next",
+                "",
+                "- [x] Add report-only Goal Completion Audit from expansion proof reports.",
+                "- [x] Add report-only Expansion Decision Brief from goal completion audits.",
+                "- [x] Add report-only Expansion Decision Evidence Index from decision briefs.",
+                "- [x] Add report-only Expansion Operator Review Checklist from evidence indexes.",
+                "- [x] Add report-only Expansion Operator Decision Ledger from review checklists.",
+                "- [x] Add report-only Expansion Operator Approval Draft from decision ledgers.",
+                "- [x] Add report-only Expansion Operator Approval Request Review from approval drafts.",
+                "- [x] Add report-only Expansion Operator Approval Schema Decision from approval request reviews.",
+                "- [x] Add report-only Expansion Operator Approval Schema Migration Plan from schema decisions.",
+                "",
+                "## blocked",
+                "",
+                "- [ ] Choose external model providers and API policies before adding remote",
+                "  model routing.",
+                "- [ ] Choose deployment target before hosted dashboard work.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    assert main(["--root", str(tmp_path), "goal-completion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-brief"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-evidence-index"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-review-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-draft"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-request-review"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-schema-decision"]) == 0
+    capsys.readouterr()
+
+    assert main(
+        ["--root", str(tmp_path), "expansion-operator-approval-schema-migration-plan"]
+    ) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "expansion_operator_approval_schema_migration_plan: "
+        "operator_approval_schema_migration_plan_ready"
+    ) in output
+    assert "report: docs/expansion-operator-approval-schema-migration-plan.md" in output
+    assert "source_status: approval_schema_decision_ready" in output
+    assert "recommended_option: operator_approval_requests_table" in output
+    assert "target_table: operator_approval_requests" in output
+    assert "planned_columns: 26" in output
+    assert "planned_indexes: 4" in output
+    assert "migration_steps: 4" in output
+    assert "migration_applied: 0" in output
+    assert "table_created: 0" in output
+    assert "operator_approval_rows_created: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert (
+        "recommended_next_step: "
+        "operator_approval_schema_migration_approval_required"
+    ) in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    plan = storage.list_recent_expansion_operator_approval_schema_migration_plans()[0]
+    decision = storage.list_recent_expansion_operator_approval_schema_decisions()[0]
+    assert plan.status == "operator_approval_schema_migration_plan_ready"
+    assert plan.source_decision_id == decision.id
+    assert plan.source_decision_status == "approval_schema_decision_ready"
+    assert plan.source_review_id == decision.source_review_id
+    assert plan.source_review_status == decision.source_review_status
+    assert plan.recommended_option == "operator_approval_requests_table"
+    assert plan.target_table == "operator_approval_requests"
+    assert plan.planned_column_count == 26
+    assert plan.planned_index_count == 4
+    assert plan.migration_step_count == 4
+    assert plan.migration_applied_count == 0
+    assert plan.table_created_count == 0
+    assert plan.operator_approval_row_count == 0
+    assert plan.created_approval_request_count == 0
+    assert plan.existing_approval_request_count == 0
+    assert (
+        plan.recommended_next_step
+        == "operator_approval_schema_migration_approval_required"
+    )
+    assert plan.planned_columns[0]["name"] == "id"
+    assert plan.planned_columns[0]["definition"] == "text primary key"
+    assert any(column["name"] == "subject_type" for column in plan.planned_columns)
+    assert any(column["name"] == "subject_key" for column in plan.planned_columns)
+    assert any(column["name"] == "allowed_actions" for column in plan.planned_columns)
+    assert plan.planned_indexes[0]["name"] == "idx_operator_approval_requests_status"
+    assert plan.migration_steps[0]["action"] == "create_table"
+    assert storage.count_approval_requests() == 0
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        target_table = connection.execute(
+            "select name from sqlite_master where type = 'table' and name = ?",
+            ("operator_approval_requests",),
+        ).fetchone()
+    assert target_table is None
+
+    report = (
+        tmp_path / "docs" / "expansion-operator-approval-schema-migration-plan.md"
+    ).read_text(encoding="utf-8")
+    assert "# Expansion Operator Approval Schema Migration Plan" in report
+    assert "- status: operator_approval_schema_migration_plan_ready" in report
+    assert f"- source_decision: {decision.id}" in report
+    assert "- target_table: operator_approval_requests" in report
+    assert "- planned_columns: 26" in report
+    assert "- column=subject_type definition=text not null" in report
+    assert "- column=subject_key definition=text not null" in report
+    assert "- index=idx_operator_approval_requests_status columns=status" in report
+    assert "- step=create_table target=operator_approval_requests status=planned" in report
+    assert "- Does not apply schema migrations." in report
+    assert "- Does not create operator_approval_requests rows." in report
+    assert "- Does not create approval_requests rows." in report
+    assert "- Does not mutate external systems." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Expansion Operator Approval Schema Migration Plan" in dashboard
+    assert "- status: operator_approval_schema_migration_plan_ready" in dashboard
+    assert "- target_table: operator_approval_requests" in dashboard
+    assert "- migration_applied: 0" in dashboard
+    assert plan.id in dashboard
+
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert (
+        "`python3 -m agent_os.cli expansion-operator-approval-schema-migration-plan`"
+        in packet
+    )
+    assert (
+        "- expansion operator approval schema migration plan: "
+        "operator_approval_schema_migration_plan_ready"
+    ) in packet
+
+
+def test_expansion_operator_approval_schema_migration_approval_request_is_report_only(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_expansion_proof_ladder(tmp_path)
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## next",
+                "",
+                "- [x] Add report-only Goal Completion Audit from expansion proof reports.",
+                "- [x] Add report-only Expansion Decision Brief from goal completion audits.",
+                "- [x] Add report-only Expansion Decision Evidence Index from decision briefs.",
+                "- [x] Add report-only Expansion Operator Review Checklist from evidence indexes.",
+                "- [x] Add report-only Expansion Operator Decision Ledger from review checklists.",
+                "- [x] Add report-only Expansion Operator Approval Draft from decision ledgers.",
+                "- [x] Add report-only Expansion Operator Approval Request Review from approval drafts.",
+                "- [x] Add report-only Expansion Operator Approval Schema Decision from approval request reviews.",
+                "- [x] Add report-only Expansion Operator Approval Schema Migration Plan from schema decisions.",
+                "- [x] Add report-only Expansion Operator Approval Schema Migration Approval Request from migration plans.",
+                "",
+                "## blocked",
+                "",
+                "- [ ] Choose external model providers and API policies before adding remote",
+                "  model routing.",
+                "- [ ] Choose deployment target before hosted dashboard work.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    assert main(["--root", str(tmp_path), "goal-completion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-brief"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-evidence-index"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-review-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-draft"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-request-review"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-schema-decision"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-schema-migration-plan"]) == 0
+    capsys.readouterr()
+
+    assert main(
+        [
+            "--root",
+            str(tmp_path),
+            "expansion-operator-approval-schema-migration-approval-request",
+        ]
+    ) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "expansion_operator_approval_schema_migration_approval_request: "
+        "operator_approval_schema_migration_approval_required"
+    ) in output
+    assert (
+        "report: docs/expansion-operator-approval-schema-migration-approval-request.md"
+        in output
+    )
+    assert "source_status: operator_approval_schema_migration_plan_ready" in output
+    assert "source_decision_status: approval_schema_decision_ready" in output
+    assert "target_table: operator_approval_requests" in output
+    assert "request_count: 1" in output
+    assert "approval_boundary: schema_migration" in output
+    assert "requested_action: apply_operator_approval_requests_schema" in output
+    assert "allowed_actions: approve,defer,request_more_evidence" in output
+    assert "migration_applied: 0" in output
+    assert "table_created: 0" in output
+    assert "operator_approval_rows_created: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert (
+        "recommended_next_step: "
+        "operator_approval_schema_migration_operator_decision_required"
+    ) in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    request = storage.list_recent_expansion_operator_approval_schema_migration_approval_requests()[0]
+    plan = storage.list_recent_expansion_operator_approval_schema_migration_plans()[0]
+    assert request.status == "operator_approval_schema_migration_approval_required"
+    assert request.source_plan_id == plan.id
+    assert request.source_plan_status == "operator_approval_schema_migration_plan_ready"
+    assert request.source_decision_id == plan.source_decision_id
+    assert request.source_decision_status == plan.source_decision_status
+    assert request.target_table == "operator_approval_requests"
+    assert request.request_count == 1
+    assert request.approval_boundary == "schema_migration"
+    assert request.requested_action == "apply_operator_approval_requests_schema"
+    assert request.allowed_actions == ["approve", "defer", "request_more_evidence"]
+    assert request.migration_applied_count == 0
+    assert request.table_created_count == 0
+    assert request.operator_approval_row_count == 0
+    assert request.created_approval_request_count == 0
+    assert request.existing_approval_request_count == 0
+    assert (
+        request.recommended_next_step
+        == "operator_approval_schema_migration_operator_decision_required"
+    )
+    assert request.approval_items[0]["request_type"] == "schema_migration"
+    assert request.approval_items[0]["requested_action"] == (
+        "apply_operator_approval_requests_schema"
+    )
+    assert request.approval_items[0]["approval_status"] == "not_created"
+    assert request.approval_items[0]["approval_boundary"] == "schema_migration"
+    assert storage.count_approval_requests() == 0
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        target_table = connection.execute(
+            "select name from sqlite_master where type = 'table' and name = ?",
+            ("operator_approval_requests",),
+        ).fetchone()
+    assert target_table is None
+
+    report = (
+        tmp_path
+        / "docs"
+        / "expansion-operator-approval-schema-migration-approval-request.md"
+    ).read_text(encoding="utf-8")
+    assert "# Expansion Operator Approval Schema Migration Approval Request" in report
+    assert "- status: operator_approval_schema_migration_approval_required" in report
+    assert f"- source_plan: {plan.id}" in report
+    assert "- target_table: operator_approval_requests" in report
+    assert "- request_count: 1" in report
+    assert "- approval_boundary: schema_migration" in report
+    assert "- requested_action: apply_operator_approval_requests_schema" in report
+    assert "- allowed_actions: approve,defer,request_more_evidence" in report
+    assert (
+        "- request_type=schema_migration requested_action=apply_operator_approval_requests_schema "
+        "approval_status=not_created approval_boundary=schema_migration"
+    ) in report
+    assert "- Does not apply schema migrations." in report
+    assert "- Does not create operator_approval_requests table." in report
+    assert "- Does not create approval_requests rows." in report
+    assert "- Does not mutate external systems." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Expansion Operator Approval Schema Migration Approval Request" in dashboard
+    assert "- status: operator_approval_schema_migration_approval_required" in dashboard
+    assert "- requested_action: apply_operator_approval_requests_schema" in dashboard
+    assert "- approval_requests_created: 0" in dashboard
+    assert request.id in dashboard
+
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert (
+        "`python3 -m agent_os.cli expansion-operator-approval-schema-migration-approval-request`"
+        in packet
+    )
+    assert (
+        "- expansion operator approval schema migration approval request: "
+        "operator_approval_schema_migration_approval_required"
+    ) in packet
+
+
+def test_expansion_operator_approval_schema_migration_decision_ledger_is_pending(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_expansion_proof_ladder(tmp_path)
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## next",
+                "",
+                "- [x] Add report-only Goal Completion Audit from expansion proof reports.",
+                "- [x] Add report-only Expansion Decision Brief from goal completion audits.",
+                "- [x] Add report-only Expansion Decision Evidence Index from decision briefs.",
+                "- [x] Add report-only Expansion Operator Review Checklist from evidence indexes.",
+                "- [x] Add report-only Expansion Operator Decision Ledger from review checklists.",
+                "- [x] Add report-only Expansion Operator Approval Draft from decision ledgers.",
+                "- [x] Add report-only Expansion Operator Approval Request Review from approval drafts.",
+                "- [x] Add report-only Expansion Operator Approval Schema Decision from approval request reviews.",
+                "- [x] Add report-only Expansion Operator Approval Schema Migration Plan from schema decisions.",
+                "- [x] Add report-only Expansion Operator Approval Schema Migration Approval Request from migration plans.",
+                "- [x] Add report-only Expansion Operator Approval Schema Migration Decision Ledger from approval requests.",
+                "",
+                "## blocked",
+                "",
+                "- [ ] Choose external model providers and API policies before adding remote",
+                "  model routing.",
+                "- [ ] Choose deployment target before hosted dashboard work.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    assert main(["--root", str(tmp_path), "goal-completion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-brief"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-evidence-index"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-review-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-draft"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-request-review"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-schema-decision"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-schema-migration-plan"]) == 0
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-schema-migration-approval-request",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    assert main(
+        [
+            "--root",
+            str(tmp_path),
+            "expansion-operator-approval-schema-migration-decision-ledger",
+        ]
+    ) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "expansion_operator_approval_schema_migration_decision_ledger: "
+        "operator_approval_schema_migration_decision_pending"
+    ) in output
+    assert (
+        "report: docs/expansion-operator-approval-schema-migration-decision-ledger.md"
+        in output
+    )
+    assert (
+        "source_status: operator_approval_schema_migration_approval_required"
+        in output
+    )
+    assert "source_plan_status: operator_approval_schema_migration_plan_ready" in output
+    assert "source_decision_status: approval_schema_decision_ready" in output
+    assert "target_table: operator_approval_requests" in output
+    assert "requested_action: apply_operator_approval_requests_schema" in output
+    assert "allowed_actions: approve,defer,request_more_evidence" in output
+    assert "request_count: 1" in output
+    assert "decision_count: 1" in output
+    assert "pending_decisions: 1" in output
+    assert "approved_decisions: 0" in output
+    assert "deferred_decisions: 0" in output
+    assert "more_evidence_decisions: 0" in output
+    assert "migration_applied: 0" in output
+    assert "table_created: 0" in output
+    assert "operator_approval_rows_created: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert (
+        "recommended_next_step: "
+        "operator_approval_schema_migration_operator_action_required"
+    ) in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    ledger = storage.list_recent_expansion_operator_approval_schema_migration_decision_ledgers()[0]
+    request = storage.list_recent_expansion_operator_approval_schema_migration_approval_requests()[0]
+    plan = storage.list_recent_expansion_operator_approval_schema_migration_plans()[0]
+    assert ledger.status == "operator_approval_schema_migration_decision_pending"
+    assert ledger.source_request_id == request.id
+    assert ledger.source_request_status == (
+        "operator_approval_schema_migration_approval_required"
+    )
+    assert ledger.source_plan_id == plan.id
+    assert ledger.source_plan_status == "operator_approval_schema_migration_plan_ready"
+    assert ledger.source_decision_id == request.source_decision_id
+    assert ledger.source_decision_status == request.source_decision_status
+    assert ledger.source_review_id == request.source_review_id
+    assert ledger.source_review_status == request.source_review_status
+    assert ledger.target_table == "operator_approval_requests"
+    assert ledger.requested_action == "apply_operator_approval_requests_schema"
+    assert ledger.allowed_actions == ["approve", "defer", "request_more_evidence"]
+    assert ledger.request_count == 1
+    assert ledger.decision_count == 1
+    assert ledger.pending_decision_count == 1
+    assert ledger.approved_decision_count == 0
+    assert ledger.deferred_decision_count == 0
+    assert ledger.more_evidence_decision_count == 0
+    assert ledger.migration_applied_count == 0
+    assert ledger.table_created_count == 0
+    assert ledger.operator_approval_row_count == 0
+    assert ledger.created_approval_request_count == 0
+    assert ledger.existing_approval_request_count == 0
+    assert (
+        ledger.recommended_next_step
+        == "operator_approval_schema_migration_operator_action_required"
+    )
+    assert ledger.decision_items[0]["decision_status"] == "pending_operator_action"
+    assert ledger.decision_items[0]["allowed_actions"] == [
+        "approve",
+        "defer",
+        "request_more_evidence",
+    ]
+    assert storage.count_approval_requests() == 0
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        target_table = connection.execute(
+            "select name from sqlite_master where type = 'table' and name = ?",
+            ("operator_approval_requests",),
+        ).fetchone()
+    assert target_table is None
+
+    report = (
+        tmp_path
+        / "docs"
+        / "expansion-operator-approval-schema-migration-decision-ledger.md"
+    ).read_text(encoding="utf-8")
+    assert "# Expansion Operator Approval Schema Migration Decision Ledger" in report
+    assert "- status: operator_approval_schema_migration_decision_pending" in report
+    assert f"- source_request: {request.id}" in report
+    assert "- target_table: operator_approval_requests" in report
+    assert "- decision_count: 1" in report
+    assert "- pending_decisions: 1" in report
+    assert "- approved_decisions: 0" in report
+    assert "- requested_action: apply_operator_approval_requests_schema" in report
+    assert "- allowed_actions: approve,defer,request_more_evidence" in report
+    assert (
+        "- decision_status=pending_operator_action "
+        "requested_action=apply_operator_approval_requests_schema"
+    ) in report
+    assert "- Does not apply schema migrations." in report
+    assert "- Does not create operator_approval_requests table." in report
+    assert "- Does not create operator_approval_requests rows." in report
+    assert "- Does not create approval_requests rows." in report
+    assert "- Does not record an operator decision as taken." in report
+    assert "- Does not mutate external systems." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Expansion Operator Approval Schema Migration Decision Ledger" in dashboard
+    assert "- status: operator_approval_schema_migration_decision_pending" in dashboard
+    assert "- pending_decisions: 1" in dashboard
+    assert "- approved_decisions: 0" in dashboard
+    assert "- approval_requests_created: 0" in dashboard
+    assert ledger.id in dashboard
+
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert (
+        "`python3 -m agent_os.cli expansion-operator-approval-schema-migration-decision-ledger`"
+        in packet
+    )
+    assert (
+        "- expansion operator approval schema migration decision ledger: "
+        "operator_approval_schema_migration_decision_pending"
+    ) in packet
+
+
+def test_expansion_operator_approval_schema_migration_action_checklist_is_manual(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_expansion_proof_ladder(tmp_path)
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## next",
+                "",
+                "- [x] Add report-only Goal Completion Audit from expansion proof reports.",
+                "- [x] Add report-only Expansion Decision Brief from goal completion audits.",
+                "- [x] Add report-only Expansion Decision Evidence Index from decision briefs.",
+                "- [x] Add report-only Expansion Operator Review Checklist from evidence indexes.",
+                "- [x] Add report-only Expansion Operator Decision Ledger from review checklists.",
+                "- [x] Add report-only Expansion Operator Approval Draft from decision ledgers.",
+                "- [x] Add report-only Expansion Operator Approval Request Review from approval drafts.",
+                "- [x] Add report-only Expansion Operator Approval Schema Decision from approval request reviews.",
+                "- [x] Add report-only Expansion Operator Approval Schema Migration Plan from schema decisions.",
+                "- [x] Add report-only Expansion Operator Approval Schema Migration Approval Request from migration plans.",
+                "- [x] Add report-only Expansion Operator Approval Schema Migration Decision Ledger from approval requests.",
+                "- [x] Add report-only Expansion Operator Approval Schema Migration Action Checklist from decision ledgers.",
+                "",
+                "## blocked",
+                "",
+                "- [ ] Choose external model providers and API policies before adding remote",
+                "  model routing.",
+                "- [ ] Choose deployment target before hosted dashboard work.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    assert main(["--root", str(tmp_path), "goal-completion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-brief"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-evidence-index"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-review-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-draft"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-request-review"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-schema-decision"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-schema-migration-plan"]) == 0
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-schema-migration-approval-request",
+            ]
+        )
+        == 0
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-schema-migration-decision-ledger",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    assert main(
+        [
+            "--root",
+            str(tmp_path),
+            "expansion-operator-approval-schema-migration-action-checklist",
+        ]
+    ) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "expansion_operator_approval_schema_migration_action_checklist: "
+        "operator_approval_schema_migration_manual_action_required"
+    ) in output
+    assert (
+        "report: docs/expansion-operator-approval-schema-migration-action-checklist.md"
+        in output
+    )
+    assert "source_status: operator_approval_schema_migration_decision_pending" in output
+    assert (
+        "source_request_status: operator_approval_schema_migration_approval_required"
+        in output
+    )
+    assert "source_plan_status: operator_approval_schema_migration_plan_ready" in output
+    assert "target_table: operator_approval_requests" in output
+    assert "requested_action: apply_operator_approval_requests_schema" in output
+    assert "allowed_actions: approve,defer,request_more_evidence" in output
+    assert "action_count: 1" in output
+    assert "pending_actions: 1" in output
+    assert "actions_taken: 0" in output
+    assert "selected_action: none" in output
+    assert "migration_applied: 0" in output
+    assert "table_created: 0" in output
+    assert "operator_approval_rows_created: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert (
+        "recommended_next_step: "
+        "operator_approval_schema_migration_operator_selection_required"
+    ) in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    checklist = (
+        storage.list_recent_expansion_operator_approval_schema_migration_action_checklists()[0]
+    )
+    ledger = storage.list_recent_expansion_operator_approval_schema_migration_decision_ledgers()[0]
+    assert (
+        checklist.status
+        == "operator_approval_schema_migration_manual_action_required"
+    )
+    assert checklist.source_ledger_id == ledger.id
+    assert checklist.source_ledger_status == (
+        "operator_approval_schema_migration_decision_pending"
+    )
+    assert checklist.source_request_id == ledger.source_request_id
+    assert checklist.source_request_status == ledger.source_request_status
+    assert checklist.source_plan_id == ledger.source_plan_id
+    assert checklist.source_plan_status == ledger.source_plan_status
+    assert checklist.target_table == "operator_approval_requests"
+    assert checklist.requested_action == "apply_operator_approval_requests_schema"
+    assert checklist.allowed_actions == ["approve", "defer", "request_more_evidence"]
+    assert checklist.action_count == 1
+    assert checklist.pending_action_count == 1
+    assert checklist.actions_taken_count == 0
+    assert checklist.selected_action == "none"
+    assert checklist.migration_applied_count == 0
+    assert checklist.table_created_count == 0
+    assert checklist.operator_approval_row_count == 0
+    assert checklist.created_approval_request_count == 0
+    assert checklist.existing_approval_request_count == 0
+    assert (
+        checklist.recommended_next_step
+        == "operator_approval_schema_migration_operator_selection_required"
+    )
+    assert checklist.action_items[0]["action_status"] == "manual_action_required"
+    assert checklist.action_items[0]["selected_action"] == "none"
+    assert checklist.action_items[0]["allowed_actions"] == [
+        "approve",
+        "defer",
+        "request_more_evidence",
+    ]
+    assert storage.count_approval_requests() == 0
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        target_table = connection.execute(
+            "select name from sqlite_master where type = 'table' and name = ?",
+            ("operator_approval_requests",),
+        ).fetchone()
+    assert target_table is None
+
+    report = (
+        tmp_path
+        / "docs"
+        / "expansion-operator-approval-schema-migration-action-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert "# Expansion Operator Approval Schema Migration Action Checklist" in report
+    assert (
+        "- status: operator_approval_schema_migration_manual_action_required"
+        in report
+    )
+    assert f"- source_ledger: {ledger.id}" in report
+    assert "- target_table: operator_approval_requests" in report
+    assert "- action_count: 1" in report
+    assert "- pending_actions: 1" in report
+    assert "- actions_taken: 0" in report
+    assert "- selected_action: none" in report
+    assert "- requested_action: apply_operator_approval_requests_schema" in report
+    assert "- allowed_actions: approve,defer,request_more_evidence" in report
+    assert (
+        "- action_status=manual_action_required selected_action=none "
+        "requested_action=apply_operator_approval_requests_schema"
+    ) in report
+    assert "- Does not select an operator action." in report
+    assert "- Does not record an operator action as taken." in report
+    assert "- Does not apply schema migrations." in report
+    assert "- Does not create operator_approval_requests table." in report
+    assert "- Does not create approval_requests rows." in report
+    assert "- Does not mutate external systems." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Expansion Operator Approval Schema Migration Action Checklist" in dashboard
+    assert (
+        "- status: operator_approval_schema_migration_manual_action_required"
+        in dashboard
+    )
+    assert "- pending_actions: 1" in dashboard
+    assert "- actions_taken: 0" in dashboard
+    assert "- selected_action: none" in dashboard
+    assert "- approval_requests_created: 0" in dashboard
+    assert checklist.id in dashboard
+
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert (
+        "`python3 -m agent_os.cli expansion-operator-approval-schema-migration-action-checklist`"
+        in packet
+    )
+    assert (
+        "- expansion operator approval schema migration action checklist: "
+        "operator_approval_schema_migration_manual_action_required"
+    ) in packet
+
+
+def test_expansion_operator_approval_schema_migration_selection_packet_requires_input(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_expansion_proof_ladder(tmp_path)
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## next",
+                "",
+                "- [x] Add report-only Goal Completion Audit from expansion proof reports.",
+                "- [x] Add report-only Expansion Decision Brief from goal completion audits.",
+                "- [x] Add report-only Expansion Decision Evidence Index from decision briefs.",
+                "- [x] Add report-only Expansion Operator Review Checklist from evidence indexes.",
+                "- [x] Add report-only Expansion Operator Decision Ledger from review checklists.",
+                "- [x] Add report-only Expansion Operator Approval Draft from decision ledgers.",
+                "- [x] Add report-only Expansion Operator Approval Request Review from approval drafts.",
+                "- [x] Add report-only Expansion Operator Approval Schema Decision from approval request reviews.",
+                "- [x] Add report-only Expansion Operator Approval Schema Migration Plan from schema decisions.",
+                "- [x] Add report-only Expansion Operator Approval Schema Migration Approval Request from migration plans.",
+                "- [x] Add report-only Expansion Operator Approval Schema Migration Decision Ledger from approval requests.",
+                "- [x] Add report-only Expansion Operator Approval Schema Migration Action Checklist from decision ledgers.",
+                "- [x] Add report-only Expansion Operator Approval Schema Migration Selection Packet from action checklists.",
+                "",
+                "## blocked",
+                "",
+                "- [ ] Choose external model providers and API policies before adding remote",
+                "  model routing.",
+                "- [ ] Choose deployment target before hosted dashboard work.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    assert main(["--root", str(tmp_path), "goal-completion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-brief"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-evidence-index"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-review-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-draft"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-request-review"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-schema-decision"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-schema-migration-plan"]) == 0
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-schema-migration-approval-request",
+            ]
+        )
+        == 0
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-schema-migration-decision-ledger",
+            ]
+        )
+        == 0
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-schema-migration-action-checklist",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    assert main(
+        [
+            "--root",
+            str(tmp_path),
+            "expansion-operator-approval-schema-migration-selection-packet",
+        ]
+    ) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "expansion_operator_approval_schema_migration_selection_packet: "
+        "operator_approval_schema_migration_selection_required"
+    ) in output
+    assert (
+        "report: docs/expansion-operator-approval-schema-migration-selection-packet.md"
+        in output
+    )
+    assert (
+        "source_status: "
+        "operator_approval_schema_migration_manual_action_required"
+    ) in output
+    assert (
+        "source_request_status: operator_approval_schema_migration_approval_required"
+        in output
+    )
+    assert "source_plan_status: operator_approval_schema_migration_plan_ready" in output
+    assert "target_table: operator_approval_requests" in output
+    assert "requested_action: apply_operator_approval_requests_schema" in output
+    assert "allowed_actions: approve,defer,request_more_evidence" in output
+    assert "selection_count: 1" in output
+    assert "pending_selections: 1" in output
+    assert "selections_recorded: 0" in output
+    assert "approve_selections: 0" in output
+    assert "defer_selections: 0" in output
+    assert "more_evidence_selections: 0" in output
+    assert "action_count: 1" in output
+    assert "pending_actions: 1" in output
+    assert "actions_taken: 0" in output
+    assert "selected_action: none" in output
+    assert "migration_applied: 0" in output
+    assert "table_created: 0" in output
+    assert "operator_approval_rows_created: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert (
+        "recommended_next_step: "
+        "operator_approval_schema_migration_operator_selection_input_required"
+    ) in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    packet = (
+        storage.list_recent_expansion_operator_approval_schema_migration_selection_packets()[
+            0
+        ]
+    )
+    checklist = (
+        storage.list_recent_expansion_operator_approval_schema_migration_action_checklists()[0]
+    )
+    assert packet.status == "operator_approval_schema_migration_selection_required"
+    assert packet.source_checklist_id == checklist.id
+    assert packet.source_checklist_status == (
+        "operator_approval_schema_migration_manual_action_required"
+    )
+    assert packet.source_ledger_id == checklist.source_ledger_id
+    assert packet.source_request_id == checklist.source_request_id
+    assert packet.source_request_status == checklist.source_request_status
+    assert packet.source_plan_id == checklist.source_plan_id
+    assert packet.source_plan_status == checklist.source_plan_status
+    assert packet.target_table == "operator_approval_requests"
+    assert packet.requested_action == "apply_operator_approval_requests_schema"
+    assert packet.allowed_actions == ["approve", "defer", "request_more_evidence"]
+    assert packet.selection_count == 1
+    assert packet.pending_selection_count == 1
+    assert packet.selections_recorded_count == 0
+    assert packet.approve_selection_count == 0
+    assert packet.defer_selection_count == 0
+    assert packet.more_evidence_selection_count == 0
+    assert packet.action_count == 1
+    assert packet.pending_action_count == 1
+    assert packet.actions_taken_count == 0
+    assert packet.selected_action == "none"
+    assert packet.migration_applied_count == 0
+    assert packet.table_created_count == 0
+    assert packet.operator_approval_row_count == 0
+    assert packet.created_approval_request_count == 0
+    assert packet.existing_approval_request_count == 0
+    assert (
+        packet.recommended_next_step
+        == "operator_approval_schema_migration_operator_selection_input_required"
+    )
+    assert packet.selection_items[0]["selection_status"] == "operator_input_required"
+    assert packet.selection_items[0]["selected_action"] == "none"
+    assert packet.selection_items[0]["allowed_actions"] == [
+        "approve",
+        "defer",
+        "request_more_evidence",
+    ]
+    assert storage.count_approval_requests() == 0
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        target_table = connection.execute(
+            "select name from sqlite_master where type = 'table' and name = ?",
+            ("operator_approval_requests",),
+        ).fetchone()
+    assert target_table is None
+
+    report = (
+        tmp_path
+        / "docs"
+        / "expansion-operator-approval-schema-migration-selection-packet.md"
+    ).read_text(encoding="utf-8")
+    assert "# Expansion Operator Approval Schema Migration Selection Packet" in report
+    assert "- status: operator_approval_schema_migration_selection_required" in report
+    assert f"- source_checklist: {checklist.id}" in report
+    assert "- target_table: operator_approval_requests" in report
+    assert "- selection_count: 1" in report
+    assert "- pending_selections: 1" in report
+    assert "- selections_recorded: 0" in report
+    assert "- selected_action: none" in report
+    assert "- requested_action: apply_operator_approval_requests_schema" in report
+    assert "- allowed_actions: approve,defer,request_more_evidence" in report
+    assert (
+        "- selection_status=operator_input_required selected_action=none "
+        "requested_action=apply_operator_approval_requests_schema"
+    ) in report
+    assert "- Does not select an operator action." in report
+    assert "- Does not record an operator selection." in report
+    assert "- Does not record an operator action as taken." in report
+    assert "- Does not apply schema migrations." in report
+    assert "- Does not create operator_approval_requests table." in report
+    assert "- Does not create approval_requests rows." in report
+    assert "- Does not mutate external systems." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Expansion Operator Approval Schema Migration Selection Packet" in dashboard
+    assert "- status: operator_approval_schema_migration_selection_required" in dashboard
+    assert "- pending_selections: 1" in dashboard
+    assert "- selections_recorded: 0" in dashboard
+    assert "- selected_action: none" in dashboard
+    assert "- approval_requests_created: 0" in dashboard
+    assert packet.id in dashboard
+
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+    packet_text = (tmp_path / "docs" / "next-iteration.md").read_text(
+        encoding="utf-8"
+    )
+    assert (
+        "`python3 -m agent_os.cli expansion-operator-approval-schema-migration-selection-packet`"
+        in packet_text
+    )
+    assert (
+        "- expansion operator approval schema migration selection packet: "
+        "operator_approval_schema_migration_selection_required"
+    ) in packet_text
+
+
+def test_hosted_dashboard_proof_checklist_blocks_blocked_real_cost_tracking_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert "hosted_dashboard_proof_checklist: hosted_dashboard_proof_blocked" in output
+    assert "report: docs/hosted-dashboard-proof-checklist.md" in output
+    assert "source_kind: real_cost_tracking_proof_checklist" in output
+    assert "source_checklist: real_cost_tracking_proof_checklist_" in output
+    assert "source_audit: none" in output
+    assert "source_status: real_cost_tracking_proof_blocked" in output
+    assert "capabilities: 1" in output
+    assert "checklist_items: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "operator_reviews_required: 0" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "boundaries: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_real_cost_tracking_proof_checklists()[0]
+    checklists = storage.list_recent_hosted_dashboard_proof_checklists()
+    assert len(checklists) >= 1
+    checklist = checklists[0]
+    assert checklist.status == "hosted_dashboard_proof_blocked"
+    assert checklist.source_kind == "real_cost_tracking_proof_checklist"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "real_cost_tracking_proof_blocked"
+    assert checklist.source_audit_id is None
+    assert checklist.source_audit_status == "none"
+    assert checklist.capability_count == 1
+    assert checklist.checklist_count == 1
+    assert checklist.blocked_dashboard_proof_count == 1
+    assert checklist.operator_review_required_count == 0
+    assert checklist.blocked_cost_tracking_count == 1
+    assert checklist.blocked_retry_count == 1
+    assert checklist.blocked_trust_promotion_count == 1
+    assert checklist.missing_evidence_count == 1
+    assert checklist.approval_required_count == 1
+    assert checklist.boundary_count == 1
+    assert checklist.recommended_commands == []
+    assert checklist.report_path == "docs/hosted-dashboard-proof-checklist.md"
+    assert checklist.checklist_items == [
+        {
+            "capability": "hosted_dashboard",
+            "proof_item": "hosted_dashboard_design_review",
+            "recommended_dashboard_action": "keep_hosted_dashboard_disabled",
+            "dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+            "source_real_cost_tracking_proof_action": "keep_cost_tracking_disabled",
+            "source_real_cost_tracking_proof_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_automatic_retry_proof_action": "keep_retry_disabled",
+            "source_automatic_retry_proof_state": "blocked_until_trust_promotion_proof_and_operator_approval",
+            "source_trust_proof_action": "keep_trust_unpromoted",
+            "source_trust_proof_state": "blocked_until_budget_enforcement_proof_and_operator_approval",
+            "source_budget_action": "keep_budget_enforcement_disabled",
+            "source_budget_state": "blocked_until_ci_deploy_proof_and_operator_approval",
+            "source_ci_deploy_action": "keep_ci_deploy_disabled",
+            "source_ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+            "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+            "source_adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+            "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+            "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+            "source_worker_action": "keep_remote_workers_disabled",
+            "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+            "source_dashboard_action": "keep_hosted_dashboard_disabled",
+            "source_dashboard_state": "blocked_until_cost_tracking_and_operator_approval",
+            "source_cost_action": "keep_cost_tracking_disabled",
+            "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_retry_action": "keep_retry_disabled",
+            "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+            "source_trust_action": "keep_trust_unpromoted",
+            "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+            "evidence_state": "missing",
+            "approval_state": "approval_required",
+            "approval_boundary": "explicit_operator_approval_required",
+            "dashboard_effect": "none",
+            "routing_effect": "none",
+        }
+    ]
+
+    report = (
+        tmp_path / "docs" / "hosted-dashboard-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert "# Hosted Dashboard Proof Checklist" in report
+    assert "- status: hosted_dashboard_proof_blocked" in report
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert "- source_kind: real_cost_tracking_proof_checklist" in report
+    assert "- checklist_items: 1" in report
+    assert "- blocked_dashboard_proofs: 1" in report
+    assert (
+        "- hosted_dashboard: proof_item=hosted_dashboard_design_review "
+        "recommended_dashboard_action=keep_hosted_dashboard_disabled "
+        "dashboard_state=blocked_until_real_cost_tracking_proof_and_operator_approval "
+        "source_real_cost_tracking_proof_action=keep_cost_tracking_disabled"
+    ) in report
+    assert "Does not enable hosted dashboard" in report
+    assert "Does not deploy hosted dashboard" in report
+    assert "Does not track real spend automatically" in report
+    assert "Does not mutate external systems" in report
+
+
+def test_hosted_dashboard_proof_checklist_blocks_real_cost_sourced_real_cost_tracking_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "automatic-retry-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "real-cost-tracking-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert "hosted_dashboard_proof_checklist: hosted_dashboard_proof_blocked" in output
+    assert "source_kind: real_cost_tracking_proof_checklist" in output
+    assert "source_status: real_cost_tracking_proof_blocked" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_real_cost_tracking_proof_checklists()[0]
+    checklist = storage.list_recent_hosted_dashboard_proof_checklists()[0]
+    assert checklist.status == "hosted_dashboard_proof_blocked"
+    assert checklist.source_kind == "real_cost_tracking_proof_checklist"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "real_cost_tracking_proof_blocked"
+    assert checklist.source_audit_id is None
+    assert checklist.source_audit_status == "none"
+    assert checklist.checklist_items == [
+        {
+            "capability": "hosted_dashboard",
+            "proof_item": "hosted_dashboard_design_review",
+            "recommended_dashboard_action": "keep_hosted_dashboard_disabled",
+            "dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+            "source_real_cost_tracking_proof_action": "keep_cost_tracking_disabled",
+            "source_real_cost_tracking_proof_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_automatic_retry_proof_action": "keep_retry_disabled",
+            "source_automatic_retry_proof_state": "blocked_until_trust_promotion_proof_and_operator_approval",
+            "source_trust_proof_action": "keep_trust_unpromoted",
+            "source_trust_proof_state": "blocked_until_budget_enforcement_proof_and_operator_approval",
+            "source_budget_action": "keep_budget_enforcement_disabled",
+            "source_budget_state": "blocked_until_ci_deploy_proof_and_operator_approval",
+            "source_ci_deploy_action": "keep_ci_deploy_disabled",
+            "source_ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+            "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+            "source_adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+            "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+            "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+            "source_worker_action": "keep_remote_workers_disabled",
+            "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+            "source_dashboard_action": "keep_hosted_dashboard_disabled",
+            "source_dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+            "source_cost_action": "keep_cost_tracking_disabled",
+            "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_retry_action": "keep_retry_disabled",
+            "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+            "source_trust_action": "keep_trust_unpromoted",
+            "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+            "evidence_state": "missing",
+            "approval_state": "approval_required",
+            "approval_boundary": "explicit_operator_approval_required",
+            "dashboard_effect": "none",
+            "routing_effect": "none",
+        }
+    ]
+
+    report = (
+        tmp_path / "docs" / "hosted-dashboard-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert (
+        "- source_checklist_source_checklist_id: "
+        "automatic_retry_proof_checklist_"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_status: "
+        "automatic_retry_proof_blocked"
+    ) in report
+    assert (
+        "source_real_cost_tracking_proof_action=keep_cost_tracking_disabled"
+    ) in report
+    assert (
+        "source_automatic_retry_proof_action=keep_retry_disabled"
+    ) in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "- source_status: real_cost_tracking_proof_blocked" in dashboard
+
+
+def test_hosted_dashboard_proof_checklist_blocks_latest_real_cost_sourced_real_cost_tracking_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_real_cost_sourced_real_cost_tracking_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert "hosted_dashboard_proof_checklist: hosted_dashboard_proof_blocked" in output
+    assert "source_kind: real_cost_tracking_proof_checklist" in output
+    assert "source_status: real_cost_tracking_proof_blocked" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_real_cost_tracking_proof_checklists()[0]
+    source_automatic_retry_checklist = storage.get_automatic_retry_proof_checklist(
+        source_checklist.source_checklist_id
+    )
+    assert source_automatic_retry_checklist is not None
+    source_trust_checklist = storage.get_trust_promotion_proof_checklist(
+        source_automatic_retry_checklist.source_checklist_id
+    )
+    assert source_trust_checklist is not None
+    source_budget_checklist = storage.get_budget_enforcement_proof_checklist(
+        source_trust_checklist.source_checklist_id
+    )
+    assert source_budget_checklist is not None
+    source_ci_deploy_checklist = storage.get_ci_deploy_proof_checklist(
+        source_budget_checklist.source_checklist_id
+    )
+    assert source_ci_deploy_checklist is not None
+    source_adapter_checklist = storage.get_browser_desktop_adapter_proof_checklist(
+        source_ci_deploy_checklist.source_checklist_id
+    )
+    assert source_adapter_checklist is not None
+    source_autonomous_checklist = storage.get_autonomous_scheduling_proof_checklist(
+        source_adapter_checklist.source_checklist_id
+    )
+    assert source_autonomous_checklist is not None
+    source_remote_checklist = storage.get_remote_worker_proof_checklist(
+        source_autonomous_checklist.source_checklist_id
+    )
+    assert source_remote_checklist is not None
+    source_hosted_checklist = storage.get_hosted_dashboard_proof_checklist(
+        source_remote_checklist.source_checklist_id
+    )
+    assert source_hosted_checklist is not None
+    source_real_cost_checklist = storage.get_real_cost_tracking_proof_checklist(
+        source_hosted_checklist.source_checklist_id
+    )
+    assert source_real_cost_checklist is not None
+
+    checklist = storage.list_recent_hosted_dashboard_proof_checklists()[0]
+    assert checklist.status == "hosted_dashboard_proof_blocked"
+    assert checklist.source_kind == "real_cost_tracking_proof_checklist"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "real_cost_tracking_proof_blocked"
+    assert checklist.checklist_items[0]["source_real_cost_tracking_proof_action"] == (
+        "keep_cost_tracking_disabled"
+    )
+    assert checklist.checklist_items[0]["source_automatic_retry_proof_action"] == (
+        "keep_retry_disabled"
+    )
+    assert checklist.checklist_items[0]["source_trust_proof_action"] == (
+        "keep_trust_unpromoted"
+    )
+
+    report = (
+        tmp_path / "docs" / "hosted-dashboard-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert (
+        f"- source_checklist_source_checklist_id: "
+        f"{source_automatic_retry_checklist.id}"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_id: "
+        f"{source_trust_checklist.id}"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_budget_checklist.id}"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_ci_deploy_checklist.id}"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_adapter_checklist.id}"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_autonomous_checklist.id}"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_remote_checklist.id}"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_hosted_checklist.id}"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_real_cost_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        "automatic_retry_proof_checklist_"
+    ) in report
+    assert "source_real_cost_tracking_proof_action=keep_cost_tracking_disabled" in report
+    assert "source_automatic_retry_proof_action=keep_retry_disabled" in report
+    assert "source_trust_proof_action=keep_trust_unpromoted" in report
+
+
+def test_hosted_dashboard_proof_checklist_skips_newer_non_real_cost_sourced_real_cost_tracking_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_real_cost_sourced_real_cost_tracking_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_cost_sourced_real_cost = storage.list_recent_real_cost_tracking_proof_checklists()[0]
+    newer_legacy_real_cost = [
+        _record_synthetic_real_cost_tracking_proof_checklist(
+            storage,
+            source_checklist_id=f"automatic_retry_proof_checklist_legacy_{index}",
+            reason="Synthetic newer legacy Real Cost Tracking proof row.",
+            source_automatic_retry_proof_state="legacy_without_real_cost_proof",
+        )
+        for index in range(26)
+    ]
+    assert newer_legacy_real_cost[0].id != real_cost_sourced_real_cost.id
+
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert f"source_checklist: {real_cost_sourced_real_cost.id}" in output
+    assert f"source_checklist: {newer_legacy_real_cost[-1].id}" not in output
+
+    checklist = storage.list_recent_hosted_dashboard_proof_checklists()[0]
+    assert checklist.source_checklist_id == real_cost_sourced_real_cost.id
+
+    report = (
+        tmp_path / "docs" / "hosted-dashboard-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert f"- source_checklist_id: {real_cost_sourced_real_cost.id}" in report
+    assert f"- source_checklist_id: {newer_legacy_real_cost[-1].id}" not in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        "real_cost_tracking_proof_checklist_"
+    ) in report
+
+
+def test_hosted_dashboard_proof_checklist_skips_newer_real_cost_tracking_with_non_real_cost_hosted_source(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_real_cost_sourced_real_cost_tracking_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_cost_sourced_real_cost = storage.list_recent_real_cost_tracking_proof_checklists()[0]
+    hosted = storage.record_hosted_dashboard_proof_checklist(
+        status="hosted_dashboard_proof_blocked",
+        source_audit_id="capability_real_cost_tracking_audit_legacy",
+        source_audit_status="real_cost_tracking_blocked",
+        source_kind="real_cost_tracking_audit",
+        source_checklist_id=None,
+        source_checklist_status="none",
+        capability_count=1,
+        checklist_count=1,
+        blocked_dashboard_proof_count=1,
+        operator_review_required_count=0,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic hosted proof row without Real Cost Tracking proof source.",
+        checklist_items=[],
+        report_path="docs/hosted-dashboard-proof-checklist.md",
+    )
+    remote = storage.record_remote_worker_proof_checklist(
+        status="remote_worker_proof_blocked",
+        source_checklist_id=hosted.id,
+        source_checklist_status="hosted_dashboard_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_worker_proof_count=1,
+        operator_review_required_count=0,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic remote proof row with non-Real-Cost hosted source.",
+        checklist_items=[],
+        report_path="docs/remote-worker-proof-checklist.md",
+    )
+    autonomous = storage.record_autonomous_scheduling_proof_checklist(
+        status="autonomous_scheduling_proof_blocked",
+        source_checklist_id=remote.id,
+        source_checklist_status="remote_worker_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_scheduling_proof_count=1,
+        operator_review_required_count=0,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic scheduling proof row with non-Real-Cost hosted source.",
+        checklist_items=[],
+        report_path="docs/autonomous-scheduling-proof-checklist.md",
+    )
+    adapter = storage.record_browser_desktop_adapter_proof_checklist(
+        status="browser_desktop_adapter_proof_blocked",
+        source_checklist_id=autonomous.id,
+        source_checklist_status="autonomous_scheduling_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_adapter_proof_count=1,
+        operator_review_required_count=0,
+        blocked_scheduling_proof_count=1,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic adapter proof row with non-Real-Cost hosted source.",
+        checklist_items=[],
+        report_path="docs/browser-desktop-adapter-proof-checklist.md",
+    )
+    ci_deploy = storage.record_ci_deploy_proof_checklist(
+        status="ci_deploy_proof_blocked",
+        source_checklist_id=adapter.id,
+        source_checklist_status="browser_desktop_adapter_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_ci_deploy_proof_count=1,
+        operator_review_required_count=0,
+        blocked_adapter_proof_count=1,
+        blocked_scheduling_proof_count=1,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic CI proof row with non-Real-Cost hosted source.",
+        checklist_items=[],
+        report_path="docs/ci-deploy-proof-checklist.md",
+    )
+    budget = _record_synthetic_budget_enforcement_proof_checklist(
+        storage,
+        source_checklist_id=ci_deploy.id,
+        reason="Synthetic newer Budget proof row with non-Real-Cost hosted source.",
+        source_ci_deploy_state="blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+    )
+    trust = _record_synthetic_trust_promotion_proof_checklist(
+        storage,
+        source_checklist_id=budget.id,
+        reason="Synthetic newer Trust proof row with non-Real-Cost hosted source.",
+        source_budget_state="blocked_until_ci_deploy_proof_and_operator_approval",
+    )
+    automatic_retry = _record_synthetic_automatic_retry_proof_checklist(
+        storage,
+        source_checklist_id=trust.id,
+        reason="Synthetic newer Automatic Retry proof row with non-Real-Cost hosted source.",
+        source_trust_proof_state="blocked_until_budget_enforcement_proof_and_operator_approval",
+    )
+    newer_non_real_cost_real_cost = _record_synthetic_real_cost_tracking_proof_checklist(
+        storage,
+        source_checklist_id=automatic_retry.id,
+        reason="Synthetic newer Real Cost Tracking proof row with non-Real-Cost hosted source.",
+        source_automatic_retry_proof_state="blocked_until_trust_promotion_proof_and_operator_approval",
+    )
+
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert f"source_checklist: {real_cost_sourced_real_cost.id}" in output
+    assert f"source_checklist: {newer_non_real_cost_real_cost.id}" not in output
+
+    checklist = storage.list_recent_hosted_dashboard_proof_checklists()[0]
+    assert checklist.source_checklist_id == real_cost_sourced_real_cost.id
+
+
+def test_hosted_dashboard_proof_checklist_reports_missing_when_only_dangling_real_cost_tracking_proofs_exist(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    dangling_real_cost = _record_synthetic_real_cost_tracking_proof_checklist(
+        storage,
+        source_checklist_id="automatic_retry_proof_checklist_missing_source",
+        reason="Synthetic dangling Real Cost Tracking proof row.",
+        source_automatic_retry_proof_state="missing_source_proof",
+    )
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "hosted_dashboard_proof_checklist: "
+        "real_cost_tracking_proof_checklist_missing"
+    ) in output
+    assert "source_checklist: none" in output
+    assert f"source_checklist: {dangling_real_cost.id}" not in output
+    assert "recommended_commands: real-cost-tracking-proof-checklist" in output
+
+    checklist = storage.list_recent_hosted_dashboard_proof_checklists()[0]
+    assert checklist.status == "real_cost_tracking_proof_checklist_missing"
+    assert checklist.source_checklist_id is None
+    assert checklist.checklist_items == []
+
+
+def test_hosted_dashboard_item_rendering_omits_partial_optional_proof_metadata() -> None:
+    from agent_os.hosted_dashboard_proof import render_checklist_item_line
+
+    item = {
+        "capability": "hosted_dashboard",
+        "proof_item": "hosted_dashboard_design_review",
+        "recommended_dashboard_action": "keep_hosted_dashboard_disabled",
+        "dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+        "source_real_cost_tracking_proof_action": "keep_cost_tracking_disabled",
+        "source_cost_action": "keep_cost_tracking_disabled",
+        "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+        "source_retry_action": "keep_retry_disabled",
+        "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+        "source_trust_action": "keep_trust_unpromoted",
+        "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+        "evidence_state": "missing",
+        "approval_state": "approval_required",
+        "approval_boundary": "explicit_operator_approval_required",
+        "dashboard_effect": "none",
+        "routing_effect": "none",
+    }
+
+    line = render_checklist_item_line(item)
+
+    assert "source_cost_action=keep_cost_tracking_disabled" in line
+    assert "source_real_cost_tracking_proof_action" not in line
+
+
+def test_remote_worker_proof_checklist_blocks_real_cost_sourced_dashboard_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert "remote_worker_proof_checklist: remote_worker_proof_blocked" in output
+    assert "report: docs/remote-worker-proof-checklist.md" in output
+    assert "source_status: hosted_dashboard_proof_blocked" in output
+    assert "capabilities: 1" in output
+    assert "checklist_items: 1" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "operator_reviews_required: 0" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "boundaries: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_hosted_dashboard_proof_checklists()[0]
+    assert source_checklist.source_kind == "real_cost_tracking_proof_checklist"
+    checklists = storage.list_recent_remote_worker_proof_checklists()
+    assert len(checklists) >= 1
+    checklist = checklists[0]
+    assert checklist.status == "remote_worker_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "hosted_dashboard_proof_blocked"
+    assert checklist.capability_count == 1
+    assert checklist.checklist_count == 1
+    assert checklist.blocked_worker_proof_count == 1
+    assert checklist.operator_review_required_count == 0
+    assert checklist.blocked_dashboard_proof_count == 1
+    assert checklist.blocked_cost_tracking_count == 1
+    assert checklist.blocked_retry_count == 1
+    assert checklist.blocked_trust_promotion_count == 1
+    assert checklist.missing_evidence_count == 1
+    assert checklist.approval_required_count == 1
+    assert checklist.boundary_count == 1
+    assert checklist.recommended_commands == []
+    assert checklist.report_path == "docs/remote-worker-proof-checklist.md"
+    assert checklist.checklist_items == [
+        {
+            "capability": "remote_workers",
+            "proof_item": "remote_worker_dispatch_review",
+            "recommended_worker_action": "keep_remote_workers_disabled",
+            "worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+            "source_dashboard_action": "keep_hosted_dashboard_disabled",
+            "source_dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+            "source_real_cost_tracking_proof_action": "keep_cost_tracking_disabled",
+            "source_real_cost_tracking_proof_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_automatic_retry_proof_action": "keep_retry_disabled",
+            "source_automatic_retry_proof_state": "blocked_until_trust_promotion_proof_and_operator_approval",
+            "source_trust_proof_action": "keep_trust_unpromoted",
+            "source_trust_proof_state": "blocked_until_budget_enforcement_proof_and_operator_approval",
+            "source_budget_action": "keep_budget_enforcement_disabled",
+            "source_budget_state": "blocked_until_ci_deploy_proof_and_operator_approval",
+            "source_ci_deploy_action": "keep_ci_deploy_disabled",
+            "source_ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+            "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+            "source_adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+            "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+            "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+            "source_worker_action": "keep_remote_workers_disabled",
+            "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+            "source_cost_action": "keep_cost_tracking_disabled",
+            "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_retry_action": "keep_retry_disabled",
+            "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+            "source_trust_action": "keep_trust_unpromoted",
+            "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+            "evidence_state": "missing",
+            "approval_state": "approval_required",
+            "approval_boundary": "explicit_operator_approval_required",
+            "worker_effect": "none",
+            "routing_effect": "none",
+        }
+    ]
+
+    report = (tmp_path / "docs" / "remote-worker-proof-checklist.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Remote Worker Proof Checklist" in report
+    assert "- status: remote_worker_proof_blocked" in report
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert "- source_checklist_source_kind: real_cost_tracking_proof_checklist" in report
+    assert "- checklist_items: 1" in report
+    assert "- blocked_worker_proofs: 1" in report
+    assert (
+        "- remote_workers: proof_item=remote_worker_dispatch_review "
+        "recommended_worker_action=keep_remote_workers_disabled "
+        "worker_state=blocked_until_hosted_dashboard_proof_and_operator_approval "
+        "source_dashboard_action=keep_hosted_dashboard_disabled "
+        "source_dashboard_state=blocked_until_real_cost_tracking_proof_and_operator_approval "
+        "source_real_cost_tracking_proof_action=keep_cost_tracking_disabled"
+    ) in report
+    assert "Does not start remote workers" in report
+    assert "Does not create hosted dashboard proof checklists" in report
+    assert "Does not track real spend automatically" in report
+    assert "Does not mutate external systems" in report
+
+
+def test_remote_worker_proof_checklist_blocks_latest_real_cost_sourced_hosted_dashboard_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "automatic-retry-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "real-cost-tracking-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert "remote_worker_proof_checklist: remote_worker_proof_blocked" in output
+    assert "source_status: hosted_dashboard_proof_blocked" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_hosted_dashboard_proof_checklists()[0]
+    source_real_cost_checklist = (
+        storage.list_recent_real_cost_tracking_proof_checklists()[0]
+    )
+    assert source_checklist.source_kind == "real_cost_tracking_proof_checklist"
+    assert source_checklist.source_checklist_id == source_real_cost_checklist.id
+    assert (
+        source_real_cost_checklist.source_checklist_status
+        == "automatic_retry_proof_blocked"
+    )
+
+    checklist = storage.list_recent_remote_worker_proof_checklists()[0]
+    assert checklist.status == "remote_worker_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "hosted_dashboard_proof_blocked"
+    assert checklist.checklist_items[0]["source_dashboard_state"] == (
+        "blocked_until_real_cost_tracking_proof_and_operator_approval"
+    )
+    assert (
+        checklist.checklist_items[0]["source_real_cost_tracking_proof_action"]
+        == "keep_cost_tracking_disabled"
+    )
+    assert (
+        checklist.checklist_items[0]["source_automatic_retry_proof_action"]
+        == "keep_retry_disabled"
+    )
+
+    report = (tmp_path / "docs" / "remote-worker-proof-checklist.md").read_text(
+        encoding="utf-8"
+    )
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert (
+        f"- source_checklist_source_checklist_id: "
+        f"{source_real_cost_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_status: "
+        "real_cost_tracking_proof_blocked"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_id: "
+        "automatic_retry_proof_checklist_"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_status: "
+        "automatic_retry_proof_blocked"
+    ) in report
+    assert (
+        "source_real_cost_tracking_proof_action=keep_cost_tracking_disabled"
+    ) in report
+    assert (
+        "source_automatic_retry_proof_action=keep_retry_disabled"
+    ) in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert f"- source_checklist: {source_checklist.id}" in dashboard
+    assert "- source_status: hosted_dashboard_proof_blocked" in dashboard
+
+
+def test_remote_worker_proof_checklist_skips_newer_non_real_cost_sourced_hosted_dashboard_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_real_cost_sourced_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_cost_sourced_hosted = (
+        storage.list_recent_hosted_dashboard_proof_checklists()[0]
+    )
+    newer_legacy_hosted = [
+        storage.record_hosted_dashboard_proof_checklist(
+            status="hosted_dashboard_proof_blocked",
+            source_audit_id=f"capability_real_cost_tracking_audit_legacy_{index}",
+            source_audit_status="real_cost_tracking_blocked",
+            source_kind="real_cost_tracking_audit",
+            source_checklist_id=None,
+            source_checklist_status="none",
+            capability_count=1,
+            checklist_count=1,
+            blocked_dashboard_proof_count=1,
+            operator_review_required_count=0,
+            blocked_cost_tracking_count=1,
+            blocked_retry_count=1,
+            blocked_trust_promotion_count=1,
+            missing_evidence_count=1,
+            approval_required_count=1,
+            boundary_count=1,
+            recommended_commands=[],
+            reason="Synthetic newer legacy Hosted Dashboard proof row.",
+            checklist_items=[
+                {
+                    "capability": "hosted_dashboard",
+                    "proof_item": "hosted_dashboard_design_review",
+                    "recommended_dashboard_action": "keep_hosted_dashboard_disabled",
+                    "dashboard_state": "legacy_without_real_cost_proof",
+                    "source_cost_action": "keep_cost_tracking_disabled",
+                    "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+                    "source_retry_action": "keep_retry_disabled",
+                    "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+                    "source_trust_action": "keep_trust_unpromoted",
+                    "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+                    "evidence_state": "missing",
+                    "approval_state": "approval_required",
+                    "approval_boundary": "explicit_operator_approval_required",
+                    "routing_effect": "none",
+                }
+            ],
+            report_path="docs/hosted-dashboard-proof-checklist.md",
+        )
+        for index in range(26)
+    ]
+    assert newer_legacy_hosted[0].id != real_cost_sourced_hosted.id
+
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert "remote_worker_proof_checklist: remote_worker_proof_blocked" in output
+    assert f"source_checklist: {real_cost_sourced_hosted.id}" in output
+    assert f"source_checklist: {newer_legacy_hosted[-1].id}" not in output
+
+    checklist = storage.list_recent_remote_worker_proof_checklists()[0]
+    assert checklist.source_checklist_id == real_cost_sourced_hosted.id
+    assert (
+        checklist.checklist_items[0]["source_real_cost_tracking_proof_action"]
+        == "keep_cost_tracking_disabled"
+    )
+
+    report = (tmp_path / "docs" / "remote-worker-proof-checklist.md").read_text(
+        encoding="utf-8"
+    )
+    assert f"- source_checklist_id: {real_cost_sourced_hosted.id}" in report
+    assert f"- source_checklist_id: {newer_legacy_hosted[-1].id}" not in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_id: "
+        "automatic_retry_proof_checklist_"
+    ) in report
+
+
+def test_remote_worker_proof_checklist_skips_newer_hosted_with_dangling_real_cost_source(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_real_cost_sourced_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_cost_sourced_hosted = (
+        storage.list_recent_hosted_dashboard_proof_checklists()[0]
+    )
+    dangling_hosted = storage.record_hosted_dashboard_proof_checklist(
+        status="hosted_dashboard_proof_blocked",
+        source_audit_id=None,
+        source_audit_status="none",
+        source_kind="real_cost_tracking_proof_checklist",
+        source_checklist_id="real_cost_tracking_proof_checklist_missing_source",
+        source_checklist_status="real_cost_tracking_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_dashboard_proof_count=1,
+        operator_review_required_count=0,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic Hosted Dashboard proof row with missing Real Cost source.",
+        checklist_items=[
+            {
+                "capability": "hosted_dashboard",
+                "proof_item": "hosted_dashboard_design_review",
+                "recommended_dashboard_action": "keep_hosted_dashboard_disabled",
+                "dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+                "source_cost_action": "keep_cost_tracking_disabled",
+                "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+                "source_retry_action": "keep_retry_disabled",
+                "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+                "source_trust_action": "keep_trust_unpromoted",
+                "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+                "evidence_state": "missing",
+                "approval_state": "approval_required",
+                "approval_boundary": "explicit_operator_approval_required",
+                "routing_effect": "none",
+            }
+        ],
+        report_path="docs/hosted-dashboard-proof-checklist.md",
+    )
+
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert f"source_checklist: {real_cost_sourced_hosted.id}" in output
+    assert f"source_checklist: {dangling_hosted.id}" not in output
+
+    checklist = storage.list_recent_remote_worker_proof_checklists()[0]
+    assert checklist.source_checklist_id == real_cost_sourced_hosted.id
+
+
+def test_remote_worker_item_rendering_omits_partial_optional_proof_metadata() -> None:
+    from agent_os.remote_worker_proof import render_checklist_item_line
+
+    item = {
+        "capability": "remote_workers",
+        "proof_item": "remote_worker_dispatch_review",
+        "recommended_worker_action": "keep_remote_workers_disabled",
+        "worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+        "source_dashboard_action": "keep_hosted_dashboard_disabled",
+        "source_dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+        "source_real_cost_tracking_proof_action": "keep_cost_tracking_disabled",
+        "source_cost_action": "keep_cost_tracking_disabled",
+        "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+        "source_retry_action": "keep_retry_disabled",
+        "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+        "source_trust_action": "keep_trust_unpromoted",
+        "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+        "evidence_state": "missing",
+        "approval_state": "approval_required",
+        "approval_boundary": "explicit_operator_approval_required",
+        "worker_effect": "none",
+        "routing_effect": "none",
+    }
+
+    line = render_checklist_item_line(item)
+
+    assert "source_cost_action=keep_cost_tracking_disabled" in line
+    assert "source_real_cost_tracking_proof_action" not in line
+
+
+def test_autonomous_scheduling_proof_checklist_blocks_latest_real_cost_sourced_remote_worker_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "automatic-retry-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "real-cost-tracking-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "autonomous_scheduling_proof_checklist: "
+        "autonomous_scheduling_proof_blocked"
+    ) in output
+    assert "source_status: remote_worker_proof_blocked" in output
+    assert "blocked_scheduling_proofs: 1" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_remote_worker_proof_checklists()[0]
+    source_hosted_checklist = (
+        storage.list_recent_hosted_dashboard_proof_checklists()[0]
+    )
+    source_real_cost_checklist = (
+        storage.list_recent_real_cost_tracking_proof_checklists()[0]
+    )
+    assert source_checklist.source_checklist_id == source_hosted_checklist.id
+    assert source_hosted_checklist.source_kind == "real_cost_tracking_proof_checklist"
+    assert source_hosted_checklist.source_checklist_id == source_real_cost_checklist.id
+    assert (
+        source_real_cost_checklist.source_checklist_status
+        == "automatic_retry_proof_blocked"
+    )
+
+    checklist = storage.list_recent_autonomous_scheduling_proof_checklists()[0]
+    assert checklist.status == "autonomous_scheduling_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "remote_worker_proof_blocked"
+    assert checklist.checklist_items[0]["source_worker_action"] == (
+        "keep_remote_workers_disabled"
+    )
+    assert (
+        checklist.checklist_items[0]["source_real_cost_tracking_proof_action"]
+        == "keep_cost_tracking_disabled"
+    )
+    assert (
+        checklist.checklist_items[0]["source_automatic_retry_proof_action"]
+        == "keep_retry_disabled"
+    )
+
+    report = (
+        tmp_path / "docs" / "autonomous-scheduling-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert (
+        f"- source_checklist_source_checklist_id: "
+        f"{source_hosted_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_status: "
+        "hosted_dashboard_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_id: "
+        f"{source_real_cost_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_status: "
+        "real_cost_tracking_proof_blocked"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        "automatic_retry_proof_checklist_"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "automatic_retry_proof_blocked"
+    ) in report
+    assert (
+        "source_real_cost_tracking_proof_action=keep_cost_tracking_disabled"
+    ) in report
+    assert (
+        "source_automatic_retry_proof_action=keep_retry_disabled"
+    ) in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert f"- source_checklist: {source_checklist.id}" in dashboard
+    assert "- source_status: remote_worker_proof_blocked" in dashboard
+
+
+def test_autonomous_scheduling_proof_checklist_skips_newer_non_real_cost_sourced_remote_worker_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_cost_sourced_remote = (
+        storage.list_recent_remote_worker_proof_checklists()[0]
+    )
+    newer_legacy_remotes = [
+        storage.record_remote_worker_proof_checklist(
+            status="remote_worker_proof_blocked",
+            source_checklist_id=f"hosted_dashboard_proof_checklist_legacy_{index}",
+            source_checklist_status="hosted_dashboard_proof_blocked",
+            capability_count=1,
+            checklist_count=1,
+            blocked_worker_proof_count=1,
+            operator_review_required_count=0,
+            blocked_dashboard_proof_count=1,
+            blocked_cost_tracking_count=1,
+            blocked_retry_count=1,
+            blocked_trust_promotion_count=1,
+            missing_evidence_count=1,
+            approval_required_count=1,
+            boundary_count=1,
+            recommended_commands=[],
+            reason="Synthetic newer legacy remote-worker proof row.",
+            checklist_items=[
+                {
+                    "capability": "remote_workers",
+                    "proof_item": "remote_worker_dispatch_review",
+                    "recommended_worker_action": "keep_remote_workers_disabled",
+                    "worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+                    "source_dashboard_action": "keep_hosted_dashboard_disabled",
+                    "source_dashboard_state": "legacy_without_real_cost_proof",
+                    "source_cost_action": "keep_cost_tracking_disabled",
+                    "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+                    "source_retry_action": "keep_retry_disabled",
+                    "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+                    "source_trust_action": "keep_trust_unpromoted",
+                    "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+                    "evidence_state": "missing",
+                    "approval_state": "approval_required",
+                    "approval_boundary": "explicit_operator_approval_required",
+                    "worker_effect": "none",
+                    "routing_effect": "none",
+                }
+            ],
+            report_path="docs/remote-worker-proof-checklist.md",
+        )
+        for index in range(26)
+    ]
+    assert newer_legacy_remotes[0].id != real_cost_sourced_remote.id
+
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "autonomous_scheduling_proof_checklist: "
+        "autonomous_scheduling_proof_blocked"
+    ) in output
+    assert f"source_checklist: {real_cost_sourced_remote.id}" in output
+    assert f"source_checklist: {newer_legacy_remotes[-1].id}" not in output
+
+    checklist = storage.list_recent_autonomous_scheduling_proof_checklists()[0]
+    assert checklist.source_checklist_id == real_cost_sourced_remote.id
+    assert (
+        checklist.checklist_items[0]["source_real_cost_tracking_proof_action"]
+        == "keep_cost_tracking_disabled"
+    )
+
+    report = (
+        tmp_path / "docs" / "autonomous-scheduling-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert f"- source_checklist_id: {real_cost_sourced_remote.id}" in report
+    assert f"- source_checklist_id: {newer_legacy_remotes[-1].id}" not in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_id: "
+        "real_cost_tracking_proof_checklist_"
+    ) in report
+
+
+def test_autonomous_scheduling_proof_checklist_skips_newer_remote_with_dangling_real_cost_source(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_cost_sourced_remote = (
+        storage.list_recent_remote_worker_proof_checklists()[0]
+    )
+    dangling_real_cost = _record_synthetic_real_cost_tracking_proof_checklist(
+        storage,
+        source_checklist_id="automatic_retry_proof_checklist_missing_source",
+        reason="Synthetic dangling Real Cost Tracking proof row.",
+        source_automatic_retry_proof_state="missing_source_proof",
+    )
+    dangling_hosted = storage.record_hosted_dashboard_proof_checklist(
+        status="hosted_dashboard_proof_blocked",
+        source_audit_id=None,
+        source_audit_status="none",
+        source_kind="real_cost_tracking_proof_checklist",
+        source_checklist_id=dangling_real_cost.id,
+        source_checklist_status="real_cost_tracking_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_dashboard_proof_count=1,
+        operator_review_required_count=0,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic hosted proof row with dangling Real Cost source.",
+        checklist_items=[],
+        report_path="docs/hosted-dashboard-proof-checklist.md",
+    )
+    dangling_remote = storage.record_remote_worker_proof_checklist(
+        status="remote_worker_proof_blocked",
+        source_checklist_id=dangling_hosted.id,
+        source_checklist_status="hosted_dashboard_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_worker_proof_count=1,
+        operator_review_required_count=0,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic remote proof row with dangling Real Cost source.",
+        checklist_items=[],
+        report_path="docs/remote-worker-proof-checklist.md",
+    )
+
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert f"source_checklist: {real_cost_sourced_remote.id}" in output
+    assert f"source_checklist: {dangling_remote.id}" not in output
+
+    checklist = storage.list_recent_autonomous_scheduling_proof_checklists()[0]
+    assert checklist.source_checklist_id == real_cost_sourced_remote.id
+
+
+def test_autonomous_scheduling_item_rendering_omits_partial_optional_proof_metadata() -> None:
+    from agent_os.autonomous_scheduling_proof import render_checklist_item_line
+
+    item = {
+        "capability": "autonomous_scheduling",
+        "proof_item": "scheduler_policy_dry_run",
+        "recommended_scheduling_action": "keep_autonomous_scheduling_disabled",
+        "scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+        "source_worker_action": "keep_remote_workers_disabled",
+        "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+        "source_dashboard_action": "keep_hosted_dashboard_disabled",
+        "source_dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+        "source_real_cost_tracking_proof_action": "keep_cost_tracking_disabled",
+        "source_cost_action": "keep_cost_tracking_disabled",
+        "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+        "source_retry_action": "keep_retry_disabled",
+        "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+        "source_trust_action": "keep_trust_unpromoted",
+        "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+        "evidence_state": "missing",
+        "approval_state": "approval_required",
+        "approval_boundary": "explicit_operator_approval_required",
+        "scheduling_effect": "none",
+        "routing_effect": "none",
+    }
+
+    line = render_checklist_item_line(item)
+
+    assert "source_cost_action=keep_cost_tracking_disabled" in line
+    assert "source_real_cost_tracking_proof_action" not in line
+
+
+def test_autonomous_scheduling_proof_checklist_blocks_real_cost_sourced_remote_worker_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "autonomous_scheduling_proof_checklist: "
+        "autonomous_scheduling_proof_blocked"
+    ) in output
+    assert "report: docs/autonomous-scheduling-proof-checklist.md" in output
+    assert "source_status: remote_worker_proof_blocked" in output
+    assert "capabilities: 1" in output
+    assert "checklist_items: 1" in output
+    assert "blocked_scheduling_proofs: 1" in output
+    assert "operator_reviews_required: 0" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "boundaries: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_remote_worker_proof_checklists()[0]
+    checklists = storage.list_recent_autonomous_scheduling_proof_checklists()
+    assert len(checklists) >= 1
+    checklist = checklists[0]
+    assert checklist.status == "autonomous_scheduling_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "remote_worker_proof_blocked"
+    assert checklist.capability_count == 1
+    assert checklist.checklist_count == 1
+    assert checklist.blocked_scheduling_proof_count == 1
+    assert checklist.operator_review_required_count == 0
+    assert checklist.blocked_worker_proof_count == 1
+    assert checklist.blocked_dashboard_proof_count == 1
+    assert checklist.blocked_cost_tracking_count == 1
+    assert checklist.blocked_retry_count == 1
+    assert checklist.blocked_trust_promotion_count == 1
+    assert checklist.missing_evidence_count == 1
+    assert checklist.approval_required_count == 1
+    assert checklist.boundary_count == 1
+    assert checklist.recommended_commands == []
+    assert checklist.report_path == "docs/autonomous-scheduling-proof-checklist.md"
+    assert checklist.checklist_items == [
+        {
+            "capability": "autonomous_scheduling",
+            "proof_item": "scheduler_policy_dry_run",
+            "recommended_scheduling_action": "keep_autonomous_scheduling_disabled",
+            "scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+            "source_worker_action": "keep_remote_workers_disabled",
+            "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+            "source_dashboard_action": "keep_hosted_dashboard_disabled",
+            "source_dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+            "source_real_cost_tracking_proof_action": "keep_cost_tracking_disabled",
+            "source_real_cost_tracking_proof_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_automatic_retry_proof_action": "keep_retry_disabled",
+            "source_automatic_retry_proof_state": "blocked_until_trust_promotion_proof_and_operator_approval",
+            "source_trust_proof_action": "keep_trust_unpromoted",
+            "source_trust_proof_state": "blocked_until_budget_enforcement_proof_and_operator_approval",
+            "source_budget_action": "keep_budget_enforcement_disabled",
+            "source_budget_state": "blocked_until_ci_deploy_proof_and_operator_approval",
+            "source_ci_deploy_action": "keep_ci_deploy_disabled",
+            "source_ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+            "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+            "source_adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+            "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+            "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+            "source_cost_action": "keep_cost_tracking_disabled",
+            "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_retry_action": "keep_retry_disabled",
+            "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+            "source_trust_action": "keep_trust_unpromoted",
+            "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+            "evidence_state": "missing",
+            "approval_state": "approval_required",
+            "approval_boundary": "explicit_operator_approval_required",
+            "scheduling_effect": "none",
+            "routing_effect": "none",
+        }
+    ]
+
+    report = (
+        tmp_path / "docs" / "autonomous-scheduling-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert "# Autonomous Scheduling Proof Checklist" in report
+    assert "- status: autonomous_scheduling_proof_blocked" in report
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert "- source_checklist_source_checklist_id: hosted_dashboard_proof_checklist_" in report
+    assert "- checklist_items: 1" in report
+    assert "- blocked_scheduling_proofs: 1" in report
+    assert (
+        "- autonomous_scheduling: proof_item=scheduler_policy_dry_run "
+        "recommended_scheduling_action=keep_autonomous_scheduling_disabled "
+        "scheduling_state=blocked_until_remote_worker_proof_and_operator_approval "
+        "source_worker_action=keep_remote_workers_disabled "
+        "source_worker_state=blocked_until_hosted_dashboard_proof_and_operator_approval "
+        "source_dashboard_action=keep_hosted_dashboard_disabled "
+        "source_dashboard_state=blocked_until_real_cost_tracking_proof_and_operator_approval "
+        "source_real_cost_tracking_proof_action=keep_cost_tracking_disabled"
+    ) in report
+    assert "Does not schedule autonomous work" in report
+    assert "Does not start remote workers" in report
+    assert "Does not track real spend automatically" in report
+    assert "Does not mutate external systems" in report
+
+
+def test_browser_desktop_adapter_proof_checklist_blocks_real_cost_sourced_scheduling_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "browser_desktop_adapter_proof_checklist: "
+        "browser_desktop_adapter_proof_blocked"
+    ) in output
+    assert "report: docs/browser-desktop-adapter-proof-checklist.md" in output
+    assert "source_status: autonomous_scheduling_proof_blocked" in output
+    assert "capabilities: 1" in output
+    assert "checklist_items: 1" in output
+    assert "blocked_adapter_proofs: 1" in output
+    assert "operator_reviews_required: 0" in output
+    assert "blocked_scheduling_proofs: 1" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "boundaries: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_autonomous_scheduling_proof_checklists()[0]
+    checklists = storage.list_recent_browser_desktop_adapter_proof_checklists()
+    assert len(checklists) >= 1
+    checklist = checklists[0]
+    assert checklist.status == "browser_desktop_adapter_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "autonomous_scheduling_proof_blocked"
+    assert checklist.capability_count == 1
+    assert checklist.checklist_count == 1
+    assert checklist.blocked_adapter_proof_count == 1
+    assert checklist.operator_review_required_count == 0
+    assert checklist.blocked_scheduling_proof_count == 1
+    assert checklist.blocked_worker_proof_count == 1
+    assert checklist.blocked_dashboard_proof_count == 1
+    assert checklist.blocked_cost_tracking_count == 1
+    assert checklist.blocked_retry_count == 1
+    assert checklist.blocked_trust_promotion_count == 1
+    assert checklist.missing_evidence_count == 1
+    assert checklist.approval_required_count == 1
+    assert checklist.boundary_count == 1
+    assert checklist.recommended_commands == []
+    assert checklist.report_path == "docs/browser-desktop-adapter-proof-checklist.md"
+    assert checklist.checklist_items == [
+        {
+            "capability": "browser_desktop_adapters",
+            "proof_item": "adapter_permission_boundary_review",
+            "recommended_adapter_action": "keep_browser_desktop_adapters_disabled",
+            "adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+            "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+            "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+            "source_worker_action": "keep_remote_workers_disabled",
+            "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+            "source_dashboard_action": "keep_hosted_dashboard_disabled",
+            "source_dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+            "source_real_cost_tracking_proof_action": "keep_cost_tracking_disabled",
+            "source_real_cost_tracking_proof_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_automatic_retry_proof_action": "keep_retry_disabled",
+            "source_automatic_retry_proof_state": "blocked_until_trust_promotion_proof_and_operator_approval",
+            "source_trust_proof_action": "keep_trust_unpromoted",
+            "source_trust_proof_state": "blocked_until_budget_enforcement_proof_and_operator_approval",
+            "source_budget_action": "keep_budget_enforcement_disabled",
+            "source_budget_state": "blocked_until_ci_deploy_proof_and_operator_approval",
+            "source_ci_deploy_action": "keep_ci_deploy_disabled",
+            "source_ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+            "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+            "source_adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+            "source_cost_action": "keep_cost_tracking_disabled",
+            "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_retry_action": "keep_retry_disabled",
+            "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+            "source_trust_action": "keep_trust_unpromoted",
+            "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+            "evidence_state": "missing",
+            "approval_state": "approval_required",
+            "approval_boundary": "explicit_operator_approval_required",
+            "adapter_effect": "none",
+            "routing_effect": "none",
+        }
+    ]
+
+    report = (
+        tmp_path / "docs" / "browser-desktop-adapter-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert "# Browser Desktop Adapter Proof Checklist" in report
+    assert "- status: browser_desktop_adapter_proof_blocked" in report
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert "- source_checklist_source_checklist_id: remote_worker_proof_checklist_" in report
+    assert "- checklist_items: 1" in report
+    assert "- blocked_adapter_proofs: 1" in report
+    assert (
+        "- browser_desktop_adapters: proof_item=adapter_permission_boundary_review "
+        "recommended_adapter_action=keep_browser_desktop_adapters_disabled "
+        "adapter_state=blocked_until_autonomous_scheduling_proof_and_operator_approval "
+        "source_scheduling_action=keep_autonomous_scheduling_disabled "
+        "source_scheduling_state=blocked_until_remote_worker_proof_and_operator_approval "
+        "source_worker_action=keep_remote_workers_disabled "
+        "source_worker_state=blocked_until_hosted_dashboard_proof_and_operator_approval "
+        "source_dashboard_action=keep_hosted_dashboard_disabled "
+        "source_dashboard_state=blocked_until_real_cost_tracking_proof_and_operator_approval "
+        "source_real_cost_tracking_proof_action=keep_cost_tracking_disabled"
+    ) in report
+    assert "Does not operate browser or desktop adapters" in report
+    assert "Does not schedule autonomous work" in report
+    assert "Does not track real spend automatically" in report
+    assert "Does not mutate external systems" in report
+
+
+def test_browser_desktop_adapter_proof_checklist_blocks_latest_real_cost_sourced_autonomous_scheduling_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "automatic-retry-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "real-cost-tracking-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "browser_desktop_adapter_proof_checklist: "
+        "browser_desktop_adapter_proof_blocked"
+    ) in output
+    assert "source_status: autonomous_scheduling_proof_blocked" in output
+    assert "blocked_adapter_proofs: 1" in output
+    assert "blocked_scheduling_proofs: 1" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_autonomous_scheduling_proof_checklists()[0]
+    source_remote_checklist = storage.list_recent_remote_worker_proof_checklists()[0]
+    source_hosted_checklist = (
+        storage.list_recent_hosted_dashboard_proof_checklists()[0]
+    )
+    source_real_cost_checklist = (
+        storage.list_recent_real_cost_tracking_proof_checklists()[0]
+    )
+    assert source_checklist.source_checklist_id == source_remote_checklist.id
+    assert source_remote_checklist.source_checklist_id == source_hosted_checklist.id
+    assert source_hosted_checklist.source_kind == "real_cost_tracking_proof_checklist"
+    assert source_hosted_checklist.source_checklist_id == source_real_cost_checklist.id
+    assert (
+        source_real_cost_checklist.source_checklist_status
+        == "automatic_retry_proof_blocked"
+    )
+
+    checklist = storage.list_recent_browser_desktop_adapter_proof_checklists()[0]
+    assert checklist.status == "browser_desktop_adapter_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "autonomous_scheduling_proof_blocked"
+    assert (
+        checklist.checklist_items[0]["source_real_cost_tracking_proof_action"]
+        == "keep_cost_tracking_disabled"
+    )
+    assert (
+        checklist.checklist_items[0]["source_automatic_retry_proof_action"]
+        == "keep_retry_disabled"
+    )
+
+    report = (
+        tmp_path / "docs" / "browser-desktop-adapter-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert (
+        f"- source_checklist_source_checklist_id: "
+        f"{source_remote_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_status: "
+        "remote_worker_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_id: "
+        f"{source_hosted_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_status: "
+        "hosted_dashboard_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_real_cost_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "real_cost_tracking_proof_blocked"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        "automatic_retry_proof_checklist_"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "automatic_retry_proof_blocked"
+    ) in report
+    assert (
+        "source_real_cost_tracking_proof_action=keep_cost_tracking_disabled"
+    ) in report
+    assert (
+        "source_automatic_retry_proof_action=keep_retry_disabled"
+    ) in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert f"- source_checklist: {source_checklist.id}" in dashboard
+    assert "- source_status: autonomous_scheduling_proof_blocked" in dashboard
+
+
+def test_browser_desktop_adapter_proof_checklist_skips_newer_non_real_cost_sourced_autonomous_scheduling_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_cost_sourced_scheduling = (
+        storage.list_recent_autonomous_scheduling_proof_checklists()[0]
+    )
+    newer_legacy_schedulings = [
+        storage.record_autonomous_scheduling_proof_checklist(
+            status="autonomous_scheduling_proof_blocked",
+            source_checklist_id=f"remote_worker_proof_checklist_legacy_{index}",
+            source_checklist_status="remote_worker_proof_blocked",
+            capability_count=1,
+            checklist_count=1,
+            blocked_scheduling_proof_count=1,
+            operator_review_required_count=0,
+            blocked_worker_proof_count=1,
+            blocked_dashboard_proof_count=1,
+            blocked_cost_tracking_count=1,
+            blocked_retry_count=1,
+            blocked_trust_promotion_count=1,
+            missing_evidence_count=1,
+            approval_required_count=1,
+            boundary_count=1,
+            recommended_commands=[],
+            reason="Synthetic newer legacy autonomous-scheduling proof row.",
+            checklist_items=[
+                {
+                    "capability": "autonomous_scheduling",
+                    "proof_item": "scheduler_policy_dry_run",
+                    "recommended_scheduling_action": "keep_autonomous_scheduling_disabled",
+                    "scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+                    "source_worker_action": "keep_remote_workers_disabled",
+                    "source_worker_state": "legacy_without_real_cost_proof",
+                    "source_dashboard_action": "keep_hosted_dashboard_disabled",
+                    "source_dashboard_state": "legacy_without_real_cost_proof",
+                    "source_cost_action": "keep_cost_tracking_disabled",
+                    "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+                    "source_retry_action": "keep_retry_disabled",
+                    "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+                    "source_trust_action": "keep_trust_unpromoted",
+                    "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+                    "evidence_state": "missing",
+                    "approval_state": "approval_required",
+                    "approval_boundary": "explicit_operator_approval_required",
+                    "scheduling_effect": "none",
+                    "routing_effect": "none",
+                }
+            ],
+            report_path="docs/autonomous-scheduling-proof-checklist.md",
+        )
+        for index in range(26)
+    ]
+    assert newer_legacy_schedulings[0].id != real_cost_sourced_scheduling.id
+
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "browser_desktop_adapter_proof_checklist: "
+        "browser_desktop_adapter_proof_blocked"
+    ) in output
+    assert f"source_checklist: {real_cost_sourced_scheduling.id}" in output
+    assert f"source_checklist: {newer_legacy_schedulings[-1].id}" not in output
+
+    checklist = storage.list_recent_browser_desktop_adapter_proof_checklists()[0]
+    assert checklist.source_checklist_id == real_cost_sourced_scheduling.id
+    assert (
+        checklist.checklist_items[0]["source_real_cost_tracking_proof_action"]
+        == "keep_cost_tracking_disabled"
+    )
+
+    report = (
+        tmp_path / "docs" / "browser-desktop-adapter-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert f"- source_checklist_id: {real_cost_sourced_scheduling.id}" in report
+    assert f"- source_checklist_id: {newer_legacy_schedulings[-1].id}" not in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        "real_cost_tracking_proof_checklist_"
+    ) in report
+
+
+def test_browser_desktop_adapter_proof_checklist_skips_newer_scheduling_with_dangling_real_cost_source(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_cost_sourced_scheduling = (
+        storage.list_recent_autonomous_scheduling_proof_checklists()[0]
+    )
+    dangling_real_cost = _record_synthetic_real_cost_tracking_proof_checklist(
+        storage,
+        source_checklist_id="automatic_retry_proof_checklist_missing_source",
+        reason="Synthetic dangling Real Cost Tracking proof row.",
+        source_automatic_retry_proof_state="missing_source_proof",
+    )
+    dangling_hosted = storage.record_hosted_dashboard_proof_checklist(
+        status="hosted_dashboard_proof_blocked",
+        source_audit_id=None,
+        source_audit_status="none",
+        source_kind="real_cost_tracking_proof_checklist",
+        source_checklist_id=dangling_real_cost.id,
+        source_checklist_status="real_cost_tracking_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_dashboard_proof_count=1,
+        operator_review_required_count=0,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic hosted proof row with dangling Real Cost source.",
+        checklist_items=[],
+        report_path="docs/hosted-dashboard-proof-checklist.md",
+    )
+    dangling_remote = storage.record_remote_worker_proof_checklist(
+        status="remote_worker_proof_blocked",
+        source_checklist_id=dangling_hosted.id,
+        source_checklist_status="hosted_dashboard_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_worker_proof_count=1,
+        operator_review_required_count=0,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic remote proof row with dangling Real Cost source.",
+        checklist_items=[],
+        report_path="docs/remote-worker-proof-checklist.md",
+    )
+    dangling_scheduling = storage.record_autonomous_scheduling_proof_checklist(
+        status="autonomous_scheduling_proof_blocked",
+        source_checklist_id=dangling_remote.id,
+        source_checklist_status="remote_worker_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_scheduling_proof_count=1,
+        operator_review_required_count=0,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic scheduling proof row with dangling Real Cost source.",
+        checklist_items=[],
+        report_path="docs/autonomous-scheduling-proof-checklist.md",
+    )
+
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert f"source_checklist: {real_cost_sourced_scheduling.id}" in output
+    assert f"source_checklist: {dangling_scheduling.id}" not in output
+
+    checklist = storage.list_recent_browser_desktop_adapter_proof_checklists()[0]
+    assert checklist.source_checklist_id == real_cost_sourced_scheduling.id
+
+
+def test_browser_desktop_adapter_proof_checklist_reports_missing_when_only_dangling_real_cost_scheduling_exists(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    dangling_real_cost = _record_synthetic_real_cost_tracking_proof_checklist(
+        storage,
+        source_checklist_id="automatic_retry_proof_checklist_missing_source",
+        reason="Synthetic dangling Real Cost Tracking proof row.",
+        source_automatic_retry_proof_state="missing_source_proof",
+    )
+    dangling_hosted = storage.record_hosted_dashboard_proof_checklist(
+        status="hosted_dashboard_proof_blocked",
+        source_audit_id=None,
+        source_audit_status="none",
+        source_kind="real_cost_tracking_proof_checklist",
+        source_checklist_id=dangling_real_cost.id,
+        source_checklist_status="real_cost_tracking_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_dashboard_proof_count=1,
+        operator_review_required_count=0,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic hosted proof row with dangling Real Cost source.",
+        checklist_items=[],
+        report_path="docs/hosted-dashboard-proof-checklist.md",
+    )
+    dangling_remote = storage.record_remote_worker_proof_checklist(
+        status="remote_worker_proof_blocked",
+        source_checklist_id=dangling_hosted.id,
+        source_checklist_status="hosted_dashboard_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_worker_proof_count=1,
+        operator_review_required_count=0,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic remote proof row with dangling Real Cost source.",
+        checklist_items=[],
+        report_path="docs/remote-worker-proof-checklist.md",
+    )
+    dangling_scheduling = storage.record_autonomous_scheduling_proof_checklist(
+        status="autonomous_scheduling_proof_blocked",
+        source_checklist_id=dangling_remote.id,
+        source_checklist_status="remote_worker_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_scheduling_proof_count=1,
+        operator_review_required_count=0,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic scheduling proof row with dangling Real Cost source.",
+        checklist_items=[],
+        report_path="docs/autonomous-scheduling-proof-checklist.md",
+    )
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "browser_desktop_adapter_proof_checklist: "
+        "autonomous_scheduling_proof_checklist_missing"
+    ) in output
+    assert "source_checklist: none" in output
+    assert f"source_checklist: {dangling_scheduling.id}" not in output
+    assert "blocked_adapter_proofs: 0" in output
+    assert "recommended_commands: autonomous-scheduling-proof-checklist" in output
+
+    checklist = storage.list_recent_browser_desktop_adapter_proof_checklists()[0]
+    assert checklist.status == "autonomous_scheduling_proof_checklist_missing"
+    assert checklist.source_checklist_id is None
+    assert checklist.checklist_items == []
+
+
+def test_browser_desktop_adapter_item_rendering_omits_partial_optional_proof_metadata() -> None:
+    from agent_os.browser_desktop_adapter_proof import render_checklist_item_line
+
+    item = {
+        "capability": "browser_desktop_adapters",
+        "proof_item": "adapter_permission_boundary_review",
+        "recommended_adapter_action": "keep_browser_desktop_adapters_disabled",
+        "adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+        "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+        "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+        "source_worker_action": "keep_remote_workers_disabled",
+        "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+        "source_dashboard_action": "keep_hosted_dashboard_disabled",
+        "source_dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+        "source_real_cost_tracking_proof_action": "keep_cost_tracking_disabled",
+        "source_cost_action": "keep_cost_tracking_disabled",
+        "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+        "source_retry_action": "keep_retry_disabled",
+        "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+        "source_trust_action": "keep_trust_unpromoted",
+        "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+        "evidence_state": "missing",
+        "approval_state": "approval_required",
+        "approval_boundary": "explicit_operator_approval_required",
+        "adapter_effect": "none",
+        "routing_effect": "none",
+    }
+
+    line = render_checklist_item_line(item)
+
+    assert "source_cost_action=keep_cost_tracking_disabled" in line
+    assert "source_real_cost_tracking_proof_action" not in line
+
+
+def test_storage_lists_autonomous_and_browser_desktop_adapter_proof_checklists_without_limit(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    for index in range(6):
+        autonomous = storage.record_autonomous_scheduling_proof_checklist(
+            status="autonomous_scheduling_proof_blocked",
+            source_checklist_id=f"remote_worker_proof_checklist_{index}",
+            source_checklist_status="remote_worker_proof_blocked",
+            capability_count=0,
+            checklist_count=0,
+            blocked_scheduling_proof_count=0,
+            operator_review_required_count=0,
+            blocked_worker_proof_count=0,
+            blocked_dashboard_proof_count=0,
+            blocked_cost_tracking_count=0,
+            blocked_retry_count=0,
+            blocked_trust_promotion_count=0,
+            missing_evidence_count=0,
+            approval_required_count=0,
+            boundary_count=0,
+            recommended_commands=[],
+            reason="Synthetic autonomous scheduling proof row.",
+            checklist_items=[],
+            report_path="docs/autonomous-scheduling-proof-checklist.md",
+        )
+        storage.record_browser_desktop_adapter_proof_checklist(
+            status="browser_desktop_adapter_proof_blocked",
+            source_checklist_id=autonomous.id,
+            source_checklist_status="autonomous_scheduling_proof_blocked",
+            capability_count=0,
+            checklist_count=0,
+            blocked_adapter_proof_count=0,
+            operator_review_required_count=0,
+            blocked_scheduling_proof_count=0,
+            blocked_worker_proof_count=0,
+            blocked_dashboard_proof_count=0,
+            blocked_cost_tracking_count=0,
+            blocked_retry_count=0,
+            blocked_trust_promotion_count=0,
+            missing_evidence_count=0,
+            approval_required_count=0,
+            boundary_count=0,
+            recommended_commands=[],
+            reason="Synthetic browser/desktop adapter proof row.",
+            checklist_items=[],
+            report_path="docs/browser-desktop-adapter-proof-checklist.md",
+        )
+
+    assert len(storage.list_recent_autonomous_scheduling_proof_checklists()) == 5
+    assert (
+        len(storage.list_recent_autonomous_scheduling_proof_checklists(limit=None))
+        == 6
+    )
+    assert len(storage.list_recent_browser_desktop_adapter_proof_checklists()) == 5
+    assert (
+        len(storage.list_recent_browser_desktop_adapter_proof_checklists(limit=None))
+        == 6
+    )
+
+
+def test_ci_deploy_proof_checklist_blocks_real_cost_sourced_adapter_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert "ci_deploy_proof_checklist: ci_deploy_proof_blocked" in output
+    assert "report: docs/ci-deploy-proof-checklist.md" in output
+    assert "source_status: browser_desktop_adapter_proof_blocked" in output
+    assert "capabilities: 1" in output
+    assert "checklist_items: 1" in output
+    assert "blocked_ci_deploy_proofs: 1" in output
+    assert "operator_reviews_required: 0" in output
+    assert "blocked_adapter_proofs: 1" in output
+    assert "blocked_scheduling_proofs: 1" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "boundaries: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_browser_desktop_adapter_proof_checklists()[0]
+    checklists = storage.list_recent_ci_deploy_proof_checklists()
+    assert len(checklists) >= 1
+    checklist = checklists[0]
+    assert checklist.status == "ci_deploy_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "browser_desktop_adapter_proof_blocked"
+    assert checklist.capability_count == 1
+    assert checklist.checklist_count == 1
+    assert checklist.blocked_ci_deploy_proof_count == 1
+    assert checklist.operator_review_required_count == 0
+    assert checklist.blocked_adapter_proof_count == 1
+    assert checklist.blocked_scheduling_proof_count == 1
+    assert checklist.blocked_worker_proof_count == 1
+    assert checklist.blocked_dashboard_proof_count == 1
+    assert checklist.blocked_cost_tracking_count == 1
+    assert checklist.blocked_retry_count == 1
+    assert checklist.blocked_trust_promotion_count == 1
+    assert checklist.missing_evidence_count == 1
+    assert checklist.approval_required_count == 1
+    assert checklist.boundary_count == 1
+    assert checklist.recommended_commands == []
+    assert checklist.report_path == "docs/ci-deploy-proof-checklist.md"
+    assert checklist.checklist_items == [
+        {
+            "capability": "ci_deploy_proof",
+            "proof_item": "ci_deploy_evidence_contract",
+            "recommended_ci_deploy_action": "keep_ci_deploy_disabled",
+            "ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+            "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+            "source_adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+            "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+            "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+            "source_worker_action": "keep_remote_workers_disabled",
+            "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+            "source_dashboard_action": "keep_hosted_dashboard_disabled",
+            "source_dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+            "source_real_cost_tracking_proof_action": "keep_cost_tracking_disabled",
+            "source_real_cost_tracking_proof_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_automatic_retry_proof_action": "keep_retry_disabled",
+            "source_automatic_retry_proof_state": "blocked_until_trust_promotion_proof_and_operator_approval",
+            "source_trust_proof_action": "keep_trust_unpromoted",
+            "source_trust_proof_state": "blocked_until_budget_enforcement_proof_and_operator_approval",
+            "source_budget_action": "keep_budget_enforcement_disabled",
+            "source_budget_state": "blocked_until_ci_deploy_proof_and_operator_approval",
+            "source_ci_deploy_action": "keep_ci_deploy_disabled",
+            "source_ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+            "source_cost_action": "keep_cost_tracking_disabled",
+            "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+            "source_retry_action": "keep_retry_disabled",
+            "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+            "source_trust_action": "keep_trust_unpromoted",
+            "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+            "evidence_state": "missing",
+            "approval_state": "approval_required",
+            "approval_boundary": "explicit_operator_approval_required",
+            "ci_deploy_effect": "none",
+            "routing_effect": "none",
+        }
+    ]
+
+    report = (tmp_path / "docs" / "ci-deploy-proof-checklist.md").read_text(
+        encoding="utf-8",
+    )
+    assert "# CI Deploy Proof Checklist" in report
+    assert "- status: ci_deploy_proof_blocked" in report
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert "- source_checklist_source_checklist_id: autonomous_scheduling_proof_checklist_" in report
+    assert "- checklist_items: 1" in report
+    assert "- blocked_ci_deploy_proofs: 1" in report
+    assert (
+        "- ci_deploy_proof: proof_item=ci_deploy_evidence_contract "
+        "recommended_ci_deploy_action=keep_ci_deploy_disabled "
+        "ci_deploy_state=blocked_until_browser_desktop_adapter_proof_and_operator_approval "
+        "source_adapter_action=keep_browser_desktop_adapters_disabled "
+        "source_adapter_state=blocked_until_autonomous_scheduling_proof_and_operator_approval "
+        "source_scheduling_action=keep_autonomous_scheduling_disabled "
+        "source_scheduling_state=blocked_until_remote_worker_proof_and_operator_approval "
+        "source_worker_action=keep_remote_workers_disabled "
+        "source_worker_state=blocked_until_hosted_dashboard_proof_and_operator_approval "
+        "source_dashboard_action=keep_hosted_dashboard_disabled "
+        "source_dashboard_state=blocked_until_real_cost_tracking_proof_and_operator_approval "
+        "source_real_cost_tracking_proof_action=keep_cost_tracking_disabled"
+    ) in report
+    assert "Does not run CI or deploys" in report
+    assert "Does not operate browser or desktop adapters" in report
+    assert "Does not track real spend automatically" in report
+    assert "Does not mutate external systems" in report
+
+
+def test_ci_deploy_proof_checklist_blocks_latest_real_cost_sourced_browser_desktop_adapter_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "automatic-retry-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "real-cost-tracking-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert "ci_deploy_proof_checklist: ci_deploy_proof_blocked" in output
+    assert "source_status: browser_desktop_adapter_proof_blocked" in output
+    assert "blocked_ci_deploy_proofs: 1" in output
+    assert "blocked_adapter_proofs: 1" in output
+    assert "blocked_scheduling_proofs: 1" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_browser_desktop_adapter_proof_checklists()[0]
+    source_autonomous_checklist = (
+        storage.list_recent_autonomous_scheduling_proof_checklists()[0]
+    )
+    source_remote_checklist = storage.list_recent_remote_worker_proof_checklists()[0]
+    source_hosted_checklist = (
+        storage.list_recent_hosted_dashboard_proof_checklists()[0]
+    )
+    source_real_cost_checklist = (
+        storage.list_recent_real_cost_tracking_proof_checklists()[0]
+    )
+    assert source_checklist.source_checklist_id == source_autonomous_checklist.id
+    assert (
+        source_autonomous_checklist.source_checklist_id
+        == source_remote_checklist.id
+    )
+    assert source_remote_checklist.source_checklist_id == source_hosted_checklist.id
+    assert source_hosted_checklist.source_kind == "real_cost_tracking_proof_checklist"
+    assert source_hosted_checklist.source_checklist_id == source_real_cost_checklist.id
+    assert (
+        source_real_cost_checklist.source_checklist_status
+        == "automatic_retry_proof_blocked"
+    )
+
+    checklist = storage.list_recent_ci_deploy_proof_checklists()[0]
+    assert checklist.status == "ci_deploy_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "browser_desktop_adapter_proof_blocked"
+    assert (
+        checklist.checklist_items[0]["source_real_cost_tracking_proof_action"]
+        == "keep_cost_tracking_disabled"
+    )
+    assert (
+        checklist.checklist_items[0]["source_automatic_retry_proof_action"]
+        == "keep_retry_disabled"
+    )
+
+    report = (tmp_path / "docs" / "ci-deploy-proof-checklist.md").read_text(
+        encoding="utf-8",
+    )
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert (
+        f"- source_checklist_source_checklist_id: "
+        f"{source_autonomous_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_status: "
+        "autonomous_scheduling_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_id: "
+        f"{source_remote_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_status: "
+        "remote_worker_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_hosted_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "hosted_dashboard_proof_blocked"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        "real_cost_tracking_proof_checklist_"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "real_cost_tracking_proof_blocked"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        "automatic_retry_proof_checklist_"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "automatic_retry_proof_blocked"
+    ) in report
+    assert (
+        "source_real_cost_tracking_proof_action=keep_cost_tracking_disabled"
+    ) in report
+    assert (
+        "source_automatic_retry_proof_action=keep_retry_disabled"
+    ) in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert f"- source_checklist: {source_checklist.id}" in dashboard
+    assert "- source_status: browser_desktop_adapter_proof_blocked" in dashboard
+
+
+def test_ci_deploy_proof_checklist_skips_newer_non_real_cost_sourced_browser_desktop_adapter_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_cost_sourced_adapter = (
+        storage.list_recent_browser_desktop_adapter_proof_checklists()[0]
+    )
+    newer_legacy_adapters = [
+        storage.record_browser_desktop_adapter_proof_checklist(
+            status="browser_desktop_adapter_proof_blocked",
+            source_checklist_id=f"autonomous_scheduling_proof_checklist_legacy_{index}",
+            source_checklist_status="autonomous_scheduling_proof_blocked",
+            capability_count=1,
+            checklist_count=1,
+            blocked_adapter_proof_count=1,
+            operator_review_required_count=0,
+            blocked_scheduling_proof_count=1,
+            blocked_worker_proof_count=1,
+            blocked_dashboard_proof_count=1,
+            blocked_cost_tracking_count=1,
+            blocked_retry_count=1,
+            blocked_trust_promotion_count=1,
+            missing_evidence_count=1,
+            approval_required_count=1,
+            boundary_count=1,
+            recommended_commands=[],
+            reason="Synthetic newer legacy browser/desktop adapter proof row.",
+            checklist_items=[
+                {
+                    "capability": "browser_desktop_adapters",
+                    "proof_item": "adapter_permission_boundary_review",
+                    "recommended_adapter_action": "keep_browser_desktop_adapters_disabled",
+                    "adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+                    "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+                    "source_scheduling_state": "legacy_without_real_cost_proof",
+                    "source_worker_action": "keep_remote_workers_disabled",
+                    "source_worker_state": "legacy_without_real_cost_proof",
+                    "source_dashboard_action": "keep_hosted_dashboard_disabled",
+                    "source_dashboard_state": "legacy_without_real_cost_proof",
+                    "source_cost_action": "keep_cost_tracking_disabled",
+                    "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+                    "source_retry_action": "keep_retry_disabled",
+                    "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+                    "source_trust_action": "keep_trust_unpromoted",
+                    "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+                    "evidence_state": "missing",
+                    "approval_state": "approval_required",
+                    "approval_boundary": "explicit_operator_approval_required",
+                    "adapter_effect": "none",
+                    "routing_effect": "none",
+                }
+            ],
+            report_path="docs/browser-desktop-adapter-proof-checklist.md",
+        )
+        for index in range(26)
+    ]
+    assert newer_legacy_adapters[0].id != real_cost_sourced_adapter.id
+
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert "ci_deploy_proof_checklist: ci_deploy_proof_blocked" in output
+    assert f"source_checklist: {real_cost_sourced_adapter.id}" in output
+    assert f"source_checklist: {newer_legacy_adapters[-1].id}" not in output
+
+    checklist = storage.list_recent_ci_deploy_proof_checklists()[0]
+    assert checklist.source_checklist_id == real_cost_sourced_adapter.id
+    assert (
+        checklist.checklist_items[0]["source_real_cost_tracking_proof_action"]
+        == "keep_cost_tracking_disabled"
+    )
+
+    report = (tmp_path / "docs" / "ci-deploy-proof-checklist.md").read_text(
+        encoding="utf-8",
+    )
+    assert f"- source_checklist_id: {real_cost_sourced_adapter.id}" in report
+    assert f"- source_checklist_id: {newer_legacy_adapters[-1].id}" not in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        "real_cost_tracking_proof_checklist_"
+    ) in report
+
+
+def test_ci_deploy_proof_checklist_skips_newer_adapter_with_dangling_real_cost_source(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_cost_sourced_adapter = (
+        storage.list_recent_browser_desktop_adapter_proof_checklists()[0]
+    )
+    dangling_real_cost = _record_synthetic_real_cost_tracking_proof_checklist(
+        storage,
+        source_checklist_id="automatic_retry_proof_checklist_missing_source",
+        reason="Synthetic dangling Real Cost Tracking proof row.",
+        source_automatic_retry_proof_state="missing_source_proof",
+    )
+    dangling_hosted = storage.record_hosted_dashboard_proof_checklist(
+        status="hosted_dashboard_proof_blocked",
+        source_audit_id=None,
+        source_audit_status="none",
+        source_kind="real_cost_tracking_proof_checklist",
+        source_checklist_id=dangling_real_cost.id,
+        source_checklist_status="real_cost_tracking_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_dashboard_proof_count=1,
+        operator_review_required_count=0,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic hosted proof row with dangling Real Cost source.",
+        checklist_items=[],
+        report_path="docs/hosted-dashboard-proof-checklist.md",
+    )
+    dangling_remote = storage.record_remote_worker_proof_checklist(
+        status="remote_worker_proof_blocked",
+        source_checklist_id=dangling_hosted.id,
+        source_checklist_status="hosted_dashboard_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_worker_proof_count=1,
+        operator_review_required_count=0,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic remote proof row with dangling Real Cost source.",
+        checklist_items=[],
+        report_path="docs/remote-worker-proof-checklist.md",
+    )
+    dangling_scheduling = storage.record_autonomous_scheduling_proof_checklist(
+        status="autonomous_scheduling_proof_blocked",
+        source_checklist_id=dangling_remote.id,
+        source_checklist_status="remote_worker_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_scheduling_proof_count=1,
+        operator_review_required_count=0,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic scheduling proof row with dangling Real Cost source.",
+        checklist_items=[],
+        report_path="docs/autonomous-scheduling-proof-checklist.md",
+    )
+    dangling_adapter = storage.record_browser_desktop_adapter_proof_checklist(
+        status="browser_desktop_adapter_proof_blocked",
+        source_checklist_id=dangling_scheduling.id,
+        source_checklist_status="autonomous_scheduling_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_adapter_proof_count=1,
+        operator_review_required_count=0,
+        blocked_scheduling_proof_count=1,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic adapter proof row with dangling Real Cost source.",
+        checklist_items=[],
+        report_path="docs/browser-desktop-adapter-proof-checklist.md",
+    )
+
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert f"source_checklist: {real_cost_sourced_adapter.id}" in output
+    assert f"source_checklist: {dangling_adapter.id}" not in output
+
+    checklist = storage.list_recent_ci_deploy_proof_checklists()[0]
+    assert checklist.source_checklist_id == real_cost_sourced_adapter.id
+
+
+def test_ci_deploy_proof_checklist_reports_missing_when_only_dangling_real_cost_adapter_exists(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    dangling_real_cost = _record_synthetic_real_cost_tracking_proof_checklist(
+        storage,
+        source_checklist_id="automatic_retry_proof_checklist_missing_source",
+        reason="Synthetic dangling Real Cost Tracking proof row.",
+        source_automatic_retry_proof_state="missing_source_proof",
+    )
+    dangling_hosted = storage.record_hosted_dashboard_proof_checklist(
+        status="hosted_dashboard_proof_blocked",
+        source_audit_id=None,
+        source_audit_status="none",
+        source_kind="real_cost_tracking_proof_checklist",
+        source_checklist_id=dangling_real_cost.id,
+        source_checklist_status="real_cost_tracking_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_dashboard_proof_count=1,
+        operator_review_required_count=0,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic hosted proof row with dangling Real Cost source.",
+        checklist_items=[],
+        report_path="docs/hosted-dashboard-proof-checklist.md",
+    )
+    dangling_remote = storage.record_remote_worker_proof_checklist(
+        status="remote_worker_proof_blocked",
+        source_checklist_id=dangling_hosted.id,
+        source_checklist_status="hosted_dashboard_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_worker_proof_count=1,
+        operator_review_required_count=0,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic remote proof row with dangling Real Cost source.",
+        checklist_items=[],
+        report_path="docs/remote-worker-proof-checklist.md",
+    )
+    dangling_scheduling = storage.record_autonomous_scheduling_proof_checklist(
+        status="autonomous_scheduling_proof_blocked",
+        source_checklist_id=dangling_remote.id,
+        source_checklist_status="remote_worker_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_scheduling_proof_count=1,
+        operator_review_required_count=0,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic scheduling proof row with dangling Real Cost source.",
+        checklist_items=[],
+        report_path="docs/autonomous-scheduling-proof-checklist.md",
+    )
+    dangling_adapter = storage.record_browser_desktop_adapter_proof_checklist(
+        status="browser_desktop_adapter_proof_blocked",
+        source_checklist_id=dangling_scheduling.id,
+        source_checklist_status="autonomous_scheduling_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_adapter_proof_count=1,
+        operator_review_required_count=0,
+        blocked_scheduling_proof_count=1,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic adapter proof row with dangling Real Cost source.",
+        checklist_items=[],
+        report_path="docs/browser-desktop-adapter-proof-checklist.md",
+    )
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "ci_deploy_proof_checklist: "
+        "browser_desktop_adapter_proof_checklist_missing"
+    ) in output
+    assert "source_checklist: none" in output
+    assert f"source_checklist: {dangling_adapter.id}" not in output
+    assert "blocked_ci_deploy_proofs: 0" in output
+    assert "recommended_commands: browser-desktop-adapter-proof-checklist" in output
+
+    checklist = storage.list_recent_ci_deploy_proof_checklists()[0]
+    assert checklist.status == "browser_desktop_adapter_proof_checklist_missing"
+    assert checklist.source_checklist_id is None
+    assert checklist.checklist_items == []
+
+
+def test_ci_deploy_item_rendering_omits_partial_optional_proof_metadata() -> None:
+    from agent_os.ci_deploy_proof import render_checklist_item_line
+
+    item = {
+        "capability": "ci_deploy_proof",
+        "proof_item": "ci_deploy_evidence_contract",
+        "recommended_ci_deploy_action": "keep_ci_deploy_disabled",
+        "ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+        "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+        "source_adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+        "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+        "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+        "source_worker_action": "keep_remote_workers_disabled",
+        "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+        "source_dashboard_action": "keep_hosted_dashboard_disabled",
+        "source_dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+        "source_real_cost_tracking_proof_action": "keep_cost_tracking_disabled",
+        "source_cost_action": "keep_cost_tracking_disabled",
+        "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+        "source_retry_action": "keep_retry_disabled",
+        "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+        "source_trust_action": "keep_trust_unpromoted",
+        "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+        "evidence_state": "missing",
+        "approval_state": "approval_required",
+        "approval_boundary": "explicit_operator_approval_required",
+        "ci_deploy_effect": "none",
+        "routing_effect": "none",
+    }
+
+    line = render_checklist_item_line(item)
+
+    assert "source_cost_action=keep_cost_tracking_disabled" in line
+    assert "source_real_cost_tracking_proof_action" not in line
+
+
+def test_storage_lists_ci_deploy_proof_checklists_without_limit(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+
+    for index in range(6):
+        storage.record_ci_deploy_proof_checklist(
+            status="ci_deploy_proof_blocked",
+            source_checklist_id=f"browser_desktop_adapter_proof_checklist_{index}",
+            source_checklist_status="browser_desktop_adapter_proof_blocked",
+            capability_count=0,
+            checklist_count=0,
+            blocked_ci_deploy_proof_count=0,
+            operator_review_required_count=0,
+            blocked_adapter_proof_count=0,
+            blocked_scheduling_proof_count=0,
+            blocked_worker_proof_count=0,
+            blocked_dashboard_proof_count=0,
+            blocked_cost_tracking_count=0,
+            blocked_retry_count=0,
+            blocked_trust_promotion_count=0,
+            missing_evidence_count=0,
+            approval_required_count=0,
+            boundary_count=0,
+            recommended_commands=[],
+            reason="Synthetic CI Deploy proof row.",
+            checklist_items=[],
+            report_path="docs/ci-deploy-proof-checklist.md",
+        )
+
+    assert len(storage.list_recent_ci_deploy_proof_checklists()) == 5
+    assert len(storage.list_recent_ci_deploy_proof_checklists(limit=None)) == 6
+
+
+def test_budget_enforcement_proof_checklist_blocks_latest_real_cost_sourced_ci_deploy_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "automatic-retry-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "real-cost-tracking-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "budget_enforcement_proof_checklist: "
+        "budget_enforcement_proof_blocked"
+    ) in output
+    assert "source_status: ci_deploy_proof_blocked" in output
+    assert "blocked_budget_enforcement_proofs: 1" in output
+    assert "blocked_ci_deploy_proofs: 1" in output
+    assert "blocked_adapter_proofs: 1" in output
+    assert "blocked_scheduling_proofs: 1" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_ci_deploy_proof_checklists()[0]
+    source_adapter_checklist = (
+        storage.list_recent_browser_desktop_adapter_proof_checklists()[0]
+    )
+    source_autonomous_checklist = (
+        storage.list_recent_autonomous_scheduling_proof_checklists()[0]
+    )
+    source_remote_checklist = storage.list_recent_remote_worker_proof_checklists()[0]
+    source_hosted_checklist = (
+        storage.list_recent_hosted_dashboard_proof_checklists()[0]
+    )
+    source_real_cost_checklist = (
+        storage.list_recent_real_cost_tracking_proof_checklists()[0]
+    )
+    assert source_checklist.source_checklist_id == source_adapter_checklist.id
+    assert (
+        source_adapter_checklist.source_checklist_id
+        == source_autonomous_checklist.id
+    )
+    assert (
+        source_autonomous_checklist.source_checklist_id
+        == source_remote_checklist.id
+    )
+    assert source_remote_checklist.source_checklist_id == source_hosted_checklist.id
+    assert source_hosted_checklist.source_kind == "real_cost_tracking_proof_checklist"
+    assert source_hosted_checklist.source_checklist_id == source_real_cost_checklist.id
+    assert (
+        source_real_cost_checklist.source_checklist_status
+        == "automatic_retry_proof_blocked"
+    )
+
+    checklist = storage.list_recent_budget_enforcement_proof_checklists()[0]
+    assert checklist.status == "budget_enforcement_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "ci_deploy_proof_blocked"
+    assert (
+        checklist.checklist_items[0]["source_real_cost_tracking_proof_action"]
+        == "keep_cost_tracking_disabled"
+    )
+    assert (
+        checklist.checklist_items[0]["source_automatic_retry_proof_action"]
+        == "keep_retry_disabled"
+    )
+
+    report = (
+        tmp_path / "docs" / "budget-enforcement-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert (
+        f"- source_checklist_source_checklist_id: "
+        f"{source_adapter_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_status: "
+        "browser_desktop_adapter_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_id: "
+        f"{source_autonomous_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_status: "
+        "autonomous_scheduling_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_remote_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "remote_worker_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_hosted_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "hosted_dashboard_proof_blocked"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        "real_cost_tracking_proof_checklist_"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "real_cost_tracking_proof_blocked"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        "automatic_retry_proof_checklist_"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "automatic_retry_proof_blocked"
+    ) in report
+    assert (
+        "source_real_cost_tracking_proof_action=keep_cost_tracking_disabled"
+    ) in report
+    assert (
+        "source_automatic_retry_proof_action=keep_retry_disabled"
+    ) in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert f"- source_checklist: {source_checklist.id}" in dashboard
+    assert "- source_status: ci_deploy_proof_blocked" in dashboard
+
+
+def test_budget_enforcement_proof_checklist_skips_newer_non_real_cost_sourced_ci_deploy_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_cost_sourced_ci_deploy = storage.list_recent_ci_deploy_proof_checklists()[0]
+    newer_legacy_ci_deploys = [
+        storage.record_ci_deploy_proof_checklist(
+            status="ci_deploy_proof_blocked",
+            source_checklist_id=f"browser_desktop_adapter_proof_checklist_legacy_{index}",
+            source_checklist_status="browser_desktop_adapter_proof_blocked",
+            capability_count=1,
+            checklist_count=1,
+            blocked_ci_deploy_proof_count=1,
+            operator_review_required_count=0,
+            blocked_adapter_proof_count=1,
+            blocked_scheduling_proof_count=1,
+            blocked_worker_proof_count=1,
+            blocked_dashboard_proof_count=1,
+            blocked_cost_tracking_count=1,
+            blocked_retry_count=1,
+            blocked_trust_promotion_count=1,
+            missing_evidence_count=1,
+            approval_required_count=1,
+            boundary_count=1,
+            recommended_commands=[],
+            reason="Synthetic newer legacy CI Deploy proof row.",
+            checklist_items=[
+                {
+                    "capability": "ci_deploy_proof",
+                    "proof_item": "ci_deploy_evidence_contract",
+                    "recommended_ci_deploy_action": "keep_ci_deploy_disabled",
+                    "ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+                    "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+                    "source_adapter_state": "legacy_without_real_cost_proof",
+                    "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+                    "source_scheduling_state": "legacy_without_real_cost_proof",
+                    "source_worker_action": "keep_remote_workers_disabled",
+                    "source_worker_state": "legacy_without_real_cost_proof",
+                    "source_dashboard_action": "keep_hosted_dashboard_disabled",
+                    "source_dashboard_state": "legacy_without_real_cost_proof",
+                    "source_cost_action": "keep_cost_tracking_disabled",
+                    "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+                    "source_retry_action": "keep_retry_disabled",
+                    "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+                    "source_trust_action": "keep_trust_unpromoted",
+                    "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+                    "evidence_state": "missing",
+                    "approval_state": "approval_required",
+                    "approval_boundary": "explicit_operator_approval_required",
+                    "ci_deploy_effect": "none",
+                    "routing_effect": "none",
+                }
+            ],
+            report_path="docs/ci-deploy-proof-checklist.md",
+        )
+        for index in range(26)
+    ]
+    assert newer_legacy_ci_deploys[-1].id != real_cost_sourced_ci_deploy.id
+
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "budget_enforcement_proof_checklist: "
+        "budget_enforcement_proof_blocked"
+    ) in output
+    assert f"source_checklist: {real_cost_sourced_ci_deploy.id}" in output
+    for newer_legacy_ci_deploy in newer_legacy_ci_deploys:
+        assert f"source_checklist: {newer_legacy_ci_deploy.id}" not in output
+
+    checklist = storage.list_recent_budget_enforcement_proof_checklists()[0]
+    assert checklist.source_checklist_id == real_cost_sourced_ci_deploy.id
+    assert (
+        checklist.checklist_items[0]["source_real_cost_tracking_proof_action"]
+        == "keep_cost_tracking_disabled"
+    )
+
+    report = (
+        tmp_path / "docs" / "budget-enforcement-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert f"- source_checklist_id: {real_cost_sourced_ci_deploy.id}" in report
+    for newer_legacy_ci_deploy in newer_legacy_ci_deploys:
+        assert f"- source_checklist_id: {newer_legacy_ci_deploy.id}" not in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        "real_cost_tracking_proof_checklist_"
+    ) in report
+
+
+def test_budget_enforcement_proof_checklist_skips_newer_ci_deploy_with_dangling_real_cost_source(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_cost_sourced_ci_deploy = storage.list_recent_ci_deploy_proof_checklists()[0]
+    dangling_ci_deploy = _record_dangling_real_cost_sourced_ci_deploy_chain(storage)
+
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert f"source_checklist: {real_cost_sourced_ci_deploy.id}" in output
+    assert f"source_checklist: {dangling_ci_deploy.id}" not in output
+
+    checklist = storage.list_recent_budget_enforcement_proof_checklists()[0]
+    assert checklist.source_checklist_id == real_cost_sourced_ci_deploy.id
+
+
+def test_budget_enforcement_proof_checklist_reports_missing_when_only_dangling_real_cost_ci_deploy_exists(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    dangling_ci_deploy = _record_dangling_real_cost_sourced_ci_deploy_chain(storage)
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "budget_enforcement_proof_checklist: "
+        "ci_deploy_proof_checklist_missing"
+    ) in output
+    assert "source_checklist: none" in output
+    assert f"source_checklist: {dangling_ci_deploy.id}" not in output
+    assert "blocked_budget_enforcement_proofs: 0" in output
+    assert "recommended_commands: ci-deploy-proof-checklist" in output
+
+    checklist = storage.list_recent_budget_enforcement_proof_checklists()[0]
+    assert checklist.status == "ci_deploy_proof_checklist_missing"
+    assert checklist.source_checklist_id is None
+    assert checklist.checklist_items == []
+
+
+def test_budget_enforcement_item_rendering_omits_partial_optional_proof_metadata() -> None:
+    from agent_os.budget_enforcement_proof import render_checklist_item_line
+
+    item = {
+        "capability": "budget_enforcement",
+        "proof_item": "budget_policy_simulation_contract",
+        "recommended_budget_action": "keep_budget_enforcement_disabled",
+        "budget_enforcement_state": "blocked_until_ci_deploy_proof_and_operator_approval",
+        "source_ci_deploy_action": "keep_ci_deploy_disabled",
+        "source_ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+        "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+        "source_adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+        "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+        "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+        "source_worker_action": "keep_remote_workers_disabled",
+        "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+        "source_dashboard_action": "keep_hosted_dashboard_disabled",
+        "source_dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+        "source_real_cost_tracking_proof_action": "keep_cost_tracking_disabled",
+        "source_cost_action": "keep_cost_tracking_disabled",
+        "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+        "source_retry_action": "keep_retry_disabled",
+        "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+        "source_trust_action": "keep_trust_unpromoted",
+        "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+        "evidence_state": "missing",
+        "approval_state": "approval_required",
+        "approval_boundary": "explicit_operator_approval_required",
+        "budget_enforcement_effect": "none",
+        "routing_effect": "none",
+    }
+
+    line = render_checklist_item_line(item)
+
+    assert "source_cost_action=keep_cost_tracking_disabled" in line
+    assert "source_real_cost_tracking_proof_action" not in line
+
+
+def _record_dangling_real_cost_sourced_ci_deploy_chain(storage: Storage):
+    dangling_real_cost = _record_synthetic_real_cost_tracking_proof_checklist(
+        storage,
+        source_checklist_id="automatic_retry_proof_checklist_missing_source",
+        reason="Synthetic dangling Real Cost Tracking proof row.",
+        source_automatic_retry_proof_state="missing_source_proof",
+    )
+    dangling_hosted = storage.record_hosted_dashboard_proof_checklist(
+        status="hosted_dashboard_proof_blocked",
+        source_audit_id=None,
+        source_audit_status="none",
+        source_kind="real_cost_tracking_proof_checklist",
+        source_checklist_id=dangling_real_cost.id,
+        source_checklist_status="real_cost_tracking_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_dashboard_proof_count=1,
+        operator_review_required_count=0,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic hosted proof row with dangling Real Cost source.",
+        checklist_items=[],
+        report_path="docs/hosted-dashboard-proof-checklist.md",
+    )
+    dangling_remote = storage.record_remote_worker_proof_checklist(
+        status="remote_worker_proof_blocked",
+        source_checklist_id=dangling_hosted.id,
+        source_checklist_status="hosted_dashboard_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_worker_proof_count=1,
+        operator_review_required_count=0,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic remote proof row with dangling Real Cost source.",
+        checklist_items=[],
+        report_path="docs/remote-worker-proof-checklist.md",
+    )
+    dangling_scheduling = storage.record_autonomous_scheduling_proof_checklist(
+        status="autonomous_scheduling_proof_blocked",
+        source_checklist_id=dangling_remote.id,
+        source_checklist_status="remote_worker_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_scheduling_proof_count=1,
+        operator_review_required_count=0,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic scheduling proof row with dangling Real Cost source.",
+        checklist_items=[],
+        report_path="docs/autonomous-scheduling-proof-checklist.md",
+    )
+    dangling_adapter = storage.record_browser_desktop_adapter_proof_checklist(
+        status="browser_desktop_adapter_proof_blocked",
+        source_checklist_id=dangling_scheduling.id,
+        source_checklist_status="autonomous_scheduling_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_adapter_proof_count=1,
+        operator_review_required_count=0,
+        blocked_scheduling_proof_count=1,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic adapter proof row with dangling Real Cost source.",
+        checklist_items=[],
+        report_path="docs/browser-desktop-adapter-proof-checklist.md",
+    )
+    return storage.record_ci_deploy_proof_checklist(
+        status="ci_deploy_proof_blocked",
+        source_checklist_id=dangling_adapter.id,
+        source_checklist_status="browser_desktop_adapter_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_ci_deploy_proof_count=1,
+        operator_review_required_count=0,
+        blocked_adapter_proof_count=1,
+        blocked_scheduling_proof_count=1,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic CI Deploy proof row with dangling Real Cost source.",
+        checklist_items=[
+            {
+                "capability": "ci_deploy_proof",
+                "proof_item": "ci_deploy_evidence_contract",
+                "recommended_ci_deploy_action": "keep_ci_deploy_disabled",
+                "ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+                "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+                "source_adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+                "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+                "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+                "source_worker_action": "keep_remote_workers_disabled",
+                "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+                "source_dashboard_action": "keep_hosted_dashboard_disabled",
+                "source_dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+                "source_real_cost_tracking_proof_action": "keep_cost_tracking_disabled",
+                "source_real_cost_tracking_proof_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+                "source_automatic_retry_proof_action": "keep_retry_disabled",
+                "source_automatic_retry_proof_state": "missing_source_proof",
+                "source_trust_proof_action": "keep_trust_unpromoted",
+                "source_trust_proof_state": "blocked_until_budget_enforcement_proof_and_operator_approval",
+                "source_budget_action": "keep_budget_enforcement_disabled",
+                "source_budget_state": "blocked_until_ci_deploy_proof_and_operator_approval",
+                "source_cost_action": "keep_cost_tracking_disabled",
+                "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+                "source_retry_action": "keep_retry_disabled",
+                "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+                "source_trust_action": "keep_trust_unpromoted",
+                "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+                "evidence_state": "missing",
+                "approval_state": "approval_required",
+                "approval_boundary": "explicit_operator_approval_required",
+                "ci_deploy_effect": "none",
+                "routing_effect": "none",
+            }
+        ],
+        report_path="docs/ci-deploy-proof-checklist.md",
+    )
+
+
+def _record_dangling_real_cost_sourced_budget_enforcement_chain(storage: Storage):
+    dangling_ci_deploy = _record_dangling_real_cost_sourced_ci_deploy_chain(storage)
+    return _record_synthetic_budget_enforcement_proof_checklist(
+        storage,
+        source_checklist_id=dangling_ci_deploy.id,
+        reason="Synthetic Budget Enforcement proof row with dangling Real Cost source.",
+        source_ci_deploy_state=(
+            "blocked_until_browser_desktop_adapter_proof_and_operator_approval"
+        ),
+    )
+
+
+def _record_dangling_real_cost_sourced_trust_promotion_chain(storage: Storage):
+    dangling_budget = _record_dangling_real_cost_sourced_budget_enforcement_chain(
+        storage
+    )
+    return _record_synthetic_trust_promotion_proof_checklist(
+        storage,
+        source_checklist_id=dangling_budget.id,
+        reason="Synthetic Trust Promotion proof row with dangling Real Cost source.",
+        source_budget_state=(
+            "blocked_until_ci_deploy_proof_and_operator_approval"
+        ),
+    )
+
+
+def _run_latest_real_cost_sourced_budget_enforcement_proof_chain(
+    tmp_path: Path,
+) -> None:
+    _run_real_cost_tracking_proof_chain(tmp_path)
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "automatic-retry-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "real-cost-tracking-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "hosted-dashboard-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "remote-worker-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "autonomous-scheduling-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "browser-desktop-adapter-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "ci-deploy-proof-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "budget-enforcement-proof-checklist"]) == 0
+
+
+def test_trust_promotion_proof_checklist_blocks_latest_real_cost_sourced_budget_enforcement_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_real_cost_sourced_budget_enforcement_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "trust_promotion_proof_checklist: "
+        "trust_promotion_proof_blocked"
+    ) in output
+    assert "source_status: budget_enforcement_proof_blocked" in output
+    assert "blocked_trust_promotion_proofs: 1" in output
+    assert "blocked_budget_enforcement_proofs: 1" in output
+    assert "blocked_ci_deploy_proofs: 1" in output
+    assert "blocked_adapter_proofs: 1" in output
+    assert "blocked_scheduling_proofs: 1" in output
+    assert "blocked_worker_proofs: 1" in output
+    assert "blocked_dashboard_proofs: 1" in output
+    assert "blocked_cost_tracking: 1" in output
+    assert "blocked_retries: 1" in output
+    assert "blocked_trust_promotions: 1" in output
+    assert "missing_evidence: 1" in output
+    assert "approvals_required: 1" in output
+    assert "recommended_commands: none" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    source_checklist = storage.list_recent_budget_enforcement_proof_checklists()[0]
+    source_ci_deploy_checklist = storage.list_recent_ci_deploy_proof_checklists()[0]
+    source_adapter_checklist = (
+        storage.list_recent_browser_desktop_adapter_proof_checklists()[0]
+    )
+    source_autonomous_checklist = (
+        storage.list_recent_autonomous_scheduling_proof_checklists()[0]
+    )
+    source_remote_checklist = storage.list_recent_remote_worker_proof_checklists()[0]
+    source_hosted_checklist = (
+        storage.list_recent_hosted_dashboard_proof_checklists()[0]
+    )
+    source_real_cost_checklist = (
+        storage.list_recent_real_cost_tracking_proof_checklists()[0]
+    )
+    assert source_checklist.source_checklist_id == source_ci_deploy_checklist.id
+    assert (
+        source_ci_deploy_checklist.source_checklist_id
+        == source_adapter_checklist.id
+    )
+    assert (
+        source_adapter_checklist.source_checklist_id
+        == source_autonomous_checklist.id
+    )
+    assert (
+        source_autonomous_checklist.source_checklist_id
+        == source_remote_checklist.id
+    )
+    assert source_remote_checklist.source_checklist_id == source_hosted_checklist.id
+    assert source_hosted_checklist.source_kind == "real_cost_tracking_proof_checklist"
+    assert source_hosted_checklist.source_checklist_id == source_real_cost_checklist.id
+    assert (
+        source_real_cost_checklist.source_checklist_status
+        == "automatic_retry_proof_blocked"
+    )
+
+    checklist = storage.list_recent_trust_promotion_proof_checklists()[0]
+    assert checklist.status == "trust_promotion_proof_blocked"
+    assert checklist.source_checklist_id == source_checklist.id
+    assert checklist.source_checklist_status == "budget_enforcement_proof_blocked"
+    assert (
+        checklist.checklist_items[0]["source_real_cost_tracking_proof_action"]
+        == "keep_cost_tracking_disabled"
+    )
+    assert (
+        checklist.checklist_items[0]["source_automatic_retry_proof_action"]
+        == "keep_retry_disabled"
+    )
+
+    report = (
+        tmp_path / "docs" / "trust-promotion-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert f"- source_checklist_id: {source_checklist.id}" in report
+    assert (
+        f"- source_checklist_source_checklist_id: "
+        f"{source_ci_deploy_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_status: "
+        "ci_deploy_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_id: "
+        f"{source_adapter_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_status: "
+        "browser_desktop_adapter_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_autonomous_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "autonomous_scheduling_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_remote_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "remote_worker_proof_blocked"
+    ) in report
+    assert (
+        f"- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        f"{source_hosted_checklist.id}"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "hosted_dashboard_proof_blocked"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        "real_cost_tracking_proof_checklist_"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "real_cost_tracking_proof_blocked"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        "automatic_retry_proof_checklist_"
+    ) in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: "
+        "automatic_retry_proof_blocked"
+    ) in report
+    assert (
+        "source_real_cost_tracking_proof_action=keep_cost_tracking_disabled"
+    ) in report
+    assert "source_automatic_retry_proof_action=keep_retry_disabled" in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert f"- source_checklist: {source_checklist.id}" in dashboard
+    assert "- source_status: budget_enforcement_proof_blocked" in dashboard
+
+
+def test_trust_promotion_proof_checklist_skips_newer_non_real_cost_sourced_budget_enforcement_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_real_cost_sourced_budget_enforcement_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_cost_sourced_budget = (
+        storage.list_recent_budget_enforcement_proof_checklists()[0]
+    )
+    newer_legacy_budgets = [
+        _record_synthetic_budget_enforcement_proof_checklist(
+            storage,
+            source_checklist_id=f"ci_deploy_proof_checklist_legacy_{index}",
+            reason="Synthetic newer legacy Budget Enforcement proof row.",
+            source_ci_deploy_state="legacy_without_real_cost_proof",
+        )
+        for index in range(26)
+    ]
+    assert newer_legacy_budgets[0].id != real_cost_sourced_budget.id
+
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "trust_promotion_proof_checklist: "
+        "trust_promotion_proof_blocked"
+    ) in output
+    assert f"source_checklist: {real_cost_sourced_budget.id}" in output
+    assert f"source_checklist: {newer_legacy_budgets[-1].id}" not in output
+
+    checklist = storage.list_recent_trust_promotion_proof_checklists()[0]
+    assert checklist.source_checklist_id == real_cost_sourced_budget.id
+    assert (
+        checklist.checklist_items[0]["source_real_cost_tracking_proof_action"]
+        == "keep_cost_tracking_disabled"
+    )
+
+    report = (
+        tmp_path / "docs" / "trust-promotion-proof-checklist.md"
+    ).read_text(encoding="utf-8")
+    assert f"- source_checklist_id: {real_cost_sourced_budget.id}" in report
+    assert f"- source_checklist_id: {newer_legacy_budgets[-1].id}" not in report
+    assert (
+        "- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: "
+        "real_cost_tracking_proof_checklist_"
+    ) in report
+
+
+def test_trust_promotion_proof_checklist_skips_newer_budget_with_non_real_cost_hosted_source(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_real_cost_sourced_budget_enforcement_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_cost_sourced_budget = (
+        storage.list_recent_budget_enforcement_proof_checklists()[0]
+    )
+    hosted = storage.record_hosted_dashboard_proof_checklist(
+        status="hosted_dashboard_proof_blocked",
+        source_audit_id="capability_real_cost_tracking_audit_legacy",
+        source_audit_status="real_cost_tracking_blocked",
+        source_kind="real_cost_tracking_audit",
+        source_checklist_id=None,
+        source_checklist_status="none",
+        capability_count=1,
+        checklist_count=1,
+        blocked_dashboard_proof_count=1,
+        operator_review_required_count=0,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic hosted proof row without Real Cost Tracking proof source.",
+        checklist_items=[],
+        report_path="docs/hosted-dashboard-proof-checklist.md",
+    )
+    remote = storage.record_remote_worker_proof_checklist(
+        status="remote_worker_proof_blocked",
+        source_checklist_id=hosted.id,
+        source_checklist_status="hosted_dashboard_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_worker_proof_count=1,
+        operator_review_required_count=0,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic remote proof row with non-Real-Cost hosted source.",
+        checklist_items=[],
+        report_path="docs/remote-worker-proof-checklist.md",
+    )
+    autonomous = storage.record_autonomous_scheduling_proof_checklist(
+        status="autonomous_scheduling_proof_blocked",
+        source_checklist_id=remote.id,
+        source_checklist_status="remote_worker_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_scheduling_proof_count=1,
+        operator_review_required_count=0,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic scheduling proof row with non-Real-Cost hosted source.",
+        checklist_items=[],
+        report_path="docs/autonomous-scheduling-proof-checklist.md",
+    )
+    adapter = storage.record_browser_desktop_adapter_proof_checklist(
+        status="browser_desktop_adapter_proof_blocked",
+        source_checklist_id=autonomous.id,
+        source_checklist_status="autonomous_scheduling_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_adapter_proof_count=1,
+        operator_review_required_count=0,
+        blocked_scheduling_proof_count=1,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic adapter proof row with non-Real-Cost hosted source.",
+        checklist_items=[],
+        report_path="docs/browser-desktop-adapter-proof-checklist.md",
+    )
+    ci_deploy = storage.record_ci_deploy_proof_checklist(
+        status="ci_deploy_proof_blocked",
+        source_checklist_id=adapter.id,
+        source_checklist_status="browser_desktop_adapter_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_ci_deploy_proof_count=1,
+        operator_review_required_count=0,
+        blocked_adapter_proof_count=1,
+        blocked_scheduling_proof_count=1,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason="Synthetic CI proof row with non-Real-Cost hosted source.",
+        checklist_items=[],
+        report_path="docs/ci-deploy-proof-checklist.md",
+    )
+    newer_non_real_cost_budget = _record_synthetic_budget_enforcement_proof_checklist(
+        storage,
+        source_checklist_id=ci_deploy.id,
+        reason="Synthetic newer Budget proof row with non-Real-Cost hosted source.",
+        source_ci_deploy_state="blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+    )
+
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert f"source_checklist: {real_cost_sourced_budget.id}" in output
+    assert f"source_checklist: {newer_non_real_cost_budget.id}" not in output
+
+    checklist = storage.list_recent_trust_promotion_proof_checklists()[0]
+    assert checklist.source_checklist_id == real_cost_sourced_budget.id
+
+
+def test_trust_promotion_proof_checklist_skips_newer_budget_with_dangling_real_cost_source(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_latest_real_cost_sourced_budget_enforcement_proof_chain(tmp_path)
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_cost_sourced_budget = (
+        storage.list_recent_budget_enforcement_proof_checklists()[0]
+    )
+    dangling_budget = _record_dangling_real_cost_sourced_budget_enforcement_chain(
+        storage
+    )
+
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert f"source_checklist: {real_cost_sourced_budget.id}" in output
+    assert f"source_checklist: {dangling_budget.id}" not in output
+
+    checklist = storage.list_recent_trust_promotion_proof_checklists()[0]
+    assert checklist.source_checklist_id == real_cost_sourced_budget.id
+
+
+def test_trust_promotion_proof_checklist_reports_missing_when_only_dangling_real_cost_budget_exists(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    dangling_budget = _record_dangling_real_cost_sourced_budget_enforcement_chain(
+        storage
+    )
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "trust-promotion-proof-checklist"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "trust_promotion_proof_checklist: "
+        "budget_enforcement_proof_checklist_missing"
+    ) in output
+    assert "source_checklist: none" in output
+    assert f"source_checklist: {dangling_budget.id}" not in output
+    assert "blocked_trust_promotion_proofs: 0" in output
+    assert "recommended_commands: budget-enforcement-proof-checklist" in output
+
+    checklist = storage.list_recent_trust_promotion_proof_checklists()[0]
+    assert checklist.status == "budget_enforcement_proof_checklist_missing"
+    assert checklist.source_checklist_id is None
+    assert checklist.checklist_items == []
+
+
+def test_trust_promotion_item_rendering_omits_partial_optional_proof_metadata() -> None:
+    from agent_os.trust_promotion_proof import render_checklist_item_line
+
+    item = {
+        "capability": "trust_promotion",
+        "proof_item": "trust_promotion_decision_contract",
+        "recommended_trust_action": "keep_trust_unpromoted",
+        "trust_promotion_state": "blocked_until_budget_enforcement_proof_and_operator_approval",
+        "source_budget_action": "keep_budget_enforcement_disabled",
+        "source_budget_state": "blocked_until_ci_deploy_proof_and_operator_approval",
+        "source_ci_deploy_action": "keep_ci_deploy_disabled",
+        "source_ci_deploy_state": "blocked_until_browser_desktop_adapter_proof_and_operator_approval",
+        "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+        "source_adapter_state": "blocked_until_autonomous_scheduling_proof_and_operator_approval",
+        "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+        "source_scheduling_state": "blocked_until_remote_worker_proof_and_operator_approval",
+        "source_worker_action": "keep_remote_workers_disabled",
+        "source_worker_state": "blocked_until_hosted_dashboard_proof_and_operator_approval",
+        "source_dashboard_action": "keep_hosted_dashboard_disabled",
+        "source_dashboard_state": "blocked_until_real_cost_tracking_proof_and_operator_approval",
+        "source_real_cost_tracking_proof_action": "keep_cost_tracking_disabled",
+        "source_cost_action": "keep_cost_tracking_disabled",
+        "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+        "source_retry_action": "keep_retry_disabled",
+        "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+        "source_trust_action": "keep_trust_unpromoted",
+        "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+        "evidence_state": "missing",
+        "approval_state": "approval_required",
+        "approval_boundary": "explicit_operator_approval_required",
+        "trust_promotion_effect": "none",
+        "routing_effect": "none",
+    }
+
+    line = render_checklist_item_line(item)
+
+    assert "source_cost_action=keep_cost_tracking_disabled" in line
+    assert "source_real_cost_tracking_proof_action" not in line
+
+
+def _record_synthetic_budget_enforcement_proof_checklist(
+    storage: Storage,
+    *,
+    source_checklist_id: str,
+    reason: str,
+    source_ci_deploy_state: str,
+):
+    return storage.record_budget_enforcement_proof_checklist(
+        status="budget_enforcement_proof_blocked",
+        source_checklist_id=source_checklist_id,
+        source_checklist_status="ci_deploy_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_budget_enforcement_proof_count=1,
+        operator_review_required_count=0,
+        blocked_ci_deploy_proof_count=1,
+        blocked_adapter_proof_count=1,
+        blocked_scheduling_proof_count=1,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason=reason,
+        checklist_items=[
+            {
+                "capability": "budget_enforcement",
+                "proof_item": "budget_policy_simulation_contract",
+                "recommended_budget_action": "keep_budget_enforcement_disabled",
+                "budget_enforcement_state": "blocked_until_ci_deploy_proof_and_operator_approval",
+                "source_ci_deploy_action": "keep_ci_deploy_disabled",
+                "source_ci_deploy_state": source_ci_deploy_state,
+                "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+                "source_adapter_state": "legacy_without_real_cost_proof",
+                "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+                "source_scheduling_state": "legacy_without_real_cost_proof",
+                "source_worker_action": "keep_remote_workers_disabled",
+                "source_worker_state": "legacy_without_real_cost_proof",
+                "source_dashboard_action": "keep_hosted_dashboard_disabled",
+                "source_dashboard_state": "legacy_without_real_cost_proof",
+                "source_cost_action": "keep_cost_tracking_disabled",
+                "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+                "source_retry_action": "keep_retry_disabled",
+                "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+                "source_trust_action": "keep_trust_unpromoted",
+                "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+                "evidence_state": "missing",
+                "approval_state": "approval_required",
+                "approval_boundary": "explicit_operator_approval_required",
+                "budget_enforcement_effect": "none",
+                "routing_effect": "none",
+            }
+        ],
+        report_path="docs/budget-enforcement-proof-checklist.md",
+    )
+
+
+def _record_synthetic_trust_promotion_proof_checklist(
+    storage: Storage,
+    *,
+    source_checklist_id: str,
+    reason: str,
+    source_budget_state: str,
+):
+    return storage.record_trust_promotion_proof_checklist(
+        status="trust_promotion_proof_blocked",
+        source_checklist_id=source_checklist_id,
+        source_checklist_status="budget_enforcement_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_trust_promotion_proof_count=1,
+        operator_review_required_count=0,
+        blocked_budget_enforcement_proof_count=1,
+        blocked_ci_deploy_proof_count=1,
+        blocked_adapter_proof_count=1,
+        blocked_scheduling_proof_count=1,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason=reason,
+        checklist_items=[
+            {
+                "capability": "trust_promotion",
+                "proof_item": "trust_promotion_decision_contract",
+                "recommended_trust_action": "keep_trust_unpromoted",
+                "trust_promotion_state": "blocked_until_budget_enforcement_proof_and_operator_approval",
+                "source_budget_action": "keep_budget_enforcement_disabled",
+                "source_budget_state": source_budget_state,
+                "source_ci_deploy_action": "keep_ci_deploy_disabled",
+                "source_ci_deploy_state": "legacy_without_real_cost_proof",
+                "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+                "source_adapter_state": "legacy_without_real_cost_proof",
+                "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+                "source_scheduling_state": "legacy_without_real_cost_proof",
+                "source_worker_action": "keep_remote_workers_disabled",
+                "source_worker_state": "legacy_without_real_cost_proof",
+                "source_dashboard_action": "keep_hosted_dashboard_disabled",
+                "source_dashboard_state": "legacy_without_real_cost_proof",
+                "source_cost_action": "keep_cost_tracking_disabled",
+                "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+                "source_retry_action": "keep_retry_disabled",
+                "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+                "source_trust_action": "keep_trust_unpromoted",
+                "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+                "evidence_state": "missing",
+                "approval_state": "approval_required",
+                "approval_boundary": "explicit_operator_approval_required",
+                "trust_promotion_effect": "none",
+                "routing_effect": "none",
+            }
+        ],
+        report_path="docs/trust-promotion-proof-checklist.md",
+    )
+
+
+def _record_synthetic_automatic_retry_proof_checklist(
+    storage: Storage,
+    *,
+    source_checklist_id: str,
+    reason: str,
+    source_trust_proof_state: str,
+):
+    return storage.record_automatic_retry_proof_checklist(
+        status="automatic_retry_proof_blocked",
+        source_checklist_id=source_checklist_id,
+        source_checklist_status="trust_promotion_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_automatic_retry_proof_count=1,
+        operator_review_required_count=0,
+        blocked_trust_promotion_proof_count=1,
+        blocked_budget_enforcement_proof_count=1,
+        blocked_ci_deploy_proof_count=1,
+        blocked_adapter_proof_count=1,
+        blocked_scheduling_proof_count=1,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason=reason,
+        checklist_items=[
+            {
+                "capability": "automatic_retry",
+                "proof_item": "automatic_retry_policy_contract",
+                "recommended_retry_action": "keep_retry_disabled",
+                "automatic_retry_state": "blocked_until_trust_promotion_proof_and_operator_approval",
+                "source_trust_proof_action": "keep_trust_unpromoted",
+                "source_trust_proof_state": source_trust_proof_state,
+                "source_budget_action": "keep_budget_enforcement_disabled",
+                "source_budget_state": "legacy_without_real_cost_proof",
+                "source_ci_deploy_action": "keep_ci_deploy_disabled",
+                "source_ci_deploy_state": "legacy_without_real_cost_proof",
+                "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+                "source_adapter_state": "legacy_without_real_cost_proof",
+                "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+                "source_scheduling_state": "legacy_without_real_cost_proof",
+                "source_worker_action": "keep_remote_workers_disabled",
+                "source_worker_state": "legacy_without_real_cost_proof",
+                "source_dashboard_action": "keep_hosted_dashboard_disabled",
+                "source_dashboard_state": "legacy_without_real_cost_proof",
+                "source_cost_action": "keep_cost_tracking_disabled",
+                "cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+                "source_retry_action": "keep_retry_disabled",
+                "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+                "source_trust_action": "keep_trust_unpromoted",
+                "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+                "evidence_state": "missing",
+                "approval_state": "approval_required",
+                "approval_boundary": "explicit_operator_approval_required",
+                "automatic_retry_effect": "none",
+                "routing_effect": "none",
+            }
+        ],
+        report_path="docs/automatic-retry-proof-checklist.md",
+    )
+
+
+def _record_synthetic_real_cost_tracking_proof_checklist(
+    storage: Storage,
+    *,
+    source_checklist_id: str,
+    reason: str,
+    source_automatic_retry_proof_state: str,
+):
+    return storage.record_real_cost_tracking_proof_checklist(
+        status="real_cost_tracking_proof_blocked",
+        source_checklist_id=source_checklist_id,
+        source_checklist_status="automatic_retry_proof_blocked",
+        capability_count=1,
+        checklist_count=1,
+        blocked_real_cost_tracking_proof_count=1,
+        operator_review_required_count=0,
+        blocked_automatic_retry_proof_count=1,
+        blocked_trust_promotion_proof_count=1,
+        blocked_budget_enforcement_proof_count=1,
+        blocked_ci_deploy_proof_count=1,
+        blocked_adapter_proof_count=1,
+        blocked_scheduling_proof_count=1,
+        blocked_worker_proof_count=1,
+        blocked_dashboard_proof_count=1,
+        blocked_cost_tracking_count=1,
+        blocked_retry_count=1,
+        blocked_trust_promotion_count=1,
+        missing_evidence_count=1,
+        approval_required_count=1,
+        boundary_count=1,
+        recommended_commands=[],
+        reason=reason,
+        checklist_items=[
+            {
+                "capability": "real_cost_tracking",
+                "proof_item": "real_cost_tracking_spend_contract",
+                "recommended_cost_action": "keep_cost_tracking_disabled",
+                "real_cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+                "source_automatic_retry_proof_action": "keep_retry_disabled",
+                "source_automatic_retry_proof_state": source_automatic_retry_proof_state,
+                "source_trust_proof_action": "keep_trust_unpromoted",
+                "source_trust_proof_state": "legacy_without_real_cost_proof",
+                "source_budget_action": "keep_budget_enforcement_disabled",
+                "source_budget_state": "legacy_without_real_cost_proof",
+                "source_ci_deploy_action": "keep_ci_deploy_disabled",
+                "source_ci_deploy_state": "legacy_without_real_cost_proof",
+                "source_adapter_action": "keep_browser_desktop_adapters_disabled",
+                "source_adapter_state": "legacy_without_real_cost_proof",
+                "source_scheduling_action": "keep_autonomous_scheduling_disabled",
+                "source_scheduling_state": "legacy_without_real_cost_proof",
+                "source_worker_action": "keep_remote_workers_disabled",
+                "source_worker_state": "legacy_without_real_cost_proof",
+                "source_dashboard_action": "keep_hosted_dashboard_disabled",
+                "source_dashboard_state": "legacy_without_real_cost_proof",
+                "source_cost_action": "keep_cost_tracking_disabled",
+                "source_cost_tracking_state": "blocked_until_automatic_retry_proof_and_operator_approval",
+                "source_retry_action": "keep_retry_disabled",
+                "source_retry_state": "blocked_until_trust_promotion_and_operator_approval",
+                "source_trust_action": "keep_trust_unpromoted",
+                "source_trust_state": "blocked_until_promotion_decision_and_operator_approval",
+                "evidence_state": "missing",
+                "approval_state": "approval_required",
+                "approval_boundary": "explicit_operator_approval_required",
+                "real_cost_tracking_effect": "none",
+                "routing_effect": "none",
+            }
+        ],
+        report_path="docs/real-cost-tracking-proof-checklist.md",
+    )

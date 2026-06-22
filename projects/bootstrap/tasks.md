@@ -1,0 +1,83 @@
+# Bootstrap Tasks
+
+- [x] Implement the SQLite-backed control plane.
+- [x] Implement deterministic goal decomposition.
+- [x] Implement local worker claiming and execution.
+- [x] Implement verifier and evidence recording.
+- [x] Implement memory and learning updates.
+- [x] Add first eval command.
+- [x] Generate a static dashboard from current runs and queue state.
+- [x] Add incident records for failed verification paths.
+- [x] Add stuck-task detection for long-claimed or long-running tasks.
+- [x] Add approval-rule scaffolding before risky task dispatch.
+- [x] Create a reusable next-iteration packet loop.
+- [x] Add a compact incident resolution path.
+- [x] Add queue-health checks for repeated blocked or failed work.
+- [x] Promote repeated successful eval runs into reusable playbooks.
+- [x] Add eval candidates for verifier and workflow gaps.
+- [x] Add simplicity guardrails for equal-score queue choices.
+- [x] Add blocked-task and stale-handoff review.
+- [x] Add eval-after-change cadence checks.
+- [x] Distill stable run learnings into root knowledge.
+- [x] Add report-only budget/trust-level posture scaffolding.
+- [x] Add report-only dispatch posture history summary from local task metadata.
+- [x] Add report-only stale dispatch-posture snapshot review from local report timestamps.
+- [x] Add report-only dispatch posture refresh recommendation from staleness reviews.
+- [x] Add report-only Capability Expansion Ledger for deferred autonomy surfaces.
+- [x] Add report-only Capability Readiness Review from the expansion ledger.
+- [x] Add report-only Capability Proof Gap Index from readiness reviews.
+- [x] Add report-only Capability Approval Boundary Matrix from proof gaps.
+- [x] Add report-only Capability Evidence Collection Plan from approval boundaries.
+- [x] Add report-only Capability Promotion Gate Checklist from evidence collection plans.
+- [x] Add report-only Capability Promotion Decision Ledger from promotion gate checklists.
+- [x] Add report-only Capability Trust Promotion Audit from promotion decision ledgers.
+- [x] Add report-only Capability Automatic Retry Audit from trust promotion audits.
+- [x] Add report-only Capability Real Cost Tracking Audit from automatic retry audits.
+- [x] Add report-only Hosted Dashboard Proof Checklist from real cost tracking audits.
+- [x] Add report-only Remote Worker Proof Checklist from hosted dashboard proof checklists.
+- [x] Add report-only Autonomous Scheduling Proof Checklist from remote worker proof checklists.
+- [x] Add report-only Browser Desktop Adapter Proof Checklist from autonomous scheduling proof checklists.
+- [x] Add report-only CI Deploy Proof Checklist from browser desktop adapter proof checklists.
+- [x] Add report-only Budget Enforcement Proof Checklist from CI Deploy proof checklists.
+- [x] Add report-only Trust Promotion Proof Checklist from Budget Enforcement proof checklists.
+- [x] Add report-only Automatic Retry Proof Checklist from Trust Promotion proof checklists.
+- [x] Add report-only Real Cost Tracking Proof Checklist from Automatic Retry proof checklists.
+- [x] Add report-only Hosted Dashboard Proof Checklist from Real Cost Tracking proof checklists.
+- [x] Add report-only Remote Worker Proof Checklist from Real-Cost-sourced Hosted Dashboard proof checklists.
+- [x] Add report-only Autonomous Scheduling Proof Checklist from Real-Cost-sourced Remote Worker proof checklists.
+- [x] Add report-only Browser Desktop Adapter Proof Checklist from Real-Cost-sourced Autonomous Scheduling proof checklists.
+- [x] Add report-only CI Deploy Proof Checklist from Real-Cost-sourced Browser Desktop Adapter proof checklists.
+- [x] Add report-only Budget Enforcement Proof Checklist from Real-Cost-sourced CI Deploy proof checklists.
+- [x] Add report-only Trust Promotion Proof Checklist from Real-Cost-sourced Budget Enforcement proof checklists.
+- [x] Add report-only Automatic Retry Proof Checklist from Real-Cost-sourced Trust Promotion proof checklists.
+- [x] Add report-only Real Cost Tracking Proof Checklist from Real-Cost-sourced Automatic Retry proof checklists.
+- [x] Add report-only Hosted Dashboard Proof Checklist from Real-Cost-sourced Real Cost Tracking proof checklists.
+- [x] Add report-only Remote Worker Proof Checklist from latest Real-Cost-sourced Hosted Dashboard proof checklists.
+- [x] Add report-only Autonomous Scheduling Proof Checklist from latest Real-Cost-sourced Remote Worker proof checklists.
+- [x] Add report-only Browser Desktop Adapter Proof Checklist from latest Real-Cost-sourced Autonomous Scheduling proof checklists.
+- [x] Add report-only CI Deploy Proof Checklist from latest Real-Cost-sourced Browser Desktop Adapter proof checklists.
+- [x] Add report-only Budget Enforcement Proof Checklist from latest Real-Cost-sourced CI Deploy proof checklists.
+- [x] Add report-only Trust Promotion Proof Checklist from latest Real-Cost-sourced Budget Enforcement proof checklists.
+- [x] Add report-only Automatic Retry Proof Checklist from latest Real-Cost-sourced Trust Promotion proof checklists.
+- [x] Add report-only Goal Completion Audit from expansion proof reports.
+- [x] Add report-only Expansion Decision Brief from goal completion audits.
+- [x] Add report-only Expansion Decision Evidence Index from decision briefs.
+- [x] Add report-only Expansion Operator Review Checklist from evidence indexes.
+- [x] Add report-only Expansion Operator Decision Ledger from review checklists.
+- [x] Add report-only Expansion Operator Approval Draft from decision ledgers.
+- [x] Add report-only Expansion Operator Approval Request Review from approval drafts.
+- [x] Add report-only Expansion Operator Approval Schema Decision from approval request reviews.
+- [x] Add report-only Expansion Operator Approval Schema Migration Plan from schema decisions.
+- [x] Add report-only Expansion Operator Approval Schema Migration Approval Request from migration plans.
+- [x] Add report-only Expansion Operator Approval Schema Migration Decision Ledger from approval requests.
+- [x] Add report-only Expansion Operator Approval Schema Migration Action Checklist from decision ledgers.
+- [x] Add report-only Expansion Operator Approval Schema Migration Selection Packet from action checklists.
+- [x] Add report-only Real Cost Tracking Proof Checklist from latest Real-Cost-sourced Automatic Retry proof checklists.
+- [x] Add report-only Hosted Dashboard Proof Checklist from latest Real-Cost-sourced Real Cost Tracking proof checklists.
+- [x] Add report-only Remote Worker Proof Checklist from latest Real-Cost-sourced Hosted Dashboard proof checklists.
+- [x] Add report-only Autonomous Scheduling Proof Checklist from latest Real-Cost-sourced Remote Worker proof checklists.
+- [x] Add report-only Browser Desktop Adapter Proof Checklist from latest Real-Cost-sourced Autonomous Scheduling proof checklists.
+- [x] Add report-only CI Deploy Proof Checklist from latest Real-Cost-sourced Browser Desktop Adapter proof checklists.
+- [x] Add report-only Budget Enforcement Proof Checklist from latest Real-Cost-sourced CI Deploy proof checklists.
+- [x] Add report-only Trust Promotion Proof Checklist from latest Real-Cost-sourced Budget Enforcement proof checklists.
+- [x] Add report-only Automatic Retry Proof Checklist from latest Real-Cost-sourced Trust Promotion proof checklists.

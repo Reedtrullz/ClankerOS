@@ -1,0 +1,104 @@
+# Live Momentum Queues
+
+## now
+
+- [x] Implement Milestone 1 local closed loop.
+- [x] Verify the loop with automated tests and a CLI smoke run.
+- [x] Record the first learning/eval improvement.
+- [x] Start Milestone 2 static dashboard and queue health view.
+- [x] Add incident records for failed verification paths.
+- [x] Add stuck-task detection for claimed or running tasks past timeout.
+- [x] Add approval rules before risky task dispatch.
+- [x] Create a reusable next-iteration packet loop.
+
+## next
+
+- [x] Extend the static dashboard with incident summaries once incidents exist.
+- [x] Add a compact incident resolution path after more failure modes exist.
+- [x] Add queue-health checks for repeated blocked or failed work.
+- [x] Add a regression test for dashboard generation once the first view exists.
+- [x] Add report-only budget/trust-level posture scaffolding for local task dispatch. <!-- score=6 complexity=3 -->
+- [x] Add report-only dispatch posture history summary from local task metadata. <!-- score=5 complexity=3 -->
+- [x] Add report-only stale dispatch-posture snapshot review from local report timestamps. <!-- score=4 complexity=2 -->
+- [x] Add report-only dispatch posture refresh recommendation from staleness reviews. <!-- score=3 complexity=2 -->
+- [x] Add report-only Capability Expansion Ledger for deferred autonomy surfaces. <!-- score=8 complexity=4 -->
+- [x] Add report-only Capability Readiness Review from the expansion ledger. <!-- score=8 complexity=4 -->
+- [x] Add report-only Capability Proof Gap Index from readiness reviews. <!-- score=8 complexity=4 -->
+- [x] Add report-only Capability Approval Boundary Matrix from proof gaps. <!-- score=8 complexity=4 -->
+- [x] Add report-only Capability Evidence Collection Plan from approval boundaries. <!-- score=8 complexity=4 -->
+- [x] Add report-only Capability Promotion Gate Checklist from evidence collection plans. <!-- score=8 complexity=4 -->
+- [x] Add report-only Capability Promotion Decision Ledger from promotion gate checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Capability Trust Promotion Audit from promotion decision ledgers. <!-- score=8 complexity=4 -->
+- [x] Add report-only Capability Automatic Retry Audit from trust promotion audits. <!-- score=8 complexity=4 -->
+- [x] Add report-only Capability Real Cost Tracking Audit from automatic retry audits. <!-- score=8 complexity=4 -->
+- [x] Add report-only Hosted Dashboard Proof Checklist from real cost tracking audits. <!-- score=8 complexity=4 -->
+- [x] Add report-only Remote Worker Proof Checklist from hosted dashboard proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Autonomous Scheduling Proof Checklist from remote worker proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Browser Desktop Adapter Proof Checklist from autonomous scheduling proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only CI Deploy Proof Checklist from browser desktop adapter proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Budget Enforcement Proof Checklist from CI Deploy proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Trust Promotion Proof Checklist from Budget Enforcement proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Automatic Retry Proof Checklist from Trust Promotion proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Real Cost Tracking Proof Checklist from Automatic Retry proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Hosted Dashboard Proof Checklist from Real Cost Tracking proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Remote Worker Proof Checklist from Real-Cost-sourced Hosted Dashboard proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Autonomous Scheduling Proof Checklist from Real-Cost-sourced Remote Worker proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Browser Desktop Adapter Proof Checklist from Real-Cost-sourced Autonomous Scheduling proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only CI Deploy Proof Checklist from Real-Cost-sourced Browser Desktop Adapter proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Budget Enforcement Proof Checklist from Real-Cost-sourced CI Deploy proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Trust Promotion Proof Checklist from Real-Cost-sourced Budget Enforcement proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Automatic Retry Proof Checklist from Real-Cost-sourced Trust Promotion proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Real Cost Tracking Proof Checklist from Real-Cost-sourced Automatic Retry proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Hosted Dashboard Proof Checklist from Real-Cost-sourced Real Cost Tracking proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Remote Worker Proof Checklist from latest Real-Cost-sourced Hosted Dashboard proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Autonomous Scheduling Proof Checklist from latest Real-Cost-sourced Remote Worker proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Browser Desktop Adapter Proof Checklist from latest Real-Cost-sourced Autonomous Scheduling proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only CI Deploy Proof Checklist from latest Real-Cost-sourced Browser Desktop Adapter proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Budget Enforcement Proof Checklist from latest Real-Cost-sourced CI Deploy proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Trust Promotion Proof Checklist from latest Real-Cost-sourced Budget Enforcement proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Automatic Retry Proof Checklist from latest Real-Cost-sourced Trust Promotion proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Real Cost Tracking Proof Checklist from latest Real-Cost-sourced Automatic Retry proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Hosted Dashboard Proof Checklist from latest Real-Cost-sourced Real Cost Tracking proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Remote Worker Proof Checklist from latest Real-Cost-sourced Hosted Dashboard proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Autonomous Scheduling Proof Checklist from latest Real-Cost-sourced Remote Worker proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Browser Desktop Adapter Proof Checklist from latest Real-Cost-sourced Autonomous Scheduling proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only CI Deploy Proof Checklist from latest Real-Cost-sourced Browser Desktop Adapter proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Budget Enforcement Proof Checklist from latest Real-Cost-sourced CI Deploy proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Trust Promotion Proof Checklist from latest Real-Cost-sourced Budget Enforcement proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Automatic Retry Proof Checklist from latest Real-Cost-sourced Trust Promotion proof checklists. <!-- score=8 complexity=4 -->
+- [x] Add report-only Goal Completion Audit from expansion proof reports. <!-- score=8 complexity=3 -->
+- [x] Add report-only Expansion Decision Brief from goal completion audits. <!-- score=8 complexity=3 -->
+- [x] Add report-only Expansion Decision Evidence Index from decision briefs. <!-- score=8 complexity=3 -->
+- [x] Add report-only Expansion Operator Review Checklist from evidence indexes. <!-- score=8 complexity=3 -->
+- [x] Add report-only Expansion Operator Decision Ledger from review checklists. <!-- score=8 complexity=3 -->
+- [x] Add report-only Expansion Operator Approval Draft from decision ledgers. <!-- score=8 complexity=3 -->
+- [x] Add report-only Expansion Operator Approval Request Review from approval drafts. <!-- score=8 complexity=3 -->
+- [x] Add report-only Expansion Operator Approval Schema Decision from approval request reviews. <!-- score=8 complexity=3 -->
+- [x] Add report-only Expansion Operator Approval Schema Migration Plan from schema decisions. <!-- score=8 complexity=3 -->
+- [x] Add report-only Expansion Operator Approval Schema Migration Approval Request from migration plans. <!-- score=8 complexity=3 -->
+- [x] Add report-only Expansion Operator Approval Schema Migration Decision Ledger from approval requests. <!-- score=8 complexity=3 -->
+- [x] Add report-only Expansion Operator Approval Schema Migration Action Checklist from decision ledgers. <!-- score=8 complexity=3 -->
+- [x] Add report-only Expansion Operator Approval Schema Migration Selection Packet from action checklists. <!-- score=8 complexity=3 -->
+
+## blocked
+
+- [ ] Choose external model providers and API policies before adding remote
+  model routing.
+- [ ] Choose deployment target before hosted dashboard work.
+
+## improve
+
+- [x] Promote repeated successful runs into reusable playbooks.
+- [x] Add an eval case whenever a verifier or workflow gap is discovered.
+- [x] Add dashboard regression coverage before implementing the first visibility view.
+- [x] Add failed-verification incident regression coverage before implementing incidents.
+- [x] Add stale-task sweep regression coverage before implementing stuck detection.
+- [x] Add approval-gate regression coverage before implementing approval dispatch.
+- [x] Add iteration-loop regression coverage before implementing `iterate`.
+- [x] Keep equal-score changes simple instead of adding orchestration complexity.
+
+## recurring
+
+- [x] Review blocked tasks and stale handoffs.
+- [x] Run the eval suite after each harness behavior change.
+- [x] Distill run learnings into `knowledge.md` when stable.
