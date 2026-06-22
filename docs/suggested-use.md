@@ -240,6 +240,9 @@ Prefer these files when orienting:
 - `docs/tutorial-capability-followup-result-task-result-effect-task-decisions.md`
   for reviewing downstream result effect task result records while keeping
   activation blocked.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-proposals.md`
+  for creating proposed effects from accepted downstream result effect task
+  result decisions.
 - `contracts.md` for safety boundaries and evidence expectations.
 - `status.md` for chronological implementation evidence.
 - `projects/bootstrap/handoff.md` for the current continuation edge.
@@ -627,6 +630,22 @@ records the operator action in SQLite, and keeps
 `external_mutations_taken=0`, `activation_allowed=false`, and
 `capability_enabled=false`.
 
+Create proposed effects from accepted downstream result effect task result
+decisions:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-proposals
+python3 -m agent_os.cli dashboard
+```
+
+The proposal command writes
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-proposals.md`,
+creates generic local `effects` rows with idempotency keys, and keeps
+`approval_requests_created=0`, `activation_actions_taken=0`,
+`external_mutations_taken=0`, `activation_allowed=false`, and
+`capability_enabled=false`. It does not apply the proposed effects; that is
+the next local application-record slice.
+
 ## When To Commit And Push
 
 Commit when:
@@ -645,7 +664,8 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 Good next slices now favor capability-specific guards after local delegation
 packets exist:
 
-- proposed effects from accepted downstream result effect task result decisions;
+- local application records for downstream result effect task result decision
+  effect proposals;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;

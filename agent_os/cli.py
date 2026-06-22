@@ -256,6 +256,10 @@ from agent_os.capability_activation_followup_result_task_result_effect_task_resu
     decide_capability_activation_followup_result_task_result_effect_task_results,
     render_capability_activation_followup_result_task_result_effect_task_result_decision_line,
 )
+from agent_os.capability_activation_followup_result_task_result_effect_task_result_effect_proposals import (
+    render_capability_activation_followup_result_task_result_effect_task_result_effect_proposal_line,
+    write_capability_activation_followup_result_task_result_effect_task_result_effect_proposals,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -913,6 +917,13 @@ def build_parser() -> argparse.ArgumentParser:
     followup_task_result_effect_task_result_decide.add_argument(
         "--evidence-reference",
         required=True,
+    )
+    subparsers.add_parser(
+        "capability-activation-followup-result-task-result-effect-task-result-effect-proposals",
+        help=(
+            "Create local proposed effects from accepted blocked downstream "
+            "follow-up result task effect task result decisions."
+        ),
     )
 
     approve = subparsers.add_parser("approve", help="Approve a pending local task request.")
@@ -3468,6 +3479,40 @@ def main(argv: list[str] | None = None) -> int:
                 f"result={record.id} delegation={record.delegation_id} "
                 f"task={record.downstream_task_id} capability={record.capability} "
                 f"status={record.evidence_status}"
+            )
+        return 0
+
+    if (
+        args.command
+        == "capability-activation-followup-result-task-result-effect-task-result-effect-proposals"
+    ):
+        AgentSystem(root).initialize()
+        report_path, summary, effects = (
+            write_capability_activation_followup_result_task_result_effect_task_result_effect_proposals(
+                root
+            )
+        )
+        print(
+            "capability_activation_followup_result_task_result_effect_task_result_effect_proposals: "
+            f"{summary.status}"
+        )
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"accepted_decisions: {summary.accepted_decision_count}")
+        print(f"accepted_results: {summary.accepted_result_count}")
+        print(f"effect_proposals_created: {summary.effect_proposal_count}")
+        print(f"existing_effect_proposals: {summary.existing_effect_proposal_count}")
+        print(
+            "capability_effect_proposals: "
+            f"{summary.capability_effect_proposal_count}"
+        )
+        print(f"approval_requests_created: {summary.approval_request_count}")
+        print(f"activation_actions_taken: {summary.activation_action_count}")
+        print(f"external_mutations_taken: {summary.external_mutation_count}")
+        for effect in effects:
+            print(
+                render_capability_activation_followup_result_task_result_effect_task_result_effect_proposal_line(
+                    effect
+                ).removeprefix("- ")
             )
         return 0
 

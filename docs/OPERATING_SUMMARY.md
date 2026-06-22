@@ -885,6 +885,16 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   `approval_requests_created: 0`, `activation_actions_taken: 0`,
   `external_mutations_taken: 0`, `activation_allowed: false`, and
   `capability_enabled: false`.
+- Capability activation follow-up result task result effect task result effect
+  proposals: available through
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-proposals`
+  after accepted downstream result effect task result decisions exist. The
+  command writes
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-proposals.md`,
+  stores generic local proposed `effects` rows with idempotency keys, and
+  keeps `approval_requests_created: 0`, `activation_actions_taken: 0`,
+  `external_mutations_taken: 0`, `activation_allowed: false`, and
+  `capability_enabled: false`.
 - Eval candidate listing: available through
   `python3 -m agent_os.cli eval-candidates` and mirrored into
   `docs/dashboard.md`.

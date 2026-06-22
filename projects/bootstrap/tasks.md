@@ -59,6 +59,13 @@
 - [x] Add report-only Budget Enforcement Proof Checklist from latest Real-Cost-sourced CI Deploy proof checklists.
 - [x] Add report-only Trust Promotion Proof Checklist from latest Real-Cost-sourced Budget Enforcement proof checklists.
 - [x] Add report-only Automatic Retry Proof Checklist from latest Real-Cost-sourced Trust Promotion proof checklists.
+
+## Current Queue Pointer
+
+- Root `tasks.md` is the canonical live momentum queue for the active
+  ClankerOS iteration loop. This bootstrap file preserves milestone history
+  and is intentionally not the source of truth for the latest downstream
+  capability-activation follow-up slices.
 - [x] Add report-only Goal Completion Audit from expansion proof reports.
 - [x] Add report-only Expansion Decision Brief from goal completion audits.
 - [x] Add report-only Expansion Decision Evidence Index from decision briefs.

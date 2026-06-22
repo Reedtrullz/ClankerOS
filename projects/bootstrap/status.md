@@ -3977,3 +3977,61 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_3caaeb0d100b
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_6623795ccd5a/summary.md
+
+## Run run_6bf53ce1f7b2
+
+- Goal ID: goal_b5a86522dbca
+- Status: failed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_6bf53ce1f7b2/summary.md
+
+## Run run_20e17f766d13
+
+- Goal ID: goal_d70747ecc473
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_20e17f766d13/summary.md
+
+## Run run_b6f39da18d37
+
+- Goal ID: goal_e42463609b0f
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_b6f39da18d37/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Proposals
+
+- Added
+  `capability-activation-followup-result-task-result-effect-task-result-effect-proposals`
+  to create generic proposed `effects` rows from accepted blocked downstream
+  result effect task result decisions.
+- Initial live effect:
+  `effect_24a2d688a662`, status `proposed`, capability `hosted_dashboard`,
+  required approval reference
+  `capability_activation_followup_result_task_result_effect_task_result_decision_f15f4d26c1d2`,
+  idempotency prefix
+  `capability-followup-result-task-result-effect-task-result-decision-effect:`.
+- Final live idempotency pass reported
+  `capability_activation_followup_result_task_result_effect_task_result_effect_proposals_already_recorded`
+  with 0 new duplicate effects, 1 existing effect proposal, 0 approval
+  requests, 0 activation actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-proposals.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-proposals.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `docs/handoff-review.md`
+- Verification evidence:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "effect_task_result_effect_proposals"`
+    -> red before implementation, then 3 passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "result_task_result"`
+    -> 28 passed.
+  - `python3 -m pytest -q` -> 311 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result effect proposals" --file agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_proposals.py`
+    -> pass, run `run_20e17f766d13`.
+  - `python3 -m agent_os.cli eval` -> pass, run `run_b6f39da18d37`.
+  - Eval note: `run_6bf53ce1f7b2` is a failed shared-output race artifact
+    from running `eval` and `eval-after-change` concurrently; the serial
+    baseline eval rerun passed.
+  - `python3 -m agent_os.cli handoff-review` -> status clear.
+- Non-claims: proposed effects only; no application rows yet, no
+  `approval_requests`, proof satisfaction, activation allowance, capability
+  enablement, trust promotion, scheduler, retries, cost tracking, CI/deploy,
+  push, PR, or external mutation.

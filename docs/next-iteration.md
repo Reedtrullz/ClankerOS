@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_cf598a1a055f
+- Packet ID: iteration_b76ad8d258d9
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add local downstream follow-up result task result effect task result decision effect proposals from accepted blocked result effect task results.
+Advance the Agent System north-star goal by completing: Add local application records for downstream follow-up result task result effect task result decision effect proposals.
 
 ## Definition Of Done
 
@@ -83,6 +83,7 @@ Advance the Agent System north-star goal by completing: Add local downstream fol
 - `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-delegations`
 - `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-results`
 - `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-decide --operator-id operator --selected-action accept_keep_blocked --selection-note "Accepted downstream result-effect proof-plan result and kept capability activation blocked." --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-results.md`
+- `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-proposals`
 - `python3 -m agent_os.cli eval`
 - `python3 -m agent_os.cli playbooks`
 - `python3 -m agent_os.cli dashboard`
@@ -175,6 +176,7 @@ Advance the Agent System north-star goal by completing: Add local downstream fol
 - capability activation followup result task result effect task delegations: capability_activation_followup_result_task_result_effect_task_delegations_already_recorded
 - capability activation followup result task result effect task results: capability_activation_followup_result_task_result_effect_task_results_already_recorded
 - capability activation followup result task result effect task result decisions: capability_activation_followup_result_task_result_effect_task_result_decisions_already_recorded
+- capability activation followup result task result effect task result effect proposals: capability_activation_followup_result_task_result_effect_task_result_effect_proposals_recorded
 - proposed eval candidates: 0
 - active playbooks: 1
 - open stuck-task incidents: 0

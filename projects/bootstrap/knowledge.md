@@ -1851,3 +1851,29 @@ coverage.
 ## Learning run_6623795ccd5a
 
 - Learning: Run run_6623795ccd5a showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_6bf53ce1f7b2
+
+- Learning: Run run_6bf53ce1f7b2 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_20e17f766d13
+
+- Learning: Run run_20e17f766d13 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_b6f39da18d37
+
+- Learning: Run run_b6f39da18d37 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning effect proposal bridge
+
+- Accepted blocked downstream result decisions should become generic
+  proposal-only `effects` rows with a stage-specific idempotency prefix before
+  any application-record slice. Do not add approval rows, apply effects,
+  satisfy proof, allow activation, or enable capabilities in the proposal
+  stage.
+
+## Learning eval serialization
+
+- Run `eval` and `eval-after-change` serially. They share the
+  `first_milestone_closed_loop` result output; running them concurrently can
+  create a failed run artifact even when a serial eval rerun passes.

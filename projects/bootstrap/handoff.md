@@ -2029,15 +2029,41 @@ work, or changing routing.
   deploy, push, open PRs, mark the active goal complete, or mutate external
   systems.
 
+## Latest Downstream Result Effect Task Result Effect Proposals
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-proposals`
+  now creates generic local `effects` rows from accepted blocked downstream
+  result effect task result decisions.
+- Live proposal effect:
+  `effect_24a2d688a662`, status `proposed`, capability `hosted_dashboard`,
+  required approval reference
+  `capability_activation_followup_result_task_result_effect_task_result_decision_f15f4d26c1d2`.
+- Final live idempotency pass reported status
+  `capability_activation_followup_result_task_result_effect_task_result_effect_proposals_already_recorded`
+  with 1 accepted decision, 1 accepted result, 0 duplicate effects, 1 existing
+  effect proposal, 0 approval requests, 0 activation actions, and 0 external
+  mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-proposals.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-proposals.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Non-claims: downstream result effect task result effect proposals do not
+  create `approval_requests`, satisfy proof, mutate activation contracts,
+  mutate downstream result effect task result records, allow activation,
+  enable capabilities, promote trust, schedule work, retry work, track spend,
+  run CI, deploy, push, open PRs, mark the active goal complete, or mutate
+  external systems.
+
 ## Next Actions
 
-Current focus: Add local downstream follow-up result task result effect task result decision effect proposals from accepted blocked result effect task results.
+Current focus: Add local application records for downstream follow-up result task result effect task result decision effect proposals.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add local downstream follow-up result task result effect task result
-   decision effect proposals from accepted blocked result effect task results.
-2. Convert accepted blocked downstream result effect task result decisions into
-   local proposed effect rows without enabling capabilities, satisfying proof,
+   Add local application records for downstream follow-up result task result
+   effect task result decision effect proposals.
+2. Convert proposed downstream result effect task result decision effects into
+   local application records without enabling capabilities, satisfying proof,
    creating approval rows, or allowing activation.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking

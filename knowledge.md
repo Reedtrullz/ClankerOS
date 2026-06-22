@@ -477,6 +477,16 @@
   keeps `selected_action=none`, `selections_recorded: 0`,
   `actions_taken: 0`, and all migration/table/approval-row creation counters
   at zero until a distinct operator selection flow is designed and verified.
+- Accepted blocked downstream result decisions can be bridged into the next
+  operator-visible stage as generic `effects` rows with a stage-specific
+  idempotency prefix. This proposal stage should not add a new table, create
+  approval rows, apply effects, satisfy proof, allow activation, or enable
+  capabilities; the separate application-record slice owns durable application
+  rows.
+- `eval` and `eval-after-change` both write the
+  `first_milestone_closed_loop` result path and should be run serially, not in
+  parallel. A parallel invocation can leave a failed run artifact even when the
+  serial baseline eval passes immediately afterward.
 
 ## Stable Distilled Learnings
 

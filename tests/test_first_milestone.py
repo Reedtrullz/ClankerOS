@@ -13405,6 +13405,16 @@ def _capability_activation_followup_result_task_result_effect_task_result_decisi
     ]
 
 
+def _capability_activation_followup_result_task_result_effect_task_result_effect_proposals_command(
+    tmp_path: Path,
+) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-followup-result-task-result-effect-task-result-effect-proposals",
+    ]
+
+
 def _run_capability_activation_followup_chain(tmp_path: Path, capsys) -> None:
     _run_capability_activation_contract_chain(tmp_path, capsys)
     assert main(_capability_activation_evidence_command(tmp_path)) == 0
@@ -13646,6 +13656,25 @@ def _record_one_capability_activation_followup_result_task_result_effect_task_re
     assert (
         main(
             _capability_activation_followup_result_task_result_effect_task_results_command(
+                tmp_path
+            )
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+
+def _record_one_capability_activation_followup_result_task_result_effect_task_result_decision(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    _record_one_capability_activation_followup_result_task_result_effect_task_result(
+        tmp_path,
+        capsys,
+    )
+    assert (
+        main(
+            _capability_activation_followup_result_task_result_effect_task_result_decision_command(
                 tmp_path
             )
         )
@@ -17540,6 +17569,235 @@ def test_capability_activation_followup_result_task_result_effect_task_result_de
         )
         == 1
     )
+
+
+def test_capability_activation_followup_result_task_result_effect_task_result_effect_proposals_require_accepted_decisions(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert (
+        main(
+            _capability_activation_followup_result_task_result_effect_task_result_effect_proposals_command(
+                tmp_path
+            )
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_result_task_result_effect_task_result_effect_proposals: "
+        "capability_activation_followup_result_task_result_effect_task_result_effect_proposals_no_accepted_decisions"
+    ) in output
+    assert "accepted_decisions: 0" in output
+    assert "accepted_results: 0" in output
+    assert "effect_proposals_created: 0" in output
+    assert "existing_effect_proposals: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+    assert "external_mutations_taken: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    assert storage.list_effects_with_idempotency_prefix(
+        "capability-followup-result-task-result-effect-task-result-decision-effect:"
+    ) == []
+
+    report = (
+        tmp_path
+        / "docs"
+        / "capability-activation-followup-result-task-result-effect-task-result-effect-proposals.md"
+    ).read_text(encoding="utf-8")
+    assert (
+        "# Capability Activation Follow-Up Result Task Result Effect Task Result Effect Proposals"
+        in report
+    )
+    assert (
+        "- status: "
+        "capability_activation_followup_result_task_result_effect_task_result_effect_proposals_no_accepted_decisions"
+    ) in report
+    assert "- Does not create approval_requests rows." in report
+    assert "- Does not enable capabilities." in report
+
+
+def test_capability_activation_followup_result_task_result_effect_task_result_effect_proposals_create_local_effects(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _record_one_capability_activation_followup_result_task_result_effect_task_result_decision(
+        tmp_path,
+        capsys,
+    )
+
+    assert (
+        main(
+            _capability_activation_followup_result_task_result_effect_task_result_effect_proposals_command(
+                tmp_path
+            )
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_result_task_result_effect_task_result_effect_proposals: "
+        "capability_activation_followup_result_task_result_effect_task_result_effect_proposals_recorded"
+    ) in output
+    assert "accepted_decisions: 1" in output
+    assert "accepted_results: 1" in output
+    assert "effect_proposals_created: 1" in output
+    assert "existing_effect_proposals: 0" in output
+    assert "capability_effect_proposals: 1" in output
+    assert "approval_requests_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+    assert "external_mutations_taken: 0" in output
+    assert (
+        "report: "
+        "docs/capability-activation-followup-result-task-result-effect-task-result-effect-proposals.md"
+        in output
+    )
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    decision = (
+        storage.list_recent_capability_activation_followup_result_task_result_effect_task_result_decisions()[
+            0
+        ]
+    )
+    result_record = (
+        storage.list_capability_activation_followup_result_task_result_effect_task_result_records()[
+            0
+        ]
+    )
+    effects = storage.list_effects_with_idempotency_prefix(
+        "capability-followup-result-task-result-effect-task-result-decision-effect:"
+    )
+    assert len(effects) == 1
+    effect = effects[0]
+    assert effect.status == "proposed"
+    assert effect.run_id == decision.id
+    assert effect.task_id == result_record.downstream_task_id
+    assert effect.project_id == result_record.project_id
+    assert effect.capability == result_record.capability
+    assert effect.effect_type == (
+        "capability_followup_result_task_result_effect_task_result_blocked_result_proposal"
+    )
+    assert effect.target == result_record.capability
+    assert effect.required_approval_id == decision.id
+    assert effect.evidence_path == (
+        "docs/capability-activation-followup-result-task-result-effect-task-result-effect-proposals.md"
+    )
+    assert effect.idempotency_key == (
+        "capability-followup-result-task-result-effect-task-result-decision-effect:"
+        f"{decision.id}:{result_record.id}"
+    )
+    assert effect.proposed_payload["source_decision_id"] == decision.id
+    assert effect.proposed_payload["source_downstream_result_id"] == result_record.id
+    assert effect.proposed_payload["source_downstream_task_id"] == (
+        result_record.downstream_task_id
+    )
+    assert effect.proposed_payload["source_effect_id"] == result_record.source_effect_id
+    assert effect.proposed_payload["source_delegation_id"] == (
+        result_record.source_delegation_id
+    )
+    assert effect.proposed_payload["selected_action"] == "accept_keep_blocked"
+    assert effect.proposed_payload["activation_allowed"] is False
+    assert effect.proposed_payload["capability_enabled"] is False
+    assert effect.proposed_payload["external_mutations_taken"] == 0
+    assert effect.result_json["activation_actions_taken"] == 0
+    assert effect.result_json["external_mutations_taken"] == 0
+    assert effect.result_json["capability_enabled"] is False
+    assert effect.compensation_plan["required"] is False
+    assert storage.list_recent_approval_requests() == []
+
+    report = (
+        tmp_path
+        / "docs"
+        / "capability-activation-followup-result-task-result-effect-task-result-effect-proposals.md"
+    ).read_text(encoding="utf-8")
+    assert (
+        "# Capability Activation Follow-Up Result Task Result Effect Task Result Effect Proposals"
+        in report
+    )
+    assert (
+        "- status: "
+        "capability_activation_followup_result_task_result_effect_task_result_effect_proposals_recorded"
+    ) in report
+    assert "- effect_proposals_created: 1" in report
+    assert f"effect={effect.id}" in report
+    assert f"decision={decision.id}" in report
+    assert f"result={result_record.id}" in report
+    assert (
+        "- Does not mutate downstream result effect task result records."
+        in report
+    )
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert (
+        "## Capability Activation Follow-Up Result Task Result Effect Task Result Effect Proposals"
+        in dashboard
+    )
+    assert (
+        "- status: "
+        "capability_activation_followup_result_task_result_effect_task_result_effect_proposals_recorded"
+        in dashboard
+    )
+    assert "- effect_proposals_created: 1" in dashboard
+    assert effect.id in dashboard
+
+
+def test_capability_activation_followup_result_task_result_effect_task_result_effect_proposals_are_idempotent(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _record_one_capability_activation_followup_result_task_result_effect_task_result_decision(
+        tmp_path,
+        capsys,
+    )
+
+    command = (
+        _capability_activation_followup_result_task_result_effect_task_result_effect_proposals_command(
+            tmp_path
+        )
+    )
+    assert main(command) == 0
+    capsys.readouterr()
+
+    assert main(command) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_result_task_result_effect_task_result_effect_proposals: "
+        "capability_activation_followup_result_task_result_effect_task_result_effect_proposals_already_recorded"
+    ) in output
+    assert "accepted_decisions: 1" in output
+    assert "accepted_results: 1" in output
+    assert "effect_proposals_created: 0" in output
+    assert "existing_effect_proposals: 1" in output
+    assert "external_mutations_taken: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    effects = storage.list_effects_with_idempotency_prefix(
+        "capability-followup-result-task-result-effect-task-result-decision-effect:"
+    )
+    assert len(effects) == 1
+    report = (
+        tmp_path
+        / "docs"
+        / "capability-activation-followup-result-task-result-effect-task-result-effect-proposals.md"
+    ).read_text(encoding="utf-8")
+    assert (
+        "- status: "
+        "capability_activation_followup_result_task_result_effect_task_result_effect_proposals_already_recorded"
+    ) in report
+    assert "- effect_proposals_created: 0" in report
+    assert "- existing_effect_proposals: 1" in report
 
 
 def test_hosted_dashboard_proof_checklist_blocks_blocked_real_cost_tracking_proof(

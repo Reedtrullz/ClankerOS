@@ -6802,3 +6802,61 @@
   proof satisfaction, activation allowance, capability enablement, CI/deploy,
   push, PR, trust promotion, scheduler, retry, cost tracking, or external
   mutation.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Proposals
+
+- Added
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-proposals`
+  for creating generic local `effects` rows from accepted blocked downstream
+  result effect task result decisions.
+- Live first run created proposed effect `effect_24a2d688a662` for
+  `hosted_dashboard`, linked to decision
+  `capability_activation_followup_result_task_result_effect_task_result_decision_f15f4d26c1d2`
+  and result
+  `capability_activation_followup_result_task_result_effect_task_result_0546b7458911`.
+- Live idempotency pass reported
+  `capability_activation_followup_result_task_result_effect_task_result_effect_proposals_already_recorded`
+  with 1 accepted decision, 1 accepted result, 0 new duplicate effects,
+  1 existing effect proposal, 0 approval requests, 0 activation actions, and
+  0 external mutations.
+- Evidence:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-proposals.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-proposals.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `docs/handoff-review.md`
+- Verification evidence:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "effect_task_result_effect_proposals"`
+    -> failed with missing CLI command, as expected.
+  - Focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "effect_task_result_effect_proposals"`
+    -> 3 passed, 308 deselected.
+  - Adjacent chain:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "result_task_result"`
+    -> 28 passed, 283 deselected.
+  - `python3 -m py_compile agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_proposals.py tests/test_first_milestone.py`
+    -> passed.
+  - `python3 -m pytest -q` -> 311 passed in 273.17s.
+  - `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800` ->
+    stuck_incidents: 0.
+  - `python3 -m agent_os.cli queue-health` -> hotspots: 0.
+  - `python3 -m agent_os.cli handoff-review` -> status: clear,
+    blocked_tasks: 0, stale_handoffs: 0.
+  - `python3 -m agent_os.cli eval-candidates` -> eval_candidates: 0.
+  - `python3 -m agent_os.cli approvals` -> pending_approvals: 0.
+  - `python3 -m agent_os.cli playbooks` -> playbooks: 1.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result effect proposals" --file agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_proposals.py`
+    -> pass, run `run_20e17f766d13`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`,
+    run `run_b6f39da18d37`.
+  - Eval note: `eval` was rerun serially after an earlier parallel invocation
+    with `eval-after-change` produced a shared-output race artifact
+    (`run_6bf53ce1f7b2` failed); the current serial baseline result is pass.
+  - `git diff --check` -> no whitespace errors.
+- Next focus:
+  `Add local application records for downstream follow-up result task result effect task result decision effect proposals.`
+- Non-claims: local effect proposal rows only; no application rows yet, no
+  approval-row creation, proof satisfaction, activation allowance, capability
+  enablement, CI/deploy, push, PR, trust promotion, scheduler, retry, cost
+  tracking, or external mutation.

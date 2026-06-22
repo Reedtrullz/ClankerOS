@@ -199,6 +199,10 @@ from agent_os.capability_activation_followup_result_task_result_effect_task_resu
 from agent_os.capability_activation_followup_result_task_result_effect_task_result_decisions import (
     render_capability_activation_followup_result_task_result_effect_task_result_decision_line,
 )
+from agent_os.capability_activation_followup_result_task_result_effect_task_result_effect_proposals import (
+    IDEMPOTENCY_PREFIX as CAPABILITY_FOLLOWUP_TASK_RESULT_EFFECT_TASK_RESULT_DECISION_EFFECT_IDEMPOTENCY_PREFIX,
+    render_capability_activation_followup_result_task_result_effect_task_result_effect_proposal_line,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -352,6 +356,7 @@ def generate_static_dashboard(root: Path) -> Path:
         operator_approval_effect_proposals = []
         capability_activation_followup_result_effect_proposals = []
         capability_activation_followup_result_task_result_effect_proposals = []
+        capability_activation_followup_result_task_result_effect_task_result_effect_proposals = []
         if _table_exists(connection, "effects"):
             effects = storage.list_recent_effects(limit=5)
             operator_approval_effect_proposals = (
@@ -367,6 +372,11 @@ def generate_static_dashboard(root: Path) -> Path:
             capability_activation_followup_result_task_result_effect_proposals = (
                 storage.list_effects_with_idempotency_prefix(
                     CAPABILITY_FOLLOWUP_TASK_RESULT_DECISION_EFFECT_IDEMPOTENCY_PREFIX
+                )
+            )
+            capability_activation_followup_result_task_result_effect_task_result_effect_proposals = (
+                storage.list_effects_with_idempotency_prefix(
+                    CAPABILITY_FOLLOWUP_TASK_RESULT_EFFECT_TASK_RESULT_DECISION_EFFECT_IDEMPOTENCY_PREFIX
                 )
             )
         iterations = []
@@ -2305,6 +2315,51 @@ def generate_static_dashboard(root: Path) -> Path:
                     decision
                 ),
             ]
+        )
+    else:
+        lines.append("- none")
+
+    lines.extend(
+        [
+            "",
+            "## Capability Activation Follow-Up Result Task Result Effect Task Result Effect Proposals",
+            "",
+        ]
+    )
+    if (
+        capability_activation_followup_result_task_result_effect_task_result_effect_proposals
+    ):
+        proposal_effects = (
+            capability_activation_followup_result_task_result_effect_task_result_effect_proposals
+        )
+        latest_effect = proposal_effects[0]
+        lines.extend(
+            [
+                (
+                    "- status: "
+                    "capability_activation_followup_result_task_result_effect_task_result_effect_proposals_recorded"
+                ),
+                f"- source_decision: {latest_effect.run_id}",
+                (
+                    "- accepted_decisions: "
+                    f"{len({effect.run_id for effect in proposal_effects})}"
+                ),
+                f"- accepted_results: {len(proposal_effects)}",
+                f"- effect_proposals_created: {len(proposal_effects)}",
+                f"- existing_effect_proposals: {len(proposal_effects)}",
+                f"- capability_effect_proposals: {len(proposal_effects)}",
+                "- approval_requests_created: 0",
+                "- activation_actions_taken: 0",
+                "- external_mutations_taken: 0",
+                f"- report: {latest_effect.evidence_path}",
+                "",
+            ]
+        )
+        lines.extend(
+            render_capability_activation_followup_result_task_result_effect_task_result_effect_proposal_line(
+                effect
+            )
+            for effect in proposal_effects
         )
     else:
         lines.append("- none")

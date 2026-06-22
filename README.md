@@ -287,6 +287,7 @@ mutate external systems.
 - [Create downstream tasks from applied downstream result decision effects](docs/tutorial-capability-followup-result-task-result-effect-tasks.md)
 - [Ingest downstream result effect task delegation results](docs/tutorial-capability-followup-result-task-result-effect-task-results.md)
 - [Review downstream result effect task results](docs/tutorial-capability-followup-result-task-result-effect-task-decisions.md)
+- [Create downstream result effect task result effect proposals](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-proposals.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Documentation index](docs/docs-index.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
@@ -535,6 +536,7 @@ python3 -m agent_os.cli capability-activation-followup-result-task-result-effect
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-delegations
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-results
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-decide --operator-id operator --selected-action accept_keep_blocked --selection-note "Accepted downstream result-effect proof-plan result and kept capability activation blocked." --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-results.md
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-proposals
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
@@ -629,6 +631,9 @@ python3 -m pytest tests/test_first_milestone.py -q
 - `docs/tutorial-capability-followup-result-task-result-effect-task-decisions.md`:
   reviewing downstream result effect task result records without enabling
   capabilities.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-proposals.md`:
+  creating proposed effects from accepted downstream result effect task result
+  decisions without enabling capabilities.
 - `docs/docs-index.md`: curated map of tutorials, generated reports, status
   files, and bootstrap project continuity files.
 - `docs/suggested-use.md`: operator guidance, prompts, and practical next slices.
