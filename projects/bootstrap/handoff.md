@@ -1348,14 +1348,40 @@ work, or changing routing.
   model providers, enforce budgets, promote trust, retry work, or change
   approval gates.
 
+## Latest Subagent Delegation Records
+
+- `delegate`, `delegations`, and `delegation-result` now exist as executable
+  control-plane commands.
+- SQLite now owns `subagent_delegations` rows with routing decision id, parent
+  goal/task, assigned profile, category, title, scoped prompt, input context,
+  allowed tools, forbidden actions, expected output schema, budget hints,
+  status, result summary, artifact path, and timestamps.
+- Delegation artifacts under `.clanker/delegations/` preserve
+  `execution_started=false`, `network_actions_taken=0`, and
+  `external_mutations_taken=0`.
+- The dashboard exposes recent delegation contracts under
+  `### Subagent Delegations`.
+- Latest command smoke:
+  `delegate task_37d1509ef90f --title "Summarize failing test output"` ->
+  `subagent_delegation_7c3ac6139928`, sourced from routing decision
+  `routing_decision_913d11bcaef2`, profile `tester`, schema
+  `failing_test_summary`.
+- Latest iteration packet:
+  `iteration_07fc0b9da91f` in `docs/next-iteration.md`.
+- Eval-after-change:
+  `eval_after_change_57383fcce489`, run `run_a013a9d6f48f`, status `pass`.
+- Non-claims: delegation records do not start subagents, call model providers,
+  write files, approve work, commit, run remote workers, or mutate external
+  systems.
+
 ## Next Actions
 
-1. Use `docs/next-iteration.md` packet `iteration_071ca887d39c` to complete:
-   Add subagent delegation records from routing decisions.
-2. Build delegation records as the next executable control-plane primitive:
-   consume recorded routing decisions, persist subagent assignment metadata,
-   and expose delegation status without starting remote workers or calling
-   external model-provider APIs.
+1. Use `docs/next-iteration.md` packet `iteration_07fc0b9da91f` to complete:
+   Add delegation result ingestion for read-only subagent outputs.
+2. Build delegation result ingestion as the next executable control-plane
+   primitive: attach structured read-only outputs to delegation contracts,
+   keep result artifacts inspectable, and preserve no external/model-provider
+   side effects.
 3. Keep hosted dashboard, remote workers, scheduler,
    browser/desktop adapters, budget enforcement, trust promotion, retries, and
    real-cost tracking blocked until their own evidence and approval contracts

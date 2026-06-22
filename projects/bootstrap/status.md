@@ -3265,3 +3265,48 @@ is report-only, external decisions remain, or approvals are missing.
 - Goal ID: goal_995971d632dd
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_2b6b0b2f72a8/summary.md
+
+## 2026-06-22 Subagent Delegation Records
+
+- `delegate <task_id> --profile <name> --title "..."` now records a scoped
+  read-only delegation contract from a task routing decision.
+- `delegations <goal_id>` lists delegation contracts for a goal.
+- `delegation-result <delegation_id>` shows current result state and artifact
+  path.
+- Stored delegation rows preserve parent goal/task, routing decision,
+  assigned profile, category, prompt, input context, allowed tools, forbidden
+  actions, expected output schema, budget hints, status, and artifact path.
+- The smoke delegation artifact is
+  `.clanker/delegations/task_37d1509ef90f-summarize-failing-test-output.json`
+  for `subagent_delegation_7c3ac6139928`, profile `tester`, schema
+  `failing_test_summary`, with `execution_started=false` and
+  `network_actions_taken=0`.
+- Dashboard cockpit exposes the new state under `### Subagent Delegations`.
+- Latest iteration packet:
+  `iteration_07fc0b9da91f` in `docs/next-iteration.md`.
+- Next selected focus:
+  `Add delegation result ingestion for read-only subagent outputs.`
+- Eval-after-change:
+  `eval_after_change_57383fcce489`, run `run_a013a9d6f48f`, status `pass`.
+- Verification evidence:
+  focused delegation tests -> 3 passed, 205 deselected; focused
+  delegation/routing/evidence/handoff/cleanup/commit/dashboard tests ->
+  64 passed, 144 deselected; full `python3 -m pytest -q` -> 208 passed;
+  CLI `delegate`/`delegations`/`delegation-result`/`dashboard` smoke passed;
+  eval-after-change -> pass; baseline eval -> pass; cleanup dry run ->
+  `eligible=0`; handoff-review -> clear; playbooks -> `successful_runs=176`.
+- Non-claims: no subagent start, model-provider call, file write, approval,
+  commit, remote worker start, budget enforcement, trust promotion, retry, or
+  external mutation is enabled by this slice.
+
+## Run run_48c25da1dc60
+
+- Goal ID: goal_e3943a3ed329
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_48c25da1dc60/summary.md
+
+## Run run_a013a9d6f48f
+
+- Goal ID: goal_7c2d1ecd0307
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_a013a9d6f48f/summary.md

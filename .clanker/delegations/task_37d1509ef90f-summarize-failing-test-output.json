@@ -1,0 +1,48 @@
+{
+  "allowed_tools": [
+    "read",
+    "shell"
+  ],
+  "assigned_profile": "tester",
+  "budget": {
+    "seconds": 300,
+    "tokens": 12000
+  },
+  "category": "test_triage",
+  "execution_started": false,
+  "expected_output_schema": "failing_test_summary",
+  "external_mutations_taken": 0,
+  "forbidden_actions": [
+    "approve",
+    "commit",
+    "external_state_mutation",
+    "write"
+  ],
+  "id": "subagent_delegation_7c3ac6139928",
+  "input_context": {
+    "model": "configurable/cheap-coding-model",
+    "parent_goal_id": "goal_278dbf0c029f",
+    "parent_task_id": "task_37d1509ef90f",
+    "profile": "tester",
+    "project_id": "bootstrap",
+    "routing_decision_id": "routing_decision_913d11bcaef2",
+    "routing_reason": "task_rule: task_type test_triage mapped to category test_triage selected tester",
+    "task_description": "Summarize a failing test run for delegation smoke verification.",
+    "task_type": "test_triage",
+    "verification_plan": {
+      "type": "manual_review"
+    }
+  },
+  "network_actions_taken": 0,
+  "non_claims": [
+    "No subagent was started.",
+    "No model provider was called.",
+    "No file, git, approval, or external state was mutated."
+  ],
+  "parent_goal_id": "goal_278dbf0c029f",
+  "parent_task_id": "task_37d1509ef90f",
+  "prompt": "/goal Summarize failing test output\n\nContext:\n- parent_goal_id: goal_278dbf0c029f\n- parent_task_id: task_37d1509ef90f\n- project_id: bootstrap\n- task_type: test_triage\n- task_description: Summarize a failing test run for delegation smoke verification.\n- routing_category: test_triage\n- assigned_profile: tester\n\nBoundaries:\n- Read-only context gathering only.\n- Do not write files, commit, approve, call external services, or mutate state.\n\nDeliverable:\n- Return structured output matching `failing_test_summary`.",
+  "routing_decision_id": "routing_decision_913d11bcaef2",
+  "status": "pending",
+  "title": "Summarize failing test output"
+}

@@ -213,6 +213,11 @@ from agent_os.profile_routing import (
 from agent_os.project_registry import register_project
 from agent_os.queue_health import render_queue_health_finding, write_queue_health_report
 from agent_os.runtime import detect_runtime_capabilities, write_runtime_capability_matrix
+from agent_os.subagent_delegation import (
+    DelegationError,
+    create_subagent_delegation,
+    render_subagent_delegation_line,
+)
 from agent_os.worktree_cleanup import cleanup_worktrees
 
 
@@ -247,6 +252,23 @@ def build_parser() -> argparse.ArgumentParser:
     route.add_argument("--category")
     route.add_argument("--project")
     route.add_argument("--profile", help="Operator override profile name.")
+    delegate = subparsers.add_parser(
+        "delegate",
+        help="Record a scoped read-only subagent delegation contract for a task.",
+    )
+    delegate.add_argument("task_id")
+    delegate.add_argument("--profile", help="Operator override profile name.")
+    delegate.add_argument("--title", required=True)
+    delegations = subparsers.add_parser(
+        "delegations",
+        help="List subagent delegation contracts for a goal.",
+    )
+    delegations.add_argument("goal_id")
+    delegation_result = subparsers.add_parser(
+        "delegation-result",
+        help="Show a subagent delegation contract and current result state.",
+    )
+    delegation_result.add_argument("delegation_id")
     register_project_parser = subparsers.add_parser(
         "register-project",
         help="Register a local git repository for isolated coding-agent work.",
@@ -630,6 +652,61 @@ def main(argv: list[str] | None = None) -> int:
         print(f"estimated_cost_tier: {decision.estimated_cost_tier}")
         print(f"status: {decision.status}")
         print(f"reason: {decision.reason}")
+        return 0
+
+    if args.command == "delegate":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            delegation = create_subagent_delegation(
+                root,
+                system.storage,
+                task_id=args.task_id,
+                title=args.title,
+                profile_override=args.profile,
+            )
+        except (DelegationError, KeyError) as error:
+            print(f"delegation_failed: {error}")
+            return 1
+        print(f"subagent_delegation: {delegation.id}")
+        print(f"routing_decision_id: {delegation.routing_decision_id or 'none'}")
+        print(f"parent_goal_id: {delegation.parent_goal_id}")
+        print(f"parent_task_id: {delegation.parent_task_id}")
+        print(f"assigned_profile: {delegation.assigned_profile}")
+        print(f"category: {delegation.category}")
+        print(f"title: {delegation.title}")
+        print(f"expected_output_schema: {delegation.expected_output_schema}")
+        print(f"status: {delegation.status}")
+        print(f"execution_started: {str(delegation.started_at is not None).lower()}")
+        print(f"artifact: {delegation.result_artifact_path}")
+        return 0
+
+    if args.command == "delegations":
+        system = AgentSystem(root)
+        system.initialize()
+        delegations = system.storage.list_subagent_delegations(args.goal_id)
+        print(f"delegations: {len(delegations)}")
+        for delegation in delegations:
+            print(render_subagent_delegation_line(delegation))
+        return 0
+
+    if args.command == "delegation-result":
+        system = AgentSystem(root)
+        system.initialize()
+        delegation = system.storage.get_subagent_delegation(args.delegation_id)
+        if delegation is None:
+            print(f"delegation_missing: {args.delegation_id}")
+            return 1
+        print(f"delegation: {delegation.id}")
+        print(f"status: {delegation.status}")
+        print(f"assigned_profile: {delegation.assigned_profile}")
+        print(f"category: {delegation.category}")
+        print(f"parent_goal_id: {delegation.parent_goal_id}")
+        print(f"parent_task_id: {delegation.parent_task_id}")
+        print(f"expected_output_schema: {delegation.expected_output_schema}")
+        print(f"result_summary: {delegation.result_summary or 'none'}")
+        print(f"result_artifact_path: {delegation.result_artifact_path}")
+        print(f"completed_at: {delegation.completed_at or 'none'}")
         return 0
 
     if args.command == "register-project":

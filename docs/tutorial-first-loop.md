@@ -7,7 +7,8 @@ This tutorial walks through the smallest useful ClankerOS loop:
 3. let the local worker execute verifiable tasks;
 4. inspect the evidence;
 5. record a safe profile routing decision;
-6. regenerate the dashboard.
+6. optionally record a read-only delegation contract;
+7. regenerate the dashboard.
 
 ClankerOS is local-first. These commands write SQLite rows and markdown
 reports in this checkout. They do not start remote workers, deploy services,
@@ -74,17 +75,31 @@ decision in SQLite. Category-only routing is useful before a concrete task
 exists. It does not dispatch a subagent, call a model provider, or change the
 worker claim rules.
 
-## 5. Regenerate The Operator Dashboard
+## 5. Record A Read-Only Delegation Contract
+
+If you have a concrete task id, create a scoped delegation contract:
+
+```bash
+python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
+python3 -m agent_os.cli delegations <goal_id>
+python3 -m agent_os.cli delegation-result <delegation_id>
+```
+
+This stores a pending `subagent_delegations` row and a JSON artifact under
+`.clanker/delegations/`. It does not start a subagent, call a model provider,
+write files, approve work, commit, or mutate external systems.
+
+## 6. Regenerate The Operator Dashboard
 
 ```bash
 python3 -m agent_os.cli dashboard
 ```
 
 Open `docs/dashboard.md` to inspect queue health, proof checklists, approval
-boundaries, profile routing decisions, playbooks, eval results, and the latest
-generated reports.
+boundaries, profile routing decisions, subagent delegation contracts,
+playbooks, eval results, and the latest generated reports.
 
-## 6. Run Verification
+## 7. Run Verification
 
 ```bash
 python3 -m pytest -q
@@ -105,6 +120,8 @@ eval runs and remain guidance only; they are not automatic executors.
 - It does not run GitHub Actions or deploy infrastructure.
 - It does not dispatch subagents or call a model provider when recording a
   profile routing decision.
+- It does not start subagents or call model providers when recording a
+  delegation contract.
 - It does not enforce budgets, promote trust, retry work, or track real spend.
 - It does not apply the future `operator_approval_requests` schema migration.
 

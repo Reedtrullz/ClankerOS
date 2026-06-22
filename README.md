@@ -12,6 +12,7 @@ approval -> freshness recheck -> local worktree commit -> committed effect evide
 committed effect -> GitHub handoff packet -> operator push/draft-PR commands
 GitHub handoff -> operator-supplied CI/deploy evidence -> local evidence record
 task/category -> profile routing decision -> durable selection record
+routing decision -> read-only subagent delegation contract -> evidence artifact
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -39,10 +40,11 @@ network action was taken. After a handoff exists, it can ingest
 operator-supplied CI/deploy evidence as a local record without calling CI,
 deploying, or mutating GitHub. It now also creates safe local profile defaults
 for planner/coder/scout/tester/evaluator work and records routing decisions
-for task or category selection without changing worker claiming or calling a
-model provider. Deployments and other external side effects remain blocked
-unless an implemented flow explicitly models evidence, authorization,
-rollback, and verification.
+for task or category selection. It can also create read-only subagent
+delegation contracts from those routing decisions without starting a subagent
+or calling a model provider. Deployments and other external side effects
+remain blocked unless an implemented flow explicitly models evidence,
+authorization, rollback, and verification.
 
 ## Repository Metadata
 
@@ -88,6 +90,7 @@ python3 -m agent_os.cli github-handoff <effect_id> --base main --title "Make a t
 python3 -m agent_os.cli ci-deploy-evidence <github_handoff_id> --provider github-actions --status success --external-run-id 123 --url https://github.com/owner/repo/actions/runs/123
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
+python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
 python3 -m agent_os.cli cleanup-worktrees --confirm --reason "committed branch kept"
 ```
 
@@ -98,8 +101,9 @@ GitHub handoff step writes local evidence and command strings; it does not push
 or open the PR for you. The CI/deploy evidence step records what the operator
 supplies; it does not call GitHub Actions, run CI, or deploy. The profile
 routing commands create `.clanker/profiles.yml`, store safe default profiles
-and routing rules in SQLite, and record selection decisions only; they do not
-dispatch subagents or call external models.
+and routing rules in SQLite, and record selection decisions. The delegation
+command stores a scoped read-only contract and evidence artifact; it does not
+start a subagent, call external models, approve work, commit, or mutate files.
 
 ## Tutorials And Suggested Use
 
@@ -133,8 +137,12 @@ The repository can now:
 - create safe default planner/coder/scout/tester/evaluator profile records and
   routing rules with `.clanker/profiles.yml` as a human-readable local config;
 - record profile routing decisions for task ids or category/project pairs,
-  including operator profile overrides, without changing worker claiming,
-  dispatching subagents, or calling a model provider;
+  including operator profile overrides, without changing worker claiming or
+  calling a model provider;
+- record read-only subagent delegation contracts from routing decisions,
+  including scoped prompts, input context, allowed tools, forbidden actions,
+  expected output schema, local budget hints, and JSON artifacts, without
+  starting subagents or mutating state;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;

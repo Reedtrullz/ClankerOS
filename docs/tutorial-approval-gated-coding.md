@@ -11,7 +11,8 @@ This tutorial walks through the first executable local coding-agent vertical:
 7. prepare a GitHub handoff packet from committed local evidence;
 8. record operator-supplied CI/deploy evidence for the handoff;
 9. record profile routing decisions for future specialist work;
-10. clean up terminal worktrees after an explicit cleanup decision.
+10. record read-only subagent delegation contracts;
+11. clean up terminal worktrees after an explicit cleanup decision.
 
 The flow is intentionally conservative. It creates evidence and an approval
 packet first. It creates a local git commit only after explicit approval and a
@@ -222,10 +223,34 @@ SQLite and writes `.clanker/profiles.yml` if no local config exists. Route
 decisions preserve the selected profile, model label, category, cost tier,
 task/goal/project context, and operator override reason when present.
 
-This is a control-plane record only. It does not claim tasks, dispatch
-subagents, call model providers, or change approval gates.
+This is a control-plane record only. It does not claim tasks, start subagents,
+call model providers, or change approval gates.
 
-## 10. Clean Up Terminal Worktrees
+## 10. Record Delegation Contracts
+
+After routing a task, record a read-only specialist delegation contract:
+
+```bash
+python3 -m agent_os.cli delegate <task_id> \
+  --profile scout \
+  --title "Find relevant CLI files and tests"
+
+python3 -m agent_os.cli delegations <goal_id>
+python3 -m agent_os.cli delegation-result <delegation_id>
+```
+
+ClankerOS will:
+
+- record or consume a routing decision for the task;
+- require the selected profile to be a read-only subagent profile;
+- store scoped prompt/context/tool/budget fields in SQLite;
+- write a JSON artifact under `.clanker/delegations/`;
+- keep the delegation `pending`.
+
+This step does not start a subagent, call a model provider, write files,
+approve work, commit, or mutate external state.
+
+## 11. Clean Up Terminal Worktrees
 
 Preview cleanup candidates:
 
@@ -259,6 +284,8 @@ uncommitted changes.
 - It does not deploy anything, even when it records deploy evidence.
 - It does not dispatch subagents or call model providers when it records
   profile routing decisions.
+- It does not start subagents or call model providers when it records
+  delegation contracts.
 - It does not enable hosted dashboards, remote workers, scheduling, browser or
   desktop adapters, budget enforcement, trust promotion, retries, or real cost
   tracking.

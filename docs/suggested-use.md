@@ -28,6 +28,10 @@ Register this git repo, run a worktree-isolated coding task, capture the diff an
 List the safe default profiles and record a scout routing decision for repo search without dispatching a model.
 ```
 
+```text
+Record a read-only scout delegation contract for this task and show me the delegation artifact, but do not start a subagent.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -67,7 +71,9 @@ python3 -m agent_os.cli run-goal "Make the smallest verified change" --project <
    after real CI/deploy evidence exists and should be preserved locally.
 9. Use `python3 -m agent_os.cli profiles`, `profile-show <name>`, and
    `route ...` to record profile routing choices before specialist work.
-10. Use `python3 -m agent_os.cli cleanup-worktrees --confirm --reason "..."`
+10. Use `python3 -m agent_os.cli delegate <task_id> --profile scout --title "..."`
+   to create a read-only delegation contract when specialist prep is useful.
+11. Use `python3 -m agent_os.cli cleanup-worktrees --confirm --reason "..."`
    after reviewing terminal effects and deciding the worktree can be removed.
 
 `commit-approved` blocks without committing if the worktree base commit, patch,
@@ -79,8 +85,11 @@ commands while recording `network_actions_taken=0`.
 operator-supplied proof while also recording `network_actions_taken=0`.
 `profiles` creates safe local planner/coder/scout/tester/evaluator defaults
 and `.clanker/profiles.yml`. `route` records profile selection decisions for
-task ids or category/project pairs without claiming tasks, dispatching
-subagents, or calling model providers.
+task ids or category/project pairs without claiming tasks or calling model
+providers.
+`delegate` stores a scoped pending delegation contract and JSON artifact under
+`.clanker/delegations/`; it does not start a subagent, call a model provider,
+write files, approve work, commit, or mutate external state.
 `cleanup-worktrees` removes only clean terminal worktrees; dirty blocked
 worktrees are recorded as blocked and left in place.
 
@@ -123,11 +132,12 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 
 ## Practical Next Slices
 
-Good next slices now favor executable local approval flow and routing records
-before broader autonomy:
+Good next slices now favor executable local approval flow, routing records, and
+delegation contracts before broader autonomy:
 
-- subagent delegation records that consume profile routing decisions without
-  yet running remote workers or external model-provider APIs;
+- delegation result ingestion that lets an operator attach structured
+  read-only subagent output without starting remote workers or external
+  model-provider APIs;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;
 - remote-worker, scheduler, browser/desktop adapter, budget, trust, retry, and

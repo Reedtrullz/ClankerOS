@@ -157,6 +157,7 @@ from agent_os.queue_health import (
     render_queue_health_finding,
 )
 from agent_os.storage import Storage
+from agent_os.subagent_delegation import render_subagent_delegation_line
 
 
 def generate_static_dashboard(root: Path) -> Path:
@@ -262,6 +263,9 @@ def generate_static_dashboard(root: Path) -> Path:
         routing_decisions = []
         if _table_exists(connection, "routing_decisions"):
             routing_decisions = storage.list_recent_routing_decisions(limit=5)
+        subagent_delegations = []
+        if _table_exists(connection, "subagent_delegations"):
+            subagent_delegations = storage.list_recent_subagent_delegations(limit=5)
         effects = []
         if _table_exists(connection, "effects"):
             effects = storage.list_recent_effects(limit=5)
@@ -952,6 +956,13 @@ def generate_static_dashboard(root: Path) -> Path:
             lines.append(f"- {format_routing_decision_line(decision)}")
     else:
         lines.append("- recent_decisions: none")
+
+    lines.extend(["", "### Subagent Delegations", ""])
+    if subagent_delegations:
+        for delegation in subagent_delegations:
+            lines.append(f"- {render_subagent_delegation_line(delegation)}")
+    else:
+        lines.append("- none")
 
     lines.extend(["", "### Next Recommended Action", ""])
     if pending_approvals:

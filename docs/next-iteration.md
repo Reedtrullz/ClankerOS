@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_071ca887d39c
+- Packet ID: iteration_07fc0b9da91f
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add subagent delegation records from routing decisions.
+Advance the Agent System north-star goal by completing: Add delegation result ingestion for read-only subagent outputs.
 
 ## Definition Of Done
 
@@ -68,8 +68,8 @@ Advance the Agent System north-star goal by completing: Add subagent delegation 
 ## Simplicity Guardrail
 
 - selection_policy: highest-score-then-lowest-complexity
-- selection_reason: selected only actionable item with score 9 and complexity 4
-- selected_score: 9
+- selection_reason: selected only actionable item with score 8 and complexity 4
+- selected_score: 8
 - selected_complexity: 4
 
 ## Guardrails And Non-Claims

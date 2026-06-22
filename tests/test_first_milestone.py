@@ -1342,6 +1342,160 @@ def test_route_task_records_tester_decision_and_allows_operator_override(
     assert decisions[0].project_id == "bootstrap"
 
 
+def test_delegate_creates_read_only_contract_from_routing_decision(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "map files before coding")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        project_id="bootstrap",
+        task_type="record_learning",
+        description="Find relevant CLI files and summarize them.",
+        verification_plan={"type": "manual_review"},
+    )
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "delegate",
+                task_id,
+                "--profile",
+                "scout",
+                "--title",
+                "Find relevant CLI files",
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "subagent_delegation:" in output
+    assert "assigned_profile: scout" in output
+    assert "status: pending" in output
+    assert "execution_started: false" in output
+
+    decisions = storage.list_recent_routing_decisions()
+    assert len(decisions) == 1
+    assert decisions[0].selected_profile == "scout"
+    assert decisions[0].reason.startswith("operator_override")
+
+    delegations = storage.list_subagent_delegations(goal_id)
+    assert len(delegations) == 1
+    delegation = delegations[0]
+    assert delegation.parent_goal_id == goal_id
+    assert delegation.parent_task_id == task_id
+    assert delegation.routing_decision_id == decisions[0].id
+    assert delegation.assigned_profile == "scout"
+    assert delegation.allowed_tools_json == ["read", "grep", "summarize"]
+    assert delegation.forbidden_actions_json == [
+        "approve",
+        "commit",
+        "external_state_mutation",
+        "shell",
+        "write",
+    ]
+    assert delegation.expected_output_schema == "file_relevance_report"
+    assert delegation.status == "pending"
+    assert delegation.result_summary is None
+    assert delegation.completed_at is None
+
+    artifact = json.loads(Path(delegation.result_artifact_path).read_text())
+    assert artifact["execution_started"] is False
+    assert artifact["network_actions_taken"] == 0
+    assert artifact["routing_decision_id"] == decisions[0].id
+
+
+def test_delegations_command_result_and_dashboard_show_delegation(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "triage failing test")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        project_id="bootstrap",
+        task_type="test_triage",
+        description="Summarize a failing test run.",
+        verification_plan={"type": "manual_review"},
+    )
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "delegate",
+                task_id,
+                "--title",
+                "Summarize failing test output",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    delegation = storage.list_subagent_delegations(goal_id)[0]
+    assert delegation.assigned_profile == "tester"
+    assert delegation.expected_output_schema == "failing_test_summary"
+
+    assert main(["--root", str(tmp_path), "delegations", goal_id]) == 0
+    list_output = capsys.readouterr().out
+    assert "delegations: 1" in list_output
+    assert delegation.id in list_output
+    assert "profile=tester" in list_output
+
+    assert main(["--root", str(tmp_path), "delegation-result", delegation.id]) == 0
+    result_output = capsys.readouterr().out
+    assert f"delegation: {delegation.id}" in result_output
+    assert "status: pending" in result_output
+    assert "result_summary: none" in result_output
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "### Subagent Delegations" in dashboard
+    assert delegation.id in dashboard
+    assert "profile=tester" in dashboard
+
+
+def test_delegate_rejects_mutating_primary_profile(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "implement code")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        project_id="bootstrap",
+        task_type="coding_change",
+        description="Change code.",
+        verification_plan={"type": "manual_review"},
+    )
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "delegate",
+                task_id,
+                "--profile",
+                "coder",
+                "--title",
+                "Try to mutate code",
+            ]
+        )
+        == 1
+    )
+    output = capsys.readouterr().out
+    assert "delegation_failed: profile coder is not a read-only subagent" in output
+    assert storage.list_subagent_delegations(goal_id) == []
+
+
 def test_static_dashboard_summarizes_runs_and_queue(tmp_path: Path) -> None:
     system = AgentSystem(tmp_path)
     result = system.run_goal(
@@ -1376,6 +1530,12 @@ def _init_git_repo(repo_path: Path) -> None:
     )
     subprocess.run(
         ["git", "config", "user.name", "ClankerOS Test"],
+        cwd=repo_path,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "config", "commit.gpgsign", "false"],
         cwd=repo_path,
         check=True,
         capture_output=True,

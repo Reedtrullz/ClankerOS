@@ -220,6 +220,29 @@ class RoutingDecision:
 
 
 @dataclass(frozen=True)
+class SubagentDelegation:
+    id: str
+    routing_decision_id: str | None
+    parent_goal_id: str
+    parent_task_id: str
+    assigned_profile: str
+    category: str
+    title: str
+    prompt: str
+    input_context_json: dict[str, Any]
+    allowed_tools_json: list[str]
+    forbidden_actions_json: list[str]
+    expected_output_schema: str
+    budget_json: dict[str, Any]
+    status: str
+    result_summary: str | None
+    result_artifact_path: str
+    created_at: str
+    started_at: str | None
+    completed_at: str | None
+
+
+@dataclass(frozen=True)
 class Effect:
     id: str
     run_id: str
@@ -1534,6 +1557,28 @@ class Storage:
                     actual_cost real,
                     status text not null,
                     created_at text not null
+                );
+
+                create table if not exists subagent_delegations (
+                    id text primary key,
+                    routing_decision_id text,
+                    parent_goal_id text not null,
+                    parent_task_id text not null,
+                    assigned_profile text not null,
+                    category text not null,
+                    title text not null,
+                    prompt text not null,
+                    input_context_json text not null,
+                    allowed_tools_json text not null,
+                    forbidden_actions_json text not null,
+                    expected_output_schema text not null,
+                    budget_json text not null,
+                    status text not null,
+                    result_summary text,
+                    result_artifact_path text not null,
+                    created_at text not null,
+                    started_at text,
+                    completed_at text
                 );
 
                 create table if not exists effects (
@@ -8242,6 +8287,127 @@ class Storage:
                 rows = connection.execute(query + " limit ?", (limit,)).fetchall()
         return [self._row_to_routing_decision(row) for row in rows]
 
+    def record_subagent_delegation(
+        self,
+        *,
+        routing_decision_id: str | None,
+        parent_goal_id: str,
+        parent_task_id: str,
+        assigned_profile: str,
+        category: str,
+        title: str,
+        prompt: str,
+        input_context_json: dict[str, Any],
+        allowed_tools_json: list[str],
+        forbidden_actions_json: list[str],
+        expected_output_schema: str,
+        budget_json: dict[str, Any],
+        status: str,
+        result_summary: str | None,
+        result_artifact_path: str,
+        started_at: str | None = None,
+        completed_at: str | None = None,
+    ) -> SubagentDelegation:
+        delegation_id = new_id("subagent_delegation")
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into subagent_delegations (
+                    id, routing_decision_id, parent_goal_id, parent_task_id,
+                    assigned_profile, category, title, prompt,
+                    input_context_json, allowed_tools_json,
+                    forbidden_actions_json, expected_output_schema,
+                    budget_json, status, result_summary, result_artifact_path,
+                    created_at, started_at, completed_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    delegation_id,
+                    routing_decision_id,
+                    parent_goal_id,
+                    parent_task_id,
+                    assigned_profile,
+                    category,
+                    title,
+                    prompt,
+                    _json_dumps(input_context_json),
+                    _json_dumps(allowed_tools_json),
+                    _json_dumps(forbidden_actions_json),
+                    expected_output_schema,
+                    _json_dumps(budget_json),
+                    status,
+                    result_summary,
+                    result_artifact_path,
+                    created_at,
+                    started_at,
+                    completed_at,
+                ),
+            )
+        return SubagentDelegation(
+            id=delegation_id,
+            routing_decision_id=routing_decision_id,
+            parent_goal_id=parent_goal_id,
+            parent_task_id=parent_task_id,
+            assigned_profile=assigned_profile,
+            category=category,
+            title=title,
+            prompt=prompt,
+            input_context_json=input_context_json,
+            allowed_tools_json=allowed_tools_json,
+            forbidden_actions_json=forbidden_actions_json,
+            expected_output_schema=expected_output_schema,
+            budget_json=budget_json,
+            status=status,
+            result_summary=result_summary,
+            result_artifact_path=result_artifact_path,
+            created_at=created_at,
+            started_at=started_at,
+            completed_at=completed_at,
+        )
+
+    def list_subagent_delegations(
+        self,
+        goal_id: str,
+    ) -> list[SubagentDelegation]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from subagent_delegations
+                where parent_goal_id = ?
+                order by created_at desc, id desc
+                """,
+                (goal_id,),
+            ).fetchall()
+        return [self._row_to_subagent_delegation(row) for row in rows]
+
+    def list_recent_subagent_delegations(
+        self,
+        limit: int | None = 5,
+    ) -> list[SubagentDelegation]:
+        with self._connect() as connection:
+            query = """
+                select * from subagent_delegations
+                order by created_at desc, id desc
+            """
+            if limit is None:
+                rows = connection.execute(query).fetchall()
+            else:
+                rows = connection.execute(query + " limit ?", (limit,)).fetchall()
+        return [self._row_to_subagent_delegation(row) for row in rows]
+
+    def get_subagent_delegation(
+        self,
+        delegation_id: str,
+    ) -> SubagentDelegation | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                "select * from subagent_delegations where id = ?",
+                (delegation_id,),
+            ).fetchone()
+        return self._row_to_subagent_delegation(row) if row else None
+
     def create_pending_approval_request_for_task(
         self,
         task_id: str,
@@ -8916,6 +9082,29 @@ class Storage:
             actual_cost=row["actual_cost"],
             status=row["status"],
             created_at=row["created_at"],
+        )
+
+    def _row_to_subagent_delegation(self, row: sqlite3.Row) -> SubagentDelegation:
+        return SubagentDelegation(
+            id=row["id"],
+            routing_decision_id=row["routing_decision_id"],
+            parent_goal_id=row["parent_goal_id"],
+            parent_task_id=row["parent_task_id"],
+            assigned_profile=row["assigned_profile"],
+            category=row["category"],
+            title=row["title"],
+            prompt=row["prompt"],
+            input_context_json=_json_loads(row["input_context_json"], {}),
+            allowed_tools_json=_json_loads(row["allowed_tools_json"], []),
+            forbidden_actions_json=_json_loads(row["forbidden_actions_json"], []),
+            expected_output_schema=row["expected_output_schema"],
+            budget_json=_json_loads(row["budget_json"], {}),
+            status=row["status"],
+            result_summary=row["result_summary"],
+            result_artifact_path=row["result_artifact_path"],
+            created_at=row["created_at"],
+            started_at=row["started_at"],
+            completed_at=row["completed_at"],
         )
 
     def _row_to_effect(self, row: sqlite3.Row) -> Effect:

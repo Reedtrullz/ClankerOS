@@ -28,5 +28,6 @@ research and external-intelligence loops behind explicit policies.
 Milestone 3 approval-gated local coding flow: project registration,
 worktree-isolated execution, verified proposed effects, operator cockpit
 visibility, approved local commit application, terminal worktree cleanup,
-GitHub handoff packets, CI/deploy evidence ingestion, and profile routing
-decision records before subagent delegation primitives.
+GitHub handoff packets, CI/deploy evidence ingestion, profile routing decision
+records, and read-only subagent delegation contracts before delegation result
+ingestion and memory/skill lifecycle primitives.

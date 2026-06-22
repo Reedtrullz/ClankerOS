@@ -42,10 +42,15 @@ Core layers for the bootstrap:
   `.clanker/profiles.yml`. `route` records task/category selection decisions,
   including operator overrides, without claiming tasks, dispatching subagents,
   calling model providers, or changing approval gates.
+- Subagent delegation records: `delegate` consumes a task routing decision and
+  stores a read-only delegation contract with scoped prompt, input context,
+  allowed tools, forbidden actions, expected output schema, budget hints, and
+  a JSON artifact. Delegation records do not start subagents, call model
+  providers, approve work, commit, write files, or mutate external state.
 - Operator cockpit: the dashboard starts with active runs, registered projects,
   approval inbox, proposed effects, verification status, recent worktrees,
-  GitHub handoffs, CI/deploy evidence, profile routing decisions, and the next
-  recommended operator action.
+  GitHub handoffs, CI/deploy evidence, profile routing decisions, subagent
+  delegations, and the next recommended operator action.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON

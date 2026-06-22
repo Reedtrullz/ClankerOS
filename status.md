@@ -5248,3 +5248,56 @@
 - Non-claims: profile routing records do not claim tasks, dispatch subagents,
   call model providers, enforce budgets, promote trust, retry work, mutate
   external systems, or change approval gates.
+
+## 2026-06-22 Subagent Delegation Records
+
+- Added read-only subagent delegation records with
+  `python3 -m agent_os.cli delegate <task_id> --profile <name> --title "..."`,
+  `delegations <goal_id>`, and `delegation-result <delegation_id>`.
+- `delegate` records or consumes a routing decision for the task, requires the
+  selected profile to be a read-only subagent profile, and stores
+  `subagent_delegations` rows with scoped prompt, input context, allowed
+  tools, forbidden actions, expected output schema, budget hints, status, and
+  result artifact path.
+- Delegation artifacts are written under `.clanker/delegations/` and preserve
+  `execution_started=false`, `network_actions_taken=0`, and
+  `external_mutations_taken=0`.
+- The dashboard now exposes recent delegation contracts under
+  `### Subagent Delegations`.
+- Hardened temporary git repo tests by setting local `commit.gpgsign=false`
+  after the environment-level 1Password SSH signer failed with
+  `failed to fill whole buffer`.
+- Latest CLI smoke:
+  `subagent_delegation_7c3ac6139928` from routing decision
+  `routing_decision_913d11bcaef2`, task `task_37d1509ef90f`, profile
+  `tester`, schema `failing_test_summary`.
+- Latest iteration packet:
+  `iteration_07fc0b9da91f` in `docs/next-iteration.md`.
+- Next selected focus:
+  `Add delegation result ingestion for read-only subagent outputs.`
+- Eval-after-change:
+  `eval_after_change_57383fcce489`, run `run_a013a9d6f48f`, status `pass`.
+- Verification evidence:
+  - Red-first focused tests failed on missing `delegate` before
+    implementation.
+  - `python3 -m py_compile agent_os/subagent_delegation.py agent_os/profile_routing.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "delegate_creates or delegations_command or delegate_rejects"` -> 3 passed, 205 deselected.
+  - Wider routing/delegation/evidence/handoff/cleanup/commit/dashboard cluster -> 64 passed, 144 deselected.
+  - `python3 -m pytest -q` -> 208 passed.
+  - CLI smoke for `delegate`, `delegations`, `delegation-result`, and
+    `dashboard` -> passed with the delegation id above.
+  - `python3 -m agent_os.cli cleanup-worktrees` -> dry run with
+    `eligible=0`.
+  - `python3 -m agent_os.cli approvals` -> `pending_approvals: 0`.
+  - `python3 -m agent_os.cli queue-health` -> `hotspots: 0`.
+  - `python3 -m agent_os.cli eval-candidates` -> `eval_candidates: 0`.
+  - `python3 -m agent_os.cli handoff-review` -> `status: clear`.
+  - `python3 -m agent_os.cli iterate` -> selected the delegation result
+    ingestion focus from `tasks.md#next`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`.
+  - `python3 -m agent_os.cli playbooks` -> `successful_runs=176`.
+  - `python3 -m agent_os.cli eval-after-change --change "Add subagent delegation records from routing decisions" ...` -> pass.
+- Non-claims: delegation records do not start subagents, call model providers,
+  write files, approve work, commit, run remote workers, enforce budgets,
+  promote trust, retry work, mutate external systems, or change approval
+  gates.
