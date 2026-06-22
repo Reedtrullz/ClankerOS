@@ -1,8 +1,8 @@
 # Handoff Review
 
-- id: handoff_review_328bd9920ef0
+- id: handoff_review_031e41c5e815
 - status: clear
-- current_focus: Add local downstream follow-up result task decision effect proposals from accepted blocked task results.
+- current_focus: Add local application records for downstream follow-up result task decision effect proposals.
 - blocked_tasks: 0
 - stale_handoffs: 0
 - reviewed_paths: 1

@@ -76,6 +76,10 @@ Create proposed effects from accepted blocked follow-up result decisions, and pr
 Review downstream proof-plan result records, accept keeping activation blocked, and prove that no approval rows, activation actions, or external mutations were created.
 ```
 
+```text
+Create proposed effects from accepted downstream proof-plan result decisions, and prove that activation remains blocked.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -98,7 +102,9 @@ Review downstream proof-plan result records, accept keeping activation blocked, 
     only after the review decision exists.
 17. Review downstream proof-plan result records before treating the next
     evidence plan as operator-accepted.
-18. Record non-claims before treating the work as safe.
+18. Convert accepted downstream proof-plan result decisions into proposed
+    effects only after the downstream review decision exists.
+19. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -202,6 +208,9 @@ Prefer these files when orienting:
   completed downstream proof-plan delegation outputs as local result records.
 - `docs/tutorial-capability-followup-result-task-decisions.md` for reviewing
   downstream proof-plan result records while keeping activation blocked.
+- `docs/tutorial-capability-followup-result-task-result-effect-proposals.md`
+  for creating proposed local effects from accepted downstream result
+  decisions.
 - `contracts.md` for safety boundaries and evidence expectations.
 - `status.md` for chronological implementation evidence.
 - `projects/bootstrap/handoff.md` for the current continuation edge.
@@ -483,6 +492,22 @@ selected operator action for downstream result records that have not already
 been decided. It keeps `approval_requests_created=0`,
 `activation_actions_taken=0`, `external_mutations_taken=0`,
 `activation_allowed=false`, and `capability_enabled=false`.
+
+Convert accepted blocked downstream result decisions into local proposed
+effects:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-proposals
+python3 -m agent_os.cli dashboard
+```
+
+The proposal command writes
+`docs/capability-activation-followup-result-task-result-effect-proposals.md`
+and creates `proposed` rows in the generic `effects` ledger for accepted
+downstream result decisions. It keeps `approval_requests_created=0`,
+`activation_actions_taken=0`, `external_mutations_taken=0`,
+`activation_allowed=false`, and `capability_enabled=false`; it does not apply
+the proposed effects.
 
 ## When To Commit And Push
 

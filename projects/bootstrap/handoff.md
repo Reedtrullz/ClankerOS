@@ -1852,15 +1852,40 @@ work, or changing routing.
   trust, schedule work, retry work, track spend, run CI, deploy, push, open
   PRs, mark the active goal complete, or mutate external systems.
 
+## Latest Capability Activation Follow-Up Result Task Effect Proposals
+
+- `capability-activation-followup-result-task-result-effect-proposals` now
+  converts accepted keep-blocked downstream proof-plan result decisions into
+  local `proposed` effect rows in the generic effects ledger.
+- Initial live proposal recorded `effect_1204651c2a69` from decision
+  `capability_activation_followup_result_task_result_decision_584334bef1b8`
+  and downstream result
+  `capability_activation_followup_result_task_result_749b9c23cd2f`.
+- Final live idempotency pass reported
+  `capability_activation_followup_result_task_result_effect_proposals_already_recorded`
+  with 1 accepted decision, 1 accepted result, 0 new effect proposals, 1
+  existing effect proposal, 0 approval requests, 0 activation actions, and 0
+  external mutations.
+- Evidence report:
+  `docs/capability-activation-followup-result-task-result-effect-proposals.md`.
+- Tutorial:
+  `docs/tutorial-capability-followup-result-task-result-effect-proposals.md`.
+- Non-claims: downstream follow-up result task effect proposals do not apply
+  proposed effects, create `approval_requests`, satisfy proof, mutate
+  activation contracts, mutate downstream result records, allow activation,
+  enable capabilities, promote trust, schedule work, retry work, track spend,
+  run CI, deploy, push, open PRs, mark the active goal complete, or mutate
+  external systems.
+
 ## Next Actions
 
-Current focus: Add local downstream follow-up result task decision effect proposals from accepted blocked task results.
+Current focus: Add local application records for downstream follow-up result task decision effect proposals.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add local downstream follow-up result task decision effect proposals from accepted blocked task results.
-2. Convert accepted blocked downstream proof-plan result decisions into
-   proposed local effect records without enabling capabilities, satisfying
-   proof, or allowing activation.
+   Add local application records for downstream follow-up result task decision effect proposals.
+2. Apply accepted downstream result task decision effect proposals as local
+   records only, without enabling capabilities, satisfying proof, or allowing
+   activation.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.

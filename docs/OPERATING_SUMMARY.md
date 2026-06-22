@@ -159,6 +159,13 @@ Core layers for the bootstrap:
   downstream task, contract, and capability links while keeping approval rows,
   external mutations, activation actions, activation allowance, capability
   enablement, and proof satisfaction at zero.
+- Capability activation follow-up result task result effect proposals:
+  accepted blocked downstream result decisions can be converted into
+  idempotent `proposed` effect rows in the generic effects ledger. Each row
+  links the source downstream decision, downstream result record, upstream
+  follow-up result, source effect, downstream task, contract, and capability
+  while keeping approval row creation, external mutations, activation actions,
+  activation allowance, and capability enablement at zero.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON
@@ -789,6 +796,15 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   downstream result records, and keeps `approval_requests_created: 0`,
   `activation_actions_taken: 0`, `external_mutations_taken: 0`,
   `activation_allowed: false`, and `capability_enabled: false`.
+- Capability activation follow-up result task result effect proposals:
+  available through
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-proposals`
+  after accepted blocked downstream result decisions exist. The command writes
+  `docs/capability-activation-followup-result-task-result-effect-proposals.md`,
+  creates local `proposed` effects, and keeps
+  `approval_requests_created: 0`, `activation_actions_taken: 0`,
+  `external_mutations_taken: 0`, `activation_allowed: false`, and
+  `capability_enabled: false`.
 - Eval candidate listing: available through
   `python3 -m agent_os.cli eval-candidates` and mirrored into
   `docs/dashboard.md`.

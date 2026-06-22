@@ -180,6 +180,10 @@ from agent_os.capability_activation_followup_result_task_results import (
 from agent_os.capability_activation_followup_result_task_result_decisions import (
     render_capability_activation_followup_result_task_result_decision_line,
 )
+from agent_os.capability_activation_followup_result_task_result_effect_proposals import (
+    IDEMPOTENCY_PREFIX as CAPABILITY_FOLLOWUP_TASK_RESULT_DECISION_EFFECT_IDEMPOTENCY_PREFIX,
+    render_capability_activation_followup_result_task_result_effect_proposal_line,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -332,6 +336,7 @@ def generate_static_dashboard(root: Path) -> Path:
         effects = []
         operator_approval_effect_proposals = []
         capability_activation_followup_result_effect_proposals = []
+        capability_activation_followup_result_task_result_effect_proposals = []
         if _table_exists(connection, "effects"):
             effects = storage.list_recent_effects(limit=5)
             operator_approval_effect_proposals = (
@@ -342,6 +347,11 @@ def generate_static_dashboard(root: Path) -> Path:
             capability_activation_followup_result_effect_proposals = (
                 storage.list_effects_with_idempotency_prefix(
                     CAPABILITY_FOLLOWUP_DECISION_EFFECT_IDEMPOTENCY_PREFIX
+                )
+            )
+            capability_activation_followup_result_task_result_effect_proposals = (
+                storage.list_effects_with_idempotency_prefix(
+                    CAPABILITY_FOLLOWUP_TASK_RESULT_DECISION_EFFECT_IDEMPOTENCY_PREFIX
                 )
             )
         iterations = []
@@ -1968,6 +1978,60 @@ def generate_static_dashboard(root: Path) -> Path:
                     decision
                 ),
             ]
+        )
+    else:
+        lines.append("- none")
+
+    lines.extend(
+        [
+            "",
+            "## Capability Activation Follow-Up Result Task Effect Proposals",
+            "",
+        ]
+    )
+    if capability_activation_followup_result_task_result_effect_proposals:
+        latest_effect = (
+            capability_activation_followup_result_task_result_effect_proposals[0]
+        )
+        lines.extend(
+            [
+                (
+                    "- status: "
+                    "capability_activation_followup_result_task_result_effect_proposals_recorded"
+                ),
+                f"- source_decision: {latest_effect.run_id}",
+                (
+                    "- accepted_decisions: "
+                    f"{len({effect.run_id for effect in capability_activation_followup_result_task_result_effect_proposals})}"
+                ),
+                (
+                    "- accepted_results: "
+                    f"{len(capability_activation_followup_result_task_result_effect_proposals)}"
+                ),
+                (
+                    "- effect_proposals_created: "
+                    f"{len(capability_activation_followup_result_task_result_effect_proposals)}"
+                ),
+                (
+                    "- existing_effect_proposals: "
+                    f"{len(capability_activation_followup_result_task_result_effect_proposals)}"
+                ),
+                (
+                    "- capability_effect_proposals: "
+                    f"{len(capability_activation_followup_result_task_result_effect_proposals)}"
+                ),
+                "- approval_requests_created: 0",
+                "- activation_actions_taken: 0",
+                "- external_mutations_taken: 0",
+                f"- report: {latest_effect.evidence_path}",
+                "",
+            ]
+        )
+        lines.extend(
+            render_capability_activation_followup_result_task_result_effect_proposal_line(
+                effect
+            )
+            for effect in capability_activation_followup_result_task_result_effect_proposals
         )
     else:
         lines.append("- none")

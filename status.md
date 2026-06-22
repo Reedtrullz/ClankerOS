@@ -6393,3 +6393,80 @@
   mutate downstream result records, allow activation, enable capabilities,
   promote trust, schedule work, retry work, track spend, run CI, deploy, push,
   open PRs, mark the active goal complete, or mutate external systems.
+
+## 2026-06-22 Capability Activation Follow-Up Result Task Effect Proposals
+
+- Added local downstream decision effect proposal command:
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-proposals`.
+- The command scans accepted keep-blocked downstream proof-plan result
+  decisions, creates idempotent `proposed` rows in the generic effects ledger,
+  writes
+  `docs/capability-activation-followup-result-task-result-effect-proposals.md`,
+  and preserves downstream result, delegation, task, upstream follow-up result,
+  source effect, contract, project, and capability links.
+- Initial live proposal:
+  `effect_1204651c2a69`, status `proposed`, from decision
+  `capability_activation_followup_result_task_result_decision_584334bef1b8`
+  and downstream result
+  `capability_activation_followup_result_task_result_749b9c23cd2f`.
+- Final live idempotency pass:
+  `capability_activation_followup_result_task_result_effect_proposals_already_recorded`
+  with 1 accepted decision, 1 accepted result, 0 new effect proposals, 1
+  existing effect proposal, 0 approval requests, 0 activation actions, and 0
+  external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-proposals.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-proposals.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Added and updated docs: README lifecycle/About/command map, suggested-use
+  tutorial docs, docs index, operating summary, workflow, bootstrap
+  handoff/status, task queue, generated dashboard, generated queue-health,
+  generated handoff-review, and generated next-iteration packet. The next
+  packet is:
+  `Add local application records for downstream follow-up result task decision effect proposals.`
+- GitHub metadata check:
+  `gh repo view Reedtrullz/ClankerOS --json nameWithOwner,description,homepageUrl,repositoryTopics,defaultBranchRef,url`
+  showed the public About description, README homepage, default branch `main`,
+  and 20 repository topics are populated for
+  `https://github.com/Reedtrullz/ClankerOS`.
+- Verification evidence before final full gates:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'capability_activation_followup_result_task_result_effect_proposals' --tb=short`
+    -> failed with missing CLI command, as expected.
+  - `python3 -m py_compile agent_os/capability_activation_followup_result_task_result_effect_proposals.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py tests/test_first_milestone.py`
+    -> passed.
+  - Focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'capability_activation_followup_result_task_result_effect_proposals' --tb=short`
+    -> 3 passed, 289 deselected.
+  - Adjacent green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'capability_activation_followup_result_task_result_effect_proposals or capability_activation_followup_result_task_result_decisions or capability_activation_followup_result_task_results or capability_activation_followup_result_task_delegations or capability_activation_followup_result_tasks' --tb=short`
+    -> 15 passed, 277 deselected.
+  - Live command:
+    `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-proposals`
+    -> recorded 1 proposed effect, 0 approval requests, 0 activation actions,
+    and 0 external mutations.
+  - Live idempotency command:
+    `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-proposals`
+    -> already recorded, 1 existing proposal, 0 new proposals, 0 approval
+    requests, 0 activation actions, and 0 external mutations.
+- Final verification evidence:
+  - `python3 -m pytest -q` -> 292 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream follow-up result task effect proposals" ...`
+    -> pass as `run_6688c4a689d3`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`
+    as `run_fb277f1d82df`.
+  - `python3 -m agent_os.cli queue-health` -> hotspots 0.
+  - `python3 -m agent_os.cli handoff-review` -> clear, 0 blocked tasks, 0
+    stale handoffs.
+  - `python3 -m agent_os.cli dashboard` -> regenerated
+    `docs/dashboard.md`.
+  - `python3 -m agent_os.cli iterate` -> next packet
+    `Add local application records for downstream follow-up result task decision effect proposals.`
+  - `git diff --check` -> passed.
+- Non-claims: downstream follow-up result task effect proposal creation does
+  not apply proposed effects, create `approval_requests`, satisfy proof, mutate
+  activation contracts, mutate downstream result records, allow activation,
+  enable capabilities, promote trust, schedule work, retry work, track spend,
+  run CI, deploy, push, open PRs, mark the active goal complete, or mutate
+  external systems.

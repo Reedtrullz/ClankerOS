@@ -3678,6 +3678,31 @@ are visible in the dashboard and are not active until approved.
   Add local downstream follow-up result task decision effect proposals from
   accepted blocked task results.
 
+## 2026-06-22 Capability Follow-Up Result Task Effect Proposals
+
+- Added `capability-activation-followup-result-task-result-effect-proposals`
+  to convert accepted keep-blocked downstream proof-plan result decisions into
+  local `proposed` effect rows.
+- Initial live run created `effect_1204651c2a69` from decision
+  `capability_activation_followup_result_task_result_decision_584334bef1b8`
+  and downstream result
+  `capability_activation_followup_result_task_result_749b9c23cd2f`.
+- Final idempotency run reported 0 new effect proposals and 1 existing effect
+  proposal, with 0 approval requests, 0 activation actions, and 0 external
+  mutations.
+- Evidence report:
+  `docs/capability-activation-followup-result-task-result-effect-proposals.md`.
+- Tutorial:
+  `docs/tutorial-capability-followup-result-task-result-effect-proposals.md`.
+- Final local gates: `python3 -m pytest -q` -> 292 passed;
+  `eval-after-change` -> pass as `run_6688c4a689d3`; `eval` ->
+  `first_milestone_closed_loop: pass` as `run_fb277f1d82df`;
+  `queue-health` -> hotspots 0; `handoff-review` -> clear with 0 stale
+  handoffs; `git diff --check` -> passed.
+- Next focus:
+  Add local application records for downstream follow-up result task decision
+  effect proposals.
+
 ## Run run_38a7d9c5354c
 
 - Goal ID: goal_f46f23ea1c14
@@ -3689,3 +3714,15 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_769369f9a905
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_ea63edf343f5/summary.md
+
+## Run run_6688c4a689d3
+
+- Goal ID: goal_652e46dd62f4
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_6688c4a689d3/summary.md
+
+## Run run_fb277f1d82df
+
+- Goal ID: goal_ef40ebb698bd
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_fb277f1d82df/summary.md
