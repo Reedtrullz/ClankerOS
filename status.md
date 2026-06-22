@@ -5353,3 +5353,40 @@
   approve work, commit, push, run CI, deploy, run remote workers, enforce
   budgets, promote trust, retry work, track spend, mutate external systems, or
   change approval gates.
+
+## 2026-06-22 Memory Proposal Records
+
+- Added a first-class `memory_entries` lifecycle with
+  `python3 -m agent_os.cli memory propose`, `memory propose-from-delegation`,
+  `memory list`, `memory approve`, and `memory archive`.
+- `memory propose-from-delegation` requires a completed delegation result,
+  copies the result summary into an inactive project-scoped memory proposal,
+  links the source delegation and result artifact, writes
+  `.clanker/memory/<memory_id>.json`, and preserves
+  `network_actions_taken=0` and `external_mutations_taken=0`.
+- `memory approve` promotes a proposed entry to `active`; `memory archive`
+  marks it `archived`. Memory is not silently activated by delegation result
+  ingestion.
+- Dashboard now exposes recent memory entries under `## Memory Proposals`.
+- Live smoke:
+  `memory_83021da89a1c` was archived after the artifact-path hardening replay.
+  `memory_4bc20665a3ec` was then proposed from
+  `subagent_delegation_7c3ac6139928` with key
+  `delegation_result_ingestion_smoke`; it remains `status=proposed` with
+  artifact `.clanker/memory/memory_4bc20665a3ec.json`.
+- Latest iteration packet will move to skill proposal records after
+  `tasks.md` regeneration.
+- Verification evidence:
+  - Red-first focused tests failed on missing top-level `memory` command.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "memory_proposal"` -> 5 passed, 214 deselected.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "memory_proposal or record_delegation_result or delegate or learning_distillation or dashboard"` -> 63 passed, 156 deselected.
+  - `python3 -m pytest -q` -> 219 passed.
+  - `python3 -m py_compile agent_os/memory_entries.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py tests/test_first_milestone.py` -> passed.
+  - Generated next-iteration gate commands through `python3 -m agent_os.cli dashboard` -> passed.
+  - `python3 -m agent_os.cli handoff-review` -> `status: clear`, `blocked_tasks: 0`, `stale_handoffs: 0`.
+  - `python3 -m agent_os.cli eval-after-change --change "Add memory proposal records" --file agent_os/memory_entries.py --file agent_os/storage.py --file agent_os/cli.py --file agent_os/dashboard.py --file tests/test_first_milestone.py` -> pass as `run_6fcdef549e8b`.
+  - `git diff --check` -> passed.
+- Non-claims: memory proposal commands do not call model providers, write to
+  external memory services, run subagents, approve code, commit, push, deploy,
+  run remote workers, schedule work, promote trust, retry work, track spend, or
+  mutate external systems.

@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_76b02735875a
+- Packet ID: iteration_4db67bb0f73c
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add memory proposal records from completed delegation outputs.
+Advance the Agent System north-star goal by completing: Add skill proposal records and approval-gated SKILL.md writing.
 
 ## Definition Of Done
 

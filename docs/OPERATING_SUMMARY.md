@@ -52,10 +52,16 @@ Core layers for the bootstrap:
   schema family, marks the delegation completed, and writes a local result
   artifact while preserving no-provider, no-network, and no-external-mutation
   non-claims.
+- Memory proposal lifecycle: `memory propose` and
+  `memory propose-from-delegation` create `memory_entries` rows with
+  `status=proposed` plus local JSON evidence. `memory approve` promotes a
+  proposed entry to `active`, and `memory archive` marks an entry archived.
+  Delegation-sourced memory proposals require a completed delegation result and
+  never silently write active memory.
 - Operator cockpit: the dashboard starts with active runs, registered projects,
   approval inbox, proposed effects, verification status, recent worktrees,
   GitHub handoffs, CI/deploy evidence, profile routing decisions, subagent
-  delegations, and the next recommended operator action.
+  delegations, memory proposals, and the next recommended operator action.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON

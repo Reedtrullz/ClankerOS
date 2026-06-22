@@ -71,6 +71,11 @@ read-only specialist contracts from routing decisions. Delegation result
 ingestion now records structured operator-supplied outputs for completed
 delegations, writes local JSON evidence, validates non-empty schema-family
 payloads, and preserves no-provider/no-network non-claims.
+Memory proposal records now separate durable project memory from project state:
+completed delegation outputs can create inactive `memory_entries` proposals
+with JSON evidence, then an operator can approve them into active memory or
+archive them. Proposed memory is visible in the dashboard and is not silently
+activated.
 
 ## Verification Evidence
 
@@ -3328,3 +3333,15 @@ payloads, and preserves no-provider/no-network non-claims.
 - Goal ID: goal_287b14a4f292
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_7a9b1e946e32/summary.md
+
+## Run run_dd1c529d99f5
+
+- Goal ID: goal_4d72116a255a
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_dd1c529d99f5/summary.md
+
+## Run run_6fcdef549e8b
+
+- Goal ID: goal_4960d6e470de
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_6fcdef549e8b/summary.md

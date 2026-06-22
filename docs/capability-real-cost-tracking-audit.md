@@ -1,8 +1,8 @@
 # Capability Real Cost Tracking Audit
 
-- id: capability_real_cost_tracking_audit_78660d24d257
+- id: capability_real_cost_tracking_audit_508a24e34151
 - status: real_cost_tracking_blocked
-- source_audit_id: capability_automatic_retry_audit_32138c4e2f96
+- source_audit_id: capability_automatic_retry_audit_b26145c02258
 - source_audit_status: automatic_retry_blocked
 - capability_count: 9
 - audits: 9
@@ -16,7 +16,7 @@
 - boundaries: 1
 - recommended_commands: none
 - report_path: docs/capability-real-cost-tracking-audit.md
-- created_at: 2026-06-22T09:04:47.360008+00:00
+- created_at: 2026-06-22T13:42:53.110890+00:00
 
 ## Recommendation
 
@@ -36,7 +36,7 @@
 
 ## Source Automatic Retry Audit
 
-- id: capability_automatic_retry_audit_32138c4e2f96
+- id: capability_automatic_retry_audit_b26145c02258
 - status: automatic_retry_blocked
 - audits: 9
 - blocked_retries: 9

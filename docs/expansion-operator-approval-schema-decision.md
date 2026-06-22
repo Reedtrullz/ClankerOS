@@ -1,15 +1,15 @@
 # Expansion Operator Approval Schema Decision
 
-- id: expansion_operator_approval_schema_decision_28975ae3657a
+- id: expansion_operator_approval_schema_decision_0f6710b00f99
 - status: approval_schema_decision_ready
-- source_review: expansion_operator_approval_request_review_e52f9cb04b84
+- source_review: expansion_operator_approval_request_review_e2e206139059
 - source_status: approval_request_schema_review_required
-- source_draft: expansion_operator_approval_draft_4e8e020bceda
-- source_ledger: expansion_operator_decision_ledger_3f19bbf99553
-- source_checklist: expansion_operator_review_checklist_ed281b99faf2
-- source_index: expansion_decision_evidence_index_d3745cabb2c9
-- source_brief: expansion_decision_brief_811755ec3d0e
-- source_audit: goal_completion_audit_a710217dd757
+- source_draft: expansion_operator_approval_draft_237c76ed3625
+- source_ledger: expansion_operator_decision_ledger_840895cc426d
+- source_checklist: expansion_operator_review_checklist_9b6fefdc6581
+- source_index: expansion_decision_evidence_index_cb16e58c994c
+- source_brief: expansion_decision_brief_b51777b800ff
+- source_audit: goal_completion_audit_07c5612902e8
 - affected_requests: 11
 - schema_gaps: 11
 - missing_fields: 7
@@ -24,7 +24,7 @@
 - existing_approval_requests: 0
 - recommended_next_step: operator_approval_schema_migration_plan_required
 - report_path: docs/expansion-operator-approval-schema-decision.md
-- created_at: 2026-06-22T09:30:42.236645+00:00
+- created_at: 2026-06-22T13:42:55.320419+00:00
 
 ## Decision Options
 

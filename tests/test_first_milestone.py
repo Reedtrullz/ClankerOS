@@ -1846,6 +1846,354 @@ def test_record_delegation_result_rejects_empty_or_malformed_schema_values(
     ) in output
 
 
+def test_memory_proposal_from_completed_delegation_records_evidence_and_dashboard(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "triage failing test")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        project_id="bootstrap",
+        task_type="test_triage",
+        description="Summarize a failing test run.",
+        verification_plan={"type": "manual_review"},
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "delegate",
+                task_id,
+                "--title",
+                "Summarize failing test output",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    delegation = storage.list_subagent_delegations(goal_id)[0]
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "record-delegation-result",
+                delegation.id,
+                "--summary",
+                "CLI failures should start from agent_os/cli.py.",
+                "--output-json",
+                '{"failures":[{"test":"test_cli","file":"agent_os/cli.py"}]}',
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "memory",
+                "propose-from-delegation",
+                delegation.id,
+                "--key",
+                "cli_failure_entrypoint",
+                "--created-by-profile",
+                "tester",
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "memory_proposal:" in output
+    assert "status: proposed" in output
+    assert "source_type: subagent_delegation" in output
+    assert "source_id: " + delegation.id in output
+    assert "artifact: " in output
+
+    entries = storage.list_memory_entries(project_id="bootstrap")
+    assert len(entries) == 1
+    entry = entries[0]
+    assert entry.project_id == "bootstrap"
+    assert entry.scope == "project"
+    assert entry.key == "cli_failure_entrypoint"
+    assert entry.value == "CLI failures should start from agent_os/cli.py."
+    assert entry.source_type == "subagent_delegation"
+    assert entry.source_id == delegation.id
+    assert entry.confidence == 0.7
+    assert entry.status == "proposed"
+    assert entry.created_by_profile == "tester"
+    assert entry.last_used_at is None
+
+    artifact_line = next(line for line in output.splitlines() if line.startswith("artifact: "))
+    artifact_path = Path(artifact_line.split(": ", 1)[1])
+    assert entry.artifact_path == str(artifact_path)
+    artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
+    assert artifact["id"] == entry.id
+    assert artifact["status"] == "proposed"
+    assert artifact["source_type"] == "subagent_delegation"
+    assert artifact["source_id"] == delegation.id
+    assert artifact["source_result_artifact_path"].endswith("-result.json")
+    assert artifact["network_actions_taken"] == 0
+    assert artifact["external_mutations_taken"] == 0
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Memory Proposals" in dashboard
+    assert entry.id in dashboard
+    assert "status=proposed" in dashboard
+    assert "key=cli_failure_entrypoint" in dashboard
+
+
+def test_memory_proposal_from_delegation_requires_completed_result(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "triage failing test")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        project_id="bootstrap",
+        task_type="test_triage",
+        description="Summarize a failing test run.",
+        verification_plan={"type": "manual_review"},
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "delegate",
+                task_id,
+                "--title",
+                "Summarize failing test output",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    delegation = storage.list_subagent_delegations(goal_id)[0]
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "memory",
+                "propose-from-delegation",
+                delegation.id,
+                "--key",
+                "cli_failure_entrypoint",
+            ]
+        )
+        == 1
+    )
+    output = capsys.readouterr().out
+    assert (
+        f"memory_proposal_failed: delegation {delegation.id} "
+        "does not have a completed result"
+    ) in output
+    assert storage.list_memory_entries(project_id="bootstrap") == []
+
+
+def test_memory_proposal_from_delegation_is_idempotent(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "triage failing test")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        project_id="bootstrap",
+        task_type="test_triage",
+        description="Summarize a failing test run.",
+        verification_plan={"type": "manual_review"},
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "delegate",
+                task_id,
+                "--title",
+                "Summarize failing test output",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    delegation = storage.list_subagent_delegations(goal_id)[0]
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "record-delegation-result",
+                delegation.id,
+                "--summary",
+                "CLI failures should start from agent_os/cli.py.",
+                "--output-json",
+                '{"failures":[{"test":"test_cli","file":"agent_os/cli.py"}]}',
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    command = [
+        "--root",
+        str(tmp_path),
+        "memory",
+        "propose-from-delegation",
+        delegation.id,
+        "--key",
+        "cli_failure_entrypoint",
+    ]
+
+    assert main(command) == 0
+    first_output = capsys.readouterr().out
+    first_id = next(
+        line.split(": ", 1)[1]
+        for line in first_output.splitlines()
+        if line.startswith("memory_proposal: ")
+    )
+    assert main(command) == 0
+    second_output = capsys.readouterr().out
+    assert f"memory_proposal: already_recorded {first_id}" in second_output
+    entries = storage.list_memory_entries(project_id="bootstrap")
+    assert len(entries) == 1
+    assert entries[0].id == first_id
+
+
+def test_memory_proposal_artifact_failure_leaves_no_memory_row(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    original_replace = Path.replace
+
+    def fail_memory_replace(source: Path, target: Path):
+        if source.name.endswith(".tmp") and target.parent.name == "memory":
+            raise OSError("simulated memory artifact replace failure")
+        return original_replace(source, target)
+
+    monkeypatch.setattr(Path, "replace", fail_memory_replace)
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "memory",
+                "propose",
+                "--project",
+                "bootstrap",
+                "--key",
+                "test_command",
+                "--value",
+                "python3 -m pytest -q",
+            ]
+        )
+        == 1
+    )
+    assert storage.list_memory_entries(project_id="bootstrap") == []
+
+
+def test_memory_proposal_manual_approve_archive_and_list(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "memory",
+                "propose",
+                "--project",
+                "bootstrap",
+                "--key",
+                "test_command",
+                "--value",
+                "python3 -m pytest -q",
+                "--scope",
+                "project",
+                "--created-by-profile",
+                "operator",
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "memory_proposal:" in output
+    entry = storage.list_memory_entries(project_id="bootstrap")[0]
+    assert entry.status == "proposed"
+
+    assert main(["--root", str(tmp_path), "memory", "list", "--project", "bootstrap"]) == 0
+    list_output = capsys.readouterr().out
+    assert "memory_entries: 1" in list_output
+    assert f"{entry.id}: status=proposed" in list_output
+    assert "key=test_command" in list_output
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "memory",
+                "approve",
+                entry.id,
+                "--approved-by",
+                "operator",
+            ]
+        )
+        == 0
+    )
+    approve_output = capsys.readouterr().out
+    assert f"memory_approved: {entry.id}" in approve_output
+    active = storage.get_memory_entry(entry.id)
+    assert active is not None
+    assert active.status == "active"
+    assert active.approved_by == "operator"
+    assert active.approved_at is not None
+    assert active.updated_at >= active.created_at
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "memory",
+                "archive",
+                entry.id,
+                "--archived-by",
+                "operator",
+                "--reason",
+                "superseded",
+            ]
+        )
+        == 0
+    )
+    archive_output = capsys.readouterr().out
+    assert f"memory_archived: {entry.id}" in archive_output
+    archived = storage.get_memory_entry(entry.id)
+    assert archived is not None
+    assert archived.status == "archived"
+    assert archived.archived_by == "operator"
+    assert archived.archive_reason == "superseded"
+    assert archived.archived_at is not None
+
+
 def test_static_dashboard_summarizes_runs_and_queue(tmp_path: Path) -> None:
     system = AgentSystem(tmp_path)
     result = system.run_goal(

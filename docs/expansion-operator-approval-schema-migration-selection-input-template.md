@@ -1,20 +1,20 @@
 # Expansion Operator Approval Schema Migration Selection Input Template
 
-- id: expansion_operator_approval_schema_migration_selection_input_template_2b843f505bec
+- id: expansion_operator_approval_schema_migration_selection_input_template_cdcbee315250
 - status: operator_approval_schema_migration_selection_input_required
-- source_packet: expansion_operator_approval_schema_migration_selection_packet_05fdef0caa17
+- source_packet: expansion_operator_approval_schema_migration_selection_packet_80cce9c537b5
 - source_status: operator_approval_schema_migration_selection_required
-- source_checklist: expansion_operator_approval_schema_migration_action_checklist_c8d344afd257
+- source_checklist: expansion_operator_approval_schema_migration_action_checklist_da7daaaca395
 - source_checklist_status: operator_approval_schema_migration_manual_action_required
-- source_ledger: expansion_operator_approval_schema_migration_decision_ledger_8354ba63b081
+- source_ledger: expansion_operator_approval_schema_migration_decision_ledger_caf6a10f16dc
 - source_ledger_status: operator_approval_schema_migration_decision_pending
-- source_request: expansion_operator_approval_schema_migration_approval_request_88a59ed82a34
+- source_request: expansion_operator_approval_schema_migration_approval_request_8e1935120990
 - source_request_status: operator_approval_schema_migration_approval_required
-- source_plan: expansion_operator_approval_schema_migration_plan_43cd7e7b31b7
+- source_plan: expansion_operator_approval_schema_migration_plan_e986127c6f76
 - source_plan_status: operator_approval_schema_migration_plan_ready
-- source_decision: expansion_operator_approval_schema_decision_28975ae3657a
+- source_decision: expansion_operator_approval_schema_decision_0f6710b00f99
 - source_decision_status: approval_schema_decision_ready
-- source_review: expansion_operator_approval_request_review_e52f9cb04b84
+- source_review: expansion_operator_approval_request_review_e2e206139059
 - source_review_status: approval_request_schema_review_required
 - target_table: operator_approval_requests
 - request_count: 1
@@ -45,7 +45,7 @@
 - existing_approval_requests: 0
 - recommended_next_step: operator_approval_schema_migration_operator_input_required
 - report_path: docs/expansion-operator-approval-schema-migration-selection-input-template.md
-- created_at: 2026-06-22T11:04:46.013944+00:00
+- created_at: 2026-06-22T13:42:56.031602+00:00
 
 ## Required Operator Inputs
 

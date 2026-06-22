@@ -36,6 +36,10 @@ Record a read-only scout delegation contract for this task and show me the deleg
 Attach this read-only delegation output to the existing contract, validate the schema, and keep the no-provider/non-network claims explicit.
 ```
 
+```text
+Propose a project memory entry from that completed delegation result, but leave it inactive until I approve it.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -45,7 +49,8 @@ Attach this read-only delegation output to the existing contract, validate the s
 5. Run `python3 -m pytest -q`.
 6. Run `python3 -m agent_os.cli eval`.
 7. Record specialist delegation results when read-only context is useful.
-8. Record non-claims before treating the work as safe.
+8. Propose memory from completed delegation results only when the fact is small and reusable.
+9. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -80,7 +85,11 @@ python3 -m agent_os.cli run-goal "Make the smallest verified change" --project <
    to create a read-only delegation contract when specialist prep is useful.
 11. Use `python3 -m agent_os.cli record-delegation-result <delegation_id> --summary "..." --output-json '{...}'`
    to attach structured read-only output to an existing delegation.
-12. Use `python3 -m agent_os.cli cleanup-worktrees --confirm --reason "..."`
+12. Use `python3 -m agent_os.cli memory propose-from-delegation <delegation_id> --key "..."`
+   to create an inactive memory proposal from completed delegation evidence.
+13. Use `python3 -m agent_os.cli memory approve <memory_id> --approved-by operator`
+   only after reviewing the proposal.
+14. Use `python3 -m agent_os.cli cleanup-worktrees --confirm --reason "..."`
    after reviewing terminal effects and deciding the worktree can be removed.
 
 `commit-approved` blocks without committing if the worktree base commit, patch,
@@ -100,6 +109,9 @@ write files, approve work, commit, or mutate external state.
 `record-delegation-result` marks a delegation completed only after structured
 operator-supplied output matches the expected schema family. It writes a local
 result artifact and preserves `network_actions_taken=0`.
+`memory propose-from-delegation` creates a proposed memory entry from a
+completed delegation result. It writes local JSON evidence and does not make
+the memory active until `memory approve` is run.
 `cleanup-worktrees` removes only clean terminal worktrees; dirty blocked
 worktrees are recorded as blocked and left in place.
 
@@ -145,11 +157,10 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 ## Practical Next Slices
 
 Good next slices now favor executable local approval flow, routing records, and
-delegation evidence before broader autonomy:
+memory/skill lifecycle behavior before broader autonomy:
 
-- memory proposal records and approval flow that can safely summarize useful
-  completed delegation output without silently promoting it into durable
-  knowledge;
+- skill proposal records and approval-gated `SKILL.md` writing from useful run
+  or delegation evidence;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;
 - remote-worker, scheduler, browser/desktop adapter, budget, trust, retry, and

@@ -149,6 +149,7 @@ from agent_os.learning_distillation import (
     render_learning_distillation_line,
     render_stable_learning_line,
 )
+from agent_os.memory_entries import render_memory_entry_line
 from agent_os.playbooks import render_playbook_line
 from agent_os.profile_routing import format_profile_line, format_routing_decision_line
 from agent_os.queue_health import (
@@ -305,6 +306,9 @@ def generate_static_dashboard(root: Path) -> Path:
             learning_distillations = storage.list_recent_learning_distillations(
                 limit=1,
             )
+        memory_entries = []
+        if _table_exists(connection, "memory_entries"):
+            memory_entries = storage.list_memory_entries(status="proposed", limit=5)
         budget_trust_reports = []
         if _table_exists(connection, "budget_trust_posture_reports"):
             budget_trust_reports = storage.list_recent_budget_trust_posture_reports(
@@ -1395,6 +1399,13 @@ def generate_static_dashboard(root: Path) -> Path:
                 render_stable_learning_line(learning)
                 for learning in latest_learning_distillation.stable_learnings
             )
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "## Memory Proposals", ""])
+    if memory_entries:
+        for entry in memory_entries:
+            lines.append(f"- {render_memory_entry_line(entry)}")
     else:
         lines.append("- none")
 

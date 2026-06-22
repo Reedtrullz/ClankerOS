@@ -6,7 +6,8 @@ This tutorial walks through the local profile-routing and delegation loop:
 2. record a safe profile routing decision;
 3. create a read-only delegation contract;
 4. ingest structured operator-supplied output;
-5. inspect the completed evidence.
+5. inspect the completed evidence;
+6. propose useful memory from the completed result.
 
 The loop is local-first. It writes SQLite rows and JSON artifacts. It does not
 start a subagent, call a model provider, approve work, commit, push, deploy, or
@@ -144,3 +145,50 @@ yet be trusted as autonomous execution. Good examples:
 The parent task can then cite the completed delegation artifact as local
 evidence while still preserving the difference between local recordkeeping and
 actual external execution.
+
+## 6. Propose Memory From The Result
+
+If the completed delegation result contains a small durable fact worth carrying
+across sessions, propose it as memory:
+
+```bash
+python3 -m agent_os.cli memory propose-from-delegation <delegation_id> \
+  --key relevant_cli_files \
+  --created-by-profile scout
+```
+
+This writes a `memory_entries` row with `status=proposed` and a JSON artifact
+under:
+
+```text
+.clanker/memory/<memory_id>.json
+```
+
+The proposal keeps the source delegation id, the source result artifact path,
+the proposed key/value, confidence, and non-claims. It does not activate memory
+silently.
+
+Review proposals:
+
+```bash
+python3 -m agent_os.cli memory list --project bootstrap
+```
+
+Approve or archive explicitly:
+
+```bash
+python3 -m agent_os.cli memory approve <memory_id> --approved-by operator
+python3 -m agent_os.cli memory archive <memory_id> --archived-by operator --reason "superseded"
+```
+
+Use manual proposals for known operator-supplied facts:
+
+```bash
+python3 -m agent_os.cli memory propose \
+  --project bootstrap \
+  --key test_command \
+  --value "python3 -m pytest -q"
+```
+
+Memory approval changes local ClankerOS state only. It does not write to an
+external memory service, call a model provider, or mutate other systems.

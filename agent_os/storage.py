@@ -300,6 +300,29 @@ class Learning:
 
 
 @dataclass(frozen=True)
+class MemoryEntry:
+    id: str
+    project_id: str
+    scope: str
+    key: str
+    value: str
+    source_type: str
+    source_id: str
+    confidence: float
+    status: str
+    created_by_profile: str
+    artifact_path: str
+    approved_by: str | None
+    approved_at: str | None
+    archived_by: str | None
+    archived_at: str | None
+    archive_reason: str | None
+    created_at: str
+    updated_at: str
+    last_used_at: str | None
+
+
+@dataclass(frozen=True)
 class EvalCandidate:
     id: str
     source_type: str
@@ -1374,6 +1397,28 @@ class Storage:
                     summary text not null,
                     source text not null,
                     created_at text not null
+                );
+
+                create table if not exists memory_entries (
+                    id text primary key,
+                    project_id text not null,
+                    scope text not null,
+                    key text not null,
+                    value text not null,
+                    source_type text not null,
+                    source_id text not null,
+                    confidence real not null,
+                    status text not null,
+                    created_by_profile text not null,
+                    artifact_path text not null,
+                    approved_by text,
+                    approved_at text,
+                    archived_by text,
+                    archived_at text,
+                    archive_reason text,
+                    created_at text not null,
+                    updated_at text not null,
+                    last_used_at text
                 );
 
                 create table if not exists eval_results (
@@ -2565,6 +2610,12 @@ class Storage:
             self._ensure_column(connection, "iteration_packets", "selected_score", "integer")
             self._ensure_column(connection, "iteration_packets", "selected_complexity", "integer")
             self._ensure_column(connection, "effects", "result_json", "text not null default '{}'")
+            self._ensure_column(connection, "memory_entries", "artifact_path", "text not null default ''")
+            self._ensure_column(connection, "memory_entries", "approved_by", "text")
+            self._ensure_column(connection, "memory_entries", "approved_at", "text")
+            self._ensure_column(connection, "memory_entries", "archived_by", "text")
+            self._ensure_column(connection, "memory_entries", "archived_at", "text")
+            self._ensure_column(connection, "memory_entries", "archive_reason", "text")
             self._allow_nullable_dispatch_posture_staleness_age(connection)
             connection.execute(
                 """
@@ -2919,6 +2970,212 @@ class Storage:
                 (limit,),
             ).fetchall()
         return [self._row_to_learning(row) for row in rows]
+
+    def record_memory_entry(
+        self,
+        *,
+        memory_id: str | None = None,
+        project_id: str,
+        scope: str,
+        key: str,
+        value: str,
+        source_type: str,
+        source_id: str,
+        confidence: float,
+        status: str,
+        created_by_profile: str,
+        artifact_path: str,
+    ) -> MemoryEntry:
+        entry_id = memory_id or new_id("memory")
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into memory_entries (
+                    id, project_id, scope, key, value, source_type, source_id,
+                    confidence, status, created_by_profile, created_at,
+                    updated_at, last_used_at, artifact_path, approved_by,
+                    approved_at, archived_by, archived_at, archive_reason
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    entry_id,
+                    project_id,
+                    scope,
+                    key,
+                    value,
+                    source_type,
+                    source_id,
+                    confidence,
+                    status,
+                    created_by_profile,
+                    created_at,
+                    created_at,
+                    None,
+                    artifact_path,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                ),
+            )
+        return MemoryEntry(
+            id=entry_id,
+            project_id=project_id,
+            scope=scope,
+            key=key,
+            value=value,
+            source_type=source_type,
+            source_id=source_id,
+            confidence=confidence,
+            status=status,
+            created_by_profile=created_by_profile,
+            artifact_path=artifact_path,
+            approved_by=None,
+            approved_at=None,
+            archived_by=None,
+            archived_at=None,
+            archive_reason=None,
+            created_at=created_at,
+            updated_at=created_at,
+            last_used_at=None,
+        )
+
+    def get_memory_entry(self, memory_id: str) -> MemoryEntry | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                "select * from memory_entries where id = ?",
+                (memory_id,),
+            ).fetchone()
+        return self._row_to_memory_entry(row) if row else None
+
+    def find_memory_entry(
+        self,
+        *,
+        project_id: str,
+        scope: str,
+        key: str,
+        source_type: str,
+        source_id: str,
+        include_archived: bool = False,
+    ) -> MemoryEntry | None:
+        archived_clause = "" if include_archived else "and status != 'archived'"
+        with self._connect() as connection:
+            row = connection.execute(
+                f"""
+                select * from memory_entries
+                where project_id = ?
+                  and scope = ?
+                  and key = ?
+                  and source_type = ?
+                  and source_id = ?
+                  {archived_clause}
+                order by updated_at desc, id desc
+                limit 1
+                """,
+                (project_id, scope, key, source_type, source_id),
+            ).fetchone()
+        return self._row_to_memory_entry(row) if row else None
+
+    def list_memory_entries(
+        self,
+        *,
+        project_id: str | None = None,
+        status: str | None = None,
+        limit: int | None = None,
+    ) -> list[MemoryEntry]:
+        conditions: list[str] = []
+        parameters: list[Any] = []
+        if project_id is not None:
+            conditions.append("project_id = ?")
+            parameters.append(project_id)
+        if status is not None:
+            conditions.append("status = ?")
+            parameters.append(status)
+        where_clause = f"where {' and '.join(conditions)}" if conditions else ""
+        query = f"""
+            select * from memory_entries
+            {where_clause}
+            order by updated_at desc, id desc
+        """
+        with self._connect() as connection:
+            if limit is None:
+                rows = connection.execute(query, parameters).fetchall()
+            else:
+                rows = connection.execute(
+                    query + " limit ?",
+                    parameters + [limit],
+                ).fetchall()
+        return [self._row_to_memory_entry(row) for row in rows]
+
+    def update_memory_entry_status(
+        self,
+        memory_id: str,
+        *,
+        status: str,
+        decided_by: str | None = None,
+        reason: str | None = None,
+    ) -> MemoryEntry:
+        updated_at = utc_now()
+        with self._connect() as connection:
+            row = connection.execute(
+                "select * from memory_entries where id = ?",
+                (memory_id,),
+            ).fetchone()
+            if row is None:
+                raise KeyError(memory_id)
+            if status == "active":
+                if not row["artifact_path"] or not Path(row["artifact_path"]).exists():
+                    raise ValueError(
+                        f"memory entry {memory_id} evidence artifact is missing"
+                    )
+                approved_by = decided_by
+                approved_at = updated_at
+                archived_by = row["archived_by"]
+                archived_at = row["archived_at"]
+                archive_reason = row["archive_reason"]
+            elif status == "archived":
+                approved_by = row["approved_by"]
+                approved_at = row["approved_at"]
+                archived_by = decided_by
+                archived_at = updated_at
+                archive_reason = reason
+            else:
+                approved_by = row["approved_by"]
+                approved_at = row["approved_at"]
+                archived_by = row["archived_by"]
+                archived_at = row["archived_at"]
+                archive_reason = row["archive_reason"]
+            connection.execute(
+                """
+                update memory_entries
+                set status = ?,
+                    updated_at = ?,
+                    approved_by = ?,
+                    approved_at = ?,
+                    archived_by = ?,
+                    archived_at = ?,
+                    archive_reason = ?
+                where id = ?
+                """,
+                (
+                    status,
+                    updated_at,
+                    approved_by,
+                    approved_at,
+                    archived_by,
+                    archived_at,
+                    archive_reason,
+                    memory_id,
+                ),
+            )
+            updated = connection.execute(
+                "select * from memory_entries where id = ?",
+                (memory_id,),
+            ).fetchone()
+        return self._row_to_memory_entry(updated)
 
     def record_eval_result(self, name: str, status: str, details: dict[str, Any]) -> str:
         eval_id = new_id("eval")
@@ -9210,6 +9467,29 @@ class Storage:
             summary=row["summary"],
             source=row["source"],
             created_at=row["created_at"],
+        )
+
+    def _row_to_memory_entry(self, row: sqlite3.Row) -> MemoryEntry:
+        return MemoryEntry(
+            id=row["id"],
+            project_id=row["project_id"],
+            scope=row["scope"],
+            key=row["key"],
+            value=row["value"],
+            source_type=row["source_type"],
+            source_id=row["source_id"],
+            confidence=row["confidence"],
+            status=row["status"],
+            created_by_profile=row["created_by_profile"],
+            artifact_path=row["artifact_path"],
+            approved_by=row["approved_by"],
+            approved_at=row["approved_at"],
+            archived_by=row["archived_by"],
+            archived_at=row["archived_at"],
+            archive_reason=row["archive_reason"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+            last_used_at=row["last_used_at"],
         )
 
     def _row_to_eval_candidate(self, row: sqlite3.Row) -> EvalCandidate:

@@ -198,6 +198,14 @@ from agent_os.learning_distillation import (
     distill_learnings,
     render_stable_learning_line,
 )
+from agent_os.memory_entries import (
+    MemoryEntryError,
+    approve_memory_entry,
+    archive_memory_entry,
+    propose_memory_entry,
+    propose_memory_from_delegation,
+    render_memory_entry_line,
+)
 from agent_os.playbooks import (
     DEFAULT_MIN_SUCCESSES,
     promote_successful_run_playbooks,
@@ -228,6 +236,29 @@ def render_eval_candidate_line(candidate) -> str:
         f"source={candidate.source_type}:{candidate.source_id} "
         f"suggested={candidate.suggested_eval} path={candidate.candidate_path}"
     )
+
+
+def _print_memory_proposal(
+    entry,
+    artifact_path: Path,
+    *,
+    already_recorded: bool = False,
+) -> None:
+    if already_recorded:
+        print(f"memory_proposal: already_recorded {entry.id}")
+    else:
+        print(f"memory_proposal: {entry.id}")
+    print(f"project_id: {entry.project_id}")
+    print(f"scope: {entry.scope}")
+    print(f"key: {entry.key}")
+    print(f"value: {entry.value}")
+    print(f"source_type: {entry.source_type}")
+    print(f"source_id: {entry.source_id}")
+    print(f"confidence: {entry.confidence:g}")
+    print(f"status: {entry.status}")
+    print(f"artifact: {artifact_path}")
+    print("network_actions_taken: 0")
+    print("external_mutations_taken: 0")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -281,6 +312,35 @@ def build_parser() -> argparse.ArgumentParser:
         "--recorded-by",
         default="operator",
     )
+    memory = subparsers.add_parser(
+        "memory",
+        help="List, propose, approve, and archive durable memory entries.",
+    )
+    memory_subparsers = memory.add_subparsers(dest="memory_command", required=True)
+    memory_list = memory_subparsers.add_parser("list")
+    memory_list.add_argument("--project")
+    memory_propose = memory_subparsers.add_parser("propose")
+    memory_propose.add_argument("--project", required=True)
+    memory_propose.add_argument("--key", required=True)
+    memory_propose.add_argument("--value", required=True)
+    memory_propose.add_argument("--scope", default="project")
+    memory_propose.add_argument("--confidence", type=float, default=0.5)
+    memory_propose.add_argument("--source-type", default="manual")
+    memory_propose.add_argument("--source-id", default="manual")
+    memory_propose.add_argument("--created-by-profile", default="operator")
+    memory_from_delegation = memory_subparsers.add_parser("propose-from-delegation")
+    memory_from_delegation.add_argument("delegation_id")
+    memory_from_delegation.add_argument("--key", required=True)
+    memory_from_delegation.add_argument("--scope", default="project")
+    memory_from_delegation.add_argument("--confidence", type=float, default=0.7)
+    memory_from_delegation.add_argument("--created-by-profile")
+    memory_approve = memory_subparsers.add_parser("approve")
+    memory_approve.add_argument("memory_id")
+    memory_approve.add_argument("--approved-by", default="operator")
+    memory_archive = memory_subparsers.add_parser("archive")
+    memory_archive.add_argument("memory_id")
+    memory_archive.add_argument("--archived-by", default="operator")
+    memory_archive.add_argument("--reason", default="")
     register_project_parser = subparsers.add_parser(
         "register-project",
         help="Register a local git repository for isolated coding-agent work.",
@@ -750,6 +810,81 @@ def main(argv: list[str] | None = None) -> int:
         print("network_actions_taken: 0")
         print("external_mutations_taken: 0")
         return 0
+
+    if args.command == "memory":
+        system = AgentSystem(root)
+        system.initialize()
+        if args.memory_command == "list":
+            entries = system.storage.list_memory_entries(project_id=args.project)
+            print(f"memory_entries: {len(entries)}")
+            for entry in entries:
+                print(render_memory_entry_line(entry))
+            return 0
+        if args.memory_command == "propose":
+            try:
+                entry, artifact_path, already_recorded = propose_memory_entry(
+                    root,
+                    system.storage,
+                    project_id=args.project,
+                    key=args.key,
+                    value=args.value,
+                    scope=args.scope,
+                    source_type=args.source_type,
+                    source_id=args.source_id,
+                    confidence=args.confidence,
+                    created_by_profile=args.created_by_profile,
+                )
+            except (MemoryEntryError, OSError) as error:
+                print(f"memory_proposal_failed: {error}")
+                return 1
+            _print_memory_proposal(entry, artifact_path, already_recorded=already_recorded)
+            return 0
+        if args.memory_command == "propose-from-delegation":
+            try:
+                entry, artifact_path, already_recorded = propose_memory_from_delegation(
+                    root,
+                    system.storage,
+                    delegation_id=args.delegation_id,
+                    key=args.key,
+                    scope=args.scope,
+                    confidence=args.confidence,
+                    created_by_profile=args.created_by_profile,
+                )
+            except (MemoryEntryError, KeyError, OSError, json.JSONDecodeError) as error:
+                print(f"memory_proposal_failed: {error}")
+                return 1
+            _print_memory_proposal(entry, artifact_path, already_recorded=already_recorded)
+            return 0
+        if args.memory_command == "approve":
+            try:
+                entry = approve_memory_entry(
+                    system.storage,
+                    args.memory_id,
+                    approved_by=args.approved_by,
+                )
+            except MemoryEntryError as error:
+                print(f"memory_approve_failed: {error}")
+                return 1
+            print(f"memory_approved: {entry.id}")
+            print(f"status: {entry.status}")
+            print(f"approved_by: {args.approved_by}")
+            return 0
+        if args.memory_command == "archive":
+            try:
+                entry = archive_memory_entry(
+                    system.storage,
+                    args.memory_id,
+                    archived_by=args.archived_by,
+                    reason=args.reason,
+                )
+            except MemoryEntryError as error:
+                print(f"memory_archive_failed: {error}")
+                return 1
+            print(f"memory_archived: {entry.id}")
+            print(f"status: {entry.status}")
+            print(f"archived_by: {args.archived_by}")
+            print(f"reason: {args.reason or 'none'}")
+            return 0
 
     if args.command == "register-project":
         AgentSystem(root).initialize()

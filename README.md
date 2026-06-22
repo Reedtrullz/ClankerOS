@@ -14,6 +14,7 @@ GitHub handoff -> operator-supplied CI/deploy evidence -> local evidence record
 task/category -> profile routing decision -> durable selection record
 routing decision -> read-only subagent delegation contract -> evidence artifact
 delegation contract -> structured result ingestion -> completed local evidence
+completed delegation result -> proposed memory entry -> operator approval/archive
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -44,9 +45,11 @@ for planner/coder/scout/tester/evaluator work and records routing decisions
 for task or category selection. It can also create read-only subagent
 delegation contracts from those routing decisions without starting a subagent
 or calling a model provider, then ingest operator-supplied structured
-delegation results as completed local evidence. Deployments and other external
-side effects remain blocked unless an implemented flow explicitly models
-evidence, authorization, rollback, and verification.
+delegation results as completed local evidence. Completed delegation results
+can become proposed memory entries, but they do not become active memory until
+approved. Deployments and other external side effects remain blocked unless an
+implemented flow explicitly models evidence, authorization, rollback, and
+verification.
 
 ## Repository Metadata
 
@@ -94,6 +97,8 @@ python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
 python3 -m agent_os.cli record-delegation-result <delegation_id> --summary "Relevant files identified." --output-json '{"files":["agent_os/cli.py"]}'
+python3 -m agent_os.cli memory propose-from-delegation <delegation_id> --key relevant_cli_files
+python3 -m agent_os.cli memory list --project bootstrap
 python3 -m agent_os.cli cleanup-worktrees --confirm --reason "committed branch kept"
 ```
 
@@ -110,6 +115,9 @@ start a subagent, call external models, approve work, commit, or mutate files.
 `record-delegation-result` attaches structured operator-supplied output to an
 existing delegation, validates the expected schema family, marks it completed,
 and writes a local result artifact while still recording `network_actions_taken=0`.
+`memory propose-from-delegation` turns a completed delegation result into a
+proposed memory entry with local JSON evidence; it does not activate memory
+until `memory approve <memory_id>` is run.
 
 ## Tutorials And Suggested Use
 
@@ -153,6 +161,9 @@ The repository can now:
 - ingest structured read-only delegation results, validate them against the
   expected schema family, mark delegations completed, and write local result
   artifacts while preserving no-provider and no-network non-claims;
+- propose durable memory entries manually or from completed delegation results,
+  list them by project, approve them into active memory, or archive them,
+  without silently promoting proposed facts;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -282,6 +293,9 @@ python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
 python3 -m agent_os.cli record-delegation-result <delegation_id> --summary "Relevant files identified." --output-json '{"files":["agent_os/cli.py"]}'
+python3 -m agent_os.cli memory propose --project <name> --key test_command --value "python3 -m pytest -q"
+python3 -m agent_os.cli memory propose-from-delegation <delegation_id> --key relevant_cli_files
+python3 -m agent_os.cli memory approve <memory_id> --approved-by operator
 python3 -m agent_os.cli cleanup-worktrees --confirm --decided-by operator --reason "terminal worktree reviewed"
 python3 -m agent_os.cli resolve-incident <incident_id> --resolved-by operator --note "local resolution note"
 python3 -m agent_os.cli queue-health

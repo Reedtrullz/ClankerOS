@@ -1,16 +1,16 @@
 # Budget And Trust Posture
 
-- id: budget_trust_posture_68d682f8a130
+- id: budget_trust_posture_b02d753e4adb
 - status: report_only
-- task_count: 326
+- task_count: 361
 - budget_state: not_tracked
 - trust_state: not_tracked
 - report_path: docs/budget-trust-posture.md
-- created_at: 2026-06-22T11:05:22.412322+00:00
+- created_at: 2026-06-22T13:42:51.588466+00:00
 
 ## Risk Levels
 
-- low: 326
+- low: 361
 
 ## Budget Posture
 
@@ -24,7 +24,7 @@
 - tracking: not_tracked
 - promotion: not_enabled
 - routing_effect: none
-- task_types_seen: record_learning,write_goal_artifact
+- task_types_seen: record_learning,test_triage,write_goal_artifact
 
 ## Non-Claims
 

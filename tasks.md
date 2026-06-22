@@ -94,7 +94,8 @@
 - [x] Add default profile config and routing decision records. <!-- score=9 complexity=4 -->
 - [x] Add subagent delegation records from routing decisions. <!-- score=9 complexity=4 -->
 - [x] Add delegation result ingestion for read-only subagent outputs. <!-- score=8 complexity=4 -->
-- [ ] Add memory proposal records from completed delegation outputs. <!-- score=8 complexity=4 -->
+- [x] Add memory proposal records from completed delegation outputs. <!-- score=8 complexity=4 -->
+- [ ] Add skill proposal records and approval-gated SKILL.md writing. <!-- score=8 complexity=4 -->
 
 ## blocked
 

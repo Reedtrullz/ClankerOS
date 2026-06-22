@@ -214,6 +214,16 @@ The command path writes the result artifact before completing the SQLite row,
 rejects direct completed-row overwrites, validates non-empty schema-family
 payloads, and keeps `network_actions_taken=0`.
 
+Latest memory proposal lifecycle:
+`memory_83021da89a1c` was archived after artifact-path hardening, then
+`memory_4bc20665a3ec` was proposed from completed delegation
+`subagent_delegation_7c3ac6139928` with key
+`delegation_result_ingestion_smoke` and artifact
+`.clanker/memory/memory_4bc20665a3ec.json`. It is intentionally
+`status=proposed` until an operator runs
+`python3 -m agent_os.cli memory approve <memory_id>`.
+Next implementation edge: Add skill proposal records and approval-gated SKILL.md writing.
+
 Latest Goal Completion Audit:
 `goal_completion_audit_8710791dee32` reports
 `blocked_by_report_only_proofs` across 9 expansion requirements: 0 satisfied,

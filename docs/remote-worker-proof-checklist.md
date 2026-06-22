@@ -1,8 +1,8 @@
 # Remote Worker Proof Checklist
 
-- id: remote_worker_proof_checklist_2efdc0b8a79f
+- id: remote_worker_proof_checklist_38a1da7fc711
 - status: remote_worker_proof_blocked
-- source_checklist_id: hosted_dashboard_proof_checklist_620a518a9498
+- source_checklist_id: hosted_dashboard_proof_checklist_09308f3b1753
 - source_checklist_status: hosted_dashboard_proof_blocked
 - capability_count: 1
 - checklist_items: 1
@@ -17,7 +17,7 @@
 - boundaries: 1
 - recommended_commands: none
 - report_path: docs/remote-worker-proof-checklist.md
-- created_at: 2026-06-22T09:04:47.604805+00:00
+- created_at: 2026-06-22T13:42:53.365390+00:00
 
 ## Recommendation
 
@@ -29,10 +29,10 @@
 
 ## Source Hosted Dashboard Proof Checklist
 
-- id: hosted_dashboard_proof_checklist_620a518a9498
+- id: hosted_dashboard_proof_checklist_09308f3b1753
 - status: hosted_dashboard_proof_blocked
 - source_checklist_source_kind: real_cost_tracking_proof_checklist
-- source_checklist_source_checklist_id: real_cost_tracking_proof_checklist_81ae753ceb8c
+- source_checklist_source_checklist_id: real_cost_tracking_proof_checklist_7a7d3f1ce217
 - source_checklist_source_checklist_status: real_cost_tracking_proof_blocked
 - source_checklist_source_audit_id: none
 - source_checklist_source_audit_status: none
@@ -45,7 +45,7 @@
 - missing_evidence: 1
 - approvals_required: 1
 - report: docs/hosted-dashboard-proof-checklist.md
-- source_checklist_source_checklist_source_checklist_id: automatic_retry_proof_checklist_85f7bb32c303
+- source_checklist_source_checklist_source_checklist_id: automatic_retry_proof_checklist_d21653c04756
 - source_checklist_source_checklist_source_checklist_status: automatic_retry_proof_blocked
 
 ## Non-Claims
