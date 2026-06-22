@@ -162,6 +162,10 @@ from agent_os.operator_approval_schema_migration import (
     apply_operator_approval_schema_migration,
     render_operator_approval_schema_migration_application_line,
 )
+from agent_os.operator_approval_request_rows import (
+    apply_operator_approval_request_rows,
+    render_operator_approval_request_rows_application_line,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -601,6 +605,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     schema_migration_apply.add_argument("--selection-note", required=True)
     schema_migration_apply.add_argument("--evidence-reference", required=True)
+    request_rows_apply = subparsers.add_parser(
+        "expansion-operator-approval-request-rows-apply",
+        help="Create local operator approval request rows from approved expansion drafts.",
+    )
+    request_rows_apply.add_argument("--operator-id", required=True)
+    request_rows_apply.add_argument(
+        "--selected-action",
+        required=True,
+        choices=["approve", "defer", "request_more_evidence"],
+    )
+    request_rows_apply.add_argument("--selection-note", required=True)
+    request_rows_apply.add_argument("--evidence-reference", required=True)
 
     approve = subparsers.add_parser("approve", help="Approve a pending local task request.")
     approve.add_argument("approval_id")
@@ -2368,6 +2384,50 @@ def main(argv: list[str] | None = None) -> int:
         print(f"existing_approval_requests: {application.existing_approval_request_count}")
         print(
             render_operator_approval_schema_migration_application_line(
+                application
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "expansion-operator-approval-request-rows-apply":
+        AgentSystem(root).initialize()
+        report_path, application = apply_operator_approval_request_rows(
+            root,
+            operator_id=args.operator_id,
+            selected_action=args.selected_action,
+            selection_note=args.selection_note,
+            evidence_reference=args.evidence_reference,
+        )
+        print(f"expansion_operator_approval_request_rows_apply: {application.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_draft: {application.source_draft_id}")
+        print(f"source_status: {application.source_draft_status}")
+        print(f"source_schema_application: {application.source_schema_application_id}")
+        print(
+            "source_schema_status: "
+            f"{application.source_schema_application_status}"
+        )
+        print(f"source_ledger: {application.source_ledger_id}")
+        print(f"source_checklist: {application.source_checklist_id}")
+        print(f"source_index: {application.source_index_id}")
+        print(f"source_brief: {application.source_brief_id}")
+        print(f"source_audit: {application.source_audit_id}")
+        print(f"operator_id: {application.operator_id}")
+        print(f"selected_action: {application.selected_action}")
+        print(f"draft_requests: {application.draft_request_count}")
+        print(
+            "operator_approval_rows_created: "
+            f"{application.operator_approval_row_count}"
+        )
+        print(f"approval_requests_created: {application.created_approval_request_count}")
+        print(
+            "existing_operator_approval_requests: "
+            f"{application.existing_operator_approval_request_count}"
+        )
+        print(f"external_requests: {application.external_request_count}")
+        print(f"capability_requests: {application.capability_request_count}")
+        print(
+            render_operator_approval_request_rows_application_line(
                 application
             ).removeprefix("- ")
         )

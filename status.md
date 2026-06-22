@@ -5523,3 +5523,45 @@
   rows, approve decisions, promote trust, run CI, deploy, push, open PRs,
   start workers, schedule work, retry work, track spend, or mutate external
   systems.
+
+## 2026-06-22 Operator Approval Request Rows Application
+
+- Added explicit local row application command:
+  `python3 -m agent_os.cli expansion-operator-approval-request-rows-apply`.
+- The command requires `operator_id`, `selected_action`, `selection_note`, and
+  `evidence_reference`.
+- `selected_action=defer` or `request_more_evidence` records durable local
+  evidence without creating rows.
+- `selected_action=approve` creates pending local
+  `operator_approval_requests` rows from the latest expansion approval draft
+  only after the schema exists.
+- Repeating an approved application is idempotent and records
+  `operator_approval_request_rows_already_applied`.
+- Latest live row application:
+  `operator_approval_request_row_application_9d1c3e1d4012`, status
+  `operator_approval_request_rows_applied`, 11 draft requests, 11 pending
+  operator approval rows, 0 legacy `approval_requests` rows, 2 external
+  requests, and 9 capability requests.
+- Added dashboard visibility under
+  `## Expansion Operator Approval Request Rows Application`.
+- Updated README, suggested-use docs, operating summary, tutorial docs, task
+  queue, generated dashboard, eval-after-change report, and next iteration
+  packet.
+- Verification evidence:
+  - `python3 -m py_compile agent_os/operator_approval_request_rows.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'approval_request_rows_apply'` -> 3 passed, 234 deselected.
+  - `python3 -m pytest -q` -> 237 passed.
+  - Live command:
+    `python3 -m agent_os.cli expansion-operator-approval-request-rows-apply --operator-id operator --selected-action approve --selection-note "Approved local operator approval request row creation after reviewing the draft packet." --evidence-reference docs/expansion-operator-approval-draft.md` -> `operator_approval_request_rows_applied`.
+  - `python3 -m agent_os.cli dashboard` -> wrote `docs/dashboard.md`.
+  - `python3 -m agent_os.cli iterate` -> selected
+    `Add approval-gated decision command for pending operator approval request rows.`
+  - `python3 -m agent_os.cli eval-after-change --change "Add operator approval request row application" ...` -> pass as `run_69b9d4af9bf1`.
+  - `python3 -m agent_os.cli eval` -> pass.
+  - `python3 -m agent_os.cli playbooks` -> 1 active playbook.
+  - `python3 -m agent_os.cli queue-health` -> hotspots 0.
+  - `git diff --check` -> passed.
+- Non-claims: row application does not decide approval rows, approve
+  capabilities, promote trust, run CI, deploy, push, open PRs, start workers,
+  schedule work, retry work, track spend, create legacy `approval_requests`
+  rows, or mutate external systems.

@@ -56,6 +56,10 @@ Write a steering review for this goal, show the next action, and list the inbox 
 Apply the operator approval request schema after I approve the generated selection template, and prove that no approval rows were created.
 ```
 
+```text
+Create pending operator approval request rows from the latest expansion approval draft after I approve the row-creation selection, and prove no legacy approval requests were created.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -70,7 +74,8 @@ Apply the operator approval request schema after I approve the generated selecti
 10. Write `review`, `evidence`, and `replay-summary` packets before operator decisions on meaningful runs.
 11. Run `steer`, `next-action`, and `inbox` when the next operator move is unclear.
 12. Apply local schema changes only through explicit operator approval commands.
-13. Record non-claims before treating the work as safe.
+13. Create local operator approval rows only through explicit operator approval commands.
+14. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -198,6 +203,21 @@ That command may create the local `operator_approval_requests` table. It must
 still report `operator_approval_rows_created: 0` and
 `approval_requests_created: 0`.
 
+After the table exists, the narrow approved row-creation crossing is:
+
+```bash
+python3 -m agent_os.cli expansion-operator-approval-request-rows-apply \
+  --operator-id operator \
+  --selected-action approve \
+  --selection-note "Approved local operator approval request row creation after reviewing the draft packet." \
+  --evidence-reference docs/expansion-operator-approval-draft.md
+```
+
+That command may create pending local `operator_approval_requests` rows from
+the latest expansion approval draft. It must still report
+`approval_requests_created: 0`, and it does not decide, promote, route,
+deploy, or mutate external systems.
+
 ## When To Commit And Push
 
 Commit when:
@@ -213,13 +233,11 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 
 ## Practical Next Slices
 
-Good next slices now favor approval-schema and operator-decision work before
-broader autonomy:
+Good next slices now favor operator-decision work before broader autonomy:
 
-- approval-gated operator approval request table creation after the report-only
-- schema migration selection packets;
-- approval-gated operator approval request rows from expansion approval drafts
-  after the table exists;
+- approval-gated decision commands for pending `operator_approval_requests`
+  rows;
+- dashboard and review surfaces for pending row decisions;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;
 - remote-worker, scheduler, browser/desktop adapter, budget, trust, retry, and

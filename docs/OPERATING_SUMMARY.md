@@ -290,6 +290,12 @@ Core layers for the bootstrap:
   template. The template records required input fields and
   `inputs_recorded: 0` while keeping `selected_action=none`,
   `selections_recorded: 0`, `actions_taken: 0`, and zero mutation counters.
+- Operator approval request row application: after the schema migration
+  application has created the local `operator_approval_requests` table, an
+  explicit approved row-creation selection can create pending local operator
+  approval request rows from the latest expansion approval draft. It creates
+  no legacy `approval_requests` rows, decides no requests, promotes nothing,
+  and takes no external action.
 - Iteration loop: `iterate` selects the next actionable queue item and writes a
   non-executing `docs/next-iteration.md` packet with verification commands.
 - Simplicity guardrail: when queue items have equal score metadata, `iterate`
@@ -320,8 +326,8 @@ Core layers for the bootstrap:
   ledgers, expansion operator approval schema migration action checklists,
   expansion operator approval schema migration selection packets, expansion
   operator approval schema migration selection input templates, operator
-  approval schema migration applications, playbooks, eval candidates,
-  iteration packets, simplicity guardrails, approvals, proposed
+  approval schema migration applications, operator approval request row
+  applications, playbooks, eval candidates, iteration packets, simplicity guardrails, approvals, proposed
   effects, worktrees, verification status, stuck tasks, incidents, recent runs,
   learnings, and eval results.
 
@@ -610,6 +616,14 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   applied columns/indexes in
   `docs/expansion-operator-approval-schema-migration-application.md`, and
   keeps `operator_approval_rows_created: 0` and
+  `approval_requests_created: 0`.
+- Operator approval request row application: available through
+  `python3 -m agent_os.cli expansion-operator-approval-request-rows-apply`
+  after the approval draft and schema application exist. Non-approve
+  selections record local evidence without creating rows. An approved
+  selection creates pending local `operator_approval_requests` rows exactly
+  once for the latest draft, records evidence in
+  `docs/expansion-operator-approval-request-rows-application.md`, and keeps
   `approval_requests_created: 0`.
 - Eval candidate listing: available through
   `python3 -m agent_os.cli eval-candidates` and mirrored into

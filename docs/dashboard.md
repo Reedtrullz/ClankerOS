@@ -77,7 +77,7 @@
 - claimed: 0
 - running: 0
 - verifying: 0
-- completed: 383
+- completed: 385
 - blocked: 0
 - failed: 0
 - active: 0
@@ -86,10 +86,10 @@
 ## Iteration Loop
 
 - status: planned
-- focus: Add approval-gated operator approval request row creation from expansion approval drafts after the schema exists.
+- focus: Add approval-gated decision command for pending operator approval request rows.
 - source: tasks.md#next
 - packet: docs/next-iteration.md
-- created_at: 2026-06-22T14:48:24.722118+00:00
+- created_at: 2026-06-22T15:06:15.139949+00:00
 
 ## Simplicity Guardrail
 
@@ -97,7 +97,7 @@
 - reason: selected only actionable item with score 9 and complexity 4
 - selected_score: 9
 - selected_complexity: 4
-- selected_focus: Add approval-gated operator approval request row creation from expansion approval drafts after the schema exists.
+- selected_focus: Add approval-gated decision command for pending operator approval request rows.
 
 ## Expansion Operator Approval Schema Decision
 
@@ -323,11 +323,11 @@
 
 - failed: 0
 
+- eval_after_change_4b8b415ba010: status=pass change=Apply operator approval request schema files=agent_os/operator_approval_schema_migration.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py,docs/tutorial-operator-approval-schema.md,README.md,docs/suggested-use.md,projects/bootstrap/handoff.md evals=first_milestone_closed_loop runs=run_3d755f0aab76 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_fd7a7396ce90: status=pass change=Apply operator approval request schema files=agent_os/operator_approval_schema_migration.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py,docs/tutorial-operator-approval-schema.md evals=first_milestone_closed_loop runs=run_052990c19430 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_e7222ef41ef8: status=pass change=Add steering reviews and inbox files=agent_os/steering.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,tests/test_first_milestone.py,docs/tutorial-steering-inbox.md evals=first_milestone_closed_loop runs=run_10ab8e90564a results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_f9315f2416fb: status=pass change=Add run evidence review packets files=agent_os/run_review.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,tests/test_first_milestone.py,docs/tutorial-run-review.md evals=first_milestone_closed_loop runs=run_d52df83d4bba results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_980f121b805f: status=pass change=Add skill proposal records files=agent_os/skill_entries.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,tests/test_first_milestone.py evals=first_milestone_closed_loop runs=run_ce1a7fc25cd8 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
-- eval_after_change_8b75404f8184: status=pass change=Add memory proposal records files=agent_os/memory_entries.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,tests/test_first_milestone.py evals=first_milestone_closed_loop runs=run_6fcdef549e8b results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 
 ## Learning Distillation
 
@@ -968,6 +968,30 @@
 
 - operator_approval_schema_migration_application_58b1de2348a1: status=operator_approval_schema_migration_applied source_template=expansion_operator_approval_schema_migration_selection_input_template_f996d5f4b462 target_table=operator_approval_requests operator_id=operator selected_action=approve inputs_recorded=1 actions_taken=1 migration_applied=1 table_created=1 operator_approval_rows_created=0 approval_requests_created=0 existing_approval_requests=0 report=docs/expansion-operator-approval-schema-migration-application.md
 
+## Expansion Operator Approval Request Rows Application
+
+- status: operator_approval_request_rows_applied
+- source_draft: expansion_operator_approval_draft_93697a4315da
+- source_status: approval_draft_ready
+- source_schema_application: operator_approval_schema_migration_application_58b1de2348a1
+- source_schema_status: operator_approval_schema_migration_applied
+- source_ledger: expansion_operator_decision_ledger_51c1e0f289fa
+- source_checklist: expansion_operator_review_checklist_f01aaf772dab
+- source_index: expansion_decision_evidence_index_d63c685e43c6
+- source_brief: expansion_decision_brief_9bfc1f0a12d2
+- source_audit: goal_completion_audit_9053feef303e
+- operator_id: operator
+- selected_action: approve
+- draft_requests: 11
+- operator_approval_rows_created: 11
+- approval_requests_created: 0
+- existing_operator_approval_requests: 0
+- external_requests: 2
+- capability_requests: 9
+- report: docs/expansion-operator-approval-request-rows-application.md
+
+- operator_approval_request_row_application_9d1c3e1d4012: status=operator_approval_request_rows_applied source_draft=expansion_operator_approval_draft_93697a4315da source_schema_application=operator_approval_schema_migration_application_58b1de2348a1 operator_id=operator selected_action=approve draft_requests=11 operator_approval_rows_created=11 approval_requests_created=0 existing_operator_approval_requests=0 external_requests=2 capability_requests=9 report=docs/expansion-operator-approval-request-rows-application.md
+
 ## Playbooks
 
 - active: 1
@@ -1003,11 +1027,11 @@
 
 ## Recent Runs
 
+- run_3d755f0aab76: completed project=bootstrap goal=goal_714c0ce097c6 completed=2026-06-22T14:49:19.559351+00:00 summary=runs/run_3d755f0aab76/summary.md
 - run_da9053c101aa: completed project=bootstrap goal=goal_bc6b5a1e184e completed=2026-06-22T14:48:49.932932+00:00 summary=runs/run_da9053c101aa/summary.md
 - run_fd407239da0f: completed project=bootstrap goal=goal_2df3a832406e completed=2026-06-22T14:48:25.087576+00:00 summary=runs/run_fd407239da0f/summary.md
 - run_052990c19430: completed project=bootstrap goal=goal_05ed616cf3d1 completed=2026-06-22T14:48:24.919897+00:00 summary=runs/run_052990c19430/summary.md
 - run_10ab8e90564a: completed project=bootstrap goal=goal_820c6ee9201d completed=2026-06-22T14:31:57.001329+00:00 summary=runs/run_10ab8e90564a/summary.md
-- run_700e3874f0cd: completed project=bootstrap goal=goal_14250f9aec07 completed=2026-06-22T14:31:56.691966+00:00 summary=runs/run_700e3874f0cd/summary.md
 
 ## Recent Evidence Packets
 
@@ -1015,16 +1039,16 @@
 
 ## Recent Learnings
 
+- run_3d755f0aab76: Run run_3d755f0aab76 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_3d755f0aab76/learning.md)
 - run_da9053c101aa: Run run_da9053c101aa showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_da9053c101aa/learning.md)
 - run_fd407239da0f: Run run_fd407239da0f showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_fd407239da0f/learning.md)
 - run_052990c19430: Run run_052990c19430 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_052990c19430/learning.md)
 - run_10ab8e90564a: Run run_10ab8e90564a showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_10ab8e90564a/learning.md)
-- run_700e3874f0cd: Run run_700e3874f0cd showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_700e3874f0cd/learning.md)
 
 ## Recent Eval Results
 
+- first_milestone_closed_loop: pass run=run_3d755f0aab76 created_at=2026-06-22T14:49:19.568205+00:00
 - first_milestone_closed_loop: pass run=run_da9053c101aa created_at=2026-06-22T14:48:49.940961+00:00
 - first_milestone_closed_loop: pass run=run_fd407239da0f created_at=2026-06-22T14:48:25.094454+00:00
 - first_milestone_closed_loop: pass run=run_052990c19430 created_at=2026-06-22T14:48:24.927456+00:00
 - first_milestone_closed_loop: pass run=run_10ab8e90564a created_at=2026-06-22T14:31:57.010047+00:00
-- first_milestone_closed_loop: pass run=run_700e3874f0cd created_at=2026-06-22T14:31:56.702040+00:00

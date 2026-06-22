@@ -1430,15 +1430,38 @@ work, or changing routing.
   approve decisions, promote trust, push, deploy, start workers, schedule work,
   retry work, track spend, or mutate external systems.
 
+## Latest Operator Approval Request Rows Application
+
+- `expansion-operator-approval-request-rows-apply` now exists as the explicit
+  operator-approved crossing from report-only approval drafts into pending
+  local `operator_approval_requests` rows.
+- Non-approve selections record local evidence without creating rows.
+- An approved selection created 11 pending local operator approval request rows
+  from draft `expansion_operator_approval_draft_93697a4315da`.
+- Latest application:
+  `operator_approval_request_row_application_9d1c3e1d4012`, status
+  `operator_approval_request_rows_applied`, 11 draft requests, 11 pending
+  operator approval rows, 0 legacy `approval_requests` rows, 2 external
+  requests, and 9 capability requests.
+- The dashboard exposes the latest application under
+  `## Expansion Operator Approval Request Rows Application`.
+- Latest eval-after-change:
+  `eval_after_change_a58ebbfd08d2`, run `run_69b9d4af9bf1`, status `pass`.
+- Non-claims: row application does not decide approval rows, approve
+  capabilities, promote trust, push, deploy, start workers, schedule work,
+  retry work, track spend, create legacy `approval_requests` rows, or mutate
+  external systems.
+
 ## Next Actions
 
-Current focus: Add approval-gated operator approval request row creation from expansion approval drafts after the schema exists.
+Current focus: Add approval-gated decision command for pending operator approval request rows.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add approval-gated operator approval request row creation from expansion
-   approval drafts after the schema exists.
-2. Build row creation as an approval-gated local effect sourced from existing
-   expansion approval drafts and the new `operator_approval_requests` table.
+   Add approval-gated decision command for pending operator approval request
+   rows.
+2. Build row decision as an approval-gated local effect sourced from pending
+   `operator_approval_requests` rows, with explicit allowed actions and
+   evidence-backed non-claims.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts exist.

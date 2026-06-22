@@ -1,9 +1,11 @@
 # Tutorial: Apply The Operator Approval Request Schema
 
-This tutorial shows how to cross the first local schema approval boundary.
-The command creates the `operator_approval_requests` table only after an
-explicit operator selection. It does not create approval request rows, approve
-decisions, promote trust, dispatch work, or mutate external systems.
+This tutorial shows how to cross the first local approval-schema boundaries.
+The schema command creates the `operator_approval_requests` table only after an
+explicit operator selection. The row command can then create pending local
+operator approval request rows from expansion approval drafts. Neither command
+approves decisions, promotes trust, dispatches work, or mutates external
+systems.
 
 ## 1. Build The Report-Only Packet Chain
 
@@ -95,7 +97,35 @@ table_created: 0
 The repeat run records evidence that the table already exists instead of
 applying the migration again.
 
-## 5. Refresh Visibility
+## 5. Create Pending Operator Approval Rows
+
+After the table exists, create local pending operator approval rows from the
+latest expansion approval draft:
+
+```bash
+python3 -m agent_os.cli expansion-operator-approval-request-rows-apply \
+  --operator-id operator \
+  --selected-action approve \
+  --selection-note "Approved local operator approval request row creation after reviewing the draft packet." \
+  --evidence-reference docs/expansion-operator-approval-draft.md
+```
+
+Expected output includes:
+
+```text
+expansion_operator_approval_request_rows_apply: operator_approval_request_rows_applied
+draft_requests: 11
+operator_approval_rows_created: 11
+approval_requests_created: 0
+```
+
+The rows are written to `operator_approval_requests` with `status=pending`.
+The legacy task-scoped `approval_requests` table remains untouched.
+
+Repeating the command is idempotent and reports
+`operator_approval_request_rows_already_applied`.
+
+## 6. Refresh Visibility
 
 Regenerate the dashboard:
 
@@ -107,16 +137,18 @@ Read `docs/dashboard.md` under:
 
 ```text
 ## Expansion Operator Approval Schema Migration Application
+## Expansion Operator Approval Request Rows Application
 ```
 
-The dashboard should show the latest selection, whether the local table was
-created, and the explicit zero counts for approval rows.
+The dashboard should show the latest schema selection, whether the local table
+was created, how many pending operator approval rows were created, and the
+explicit zero count for legacy approval rows.
 
 ## Non-Claims
 
 This flow does not:
 
-- create operator approval request rows;
+- decide pending operator approval request rows;
 - create legacy `approval_requests` rows;
 - approve pending decisions;
 - promote a capability or trust level;
@@ -124,4 +156,3 @@ This flow does not:
 - start workers, subagents, browser adapters, desktop adapters, retries, or
   scheduled work;
 - mutate external systems.
-

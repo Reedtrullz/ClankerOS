@@ -9303,6 +9303,29 @@ def _run_schema_migration_selection_input_chain(tmp_path: Path, capsys) -> None:
     capsys.readouterr()
 
 
+def _run_operator_approval_requests_schema_chain(tmp_path: Path, capsys) -> None:
+    _run_schema_migration_selection_input_chain(tmp_path, capsys)
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-schema-migration-apply",
+                "--operator-id",
+                "operator",
+                "--selected-action",
+                "approve",
+                "--selection-note",
+                "Approved local schema migration after reviewing the plan.",
+                "--evidence-reference",
+                "docs/expansion-operator-approval-schema-migration-selection-input-template.md",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+
 def test_goal_completion_audit_reports_blocked_expansion_goal(
     tmp_path: Path,
     capsys,
@@ -11842,6 +11865,207 @@ def test_expansion_operator_approval_schema_migration_apply_is_idempotent(
     assert applications[1].status == "operator_approval_schema_migration_applied"
     assert applications[1].migration_applied_count == 1
     assert applications[1].table_created_count == 1
+
+
+def test_expansion_operator_approval_request_rows_apply_requires_approve_selection(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_operator_approval_requests_schema_chain(tmp_path, capsys)
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-request-rows-apply",
+                "--operator-id",
+                "operator",
+                "--selected-action",
+                "defer",
+                "--selection-note",
+                "Need to review the draft requests before creating rows.",
+                "--evidence-reference",
+                "docs/expansion-operator-approval-draft.md",
+            ]
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert (
+        "expansion_operator_approval_request_rows_apply: "
+        "operator_approval_request_rows_not_approved"
+    ) in output
+    assert "selected_action: defer" in output
+    assert "draft_requests: 11" in output
+    assert "operator_approval_rows_created: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert "report: docs/expansion-operator-approval-request-rows-application.md" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    application = storage.list_recent_operator_approval_request_row_applications()[0]
+    draft = storage.list_recent_expansion_operator_approval_drafts()[0]
+    schema_application = (
+        storage.list_recent_operator_approval_schema_migration_applications()[0]
+    )
+    assert application.status == "operator_approval_request_rows_not_approved"
+    assert application.source_draft_id == draft.id
+    assert application.source_schema_application_id == schema_application.id
+    assert application.selected_action == "defer"
+    assert application.draft_request_count == 11
+    assert application.operator_approval_row_count == 0
+    assert application.created_approval_request_count == 0
+    assert application.existing_operator_approval_request_count == 0
+    assert storage.list_operator_approval_requests() == []
+    assert storage.list_recent_approval_requests() == []
+
+
+def test_expansion_operator_approval_request_rows_apply_creates_rows_after_approval(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_operator_approval_requests_schema_chain(tmp_path, capsys)
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-request-rows-apply",
+                "--operator-id",
+                "operator",
+                "--selected-action",
+                "approve",
+                "--selection-note",
+                "Approved local operator approval request row creation.",
+                "--evidence-reference",
+                "docs/expansion-operator-approval-draft.md",
+            ]
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert (
+        "expansion_operator_approval_request_rows_apply: "
+        "operator_approval_request_rows_applied"
+    ) in output
+    assert "selected_action: approve" in output
+    assert "draft_requests: 11" in output
+    assert "operator_approval_rows_created: 11" in output
+    assert "approval_requests_created: 0" in output
+    assert "existing_operator_approval_requests: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    application = storage.list_recent_operator_approval_request_row_applications()[0]
+    draft = storage.list_recent_expansion_operator_approval_drafts()[0]
+    schema_application = (
+        storage.list_recent_operator_approval_schema_migration_applications()[0]
+    )
+    requests = storage.list_operator_approval_requests()
+    assert application.status == "operator_approval_request_rows_applied"
+    assert application.source_draft_id == draft.id
+    assert application.source_schema_application_id == schema_application.id
+    assert application.draft_request_count == 11
+    assert application.operator_approval_row_count == 11
+    assert application.created_approval_request_count == 0
+    assert application.existing_operator_approval_request_count == 0
+    assert application.external_request_count == 2
+    assert application.capability_request_count == 9
+    assert len(application.created_request_ids) == 11
+    assert len(requests) == 11
+    assert requests[0].source_draft_id == draft.id
+    assert requests[0].source_decision_id.endswith(":item:0")
+    assert requests[0].subject_type == "external_decision"
+    assert requests[0].request_kind == "external_operator_decision"
+    assert requests[0].capability_key is None
+    assert requests[0].status == "pending"
+    assert requests[0].allowed_actions == ["approve", "defer", "request_more_evidence"]
+    assert requests[0].requested_by == "operator"
+    assert requests[0].evidence_path == "tasks.md"
+    assert requests[-1].subject_type == "capability_approval"
+    assert requests[-1].subject_key == "real_cost_tracking"
+    assert requests[-1].request_kind == "capability_operator_approval"
+    assert requests[-1].capability_key == "real_cost_tracking"
+    assert storage.list_recent_approval_requests() == []
+
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        count = connection.execute(
+            "select count(*) from operator_approval_requests"
+        ).fetchone()[0]
+    assert count == 11
+
+    report = (
+        tmp_path / "docs" / "expansion-operator-approval-request-rows-application.md"
+    ).read_text(encoding="utf-8")
+    assert "# Expansion Operator Approval Request Rows Application" in report
+    assert "- status: operator_approval_request_rows_applied" in report
+    assert f"- source_draft: {draft.id}" in report
+    assert f"- source_schema_application: {schema_application.id}" in report
+    assert "- operator_approval_rows_created: 11" in report
+    assert "- approval_requests_created: 0" in report
+    assert "subject_type=capability_approval subject_key=real_cost_tracking" in report
+    assert "- Does not create legacy approval_requests rows." in report
+    assert "- Does not approve decisions." in report
+    assert "- Does not mutate external systems." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Expansion Operator Approval Request Rows Application" in dashboard
+    assert "- status: operator_approval_request_rows_applied" in dashboard
+    assert "- operator_approval_rows_created: 11" in dashboard
+    assert application.id in dashboard
+
+
+def test_expansion_operator_approval_request_rows_apply_is_idempotent(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_operator_approval_requests_schema_chain(tmp_path, capsys)
+
+    command = [
+        "--root",
+        str(tmp_path),
+        "expansion-operator-approval-request-rows-apply",
+        "--operator-id",
+        "operator",
+        "--selected-action",
+        "approve",
+        "--selection-note",
+        "Approved local operator approval request row creation.",
+        "--evidence-reference",
+        "docs/expansion-operator-approval-draft.md",
+    ]
+    assert main(command) == 0
+    capsys.readouterr()
+
+    assert main(command) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "expansion_operator_approval_request_rows_apply: "
+        "operator_approval_request_rows_already_applied"
+    ) in output
+    assert "operator_approval_rows_created: 0" in output
+    assert "existing_operator_approval_requests: 11" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    applications = storage.list_recent_operator_approval_request_row_applications(
+        limit=2
+    )
+    assert applications[0].status == "operator_approval_request_rows_already_applied"
+    assert applications[0].operator_approval_row_count == 0
+    assert applications[0].existing_operator_approval_request_count == 11
+    assert applications[1].status == "operator_approval_request_rows_applied"
+    assert applications[1].operator_approval_row_count == 11
+    assert len(storage.list_operator_approval_requests()) == 11
 
 
 def test_hosted_dashboard_proof_checklist_blocks_blocked_real_cost_tracking_proof(

@@ -1,8 +1,8 @@
 # Handoff Review
 
-- id: handoff_review_9e50b86429e3
+- id: handoff_review_ef08d589cb96
 - status: clear
-- current_focus: Add approval-gated operator approval request row creation from expansion approval drafts after the schema exists.
+- current_focus: Add approval-gated decision command for pending operator approval request rows.
 - blocked_tasks: 0
 - stale_handoffs: 0
 - reviewed_paths: 1

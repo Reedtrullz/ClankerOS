@@ -3419,3 +3419,15 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_714c0ce097c6
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_3d755f0aab76/summary.md
+
+## Run run_69b9d4af9bf1
+
+- Goal ID: goal_1a59ec28c2e2
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_69b9d4af9bf1/summary.md
+
+## Run run_2cffa41b4f05
+
+- Goal ID: goal_38e36136446c
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_2cffa41b4f05/summary.md

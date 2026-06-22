@@ -126,6 +126,9 @@ from agent_os.expansion_operator_approval_schema_migration_selection_input_templ
 from agent_os.operator_approval_schema_migration import (
     render_operator_approval_schema_migration_application_line,
 )
+from agent_os.operator_approval_request_rows import (
+    render_operator_approval_request_rows_application_line,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -593,6 +596,16 @@ def generate_static_dashboard(root: Path) -> Path:
                     limit=1,
                 )
             )
+        operator_approval_request_row_applications = []
+        if _table_exists(
+            connection,
+            "operator_approval_request_row_applications",
+        ):
+            operator_approval_request_row_applications = (
+                storage.list_recent_operator_approval_request_row_applications(
+                    limit=1,
+                )
+            )
 
     statuses = [
         "pending",
@@ -798,6 +811,11 @@ def generate_static_dashboard(root: Path) -> Path:
     latest_operator_approval_schema_migration_application = (
         operator_approval_schema_migration_applications[0]
         if operator_approval_schema_migration_applications
+        else None
+    )
+    latest_operator_approval_request_row_application = (
+        operator_approval_request_row_applications[0]
+        if operator_approval_request_row_applications
         else None
     )
     eval_after_change_statuses = Counter(
@@ -2330,6 +2348,43 @@ def generate_static_dashboard(root: Path) -> Path:
                 render_operator_approval_schema_migration_application_line(
                     application
                 ),
+            ]
+        )
+    else:
+        lines.append("- none")
+
+    lines.extend(
+        [
+            "",
+            "## Expansion Operator Approval Request Rows Application",
+            "",
+        ]
+    )
+    if latest_operator_approval_request_row_application is not None:
+        application = latest_operator_approval_request_row_application
+        lines.extend(
+            [
+                f"- status: {application.status}",
+                f"- source_draft: {application.source_draft_id}",
+                f"- source_status: {application.source_draft_status}",
+                f"- source_schema_application: {application.source_schema_application_id}",
+                f"- source_schema_status: {application.source_schema_application_status}",
+                f"- source_ledger: {application.source_ledger_id}",
+                f"- source_checklist: {application.source_checklist_id}",
+                f"- source_index: {application.source_index_id}",
+                f"- source_brief: {application.source_brief_id}",
+                f"- source_audit: {application.source_audit_id}",
+                f"- operator_id: {application.operator_id}",
+                f"- selected_action: {application.selected_action}",
+                f"- draft_requests: {application.draft_request_count}",
+                f"- operator_approval_rows_created: {application.operator_approval_row_count}",
+                f"- approval_requests_created: {application.created_approval_request_count}",
+                f"- existing_operator_approval_requests: {application.existing_operator_approval_request_count}",
+                f"- external_requests: {application.external_request_count}",
+                f"- capability_requests: {application.capability_request_count}",
+                f"- report: {application.report_path}",
+                "",
+                render_operator_approval_request_rows_application_line(application),
             ]
         )
     else:

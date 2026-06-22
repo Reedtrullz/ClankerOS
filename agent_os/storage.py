@@ -1437,6 +1437,64 @@ class OperatorApprovalSchemaMigrationApplication:
     created_at: str
 
 
+@dataclass(frozen=True)
+class OperatorApprovalRequest:
+    id: str
+    source_decision_id: str
+    source_review_id: str
+    source_draft_id: str
+    source_ledger_id: str
+    source_checklist_id: str
+    source_index_id: str
+    source_brief_id: str
+    source_audit_id: str
+    subject_type: str
+    subject_key: str
+    request_kind: str
+    capability_key: str | None
+    approval_boundary: str
+    allowed_actions: list[str]
+    status: str
+    reason: str
+    policy_name: str
+    policy_version: str
+    requested_by: str
+    decided_by: str | None
+    decision_note: str | None
+    requested_at: str
+    decided_at: str | None
+    evidence_path: str | None
+    created_at: str
+
+
+@dataclass(frozen=True)
+class OperatorApprovalRequestRowApplication:
+    id: str
+    status: str
+    source_draft_id: str
+    source_draft_status: str
+    source_schema_application_id: str
+    source_schema_application_status: str
+    source_ledger_id: str
+    source_checklist_id: str
+    source_index_id: str
+    source_brief_id: str
+    source_audit_id: str
+    operator_id: str
+    selected_action: str
+    selection_note: str
+    evidence_reference: str
+    draft_request_count: int
+    operator_approval_row_count: int
+    created_approval_request_count: int
+    existing_operator_approval_request_count: int
+    external_request_count: int
+    capability_request_count: int
+    created_request_ids: list[str]
+    report_path: str
+    created_at: str
+
+
 SAFE_AUTO_TASK_TYPES = {"write_goal_artifact", "record_learning"}
 SAFE_AUTO_RISK_LEVELS = {"low"}
 APPROVAL_WAITING_STATUS = "waiting_approval"
@@ -2772,6 +2830,33 @@ class Storage:
                     existing_approval_request_count integer not null,
                     applied_table_columns text not null,
                     applied_indexes text not null,
+                    report_path text not null,
+                    created_at text not null
+                );
+
+                create table if not exists operator_approval_request_row_applications (
+                    id text primary key,
+                    status text not null,
+                    source_draft_id text not null,
+                    source_draft_status text not null,
+                    source_schema_application_id text not null,
+                    source_schema_application_status text not null,
+                    source_ledger_id text not null,
+                    source_checklist_id text not null,
+                    source_index_id text not null,
+                    source_brief_id text not null,
+                    source_audit_id text not null,
+                    operator_id text not null,
+                    selected_action text not null,
+                    selection_note text not null,
+                    evidence_reference text not null,
+                    draft_request_count integer not null,
+                    operator_approval_row_count integer not null,
+                    created_approval_request_count integer not null,
+                    existing_operator_approval_request_count integer not null,
+                    external_request_count integer not null,
+                    capability_request_count integer not null,
+                    created_request_ids text not null,
                     report_path text not null,
                     created_at text not null
                 );
@@ -8417,6 +8502,305 @@ class Storage:
             for row in rows
         ]
 
+    def list_operator_approval_requests(
+        self,
+        *,
+        source_draft_id: str | None = None,
+    ) -> list[OperatorApprovalRequest]:
+        with self._connect() as connection:
+            if not self._table_exists(connection, "operator_approval_requests"):
+                return []
+            if source_draft_id is None:
+                rows = connection.execute(
+                    """
+                    select * from operator_approval_requests
+                    order by requested_at asc, id asc
+                    """
+                ).fetchall()
+            else:
+                rows = connection.execute(
+                    """
+                    select * from operator_approval_requests
+                    where source_draft_id = ?
+                    order by requested_at asc, id asc
+                    """,
+                    (source_draft_id,),
+                ).fetchall()
+        return [self._row_to_operator_approval_request(row) for row in rows]
+
+    def count_operator_approval_requests(
+        self,
+        *,
+        source_draft_id: str | None = None,
+    ) -> int:
+        with self._connect() as connection:
+            if not self._table_exists(connection, "operator_approval_requests"):
+                return 0
+            if source_draft_id is None:
+                row = connection.execute(
+                    "select count(*) as count from operator_approval_requests"
+                ).fetchone()
+            else:
+                row = connection.execute(
+                    """
+                    select count(*) as count from operator_approval_requests
+                    where source_draft_id = ?
+                    """,
+                    (source_draft_id,),
+                ).fetchone()
+        return int(row["count"])
+
+    def create_operator_approval_requests_from_draft(
+        self,
+        *,
+        draft: ExpansionOperatorApprovalDraft,
+        operator_id: str,
+        policy_name: str,
+        policy_version: str,
+    ) -> list[OperatorApprovalRequest]:
+        created_requests: list[OperatorApprovalRequest] = []
+        with self._connect() as connection:
+            if not self._table_exists(connection, "operator_approval_requests"):
+                return []
+            existing_count = int(
+                connection.execute(
+                    """
+                    select count(*) as count from operator_approval_requests
+                    where source_draft_id = ?
+                    """,
+                    (draft.id,),
+                ).fetchone()["count"]
+            )
+            if existing_count > 0:
+                return []
+            for index, item in enumerate(draft.draft_items):
+                created_at = utc_now()
+                request_id = new_id("operator_approval_request")
+                source_decision_id = f"{draft.source_ledger_id}:item:{index}"
+                subject_type = item["review_type"]
+                subject_key = item.get("requirement") or item["decision"]
+                capability_key = item.get("requirement")
+                allowed_actions = item["allowed_actions"]
+                values = {
+                    "id": request_id,
+                    "source_decision_id": source_decision_id,
+                    "source_review_id": draft.source_checklist_id,
+                    "source_draft_id": draft.id,
+                    "source_ledger_id": draft.source_ledger_id,
+                    "source_checklist_id": draft.source_checklist_id,
+                    "source_index_id": draft.source_index_id,
+                    "source_brief_id": draft.source_brief_id,
+                    "source_audit_id": draft.source_audit_id,
+                    "subject_type": subject_type,
+                    "subject_key": subject_key,
+                    "request_kind": item["approval_request_kind"],
+                    "capability_key": capability_key,
+                    "approval_boundary": item["approval_boundary"],
+                    "allowed_actions": allowed_actions,
+                    "status": "pending",
+                    "reason": item["decision"],
+                    "policy_name": policy_name,
+                    "policy_version": policy_version,
+                    "requested_by": operator_id,
+                    "decided_by": None,
+                    "decision_note": None,
+                    "requested_at": created_at,
+                    "decided_at": None,
+                    "evidence_path": item.get("evidence_path"),
+                    "created_at": created_at,
+                }
+                connection.execute(
+                    """
+                    insert into operator_approval_requests (
+                        id, source_decision_id, source_review_id, source_draft_id,
+                        source_ledger_id, source_checklist_id, source_index_id,
+                        source_brief_id, source_audit_id, subject_type,
+                        subject_key, request_kind, capability_key,
+                        approval_boundary, allowed_actions, status, reason,
+                        policy_name, policy_version, requested_by, decided_by,
+                        decision_note, requested_at, decided_at, evidence_path,
+                        created_at
+                    )
+                    values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        values["id"],
+                        values["source_decision_id"],
+                        values["source_review_id"],
+                        values["source_draft_id"],
+                        values["source_ledger_id"],
+                        values["source_checklist_id"],
+                        values["source_index_id"],
+                        values["source_brief_id"],
+                        values["source_audit_id"],
+                        values["subject_type"],
+                        values["subject_key"],
+                        values["request_kind"],
+                        values["capability_key"],
+                        values["approval_boundary"],
+                        _json_dumps(values["allowed_actions"]),
+                        values["status"],
+                        values["reason"],
+                        values["policy_name"],
+                        values["policy_version"],
+                        values["requested_by"],
+                        values["decided_by"],
+                        values["decision_note"],
+                        values["requested_at"],
+                        values["decided_at"],
+                        values["evidence_path"],
+                        values["created_at"],
+                    ),
+                )
+                created_requests.append(
+                    OperatorApprovalRequest(
+                        id=values["id"],
+                        source_decision_id=values["source_decision_id"],
+                        source_review_id=values["source_review_id"],
+                        source_draft_id=values["source_draft_id"],
+                        source_ledger_id=values["source_ledger_id"],
+                        source_checklist_id=values["source_checklist_id"],
+                        source_index_id=values["source_index_id"],
+                        source_brief_id=values["source_brief_id"],
+                        source_audit_id=values["source_audit_id"],
+                        subject_type=values["subject_type"],
+                        subject_key=values["subject_key"],
+                        request_kind=values["request_kind"],
+                        capability_key=values["capability_key"],
+                        approval_boundary=values["approval_boundary"],
+                        allowed_actions=values["allowed_actions"],
+                        status=values["status"],
+                        reason=values["reason"],
+                        policy_name=values["policy_name"],
+                        policy_version=values["policy_version"],
+                        requested_by=values["requested_by"],
+                        decided_by=values["decided_by"],
+                        decision_note=values["decision_note"],
+                        requested_at=values["requested_at"],
+                        decided_at=values["decided_at"],
+                        evidence_path=values["evidence_path"],
+                        created_at=values["created_at"],
+                    )
+                )
+        return created_requests
+
+    def record_operator_approval_request_row_application(
+        self,
+        *,
+        status: str,
+        source_draft_id: str,
+        source_draft_status: str,
+        source_schema_application_id: str,
+        source_schema_application_status: str,
+        source_ledger_id: str,
+        source_checklist_id: str,
+        source_index_id: str,
+        source_brief_id: str,
+        source_audit_id: str,
+        operator_id: str,
+        selected_action: str,
+        selection_note: str,
+        evidence_reference: str,
+        draft_request_count: int,
+        operator_approval_row_count: int,
+        created_approval_request_count: int,
+        existing_operator_approval_request_count: int,
+        external_request_count: int,
+        capability_request_count: int,
+        created_request_ids: list[str],
+        report_path: str,
+    ) -> OperatorApprovalRequestRowApplication:
+        application_id = new_id("operator_approval_request_row_application")
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into operator_approval_request_row_applications (
+                    id, status, source_draft_id, source_draft_status,
+                    source_schema_application_id, source_schema_application_status,
+                    source_ledger_id, source_checklist_id, source_index_id,
+                    source_brief_id, source_audit_id, operator_id,
+                    selected_action, selection_note, evidence_reference,
+                    draft_request_count, operator_approval_row_count,
+                    created_approval_request_count,
+                    existing_operator_approval_request_count,
+                    external_request_count, capability_request_count,
+                    created_request_ids, report_path, created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    application_id,
+                    status,
+                    source_draft_id,
+                    source_draft_status,
+                    source_schema_application_id,
+                    source_schema_application_status,
+                    source_ledger_id,
+                    source_checklist_id,
+                    source_index_id,
+                    source_brief_id,
+                    source_audit_id,
+                    operator_id,
+                    selected_action,
+                    selection_note,
+                    evidence_reference,
+                    draft_request_count,
+                    operator_approval_row_count,
+                    created_approval_request_count,
+                    existing_operator_approval_request_count,
+                    external_request_count,
+                    capability_request_count,
+                    _json_dumps(created_request_ids),
+                    report_path,
+                    created_at,
+                ),
+            )
+        return OperatorApprovalRequestRowApplication(
+            id=application_id,
+            status=status,
+            source_draft_id=source_draft_id,
+            source_draft_status=source_draft_status,
+            source_schema_application_id=source_schema_application_id,
+            source_schema_application_status=source_schema_application_status,
+            source_ledger_id=source_ledger_id,
+            source_checklist_id=source_checklist_id,
+            source_index_id=source_index_id,
+            source_brief_id=source_brief_id,
+            source_audit_id=source_audit_id,
+            operator_id=operator_id,
+            selected_action=selected_action,
+            selection_note=selection_note,
+            evidence_reference=evidence_reference,
+            draft_request_count=draft_request_count,
+            operator_approval_row_count=operator_approval_row_count,
+            created_approval_request_count=created_approval_request_count,
+            existing_operator_approval_request_count=existing_operator_approval_request_count,
+            external_request_count=external_request_count,
+            capability_request_count=capability_request_count,
+            created_request_ids=created_request_ids,
+            report_path=report_path,
+            created_at=created_at,
+        )
+
+    def list_recent_operator_approval_request_row_applications(
+        self,
+        limit: int = 5,
+    ) -> list[OperatorApprovalRequestRowApplication]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from operator_approval_request_row_applications
+                order by created_at desc, id desc
+                limit ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [
+            self._row_to_operator_approval_request_row_application(row)
+            for row in rows
+        ]
+
     def get_real_cost_tracking_proof_checklist(
         self,
         checklist_id: str | None,
@@ -11639,6 +12023,72 @@ class Storage:
             existing_approval_request_count=row["existing_approval_request_count"],
             applied_table_columns=_json_loads(row["applied_table_columns"], []),
             applied_indexes=_json_loads(row["applied_indexes"], []),
+            report_path=row["report_path"],
+            created_at=row["created_at"],
+        )
+
+    def _row_to_operator_approval_request(
+        self,
+        row: sqlite3.Row,
+    ) -> OperatorApprovalRequest:
+        return OperatorApprovalRequest(
+            id=row["id"],
+            source_decision_id=row["source_decision_id"],
+            source_review_id=row["source_review_id"],
+            source_draft_id=row["source_draft_id"],
+            source_ledger_id=row["source_ledger_id"],
+            source_checklist_id=row["source_checklist_id"],
+            source_index_id=row["source_index_id"],
+            source_brief_id=row["source_brief_id"],
+            source_audit_id=row["source_audit_id"],
+            subject_type=row["subject_type"],
+            subject_key=row["subject_key"],
+            request_kind=row["request_kind"],
+            capability_key=row["capability_key"],
+            approval_boundary=row["approval_boundary"],
+            allowed_actions=_json_loads(row["allowed_actions"], []),
+            status=row["status"],
+            reason=row["reason"],
+            policy_name=row["policy_name"],
+            policy_version=row["policy_version"],
+            requested_by=row["requested_by"],
+            decided_by=row["decided_by"],
+            decision_note=row["decision_note"],
+            requested_at=row["requested_at"],
+            decided_at=row["decided_at"],
+            evidence_path=row["evidence_path"],
+            created_at=row["created_at"],
+        )
+
+    def _row_to_operator_approval_request_row_application(
+        self,
+        row: sqlite3.Row,
+    ) -> OperatorApprovalRequestRowApplication:
+        return OperatorApprovalRequestRowApplication(
+            id=row["id"],
+            status=row["status"],
+            source_draft_id=row["source_draft_id"],
+            source_draft_status=row["source_draft_status"],
+            source_schema_application_id=row["source_schema_application_id"],
+            source_schema_application_status=row["source_schema_application_status"],
+            source_ledger_id=row["source_ledger_id"],
+            source_checklist_id=row["source_checklist_id"],
+            source_index_id=row["source_index_id"],
+            source_brief_id=row["source_brief_id"],
+            source_audit_id=row["source_audit_id"],
+            operator_id=row["operator_id"],
+            selected_action=row["selected_action"],
+            selection_note=row["selection_note"],
+            evidence_reference=row["evidence_reference"],
+            draft_request_count=row["draft_request_count"],
+            operator_approval_row_count=row["operator_approval_row_count"],
+            created_approval_request_count=row["created_approval_request_count"],
+            existing_operator_approval_request_count=row[
+                "existing_operator_approval_request_count"
+            ],
+            external_request_count=row["external_request_count"],
+            capability_request_count=row["capability_request_count"],
+            created_request_ids=_json_loads(row["created_request_ids"], []),
             report_path=row["report_path"],
             created_at=row["created_at"],
         )
