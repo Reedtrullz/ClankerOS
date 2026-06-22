@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_7e3beeecba06
+- Packet ID: iteration_f598295c69b1
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add routing and delegation packets for downstream follow-up result tasks.
+Advance the Agent System north-star goal by completing: Add result ingestion for downstream follow-up result delegation packets.
 
 ## Definition Of Done
 
@@ -74,6 +74,7 @@ Advance the Agent System north-star goal by completing: Add routing and delegati
 - `python3 -m agent_os.cli capability-activation-followup-result-effect-proposals`
 - `python3 -m agent_os.cli capability-activation-followup-result-effect-apply --operator-id operator --selection-note "Apply accepted blocked follow-up result effect proposals as local records only." --evidence-reference docs/capability-activation-followup-result-effect-proposals.md`
 - `python3 -m agent_os.cli capability-activation-followup-result-tasks`
+- `python3 -m agent_os.cli capability-activation-followup-result-task-delegations`
 - `python3 -m agent_os.cli eval`
 - `python3 -m agent_os.cli playbooks`
 - `python3 -m agent_os.cli dashboard`
@@ -101,7 +102,7 @@ Advance the Agent System north-star goal by completing: Add routing and delegati
 - pending approvals: 0
 - queue-health hotspots: 0
 - handoff blocked tasks: 0
-- stale handoffs: 1
+- stale handoffs: 0
 - eval-after-change failures: 0
 - stable distilled learnings: 1
 - budget/trust posture: report_only
@@ -157,6 +158,7 @@ Advance the Agent System north-star goal by completing: Add routing and delegati
 - capability activation followup result effect proposals: capability_activation_followup_result_effect_proposals_recorded
 - capability activation followup result effect application: capability_activation_followup_result_effect_application_already_recorded
 - capability activation followup result tasks: capability_activation_followup_result_tasks_already_recorded
+- capability activation followup result task delegations: capability_activation_followup_result_task_delegations_already_recorded
 - proposed eval candidates: 0
 - active playbooks: 1
 - open stuck-task incidents: 0

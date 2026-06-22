@@ -1760,15 +1760,45 @@ work, or changing routing.
   start workers, retry work, track spend, run CI, deploy, push, open PRs, mark
   the active goal complete, or mutate external systems.
 
+## Latest Capability Activation Follow-Up Result Task Delegations
+
+- `capability-activation-followup-result-task-delegations` now routes pending
+  downstream proof tasks to read-only evaluator delegation packets in the
+  local task graph.
+- Initial live delegation batch:
+  `capability_activation_followup_result_task_delegation_batch_fffd2ddfdbed`,
+  status
+  `capability_activation_followup_result_task_delegations_recorded`, created
+  `subagent_delegation_0de281ad619c` for `task_b18120b40e5e` /
+  `hosted_dashboard`.
+- Final live idempotency batch:
+  `capability_activation_followup_result_task_delegation_batch_564b4ab81776`,
+  status
+  `capability_activation_followup_result_task_delegations_already_recorded`,
+  with 1 downstream task, 0 new routing decisions, 0 new delegations, 1
+  existing delegation, 0 execution starts, 0 network actions, 0 external
+  mutations, and 0 activation actions.
+- Evidence report:
+  `docs/capability-activation-followup-result-task-delegations.md`.
+- Delegation artifact:
+  `.clanker/delegations/task_b18120b40e5e-plan-next-proof-evidence-for-hosted-dashboard.json`.
+- Tutorial:
+  `docs/tutorial-capability-followup-result-task-delegations.md`.
+- Non-claims: downstream follow-up result task delegation creation does not
+  start subagents, call model providers, create `approval_requests`, satisfy
+  proof, mutate activation contracts, allow activation, enable capabilities,
+  promote trust, schedule work, retry work, track spend, run CI, deploy, push,
+  open PRs, mark the active goal complete, or mutate external systems.
+
 ## Next Actions
 
-Current focus: Add routing and delegation packets for downstream follow-up result tasks.
+Current focus: Add result ingestion for downstream follow-up result delegation packets.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add routing and delegation packets for downstream follow-up result tasks.
-2. Convert pending `capability_activation_followup_result_task` rows into
-   local routing decisions and read-only delegation packets without starting
-   workers, enabling capabilities, or allowing activation.
+   Add result ingestion for downstream follow-up result delegation packets.
+2. Ingest completed downstream proof-plan delegation output into local result
+   records without starting workers, enabling capabilities, or allowing
+   activation.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.

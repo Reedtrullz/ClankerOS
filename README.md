@@ -29,6 +29,7 @@ completed follow-up delegation results -> local result records -> blocked proof 
 local result records -> operator follow-up review decisions -> blocked activation preserved
 accepted blocked follow-up decisions -> proposed effect records -> blocked activation preserved
 applied follow-up result effects -> downstream proof tasks -> next evidence plan
+downstream proof tasks -> routing decisions -> read-only delegation packets
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -115,6 +116,10 @@ downstream proof tasks, keeping the next evidence plan in the task graph while
 preserving `activation_allowed=false`, `capability_enabled=false`,
 `approval_requests_created=0`, `activation_actions_taken=0`, and
 `external_mutations_taken=0`.
+Those downstream proof tasks can now be routed to the read-only evaluator
+profile and materialized as pending delegation packets with local JSON
+artifacts, without starting a subagent, calling a model provider, or allowing
+activation.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -227,7 +232,9 @@ mutate external systems.
 - [Create follow-up result effect proposals](docs/tutorial-capability-followup-result-effect-proposals.md)
 - [Apply follow-up result effect records](docs/tutorial-capability-followup-result-effect-application.md)
 - [Create downstream tasks from applied follow-up result effects](docs/tutorial-capability-followup-result-tasks.md)
+- [Route downstream follow-up result tasks to delegation packets](docs/tutorial-capability-followup-result-task-delegations.md)
 - [Suggested use patterns](docs/suggested-use.md)
+- [Documentation index](docs/docs-index.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
 - [Safety contract](contracts.md)
 
@@ -299,6 +306,9 @@ The repository can now:
 - create pending downstream proof tasks from applied follow-up result effects,
   preserving source effect/result/delegation/task/contract links while keeping
   activation blocked;
+- route pending downstream proof tasks to read-only evaluator delegation
+  packets with local JSON artifacts while keeping execution, approval rows,
+  external mutations, and activation actions at zero;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -455,6 +465,7 @@ python3 -m agent_os.cli capability-activation-followup-result-decide --operator-
 python3 -m agent_os.cli capability-activation-followup-result-effect-proposals
 python3 -m agent_os.cli capability-activation-followup-result-effect-apply --operator-id operator --selection-note "Apply accepted blocked follow-up result effect proposals as local records only." --evidence-reference docs/capability-activation-followup-result-effect-proposals.md
 python3 -m agent_os.cli capability-activation-followup-result-tasks
+python3 -m agent_os.cli capability-activation-followup-result-task-delegations
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
@@ -534,6 +545,11 @@ python3 -m pytest tests/test_first_milestone.py -q
 - `docs/tutorial-capability-followup-result-tasks.md`: applying accepted
   blocked follow-up result effects into downstream proof tasks without
   enabling capabilities.
+- `docs/tutorial-capability-followup-result-task-delegations.md`: routing
+  downstream follow-up result tasks into read-only evaluator delegation
+  packets without starting subagents.
+- `docs/docs-index.md`: curated map of tutorials, generated reports, status
+  files, and bootstrap project continuity files.
 - `docs/suggested-use.md`: operator guidance, prompts, and practical next slices.
 - `docs/next-iteration.md`: generated packet for the next implementation pass.
   Queue items may include `<!-- score=N complexity=N -->`; equal scores choose

@@ -3590,3 +3590,33 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_2765436bef64
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_c0a2f690460d/summary.md
+
+## 2026-06-22 Capability Follow-Up Result Task Delegations
+
+- Added `capability-activation-followup-result-task-delegations` to route
+  pending downstream proof tasks into read-only evaluator delegation packets.
+- Initial live run recorded
+  `capability_activation_followup_result_task_delegation_batch_fffd2ddfdbed`
+  and created `subagent_delegation_0de281ad619c` for
+  `task_b18120b40e5e` / `hosted_dashboard`.
+- Final idempotency run recorded
+  `capability_activation_followup_result_task_delegation_batch_564b4ab81776`
+  with 0 new routing decisions, 0 new delegations, and 1 existing delegation.
+- Evidence report:
+  `docs/capability-activation-followup-result-task-delegations.md`.
+- Delegation artifact:
+  `.clanker/delegations/task_b18120b40e5e-plan-next-proof-evidence-for-hosted-dashboard.json`.
+- Next focus:
+  Add result ingestion for downstream follow-up result delegation packets.
+
+## Run run_30b88ff510c7
+
+- Goal ID: goal_a6917776c912
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_30b88ff510c7/summary.md
+
+## Run run_1da58c9a62d1
+
+- Goal ID: goal_1b3d8992b809
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_1da58c9a62d1/summary.md

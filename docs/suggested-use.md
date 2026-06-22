@@ -413,6 +413,7 @@ python3 -m agent_os.cli capability-activation-followup-result-effect-apply \
   --selection-note "Apply accepted blocked follow-up result effect proposals as local records only." \
   --evidence-reference docs/capability-activation-followup-result-effect-proposals.md
 python3 -m agent_os.cli capability-activation-followup-result-tasks
+python3 -m agent_os.cli capability-activation-followup-result-task-delegations
 python3 -m agent_os.cli dashboard
 ```
 
@@ -424,6 +425,14 @@ result, delegation, follow-up task, contract, and capability links while
 keeping `approval_requests_created=0`, `activation_actions_taken=0`,
 `external_mutations_taken=0`, `activation_allowed=false`, and
 `capability_enabled=false`.
+
+The delegation command writes
+`docs/capability-activation-followup-result-task-delegations.md` and creates
+read-only evaluator delegation packets for pending
+`capability_activation_followup_result_task` rows that do not already have a
+packet. It keeps `execution_started=0`, `network_actions_taken=0`,
+`external_mutations_taken=0`, and `activation_actions_taken=0`; the packets
+are local proof-planning contracts, not worker execution.
 
 ## When To Commit And Push
 
@@ -440,10 +449,10 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 
 ## Practical Next Slices
 
-Good next slices now favor capability-specific guards after local proposal
-records exist:
+Good next slices now favor capability-specific guards after local delegation
+packets exist:
 
-- downstream task creation from local follow-up decision effect applications;
+- result ingestion from downstream follow-up result delegation packets;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;

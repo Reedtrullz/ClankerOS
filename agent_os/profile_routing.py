@@ -122,6 +122,7 @@ TASK_TYPE_CATEGORY_MAP = {
     "bugfix": "bugfix",
     "refactor": "refactor",
     "capability_activation_followup_task": "evidence_review",
+    "capability_activation_followup_result_task": "evidence_review",
 }
 
 

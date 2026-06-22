@@ -6187,3 +6187,73 @@
   activation, enable capabilities, promote trust, route work, schedule work,
   start workers, retry work, track spend, run CI, deploy, push, open PRs, mark
   the active goal complete, or mutate external systems.
+
+## 2026-06-22 Capability Activation Follow-Up Result Task Delegations
+
+- Added local downstream delegation command:
+  `python3 -m agent_os.cli capability-activation-followup-result-task-delegations`.
+- The command records
+  `capability_activation_followup_result_task_delegation_batches` rows and
+  creates read-only evaluator delegation packets for pending
+  `capability_activation_followup_result_task` rows that do not already have a
+  packet.
+- Initial live batch:
+  `capability_activation_followup_result_task_delegation_batch_fffd2ddfdbed`,
+  status
+  `capability_activation_followup_result_task_delegations_recorded`, created
+  delegation `subagent_delegation_0de281ad619c` for
+  `task_b18120b40e5e` / `hosted_dashboard`.
+- Final live idempotency batch:
+  `capability_activation_followup_result_task_delegation_batch_564b4ab81776`,
+  status
+  `capability_activation_followup_result_task_delegations_already_recorded`,
+  with 1 downstream task, 0 new routing decisions, 0 new delegations, 1
+  existing delegation, 0 execution starts, 0 network actions, 0 external
+  mutations, and 0 activation actions.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-delegations.md`
+  - `.clanker/delegations/task_b18120b40e5e-plan-next-proof-evidence-for-hosted-dashboard.json`
+- Added `docs/tutorial-capability-followup-result-task-delegations.md` and
+  `docs/docs-index.md`, and updated README, suggested-use docs, operating
+  summary, workflow, task queue, generated dashboard, and generated
+  next-iteration packet.
+- Next packet:
+  `Add result ingestion for downstream follow-up result delegation packets.`
+- Verification evidence:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'capability_activation_followup_result_task_delegations'`
+    -> failed with missing CLI command, as expected.
+  - `python3 -m py_compile agent_os/capability_activation_followup_result_task_delegations.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py agent_os/profile_routing.py tests/test_first_milestone.py`
+    -> passed.
+  - Focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'capability_activation_followup_result_task_delegations'`
+    -> 3 passed, 280 deselected.
+  - Adjacent green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'capability_activation_followup_result_tasks or capability_activation_followup_result_task_delegations or capability_activation_followup_delegations'`
+    -> 9 passed, 274 deselected.
+  - `python3 -m pytest -q` -> 283 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add capability followup result task delegation packets" ...`
+    -> pass as `run_30b88ff510c7`.
+  - Initial live command:
+    `python3 -m agent_os.cli capability-activation-followup-result-task-delegations`
+    -> recorded 1 downstream task, 1 routing decision, 1 delegation, 0
+    execution starts, 0 network actions, 0 external mutations, and 0
+    activation actions.
+  - Live idempotency command:
+    `python3 -m agent_os.cli capability-activation-followup-result-task-delegations`
+    -> already recorded, 1 downstream task, 0 new routing decisions, 0 new
+    delegations, 1 existing delegation, 0 execution starts, 0 network actions,
+    0 external mutations, and 0 activation actions.
+  - `python3 -m agent_os.cli queue-health` -> hotspots 0.
+  - `python3 -m agent_os.cli handoff-review` -> clear, 0 blocked tasks, 0
+    stale handoffs.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`.
+  - `git diff --check` -> passed.
+  - `gh repo view Reedtrullz/ClankerOS --json description,homepageUrl,repositoryTopics,url`
+    -> GitHub About description, README homepage, and 20 repository topics
+    matched the requested public metadata.
+- Non-claims: downstream follow-up result task delegation creation does not
+  start subagents, call model providers, create `approval_requests`, satisfy
+  proof, mutate activation contracts, allow activation, enable capabilities,
+  promote trust, schedule work, retry work, track spend, run CI, deploy, push,
+  open PRs, mark the active goal complete, or mutate external systems.
