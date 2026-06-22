@@ -1,0 +1,106 @@
+# Safe local defaults for ClankerOS profile routing.
+# These are labels and policy hints, not provider credentials.
+profiles:
+  - name: planner
+    label: Strategic Planner
+    model: configurable/planner-model
+    cost_tier: high
+    mode: primary
+    use_for:
+      - ambiguous_goal
+      - architecture
+      - plan_creation
+      - replan
+  - name: coder
+    label: Implementation Coder
+    model: configurable/coder-model
+    cost_tier: high
+    mode: primary
+    use_for:
+      - implementation
+      - refactor
+      - bugfix
+  - name: scout
+    label: Repo Scout
+    model: configurable/cheap-fast-model
+    cost_tier: low
+    mode: subagent
+    use_for:
+      - repo_search
+      - file_mapping
+      - dependency_mapping
+      - summarization
+  - name: tester
+    label: Verification Tester
+    model: configurable/cheap-coding-model
+    cost_tier: low
+    mode: subagent
+    use_for:
+      - test_triage
+      - failure_summary
+      - verification_review
+  - name: evaluator
+    label: Alignment Evaluator
+    model: configurable/strong-reasoning-model
+    cost_tier: medium
+    mode: subagent
+    use_for:
+      - sprint_contract_review
+      - alignment_review
+      - evidence_review
+      - final_review
+routing_rules:
+  - category: repo_search
+    preferred_profile: scout
+    fallback_profile: planner
+  - category: file_mapping
+    preferred_profile: scout
+    fallback_profile: planner
+  - category: dependency_mapping
+    preferred_profile: scout
+    fallback_profile: planner
+  - category: summarization
+    preferred_profile: scout
+    fallback_profile: planner
+  - category: test_triage
+    preferred_profile: tester
+    fallback_profile: evaluator
+  - category: failure_summary
+    preferred_profile: tester
+    fallback_profile: evaluator
+  - category: verification_review
+    preferred_profile: tester
+    fallback_profile: evaluator
+  - category: implementation
+    preferred_profile: coder
+    fallback_profile: planner
+  - category: refactor
+    preferred_profile: coder
+    fallback_profile: planner
+  - category: bugfix
+    preferred_profile: coder
+    fallback_profile: planner
+  - category: ambiguous_goal
+    preferred_profile: planner
+    fallback_profile: evaluator
+  - category: architecture
+    preferred_profile: planner
+    fallback_profile: evaluator
+  - category: plan_creation
+    preferred_profile: planner
+    fallback_profile: evaluator
+  - category: replan
+    preferred_profile: planner
+    fallback_profile: evaluator
+  - category: sprint_contract_review
+    preferred_profile: evaluator
+    fallback_profile: planner
+  - category: alignment_review
+    preferred_profile: evaluator
+    fallback_profile: planner
+  - category: evidence_review
+    preferred_profile: evaluator
+    fallback_profile: planner
+  - category: final_review
+    preferred_profile: evaluator
+    fallback_profile: planner

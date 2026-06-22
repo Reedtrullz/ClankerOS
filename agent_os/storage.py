@@ -176,6 +176,50 @@ class CiDeployEvidenceRecord:
 
 
 @dataclass(frozen=True)
+class AgentProfile:
+    id: str
+    name: str
+    label: str
+    model: str
+    cost_tier: str
+    mode: str
+    tools_json: list[str]
+    permissions_json: dict[str, Any]
+    use_for_json: list[str]
+    max_budget_json: dict[str, Any]
+    enabled: bool
+    created_at: str
+    updated_at: str
+
+
+@dataclass(frozen=True)
+class RoutingRule:
+    id: str
+    category: str
+    preferred_profile: str
+    fallback_profile: str
+    confidence_threshold: float | None
+    created_at: str
+    updated_at: str
+
+
+@dataclass(frozen=True)
+class RoutingDecision:
+    id: str
+    task_id: str | None
+    goal_id: str | None
+    project_id: str | None
+    selected_profile: str
+    selected_model: str
+    category: str
+    reason: str
+    estimated_cost_tier: str
+    actual_cost: float | None
+    status: str
+    created_at: str
+
+
+@dataclass(frozen=True)
 class Effect:
     id: str
     run_id: str
@@ -1448,6 +1492,47 @@ class Storage:
                     evidence_path text not null,
                     result_json text not null,
                     idempotency_key text not null unique,
+                    created_at text not null
+                );
+
+                create table if not exists profiles (
+                    id text primary key,
+                    name text not null unique,
+                    label text not null,
+                    model text not null,
+                    cost_tier text not null,
+                    mode text not null,
+                    tools_json text not null,
+                    permissions_json text not null,
+                    use_for_json text not null,
+                    max_budget_json text not null,
+                    enabled integer not null,
+                    created_at text not null,
+                    updated_at text not null
+                );
+
+                create table if not exists routing_rules (
+                    id text primary key,
+                    category text not null unique,
+                    preferred_profile text not null,
+                    fallback_profile text not null,
+                    confidence_threshold real,
+                    created_at text not null,
+                    updated_at text not null
+                );
+
+                create table if not exists routing_decisions (
+                    id text primary key,
+                    task_id text,
+                    goal_id text,
+                    project_id text,
+                    selected_profile text not null,
+                    selected_model text not null,
+                    category text not null,
+                    reason text not null,
+                    estimated_cost_tier text not null,
+                    actual_cost real,
+                    status text not null,
                     created_at text not null
                 );
 
@@ -7920,6 +8005,243 @@ class Storage:
                 rows = connection.execute(query + " limit ?", (limit,)).fetchall()
         return [self._row_to_ci_deploy_evidence_record(row) for row in rows]
 
+    def upsert_profile(
+        self,
+        *,
+        name: str,
+        label: str,
+        model: str,
+        cost_tier: str,
+        mode: str,
+        tools_json: list[str],
+        permissions_json: dict[str, Any],
+        use_for_json: list[str],
+        max_budget_json: dict[str, Any],
+        enabled: bool = True,
+    ) -> AgentProfile:
+        now = utc_now()
+        profile_id = new_id("profile")
+        with self._connect() as connection:
+            row = connection.execute(
+                "select id, created_at from profiles where name = ?",
+                (name,),
+            ).fetchone()
+            if row is None:
+                connection.execute(
+                    """
+                    insert into profiles (
+                        id, name, label, model, cost_tier, mode, tools_json,
+                        permissions_json, use_for_json, max_budget_json,
+                        enabled, created_at, updated_at
+                    )
+                    values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        profile_id,
+                        name,
+                        label,
+                        model,
+                        cost_tier,
+                        mode,
+                        _json_dumps(tools_json),
+                        _json_dumps(permissions_json),
+                        _json_dumps(use_for_json),
+                        _json_dumps(max_budget_json),
+                        1 if enabled else 0,
+                        now,
+                        now,
+                    ),
+                )
+            else:
+                profile_id = row["id"]
+                connection.execute(
+                    """
+                    update profiles
+                    set label = ?, model = ?, cost_tier = ?, mode = ?,
+                        tools_json = ?, permissions_json = ?, use_for_json = ?,
+                        max_budget_json = ?, enabled = ?, updated_at = ?
+                    where name = ?
+                    """,
+                    (
+                        label,
+                        model,
+                        cost_tier,
+                        mode,
+                        _json_dumps(tools_json),
+                        _json_dumps(permissions_json),
+                        _json_dumps(use_for_json),
+                        _json_dumps(max_budget_json),
+                        1 if enabled else 0,
+                        now,
+                        name,
+                    ),
+                )
+        profile = self.get_profile(name)
+        if profile is None:
+            raise KeyError(name)
+        return profile
+
+    def list_profiles(self, *, enabled_only: bool = True) -> list[AgentProfile]:
+        with self._connect() as connection:
+            query = "select * from profiles"
+            values: tuple[Any, ...] = ()
+            if enabled_only:
+                query += " where enabled = ?"
+                values = (1,)
+            query += " order by name asc"
+            rows = connection.execute(query, values).fetchall()
+        return [self._row_to_profile(row) for row in rows]
+
+    def get_profile(self, name: str) -> AgentProfile | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                "select * from profiles where name = ?",
+                (name,),
+            ).fetchone()
+        return self._row_to_profile(row) if row else None
+
+    def upsert_routing_rule(
+        self,
+        *,
+        category: str,
+        preferred_profile: str,
+        fallback_profile: str,
+        confidence_threshold: float | None = None,
+    ) -> RoutingRule:
+        now = utc_now()
+        rule_id = new_id("routing_rule")
+        with self._connect() as connection:
+            row = connection.execute(
+                "select id from routing_rules where category = ?",
+                (category,),
+            ).fetchone()
+            if row is None:
+                connection.execute(
+                    """
+                    insert into routing_rules (
+                        id, category, preferred_profile, fallback_profile,
+                        confidence_threshold, created_at, updated_at
+                    )
+                    values (?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        rule_id,
+                        category,
+                        preferred_profile,
+                        fallback_profile,
+                        confidence_threshold,
+                        now,
+                        now,
+                    ),
+                )
+            else:
+                rule_id = row["id"]
+                connection.execute(
+                    """
+                    update routing_rules
+                    set preferred_profile = ?, fallback_profile = ?,
+                        confidence_threshold = ?, updated_at = ?
+                    where category = ?
+                    """,
+                    (
+                        preferred_profile,
+                        fallback_profile,
+                        confidence_threshold,
+                        now,
+                        category,
+                    ),
+                )
+        rule = self.get_routing_rule(category)
+        if rule is None:
+            raise KeyError(category)
+        return rule
+
+    def get_routing_rule(self, category: str) -> RoutingRule | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                "select * from routing_rules where category = ?",
+                (category,),
+            ).fetchone()
+        return self._row_to_routing_rule(row) if row else None
+
+    def list_routing_rules(self) -> list[RoutingRule]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                "select * from routing_rules order by category asc",
+            ).fetchall()
+        return [self._row_to_routing_rule(row) for row in rows]
+
+    def record_routing_decision(
+        self,
+        *,
+        task_id: str | None,
+        goal_id: str | None,
+        project_id: str | None,
+        selected_profile: str,
+        selected_model: str,
+        category: str,
+        reason: str,
+        estimated_cost_tier: str,
+        actual_cost: float | None = None,
+        status: str = "selected",
+    ) -> RoutingDecision:
+        decision_id = new_id("routing_decision")
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into routing_decisions (
+                    id, task_id, goal_id, project_id, selected_profile,
+                    selected_model, category, reason, estimated_cost_tier,
+                    actual_cost, status, created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    decision_id,
+                    task_id,
+                    goal_id,
+                    project_id,
+                    selected_profile,
+                    selected_model,
+                    category,
+                    reason,
+                    estimated_cost_tier,
+                    actual_cost,
+                    status,
+                    created_at,
+                ),
+            )
+        return RoutingDecision(
+            id=decision_id,
+            task_id=task_id,
+            goal_id=goal_id,
+            project_id=project_id,
+            selected_profile=selected_profile,
+            selected_model=selected_model,
+            category=category,
+            reason=reason,
+            estimated_cost_tier=estimated_cost_tier,
+            actual_cost=actual_cost,
+            status=status,
+            created_at=created_at,
+        )
+
+    def list_recent_routing_decisions(
+        self,
+        limit: int | None = 5,
+    ) -> list[RoutingDecision]:
+        with self._connect() as connection:
+            query = """
+                select * from routing_decisions
+                order by created_at desc, id desc
+            """
+            if limit is None:
+                rows = connection.execute(query).fetchall()
+            else:
+                rows = connection.execute(query + " limit ?", (limit,)).fetchall()
+        return [self._row_to_routing_decision(row) for row in rows]
+
     def create_pending_approval_request_for_task(
         self,
         task_id: str,
@@ -8549,6 +8871,50 @@ class Storage:
             evidence_path=row["evidence_path"],
             result_json=_json_loads(row["result_json"], {}),
             idempotency_key=row["idempotency_key"],
+            created_at=row["created_at"],
+        )
+
+    def _row_to_profile(self, row: sqlite3.Row) -> AgentProfile:
+        return AgentProfile(
+            id=row["id"],
+            name=row["name"],
+            label=row["label"],
+            model=row["model"],
+            cost_tier=row["cost_tier"],
+            mode=row["mode"],
+            tools_json=_json_loads(row["tools_json"], []),
+            permissions_json=_json_loads(row["permissions_json"], {}),
+            use_for_json=_json_loads(row["use_for_json"], []),
+            max_budget_json=_json_loads(row["max_budget_json"], {}),
+            enabled=bool(row["enabled"]),
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+        )
+
+    def _row_to_routing_rule(self, row: sqlite3.Row) -> RoutingRule:
+        return RoutingRule(
+            id=row["id"],
+            category=row["category"],
+            preferred_profile=row["preferred_profile"],
+            fallback_profile=row["fallback_profile"],
+            confidence_threshold=row["confidence_threshold"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+        )
+
+    def _row_to_routing_decision(self, row: sqlite3.Row) -> RoutingDecision:
+        return RoutingDecision(
+            id=row["id"],
+            task_id=row["task_id"],
+            goal_id=row["goal_id"],
+            project_id=row["project_id"],
+            selected_profile=row["selected_profile"],
+            selected_model=row["selected_model"],
+            category=row["category"],
+            reason=row["reason"],
+            estimated_cost_tier=row["estimated_cost_tier"],
+            actual_cost=row["actual_cost"],
+            status=row["status"],
             created_at=row["created_at"],
         )
 

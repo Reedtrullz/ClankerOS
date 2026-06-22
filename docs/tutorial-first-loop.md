@@ -6,7 +6,8 @@ This tutorial walks through the smallest useful ClankerOS loop:
 2. create a goal;
 3. let the local worker execute verifiable tasks;
 4. inspect the evidence;
-5. regenerate the dashboard.
+5. record a safe profile routing decision;
+6. regenerate the dashboard.
 
 ClankerOS is local-first. These commands write SQLite rows and markdown
 reports in this checkout. They do not start remote workers, deploy services,
@@ -60,16 +61,30 @@ Useful readings:
 - `hotspots: 0` means no repeated blocked or failed task pattern was found.
 - `status: clear` means the current handoff review found no stale handoff issue.
 
-## 4. Regenerate The Operator Dashboard
+## 4. Record A Profile Routing Decision
+
+```bash
+python3 -m agent_os.cli profiles
+python3 -m agent_os.cli route --category repo_search --project bootstrap
+```
+
+The `profiles` command creates safe local defaults for planner, coder, scout,
+tester, and evaluator profiles. The `route` command records a selection
+decision in SQLite. Category-only routing is useful before a concrete task
+exists. It does not dispatch a subagent, call a model provider, or change the
+worker claim rules.
+
+## 5. Regenerate The Operator Dashboard
 
 ```bash
 python3 -m agent_os.cli dashboard
 ```
 
 Open `docs/dashboard.md` to inspect queue health, proof checklists, approval
-boundaries, playbooks, eval results, and the latest generated reports.
+boundaries, profile routing decisions, playbooks, eval results, and the latest
+generated reports.
 
-## 5. Run Verification
+## 6. Run Verification
 
 ```bash
 python3 -m pytest -q
@@ -88,6 +103,8 @@ eval runs and remain guidance only; they are not automatic executors.
 - It does not schedule autonomous external work.
 - It does not operate browser or desktop adapters.
 - It does not run GitHub Actions or deploy infrastructure.
+- It does not dispatch subagents or call a model provider when recording a
+  profile routing decision.
 - It does not enforce budgets, promote trust, retry work, or track real spend.
 - It does not apply the future `operator_approval_requests` schema migration.
 

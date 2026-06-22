@@ -5198,3 +5198,53 @@
   deploy, push branches, open PRs, start remote workers, schedule autonomous
   work, operate browser or desktop adapters, enforce budgets, promote trust,
   retry work, track real spend, or mutate external systems.
+
+## 2026-06-22 Profile Routing Decision Records
+
+- Added safe local profile routing primitives with
+  `python3 -m agent_os.cli profiles`, `profile-show <name>`, and `route`.
+- `profiles` materializes planner, coder, scout, tester, and evaluator
+  profiles plus default routing rules in SQLite and writes
+  `.clanker/profiles.yml` as a human-readable local config.
+- `route` records durable `routing_decisions` rows for task ids or
+  category/project pairs. It preserves selected profile, model label,
+  category, estimated cost tier, project/task/goal context, status, and
+  operator override reason when `--profile` is used.
+- The dashboard now exposes enabled profiles and recent routing decisions
+  under `### Profile Routing`.
+- GitHub repository metadata for `Reedtrullz/ClankerOS` was updated with the
+  README description and tags, then verified with `gh repo view`.
+- Latest iteration packet:
+  `iteration_071ca887d39c` in `docs/next-iteration.md`.
+- Next selected focus:
+  `Add subagent delegation records from routing decisions.`
+- Eval-after-change:
+  `eval_after_change_f893ffee7355`, run `run_2b6b0b2f72a8`, status `pass`.
+- Verification evidence:
+  - Red-first focused tests failed on missing `profiles` and `route` commands
+    before implementation.
+  - `python3 -m py_compile agent_os/profile_routing.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "profiles_command or route_category or route_task"` -> 3 passed, 202 deselected.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "profiles_command or route_category or route_task or ci_deploy_evidence or github_handoff or cleanup_worktrees or commit_approved or worktree_isolation or dashboard"` -> 61 passed, 144 deselected.
+  - `python3 -m pytest -q` -> 205 passed.
+  - `python3 -m agent_os.cli profiles` -> `profiles: 5`.
+  - `python3 -m agent_os.cli profile-show scout` -> model
+    `configurable/cheap-fast-model`, write permission `deny`.
+  - `python3 -m agent_os.cli route --category repo_search --project bootstrap` -> selected profile `scout`, cost tier `low`.
+  - `python3 -m agent_os.cli dashboard` -> dashboard includes
+    `### Profile Routing` and routing decision
+    `routing_decision_3d77ced38bf2`.
+  - `python3 -m agent_os.cli cleanup-worktrees` -> dry run with
+    `eligible=0`.
+  - `python3 -m agent_os.cli approvals` -> `pending_approvals: 0`.
+  - `python3 -m agent_os.cli queue-health` -> `hotspots: 0`.
+  - `python3 -m agent_os.cli eval-candidates` -> `eval_candidates: 0`.
+  - `python3 -m agent_os.cli handoff-review` -> `status: clear`.
+  - `python3 -m agent_os.cli iterate` -> selected the subagent delegation
+    records focus from `tasks.md#next`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`.
+  - `python3 -m agent_os.cli playbooks` -> `successful_runs=174`.
+  - `python3 -m agent_os.cli eval-after-change --change "Add profile routing decision records" ...` -> pass.
+- Non-claims: profile routing records do not claim tasks, dispatch subagents,
+  call model providers, enforce budgets, promote trust, retry work, mutate
+  external systems, or change approval gates.

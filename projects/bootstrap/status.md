@@ -3225,3 +3225,43 @@ is report-only, external decisions remain, or approvals are missing.
   `successful_runs=172`.
 - Non-claims: no CI provider call, CI run, deploy, push, PR, external
   mutation, or deferred autonomy capability is enabled by this slice.
+
+## 2026-06-22 Profile Routing Decision Records
+
+- `profiles` now creates five safe default profile records and
+  `.clanker/profiles.yml`: planner, coder, scout, tester, and evaluator.
+- `profile-show <name>` reports a profile's model label, mode, cost tier,
+  tools, use cases, permissions, and local budget hints.
+- `route` now records routing decisions for task ids or category/project
+  pairs. A repo-search category routes to `scout`; test triage routes to
+  `tester`; `--profile <name>` records an operator override.
+- Dashboard cockpit exposes the new state under `### Profile Routing`.
+- Latest iteration packet:
+  `iteration_071ca887d39c` in `docs/next-iteration.md`.
+- Next selected focus:
+  `Add subagent delegation records from routing decisions.`
+- Eval-after-change:
+  `eval_after_change_f893ffee7355`, run `run_2b6b0b2f72a8`, status `pass`.
+- Verification evidence:
+  focused profile/routing tests -> 3 passed, 202 deselected; focused
+  profile/routing/evidence/handoff/cleanup/commit/dashboard tests ->
+  61 passed, 144 deselected; full `python3 -m pytest -q` -> 205 passed;
+  CLI `profiles` -> `profiles: 5`; CLI category route -> selected `scout`;
+  dashboard regenerated with routing decision `routing_decision_3d77ced38bf2`;
+  eval-after-change -> pass; baseline eval -> pass; cleanup dry run ->
+  `eligible=0`; handoff-review -> clear; playbooks -> `successful_runs=174`.
+- Non-claims: no task claim, subagent dispatch, model-provider call, budget
+  enforcement, trust promotion, retry, approval-gate change, or external
+  mutation is enabled by this slice.
+
+## Run run_89e2b27803c1
+
+- Goal ID: goal_6bd5a338a320
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_89e2b27803c1/summary.md
+
+## Run run_2b6b0b2f72a8
+
+- Goal ID: goal_995971d632dd
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_2b6b0b2f72a8/summary.md

@@ -37,10 +37,15 @@ Core layers for the bootstrap:
   provider, external run id, URL, commit, branch, handoff, and JSON evidence
   while recording `network_actions_taken=0`; it does not fetch CI, run CI, or
   deploy.
+- Profile routing: safe default planner, coder, scout, tester, and evaluator
+  profiles plus routing rules can be materialized into SQLite and
+  `.clanker/profiles.yml`. `route` records task/category selection decisions,
+  including operator overrides, without claiming tasks, dispatching subagents,
+  calling model providers, or changing approval gates.
 - Operator cockpit: the dashboard starts with active runs, registered projects,
   approval inbox, proposed effects, verification status, recent worktrees,
-  GitHub handoffs, CI/deploy evidence, and the next recommended operator
-  action.
+  GitHub handoffs, CI/deploy evidence, profile routing decisions, and the next
+  recommended operator action.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON

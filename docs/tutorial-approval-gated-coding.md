@@ -10,7 +10,8 @@ This tutorial walks through the first executable local coding-agent vertical:
 6. create the approved local worktree commit exactly once;
 7. prepare a GitHub handoff packet from committed local evidence;
 8. record operator-supplied CI/deploy evidence for the handoff;
-9. clean up terminal worktrees after an explicit cleanup decision.
+9. record profile routing decisions for future specialist work;
+10. clean up terminal worktrees after an explicit cleanup decision.
 
 The flow is intentionally conservative. It creates evidence and an approval
 packet first. It creates a local git commit only after explicit approval and a
@@ -204,7 +205,27 @@ This step does not fetch the URL, call GitHub Actions, run CI, deploy, or
 mutate an external system. It records operator-supplied proof so the local
 control plane can preserve the evidence trail.
 
-## 9. Clean Up Terminal Worktrees
+## 9. Record Profile Routing Decisions
+
+Create the default local profile config and record a routing decision:
+
+```bash
+python3 -m agent_os.cli profiles
+python3 -m agent_os.cli profile-show scout
+python3 -m agent_os.cli route <task_id>
+python3 -m agent_os.cli route --category repo_search --project my-repo
+python3 -m agent_os.cli route <task_id> --profile evaluator
+```
+
+ClankerOS stores planner, coder, scout, tester, and evaluator profiles in
+SQLite and writes `.clanker/profiles.yml` if no local config exists. Route
+decisions preserve the selected profile, model label, category, cost tier,
+task/goal/project context, and operator override reason when present.
+
+This is a control-plane record only. It does not claim tasks, dispatch
+subagents, call model providers, or change approval gates.
+
+## 10. Clean Up Terminal Worktrees
 
 Preview cleanup candidates:
 
@@ -236,6 +257,8 @@ uncommitted changes.
 - It does not open a pull request, even when it prints a draft PR command.
 - It does not run GitHub Actions, even when it records a GitHub Actions URL.
 - It does not deploy anything, even when it records deploy evidence.
+- It does not dispatch subagents or call model providers when it records
+  profile routing decisions.
 - It does not enable hosted dashboards, remote workers, scheduling, browser or
   desktop adapters, budget enforcement, trust promotion, retries, or real cost
   tracking.

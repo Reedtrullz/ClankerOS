@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_ea5feef799e1
+- Packet ID: iteration_071ca887d39c
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add default profile config and routing decision records.
+Advance the Agent System north-star goal by completing: Add subagent delegation records from routing decisions.
 
 ## Definition Of Done
 

@@ -1328,14 +1328,34 @@ work, or changing routing.
   `iteration_4e9ed1c65b48` in `docs/next-iteration.md`, fallback objective
   `Review current evidence and add the next actionable queue item.`
 
+## Latest Profile Routing Decision Records
+
+- `profiles`, `profile-show <name>`, and `route` now exist as executable
+  control-plane commands.
+- SQLite now owns default profile rows, routing rules, and routing decisions.
+  `.clanker/profiles.yml` mirrors the safe local defaults for operator review.
+- The dashboard exposes enabled profiles and recent routing decisions under
+  `### Profile Routing`.
+- Latest command smoke: `profiles` -> 5 profiles; `profile-show scout` ->
+  cheap-fast model with write denied; `route --category repo_search --project
+  bootstrap` -> routing decision `routing_decision_3d77ced38bf2` selecting
+  `scout`.
+- Latest iteration packet:
+  `iteration_071ca887d39c` in `docs/next-iteration.md`.
+- Eval-after-change:
+  `eval_after_change_f893ffee7355`, run `run_2b6b0b2f72a8`, status `pass`.
+- Non-claims: routing decisions do not claim tasks, dispatch subagents, call
+  model providers, enforce budgets, promote trust, retry work, or change
+  approval gates.
+
 ## Next Actions
 
-1. Use `docs/next-iteration.md` packet `iteration_ea5feef799e1` to complete:
-   Add default profile config and routing decision records.
-2. Build profile/routing as the next executable control-plane primitive:
-   create safe default planner/coder/scout/tester/evaluator profiles, persist
-   routing rules and routing decisions, and route repo-search/test-triage
-   tasks to cheaper read-only profiles before subagent delegation work.
+1. Use `docs/next-iteration.md` packet `iteration_071ca887d39c` to complete:
+   Add subagent delegation records from routing decisions.
+2. Build delegation records as the next executable control-plane primitive:
+   consume recorded routing decisions, persist subagent assignment metadata,
+   and expose delegation status without starting remote workers or calling
+   external model-provider APIs.
 3. Keep hosted dashboard, remote workers, scheduler,
    browser/desktop adapters, budget enforcement, trust promotion, retries, and
    real-cost tracking blocked until their own evidence and approval contracts

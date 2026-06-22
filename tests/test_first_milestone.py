@@ -1219,6 +1219,129 @@ def test_ci_deploy_evidence_records_operator_supplied_proof_for_github_handoff(
     assert len(storage.list_recent_ci_deploy_evidence_records()) == 1
 
 
+def test_profiles_command_creates_safe_defaults_and_profile_show(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    assert main(["--root", str(tmp_path), "profiles"]) == 0
+    output = capsys.readouterr().out
+
+    assert "profiles: 5" in output
+    assert "scout: Repo Scout mode=subagent cost=low" in output
+    assert "tester: Verification Tester mode=subagent cost=low" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    profiles = storage.list_profiles()
+    assert [profile.name for profile in profiles] == [
+        "coder",
+        "evaluator",
+        "planner",
+        "scout",
+        "tester",
+    ]
+    scout = storage.get_profile("scout")
+    assert scout is not None
+    assert scout.permissions_json["write"] == "deny"
+    assert "repo_search" in scout.use_for_json
+
+    assert main(["--root", str(tmp_path), "profile-show", "scout"]) == 0
+    detail = capsys.readouterr().out
+    assert "profile: scout" in detail
+    assert "model: configurable/cheap-fast-model" in detail
+    assert "permissions.write: deny" in detail
+
+
+def test_route_category_records_scout_decision_and_dashboard(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "route",
+                "--category",
+                "repo_search",
+                "--project",
+                "bootstrap",
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+
+    assert "routing_decision:" in output
+    assert "selected_profile: scout" in output
+    assert "selected_model: configurable/cheap-fast-model" in output
+    assert "estimated_cost_tier: low" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    decisions = storage.list_recent_routing_decisions()
+    assert len(decisions) == 1
+    decision = decisions[0]
+    assert decision.task_id is None
+    assert decision.goal_id is None
+    assert decision.project_id == "bootstrap"
+    assert decision.category == "repo_search"
+    assert decision.selected_profile == "scout"
+    assert decision.status == "selected"
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "### Profile Routing" in dashboard
+    assert decision.id in dashboard
+    assert "selected=scout" in dashboard
+
+
+def test_route_task_records_tester_decision_and_allows_operator_override(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "triage failing tests")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        project_id="bootstrap",
+        task_type="test_triage",
+        description="Summarize a failing test run.",
+        verification_plan={"type": "manual_review"},
+    )
+
+    assert main(["--root", str(tmp_path), "route", task_id]) == 0
+    output = capsys.readouterr().out
+    assert "selected_profile: tester" in output
+    assert "category: test_triage" in output
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "route",
+                task_id,
+                "--profile",
+                "evaluator",
+            ]
+        )
+        == 0
+    )
+    override_output = capsys.readouterr().out
+    assert "selected_profile: evaluator" in override_output
+    assert "operator_override" in override_output
+
+    decisions = storage.list_recent_routing_decisions(limit=2)
+    assert [decision.selected_profile for decision in decisions] == [
+        "evaluator",
+        "tester",
+    ]
+    assert decisions[0].reason.startswith("operator_override")
+    assert decisions[0].task_id == task_id
+    assert decisions[0].goal_id == goal_id
+    assert decisions[0].project_id == "bootstrap"
+
+
 def test_static_dashboard_summarizes_runs_and_queue(tmp_path: Path) -> None:
     system = AgentSystem(tmp_path)
     result = system.run_goal(

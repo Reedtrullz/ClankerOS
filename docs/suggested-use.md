@@ -24,6 +24,10 @@ Run the first local loop, regenerate the dashboard, and summarize what is proven
 Register this git repo, run a worktree-isolated coding task, capture the diff and tests, then ask me before creating the local worktree commit.
 ```
 
+```text
+List the safe default profiles and record a scout routing decision for repo search without dispatching a model.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -61,7 +65,9 @@ python3 -m agent_os.cli run-goal "Make the smallest verified change" --project <
    when you want a local push/draft-PR packet after commit evidence exists.
 8. Use `python3 -m agent_os.cli ci-deploy-evidence <github_handoff_id> --provider github-actions --status success --external-run-id <run_id> --url <run_url>`
    after real CI/deploy evidence exists and should be preserved locally.
-9. Use `python3 -m agent_os.cli cleanup-worktrees --confirm --reason "..."`
+9. Use `python3 -m agent_os.cli profiles`, `profile-show <name>`, and
+   `route ...` to record profile routing choices before specialist work.
+10. Use `python3 -m agent_os.cli cleanup-worktrees --confirm --reason "..."`
    after reviewing terminal effects and deciding the worktree can be removed.
 
 `commit-approved` blocks without committing if the worktree base commit, patch,
@@ -71,6 +77,10 @@ handoff packet, and prints operator `git push` plus `gh pr create --draft`
 commands while recording `network_actions_taken=0`.
 `ci-deploy-evidence` requires a GitHub handoff packet and records
 operator-supplied proof while also recording `network_actions_taken=0`.
+`profiles` creates safe local planner/coder/scout/tester/evaluator defaults
+and `.clanker/profiles.yml`. `route` records profile selection decisions for
+task ids or category/project pairs without claiming tasks, dispatching
+subagents, or calling model providers.
 `cleanup-worktrees` removes only clean terminal worktrees; dirty blocked
 worktrees are recorded as blocked and left in place.
 
@@ -113,10 +123,11 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 
 ## Practical Next Slices
 
-Good next slices now favor executable local approval flow before broader
-autonomy:
+Good next slices now favor executable local approval flow and routing records
+before broader autonomy:
 
-- profile config and routing decisions for scout/tester/coder/evaluator work;
+- subagent delegation records that consume profile routing decisions without
+  yet running remote workers or external model-provider APIs;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;
 - remote-worker, scheduler, browser/desktop adapter, budget, trust, retry, and

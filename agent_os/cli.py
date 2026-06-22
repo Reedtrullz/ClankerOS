@@ -203,6 +203,13 @@ from agent_os.playbooks import (
     promote_successful_run_playbooks,
     render_playbook_line,
 )
+from agent_os.profile_routing import (
+    RouteRequest,
+    ensure_default_profiles,
+    format_profile_line,
+    route_work,
+    write_default_profile_config,
+)
 from agent_os.project_registry import register_project
 from agent_os.queue_health import render_queue_health_finding, write_queue_health_report
 from agent_os.runtime import detect_runtime_capabilities, write_runtime_capability_matrix
@@ -232,6 +239,14 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("iterate", help="Write the next iteration packet from repo queues.")
     subparsers.add_parser("approvals", help="List pending approval requests.")
     subparsers.add_parser("handoff-review", help="Review blocked tasks and stale handoffs.")
+    subparsers.add_parser("profiles", help="List safe local model/profile routing defaults.")
+    profile_show = subparsers.add_parser("profile-show", help="Show a named profile.")
+    profile_show.add_argument("name")
+    route = subparsers.add_parser("route", help="Record a routing decision for a task or category.")
+    route.add_argument("task_id", nargs="?")
+    route.add_argument("--category")
+    route.add_argument("--project")
+    route.add_argument("--profile", help="Operator override profile name.")
     register_project_parser = subparsers.add_parser(
         "register-project",
         help="Register a local git repository for isolated coding-agent work.",
@@ -551,6 +566,70 @@ def main(argv: list[str] | None = None) -> int:
         print(f"stale_handoffs: {review.stale_handoff_count}")
         for handoff in review.stale_handoffs:
             print(render_stale_handoff_line(handoff).removeprefix("- "))
+        return 0
+
+    if args.command == "profiles":
+        system = AgentSystem(root)
+        system.initialize()
+        profiles = ensure_default_profiles(system.storage)
+        config_path = write_default_profile_config(root)
+        print(f"profiles: {len(profiles)}")
+        print(f"config: {config_path.relative_to(root)}")
+        for profile in profiles:
+            print(format_profile_line(profile))
+        return 0
+
+    if args.command == "profile-show":
+        system = AgentSystem(root)
+        system.initialize()
+        ensure_default_profiles(system.storage)
+        profile = system.storage.get_profile(args.name)
+        if profile is None:
+            print(f"profile_missing: {args.name}")
+            return 1
+        print(f"profile: {profile.name}")
+        print(f"label: {profile.label}")
+        print(f"model: {profile.model}")
+        print(f"cost_tier: {profile.cost_tier}")
+        print(f"mode: {profile.mode}")
+        print(f"enabled: {profile.enabled}")
+        print(f"tools: {','.join(profile.tools_json)}")
+        print(f"use_for: {','.join(profile.use_for_json)}")
+        for key in sorted(profile.permissions_json):
+            print(f"permissions.{key}: {profile.permissions_json[key]}")
+        for key in sorted(profile.max_budget_json):
+            print(f"max_budget.{key}: {profile.max_budget_json[key]}")
+        return 0
+
+    if args.command == "route":
+        if not args.task_id and not args.category:
+            print("routing_failed: provide a task_id or --category")
+            return 1
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            decision = route_work(
+                system.storage,
+                RouteRequest(
+                    task_id=args.task_id,
+                    category=args.category,
+                    project_id=args.project,
+                    profile_override=args.profile,
+                ),
+            )
+        except KeyError as error:
+            print(f"routing_failed: missing {error}")
+            return 1
+        print(f"routing_decision: {decision.id}")
+        print(f"task_id: {decision.task_id or 'none'}")
+        print(f"goal_id: {decision.goal_id or 'none'}")
+        print(f"project_id: {decision.project_id or 'none'}")
+        print(f"category: {decision.category}")
+        print(f"selected_profile: {decision.selected_profile}")
+        print(f"selected_model: {decision.selected_model}")
+        print(f"estimated_cost_tier: {decision.estimated_cost_tier}")
+        print(f"status: {decision.status}")
+        print(f"reason: {decision.reason}")
         return 0
 
     if args.command == "register-project":

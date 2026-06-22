@@ -150,6 +150,7 @@ from agent_os.learning_distillation import (
     render_stable_learning_line,
 )
 from agent_os.playbooks import render_playbook_line
+from agent_os.profile_routing import format_profile_line, format_routing_decision_line
 from agent_os.queue_health import (
     DEFAULT_BLOCKED_THRESHOLD,
     DEFAULT_FAILED_THRESHOLD,
@@ -255,6 +256,12 @@ def generate_static_dashboard(root: Path) -> Path:
             ci_deploy_evidence_records = (
                 storage.list_recent_ci_deploy_evidence_records(limit=5)
             )
+        profiles = []
+        if _table_exists(connection, "profiles"):
+            profiles = storage.list_profiles()
+        routing_decisions = []
+        if _table_exists(connection, "routing_decisions"):
+            routing_decisions = storage.list_recent_routing_decisions(limit=5)
         effects = []
         if _table_exists(connection, "effects"):
             effects = storage.list_recent_effects(limit=5)
@@ -931,6 +938,20 @@ def generate_static_dashboard(root: Path) -> Path:
             )
     else:
         lines.append("- none")
+
+    lines.extend(["", "### Profile Routing", ""])
+    if profiles:
+        lines.append(f"- enabled_profiles: {len(profiles)}")
+        for profile in profiles:
+            lines.append(f"- profile {format_profile_line(profile)}")
+    else:
+        lines.append("- enabled_profiles: 0")
+    if routing_decisions:
+        lines.append("- recent_decisions:")
+        for decision in routing_decisions:
+            lines.append(f"- {format_routing_decision_line(decision)}")
+    else:
+        lines.append("- recent_decisions: none")
 
     lines.extend(["", "### Next Recommended Action", ""])
     if pending_approvals:
