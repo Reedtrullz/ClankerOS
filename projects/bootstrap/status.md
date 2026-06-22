@@ -3563,3 +3563,30 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_1c1fe1c4765c
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_9a36a417e092/summary.md
+
+## 2026-06-22 Capability Follow-Up Result Downstream Tasks
+
+- Added `capability-activation-followup-result-tasks` to create pending
+  downstream proof tasks from applied accepted-blocked follow-up result effects.
+- Live first run recorded
+  `capability_activation_followup_result_task_batch_07580107fac2` and created
+  `task_b18120b40e5e` for `hosted_dashboard` from `effect_0fa73f003874`.
+- Live idempotency run recorded
+  `capability_activation_followup_result_task_batch_e267115cdeaf` with 0 new
+  tasks and 1 existing downstream task.
+- Evidence report:
+  `docs/capability-activation-followup-result-tasks.md`.
+- Next focus:
+  Add routing and delegation packets for downstream follow-up result tasks.
+
+## Run run_5abaa9a0176d
+
+- Goal ID: goal_95c8a8ddba07
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_5abaa9a0176d/summary.md
+
+## Run run_c0a2f690460d
+
+- Goal ID: goal_2765436bef64
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_c0a2f690460d/summary.md

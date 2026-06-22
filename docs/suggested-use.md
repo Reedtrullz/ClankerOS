@@ -404,6 +404,27 @@ This writes
 `capability_enabled=false`; the effect row is a traceable local proposal, not
 capability enablement.
 
+After proposed follow-up result effects exist, apply the accepted blocked
+effects locally and materialize the next downstream proof task:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-effect-apply \
+  --operator-id operator \
+  --selection-note "Apply accepted blocked follow-up result effect proposals as local records only." \
+  --evidence-reference docs/capability-activation-followup-result-effect-proposals.md
+python3 -m agent_os.cli capability-activation-followup-result-tasks
+python3 -m agent_os.cli dashboard
+```
+
+The task command writes
+`docs/capability-activation-followup-result-tasks.md` and creates one pending
+`capability_activation_followup_result_task` per applied follow-up result
+effect that has not already been materialized. It preserves source decision,
+result, delegation, follow-up task, contract, and capability links while
+keeping `approval_requests_created=0`, `activation_actions_taken=0`,
+`external_mutations_taken=0`, `activation_allowed=false`, and
+`capability_enabled=false`.
+
 ## When To Commit And Push
 
 Commit when:

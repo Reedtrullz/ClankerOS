@@ -142,6 +142,12 @@ Core layers for the bootstrap:
   result, delegation, follow-up task, contract, and capability links while
   keeping approval row creation, external mutations, activation actions,
   activation allowance, and capability enablement at zero.
+- Capability activation follow-up result tasks: applied accepted-blocked
+  follow-up result effects can be materialized into pending downstream
+  `capability_activation_followup_result_task` rows. Each task preserves
+  source effect, application, result, delegation, follow-up task, contract,
+  and capability links while keeping approval rows, external mutations,
+  activation actions, activation allowance, and capability enablement at zero.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON
@@ -392,8 +398,9 @@ Core layers for the bootstrap:
   operator approval schema migration selection input templates, operator
   approval schema migration applications, operator approval request row
   applications, operator approval request decisions, capability activation
-  follow-up result batches, follow-up result decisions, playbooks, eval
-  candidates, iteration packets, simplicity guardrails, approvals, proposed
+  follow-up result batches, follow-up result decisions, follow-up result
+  downstream task batches, playbooks, eval candidates, iteration packets,
+  simplicity guardrails, approvals, proposed
   effects, worktrees, verification status, stuck tasks, incidents, recent
   runs, learnings, and eval results.
 
@@ -737,6 +744,14 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   `docs/capability-activation-followup-decisions.md`, records local operator
   review decisions, and keeps `approval_requests_created: 0`,
   `activation_actions_taken: 0`, `activation_allowed: false`, and
+  `capability_enabled: false`.
+- Capability activation follow-up result tasks: available through
+  `python3 -m agent_os.cli capability-activation-followup-result-tasks` after
+  accepted blocked follow-up result effects have been applied locally. The
+  command writes `docs/capability-activation-followup-result-tasks.md`,
+  creates pending downstream proof tasks, and keeps
+  `approval_requests_created: 0`, `activation_actions_taken: 0`,
+  `external_mutations_taken: 0`, `activation_allowed: false`, and
   `capability_enabled: false`.
 - Eval candidate listing: available through
   `python3 -m agent_os.cli eval-candidates` and mirrored into

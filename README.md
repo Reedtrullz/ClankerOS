@@ -28,6 +28,7 @@ follow-up evidence tasks -> routing decisions -> read-only delegation packets
 completed follow-up delegation results -> local result records -> blocked proof state preserved
 local result records -> operator follow-up review decisions -> blocked activation preserved
 accepted blocked follow-up decisions -> proposed effect records -> blocked activation preserved
+applied follow-up result effects -> downstream proof tasks -> next evidence plan
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -109,6 +110,11 @@ Accepted blocked follow-up decisions can now be converted into local
 contract, and capability while preserving `activation_allowed=false`,
 `capability_enabled=false`, `approval_requests_created=0`, and
 `activation_actions_taken=0`.
+Applied follow-up result effects can now be materialized into pending
+downstream proof tasks, keeping the next evidence plan in the task graph while
+preserving `activation_allowed=false`, `capability_enabled=false`,
+`approval_requests_created=0`, `activation_actions_taken=0`, and
+`external_mutations_taken=0`.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -220,6 +226,7 @@ mutate external systems.
 - [Review capability follow-up results](docs/tutorial-capability-followup-result-decisions.md)
 - [Create follow-up result effect proposals](docs/tutorial-capability-followup-result-effect-proposals.md)
 - [Apply follow-up result effect records](docs/tutorial-capability-followup-result-effect-application.md)
+- [Create downstream tasks from applied follow-up result effects](docs/tutorial-capability-followup-result-tasks.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
 - [Safety contract](contracts.md)
@@ -289,6 +296,9 @@ The repository can now:
 - create proposed effect rows from accepted blocked follow-up result decisions
   while preserving no approval rows, no activation actions, and no capability
   enablement;
+- create pending downstream proof tasks from applied follow-up result effects,
+  preserving source effect/result/delegation/task/contract links while keeping
+  activation blocked;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -443,6 +453,8 @@ python3 -m agent_os.cli capability-activation-followup-delegations
 python3 -m agent_os.cli capability-activation-followup-results
 python3 -m agent_os.cli capability-activation-followup-result-decide --operator-id operator --selected-action accept_keep_blocked --selection-note "Accepted evaluator result and kept capability activation blocked." --evidence-reference docs/capability-activation-followup-results.md
 python3 -m agent_os.cli capability-activation-followup-result-effect-proposals
+python3 -m agent_os.cli capability-activation-followup-result-effect-apply --operator-id operator --selection-note "Apply accepted blocked follow-up result effect proposals as local records only." --evidence-reference docs/capability-activation-followup-result-effect-proposals.md
+python3 -m agent_os.cli capability-activation-followup-result-tasks
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
@@ -519,6 +531,9 @@ python3 -m pytest tests/test_first_milestone.py -q
   walkthrough with evidence, approval review, GitHub handoff, and cleanup.
 - `docs/tutorial-subagent-delegation-results.md`: profile routing,
   read-only delegation contracts, and structured result ingestion walkthrough.
+- `docs/tutorial-capability-followup-result-tasks.md`: applying accepted
+  blocked follow-up result effects into downstream proof tasks without
+  enabling capabilities.
 - `docs/suggested-use.md`: operator guidance, prompts, and practical next slices.
 - `docs/next-iteration.md`: generated packet for the next implementation pass.
   Queue items may include `<!-- score=N complexity=N -->`; equal scores choose

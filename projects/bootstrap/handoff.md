@@ -1734,14 +1734,41 @@ work, or changing routing.
   start workers, retry work, track spend, run CI, deploy, push, open PRs, mark
   the active goal complete, or mutate external systems.
 
+## Latest Capability Activation Follow-Up Result Downstream Tasks
+
+- `capability-activation-followup-result-tasks` now materializes applied
+  accepted-blocked follow-up result effects into pending downstream proof
+  tasks in the local task graph.
+- Initial live task batch:
+  `capability_activation_followup_result_task_batch_07580107fac2`, status
+  `capability_activation_followup_result_tasks_recorded`, created
+  `task_b18120b40e5e` for `hosted_dashboard` from
+  `effect_0fa73f003874` and result
+  `capability_activation_followup_result_4c9b8b0d1c43`.
+- Final live idempotency pass:
+  `capability_activation_followup_result_task_batch_e267115cdeaf`, status
+  `capability_activation_followup_result_tasks_already_recorded`, with 1
+  applied follow-up effect, 0 new tasks, 1 existing downstream task, 0
+  approval requests, 0 activation actions, and 0 external mutations.
+- Evidence report:
+  `docs/capability-activation-followup-result-tasks.md`.
+- Tutorial:
+  `docs/tutorial-capability-followup-result-tasks.md`.
+- Non-claims: follow-up result downstream task creation does not create
+  `approval_requests`, satisfy proof, mutate activation contracts, allow
+  activation, enable capabilities, promote trust, route work, schedule work,
+  start workers, retry work, track spend, run CI, deploy, push, open PRs, mark
+  the active goal complete, or mutate external systems.
+
 ## Next Actions
 
-Current focus: Add downstream task records from applied follow-up decision effect applications.
+Current focus: Add routing and delegation packets for downstream follow-up result tasks.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add downstream task records from applied follow-up decision effect applications.
-2. Convert applied follow-up decision effect applications into downstream
-   local task records without enabling capabilities or allowing activation.
+   Add routing and delegation packets for downstream follow-up result tasks.
+2. Convert pending `capability_activation_followup_result_task` rows into
+   local routing decisions and read-only delegation packets without starting
+   workers, enabling capabilities, or allowing activation.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.

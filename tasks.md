@@ -112,7 +112,8 @@
 - [x] Add operator review decisions for ingested capability follow-up results. <!-- score=9 complexity=4 -->
 - [x] Add local follow-up decision effect proposals from accepted blocked results. <!-- score=9 complexity=4 -->
 - [x] Add local application records for follow-up decision effect proposals. <!-- score=9 complexity=4 -->
-- [ ] Add downstream task records from applied follow-up decision effect applications. <!-- score=9 complexity=4 -->
+- [x] Add downstream task records from applied follow-up decision effect applications. <!-- score=9 complexity=4 -->
+- [ ] Add routing and delegation packets for downstream follow-up result tasks. <!-- score=9 complexity=4 -->
 
 ## blocked
 

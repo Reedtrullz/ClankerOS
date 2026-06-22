@@ -6133,3 +6133,57 @@
   activation, enable capabilities, promote trust, route work, schedule work,
   start workers, retry work, track spend, run CI, deploy, push, open PRs, mark
   the active goal complete, or mutate external systems.
+
+## 2026-06-22 Capability Activation Follow-Up Result Downstream Tasks
+
+- Added local downstream-task command:
+  `python3 -m agent_os.cli capability-activation-followup-result-tasks`.
+- The command records
+  `capability_activation_followup_result_task_batches` rows and creates pending
+  `capability_activation_followup_result_task` records for applied
+  accepted-blocked follow-up result effects that do not already have
+  downstream task graph state.
+- Initial live batch:
+  `capability_activation_followup_result_task_batch_07580107fac2`, status
+  `capability_activation_followup_result_tasks_recorded`, created
+  `task_b18120b40e5e` for `hosted_dashboard` from `effect_0fa73f003874`.
+- Final live idempotency batch:
+  `capability_activation_followup_result_task_batch_e267115cdeaf`, status
+  `capability_activation_followup_result_tasks_already_recorded`, with 1
+  applied follow-up effect, 0 new tasks, 1 existing downstream task, 0
+  approval requests, 0 activation actions, and 0 external mutations.
+- Added `docs/tutorial-capability-followup-result-tasks.md` and updated
+  README, suggested-use docs, operating summary, workflow, task queue,
+  generated dashboard, generated next-iteration packet, bootstrap handoff, and
+  bootstrap status.
+- Next packet:
+  `Add routing and delegation packets for downstream follow-up result tasks.`
+- Verification evidence:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -k 'capability_activation_followup_result_tasks' -q --tb=short`
+    -> failed with missing CLI command, as expected.
+  - `python3 -m py_compile agent_os/capability_activation_followup_result_tasks.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest tests/test_first_milestone.py -k 'capability_activation_followup_result_tasks' -q --tb=short` -> 3 passed, 277 deselected.
+  - `python3 -m pytest tests/test_first_milestone.py -k 'capability_activation_followup_result' -q --tb=short` -> 15 passed, 265 deselected.
+  - `python3 -m pytest -q` -> 280 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add capability followup result downstream tasks" ...` -> pass as `run_5abaa9a0176d`.
+  - Live first command:
+    `python3 -m agent_os.cli capability-activation-followup-result-tasks`
+    -> recorded 1 downstream task, 0 approval requests, 0 activation actions,
+    0 external mutations.
+  - Live idempotency command:
+    `python3 -m agent_os.cli capability-activation-followup-result-tasks`
+    -> already recorded, 0 new tasks, 1 existing downstream task.
+  - Live command-gate refresh passed for `sweep-stuck`, `queue-health`,
+    `approvals`, `eval-candidates`, `handoff-review`, `playbooks`, `iterate`,
+    `dashboard`, and `eval`.
+  - Final `handoff-review` status: `clear`, 0 blocked tasks, 0 stale
+    handoffs.
+  - `gh repo view Reedtrullz/ClankerOS --json description,repositoryTopics,url`
+    -> description and topics matched README metadata for the GitHub About
+    section.
+- Non-claims: follow-up result downstream task creation does not create
+  `approval_requests`, satisfy proof, mutate activation contracts, allow
+  activation, enable capabilities, promote trust, route work, schedule work,
+  start workers, retry work, track spend, run CI, deploy, push, open PRs, mark
+  the active goal complete, or mutate external systems.

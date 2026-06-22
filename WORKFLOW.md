@@ -141,38 +141,42 @@
     blocked follow-up decision effects as local `applied` ledger rows while
     keeping approval rows, external mutations, activation actions, activation
     allowance, and capability enablement blocked.
-60. Autonomous scheduling proof checklists review the latest
+60. Capability activation follow-up result downstream tasks materialize applied
+    accepted-blocked follow-up result effects into pending high-risk proof
+    tasks while keeping approval rows, external mutations, activation actions,
+    activation allowance, and capability enablement blocked.
+61. Autonomous scheduling proof checklists review the latest
     Real-Cost-sourced remote-worker proof checklist when one exists before any
     scheduler, remote worker, routing change, or claim behavior exists,
     preserving remote-worker proof metadata and the remote-worker source
     proof's own source metadata when present.
-61. Browser desktop adapter proof checklists review the latest
+62. Browser desktop adapter proof checklists review the latest
     Real-Cost-sourced autonomous-scheduling proof checklist when one exists
     before any browser/desktop adapter operation or routing change exists,
     preserving autonomous-scheduling proof metadata and the
     autonomous-scheduling source proof's own source metadata when present.
-62. CI Deploy proof checklists review browser desktop adapter proof checklists
+63. CI Deploy proof checklists review browser desktop adapter proof checklists
     before any CI run, deploy, or routing change exists, preserving
     Real-Cost-sourced browser/desktop adapter proof metadata when present.
-63. Budget Enforcement proof checklists review the latest Real-Cost-sourced
+64. Budget Enforcement proof checklists review the latest Real-Cost-sourced
     CI Deploy proof checklist when one exists before any budget enforcement,
     CI/deploy, or routing change exists, preserving CI Deploy proof metadata
     and the CI Deploy source proof's own source metadata when available.
-64. Trust Promotion proof checklists review the latest Real-Cost-sourced
+65. Trust Promotion proof checklists review the latest Real-Cost-sourced
     Budget Enforcement proof checklist when one exists before any trust
     promotion, budget enforcement, or routing change exists, preserving
     Budget Enforcement proof metadata and the Budget Enforcement source
     proof's own source metadata when available.
-65. Automatic Retry proof checklists review Trust Promotion proof checklists
+66. Automatic Retry proof checklists review Trust Promotion proof checklists
     before any retry, replay, trust promotion, or routing change exists,
     preserving Real-Cost-sourced Trust Promotion proof metadata when present.
-66. Real Cost Tracking proof checklists review Automatic Retry proof
+67. Real Cost Tracking proof checklists review Automatic Retry proof
     checklists before any spend tracking, retry, budget enforcement, or
     routing change exists.
-67. Repeated successful eval runs can be promoted into reusable playbooks.
-68. Equal-score queue choices prefer lower complexity before adding
+68. Repeated successful eval runs can be promoted into reusable playbooks.
+69. Equal-score queue choices prefer lower complexity before adding
     orchestration.
-69. Completed tasks update project memory and activity.
+70. Completed tasks update project memory and activity.
 70. Run summary mirrors status to project files.
 71. Learning loop records one improvement candidate.
 72. Static dashboard generation mirrors queue health, handoff reviews,
@@ -202,8 +206,9 @@
     activation follow-up delegations, capability activation follow-up results,
     capability activation follow-up result decisions, capability activation
     follow-up result effect proposals, capability activation follow-up result
-    effect applications, playbooks, eval candidates, approvals, stuck tasks,
-    incidents, and recent evidence.
+    effect applications, capability activation follow-up result downstream
+    tasks, playbooks, eval candidates, approvals, stuck tasks, incidents, and
+    recent evidence.
 
 ## Incident Resolution Lifecycle
 

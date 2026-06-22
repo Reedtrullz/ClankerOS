@@ -70,6 +70,13 @@ This is a local ledger application. It lets later workflow steps distinguish
 between effect proposals that still need operator application and effects the
 operator has intentionally recorded as applied locally.
 
+The next local step is to turn those applied follow-up result effects into
+downstream proof tasks:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-tasks
+```
+
 It still keeps the capability blocked:
 
 - `activation_allowed=false`
