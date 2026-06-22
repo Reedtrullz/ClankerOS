@@ -56,6 +56,7 @@ VERIFICATION_COMMANDS = [
     "python3 -m agent_os.cli expansion-operator-approval-schema-migration-decision-ledger",
     "python3 -m agent_os.cli expansion-operator-approval-schema-migration-action-checklist",
     "python3 -m agent_os.cli expansion-operator-approval-schema-migration-selection-packet",
+    "python3 -m agent_os.cli expansion-operator-approval-schema-migration-selection-input-template",
     "python3 -m agent_os.cli eval",
     "python3 -m agent_os.cli playbooks",
     "python3 -m agent_os.cli dashboard",
@@ -621,6 +622,16 @@ def _current_posture(root: Path) -> list[str]:
             expansion_operator_approval_schema_migration_selection_packet = (
                 approval_schema_migration_selection_packet_rows[0].status
             )
+        expansion_operator_approval_schema_migration_selection_input_template = "none"
+        approval_schema_migration_selection_input_template_rows = Storage(
+            db_path
+        ).list_recent_expansion_operator_approval_schema_migration_selection_input_templates(
+            limit=1,
+        )
+        if approval_schema_migration_selection_input_template_rows:
+            expansion_operator_approval_schema_migration_selection_input_template = (
+                approval_schema_migration_selection_input_template_rows[0].status
+            )
         handoff_reviews = Storage(db_path).list_recent_handoff_reviews(limit=1)
 
     handoff_blocked_tasks = 0
@@ -676,6 +687,7 @@ def _current_posture(root: Path) -> list[str]:
         f"expansion operator approval schema migration decision ledger: {expansion_operator_approval_schema_migration_decision_ledger}",
         f"expansion operator approval schema migration action checklist: {expansion_operator_approval_schema_migration_action_checklist}",
         f"expansion operator approval schema migration selection packet: {expansion_operator_approval_schema_migration_selection_packet}",
+        f"expansion operator approval schema migration selection input template: {expansion_operator_approval_schema_migration_selection_input_template}",
         f"proposed eval candidates: {proposed_eval_candidates}",
         f"active playbooks: {active_playbooks}",
         f"open stuck-task incidents: {stuck_count}",

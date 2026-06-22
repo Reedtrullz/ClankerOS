@@ -7,7 +7,7 @@
 - claimed: 0
 - running: 0
 - verifying: 0
-- completed: 320
+- completed: 326
 - blocked: 0
 - failed: 0
 - active: 0
@@ -19,7 +19,7 @@
 - focus: Review current evidence and add the next actionable queue item.
 - source: tasks.md#fallback
 - packet: docs/next-iteration.md
-- created_at: 2026-06-22T10:37:03.663840+00:00
+- created_at: 2026-06-22T11:05:36.538974+00:00
 
 ## Simplicity Guardrail
 
@@ -253,11 +253,11 @@
 
 - failed: 0
 
+- eval_after_change_bd85fa596ed7: status=pass change=Add Expansion Operator Approval Schema Migration Selection Input Template from selection packets files=agent_os/expansion_operator_approval_schema_migration_selection_input_template.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py evals=first_milestone_closed_loop runs=run_21b6a386585b results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_0d383518167b: status=pass change=Add Expansion Operator Approval Schema Migration Selection Packet from action checklists files=agent_os/expansion_operator_approval_schema_migration_selection_packet.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py evals=first_milestone_closed_loop runs=run_53c46f6d9926 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_95daf953bd95: status=pass change=Add Expansion Operator Approval Schema Migration Action Checklist from decision ledgers files=agent_os/expansion_operator_approval_schema_migration_action_checklist.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py evals=first_milestone_closed_loop runs=run_b4567c7f4709 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_c7b6839703d1: status=pass change=Add Expansion Operator Approval Schema Migration Decision Ledger from approval requests files=agent_os/expansion_operator_approval_schema_migration_decision_ledger.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py evals=first_milestone_closed_loop runs=run_fa04499de687 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_71511c86450e: status=pass change=Add Expansion Operator Approval Schema Migration Approval Request from migration plans files=agent_os/expansion_operator_approval_schema_migration_approval_request.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py evals=first_milestone_closed_loop runs=run_84fd053bbdf7 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
-- eval_after_change_90ceb4ab0306: status=pass change=Add Expansion Operator Approval Schema Migration Plan from schema decisions files=agent_os/expansion_operator_approval_schema_migration_plan.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py evals=first_milestone_closed_loop runs=run_604a33781c2f results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 
 ## Learning Distillation
 
@@ -273,45 +273,45 @@
 ## Budget And Trust Posture
 
 - status: report_only
-- tasks: 320
+- tasks: 326
 - budget_state: not_tracked
 - trust_state: not_tracked
-- risk_counts: low=320
+- risk_counts: low=326
 - report: docs/budget-trust-posture.md
 
-- budget_trust_posture_5543e89880e3: status=report_only tasks=320 budget_state=not_tracked trust_state=not_tracked risk_counts=low=320 report=docs/budget-trust-posture.md
+- budget_trust_posture_68d682f8a130: status=report_only tasks=326 budget_state=not_tracked trust_state=not_tracked risk_counts=low=326 report=docs/budget-trust-posture.md
 
 ## Dispatch Posture History
 
 - status: report_only
 - snapshots: 25
-- latest_tasks: 316
-- task_delta: 102
-- latest_risk_counts: low=316
+- latest_tasks: 326
+- task_delta: 100
+- latest_risk_counts: low=326
 - report: docs/dispatch-posture-history.md
 
-- dispatch_posture_history_cbb5292094e4: status=report_only snapshots=25 latest_tasks=316 task_delta=102 latest_risk_counts=low=316 report=docs/dispatch-posture-history.md
+- dispatch_posture_history_11c91397ed73: status=report_only snapshots=25 latest_tasks=326 task_delta=100 latest_risk_counts=low=326 report=docs/dispatch-posture-history.md
 
 ## Dispatch Posture Snapshot Review
 
 - status: fresh
 - snapshots: 25
-- stale_snapshots: 20
-- latest_snapshot_age_seconds: 0
+- stale_snapshots: 22
+- latest_snapshot_age_seconds: 6
 - stale_after_seconds: 3600
 - report: docs/dispatch-posture-staleness.md
 
-- dispatch_posture_staleness_8d8743fdb33e: status=fresh snapshots=25 stale_snapshots=20 latest_snapshot_age_seconds=0 stale_after_seconds=3600 latest_tasks=320 latest_risk_counts=low=320 report=docs/dispatch-posture-staleness.md
+- dispatch_posture_staleness_72eb5fdaa611: status=fresh snapshots=25 stale_snapshots=22 latest_snapshot_age_seconds=6 stale_after_seconds=3600 latest_tasks=326 latest_risk_counts=low=326 report=docs/dispatch-posture-staleness.md
 
 ## Dispatch Posture Refresh Recommendation
 
 - status: no_refresh_needed
-- source_review: dispatch_posture_staleness_8d8743fdb33e
+- source_review: dispatch_posture_staleness_72eb5fdaa611
 - source_status: fresh
 - recommended_commands: none
 - report: docs/dispatch-posture-refresh.md
 
-- dispatch_posture_refresh_3d4e7d7366b8: status=no_refresh_needed source_review=dispatch_posture_staleness_8d8743fdb33e source_status=fresh recommended_commands=none report=docs/dispatch-posture-refresh.md
+- dispatch_posture_refresh_b3bc10fe4e1d: status=no_refresh_needed source_review=dispatch_posture_staleness_72eb5fdaa611 source_status=fresh recommended_commands=none report=docs/dispatch-posture-refresh.md
 
 ## Capability Expansion Ledger
 
@@ -814,11 +814,60 @@
 
 - expansion_operator_approval_request_review_e52f9cb04b84: status=approval_request_schema_review_required source_draft=expansion_operator_approval_draft_4e8e020bceda source_status=approval_draft_ready source_ledger=expansion_operator_decision_ledger_3f19bbf99553 source_checklist=expansion_operator_review_checklist_ed281b99faf2 source_index=expansion_decision_evidence_index_d3745cabb2c9 source_brief=expansion_decision_brief_811755ec3d0e source_audit=goal_completion_audit_a710217dd757 draft_requests=11 review_items=11 ready_requests=0 blocked_requests=11 schema_gaps=11 created_approval_requests=0 existing_approval_requests=0 external_requests=2 capability_requests=9 approval_boundaries=2 recommended_next_step=approval_request_schema_decision_required report=docs/expansion-operator-approval-request-review.md
 
+## Expansion Operator Approval Schema Migration Selection Input Template
+
+- status: operator_approval_schema_migration_selection_input_required
+- source_packet: expansion_operator_approval_schema_migration_selection_packet_05fdef0caa17
+- source_status: operator_approval_schema_migration_selection_required
+- source_checklist: expansion_operator_approval_schema_migration_action_checklist_c8d344afd257
+- source_checklist_status: operator_approval_schema_migration_manual_action_required
+- source_ledger: expansion_operator_approval_schema_migration_decision_ledger_8354ba63b081
+- source_ledger_status: operator_approval_schema_migration_decision_pending
+- source_request: expansion_operator_approval_schema_migration_approval_request_88a59ed82a34
+- source_request_status: operator_approval_schema_migration_approval_required
+- source_plan: expansion_operator_approval_schema_migration_plan_43cd7e7b31b7
+- source_plan_status: operator_approval_schema_migration_plan_ready
+- source_decision: expansion_operator_approval_schema_decision_28975ae3657a
+- source_decision_status: approval_schema_decision_ready
+- source_review: expansion_operator_approval_request_review_e52f9cb04b84
+- source_review_status: approval_request_schema_review_required
+- target_table: operator_approval_requests
+- request_count: 1
+- decision_count: 1
+- pending_decisions: 1
+- action_count: 1
+- pending_actions: 1
+- actions_taken: 0
+- selected_action: none
+- selection_count: 1
+- pending_selections: 1
+- selections_recorded: 0
+- approve_selections: 0
+- defer_selections: 0
+- more_evidence_selections: 0
+- template_count: 1
+- pending_inputs: 1
+- inputs_recorded: 0
+- required_fields_count: 4
+- missing_required_inputs: 4
+- approval_boundary: schema_migration
+- requested_action: apply_operator_approval_requests_schema
+- allowed_actions: approve,defer,request_more_evidence
+- migration_applied: 0
+- table_created: 0
+- operator_approval_rows_created: 0
+- approval_requests_created: 0
+- existing_approval_requests: 0
+- recommended_next_step: operator_approval_schema_migration_operator_input_required
+- report: docs/expansion-operator-approval-schema-migration-selection-input-template.md
+
+- expansion_operator_approval_schema_migration_selection_input_template_2b843f505bec: status=operator_approval_schema_migration_selection_input_required source_packet=expansion_operator_approval_schema_migration_selection_packet_05fdef0caa17 source_status=operator_approval_schema_migration_selection_required source_checklist=expansion_operator_approval_schema_migration_action_checklist_c8d344afd257 source_checklist_status=operator_approval_schema_migration_manual_action_required source_ledger=expansion_operator_approval_schema_migration_decision_ledger_8354ba63b081 source_ledger_status=operator_approval_schema_migration_decision_pending source_request=expansion_operator_approval_schema_migration_approval_request_88a59ed82a34 source_request_status=operator_approval_schema_migration_approval_required source_plan=expansion_operator_approval_schema_migration_plan_43cd7e7b31b7 source_plan_status=operator_approval_schema_migration_plan_ready target_table=operator_approval_requests request_count=1 decision_count=1 pending_decisions=1 action_count=1 pending_actions=1 actions_taken=0 selected_action=none selection_count=1 pending_selections=1 selections_recorded=0 template_count=1 pending_inputs=1 inputs_recorded=0 required_fields_count=4 missing_required_inputs=4 approval_boundary=schema_migration requested_action=apply_operator_approval_requests_schema allowed_actions=approve,defer,request_more_evidence migration_applied=0 table_created=0 operator_approval_rows_created=0 approval_requests_created=0 existing_approval_requests=0 recommended_next_step=operator_approval_schema_migration_operator_input_required report=docs/expansion-operator-approval-schema-migration-selection-input-template.md
+
 ## Playbooks
 
 - active: 1
 
-- first-milestone-closed-loop: active source=first_milestone_closed_loop successful_runs=159 path=playbooks/first-milestone-closed-loop.md
+- first-milestone-closed-loop: active source=first_milestone_closed_loop successful_runs=162 path=playbooks/first-milestone-closed-loop.md
 
 ## Eval Candidates
 
@@ -849,24 +898,24 @@
 
 ## Recent Runs
 
-- run_64d3fd52b283: running project=bootstrap goal=goal_a86f3b22c342 completed=in progress summary=runs/run_64d3fd52b283/summary.md
+- run_60c83a6cdc32: completed project=bootstrap goal=goal_f2e7179ceed3 completed=2026-06-22T11:04:57.024140+00:00 summary=runs/run_60c83a6cdc32/summary.md
+- run_21b6a386585b: completed project=bootstrap goal=goal_1d62a76a0ba2 completed=2026-06-22T11:04:35.231191+00:00 summary=runs/run_21b6a386585b/summary.md
+- run_64d3fd52b283: completed project=bootstrap goal=goal_a86f3b22c342 completed=2026-06-22T10:46:30.390050+00:00 summary=runs/run_64d3fd52b283/summary.md
 - run_a08cb9a26ca1: completed project=bootstrap goal=goal_d3392ccb7caa completed=2026-06-22T10:36:18.946389+00:00 summary=runs/run_a08cb9a26ca1/summary.md
 - run_53c46f6d9926: completed project=bootstrap goal=goal_87400e6f5df3 completed=2026-06-22T10:36:07.957997+00:00 summary=runs/run_53c46f6d9926/summary.md
-- run_1f5819f6547c: completed project=bootstrap goal=goal_d8a635dc2b7d completed=2026-06-22T10:17:31.398027+00:00 summary=runs/run_1f5819f6547c/summary.md
-- run_b4567c7f4709: completed project=bootstrap goal=goal_0604aea31e3f completed=2026-06-22T10:17:19.453927+00:00 summary=runs/run_b4567c7f4709/summary.md
 
 ## Recent Learnings
 
+- run_60c83a6cdc32: Run run_60c83a6cdc32 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_60c83a6cdc32/learning.md)
+- run_21b6a386585b: Run run_21b6a386585b showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_21b6a386585b/learning.md)
+- run_64d3fd52b283: Run run_64d3fd52b283 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_64d3fd52b283/learning.md)
 - run_a08cb9a26ca1: Run run_a08cb9a26ca1 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_a08cb9a26ca1/learning.md)
 - run_53c46f6d9926: Run run_53c46f6d9926 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_53c46f6d9926/learning.md)
-- run_1f5819f6547c: Run run_1f5819f6547c showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_1f5819f6547c/learning.md)
-- run_b4567c7f4709: Run run_b4567c7f4709 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_b4567c7f4709/learning.md)
-- run_66c5a0ad5210: Run run_66c5a0ad5210 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_66c5a0ad5210/learning.md)
 
 ## Recent Eval Results
 
+- first_milestone_closed_loop: pass run=run_60c83a6cdc32 created_at=2026-06-22T11:04:57.029806+00:00
+- first_milestone_closed_loop: pass run=run_21b6a386585b created_at=2026-06-22T11:04:35.238227+00:00
+- first_milestone_closed_loop: pass run=run_64d3fd52b283 created_at=2026-06-22T10:46:30.399370+00:00
 - first_milestone_closed_loop: pass run=run_a08cb9a26ca1 created_at=2026-06-22T10:36:18.957399+00:00
 - first_milestone_closed_loop: pass run=run_53c46f6d9926 created_at=2026-06-22T10:36:07.964211+00:00
-- first_milestone_closed_loop: pass run=run_1f5819f6547c created_at=2026-06-22T10:17:31.404814+00:00
-- first_milestone_closed_loop: pass run=run_b4567c7f4709 created_at=2026-06-22T10:17:19.458754+00:00
-- first_milestone_closed_loop: pass run=run_66c5a0ad5210 created_at=2026-06-22T10:03:33.145817+00:00

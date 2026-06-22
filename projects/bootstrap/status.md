@@ -2989,3 +2989,44 @@ is report-only, external decisions remain, or approvals are missing.
 - Goal ID: goal_a86f3b22c342
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_64d3fd52b283/summary.md
+
+## Run run_21b6a386585b
+
+- Goal ID: goal_1d62a76a0ba2
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_21b6a386585b/summary.md
+
+## Run run_60c83a6cdc32
+
+- Goal ID: goal_f2e7179ceed3
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_60c83a6cdc32/summary.md
+
+## 2026-06-22 Expansion Operator Approval Schema Migration Selection Input Template
+
+- Expansion Operator Approval Schema Migration Selection Input Template now
+  records the required operator input fields that remain before a schema
+  migration selection can be recorded. Latest live template:
+  `expansion_operator_approval_schema_migration_selection_input_template_2b843f505bec`,
+  status `operator_approval_schema_migration_selection_input_required`,
+  source packet
+  `expansion_operator_approval_schema_migration_selection_packet_05fdef0caa17`,
+  source checklist
+  `expansion_operator_approval_schema_migration_action_checklist_c8d344afd257`,
+  source ledger
+  `expansion_operator_approval_schema_migration_decision_ledger_8354ba63b081`,
+  source request
+  `expansion_operator_approval_schema_migration_approval_request_88a59ed82a34`,
+  source plan `expansion_operator_approval_schema_migration_plan_43cd7e7b31b7`,
+  target table `operator_approval_requests`, requested action
+  `apply_operator_approval_requests_schema`, allowed actions
+  `approve,defer,request_more_evidence`, `template_count: 1`,
+  `pending_inputs: 1`, `inputs_recorded: 0`,
+  `required_fields_count: 4`, `missing_required_inputs: 4`,
+  `selections_recorded: 0`, `actions_taken: 0`,
+  `selected_action: none`, `migration_applied: 0`, `table_created: 0`,
+  `operator_approval_rows_created: 0`, `approval_requests_created: 0`, and
+  `existing_approval_requests: 0`. Eval-after-change
+  `eval_after_change_bd85fa596ed7` passed with run `run_21b6a386585b`;
+  baseline eval passed with run `run_60c83a6cdc32`; `playbooks` reports
+  `successful_runs=162`.

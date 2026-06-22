@@ -335,6 +335,15 @@ shows activity, and creates one learning/eval artifact.
   approval row and approval request creation counts retained as zero,
   recommended next step retained, report-only non-claims retained, and report
   paths retained.
+- Expansion operator approval schema migration selection input templates run,
+  source selection packet, action checklist, decision ledger, approval request,
+  migration plan, schema decision, and review ids retained, target table
+  retained, requested action and approval boundary surfaced, allowed operator
+  actions retained, required operator fields surfaced, input counts surfaced,
+  inputs-recorded, selections-recorded, actions-taken, migration-applied,
+  table-created, operator approval row creation, and approval request creation
+  counts retained as zero, recommended next step retained, report-only
+  non-claims retained, and report paths retained.
 - Eval candidates proposed from verifier or workflow gaps.
 - Playbooks promoted from repeated successful eval runs.
 - Equal-score queue choices that selected the lower-complexity item.

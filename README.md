@@ -351,6 +351,10 @@ python3 -m pytest tests/test_first_milestone.py -q
   generated report-only operator selection input packet for the schema
   migration action checklist; it keeps `selected_action=none` and records no
   operator selection.
+- `docs/expansion-operator-approval-schema-migration-selection-input-template.md`:
+  generated report-only operator input template for the schema migration
+  selection packet; it lists required fields while recording no operator input
+  or selection.
 - `docs/dashboard.md`: generated operational view of queue health, approvals,
   handoff reviews, eval-after-change checks, learning distillation,
   budget/trust posture, dispatch posture history, dispatch posture snapshot
@@ -371,7 +375,8 @@ python3 -m pytest tests/test_first_milestone.py -q
   expansion operator approval schema migration approval request, expansion
   operator approval schema migration decision ledger, expansion operator
   approval schema migration action checklist, expansion operator approval
-  schema migration selection packet, playbooks, eval candidates, iteration
+  schema migration selection packet, expansion operator approval schema
+  migration selection input template, playbooks, eval candidates, iteration
   loop state, stuck tasks, incidents, and recent activity.
 - `knowledge.md`: stable human-readable knowledge promoted from repeated local
   evidence.

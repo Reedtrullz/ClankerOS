@@ -79,6 +79,7 @@
 - [x] Add report-only Expansion Operator Approval Schema Migration Decision Ledger from approval requests. <!-- score=8 complexity=3 -->
 - [x] Add report-only Expansion Operator Approval Schema Migration Action Checklist from decision ledgers. <!-- score=8 complexity=3 -->
 - [x] Add report-only Expansion Operator Approval Schema Migration Selection Packet from action checklists. <!-- score=8 complexity=3 -->
+- [x] Add report-only Expansion Operator Approval Schema Migration Selection Input Template from selection packets. <!-- score=8 complexity=3 -->
 
 ## blocked
 

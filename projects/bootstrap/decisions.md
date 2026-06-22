@@ -842,3 +842,20 @@ allowed actions `approve`, `defer`, and `request_more_evidence`. It must keep
 selection packet is not itself a selection. This packet creates no approval
 rows, applies no migration, creates no table, takes no allowed action,
 approves no decisions, changes no routing, and mutates no external systems.
+
+## 2026-06-22: Report-Only Expansion Operator Approval Schema Migration Selection Input Template
+
+Use
+`python3 -m agent_os.cli expansion-operator-approval-schema-migration-selection-input-template`
+after `expansion-operator-approval-schema-migration-selection-packet` to make
+the concrete operator input fields explicit before any schema migration
+selection can be recorded. The template should retain the source selection
+packet, action checklist, decision ledger, approval request, target table,
+requested action `apply_operator_approval_requests_schema`, boundary
+`schema_migration`, and allowed actions `approve`, `defer`, and
+`request_more_evidence`. It must keep `selected_action=none`,
+`inputs_recorded=0`, `selections_recorded=0`, and `actions_taken=0`; listing
+required fields is not itself operator input. This template creates no
+approval rows, applies no migration, creates no table, takes no allowed
+action, approves no decisions, changes no routing, and mutates no external
+systems.

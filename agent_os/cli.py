@@ -152,6 +152,11 @@ from agent_os.expansion_operator_approval_schema_migration_selection_packet impo
     render_expansion_operator_approval_schema_migration_selection_packet_line,
     write_expansion_operator_approval_schema_migration_selection_packet,
 )
+from agent_os.expansion_operator_approval_schema_migration_selection_input_template import (
+    format_allowed_actions as format_schema_migration_input_template_actions,
+    render_expansion_operator_approval_schema_migration_selection_input_template_line,
+    write_expansion_operator_approval_schema_migration_selection_input_template,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -370,6 +375,10 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "expansion-operator-approval-schema-migration-selection-packet",
         help="Prepare a report-only operator selection input packet from schema migration action checklists.",
+    )
+    subparsers.add_parser(
+        "expansion-operator-approval-schema-migration-selection-input-template",
+        help="Prepare a report-only operator input template from schema migration selection packets.",
     )
 
     approve = subparsers.add_parser("approve", help="Approve a pending local task request.")
@@ -1541,6 +1550,76 @@ def main(argv: list[str] | None = None) -> int:
         print(
             render_expansion_operator_approval_schema_migration_selection_packet_line(
                 packet
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if (
+        args.command
+        == "expansion-operator-approval-schema-migration-selection-input-template"
+    ):
+        AgentSystem(root).initialize()
+        report_path, template = (
+            write_expansion_operator_approval_schema_migration_selection_input_template(
+                root
+            )
+        )
+        print(
+            "expansion_operator_approval_schema_migration_selection_input_template: "
+            f"{template.status}"
+        )
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_packet: {template.source_packet_id}")
+        print(f"source_status: {template.source_packet_status}")
+        print(f"source_checklist: {template.source_checklist_id}")
+        print(f"source_checklist_status: {template.source_checklist_status}")
+        print(f"source_ledger: {template.source_ledger_id}")
+        print(f"source_ledger_status: {template.source_ledger_status}")
+        print(f"source_request: {template.source_request_id}")
+        print(f"source_request_status: {template.source_request_status}")
+        print(f"source_plan: {template.source_plan_id}")
+        print(f"source_plan_status: {template.source_plan_status}")
+        print(f"source_decision: {template.source_decision_id}")
+        print(f"source_decision_status: {template.source_decision_status}")
+        print(f"source_review: {template.source_review_id}")
+        print(f"source_review_status: {template.source_review_status}")
+        print(f"target_table: {template.target_table}")
+        print(f"request_count: {template.request_count}")
+        print(f"decision_count: {template.decision_count}")
+        print(f"pending_decisions: {template.pending_decision_count}")
+        print(f"action_count: {template.action_count}")
+        print(f"pending_actions: {template.pending_action_count}")
+        print(f"actions_taken: {template.actions_taken_count}")
+        print(f"selected_action: {template.selected_action}")
+        print(f"selection_count: {template.selection_count}")
+        print(f"pending_selections: {template.pending_selection_count}")
+        print(f"selections_recorded: {template.selections_recorded_count}")
+        print(f"approve_selections: {template.approve_selection_count}")
+        print(f"defer_selections: {template.defer_selection_count}")
+        print(f"more_evidence_selections: {template.more_evidence_selection_count}")
+        print(f"template_count: {template.template_count}")
+        print(f"pending_inputs: {template.pending_input_count}")
+        print(f"inputs_recorded: {template.inputs_recorded_count}")
+        print(f"required_fields_count: {template.required_fields_count}")
+        print(f"missing_required_inputs: {template.missing_required_input_count}")
+        print(f"approval_boundary: {template.approval_boundary}")
+        print(f"requested_action: {template.requested_action}")
+        print(
+            "allowed_actions: "
+            f"{format_schema_migration_input_template_actions(template.allowed_actions)}"
+        )
+        print(f"migration_applied: {template.migration_applied_count}")
+        print(f"table_created: {template.table_created_count}")
+        print(
+            "operator_approval_rows_created: "
+            f"{template.operator_approval_row_count}"
+        )
+        print(f"approval_requests_created: {template.created_approval_request_count}")
+        print(f"existing_approval_requests: {template.existing_approval_request_count}")
+        print(f"recommended_next_step: {template.recommended_next_step}")
+        print(
+            render_expansion_operator_approval_schema_migration_selection_input_template_line(
+                template
             ).removeprefix("- ")
         )
         return 0

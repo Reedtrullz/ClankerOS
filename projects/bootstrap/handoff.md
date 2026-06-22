@@ -1288,8 +1288,44 @@ work, or changing routing.
   action checklists` -> pass as `eval_after_change_0d383518167b`, run
   `run_53c46f6d9926`; `eval` -> pass; `playbooks` ->
   `successful_runs=159`.
+- Latest Expansion Operator Approval Schema Migration Selection Input
+  Template:
+  `expansion_operator_approval_schema_migration_selection_input_template_2b843f505bec`
+  converts the selection packet into explicit required operator input fields
+  without recording input. It reports
+  `operator_approval_schema_migration_selection_input_required` from source
+  packet
+  `expansion_operator_approval_schema_migration_selection_packet_05fdef0caa17`,
+  source status `operator_approval_schema_migration_selection_required`,
+  source checklist
+  `expansion_operator_approval_schema_migration_action_checklist_c8d344afd257`,
+  source ledger
+  `expansion_operator_approval_schema_migration_decision_ledger_8354ba63b081`,
+  source request
+  `expansion_operator_approval_schema_migration_approval_request_88a59ed82a34`,
+  source plan `expansion_operator_approval_schema_migration_plan_43cd7e7b31b7`,
+  target table `operator_approval_requests`, requested action
+  `apply_operator_approval_requests_schema`, allowed actions
+  `approve,defer,request_more_evidence`, 1 request, 1 decision,
+  1 pending decision, 1 action, 1 pending action, 0 actions taken,
+  `selected_action=none`, 1 selection, 1 pending selection,
+  0 selections recorded, 1 template, 1 pending input, 0 inputs recorded,
+  4 required fields, 4 missing required inputs, 0 applied migrations,
+  0 created tables, 0 operator approval rows, 0 created approval requests,
+  and 0 existing approval requests. Recommended next step:
+  `operator_approval_schema_migration_operator_input_required`.
+- Eval cadence after Expansion Operator Approval Schema Migration Selection
+  Input Template:
+  focused regression passed after the red run failed on the missing CLI
+  command; `python3 -m py_compile ...` passed; focused selection-input
+  template test -> 1 passed; schema migration cluster -> 6 passed,
+  185 deselected; full `python3 -m pytest -q` -> 191 passed;
+  eval-after-change for `Add Expansion Operator Approval Schema Migration
+  Selection Input Template from selection packets` -> pass as
+  `eval_after_change_bd85fa596ed7`, run `run_21b6a386585b`; `eval` -> pass
+  with run `run_60c83a6cdc32`; `playbooks` -> `successful_runs=162`.
 - Current iteration packet:
-  `iteration_8be27adad031` in `docs/next-iteration.md`, fallback objective
+  `iteration_4e9ed1c65b48` in `docs/next-iteration.md`, fallback objective
   `Review current evidence and add the next actionable queue item.`
 
 ## Next Actions
@@ -1315,11 +1351,14 @@ work, or changing routing.
    `docs/expansion-operator-approval-schema-migration-action-checklist.md` as
    the current action-selection checklist and
    `docs/expansion-operator-approval-schema-migration-selection-packet.md` as
-   the current operator-input packet before any hosted dashboard, remote
+   the current operator-input packet and
+   `docs/expansion-operator-approval-schema-migration-selection-input-template.md`
+   as the current required-input template before any hosted dashboard, remote
    worker, scheduler, adapter, CI/deploy, budget, trust, retry, real-spend
-   capability, or schema migration is promoted.
+   capability, operator input, operator selection, or schema migration is
+   promoted.
 3. Treat
-   `operator_approval_schema_migration_operator_selection_input_required` as
-   the next approval boundary; keep the next slice metadata/report-only until
-   explicit operator selection input justifies applying migrations, creating
-   approval rows, or changing routing.
+   `operator_approval_schema_migration_operator_input_required` as the next
+   approval boundary; keep the next slice metadata/report-only until explicit
+   operator input justifies recording a selection, applying migrations,
+   creating approval rows, or changing routing.

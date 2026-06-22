@@ -1074,6 +1074,57 @@ class ExpansionOperatorApprovalSchemaMigrationSelectionPacket:
     created_at: str
 
 
+@dataclass(frozen=True)
+class ExpansionOperatorApprovalSchemaMigrationSelectionInputTemplate:
+    id: str
+    status: str
+    source_packet_id: str
+    source_packet_status: str
+    source_checklist_id: str
+    source_checklist_status: str
+    source_ledger_id: str
+    source_ledger_status: str
+    source_request_id: str
+    source_request_status: str
+    source_plan_id: str
+    source_plan_status: str
+    source_decision_id: str
+    source_decision_status: str
+    source_review_id: str
+    source_review_status: str
+    target_table: str
+    request_count: int
+    decision_count: int
+    pending_decision_count: int
+    action_count: int
+    pending_action_count: int
+    actions_taken_count: int
+    selected_action: str
+    selection_count: int
+    pending_selection_count: int
+    selections_recorded_count: int
+    approve_selection_count: int
+    defer_selection_count: int
+    more_evidence_selection_count: int
+    template_count: int
+    pending_input_count: int
+    inputs_recorded_count: int
+    required_fields_count: int
+    missing_required_input_count: int
+    approval_boundary: str
+    requested_action: str
+    allowed_actions: list[str]
+    migration_applied_count: int
+    table_created_count: int
+    operator_approval_row_count: int
+    created_approval_request_count: int
+    existing_approval_request_count: int
+    recommended_next_step: str
+    input_template_items: list[dict[str, Any]]
+    report_path: str
+    created_at: str
+
+
 SAFE_AUTO_TASK_TYPES = {"write_goal_artifact", "record_learning"}
 SAFE_AUTO_RISK_LEVELS = {"low"}
 APPROVAL_WAITING_STATUS = "waiting_approval"
@@ -2112,6 +2163,56 @@ class Storage:
                     existing_approval_request_count integer not null,
                     recommended_next_step text not null,
                     selection_items text not null,
+                    report_path text not null,
+                    created_at text not null
+                );
+
+                create table if not exists expansion_operator_approval_schema_migration_selection_input_templates (
+                    id text primary key,
+                    status text not null,
+                    source_packet_id text not null,
+                    source_packet_status text not null,
+                    source_checklist_id text not null,
+                    source_checklist_status text not null,
+                    source_ledger_id text not null,
+                    source_ledger_status text not null,
+                    source_request_id text not null,
+                    source_request_status text not null,
+                    source_plan_id text not null,
+                    source_plan_status text not null,
+                    source_decision_id text not null,
+                    source_decision_status text not null,
+                    source_review_id text not null,
+                    source_review_status text not null,
+                    target_table text not null,
+                    request_count integer not null,
+                    decision_count integer not null,
+                    pending_decision_count integer not null,
+                    action_count integer not null,
+                    pending_action_count integer not null,
+                    actions_taken_count integer not null,
+                    selected_action text not null,
+                    selection_count integer not null,
+                    pending_selection_count integer not null,
+                    selections_recorded_count integer not null,
+                    approve_selection_count integer not null,
+                    defer_selection_count integer not null,
+                    more_evidence_selection_count integer not null,
+                    template_count integer not null,
+                    pending_input_count integer not null,
+                    inputs_recorded_count integer not null,
+                    required_fields_count integer not null,
+                    missing_required_input_count integer not null,
+                    approval_boundary text not null,
+                    requested_action text not null,
+                    allowed_actions text not null,
+                    migration_applied_count integer not null,
+                    table_created_count integer not null,
+                    operator_approval_row_count integer not null,
+                    created_approval_request_count integer not null,
+                    existing_approval_request_count integer not null,
+                    recommended_next_step text not null,
+                    input_template_items text not null,
                     report_path text not null,
                     created_at text not null
                 );
@@ -6766,6 +6867,204 @@ class Storage:
             for row in rows
         ]
 
+    def record_expansion_operator_approval_schema_migration_selection_input_template(
+        self,
+        *,
+        status: str,
+        source_packet_id: str,
+        source_packet_status: str,
+        source_checklist_id: str,
+        source_checklist_status: str,
+        source_ledger_id: str,
+        source_ledger_status: str,
+        source_request_id: str,
+        source_request_status: str,
+        source_plan_id: str,
+        source_plan_status: str,
+        source_decision_id: str,
+        source_decision_status: str,
+        source_review_id: str,
+        source_review_status: str,
+        target_table: str,
+        request_count: int,
+        decision_count: int,
+        pending_decision_count: int,
+        action_count: int,
+        pending_action_count: int,
+        actions_taken_count: int,
+        selected_action: str,
+        selection_count: int,
+        pending_selection_count: int,
+        selections_recorded_count: int,
+        approve_selection_count: int,
+        defer_selection_count: int,
+        more_evidence_selection_count: int,
+        template_count: int,
+        pending_input_count: int,
+        inputs_recorded_count: int,
+        required_fields_count: int,
+        missing_required_input_count: int,
+        approval_boundary: str,
+        requested_action: str,
+        allowed_actions: list[str],
+        migration_applied_count: int,
+        table_created_count: int,
+        operator_approval_row_count: int,
+        created_approval_request_count: int,
+        existing_approval_request_count: int,
+        recommended_next_step: str,
+        input_template_items: list[dict[str, Any]],
+        report_path: str,
+    ) -> ExpansionOperatorApprovalSchemaMigrationSelectionInputTemplate:
+        template_id = new_id(
+            "expansion_operator_approval_schema_migration_selection_input_template"
+        )
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into expansion_operator_approval_schema_migration_selection_input_templates (
+                    id, status, source_packet_id, source_packet_status,
+                    source_checklist_id, source_checklist_status,
+                    source_ledger_id, source_ledger_status, source_request_id,
+                    source_request_status, source_plan_id, source_plan_status,
+                    source_decision_id, source_decision_status,
+                    source_review_id, source_review_status, target_table,
+                    request_count, decision_count, pending_decision_count,
+                    action_count, pending_action_count, actions_taken_count,
+                    selected_action, selection_count, pending_selection_count,
+                    selections_recorded_count, approve_selection_count,
+                    defer_selection_count, more_evidence_selection_count,
+                    template_count, pending_input_count, inputs_recorded_count,
+                    required_fields_count, missing_required_input_count,
+                    approval_boundary, requested_action, allowed_actions,
+                    migration_applied_count, table_created_count,
+                    operator_approval_row_count, created_approval_request_count,
+                    existing_approval_request_count, recommended_next_step,
+                    input_template_items, report_path, created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    template_id,
+                    status,
+                    source_packet_id,
+                    source_packet_status,
+                    source_checklist_id,
+                    source_checklist_status,
+                    source_ledger_id,
+                    source_ledger_status,
+                    source_request_id,
+                    source_request_status,
+                    source_plan_id,
+                    source_plan_status,
+                    source_decision_id,
+                    source_decision_status,
+                    source_review_id,
+                    source_review_status,
+                    target_table,
+                    request_count,
+                    decision_count,
+                    pending_decision_count,
+                    action_count,
+                    pending_action_count,
+                    actions_taken_count,
+                    selected_action,
+                    selection_count,
+                    pending_selection_count,
+                    selections_recorded_count,
+                    approve_selection_count,
+                    defer_selection_count,
+                    more_evidence_selection_count,
+                    template_count,
+                    pending_input_count,
+                    inputs_recorded_count,
+                    required_fields_count,
+                    missing_required_input_count,
+                    approval_boundary,
+                    requested_action,
+                    _json_dumps(allowed_actions),
+                    migration_applied_count,
+                    table_created_count,
+                    operator_approval_row_count,
+                    created_approval_request_count,
+                    existing_approval_request_count,
+                    recommended_next_step,
+                    _json_dumps(input_template_items),
+                    report_path,
+                    created_at,
+                ),
+            )
+        return ExpansionOperatorApprovalSchemaMigrationSelectionInputTemplate(
+            id=template_id,
+            status=status,
+            source_packet_id=source_packet_id,
+            source_packet_status=source_packet_status,
+            source_checklist_id=source_checklist_id,
+            source_checklist_status=source_checklist_status,
+            source_ledger_id=source_ledger_id,
+            source_ledger_status=source_ledger_status,
+            source_request_id=source_request_id,
+            source_request_status=source_request_status,
+            source_plan_id=source_plan_id,
+            source_plan_status=source_plan_status,
+            source_decision_id=source_decision_id,
+            source_decision_status=source_decision_status,
+            source_review_id=source_review_id,
+            source_review_status=source_review_status,
+            target_table=target_table,
+            request_count=request_count,
+            decision_count=decision_count,
+            pending_decision_count=pending_decision_count,
+            action_count=action_count,
+            pending_action_count=pending_action_count,
+            actions_taken_count=actions_taken_count,
+            selected_action=selected_action,
+            selection_count=selection_count,
+            pending_selection_count=pending_selection_count,
+            selections_recorded_count=selections_recorded_count,
+            approve_selection_count=approve_selection_count,
+            defer_selection_count=defer_selection_count,
+            more_evidence_selection_count=more_evidence_selection_count,
+            template_count=template_count,
+            pending_input_count=pending_input_count,
+            inputs_recorded_count=inputs_recorded_count,
+            required_fields_count=required_fields_count,
+            missing_required_input_count=missing_required_input_count,
+            approval_boundary=approval_boundary,
+            requested_action=requested_action,
+            allowed_actions=allowed_actions,
+            migration_applied_count=migration_applied_count,
+            table_created_count=table_created_count,
+            operator_approval_row_count=operator_approval_row_count,
+            created_approval_request_count=created_approval_request_count,
+            existing_approval_request_count=existing_approval_request_count,
+            recommended_next_step=recommended_next_step,
+            input_template_items=input_template_items,
+            report_path=report_path,
+            created_at=created_at,
+        )
+
+    def list_recent_expansion_operator_approval_schema_migration_selection_input_templates(
+        self,
+        limit: int = 5,
+    ) -> list[ExpansionOperatorApprovalSchemaMigrationSelectionInputTemplate]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from expansion_operator_approval_schema_migration_selection_input_templates
+                order by created_at desc, id desc
+                limit ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [
+            self._row_to_expansion_operator_approval_schema_migration_selection_input_template(
+                row
+            )
+            for row in rows
+        ]
+
     def get_real_cost_tracking_proof_checklist(
         self,
         checklist_id: str | None,
@@ -8402,6 +8701,60 @@ class Storage:
             existing_approval_request_count=row["existing_approval_request_count"],
             recommended_next_step=row["recommended_next_step"],
             selection_items=_json_loads(row["selection_items"], []),
+            report_path=row["report_path"],
+            created_at=row["created_at"],
+        )
+
+    def _row_to_expansion_operator_approval_schema_migration_selection_input_template(
+        self,
+        row: sqlite3.Row,
+    ) -> ExpansionOperatorApprovalSchemaMigrationSelectionInputTemplate:
+        return ExpansionOperatorApprovalSchemaMigrationSelectionInputTemplate(
+            id=row["id"],
+            status=row["status"],
+            source_packet_id=row["source_packet_id"],
+            source_packet_status=row["source_packet_status"],
+            source_checklist_id=row["source_checklist_id"],
+            source_checklist_status=row["source_checklist_status"],
+            source_ledger_id=row["source_ledger_id"],
+            source_ledger_status=row["source_ledger_status"],
+            source_request_id=row["source_request_id"],
+            source_request_status=row["source_request_status"],
+            source_plan_id=row["source_plan_id"],
+            source_plan_status=row["source_plan_status"],
+            source_decision_id=row["source_decision_id"],
+            source_decision_status=row["source_decision_status"],
+            source_review_id=row["source_review_id"],
+            source_review_status=row["source_review_status"],
+            target_table=row["target_table"],
+            request_count=row["request_count"],
+            decision_count=row["decision_count"],
+            pending_decision_count=row["pending_decision_count"],
+            action_count=row["action_count"],
+            pending_action_count=row["pending_action_count"],
+            actions_taken_count=row["actions_taken_count"],
+            selected_action=row["selected_action"],
+            selection_count=row["selection_count"],
+            pending_selection_count=row["pending_selection_count"],
+            selections_recorded_count=row["selections_recorded_count"],
+            approve_selection_count=row["approve_selection_count"],
+            defer_selection_count=row["defer_selection_count"],
+            more_evidence_selection_count=row["more_evidence_selection_count"],
+            template_count=row["template_count"],
+            pending_input_count=row["pending_input_count"],
+            inputs_recorded_count=row["inputs_recorded_count"],
+            required_fields_count=row["required_fields_count"],
+            missing_required_input_count=row["missing_required_input_count"],
+            approval_boundary=row["approval_boundary"],
+            requested_action=row["requested_action"],
+            allowed_actions=_json_loads(row["allowed_actions"], []),
+            migration_applied_count=row["migration_applied_count"],
+            table_created_count=row["table_created_count"],
+            operator_approval_row_count=row["operator_approval_row_count"],
+            created_approval_request_count=row["created_approval_request_count"],
+            existing_approval_request_count=row["existing_approval_request_count"],
+            recommended_next_step=row["recommended_next_step"],
+            input_template_items=_json_loads(row["input_template_items"], []),
             report_path=row["report_path"],
             created_at=row["created_at"],
         )

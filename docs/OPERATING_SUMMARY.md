@@ -219,6 +219,11 @@ Core layers for the bootstrap:
   allowed operator actions, and zero mutation counters while applying no
   migration, creating no table, creating no approval rows, and recording no
   operator selection.
+- Expansion operator approval schema migration selection input template: the
+  latest selection packet can be converted into a report-only operator input
+  template. The template records required input fields and
+  `inputs_recorded: 0` while keeping `selected_action=none`,
+  `selections_recorded: 0`, `actions_taken: 0`, and zero mutation counters.
 - Iteration loop: `iterate` selects the next actionable queue item and writes a
   non-executing `docs/next-iteration.md` packet with verification commands.
 - Simplicity guardrail: when queue items have equal score metadata, `iterate`
@@ -247,9 +252,10 @@ Core layers for the bootstrap:
   schema migration plans, expansion operator approval schema migration
   approval requests, expansion operator approval schema migration decision
   ledgers, expansion operator approval schema migration action checklists,
-  expansion operator approval schema migration selection packets, playbooks,
-  eval candidates, iteration packets, simplicity guardrails, approvals, stuck
-  tasks, incidents, recent runs, learnings, and eval results.
+  expansion operator approval schema migration selection packets, expansion
+  operator approval schema migration selection input templates, playbooks, eval
+  candidates, iteration packets, simplicity guardrails, approvals, stuck tasks,
+  incidents, recent runs, learnings, and eval results.
 
 ## First Milestone
 
@@ -512,6 +518,14 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   `docs/expansion-operator-approval-schema-migration-selection-packet.md`,
   SQLite state, and `docs/dashboard.md`; it requires explicit operator input
   while keeping `selected_action=none`, `selections_recorded: 0`, and all
+  migration, table, and approval-row counters at zero.
+- Expansion operator approval schema migration selection input template:
+  available through
+  `python3 -m agent_os.cli expansion-operator-approval-schema-migration-selection-input-template`
+  and mirrored into
+  `docs/expansion-operator-approval-schema-migration-selection-input-template.md`,
+  SQLite state, and `docs/dashboard.md`; it lists required operator fields
+  while keeping `inputs_recorded: 0`, `selections_recorded: 0`, and all
   migration, table, and approval-row counters at zero.
 - Eval candidate listing: available through
   `python3 -m agent_os.cli eval-candidates` and mirrored into

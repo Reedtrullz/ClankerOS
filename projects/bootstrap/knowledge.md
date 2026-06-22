@@ -1503,6 +1503,19 @@ coverage.
   approval rows until an explicit operator selection flow is designed and
   verified.
 
+## Learning: Expansion Operator Approval Schema Migration Selection Input Template
+
+- The schema migration approval chain now has an explicit operator input
+  template after the selection packet.
+- The latest template preserves source packet
+  `expansion_operator_approval_schema_migration_selection_packet_05fdef0caa17`
+  and keeps `inputs_recorded: 0`, `selections_recorded: 0`,
+  `selected_action: none`, `actions_taken: 0`, and all schema/table/approval-row
+  mutation counters at zero.
+- Treat `operator_approval_schema_migration_operator_input_required` as the
+  next boundary; do not record input, record a selection, apply migrations, or
+  create approval rows until explicit operator input is provided and verified.
+
 ## Learning run_b4567c7f4709
 
 - Learning: Run run_b4567c7f4709 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
@@ -1522,3 +1535,11 @@ coverage.
 ## Learning run_64d3fd52b283
 
 - Learning: Run run_64d3fd52b283 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_21b6a386585b
+
+- Learning: Run run_21b6a386585b showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_60c83a6cdc32
+
+- Learning: Run run_60c83a6cdc32 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

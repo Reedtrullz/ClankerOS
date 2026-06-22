@@ -1,6 +1,6 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_8be27adad031
+- Packet ID: iteration_4e9ed1c65b48
 - Status: planned
 - Source: tasks.md#fallback
 
@@ -60,6 +60,7 @@ Advance the Agent System north-star goal by completing: Review current evidence 
 - `python3 -m agent_os.cli expansion-operator-approval-schema-migration-decision-ledger`
 - `python3 -m agent_os.cli expansion-operator-approval-schema-migration-action-checklist`
 - `python3 -m agent_os.cli expansion-operator-approval-schema-migration-selection-packet`
+- `python3 -m agent_os.cli expansion-operator-approval-schema-migration-selection-input-template`
 - `python3 -m agent_os.cli eval`
 - `python3 -m agent_os.cli playbooks`
 - `python3 -m agent_os.cli dashboard`
@@ -126,6 +127,7 @@ Advance the Agent System north-star goal by completing: Review current evidence 
 - expansion operator approval schema migration decision ledger: operator_approval_schema_migration_decision_pending
 - expansion operator approval schema migration action checklist: operator_approval_schema_migration_manual_action_required
 - expansion operator approval schema migration selection packet: operator_approval_schema_migration_selection_required
+- expansion operator approval schema migration selection input template: operator_approval_schema_migration_selection_input_required
 - proposed eval candidates: 0
 - active playbooks: 1
 - open stuck-task incidents: 0

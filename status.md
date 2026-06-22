@@ -4890,3 +4890,78 @@
   `operator_approval_requests` rows were created, no `approval_requests` rows
   were created, no routing changed, no CI/deploy proof exists from this local
   pass, and no external system was mutated.
+
+## 2026-06-22 Expansion Operator Approval Schema Migration Selection Input Template
+
+- Added report-only selection input template command:
+  `python3 -m agent_os.cli expansion-operator-approval-schema-migration-selection-input-template`.
+- Latest live template:
+  `expansion_operator_approval_schema_migration_selection_input_template_2b843f505bec`.
+- Template status:
+  `operator_approval_schema_migration_selection_input_required`.
+- Source packet:
+  `expansion_operator_approval_schema_migration_selection_packet_05fdef0caa17`
+  with status `operator_approval_schema_migration_selection_required`.
+- Source checklist:
+  `expansion_operator_approval_schema_migration_action_checklist_c8d344afd257`
+  with status `operator_approval_schema_migration_manual_action_required`.
+- Source ledger:
+  `expansion_operator_approval_schema_migration_decision_ledger_8354ba63b081`
+  with status `operator_approval_schema_migration_decision_pending`.
+- Source request:
+  `expansion_operator_approval_schema_migration_approval_request_88a59ed82a34`
+  with status `operator_approval_schema_migration_approval_required`.
+- Source plan:
+  `expansion_operator_approval_schema_migration_plan_43cd7e7b31b7` with
+  status `operator_approval_schema_migration_plan_ready`.
+- Target table remains future-only: `operator_approval_requests`.
+- Requested action remains unselected:
+  `apply_operator_approval_requests_schema`.
+- Allowed actions retained for an operator:
+  `approve,defer,request_more_evidence`.
+- Input posture: `request_count: 1`, `decision_count: 1`,
+  `pending_decisions: 1`, `action_count: 1`, `pending_actions: 1`,
+  `actions_taken: 0`, `selected_action: none`, `selection_count: 1`,
+  `pending_selections: 1`, `selections_recorded: 0`,
+  `template_count: 1`, `pending_inputs: 1`, `inputs_recorded: 0`,
+  `required_fields_count: 4`, `missing_required_inputs: 4`.
+- Required fields:
+  `operator_id,selected_action,selection_note,evidence_reference`.
+- Safety counters remain zero: `migration_applied: 0`,
+  `table_created: 0`, `operator_approval_rows_created: 0`,
+  `approval_requests_created: 0`, `existing_approval_requests: 0`.
+- Report:
+  `docs/expansion-operator-approval-schema-migration-selection-input-template.md`.
+- Dashboard section:
+  `## Expansion Operator Approval Schema Migration Selection Input Template`.
+- Latest iteration packet: `iteration_4e9ed1c65b48` in
+  `docs/next-iteration.md`.
+- Eval-after-change:
+  `eval_after_change_bd85fa596ed7`, run `run_21b6a386585b`, status `pass`.
+- Baseline eval run: `run_60c83a6cdc32`, status `pass`.
+- Playbooks: `first-milestone-closed-loop` remains active with
+  `successful_runs=162`.
+- Verification evidence:
+  - Red-first focused test failed on missing CLI command before implementation.
+  - `python3 -m py_compile agent_os/expansion_operator_approval_schema_migration_selection_input_template.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_expansion_operator_approval_schema_migration_selection_input_template_requires_operator_input -q` -> 1 passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "expansion_operator_approval_schema_migration"` -> 6 passed, 185 deselected.
+  - `python3 -m pytest -q` -> 191 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add Expansion Operator Approval Schema Migration Selection Input Template from selection packets" --file ...` -> pass.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`.
+  - `python3 -m agent_os.cli approvals` -> `pending_approvals: 0`.
+  - `python3 -m agent_os.cli queue-health` -> `hotspots: 0`.
+  - `python3 -m agent_os.cli handoff-review` -> `status: clear`.
+  - `python3 -m agent_os.cli eval-candidates` -> `eval_candidates: 0`.
+  - `python3 -m agent_os.cli budget-trust-posture` -> `report_only`.
+  - `python3 -m agent_os.cli dispatch-posture-refresh` -> `no_refresh_needed`.
+  - `sqlite3 .agent/state.db ...` -> no `operator_approval_requests` table
+    and `approval_requests` count `0`.
+  - `git diff --check` -> passed.
+  - `rg -n "[ \t]+$" ...` -> no trailing whitespace matches.
+- Non-claims: no operator input was recorded, no operator selection was
+  recorded, no operator action was selected, no operator action was recorded
+  as taken, no schema migration was applied, no `operator_approval_requests`
+  table was created, no `operator_approval_requests` rows were created, no
+  `approval_requests` rows were created, no routing changed, no CI/deploy
+  proof exists from this local pass, and no external system was mutated.

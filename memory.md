@@ -1763,6 +1763,18 @@
   while preserving source checklist
   `expansion_operator_approval_schema_migration_action_checklist_c8d344afd257`.
 
+## Learning: Expansion Operator Approval Schema Migration Selection Input Template
+
+- `expansion-operator-approval-schema-migration-selection-input-template`
+  turns the selection packet into a report-only operator input template.
+- It must keep `inputs_recorded: 0`, `selections_recorded: 0`,
+  `selected_action: none`, and `actions_taken: 0`; listing required fields is
+  not the same as recording operator input.
+- It must keep `migration_applied: 0`, `table_created: 0`,
+  `operator_approval_rows_created: 0`, and `approval_requests_created: 0`
+  while preserving source packet
+  `expansion_operator_approval_schema_migration_selection_packet_05fdef0caa17`.
+
 ## Run run_b4567c7f4709
 
 - Goal: Eval: prove first milestone closed loop
@@ -1787,3 +1799,13 @@
 
 - Goal: Eval: prove first milestone closed loop
 - Learning: Run run_64d3fd52b283 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Run run_21b6a386585b
+
+- Goal: Eval: prove first milestone closed loop
+- Learning: Run run_21b6a386585b showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Run run_60c83a6cdc32
+
+- Goal: Eval: prove first milestone closed loop
+- Learning: Run run_60c83a6cdc32 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
