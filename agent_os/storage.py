@@ -1566,6 +1566,25 @@ class CapabilityActivationFollowupResultEffectApplication:
 
 
 @dataclass(frozen=True)
+class CapabilityActivationFollowupResultTaskResultEffectApplication:
+    id: str
+    status: str
+    operator_id: str
+    selection_note: str
+    evidence_reference: str
+    proposed_effect_count: int
+    applied_effect_count: int
+    existing_applied_effect_count: int
+    capability_effect_count: int
+    approval_request_count: int
+    activation_action_count: int
+    external_mutation_count: int
+    applied_effect_ids: list[str]
+    report_path: str
+    created_at: str
+
+
+@dataclass(frozen=True)
 class CapabilityActivationFollowupResultTaskBatch:
     id: str
     status: str
@@ -3287,6 +3306,24 @@ class Storage:
                 );
 
                 create table if not exists capability_activation_followup_result_effect_applications (
+                    id text primary key,
+                    status text not null,
+                    operator_id text not null,
+                    selection_note text not null,
+                    evidence_reference text not null,
+                    proposed_effect_count integer not null,
+                    applied_effect_count integer not null,
+                    existing_applied_effect_count integer not null,
+                    capability_effect_count integer not null,
+                    approval_request_count integer not null,
+                    activation_action_count integer not null,
+                    external_mutation_count integer not null,
+                    applied_effect_ids text not null,
+                    report_path text not null,
+                    created_at text not null
+                );
+
+                create table if not exists capability_activation_followup_result_task_result_effect_applications (
                     id text primary key,
                     status text not null,
                     operator_id text not null,
@@ -9943,6 +9980,96 @@ class Storage:
             for row in rows
         ]
 
+    def record_capability_activation_followup_result_task_result_effect_application(
+        self,
+        *,
+        status: str,
+        operator_id: str,
+        selection_note: str,
+        evidence_reference: str,
+        proposed_effect_count: int,
+        applied_effect_count: int,
+        existing_applied_effect_count: int,
+        capability_effect_count: int,
+        approval_request_count: int,
+        activation_action_count: int,
+        external_mutation_count: int,
+        applied_effect_ids: list[str],
+        report_path: str,
+    ) -> CapabilityActivationFollowupResultTaskResultEffectApplication:
+        application_id = new_id(
+            "capability_activation_followup_result_task_result_effect_application"
+        )
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into capability_activation_followup_result_task_result_effect_applications (
+                    id, status, operator_id, selection_note, evidence_reference,
+                    proposed_effect_count, applied_effect_count,
+                    existing_applied_effect_count, capability_effect_count,
+                    approval_request_count, activation_action_count,
+                    external_mutation_count, applied_effect_ids, report_path,
+                    created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    application_id,
+                    status,
+                    operator_id,
+                    selection_note,
+                    evidence_reference,
+                    proposed_effect_count,
+                    applied_effect_count,
+                    existing_applied_effect_count,
+                    capability_effect_count,
+                    approval_request_count,
+                    activation_action_count,
+                    external_mutation_count,
+                    _json_dumps(applied_effect_ids),
+                    report_path,
+                    created_at,
+                ),
+            )
+        return CapabilityActivationFollowupResultTaskResultEffectApplication(
+            id=application_id,
+            status=status,
+            operator_id=operator_id,
+            selection_note=selection_note,
+            evidence_reference=evidence_reference,
+            proposed_effect_count=proposed_effect_count,
+            applied_effect_count=applied_effect_count,
+            existing_applied_effect_count=existing_applied_effect_count,
+            capability_effect_count=capability_effect_count,
+            approval_request_count=approval_request_count,
+            activation_action_count=activation_action_count,
+            external_mutation_count=external_mutation_count,
+            applied_effect_ids=applied_effect_ids,
+            report_path=report_path,
+            created_at=created_at,
+        )
+
+    def list_recent_capability_activation_followup_result_task_result_effect_applications(
+        self,
+        limit: int = 5,
+    ) -> list[CapabilityActivationFollowupResultTaskResultEffectApplication]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from capability_activation_followup_result_task_result_effect_applications
+                order by created_at desc, id desc
+                limit ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [
+            self._row_to_capability_activation_followup_result_task_result_effect_application(
+                row
+            )
+            for row in rows
+        ]
+
     def record_capability_activation_followup_result_task_batch(
         self,
         *,
@@ -14895,6 +15022,28 @@ class Storage:
         row: sqlite3.Row,
     ) -> CapabilityActivationFollowupResultEffectApplication:
         return CapabilityActivationFollowupResultEffectApplication(
+            id=row["id"],
+            status=row["status"],
+            operator_id=row["operator_id"],
+            selection_note=row["selection_note"],
+            evidence_reference=row["evidence_reference"],
+            proposed_effect_count=row["proposed_effect_count"],
+            applied_effect_count=row["applied_effect_count"],
+            existing_applied_effect_count=row["existing_applied_effect_count"],
+            capability_effect_count=row["capability_effect_count"],
+            approval_request_count=row["approval_request_count"],
+            activation_action_count=row["activation_action_count"],
+            external_mutation_count=row["external_mutation_count"],
+            applied_effect_ids=_json_loads(row["applied_effect_ids"], []),
+            report_path=row["report_path"],
+            created_at=row["created_at"],
+        )
+
+    def _row_to_capability_activation_followup_result_task_result_effect_application(
+        self,
+        row: sqlite3.Row,
+    ) -> CapabilityActivationFollowupResultTaskResultEffectApplication:
+        return CapabilityActivationFollowupResultTaskResultEffectApplication(
             id=row["id"],
             status=row["status"],
             operator_id=row["operator_id"],

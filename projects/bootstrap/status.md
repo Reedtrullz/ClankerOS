@@ -3703,6 +3703,34 @@ are visible in the dashboard and are not active until approved.
   Add local application records for downstream follow-up result task decision
   effect proposals.
 
+## 2026-06-22 Capability Follow-Up Result Task Effect Application
+
+- Added `capability-activation-followup-result-task-result-effect-apply` to
+  apply accepted keep-blocked downstream proof-plan result decision effects as
+  local `applied` ledger rows.
+- Initial live run recorded
+  `capability_activation_followup_result_task_result_effect_application_9a25296003eb`
+  and marked `effect_1204651c2a69` as `applied`.
+- Final idempotency run recorded
+  `capability_activation_followup_result_task_result_effect_application_29f9b937a8d8`
+  with 0 new applications, 1 existing applied effect, 0 approval requests, 0
+  activation actions, and 0 external mutations.
+- Evidence report:
+  `docs/capability-activation-followup-result-task-result-effect-application.md`.
+- Tutorial:
+  `docs/tutorial-capability-followup-result-task-result-effect-application.md`.
+- Verification:
+  `python3 -m pytest -q` passed with 295 tests;
+  `python3 -m agent_os.cli eval-after-change --change "Add downstream follow-up result task effect application" ...`
+  passed with run `run_660cb0357548`;
+  `python3 -m agent_os.cli eval` passed;
+  `python3 -m agent_os.cli queue-health` reported 0 hotspots;
+  `python3 -m agent_os.cli handoff-review` reported clear;
+  `git diff --check` passed.
+- Next focus:
+  Add downstream task records from applied downstream follow-up result task
+  decision effect applications.
+
 ## Run run_38a7d9c5354c
 
 - Goal ID: goal_f46f23ea1c14
@@ -3726,3 +3754,15 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_ef40ebb698bd
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_fb277f1d82df/summary.md
+
+## Run run_660cb0357548
+
+- Goal ID: goal_877fe4e8a9d9
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_660cb0357548/summary.md
+
+## Run run_af75fe75ca2b
+
+- Goal ID: goal_a11dc8d6567e
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_af75fe75ca2b/summary.md

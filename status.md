@@ -6470,3 +6470,81 @@
   enable capabilities, promote trust, schedule work, retry work, track spend,
   run CI, deploy, push, open PRs, mark the active goal complete, or mutate
   external systems.
+
+## 2026-06-22 Capability Activation Follow-Up Result Task Effect Application
+
+- Added local downstream effect application command:
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-apply`.
+- The command records local
+  `capability_activation_followup_result_task_result_effect_applications`
+  rows, marks applicable downstream task-result decision effects as `applied`,
+  writes
+  `docs/capability-activation-followup-result-task-result-effect-application.md`,
+  and preserves source downstream decision, downstream result, upstream
+  follow-up result, source effect, downstream task, contract, project, and
+  capability links.
+- Initial live application:
+  `capability_activation_followup_result_task_result_effect_application_9a25296003eb`,
+  status
+  `capability_activation_followup_result_task_result_effect_application_recorded`,
+  applied `effect_1204651c2a69` for `hosted_dashboard`.
+- Final live idempotency pass:
+  `capability_activation_followup_result_task_result_effect_application_29f9b937a8d8`,
+  status
+  `capability_activation_followup_result_task_result_effect_application_already_recorded`,
+  with 0 new applications, 1 existing applied effect, 0 approval requests, 0
+  activation actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-application.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-application.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Added and updated docs: README lifecycle/About/command map, suggested-use
+  tutorial docs, docs index, operating summary, workflow, bootstrap
+  handoff/status, task queue, generated dashboard, and generated
+  next-iteration packet. The next packet is:
+  `Add downstream task records from applied downstream follow-up result task decision effect applications.`
+- Verification evidence before final full gates:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'capability_activation_followup_result_task_result_effect_apply' --tb=short`
+    -> failed with missing CLI command, as expected.
+  - `python3 -m py_compile agent_os/capability_activation_followup_result_task_result_effect_application.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py tests/test_first_milestone.py`
+    -> passed.
+  - Focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'capability_activation_followup_result_task_result_effect_apply' --tb=short`
+    -> 3 passed, 292 deselected.
+  - Adjacent green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'capability_activation_followup_result_task_result_effect_apply or capability_activation_followup_result_task_result_effect_proposals or capability_activation_followup_result_task_result_decisions or capability_activation_followup_result_task_results or capability_activation_followup_result_task_delegations or capability_activation_followup_result_tasks' --tb=short`
+    -> 18 passed, 277 deselected.
+  - Live command:
+    `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-apply --operator-id operator --selection-note "Apply accepted downstream proof-plan result effect proposals as local records only." --evidence-reference docs/capability-activation-followup-result-task-result-effect-proposals.md`
+    -> recorded 1 local application, 1 applied effect, 0 approval requests, 0
+    activation actions, and 0 external mutations.
+  - Live idempotency command:
+    `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-apply --operator-id operator --selection-note "Apply accepted downstream proof-plan result effect proposals as local records only." --evidence-reference docs/capability-activation-followup-result-task-result-effect-proposals.md`
+    -> already recorded, 1 existing applied effect, 0 new applications, 0
+    approval requests, 0 activation actions, and 0 external mutations.
+- Final verification evidence:
+  - `python3 -m pytest -q`
+    -> 295 passed in 206.25s.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream follow-up result task effect application" --file agent_os/capability_activation_followup_result_task_result_effect_application.py --file agent_os/storage.py --file agent_os/cli.py --file agent_os/dashboard.py --file agent_os/iteration.py --file tests/test_first_milestone.py`
+    -> pass, run `run_660cb0357548`.
+  - `python3 -m agent_os.cli eval`
+    -> `first_milestone_closed_loop: pass`, result
+    `evals/results/first_milestone_closed_loop.json`.
+  - `python3 -m agent_os.cli queue-health`
+    -> hotspots: 0.
+  - `python3 -m agent_os.cli handoff-review`
+    -> status: clear, blocked_tasks: 0, stale_handoffs: 0.
+  - `python3 -m agent_os.cli dashboard`
+    -> regenerated `docs/dashboard.md`.
+  - `python3 -m agent_os.cli iterate`
+    -> next packet:
+    `Add downstream task records from applied downstream follow-up result task decision effect applications.`
+  - `git diff --check`
+    -> passed.
+- Non-claims: downstream follow-up result task effect application does not
+  create `approval_requests`, satisfy proof, mutate activation contracts,
+  mutate downstream result records, allow activation, enable capabilities,
+  promote trust, schedule work, retry work, track spend, run CI, deploy, push,
+  open PRs, mark the active goal complete, or mutate external systems.

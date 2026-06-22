@@ -1877,15 +1877,39 @@ work, or changing routing.
   run CI, deploy, push, open PRs, mark the active goal complete, or mutate
   external systems.
 
+## Latest Capability Activation Follow-Up Result Task Effect Application
+
+- `capability-activation-followup-result-task-result-effect-apply` now applies
+  accepted keep-blocked downstream proof-plan result decision effects as local
+  ledger records only.
+- Initial live application
+  `capability_activation_followup_result_task_result_effect_application_9a25296003eb`
+  marked `effect_1204651c2a69` as `applied` for `hosted_dashboard`.
+- Final live idempotency pass recorded
+  `capability_activation_followup_result_task_result_effect_application_29f9b937a8d8`,
+  status
+  `capability_activation_followup_result_task_result_effect_application_already_recorded`,
+  with 0 new applications, 1 existing applied effect, 0 approval requests, 0
+  activation actions, and 0 external mutations.
+- Evidence report:
+  `docs/capability-activation-followup-result-task-result-effect-application.md`.
+- Tutorial:
+  `docs/tutorial-capability-followup-result-task-result-effect-application.md`.
+- Non-claims: downstream follow-up result task effect application does not
+  create `approval_requests`, satisfy proof, mutate activation contracts,
+  mutate downstream result records, allow activation, enable capabilities,
+  promote trust, schedule work, retry work, track spend, run CI, deploy, push,
+  open PRs, mark the active goal complete, or mutate external systems.
+
 ## Next Actions
 
-Current focus: Add local application records for downstream follow-up result task decision effect proposals.
+Current focus: Add downstream task records from applied downstream follow-up result task decision effect applications.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add local application records for downstream follow-up result task decision effect proposals.
-2. Apply accepted downstream result task decision effect proposals as local
-   records only, without enabling capabilities, satisfying proof, or allowing
-   activation.
+   Add downstream task records from applied downstream follow-up result task decision effect applications.
+2. Materialize applied downstream result decision effect applications into
+   pending downstream task graph records without enabling capabilities,
+   satisfying proof, or allowing activation.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.

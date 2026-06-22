@@ -49,6 +49,8 @@ tutorials and operating docs are the better place to start.
   downstream proof-plan result records while keeping activation blocked.
 - `docs/tutorial-capability-followup-result-task-result-effect-proposals.md` -
   create proposed local effects from accepted downstream result decisions.
+- `docs/tutorial-capability-followup-result-task-result-effect-application.md`
+  - apply downstream result decision effects as local records.
 
 ## Current State
 
@@ -67,6 +69,7 @@ packets, not as marketing docs:
 
 - `docs/capability-activation-followup-result-task-delegations.md`
 - `docs/capability-activation-followup-result-task-decisions.md`
+- `docs/capability-activation-followup-result-task-result-effect-application.md`
 - `docs/capability-activation-followup-result-task-result-effect-proposals.md`
 - `docs/capability-activation-followup-result-task-results.md`
 - `docs/capability-activation-followup-result-tasks.md`

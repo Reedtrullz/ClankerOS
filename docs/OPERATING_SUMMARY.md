@@ -166,6 +166,13 @@ Core layers for the bootstrap:
   follow-up result, source effect, downstream task, contract, and capability
   while keeping approval row creation, external mutations, activation actions,
   activation allowance, and capability enablement at zero.
+- Capability activation follow-up result task result effect application:
+  proposed accepted-blocked downstream result decision effects can be applied
+  as local ledger records only. Application rows and applied effects preserve
+  source downstream decision, downstream result, upstream follow-up result,
+  source effect, downstream task, contract, project, and capability links
+  while keeping approval row creation, external mutations, activation actions,
+  activation allowance, and capability enablement at zero.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON
@@ -803,6 +810,15 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   `docs/capability-activation-followup-result-task-result-effect-proposals.md`,
   creates local `proposed` effects, and keeps
   `approval_requests_created: 0`, `activation_actions_taken: 0`,
+  `external_mutations_taken: 0`, `activation_allowed: false`, and
+  `capability_enabled: false`.
+- Capability activation follow-up result task result effect application:
+  available through
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-apply`
+  after downstream result decision effect proposals exist. The command writes
+  `docs/capability-activation-followup-result-task-result-effect-application.md`,
+  records local application rows, marks applicable effects `applied`, and
+  keeps `approval_requests_created: 0`, `activation_actions_taken: 0`,
   `external_mutations_taken: 0`, `activation_allowed: false`, and
   `capability_enabled: false`.
 - Eval candidate listing: available through

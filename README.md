@@ -33,6 +33,7 @@ downstream proof tasks -> routing decisions -> read-only delegation packets
 completed downstream proof-plan delegation results -> local result records -> next evidence plan preserved
 local downstream result records -> operator review decisions -> blocked activation preserved
 accepted downstream result decisions -> proposed effect records -> blocked activation preserved
+applied downstream result decision effects -> local application records -> blocked activation preserved
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -140,6 +141,11 @@ upstream follow-up result, source effect, downstream task, contract, and
 capability while preserving `activation_allowed=false`,
 `capability_enabled=false`, `approval_requests_created=0`,
 `activation_actions_taken=0`, and `external_mutations_taken=0`.
+Those downstream result decision effects can now be applied as local records
+only, advancing effect status to `applied` while preserving
+`activation_allowed=false`, `capability_enabled=false`,
+`approval_requests_created=0`, `activation_actions_taken=0`, and
+`external_mutations_taken=0`.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -489,6 +495,7 @@ python3 -m agent_os.cli capability-activation-followup-result-task-delegations
 python3 -m agent_os.cli capability-activation-followup-result-task-results
 python3 -m agent_os.cli capability-activation-followup-result-task-result-decide --operator-id operator --selected-action accept_keep_blocked --selection-note "Accepted downstream proof-plan result and kept capability activation blocked." --evidence-reference docs/capability-activation-followup-result-task-results.md
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-proposals
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-apply --operator-id operator --selection-note "Apply accepted downstream proof-plan result effect proposals as local records only." --evidence-reference docs/capability-activation-followup-result-task-result-effect-proposals.md
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"

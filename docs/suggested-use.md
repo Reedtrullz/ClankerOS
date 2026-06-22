@@ -80,6 +80,10 @@ Review downstream proof-plan result records, accept keeping activation blocked, 
 Create proposed effects from accepted downstream proof-plan result decisions, and prove that activation remains blocked.
 ```
 
+```text
+Apply proposed downstream proof-plan result decision effects as local records only, and prove that activation remains blocked.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -104,7 +108,9 @@ Create proposed effects from accepted downstream proof-plan result decisions, an
     evidence plan as operator-accepted.
 18. Convert accepted downstream proof-plan result decisions into proposed
     effects only after the downstream review decision exists.
-19. Record non-claims before treating the work as safe.
+19. Apply downstream result decision effects as local records only after the
+    proposal row exists.
+20. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -508,6 +514,23 @@ downstream result decisions. It keeps `approval_requests_created=0`,
 `activation_actions_taken=0`, `external_mutations_taken=0`,
 `activation_allowed=false`, and `capability_enabled=false`; it does not apply
 the proposed effects.
+
+Apply accepted blocked downstream result decision effects as local records:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-apply \
+  --operator-id operator \
+  --selection-note "Apply accepted downstream proof-plan result effect proposals as local records only." \
+  --evidence-reference docs/capability-activation-followup-result-task-result-effect-proposals.md
+python3 -m agent_os.cli dashboard
+```
+
+The application command writes
+`docs/capability-activation-followup-result-task-result-effect-application.md`,
+records a local application row, and marks applicable proposed effects as
+`applied`. It keeps `approval_requests_created=0`,
+`activation_actions_taken=0`, `external_mutations_taken=0`,
+`activation_allowed=false`, and `capability_enabled=false`.
 
 ## When To Commit And Push
 
