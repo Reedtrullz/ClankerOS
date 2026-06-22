@@ -1,5 +1,6 @@
 import json
 import sqlite3
+import subprocess
 from pathlib import Path
 
 from agent_os.dashboard import generate_static_dashboard
@@ -191,6 +192,186 @@ def test_eval_command_records_first_milestone_result(tmp_path: Path) -> None:
     assert rows == [("first_milestone_closed_loop", "pass")]
 
 
+def test_register_project_records_git_repo_and_rejects_non_git_path(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    repo_path = tmp_path / "subject-repo"
+    repo_path.mkdir()
+    subprocess.run(["git", "init"], cwd=repo_path, check=True, capture_output=True)
+    non_git_path = tmp_path / "not-git"
+    non_git_path.mkdir()
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "register-project",
+                "subject",
+                "--path",
+                str(repo_path),
+                "--test-command",
+                "python3 -m pytest -q",
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "project_registered: subject" in output
+    assert f"root_path: {repo_path.resolve()}" in output
+    assert "default_test_command: python3 -m pytest -q" in output
+    assert f"allowed_write_roots: {repo_path.resolve()}" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    project = storage.get_registered_project("subject")
+    assert project.name == "subject"
+    assert project.root_path == str(repo_path.resolve())
+    assert project.default_test_command == "python3 -m pytest -q"
+    assert project.allowed_write_roots == [str(repo_path.resolve())]
+    assert project.created_at
+    assert project.updated_at
+
+    project_note = tmp_path / "projects" / "subject" / "project.md"
+    assert project_note.exists()
+    note = project_note.read_text(encoding="utf-8")
+    assert "# Project subject" in note
+    assert f"- root_path: {repo_path.resolve()}" in note
+    assert "- default_test_command: python3 -m pytest -q" in note
+    assert f"- allowed_write_roots: {repo_path.resolve()}" in note
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "register-project",
+                "broken",
+                "--path",
+                str(non_git_path),
+                "--test-command",
+                "true",
+            ]
+        )
+        == 1
+    )
+    rejected_output = capsys.readouterr().out
+    assert "project_registration_failed: path is not a git repository" in rejected_output
+    assert storage.get_registered_project("broken") is None
+
+
+def test_run_goal_with_worktree_isolation_captures_diff_and_proposes_commit_effect(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    repo_path = tmp_path / "subject-repo"
+    _init_git_repo(repo_path)
+    test_command = (
+        "python3 -c \"from pathlib import Path; "
+        "text = Path('agent_output.txt').read_text(); "
+        "assert text == 'hello\\\\n'; print(text)\""
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "register-project",
+                "subject",
+                "--path",
+                str(repo_path),
+                "--test-command",
+                test_command,
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    command = (
+        "python3 -c \"from pathlib import Path; "
+        "Path('agent_output.txt').write_text('hello\\\\n')\""
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-goal",
+                "write a marker file",
+                "--project",
+                "subject",
+                "--isolation",
+                "worktree",
+                "--command",
+                command,
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "coding_run: awaiting_approval" in output
+    assert "effect_type: local_git_commit" in output
+    assert "effect_status: awaiting_approval" in output
+    assert "approval_id: approval_" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    worktree = storage.list_recent_worktree_records()[0]
+    effect = storage.list_recent_effects()[0]
+    approval = storage.list_pending_approvals()[0]
+    task = storage.get_task(effect.task_id)
+
+    assert worktree.project_id == "subject"
+    assert worktree.run_id == effect.run_id
+    assert worktree.task_id == effect.task_id
+    assert worktree.base_commit
+    assert worktree.branch_name.startswith("clankeros/")
+    assert Path(worktree.worktree_path).exists()
+    assert not (repo_path / "agent_output.txt").exists()
+    assert (Path(worktree.worktree_path) / "agent_output.txt").read_text() == "hello\n"
+    head = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=worktree.worktree_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert head == worktree.base_commit
+
+    assert effect.capability == "local_coding_agent"
+    assert effect.effect_type == "local_git_commit"
+    assert effect.status == "awaiting_approval"
+    assert effect.required_approval_id == approval.id
+    assert effect.committed_at is None
+    assert "agent_output.txt" in effect.proposed_payload["changed_files"]
+    assert task.status == "waiting_approval"
+
+    evidence_dir = tmp_path / "runs" / effect.run_id / "evidence"
+    assert (evidence_dir / "summary.md").exists()
+    assert (evidence_dir / "worktree.json").exists()
+    assert (evidence_dir / "commands.jsonl").exists()
+    assert "agent_output.txt" in (evidence_dir / "diff.patch").read_text()
+    assert "agent_output.txt" in (evidence_dir / "diff_summary.md").read_text()
+    assert "hello" in (evidence_dir / "tests.txt").read_text()
+    verification = json.loads((evidence_dir / "verification.json").read_text())
+    assert verification["status"] == "passed"
+    assert verification["policy"]["allowed_write_roots"] is True
+    assert verification["tests"]["exit_code"] == 0
+    assert json.loads((evidence_dir / "effect.json").read_text())["id"] == effect.id
+    assert approval.id in (evidence_dir / "approval.md").read_text()
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Operator Cockpit" in dashboard
+    assert "### Approval Inbox" in dashboard
+    assert approval.id in dashboard
+    assert "### Proposed Effects" in dashboard
+    assert effect.id in dashboard
+    assert "local_git_commit" in dashboard
+    assert "### Verification Status" in dashboard
+    assert "worktree_command" in dashboard
+
+
 def test_static_dashboard_summarizes_runs_and_queue(tmp_path: Path) -> None:
     system = AgentSystem(tmp_path)
     result = system.run_goal(
@@ -212,6 +393,31 @@ def test_static_dashboard_summarizes_runs_and_queue(tmp_path: Path) -> None:
     assert "completed" in dashboard
     assert "## Recent Learnings" in dashboard
     assert "first closed loop" in dashboard
+
+
+def _init_git_repo(repo_path: Path) -> None:
+    repo_path.mkdir()
+    subprocess.run(["git", "init"], cwd=repo_path, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "config", "user.email", "clankeros@example.invalid"],
+        cwd=repo_path,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "ClankerOS Test"],
+        cwd=repo_path,
+        check=True,
+        capture_output=True,
+    )
+    (repo_path / "README.md").write_text("# Subject\n", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], cwd=repo_path, check=True)
+    subprocess.run(
+        ["git", "commit", "-m", "initial"],
+        cwd=repo_path,
+        check=True,
+        capture_output=True,
+    )
 
 
 def test_failed_verification_records_incident_and_dashboard_visibility(tmp_path: Path) -> None:

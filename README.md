@@ -2,10 +2,12 @@
 
 ClankerOS is a local-first harness for building a durable agentic operating
 system with explicit state, verification evidence, and approval boundaries.
-It starts with the closed loop:
+It starts with the closed loop and then adds a practical approval-gated coding
+vertical:
 
 ```text
 goal -> task graph -> execution -> verification -> memory -> visibility -> learning
+registered repo -> isolated worktree -> verified diff -> proposed effect -> approval
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -22,9 +24,27 @@ separate what is locally proven from what still needs approval.
 
 The repository currently contains a working Python CLI, SQLite storage layer,
 generated proof reports, dashboard output, evals, playbooks, and bootstrap
-project memory. External side effects remain out of scope unless a future
-approved flow explicitly models evidence, authorization, rollback, and
+project memory. It can also register local git repositories, run a constrained
+coding command inside an isolated git worktree, capture the resulting diff and
+test evidence, and record a pending `local_git_commit` effect for operator
+review. Creating the actual commit, pushing, opening PRs, deployments, and
+other external side effects remain approval-gated future steps unless an
+implemented flow explicitly models evidence, authorization, rollback, and
 verification.
+
+## Repository Metadata
+
+GitHub description:
+
+```text
+Local-first agent operating system harness with explicit state, evidence, and approval-gated coding workflows.
+```
+
+Suggested GitHub topics:
+
+```text
+agent-operating-system, agentic-ai, ai-agents, agent-os, local-first, coding-agents, automation, sqlite, approval-workflow, worktrees, verification, operator-dashboard, evals, markdown, python
+```
 
 ## Quick Start
 
@@ -41,9 +61,21 @@ Then read:
 - `docs/next-iteration.md` for the next local work packet.
 - `projects/bootstrap/handoff.md` for the current continuation edge.
 
+To try the approval-gated coding loop on a local git repo:
+
+```bash
+python3 -m agent_os.cli register-project my-repo --path /path/to/repo --test-command "python3 -m pytest -q"
+python3 -m agent_os.cli run-goal "Make a tiny verified change" --project my-repo --isolation worktree --command "python3 -c \"from pathlib import Path; Path('agent-output.txt').write_text('hello\\n')\""
+python3 -m agent_os.cli dashboard
+python3 -m agent_os.cli approvals
+```
+
+This creates a worktree and approval packet. It does not create a git commit.
+
 ## Tutorials And Suggested Use
 
 - [Run the first local loop](docs/tutorial-first-loop.md)
+- [Run an approval-gated coding task](docs/tutorial-approval-gated-coding.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
 - [Safety contract](contracts.md)
@@ -54,6 +86,12 @@ The repository can now:
 
 - initialize a SQLite-backed local control plane;
 - write a runtime capability matrix;
+- register local git repositories with default test commands and allowed write
+  roots;
+- create isolated git worktrees for constrained local coding runs;
+- capture command output, git status, patch diffs, test output, verification
+  JSON, and approval packets for proposed code changes;
+- record proposed `local_git_commit` effects without creating the commit;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -163,7 +201,8 @@ The repository can now:
 - generate a static dashboard with queue health, handoff reviews,
   eval-after-change checks, learning distillation, budget/trust posture,
   dispatch posture history, playbooks, eval candidates, approvals, stuck tasks,
-  incidents, recent runs, learnings, and evals;
+  incidents, an operator cockpit for active approvals/effects/worktrees,
+  recent runs, learnings, and evals;
 - run a first-milestone regression eval.
 
 ## Commands
@@ -171,6 +210,8 @@ The repository can now:
 ```bash
 python3 -m agent_os.cli init
 python3 -m agent_os.cli run-goal "Prove the first milestone closed loop" --project bootstrap
+python3 -m agent_os.cli register-project <name> --path /path/to/git/repo --test-command "python3 -m pytest -q"
+python3 -m agent_os.cli run-goal "Make a verified local change" --project <name> --isolation worktree --command "<safe local command>"
 python3 -m agent_os.cli approvals
 python3 -m agent_os.cli approve <approval_id> --decided-by operator --note "local approval"
 python3 -m agent_os.cli resolve-incident <incident_id> --resolved-by operator --note "local resolution note"
@@ -229,6 +270,8 @@ python3 -m pytest tests/test_first_milestone.py -q
 - `docs/OPERATING_SUMMARY.md`: compact architecture and first milestone summary.
 - `docs/runtime-capability-matrix.md`: detected runtime capabilities and dispositions.
 - `docs/tutorial-first-loop.md`: step-by-step local loop walkthrough.
+- `docs/tutorial-approval-gated-coding.md`: worktree-isolated coding run
+  walkthrough with evidence and approval review.
 - `docs/suggested-use.md`: operator guidance, prompts, and practical next slices.
 - `docs/next-iteration.md`: generated packet for the next implementation pass.
   Queue items may include `<!-- score=N complexity=N -->`; equal scores choose
@@ -355,8 +398,10 @@ python3 -m pytest tests/test_first_milestone.py -q
   generated report-only operator input template for the schema migration
   selection packet; it lists required fields while recording no operator input
   or selection.
-- `docs/dashboard.md`: generated operational view of queue health, approvals,
-  handoff reviews, eval-after-change checks, learning distillation,
+- `docs/dashboard.md`: generated operational view with an operator cockpit for
+  active runs, registered projects, approval inbox, proposed effects,
+  verification status, recent worktrees, queue health, approvals, handoff
+  reviews, eval-after-change checks, learning distillation,
   budget/trust posture, dispatch posture history, dispatch posture snapshot
   review, dispatch posture refresh recommendation, capability expansion
   ledger, capability readiness review, capability proof gap index, capability

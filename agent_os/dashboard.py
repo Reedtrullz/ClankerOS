@@ -180,7 +180,8 @@ def generate_static_dashboard(root: Path) -> Path:
         )
         return dashboard_path
 
-    Storage(db_path).initialize()
+    storage = Storage(db_path)
+    storage.initialize()
     with sqlite3.connect(db_path) as connection:
         connection.row_factory = sqlite3.Row
         task_statuses = Counter(
@@ -237,6 +238,15 @@ def generate_static_dashboard(root: Path) -> Path:
                 limit 5
                 """
             ).fetchall()
+        registered_projects = []
+        if _table_exists(connection, "registered_projects"):
+            registered_projects = storage.list_registered_projects()
+        worktrees = []
+        if _table_exists(connection, "worktree_records"):
+            worktrees = storage.list_recent_worktree_records(limit=5)
+        effects = []
+        if _table_exists(connection, "effects"):
+            effects = storage.list_recent_effects(limit=5)
         iterations = []
         if _table_exists(connection, "iteration_packets"):
             iterations = connection.execute(
@@ -250,287 +260,291 @@ def generate_static_dashboard(root: Path) -> Path:
                 limit 1
                 """
             ).fetchall()
-        queue_health_findings = Storage(db_path).list_queue_health_findings(
+        queue_health_findings = storage.list_queue_health_findings(
             blocked_threshold=DEFAULT_BLOCKED_THRESHOLD,
             failed_threshold=DEFAULT_FAILED_THRESHOLD,
         )
         playbooks = []
         if _table_exists(connection, "playbooks"):
-            playbooks = Storage(db_path).list_recent_playbooks(limit=5)
+            playbooks = storage.list_recent_playbooks(limit=5)
         eval_candidates = []
         if _table_exists(connection, "eval_candidates"):
-            eval_candidates = Storage(db_path).list_recent_eval_candidates(limit=5)
+            eval_candidates = storage.list_recent_eval_candidates(limit=5)
         handoff_reviews = []
         if _table_exists(connection, "handoff_reviews"):
-            handoff_reviews = Storage(db_path).list_recent_handoff_reviews(limit=1)
+            handoff_reviews = storage.list_recent_handoff_reviews(limit=1)
         eval_after_change_checks = []
         if _table_exists(connection, "eval_after_change_checks"):
-            eval_after_change_checks = Storage(db_path).list_recent_eval_after_change_checks(
+            eval_after_change_checks = storage.list_recent_eval_after_change_checks(
                 limit=5,
             )
         learning_distillations = []
         if _table_exists(connection, "learning_distillations"):
-            learning_distillations = Storage(db_path).list_recent_learning_distillations(
+            learning_distillations = storage.list_recent_learning_distillations(
                 limit=1,
             )
         budget_trust_reports = []
         if _table_exists(connection, "budget_trust_posture_reports"):
-            budget_trust_reports = Storage(db_path).list_recent_budget_trust_posture_reports(
+            budget_trust_reports = storage.list_recent_budget_trust_posture_reports(
                 limit=1,
             )
         dispatch_posture_history_summaries = []
         if _table_exists(connection, "dispatch_posture_history_summaries"):
             dispatch_posture_history_summaries = (
-                Storage(db_path).list_recent_dispatch_posture_history_summaries(
+                storage.list_recent_dispatch_posture_history_summaries(
                     limit=1,
                 )
             )
         dispatch_posture_staleness_reviews = []
         if _table_exists(connection, "dispatch_posture_staleness_reviews"):
             dispatch_posture_staleness_reviews = (
-                Storage(db_path).list_recent_dispatch_posture_staleness_reviews(
+                storage.list_recent_dispatch_posture_staleness_reviews(
                     limit=1,
                 )
             )
         dispatch_posture_refresh_recommendations = []
         if _table_exists(connection, "dispatch_posture_refresh_recommendations"):
             dispatch_posture_refresh_recommendations = (
-                Storage(db_path).list_recent_dispatch_posture_refresh_recommendations(
+                storage.list_recent_dispatch_posture_refresh_recommendations(
                     limit=1,
                 )
             )
         capability_expansion_ledgers = []
         if _table_exists(connection, "capability_expansion_ledgers"):
             capability_expansion_ledgers = (
-                Storage(db_path).list_recent_capability_expansion_ledgers(
+                storage.list_recent_capability_expansion_ledgers(
                     limit=1,
                 )
             )
         capability_readiness_reviews = []
         if _table_exists(connection, "capability_readiness_reviews"):
             capability_readiness_reviews = (
-                Storage(db_path).list_recent_capability_readiness_reviews(
+                storage.list_recent_capability_readiness_reviews(
                     limit=1,
                 )
             )
         capability_proof_gap_indexes = []
         if _table_exists(connection, "capability_proof_gap_indexes"):
             capability_proof_gap_indexes = (
-                Storage(db_path).list_recent_capability_proof_gap_indexes(
+                storage.list_recent_capability_proof_gap_indexes(
                     limit=1,
                 )
             )
         capability_approval_boundary_matrices = []
         if _table_exists(connection, "capability_approval_boundary_matrices"):
             capability_approval_boundary_matrices = (
-                Storage(db_path).list_recent_capability_approval_boundary_matrices(
+                storage.list_recent_capability_approval_boundary_matrices(
                     limit=1,
                 )
             )
         capability_evidence_collection_plans = []
         if _table_exists(connection, "capability_evidence_collection_plans"):
             capability_evidence_collection_plans = (
-                Storage(db_path).list_recent_capability_evidence_collection_plans(
+                storage.list_recent_capability_evidence_collection_plans(
                     limit=1,
                 )
             )
         capability_promotion_gate_checklists = []
         if _table_exists(connection, "capability_promotion_gate_checklists"):
             capability_promotion_gate_checklists = (
-                Storage(db_path).list_recent_capability_promotion_gate_checklists(
+                storage.list_recent_capability_promotion_gate_checklists(
                     limit=1,
                 )
             )
         capability_promotion_decision_ledgers = []
         if _table_exists(connection, "capability_promotion_decision_ledgers"):
             capability_promotion_decision_ledgers = (
-                Storage(db_path).list_recent_capability_promotion_decision_ledgers(
+                storage.list_recent_capability_promotion_decision_ledgers(
                     limit=1,
                 )
             )
         capability_trust_promotion_audits = []
         if _table_exists(connection, "capability_trust_promotion_audits"):
             capability_trust_promotion_audits = (
-                Storage(db_path).list_recent_capability_trust_promotion_audits(
+                storage.list_recent_capability_trust_promotion_audits(
                     limit=1,
                 )
             )
         capability_automatic_retry_audits = []
         if _table_exists(connection, "capability_automatic_retry_audits"):
             capability_automatic_retry_audits = (
-                Storage(db_path).list_recent_capability_automatic_retry_audits(
+                storage.list_recent_capability_automatic_retry_audits(
                     limit=1,
                 )
             )
         capability_real_cost_tracking_audits = []
         if _table_exists(connection, "capability_real_cost_tracking_audits"):
             capability_real_cost_tracking_audits = (
-                Storage(db_path).list_recent_capability_real_cost_tracking_audits(
+                storage.list_recent_capability_real_cost_tracking_audits(
                     limit=1,
                 )
             )
         hosted_dashboard_proof_checklists = []
         if _table_exists(connection, "hosted_dashboard_proof_checklists"):
             hosted_dashboard_proof_checklists = (
-                Storage(db_path).list_recent_hosted_dashboard_proof_checklists(
+                storage.list_recent_hosted_dashboard_proof_checklists(
                     limit=1,
                 )
             )
         remote_worker_proof_checklists = []
         if _table_exists(connection, "remote_worker_proof_checklists"):
             remote_worker_proof_checklists = (
-                Storage(db_path).list_recent_remote_worker_proof_checklists(
+                storage.list_recent_remote_worker_proof_checklists(
                     limit=1,
                 )
             )
         autonomous_scheduling_proof_checklists = []
         if _table_exists(connection, "autonomous_scheduling_proof_checklists"):
             autonomous_scheduling_proof_checklists = (
-                Storage(db_path).list_recent_autonomous_scheduling_proof_checklists(
+                storage.list_recent_autonomous_scheduling_proof_checklists(
                     limit=1,
                 )
             )
         browser_desktop_adapter_proof_checklists = []
         if _table_exists(connection, "browser_desktop_adapter_proof_checklists"):
             browser_desktop_adapter_proof_checklists = (
-                Storage(db_path).list_recent_browser_desktop_adapter_proof_checklists(
+                storage.list_recent_browser_desktop_adapter_proof_checklists(
                     limit=1,
                 )
             )
         ci_deploy_proof_checklists = []
         if _table_exists(connection, "ci_deploy_proof_checklists"):
             ci_deploy_proof_checklists = (
-                Storage(db_path).list_recent_ci_deploy_proof_checklists(
+                storage.list_recent_ci_deploy_proof_checklists(
                     limit=1,
                 )
             )
         budget_enforcement_proof_checklists = []
         if _table_exists(connection, "budget_enforcement_proof_checklists"):
             budget_enforcement_proof_checklists = (
-                Storage(db_path).list_recent_budget_enforcement_proof_checklists(
+                storage.list_recent_budget_enforcement_proof_checklists(
                     limit=1,
                 )
             )
         trust_promotion_proof_checklists = []
         if _table_exists(connection, "trust_promotion_proof_checklists"):
             trust_promotion_proof_checklists = (
-                Storage(db_path).list_recent_trust_promotion_proof_checklists(
+                storage.list_recent_trust_promotion_proof_checklists(
                     limit=1,
                 )
             )
         automatic_retry_proof_checklists = []
         if _table_exists(connection, "automatic_retry_proof_checklists"):
             automatic_retry_proof_checklists = (
-                Storage(db_path).list_recent_automatic_retry_proof_checklists(
+                storage.list_recent_automatic_retry_proof_checklists(
                     limit=1,
                 )
             )
         real_cost_tracking_proof_checklists = []
         if _table_exists(connection, "real_cost_tracking_proof_checklists"):
             real_cost_tracking_proof_checklists = (
-                Storage(db_path).list_recent_real_cost_tracking_proof_checklists(
+                storage.list_recent_real_cost_tracking_proof_checklists(
                     limit=1,
                 )
             )
         goal_completion_audits = []
         if _table_exists(connection, "goal_completion_audits"):
-            goal_completion_audits = Storage(
-                db_path
-            ).list_recent_goal_completion_audits(limit=1)
+            goal_completion_audits = storage.list_recent_goal_completion_audits(
+                limit=1
+            )
         expansion_decision_briefs = []
         if _table_exists(connection, "expansion_decision_briefs"):
-            expansion_decision_briefs = Storage(
-                db_path
-            ).list_recent_expansion_decision_briefs(limit=1)
+            expansion_decision_briefs = storage.list_recent_expansion_decision_briefs(
+                limit=1
+            )
         expansion_decision_evidence_indexes = []
         if _table_exists(connection, "expansion_decision_evidence_indexes"):
-            expansion_decision_evidence_indexes = Storage(
-                db_path
-            ).list_recent_expansion_decision_evidence_indexes(limit=1)
+            expansion_decision_evidence_indexes = (
+                storage.list_recent_expansion_decision_evidence_indexes(limit=1)
+            )
         expansion_operator_review_checklists = []
         if _table_exists(connection, "expansion_operator_review_checklists"):
-            expansion_operator_review_checklists = Storage(
-                db_path
-            ).list_recent_expansion_operator_review_checklists(limit=1)
+            expansion_operator_review_checklists = (
+                storage.list_recent_expansion_operator_review_checklists(limit=1)
+            )
         expansion_operator_decision_ledgers = []
         if _table_exists(connection, "expansion_operator_decision_ledgers"):
-            expansion_operator_decision_ledgers = Storage(
-                db_path
-            ).list_recent_expansion_operator_decision_ledgers(limit=1)
+            expansion_operator_decision_ledgers = (
+                storage.list_recent_expansion_operator_decision_ledgers(limit=1)
+            )
         expansion_operator_approval_drafts = []
         if _table_exists(connection, "expansion_operator_approval_drafts"):
-            expansion_operator_approval_drafts = Storage(
-                db_path
-            ).list_recent_expansion_operator_approval_drafts(limit=1)
+            expansion_operator_approval_drafts = (
+                storage.list_recent_expansion_operator_approval_drafts(limit=1)
+            )
         expansion_operator_approval_request_reviews = []
         if _table_exists(connection, "expansion_operator_approval_request_reviews"):
-            expansion_operator_approval_request_reviews = Storage(
-                db_path
-            ).list_recent_expansion_operator_approval_request_reviews(limit=1)
+            expansion_operator_approval_request_reviews = (
+                storage.list_recent_expansion_operator_approval_request_reviews(
+                    limit=1
+                )
+            )
         expansion_operator_approval_schema_decisions = []
         if _table_exists(connection, "expansion_operator_approval_schema_decisions"):
-            expansion_operator_approval_schema_decisions = Storage(
-                db_path
-            ).list_recent_expansion_operator_approval_schema_decisions(limit=1)
+            expansion_operator_approval_schema_decisions = (
+                storage.list_recent_expansion_operator_approval_schema_decisions(
+                    limit=1
+                )
+            )
         expansion_operator_approval_schema_migration_plans = []
         if _table_exists(
             connection,
             "expansion_operator_approval_schema_migration_plans",
         ):
-            expansion_operator_approval_schema_migration_plans = Storage(
-                db_path
-            ).list_recent_expansion_operator_approval_schema_migration_plans(
+            expansion_operator_approval_schema_migration_plans = (
+                storage.list_recent_expansion_operator_approval_schema_migration_plans(
                 limit=1,
+            )
             )
         expansion_operator_approval_schema_migration_approval_requests = []
         if _table_exists(
             connection,
             "expansion_operator_approval_schema_migration_approval_requests",
         ):
-            expansion_operator_approval_schema_migration_approval_requests = Storage(
-                db_path
-            ).list_recent_expansion_operator_approval_schema_migration_approval_requests(
+            expansion_operator_approval_schema_migration_approval_requests = (
+                storage.list_recent_expansion_operator_approval_schema_migration_approval_requests(
                 limit=1,
+            )
             )
         expansion_operator_approval_schema_migration_decision_ledgers = []
         if _table_exists(
             connection,
             "expansion_operator_approval_schema_migration_decision_ledgers",
         ):
-            expansion_operator_approval_schema_migration_decision_ledgers = Storage(
-                db_path
-            ).list_recent_expansion_operator_approval_schema_migration_decision_ledgers(
+            expansion_operator_approval_schema_migration_decision_ledgers = (
+                storage.list_recent_expansion_operator_approval_schema_migration_decision_ledgers(
                 limit=1,
+            )
             )
         expansion_operator_approval_schema_migration_action_checklists = []
         if _table_exists(
             connection,
             "expansion_operator_approval_schema_migration_action_checklists",
         ):
-            expansion_operator_approval_schema_migration_action_checklists = Storage(
-                db_path
-            ).list_recent_expansion_operator_approval_schema_migration_action_checklists(
+            expansion_operator_approval_schema_migration_action_checklists = (
+                storage.list_recent_expansion_operator_approval_schema_migration_action_checklists(
                 limit=1,
+            )
             )
         expansion_operator_approval_schema_migration_selection_packets = []
         if _table_exists(
             connection,
             "expansion_operator_approval_schema_migration_selection_packets",
         ):
-            expansion_operator_approval_schema_migration_selection_packets = Storage(
-                db_path
-            ).list_recent_expansion_operator_approval_schema_migration_selection_packets(
+            expansion_operator_approval_schema_migration_selection_packets = (
+                storage.list_recent_expansion_operator_approval_schema_migration_selection_packets(
                 limit=1,
+            )
             )
         expansion_operator_approval_schema_migration_selection_input_templates = []
         if _table_exists(
             connection,
             "expansion_operator_approval_schema_migration_selection_input_templates",
         ):
-            expansion_operator_approval_schema_migration_selection_input_templates = Storage(
-                db_path
-            ).list_recent_expansion_operator_approval_schema_migration_selection_input_templates(
+            expansion_operator_approval_schema_migration_selection_input_templates = (
+                storage.list_recent_expansion_operator_approval_schema_migration_selection_input_templates(
                 limit=1,
+            )
             )
 
     statuses = [
@@ -741,13 +755,138 @@ def generate_static_dashboard(root: Path) -> Path:
         incident for incident in incidents if incident["incident_type"] == "task_stuck"
     ]
     stuck_statuses = Counter(incident["status"] for incident in stuck_incidents)
+    active_runs = [
+        run
+        for run in runs
+        if run["status"] in {"accepted", "running", "waiting_approval"}
+    ]
+    pending_approvals = [
+        approval for approval in approvals if approval["status"] == "pending"
+    ]
+    open_incidents = [incident for incident in incidents if incident["status"] == "open"]
 
     lines = [
         "# Agent System Dashboard",
         "",
-        "## Queue Health",
+        "## Operator Cockpit",
+        "",
+        "### Active Goals/Runs",
         "",
     ]
+    if active_runs:
+        for run in active_runs:
+            lines.append(
+                f"- {run['id']}: {run['status']} project={run['project_id']} "
+                f"goal={run['goal_id']} summary={_relative_to_root(root, run['summary_path'])}"
+            )
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "### Registered Projects", ""])
+    if registered_projects:
+        for project in registered_projects:
+            allowed_roots = ",".join(project.allowed_write_roots)
+            lines.append(
+                f"- {project.name}: root={project.root_path} "
+                f"test={project.default_test_command} allowed_write_roots={allowed_roots}"
+            )
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "### Approval Inbox", ""])
+    if pending_approvals:
+        for approval in pending_approvals:
+            lines.append(
+                f"- {approval['id']}: task={approval['task_id']} "
+                f"run={approval['run_id']} project={approval['project_id']} "
+                f"type={approval['task_type']} risk={approval['risk_level']} "
+                f"reason={approval['reason']}"
+            )
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "### Proposed Effects", ""])
+    if effects:
+        for effect in effects:
+            lines.append(
+                f"- {effect.id}: {effect.effect_type} status={effect.status} "
+                f"approval={effect.required_approval_id or 'none'} "
+                f"project={effect.project_id} target={_relative_to_root(root, effect.target)} "
+                f"evidence={_relative_to_root(root, effect.evidence_path)}"
+            )
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "### Recent Commits/Effects", ""])
+    if effects:
+        for effect in effects:
+            committed_at = effect.committed_at or "not_committed"
+            lines.append(
+                f"- {effect.id}: {effect.effect_type} status={effect.status} "
+                f"committed_at={committed_at}"
+            )
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "### Incidents", ""])
+    if open_incidents:
+        for incident in open_incidents:
+            lines.append(
+                f"- {incident['id']}: {incident['severity']} "
+                f"type={incident['incident_type']} task={incident['task_id']} "
+                f"evidence={_relative_to_root(root, incident['evidence_path'])}"
+            )
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "### Verification Status", ""])
+    if effects:
+        for effect in effects:
+            verification = _effect_verification_status(root, storage, effect)
+            lines.append(
+                f"- {effect.id}: {verification['status']} "
+                f"method={verification['method']} "
+                f"command_exit={verification['command_exit_code']} "
+                f"tests_exit={verification['tests_exit_code']} "
+                f"evidence={verification['path']}"
+            )
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "### Recent Worktrees", ""])
+    if worktrees:
+        for worktree in worktrees:
+            lines.append(
+                f"- {worktree.id}: project={worktree.project_id} "
+                f"run={worktree.run_id} branch={worktree.branch_name} "
+                f"base={worktree.base_commit} path={_relative_to_root(root, worktree.worktree_path)}"
+            )
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "### Next Recommended Action", ""])
+    if pending_approvals:
+        approval = pending_approvals[0]
+        lines.append(
+            f"- Review approval `{approval['id']}` and its run evidence before "
+            "deciding with `python3 -m agent_os.cli approve <approval_id> "
+            "--decided-by operator --note \"...\"`."
+        )
+        lines.append(
+            "- Note: applying the proposed local git commit is not enabled in this slice."
+        )
+    elif effects:
+        lines.append("- Review recent proposed effects and regenerate the dashboard after decisions.")
+    else:
+        lines.append("- Run `python3 -m agent_os.cli iterate` for the next local work packet.")
+
+    lines.extend(
+        [
+            "",
+            "## Queue Health",
+            "",
+        ]
+    )
     for status in statuses:
         lines.append(f"- {status}: {task_statuses[status]}")
     lines.extend(
@@ -2161,6 +2300,42 @@ def generate_static_dashboard(root: Path) -> Path:
     lines.append("")
     dashboard_path.write_text("\n".join(lines), encoding="utf-8")
     return dashboard_path
+
+
+def _effect_verification_status(
+    root: Path,
+    storage: Storage,
+    effect,
+) -> dict[str, str]:
+    method = "unknown"
+    try:
+        task = storage.get_task(effect.task_id)
+    except KeyError:
+        task = None
+    if task is not None:
+        method = str(task.verification_plan.get("type", "unknown"))
+
+    verification_path = Path(effect.evidence_path).with_name("verification.json")
+    status = "missing"
+    command_exit_code = "unknown"
+    tests_exit_code = "unknown"
+    if verification_path.exists():
+        verification = json.loads(verification_path.read_text(encoding="utf-8"))
+        status = str(verification.get("status", "unknown"))
+        command_exit_code = str(
+            verification.get("command", {}).get("exit_code", "unknown")
+        )
+        tests_exit_code = str(
+            verification.get("tests", {}).get("exit_code", "unknown")
+        )
+
+    return {
+        "status": status,
+        "method": method,
+        "command_exit_code": command_exit_code,
+        "tests_exit_code": tests_exit_code,
+        "path": _relative_to_root(root, str(verification_path)),
+    }
 
 
 def _table_exists(connection: sqlite3.Connection, table_name: str) -> bool:

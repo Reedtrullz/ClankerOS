@@ -94,6 +94,49 @@ class ApprovalRequest:
 
 
 @dataclass(frozen=True)
+class RegisteredProject:
+    name: str
+    root_path: str
+    default_test_command: str
+    allowed_write_roots: list[str]
+    created_at: str
+    updated_at: str
+
+
+@dataclass(frozen=True)
+class WorktreeRecord:
+    id: str
+    project_id: str
+    task_id: str
+    run_id: str
+    base_commit: str
+    branch_name: str
+    worktree_path: str
+    created_at: str
+
+
+@dataclass(frozen=True)
+class Effect:
+    id: str
+    run_id: str
+    task_id: str
+    project_id: str
+    capability: str
+    effect_type: str
+    idempotency_key: str
+    target: str
+    proposed_payload: dict[str, Any]
+    status: str
+    required_approval_id: str | None
+    attempted_at: str | None
+    committed_at: str | None
+    evidence_path: str
+    compensation_plan: dict[str, Any]
+    created_at: str
+    updated_at: str
+
+
+@dataclass(frozen=True)
 class IterationPacket:
     id: str
     focus: str
@@ -1268,6 +1311,47 @@ class Storage:
                     decision_note text,
                     requested_at text not null,
                     decided_at text
+                );
+
+                create table if not exists registered_projects (
+                    name text primary key,
+                    root_path text not null,
+                    default_test_command text not null,
+                    allowed_write_roots text not null,
+                    created_at text not null,
+                    updated_at text not null
+                );
+
+                create table if not exists worktree_records (
+                    id text primary key,
+                    project_id text not null,
+                    task_id text not null,
+                    run_id text not null,
+                    base_commit text not null,
+                    branch_name text not null,
+                    worktree_path text not null,
+                    created_at text not null
+                );
+
+                create table if not exists effects (
+                    id text primary key,
+                    run_id text not null,
+                    task_id text not null,
+                    project_id text not null,
+                    capability text not null,
+                    effect_type text not null,
+                    idempotency_key text not null,
+                    target text not null,
+                    proposed_payload_json text not null,
+                    status text not null,
+                    required_approval_id text,
+                    attempted_at text,
+                    committed_at text,
+                    evidence_path text not null,
+                    compensation_plan_json text not null,
+                    created_at text not null,
+                    updated_at text not null,
+                    unique(idempotency_key)
                 );
 
                 create table if not exists iteration_packets (
@@ -7291,6 +7375,245 @@ class Storage:
                 raise KeyError(approval_id)
             return self._row_to_approval_request(updated)
 
+    def upsert_registered_project(
+        self,
+        *,
+        name: str,
+        root_path: str,
+        default_test_command: str,
+        allowed_write_roots: list[str],
+    ) -> RegisteredProject:
+        now = utc_now()
+        existing = self.get_registered_project(name)
+        created_at = existing.created_at if existing else now
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into registered_projects (
+                    name, root_path, default_test_command, allowed_write_roots,
+                    created_at, updated_at
+                )
+                values (?, ?, ?, ?, ?, ?)
+                on conflict(name) do update set
+                    root_path = excluded.root_path,
+                    default_test_command = excluded.default_test_command,
+                    allowed_write_roots = excluded.allowed_write_roots,
+                    updated_at = excluded.updated_at
+                """,
+                (
+                    name,
+                    root_path,
+                    default_test_command,
+                    _json_dumps(allowed_write_roots),
+                    created_at,
+                    now,
+                ),
+            )
+        return RegisteredProject(
+            name=name,
+            root_path=root_path,
+            default_test_command=default_test_command,
+            allowed_write_roots=allowed_write_roots,
+            created_at=created_at,
+            updated_at=now,
+        )
+
+    def get_registered_project(self, name: str) -> RegisteredProject | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                "select * from registered_projects where name = ?",
+                (name,),
+            ).fetchone()
+        return self._row_to_registered_project(row) if row is not None else None
+
+    def list_registered_projects(self) -> list[RegisteredProject]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from registered_projects
+                order by name asc
+                """
+            ).fetchall()
+        return [self._row_to_registered_project(row) for row in rows]
+
+    def record_worktree(
+        self,
+        *,
+        project_id: str,
+        task_id: str,
+        run_id: str,
+        base_commit: str,
+        branch_name: str,
+        worktree_path: str,
+    ) -> WorktreeRecord:
+        worktree_id = new_id("worktree")
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into worktree_records (
+                    id, project_id, task_id, run_id, base_commit,
+                    branch_name, worktree_path, created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    worktree_id,
+                    project_id,
+                    task_id,
+                    run_id,
+                    base_commit,
+                    branch_name,
+                    worktree_path,
+                    created_at,
+                ),
+            )
+        return WorktreeRecord(
+            id=worktree_id,
+            project_id=project_id,
+            task_id=task_id,
+            run_id=run_id,
+            base_commit=base_commit,
+            branch_name=branch_name,
+            worktree_path=worktree_path,
+            created_at=created_at,
+        )
+
+    def list_recent_worktree_records(self, limit: int = 5) -> list[WorktreeRecord]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from worktree_records
+                order by created_at desc, id desc
+                limit ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [self._row_to_worktree_record(row) for row in rows]
+
+    def create_pending_approval_request_for_task(
+        self,
+        task_id: str,
+        *,
+        reason: str,
+    ) -> ApprovalRequest:
+        now = utc_now()
+        with self._connect() as connection:
+            row = connection.execute(
+                "select * from tasks where id = ?",
+                (task_id,),
+            ).fetchone()
+            if row is None:
+                raise KeyError(task_id)
+            task = self._row_to_task(row)
+            approval_id = self._ensure_pending_approval_request(connection, task)
+            connection.execute(
+                """
+                update approval_requests
+                set reason = ?
+                where id = ? and status = 'pending'
+                """,
+                (reason, approval_id),
+            )
+            connection.execute(
+                """
+                update tasks
+                set status = ?, updated_at = ?
+                where id = ?
+                """,
+                (APPROVAL_WAITING_STATUS, now, task_id),
+            )
+            approval_row = connection.execute(
+                "select * from approval_requests where id = ?",
+                (approval_id,),
+            ).fetchone()
+            if approval_row is None:
+                raise KeyError(approval_id)
+            return self._row_to_approval_request(approval_row)
+
+    def record_effect(
+        self,
+        *,
+        run_id: str,
+        task_id: str,
+        project_id: str,
+        capability: str,
+        effect_type: str,
+        idempotency_key: str,
+        target: str,
+        proposed_payload: dict[str, Any],
+        status: str,
+        required_approval_id: str | None,
+        attempted_at: str | None,
+        committed_at: str | None,
+        evidence_path: str,
+        compensation_plan: dict[str, Any],
+    ) -> Effect:
+        effect_id = new_id("effect")
+        now = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into effects (
+                    id, run_id, task_id, project_id, capability, effect_type,
+                    idempotency_key, target, proposed_payload_json, status,
+                    required_approval_id, attempted_at, committed_at,
+                    evidence_path, compensation_plan_json, created_at, updated_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    effect_id,
+                    run_id,
+                    task_id,
+                    project_id,
+                    capability,
+                    effect_type,
+                    idempotency_key,
+                    target,
+                    _json_dumps(proposed_payload),
+                    status,
+                    required_approval_id,
+                    attempted_at,
+                    committed_at,
+                    evidence_path,
+                    _json_dumps(compensation_plan),
+                    now,
+                    now,
+                ),
+            )
+        return Effect(
+            id=effect_id,
+            run_id=run_id,
+            task_id=task_id,
+            project_id=project_id,
+            capability=capability,
+            effect_type=effect_type,
+            idempotency_key=idempotency_key,
+            target=target,
+            proposed_payload=proposed_payload,
+            status=status,
+            required_approval_id=required_approval_id,
+            attempted_at=attempted_at,
+            committed_at=committed_at,
+            evidence_path=evidence_path,
+            compensation_plan=compensation_plan,
+            created_at=now,
+            updated_at=now,
+        )
+
+    def list_recent_effects(self, limit: int = 5) -> list[Effect]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from effects
+                order by created_at desc, id desc
+                limit ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [self._row_to_effect(row) for row in rows]
+
     def list_stale_active_tasks(
         self,
         *,
@@ -7602,6 +7925,49 @@ class Storage:
             decision_note=row["decision_note"],
             requested_at=row["requested_at"],
             decided_at=row["decided_at"],
+        )
+
+    def _row_to_registered_project(self, row: sqlite3.Row) -> RegisteredProject:
+        return RegisteredProject(
+            name=row["name"],
+            root_path=row["root_path"],
+            default_test_command=row["default_test_command"],
+            allowed_write_roots=_json_loads(row["allowed_write_roots"], []),
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+        )
+
+    def _row_to_worktree_record(self, row: sqlite3.Row) -> WorktreeRecord:
+        return WorktreeRecord(
+            id=row["id"],
+            project_id=row["project_id"],
+            task_id=row["task_id"],
+            run_id=row["run_id"],
+            base_commit=row["base_commit"],
+            branch_name=row["branch_name"],
+            worktree_path=row["worktree_path"],
+            created_at=row["created_at"],
+        )
+
+    def _row_to_effect(self, row: sqlite3.Row) -> Effect:
+        return Effect(
+            id=row["id"],
+            run_id=row["run_id"],
+            task_id=row["task_id"],
+            project_id=row["project_id"],
+            capability=row["capability"],
+            effect_type=row["effect_type"],
+            idempotency_key=row["idempotency_key"],
+            target=row["target"],
+            proposed_payload=_json_loads(row["proposed_payload_json"], {}),
+            status=row["status"],
+            required_approval_id=row["required_approval_id"],
+            attempted_at=row["attempted_at"],
+            committed_at=row["committed_at"],
+            evidence_path=row["evidence_path"],
+            compensation_plan=_json_loads(row["compensation_plan_json"], {}),
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
         )
 
     def _row_to_iteration_packet(self, row: sqlite3.Row) -> IterationPacket:

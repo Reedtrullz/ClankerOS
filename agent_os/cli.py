@@ -168,6 +168,7 @@ from agent_os.capability_readiness import (
     write_capability_readiness_review,
 )
 from agent_os.dashboard import generate_static_dashboard
+from agent_os.coding_workflow import run_worktree_coding_goal
 from agent_os.dispatch_posture_history import (
     render_dispatch_posture_history_line,
     write_dispatch_posture_history_report,
@@ -200,6 +201,7 @@ from agent_os.playbooks import (
     promote_successful_run_playbooks,
     render_playbook_line,
 )
+from agent_os.project_registry import register_project
 from agent_os.queue_health import render_queue_health_finding, write_queue_health_report
 from agent_os.runtime import detect_runtime_capabilities, write_runtime_capability_matrix
 
@@ -227,6 +229,14 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("iterate", help="Write the next iteration packet from repo queues.")
     subparsers.add_parser("approvals", help="List pending approval requests.")
     subparsers.add_parser("handoff-review", help="Review blocked tasks and stale handoffs.")
+    register_project_parser = subparsers.add_parser(
+        "register-project",
+        help="Register a local git repository for isolated coding-agent work.",
+    )
+    register_project_parser.add_argument("name")
+    register_project_parser.add_argument("--path", required=True)
+    register_project_parser.add_argument("--test-command", required=True)
+    register_project_parser.add_argument("--allowed-write-root", action="append", default=[])
     subparsers.add_parser(
         "budget-trust-posture",
         help="Report local budget/trust posture metadata without enforcement.",
@@ -434,6 +444,8 @@ def build_parser() -> argparse.ArgumentParser:
     run_goal = subparsers.add_parser("run-goal", help="Run a goal through the local loop.")
     run_goal.add_argument("description")
     run_goal.add_argument("--project", default="bootstrap")
+    run_goal.add_argument("--isolation", choices=["none", "worktree"], default="none")
+    run_goal.add_argument("--command", dest="exec_command")
 
     eval_parser = subparsers.add_parser("eval", help="Run evals.")
     eval_parser.add_argument("--name", default="first_milestone_closed_loop")
@@ -499,6 +511,29 @@ def main(argv: list[str] | None = None) -> int:
         print(f"stale_handoffs: {review.stale_handoff_count}")
         for handoff in review.stale_handoffs:
             print(render_stale_handoff_line(handoff).removeprefix("- "))
+        return 0
+
+    if args.command == "register-project":
+        AgentSystem(root).initialize()
+        try:
+            project = register_project(
+                root,
+                name=args.name,
+                repo_path=Path(args.path),
+                default_test_command=args.test_command,
+                allowed_write_roots=[
+                    Path(path) for path in args.allowed_write_root
+                ]
+                or None,
+            )
+        except ValueError as error:
+            print(f"project_registration_failed: {error}")
+            return 1
+        print(f"project_registered: {project.name}")
+        print(f"root_path: {project.root_path}")
+        print(f"default_test_command: {project.default_test_command}")
+        print(f"allowed_write_roots: {','.join(project.allowed_write_roots)}")
+        print(f"project_note: projects/{project.name}/project.md")
         return 0
 
     if args.command == "budget-trust-posture":
@@ -1723,6 +1758,33 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "run-goal":
+        if args.isolation == "worktree":
+            if not args.exec_command:
+                print("coding_run_failed: --command is required for worktree isolation")
+                return 1
+            try:
+                result = run_worktree_coding_goal(
+                    root,
+                    project_name=args.project,
+                    description=args.description,
+                    command=args.exec_command,
+                )
+            except ValueError as error:
+                print(f"coding_run_failed: {error}")
+                return 1
+            print(f"coding_run: {result.status}")
+            print(f"goal_id: {result.goal_id}")
+            print(f"run_id: {result.run_id}")
+            print(f"task_id: {result.task_id}")
+            print(f"worktree: {result.worktree.worktree_path}")
+            print(f"branch: {result.worktree.branch_name}")
+            print(f"base_commit: {result.worktree.base_commit}")
+            print(f"effect_id: {result.effect.id}")
+            print(f"effect_type: {result.effect.effect_type}")
+            print(f"effect_status: {result.effect.status}")
+            print(f"approval_id: {result.approval_id}")
+            print(f"evidence: {result.evidence_dir}")
+            return 0 if result.status == "awaiting_approval" else 1
         result = AgentSystem(root).run_goal(args.project, args.description)
         print(f"status: {result.status}")
         print(f"goal_id: {result.goal_id}")

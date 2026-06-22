@@ -3030,3 +3030,42 @@ is report-only, external decisions remain, or approvals are missing.
   `eval_after_change_bd85fa596ed7` passed with run `run_21b6a386585b`;
   baseline eval passed with run `run_60c83a6cdc32`; `playbooks` reports
   `successful_runs=162`.
+
+## Run run_547845d76cbe
+
+- Goal ID: goal_208e991d7f07
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_547845d76cbe/summary.md
+
+## Run run_f53498dc62ff
+
+- Goal ID: goal_7c9bfb8a0f96
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_f53498dc62ff/summary.md
+
+## 2026-06-22 Approval-Gated Worktree Coding Vertical
+
+- ClankerOS now registers local git repositories for coding-agent work through
+  `register-project`, storing resolved git root, default test command, allowed
+  write roots, and a project note.
+- `run-goal --isolation worktree --command ...` now creates an isolated git
+  worktree, runs the constrained command, captures command/test/diff evidence,
+  and records a proposed `local_git_commit` effect that waits for approval.
+- `docs/dashboard.md` now starts with `## Operator Cockpit`, including active
+  runs, registered projects, approval inbox, proposed effects, verification
+  status, recent worktrees, incidents, and next recommended action.
+- Tutorial docs now cover the new path:
+  `docs/tutorial-approval-gated-coding.md` and `docs/suggested-use.md`.
+- Latest iteration packet:
+  `iteration_cec0a2777ee8` in `docs/next-iteration.md`.
+- Next selected focus:
+  `Add approval-gated commit-approved command for verified local_git_commit effects.`
+- Eval-after-change:
+  `eval_after_change_55b5d28285b1`, run `run_f53498dc62ff`, status `pass`.
+- Verification evidence:
+  focused registry/worktree tests -> 2 passed, 191 deselected; full
+  `python3 -m pytest -q` -> 193 passed; baseline eval -> pass; playbooks ->
+  `successful_runs=164`; handoff-review -> clear.
+- Non-claims: no local commit is created by the proposed-effect flow yet, no
+  push or PR is opened, no CI/deploy proof is created, no worktree cleanup
+  flow exists yet, and no external system is mutated.

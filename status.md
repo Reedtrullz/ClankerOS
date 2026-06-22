@@ -4965,3 +4965,56 @@
   table was created, no `operator_approval_requests` rows were created, no
   `approval_requests` rows were created, no routing changed, no CI/deploy
   proof exists from this local pass, and no external system was mutated.
+
+## 2026-06-22 Approval-Gated Worktree Coding Vertical
+
+- Added durable local project registration:
+  `python3 -m agent_os.cli register-project <name> --path <repo> --test-command "<command>"`.
+- Added worktree-isolated coding runs through
+  `python3 -m agent_os.cli run-goal "<goal>" --project <name> --isolation worktree --command "<safe local command>"`.
+- Worktree runs now capture command output, git status, patch diff, tests,
+  `verification.json`, `effect.json`, `approval.md`, and `summary.md`.
+- Proposed code changes are recorded as `local_git_commit` effects in SQLite
+  with status `awaiting_approval` when command, diff, tests, and write-root
+  policy pass.
+- Added `## Operator Cockpit` to `docs/dashboard.md` with active runs,
+  registered projects, approval inbox, proposed effects, verification status,
+  recent worktrees, incidents, and next recommended action.
+- Added tutorial and suggested-use documentation for the approval-gated coding
+  loop:
+  `docs/tutorial-approval-gated-coding.md` and `docs/suggested-use.md`.
+- Updated README About, repository metadata guidance, quick-start commands,
+  capability list, and key files for the new coding flow.
+- Updated GitHub repository About metadata for
+  `https://github.com/Reedtrullz/ClankerOS`: description set to
+  `Local-first agent operating system harness with explicit state, evidence, and approval-gated coding workflows.`
+  and topics confirmed through `gh repo view`.
+- Latest iteration packet:
+  `iteration_cec0a2777ee8` in `docs/next-iteration.md`.
+- Next selected focus:
+  `Add approval-gated commit-approved command for verified local_git_commit effects.`
+- Eval-after-change:
+  `eval_after_change_55b5d28285b1`, run `run_f53498dc62ff`, status `pass`.
+- Playbooks: `first-milestone-closed-loop` active with
+  `successful_runs=164`.
+- Verification evidence:
+  - Red-first focused worktree/dashboard test failed on missing
+    `## Operator Cockpit` before implementation.
+  - `python3 -m py_compile agent_os/coding_workflow.py agent_os/project_registry.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "register_project or worktree_isolation"` -> 2 passed, 191 deselected.
+  - `python3 -m pytest -q` -> 193 passed.
+  - `python3 -m agent_os.cli init` -> initialized and wrote runtime capability matrix.
+  - `python3 -m agent_os.cli iterate` -> selected the `commit-approved`
+    focus from `tasks.md#next`.
+  - `python3 -m agent_os.cli dashboard` -> wrote `docs/dashboard.md`.
+  - `python3 -m agent_os.cli approvals` -> `pending_approvals: 0`.
+  - `python3 -m agent_os.cli queue-health` -> `hotspots: 0`.
+  - `python3 -m agent_os.cli handoff-review` -> `status: clear`,
+    `blocked_tasks: 0`, `stale_handoffs: 0`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`.
+  - `python3 -m agent_os.cli eval-after-change --change "Add approval-gated worktree coding cockpit and tutorial docs" ...` -> pass.
+  - `python3 -m agent_os.cli playbooks` -> `successful_runs=164`.
+- Non-claims: this slice does not create local git commits, push branches,
+  open PRs, run CI, deploy, clean worktrees, start remote workers, schedule
+  autonomous work, operate browser or desktop adapters, enforce budgets,
+  promote trust, retry work, track real spend, or mutate external systems.

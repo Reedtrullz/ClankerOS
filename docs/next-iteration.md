@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_4e9ed1c65b48
+- Packet ID: iteration_cec0a2777ee8
 - Status: planned
-- Source: tasks.md#fallback
+- Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Review current evidence and add the next actionable queue item.
+Advance the Agent System north-star goal by completing: Add approval-gated `commit-approved` command for verified `local_git_commit` effects.
 
 ## Definition Of Done
 
@@ -68,9 +68,9 @@ Advance the Agent System north-star goal by completing: Review current evidence 
 ## Simplicity Guardrail
 
 - selection_policy: highest-score-then-lowest-complexity
-- selection_reason: selected fallback because no actionable queue items were found
-- selected_score: 0
-- selected_complexity: 0
+- selection_reason: selected highest score 10; complexity 4 recorded for audit
+- selected_score: 10
+- selected_complexity: 4
 
 ## Guardrails And Non-Claims
 

@@ -1330,35 +1330,17 @@ work, or changing routing.
 
 ## Next Actions
 
-1. Use `docs/next-iteration.md` fallback packet `iteration_8be27adad031`
-   to complete: Review current evidence and add the next actionable queue item.
-2. Treat `docs/expansion-decision-brief.md` as the current operator decision
-   packet and `docs/expansion-decision-evidence-index.md` as the current
-   evidence map. Treat `docs/expansion-operator-review-checklist.md` as the
-   current manual review checklist and
-   `docs/expansion-operator-decision-ledger.md` as the current pending/manual
-   decision ledger. Treat `docs/expansion-operator-approval-draft.md` as the
-   current draft-only approval packet and
-   `docs/expansion-operator-approval-request-review.md` as the current schema
-   blocker. Treat `docs/expansion-operator-approval-schema-decision.md` as the
-   current schema recommendation and
-   `docs/expansion-operator-approval-schema-migration-plan.md` as the current
-   migration plan. Treat
-   `docs/expansion-operator-approval-schema-migration-approval-request.md` as
-   the current approval packet and
-   `docs/expansion-operator-approval-schema-migration-decision-ledger.md` as
-   the current pending/manual operator-action ledger and
-   `docs/expansion-operator-approval-schema-migration-action-checklist.md` as
-   the current action-selection checklist and
-   `docs/expansion-operator-approval-schema-migration-selection-packet.md` as
-   the current operator-input packet and
-   `docs/expansion-operator-approval-schema-migration-selection-input-template.md`
-   as the current required-input template before any hosted dashboard, remote
-   worker, scheduler, adapter, CI/deploy, budget, trust, retry, real-spend
-   capability, operator input, operator selection, or schema migration is
-   promoted.
-3. Treat
-   `operator_approval_schema_migration_operator_input_required` as the next
-   approval boundary; keep the next slice metadata/report-only until explicit
-   operator input justifies recording a selection, applying migrations,
-   creating approval rows, or changing routing.
+1. Use `docs/next-iteration.md` packet `iteration_cec0a2777ee8` to complete:
+   Add approval-gated `commit-approved` command for verified `local_git_commit` effects.
+2. Implement `commit-approved` as the next executable local coding-agent
+   control-plane slice: re-check the approved effect, verify the worktree
+   still matches the captured base commit and evidence, create exactly one
+   local git commit, update the effect to committed, and preserve rollback or
+   compensation notes.
+3. Keep GitHub push/PR handoff, CI/deploy proof, worktree cleanup, hosted
+   dashboard, remote workers, scheduler, browser/desktop adapters, budget
+   enforcement, trust promotion, retries, and real-cost tracking blocked until
+   their own evidence and approval contracts exist.
+4. Preserve the schema-migration report chain as historical evidence, but do
+   not continue report-only schema packets before the local commit approval
+   path can execute safely.

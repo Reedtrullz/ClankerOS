@@ -18,6 +18,15 @@ Core layers for the bootstrap:
   local task types, and records lifecycle events.
 - Approval gate: runnable risky or unknown tasks move to `waiting_approval`
   with a persisted `approval_requests` record before any worker claim.
+- Project registry: local git repositories can be registered with a resolved
+  git root, default test command, and allowed write roots before coding-agent
+  runs target them.
+- Worktree coding loop: a high-risk coding goal can run a constrained command
+  inside an isolated git worktree, capture command/test/diff evidence, and
+  record a proposed `local_git_commit` effect that waits for operator approval.
+- Operator cockpit: the dashboard starts with active runs, registered projects,
+  approval inbox, proposed effects, verification status, recent worktrees, and
+  the next recommended operator action.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON
@@ -254,8 +263,9 @@ Core layers for the bootstrap:
   ledgers, expansion operator approval schema migration action checklists,
   expansion operator approval schema migration selection packets, expansion
   operator approval schema migration selection input templates, playbooks, eval
-  candidates, iteration packets, simplicity guardrails, approvals, stuck tasks,
-  incidents, recent runs, learnings, and eval results.
+  candidates, iteration packets, simplicity guardrails, approvals, proposed
+  effects, worktrees, verification status, stuck tasks, incidents, recent runs,
+  learnings, and eval results.
 
 ## First Milestone
 
@@ -286,7 +296,8 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
 - Runtime: Codex desktop coding agent in a local git repository.
 - Shell and filesystem: available.
 - File editing: available through patch-based edits.
-- Git: available, repository has no commits yet.
+- Git: available. ClankerOS itself is connected to a GitHub remote, and
+  registered target repositories can be isolated with git worktrees.
 - Network: available, but not required for the first milestone.
 - Browser and desktop control: available to the agent runtime, deferred from the
   first executable milestone.
@@ -297,6 +308,12 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   lower complexity.
 - Local approval review: available through `python3 -m agent_os.cli approvals`
   and `python3 -m agent_os.cli approve <approval_id>`.
+- Local project registration: available through
+  `python3 -m agent_os.cli register-project <name> --path /path/to/repo --test-command "<command>"`.
+- Worktree-isolated coding run: available through
+  `python3 -m agent_os.cli run-goal "<goal>" --project <name> --isolation worktree --command "<safe local command>"`.
+  The current flow records a proposed `local_git_commit` effect and approval
+  packet, but it does not create the commit yet.
 - Incident resolution: available through
   `python3 -m agent_os.cli resolve-incident <incident_id> --resolved-by operator --note "..."`.
 - Stuck-task sweep: available through

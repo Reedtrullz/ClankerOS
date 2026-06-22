@@ -1,0 +1,138 @@
+# Tutorial: Run An Approval-Gated Coding Task
+
+This tutorial walks through the first executable local coding-agent vertical:
+
+1. register a local git repository;
+2. run a constrained coding command in an isolated git worktree;
+3. capture diff, command, and test evidence;
+4. inspect the proposed `local_git_commit` effect;
+5. make an operator approval decision.
+
+The flow is intentionally conservative. It creates evidence and an approval
+packet, but it does not create a git commit, push, open a PR, deploy, or mutate
+external systems.
+
+## Prerequisites
+
+- Python 3.10 or newer.
+- `git`.
+- A local git repository with at least one commit.
+- A deterministic test command for that repository.
+
+## 1. Initialize ClankerOS State
+
+Run this from the ClankerOS repository root:
+
+```bash
+python3 -m agent_os.cli init
+```
+
+This prepares `.agent/state.db` and the local runtime files.
+
+## 2. Register A Target Repository
+
+Replace `/path/to/repo` and the test command with values for your project:
+
+```bash
+python3 -m agent_os.cli register-project my-repo \
+  --path /path/to/repo \
+  --test-command "python3 -m pytest -q"
+```
+
+Registration records:
+
+- the resolved git root;
+- the default verification command;
+- allowed write roots, defaulting to the repository root;
+- a project note under `projects/my-repo/project.md`.
+
+Registration does not create a worktree, run commands, or change the target
+repository.
+
+## 3. Run A Worktree-Isolated Coding Goal
+
+Use `run-goal` with `--isolation worktree` and a narrow local command:
+
+```bash
+python3 -m agent_os.cli run-goal \
+  "Make a tiny verified local change" \
+  --project my-repo \
+  --isolation worktree \
+  --command "python3 -c \"from pathlib import Path; Path('agent-output.txt').write_text('hello\\n')\""
+```
+
+ClankerOS will:
+
+- create a new git worktree under `.agent/worktrees/my-repo/<run_id>`;
+- run the command in that worktree;
+- collect stdout, stderr, git status, patch diff, and changed files;
+- run the registered test command in the worktree;
+- write `verification.json`, `effect.json`, `approval.md`, and `summary.md`;
+- create a pending approval request;
+- record a proposed `local_git_commit` effect.
+
+The original repository checkout is not edited by this command.
+
+## 4. Inspect Evidence
+
+Regenerate the dashboard:
+
+```bash
+python3 -m agent_os.cli dashboard
+```
+
+Open `docs/dashboard.md` and start with `## Operator Cockpit`.
+
+For a proposed coding effect, inspect the run evidence under:
+
+```text
+runs/<run_id>/evidence/
+```
+
+Important files:
+
+- `summary.md`: compact operator summary and non-claims.
+- `worktree.json`: worktree id, branch, path, and base commit.
+- `commands.jsonl`: command and test execution metadata.
+- `command-stdout.txt` and `command-stderr.txt`: coding command output.
+- `git_status.txt`: short git status from the worktree.
+- `diff.patch`: exact proposed diff.
+- `diff_summary.md`: changed-file summary.
+- `tests.txt`: test command, exit code, stdout, and stderr.
+- `verification.json`: policy, command, test, and diff verification status.
+- `effect.json`: proposed effect payload.
+- `approval.md`: approval packet for the operator.
+
+## 5. Review And Decide
+
+List pending approvals:
+
+```bash
+python3 -m agent_os.cli approvals
+```
+
+If the evidence is acceptable, record the approval:
+
+```bash
+python3 -m agent_os.cli approve <approval_id> \
+  --decided-by operator \
+  --note "reviewed diff and tests"
+```
+
+Current behavior: this records the task approval decision. It still does not
+create a git commit. A future `commit-approved` flow should re-check the
+evidence, verify idempotency, create the local commit from the worktree, and
+record the committed effect.
+
+## What This Tutorial Does Not Do
+
+- It does not create a local git commit.
+- It does not push a branch.
+- It does not open a pull request.
+- It does not run GitHub Actions.
+- It does not deploy anything.
+- It does not enable hosted dashboards, remote workers, scheduling, browser or
+  desktop adapters, budget enforcement, trust promotion, retries, or real cost
+  tracking.
+
+Those steps need their own approval-gated implementation and verification.

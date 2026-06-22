@@ -20,6 +20,10 @@ Review the current expansion evidence and add the next report-only approval boun
 Run the first local loop, regenerate the dashboard, and summarize what is proven and not proven.
 ```
 
+```text
+Register this git repo, run a worktree-isolated coding task, capture the diff and tests, and stop at an approval packet.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -29,6 +33,33 @@ Run the first local loop, regenerate the dashboard, and summarize what is proven
 5. Run `python3 -m pytest -q`.
 6. Run `python3 -m agent_os.cli eval`.
 7. Record non-claims before treating the work as safe.
+
+## Approval-Gated Coding Loop
+
+Use this loop when the desired outcome is an actual local code change:
+
+1. Register the target repository with its default test command:
+
+```bash
+python3 -m agent_os.cli register-project <name> --path /path/to/repo --test-command "python3 -m pytest -q"
+```
+
+2. Run the change in an isolated worktree:
+
+```bash
+python3 -m agent_os.cli run-goal "Make the smallest verified change" --project <name> --isolation worktree --command "<safe local command>"
+```
+
+3. Inspect `docs/dashboard.md`, especially `## Operator Cockpit`.
+4. Read `runs/<run_id>/evidence/diff.patch`, `tests.txt`,
+   `verification.json`, `effect.json`, and `approval.md`.
+5. Use `python3 -m agent_os.cli approve <approval_id> --decided-by operator --note "..."`
+   only after the diff, tests, and policy evidence are acceptable.
+
+Current limit: approval records the operator decision, but ClankerOS does not
+yet apply the proposed `local_git_commit`. The next executable slice should add
+an idempotent `commit-approved` command that revalidates evidence before
+creating a commit.
 
 ## Reading The Reports
 
@@ -69,17 +100,20 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 
 ## Practical Next Slices
 
-Good next slices are still report-only until approved:
+Good next slices now favor executable local approval flow before broader
+autonomy:
 
-- a hosted-dashboard proof evidence importer;
-- a remote-worker approval packet that models credentials and rollback;
-- an autonomous-scheduling dry-run calendar;
-- browser/desktop adapter evidence capture without action execution;
-- CI/deploy proof ingestion from GitHub Actions;
-- budget-limit simulation before enforcement;
-- trust-promotion criteria with explicit demotion paths;
-- retry policy dry-run reports;
-- real-cost ledger imports from local usage records.
+- `commit-approved`: turn an approved, verified `local_git_commit` effect into
+  an actual local commit exactly once;
+- stale-evidence checks before approval or commit application;
+- worktree cleanup after committed, rejected, or superseded effects;
+- GitHub push or draft-PR handoff after a local commit exists;
+- CI/deploy proof ingestion from GitHub Actions after the GitHub flow exists;
+- hosted-dashboard proof only after local commit and CI/deploy evidence is
+  modeled;
+- remote-worker, scheduler, browser/desktop adapter, budget, trust, retry, and
+  real-cost surfaces only after their evidence and approval contracts can be
+  enforced.
 
 Each slice should end with explicit non-claims. That discipline is the point:
 the system should show what is safe to trust, what is only locally proven, and

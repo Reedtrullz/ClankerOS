@@ -25,5 +25,7 @@ research and external-intelligence loops behind explicit policies.
 
 ## Current Focus
 
-Milestone 3 policy, budgets, approvals, and report-only readiness inventory for
-deferred autonomy surfaces before activation.
+Milestone 3 approval-gated local coding flow: project registration,
+worktree-isolated execution, verified proposed effects, operator cockpit
+visibility, and the next `commit-approved` step that can turn an approved
+effect into exactly one local git commit.

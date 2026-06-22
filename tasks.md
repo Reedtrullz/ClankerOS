@@ -10,6 +10,12 @@
 - [x] Add stuck-task detection for claimed or running tasks past timeout.
 - [x] Add approval rules before risky task dispatch.
 - [x] Create a reusable next-iteration packet loop.
+- [x] Register local git projects for worktree-isolated coding-agent runs.
+- [x] Capture worktree command, diff, test, effect, and approval evidence for
+  proposed local git commits.
+- [x] Add an operator cockpit to the dashboard for approvals, proposed effects,
+  verification status, and worktrees.
+- [x] Add tutorial and suggested-use docs for approval-gated coding runs.
 
 ## next
 
@@ -80,6 +86,10 @@
 - [x] Add report-only Expansion Operator Approval Schema Migration Action Checklist from decision ledgers. <!-- score=8 complexity=3 -->
 - [x] Add report-only Expansion Operator Approval Schema Migration Selection Packet from action checklists. <!-- score=8 complexity=3 -->
 - [x] Add report-only Expansion Operator Approval Schema Migration Selection Input Template from selection packets. <!-- score=8 complexity=3 -->
+- [ ] Add approval-gated `commit-approved` command for verified `local_git_commit` effects. <!-- score=10 complexity=4 -->
+- [ ] Add stale-evidence and idempotency checks before applying approved local commit effects. <!-- score=9 complexity=3 -->
+- [ ] Add worktree cleanup for committed, rejected, or superseded proposed effects. <!-- score=7 complexity=3 -->
+- [ ] Add GitHub push or draft-PR handoff after local commit evidence exists. <!-- score=7 complexity=4 -->
 
 ## blocked
 
