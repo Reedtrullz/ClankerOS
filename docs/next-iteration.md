@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_de7bb8d859ed
+- Packet ID: iteration_bd766b3c782b
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add approval-gated operator approval request table creation from schema migration selection packets.
+Advance the Agent System north-star goal by completing: Add approval-gated operator approval request row creation from expansion approval drafts after the schema exists.
 
 ## Definition Of Done
 
@@ -128,6 +128,7 @@ Advance the Agent System north-star goal by completing: Add approval-gated opera
 - expansion operator approval schema migration action checklist: operator_approval_schema_migration_manual_action_required
 - expansion operator approval schema migration selection packet: operator_approval_schema_migration_selection_required
 - expansion operator approval schema migration selection input template: operator_approval_schema_migration_selection_input_required
+- operator approval schema migration application: operator_approval_schema_migration_applied
 - proposed eval candidates: 0
 - active playbooks: 1
 - open stuck-task incidents: 0

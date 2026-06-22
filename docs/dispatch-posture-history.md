@@ -1,23 +1,24 @@
 # Dispatch Posture History
 
-- id: dispatch_posture_history_acb68db70663
+- id: dispatch_posture_history_46d9599ab0e2
 - status: report_only
 - snapshots: 25
-- latest_task_count: 373
-- task_count_delta: 135
+- latest_task_count: 381
+- task_count_delta: 139
 - budget_states: not_tracked
 - trust_states: not_tracked
-- first_snapshot_at: 2026-06-22T06:32:48.825494+00:00
-- latest_snapshot_at: 2026-06-22T14:31:51.632052+00:00
+- first_snapshot_at: 2026-06-22T06:48:31.629788+00:00
+- latest_snapshot_at: 2026-06-22T14:48:45.093117+00:00
 - report_path: docs/dispatch-posture-history.md
-- created_at: 2026-06-22T14:31:51.795881+00:00
+- created_at: 2026-06-22T14:48:45.214660+00:00
 
 ## Latest Risk Levels
 
-- low: 373
+- low: 381
 
 ## Recent Snapshots
 
+- budget_trust_posture_ba2ae8e9854a: tasks=381 risk_counts=low=381 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T14:48:45.093117+00:00
 - budget_trust_posture_8278791885c3: tasks=373 risk_counts=low=373 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T14:31:51.632052+00:00
 - budget_trust_posture_d4bb9767839f: tasks=369 risk_counts=low=369 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T14:18:04.160769+00:00
 - budget_trust_posture_564112f31998: tasks=365 risk_counts=low=365 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T13:57:42.190804+00:00
@@ -42,7 +43,6 @@
 - budget_trust_posture_61b1029e591d: tasks=250 risk_counts=low=250 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T07:15:49.956945+00:00
 - budget_trust_posture_2b78eba413eb: tasks=246 risk_counts=low=246 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T06:59:25.533068+00:00
 - budget_trust_posture_561788281776: tasks=242 risk_counts=low=242 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T06:48:31.629788+00:00
-- budget_trust_posture_74b0e491ba5d: tasks=238 risk_counts=low=238 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T06:32:48.825494+00:00
 
 ## Non-Claims
 

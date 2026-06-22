@@ -9207,6 +9207,102 @@ def _run_latest_expansion_proof_ladder(tmp_path: Path) -> None:
     assert main(["--root", str(tmp_path), "real-cost-tracking-proof-checklist"]) == 0
 
 
+def _run_schema_migration_selection_input_chain(tmp_path: Path, capsys) -> None:
+    _run_latest_expansion_proof_ladder(tmp_path)
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## next",
+                "",
+                "- [x] Add report-only Goal Completion Audit from expansion proof reports.",
+                "- [x] Add report-only Expansion Decision Brief from goal completion audits.",
+                "- [x] Add report-only Expansion Decision Evidence Index from decision briefs.",
+                "- [x] Add report-only Expansion Operator Review Checklist from evidence indexes.",
+                "- [x] Add report-only Expansion Operator Decision Ledger from review checklists.",
+                "- [x] Add report-only Expansion Operator Approval Draft from decision ledgers.",
+                "- [x] Add report-only Expansion Operator Approval Request Review from approval drafts.",
+                "- [x] Add report-only Expansion Operator Approval Schema Decision from approval request reviews.",
+                "- [x] Add report-only Expansion Operator Approval Schema Migration Plan from schema decisions.",
+                "- [x] Add report-only Expansion Operator Approval Schema Migration Approval Request from migration plans.",
+                "- [x] Add report-only Expansion Operator Approval Schema Migration Decision Ledger from approval requests.",
+                "- [x] Add report-only Expansion Operator Approval Schema Migration Action Checklist from decision ledgers.",
+                "- [x] Add report-only Expansion Operator Approval Schema Migration Selection Packet from action checklists.",
+                "- [x] Add report-only Expansion Operator Approval Schema Migration Selection Input Template from selection packets.",
+                "",
+                "## blocked",
+                "",
+                "- [ ] Choose external model providers and API policies before adding remote",
+                "  model routing.",
+                "- [ ] Choose deployment target before hosted dashboard work.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    assert main(["--root", str(tmp_path), "goal-completion-audit"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-brief"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-decision-evidence-index"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-review-checklist"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-decision-ledger"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-draft"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-request-review"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-schema-decision"]) == 0
+    assert main(["--root", str(tmp_path), "expansion-operator-approval-schema-migration-plan"]) == 0
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-schema-migration-approval-request",
+            ]
+        )
+        == 0
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-schema-migration-decision-ledger",
+            ]
+        )
+        == 0
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-schema-migration-action-checklist",
+            ]
+        )
+        == 0
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-schema-migration-selection-packet",
+            ]
+        )
+        == 0
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-schema-migration-selection-input-template",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+
 def test_goal_completion_audit_reports_blocked_expansion_goal(
     tmp_path: Path,
     capsys,
@@ -11523,6 +11619,229 @@ def test_expansion_operator_approval_schema_migration_selection_input_template_r
         "- expansion operator approval schema migration selection input template: "
         "operator_approval_schema_migration_selection_input_required"
     ) in packet_text
+
+
+def test_expansion_operator_approval_schema_migration_apply_requires_approve_selection(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_schema_migration_selection_input_chain(tmp_path, capsys)
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-schema-migration-apply",
+                "--operator-id",
+                "operator",
+                "--selected-action",
+                "defer",
+                "--selection-note",
+                "Need one more review before applying.",
+                "--evidence-reference",
+                "docs/expansion-operator-approval-schema-migration-selection-input-template.md",
+            ]
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert (
+        "expansion_operator_approval_schema_migration_apply: "
+        "operator_approval_schema_migration_not_approved"
+    ) in output
+    assert "selected_action: defer" in output
+    assert "migration_applied: 0" in output
+    assert "table_created: 0" in output
+    assert "operator_approval_rows_created: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert "report: docs/expansion-operator-approval-schema-migration-application.md" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    application = storage.list_recent_operator_approval_schema_migration_applications()[0]
+    template = (
+        storage.list_recent_expansion_operator_approval_schema_migration_selection_input_templates()[
+            0
+        ]
+    )
+    assert application.status == "operator_approval_schema_migration_not_approved"
+    assert application.source_template_id == template.id
+    assert application.selected_action == "defer"
+    assert application.operator_id == "operator"
+    assert application.inputs_recorded_count == 1
+    assert application.missing_required_input_count == 0
+    assert application.actions_taken_count == 0
+    assert application.migration_applied_count == 0
+    assert application.table_created_count == 0
+    assert application.operator_approval_row_count == 0
+    assert application.created_approval_request_count == 0
+
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        table = connection.execute(
+            "select name from sqlite_master where type = 'table' and name = ?",
+            ("operator_approval_requests",),
+        ).fetchone()
+    assert table is None
+
+
+def test_expansion_operator_approval_schema_migration_apply_creates_table_after_approval(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_schema_migration_selection_input_chain(tmp_path, capsys)
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-schema-migration-apply",
+                "--operator-id",
+                "operator",
+                "--selected-action",
+                "approve",
+                "--selection-note",
+                "Approved local schema migration after reviewing the plan.",
+                "--evidence-reference",
+                "docs/expansion-operator-approval-schema-migration-selection-input-template.md",
+            ]
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert (
+        "expansion_operator_approval_schema_migration_apply: "
+        "operator_approval_schema_migration_applied"
+    ) in output
+    assert "target_table: operator_approval_requests" in output
+    assert "selected_action: approve" in output
+    assert "migration_applied: 1" in output
+    assert "table_created: 1" in output
+    assert "operator_approval_rows_created: 0" in output
+    assert "approval_requests_created: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    application = storage.list_recent_operator_approval_schema_migration_applications()[0]
+    template = (
+        storage.list_recent_expansion_operator_approval_schema_migration_selection_input_templates()[
+            0
+        ]
+    )
+    assert application.status == "operator_approval_schema_migration_applied"
+    assert application.source_template_id == template.id
+    assert application.source_packet_id == template.source_packet_id
+    assert application.source_checklist_id == template.source_checklist_id
+    assert application.source_ledger_id == template.source_ledger_id
+    assert application.source_request_id == template.source_request_id
+    assert application.source_plan_id == template.source_plan_id
+    assert application.target_table == "operator_approval_requests"
+    assert application.selected_action == "approve"
+    assert application.operator_id == "operator"
+    assert application.inputs_recorded_count == 1
+    assert application.missing_required_input_count == 0
+    assert application.actions_taken_count == 1
+    assert application.migration_applied_count == 1
+    assert application.table_created_count == 1
+    assert application.operator_approval_row_count == 0
+    assert application.created_approval_request_count == 0
+    assert application.existing_approval_request_count == 0
+    assert application.applied_table_columns[0]["name"] == "id"
+    assert any(
+        column["name"] == "subject_type"
+        for column in application.applied_table_columns
+    )
+    assert application.applied_indexes[0]["name"] == (
+        "idx_operator_approval_requests_status"
+    )
+
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        columns = {
+            row[1]
+            for row in connection.execute("pragma table_info(operator_approval_requests)")
+        }
+        indexes = {
+            row[1]
+            for row in connection.execute("pragma index_list(operator_approval_requests)")
+        }
+    assert {"id", "subject_type", "subject_key", "allowed_actions", "created_at"}.issubset(
+        columns
+    )
+    assert "idx_operator_approval_requests_status" in indexes
+    assert "idx_operator_approval_requests_subject" in indexes
+
+    report = (
+        tmp_path / "docs" / "expansion-operator-approval-schema-migration-application.md"
+    ).read_text(encoding="utf-8")
+    assert "# Expansion Operator Approval Schema Migration Application" in report
+    assert "- status: operator_approval_schema_migration_applied" in report
+    assert f"- source_template: {template.id}" in report
+    assert "- selected_action: approve" in report
+    assert "- migration_applied: 1" in report
+    assert "- table_created: 1" in report
+    assert "- operator_approval_rows_created: 0" in report
+    assert "- Creates operator_approval_requests table locally." in report
+    assert "- Does not create operator approval request rows." in report
+    assert "- Does not mutate external systems." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Expansion Operator Approval Schema Migration Application" in dashboard
+    assert "- status: operator_approval_schema_migration_applied" in dashboard
+    assert "- selected_action: approve" in dashboard
+    assert "- table_created: 1" in dashboard
+    assert application.id in dashboard
+
+
+def test_expansion_operator_approval_schema_migration_apply_is_idempotent(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_schema_migration_selection_input_chain(tmp_path, capsys)
+
+    command = [
+        "--root",
+        str(tmp_path),
+        "expansion-operator-approval-schema-migration-apply",
+        "--operator-id",
+        "operator",
+        "--selected-action",
+        "approve",
+        "--selection-note",
+        "Approved local schema migration after reviewing the plan.",
+        "--evidence-reference",
+        "docs/expansion-operator-approval-schema-migration-selection-input-template.md",
+    ]
+    assert main(command) == 0
+    capsys.readouterr()
+
+    assert main(command) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "expansion_operator_approval_schema_migration_apply: "
+        "operator_approval_schema_migration_already_applied"
+    ) in output
+    assert "migration_applied: 0" in output
+    assert "table_created: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    applications = storage.list_recent_operator_approval_schema_migration_applications(
+        limit=2
+    )
+    assert applications[0].status == "operator_approval_schema_migration_already_applied"
+    assert applications[0].migration_applied_count == 0
+    assert applications[0].table_created_count == 0
+    assert applications[1].status == "operator_approval_schema_migration_applied"
+    assert applications[1].migration_applied_count == 1
+    assert applications[1].table_created_count == 1
 
 
 def test_hosted_dashboard_proof_checklist_blocks_blocked_real_cost_tracking_proof(

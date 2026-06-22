@@ -52,6 +52,10 @@ Write a human-first review, evidence index, and replay summary for this run befo
 Write a steering review for this goal, show the next action, and list the inbox without executing or approving anything.
 ```
 
+```text
+Apply the operator approval request schema after I approve the generated selection template, and prove that no approval rows were created.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -65,7 +69,8 @@ Write a steering review for this goal, show the next action, and list the inbox 
 9. Propose skills from verified run evidence only when the procedure is reusable.
 10. Write `review`, `evidence`, and `replay-summary` packets before operator decisions on meaningful runs.
 11. Run `steer`, `next-action`, and `inbox` when the next operator move is unclear.
-12. Record non-claims before treating the work as safe.
+12. Apply local schema changes only through explicit operator approval commands.
+13. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -178,6 +183,21 @@ Allowed actions are not actions taken. A report may list choices such as
 Treat those zeros as intentional safety evidence. Do not cross them without an
 explicit operator-approved flow and fresh verification.
 
+When the generated schema migration selection template is ready, the narrow
+approved crossing is:
+
+```bash
+python3 -m agent_os.cli expansion-operator-approval-schema-migration-apply \
+  --operator-id operator \
+  --selected-action approve \
+  --selection-note "Approved local operator approval request schema." \
+  --evidence-reference docs/expansion-operator-approval-schema-migration-selection-input-template.md
+```
+
+That command may create the local `operator_approval_requests` table. It must
+still report `operator_approval_rows_created: 0` and
+`approval_requests_created: 0`.
+
 ## When To Commit And Push
 
 Commit when:
@@ -197,7 +217,9 @@ Good next slices now favor approval-schema and operator-decision work before
 broader autonomy:
 
 - approval-gated operator approval request table creation after the report-only
-  schema migration selection packets;
+- schema migration selection packets;
+- approval-gated operator approval request rows from expansion approval drafts
+  after the table exists;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;
 - remote-worker, scheduler, browser/desktop adapter, budget, trust, retry, and

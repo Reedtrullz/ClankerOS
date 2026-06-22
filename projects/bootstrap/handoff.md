@@ -1415,13 +1415,30 @@ work, or changing routing.
   commit, push, deploy, start remote workers, schedule work, promote trust,
   retry work, track spend, or mutate external systems.
 
+## Latest Operator Approval Schema Application
+
+- `expansion-operator-approval-schema-migration-apply` now exists as the first
+  explicit operator-approved crossing after the report-only schema migration
+  selection input template.
+- Non-approve selections record local evidence without creating the table.
+- An approved selection creates the local `operator_approval_requests` table
+  once, records the applied columns/indexes, and keeps approval-row counters
+  at zero.
+- The dashboard exposes the latest application under
+  `## Expansion Operator Approval Schema Migration Application`.
+- Non-claims: schema application does not create approval request rows,
+  approve decisions, promote trust, push, deploy, start workers, schedule work,
+  retry work, track spend, or mutate external systems.
+
 ## Next Actions
 
+Current focus: Add approval-gated operator approval request row creation from expansion approval drafts after the schema exists.
+
 1. Use `docs/next-iteration.md` to complete:
-   Add deterministic steering review records plus `next-action` and `inbox` commands.
-2. Build steering as executable control-plane behavior from current local
-   state: approvals, incidents, blocked tasks, failed tasks, recent run review
-   packets, and stale handoffs.
+   Add approval-gated operator approval request row creation from expansion
+   approval drafts after the schema exists.
+2. Build row creation as an approval-gated local effect sourced from existing
+   expansion approval drafts and the new `operator_approval_requests` table.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts exist.

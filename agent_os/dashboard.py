@@ -123,6 +123,9 @@ from agent_os.expansion_operator_approval_schema_migration_selection_input_templ
     format_allowed_actions as format_schema_migration_input_template_actions,
     render_expansion_operator_approval_schema_migration_selection_input_template_line,
 )
+from agent_os.operator_approval_schema_migration import (
+    render_operator_approval_schema_migration_application_line,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -580,6 +583,16 @@ def generate_static_dashboard(root: Path) -> Path:
                 limit=1,
             )
             )
+        operator_approval_schema_migration_applications = []
+        if _table_exists(
+            connection,
+            "operator_approval_schema_migration_applications",
+        ):
+            operator_approval_schema_migration_applications = (
+                storage.list_recent_operator_approval_schema_migration_applications(
+                    limit=1,
+                )
+            )
 
     statuses = [
         "pending",
@@ -780,6 +793,11 @@ def generate_static_dashboard(root: Path) -> Path:
     latest_expansion_operator_approval_schema_migration_selection_input_template = (
         expansion_operator_approval_schema_migration_selection_input_templates[0]
         if expansion_operator_approval_schema_migration_selection_input_templates
+        else None
+    )
+    latest_operator_approval_schema_migration_application = (
+        operator_approval_schema_migration_applications[0]
+        if operator_approval_schema_migration_applications
         else None
     )
     eval_after_change_statuses = Counter(
@@ -2269,6 +2287,48 @@ def generate_static_dashboard(root: Path) -> Path:
                 "",
                 render_expansion_operator_approval_schema_migration_selection_input_template_line(
                     template
+                ),
+            ]
+        )
+    else:
+        lines.append("- none")
+
+    lines.extend(
+        [
+            "",
+            "## Expansion Operator Approval Schema Migration Application",
+            "",
+        ]
+    )
+    if latest_operator_approval_schema_migration_application is not None:
+        application = latest_operator_approval_schema_migration_application
+        lines.extend(
+            [
+                f"- status: {application.status}",
+                f"- source_template: {application.source_template_id}",
+                f"- source_status: {application.source_template_status}",
+                f"- source_packet: {application.source_packet_id}",
+                f"- source_checklist: {application.source_checklist_id}",
+                f"- source_ledger: {application.source_ledger_id}",
+                f"- source_request: {application.source_request_id}",
+                f"- source_plan: {application.source_plan_id}",
+                f"- source_decision: {application.source_decision_id}",
+                f"- source_review: {application.source_review_id}",
+                f"- target_table: {application.target_table}",
+                f"- operator_id: {application.operator_id}",
+                f"- selected_action: {application.selected_action}",
+                f"- inputs_recorded: {application.inputs_recorded_count}",
+                f"- missing_required_inputs: {application.missing_required_input_count}",
+                f"- actions_taken: {application.actions_taken_count}",
+                f"- migration_applied: {application.migration_applied_count}",
+                f"- table_created: {application.table_created_count}",
+                f"- operator_approval_rows_created: {application.operator_approval_row_count}",
+                f"- approval_requests_created: {application.created_approval_request_count}",
+                f"- existing_approval_requests: {application.existing_approval_request_count}",
+                f"- report: {application.report_path}",
+                "",
+                render_operator_approval_schema_migration_application_line(
+                    application
                 ),
             ]
         )

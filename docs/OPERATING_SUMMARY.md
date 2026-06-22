@@ -319,8 +319,9 @@ Core layers for the bootstrap:
   approval requests, expansion operator approval schema migration decision
   ledgers, expansion operator approval schema migration action checklists,
   expansion operator approval schema migration selection packets, expansion
-  operator approval schema migration selection input templates, playbooks, eval
-  candidates, iteration packets, simplicity guardrails, approvals, proposed
+  operator approval schema migration selection input templates, operator
+  approval schema migration applications, playbooks, eval candidates,
+  iteration packets, simplicity guardrails, approvals, proposed
   effects, worktrees, verification status, stuck tasks, incidents, recent runs,
   learnings, and eval results.
 
@@ -601,6 +602,15 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   SQLite state, and `docs/dashboard.md`; it lists required operator fields
   while keeping `inputs_recorded: 0`, `selections_recorded: 0`, and all
   migration, table, and approval-row counters at zero.
+- Operator approval schema migration application: available through
+  `python3 -m agent_os.cli expansion-operator-approval-schema-migration-apply`
+  after the selection input template exists. Non-approve selections record a
+  local application row without creating the table. An approved selection
+  creates the local `operator_approval_requests` table exactly once, records
+  applied columns/indexes in
+  `docs/expansion-operator-approval-schema-migration-application.md`, and
+  keeps `operator_approval_rows_created: 0` and
+  `approval_requests_created: 0`.
 - Eval candidate listing: available through
   `python3 -m agent_os.cli eval-candidates` and mirrored into
   `docs/dashboard.md`.

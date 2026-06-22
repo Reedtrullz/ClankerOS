@@ -158,6 +158,10 @@ from agent_os.expansion_operator_approval_schema_migration_selection_input_templ
     render_expansion_operator_approval_schema_migration_selection_input_template_line,
     write_expansion_operator_approval_schema_migration_selection_input_template,
 )
+from agent_os.operator_approval_schema_migration import (
+    apply_operator_approval_schema_migration,
+    render_operator_approval_schema_migration_application_line,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -585,6 +589,18 @@ def build_parser() -> argparse.ArgumentParser:
         "expansion-operator-approval-schema-migration-selection-input-template",
         help="Prepare a report-only operator input template from schema migration selection packets.",
     )
+    schema_migration_apply = subparsers.add_parser(
+        "expansion-operator-approval-schema-migration-apply",
+        help="Apply the local operator approval request schema after explicit operator approval.",
+    )
+    schema_migration_apply.add_argument("--operator-id", required=True)
+    schema_migration_apply.add_argument(
+        "--selected-action",
+        required=True,
+        choices=["approve", "defer", "request_more_evidence"],
+    )
+    schema_migration_apply.add_argument("--selection-note", required=True)
+    schema_migration_apply.add_argument("--evidence-reference", required=True)
 
     approve = subparsers.add_parser("approve", help="Approve a pending local task request.")
     approve.add_argument("approval_id")
@@ -2312,6 +2328,47 @@ def main(argv: list[str] | None = None) -> int:
         print(
             render_expansion_operator_approval_schema_migration_selection_input_template_line(
                 template
+            ).removeprefix("- ")
+        )
+        return 0
+
+    if args.command == "expansion-operator-approval-schema-migration-apply":
+        AgentSystem(root).initialize()
+        report_path, application = apply_operator_approval_schema_migration(
+            root,
+            operator_id=args.operator_id,
+            selected_action=args.selected_action,
+            selection_note=args.selection_note,
+            evidence_reference=args.evidence_reference,
+        )
+        print(f"expansion_operator_approval_schema_migration_apply: {application.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_template: {application.source_template_id}")
+        print(f"source_status: {application.source_template_status}")
+        print(f"source_packet: {application.source_packet_id}")
+        print(f"source_checklist: {application.source_checklist_id}")
+        print(f"source_ledger: {application.source_ledger_id}")
+        print(f"source_request: {application.source_request_id}")
+        print(f"source_plan: {application.source_plan_id}")
+        print(f"source_decision: {application.source_decision_id}")
+        print(f"source_review: {application.source_review_id}")
+        print(f"target_table: {application.target_table}")
+        print(f"operator_id: {application.operator_id}")
+        print(f"selected_action: {application.selected_action}")
+        print(f"inputs_recorded: {application.inputs_recorded_count}")
+        print(f"missing_required_inputs: {application.missing_required_input_count}")
+        print(f"actions_taken: {application.actions_taken_count}")
+        print(f"migration_applied: {application.migration_applied_count}")
+        print(f"table_created: {application.table_created_count}")
+        print(
+            "operator_approval_rows_created: "
+            f"{application.operator_approval_row_count}"
+        )
+        print(f"approval_requests_created: {application.created_approval_request_count}")
+        print(f"existing_approval_requests: {application.existing_approval_request_count}")
+        print(
+            render_operator_approval_schema_migration_application_line(
+                application
             ).removeprefix("- ")
         )
         return 0

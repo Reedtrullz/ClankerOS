@@ -56,7 +56,11 @@ approves them. Run evidence can now be summarized with human-first `review`,
 `evidence`, and `replay-summary` commands that write local Markdown packets
 without rerunning work or approving effects. Deterministic steering reviews
 can now inspect local goals, tasks, approvals, and incidents to recommend a
-next operator action and populate a local inbox without executing work.
+next operator action and populate a local inbox without executing work. The
+operator approval schema chain can now cross its first explicit approval
+boundary by creating the local `operator_approval_requests` table only after
+an operator supplies an approved selection; it still creates no approval rows
+and performs no external action.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -162,6 +166,7 @@ mutate external systems.
 - [Propose and approve reusable skills](docs/tutorial-skill-proposals.md)
 - [Review run evidence and replay summaries](docs/tutorial-run-review.md)
 - [Use steering reviews, next actions, and the inbox](docs/tutorial-steering-inbox.md)
+- [Apply the operator approval request schema](docs/tutorial-operator-approval-schema.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
 - [Safety contract](contracts.md)
@@ -211,6 +216,10 @@ The repository can now:
 - write deterministic steering reviews for goals, recommend the next local
   operator action for a goal or project, and list operator-worthy inbox items
   from steering reviews, approvals, and incidents;
+- create the local `operator_approval_requests` table from the schema migration
+  selection template after an explicit `approve` selection, recording applied
+  columns/indexes and idempotent repeat attempts while creating no approval
+  rows;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -389,6 +398,8 @@ python3 -m agent_os.cli expansion-operator-approval-schema-migration-approval-re
 python3 -m agent_os.cli expansion-operator-approval-schema-migration-decision-ledger
 python3 -m agent_os.cli expansion-operator-approval-schema-migration-action-checklist
 python3 -m agent_os.cli expansion-operator-approval-schema-migration-selection-packet
+python3 -m agent_os.cli expansion-operator-approval-schema-migration-selection-input-template
+python3 -m agent_os.cli expansion-operator-approval-schema-migration-apply --operator-id operator --selected-action approve --selection-note "Approved local operator approval request schema." --evidence-reference docs/expansion-operator-approval-schema-migration-selection-input-template.md
 python3 -m agent_os.cli eval-candidates
 python3 -m agent_os.cli playbooks
 python3 -m agent_os.cli iterate
@@ -534,6 +545,10 @@ python3 -m pytest tests/test_first_milestone.py -q
   generated report-only operator input template for the schema migration
   selection packet; it lists required fields while recording no operator input
   or selection.
+- `docs/expansion-operator-approval-schema-migration-application.md`:
+  generated application evidence for an explicit operator schema selection;
+  an approved selection can create the local `operator_approval_requests`
+  table while still creating zero approval rows.
 - `docs/dashboard.md`: generated operational view with an operator cockpit for
   active runs, registered projects, approval inbox, proposed effects,
   verification status, recent worktrees, queue health, approvals, handoff

@@ -1,8 +1,8 @@
 # Capability Evidence Collection Plan
 
-- id: capability_evidence_collection_plan_ccc862b09746
+- id: capability_evidence_collection_plan_09c5d3a55d40
 - status: evidence_required
-- source_matrix_id: capability_approval_boundary_matrix_395bb0080bdb
+- source_matrix_id: capability_approval_boundary_matrix_edc3e766edba
 - source_matrix_status: approval_required
 - capability_count: 9
 - evidence_items: 9
@@ -11,7 +11,7 @@
 - boundaries: 1
 - recommended_commands: none
 - report_path: docs/capability-evidence-collection-plan.md
-- created_at: 2026-06-22T14:31:52.661473+00:00
+- created_at: 2026-06-22T14:48:46.100906+00:00
 
 ## Recommendation
 
@@ -31,7 +31,7 @@
 
 ## Source Approval Boundary Matrix
 
-- id: capability_approval_boundary_matrix_395bb0080bdb
+- id: capability_approval_boundary_matrix_edc3e766edba
 - status: approval_required
 - boundaries: 1
 - gaps: 9

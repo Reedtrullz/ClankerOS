@@ -5495,3 +5495,31 @@
 - Non-claims: steering is local review and recommendation only; it does not
   execute tasks, approve requests, retry work, commit, push, deploy, schedule
   workers, or mutate external systems.
+
+## 2026-06-22 Operator Approval Schema Application
+
+- Added explicit local schema application command:
+  `python3 -m agent_os.cli expansion-operator-approval-schema-migration-apply`.
+- The command requires operator fields from the generated selection input:
+  `operator_id`, `selected_action`, `selection_note`, and
+  `evidence_reference`.
+- `selected_action=defer` or `request_more_evidence` records a durable
+  application row and report without creating the table.
+- `selected_action=approve` creates the local `operator_approval_requests`
+  table from the generated migration plan, records applied columns/indexes,
+  and leaves `operator_approval_rows_created=0` and
+  `approval_requests_created=0`.
+- Repeating an approved application is idempotent and records
+  `operator_approval_schema_migration_already_applied`.
+- Added dashboard visibility under
+  `## Expansion Operator Approval Schema Migration Application`.
+- Added `docs/tutorial-operator-approval-schema.md` and updated README and
+  suggested-use docs.
+- Verification evidence:
+  - Red-first focused tests failed before the CLI command existed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'schema_migration_apply'`
+    -> 3 passed.
+- Non-claims: the schema application command does not create approval request
+  rows, approve decisions, promote trust, run CI, deploy, push, open PRs,
+  start workers, schedule work, retry work, track spend, or mutate external
+  systems.

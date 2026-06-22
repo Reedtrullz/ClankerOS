@@ -1405,6 +1405,38 @@ class ExpansionOperatorApprovalSchemaMigrationSelectionInputTemplate:
     created_at: str
 
 
+@dataclass(frozen=True)
+class OperatorApprovalSchemaMigrationApplication:
+    id: str
+    status: str
+    source_template_id: str
+    source_template_status: str
+    source_packet_id: str
+    source_checklist_id: str
+    source_ledger_id: str
+    source_request_id: str
+    source_plan_id: str
+    source_decision_id: str
+    source_review_id: str
+    target_table: str
+    operator_id: str
+    selected_action: str
+    selection_note: str
+    evidence_reference: str
+    inputs_recorded_count: int
+    missing_required_input_count: int
+    actions_taken_count: int
+    migration_applied_count: int
+    table_created_count: int
+    operator_approval_row_count: int
+    created_approval_request_count: int
+    existing_approval_request_count: int
+    applied_table_columns: list[dict[str, Any]]
+    applied_indexes: list[dict[str, Any]]
+    report_path: str
+    created_at: str
+
+
 SAFE_AUTO_TASK_TYPES = {"write_goal_artifact", "record_learning"}
 SAFE_AUTO_RISK_LEVELS = {"low"}
 APPROVAL_WAITING_STATUS = "waiting_approval"
@@ -2709,6 +2741,37 @@ class Storage:
                     existing_approval_request_count integer not null,
                     recommended_next_step text not null,
                     input_template_items text not null,
+                    report_path text not null,
+                    created_at text not null
+                );
+
+                create table if not exists operator_approval_schema_migration_applications (
+                    id text primary key,
+                    status text not null,
+                    source_template_id text not null,
+                    source_template_status text not null,
+                    source_packet_id text not null,
+                    source_checklist_id text not null,
+                    source_ledger_id text not null,
+                    source_request_id text not null,
+                    source_plan_id text not null,
+                    source_decision_id text not null,
+                    source_review_id text not null,
+                    target_table text not null,
+                    operator_id text not null,
+                    selected_action text not null,
+                    selection_note text not null,
+                    evidence_reference text not null,
+                    inputs_recorded_count integer not null,
+                    missing_required_input_count integer not null,
+                    actions_taken_count integer not null,
+                    migration_applied_count integer not null,
+                    table_created_count integer not null,
+                    operator_approval_row_count integer not null,
+                    created_approval_request_count integer not null,
+                    existing_approval_request_count integer not null,
+                    applied_table_columns text not null,
+                    applied_indexes text not null,
                     report_path text not null,
                     created_at text not null
                 );
@@ -8190,6 +8253,170 @@ class Storage:
             for row in rows
         ]
 
+    def operator_approval_requests_table_exists(self) -> bool:
+        with self._connect() as connection:
+            return self._table_exists(connection, "operator_approval_requests")
+
+    def create_operator_approval_requests_schema(
+        self,
+        *,
+        columns: list[dict[str, Any]],
+        indexes: list[dict[str, Any]],
+    ) -> tuple[bool, list[dict[str, Any]], list[dict[str, Any]]]:
+        with self._connect() as connection:
+            table_already_exists = self._table_exists(
+                connection,
+                "operator_approval_requests",
+            )
+            column_sql = ",\n                    ".join(
+                f"{column['name']} {column['definition']}" for column in columns
+            )
+            connection.execute(
+                f"""
+                create table if not exists operator_approval_requests (
+                    {column_sql}
+                )
+                """
+            )
+            for index in indexes:
+                index_columns = ", ".join(index["columns"])
+                connection.execute(
+                    f"""
+                    create index if not exists {index['name']}
+                    on operator_approval_requests ({index_columns})
+                    """
+                )
+        return (not table_already_exists), columns, indexes
+
+    def record_operator_approval_schema_migration_application(
+        self,
+        *,
+        status: str,
+        source_template_id: str,
+        source_template_status: str,
+        source_packet_id: str,
+        source_checklist_id: str,
+        source_ledger_id: str,
+        source_request_id: str,
+        source_plan_id: str,
+        source_decision_id: str,
+        source_review_id: str,
+        target_table: str,
+        operator_id: str,
+        selected_action: str,
+        selection_note: str,
+        evidence_reference: str,
+        inputs_recorded_count: int,
+        missing_required_input_count: int,
+        actions_taken_count: int,
+        migration_applied_count: int,
+        table_created_count: int,
+        operator_approval_row_count: int,
+        created_approval_request_count: int,
+        existing_approval_request_count: int,
+        applied_table_columns: list[dict[str, Any]],
+        applied_indexes: list[dict[str, Any]],
+        report_path: str,
+    ) -> OperatorApprovalSchemaMigrationApplication:
+        application_id = new_id("operator_approval_schema_migration_application")
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into operator_approval_schema_migration_applications (
+                    id, status, source_template_id, source_template_status,
+                    source_packet_id, source_checklist_id, source_ledger_id,
+                    source_request_id, source_plan_id, source_decision_id,
+                    source_review_id, target_table, operator_id,
+                    selected_action, selection_note, evidence_reference,
+                    inputs_recorded_count, missing_required_input_count,
+                    actions_taken_count, migration_applied_count,
+                    table_created_count, operator_approval_row_count,
+                    created_approval_request_count, existing_approval_request_count,
+                    applied_table_columns, applied_indexes, report_path, created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    application_id,
+                    status,
+                    source_template_id,
+                    source_template_status,
+                    source_packet_id,
+                    source_checklist_id,
+                    source_ledger_id,
+                    source_request_id,
+                    source_plan_id,
+                    source_decision_id,
+                    source_review_id,
+                    target_table,
+                    operator_id,
+                    selected_action,
+                    selection_note,
+                    evidence_reference,
+                    inputs_recorded_count,
+                    missing_required_input_count,
+                    actions_taken_count,
+                    migration_applied_count,
+                    table_created_count,
+                    operator_approval_row_count,
+                    created_approval_request_count,
+                    existing_approval_request_count,
+                    _json_dumps(applied_table_columns),
+                    _json_dumps(applied_indexes),
+                    report_path,
+                    created_at,
+                ),
+            )
+        return OperatorApprovalSchemaMigrationApplication(
+            id=application_id,
+            status=status,
+            source_template_id=source_template_id,
+            source_template_status=source_template_status,
+            source_packet_id=source_packet_id,
+            source_checklist_id=source_checklist_id,
+            source_ledger_id=source_ledger_id,
+            source_request_id=source_request_id,
+            source_plan_id=source_plan_id,
+            source_decision_id=source_decision_id,
+            source_review_id=source_review_id,
+            target_table=target_table,
+            operator_id=operator_id,
+            selected_action=selected_action,
+            selection_note=selection_note,
+            evidence_reference=evidence_reference,
+            inputs_recorded_count=inputs_recorded_count,
+            missing_required_input_count=missing_required_input_count,
+            actions_taken_count=actions_taken_count,
+            migration_applied_count=migration_applied_count,
+            table_created_count=table_created_count,
+            operator_approval_row_count=operator_approval_row_count,
+            created_approval_request_count=created_approval_request_count,
+            existing_approval_request_count=existing_approval_request_count,
+            applied_table_columns=applied_table_columns,
+            applied_indexes=applied_indexes,
+            report_path=report_path,
+            created_at=created_at,
+        )
+
+    def list_recent_operator_approval_schema_migration_applications(
+        self,
+        limit: int = 5,
+    ) -> list[OperatorApprovalSchemaMigrationApplication]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from operator_approval_schema_migration_applications
+                order by created_at desc, id desc
+                limit ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [
+            self._row_to_operator_approval_schema_migration_application(row)
+            for row in rows
+        ]
+
     def get_real_cost_tracking_proof_checklist(
         self,
         checklist_id: str | None,
@@ -9723,6 +9950,13 @@ class Storage:
             except sqlite3.OperationalError as error:
                 if "duplicate column name" not in str(error).lower():
                     raise
+
+    def _table_exists(self, connection: sqlite3.Connection, table_name: str) -> bool:
+        row = connection.execute(
+            "select name from sqlite_master where type = 'table' and name = ?",
+            (table_name,),
+        ).fetchone()
+        return row is not None
 
     def _allow_nullable_dispatch_posture_staleness_age(
         self,
@@ -11370,6 +11604,41 @@ class Storage:
             existing_approval_request_count=row["existing_approval_request_count"],
             recommended_next_step=row["recommended_next_step"],
             input_template_items=_json_loads(row["input_template_items"], []),
+            report_path=row["report_path"],
+            created_at=row["created_at"],
+        )
+
+    def _row_to_operator_approval_schema_migration_application(
+        self,
+        row: sqlite3.Row,
+    ) -> OperatorApprovalSchemaMigrationApplication:
+        return OperatorApprovalSchemaMigrationApplication(
+            id=row["id"],
+            status=row["status"],
+            source_template_id=row["source_template_id"],
+            source_template_status=row["source_template_status"],
+            source_packet_id=row["source_packet_id"],
+            source_checklist_id=row["source_checklist_id"],
+            source_ledger_id=row["source_ledger_id"],
+            source_request_id=row["source_request_id"],
+            source_plan_id=row["source_plan_id"],
+            source_decision_id=row["source_decision_id"],
+            source_review_id=row["source_review_id"],
+            target_table=row["target_table"],
+            operator_id=row["operator_id"],
+            selected_action=row["selected_action"],
+            selection_note=row["selection_note"],
+            evidence_reference=row["evidence_reference"],
+            inputs_recorded_count=row["inputs_recorded_count"],
+            missing_required_input_count=row["missing_required_input_count"],
+            actions_taken_count=row["actions_taken_count"],
+            migration_applied_count=row["migration_applied_count"],
+            table_created_count=row["table_created_count"],
+            operator_approval_row_count=row["operator_approval_row_count"],
+            created_approval_request_count=row["created_approval_request_count"],
+            existing_approval_request_count=row["existing_approval_request_count"],
+            applied_table_columns=_json_loads(row["applied_table_columns"], []),
+            applied_indexes=_json_loads(row["applied_indexes"], []),
             report_path=row["report_path"],
             created_at=row["created_at"],
         )

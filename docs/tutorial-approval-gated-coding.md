@@ -22,6 +22,10 @@ handoff after the commit exists and later record operator-supplied CI/deploy
 evidence. It does not push, open a PR, run CI, deploy, or mutate external
 systems.
 
+For the separate approval boundary that creates the local
+`operator_approval_requests` table, use
+`docs/tutorial-operator-approval-schema.md`.
+
 ## Prerequisites
 
 - Python 3.10 or newer.
