@@ -1,0 +1,26 @@
+{
+  "activation_actions_taken": 0,
+  "activation_allowed": false,
+  "capability": "trust_promotion",
+  "contract_id": "capability_activation_contract_7c395412aadc",
+  "created_approval_request_count": 0,
+  "created_at": "2026-06-22T16:38:09.494189+00:00",
+  "evidence_kind": "proof_checklist",
+  "evidence_reference": "docs/capability-activation-contracts.md",
+  "goal_id": "goal_b25a107a53a9",
+  "network_actions_taken": 0,
+  "non_claims": [
+    "Does not create approval_requests rows.",
+    "Does not enable capabilities.",
+    "Does not satisfy capability evidence by itself.",
+    "Does not mutate external systems."
+  ],
+  "project_id": "bootstrap",
+  "recorded_by": "operator",
+  "source_effect_id": "effect_549912b53e8e",
+  "status": "evidence_recorded",
+  "summary": "Current activation contracts are present but still missing capability-specific proof.",
+  "task_id": "task_99c552985002",
+  "verification_command": "python3 -m agent_os.cli capability-activation-contracts",
+  "verification_status": "blocked"
+}

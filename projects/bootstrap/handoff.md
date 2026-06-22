@@ -1566,16 +1566,48 @@ work, or changing routing.
   schedule work, start workers, retry work, track spend, run CI, deploy, push,
   open PRs, mark the active goal complete, or mutate external systems.
 
+## Latest Capability Activation Evidence And Decisions
+
+- `capability-activation-evidence` now attaches operator-supplied local
+  evidence rows and per-contract JSON artifacts to activation contracts.
+- Initial evidence batch:
+  `capability_activation_evidence_batch_13cb1b848770`, status
+  `capability_activation_evidence_recorded`, with 9 selected contracts, 9
+  evidence rows created, 0 existing rows, 0 approval requests created, and 0
+  activation actions taken.
+- Final evidence idempotency batch:
+  `capability_activation_evidence_batch_59d5cfbc023e`, status
+  `capability_activation_evidence_already_recorded`, with 9 existing evidence
+  rows and 0 new activation actions.
+- `capability-activation-decide` now records local operator decisions for
+  evidence-bearing contracts.
+- Initial decision:
+  `capability_activation_decision_f601a69d076e`, status
+  `capability_activation_decisions_recorded`, selected action
+  `request_more_evidence`, 9 contracts ready, 9 decisions recorded, 9
+  more-evidence decisions, 0 approval requests created, and 0 activation
+  actions taken.
+- Final decision idempotency row:
+  `capability_activation_decision_7e9a89479c7b`, status
+  `capability_activation_decisions_already_recorded`, with 9 existing
+  decisions and 0 new activation actions.
+- Evidence reports:
+  `docs/capability-activation-evidence.md` and
+  `docs/capability-activation-decisions.md`.
+- Non-claims: evidence and decision recording do not create
+  `approval_requests`, satisfy proof, enable capabilities, promote trust,
+  route work, schedule work, start workers, retry work, track spend, run CI,
+  deploy, push, open PRs, mark the active goal complete, or mutate external
+  systems.
+
 ## Next Actions
 
-Current focus: Add evidence ingestion and operator decisions for capability activation contracts.
+Current focus: Add follow-up tasks from capability activation more-evidence decisions.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add evidence ingestion and operator decisions for capability activation
-   contracts.
-2. Keep the 9 activation tasks and 9 activation contracts blocked until each
-   has submitted evidence, fresh verification, and explicit operator approval
-   decisions.
+   Add follow-up tasks from capability activation more-evidence decisions.
+2. Convert the 9 more-evidence decisions into explicit task-graph work without
+   enabling capabilities or creating approval rows.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.

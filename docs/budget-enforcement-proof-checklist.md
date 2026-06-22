@@ -1,8 +1,8 @@
 # Budget Enforcement Proof Checklist
 
-- id: budget_enforcement_proof_checklist_64930107198b
+- id: budget_enforcement_proof_checklist_ec3fc01711a8
 - status: budget_enforcement_proof_blocked
-- source_checklist_id: ci_deploy_proof_checklist_4e4e88eb6025
+- source_checklist_id: ci_deploy_proof_checklist_f8674717134d
 - source_checklist_status: ci_deploy_proof_blocked
 - capability_count: 1
 - checklist_items: 1
@@ -21,7 +21,7 @@
 - boundaries: 1
 - recommended_commands: none
 - report_path: docs/budget-enforcement-proof-checklist.md
-- created_at: 2026-06-22T16:24:19.690766+00:00
+- created_at: 2026-06-22T16:46:27.340364+00:00
 
 ## Recommendation
 
@@ -33,9 +33,9 @@
 
 ## Source CI Deploy Proof Checklist
 
-- id: ci_deploy_proof_checklist_4e4e88eb6025
+- id: ci_deploy_proof_checklist_f8674717134d
 - status: ci_deploy_proof_blocked
-- source_checklist_source_checklist_id: browser_desktop_adapter_proof_checklist_3c08b4c52f65
+- source_checklist_source_checklist_id: browser_desktop_adapter_proof_checklist_e07c7dc435f7
 - source_checklist_source_checklist_status: browser_desktop_adapter_proof_blocked
 - checklist_items: 1
 - blocked_ci_deploy_proofs: 1
@@ -50,15 +50,15 @@
 - missing_evidence: 1
 - approvals_required: 1
 - report: docs/ci-deploy-proof-checklist.md
-- source_checklist_source_checklist_source_checklist_id: autonomous_scheduling_proof_checklist_c9a29d86a144
+- source_checklist_source_checklist_source_checklist_id: autonomous_scheduling_proof_checklist_bb7aed715103
 - source_checklist_source_checklist_source_checklist_status: autonomous_scheduling_proof_blocked
-- source_checklist_source_checklist_source_checklist_source_checklist_id: remote_worker_proof_checklist_efa2874eddfc
+- source_checklist_source_checklist_source_checklist_source_checklist_id: remote_worker_proof_checklist_8e48c98c174c
 - source_checklist_source_checklist_source_checklist_source_checklist_status: remote_worker_proof_blocked
-- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: hosted_dashboard_proof_checklist_251c8c66b06e
+- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: hosted_dashboard_proof_checklist_d4b68c6d6967
 - source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: hosted_dashboard_proof_blocked
-- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: real_cost_tracking_proof_checklist_add11250eddc
+- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: real_cost_tracking_proof_checklist_74e6dfcd60dc
 - source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: real_cost_tracking_proof_blocked
-- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: automatic_retry_proof_checklist_53b42b5a045e
+- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: automatic_retry_proof_checklist_3783eeff5d36
 - source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: automatic_retry_proof_blocked
 
 ## Non-Claims

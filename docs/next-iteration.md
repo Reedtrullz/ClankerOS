@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_416571964fab
+- Packet ID: iteration_3b1d231d78c8
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add evidence ingestion and operator decisions for capability activation contracts.
+Advance the Agent System north-star goal by completing: Add follow-up tasks from capability activation more-evidence decisions.
 
 ## Definition Of Done
 
@@ -65,6 +65,8 @@ Advance the Agent System north-star goal by completing: Add evidence ingestion a
 - `python3 -m agent_os.cli expansion-operator-approval-effect-apply --operator-id operator --selection-note "Apply approved local operator approval effect proposals." --evidence-reference docs/expansion-operator-approval-effect-proposals.md`
 - `python3 -m agent_os.cli capability-activation-tasks`
 - `python3 -m agent_os.cli capability-activation-contracts`
+- `python3 -m agent_os.cli capability-activation-evidence --all --evidence-kind proof_checklist --evidence-reference docs/capability-activation-contracts.md --verification-command "python3 -m agent_os.cli capability-activation-contracts" --verification-status blocked --recorded-by operator --summary "Current activation contracts are present but still missing capability-specific proof."`
+- `python3 -m agent_os.cli capability-activation-decide --operator-id operator --selected-action request_more_evidence --selection-note "Requested capability-specific proof before any activation decision." --evidence-reference docs/capability-activation-evidence.md`
 - `python3 -m agent_os.cli eval`
 - `python3 -m agent_os.cli playbooks`
 - `python3 -m agent_os.cli dashboard`
@@ -138,7 +140,9 @@ Advance the Agent System north-star goal by completing: Add evidence ingestion a
 - operator approval effect proposals: operator_approval_effect_proposals_recorded
 - operator approval effect application: operator_approval_effect_application_already_recorded
 - capability activation tasks: capability_activation_tasks_already_recorded
-- capability activation contracts: capability_activation_contracts_recorded
+- capability activation contracts: capability_activation_contracts_already_recorded
+- capability activation evidence: capability_activation_evidence_already_recorded
+- capability activation decisions: capability_activation_decisions_already_recorded
 - proposed eval candidates: 0
 - active playbooks: 1
 - open stuck-task incidents: 0

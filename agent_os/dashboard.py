@@ -145,6 +145,10 @@ from agent_os.capability_activation_tasks import (
 from agent_os.capability_activation_contracts import (
     render_capability_activation_contract_batch_line,
 )
+from agent_os.capability_activation_evidence import (
+    render_capability_activation_decision_line,
+    render_capability_activation_evidence_batch_line,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -660,6 +664,22 @@ def generate_static_dashboard(root: Path) -> Path:
             capability_activation_contract_batches = (
                 storage.list_recent_capability_activation_contract_batches(limit=1)
             )
+        capability_activation_evidence_batches = []
+        if _table_exists(
+            connection,
+            "capability_activation_evidence_batches",
+        ):
+            capability_activation_evidence_batches = (
+                storage.list_recent_capability_activation_evidence_batches(limit=1)
+            )
+        capability_activation_decisions = []
+        if _table_exists(
+            connection,
+            "capability_activation_decisions",
+        ):
+            capability_activation_decisions = (
+                storage.list_recent_capability_activation_decisions(limit=1)
+            )
 
     statuses = [
         "pending",
@@ -890,6 +910,16 @@ def generate_static_dashboard(root: Path) -> Path:
     latest_capability_activation_contract_batch = (
         capability_activation_contract_batches[0]
         if capability_activation_contract_batches
+        else None
+    )
+    latest_capability_activation_evidence_batch = (
+        capability_activation_evidence_batches[0]
+        if capability_activation_evidence_batches
+        else None
+    )
+    latest_capability_activation_decision = (
+        capability_activation_decisions[0]
+        if capability_activation_decisions
         else None
     )
     eval_after_change_statuses = Counter(
@@ -1400,6 +1430,61 @@ def generate_static_dashboard(root: Path) -> Path:
                 f"- report: {batch.report_path}",
                 "",
                 render_capability_activation_contract_batch_line(batch),
+            ]
+        )
+    else:
+        lines.append("- none")
+
+    lines.extend(
+        [
+            "",
+            "## Capability Activation Evidence",
+            "",
+        ]
+    )
+    if latest_capability_activation_evidence_batch is not None:
+        batch = latest_capability_activation_evidence_batch
+        lines.extend(
+            [
+                f"- status: {batch.status}",
+                f"- contracts_selected: {batch.contract_count}",
+                f"- evidence_records_created: {batch.evidence_record_count}",
+                f"- existing_evidence_records: {batch.existing_evidence_count}",
+                f"- approval_requests_created: {batch.created_approval_request_count}",
+                f"- activation_actions_taken: {batch.activation_action_count}",
+                f"- report: {batch.report_path}",
+                "",
+                render_capability_activation_evidence_batch_line(batch),
+            ]
+        )
+    else:
+        lines.append("- none")
+
+    lines.extend(
+        [
+            "",
+            "## Capability Activation Decisions",
+            "",
+        ]
+    )
+    if latest_capability_activation_decision is not None:
+        decision = latest_capability_activation_decision
+        lines.extend(
+            [
+                f"- status: {decision.status}",
+                f"- operator_id: {decision.operator_id}",
+                f"- selected_action: {decision.selected_action}",
+                f"- contracts_ready: {decision.contract_count}",
+                f"- decisions_recorded: {decision.decision_count}",
+                f"- approved_decisions: {decision.approved_decision_count}",
+                f"- deferred_decisions: {decision.deferred_decision_count}",
+                f"- more_evidence_decisions: {decision.more_evidence_decision_count}",
+                f"- existing_decisions: {decision.existing_decision_count}",
+                f"- approval_requests_created: {decision.created_approval_request_count}",
+                f"- activation_actions_taken: {decision.activation_action_count}",
+                f"- report: {decision.report_path}",
+                "",
+                render_capability_activation_decision_line(decision),
             ]
         )
     else:

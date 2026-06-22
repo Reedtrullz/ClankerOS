@@ -5768,3 +5768,61 @@
   satisfy capability evidence, enable capabilities, promote trust, route work,
   schedule work, start workers, retry work, track spend, run CI, deploy, push,
   open PRs, mark the active goal complete, or mutate external systems.
+
+## 2026-06-22 Capability Activation Evidence And Decisions
+
+- Added local evidence ingestion command:
+  `python3 -m agent_os.cli capability-activation-evidence`.
+- The command reads existing capability activation contracts, writes one
+  `capability_activation_evidence_record` per selected contract, writes
+  per-contract JSON artifacts under `docs/capability-activation-evidence/`,
+  and regenerates `docs/capability-activation-evidence.md`.
+- Added local operator decision command:
+  `python3 -m agent_os.cli capability-activation-decide`.
+- The command records local approve/defer/more-evidence decisions for
+  evidence-bearing contracts and updates contract decision state while keeping
+  capability activation blocked.
+- Initial live evidence batch:
+  `capability_activation_evidence_batch_13cb1b848770`, status
+  `capability_activation_evidence_recorded`, 9 contracts selected, 9 evidence
+  rows created, 0 existing rows, 0 approval requests created, and 0 activation
+  actions taken.
+- Initial live decision row:
+  `capability_activation_decision_f601a69d076e`, status
+  `capability_activation_decisions_recorded`, selected action
+  `request_more_evidence`, 9 contracts ready, 9 decisions recorded, 9
+  more-evidence decisions, 0 approval requests created, and 0 activation
+  actions taken.
+- Final idempotency evidence batch:
+  `capability_activation_evidence_batch_59d5cfbc023e`, status
+  `capability_activation_evidence_already_recorded`, 9 existing evidence
+  records, 0 new records, 0 approval requests created, and 0 activation
+  actions taken.
+- Final idempotency decision row:
+  `capability_activation_decision_7e9a89479c7b`, status
+  `capability_activation_decisions_already_recorded`, 9 existing decisions, 0
+  new decisions, 0 approval requests created, and 0 activation actions taken.
+- Added dashboard visibility under `## Capability Activation Evidence` and
+  `## Capability Activation Decisions`.
+- Updated README About/metadata, suggested-use docs, operating summary,
+  workflow lifecycle, activation-contract tutorial, task queue, generated
+  dashboard, and next iteration packet.
+- Next packet:
+  `Add follow-up tasks from capability activation more-evidence decisions.`
+- Verification evidence:
+  - Red-first focused tests failed before the CLI commands existed.
+  - `python3 -m py_compile agent_os/capability_activation_evidence.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest tests/test_first_milestone.py -k 'capability_activation_evidence or capability_activation_decide or capability_activation_decisions' -q` -> 6 passed, 252 deselected.
+  - `python3 -m pytest tests/test_first_milestone.py -k 'capability_activation_contracts or capability_activation_evidence or capability_activation_decide or capability_activation_decisions' -q` -> 9 passed, 249 deselected.
+  - `python3 -m pytest -q` -> 258 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add capability activation evidence decisions" ...` -> pass as `run_7a274a64c63c`.
+  - Command-gate sweep excluding the already-run full pytest and eval passed
+    50 commands, including idempotent `capability-activation-evidence` and
+    `capability-activation-decide` reruns.
+  - `gh repo view Reedtrullz/ClankerOS --json description,repositoryTopics`
+    read back the intended GitHub About description and topics.
+- Non-claims: evidence and decision recording do not create
+  `approval_requests`, satisfy capability proof, enable capabilities, promote
+  trust, route work, schedule work, start workers, retry work, track spend,
+  run CI, deploy, push, open PRs, mark the active goal complete, or mutate
+  external systems.

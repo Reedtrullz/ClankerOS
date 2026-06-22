@@ -13041,6 +13041,319 @@ def test_capability_activation_contracts_are_idempotent(
     assert len(storage.list_capability_activation_contracts()) == 9
 
 
+def _run_capability_activation_contract_chain(tmp_path: Path, capsys) -> None:
+    _run_operator_approval_effect_application_chain(tmp_path, capsys)
+    assert main(["--root", str(tmp_path), "capability-activation-tasks"]) == 0
+    assert main(["--root", str(tmp_path), "capability-activation-contracts"]) == 0
+    capsys.readouterr()
+
+
+def _capability_activation_evidence_command(tmp_path: Path) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-evidence",
+        "--all",
+        "--evidence-kind",
+        "proof_checklist",
+        "--evidence-reference",
+        "docs/capability-activation-contracts.md",
+        "--verification-command",
+        "python3 -m agent_os.cli capability-activation-contracts",
+        "--verification-status",
+        "blocked",
+        "--recorded-by",
+        "operator",
+        "--summary",
+        "Current activation contracts are present but still missing capability-specific proof.",
+    ]
+
+
+def test_capability_activation_evidence_requires_contracts(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(_capability_activation_evidence_command(tmp_path)) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_evidence: "
+        "capability_activation_evidence_no_contracts"
+    ) in output
+    assert "contracts_selected: 0" in output
+    assert "evidence_records_created: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batches = storage.list_recent_capability_activation_evidence_batches()
+    assert batches[0].status == "capability_activation_evidence_no_contracts"
+    assert batches[0].evidence_record_count == 0
+    assert storage.list_capability_activation_evidence_records() == []
+    assert storage.list_recent_approval_requests() == []
+
+    report = (tmp_path / "docs" / "capability-activation-evidence.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Capability Activation Evidence" in report
+    assert "- status: capability_activation_evidence_no_contracts" in report
+    assert "- Does not create approval_requests rows." in report
+    assert "- Does not enable capabilities." in report
+
+
+def test_capability_activation_evidence_records_operator_supplied_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_capability_activation_contract_chain(tmp_path, capsys)
+
+    assert main(_capability_activation_evidence_command(tmp_path)) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_evidence: "
+        "capability_activation_evidence_recorded"
+    ) in output
+    assert "contracts_selected: 9" in output
+    assert "evidence_records_created: 9" in output
+    assert "existing_evidence_records: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+    assert "report: docs/capability-activation-evidence.md" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batches = storage.list_recent_capability_activation_evidence_batches()
+    batch = batches[0]
+    assert batch.status == "capability_activation_evidence_recorded"
+    assert batch.contract_count == 9
+    assert batch.evidence_record_count == 9
+    assert batch.existing_evidence_count == 0
+    assert batch.created_approval_request_count == 0
+    assert batch.activation_action_count == 0
+    assert len(batch.created_evidence_ids) == 9
+
+    records = storage.list_capability_activation_evidence_records()
+    assert len(records) == 9
+    assert {record.evidence_kind for record in records} == {"proof_checklist"}
+    assert {record.verification_status for record in records} == {"blocked"}
+    assert {record.recorded_by for record in records} == {"operator"}
+    assert {record.activation_action_count for record in records} == {0}
+    assert {record.created_approval_request_count for record in records} == {0}
+    assert all(Path(record.evidence_path).exists() for record in records)
+
+    sample_evidence = json.loads(Path(records[0].evidence_path).read_text())
+    assert sample_evidence["network_actions_taken"] == 0
+    assert sample_evidence["activation_actions_taken"] == 0
+    assert "Does not enable capabilities." in sample_evidence["non_claims"]
+
+    contracts = storage.list_capability_activation_contracts()
+    assert {contract.status for contract in contracts} == {"evidence_submitted"}
+    assert {
+        contract.approval_status for contract in contracts
+    } == {"operator_decision_pending"}
+    assert {contract.activation_allowed for contract in contracts} == {False}
+    assert storage.list_recent_approval_requests() == []
+
+    report = (tmp_path / "docs" / "capability-activation-evidence.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Capability Activation Evidence" in report
+    assert "- status: capability_activation_evidence_recorded" in report
+    assert "- evidence_records_created: 9" in report
+    assert "verification_status=blocked" in report
+    assert "- Does not create approval_requests rows." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Capability Activation Evidence" in dashboard
+    assert "- status: capability_activation_evidence_recorded" in dashboard
+    assert "- evidence_records_created: 9" in dashboard
+    assert batch.id in dashboard
+
+
+def test_capability_activation_evidence_is_idempotent(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_capability_activation_contract_chain(tmp_path, capsys)
+
+    command = _capability_activation_evidence_command(tmp_path)
+    assert main(command) == 0
+    capsys.readouterr()
+
+    assert main(command) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_evidence: "
+        "capability_activation_evidence_already_recorded"
+    ) in output
+    assert "contracts_selected: 9" in output
+    assert "evidence_records_created: 0" in output
+    assert "existing_evidence_records: 9" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batches = storage.list_recent_capability_activation_evidence_batches(limit=2)
+    assert batches[0].status == "capability_activation_evidence_already_recorded"
+    assert batches[0].evidence_record_count == 0
+    assert batches[0].existing_evidence_count == 9
+    assert batches[1].status == "capability_activation_evidence_recorded"
+    assert len(storage.list_capability_activation_evidence_records()) == 9
+
+
+def _capability_activation_decision_command(tmp_path: Path) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-decide",
+        "--operator-id",
+        "operator",
+        "--selected-action",
+        "request_more_evidence",
+        "--selection-note",
+        "Requested capability-specific proof before any activation decision.",
+        "--evidence-reference",
+        "docs/capability-activation-evidence.md",
+    ]
+
+
+def test_capability_activation_decisions_require_evidence(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_capability_activation_contract_chain(tmp_path, capsys)
+
+    assert main(_capability_activation_decision_command(tmp_path)) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_decide: "
+        "capability_activation_decisions_no_evidence"
+    ) in output
+    assert "contracts_ready: 0" in output
+    assert "decisions_recorded: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    decisions = storage.list_recent_capability_activation_decisions()
+    assert decisions[0].status == "capability_activation_decisions_no_evidence"
+    assert decisions[0].decision_count == 0
+    assert storage.list_recent_approval_requests() == []
+
+
+def test_capability_activation_decide_records_more_evidence_decisions(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_capability_activation_contract_chain(tmp_path, capsys)
+    assert main(_capability_activation_evidence_command(tmp_path)) == 0
+    capsys.readouterr()
+
+    assert main(_capability_activation_decision_command(tmp_path)) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_decide: "
+        "capability_activation_decisions_recorded"
+    ) in output
+    assert "selected_action: request_more_evidence" in output
+    assert "contracts_ready: 9" in output
+    assert "decisions_recorded: 9" in output
+    assert "approved_decisions: 0" in output
+    assert "deferred_decisions: 0" in output
+    assert "more_evidence_decisions: 9" in output
+    assert "approval_requests_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+    assert "report: docs/capability-activation-decisions.md" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    decision = storage.list_recent_capability_activation_decisions()[0]
+    assert decision.status == "capability_activation_decisions_recorded"
+    assert decision.selected_action == "request_more_evidence"
+    assert decision.contract_count == 9
+    assert decision.decision_count == 9
+    assert decision.approved_decision_count == 0
+    assert decision.deferred_decision_count == 0
+    assert decision.more_evidence_decision_count == 9
+    assert decision.created_approval_request_count == 0
+    assert decision.activation_action_count == 0
+    assert len(decision.decided_contract_ids) == 9
+
+    contracts = storage.list_capability_activation_contracts()
+    assert {contract.status for contract in contracts} == {"more_evidence_requested"}
+    assert {
+        contract.approval_status for contract in contracts
+    } == {"more_evidence_requested"}
+    assert {contract.activation_allowed for contract in contracts} == {False}
+    assert storage.list_recent_approval_requests() == []
+
+    report = (tmp_path / "docs" / "capability-activation-decisions.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Capability Activation Decisions" in report
+    assert "- status: capability_activation_decisions_recorded" in report
+    assert "- selected_action: request_more_evidence" in report
+    assert "- decisions_recorded: 9" in report
+    assert "- more_evidence_decisions: 9" in report
+    assert "- approval_requests_created: 0" in report
+    assert "- activation_actions_taken: 0" in report
+    assert "status=more_evidence_requested" in report
+    assert "- Does not enable capabilities." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Capability Activation Decisions" in dashboard
+    assert "- status: capability_activation_decisions_recorded" in dashboard
+    assert "- decisions_recorded: 9" in dashboard
+    assert decision.id in dashboard
+
+
+def test_capability_activation_decisions_are_idempotent(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_capability_activation_contract_chain(tmp_path, capsys)
+    assert main(_capability_activation_evidence_command(tmp_path)) == 0
+    capsys.readouterr()
+
+    command = _capability_activation_decision_command(tmp_path)
+    assert main(command) == 0
+    capsys.readouterr()
+
+    assert main(command) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_decide: "
+        "capability_activation_decisions_already_recorded"
+    ) in output
+    assert "contracts_ready: 0" in output
+    assert "decisions_recorded: 0" in output
+    assert "existing_decisions: 9" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    decisions = storage.list_recent_capability_activation_decisions(limit=2)
+    assert decisions[0].status == "capability_activation_decisions_already_recorded"
+    assert decisions[0].decision_count == 0
+    assert decisions[0].existing_decision_count == 9
+    assert decisions[1].status == "capability_activation_decisions_recorded"
+    assert len(storage.list_capability_activation_evidence_records()) == 9
+
+
 def test_hosted_dashboard_proof_checklist_blocks_blocked_real_cost_tracking_proof(
     tmp_path: Path,
     capsys,

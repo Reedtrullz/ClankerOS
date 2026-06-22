@@ -294,6 +294,28 @@ It must still report `approval_requests_created: 0` and
 `activation_actions_taken: 0`; it does not create `approval_requests` rows or
 enable capabilities.
 
+Attach local evidence and record the current operator decision:
+
+```bash
+python3 -m agent_os.cli capability-activation-evidence \
+  --all \
+  --evidence-kind proof_checklist \
+  --evidence-reference docs/capability-activation-contracts.md \
+  --verification-command "python3 -m agent_os.cli capability-activation-contracts" \
+  --verification-status blocked \
+  --recorded-by operator \
+  --summary "Current activation contracts are present but still missing capability-specific proof."
+python3 -m agent_os.cli capability-activation-decide \
+  --operator-id operator \
+  --selected-action request_more_evidence \
+  --selection-note "Requested capability-specific proof before any activation decision." \
+  --evidence-reference docs/capability-activation-evidence.md
+```
+
+This records local evidence rows and a local decision state for each contract.
+It does not approve capability activation. In the current blocked proof state,
+the safe decision is `request_more_evidence`.
+
 ## When To Commit And Push
 
 Commit when:
@@ -312,8 +334,8 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 Good next slices now favor capability-specific guards after local application
 records exist:
 
-- evidence ingestion and operator decisions for capability activation
-  contracts;
+- follow-up task generation from capability activation more-evidence
+  decisions;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;

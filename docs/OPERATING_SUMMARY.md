@@ -104,6 +104,12 @@ Core layers for the bootstrap:
   and `blocked_until_evidence_verified` while keeping
   `approval_requests_created=0`, `activation_actions_taken=0`, and
   `activation_allowed=false`.
+- Capability activation evidence and decisions: operators can attach local
+  evidence rows and JSON artifacts to activation contracts, then record local
+  approve/defer/more-evidence decisions. The safe current decision path records
+  `request_more_evidence` for blocked proofs while keeping
+  `approval_requests_created=0`, `activation_actions_taken=0`, and
+  `activation_allowed=false`.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON
@@ -664,6 +670,15 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   command writes `docs/capability-activation-contracts.md`, records one
   blocked contract per task, and keeps `approval_requests_created: 0`,
   `activation_actions_taken: 0`, and `activation_allowed=false`.
+- Capability activation evidence: available through
+  `python3 -m agent_os.cli capability-activation-evidence` after contracts
+  exist. The command writes `docs/capability-activation-evidence.md`, one JSON
+  artifact per selected contract, and keeps `approval_requests_created: 0` and
+  `activation_actions_taken: 0`.
+- Capability activation decisions: available through
+  `python3 -m agent_os.cli capability-activation-decide` after evidence exists.
+  The command writes `docs/capability-activation-decisions.md`, updates
+  contract decision state, and keeps capability activation blocked.
 - Eval candidate listing: available through
   `python3 -m agent_os.cli eval-candidates` and mirrored into
   `docs/dashboard.md`.

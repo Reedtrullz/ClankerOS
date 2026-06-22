@@ -1599,6 +1599,65 @@ class CapabilityActivationContractBatch:
     created_at: str
 
 
+@dataclass(frozen=True)
+class CapabilityActivationEvidenceRecord:
+    id: str
+    contract_id: str
+    task_id: str
+    goal_id: str
+    project_id: str
+    capability: str
+    source_effect_id: str
+    evidence_kind: str
+    evidence_reference: str
+    verification_command: str
+    verification_status: str
+    recorded_by: str
+    summary: str
+    status: str
+    evidence_path: str
+    result_json: dict[str, object]
+    idempotency_key: str
+    created_approval_request_count: int
+    activation_action_count: int
+    created_at: str
+
+
+@dataclass(frozen=True)
+class CapabilityActivationEvidenceBatch:
+    id: str
+    status: str
+    contract_count: int
+    evidence_record_count: int
+    existing_evidence_count: int
+    created_approval_request_count: int
+    activation_action_count: int
+    created_evidence_ids: list[str]
+    report_path: str
+    created_at: str
+
+
+@dataclass(frozen=True)
+class CapabilityActivationDecision:
+    id: str
+    status: str
+    operator_id: str
+    selected_action: str
+    selection_note: str
+    evidence_reference: str
+    contract_count: int
+    decision_count: int
+    approved_decision_count: int
+    deferred_decision_count: int
+    more_evidence_decision_count: int
+    existing_decision_count: int
+    created_approval_request_count: int
+    activation_action_count: int
+    decided_contract_ids: list[str]
+    report_path: str
+    created_at: str
+
+
 SAFE_AUTO_TASK_TYPES = {"write_goal_artifact", "record_learning"}
 SAFE_AUTO_RISK_LEVELS = {"low"}
 APPROVAL_WAITING_STATUS = "waiting_approval"
@@ -3060,6 +3119,62 @@ class Storage:
                     created_approval_request_count integer not null,
                     activation_action_count integer not null,
                     created_contract_ids text not null,
+                    report_path text not null,
+                    created_at text not null
+                );
+
+                create table if not exists capability_activation_evidence_records (
+                    id text primary key,
+                    contract_id text not null,
+                    task_id text not null,
+                    goal_id text not null,
+                    project_id text not null,
+                    capability text not null,
+                    source_effect_id text not null,
+                    evidence_kind text not null,
+                    evidence_reference text not null,
+                    verification_command text not null,
+                    verification_status text not null,
+                    recorded_by text not null,
+                    summary text not null,
+                    status text not null,
+                    evidence_path text not null,
+                    result_json text not null,
+                    idempotency_key text not null unique,
+                    created_approval_request_count integer not null,
+                    activation_action_count integer not null,
+                    created_at text not null
+                );
+
+                create table if not exists capability_activation_evidence_batches (
+                    id text primary key,
+                    status text not null,
+                    contract_count integer not null,
+                    evidence_record_count integer not null,
+                    existing_evidence_count integer not null,
+                    created_approval_request_count integer not null,
+                    activation_action_count integer not null,
+                    created_evidence_ids text not null,
+                    report_path text not null,
+                    created_at text not null
+                );
+
+                create table if not exists capability_activation_decisions (
+                    id text primary key,
+                    status text not null,
+                    operator_id text not null,
+                    selected_action text not null,
+                    selection_note text not null,
+                    evidence_reference text not null,
+                    contract_count integer not null,
+                    decision_count integer not null,
+                    approved_decision_count integer not null,
+                    deferred_decision_count integer not null,
+                    more_evidence_decision_count integer not null,
+                    existing_decision_count integer not null,
+                    created_approval_request_count integer not null,
+                    activation_action_count integer not null,
+                    decided_contract_ids text not null,
                     report_path text not null,
                     created_at text not null
                 );
@@ -9572,6 +9687,346 @@ class Storage:
             for row in rows
         ]
 
+    def get_capability_activation_contract(
+        self,
+        contract_id: str,
+    ) -> CapabilityActivationContract | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                select * from capability_activation_contracts
+                where id = ?
+                """,
+                (contract_id,),
+            ).fetchone()
+        if row is None:
+            return None
+        return self._row_to_capability_activation_contract(row)
+
+    def record_capability_activation_evidence(
+        self,
+        *,
+        contract_id: str,
+        task_id: str,
+        goal_id: str,
+        project_id: str,
+        capability: str,
+        source_effect_id: str,
+        evidence_kind: str,
+        evidence_reference: str,
+        verification_command: str,
+        verification_status: str,
+        recorded_by: str,
+        summary: str,
+        status: str,
+        evidence_path: str,
+        result_json: dict[str, object],
+        idempotency_key: str,
+        created_approval_request_count: int,
+        activation_action_count: int,
+    ) -> CapabilityActivationEvidenceRecord:
+        evidence_id = new_id("capability_activation_evidence")
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into capability_activation_evidence_records (
+                    id, contract_id, task_id, goal_id, project_id, capability,
+                    source_effect_id, evidence_kind, evidence_reference,
+                    verification_command, verification_status, recorded_by,
+                    summary, status, evidence_path, result_json,
+                    idempotency_key, created_approval_request_count,
+                    activation_action_count, created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    evidence_id,
+                    contract_id,
+                    task_id,
+                    goal_id,
+                    project_id,
+                    capability,
+                    source_effect_id,
+                    evidence_kind,
+                    evidence_reference,
+                    verification_command,
+                    verification_status,
+                    recorded_by,
+                    summary,
+                    status,
+                    evidence_path,
+                    _json_dumps(result_json),
+                    idempotency_key,
+                    created_approval_request_count,
+                    activation_action_count,
+                    created_at,
+                ),
+            )
+            connection.execute(
+                """
+                update capability_activation_contracts
+                set status = ?, approval_status = ?, updated_at = ?
+                where id = ?
+                """,
+                (
+                    "evidence_submitted",
+                    "operator_decision_pending",
+                    created_at,
+                    contract_id,
+                ),
+            )
+        return CapabilityActivationEvidenceRecord(
+            id=evidence_id,
+            contract_id=contract_id,
+            task_id=task_id,
+            goal_id=goal_id,
+            project_id=project_id,
+            capability=capability,
+            source_effect_id=source_effect_id,
+            evidence_kind=evidence_kind,
+            evidence_reference=evidence_reference,
+            verification_command=verification_command,
+            verification_status=verification_status,
+            recorded_by=recorded_by,
+            summary=summary,
+            status=status,
+            evidence_path=evidence_path,
+            result_json=result_json,
+            idempotency_key=idempotency_key,
+            created_approval_request_count=created_approval_request_count,
+            activation_action_count=activation_action_count,
+            created_at=created_at,
+        )
+
+    def get_capability_activation_evidence_by_idempotency_key(
+        self,
+        idempotency_key: str,
+    ) -> CapabilityActivationEvidenceRecord | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                select * from capability_activation_evidence_records
+                where idempotency_key = ?
+                """,
+                (idempotency_key,),
+            ).fetchone()
+        if row is None:
+            return None
+        return self._row_to_capability_activation_evidence_record(row)
+
+    def list_capability_activation_evidence_records(
+        self,
+    ) -> list[CapabilityActivationEvidenceRecord]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from capability_activation_evidence_records
+                order by created_at asc, id asc
+                """
+            ).fetchall()
+        return [
+            self._row_to_capability_activation_evidence_record(row)
+            for row in rows
+        ]
+
+    def list_recent_capability_activation_evidence_records(
+        self,
+        limit: int = 20,
+    ) -> list[CapabilityActivationEvidenceRecord]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from capability_activation_evidence_records
+                order by created_at desc, id desc
+                limit ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [
+            self._row_to_capability_activation_evidence_record(row)
+            for row in rows
+        ]
+
+    def record_capability_activation_evidence_batch(
+        self,
+        *,
+        status: str,
+        contract_count: int,
+        evidence_record_count: int,
+        existing_evidence_count: int,
+        created_approval_request_count: int,
+        activation_action_count: int,
+        created_evidence_ids: list[str],
+        report_path: str,
+    ) -> CapabilityActivationEvidenceBatch:
+        batch_id = new_id("capability_activation_evidence_batch")
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into capability_activation_evidence_batches (
+                    id, status, contract_count, evidence_record_count,
+                    existing_evidence_count, created_approval_request_count,
+                    activation_action_count, created_evidence_ids, report_path,
+                    created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    batch_id,
+                    status,
+                    contract_count,
+                    evidence_record_count,
+                    existing_evidence_count,
+                    created_approval_request_count,
+                    activation_action_count,
+                    _json_dumps(created_evidence_ids),
+                    report_path,
+                    created_at,
+                ),
+            )
+        return CapabilityActivationEvidenceBatch(
+            id=batch_id,
+            status=status,
+            contract_count=contract_count,
+            evidence_record_count=evidence_record_count,
+            existing_evidence_count=existing_evidence_count,
+            created_approval_request_count=created_approval_request_count,
+            activation_action_count=activation_action_count,
+            created_evidence_ids=created_evidence_ids,
+            report_path=report_path,
+            created_at=created_at,
+        )
+
+    def list_recent_capability_activation_evidence_batches(
+        self,
+        limit: int = 5,
+    ) -> list[CapabilityActivationEvidenceBatch]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from capability_activation_evidence_batches
+                order by created_at desc, id desc
+                limit ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [
+            self._row_to_capability_activation_evidence_batch(row)
+            for row in rows
+        ]
+
+    def record_capability_activation_decision(
+        self,
+        *,
+        status: str,
+        operator_id: str,
+        selected_action: str,
+        selection_note: str,
+        evidence_reference: str,
+        contract_count: int,
+        decision_count: int,
+        approved_decision_count: int,
+        deferred_decision_count: int,
+        more_evidence_decision_count: int,
+        existing_decision_count: int,
+        created_approval_request_count: int,
+        activation_action_count: int,
+        decided_contract_ids: list[str],
+        report_path: str,
+    ) -> CapabilityActivationDecision:
+        decision_id = new_id("capability_activation_decision")
+        created_at = utc_now()
+        status_by_action = {
+            "approve": ("approved_pending_activation", "approved_local_only"),
+            "defer": ("deferred_by_operator", "deferred"),
+            "request_more_evidence": (
+                "more_evidence_requested",
+                "more_evidence_requested",
+            ),
+        }
+        contract_status, approval_status = status_by_action[selected_action]
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into capability_activation_decisions (
+                    id, status, operator_id, selected_action, selection_note,
+                    evidence_reference, contract_count, decision_count,
+                    approved_decision_count, deferred_decision_count,
+                    more_evidence_decision_count, existing_decision_count,
+                    created_approval_request_count, activation_action_count,
+                    decided_contract_ids, report_path, created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    decision_id,
+                    status,
+                    operator_id,
+                    selected_action,
+                    selection_note,
+                    evidence_reference,
+                    contract_count,
+                    decision_count,
+                    approved_decision_count,
+                    deferred_decision_count,
+                    more_evidence_decision_count,
+                    existing_decision_count,
+                    created_approval_request_count,
+                    activation_action_count,
+                    _json_dumps(decided_contract_ids),
+                    report_path,
+                    created_at,
+                ),
+            )
+            for contract_id in decided_contract_ids:
+                connection.execute(
+                    """
+                    update capability_activation_contracts
+                    set status = ?, approval_status = ?, updated_at = ?
+                    where id = ?
+                    """,
+                    (contract_status, approval_status, created_at, contract_id),
+                )
+        return CapabilityActivationDecision(
+            id=decision_id,
+            status=status,
+            operator_id=operator_id,
+            selected_action=selected_action,
+            selection_note=selection_note,
+            evidence_reference=evidence_reference,
+            contract_count=contract_count,
+            decision_count=decision_count,
+            approved_decision_count=approved_decision_count,
+            deferred_decision_count=deferred_decision_count,
+            more_evidence_decision_count=more_evidence_decision_count,
+            existing_decision_count=existing_decision_count,
+            created_approval_request_count=created_approval_request_count,
+            activation_action_count=activation_action_count,
+            decided_contract_ids=decided_contract_ids,
+            report_path=report_path,
+            created_at=created_at,
+        )
+
+    def list_recent_capability_activation_decisions(
+        self,
+        limit: int = 5,
+    ) -> list[CapabilityActivationDecision]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from capability_activation_decisions
+                order by created_at desc, id desc
+                limit ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [
+            self._row_to_capability_activation_decision(row)
+            for row in rows
+        ]
+
     def get_real_cost_tracking_proof_checklist(
         self,
         checklist_id: str | None,
@@ -13033,6 +13488,74 @@ class Storage:
             created_approval_request_count=row["created_approval_request_count"],
             activation_action_count=row["activation_action_count"],
             created_contract_ids=_json_loads(row["created_contract_ids"], []),
+            report_path=row["report_path"],
+            created_at=row["created_at"],
+        )
+
+    def _row_to_capability_activation_evidence_record(
+        self,
+        row: sqlite3.Row,
+    ) -> CapabilityActivationEvidenceRecord:
+        return CapabilityActivationEvidenceRecord(
+            id=row["id"],
+            contract_id=row["contract_id"],
+            task_id=row["task_id"],
+            goal_id=row["goal_id"],
+            project_id=row["project_id"],
+            capability=row["capability"],
+            source_effect_id=row["source_effect_id"],
+            evidence_kind=row["evidence_kind"],
+            evidence_reference=row["evidence_reference"],
+            verification_command=row["verification_command"],
+            verification_status=row["verification_status"],
+            recorded_by=row["recorded_by"],
+            summary=row["summary"],
+            status=row["status"],
+            evidence_path=row["evidence_path"],
+            result_json=_json_loads(row["result_json"], {}),
+            idempotency_key=row["idempotency_key"],
+            created_approval_request_count=row["created_approval_request_count"],
+            activation_action_count=row["activation_action_count"],
+            created_at=row["created_at"],
+        )
+
+    def _row_to_capability_activation_evidence_batch(
+        self,
+        row: sqlite3.Row,
+    ) -> CapabilityActivationEvidenceBatch:
+        return CapabilityActivationEvidenceBatch(
+            id=row["id"],
+            status=row["status"],
+            contract_count=row["contract_count"],
+            evidence_record_count=row["evidence_record_count"],
+            existing_evidence_count=row["existing_evidence_count"],
+            created_approval_request_count=row["created_approval_request_count"],
+            activation_action_count=row["activation_action_count"],
+            created_evidence_ids=_json_loads(row["created_evidence_ids"], []),
+            report_path=row["report_path"],
+            created_at=row["created_at"],
+        )
+
+    def _row_to_capability_activation_decision(
+        self,
+        row: sqlite3.Row,
+    ) -> CapabilityActivationDecision:
+        return CapabilityActivationDecision(
+            id=row["id"],
+            status=row["status"],
+            operator_id=row["operator_id"],
+            selected_action=row["selected_action"],
+            selection_note=row["selection_note"],
+            evidence_reference=row["evidence_reference"],
+            contract_count=row["contract_count"],
+            decision_count=row["decision_count"],
+            approved_decision_count=row["approved_decision_count"],
+            deferred_decision_count=row["deferred_decision_count"],
+            more_evidence_decision_count=row["more_evidence_decision_count"],
+            existing_decision_count=row["existing_decision_count"],
+            created_approval_request_count=row["created_approval_request_count"],
+            activation_action_count=row["activation_action_count"],
+            decided_contract_ids=_json_loads(row["decided_contract_ids"], []),
             report_path=row["report_path"],
             created_at=row["created_at"],
         )

@@ -186,6 +186,12 @@ from agent_os.capability_activation_contracts import (
     render_capability_activation_contract_batch_line,
     write_capability_activation_contracts,
 )
+from agent_os.capability_activation_evidence import (
+    decide_capability_activation_contracts,
+    record_capability_activation_evidence,
+    render_capability_activation_decision_line,
+    render_capability_activation_evidence_batch_line,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -668,6 +674,37 @@ def build_parser() -> argparse.ArgumentParser:
         "capability-activation-contracts",
         help="Record evidence and approval contracts for pending activation-gate tasks.",
     )
+    activation_evidence = subparsers.add_parser(
+        "capability-activation-evidence",
+        help="Attach operator-supplied evidence to capability activation contracts.",
+    )
+    activation_evidence_target = activation_evidence.add_mutually_exclusive_group(
+        required=True,
+    )
+    activation_evidence_target.add_argument("--all", action="store_true")
+    activation_evidence_target.add_argument("--contract-id")
+    activation_evidence.add_argument("--evidence-kind", required=True)
+    activation_evidence.add_argument("--evidence-reference", required=True)
+    activation_evidence.add_argument("--verification-command", required=True)
+    activation_evidence.add_argument(
+        "--verification-status",
+        required=True,
+        choices=["pass", "fail", "blocked", "missing", "manual"],
+    )
+    activation_evidence.add_argument("--recorded-by", default="operator")
+    activation_evidence.add_argument("--summary", required=True)
+    activation_decide = subparsers.add_parser(
+        "capability-activation-decide",
+        help="Record operator decisions for evidence-bearing activation contracts.",
+    )
+    activation_decide.add_argument("--operator-id", required=True)
+    activation_decide.add_argument(
+        "--selected-action",
+        required=True,
+        choices=["approve", "defer", "request_more_evidence"],
+    )
+    activation_decide.add_argument("--selection-note", required=True)
+    activation_decide.add_argument("--evidence-reference", required=True)
 
     approve = subparsers.add_parser("approve", help="Approve a pending local task request.")
     approve.add_argument("approval_id")
@@ -2625,6 +2662,60 @@ def main(argv: list[str] | None = None) -> int:
                 f"status={contract.status} task={contract.task_id} "
                 f"approval_boundary={contract.approval_boundary}"
             )
+        return 0
+
+    if args.command == "capability-activation-evidence":
+        AgentSystem(root).initialize()
+        report_path, batch, created_records, _existing_records, _contracts = (
+            record_capability_activation_evidence(
+                root,
+                contract_id=args.contract_id,
+                all_contracts=args.all,
+                evidence_kind=args.evidence_kind,
+                evidence_reference=args.evidence_reference,
+                verification_command=args.verification_command,
+                verification_status=args.verification_status,
+                recorded_by=args.recorded_by,
+                summary=args.summary,
+            )
+        )
+        print(f"capability_activation_evidence: {batch.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"contracts_selected: {batch.contract_count}")
+        print(f"evidence_records_created: {batch.evidence_record_count}")
+        print(f"existing_evidence_records: {batch.existing_evidence_count}")
+        print(f"approval_requests_created: {batch.created_approval_request_count}")
+        print(f"activation_actions_taken: {batch.activation_action_count}")
+        print(render_capability_activation_evidence_batch_line(batch).removeprefix("- "))
+        for record in created_records:
+            print(
+                f"evidence={record.id} capability={record.capability} "
+                f"contract={record.contract_id} verification_status={record.verification_status}"
+            )
+        return 0
+
+    if args.command == "capability-activation-decide":
+        AgentSystem(root).initialize()
+        report_path, decision, _decided_contracts = decide_capability_activation_contracts(
+            root,
+            operator_id=args.operator_id,
+            selected_action=args.selected_action,
+            selection_note=args.selection_note,
+            evidence_reference=args.evidence_reference,
+        )
+        print(f"capability_activation_decide: {decision.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"operator_id: {decision.operator_id}")
+        print(f"selected_action: {decision.selected_action}")
+        print(f"contracts_ready: {decision.contract_count}")
+        print(f"decisions_recorded: {decision.decision_count}")
+        print(f"approved_decisions: {decision.approved_decision_count}")
+        print(f"deferred_decisions: {decision.deferred_decision_count}")
+        print(f"more_evidence_decisions: {decision.more_evidence_decision_count}")
+        print(f"existing_decisions: {decision.existing_decision_count}")
+        print(f"approval_requests_created: {decision.created_approval_request_count}")
+        print(f"activation_actions_taken: {decision.activation_action_count}")
+        print(render_capability_activation_decision_line(decision).removeprefix("- "))
         return 0
 
     if args.command == "approve":
