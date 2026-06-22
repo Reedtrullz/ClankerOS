@@ -1,12 +1,12 @@
 # Expansion Operator Approval Schema Migration Approval Request
 
-- id: expansion_operator_approval_schema_migration_approval_request_1bcc87e59059
+- id: expansion_operator_approval_schema_migration_approval_request_9621b0d4e371
 - status: operator_approval_schema_migration_approval_required
-- source_plan: expansion_operator_approval_schema_migration_plan_230532bbadd3
+- source_plan: expansion_operator_approval_schema_migration_plan_642275787265
 - source_status: operator_approval_schema_migration_plan_ready
-- source_decision: expansion_operator_approval_schema_decision_20d31b1c6e4f
+- source_decision: expansion_operator_approval_schema_decision_53d4b6519d47
 - source_decision_status: approval_schema_decision_ready
-- source_review: expansion_operator_approval_request_review_9f730b6a62fb
+- source_review: expansion_operator_approval_request_review_ba7c3faeebc5
 - source_review_status: approval_request_schema_review_required
 - target_table: operator_approval_requests
 - planned_columns: 26
@@ -25,7 +25,7 @@
 - existing_approval_requests: 0
 - recommended_next_step: operator_approval_schema_migration_operator_decision_required
 - report_path: docs/expansion-operator-approval-schema-migration-approval-request.md
-- created_at: 2026-06-22T15:51:23.732007+00:00
+- created_at: 2026-06-22T16:07:30.222667+00:00
 
 ## Approval Items
 

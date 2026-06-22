@@ -5687,3 +5687,42 @@
   rows, enable capabilities, promote trust, route work, schedule work, start
   workers, retry work, track spend, run CI, deploy, push, open PRs, mark the
   active goal complete, or mutate external systems.
+
+## 2026-06-22 Capability Activation Tasks
+
+- Added local task materialization command:
+  `python3 -m agent_os.cli capability-activation-tasks`.
+- The command reads applied `operator_capability_proposal` effects and creates
+  one pending high-risk `capability_activation_task` per capability, linked to
+  the source effect and source application evidence.
+- Initial live task batch:
+  `capability_activation_task_batch_5fc10f9327a5`, status
+  `capability_activation_tasks_recorded`, 9 applied capability effects, 9
+  pending activation tasks, 0 existing activation tasks, and 0 activation
+  actions taken.
+- Final idempotency verification batch:
+  `capability_activation_task_batch_bf62744d45f5`, status
+  `capability_activation_tasks_already_recorded`, 9 applied capability
+  effects, 0 new tasks, 9 existing activation tasks, and 0 activation actions
+  taken.
+- The pending task capabilities are hosted dashboard, remote workers,
+  autonomous scheduling, browser/desktop adapters, CI/deploy proof, budget
+  enforcement, trust promotion, automatic retries, and real cost tracking.
+- Added dashboard visibility under `## Capability Activation Tasks`.
+- Updated README, suggested-use docs, operating summary, tutorial docs, task
+  queue, generated dashboard, and next iteration packet.
+- Next packet:
+  `Add capability-specific evidence and approval contracts for activation tasks.`
+- Verification evidence:
+  - Red-first focused tests failed before the CLI command existed.
+  - `python3 -m py_compile agent_os/capability_activation_tasks.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'capability_activation_tasks'` -> 3 passed, 246 deselected.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'operator_approval_effect_apply or capability_activation_tasks or operator_approval_effect_proposals'` -> 9 passed, 240 deselected.
+  - `python3 -m pytest -q` -> 249 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add capability activation tasks" ...` -> pass as `run_40790f144c91`.
+  - Full command-gate sweep from `sweep-stuck` through dashboard -> passed,
+    including `capability-activation-tasks` idempotency.
+- Non-claims: activation task creation does not enable capabilities, create
+  legacy `approval_requests` rows, promote trust, route work, schedule work,
+  start workers, retry work, track spend, run CI, deploy, push, open PRs, mark
+  the active goal complete, or mutate external systems.

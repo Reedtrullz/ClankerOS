@@ -1546,6 +1546,22 @@ class OperatorApprovalEffectApplication:
     created_at: str
 
 
+@dataclass(frozen=True)
+class CapabilityActivationTaskBatch:
+    id: str
+    status: str
+    source_application_id: str
+    goal_id: str
+    applied_capability_effect_count: int
+    task_count: int
+    existing_task_count: int
+    activation_action_count: int
+    created_task_ids: list[str]
+    source_effect_ids: list[str]
+    report_path: str
+    created_at: str
+
+
 SAFE_AUTO_TASK_TYPES = {"write_goal_artifact", "record_learning"}
 SAFE_AUTO_RISK_LEVELS = {"low"}
 APPROVAL_WAITING_STATUS = "waiting_approval"
@@ -2961,6 +2977,21 @@ class Storage:
                     created_at text not null
                 );
 
+                create table if not exists capability_activation_task_batches (
+                    id text primary key,
+                    status text not null,
+                    source_application_id text not null,
+                    goal_id text not null,
+                    applied_capability_effect_count integer not null,
+                    task_count integer not null,
+                    existing_task_count integer not null,
+                    activation_action_count integer not null,
+                    created_task_ids text not null,
+                    source_effect_ids text not null,
+                    report_path text not null,
+                    created_at text not null
+                );
+
                 create table if not exists steering_reviews (
                     id text primary key,
                     goal_id text not null,
@@ -3050,6 +3081,30 @@ class Storage:
         goal_id = new_id("goal")
         now = utc_now()
         with self._connect() as connection:
+            connection.execute(
+                """
+                insert into goals (id, project_id, description, status, created_at, updated_at)
+                values (?, ?, ?, ?, ?, ?)
+                """,
+                (goal_id, project_id, description, "accepted", now, now),
+            )
+        return goal_id
+
+    def get_or_create_goal(self, project_id: str, description: str) -> str:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                select id from goals
+                where project_id = ? and description = ?
+                order by created_at asc, id asc
+                limit 1
+                """,
+                (project_id, description),
+            ).fetchone()
+            if row is not None:
+                return row["id"]
+            goal_id = new_id("goal")
+            now = utc_now()
             connection.execute(
                 """
                 insert into goals (id, project_id, description, status, created_at, updated_at)
@@ -3156,6 +3211,8 @@ class Storage:
         skill_tags: list[str] | None = None,
         priority: int = 100,
         risk_level: str = "low",
+        evidence: dict[str, Any] | None = None,
+        artifacts: list[str] | None = None,
     ) -> str:
         task_id = new_id("task")
         now = utc_now()
@@ -3183,8 +3240,8 @@ class Storage:
                     _json_dumps(depends_on or []),
                     0,
                     _json_dumps(verification_plan),
-                    _json_dumps({}),
-                    _json_dumps([]),
+                    _json_dumps(evidence or {}),
+                    _json_dumps(artifacts or []),
                     now,
                     now,
                 ),
@@ -9196,6 +9253,78 @@ class Storage:
             for row in rows
         ]
 
+    def record_capability_activation_task_batch(
+        self,
+        *,
+        status: str,
+        source_application_id: str,
+        goal_id: str,
+        applied_capability_effect_count: int,
+        task_count: int,
+        existing_task_count: int,
+        activation_action_count: int,
+        created_task_ids: list[str],
+        source_effect_ids: list[str],
+        report_path: str,
+    ) -> CapabilityActivationTaskBatch:
+        batch_id = new_id("capability_activation_task_batch")
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into capability_activation_task_batches (
+                    id, status, source_application_id, goal_id,
+                    applied_capability_effect_count, task_count,
+                    existing_task_count, activation_action_count,
+                    created_task_ids, source_effect_ids, report_path, created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    batch_id,
+                    status,
+                    source_application_id,
+                    goal_id,
+                    applied_capability_effect_count,
+                    task_count,
+                    existing_task_count,
+                    activation_action_count,
+                    _json_dumps(created_task_ids),
+                    _json_dumps(source_effect_ids),
+                    report_path,
+                    created_at,
+                ),
+            )
+        return CapabilityActivationTaskBatch(
+            id=batch_id,
+            status=status,
+            source_application_id=source_application_id,
+            goal_id=goal_id,
+            applied_capability_effect_count=applied_capability_effect_count,
+            task_count=task_count,
+            existing_task_count=existing_task_count,
+            activation_action_count=activation_action_count,
+            created_task_ids=created_task_ids,
+            source_effect_ids=source_effect_ids,
+            report_path=report_path,
+            created_at=created_at,
+        )
+
+    def list_recent_capability_activation_task_batches(
+        self,
+        limit: int = 5,
+    ) -> list[CapabilityActivationTaskBatch]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from capability_activation_task_batches
+                order by created_at desc, id desc
+                limit ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [self._row_to_capability_activation_task_batch(row) for row in rows]
+
     def get_real_cost_tracking_proof_checklist(
         self,
         checklist_id: str | None,
@@ -12592,6 +12721,25 @@ class Storage:
             legacy_approval_request_count=row["legacy_approval_request_count"],
             activation_action_count=row["activation_action_count"],
             applied_effect_ids=_json_loads(row["applied_effect_ids"], []),
+            report_path=row["report_path"],
+            created_at=row["created_at"],
+        )
+
+    def _row_to_capability_activation_task_batch(
+        self,
+        row: sqlite3.Row,
+    ) -> CapabilityActivationTaskBatch:
+        return CapabilityActivationTaskBatch(
+            id=row["id"],
+            status=row["status"],
+            source_application_id=row["source_application_id"],
+            goal_id=row["goal_id"],
+            applied_capability_effect_count=row["applied_capability_effect_count"],
+            task_count=row["task_count"],
+            existing_task_count=row["existing_task_count"],
+            activation_action_count=row["activation_action_count"],
+            created_task_ids=_json_loads(row["created_task_ids"], []),
+            source_effect_ids=_json_loads(row["source_effect_ids"], []),
             report_path=row["report_path"],
             created_at=row["created_at"],
         )

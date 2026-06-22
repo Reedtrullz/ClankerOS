@@ -63,6 +63,7 @@ VERIFICATION_COMMANDS = [
     "python3 -m agent_os.cli expansion-operator-approval-schema-migration-selection-input-template",
     "python3 -m agent_os.cli expansion-operator-approval-effect-proposals",
     "python3 -m agent_os.cli expansion-operator-approval-effect-apply --operator-id operator --selection-note \"Apply approved local operator approval effect proposals.\" --evidence-reference docs/expansion-operator-approval-effect-proposals.md",
+    "python3 -m agent_os.cli capability-activation-tasks",
     "python3 -m agent_os.cli eval",
     "python3 -m agent_os.cli playbooks",
     "python3 -m agent_os.cli dashboard",
@@ -703,6 +704,18 @@ def _current_posture(root: Path) -> list[str]:
                 operator_approval_effect_application = (
                     operator_approval_effect_application_rows[0].status
                 )
+        capability_activation_tasks = "none"
+        if _table_exists(
+            connection,
+            "capability_activation_task_batches",
+        ):
+            capability_activation_task_batch_rows = Storage(
+                db_path
+            ).list_recent_capability_activation_task_batches(limit=1)
+            if capability_activation_task_batch_rows:
+                capability_activation_tasks = (
+                    capability_activation_task_batch_rows[0].status
+                )
         handoff_reviews = Storage(db_path).list_recent_handoff_reviews(limit=1)
 
     handoff_blocked_tasks = 0
@@ -764,6 +777,7 @@ def _current_posture(root: Path) -> list[str]:
         f"operator approval request decisions: {operator_approval_request_decisions}",
         f"operator approval effect proposals: {operator_approval_effect_proposals}",
         f"operator approval effect application: {operator_approval_effect_application}",
+        f"capability activation tasks: {capability_activation_tasks}",
         f"proposed eval candidates: {proposed_eval_candidates}",
         f"active playbooks: {active_playbooks}",
         f"open stuck-task incidents: {stuck_count}",

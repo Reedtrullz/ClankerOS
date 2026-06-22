@@ -9372,6 +9372,37 @@ def _run_operator_approval_request_decision_chain(tmp_path: Path, capsys) -> Non
     capsys.readouterr()
 
 
+def _run_operator_approval_effect_application_chain(tmp_path: Path, capsys) -> None:
+    _run_operator_approval_request_decision_chain(tmp_path, capsys)
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-effect-proposals",
+            ]
+        )
+        == 0
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "expansion-operator-approval-effect-apply",
+                "--operator-id",
+                "operator",
+                "--selection-note",
+                "Apply approved local operator approval effect proposals.",
+                "--evidence-reference",
+                "docs/expansion-operator-approval-effect-proposals.md",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+
 def test_goal_completion_audit_reports_blocked_expansion_goal(
     tmp_path: Path,
     capsys,
@@ -12694,6 +12725,157 @@ def test_expansion_operator_approval_effect_apply_is_idempotent(
     assert applications[1].status == "operator_approval_effect_application_recorded"
     assert {effect.status for effect in effects} == {"applied"}
     assert len(effects) == 11
+
+
+def test_capability_activation_tasks_require_applied_effects(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-activation-tasks"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_tasks: "
+        "capability_activation_tasks_no_applied_effects"
+    ) in output
+    assert "applied_capability_effects: 0" in output
+    assert "tasks_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batches = storage.list_recent_capability_activation_task_batches()
+    assert batches[0].status == "capability_activation_tasks_no_applied_effects"
+    assert batches[0].task_count == 0
+    assert storage.list_all_tasks() == []
+
+    report = (tmp_path / "docs" / "capability-activation-tasks.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Capability Activation Tasks" in report
+    assert "- status: capability_activation_tasks_no_applied_effects" in report
+    assert "- tasks_created: 0" in report
+    assert "- Does not enable capabilities." in report
+    assert "- Does not mutate external systems." in report
+
+
+def test_capability_activation_tasks_create_pending_tasks_from_applied_effects(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_operator_approval_effect_application_chain(tmp_path, capsys)
+
+    assert main(["--root", str(tmp_path), "capability-activation-tasks"]) == 0
+
+    output = capsys.readouterr().out
+    assert "capability_activation_tasks: capability_activation_tasks_recorded" in output
+    assert "applied_capability_effects: 9" in output
+    assert "tasks_created: 9" in output
+    assert "existing_activation_tasks: 0" in output
+    assert "activation_actions_taken: 0" in output
+    assert "report: docs/capability-activation-tasks.md" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batches = storage.list_recent_capability_activation_task_batches()
+    batch = batches[0]
+    assert batch.status == "capability_activation_tasks_recorded"
+    assert batch.applied_capability_effect_count == 9
+    assert batch.task_count == 9
+    assert batch.existing_task_count == 0
+    assert batch.activation_action_count == 0
+    assert len(batch.created_task_ids) == 9
+
+    tasks = [
+        task
+        for task in storage.list_all_tasks()
+        if task.task_type == "capability_activation_task"
+    ]
+    assert len(tasks) == 9
+    assert {task.status for task in tasks} == {"pending"}
+    assert {task.project_id for task in tasks} == {"bootstrap"}
+    assert {task.risk_level for task in tasks} == {"high"}
+    assert all("capability-activation" in task.skill_tags for task in tasks)
+    assert all(task.evidence["source_effect_id"].startswith("effect_") for task in tasks)
+    assert all(task.evidence["activation_actions_taken"] == 0 for task in tasks)
+    assert all(task.evidence["capability_enabled"] is False for task in tasks)
+    assert all(task.artifacts == ["docs/capability-activation-tasks.md"] for task in tasks)
+
+    capability_tasks = {task.evidence["capability"]: task for task in tasks}
+    assert set(capability_tasks) == {
+        "hosted_dashboard",
+        "remote_workers",
+        "autonomous_scheduling",
+        "browser_desktop_adapters",
+        "ci_deploy_proof",
+        "budget_enforcement",
+        "trust_promotion",
+        "automatic_retries",
+        "real_cost_tracking",
+    }
+    hosted_task = capability_tasks["hosted_dashboard"]
+    assert hosted_task.verification_plan["type"] == "capability_activation_gate"
+    assert hosted_task.verification_plan["capability"] == "hosted_dashboard"
+    assert hosted_task.verification_plan["activation_allowed"] is False
+    assert "explicit_operator_approval" in hosted_task.verification_plan["required_gates"]
+
+    report = (tmp_path / "docs" / "capability-activation-tasks.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Capability Activation Tasks" in report
+    assert "- status: capability_activation_tasks_recorded" in report
+    assert "- tasks_created: 9" in report
+    assert "capability=hosted_dashboard" in report
+    assert "- Does not enable capabilities." in report
+    assert "- Does not route, schedule, retry, dispatch, run CI, or deploy." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Capability Activation Tasks" in dashboard
+    assert "- status: capability_activation_tasks_recorded" in dashboard
+    assert "- tasks_created: 9" in dashboard
+    assert batch.id in dashboard
+
+
+def test_capability_activation_tasks_are_idempotent(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_operator_approval_effect_application_chain(tmp_path, capsys)
+
+    command = ["--root", str(tmp_path), "capability-activation-tasks"]
+    assert main(command) == 0
+    capsys.readouterr()
+
+    assert main(command) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_tasks: "
+        "capability_activation_tasks_already_recorded"
+    ) in output
+    assert "applied_capability_effects: 9" in output
+    assert "tasks_created: 0" in output
+    assert "existing_activation_tasks: 9" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batches = storage.list_recent_capability_activation_task_batches(limit=2)
+    assert batches[0].status == "capability_activation_tasks_already_recorded"
+    assert batches[0].task_count == 0
+    assert batches[0].existing_task_count == 9
+    assert batches[1].status == "capability_activation_tasks_recorded"
+
+    tasks = [
+        task
+        for task in storage.list_all_tasks()
+        if task.task_type == "capability_activation_task"
+    ]
+    assert len(tasks) == 9
 
 
 def test_hosted_dashboard_proof_checklist_blocks_blocked_real_cost_tracking_proof(

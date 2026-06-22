@@ -20,6 +20,7 @@ run evidence -> human review -> evidence index -> conceptual replay summary
 goal state -> deterministic steering review -> next action -> operator inbox
 approved operator request decisions -> proposed effect records -> blocked activation
 proposed operator effects -> local application record -> capability-specific guard
+applied capability effects -> pending activation tasks -> explicit evidence gates
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -72,7 +73,10 @@ for external-decision and capability surfaces, preserving the approval link
 and idempotency key while still taking zero activation actions. Those proposed
 effects can then be applied as local records, advancing effect status to
 `applied` while still recording `capability_enabled=false`,
-`activation_actions_taken=0`, and no external mutation.
+`activation_actions_taken=0`, and no external mutation. Applied capability
+effects can now be materialized into pending high-risk activation-gate tasks,
+one per capability, so the next work happens in the task graph with evidence
+requirements instead of becoming silent capability enablement.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -82,7 +86,7 @@ verification.
 GitHub description:
 
 ```text
-Local-first agent operating system harness with explicit state, evidence, and approval-gated coding workflows.
+Local-first agent operating system harness for goal loops, task graphs, verification evidence, approvals, and operator-visible autonomy.
 ```
 
 Suggested GitHub topics:
@@ -348,6 +352,9 @@ The repository can now:
   per-effect `applied` status, result evidence, idempotency, and
   `capability_enabled=false` while still taking no activation or external
   action;
+- create pending capability-specific activation-gate tasks from applied
+  capability effects, linking each task to its source effect while keeping
+  every capability disabled until explicit evidence and approval gates pass;
 - record proposed eval candidates when verifier or workflow gaps are discovered;
 - promote repeated successful eval runs into reusable playbook files;
 - prefer lower-complexity queue items when candidate scores tie;
@@ -374,6 +381,7 @@ python3 -m agent_os.cli github-handoff <effect_id> --remote origin --base main -
 python3 -m agent_os.cli ci-deploy-evidence <github_handoff_id> --provider github-actions --status success --external-run-id <run_id> --url <run_url>
 python3 -m agent_os.cli expansion-operator-approval-effect-proposals
 python3 -m agent_os.cli expansion-operator-approval-effect-apply --operator-id operator --selection-note "Apply approved local operator approval effect proposals as local records only." --evidence-reference docs/expansion-operator-approval-effect-proposals.md
+python3 -m agent_os.cli capability-activation-tasks
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"

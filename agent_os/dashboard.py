@@ -139,6 +139,9 @@ from agent_os.operator_approval_effect_proposals import (
 from agent_os.operator_approval_effect_application import (
     render_operator_approval_effect_application_line,
 )
+from agent_os.capability_activation_tasks import (
+    render_capability_activation_task_batch_line,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -638,6 +641,14 @@ def generate_static_dashboard(root: Path) -> Path:
             operator_approval_effect_applications = (
                 storage.list_recent_operator_approval_effect_applications(limit=1)
             )
+        capability_activation_task_batches = []
+        if _table_exists(
+            connection,
+            "capability_activation_task_batches",
+        ):
+            capability_activation_task_batches = (
+                storage.list_recent_capability_activation_task_batches(limit=1)
+            )
 
     statuses = [
         "pending",
@@ -858,6 +869,11 @@ def generate_static_dashboard(root: Path) -> Path:
     latest_operator_approval_effect_application = (
         operator_approval_effect_applications[0]
         if operator_approval_effect_applications
+        else None
+    )
+    latest_capability_activation_task_batch = (
+        capability_activation_task_batches[0]
+        if capability_activation_task_batches
         else None
     )
     eval_after_change_statuses = Counter(
@@ -1316,6 +1332,32 @@ def generate_static_dashboard(root: Path) -> Path:
                 f"- report: {application.report_path}",
                 "",
                 render_operator_approval_effect_application_line(application),
+            ]
+        )
+    else:
+        lines.append("- none")
+
+    lines.extend(
+        [
+            "",
+            "## Capability Activation Tasks",
+            "",
+        ]
+    )
+    if latest_capability_activation_task_batch is not None:
+        batch = latest_capability_activation_task_batch
+        lines.extend(
+            [
+                f"- status: {batch.status}",
+                f"- source_application: {batch.source_application_id}",
+                f"- goal: {batch.goal_id}",
+                f"- applied_capability_effects: {batch.applied_capability_effect_count}",
+                f"- tasks_created: {batch.task_count}",
+                f"- existing_activation_tasks: {batch.existing_task_count}",
+                f"- activation_actions_taken: {batch.activation_action_count}",
+                f"- report: {batch.report_path}",
+                "",
+                render_capability_activation_task_batch_line(batch),
             ]
         )
     else:

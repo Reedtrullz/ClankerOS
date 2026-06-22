@@ -1,8 +1,8 @@
 # Capability Promotion Decision Ledger
 
-- id: capability_promotion_decision_ledger_7454c334c39f
+- id: capability_promotion_decision_ledger_54d7fab6e89e
 - status: promotion_decision_blocked
-- source_checklist_id: capability_promotion_gate_checklist_3280f4160e77
+- source_checklist_id: capability_promotion_gate_checklist_53f9410f8c9d
 - source_checklist_status: promotion_blocked
 - capability_count: 9
 - decisions: 9
@@ -14,7 +14,7 @@
 - boundaries: 1
 - recommended_commands: none
 - report_path: docs/capability-promotion-decision-ledger.md
-- created_at: 2026-06-22T15:51:20.790425+00:00
+- created_at: 2026-06-22T16:07:27.284852+00:00
 
 ## Recommendation
 
@@ -34,7 +34,7 @@
 
 ## Source Promotion Gate Checklist
 
-- id: capability_promotion_gate_checklist_3280f4160e77
+- id: capability_promotion_gate_checklist_53f9410f8c9d
 - status: promotion_blocked
 - gates: 9
 - blocked_promotions: 9

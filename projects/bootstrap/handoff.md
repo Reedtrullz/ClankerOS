@@ -1518,17 +1518,39 @@ work, or changing routing.
   work, schedule work, start workers, retry work, track spend, run CI, deploy,
   push, open PRs, mark the active goal complete, or mutate external systems.
 
+## Latest Capability Activation Tasks
+
+- `capability-activation-tasks` now exists as the local bridge from applied
+  capability proposal effects into pending task graph work.
+- Initial task materialization:
+  `capability_activation_task_batch_5fc10f9327a5`, status
+  `capability_activation_tasks_recorded`, with 9 applied capability effects,
+  9 pending `capability_activation_task` rows, 0 existing activation tasks,
+  and 0 activation actions taken.
+- Final verification reran the command idempotently, so the current report
+  status is `capability_activation_tasks_already_recorded` in
+  `capability_activation_task_batch_bf62744d45f5`, with 9 existing activation
+  tasks and 0 new activation actions.
+- The activation tasks are pending high-risk local rows for hosted dashboard,
+  remote workers, autonomous scheduling, browser/desktop adapters,
+  CI/deploy proof, budget enforcement, trust promotion, automatic retries,
+  and real cost tracking.
+- Evidence report:
+  `docs/capability-activation-tasks.md`.
+- Non-claims: task materialization does not enable capabilities, create legacy
+  `approval_requests`, promote trust, route work, schedule work, start
+  workers, retry work, track spend, run CI, deploy, push, open PRs, mark the
+  active goal complete, or mutate external systems.
+
 ## Next Actions
 
-Current focus: Add capability-specific activation tasks from applied operator approval effects.
+Current focus: Add capability-specific evidence and approval contracts for activation tasks.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add capability-specific activation tasks from applied operator approval
-   effects.
-2. Keep applied operator approval effects separate from active capabilities;
-   require capability-specific tasks, evidence, and approval checkpoints before
-   any activation, trust promotion, routing, worker, scheduler, retry,
-   spend-tracking, CI/deploy, or external action.
+   Add capability-specific evidence and approval contracts for activation
+   tasks.
+2. Keep the 9 activation tasks pending until each has capability-specific
+   evidence, verification, and explicit approval gates.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts exist.

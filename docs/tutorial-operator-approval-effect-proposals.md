@@ -72,10 +72,35 @@ Read `docs/dashboard.md` and check
 `## Expansion Operator Approval Effect Application` after regenerating the
 dashboard.
 
+## 5. Create Capability Activation Tasks
+
+```bash
+python3 -m agent_os.cli capability-activation-tasks
+```
+
+Expected output includes:
+
+```text
+applied_capability_effects: 9
+tasks_created: 9
+activation_actions_taken: 0
+```
+
+The generated report is:
+
+```text
+docs/capability-activation-tasks.md
+```
+
+Read `docs/dashboard.md` and check `## Capability Activation Tasks` after
+regenerating the dashboard.
+
 ## Non-Claims
 
 - Proposed effects are not applied effects.
 - Applied operator approval effects are local application records, not active
+  capabilities.
+- Capability activation tasks are pending guard tasks, not active
   capabilities.
 - These commands do not enable capabilities.
 - These commands do not promote trust, route work, schedule work, retry work,

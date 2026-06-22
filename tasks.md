@@ -103,7 +103,8 @@
 - [x] Add approval-gated decision command for pending operator approval request rows. <!-- score=9 complexity=4 -->
 - [x] Add effect proposal records from approved operator approval request decisions. <!-- score=9 complexity=4 -->
 - [x] Add approval-gated application command for operator approval effect proposals. <!-- score=9 complexity=4 -->
-- [ ] Add capability-specific activation tasks from applied operator approval effects. <!-- score=9 complexity=4 -->
+- [x] Add capability-specific activation tasks from applied operator approval effects. <!-- score=9 complexity=4 -->
+- [ ] Add capability-specific evidence and approval contracts for activation tasks. <!-- score=9 complexity=4 -->
 
 ## blocked
 

@@ -178,6 +178,10 @@ from agent_os.operator_approval_effect_application import (
     apply_operator_approval_effects,
     render_operator_approval_effect_application_line,
 )
+from agent_os.capability_activation_tasks import (
+    render_capability_activation_task_batch_line,
+    write_capability_activation_tasks,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -652,6 +656,10 @@ def build_parser() -> argparse.ArgumentParser:
     effect_apply.add_argument("--operator-id", required=True)
     effect_apply.add_argument("--selection-note", required=True)
     effect_apply.add_argument("--evidence-reference", required=True)
+    subparsers.add_parser(
+        "capability-activation-tasks",
+        help="Create pending activation-gate tasks from applied operator approval effects.",
+    )
 
     approve = subparsers.add_parser("approve", help="Approve a pending local task request.")
     approve.add_argument("approval_id")
@@ -2562,6 +2570,29 @@ def main(argv: list[str] | None = None) -> int:
         )
         for effect in effects:
             print(render_operator_approval_effect_proposal_line(effect).removeprefix("- "))
+        return 0
+
+    if args.command == "capability-activation-tasks":
+        AgentSystem(root).initialize()
+        report_path, batch, created_tasks, _existing_tasks, _applied_effects = (
+            write_capability_activation_tasks(root)
+        )
+        print(f"capability_activation_tasks: {batch.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_application: {batch.source_application_id}")
+        print(f"goal: {batch.goal_id}")
+        print(f"applied_capability_effects: {batch.applied_capability_effect_count}")
+        print(f"tasks_created: {batch.task_count}")
+        print(f"existing_activation_tasks: {batch.existing_task_count}")
+        print(f"activation_actions_taken: {batch.activation_action_count}")
+        print(
+            render_capability_activation_task_batch_line(batch).removeprefix("- ")
+        )
+        for task in created_tasks:
+            print(
+                f"task={task.id} capability={task.evidence.get('capability')} "
+                f"status={task.status} source_effect={task.evidence.get('source_effect_id')}"
+            )
         return 0
 
     if args.command == "approve":

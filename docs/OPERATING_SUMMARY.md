@@ -93,6 +93,11 @@ Core layers for the bootstrap:
   be applied as local records with per-effect `status=applied` and explicit
   `capability_enabled=false` result evidence while still taking zero
   activation actions and mutating no external systems.
+- Capability activation tasks: applied capability proposal effects can be
+  materialized into pending high-risk `capability_activation_task` rows, one
+  per capability, with evidence and verification gates that keep
+  `activation_actions_taken=0` and `capability_enabled=false` until a later
+  explicit capability-specific approval path exists.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON

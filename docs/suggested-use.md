@@ -268,6 +268,17 @@ and write local application evidence. It must still report
 workers, schedulers, adapters, CI/deploy, budget enforcement, trust promotion,
 automatic retry, real-cost tracking, or external systems.
 
+After applied capability effects exist, create pending activation-gate tasks:
+
+```bash
+python3 -m agent_os.cli capability-activation-tasks
+```
+
+This command creates one pending high-risk task per applied capability effect
+and links each task back to its source effect. It must still report
+`activation_actions_taken: 0`; the tasks are guardrails for future evidence
+and approval work, not capability enablement.
+
 ## When To Commit And Push
 
 Commit when:
@@ -286,7 +297,8 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 Good next slices now favor capability-specific guards after local application
 records exist:
 
-- capability-specific activation tasks from applied operator approval effects;
+- capability-specific evidence and approval contracts for the new activation
+  tasks;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;
