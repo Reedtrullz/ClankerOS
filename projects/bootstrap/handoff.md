@@ -1542,18 +1542,43 @@ work, or changing routing.
   workers, retry work, track spend, run CI, deploy, push, open PRs, mark the
   active goal complete, or mutate external systems.
 
+## Latest Capability Activation Contracts
+
+- `capability-activation-contracts` now exists as the local bridge from
+  pending activation-gate tasks into blocked per-capability evidence and
+  approval contracts.
+- Initial contract materialization:
+  `capability_activation_contract_batch_e2ec8894f76a`, status
+  `capability_activation_contracts_recorded`, with 9 activation tasks, 9
+  created `capability_activation_contract` rows, 0 existing contracts, 0
+  approval requests created, and 0 activation actions taken.
+- Final verification reran the command idempotently, so the current report
+  status is `capability_activation_contracts_already_recorded` in
+  `capability_activation_contract_batch_d9a463c7fc7a`, with 9 existing
+  contracts and 0 new activation actions.
+- Each contract is `blocked_pending_evidence`, has
+  `explicit_operator_approval_required`, records
+  `blocked_until_evidence_verified`, and keeps `activation_allowed=false`.
+- Evidence report:
+  `docs/capability-activation-contracts.md`.
+- Non-claims: contract materialization does not create `approval_requests`,
+  satisfy capability evidence, enable capabilities, promote trust, route work,
+  schedule work, start workers, retry work, track spend, run CI, deploy, push,
+  open PRs, mark the active goal complete, or mutate external systems.
+
 ## Next Actions
 
-Current focus: Add capability-specific evidence and approval contracts for activation tasks.
+Current focus: Add evidence ingestion and operator decisions for capability activation contracts.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add capability-specific evidence and approval contracts for activation
-   tasks.
-2. Keep the 9 activation tasks pending until each has capability-specific
-   evidence, verification, and explicit approval gates.
+   Add evidence ingestion and operator decisions for capability activation
+   contracts.
+2. Keep the 9 activation tasks and 9 activation contracts blocked until each
+   has submitted evidence, fresh verification, and explicit operator approval
+   decisions.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
-   blocked until their own evidence and approval contracts exist.
+   blocked until their own evidence and approval contracts are satisfied.
 4. Preserve the local coding-to-GitHub-to-CI evidence chain as operator proof,
    but do not treat operator-supplied CI/deploy evidence as a live CI/deploy
    action performed by ClankerOS.

@@ -12878,6 +12878,169 @@ def test_capability_activation_tasks_are_idempotent(
     assert len(tasks) == 9
 
 
+def test_capability_activation_contracts_require_activation_tasks(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert main(["--root", str(tmp_path), "capability-activation-contracts"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_contracts: "
+        "capability_activation_contracts_no_activation_tasks"
+    ) in output
+    assert "activation_tasks: 0" in output
+    assert "contracts_created: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batches = storage.list_recent_capability_activation_contract_batches()
+    assert batches[0].status == "capability_activation_contracts_no_activation_tasks"
+    assert batches[0].contract_count == 0
+    assert storage.list_capability_activation_contracts() == []
+    assert storage.list_recent_approval_requests() == []
+
+    report = (tmp_path / "docs" / "capability-activation-contracts.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Capability Activation Contracts" in report
+    assert "- status: capability_activation_contracts_no_activation_tasks" in report
+    assert "- contracts_created: 0" in report
+    assert "- Does not create approval_requests rows." in report
+    assert "- Does not enable capabilities." in report
+
+
+def test_capability_activation_contracts_record_evidence_and_approval_boundaries(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_operator_approval_effect_application_chain(tmp_path, capsys)
+    assert main(["--root", str(tmp_path), "capability-activation-tasks"]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "capability-activation-contracts"]) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_contracts: "
+        "capability_activation_contracts_recorded"
+    ) in output
+    assert "activation_tasks: 9" in output
+    assert "contracts_created: 9" in output
+    assert "existing_contracts: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+    assert "report: docs/capability-activation-contracts.md" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batches = storage.list_recent_capability_activation_contract_batches()
+    batch = batches[0]
+    assert batch.status == "capability_activation_contracts_recorded"
+    assert batch.activation_task_count == 9
+    assert batch.contract_count == 9
+    assert batch.existing_contract_count == 0
+    assert batch.created_approval_request_count == 0
+    assert batch.activation_action_count == 0
+    assert len(batch.created_contract_ids) == 9
+
+    contracts = storage.list_capability_activation_contracts()
+    assert len(contracts) == 9
+    assert {contract.status for contract in contracts} == {"blocked_pending_evidence"}
+    assert {contract.activation_allowed for contract in contracts} == {False}
+    assert {contract.created_approval_request_count for contract in contracts} == {0}
+    assert {contract.activation_action_count for contract in contracts} == {0}
+    assert {
+        contract.approval_boundary for contract in contracts
+    } == {"explicit_operator_approval_required"}
+    assert {
+        contract.approval_status for contract in contracts
+    } == {"blocked_until_evidence_verified"}
+    assert {contract.required_approval_id for contract in contracts} == {"none"}
+    assert all(contract.task_id.startswith("task_") for contract in contracts)
+    assert all(contract.source_effect_id.startswith("effect_") for contract in contracts)
+    assert all(
+        contract.source_application_id.startswith(
+            "operator_approval_effect_application_"
+        )
+        for contract in contracts
+    )
+
+    hosted_contract = next(
+        contract
+        for contract in contracts
+        if contract.capability == "hosted_dashboard"
+    )
+    requirements = hosted_contract.evidence_requirements
+    assert requirements["capability"] == "hosted_dashboard"
+    assert "explicit_operator_approval" in requirements["required_gates"]
+    assert "docs/hosted-dashboard-proof-checklist.md" in requirements["required_artifacts"]
+    assert (
+        "python3 -m agent_os.cli hosted-dashboard-proof-checklist"
+        in requirements["required_commands"]
+    )
+    assert "does_not_enable_capability" in requirements["non_claims"]
+    assert "does_not_create_approval_requests_yet" in requirements["non_claims"]
+
+    assert storage.list_recent_approval_requests() == []
+
+    report = (tmp_path / "docs" / "capability-activation-contracts.md").read_text(
+        encoding="utf-8"
+    )
+    assert "# Capability Activation Contracts" in report
+    assert "- status: capability_activation_contracts_recorded" in report
+    assert "- contracts_created: 9" in report
+    assert "capability=hosted_dashboard" in report
+    assert "approval_boundary=explicit_operator_approval_required" in report
+    assert "- Does not create approval_requests rows." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Capability Activation Contracts" in dashboard
+    assert "- status: capability_activation_contracts_recorded" in dashboard
+    assert "- contracts_created: 9" in dashboard
+    assert batch.id in dashboard
+
+
+def test_capability_activation_contracts_are_idempotent(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_operator_approval_effect_application_chain(tmp_path, capsys)
+    assert main(["--root", str(tmp_path), "capability-activation-tasks"]) == 0
+    capsys.readouterr()
+
+    command = ["--root", str(tmp_path), "capability-activation-contracts"]
+    assert main(command) == 0
+    capsys.readouterr()
+
+    assert main(command) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_contracts: "
+        "capability_activation_contracts_already_recorded"
+    ) in output
+    assert "activation_tasks: 9" in output
+    assert "contracts_created: 0" in output
+    assert "existing_contracts: 9" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batches = storage.list_recent_capability_activation_contract_batches(limit=2)
+    assert batches[0].status == "capability_activation_contracts_already_recorded"
+    assert batches[0].contract_count == 0
+    assert batches[0].existing_contract_count == 9
+    assert batches[1].status == "capability_activation_contracts_recorded"
+    assert len(storage.list_capability_activation_contracts()) == 9
+
+
 def test_hosted_dashboard_proof_checklist_blocks_blocked_real_cost_tracking_proof(
     tmp_path: Path,
     capsys,

@@ -93,41 +93,61 @@
     action checklist into an operator-input packet while keeping
     `selected_action=none`, `selections_recorded=0`, recording no action
     taken, and applying no schema or approval-row mutation.
-35. Autonomous scheduling proof checklists review the latest
+44. Expansion operator approval schema migration selection input templates
+    capture the explicit operator fields needed before applying the schema
+    while recording no schema or approval-row mutation.
+45. Expansion operator approval schema migration applications apply the local
+    `operator_approval_requests` schema only after an approved selection while
+    keeping `approval_requests_created=0`.
+46. Operator approval request row applications create pending local
+    `operator_approval_requests` rows from approved drafts after the schema
+    exists while keeping legacy `approval_requests` untouched.
+47. Operator approval request decisions record approve/defer/more-evidence
+    decisions for local operator request rows without enabling capabilities.
+48. Operator approval effect proposals convert approved local operator request
+    decisions into `proposed` effect rows while taking zero activation actions.
+49. Operator approval effect applications move proposed effects to local
+    `applied` records while keeping `capability_enabled=false`.
+50. Capability activation tasks materialize applied capability effects into
+    pending high-risk activation-gate tasks.
+51. Capability activation contracts convert pending activation-gate tasks into
+    blocked evidence and approval contracts without creating approval rows or
+    taking activation actions.
+52. Autonomous scheduling proof checklists review the latest
     Real-Cost-sourced remote-worker proof checklist when one exists before any
     scheduler, remote worker, routing change, or claim behavior exists,
     preserving remote-worker proof metadata and the remote-worker source
     proof's own source metadata when present.
-36. Browser desktop adapter proof checklists review the latest
+53. Browser desktop adapter proof checklists review the latest
     Real-Cost-sourced autonomous-scheduling proof checklist when one exists
     before any browser/desktop adapter operation or routing change exists,
     preserving autonomous-scheduling proof metadata and the
     autonomous-scheduling source proof's own source metadata when present.
-37. CI Deploy proof checklists review browser desktop adapter proof checklists
+54. CI Deploy proof checklists review browser desktop adapter proof checklists
     before any CI run, deploy, or routing change exists, preserving
     Real-Cost-sourced browser/desktop adapter proof metadata when present.
-38. Budget Enforcement proof checklists review the latest Real-Cost-sourced
+55. Budget Enforcement proof checklists review the latest Real-Cost-sourced
     CI Deploy proof checklist when one exists before any budget enforcement,
     CI/deploy, or routing change exists, preserving CI Deploy proof metadata
     and the CI Deploy source proof's own source metadata when available.
-39. Trust Promotion proof checklists review the latest Real-Cost-sourced
+56. Trust Promotion proof checklists review the latest Real-Cost-sourced
     Budget Enforcement proof checklist when one exists before any trust
     promotion, budget enforcement, or routing change exists, preserving
     Budget Enforcement proof metadata and the Budget Enforcement source
     proof's own source metadata when available.
-40. Automatic Retry proof checklists review Trust Promotion proof checklists
+57. Automatic Retry proof checklists review Trust Promotion proof checklists
     before any retry, replay, trust promotion, or routing change exists,
     preserving Real-Cost-sourced Trust Promotion proof metadata when present.
-41. Real Cost Tracking proof checklists review Automatic Retry proof
+58. Real Cost Tracking proof checklists review Automatic Retry proof
     checklists before any spend tracking, retry, budget enforcement, or
     routing change exists.
-42. Repeated successful eval runs can be promoted into reusable playbooks.
-43. Equal-score queue choices prefer lower complexity before adding
+59. Repeated successful eval runs can be promoted into reusable playbooks.
+60. Equal-score queue choices prefer lower complexity before adding
     orchestration.
-44. Completed tasks update project memory and activity.
-45. Run summary mirrors status to project files.
-46. Learning loop records one improvement candidate.
-47. Static dashboard generation mirrors queue health, handoff reviews,
+61. Completed tasks update project memory and activity.
+62. Run summary mirrors status to project files.
+63. Learning loop records one improvement candidate.
+64. Static dashboard generation mirrors queue health, handoff reviews,
     eval-after-change checks, learning distillation, budget/trust posture,
     dispatch posture history, dispatch posture snapshot reviews, dispatch
     posture refresh recommendations, capability expansion ledgers, capability
@@ -148,8 +168,9 @@
     operator approval schema migration approval requests, expansion operator
     approval schema migration decision ledgers, expansion operator approval
     schema migration action checklists, expansion operator approval schema
-    migration selection packets, playbooks, eval candidates, approvals, stuck
-    tasks, incidents, and recent evidence.
+    migration selection packets, capability activation tasks, capability
+    activation contracts, playbooks, eval candidates, approvals, stuck tasks,
+    incidents, and recent evidence.
 
 ## Incident Resolution Lifecycle
 

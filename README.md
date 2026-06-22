@@ -21,6 +21,7 @@ goal state -> deterministic steering review -> next action -> operator inbox
 approved operator request decisions -> proposed effect records -> blocked activation
 proposed operator effects -> local application record -> capability-specific guard
 applied capability effects -> pending activation tasks -> explicit evidence gates
+pending activation tasks -> capability activation contracts -> blocked evidence/approval packets
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -76,7 +77,12 @@ effects can then be applied as local records, advancing effect status to
 `activation_actions_taken=0`, and no external mutation. Applied capability
 effects can now be materialized into pending high-risk activation-gate tasks,
 one per capability, so the next work happens in the task graph with evidence
-requirements instead of becoming silent capability enablement.
+requirements instead of becoming silent capability enablement. Pending
+activation tasks can now be converted into capability-specific activation
+contracts that record required artifacts, required commands,
+`explicit_operator_approval_required`, and `blocked_until_evidence_verified`
+while keeping `approval_requests_created=0`, `activation_actions_taken=0`,
+and `activation_allowed=false`.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -183,6 +189,8 @@ mutate external systems.
 - [Review run evidence and replay summaries](docs/tutorial-run-review.md)
 - [Use steering reviews, next actions, and the inbox](docs/tutorial-steering-inbox.md)
 - [Apply the operator approval request schema](docs/tutorial-operator-approval-schema.md)
+- [Create operator approval effects and activation tasks](docs/tutorial-operator-approval-effect-proposals.md)
+- [Create capability activation contracts](docs/tutorial-capability-activation-contracts.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
 - [Safety contract](contracts.md)
@@ -236,6 +244,9 @@ The repository can now:
   selection template after an explicit `approve` selection, recording applied
   columns/indexes and idempotent repeat attempts while creating no approval
   rows;
+- create capability activation contracts from pending activation-gate tasks,
+  one per capability, while keeping approval creation, activation actions, and
+  capability enablement blocked;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -382,6 +393,7 @@ python3 -m agent_os.cli ci-deploy-evidence <github_handoff_id> --provider github
 python3 -m agent_os.cli expansion-operator-approval-effect-proposals
 python3 -m agent_os.cli expansion-operator-approval-effect-apply --operator-id operator --selection-note "Apply approved local operator approval effect proposals as local records only." --evidence-reference docs/expansion-operator-approval-effect-proposals.md
 python3 -m agent_os.cli capability-activation-tasks
+python3 -m agent_os.cli capability-activation-contracts
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"

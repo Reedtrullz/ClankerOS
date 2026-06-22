@@ -1,0 +1,49 @@
+# Capability Activation Contracts
+
+- id: capability_activation_contract_batch_d9a463c7fc7a
+- status: capability_activation_contracts_already_recorded
+- source_task_batch: capability_activation_task_batch_eeea92c98c6f
+- activation_tasks: 9
+- contracts_created: 0
+- existing_contracts: 9
+- approval_requests_created: 0
+- activation_actions_taken: 0
+- report_path: docs/capability-activation-contracts.md
+- created_at: 2026-06-22T16:24:22.608993+00:00
+
+## Created Contracts
+
+- none
+
+## Existing Contracts
+
+- contract=capability_activation_contract_5bae92de4e50 status=blocked_pending_evidence capability=real_cost_tracking task=task_8bcbf504e7d4 source_effect=effect_1a41ff7c5cca approval_boundary=explicit_operator_approval_required approval_status=blocked_until_evidence_verified activation_allowed=false approval_requests_created=0
+- contract=capability_activation_contract_982853983831 status=blocked_pending_evidence capability=automatic_retries task=task_dc62ee6f543d source_effect=effect_e5a56b95d9ce approval_boundary=explicit_operator_approval_required approval_status=blocked_until_evidence_verified activation_allowed=false approval_requests_created=0
+- contract=capability_activation_contract_7c395412aadc status=blocked_pending_evidence capability=trust_promotion task=task_99c552985002 source_effect=effect_549912b53e8e approval_boundary=explicit_operator_approval_required approval_status=blocked_until_evidence_verified activation_allowed=false approval_requests_created=0
+- contract=capability_activation_contract_ff5d57a4a051 status=blocked_pending_evidence capability=budget_enforcement task=task_0ad009784133 source_effect=effect_9ad8411cfe14 approval_boundary=explicit_operator_approval_required approval_status=blocked_until_evidence_verified activation_allowed=false approval_requests_created=0
+- contract=capability_activation_contract_ce4bd84e03c4 status=blocked_pending_evidence capability=ci_deploy_proof task=task_e1da0f911e35 source_effect=effect_1e2d271e79f3 approval_boundary=explicit_operator_approval_required approval_status=blocked_until_evidence_verified activation_allowed=false approval_requests_created=0
+- contract=capability_activation_contract_6d33d1cbc177 status=blocked_pending_evidence capability=browser_desktop_adapters task=task_7c11407bcf4c source_effect=effect_2fe6bd7d30f4 approval_boundary=explicit_operator_approval_required approval_status=blocked_until_evidence_verified activation_allowed=false approval_requests_created=0
+- contract=capability_activation_contract_83970ce4e933 status=blocked_pending_evidence capability=autonomous_scheduling task=task_1aa4ed98b59e source_effect=effect_29e9791db746 approval_boundary=explicit_operator_approval_required approval_status=blocked_until_evidence_verified activation_allowed=false approval_requests_created=0
+- contract=capability_activation_contract_747cf70dda59 status=blocked_pending_evidence capability=remote_workers task=task_a8743cef9b81 source_effect=effect_cc210d6119d5 approval_boundary=explicit_operator_approval_required approval_status=blocked_until_evidence_verified activation_allowed=false approval_requests_created=0
+- contract=capability_activation_contract_5f51a9f00ad5 status=blocked_pending_evidence capability=hosted_dashboard task=task_f26a1635d5f1 source_effect=effect_f150fdc78c97 approval_boundary=explicit_operator_approval_required approval_status=blocked_until_evidence_verified activation_allowed=false approval_requests_created=0
+
+## Activation Tasks
+
+- task=task_8bcbf504e7d4 status=pending capability=real_cost_tracking source_effect=effect_1a41ff7c5cca risk=high
+- task=task_dc62ee6f543d status=pending capability=automatic_retries source_effect=effect_e5a56b95d9ce risk=high
+- task=task_99c552985002 status=pending capability=trust_promotion source_effect=effect_549912b53e8e risk=high
+- task=task_0ad009784133 status=pending capability=budget_enforcement source_effect=effect_9ad8411cfe14 risk=high
+- task=task_e1da0f911e35 status=pending capability=ci_deploy_proof source_effect=effect_1e2d271e79f3 risk=high
+- task=task_7c11407bcf4c status=pending capability=browser_desktop_adapters source_effect=effect_2fe6bd7d30f4 risk=high
+- task=task_1aa4ed98b59e status=pending capability=autonomous_scheduling source_effect=effect_29e9791db746 risk=high
+- task=task_a8743cef9b81 status=pending capability=remote_workers source_effect=effect_cc210d6119d5 risk=high
+- task=task_f26a1635d5f1 status=pending capability=hosted_dashboard source_effect=effect_f150fdc78c97 risk=high
+
+## Non-Claims
+
+- Does not create approval_requests rows.
+- Does not enable capabilities.
+- Does not satisfy capability evidence.
+- Does not mutate external systems.
+- Does not route, schedule, retry, dispatch, run CI, or deploy.
+- Does not promote trust or mark the active goal complete.

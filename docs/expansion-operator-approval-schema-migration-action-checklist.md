@@ -1,16 +1,16 @@
 # Expansion Operator Approval Schema Migration Action Checklist
 
-- id: expansion_operator_approval_schema_migration_action_checklist_c6a0783dad82
+- id: expansion_operator_approval_schema_migration_action_checklist_ac882337132e
 - status: operator_approval_schema_migration_manual_action_required
-- source_ledger: expansion_operator_approval_schema_migration_decision_ledger_2d0c669a77c0
+- source_ledger: expansion_operator_approval_schema_migration_decision_ledger_ec632b846a9a
 - source_status: operator_approval_schema_migration_decision_pending
-- source_request: expansion_operator_approval_schema_migration_approval_request_9621b0d4e371
+- source_request: expansion_operator_approval_schema_migration_approval_request_bbafe718810e
 - source_request_status: operator_approval_schema_migration_approval_required
-- source_plan: expansion_operator_approval_schema_migration_plan_642275787265
+- source_plan: expansion_operator_approval_schema_migration_plan_64f904d9406e
 - source_plan_status: operator_approval_schema_migration_plan_ready
-- source_decision: expansion_operator_approval_schema_decision_53d4b6519d47
+- source_decision: expansion_operator_approval_schema_decision_1cc901add127
 - source_decision_status: approval_schema_decision_ready
-- source_review: expansion_operator_approval_request_review_ba7c3faeebc5
+- source_review: expansion_operator_approval_request_review_38b521d46367
 - source_review_status: approval_request_schema_review_required
 - target_table: operator_approval_requests
 - request_count: 1
@@ -30,7 +30,7 @@
 - existing_approval_requests: 0
 - recommended_next_step: operator_approval_schema_migration_operator_selection_required
 - report_path: docs/expansion-operator-approval-schema-migration-action-checklist.md
-- created_at: 2026-06-22T16:07:30.493627+00:00
+- created_at: 2026-06-22T16:24:21.703455+00:00
 
 ## Action Items
 

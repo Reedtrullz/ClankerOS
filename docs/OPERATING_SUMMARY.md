@@ -98,6 +98,12 @@ Core layers for the bootstrap:
   per capability, with evidence and verification gates that keep
   `activation_actions_taken=0` and `capability_enabled=false` until a later
   explicit capability-specific approval path exists.
+- Capability activation contracts: pending activation-gate tasks can be
+  converted into durable per-capability evidence and approval contracts with
+  required artifacts, required commands, `explicit_operator_approval_required`,
+  and `blocked_until_evidence_verified` while keeping
+  `approval_requests_created=0`, `activation_actions_taken=0`, and
+  `activation_allowed=false`.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON
@@ -652,6 +658,12 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   approve/defer/more-evidence decisions on local rows, writes evidence to
   `docs/expansion-operator-approval-request-decisions.md`, and keeps
   `approval_requests_created: 0` without enabling capabilities.
+- Capability activation contracts: available through
+  `python3 -m agent_os.cli capability-activation-contracts` after
+  `capability-activation-tasks` has created pending activation tasks. The
+  command writes `docs/capability-activation-contracts.md`, records one
+  blocked contract per task, and keeps `approval_requests_created: 0`,
+  `activation_actions_taken: 0`, and `activation_allowed=false`.
 - Eval candidate listing: available through
   `python3 -m agent_os.cli eval-candidates` and mirrored into
   `docs/dashboard.md`.

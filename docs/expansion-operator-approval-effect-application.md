@@ -1,6 +1,6 @@
 # Expansion Operator Approval Effect Application
 
-- id: operator_approval_effect_application_8e180df11ab3
+- id: operator_approval_effect_application_64a1ef1563dc
 - status: operator_approval_effect_application_already_recorded
 - operator_id: operator
 - selection_note: Apply approved local operator approval effect proposals.
@@ -13,7 +13,7 @@
 - legacy_approval_requests_created: 0
 - activation_actions_taken: 0
 - report_path: docs/expansion-operator-approval-effect-application.md
-- created_at: 2026-06-22T16:07:31.018901+00:00
+- created_at: 2026-06-22T16:24:22.333474+00:00
 
 ## Applied Effects
 

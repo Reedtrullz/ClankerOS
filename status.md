@@ -5726,3 +5726,45 @@
   legacy `approval_requests` rows, promote trust, route work, schedule work,
   start workers, retry work, track spend, run CI, deploy, push, open PRs, mark
   the active goal complete, or mutate external systems.
+
+## 2026-06-22 Capability Activation Contracts
+
+- Added local contract materialization command:
+  `python3 -m agent_os.cli capability-activation-contracts`.
+- The command reads pending `capability_activation_task` rows and records one
+  durable `capability_activation_contract` per task with capability-specific
+  required artifacts, required commands, `explicit_operator_approval_required`,
+  `blocked_until_evidence_verified`, and `activation_allowed=false`.
+- Initial live contract batch:
+  `capability_activation_contract_batch_e2ec8894f76a`, status
+  `capability_activation_contracts_recorded`, 9 activation tasks, 9 created
+  contracts, 0 existing contracts, 0 approval requests created, and 0
+  activation actions taken.
+- Final idempotency verification batch:
+  `capability_activation_contract_batch_d9a463c7fc7a`, status
+  `capability_activation_contracts_already_recorded`, 9 activation tasks, 0
+  new contracts, 9 existing contracts, 0 approval requests created, and 0
+  activation actions taken.
+- The contracts remain `blocked_pending_evidence` for hosted dashboard, remote
+  workers, autonomous scheduling, browser/desktop adapters, CI/deploy proof,
+  budget enforcement, trust promotion, automatic retries, and real cost
+  tracking.
+- Added dashboard visibility under `## Capability Activation Contracts`.
+- Updated README, suggested-use docs, operating summary, workflow lifecycle,
+  operator approval tutorial, new activation-contract tutorial, task queue,
+  generated dashboard, and next iteration packet.
+- Next packet:
+  `Add evidence ingestion and operator decisions for capability activation contracts.`
+- Verification evidence:
+  - Red-first focused tests failed before the CLI command existed.
+  - `python3 -m py_compile agent_os/capability_activation_contracts.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py` -> passed.
+  - `python3 -m pytest tests/test_first_milestone.py -k 'capability_activation_contracts' -q` -> 3 passed, 249 deselected.
+  - `python3 -m pytest tests/test_first_milestone.py -k 'capability_activation_tasks or capability_activation_contracts or expansion_operator_approval_effect' -q` -> 12 passed, 240 deselected.
+  - `python3 -m pytest -q` -> 252 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add capability activation contracts" ...` -> pass as `run_49a0a5c2b535`.
+  - Full command-gate sweep from `sweep-stuck` through dashboard -> passed 49
+    commands, including `capability-activation-contracts` idempotency.
+- Non-claims: activation contracts do not create `approval_requests` rows,
+  satisfy capability evidence, enable capabilities, promote trust, route work,
+  schedule work, start workers, retry work, track spend, run CI, deploy, push,
+  open PRs, mark the active goal complete, or mutate external systems.

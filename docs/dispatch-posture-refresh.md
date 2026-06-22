@@ -1,17 +1,17 @@
 # Dispatch Posture Refresh Recommendation
 
-- id: dispatch_posture_refresh_b48a0677e68e
+- id: dispatch_posture_refresh_3a33128375ee
 - status: no_refresh_needed
-- source_review_id: dispatch_posture_staleness_f77c0321f4c1
+- source_review_id: dispatch_posture_staleness_624c60c45ad3
 - source_review_status: fresh
 - snapshots: 25
-- stale_snapshots: 22
+- stale_snapshots: 21
 - latest_snapshot_age_seconds: 0
 - stale_after_seconds: 3600
-- latest_snapshot_at: 2026-06-22T16:07:25.998593+00:00
+- latest_snapshot_at: 2026-06-22T16:24:17.088149+00:00
 - approval_boundary: operator_runs_recommended_commands_manually
 - report_path: docs/dispatch-posture-refresh.md
-- created_at: 2026-06-22T16:07:26.388985+00:00
+- created_at: 2026-06-22T16:24:17.484881+00:00
 
 ## Recommendation
 
@@ -24,10 +24,10 @@
 
 ## Source Review
 
-- id: dispatch_posture_staleness_f77c0321f4c1
+- id: dispatch_posture_staleness_624c60c45ad3
 - status: fresh
 - snapshots: 25
-- stale_snapshots: 22
+- stale_snapshots: 21
 - latest_snapshot_age_seconds: 0
 - stale_after_seconds: 3600
 - report: docs/dispatch-posture-staleness.md

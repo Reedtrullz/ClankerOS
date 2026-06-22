@@ -182,6 +182,10 @@ from agent_os.capability_activation_tasks import (
     render_capability_activation_task_batch_line,
     write_capability_activation_tasks,
 )
+from agent_os.capability_activation_contracts import (
+    render_capability_activation_contract_batch_line,
+    write_capability_activation_contracts,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -659,6 +663,10 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "capability-activation-tasks",
         help="Create pending activation-gate tasks from applied operator approval effects.",
+    )
+    subparsers.add_parser(
+        "capability-activation-contracts",
+        help="Record evidence and approval contracts for pending activation-gate tasks.",
     )
 
     approve = subparsers.add_parser("approve", help="Approve a pending local task request.")
@@ -2592,6 +2600,30 @@ def main(argv: list[str] | None = None) -> int:
             print(
                 f"task={task.id} capability={task.evidence.get('capability')} "
                 f"status={task.status} source_effect={task.evidence.get('source_effect_id')}"
+            )
+        return 0
+
+    if args.command == "capability-activation-contracts":
+        AgentSystem(root).initialize()
+        report_path, batch, created_contracts, _existing_contracts, _activation_tasks = (
+            write_capability_activation_contracts(root)
+        )
+        print(f"capability_activation_contracts: {batch.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_task_batch: {batch.source_task_batch_id}")
+        print(f"activation_tasks: {batch.activation_task_count}")
+        print(f"contracts_created: {batch.contract_count}")
+        print(f"existing_contracts: {batch.existing_contract_count}")
+        print(f"approval_requests_created: {batch.created_approval_request_count}")
+        print(f"activation_actions_taken: {batch.activation_action_count}")
+        print(
+            render_capability_activation_contract_batch_line(batch).removeprefix("- ")
+        )
+        for contract in created_contracts:
+            print(
+                f"contract={contract.id} capability={contract.capability} "
+                f"status={contract.status} task={contract.task_id} "
+                f"approval_boundary={contract.approval_boundary}"
             )
         return 0
 

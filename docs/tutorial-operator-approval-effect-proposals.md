@@ -95,6 +95,32 @@ docs/capability-activation-tasks.md
 Read `docs/dashboard.md` and check `## Capability Activation Tasks` after
 regenerating the dashboard.
 
+## 6. Create Capability Activation Contracts
+
+```bash
+python3 -m agent_os.cli capability-activation-contracts
+```
+
+Expected output includes:
+
+```text
+capability_activation_contracts: capability_activation_contracts_recorded
+activation_tasks: 9
+contracts_created: 9
+existing_contracts: 0
+approval_requests_created: 0
+activation_actions_taken: 0
+```
+
+The generated report is:
+
+```text
+docs/capability-activation-contracts.md
+```
+
+Read `docs/dashboard.md` and check `## Capability Activation Contracts` after
+regenerating the dashboard.
+
 ## Non-Claims
 
 - Proposed effects are not applied effects.
@@ -102,6 +128,8 @@ regenerating the dashboard.
   capabilities.
 - Capability activation tasks are pending guard tasks, not active
   capabilities.
+- Capability activation contracts are blocked evidence and approval packets,
+  not satisfied proof or active capabilities.
 - These commands do not enable capabilities.
 - These commands do not promote trust, route work, schedule work, retry work,
   or track spend.

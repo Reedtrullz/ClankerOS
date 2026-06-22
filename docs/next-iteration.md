@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_a8f1a5b40463
+- Packet ID: iteration_416571964fab
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add capability-specific evidence and approval contracts for activation tasks.
+Advance the Agent System north-star goal by completing: Add evidence ingestion and operator decisions for capability activation contracts.
 
 ## Definition Of Done
 
@@ -64,6 +64,7 @@ Advance the Agent System north-star goal by completing: Add capability-specific 
 - `python3 -m agent_os.cli expansion-operator-approval-effect-proposals`
 - `python3 -m agent_os.cli expansion-operator-approval-effect-apply --operator-id operator --selection-note "Apply approved local operator approval effect proposals." --evidence-reference docs/expansion-operator-approval-effect-proposals.md`
 - `python3 -m agent_os.cli capability-activation-tasks`
+- `python3 -m agent_os.cli capability-activation-contracts`
 - `python3 -m agent_os.cli eval`
 - `python3 -m agent_os.cli playbooks`
 - `python3 -m agent_os.cli dashboard`
@@ -137,6 +138,7 @@ Advance the Agent System north-star goal by completing: Add capability-specific 
 - operator approval effect proposals: operator_approval_effect_proposals_recorded
 - operator approval effect application: operator_approval_effect_application_already_recorded
 - capability activation tasks: capability_activation_tasks_already_recorded
+- capability activation contracts: capability_activation_contracts_recorded
 - proposed eval candidates: 0
 - active playbooks: 1
 - open stuck-task incidents: 0

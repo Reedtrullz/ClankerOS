@@ -279,6 +279,21 @@ and links each task back to its source effect. It must still report
 `activation_actions_taken: 0`; the tasks are guardrails for future evidence
 and approval work, not capability enablement.
 
+Turn those pending activation tasks into blocked evidence and approval
+contracts:
+
+```bash
+python3 -m agent_os.cli capability-activation-contracts
+python3 -m agent_os.cli dashboard
+```
+
+This creates one blocked activation contract per pending activation task. Each
+contract records required artifacts, required commands,
+`explicit_operator_approval_required`, and `blocked_until_evidence_verified`.
+It must still report `approval_requests_created: 0` and
+`activation_actions_taken: 0`; it does not create `approval_requests` rows or
+enable capabilities.
+
 ## When To Commit And Push
 
 Commit when:
@@ -297,8 +312,8 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 Good next slices now favor capability-specific guards after local application
 records exist:
 
-- capability-specific evidence and approval contracts for the new activation
-  tasks;
+- evidence ingestion and operator decisions for capability activation
+  contracts;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;
