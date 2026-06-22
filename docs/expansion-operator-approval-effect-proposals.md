@@ -1,0 +1,54 @@
+# Expansion Operator Approval Effect Proposals
+
+- status: operator_approval_effect_proposals_already_recorded
+- source_decision: operator_approval_request_decision_560d5914977d
+- source_draft: expansion_operator_approval_draft_93697a4315da
+- approved_operator_requests: 11
+- effect_proposals_created: 0
+- existing_effect_proposals: 11
+- external_effect_proposals: 0
+- capability_effect_proposals: 0
+- legacy_approval_requests_created: 0
+- activation_actions_taken: 0
+- report_path: docs/expansion-operator-approval-effect-proposals.md
+
+## Created Proposed Effects
+
+- none
+
+## Approved Operator Requests
+
+- request=operator_approval_request_96d25fbeb129 subject_type=external_decision subject_key=Choose external model providers and API policies before adding remote model routing. request_kind=external_operator_decision capability=external_decision status=approved evidence_path=tasks.md
+- request=operator_approval_request_f7ee8e548564 subject_type=external_decision subject_key=Choose deployment target before hosted dashboard work. request_kind=external_operator_decision capability=external_decision status=approved evidence_path=tasks.md
+- request=operator_approval_request_6f34e2f394cd subject_type=capability_approval subject_key=hosted_dashboard request_kind=capability_operator_approval capability=hosted_dashboard status=approved evidence_path=docs/hosted-dashboard-proof-checklist.md
+- request=operator_approval_request_e9b0f08564e1 subject_type=capability_approval subject_key=remote_workers request_kind=capability_operator_approval capability=remote_workers status=approved evidence_path=docs/remote-worker-proof-checklist.md
+- request=operator_approval_request_6ebeb2f32056 subject_type=capability_approval subject_key=autonomous_scheduling request_kind=capability_operator_approval capability=autonomous_scheduling status=approved evidence_path=docs/autonomous-scheduling-proof-checklist.md
+- request=operator_approval_request_5f1238b66961 subject_type=capability_approval subject_key=browser_desktop_adapters request_kind=capability_operator_approval capability=browser_desktop_adapters status=approved evidence_path=docs/browser-desktop-adapter-proof-checklist.md
+- request=operator_approval_request_6a498ab280e1 subject_type=capability_approval subject_key=ci_deploy_proof request_kind=capability_operator_approval capability=ci_deploy_proof status=approved evidence_path=docs/ci-deploy-proof-checklist.md
+- request=operator_approval_request_21a453d20186 subject_type=capability_approval subject_key=budget_enforcement request_kind=capability_operator_approval capability=budget_enforcement status=approved evidence_path=docs/budget-enforcement-proof-checklist.md
+- request=operator_approval_request_582f7bfe609c subject_type=capability_approval subject_key=trust_promotion request_kind=capability_operator_approval capability=trust_promotion status=approved evidence_path=docs/trust-promotion-proof-checklist.md
+- request=operator_approval_request_239a407346df subject_type=capability_approval subject_key=automatic_retries request_kind=capability_operator_approval capability=automatic_retries status=approved evidence_path=docs/automatic-retry-proof-checklist.md
+- request=operator_approval_request_c59b82c4f7c3 subject_type=capability_approval subject_key=real_cost_tracking request_kind=capability_operator_approval capability=real_cost_tracking status=approved evidence_path=docs/real-cost-tracking-proof-checklist.md
+
+## Existing Proposed Effects
+
+- effect_1a41ff7c5cca: status=proposed effect_type=operator_capability_proposal capability=real_cost_tracking target=real_cost_tracking required_approval=operator_approval_request_c59b82c4f7c3 idempotency_key=operator-approval-effect:operator_approval_request_c59b82c4f7c3 report=docs/expansion-operator-approval-effect-proposals.md
+- effect_e5a56b95d9ce: status=proposed effect_type=operator_capability_proposal capability=automatic_retries target=automatic_retries required_approval=operator_approval_request_239a407346df idempotency_key=operator-approval-effect:operator_approval_request_239a407346df report=docs/expansion-operator-approval-effect-proposals.md
+- effect_549912b53e8e: status=proposed effect_type=operator_capability_proposal capability=trust_promotion target=trust_promotion required_approval=operator_approval_request_582f7bfe609c idempotency_key=operator-approval-effect:operator_approval_request_582f7bfe609c report=docs/expansion-operator-approval-effect-proposals.md
+- effect_9ad8411cfe14: status=proposed effect_type=operator_capability_proposal capability=budget_enforcement target=budget_enforcement required_approval=operator_approval_request_21a453d20186 idempotency_key=operator-approval-effect:operator_approval_request_21a453d20186 report=docs/expansion-operator-approval-effect-proposals.md
+- effect_1e2d271e79f3: status=proposed effect_type=operator_capability_proposal capability=ci_deploy_proof target=ci_deploy_proof required_approval=operator_approval_request_6a498ab280e1 idempotency_key=operator-approval-effect:operator_approval_request_6a498ab280e1 report=docs/expansion-operator-approval-effect-proposals.md
+- effect_2fe6bd7d30f4: status=proposed effect_type=operator_capability_proposal capability=browser_desktop_adapters target=browser_desktop_adapters required_approval=operator_approval_request_5f1238b66961 idempotency_key=operator-approval-effect:operator_approval_request_5f1238b66961 report=docs/expansion-operator-approval-effect-proposals.md
+- effect_29e9791db746: status=proposed effect_type=operator_capability_proposal capability=autonomous_scheduling target=autonomous_scheduling required_approval=operator_approval_request_6ebeb2f32056 idempotency_key=operator-approval-effect:operator_approval_request_6ebeb2f32056 report=docs/expansion-operator-approval-effect-proposals.md
+- effect_cc210d6119d5: status=proposed effect_type=operator_capability_proposal capability=remote_workers target=remote_workers required_approval=operator_approval_request_e9b0f08564e1 idempotency_key=operator-approval-effect:operator_approval_request_e9b0f08564e1 report=docs/expansion-operator-approval-effect-proposals.md
+- effect_f150fdc78c97: status=proposed effect_type=operator_capability_proposal capability=hosted_dashboard target=hosted_dashboard required_approval=operator_approval_request_6f34e2f394cd idempotency_key=operator-approval-effect:operator_approval_request_6f34e2f394cd report=docs/expansion-operator-approval-effect-proposals.md
+- effect_a4c16d8bee74: status=proposed effect_type=operator_external_decision capability=external_decision target=Choose deployment target before hosted dashboard work. required_approval=operator_approval_request_f7ee8e548564 idempotency_key=operator-approval-effect:operator_approval_request_f7ee8e548564 report=docs/expansion-operator-approval-effect-proposals.md
+- effect_119092eae663: status=proposed effect_type=operator_external_decision capability=external_decision target=Choose external model providers and API policies before adding remote model routing. required_approval=operator_approval_request_96d25fbeb129 idempotency_key=operator-approval-effect:operator_approval_request_96d25fbeb129 report=docs/expansion-operator-approval-effect-proposals.md
+
+## Non-Claims
+
+- Does not create legacy approval_requests rows.
+- Does not enable capabilities.
+- Does not promote trust, retry, schedule, route, or dispatch work.
+- Does not run CI or deploy.
+- Does not mark the active goal complete.
+- Does not mutate external systems.

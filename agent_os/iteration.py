@@ -6,6 +6,10 @@ from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 
+from agent_os.operator_approval_effect_proposals import (
+    IDEMPOTENCY_PREFIX as OPERATOR_APPROVAL_EFFECT_IDEMPOTENCY_PREFIX,
+    PROPOSALS_RECORDED as OPERATOR_APPROVAL_EFFECT_PROPOSALS_RECORDED,
+)
 from agent_os.storage import IterationPacket, Storage
 
 
@@ -57,6 +61,7 @@ VERIFICATION_COMMANDS = [
     "python3 -m agent_os.cli expansion-operator-approval-schema-migration-action-checklist",
     "python3 -m agent_os.cli expansion-operator-approval-schema-migration-selection-packet",
     "python3 -m agent_os.cli expansion-operator-approval-schema-migration-selection-input-template",
+    "python3 -m agent_os.cli expansion-operator-approval-effect-proposals",
     "python3 -m agent_os.cli eval",
     "python3 -m agent_os.cli playbooks",
     "python3 -m agent_os.cli dashboard",
@@ -674,6 +679,17 @@ def _current_posture(root: Path) -> list[str]:
                 operator_approval_request_decisions = (
                     operator_approval_request_decision_rows[0].status
                 )
+        operator_approval_effect_proposals = "none"
+        if _table_exists(connection, "effects"):
+            operator_approval_effect_rows = Storage(
+                db_path
+            ).list_effects_with_idempotency_prefix(
+                OPERATOR_APPROVAL_EFFECT_IDEMPOTENCY_PREFIX
+            )
+            if operator_approval_effect_rows:
+                operator_approval_effect_proposals = (
+                    OPERATOR_APPROVAL_EFFECT_PROPOSALS_RECORDED
+                )
         handoff_reviews = Storage(db_path).list_recent_handoff_reviews(limit=1)
 
     handoff_blocked_tasks = 0
@@ -733,6 +749,7 @@ def _current_posture(root: Path) -> list[str]:
         f"operator approval schema migration application: {operator_approval_schema_migration_application}",
         f"operator approval request rows application: {operator_approval_request_rows_application}",
         f"operator approval request decisions: {operator_approval_request_decisions}",
+        f"operator approval effect proposals: {operator_approval_effect_proposals}",
         f"proposed eval candidates: {proposed_eval_candidates}",
         f"active playbooks: {active_playbooks}",
         f"open stuck-task incidents: {stuck_count}",

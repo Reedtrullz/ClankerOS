@@ -84,6 +84,11 @@ Core layers for the bootstrap:
   GitHub handoffs, CI/deploy evidence, profile routing decisions, subagent
   delegations, steering reviews, memory proposals, skill proposals, and the
   next recommended operator action.
+- Operator approval effect proposals: approved local
+  `operator_approval_requests` rows can be converted into idempotent
+  `proposed` effect records for external-decision and capability surfaces
+  while taking zero activation actions and creating zero legacy
+  `approval_requests` rows.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON

@@ -10402,6 +10402,18 @@ class Storage:
             ).fetchall()
         return [self._row_to_effect(row) for row in rows]
 
+    def list_effects_with_idempotency_prefix(self, prefix: str) -> list[Effect]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from effects
+                where idempotency_key like ?
+                order by created_at desc, id desc
+                """,
+                (f"{prefix}%",),
+            ).fetchall()
+        return [self._row_to_effect(row) for row in rows]
+
     def list_stale_active_tasks(
         self,
         *,

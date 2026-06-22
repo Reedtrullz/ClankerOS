@@ -239,6 +239,19 @@ action. It must still report `approval_requests_created: 0`, and it does not
 enable capabilities, promote trust, route work, deploy, or mutate external
 systems.
 
+After approved rows exist, create proposal records without applying them:
+
+```bash
+python3 -m agent_os.cli expansion-operator-approval-effect-proposals
+```
+
+This command writes `proposed` effect rows for approved local operator approval
+requests and links each row back to the original operator request. It must
+still report `legacy_approval_requests_created: 0` and
+`activation_actions_taken: 0`; it does not enable capabilities, promote trust,
+route work, schedule workers, retry work, track spend, deploy, or mutate
+external systems.
+
 ## When To Commit And Push
 
 Commit when:
@@ -254,9 +267,10 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 
 ## Practical Next Slices
 
-Good next slices now favor effect proposal work before broader autonomy:
+Good next slices now favor applying proposed effects through a fresh approval
+checkpoint before broader autonomy:
 
-- effect proposal records from approved `operator_approval_requests` rows;
+- approval-gated application for proposed operator approval effects;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;

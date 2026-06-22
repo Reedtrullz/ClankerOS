@@ -101,7 +101,8 @@
 - [x] Add approval-gated operator approval request table creation from schema migration selection packets. <!-- score=9 complexity=4 -->
 - [x] Add approval-gated operator approval request row creation from expansion approval drafts after the schema exists. <!-- score=9 complexity=4 -->
 - [x] Add approval-gated decision command for pending operator approval request rows. <!-- score=9 complexity=4 -->
-- [ ] Add effect proposal records from approved operator approval request decisions. <!-- score=9 complexity=4 -->
+- [x] Add effect proposal records from approved operator approval request decisions. <!-- score=9 complexity=4 -->
+- [ ] Add approval-gated application command for operator approval effect proposals. <!-- score=9 complexity=4 -->
 
 ## blocked
 

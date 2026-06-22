@@ -18,6 +18,7 @@ completed delegation result -> proposed memory entry -> operator approval/archiv
 useful run evidence -> proposed SKILL.md -> operator approval/archive
 run evidence -> human review -> evidence index -> conceptual replay summary
 goal state -> deterministic steering review -> next action -> operator inbox
+approved operator request decisions -> proposed effect records -> blocked activation
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -64,7 +65,10 @@ approved row-application command can create pending local
 `operator_approval_requests` rows from expansion approval drafts. A decision
 command can then record local approve/defer/more-evidence decisions for those
 pending rows while still leaving legacy `approval_requests`, capability
-activation, trust promotion, and external systems untouched.
+activation, trust promotion, and external systems untouched. Approved local
+operator request decisions can now be converted into `proposed` effect records
+for external-decision and capability surfaces, preserving the approval link
+and idempotency key while still taking zero activation actions.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -332,6 +336,10 @@ The repository can now:
 - record local decisions on pending `operator_approval_requests` rows with
   explicit operator input while still creating no legacy `approval_requests`
   rows, enabling no capability, and taking no external action;
+- create proposed effect records from approved `operator_approval_requests`
+  rows, linking each effect to its source operator request and idempotency key
+  while taking no activation, routing, scheduling, trust-promotion, retry,
+  spend-tracking, CI, deploy, or external action;
 - record proposed eval candidates when verifier or workflow gaps are discovered;
 - promote repeated successful eval runs into reusable playbook files;
 - prefer lower-complexity queue items when candidate scores tie;
@@ -356,6 +364,7 @@ python3 -m agent_os.cli approve <approval_id> --decided-by operator --note "loca
 python3 -m agent_os.cli commit-approved <approval_id> --committed-by operator
 python3 -m agent_os.cli github-handoff <effect_id> --remote origin --base main --title "Draft PR title"
 python3 -m agent_os.cli ci-deploy-evidence <github_handoff_id> --provider github-actions --status success --external-run-id <run_id> --url <run_url>
+python3 -m agent_os.cli expansion-operator-approval-effect-proposals
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"

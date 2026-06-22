@@ -1474,17 +1474,38 @@ work, or changing routing.
   legacy `approval_requests` rows, mark the active goal complete, or mutate
   external systems.
 
+## Latest Operator Approval Effect Proposals
+
+- `expansion-operator-approval-effect-proposals` now exists as the local bridge
+  from approved `operator_approval_requests` rows into proposed effect records.
+- Initial proposal run:
+  `operator_approval_effect_proposals_recorded`, sourced from decision
+  `operator_approval_request_decision_560d5914977d` and draft
+  `expansion_operator_approval_draft_93697a4315da`.
+- It created 11 `effects` rows with `status=proposed`: 2 external-decision
+  proposals and 9 capability proposals for hosted dashboard, remote workers,
+  autonomous scheduling, browser/desktop adapters, CI/deploy proof, budget
+  enforcement, trust promotion, automatic retries, and real cost tracking.
+- Evidence report:
+  `docs/expansion-operator-approval-effect-proposals.md`.
+- Final verification reran the command idempotently, so the current report
+  status is `operator_approval_effect_proposals_already_recorded` with 11
+  existing proposed effects and 0 new activation actions.
+- Non-claims: proposal creation does not apply effects, create legacy
+  `approval_requests`, enable capabilities, promote trust, route work,
+  schedule work, start workers, retry work, track spend, run CI, deploy, push,
+  open PRs, mark the active goal complete, or mutate external systems.
+
 ## Next Actions
 
-Current focus: Add effect proposal records from approved operator approval request decisions.
+Current focus: Add approval-gated application command for operator approval effect proposals.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add effect proposal records from approved operator approval request
-   decisions.
-2. Build effect proposal records sourced from approved
-   `operator_approval_requests` rows while keeping actual capability
-   activation, trust promotion, routing, workers, schedulers, and external
-   side effects blocked.
+   Add approval-gated application command for operator approval effect
+   proposals.
+2. Keep proposed effects separate from applied effects; require a fresh
+   approval checkpoint before any activation, trust promotion, routing,
+   worker, scheduler, retry, spend-tracking, CI/deploy, or external action.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts exist.

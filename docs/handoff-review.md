@@ -1,8 +1,8 @@
 # Handoff Review
 
-- id: handoff_review_2cf69d76d3f3
+- id: handoff_review_fb228d7e9598
 - status: clear
-- current_focus: Add effect proposal records from approved operator approval request decisions.
+- current_focus: Add approval-gated application command for operator approval effect proposals.
 - blocked_tasks: 0
 - stale_handoffs: 0
 - reviewed_paths: 1

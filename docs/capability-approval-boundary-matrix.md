@@ -1,8 +1,8 @@
 # Capability Approval Boundary Matrix
 
-- id: capability_approval_boundary_matrix_edc3e766edba
+- id: capability_approval_boundary_matrix_fc74b4574659
 - status: approval_required
-- source_index_id: capability_proof_gap_index_2e86cc7a2331
+- source_index_id: capability_proof_gap_index_85f99c1c4d9d
 - source_index_status: open_gaps
 - capability_count: 9
 - boundaries: 1
@@ -11,7 +11,7 @@
 - approvals_required: 9
 - recommended_commands: none
 - report_path: docs/capability-approval-boundary-matrix.md
-- created_at: 2026-06-22T14:48:45.976286+00:00
+- created_at: 2026-06-22T15:36:45.579388+00:00
 
 ## Recommendation
 
@@ -35,7 +35,7 @@
 
 ## Source Proof Gap Index
 
-- id: capability_proof_gap_index_2e86cc7a2331
+- id: capability_proof_gap_index_85f99c1c4d9d
 - status: open_gaps
 - gaps: 9
 - missing_evidence: 9

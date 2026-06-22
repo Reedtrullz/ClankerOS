@@ -5609,3 +5609,41 @@
   `approval_requests` rows, enable capabilities, promote trust, run CI,
   deploy, push, open PRs, start workers, schedule work, retry work, track
   spend, mark the active goal complete, or mutate external systems.
+
+## 2026-06-22 Operator Approval Effect Proposals
+
+- Added local proposal command:
+  `python3 -m agent_os.cli expansion-operator-approval-effect-proposals`.
+- The command reads the latest recorded approved local
+  `operator_approval_requests` decision, creates idempotent `effects` rows
+  with `status=proposed`, and links each proposal to the source operator
+  approval request via `required_approval_id`.
+- Initial live proposal run created 11 proposed effects from decision
+  `operator_approval_request_decision_560d5914977d`: 2
+  `operator_external_decision` effects and 9
+  `operator_capability_proposal` effects.
+- A later idempotency verification run reported
+  `operator_approval_effect_proposals_already_recorded`,
+  `effect_proposals_created: 0`, `existing_effect_proposals: 11`, 0 legacy
+  `approval_requests` rows created, and 0 activation actions taken.
+- Added dashboard visibility under
+  `## Expansion Operator Approval Effect Proposals`.
+- Added `docs/tutorial-operator-approval-effect-proposals.md` and updated
+  README, suggested-use docs, operating summary, task queue, dashboard, eval
+  evidence, and next iteration packet.
+- Verification evidence:
+  - Red-first focused tests failed before the CLI command existed.
+  - `python3 -m py_compile agent_os/operator_approval_effect_proposals.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'operator_approval_effect_proposals'` -> 3 passed, 240 deselected.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'operator_approval_request_decide or operator_approval_effect_proposals or approval_request_rows_apply'` -> 9 passed, 234 deselected.
+  - `python3 -m pytest -q` -> 243 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add operator approval effect proposals" ...` -> pass as `run_706a409ddded`.
+  - Full command-gate sweep from `sweep-stuck` through dashboard -> passed,
+    including `expansion-operator-approval-effect-proposals` idempotency.
+  - `gh repo view Reedtrullz/ClankerOS --json description,repositoryTopics,url`
+    -> description and topics matched README metadata.
+  - `git diff --check` -> passed.
+- Non-claims: effect proposal creation does not apply effects, create legacy
+  `approval_requests` rows, enable capabilities, promote trust, route work,
+  schedule work, start workers, retry work, track spend, run CI, deploy, push,
+  open PRs, mark the active goal complete, or mutate external systems.

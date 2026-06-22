@@ -170,6 +170,10 @@ from agent_os.operator_approval_request_decisions import (
     decide_operator_approval_requests,
     render_operator_approval_request_decision_line,
 )
+from agent_os.operator_approval_effect_proposals import (
+    render_operator_approval_effect_proposal_line,
+    write_operator_approval_effect_proposals,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -633,6 +637,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     request_decide.add_argument("--selection-note", required=True)
     request_decide.add_argument("--evidence-reference", required=True)
+    subparsers.add_parser(
+        "expansion-operator-approval-effect-proposals",
+        help="Create local proposed effects from approved operator approval request decisions.",
+    )
 
     approve = subparsers.add_parser("approve", help="Approve a pending local task request.")
     approve.add_argument("approval_id")
@@ -2486,6 +2494,33 @@ def main(argv: list[str] | None = None) -> int:
                 "- "
             )
         )
+        return 0
+
+    if args.command == "expansion-operator-approval-effect-proposals":
+        AgentSystem(root).initialize()
+        report_path, summary, effects = write_operator_approval_effect_proposals(root)
+        print(f"expansion_operator_approval_effect_proposals: {summary.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"source_decision: {summary.source_decision_id}")
+        print(f"source_draft: {summary.source_draft_id}")
+        print(
+            "approved_operator_requests: "
+            f"{summary.approved_operator_request_count}"
+        )
+        print(f"effect_proposals_created: {summary.effect_proposal_count}")
+        print(f"existing_effect_proposals: {summary.existing_effect_proposal_count}")
+        print(f"external_effect_proposals: {summary.external_effect_proposal_count}")
+        print(
+            "capability_effect_proposals: "
+            f"{summary.capability_effect_proposal_count}"
+        )
+        print(
+            "legacy_approval_requests_created: "
+            f"{summary.legacy_approval_request_count}"
+        )
+        print(f"activation_actions_taken: {summary.activation_action_count}")
+        for effect in effects:
+            print(render_operator_approval_effect_proposal_line(effect).removeprefix("- "))
         return 0
 
     if args.command == "approve":

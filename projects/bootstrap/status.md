@@ -3443,3 +3443,15 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_ba717f829701
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_7964f9ddd944/summary.md
+
+## Run run_706a409ddded
+
+- Goal ID: goal_7337fda44178
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_706a409ddded/summary.md
+
+## Run run_533ba4c469c4
+
+- Goal ID: goal_fd234e068201
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_533ba4c469c4/summary.md

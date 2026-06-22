@@ -132,6 +132,10 @@ from agent_os.operator_approval_request_rows import (
 from agent_os.operator_approval_request_decisions import (
     render_operator_approval_request_decision_line,
 )
+from agent_os.operator_approval_effect_proposals import (
+    IDEMPOTENCY_PREFIX as OPERATOR_APPROVAL_EFFECT_IDEMPOTENCY_PREFIX,
+    render_operator_approval_effect_proposal_line,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -282,8 +286,14 @@ def generate_static_dashboard(root: Path) -> Path:
         if _table_exists(connection, "steering_reviews"):
             steering_reviews = storage.list_recent_steering_reviews(limit=5)
         effects = []
+        operator_approval_effect_proposals = []
         if _table_exists(connection, "effects"):
             effects = storage.list_recent_effects(limit=5)
+            operator_approval_effect_proposals = (
+                storage.list_effects_with_idempotency_prefix(
+                    OPERATOR_APPROVAL_EFFECT_IDEMPOTENCY_PREFIX
+                )
+            )
         iterations = []
         if _table_exists(connection, "iteration_packets"):
             iterations = connection.execute(
@@ -1222,6 +1232,47 @@ def generate_static_dashboard(root: Path) -> Path:
                 "",
                 render_operator_approval_request_decision_line(decision),
             ]
+        )
+    else:
+        lines.append("- none")
+
+    lines.extend(
+        [
+            "",
+            "## Expansion Operator Approval Effect Proposals",
+            "",
+        ]
+    )
+    if operator_approval_effect_proposals:
+        external_effect_count = sum(
+            1
+            for effect in operator_approval_effect_proposals
+            if effect.effect_type == "operator_external_decision"
+        )
+        capability_effect_count = sum(
+            1
+            for effect in operator_approval_effect_proposals
+            if effect.effect_type == "operator_capability_proposal"
+        )
+        latest_effect = operator_approval_effect_proposals[0]
+        lines.extend(
+            [
+                "- status: operator_approval_effect_proposals_recorded",
+                f"- source_decision: {latest_effect.run_id}",
+                f"- approved_operator_requests: {len(operator_approval_effect_proposals)}",
+                f"- effect_proposals_created: {len(operator_approval_effect_proposals)}",
+                f"- existing_effect_proposals: {len(operator_approval_effect_proposals)}",
+                f"- external_effect_proposals: {external_effect_count}",
+                f"- capability_effect_proposals: {capability_effect_count}",
+                "- legacy_approval_requests_created: 0",
+                "- activation_actions_taken: 0",
+                f"- report: {latest_effect.evidence_path}",
+                "",
+            ]
+        )
+        lines.extend(
+            render_operator_approval_effect_proposal_line(effect)
+            for effect in operator_approval_effect_proposals
         )
     else:
         lines.append("- none")

@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_6a631b6ef0c3
+- Packet ID: iteration_9da2aff951a8
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add effect proposal records from approved operator approval request decisions.
+Advance the Agent System north-star goal by completing: Add approval-gated application command for operator approval effect proposals.
 
 ## Definition Of Done
 
@@ -61,6 +61,7 @@ Advance the Agent System north-star goal by completing: Add effect proposal reco
 - `python3 -m agent_os.cli expansion-operator-approval-schema-migration-action-checklist`
 - `python3 -m agent_os.cli expansion-operator-approval-schema-migration-selection-packet`
 - `python3 -m agent_os.cli expansion-operator-approval-schema-migration-selection-input-template`
+- `python3 -m agent_os.cli expansion-operator-approval-effect-proposals`
 - `python3 -m agent_os.cli eval`
 - `python3 -m agent_os.cli playbooks`
 - `python3 -m agent_os.cli dashboard`
@@ -131,6 +132,7 @@ Advance the Agent System north-star goal by completing: Add effect proposal reco
 - operator approval schema migration application: operator_approval_schema_migration_applied
 - operator approval request rows application: operator_approval_request_rows_applied
 - operator approval request decisions: operator_approval_request_decisions_recorded
+- operator approval effect proposals: operator_approval_effect_proposals_recorded
 - proposed eval candidates: 0
 - active playbooks: 1
 - open stuck-task incidents: 0
