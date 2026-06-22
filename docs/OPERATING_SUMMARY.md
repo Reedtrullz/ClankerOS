@@ -120,6 +120,11 @@ Core layers for the bootstrap:
   delegation packets with local JSON artifacts. The packets preserve source
   task evidence and required proof commands while keeping subagent execution,
   model-provider calls, approval rows, and activation actions at zero.
+- Capability activation follow-up results: completed read-only evaluator
+  delegation results can be ingested into local result records and JSON
+  artifacts. The records preserve evaluator findings for operator review while
+  keeping proof satisfaction, approval rows, activation actions, and capability
+  enablement blocked.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON
@@ -369,10 +374,10 @@ Core layers for the bootstrap:
   expansion operator approval schema migration selection packets, expansion
   operator approval schema migration selection input templates, operator
   approval schema migration applications, operator approval request row
-  applications, operator approval request decisions, playbooks, eval
-  candidates, iteration packets, simplicity guardrails, approvals, proposed
-  effects, worktrees, verification status, stuck tasks, incidents, recent
-  runs, learnings, and eval results.
+  applications, operator approval request decisions, capability activation
+  follow-up result batches, playbooks, eval candidates, iteration packets,
+  simplicity guardrails, approvals, proposed effects, worktrees, verification
+  status, stuck tasks, incidents, recent runs, learnings, and eval results.
 
 ## First Milestone
 
@@ -701,6 +706,13 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   `docs/capability-activation-followup-delegations.md`, records
   `evidence_review` routing decisions, and creates pending read-only evaluator
   delegation packets while keeping execution and activation actions at zero.
+- Capability activation follow-up results: available through
+  `python3 -m agent_os.cli capability-activation-followup-results` after
+  read-only evaluator delegation results are completed. The command writes
+  `docs/capability-activation-followup-results.md`, records local result rows
+  and JSON artifacts, and keeps `approval_requests_created: 0`,
+  `activation_actions_taken: 0`, `activation_allowed: false`, and
+  `capability_enabled: false`.
 - Eval candidate listing: available through
   `python3 -m agent_os.cli eval-candidates` and mirrored into
   `docs/dashboard.md`.

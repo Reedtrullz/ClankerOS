@@ -1,15 +1,15 @@
 # Capability Activation Tasks
 
-- id: capability_activation_task_batch_84dc586e1d7a
+- id: capability_activation_task_batch_e7876bf8ae6a
 - status: capability_activation_tasks_already_recorded
-- source_application: operator_approval_effect_application_55f8ddf9ea75
+- source_application: operator_approval_effect_application_e0c5bd92fde7
 - goal: goal_b25a107a53a9
 - applied_capability_effects: 9
 - tasks_created: 0
 - existing_activation_tasks: 9
 - activation_actions_taken: 0
 - report_path: docs/capability-activation-tasks.md
-- created_at: 2026-06-22T17:03:53.686127+00:00
+- created_at: 2026-06-22T17:47:08.388855+00:00
 
 ## Created Activation Tasks
 

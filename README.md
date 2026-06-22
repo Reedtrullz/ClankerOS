@@ -25,6 +25,7 @@ pending activation tasks -> capability activation contracts -> blocked evidence/
 activation contracts -> operator evidence ingestion -> local more-evidence decisions
 more-evidence decisions -> pending follow-up evidence tasks -> task graph
 follow-up evidence tasks -> routing decisions -> read-only delegation packets
+completed follow-up delegation results -> local result records -> blocked proof state preserved
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -94,7 +95,10 @@ tasks in the task graph, so the next proof work is executable queue state
 rather than a chat reminder. Those follow-up tasks can now be routed to the
 read-only evaluator profile and materialized as pending delegation packets
 with local JSON artifacts, without starting a subagent or calling a model
-provider.
+provider. Completed read-only evaluator delegation results can now be ingested
+as local capability follow-up result records and JSON artifacts while keeping
+`approval_requests_created=0`, `activation_actions_taken=0`,
+`activation_allowed=false`, and `capability_enabled=false`.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -265,6 +269,8 @@ The repository can now:
   more evidence, without enabling capabilities or creating approval rows;
 - route capability follow-up evidence tasks to read-only evaluator delegation
   packets without starting subagents or calling model providers;
+- ingest completed read-only evaluator follow-up delegation results into local
+  result records without satisfying proof or enabling capabilities;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -416,6 +422,7 @@ python3 -m agent_os.cli capability-activation-evidence --all --evidence-kind pro
 python3 -m agent_os.cli capability-activation-decide --operator-id operator --selected-action request_more_evidence --selection-note "Requested capability-specific proof before any activation decision." --evidence-reference docs/capability-activation-evidence.md
 python3 -m agent_os.cli capability-activation-followups
 python3 -m agent_os.cli capability-activation-followup-delegations
+python3 -m agent_os.cli capability-activation-followup-results
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"

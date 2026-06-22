@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_7f7b52a5d13c
+- Packet ID: iteration_57f226ba376d
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add capability follow-up evidence result ingestion from completed delegation packets.
+Advance the Agent System north-star goal by completing: Add operator review decisions for ingested capability follow-up results.
 
 ## Definition Of Done
 
@@ -69,6 +69,7 @@ Advance the Agent System north-star goal by completing: Add capability follow-up
 - `python3 -m agent_os.cli capability-activation-decide --operator-id operator --selected-action request_more_evidence --selection-note "Requested capability-specific proof before any activation decision." --evidence-reference docs/capability-activation-evidence.md`
 - `python3 -m agent_os.cli capability-activation-followups`
 - `python3 -m agent_os.cli capability-activation-followup-delegations`
+- `python3 -m agent_os.cli capability-activation-followup-results`
 - `python3 -m agent_os.cli eval`
 - `python3 -m agent_os.cli playbooks`
 - `python3 -m agent_os.cli dashboard`
@@ -147,6 +148,7 @@ Advance the Agent System north-star goal by completing: Add capability follow-up
 - capability activation decisions: capability_activation_decisions_already_recorded
 - capability activation followups: capability_activation_followups_already_recorded
 - capability activation followup delegations: capability_activation_followup_delegations_already_recorded
+- capability activation followup results: capability_activation_followup_results_already_recorded
 - proposed eval candidates: 0
 - active playbooks: 1
 - open stuck-task incidents: 0

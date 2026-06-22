@@ -153,6 +153,41 @@ They include the source follow-up task evidence, required artifacts, required
 commands, and non-claims, but they do not start a subagent or call a model
 provider.
 
+## Ingest Completed Follow-Up Results
+
+After an operator has a read-only evaluator result, complete the delegation:
+
+```bash
+python3 -m agent_os.cli record-delegation-result <delegation_id> \
+  --summary "Evaluator found missing proof and recommends keeping activation blocked." \
+  --output-json '{"evidence":[{"status":"missing","summary":"Required proof is not attached."}],"findings":[{"summary":"Keep activation blocked."}]}'
+```
+
+Then ingest completed capability follow-up delegation results:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-results
+```
+
+Expected output includes:
+
+```text
+capability_activation_followup_results: capability_activation_followup_results_recorded
+completed_delegations: 1
+result_records_created: 1
+approval_requests_created: 0
+activation_actions_taken: 0
+report: docs/capability-activation-followup-results.md
+```
+
+Rerunning the command should report
+`capability_activation_followup_results_already_recorded` when all completed
+delegation results already have local result records.
+
+The result record preserves the completed delegation output for operator
+review. It does not satisfy capability proof, create approval rows, or enable
+the capability.
+
 ## Non-Claims
 
 - This does not create `approval_requests` rows.

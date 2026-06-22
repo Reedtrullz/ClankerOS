@@ -13240,6 +13240,14 @@ def _capability_activation_followup_delegations_command(tmp_path: Path) -> list[
     ]
 
 
+def _capability_activation_followup_results_command(tmp_path: Path) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-followup-results",
+    ]
+
+
 def _run_capability_activation_followup_chain(tmp_path: Path, capsys) -> None:
     _run_capability_activation_contract_chain(tmp_path, capsys)
     assert main(_capability_activation_evidence_command(tmp_path)) == 0
@@ -13766,6 +13774,212 @@ def test_capability_activation_followup_delegations_are_idempotent(
     ]
     assert len(followup_delegations) == 9
     assert len(storage.list_recent_routing_decisions(limit=None)) == 9
+
+
+def test_capability_activation_followup_results_require_completed_delegations(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_capability_activation_followup_chain(tmp_path, capsys)
+    assert main(_capability_activation_followup_delegations_command(tmp_path)) == 0
+    capsys.readouterr()
+
+    assert main(_capability_activation_followup_results_command(tmp_path)) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_results: "
+        "capability_activation_followup_results_no_completed_delegations"
+    ) in output
+    assert "completed_delegations: 0" in output
+    assert "result_records_created: 0" in output
+    assert "existing_result_records: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batches = storage.list_recent_capability_activation_followup_result_batches()
+    assert batches[0].status == (
+        "capability_activation_followup_results_no_completed_delegations"
+    )
+    assert batches[0].completed_delegation_count == 0
+    assert storage.list_capability_activation_followup_result_records() == []
+    assert storage.list_recent_approval_requests() == []
+
+    report = (
+        tmp_path / "docs" / "capability-activation-followup-results.md"
+    ).read_text(encoding="utf-8")
+    assert "# Capability Activation Follow-Up Results" in report
+    assert (
+        "- status: capability_activation_followup_results_no_completed_delegations"
+        in report
+    )
+    assert "- Does not create approval_requests rows." in report
+
+
+def test_capability_activation_followup_results_ingest_completed_delegation_output(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_capability_activation_followup_chain(tmp_path, capsys)
+    assert main(_capability_activation_followup_delegations_command(tmp_path)) == 0
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    followup_delegations = [
+        delegation
+        for delegation in storage.list_recent_subagent_delegations(limit=None)
+        if delegation.parent_task_id
+    ]
+    delegation = followup_delegations[0]
+    completed, already_recorded = record_delegation_result(
+        tmp_path,
+        storage,
+        delegation_id=delegation.id,
+        result_summary="Evaluator found missing proof and recommended keeping activation blocked.",
+        structured_output={
+            "evidence": [
+                {
+                    "status": "missing",
+                    "reference": "docs/capability-activation-contracts.md",
+                    "summary": "Required external proof is not attached.",
+                }
+            ],
+            "findings": [
+                {
+                    "severity": "medium",
+                    "summary": "Keep activation blocked until fresh proof is supplied.",
+                }
+            ],
+        },
+        recorded_by="operator",
+    )
+    assert completed.status == "completed"
+    assert already_recorded is False
+    capsys.readouterr()
+
+    assert main(_capability_activation_followup_results_command(tmp_path)) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_results: "
+        "capability_activation_followup_results_recorded"
+    ) in output
+    assert "completed_delegations: 1" in output
+    assert "result_records_created: 1" in output
+    assert "existing_result_records: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+    assert "report: docs/capability-activation-followup-results.md" in output
+
+    batches = storage.list_recent_capability_activation_followup_result_batches()
+    batch = batches[0]
+    assert batch.status == "capability_activation_followup_results_recorded"
+    assert batch.completed_delegation_count == 1
+    assert batch.result_record_count == 1
+    assert batch.existing_result_record_count == 0
+    assert batch.created_approval_request_count == 0
+    assert batch.activation_action_count == 0
+    assert len(batch.created_result_ids) == 1
+
+    records = storage.list_capability_activation_followup_result_records()
+    assert len(records) == 1
+    record = records[0]
+    assert record.delegation_id == completed.id
+    assert record.followup_task_id == completed.parent_task_id
+    assert record.contract_id.startswith("capability_activation_contract_")
+    assert record.capability
+    assert record.evidence_status == "reviewed_missing_proof"
+    assert record.activation_allowed is False
+    assert record.capability_enabled is False
+    assert record.created_approval_request_count == 0
+    assert record.activation_action_count == 0
+    assert record.result_json["delegation_result"]["result_summary"].startswith(
+        "Evaluator found missing proof"
+    )
+
+    artifact = json.loads(Path(record.evidence_path).read_text(encoding="utf-8"))
+    assert artifact["delegation_id"] == completed.id
+    assert artifact["followup_task_id"] == completed.parent_task_id
+    assert artifact["activation_allowed"] is False
+    assert artifact["capability_enabled"] is False
+    assert artifact["approval_requests_created"] == 0
+    assert artifact["activation_actions_taken"] == 0
+    assert artifact["delegation_result"]["structured_output"]["evidence"]
+
+    assert storage.list_recent_approval_requests() == []
+    contracts = storage.list_capability_activation_contracts()
+    assert {contract.activation_allowed for contract in contracts} == {False}
+
+    report = (
+        tmp_path / "docs" / "capability-activation-followup-results.md"
+    ).read_text(encoding="utf-8")
+    assert "# Capability Activation Follow-Up Results" in report
+    assert "- status: capability_activation_followup_results_recorded" in report
+    assert "- result_records_created: 1" in report
+    assert f"delegation={completed.id}" in report
+    assert "- Does not satisfy capability proof." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "## Capability Activation Follow-Up Results" in dashboard
+    assert "- status: capability_activation_followup_results_recorded" in dashboard
+    assert "- result_records_created: 1" in dashboard
+    assert batch.id in dashboard
+
+
+def test_capability_activation_followup_results_are_idempotent(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _run_capability_activation_followup_chain(tmp_path, capsys)
+    assert main(_capability_activation_followup_delegations_command(tmp_path)) == 0
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    delegation = storage.list_recent_subagent_delegations(limit=None)[0]
+    record_delegation_result(
+        tmp_path,
+        storage,
+        delegation_id=delegation.id,
+        result_summary="Evaluator result ready for local ingestion.",
+        structured_output={
+            "evidence": [{"status": "missing", "summary": "No fresh proof yet."}],
+            "findings": [{"summary": "Keep blocked."}],
+        },
+        recorded_by="operator",
+    )
+    capsys.readouterr()
+
+    command = _capability_activation_followup_results_command(tmp_path)
+    assert main(command) == 0
+    capsys.readouterr()
+
+    assert main(command) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_results: "
+        "capability_activation_followup_results_already_recorded"
+    ) in output
+    assert "completed_delegations: 1" in output
+    assert "result_records_created: 0" in output
+    assert "existing_result_records: 1" in output
+
+    batches = storage.list_recent_capability_activation_followup_result_batches(
+        limit=2
+    )
+    assert batches[0].status == "capability_activation_followup_results_already_recorded"
+    assert batches[0].result_record_count == 0
+    assert batches[0].existing_result_record_count == 1
+    assert batches[1].status == "capability_activation_followup_results_recorded"
+    assert len(storage.list_capability_activation_followup_result_records()) == 1
 
 
 def test_hosted_dashboard_proof_checklist_blocks_blocked_real_cost_tracking_proof(

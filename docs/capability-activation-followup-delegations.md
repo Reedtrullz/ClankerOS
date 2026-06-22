@@ -1,6 +1,6 @@
 # Capability Activation Follow-Up Delegations
 
-- id: capability_activation_followup_delegation_batch_4094880bdfae
+- id: capability_activation_followup_delegation_batch_d94bb0e07be2
 - status: capability_activation_followup_delegations_already_recorded
 - followup_tasks: 9
 - routing_decisions_created: 0
@@ -11,7 +11,7 @@
 - external_mutations_taken: 0
 - activation_actions_taken: 0
 - report_path: docs/capability-activation-followup-delegations.md
-- created_at: 2026-06-22T17:29:29.230826+00:00
+- created_at: 2026-06-22T17:47:09.113758+00:00
 
 ## Created Delegations
 
@@ -19,7 +19,7 @@
 
 ## Existing Delegations
 
-- subagent_delegation_48d1cc9f63ae: status=pending profile=evaluator category=evidence_review task=task_4e0c48c4ff48 schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/task_4e0c48c4ff48-review-hosted-dashboard-follow-up-evidence-requirements.json
+- subagent_delegation_48d1cc9f63ae: status=completed profile=evaluator category=evidence_review task=task_4e0c48c4ff48 schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_48d1cc9f63ae-result.json summary=Hosted dashboard follow-up review found no fresh hosted-dashboard proof attached; keep activation blocked.
 - subagent_delegation_159495832f88: status=pending profile=evaluator category=evidence_review task=task_77ba0589314d schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/task_77ba0589314d-review-remote-workers-follow-up-evidence-requirements.json
 - subagent_delegation_13cc55468b0d: status=pending profile=evaluator category=evidence_review task=task_6db6dcd9a6c4 schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/task_6db6dcd9a6c4-review-autonomous-scheduling-follow-up-evidence-requirements.json
 - subagent_delegation_f77fd0595f14: status=pending profile=evaluator category=evidence_review task=task_734b7397c0b4 schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/task_734b7397c0b4-review-browser-desktop-adapters-follow-up-evidence-requirements.json

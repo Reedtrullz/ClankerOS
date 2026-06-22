@@ -1,6 +1,6 @@
 # Handoff Review
 
-- id: handoff_review_4ae63651f0b0
+- id: handoff_review_35d5cbb94e82
 - status: clear
 - current_focus: Add capability follow-up evidence result ingestion from completed delegation packets.
 - blocked_tasks: 0

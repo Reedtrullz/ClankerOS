@@ -1,6 +1,6 @@
 # Capability Activation Follow-Up Tasks
 
-- id: capability_activation_followup_batch_b2e49c8d5124
+- id: capability_activation_followup_batch_c288c45b9623
 - status: capability_activation_followups_already_recorded
 - source_decision: capability_activation_decision_f601a69d076e
 - contracts_selected: 9
@@ -9,7 +9,7 @@
 - approval_requests_created: 0
 - activation_actions_taken: 0
 - report_path: docs/capability-activation-followups.md
-- created_at: 2026-06-22T17:03:54.243889+00:00
+- created_at: 2026-06-22T17:47:08.970073+00:00
 
 ## Created Follow-Up Tasks
 

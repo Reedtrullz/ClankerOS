@@ -1,15 +1,15 @@
 # Capability Activation Contracts
 
-- id: capability_activation_contract_batch_feaa740af492
+- id: capability_activation_contract_batch_c39486464038
 - status: capability_activation_contracts_already_recorded
-- source_task_batch: capability_activation_task_batch_84dc586e1d7a
+- source_task_batch: capability_activation_task_batch_e7876bf8ae6a
 - activation_tasks: 9
 - contracts_created: 0
 - existing_contracts: 9
 - approval_requests_created: 0
 - activation_actions_taken: 0
 - report_path: docs/capability-activation-contracts.md
-- created_at: 2026-06-22T17:03:53.825923+00:00
+- created_at: 2026-06-22T17:47:08.530563+00:00
 
 ## Created Contracts
 

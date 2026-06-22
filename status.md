@@ -5920,3 +5920,59 @@
   promote trust, schedule work, start workers, retry work, track spend, run CI,
   deploy, push, open PRs, mark the active goal complete, or mutate external
   systems.
+
+## 2026-06-22 Capability Activation Follow-Up Results
+
+- Added local result ingestion command:
+  `python3 -m agent_os.cli capability-activation-followup-results`.
+- The command reads completed read-only evaluator delegations whose parent task
+  is `capability_activation_followup_task`, loads the delegation result
+  artifact, and records one local
+  `capability_activation_followup_result_record` per completed delegation.
+- Result artifacts are written under
+  `docs/capability-activation-followup-results/` and the summary report is
+  `docs/capability-activation-followup-results.md`.
+- Red-first tests initially failed because
+  `capability-activation-followup-results` was not a registered CLI command.
+- Live no-completed-delegation smoke batch:
+  `capability_activation_followup_result_batch_f7f194deb980`, status
+  `capability_activation_followup_results_no_completed_delegations`, 0
+  completed delegations, 0 records created, 0 approval requests, and 0
+  activation actions.
+- Completed one existing hosted-dashboard evaluator delegation with a
+  conservative missing-proof result:
+  `subagent_delegation_48d1cc9f63ae`, recorded by `codex`, with
+  `network_actions_taken=0` and `external_mutations_taken=0`.
+- Initial live result ingestion batch:
+  `capability_activation_followup_result_batch_195663ed1193`, status
+  `capability_activation_followup_results_recorded`, 1 completed delegation,
+  1 result record, 0 approval requests, and 0 activation actions.
+- Live result record:
+  `capability_activation_followup_result_4c9b8b0d1c43` for
+  `hosted_dashboard`, status `reviewed_missing_proof`,
+  `activation_allowed=false`, and `capability_enabled=false`.
+- Final idempotency result batch:
+  `capability_activation_followup_result_batch_bb94fe9345a6`, status
+  `capability_activation_followup_results_already_recorded`, 1 completed
+  delegation, 0 new result records, and 1 existing result record.
+- Added dashboard visibility under
+  `## Capability Activation Follow-Up Results`.
+- Updated README, suggested-use docs, operating summary, workflow lifecycle,
+  activation-contract tutorial, delegation-result tutorial, task queue,
+  generated dashboard, and next iteration packet.
+- Next packet:
+  `Add operator review decisions for ingested capability follow-up results.`
+- Verification evidence:
+  - `python3 -m py_compile agent_os/capability_activation_followup_results.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py tests/test_first_milestone.py` -> passed.
+  - `python3 -m pytest tests/test_first_milestone.py -k 'capability_activation_followup_results' -q` -> 3 passed, 265 deselected, then reran after idempotency-key compatibility hardening with the same result.
+  - `python3 -m pytest tests/test_first_milestone.py -k 'capability_activation_followup' -q` -> 10 passed, 258 deselected.
+  - `python3 -m pytest -q` -> 268 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add capability activation followup result ingestion" ...` -> pass as `eval_after_change_4a9cf0a65710`, run `run_a3d4b9fcbe41`.
+  - Live command-gate sweep passed from `sweep-stuck` through dashboard,
+    including idempotent `capability-activation-followup-results`,
+    `eval`, `playbooks`, `iterate`, and `dashboard`.
+- Non-claims: result ingestion does not start subagents, call model providers,
+  create `approval_requests`, satisfy proof, allow activation, enable
+  capabilities, promote trust, schedule work, start workers, retry work, track
+  spend, run CI, deploy, push, open PRs, mark the active goal complete, or
+  mutate external systems.

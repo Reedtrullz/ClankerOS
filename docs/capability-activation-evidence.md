@@ -1,6 +1,6 @@
 # Capability Activation Evidence
 
-- id: capability_activation_evidence_batch_77a251600f23
+- id: capability_activation_evidence_batch_eb4026020292
 - status: capability_activation_evidence_already_recorded
 - contracts_selected: 9
 - evidence_records_created: 0
@@ -8,7 +8,7 @@
 - approval_requests_created: 0
 - activation_actions_taken: 0
 - report_path: docs/capability-activation-evidence.md
-- created_at: 2026-06-22T17:03:53.969111+00:00
+- created_at: 2026-06-22T17:47:08.679902+00:00
 
 ## Created Evidence Records
 

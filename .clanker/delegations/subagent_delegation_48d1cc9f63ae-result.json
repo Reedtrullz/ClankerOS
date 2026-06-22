@@ -1,0 +1,38 @@
+{
+  "assigned_profile": "evaluator",
+  "category": "evidence_review",
+  "completed_at": "2026-06-22T17:43:43.417471+00:00",
+  "created_at": "2026-06-22T17:22:37.144364+00:00",
+  "execution_started": false,
+  "expected_output_schema": "evidence_review",
+  "external_mutations_taken": 0,
+  "id": "subagent_delegation_48d1cc9f63ae",
+  "network_actions_taken": 0,
+  "non_claims": [
+    "No subagent was started by this ingestion command.",
+    "No model provider was called by this ingestion command.",
+    "No file, git, approval, or external state was mutated beyond this local result record."
+  ],
+  "parent_goal_id": "goal_b25a107a53a9",
+  "parent_task_id": "task_4e0c48c4ff48",
+  "recorded_by": "codex",
+  "result_summary": "Hosted dashboard follow-up review found no fresh hosted-dashboard proof attached; keep activation blocked.",
+  "routing_decision_id": "routing_decision_17a5d6070d70",
+  "status": "completed",
+  "structured_output": {
+    "evidence": [
+      {
+        "reference": "docs/hosted-dashboard-proof-checklist.md",
+        "status": "missing",
+        "summary": "No fresh hosted-dashboard deployment or access proof is attached to the follow-up packet."
+      }
+    ],
+    "findings": [
+      {
+        "severity": "medium",
+        "summary": "Keep hosted dashboard activation blocked until explicit proof and approval are supplied."
+      }
+    ]
+  },
+  "title": "Review hosted_dashboard follow-up evidence requirements"
+}

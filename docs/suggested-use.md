@@ -340,6 +340,21 @@ pending evaluator delegation packets with local JSON artifacts. It does not
 start subagents, call model providers, create approval rows, satisfy proof, or
 enable capabilities.
 
+After an operator records a completed evaluator result with
+`record-delegation-result`, ingest those completed follow-up results into the
+capability evidence trail:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-results
+python3 -m agent_os.cli dashboard
+```
+
+This writes local result records and JSON artifacts for completed read-only
+evaluator delegation results. It keeps `approval_requests_created=0`,
+`activation_actions_taken=0`, `activation_allowed=false`, and
+`capability_enabled=false`; the record is evidence for operator review, not
+proof satisfaction or capability enablement.
+
 ## When To Commit And Push
 
 Commit when:

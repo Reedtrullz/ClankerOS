@@ -1,6 +1,6 @@
 # Capability Activation Decisions
 
-- id: capability_activation_decision_0b3b8c127757
+- id: capability_activation_decision_3097690da5f9
 - status: capability_activation_decisions_already_recorded
 - operator_id: operator
 - selected_action: request_more_evidence
@@ -15,7 +15,7 @@
 - approval_requests_created: 0
 - activation_actions_taken: 0
 - report_path: docs/capability-activation-decisions.md
-- created_at: 2026-06-22T17:03:54.103093+00:00
+- created_at: 2026-06-22T17:47:08.820020+00:00
 
 ## Decided Contracts
 

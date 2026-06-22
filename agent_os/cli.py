@@ -200,6 +200,10 @@ from agent_os.capability_activation_followup_delegations import (
     render_capability_activation_followup_delegation_batch_line,
     write_capability_activation_followup_delegations,
 )
+from agent_os.capability_activation_followup_results import (
+    render_capability_activation_followup_result_batch_line,
+    write_capability_activation_followup_results,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -720,6 +724,10 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "capability-activation-followup-delegations",
         help="Create read-only routing and delegation packets for follow-up evidence tasks.",
+    )
+    subparsers.add_parser(
+        "capability-activation-followup-results",
+        help="Ingest completed follow-up delegation results as local evidence records.",
     )
 
     approve = subparsers.add_parser("approve", help="Approve a pending local task request.")
@@ -2783,6 +2791,31 @@ def main(argv: list[str] | None = None) -> int:
                 f"delegation={delegation.id} task={delegation.parent_task_id} "
                 f"profile={delegation.assigned_profile} category={delegation.category} "
                 f"status={delegation.status}"
+            )
+        return 0
+
+    if args.command == "capability-activation-followup-results":
+        AgentSystem(root).initialize()
+        report_path, batch, created_records, _existing_records, _delegations = (
+            write_capability_activation_followup_results(root)
+        )
+        print(f"capability_activation_followup_results: {batch.status}")
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"completed_delegations: {batch.completed_delegation_count}")
+        print(f"result_records_created: {batch.result_record_count}")
+        print(f"existing_result_records: {batch.existing_result_record_count}")
+        print(f"approval_requests_created: {batch.created_approval_request_count}")
+        print(f"activation_actions_taken: {batch.activation_action_count}")
+        print(
+            render_capability_activation_followup_result_batch_line(
+                batch
+            ).removeprefix("- ")
+        )
+        for record in created_records:
+            print(
+                f"result={record.id} delegation={record.delegation_id} "
+                f"task={record.followup_task_id} capability={record.capability} "
+                f"status={record.evidence_status}"
             )
         return 0
 

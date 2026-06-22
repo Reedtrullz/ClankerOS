@@ -146,6 +146,12 @@ The parent task can then cite the completed delegation artifact as local
 evidence while still preserving the difference between local recordkeeping and
 actual external execution.
 
+Capability activation follow-up work has one extra local ingestion step:
+after completing a read-only evaluator delegation, run
+`python3 -m agent_os.cli capability-activation-followup-results` to create the
+capability follow-up result record. Completing the generic delegation does not
+itself satisfy capability proof or enable activation.
+
 ## 6. Propose Memory From The Result
 
 If the completed delegation result contains a small durable fact worth carrying
