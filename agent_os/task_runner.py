@@ -19,6 +19,10 @@ from agent_os.storage import (
     Task,
     utc_now,
 )
+from agent_os.task_recommendations import (
+    ensure_failed_run_task_recommendation,
+    write_run_recommendations_packet,
+)
 
 
 class TaskRunError(ValueError):
@@ -166,6 +170,7 @@ def run_planned_task(
         evidence=evidence,
     )
 
+    recommendations = []
     if verification_passed:
         storage.mark_task_completed(
             task.id,
@@ -192,6 +197,15 @@ def run_planned_task(
             evidence=evidence,
             artifacts=artifact_paths,
         )
+        recommendation, _created = ensure_failed_run_task_recommendation(
+            root=root,
+            storage=storage,
+            task=storage.get_task(task.id),
+            run_id=run_id,
+            profile_name=profile.name,
+            evidence_dir=evidence_dir,
+        )
+        recommendations.append(recommendation)
         status = "failed"
         event_type = "task.failed"
         message = f"failed task {task.id}"
@@ -208,6 +222,11 @@ def run_planned_task(
         routing_decision=routing_decision,
         evidence=evidence,
     )
+    if recommendations:
+        artifact_paths.extend(
+            write_run_recommendations_packet(root, evidence_dir, recommendations)
+        )
+        storage.mark_task_failed(task.id, evidence=evidence, artifacts=artifact_paths)
     storage.complete_run(run_id, status)
     _write_run_summary(summary_path, project.name, goal, task, profile, evidence, status)
     _emit(

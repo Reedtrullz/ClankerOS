@@ -99,7 +99,7 @@ external_mutations_taken: 0
 
 If the verifier fails, the task and linked plan step are marked failed, a local
 incident is opened, and the run still keeps stdout, stderr, command metadata,
-and verification JSON for review.
+verification JSON, and `recommendations.jsonl` for review.
 
 ## 6. Inspect Evidence
 
@@ -117,9 +117,30 @@ Important files:
 - `routing_decisions.jsonl` - the profile/model selection row.
 - `commands.jsonl` - local command adapter metadata.
 - `tasks.json` - task, plan-step, and contract snapshot.
+- `recommendations.jsonl` - present when failed verification created recovery
+  guidance.
 - `stdout.txt` and `stderr.txt` - raw verifier output.
 
-## 7. Review And Refresh The Cockpit
+## 7. Review Recovery Recommendations
+
+For failed task runs or blocked planned tasks:
+
+```bash
+python3 -m agent_os.cli task-recommendations --goal goal_...
+```
+
+This writes `docs/task-recommendations.md` and records idempotent
+`task_recommendations` rows. Failed runs get `failed_run_task_recovery`
+guidance such as `review <run_id>`, `replan <goal_id> --reason "..."`, and a
+manual `run-task <task_id> --profile <profile>` command for after the operator
+has explicitly reset or replanned the task. Blocked planned tasks get
+`blocked_planned_task_replan` guidance.
+
+The command is guidance only. It does not retry, reset, replan, dispatch,
+approve, commit, push, deploy, call providers, schedule work, or mutate
+external systems.
+
+## 8. Review And Refresh The Cockpit
 
 ```bash
 python3 -m agent_os.cli review run_...
@@ -127,11 +148,12 @@ python3 -m agent_os.cli dashboard
 ```
 
 `review` writes `runs/<run_id>/review.md` from local run state. The dashboard
-now includes a `### Task Runs` section so the operator can see recent planned
-task executions alongside active runs, plans, approvals, incidents, routing,
-delegations, memory, and skill state.
+now includes `### Task Runs` and `### Task Recommendations` sections so the
+operator can see recent planned task executions and recovery guidance alongside
+active runs, plans, approvals, incidents, routing, delegations, memory, and
+skill state.
 
-## 8. Rerun Policy
+## 9. Rerun Policy
 
 `run-task` dispatches only tasks that are still `status=planned`. A completed
 or failed task is not silently rerun:

@@ -162,6 +162,25 @@ class Incident:
 
 
 @dataclass(frozen=True)
+class TaskRecommendation:
+    id: str
+    idempotency_key: str
+    task_id: str
+    run_id: str | None
+    goal_id: str
+    project_id: str
+    plan_id: str | None
+    recommendation_type: str
+    source_status: str
+    status: str
+    reason: str
+    recommended_commands: list[str]
+    evidence_path: str
+    created_at: str
+    updated_at: str
+
+
+@dataclass(frozen=True)
 class ApprovalRequest:
     id: str
     task_id: str
@@ -2923,6 +2942,24 @@ class Storage:
                     resolved_by text,
                     resolution_note text,
                     resolution_evidence_path text
+                );
+
+                create table if not exists task_recommendations (
+                    id text primary key,
+                    idempotency_key text not null unique,
+                    task_id text not null,
+                    run_id text,
+                    goal_id text not null,
+                    project_id text not null,
+                    plan_id text,
+                    recommendation_type text not null,
+                    source_status text not null,
+                    status text not null,
+                    reason text not null,
+                    recommended_commands text not null,
+                    evidence_path text not null,
+                    created_at text not null,
+                    updated_at text not null
                 );
 
                 create table if not exists approval_requests (
@@ -17451,6 +17488,108 @@ class Storage:
             ).fetchall()
         return [self._row_to_incident(row) for row in rows]
 
+    def ensure_task_recommendation(
+        self,
+        *,
+        idempotency_key: str,
+        task_id: str,
+        run_id: str | None,
+        goal_id: str,
+        project_id: str,
+        plan_id: str | None,
+        recommendation_type: str,
+        source_status: str,
+        status: str,
+        reason: str,
+        recommended_commands: list[str],
+        evidence_path: str,
+    ) -> tuple[TaskRecommendation, bool]:
+        created_at = utc_now()
+        with self._connect() as connection:
+            existing = connection.execute(
+                """
+                select * from task_recommendations
+                where idempotency_key = ?
+                """,
+                (idempotency_key,),
+            ).fetchone()
+            if existing is not None:
+                return self._row_to_task_recommendation(existing), False
+            recommendation_id = new_id("task_recommendation")
+            connection.execute(
+                """
+                insert into task_recommendations (
+                    id, idempotency_key, task_id, run_id, goal_id, project_id,
+                    plan_id, recommendation_type, source_status, status, reason,
+                    recommended_commands, evidence_path, created_at, updated_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    recommendation_id,
+                    idempotency_key,
+                    task_id,
+                    run_id,
+                    goal_id,
+                    project_id,
+                    plan_id,
+                    recommendation_type,
+                    source_status,
+                    status,
+                    reason,
+                    _json_dumps(recommended_commands),
+                    evidence_path,
+                    created_at,
+                    created_at,
+                ),
+            )
+            row = connection.execute(
+                """
+                select * from task_recommendations
+                where id = ?
+                """,
+                (recommendation_id,),
+            ).fetchone()
+        return self._row_to_task_recommendation(row), True
+
+    def list_task_recommendations(
+        self,
+        *,
+        task_id: str | None = None,
+        goal_id: str | None = None,
+        status: str | None = None,
+        limit: int | None = None,
+    ) -> list[TaskRecommendation]:
+        clauses = []
+        params: list[object] = []
+        if task_id is not None:
+            clauses.append("task_id = ?")
+            params.append(task_id)
+        if goal_id is not None:
+            clauses.append("goal_id = ?")
+            params.append(goal_id)
+        if status is not None:
+            clauses.append("status = ?")
+            params.append(status)
+        where = f"where {' and '.join(clauses)}" if clauses else ""
+        query = f"""
+            select * from task_recommendations
+            {where}
+            order by created_at desc, id desc
+        """
+        with self._connect() as connection:
+            if limit is None:
+                rows = connection.execute(query, tuple(params)).fetchall()
+            else:
+                rows = connection.execute(query + " limit ?", tuple(params + [limit])).fetchall()
+        return [self._row_to_task_recommendation(row) for row in rows]
+
+    def list_recent_task_recommendations(
+        self,
+        limit: int = 5,
+    ) -> list[TaskRecommendation]:
+        return self.list_task_recommendations(status="open", limit=limit)
+
     def get_incident(self, incident_id: str) -> Incident:
         with self._connect() as connection:
             row = connection.execute(
@@ -19234,6 +19373,25 @@ class Storage:
             requires_operator=bool(row["requires_operator"]),
             report_path=row["report_path"],
             created_at=row["created_at"],
+        )
+
+    def _row_to_task_recommendation(self, row: sqlite3.Row) -> TaskRecommendation:
+        return TaskRecommendation(
+            id=row["id"],
+            idempotency_key=row["idempotency_key"],
+            task_id=row["task_id"],
+            run_id=row["run_id"],
+            goal_id=row["goal_id"],
+            project_id=row["project_id"],
+            plan_id=row["plan_id"],
+            recommendation_type=row["recommendation_type"],
+            source_status=row["source_status"],
+            status=row["status"],
+            reason=row["reason"],
+            recommended_commands=_json_loads(row["recommended_commands"], []),
+            evidence_path=row["evidence_path"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
         )
 
     def _row_to_approval_request(self, row: sqlite3.Row) -> ApprovalRequest:

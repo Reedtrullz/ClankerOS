@@ -68,6 +68,7 @@ planned task:
 ```bash
 python3 -m agent_os.cli run-task task_... --profile tester
 python3 -m agent_os.cli review run_...
+python3 -m agent_os.cli task-recommendations --goal goal_...
 python3 -m agent_os.cli dashboard
 ```
 
@@ -76,6 +77,11 @@ test command. Use `coder` for other safe local verifier commands. The command
 records a routing decision, local shell verifier output, task/plan-step state,
 and a `.clanker/projects/<project>/goals/<goal_id>/runs/<run_id>/evidence/`
 packet.
+
+If a verifier fails or a planned task is blocked, `task-recommendations`
+records durable local review/replan guidance and writes
+`docs/task-recommendations.md`. It does not retry, reset, replan, or dispatch
+tasks automatically.
 
 Proof boundary: `run-task` does not edit files by itself, commit, push,
 deploy, open PRs, call model providers, start subagents, schedule retries,

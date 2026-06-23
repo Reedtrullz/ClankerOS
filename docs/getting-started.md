@@ -117,6 +117,7 @@ a local profile-backed verifier:
 ```bash
 python3 -m agent_os.cli run-task <task_id> --profile tester
 python3 -m agent_os.cli review <run_id>
+python3 -m agent_os.cli task-recommendations --goal <goal_id>
 python3 -m agent_os.cli dashboard
 ```
 
@@ -124,6 +125,10 @@ python3 -m agent_os.cli dashboard
 for other safe local verifier commands. `run-task` creates a local run and
 evidence packet; it does not commit, push, deploy, call model providers, or
 start subagents.
+
+Use `task-recommendations` after a failed planned-task verifier or blocked
+planned task. It records local guidance for review, replan, and manual reset
+without automatically retrying or dispatching work.
 
 ## Best Operating Pattern
 

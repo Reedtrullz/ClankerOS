@@ -342,6 +342,7 @@ from agent_os.queue_health import (
 from agent_os.steering import render_steering_review_line
 from agent_os.storage import Storage
 from agent_os.subagent_delegation import render_subagent_delegation_line
+from agent_os.task_recommendations import render_task_recommendation_line
 
 
 def generate_static_dashboard(root: Path) -> Path:
@@ -437,6 +438,9 @@ def generate_static_dashboard(root: Path) -> Path:
                 key=lambda task: (task.updated_at, task.id),
                 reverse=True,
             )[:5]
+        task_recommendations = []
+        if _table_exists(connection, "task_recommendations"):
+            task_recommendations = storage.list_recent_task_recommendations(limit=5)
         worktrees = []
         if _table_exists(connection, "worktree_records"):
             worktrees = storage.list_recent_worktree_records(limit=5)
@@ -1891,6 +1895,13 @@ def generate_static_dashboard(root: Path) -> Path:
                 f"goal={task.goal_id} status={task.status} profile={profile} "
                 f"artifact={artifact}"
             )
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "### Task Recommendations", ""])
+    if task_recommendations:
+        for recommendation in task_recommendations:
+            lines.append(render_task_recommendation_line(recommendation))
     else:
         lines.append("- none")
 

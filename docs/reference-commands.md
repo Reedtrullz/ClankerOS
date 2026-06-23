@@ -38,6 +38,7 @@ python3 -m agent_os.cli plan <goal_id>
 python3 -m agent_os.cli contract <goal_id>
 python3 -m agent_os.cli tasks <goal_id>
 python3 -m agent_os.cli run-task <task_id> --profile tester
+python3 -m agent_os.cli task-recommendations --goal <goal_id>
 python3 -m agent_os.cli update-task <task_id> --status blocked --blocked-reason "waiting on operator scope"
 python3 -m agent_os.cli replan <goal_id> --reason "scope changed after operator review"
 python3 -m agent_os.cli dashboard
@@ -52,6 +53,10 @@ draft sprint contract for the latest plan. `run-task` dispatches one
 routing decision, creates a run, writes an evidence packet under the goal, and
 updates the linked plan step. It does not commit, push, deploy, call model
 providers, start subagents, or mutate external systems.
+`task-recommendations` records idempotent local `task_recommendations` rows and
+writes `docs/task-recommendations.md` for failed planned-task runs and blocked
+planned tasks. It recommends review/replan/manual reset commands but does not
+retry, reset, replan, dispatch, approve, or mutate external systems.
 
 ## Approval-Gated Coding
 

@@ -40,6 +40,14 @@ Core layers for the bootstrap:
   updates the task and linked plan step, and opens a local incident if
   verification fails. It does not commit, push, deploy, call model providers,
   start subagents, or mutate external systems.
+- Task recovery recommendations: failed planned-task runs and blocked planned
+  tasks can create idempotent `task_recommendations` rows plus local JSON
+  evidence. Failed `run-task` evidence packets include
+  `recommendations.jsonl`; `task-recommendations --goal <goal_id>` refreshes
+  `docs/task-recommendations.md` and dashboard visibility. Recommendations
+  guide review/replan/manual reset decisions only; they do not retry, reset,
+  replan, dispatch, approve, commit, push, deploy, schedule work, call
+  providers, or mutate external systems.
 - Worktree coding loop: a high-risk coding goal can run a constrained command
   inside an isolated git worktree, capture command/test/diff evidence, and
   record a proposed `local_git_commit` effect that waits for operator approval.

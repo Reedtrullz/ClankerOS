@@ -1,5 +1,40 @@
 # Status
 
+## 2026-06-23 Task Recovery Recommendations
+
+- Added durable `task_recommendations` storage for local retry/replan guidance.
+- Failed `run-task` verifier runs now:
+  - keep the existing failed task, failed plan step, open incident, and failed
+    run behavior;
+  - record an idempotent `failed_run_task_recovery` recommendation;
+  - write individual recommendation JSON evidence;
+  - write `recommendations.jsonl` inside the failed run evidence packet.
+- Added `python3 -m agent_os.cli task-recommendations [--goal <goal_id>]` to
+  refresh local guidance for failed planned-task runs and blocked planned
+  tasks. The command writes `docs/task-recommendations.md`, reports created
+  versus existing recommendations, and does not retry, reset, replan, dispatch,
+  approve, commit, push, deploy, call model providers, schedule work, or mutate
+  external systems.
+- Dashboard visibility now includes `### Task Recommendations`.
+- Documentation updated in README, getting-started, suggested-use,
+  command-reference, run-task tutorial, and operating summary.
+- Verification evidence:
+  - Red-first focused tests failed on missing `list_task_recommendations` and
+    missing `task-recommendations` CLI command.
+  - `python3 -m pytest tests/test_first_milestone.py::test_failed_run_task_records_recovery_recommendation tests/test_first_milestone.py::test_task_recommendations_surfaces_blocked_planned_task -q` -> 2 passed.
+  - `python3 -m py_compile agent_os/storage.py agent_os/task_recommendations.py agent_os/task_runner.py agent_os/cli.py agent_os/dashboard.py tests/test_first_milestone.py` -> pass.
+  - `python3 -m pytest tests/test_first_milestone.py::test_run_task_dispatches_planned_goal_task_with_profile_evidence tests/test_first_milestone.py::test_goal_plan_contract_task_lifecycle_for_registered_project tests/test_first_milestone.py::test_next_action_prefers_blocked_task_review_or_replan -q` -> 3 passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "task_recommendations or failed_run_task or run_task or goal_plan_contract or profile or routing or dashboard or steering"` -> 64 passed, 352 deselected.
+  - `git diff --check` -> no whitespace errors.
+  - `python3 -m agent_os.cli task-recommendations` -> `task_recommendations: 0`, `created: 0`, `existing: 0`, report `docs/task-recommendations.md`.
+  - `python3 -m agent_os.cli dashboard` -> wrote `docs/dashboard.md` with `### Task Recommendations`.
+  - `python3 -m agent_os.cli iterate` -> selected the next remaining `tasks.md#next` item.
+  - `python3 -m pytest -q` -> 416 passed in 698.79s.
+- Non-claims: this adds local recommendation records and reports only. It does
+  not implement automatic retries, autonomous scheduling, budget enforcement,
+  trust promotion, real cost tracking, hosted dashboards, remote workers,
+  browser/desktop adapters, CI/deploy automation, or external side effects.
+
 ## 2026-06-23 Planned Task Dispatch
 
 - Added first-class `run-task <task_id> --profile <profile>` for planned goal

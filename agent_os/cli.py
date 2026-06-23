@@ -480,6 +480,10 @@ from agent_os.subagent_delegation import (
     record_delegation_result,
     render_subagent_delegation_line,
 )
+from agent_os.task_recommendations import (
+    render_task_recommendation_line,
+    write_task_recommendations,
+)
 from agent_os.task_runner import TaskRunError, run_planned_task
 from agent_os.worktree_cleanup import cleanup_worktrees
 
@@ -716,6 +720,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run_task_parser.add_argument("task_id")
     run_task_parser.add_argument("--profile")
+    task_recommendations_parser = subparsers.add_parser(
+        "task-recommendations",
+        help="Write retry/replan guidance for failed or blocked planned tasks.",
+    )
+    task_recommendations_parser.add_argument("--goal")
     replan_parser = subparsers.add_parser(
         "replan",
         help="Create a new plan version for an existing goal.",
@@ -2284,6 +2293,24 @@ def main(argv: list[str] | None = None) -> int:
         print(f"evidence_packet: {result.evidence_dir.relative_to(root)}")
         print(f"summary: {result.summary_path.relative_to(root)}")
         print("commands_rerun: 1")
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
+        return 0
+
+    if args.command == "task-recommendations":
+        try:
+            report_path, batch = write_task_recommendations(root, goal_id=args.goal)
+        except KeyError as error:
+            print(f"task_recommendations_failed: {error}")
+            return 1
+        print(f"task_recommendations: {len(batch.recommendations)}")
+        print(f"created: {batch.created_count}")
+        print(f"existing: {batch.existing_count}")
+        print(f"goal_id: {args.goal or 'all'}")
+        print(f"report: {report_path.relative_to(root)}")
+        for recommendation in batch.recommendations:
+            print(render_task_recommendation_line(recommendation).removeprefix("- "))
+        print("commands_rerun: 0")
         print("network_actions_taken: 0")
         print("external_mutations_taken: 0")
         return 0

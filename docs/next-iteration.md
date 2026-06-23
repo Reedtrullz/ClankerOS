@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_36c3253edb51
+- Packet ID: iteration_f8c9ef80a4b5
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add retry/replan recommendations for failed `run-task` evidence packets and blocked planned tasks.
+Advance the Agent System north-star goal by completing: Add local downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals from accepted blocked result effect task result effect task result effect task results.
 
 ## Definition Of Done
 
@@ -120,7 +120,7 @@ Advance the Agent System north-star goal by completing: Add retry/replan recomme
 ## Simplicity Guardrail
 
 - selection_policy: highest-score-then-lowest-complexity
-- selection_reason: selected queue order among 2 candidates with equal score 9 and equal complexity 4
+- selection_reason: selected only actionable item with score 9 and complexity 4
 - selected_score: 9
 - selected_complexity: 4
 

@@ -97,6 +97,8 @@ verbose because each rung preserves source links and explicit non-claims.
 
 - `docs/dashboard.md` - generated operator dashboard.
 - `docs/next-iteration.md` - generated next work packet from `tasks.md`.
+- `docs/task-recommendations.md` - generated local retry/replan guidance for
+  failed or blocked planned tasks.
 - `docs/OPERATING_SUMMARY.md` - architecture, runtime capability, guardrails,
   and current local proof state.
 - `status.md` - chronological implementation evidence.

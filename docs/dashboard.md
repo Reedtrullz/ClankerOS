@@ -23,6 +23,10 @@
 - task_9b4f30fd7664: run=run_709a4a66bf91 project=bootstrap goal=goal_9baf5521cabf status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_709a4a66bf91/learning.md
 - task_a2247e285b1f: run=run_709a4a66bf91 project=bootstrap goal=goal_9baf5521cabf status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_709a4a66bf91/goal-artifact.md
 
+### Task Recommendations
+
+- none
+
 ### Approval Inbox
 
 - none
@@ -118,18 +122,18 @@
 ## Iteration Loop
 
 - status: planned
-- focus: Add retry/replan recommendations for failed `run-task` evidence packets and blocked planned tasks.
+- focus: Add local downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals from accepted blocked result effect task result effect task result effect task results.
 - source: tasks.md#next
 - packet: docs/next-iteration.md
-- created_at: 2026-06-23T14:57:49.844312+00:00
+- created_at: 2026-06-23T15:40:31.339067+00:00
 
 ## Simplicity Guardrail
 
 - policy: highest-score-then-lowest-complexity
-- reason: selected queue order among 2 candidates with equal score 9 and equal complexity 4
+- reason: selected only actionable item with score 9 and complexity 4
 - selected_score: 9
 - selected_complexity: 4
-- selected_focus: Add retry/replan recommendations for failed `run-task` evidence packets and blocked planned tasks.
+- selected_focus: Add local downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals from accepted blocked result effect task result effect task result effect task results.
 
 ## Expansion Operator Approval Schema Decision
 

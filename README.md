@@ -26,6 +26,9 @@ hidden autonomy.
 - Dispatches planned goal tasks through local profiles with `run-task`,
   records routing decisions, runs safe verifier commands, and writes evidence
   packets under `.clanker/projects/<project>/goals/<goal_id>/runs/`.
+- Records retry/replan recommendations for failed planned-task runs and
+  blocked planned tasks without automatically retrying, resetting, or
+  dispatching work.
 - Generates an operator dashboard and next-iteration packet from current local
   state.
 - Runs worktree-isolated coding goals, captures diffs and verification output,
@@ -91,6 +94,7 @@ Execute one planned task only after the plan and sprint contract are clear:
 ```bash
 python3 -m agent_os.cli run-task <task_id> --profile tester
 python3 -m agent_os.cli review <run_id>
+python3 -m agent_os.cli task-recommendations --goal <goal_id>
 python3 -m agent_os.cli dashboard
 ```
 
@@ -98,6 +102,12 @@ python3 -m agent_os.cli dashboard
 default test command; `coder` can run safe local verifier commands. The command
 creates a local run and evidence packet, but it does not commit, push, deploy,
 start a model provider, or start a subagent.
+
+If a planned task verifier fails, ClankerOS opens a local incident and records
+an open `failed_run_task_recovery` recommendation with review, replan, and
+manual rerun guidance. If a planned task is blocked, `task-recommendations`
+records `blocked_planned_task_replan` guidance. These records are local
+operator guidance only; they do not retry or change task status by themselves.
 
 ## Current Shape
 

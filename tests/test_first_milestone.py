@@ -856,6 +856,236 @@ def test_run_task_dispatches_planned_goal_task_with_profile_evidence(
     assert "status completed cannot be dispatched" in rerun_output
 
 
+def test_failed_run_task_records_recovery_recommendation(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    repo_path = tmp_path / "subject-repo"
+    _init_git_repo(repo_path)
+    test_command = "python3 -c \"print('broken verification'); raise SystemExit(7)\""
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "register-project",
+                "subject",
+                "--path",
+                str(repo_path),
+                "--test-command",
+                test_command,
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "goal",
+                "Verify the registered project failure path",
+                "--project",
+                "subject",
+            ]
+        )
+        == 0
+    )
+    goal_output = capsys.readouterr().out
+    goal_id = next(
+        line.split(": ", 1)[1]
+        for line in goal_output.splitlines()
+        if line.startswith("goal_id: ")
+    )
+    assert main(["--root", str(tmp_path), "contract", goal_id]) == 0
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    task_id = storage.list_tasks(goal_id)[1].id
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-task",
+                task_id,
+                "--profile",
+                "tester",
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "status: failed" in output
+    assert "verification_passed: false" in output
+    run_id = next(
+        line.split(": ", 1)[1]
+        for line in output.splitlines()
+        if line.startswith("run_id: ")
+    )
+
+    failed_task = storage.get_task(task_id)
+    assert failed_task.status == "failed"
+    assert failed_task.run_id == run_id
+    assert failed_task.evidence["returncode"] == 7
+    step = storage.get_plan_step_by_task(task_id)
+    assert step is not None
+    assert step.status == "failed"
+    incidents = storage.list_incidents_for_run(run_id)
+    assert len(incidents) == 1
+    assert incidents[0].status == "open"
+
+    recommendations = storage.list_task_recommendations(task_id=task_id)
+    assert len(recommendations) == 1
+    recommendation = recommendations[0]
+    assert recommendation.recommendation_type == "failed_run_task_recovery"
+    assert recommendation.source_status == "failed"
+    assert recommendation.status == "open"
+    assert recommendation.run_id == run_id
+    assert recommendation.goal_id == goal_id
+    assert any(command == f"review {run_id}" for command in recommendation.recommended_commands)
+    assert any(command.startswith(f"replan {goal_id} ") for command in recommendation.recommended_commands)
+    assert any(command == f"run-task {task_id} --profile tester" for command in recommendation.recommended_commands)
+    assert (tmp_path / recommendation.evidence_path).exists()
+
+    evidence_dir = (
+        tmp_path
+        / ".clanker"
+        / "projects"
+        / "subject"
+        / "goals"
+        / goal_id
+        / "runs"
+        / run_id
+        / "evidence"
+    )
+    recommendation_packet = evidence_dir / "recommendations.jsonl"
+    assert recommendation_packet.exists()
+    packet_lines = recommendation_packet.read_text(encoding="utf-8").splitlines()
+    assert len(packet_lines) == 1
+    packet = json.loads(packet_lines[0])
+    assert packet["id"] == recommendation.id
+    assert packet["recommended_commands"] == recommendation.recommended_commands
+    task_packet = json.loads((evidence_dir / "tasks.json").read_text(encoding="utf-8"))
+    assert task_packet["task"]["status"] == "failed"
+    assert task_packet["plan_step"]["status"] == "failed"
+
+    assert main(["--root", str(tmp_path), "task-recommendations", "--goal", goal_id]) == 0
+    recommendation_output = capsys.readouterr().out
+    assert "task_recommendations: 1" in recommendation_output
+    assert "created: 0" in recommendation_output
+    assert "existing: 1" in recommendation_output
+    assert f"task={task_id}" in recommendation_output
+    report = (tmp_path / "docs" / "task-recommendations.md").read_text(encoding="utf-8")
+    assert "failed_run_task_recovery" in report
+    assert f"review {run_id}" in report
+
+    dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
+    assert "### Task Recommendations" in dashboard
+    assert recommendation.id in dashboard
+    assert "failed_run_task_recovery" in dashboard
+
+
+def test_task_recommendations_surfaces_blocked_planned_task(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    repo_path = tmp_path / "subject-repo"
+    _init_git_repo(repo_path)
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "register-project",
+                "subject",
+                "--path",
+                str(repo_path),
+                "--test-command",
+                "python3 -c \"print('ok')\"",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "goal",
+                "Verify blocked task recommendations",
+                "--project",
+                "subject",
+            ]
+        )
+        == 0
+    )
+    goal_output = capsys.readouterr().out
+    goal_id = next(
+        line.split(": ", 1)[1]
+        for line in goal_output.splitlines()
+        if line.startswith("goal_id: ")
+    )
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    task_id = storage.list_tasks(goal_id)[1].id
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "update-task",
+                task_id,
+                "--status",
+                "blocked",
+                "--blocked-reason",
+                "needs operator scope review",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "task-recommendations", "--goal", goal_id]) == 0
+    output = capsys.readouterr().out
+    assert "task_recommendations: 1" in output
+    assert "created: 1" in output
+    assert "existing: 0" in output
+    assert "blocked_planned_task_replan" in output
+    assert f"task={task_id}" in output
+
+    recommendations = storage.list_task_recommendations(task_id=task_id)
+    assert len(recommendations) == 1
+    recommendation = recommendations[0]
+    assert recommendation.recommendation_type == "blocked_planned_task_replan"
+    assert recommendation.source_status == "blocked"
+    assert recommendation.run_id is None
+    assert recommendation.status == "open"
+    assert recommendation.reason == "needs operator scope review"
+    assert recommendation.recommended_commands == [
+        f"tasks {goal_id}",
+        f"replan {goal_id} --reason \"Unblock blocked task {task_id}: needs operator scope review\"",
+        f"update-task {task_id} --status planned",
+    ]
+    assert (tmp_path / recommendation.evidence_path).exists()
+
+    assert main(["--root", str(tmp_path), "task-recommendations", "--goal", goal_id]) == 0
+    repeated_output = capsys.readouterr().out
+    assert "created: 0" in repeated_output
+    assert "existing: 1" in repeated_output
+
+    report = (tmp_path / "docs" / "task-recommendations.md").read_text(encoding="utf-8")
+    assert "blocked_planned_task_replan" in report
+    assert "Does not retry, reset, replan, or dispatch tasks automatically." in report
+
+    dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
+    assert "### Task Recommendations" in dashboard
+    assert recommendation.id in dashboard
+    assert "blocked_planned_task_replan" in dashboard
+
+
 def test_run_goal_with_worktree_isolation_captures_diff_and_proposes_commit_effect(
     tmp_path: Path,
     capsys,
