@@ -2491,3 +2491,27 @@ coverage.
 - The delegation boundary remains packet creation only: pending evaluator rows
   and JSON artifacts are evidence of routing intent, not proof execution,
   model-provider calls, approval, activation, dispatch, or external mutation.
+
+## Learning run_73513c45c57b
+
+- Learning: Run run_73513c45c57b showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_6ede13ec3b84
+
+- Learning: Run run_6ede13ec3b84 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_8944f9d4e658
+
+- Learning: Run run_8944f9d4e658 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning: Downstream Result Effect Task Result Ingestion
+
+- Completed evaluator delegation packets should become explicit result records
+  before any operator decision, effect proposal, activation, or proof-satisfied
+  claim is allowed.
+- The result ingestion boundary remains local: it reads completed
+  operator-supplied delegation output, writes result rows and JSON artifacts,
+  and keeps approval rows, activation actions, external mutations, capability
+  enablement, and proof satisfaction at zero.
+- Running baseline evals concurrently can create misleading failed eval runs;
+  use serial eval cadence for final proof after `eval-after-change`.

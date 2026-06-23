@@ -285,6 +285,10 @@ Create downstream proof tasks from applied downstream result effect task result 
 Route downstream result effect task result effect task result effect task result effect task result effect task result effect tasks to read-only evaluator delegation packets, and prove that no subagent starts.
 ```
 
+```text
+Ingest completed downstream result effect task result effect task result effect task result effect task result effect task result effect task delegation outputs as local result records, and prove that capability activation remains blocked.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -532,6 +536,10 @@ Prefer these files when orienting:
   for creating pending downstream proof tasks from applied downstream result
   effect task result effect task result effect task result effect task result
   decision effects.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`
+  for ingesting completed downstream result effect task result effect task
+  result effect task result effect task result effect task result effect task
+  delegation outputs.
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`
   for ingesting completed downstream result effect task result effect task
   result effect task result effect task result effect delegation outputs.
@@ -1203,6 +1211,19 @@ python3 -m agent_os.cli dashboard
 See
 `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`
 for the delegation packet report, idempotency check, and safety counters.
+
+After an operator records structured output for one of those delegation
+packets, ingest the completed result:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results
+python3 -m agent_os.cli dashboard
+```
+
+See
+`docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`
+for the result record report, artifact path, idempotency check, and safety
+counters.
 
 ## When To Commit And Push
 

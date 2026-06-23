@@ -1,0 +1,125 @@
+{
+  "activation_actions_taken": 0,
+  "activation_allowed": false,
+  "approval_requests_created": 0,
+  "assigned_profile": "evaluator",
+  "capability": "hosted_dashboard",
+  "capability_enabled": false,
+  "delegation_id": "subagent_delegation_200c581a36a6",
+  "delegation_result": {
+    "artifact_path": "/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_200c581a36a6-result.json",
+    "completed_at": "2026-06-23T18:45:00.975899+00:00",
+    "recorded_by": "operator",
+    "result_summary": "Evaluator drafted the next downstream result-effect task result-effect task result-effect task result-effect task result-effect task result-effect task proof plan while keeping capability activation blocked.",
+    "structured_output": {
+      "evidence": [
+        {
+          "status": "planned",
+          "summary": "Collect downstream result-effect task result-effect task result-effect task result-effect task result-effect task result-effect task proof before any activation decision."
+        }
+      ],
+      "findings": [
+        {
+          "severity": "medium",
+          "summary": "Keep hosted dashboard activation blocked until operator-reviewed proof exists."
+        }
+      ]
+    }
+  },
+  "downstream_task_id": "task_e7034260ac20",
+  "evidence_status": "next_evidence_plan_recorded",
+  "external_mutations_taken": 0,
+  "goal_id": "goal_f6a2102cca01",
+  "non_claims": [
+    "No subagent was started by this ingestion command.",
+    "No model provider was called by this ingestion command.",
+    "No approval request was created.",
+    "Capability activation remains blocked.",
+    "Capability proof is not satisfied by this result record.",
+    "No external system was mutated by this ingestion command."
+  ],
+  "project_id": "bootstrap",
+  "result_evidence_path": "/Users/reidar/Documents/Agent System/docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results/subagent_delegation_4dc659649824-hosted-dashboard.json",
+  "result_summary": "Evaluator drafted the next downstream result-effect task result-effect task result-effect task result-effect task result-effect task result-effect task proof plan while keeping capability activation blocked.",
+  "source_application_decision_id": "capability_activation_followup_result_task_result_decision_584334bef1b8",
+  "source_application_delegation_id": "subagent_delegation_0de281ad619c",
+  "source_application_downstream_result_id": "capability_activation_followup_result_task_result_749b9c23cd2f",
+  "source_application_effect_id": "effect_1204651c2a69",
+  "source_application_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_34334ca28bfb",
+  "source_application_record_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_9cafc301c8ae",
+  "source_contract_id": "capability_activation_contract_5f51a9f00ad5",
+  "source_decision_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_aa06e26fcd4b",
+  "source_delegation_id": "subagent_delegation_4dc659649824",
+  "source_downstream_result_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_ee5597b442ad",
+  "source_downstream_task_id": "task_3ee0f399e6b6",
+  "source_effect_id": "effect_96080d734142",
+  "source_followup_result_id": "capability_activation_followup_result_4c9b8b0d1c43",
+  "source_goal_id": "goal_f6a2102cca01",
+  "source_project_id": "bootstrap",
+  "source_task_evidence": {
+    "activation_actions_taken": 0,
+    "activation_allowed": false,
+    "approval_requests_created": 0,
+    "assigned_profile": "evaluator",
+    "capability": "hosted_dashboard",
+    "capability_enabled": false,
+    "evidence_status": "next_evidence_plan_recorded",
+    "external_mutations_taken": 0,
+    "result_evidence_path": "/Users/reidar/Documents/Agent System/docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results/subagent_delegation_4dc659649824-hosted-dashboard.json",
+    "selected_action": "accept_keep_blocked",
+    "source_application_decision_id": "capability_activation_followup_result_task_result_decision_584334bef1b8",
+    "source_application_delegation_id": "subagent_delegation_0de281ad619c",
+    "source_application_downstream_result_id": "capability_activation_followup_result_task_result_749b9c23cd2f",
+    "source_application_effect_id": "effect_1204651c2a69",
+    "source_application_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_34334ca28bfb",
+    "source_application_record_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_9cafc301c8ae",
+    "source_contract_id": "capability_activation_contract_5f51a9f00ad5",
+    "source_decision_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_aa06e26fcd4b",
+    "source_delegation_id": "subagent_delegation_4dc659649824",
+    "source_downstream_result_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_ee5597b442ad",
+    "source_downstream_task_id": "task_3ee0f399e6b6",
+    "source_effect_id": "effect_96080d734142",
+    "source_followup_result_id": "capability_activation_followup_result_4c9b8b0d1c43",
+    "source_goal_id": "goal_f6a2102cca01",
+    "source_project_id": "bootstrap",
+    "task_origin": "applied_downstream_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_decision_effect",
+    "upstream_downstream_task_id": "task_d84ea88202c6",
+    "upstream_followup_effect_id": "effect_0fa73f003874",
+    "upstream_source_decision_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_8bb5a92311a1",
+    "upstream_source_downstream_result_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_d050d817fc2c"
+  },
+  "source_verification_plan": {
+    "activation_allowed": false,
+    "capability": "hosted_dashboard",
+    "capability_enabled": false,
+    "non_claims": [
+      "does_not_enable_capability",
+      "does_not_allow_activation",
+      "does_not_satisfy_capability_proof",
+      "does_not_mutate_external_systems",
+      "does_not_create_approval_requests",
+      "does_not_mutate_downstream_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_records"
+    ],
+    "required_gates": [
+      "next_evidence_plan",
+      "fresh_verification",
+      "explicit_operator_approval",
+      "non_claim_review"
+    ],
+    "selected_action": "accept_keep_blocked",
+    "source_application_decision_id": "capability_activation_followup_result_task_result_decision_584334bef1b8",
+    "source_application_effect_id": "effect_1204651c2a69",
+    "source_application_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_34334ca28bfb",
+    "source_application_record_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_9cafc301c8ae",
+    "source_decision_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_aa06e26fcd4b",
+    "source_delegation_id": "subagent_delegation_4dc659649824",
+    "source_downstream_result_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_ee5597b442ad",
+    "source_downstream_task_id": "task_3ee0f399e6b6",
+    "source_effect_id": "effect_96080d734142",
+    "type": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_downstream_task"
+  },
+  "upstream_downstream_task_id": "task_d84ea88202c6",
+  "upstream_followup_effect_id": "effect_0fa73f003874",
+  "upstream_source_decision_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_8bb5a92311a1",
+  "upstream_source_downstream_result_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_d050d817fc2c"
+}

@@ -3131,3 +3131,33 @@ Current focus: Add result ingestion for downstream follow-up result task result 
    was called, no approval rows were created, no activation actions occurred,
    no external systems were mutated, no capability was enabled, and proof
    remains unsatisfied.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Results
+
+Current focus: Add operator review decisions for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result effect task result records.
+
+1. The new command
+   `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results`
+   ingests completed read-only evaluator output into local result records.
+2. Live proof first recorded completed output for delegation
+   `subagent_delegation_200c581a36a6`, then recorded result batch
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_807748792c52`
+   and result
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_0aa50ade1e23`
+   for task `task_e7034260ac20`.
+3. The idempotency rerun recorded
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_6a8de584a061`
+   with 0 new result rows, 1 existing result row, 0 approval requests, 0
+   activation actions, and 0 external mutations.
+4. Verification passed: focused result-rung tests, adjacent result slice, full
+   suite with 432 tests, stuck sweep, queue health, approvals, eval-candidates,
+   handoff review, diff-check, eval-after-change `run_6ede13ec3b84`, serial
+   baseline eval `run_8944f9d4e658`, playbooks, and GitHub metadata readback.
+5. Continue with:
+   Add operator review decisions for downstream follow-up result task result
+   effect task result effect task result effect task result effect task result
+   effect task result effect task result effect task result records.
+6. Preserve the current boundary: local result rows, generated reports, and
+   JSON artifacts only; no subagent was started, no model provider was called,
+   no approval row was created, no activation action occurred, no external
+   system was mutated, no capability was enabled, and proof remains unsatisfied.

@@ -116,17 +116,19 @@ python3 -m agent_os.cli capability-activation-followup-result-task-result-effect
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply --operator-id operator --selection-note "Apply accepted downstream result-effect task result-effect task result-effect task result-effect task result-effect task result-effect task result effect proposals as local records only." --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results
 ```
 
 This creates pending downstream proof tasks from applied local effects and
 then routes those tasks into read-only evaluator delegation packets. Completed
-local evaluator outputs can be ingested as result records and reviewed by an
-operator decision. Accepted blocked decisions can then create local proposed
-effect rows, apply those proposed rows as local application records only, and
-materialize the applied local effects as the next pending proof tasks. The
-latest task rung can also be routed into read-only evaluator delegation packets.
-Approval, activation, execution, network, and external mutation counters stay at
-zero.
+local evaluator outputs can be ingested as result records, and those records
+remain blocked for a later operator decision. Accepted blocked decisions can
+then create local proposed effect rows, apply those proposed rows as local
+application records only, and materialize the applied local effects as the next
+pending proof tasks. The latest task rung can also be routed into read-only
+evaluator delegation packets and ingested after an operator records structured
+delegation output. Approval, activation, execution, network, and external
+mutation counters stay at zero.
 
 ## Publishing
 

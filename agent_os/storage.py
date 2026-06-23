@@ -2277,6 +2277,57 @@ class CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResu
 
 
 @dataclass(frozen=True)
+class CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultRecord:
+    id: str
+    delegation_id: str
+    downstream_task_id: str
+    source_application_id: str
+    source_decision_id: str
+    source_downstream_result_id: str
+    source_effect_id: str
+    source_application_effect_id: str
+    source_application_record_id: str
+    source_application_decision_id: str
+    source_application_downstream_result_id: str
+    source_application_delegation_id: str
+    source_downstream_task_id: str
+    source_followup_result_id: str
+    upstream_followup_effect_id: str
+    source_contract_id: str
+    goal_id: str
+    project_id: str
+    capability: str
+    assigned_profile: str
+    evidence_status: str
+    result_summary: str
+    evidence_path: str
+    result_json: dict[str, object]
+    idempotency_key: str
+    activation_allowed: bool
+    capability_enabled: bool
+    created_approval_request_count: int
+    activation_action_count: int
+    external_mutation_count: int
+    created_at: str
+
+
+@dataclass(frozen=True)
+class CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultBatch:
+    id: str
+    status: str
+    completed_delegation_count: int
+    result_record_count: int
+    existing_result_record_count: int
+    created_approval_request_count: int
+    activation_action_count: int
+    external_mutation_count: int
+    created_result_ids: list[str]
+    completed_delegation_ids: list[str]
+    report_path: str
+    created_at: str
+
+
+@dataclass(frozen=True)
 class CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultDecision:
     id: str
     status: str
@@ -4816,6 +4867,55 @@ class Storage:
                 );
 
                 create table if not exists capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batches (
+                    id text primary key,
+                    status text not null,
+                    completed_delegation_count integer not null,
+                    result_record_count integer not null,
+                    existing_result_record_count integer not null,
+                    created_approval_request_count integer not null,
+                    activation_action_count integer not null,
+                    external_mutation_count integer not null,
+                    created_result_ids text not null,
+                    completed_delegation_ids text not null,
+                    report_path text not null,
+                    created_at text not null
+                );
+
+                create table if not exists capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_records (
+                    id text primary key,
+                    delegation_id text not null,
+                    downstream_task_id text not null,
+                    source_application_id text not null,
+                    source_decision_id text not null,
+                    source_downstream_result_id text not null,
+                    source_effect_id text not null,
+                    source_application_effect_id text not null,
+                    source_application_record_id text not null,
+                    source_application_decision_id text not null,
+                    source_application_downstream_result_id text not null,
+                    source_application_delegation_id text not null,
+                    source_downstream_task_id text not null,
+                    source_followup_result_id text not null,
+                    upstream_followup_effect_id text not null,
+                    source_contract_id text not null,
+                    goal_id text not null,
+                    project_id text not null,
+                    capability text not null,
+                    assigned_profile text not null,
+                    evidence_status text not null,
+                    result_summary text not null,
+                    evidence_path text not null,
+                    result_json text not null,
+                    idempotency_key text not null unique,
+                    activation_allowed integer not null,
+                    capability_enabled integer not null,
+                    created_approval_request_count integer not null,
+                    activation_action_count integer not null,
+                    external_mutation_count integer not null,
+                    created_at text not null
+                );
+
+                create table if not exists capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batches (
                     id text primary key,
                     status text not null,
                     completed_delegation_count integer not null,
@@ -14992,6 +15092,276 @@ class Storage:
             for row in rows
         ]
 
+    def record_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result(
+        self,
+        *,
+        delegation_id: str,
+        downstream_task_id: str,
+        source_application_id: str,
+        source_decision_id: str,
+        source_downstream_result_id: str,
+        source_effect_id: str,
+        source_application_effect_id: str,
+        source_application_record_id: str,
+        source_application_decision_id: str,
+        source_application_downstream_result_id: str,
+        source_application_delegation_id: str,
+        source_downstream_task_id: str,
+        source_followup_result_id: str,
+        upstream_followup_effect_id: str,
+        source_contract_id: str,
+        goal_id: str,
+        project_id: str,
+        capability: str,
+        assigned_profile: str,
+        evidence_status: str,
+        result_summary: str,
+        evidence_path: str,
+        result_json: dict[str, object],
+        idempotency_key: str,
+        activation_allowed: bool,
+        capability_enabled: bool,
+        created_approval_request_count: int,
+        activation_action_count: int,
+        external_mutation_count: int,
+    ) -> CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultRecord:
+        result_id = new_id(
+            "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result"
+        )
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_records (
+                    id, delegation_id, downstream_task_id,
+                    source_application_id, source_decision_id,
+                    source_downstream_result_id, source_effect_id,
+                    source_application_effect_id, source_application_record_id,
+                    source_application_decision_id,
+                    source_application_downstream_result_id,
+                    source_application_delegation_id, source_downstream_task_id,
+                    source_followup_result_id, upstream_followup_effect_id,
+                    source_contract_id, goal_id, project_id, capability,
+                    assigned_profile, evidence_status, result_summary,
+                    evidence_path, result_json, idempotency_key,
+                    activation_allowed, capability_enabled,
+                    created_approval_request_count, activation_action_count,
+                    external_mutation_count, created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    result_id,
+                    delegation_id,
+                    downstream_task_id,
+                    source_application_id,
+                    source_decision_id,
+                    source_downstream_result_id,
+                    source_effect_id,
+                    source_application_effect_id,
+                    source_application_record_id,
+                    source_application_decision_id,
+                    source_application_downstream_result_id,
+                    source_application_delegation_id,
+                    source_downstream_task_id,
+                    source_followup_result_id,
+                    upstream_followup_effect_id,
+                    source_contract_id,
+                    goal_id,
+                    project_id,
+                    capability,
+                    assigned_profile,
+                    evidence_status,
+                    result_summary,
+                    evidence_path,
+                    _json_dumps(result_json),
+                    idempotency_key,
+                    1 if activation_allowed else 0,
+                    1 if capability_enabled else 0,
+                    created_approval_request_count,
+                    activation_action_count,
+                    external_mutation_count,
+                    created_at,
+                ),
+            )
+        return CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultRecord(
+            id=result_id,
+            delegation_id=delegation_id,
+            downstream_task_id=downstream_task_id,
+            source_application_id=source_application_id,
+            source_decision_id=source_decision_id,
+            source_downstream_result_id=source_downstream_result_id,
+            source_effect_id=source_effect_id,
+            source_application_effect_id=source_application_effect_id,
+            source_application_record_id=source_application_record_id,
+            source_application_decision_id=source_application_decision_id,
+            source_application_downstream_result_id=source_application_downstream_result_id,
+            source_application_delegation_id=source_application_delegation_id,
+            source_downstream_task_id=source_downstream_task_id,
+            source_followup_result_id=source_followup_result_id,
+            upstream_followup_effect_id=upstream_followup_effect_id,
+            source_contract_id=source_contract_id,
+            goal_id=goal_id,
+            project_id=project_id,
+            capability=capability,
+            assigned_profile=assigned_profile,
+            evidence_status=evidence_status,
+            result_summary=result_summary,
+            evidence_path=evidence_path,
+            result_json=result_json,
+            idempotency_key=idempotency_key,
+            activation_allowed=activation_allowed,
+            capability_enabled=capability_enabled,
+            created_approval_request_count=created_approval_request_count,
+            activation_action_count=activation_action_count,
+            external_mutation_count=external_mutation_count,
+            created_at=created_at,
+        )
+
+    def get_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_by_idempotency_key(
+        self,
+        idempotency_key: str,
+    ) -> (
+        CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultRecord
+        | None
+    ):
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                select * from capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_records
+                where idempotency_key = ?
+                """,
+                (idempotency_key,),
+            ).fetchone()
+        if row is None:
+            return None
+        return self._row_to_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_record(
+            row
+        )
+
+    def list_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_records(
+        self,
+    ) -> list[
+        CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultRecord
+    ]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_records
+                order by created_at asc, id asc
+                """
+            ).fetchall()
+        return [
+            self._row_to_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_record(
+                row
+            )
+            for row in rows
+        ]
+
+    def list_recent_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_records(
+        self,
+        limit: int = 20,
+    ) -> list[
+        CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultRecord
+    ]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_records
+                order by created_at desc, id desc
+                limit ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [
+            self._row_to_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_record(
+                row
+            )
+            for row in rows
+        ]
+
+    def record_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch(
+        self,
+        *,
+        status: str,
+        completed_delegation_count: int,
+        result_record_count: int,
+        existing_result_record_count: int,
+        created_approval_request_count: int,
+        activation_action_count: int,
+        external_mutation_count: int,
+        created_result_ids: list[str],
+        completed_delegation_ids: list[str],
+        report_path: str,
+    ) -> CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultBatch:
+        batch_id = new_id(
+            "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch"
+        )
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batches (
+                    id, status, completed_delegation_count,
+                    result_record_count, existing_result_record_count,
+                    created_approval_request_count, activation_action_count,
+                    external_mutation_count, created_result_ids,
+                    completed_delegation_ids, report_path, created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    batch_id,
+                    status,
+                    completed_delegation_count,
+                    result_record_count,
+                    existing_result_record_count,
+                    created_approval_request_count,
+                    activation_action_count,
+                    external_mutation_count,
+                    _json_dumps(created_result_ids),
+                    _json_dumps(completed_delegation_ids),
+                    report_path,
+                    created_at,
+                ),
+            )
+        return CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultBatch(
+            id=batch_id,
+            status=status,
+            completed_delegation_count=completed_delegation_count,
+            result_record_count=result_record_count,
+            existing_result_record_count=existing_result_record_count,
+            created_approval_request_count=created_approval_request_count,
+            activation_action_count=activation_action_count,
+            external_mutation_count=external_mutation_count,
+            created_result_ids=created_result_ids,
+            completed_delegation_ids=completed_delegation_ids,
+            report_path=report_path,
+            created_at=created_at,
+        )
+
+    def list_recent_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batches(
+        self,
+        limit: int = 5,
+    ) -> list[
+        CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultBatch
+    ]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batches
+                order by created_at desc, id desc
+                limit ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [
+            self._row_to_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch(
+                row
+            )
+            for row in rows
+        ]
+
     def record_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision(
         self,
         *,
@@ -22078,6 +22448,68 @@ class Storage:
         row: sqlite3.Row,
     ) -> CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultBatch:
         return CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultBatch(
+            id=row["id"],
+            status=row["status"],
+            completed_delegation_count=row["completed_delegation_count"],
+            result_record_count=row["result_record_count"],
+            existing_result_record_count=row["existing_result_record_count"],
+            created_approval_request_count=row["created_approval_request_count"],
+            activation_action_count=row["activation_action_count"],
+            external_mutation_count=row["external_mutation_count"],
+            created_result_ids=_json_loads(row["created_result_ids"], []),
+            completed_delegation_ids=_json_loads(
+                row["completed_delegation_ids"],
+                [],
+            ),
+            report_path=row["report_path"],
+            created_at=row["created_at"],
+        )
+
+    def _row_to_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_record(
+        self,
+        row: sqlite3.Row,
+    ) -> CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultRecord:
+        return CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultRecord(
+            id=row["id"],
+            delegation_id=row["delegation_id"],
+            downstream_task_id=row["downstream_task_id"],
+            source_application_id=row["source_application_id"],
+            source_decision_id=row["source_decision_id"],
+            source_downstream_result_id=row["source_downstream_result_id"],
+            source_effect_id=row["source_effect_id"],
+            source_application_effect_id=row["source_application_effect_id"],
+            source_application_record_id=row["source_application_record_id"],
+            source_application_decision_id=row["source_application_decision_id"],
+            source_application_downstream_result_id=row[
+                "source_application_downstream_result_id"
+            ],
+            source_application_delegation_id=row["source_application_delegation_id"],
+            source_downstream_task_id=row["source_downstream_task_id"],
+            source_followup_result_id=row["source_followup_result_id"],
+            upstream_followup_effect_id=row["upstream_followup_effect_id"],
+            source_contract_id=row["source_contract_id"],
+            goal_id=row["goal_id"],
+            project_id=row["project_id"],
+            capability=row["capability"],
+            assigned_profile=row["assigned_profile"],
+            evidence_status=row["evidence_status"],
+            result_summary=row["result_summary"],
+            evidence_path=row["evidence_path"],
+            result_json=_json_loads(row["result_json"], {}),
+            idempotency_key=row["idempotency_key"],
+            activation_allowed=bool(row["activation_allowed"]),
+            capability_enabled=bool(row["capability_enabled"]),
+            created_approval_request_count=row["created_approval_request_count"],
+            activation_action_count=row["activation_action_count"],
+            external_mutation_count=row["external_mutation_count"],
+            created_at=row["created_at"],
+        )
+
+    def _row_to_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch(
+        self,
+        row: sqlite3.Row,
+    ) -> CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultBatch:
+        return CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultEffectTaskResultBatch(
             id=row["id"],
             status=row["status"],
             completed_delegation_count=row["completed_delegation_count"],

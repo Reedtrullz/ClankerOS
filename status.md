@@ -1,5 +1,59 @@
 # Status
 
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Results
+
+- Added the next local-only result ingestion rung:
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results`.
+- The command consumes completed read-only evaluator delegation packets from
+  the latest downstream proof-task delegation rung, validates structured
+  operator-supplied result output, records local result rows, and writes
+  per-result JSON artifacts.
+- Live proof first recorded completed delegation output for
+  `subagent_delegation_200c581a36a6`, then recorded result batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_807748792c52`
+  and result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_0aa50ade1e23`
+  for task `task_e7034260ac20`.
+- The idempotency rerun recorded batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_6a8de584a061`
+  with 0 new result rows, 1 existing result row, 0 approval requests, 0
+  activation actions, and 0 external mutations.
+- Generated proof:
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`.
+- Operator docs added:
+  `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`,
+  plus README, docs index, command reference, suggested-use, operating summary,
+  dashboard, and iteration visibility.
+- Verification evidence:
+  - syntax compile passed for `agent_os/*.py` and
+    `tests/test_first_milestone.py`.
+  - focused new result-rung tests: 3 passed.
+  - adjacent result-rung slice: 22 passed, 410 deselected.
+  - full suite: 432 passed in 819.48s.
+  - live command and idempotency rerun passed.
+  - `sweep-stuck`: stuck_incidents 0.
+  - `queue-health`: hotspots 0.
+  - `eval-candidates`: 0.
+  - `approvals`: pending_approvals 0.
+  - `handoff-review`: clear, stale_handoffs 0.
+  - `git diff --check`: passed.
+  - `eval-after-change`: pass, run `run_6ede13ec3b84`.
+  - A concurrent baseline `eval` attempt produced failed run
+    `run_73513c45c57b`; an immediate serial rerun passed as
+    `run_8944f9d4e658`.
+  - `playbooks`: 1 active playbook, 315 successful runs.
+  - GitHub metadata readback showed PUBLIC visibility, default branch `main`,
+    configured description, README homepage, ADMIN viewer permission, and 20
+    repository topics.
+  - `dashboard` and `iterate` regenerated local operator state.
+- The next queue item is operator review decisions for the new downstream
+  result-effect task result records.
+- Non-claims: local completed delegation result artifact, result rows,
+  generated reports, and JSON artifacts only; no subagent was started, no
+  model provider was called, no approval row was created, no activation action
+  occurred, no external system was mutated, no capability was enabled, and
+  proof remains unsatisfied.
+
 ## 2026-06-23 Task Recovery Recommendations
 
 - Added durable `task_recommendations` storage for local retry/replan guidance.

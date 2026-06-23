@@ -5695,3 +5695,48 @@ enablement, and proof satisfaction at zero.
   provider was called, no approval row was created, no activation action
   occurred, no external system was mutated, no capability was enabled, and
   proof remains unsatisfied.
+
+## Run run_73513c45c57b
+
+- Goal ID: goal_5b0c5ac52014
+- Status: failed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_73513c45c57b/summary.md
+
+## Run run_6ede13ec3b84
+
+- Goal ID: goal_58a4a75397ce
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_6ede13ec3b84/summary.md
+
+## Run run_8944f9d4e658
+
+- Goal ID: goal_63690993cff3
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_8944f9d4e658/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Results
+
+- Current focus is now:
+  `Add operator review decisions for downstream follow-up result task result
+  effect task result effect task result effect task result effect task result
+  effect task result effect task result effect task result records.`
+- The new command
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results`
+  ingests completed read-only evaluator outputs into local result records.
+- Live proof first recorded result batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_807748792c52`
+  and result record
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_0aa50ade1e23`
+  from completed delegation `subagent_delegation_200c581a36a6`.
+- The idempotency rerun recorded
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_6a8de584a061`
+  with 0 new result records, 1 existing result record, 0 approval requests, 0
+  activation actions, and 0 external mutations.
+- Verification passed: focused new result tests, adjacent result slice, full
+  suite with 432 tests, stuck sweep, queue health, approvals, eval-candidates,
+  handoff review, diff-check, eval-after-change `run_6ede13ec3b84`, serial
+  baseline eval `run_8944f9d4e658`, playbooks, and GitHub metadata readback.
+- Preserve the current boundary: local result rows, generated reports, and
+  JSON artifacts only; no subagent was started, no model provider was called,
+  no approval row was created, no activation action occurred, no external
+  system was mutated, no capability was enabled, and proof remains unsatisfied.
