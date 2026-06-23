@@ -205,9 +205,21 @@ chain, without starting remote workers, claiming remote work, or changing
 routing.
 Current iteration packet:
 `docs/next-iteration.md` selects
-Add first-class `run-task` dispatch for planned goal tasks with profile-aware
-local evidence packets.
-Exact focus: Add first-class `run-task` dispatch for planned goal tasks with profile-aware local evidence packets.
+Add local application records for downstream follow-up result task result
+effect task result effect task result effect task result effect task result
+effect task result effect task result decision effect proposals.
+Exact focus: Add local application records for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals.
+
+Latest downstream result decision-effect proposals:
+`python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals`
+now creates local proposed generic `effects` rows from accepted blocked
+downstream result decisions. Live proof created proposed effect
+`effect_1427bc069283` for `hosted_dashboard`; the idempotency rerun found 1
+existing proposal and created 0 new proposals. The report is
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`.
+This remains a local evidence bridge only: no approval requests, activation
+actions, external mutations, capability enablement, proof satisfaction, CI, or
+deployment happened.
 
 Latest goal planning lifecycle:
 `goal`, `plan`, `contract`, `tasks`, `update-task`, and `replan` now create
@@ -247,7 +259,10 @@ for project `bootstrap` with name `adding-cli-commands` and path
 `.clanker/skills/adding-cli-commands/SKILL.md`. It is intentionally
 `status=proposed` until an operator runs
 `python3 -m agent_os.cli skill approve <skill_id>`.
-Next implementation edge: Add human-first `review`, `evidence`, and `replay-summary` commands for run evidence packets.
+Next implementation edge: Add local application records for downstream
+follow-up result task result effect task result effect task result effect task
+result effect task result effect task result effect task result decision effect
+proposals.
 
 Latest Goal Completion Audit:
 `goal_completion_audit_8710791dee32` reports
@@ -1370,9 +1385,10 @@ work, or changing routing.
   with run `run_60c83a6cdc32`; `playbooks` -> `successful_runs=162`.
 - Current iteration packet:
   `docs/next-iteration.md` selects
-  Add first-class `run-task` dispatch for planned goal tasks with
-  profile-aware local evidence packets.
-  Exact focus: Add first-class `run-task` dispatch for planned goal tasks with profile-aware local evidence packets.
+  Add local application records for downstream follow-up result task result
+  effect task result effect task result effect task result effect task result
+  effect task result effect task result decision effect proposals.
+  Exact focus: Add local application records for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals.
 
 ## Latest Profile Routing Decision Records
 

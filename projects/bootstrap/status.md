@@ -104,6 +104,19 @@ activation actions, external mutations, activation allowance, capability
 enablement, and proof satisfaction at zero. The next focus is local
 decision-effect proposals from the accepted blocked decision.
 
+Latest downstream result effect task result effect task result effect task
+result effect task result effect task result effect task result effect task
+decision-effect proposals now create local proposed generic `effects` rows
+from accepted blocked decisions through
+`python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals`,
+write
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`,
+show in the dashboard and iteration packet, and keep approval requests,
+activation actions, external mutations, activation allowance, capability
+enablement, and proof satisfaction at zero. Live effect
+`effect_1427bc069283` is proposed for `hosted_dashboard`; the next focus is
+local application records for those proposed effects.
+
 ## Verification Evidence
 
 - `python3 -m pytest tests/test_first_milestone.py -q` -> 3 passed.
@@ -5764,3 +5777,15 @@ decision-effect proposals from the accepted blocked decision.
 - Goal ID: goal_0c706f8fecd4
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_6ba2aef707c7/summary.md
+
+## Run run_8a56dcaa9a85
+
+- Goal ID: goal_bb088a3283a6
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_8a56dcaa9a85/summary.md
+
+## Run run_13d70f4b14b5
+
+- Goal ID: goal_d951a7de9ee6
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_13d70f4b14b5/summary.md

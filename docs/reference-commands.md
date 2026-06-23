@@ -118,6 +118,7 @@ python3 -m agent_os.cli capability-activation-followup-result-task-result-effect
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide --operator-id operator --selected-action accept_keep_blocked --selection-note "Accepted downstream result-effect task result-effect task result-effect task result-effect task result-effect task result-effect task proof-plan result and kept capability activation blocked." --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals
 ```
 
 This creates pending downstream proof tasks from applied local effects and
@@ -129,8 +130,9 @@ application records only, and materialize the applied local effects as the next
 pending proof tasks. The latest task rung can also be routed into read-only
 evaluator delegation packets and ingested after an operator records structured
 delegation output. The latest result records can now receive a local
-accept-keep-blocked, request-more-evidence, or defer-review decision. Approval,
-activation, execution, network, and external
+accept-keep-blocked, request-more-evidence, or defer-review decision, and
+accepted blocked decisions can create idempotent proposed effect rows.
+Approval, activation, execution, network, and external
 mutation counters stay at zero.
 
 ## Publishing

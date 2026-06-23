@@ -544,6 +544,10 @@ Prefer these files when orienting:
   for reviewing downstream result effect task result effect task result effect
   task result effect task result effect task result effect task result records
   while keeping activation blocked.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+  for creating proposed effect rows from accepted downstream result effect
+  task result effect task result effect task result effect task result effect
+  task result effect task result decisions.
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`
   for ingesting completed downstream result effect task result effect task
   result effect task result effect task result effect delegation outputs.
@@ -1243,6 +1247,18 @@ python3 -m agent_os.cli dashboard
 See
 `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`
 for the decision report, idempotency check, and safety counters.
+
+After the latest accepted blocked decision exists, create the local proposed
+effect row:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals
+python3 -m agent_os.cli dashboard
+```
+
+See
+`docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+for the proposal report, idempotency check, and safety counters.
 
 ## When To Commit And Push
 
