@@ -2041,6 +2041,14 @@ coverage.
   approval rows, activation actions, external mutations, activation allowance,
   and capability enablement at zero.
 
+## Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Tasks
+
+- Applied downstream result effect task result effect task result effect task
+  result decision effect applications should materialize pending downstream
+  proof tasks only: preserve source links in task evidence and keep approval
+  rows, activation actions, external mutations, activation allowance,
+  capability enablement, and proof satisfaction at zero.
+
 ## Learning run_6aac17428229
 
 - Learning: Run run_6aac17428229 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
@@ -2096,3 +2104,11 @@ coverage.
 ## Learning run_043ed13bc23a
 
 - Learning: Run run_043ed13bc23a showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_69f486df6818
+
+- Learning: Run run_69f486df6818 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_67f2e1009254
+
+- Learning: Run run_67f2e1009254 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

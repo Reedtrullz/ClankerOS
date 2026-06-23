@@ -231,6 +231,10 @@ delegation, task, contract, project, and capability while preserving
 `activation_allowed=false`, `capability_enabled=false`,
 `approval_requests_created=0`, `activation_actions_taken=0`, and
 `external_mutations_taken=0`.
+Those downstream result effect task result effect task result effect task
+result decision effects can now be applied as local records only, and the
+applied records can be materialized into pending downstream proof tasks while
+preserving the same source links and keeping activation blocked.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -388,6 +392,7 @@ tutorials are advanced evidence packets for blocked activation work.
 - [Review downstream result effect task result effect task result effect task results](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-decisions.md)
 - [Create downstream result effect task result effect task result effect task result effect proposals](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md)
 - [Apply downstream result effect task result effect task result effect task result effect records](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md)
+- [Create downstream tasks from applied result effect task result effect task result effect task result effects](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Documentation index](docs/docs-index.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
@@ -521,6 +526,11 @@ The repository can now:
   effect task result decision effects as local records only while preserving
   applied effect evidence and keeping approval rows, activation actions,
   external mutations, activation allowance, and capability enablement at zero;
+- create pending downstream proof tasks from applied downstream result effect
+  task result effect task result effect task result decision effect
+  applications while preserving source links and keeping approval rows,
+  activation actions, external mutations, activation allowance, and capability
+  enablement at zero;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -699,6 +709,8 @@ python3 -m agent_os.cli capability-activation-followup-result-task-result-effect
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-decide --operator-id operator --selected-action accept_keep_blocked --selection-note "Accepted downstream result-effect task result-effect task result-effect proof-plan result and kept capability activation blocked." --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results.md
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply --operator-id operator --selection-note "Apply accepted downstream result-effect task result-effect task result-effect task result effect proposals as local records only." --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
@@ -818,6 +830,10 @@ python3 -m pytest tests/test_first_milestone.py -q
   creating proposed effects from accepted downstream result effect task result
   effect task result effect task result decisions without enabling
   capabilities.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`:
+  creating pending downstream proof tasks from applied downstream result effect
+  task result effect task result effect task result decision effect
+  applications without enabling capabilities.
 - `docs/docs-index.md`: curated map of tutorials, generated reports, status
   files, and bootstrap project continuity files.
 - `docs/suggested-use.md`: operator guidance, prompts, and practical next slices.

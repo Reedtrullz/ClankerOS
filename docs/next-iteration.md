@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_45e1d433714f
+- Packet ID: iteration_99fa0522cf38
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add downstream task records from applied downstream follow-up result task result effect task result effect task result effect task result decision effect applications.
+Advance the Agent System north-star goal by completing: Add routing and delegation packets for downstream follow-up result task result effect task result effect task result effect task result effect tasks.
 
 ## Definition Of Done
 
@@ -97,6 +97,7 @@ Advance the Agent System north-star goal by completing: Add downstream task reco
 - `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-decide --operator-id operator --selected-action accept_keep_blocked --selection-note "Accepted downstream result-effect task result-effect task result-effect proof-plan result and kept capability activation blocked." --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results.md`
 - `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals`
 - `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply --operator-id operator --selection-note "Apply accepted downstream result-effect task result-effect task result-effect task result effect proposals as local records only." --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+- `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks`
 - `python3 -m agent_os.cli eval`
 - `python3 -m agent_os.cli playbooks`
 - `python3 -m agent_os.cli dashboard`
@@ -117,7 +118,7 @@ Advance the Agent System north-star goal by completing: Add downstream task reco
 
 ## Current Posture
 
-- pending tasks: 22
+- pending tasks: 23
 - waiting approval: 0
 - blocked tasks: 0
 - failed tasks: 0
@@ -203,6 +204,7 @@ Advance the Agent System north-star goal by completing: Add downstream task reco
 - capability activation followup result task result effect task result effect task result effect task result decisions: capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_decisions_already_recorded
 - capability activation followup result task result effect task result effect task result effect task result effect proposals: capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals_recorded
 - capability activation followup result task result effect task result effect task result effect task result effect application: capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_already_recorded
+- capability activation followup result task result effect task result effect task result effect task result effect tasks: capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_tasks_already_recorded
 - proposed eval candidates: 0
 - active playbooks: 1
 - open stuck-task incidents: 0

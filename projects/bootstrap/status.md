@@ -4787,3 +4787,47 @@ are visible in the dashboard and are not active until approved.
   subagent execution, model-provider calls, proof satisfaction, activation
   allowance, capability enablement, trust promotion, scheduler, retries, cost
   tracking, CI/deploy action by ClankerOS, PRs, or external mutation.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Tasks
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks`
+  now materializes applied downstream result effect task result effect task
+  result effect task result decision effects into pending local proof tasks.
+- Initial live task batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_5a4fac3b3100`
+  created pending high-risk task `task_b1f604bef7cf` for
+  `hosted_dashboard` from applied effect `effect_d8299118fb64`.
+- Final live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_a8611895b817`
+  reported already recorded with 1 existing downstream task, 0 new tasks,
+  0 approval requests, 0 activation actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Verification evidence:
+  - focused red/green tasks tests: 3 passed after implementation
+  - adjacent chain tests: 10 passed
+  - full suite: 359 passed
+  - handoff-review: clear after refreshing `projects/bootstrap/handoff.md`
+  - eval-after-change: pass, run `run_69f486df6818`
+  - baseline eval: pass, run `run_67f2e1009254`
+  - playbooks: 1 active, 269 successful runs
+  - syntax compile check passed for changed Python modules
+- Non-claims: pending local proof tasks only; no `approval_requests`,
+  subagent execution, model-provider calls, proof satisfaction, activation
+  allowance, capability enablement, trust promotion, scheduler, retries, cost
+  tracking, CI/deploy action by ClankerOS, PRs, or external mutation.
+
+## Run run_69f486df6818
+
+- Goal ID: goal_6bbc97007fa4
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_69f486df6818/summary.md
+
+## Run run_67f2e1009254
+
+- Goal ID: goal_9383e0394d79
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_67f2e1009254/summary.md

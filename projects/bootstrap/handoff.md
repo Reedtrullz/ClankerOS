@@ -2493,3 +2493,42 @@ Current focus: Add downstream task records from applied downstream follow-up res
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Tasks
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks`
+  now materializes applied downstream result effect task result effect task
+  result effect task result decision effects into pending local proof tasks.
+- Initial live task batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_5a4fac3b3100`
+  created pending high-risk task `task_b1f604bef7cf` for
+  `hosted_dashboard` from applied effect `effect_d8299118fb64`.
+- Final live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_a8611895b817`
+  reported
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_tasks_already_recorded`
+  with 1 existing downstream task, 0 new tasks, 0 approval requests,
+  0 activation actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Non-claims: pending local proof tasks only; no approval rows, subagent
+  execution, model-provider calls, proof satisfaction, activation allowance,
+  capability enablement, trust promotion, scheduler, retries, cost tracking,
+  CI/deploy action by ClankerOS, PRs, or external mutation.
+
+## Next Actions
+
+Current focus: Add routing and delegation packets for downstream follow-up result task result effect task result effect task result effect task result effect tasks.
+
+1. Use `docs/next-iteration.md` to complete:
+   Add routing and delegation packets for downstream follow-up result task
+   result effect task result effect task result effect task result effect
+   tasks.
+2. Route only the pending local proof task into read-only evaluator delegation
+   packets; keep activation blocked and preserve idempotency.
+3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
+   budget enforcement, trust promotion, retries, and real-cost tracking
+   blocked until their own evidence and approval contracts are satisfied.

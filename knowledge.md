@@ -570,6 +570,13 @@
   contract, project, and capability links, and still keep approval rows,
   activation actions, external mutations, activation allowance, and
   capability enablement at zero.
+- Applied downstream result effect task result effect task result effect task
+  result decision effect applications should become pending downstream proof
+  tasks before routing or delegation. The task materialization stage must
+  preserve source decision, result, application, effect, delegation, task,
+  contract, project, and capability links while keeping approval rows,
+  activation actions, external mutations, activation allowance, capability
+  enablement, and proof satisfaction at zero.
 
 ## Stable Distilled Learnings
 

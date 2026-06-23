@@ -7635,3 +7635,63 @@
   satisfaction, activation allowance, capability enablement, trust promotion,
   scheduler, retries, cost tracking, CI/deploy action by ClankerOS, PRs, or
   external mutation.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Tasks
+
+- Added
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks`
+  for materializing applied downstream result effect task result effect task
+  result effect task result decision effects into pending downstream proof
+  tasks.
+- Added SQLite table
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batches`.
+- Live first task pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_5a4fac3b3100`
+  created pending high-risk task `task_b1f604bef7cf` for
+  `hosted_dashboard` from applied effect `effect_d8299118fb64`.
+- Live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_a8611895b817`
+  reported
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_tasks_already_recorded`
+  with 1 applied downstream effect, 0 new tasks, 1 existing downstream task,
+  0 approval requests, 0 activation actions, and 0 external mutations.
+- Evidence:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Verification evidence:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_result_effect_tasks"`
+    -> failed before implementation on the missing CLI command.
+  - Focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_result_effect_tasks"`
+    -> 3 passed, 356 deselected.
+  - Adjacent chain:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_result_effect"`
+    -> 10 passed, 349 deselected.
+  - `python3 -m py_compile agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_tasks.py agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py tests/test_first_milestone.py`
+    -> passed.
+  - `git diff --check` -> passed.
+  - `python3 -m pytest -q` -> 359 passed in 423.44s.
+  - `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800` ->
+    stuck_incidents: 0.
+  - `python3 -m agent_os.cli queue-health` -> hotspots: 0.
+  - `python3 -m agent_os.cli handoff-review` -> clear, blocked_tasks: 0,
+    stale_handoffs: 0.
+  - `python3 -m agent_os.cli eval-candidates` -> eval_candidates: 0.
+  - `python3 -m agent_os.cli approvals` -> pending_approvals: 0.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result effect task result effect task result effect tasks" ...`
+    -> pass, run `run_69f486df6818`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`,
+    run `run_67f2e1009254`.
+  - `python3 -m agent_os.cli playbooks` -> playbooks: 1,
+    `first-milestone-closed-loop` active with 269 successful runs.
+- Next focus:
+  `Add routing and delegation packets for downstream follow-up result task
+  result effect task result effect task result effect task result effect
+  tasks.`
+- Non-claims: pending local proof tasks only; no `approval_requests`,
+  subagent execution, model-provider calls, proof satisfaction, activation
+  allowance, capability enablement, trust promotion, scheduler, retries, cost
+  tracking, CI/deploy action by ClankerOS, PRs, or external mutation.
