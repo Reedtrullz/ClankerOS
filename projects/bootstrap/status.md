@@ -5345,3 +5345,46 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_48660736e79b
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_f364483e641a/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Tasks
+
+- Current focus is now:
+  `Add routing and delegation packets for downstream follow-up result task
+  result effect task result effect task result effect task result effect task
+  result effect task result effect tasks.`
+- The new command
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks`
+  creates pending downstream proof tasks from applied downstream result effect
+  task result effect task result effect task result effect task result effect
+  task result decision effects.
+- Live proof first recorded task batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_de50527e1b5a`
+  and created pending task `task_3ee0f399e6b6` for
+  `effect_38049b66392f`.
+- The idempotency rerun recorded
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_8091f6e07e0e`
+  with 0 new tasks and 1 existing downstream task.
+- Public operator docs now include
+  `docs/tutorial-operator-daily-loop.md` and
+  `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`.
+- Verification: focused task-rung tests passed, adjacent chain tests passed,
+  full suite passed with 401 tests, `sweep-stuck` found 0 incidents,
+  `queue-health` found 0 hotspots, `handoff-review` was clear,
+  `eval-candidates` returned 0, `approvals` returned 0, `git diff --check`
+  passed, `eval-after-change` passed as `run_b621ba042540`, baseline `eval`
+  passed, and playbooks reported 292 successful runs.
+- Preserve the boundary: local pending task rows and reports only; no approval
+  rows, activation actions, external mutations, routing, dispatch,
+  activation allowance, capability enablement, or proof satisfaction.
+
+## Run run_e2b6cba0b53a
+
+- Goal ID: goal_2fc925de10c1
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_e2b6cba0b53a/summary.md
+
+## Run run_b621ba042540
+
+- Goal ID: goal_343108d385d7
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_b621ba042540/summary.md

@@ -72,6 +72,15 @@ python3 -m agent_os.cli playbooks
 git diff --check
 ```
 
+## Capability Activation Proof Tasks
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks
+```
+
+This creates pending downstream proof tasks from applied local effects and
+keeps approval, activation, and external mutation counters at zero.
+
 ## Publishing
 
 ```bash

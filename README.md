@@ -46,6 +46,7 @@ Then read:
 - [Command Reference](docs/reference-commands.md)
 - [Documentation Index](docs/docs-index.md)
 - [First Loop Tutorial](docs/tutorial-first-loop.md)
+- [Operator Daily Loop Tutorial](docs/tutorial-operator-daily-loop.md)
 - [Approval-Gated Coding Tutorial](docs/tutorial-approval-gated-coding.md)
 - [Public Snapshot Tutorial](docs/tutorial-public-snapshot.md)
 

@@ -292,6 +292,9 @@ from agent_os.capability_activation_followup_result_task_result_effect_task_resu
 from agent_os.capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application import (
     render_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_line,
 )
+from agent_os.capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_tasks import (
+    render_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_line,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -973,6 +976,16 @@ def generate_static_dashboard(root: Path) -> Path:
                     limit=1
                 )
             )
+        capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batches = []
+        if _table_exists(
+            connection,
+            "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batches",
+        ):
+            capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batches = (
+                storage.list_recent_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batches(
+                    limit=1
+                )
+            )
         capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batches = []
         if _table_exists(
             connection,
@@ -1518,6 +1531,13 @@ def generate_static_dashboard(root: Path) -> Path:
             0
         ]
         if capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_applications
+        else None
+    )
+    latest_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch = (
+        capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batches[
+            0
+        ]
+        if capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batches
         else None
     )
     latest_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch = (
@@ -3786,6 +3806,47 @@ def generate_static_dashboard(root: Path) -> Path:
                 "",
                 render_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_line(
                     application
+                ),
+            ]
+        )
+    else:
+        lines.append("- none")
+
+    lines.extend(
+        [
+            "",
+            "## Capability Activation Follow-Up Result Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Tasks",
+            "",
+        ]
+    )
+    if (
+        latest_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch
+        is not None
+    ):
+        batch = (
+            latest_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch
+        )
+        lines.extend(
+            [
+                f"- status: {batch.status}",
+                f"- source_application: {batch.source_application_id}",
+                (
+                    "- applied_downstream_effects: "
+                    f"{batch.applied_downstream_effect_count}"
+                ),
+                f"- tasks_created: {batch.task_count}",
+                f"- existing_downstream_tasks: {batch.existing_task_count}",
+                f"- capability_tasks_created: {batch.capability_task_count}",
+                (
+                    "- approval_requests_created: "
+                    f"{batch.created_approval_request_count}"
+                ),
+                f"- activation_actions_taken: {batch.activation_action_count}",
+                f"- external_mutations_taken: {batch.external_mutation_count}",
+                f"- report: {batch.report_path}",
+                "",
+                render_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_line(
+                    batch
                 ),
             ]
         )

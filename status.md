@@ -8375,3 +8375,52 @@
   allowance, capability enablement, proof satisfaction, hosted dashboard,
   remote workers, scheduling, CI/deploy action, trust promotion, retries, or
   real cost tracking.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Tasks
+
+- Added
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks`
+  for materializing applied downstream result effect task result effect task
+  result effect task result effect task result effect task result decision
+  effects into pending local proof tasks.
+- Added storage table
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batches`
+  plus typed record/list/readback helpers.
+- Added dashboard and iteration visibility for the new task-record batch.
+- Added tutorial docs for the new task-rung command and a daily operator loop
+  tutorial for public/local use.
+- Live proof first recorded batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_de50527e1b5a`
+  from application
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_3c9a226d96c4`
+  and created pending task `task_3ee0f399e6b6` for
+  `effect_38049b66392f`.
+- Live idempotency rerun recorded
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_8091f6e07e0e`
+  with 1 applied downstream effect, 0 new tasks, 1 existing downstream task,
+  0 approval requests, 0 activation actions, and 0 external mutations.
+- Verification evidence:
+  - syntax compile check passed for storage, CLI, dashboard, iteration, the
+    new task module, and tests.
+  - focused task-rung tests: 3 passed.
+  - adjacent chain tests: 31 passed.
+  - full suite: 401 passed.
+  - live command and idempotency rerun passed.
+  - `sweep-stuck`: stuck_incidents 0.
+  - `queue-health`: hotspots 0.
+  - `handoff-review`: clear, stale_handoffs 0.
+  - `eval-candidates`: 0.
+  - `approvals`: pending_approvals 0.
+  - `git diff --check`: passed.
+  - `eval-after-change`: pass, run `run_b621ba042540`.
+  - `eval`: `first_milestone_closed_loop: pass`.
+  - `playbooks`: 1 active playbook, 292 successful runs.
+  - `dashboard` and `iterate` regenerated local operator state.
+- Next focus:
+  `Add routing and delegation packets for downstream follow-up result task
+  result effect task result effect task result effect task result effect task
+  result effect task result effect tasks.`
+- Non-claims: local pending task rows and task-batch reports only; no approval
+  rows, activation actions, external mutations, routing, dispatch, scheduling,
+  CI/deploy action, trust promotion, retries, real cost tracking, activation
+  allowance, capability enablement, or proof satisfaction.

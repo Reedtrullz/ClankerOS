@@ -17,6 +17,8 @@ system.
 - `docs/architecture.md` - local control plane, runtime artifacts, safety
   boundaries, and extension order.
 - `docs/reference-commands.md` - compact command map.
+- `docs/tutorial-operator-daily-loop.md` - daily operator loop for returning
+  to a workspace, choosing one narrow move, and verifying before claims.
 - `docs/tutorial-public-snapshot.md` - verify, commit, and push a coherent
   public GitHub snapshot without overclaiming.
 - `contracts.md` - safety contract and evidence expectations.
@@ -26,6 +28,7 @@ system.
 ## Core Tutorials
 
 - `docs/tutorial-first-loop.md`
+- `docs/tutorial-operator-daily-loop.md`
 - `docs/tutorial-approval-gated-coding.md`
 - `docs/tutorial-public-snapshot.md`
 - `docs/tutorial-subagent-delegation-results.md`
@@ -74,6 +77,7 @@ verbose because each rung preserves source links and explicit non-claims.
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`
 
 ## Current State
 

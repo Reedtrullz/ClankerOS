@@ -14,6 +14,7 @@ harder to overclaim.
 | Find a command quickly | `docs/reference-commands.md` |
 | See current state | `python3 -m agent_os.cli dashboard` |
 | Pick the next safe local task | `python3 -m agent_os.cli iterate` |
+| Resume a workspace safely | `docs/tutorial-operator-daily-loop.md` |
 | Run the first loop | `docs/tutorial-first-loop.md` |
 | Make a coded change safely | `docs/tutorial-approval-gated-coding.md` |
 | Capture subagent-style context without execution | `docs/tutorial-subagent-delegation-results.md` |
@@ -205,6 +206,10 @@ Ingest completed downstream result effect task result effect task result effect 
 Apply proposed downstream result effect task result effect task result effect task result effect task result effect task result decision effects as local records only, and prove that capability activation remains blocked.
 ```
 
+```text
+Create downstream proof tasks from applied downstream result effect task result effect task result effect task result effect task result effect task result decision effects, and prove that capability activation remains blocked.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -285,7 +290,10 @@ Apply proposed downstream result effect task result effect task result effect ta
 41. Review downstream result effect task result effect task result effect task
     result effect task result effect task result records before treating the
     next evidence plan as operator-accepted.
-42. Record non-claims before treating the work as safe.
+42. Materialize applied downstream result effect task result effect task result
+    effect task result effect task result effect task result decision effects
+    into pending downstream proof tasks before routing or delegation.
+43. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
