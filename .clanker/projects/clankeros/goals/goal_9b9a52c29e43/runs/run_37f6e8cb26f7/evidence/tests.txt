@@ -1,0 +1,6 @@
+project_context: clankeros
+context: projects/clankeros/context.md
+project_note: projects/clankeros/project.md
+commands_rerun: 0
+network_actions_taken: 0
+external_mutations_taken: 0

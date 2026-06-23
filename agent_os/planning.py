@@ -162,6 +162,38 @@ def create_contract_for_goal(
     return goal, plan, contract
 
 
+def refresh_goal_planning_artifacts(
+    root: Path,
+    storage: Storage,
+    goal_id: str,
+) -> list[Path]:
+    root = root.resolve()
+    goal = storage.get_goal(goal_id)
+    project = _require_project(storage, goal.project_id)
+    paths: list[Path] = []
+    try:
+        plan = storage.get_latest_plan(goal.id)
+    except KeyError:
+        paths.append(write_tasks_artifact(root, goal, storage.list_tasks(goal.id)))
+        return paths
+
+    steps = storage.list_plan_steps(plan.id)
+    _write_plan_artifacts(root, project, goal, plan, steps)
+    paths.extend(
+        [
+            root / plan.artifact_path,
+            root / _relative_goal_path(project.name, goal.id) / "PLAN.md",
+        ]
+    )
+    contract = storage.get_sprint_contract_for_plan(plan.id)
+    if contract is not None:
+        paths.append(
+            _write_contract_artifact(root, project, goal, plan, steps, contract)
+        )
+    paths.append(write_tasks_artifact(root, goal, storage.list_tasks(goal.id)))
+    return paths
+
+
 def update_lifecycle_task(
     root: Path,
     storage: Storage,

@@ -149,6 +149,21 @@ The dashboard is the operator cockpit for the current local state. After this
 workflow, use it to confirm the goal plan version, planned tasks, approval
 posture, and non-claim counters.
 
+## 11. Optional Next Step: Run One Planned Task
+
+When the plan and sprint contract are clear, continue with
+`docs/tutorial-run-task.md`:
+
+```bash
+python3 -m agent_os.cli run-task task_... --profile tester
+python3 -m agent_os.cli review run_...
+python3 -m agent_os.cli dashboard
+```
+
+This is a separate execution path. It creates a local run and evidence packet
+for one planned task, but still does not commit, push, deploy, call model
+providers, or start subagents.
+
 ## Proof Boundaries
 
 - `register-project` proves only that the local path can be resolved as a git

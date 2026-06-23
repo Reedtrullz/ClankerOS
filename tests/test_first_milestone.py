@@ -673,6 +673,189 @@ def test_goal_plan_contract_task_lifecycle_for_registered_project(
     assert "goal_failed: project missing is not registered" in missing_output
 
 
+def test_run_task_dispatches_planned_goal_task_with_profile_evidence(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    repo_path = tmp_path / "subject-repo"
+    _init_git_repo(repo_path)
+    (repo_path / "README.md").write_text("# Subject\n", encoding="utf-8")
+    test_command = (
+        "python3 -c \"from pathlib import Path; "
+        "assert Path('README.md').read_text() == '# Subject\\\\n'; "
+        "print('verified subject repo')\""
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "register-project",
+                "subject",
+                "--path",
+                str(repo_path),
+                "--test-command",
+                test_command,
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "goal",
+                "Verify the registered project README",
+                "--project",
+                "subject",
+            ]
+        )
+        == 0
+    )
+    goal_output = capsys.readouterr().out
+    goal_id = next(
+        line.split(": ", 1)[1]
+        for line in goal_output.splitlines()
+        if line.startswith("goal_id: ")
+    )
+    assert main(["--root", str(tmp_path), "contract", goal_id]) == 0
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    tasks = storage.list_tasks(goal_id)
+    task_id = tasks[1].id
+    assert tasks[1].status == "planned"
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-task",
+                task_id,
+                "--profile",
+                "tester",
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "task_run:" in output
+    assert f"task_id: {task_id}" in output
+    assert f"goal_id: {goal_id}" in output
+    assert "project_id: subject" in output
+    assert "profile: tester" in output
+    assert "status: completed" in output
+    assert "verification_passed: true" in output
+    assert "routing_decision:" in output
+    assert "evidence_packet: .clanker/projects/subject/goals/" in output
+    run_id = next(
+        line.split(": ", 1)[1]
+        for line in output.splitlines()
+        if line.startswith("run_id: ")
+    )
+
+    updated = storage.get_task(task_id)
+    assert updated.status == "completed"
+    assert updated.run_id == run_id
+    assert updated.evidence["passed"] is True
+    assert updated.evidence["profile"] == "tester"
+    assert updated.evidence["adapter"] == "local_shell"
+    assert "verified subject repo" in updated.evidence["stdout"]
+    assert any(path.endswith("summary.md") for path in updated.artifacts)
+
+    step = storage.get_plan_step_by_task(task_id)
+    assert step is not None
+    assert step.status == "completed"
+    latest_plan = storage.get_latest_plan(goal_id)
+    plan_markdown = (
+        tmp_path
+        / ".clanker"
+        / "projects"
+        / "subject"
+        / "goals"
+        / goal_id
+        / "PLAN.md"
+    ).read_text(encoding="utf-8")
+    assert f"- task_id: {task_id}" in plan_markdown
+    assert "- status: completed" in plan_markdown
+    contract = storage.get_sprint_contract_for_plan(latest_plan.id)
+    assert contract is not None
+    contract_markdown = (tmp_path / contract.artifact_path).read_text(
+        encoding="utf-8"
+    )
+    assert "- 2. Implement the smallest safe change: completed" in contract_markdown
+
+    run = storage.get_run(run_id)
+    assert run.status == "completed"
+    assert Path(run.activity_path).exists()
+    assert Path(run.summary_path).exists()
+    assert Path(run.events_path).exists()
+    events = storage.list_events_for_run(run_id)
+    assert [event.event_type for event in events] == [
+        "task.dispatch_started",
+        "task.command_completed",
+        "task.completed",
+    ]
+    decisions = storage.list_recent_routing_decisions(limit=1)
+    assert decisions[0].task_id == task_id
+    assert decisions[0].selected_profile == "tester"
+    assert decisions[0].status == "dispatched"
+
+    evidence_dir = (
+        tmp_path
+        / ".clanker"
+        / "projects"
+        / "subject"
+        / "goals"
+        / goal_id
+        / "runs"
+        / run_id
+        / "evidence"
+    )
+    summary = (evidence_dir / "summary.md").read_text(encoding="utf-8")
+    assert "verified subject repo" in summary
+    assert (evidence_dir / "verification.json").exists()
+    assert (evidence_dir / "routing_decisions.jsonl").exists()
+    assert (evidence_dir / "tasks.json").exists()
+    task_packet = json.loads((evidence_dir / "tasks.json").read_text(encoding="utf-8"))
+    assert task_packet["task"]["status"] == "completed"
+    assert task_packet["plan_step"]["status"] == "completed"
+
+    assert main(["--root", str(tmp_path), "review", run_id]) == 0
+    review_output = capsys.readouterr().out
+    assert f"run_id: {run_id}" in review_output
+    review = (tmp_path / "runs" / run_id / "review.md").read_text(
+        encoding="utf-8"
+    )
+    assert "## Evidence Files" in review
+    assert ".clanker/projects/subject/goals/" in review
+
+    dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
+    assert "### Task Runs" in dashboard
+    assert f"{task_id}: run={run_id}" in dashboard
+    assert "profile=tester" in dashboard
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-task",
+                task_id,
+                "--profile",
+                "tester",
+            ]
+        )
+        == 1
+    )
+    rerun_output = capsys.readouterr().out
+    assert "run_task_failed:" in rerun_output
+    assert "status completed cannot be dispatched" in rerun_output
+
+
 def test_run_goal_with_worktree_isolation_captures_diff_and_proposes_commit_effect(
     tmp_path: Path,
     capsys,

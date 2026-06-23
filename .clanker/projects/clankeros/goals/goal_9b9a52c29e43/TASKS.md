@@ -28,9 +28,10 @@
 - priority: 13
 - description: Run verification, refresh operator views, and preserve explicit non-claims.
 - verification: python3 -m pytest -q
+
 ### task_c13d6ab242ec
 
-- status: planned
+- status: completed
 - type: planned_step
 - priority: 11
 - description: Confirm target behavior and proof boundary for: Add a small tested improvement to the CLI help output. Replan reason: Prove plan versioning before implementation dispatch

@@ -1,0 +1,15 @@
+{
+  "adapter": "local_shell",
+  "command": "python3 -m agent_os.cli project-context clankeros",
+  "contract_id": "contract_6c58a81c7556",
+  "evidence_packet": ".clanker/projects/clankeros/goals/goal_9b9a52c29e43/runs/run_37f6e8cb26f7/evidence",
+  "model": "configurable/coder-model",
+  "passed": true,
+  "plan_id": "plan_41c16517c4f4",
+  "profile": "coder",
+  "returncode": 0,
+  "routing_decision_id": "routing_decision_93b1c07d54a4",
+  "run_id": "run_37f6e8cb26f7",
+  "stderr": "",
+  "stdout": "project_context: clankeros\ncontext: projects/clankeros/context.md\nproject_note: projects/clankeros/project.md\ncommands_rerun: 0\nnetwork_actions_taken: 0\nexternal_mutations_taken: 0\n"
+}

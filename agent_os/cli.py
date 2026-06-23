@@ -480,6 +480,7 @@ from agent_os.subagent_delegation import (
     record_delegation_result,
     render_subagent_delegation_line,
 )
+from agent_os.task_runner import TaskRunError, run_planned_task
 from agent_os.worktree_cleanup import cleanup_worktrees
 
 
@@ -709,6 +710,12 @@ def build_parser() -> argparse.ArgumentParser:
     update_task_parser.add_argument("task_id")
     update_task_parser.add_argument("--status", required=True)
     update_task_parser.add_argument("--blocked-reason")
+    run_task_parser = subparsers.add_parser(
+        "run-task",
+        help="Dispatch a planned task through a local profile-backed verifier.",
+    )
+    run_task_parser.add_argument("task_id")
+    run_task_parser.add_argument("--profile")
     replan_parser = subparsers.add_parser(
         "replan",
         help="Create a new plan version for an existing goal.",
@@ -1630,6 +1637,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"review_failed: run {args.run_id} not found")
             return 1
         print(f"run_review: {packet.run.id}")
+        print(f"run_id: {packet.run.id}")
         print(f"status: {packet.run.status}")
         print(f"report: {report_path.relative_to(root)}")
         print(f"tasks: {len(packet.tasks)}")
@@ -2247,6 +2255,35 @@ def main(argv: list[str] | None = None) -> int:
         print(f"plan_step_id: {step.id if step else 'none'}")
         print(f"blocked_reason: {args.blocked_reason or 'none'}")
         print("commands_rerun: 0")
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
+        return 0
+
+    if args.command == "run-task":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            result = run_planned_task(
+                root,
+                system.storage,
+                args.task_id,
+                profile_name=args.profile,
+            )
+        except (TaskRunError, KeyError) as error:
+            print(f"run_task_failed: {error}")
+            return 1
+        print(f"task_run: {result.run_id}")
+        print(f"run_id: {result.run_id}")
+        print(f"task_id: {result.task.id}")
+        print(f"goal_id: {result.goal.id}")
+        print(f"project_id: {result.project.name}")
+        print(f"profile: {result.profile.name}")
+        print(f"status: {result.status}")
+        print(f"verification_passed: {'true' if result.verification_passed else 'false'}")
+        print(f"routing_decision: {result.routing_decision.id}")
+        print(f"evidence_packet: {result.evidence_dir.relative_to(root)}")
+        print(f"summary: {result.summary_path.relative_to(root)}")
+        print("commands_rerun: 1")
         print("network_actions_taken: 0")
         print("external_mutations_taken: 0")
         return 0

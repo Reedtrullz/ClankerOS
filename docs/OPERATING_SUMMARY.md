@@ -31,6 +31,15 @@ Core layers for the bootstrap:
   `status=planned`, and preserves explicit non-claims around task execution,
   approval, commits, pushes, deployments, provider calls, and external
   mutations.
+- Planned task dispatch: `run-task <task_id> --profile <profile>` dispatches
+  one `status=planned` goal task only after the linked plan has a sprint
+  contract. It records a `status=dispatched` routing decision, creates a run,
+  executes the task verification command through the local shell adapter under
+  profile permissions, writes an evidence packet under
+  `.clanker/projects/<project>/goals/<goal_id>/runs/<run_id>/evidence/`,
+  updates the task and linked plan step, and opens a local incident if
+  verification fails. It does not commit, push, deploy, call model providers,
+  start subagents, or mutate external systems.
 - Worktree coding loop: a high-risk coding goal can run a constrained command
   inside an isolated git worktree, capture command/test/diff evidence, and
   record a proposed `local_git_commit` effect that waits for operator approval.
@@ -90,10 +99,10 @@ Core layers for the bootstrap:
   These commands do not execute tasks, approve requests, retry, commit, push,
   deploy, or mutate external systems.
 - Operator cockpit: the dashboard starts with active runs, registered projects,
-  approval inbox, proposed effects, verification status, recent worktrees,
-  GitHub handoffs, CI/deploy evidence, profile routing decisions, subagent
-  delegations, steering reviews, memory proposals, skill proposals, and the
-  next recommended operator action.
+  goal plans, planned task runs, approval inbox, proposed effects,
+  verification status, recent worktrees, GitHub handoffs, CI/deploy evidence,
+  profile routing decisions, subagent delegations, steering reviews, memory
+  proposals, skill proposals, and the next recommended operator action.
 - Operator approval effect proposals: approved local
   `operator_approval_requests` rows can be converted into idempotent
   `proposed` effect records for external-decision and capability surfaces

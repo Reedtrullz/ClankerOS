@@ -138,6 +138,7 @@ class RouteRequest:
     category: str | None = None
     project_id: str | None = None
     profile_override: str | None = None
+    status: str = "selected"
 
 
 def ensure_default_profiles(storage: Storage) -> list[AgentProfile]:
@@ -222,7 +223,7 @@ def route_work(storage: Storage, request: RouteRequest) -> RoutingDecision:
         category=category,
         reason=reason,
         estimated_cost_tier=profile.cost_tier,
-        status="selected",
+        status=request.status,
     )
 
 

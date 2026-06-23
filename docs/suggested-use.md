@@ -16,6 +16,7 @@ harder to overclaim.
 | Inspect registered projects | `docs/tutorial-project-registry.md` |
 | Build a project context packet | `python3 -m agent_os.cli project-context <project>` |
 | Plan a registered project goal without executing it | `docs/tutorial-goal-lifecycle.md` |
+| Execute one planned task with local verifier evidence | `docs/tutorial-run-task.md` |
 | Pick the next safe local task | `python3 -m agent_os.cli iterate` |
 | Resume a workspace safely | `docs/tutorial-operator-daily-loop.md` |
 | Run the first loop | `docs/tutorial-first-loop.md` |
@@ -54,10 +55,33 @@ python3 -m agent_os.cli replan goal_... --reason "Scope changed after contract r
 
 Proof boundary: this lifecycle does not execute tasks, claim work, run tests,
 commit, push, deploy, open PRs, call model providers, or start subagents.
-Planned tasks remain `status=planned` until a later runner or operator
-deliberately advances them.
+Planned tasks remain `status=planned` until `run-task`, a later runner, or an
+operator deliberately advances them.
 
 For the full walkthrough, use `docs/tutorial-goal-lifecycle.md`.
+
+## Running One Planned Task
+
+Use `run-task` after the goal has a sprint contract and you have picked one
+planned task:
+
+```bash
+python3 -m agent_os.cli run-task task_... --profile tester
+python3 -m agent_os.cli review run_...
+python3 -m agent_os.cli dashboard
+```
+
+Use `tester` only when the task verifier is the registered project default
+test command. Use `coder` for other safe local verifier commands. The command
+records a routing decision, local shell verifier output, task/plan-step state,
+and a `.clanker/projects/<project>/goals/<goal_id>/runs/<run_id>/evidence/`
+packet.
+
+Proof boundary: `run-task` does not edit files by itself, commit, push,
+deploy, open PRs, call model providers, start subagents, schedule retries,
+promote trust, or mutate external systems.
+
+For the full walkthrough, use `docs/tutorial-run-task.md`.
 
 ## Good Starting Prompts
 

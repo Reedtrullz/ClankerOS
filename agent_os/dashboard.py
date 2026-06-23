@@ -430,6 +430,13 @@ def generate_static_dashboard(root: Path) -> Path:
         goal_plans = []
         if _table_exists(connection, "plans"):
             goal_plans = storage.list_recent_plans(limit=5)
+        task_runs = []
+        if _table_exists(connection, "tasks"):
+            task_runs = sorted(
+                (task for task in storage.list_all_tasks() if task.run_id),
+                key=lambda task: (task.updated_at, task.id),
+                reverse=True,
+            )[:5]
         worktrees = []
         if _table_exists(connection, "worktree_records"):
             worktrees = storage.list_recent_worktree_records(limit=5)
@@ -1870,6 +1877,19 @@ def generate_static_dashboard(root: Path) -> Path:
             lines.append(
                 f"- {plan.goal_id}: project={project_id} version={plan.version} "
                 f"status={plan.status} goal={goal_title} artifact={plan.artifact_path}"
+            )
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "### Task Runs", ""])
+    if task_runs:
+        for task in task_runs:
+            profile = task.evidence.get("profile") or task.owner or "unknown"
+            artifact = task.artifacts[0] if task.artifacts else "none"
+            lines.append(
+                f"- {task.id}: run={task.run_id} project={task.project_id} "
+                f"goal={task.goal_id} status={task.status} profile={profile} "
+                f"artifact={artifact}"
             )
     else:
         lines.append("- none")

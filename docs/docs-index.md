@@ -25,6 +25,8 @@ system.
 - `docs/tutorial-goal-lifecycle.md` - create a registered-project goal, inspect
   its plan, write a draft sprint contract, update planned tasks, and replan
   without executing work.
+- `docs/tutorial-run-task.md` - dispatch one planned task through a local
+  profile-backed verifier, record routing, and inspect the evidence packet.
 - `docs/tutorial-public-snapshot.md` - verify, commit, and push a coherent
   public GitHub snapshot without overclaiming.
 - `contracts.md` - safety contract and evidence expectations.
@@ -36,6 +38,7 @@ system.
 - `docs/tutorial-first-loop.md`
 - `docs/tutorial-project-registry.md`
 - `docs/tutorial-goal-lifecycle.md`
+- `docs/tutorial-run-task.md`
 - `docs/tutorial-operator-daily-loop.md`
 - `docs/tutorial-approval-gated-coding.md`
 - `docs/tutorial-public-snapshot.md`

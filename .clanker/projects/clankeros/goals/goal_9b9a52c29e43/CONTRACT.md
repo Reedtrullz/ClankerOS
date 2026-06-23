@@ -1,14 +1,14 @@
-# Sprint Contract contract_5c2df3a91f86
+# Sprint Contract contract_6c58a81c7556
 
 - project_id: clankeros
 - goal_id: goal_9b9a52c29e43
-- plan_id: plan_7b0d95b67749
-- plan_version: 1
+- plan_id: plan_41c16517c4f4
+- plan_version: 2
 - status: draft
 
 ## Scope
 
-Execute plan v1 for goal: Add a small tested improvement to the CLI help output
+Execute plan v2 for goal: Add a small tested improvement to the CLI help output
 
 ## Non-Goals
 
@@ -36,7 +36,7 @@ Review plan alignment, task evidence, and non-claims before execution.
 
 ## Plan Steps
 
-- 1. Clarify scope and acceptance criteria: planned
+- 1. Clarify scope and acceptance criteria: completed
 - 2. Implement the smallest safe change: planned
 - 3. Verify evidence and decide next action: planned
 

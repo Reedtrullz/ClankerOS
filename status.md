@@ -1,5 +1,47 @@
 # Status
 
+## 2026-06-23 Planned Task Dispatch
+
+- Added first-class `run-task <task_id> --profile <profile>` for planned goal
+  tasks after a linked sprint contract exists.
+- `run-task` now:
+  - requires `status=planned`;
+  - records a `status=dispatched` routing decision;
+  - creates a local run and attaches it to the task;
+  - executes the task verification command through a profile-gated local shell
+    adapter;
+  - writes `.clanker/projects/<project>/goals/<goal_id>/runs/<run_id>/evidence/`
+    with `summary.md`, `verification.json`, `routing_decisions.jsonl`,
+    `commands.jsonl`, `tasks.json`, `tests.txt`, `stdout.txt`, and
+    `stderr.txt`;
+  - updates the linked plan step;
+  - opens a local incident when verification fails.
+- Added dashboard visibility for recent planned task runs under
+  `### Task Runs`.
+- Added tutorial/use docs for the executable planned-task path:
+  `docs/tutorial-run-task.md`, README links, suggested-use guidance,
+  getting-started guidance, command reference updates, and operating-summary
+  updates.
+- Verification evidence:
+  - `python3 -m pytest tests/test_first_milestone.py::test_run_task_dispatches_planned_goal_task_with_profile_evidence -q` -> 1 passed.
+  - `python3 -m py_compile agent_os/cli.py agent_os/dashboard.py agent_os/profile_routing.py agent_os/storage.py agent_os/task_runner.py tests/test_first_milestone.py` -> pass.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "run_task or goal_plan_contract or profile or routing or dashboard"` -> 61 passed, 353 deselected.
+  - `python3 -m pytest -q` -> 414 passed in 684.37s.
+  - Live smoke:
+    `python3 -m agent_os.cli run-task task_c13d6ab242ec --profile coder`
+    -> `run_37f6e8cb26f7`, `verification_passed: true`,
+    `routing_decision_93b1c07d54a4`.
+  - `python3 -m agent_os.cli review run_37f6e8cb26f7` -> wrote
+    `runs/run_37f6e8cb26f7/review.md` with 1 task, 3 events, 0 open incidents,
+    and 0 pending approvals.
+  - `python3 -m agent_os.cli dashboard` -> wrote `docs/dashboard.md` with
+    `### Task Runs`.
+  - `python3 -m agent_os.cli iterate` -> selected
+    `Add retry/replan recommendations for failed run-task evidence packets and blocked planned tasks.`
+- Non-claims: `run-task` does not edit files by itself, commit, push, deploy,
+  call model providers, start subagents, schedule retries, promote trust,
+  enforce budgets, track real spend, or mutate external systems.
+
 ## 2026-06-23 Goal Planning Lifecycle
 
 - Added first-class registered-project planning commands:

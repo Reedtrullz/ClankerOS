@@ -23,6 +23,9 @@ hidden autonomy.
 - Creates durable project-scoped `goal`, `plan`, `contract`, and `tasks`
   records before execution, with versioned plan artifacts and explicit
   non-claims.
+- Dispatches planned goal tasks through local profiles with `run-task`,
+  records routing decisions, runs safe verifier commands, and writes evidence
+  packets under `.clanker/projects/<project>/goals/<goal_id>/runs/`.
 - Generates an operator dashboard and next-iteration packet from current local
   state.
 - Runs worktree-isolated coding goals, captures diffs and verification output,
@@ -55,6 +58,7 @@ Then read:
 - [First Loop Tutorial](docs/tutorial-first-loop.md)
 - [Project Registry Tutorial](docs/tutorial-project-registry.md)
 - [Goal Planning Lifecycle Tutorial](docs/tutorial-goal-lifecycle.md)
+- [Run A Planned Task Tutorial](docs/tutorial-run-task.md)
 - [Operator Daily Loop Tutorial](docs/tutorial-operator-daily-loop.md)
 - [Approval-Gated Coding Tutorial](docs/tutorial-approval-gated-coding.md)
 - [Public Snapshot Tutorial](docs/tutorial-public-snapshot.md)
@@ -82,6 +86,19 @@ This writes versioned local artifacts under
 `.clanker/projects/<project>/goals/<goal_id>/`. It does not execute tasks,
 commit, push, deploy, or call model providers.
 
+Execute one planned task only after the plan and sprint contract are clear:
+
+```bash
+python3 -m agent_os.cli run-task <task_id> --profile tester
+python3 -m agent_os.cli review <run_id>
+python3 -m agent_os.cli dashboard
+```
+
+`run-task` is profile-gated. `tester` can only run the registered project
+default test command; `coder` can run safe local verifier commands. The command
+creates a local run and evidence packet, but it does not commit, push, deploy,
+start a model provider, or start a subagent.
+
 ## Current Shape
 
 ClankerOS is a Python CLI with a local SQLite control plane, generated Markdown
@@ -92,12 +109,14 @@ project memory. The first milestone is the closed loop:
 goal -> task graph -> execution -> verification -> memory -> visibility -> learning
 ```
 
-The current capability ladder is deliberately report-heavy: accepted blocked
-decisions can create local proposed effects, applied effects can create more
-proof tasks, and every step preserves `activation_allowed=false`,
-`capability_enabled=false`, `approval_requests_created=0`,
-`activation_actions_taken=0`, and `external_mutations_taken=0` unless a future
-approved capability boundary changes that contract.
+The current control plane includes executable local slices where the verifier
+is explicit (`run-goal`, `run-task`) and report-only ladders where a capability
+is still blocked. Accepted blocked decisions can create local proposed effects,
+applied effects can create more proof tasks, and every activation step
+preserves `activation_allowed=false`, `capability_enabled=false`,
+`approval_requests_created=0`, `activation_actions_taken=0`, and
+`external_mutations_taken=0` unless a future approved capability boundary
+changes that contract.
 
 For the detailed state, use:
 

@@ -5680,6 +5680,22 @@ class Storage:
             ).fetchone()
         return self._row_to_sprint_contract(row) if row else None
 
+    def get_sprint_contract_for_plan(
+        self,
+        plan_id: str,
+    ) -> SprintContractRecord | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                select * from sprint_contracts
+                where plan_id = ?
+                order by created_at desc, id desc
+                limit 1
+                """,
+                (plan_id,),
+            ).fetchone()
+        return self._row_to_sprint_contract(row) if row else None
+
     def create_run(self, goal_id: str, project_id: str, runs_root: Path) -> str:
         run_id = new_id("run")
         run_dir = runs_root / run_id
@@ -5913,6 +5929,20 @@ class Storage:
                 "update tasks set status = ?, updated_at = ? where id = ?",
                 (status, utc_now(), task_id),
             )
+
+    def start_task_run(self, task_id: str, *, run_id: str, owner: str) -> Task:
+        now = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                update tasks
+                set run_id = ?, status = 'running', owner = ?,
+                    attempts = attempts + 1, claimed_at = ?, updated_at = ?
+                where id = ?
+                """,
+                (run_id, owner, now, now, task_id),
+            )
+            return self.get_task(task_id, connection=connection)
 
     def mark_task_completed(
         self,

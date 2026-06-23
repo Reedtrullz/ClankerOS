@@ -15,6 +15,14 @@
 - goal_9b9a52c29e43: project=clankeros version=2 status=active goal=Add a small tested improvement to the CLI help output artifact=.clanker/projects/clankeros/goals/goal_9b9a52c29e43/PLAN-v2.md
 - goal_9b9a52c29e43: project=clankeros version=1 status=superseded goal=Add a small tested improvement to the CLI help output artifact=.clanker/projects/clankeros/goals/goal_9b9a52c29e43/PLAN-v1.md
 
+### Task Runs
+
+- task_c13d6ab242ec: run=run_37f6e8cb26f7 project=clankeros goal=goal_9b9a52c29e43 status=completed profile=coder artifact=.clanker/projects/clankeros/goals/goal_9b9a52c29e43/runs/run_37f6e8cb26f7/evidence/summary.md
+- task_c432ea910d85: run=run_24294d88ba47 project=bootstrap goal=goal_9797f2b264de status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_24294d88ba47/learning.md
+- task_2dcc58e13843: run=run_24294d88ba47 project=bootstrap goal=goal_9797f2b264de status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_24294d88ba47/goal-artifact.md
+- task_9b4f30fd7664: run=run_709a4a66bf91 project=bootstrap goal=goal_9baf5521cabf status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_709a4a66bf91/learning.md
+- task_a2247e285b1f: run=run_709a4a66bf91 project=bootstrap goal=goal_9baf5521cabf status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_709a4a66bf91/goal-artifact.md
+
 ### Approval Inbox
 
 - none
@@ -72,11 +80,11 @@
 - profile scout: Repo Scout mode=subagent cost=low model=configurable/cheap-fast-model use_for=repo_search,file_mapping,dependency_mapping,summarization
 - profile tester: Verification Tester mode=subagent cost=low model=configurable/cheap-coding-model use_for=test_triage,failure_summary,verification_review
 - recent_decisions:
+- routing_decision_93b1c07d54a4: category=implementation selected=coder model=configurable/coder-model cost=high task=task_c13d6ab242ec project=clankeros status=dispatched
 - routing_decision_a34094305406: category=evidence_review selected=evaluator model=configurable/strong-reasoning-model cost=medium task=task_3ee0f399e6b6 project=bootstrap status=selected
 - routing_decision_433a29462d9f: category=evidence_review selected=evaluator model=configurable/strong-reasoning-model cost=medium task=task_d84ea88202c6 project=bootstrap status=selected
 - routing_decision_d69a4aaba96b: category=evidence_review selected=evaluator model=configurable/strong-reasoning-model cost=medium task=task_b1f604bef7cf project=bootstrap status=selected
 - routing_decision_95f719e03b8b: category=evidence_review selected=evaluator model=configurable/strong-reasoning-model cost=medium task=task_6392c3a229e5 project=bootstrap status=selected
-- routing_decision_fa59ac712b60: category=evidence_review selected=evaluator model=configurable/strong-reasoning-model cost=medium task=task_c00e6484c25b project=bootstrap status=selected
 
 ### Subagent Delegations
 
@@ -101,7 +109,7 @@
 - claimed: 0
 - running: 0
 - verifying: 0
-- completed: 615
+- completed: 616
 - blocked: 0
 - failed: 0
 - active: 0
@@ -110,18 +118,18 @@
 ## Iteration Loop
 
 - status: planned
-- focus: Add first-class `run-task` dispatch for planned goal tasks with profile-aware local evidence packets.
+- focus: Add retry/replan recommendations for failed `run-task` evidence packets and blocked planned tasks.
 - source: tasks.md#next
 - packet: docs/next-iteration.md
-- created_at: 2026-06-23T14:27:27.253756+00:00
+- created_at: 2026-06-23T14:57:49.844312+00:00
 
 ## Simplicity Guardrail
 
 - policy: highest-score-then-lowest-complexity
-- reason: selected highest score 10; complexity 5 recorded for audit
-- selected_score: 10
-- selected_complexity: 5
-- selected_focus: Add first-class `run-task` dispatch for planned goal tasks with profile-aware local evidence packets.
+- reason: selected queue order among 2 candidates with equal score 9 and equal complexity 4
+- selected_score: 9
+- selected_complexity: 4
+- selected_focus: Add retry/replan recommendations for failed `run-task` evidence packets and blocked planned tasks.
 
 ## Expansion Operator Approval Schema Decision
 
@@ -1853,15 +1861,15 @@
 
 ## Recent Runs
 
+- run_37f6e8cb26f7: completed project=clankeros goal=goal_9b9a52c29e43 completed=2026-06-23T14:57:42.334382+00:00 summary=runs/run_37f6e8cb26f7/summary.md
 - run_24294d88ba47: completed project=bootstrap goal=goal_9797f2b264de completed=2026-06-23T14:27:20.910872+00:00 summary=runs/run_24294d88ba47/summary.md
 - run_709a4a66bf91: completed project=bootstrap goal=goal_9baf5521cabf completed=2026-06-23T14:27:20.651478+00:00 summary=runs/run_709a4a66bf91/summary.md
 - run_2d4cb12e2218: completed project=bootstrap goal=goal_c3798d0ff898 completed=2026-06-23T13:54:38.392786+00:00 summary=runs/run_2d4cb12e2218/summary.md
 - run_6d0df3abdb79: completed project=bootstrap goal=goal_2c7f6a8aee45 completed=2026-06-23T13:54:38.119120+00:00 summary=runs/run_6d0df3abdb79/summary.md
-- run_a8fb6232bdc7: completed project=bootstrap goal=goal_bba8ed9f6b25 completed=2026-06-23T13:23:15.137956+00:00 summary=runs/run_a8fb6232bdc7/summary.md
 
 ## Recent Evidence Packets
 
-- none
+- run_37f6e8cb26f7: review=runs/run_37f6e8cb26f7/review.md evidence=missing replay=missing
 
 ## Recent Learnings
 

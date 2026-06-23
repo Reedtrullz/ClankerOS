@@ -1,0 +1,31 @@
+{
+  "contract": {
+    "id": "contract_6c58a81c7556",
+    "scope": "Execute plan v2 for goal: Add a small tested improvement to the CLI help output",
+    "status": "draft"
+  },
+  "plan_step": {
+    "acceptance_criteria": "Scope, non-goals, and verifier are explicit.",
+    "assigned_profile": "planner",
+    "id": "plan_step_54ddcf2b4919",
+    "plan_id": "plan_41c16517c4f4",
+    "status": "completed",
+    "verification_command": "python3 -m agent_os.cli project-context clankeros"
+  },
+  "task": {
+    "description": "Confirm target behavior and proof boundary for: Add a small tested improvement to the CLI help output. Replan reason: Prove plan versioning before implementation dispatch",
+    "goal_id": "goal_9b9a52c29e43",
+    "id": "task_c13d6ab242ec",
+    "priority": 11,
+    "project_id": "clankeros",
+    "risk_level": "low",
+    "run_id": "run_37f6e8cb26f7",
+    "status": "completed",
+    "task_type": "planned_step",
+    "verification_plan": {
+      "acceptance_criteria": "Scope, non-goals, and verifier are explicit.",
+      "command": "python3 -m agent_os.cli project-context clankeros",
+      "source": "plan_step"
+    }
+  }
+}

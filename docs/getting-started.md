@@ -111,6 +111,20 @@ python3 -m agent_os.cli update-task <task_id> --status blocked --blocked-reason 
 python3 -m agent_os.cli replan <goal_id> --reason "operator narrowed the target"
 ```
 
+When the plan and sprint contract are ready, dispatch one planned task through
+a local profile-backed verifier:
+
+```bash
+python3 -m agent_os.cli run-task <task_id> --profile tester
+python3 -m agent_os.cli review <run_id>
+python3 -m agent_os.cli dashboard
+```
+
+`tester` can only run the registered project default test command. Use `coder`
+for other safe local verifier commands. `run-task` creates a local run and
+evidence packet; it does not commit, push, deploy, call model providers, or
+start subagents.
+
 ## Best Operating Pattern
 
 1. Keep each request narrow and evidence-shaped.
@@ -138,6 +152,10 @@ Create a durable goal, plan, sprint contract, and planned task list for this reg
 ```
 
 ```text
+Run one planned task through the tester profile, write the local evidence packet, refresh the dashboard, and keep non-claims explicit.
+```
+
+```text
 Review the current dashboard and next-iteration packet, then implement the next local proof step with tests.
 ```
 
@@ -148,4 +166,6 @@ Review the current dashboard and next-iteration packet, then implement the next 
 - `docs/suggested-use.md` for prompt patterns and operating rules.
 - `docs/tutorial-goal-lifecycle.md` for planning a registered project goal
   before execution.
+- `docs/tutorial-run-task.md` for executing one planned task with profile
+  routing and local verifier evidence.
 - `docs/tutorial-approval-gated-coding.md` for the worktree approval loop.

@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_71bac40aefa5
+- Packet ID: iteration_36c3253edb51
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add first-class `run-task` dispatch for planned goal tasks with profile-aware local evidence packets.
+Advance the Agent System north-star goal by completing: Add retry/replan recommendations for failed `run-task` evidence packets and blocked planned tasks.
 
 ## Definition Of Done
 
@@ -120,9 +120,9 @@ Advance the Agent System north-star goal by completing: Add first-class `run-tas
 ## Simplicity Guardrail
 
 - selection_policy: highest-score-then-lowest-complexity
-- selection_reason: selected highest score 10; complexity 5 recorded for audit
-- selected_score: 10
-- selected_complexity: 5
+- selection_reason: selected queue order among 2 candidates with equal score 9 and equal complexity 4
+- selected_score: 9
+- selected_complexity: 4
 
 ## Guardrails And Non-Claims
 

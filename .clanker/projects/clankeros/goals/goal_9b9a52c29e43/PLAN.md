@@ -9,7 +9,7 @@
 
 ### 1. Clarify scope and acceptance criteria
 
-- status: planned
+- status: completed
 - assigned_profile: planner
 - task_id: task_c13d6ab242ec
 - acceptance_criteria: Scope, non-goals, and verifier are explicit.

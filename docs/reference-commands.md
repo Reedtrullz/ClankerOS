@@ -37,6 +37,7 @@ python3 -m agent_os.cli goal "Make the smallest verified improvement" --project 
 python3 -m agent_os.cli plan <goal_id>
 python3 -m agent_os.cli contract <goal_id>
 python3 -m agent_os.cli tasks <goal_id>
+python3 -m agent_os.cli run-task <task_id> --profile tester
 python3 -m agent_os.cli update-task <task_id> --status blocked --blocked-reason "waiting on operator scope"
 python3 -m agent_os.cli replan <goal_id> --reason "scope changed after operator review"
 python3 -m agent_os.cli dashboard
@@ -46,8 +47,11 @@ python3 -m agent_os.cli dashboard
 three `planned_step` task rows, and artifacts under
 `.clanker/projects/<project>/goals/<goal_id>/`. `plan` and `replan` keep
 versioned `PLAN-vN.md` files plus the latest `PLAN.md`. `contract` creates a
-draft sprint contract for the latest plan. These commands do not execute
-tasks, approve work, commit, push, deploy, or call model providers.
+draft sprint contract for the latest plan. `run-task` dispatches one
+`status=planned` task through a profile-gated local verifier, records a
+routing decision, creates a run, writes an evidence packet under the goal, and
+updates the linked plan step. It does not commit, push, deploy, call model
+providers, start subagents, or mutate external systems.
 
 ## Approval-Gated Coding
 

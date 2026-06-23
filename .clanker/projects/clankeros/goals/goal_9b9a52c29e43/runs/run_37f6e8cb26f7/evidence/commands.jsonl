@@ -1,0 +1,1 @@
+{"adapter": "local_shell", "command": "python3 -m agent_os.cli project-context clankeros", "created_at": "2026-06-23T14:57:42.329024+00:00", "cwd": "/Users/reidar/Documents/Agent System", "profile": "coder", "returncode": 0}
