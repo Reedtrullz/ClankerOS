@@ -205,18 +205,21 @@ chain, without starting remote workers, claiming remote work, or changing
 routing.
 Current iteration packet:
 `docs/next-iteration.md` selects
-Add local application records for downstream follow-up result task result
+Add downstream task records from applied downstream follow-up result task result
 effect task result effect task result effect task result effect task result
-effect task result effect task result decision effect proposals.
-Exact focus: Add local application records for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals.
+effect task result effect task result decision effect applications.
+Exact focus: Add downstream task records from applied downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect applications.
 
-Latest downstream result decision-effect proposals:
-`python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals`
-now creates local proposed generic `effects` rows from accepted blocked
-downstream result decisions. Live proof created proposed effect
-`effect_1427bc069283` for `hosted_dashboard`; the idempotency rerun found 1
-existing proposal and created 0 new proposals. The report is
-`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`.
+Latest downstream result decision-effect application:
+`python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply`
+now applies accepted local proposed generic `effects` rows as local
+application records only. Live proof recorded application
+`capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_cb2dfc13d552`
+and applied `effect_1427bc069283` for `hosted_dashboard`; the idempotency
+rerun recorded
+`capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_025059bc5fb8`,
+found 1 existing applied effect, and applied 0 new effects. The report is
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`.
 This remains a local evidence bridge only: no approval requests, activation
 actions, external mutations, capability enablement, proof satisfaction, CI, or
 deployment happened.

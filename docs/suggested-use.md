@@ -1260,6 +1260,21 @@ See
 `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
 for the proposal report, idempotency check, and safety counters.
 
+After the latest proposed effect row exists, apply it as a local application
+record:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply \
+  --operator-id operator \
+  --selection-note "Apply accepted downstream result-effect task result-effect task result-effect task result-effect task result-effect task result-effect task result-effect task result effect proposals as local records only." \
+  --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md
+python3 -m agent_os.cli dashboard
+```
+
+See
+`docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`
+for the application report, idempotency check, and safety counters.
+
 ## When To Commit And Push
 
 Commit when:

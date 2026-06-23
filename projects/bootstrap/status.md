@@ -1,5 +1,16 @@
 # Bootstrap Status
 
+Latest local capability continuation: accepted downstream result decision-effect
+proposals can now be applied as local application records only through
+`capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply`.
+Live proof applied `effect_1427bc069283` for `hosted_dashboard`, wrote
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`,
+and the idempotency rerun found one existing applied effect with zero new
+effects. The next iteration packet now selects downstream task records from
+those applied application rows. This is still local evidence only: no approval
+requests, activation actions, external mutations, capability enablement,
+runtime CI/deploy proof, or trust promotion occurred.
+
 Milestone 1 is implemented and locally verified. Milestone 2 has a static
 dashboard, queue-health view, failed-verification incidents, stuck-task
 detection, compact incident resolution, and repeated-work queue-health checks.
@@ -5789,3 +5800,15 @@ local application records for those proposed effects.
 - Goal ID: goal_d951a7de9ee6
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_13d70f4b14b5/summary.md
+
+## Run run_9b977e9a4a11
+
+- Goal ID: goal_9fc3405e19f4
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_9b977e9a4a11/summary.md
+
+## Run run_a6be7fee3515
+
+- Goal ID: goal_c8b95d6fc768
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_a6be7fee3515/summary.md

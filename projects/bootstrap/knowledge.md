@@ -104,6 +104,14 @@ coverage.
 - The first implementation keeps this manual and report-only; no background
   watcher, scheduler, CI gate, or deploy gate is implied.
 
+## Learning: Local Effect Application
+
+- Proposed capability effects should move through an explicit local
+  application record before any downstream task materialization.
+- The application record can mark a generic effect as applied while preserving
+  `activation_allowed=false`, `capability_enabled=false`, and zero approval,
+  activation, and external mutation counters.
+
 ## Learning: Stable Learning Distillation
 
 - Repeated run learnings are episodic evidence until a deterministic local
@@ -2542,3 +2550,11 @@ coverage.
 ## Learning run_13d70f4b14b5
 
 - Learning: Run run_13d70f4b14b5 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_9b977e9a4a11
+
+- Learning: Run run_9b977e9a4a11 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_a6be7fee3515
+
+- Learning: Run run_a6be7fee3515 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

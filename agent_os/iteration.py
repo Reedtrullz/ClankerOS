@@ -1742,6 +1742,24 @@ def _current_posture(root: Path) -> list[str]:
                 capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals = (
                     CAPABILITY_FOLLOWUP_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_DECISION_EFFECT_PROPOSALS_RECORDED
                 )
+        capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application = "none"
+        if _table_exists(
+            connection,
+            "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_applications",
+        ):
+            capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_rows = Storage(
+                db_path
+            ).list_recent_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_applications(
+                limit=1
+            )
+            if (
+                capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_rows
+            ):
+                capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application = (
+                    capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_rows[
+                        0
+                    ].status
+                )
         handoff_reviews = Storage(db_path).list_recent_handoff_reviews(limit=1)
 
     handoff_blocked_tasks = 0
@@ -1860,6 +1878,7 @@ def _current_posture(root: Path) -> list[str]:
         f"capability activation followup result task result effect task result effect task result effect task result effect task result effect task result effect task result effect task results: {capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_results}",
         f"capability activation followup result task result effect task result effect task result effect task result effect task result effect task result effect task result effect task result decisions: {capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decisions}",
         f"capability activation followup result task result effect task result effect task result effect task result effect task result effect task result effect task result effect task result effect proposals: {capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals}",
+        f"capability activation followup result task result effect task result effect task result effect task result effect task result effect task result effect task result effect task result effect application: {capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application}",
         f"proposed eval candidates: {proposed_eval_candidates}",
         f"active playbooks: {active_playbooks}",
         f"open stuck-task incidents: {stuck_count}",

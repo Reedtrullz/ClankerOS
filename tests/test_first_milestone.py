@@ -9,6 +9,9 @@ from agent_os.engine import AgentSystem
 from agent_os.eval import run_first_milestone_eval
 from agent_os.subagent_delegation import record_delegation_result
 from agent_os.storage import Storage, Task
+from agent_os.capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals import (
+    IDEMPOTENCY_PREFIX as COUNT8_CAPABILITY_FOLLOWUP_RESULT_EFFECT_PREFIX,
+)
 
 
 class CorruptingAgentSystem(AgentSystem):
@@ -14331,6 +14334,193 @@ def _capability_activation_followup_result_task_result_effect_task_result_effect
 
 
 
+def _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_command(
+    tmp_path: Path,
+) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply",
+        "--operator-id",
+        "operator",
+        "--selection-note",
+        (
+            "Apply accepted downstream result-effect task result-effect task "
+            "result-effect task result-effect task result-effect task "
+            "result-effect task result effect proposals as local records only."
+        ),
+        "--evidence-reference",
+        (
+            "docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md"
+        ),
+    ]
+
+
+def _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_tasks_command(
+    tmp_path: Path,
+) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks",
+    ]
+
+
+def _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_command(
+    tmp_path: Path,
+) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations",
+    ]
+
+
+def _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_results_command(
+    tmp_path: Path,
+) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results",
+    ]
+
+
+def _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_command(
+    tmp_path: Path,
+    *,
+    selected_action: str = "accept_keep_blocked",
+    selection_note: str = (
+        "Accepted downstream result-effect task result-effect task "
+        "result-effect task result-effect task result-effect proof-plan "
+        "result and kept capability activation blocked."
+    ),
+) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide",
+        "--operator-id",
+        "operator",
+        "--selected-action",
+        selected_action,
+        "--selection-note",
+        selection_note,
+        "--evidence-reference",
+        "docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md",
+    ]
+
+
+def _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_command(
+    tmp_path: Path,
+) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply",
+        "--operator-id",
+        "operator",
+        "--selection-note",
+        (
+            "Apply accepted downstream result-effect task result-effect task "
+            "result-effect task result effect proposals as local records only."
+        ),
+        "--evidence-reference",
+        (
+            "docs/capability-activation-followup-result-task-result-effect-task-result-effect-"
+            "task-result-effect-task-result-effect-proposals.md"
+        ),
+    ]
+
+
+def _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_tasks_command(
+    tmp_path: Path,
+) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks",
+    ]
+
+
+def _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_command(
+    tmp_path: Path,
+) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations",
+    ]
+
+
+def _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_results_command(
+    tmp_path: Path,
+) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results",
+    ]
+
+
+def _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_command(
+    tmp_path: Path,
+    *,
+    selected_action: str = "accept_keep_blocked",
+    selection_note: str = (
+        "Accepted downstream result-effect task result-effect task "
+        "result-effect task result-effect proof-plan result and kept "
+        "capability activation blocked."
+    ),
+) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide",
+        "--operator-id",
+        "operator",
+        "--selected-action",
+        selected_action,
+        "--selection-note",
+        selection_note,
+        "--evidence-reference",
+        "docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md",
+    ]
+
+
+def _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals_command(
+    tmp_path: Path,
+) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals",
+    ]
+
+
+def _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_command(
+    tmp_path: Path,
+) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply",
+        "--operator-id",
+        "operator",
+        "--selection-note",
+        (
+            "Apply accepted downstream result-effect task result-effect task "
+            "result-effect task result-effect task result-effect task result "
+            "effect proposals as local records only."
+        ),
+        "--evidence-reference",
+        (
+            "docs/capability-activation-followup-result-task-result-effect-task-result-effect-"
+            "task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md"
+        ),
+    ]
+
+
 def _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_tasks_command(
     tmp_path: Path,
 ) -> list[str]:
@@ -15669,6 +15859,44 @@ def _record_one_capability_activation_followup_result_task_result_effect_task_re
     assert (
         main(
             _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_command(
+                tmp_path
+            )
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+
+def _record_one_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposal(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    _record_one_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision(
+        tmp_path,
+        capsys,
+    )
+    assert (
+        main(
+            _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals_command(
+                tmp_path
+            )
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+
+def _record_one_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    _record_one_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposal(
+        tmp_path,
+        capsys,
+    )
+    assert (
+        main(
+            _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_command(
                 tmp_path
             )
         )
@@ -30555,7 +30783,7 @@ def test_capability_activation_followup_result_task_result_effect_task_result_ef
 
     storage = Storage(tmp_path / ".agent" / "state.db")
     assert storage.list_effects_with_idempotency_prefix(
-        "capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decision-effect:"
+        COUNT8_CAPABILITY_FOLLOWUP_RESULT_EFFECT_PREFIX
     ) == []
 
     report = (
@@ -30621,7 +30849,7 @@ def test_capability_activation_followup_result_task_result_effect_task_result_ef
 
     storage = Storage(tmp_path / ".agent" / "state.db")
     assert storage.list_effects_with_idempotency_prefix(
-        "capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decision-effect:"
+        COUNT8_CAPABILITY_FOLLOWUP_RESULT_EFFECT_PREFIX
     ) == []
 
 
@@ -30676,7 +30904,7 @@ def test_capability_activation_followup_result_task_result_effect_task_result_ef
         ]
     )
     effects = storage.list_effects_with_idempotency_prefix(
-        "capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decision-effect:"
+        COUNT8_CAPABILITY_FOLLOWUP_RESULT_EFFECT_PREFIX
     )
     assert len(effects) == 1
     effect = effects[0]
@@ -30694,8 +30922,7 @@ def test_capability_activation_followup_result_task_result_effect_task_result_ef
         "docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md"
     )
     assert effect.idempotency_key == (
-        "capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decision-effect:"
-        f"{decision.id}:{result_record.id}"
+        f"{COUNT8_CAPABILITY_FOLLOWUP_RESULT_EFFECT_PREFIX}{decision.id}:{result_record.id}"
     )
     assert effect.proposed_payload["source_decision_id"] == decision.id
     assert effect.proposed_payload["source_downstream_result_id"] == result_record.id
@@ -30784,7 +31011,7 @@ def test_capability_activation_followup_result_task_result_effect_task_result_ef
 
     storage = Storage(tmp_path / ".agent" / "state.db")
     effects = storage.list_effects_with_idempotency_prefix(
-        "capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decision-effect:"
+        COUNT8_CAPABILITY_FOLLOWUP_RESULT_EFFECT_PREFIX
     )
     assert len(effects) == 1
     report = (
@@ -30798,6 +31025,273 @@ def test_capability_activation_followup_result_task_result_effect_task_result_ef
     )
     assert "- effect_proposals_created: 0" in report
     assert "- existing_effect_proposals: 1" in report
+
+
+def test_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_requires_proposals(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert (
+        main(
+            _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_command(
+                tmp_path
+            )
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_apply: "
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_no_proposals"
+    ) in output
+    assert "proposed_effects: 0" in output
+    assert "effects_applied: 0" in output
+    assert "existing_applied_effects: 0" in output
+    assert "approval_requests_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+    assert "external_mutations_taken: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    applications = (
+        storage.list_recent_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_applications()
+    )
+    assert applications[0].status == (
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_no_proposals"
+    )
+    assert applications[0].proposed_effect_count == 0
+    assert applications[0].applied_effect_count == 0
+    assert applications[0].existing_applied_effect_count == 0
+    assert applications[0].approval_request_count == 0
+    assert applications[0].activation_action_count == 0
+    assert applications[0].external_mutation_count == 0
+
+    report = (
+        tmp_path
+        / "docs"
+        / "capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md"
+    ).read_text(encoding="utf-8")
+    assert (
+        "# Capability Activation Follow-Up Result Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Application"
+        in report
+    )
+    assert (
+        "- status: "
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_no_proposals"
+    ) in report
+    assert "- Does not create approval_requests rows." in report
+    assert "- Does not enable capabilities." in report
+
+
+def test_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_records_local_applications(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _record_one_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposal(
+        tmp_path,
+        capsys,
+    )
+
+    assert (
+        main(
+            _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_command(
+                tmp_path
+            )
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_apply: "
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_recorded"
+    ) in output
+    assert "operator_id: operator" in output
+    assert "proposed_effects: 1" in output
+    assert "effects_applied: 1" in output
+    assert "existing_applied_effects: 0" in output
+    assert "capability_effects_applied: 1" in output
+    assert "approval_requests_created: 0" in output
+    assert "activation_actions_taken: 0" in output
+    assert "external_mutations_taken: 0" in output
+    assert (
+        "report: "
+        "docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md"
+        in output
+    )
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    applications = (
+        storage.list_recent_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_applications()
+    )
+    application = applications[0]
+    assert application.status == (
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_recorded"
+    )
+    assert application.operator_id == "operator"
+    assert application.proposed_effect_count == 1
+    assert application.applied_effect_count == 1
+    assert application.existing_applied_effect_count == 0
+    assert application.capability_effect_count == 1
+    assert application.approval_request_count == 0
+    assert application.activation_action_count == 0
+    assert application.external_mutation_count == 0
+
+    decision = (
+        storage.list_recent_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decisions()[
+            0
+        ]
+    )
+    result_record = (
+        storage.list_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_records()[
+            0
+        ]
+    )
+    effects = storage.list_effects_with_idempotency_prefix(
+        COUNT8_CAPABILITY_FOLLOWUP_RESULT_EFFECT_PREFIX
+    )
+    assert len(effects) == 1
+    effect = effects[0]
+    assert effect.status == "applied"
+    assert application.applied_effect_ids == [effect.id]
+    assert effect.attempted_at is not None
+    assert effect.committed_at is None
+    assert effect.evidence_path == (
+        "docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md"
+    )
+    assert effect.result_json["status"] == "applied"
+    assert effect.result_json["application_id"] == application.id
+    assert effect.result_json["application_status"] == "recorded_local_only"
+    assert effect.result_json["source_decision_id"] == decision.id
+    assert effect.result_json["source_downstream_result_id"] == result_record.id
+    assert effect.result_json["source_downstream_task_id"] == (
+        result_record.downstream_task_id
+    )
+    assert effect.result_json["source_application_id"] == (
+        result_record.source_application_id
+    )
+    assert effect.result_json["source_application_effect_id"] == (
+        result_record.source_application_effect_id
+    )
+    assert effect.result_json["source_effect_id"] == result_record.source_effect_id
+    assert effect.result_json["source_delegation_id"] == result_record.delegation_id
+    assert effect.result_json["selected_action"] == "accept_keep_blocked"
+    assert effect.result_json["activation_allowed"] is False
+    assert effect.result_json["capability_enabled"] is False
+    assert effect.result_json["approval_requests_created"] == 0
+    assert effect.result_json["activation_actions_taken"] == 0
+    assert effect.result_json["external_mutations_taken"] == 0
+    assert effect.compensation_plan == {
+        "required": False,
+        "reason": (
+            "local_application_record_only_downstream_result_effect_task_result_"
+            "effect_task_result_effect_task_result_effect_task_result_effect_"
+            "task_result_effect_task_result_effect_blocked_activation_preserved"
+        ),
+    }
+    assert storage.list_recent_approval_requests() == []
+    assert result_record.activation_allowed is False
+    assert result_record.capability_enabled is False
+    assert result_record.external_mutation_count == 0
+
+    report = (
+        tmp_path
+        / "docs"
+        / "capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md"
+    ).read_text(encoding="utf-8")
+    assert (
+        "# Capability Activation Follow-Up Result Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Application"
+        in report
+    )
+    assert (
+        "- status: "
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_recorded"
+    ) in report
+    assert "- effects_applied: 1" in report
+    assert f"effect={effect.id}" in report
+
+    dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
+    assert (
+        "## Capability Activation Follow-Up Result Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Proposals"
+        in dashboard
+    )
+    assert (
+        "## Capability Activation Follow-Up Result Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Application"
+        in dashboard
+    )
+    assert (
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_recorded"
+        in dashboard
+    )
+    assert "- effects_applied: 1" in dashboard
+
+
+def test_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_is_idempotent(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _record_one_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposal(
+        tmp_path,
+        capsys,
+    )
+
+    command = (
+        _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_command(
+            tmp_path
+        )
+    )
+    assert main(command) == 0
+    capsys.readouterr()
+
+    assert main(command) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_apply: "
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_already_recorded"
+    ) in output
+    assert "proposed_effects: 0" in output
+    assert "effects_applied: 0" in output
+    assert "existing_applied_effects: 1" in output
+    assert "external_mutations_taken: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    applications = (
+        storage.list_recent_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_applications(
+            limit=2
+        )
+    )
+    assert applications[0].status == (
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_already_recorded"
+    )
+    assert applications[0].applied_effect_count == 0
+    assert applications[0].existing_applied_effect_count == 1
+    assert applications[1].status == (
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_recorded"
+    )
+    effects = storage.list_effects_with_idempotency_prefix(
+        COUNT8_CAPABILITY_FOLLOWUP_RESULT_EFFECT_PREFIX
+    )
+    assert len(effects) == 1
+    assert effects[0].status == "applied"
+    report = (
+        tmp_path
+        / "docs"
+        / "capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md"
+    ).read_text(encoding="utf-8")
+    assert (
+        "- status: "
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_already_recorded"
+    ) in report
+    assert "- effects_applied: 0" in report
+    assert "- existing_applied_effects: 1" in report
 
 
 def test_hosted_dashboard_proof_checklist_blocks_blocked_real_cost_tracking_proof(

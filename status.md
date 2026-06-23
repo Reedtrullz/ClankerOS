@@ -1,5 +1,59 @@
 # Status
 
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Application
+
+- Added the next local-only effect application rung:
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply`.
+- The command reads accepted blocked local proposed effect rows from the
+  latest downstream result-effect task result-effect task result-effect task
+  result-effect task result-effect task result-effect task result-effect
+  decisions and records local application rows while marking applicable generic
+  `effects` rows as `applied`.
+- Live proof first recorded application
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_cb2dfc13d552`
+  and applied `effect_1427bc069283` for `hosted_dashboard`, linked to decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_6202184ba4ee`
+  and result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_0aa50ade1e23`.
+- The idempotency rerun recorded application
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_025059bc5fb8`
+  with 0 proposed effects, 0 applied effects, 1 existing applied effect, 0
+  approval requests, 0 activation actions, and 0 external mutations.
+- Generated proof:
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`.
+- Operator docs added:
+  `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`,
+  plus README, docs index, command reference, suggested-use, operating summary,
+  dashboard, next-iteration, bootstrap status, handoff, and project knowledge
+  visibility.
+- GitHub metadata readback for `Reedtrullz/ClankerOS` shows the repository
+  description, README homepage, and topics are populated.
+- Verification evidence:
+  - syntax compile passed for touched Python modules and
+    `tests/test_first_milestone.py`.
+  - focused latest proposal/application slice: 7 passed, 436 deselected.
+  - focused application-records slice: 3 passed, 440 deselected.
+  - full suite: 443 passed in 850.60s.
+  - live application command and idempotency rerun passed.
+  - `sweep-stuck`: stuck_incidents 0.
+  - `queue-health`: hotspots 0.
+  - `handoff-review`: clear, blocked_tasks 0, stale_handoffs 0.
+  - `eval-candidates`: 0.
+  - `approvals`: pending_approvals 0.
+  - `eval-after-change`: pass, run `run_9b977e9a4a11`.
+  - `eval`: `first_milestone_closed_loop: pass`.
+  - `playbooks`: 1 active playbook, 321 successful runs.
+  - `dashboard` and `iterate` regenerated local operator state.
+  - `git diff --check`: passed.
+- The next queue item is downstream task records from the applied downstream
+  decision-effect application rows.
+- Non-claims: local application rows, applied generic effects, and generated
+  reports only; no approval row was created, no activation action occurred, no
+  external system was mutated, no capability was enabled, no proof was
+  satisfied, no runtime CI/deploy proof happened, no hosted dashboard or remote
+  worker was started, no trust was promoted, and the active expansion goal
+  remains open.
+
 ## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Proposals
 
 - Added the next local-only effect proposal rung:
