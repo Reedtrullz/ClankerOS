@@ -2173,6 +2173,16 @@ coverage.
   activation actions, external mutations, activation allowance, capability
   enablement, and proof satisfaction at zero.
 
+## Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Tasks
+
+- Applied downstream result effect task result effect task result effect task
+  result effect task result decision effects can be converted into pending
+  high-risk downstream proof tasks. This materialization preserves source
+  effect, application, decision, result, delegation, task, contract, project,
+  and capability links, and it must keep approval rows, routing/delegation
+  side effects, activation actions, external mutations, activation allowance,
+  capability enablement, and proof satisfaction at zero.
+
 ## Learning run_2f3e9e364ab3
 
 - Learning: Run run_2f3e9e364ab3 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
@@ -2188,3 +2198,11 @@ coverage.
 ## Learning run_87857b9c6080
 
 - Learning: Run run_87857b9c6080 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_0d34a37b268d
+
+- Learning: Run run_0d34a37b268d showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_c86e2ef3dc65
+
+- Learning: Run run_c86e2ef3dc65 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

@@ -2740,3 +2740,23 @@ Current focus: Add downstream task records from applied downstream follow-up res
   capability enablement, proof satisfaction, trust promotion, scheduler,
   retries, cost tracking, CI/deploy action by ClankerOS, PRs, or external
   mutation.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Tasks
+
+Current focus: Add routing and delegation packets for downstream follow-up result task result effect task result effect task result effect task result effect task result effect tasks.
+
+1. The new command
+   `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks`
+   materializes applied downstream result effect task result effect task result
+   effect task result effect task result decision effects as local pending
+   proof tasks.
+2. Live proof created `task_d84ea88202c6` for `hosted_dashboard` from
+   `effect_10f389f8a6a3`, then an idempotency rerun reported 1 existing
+   downstream task and 0 new tasks.
+3. Continue with:
+   Add routing and delegation packets for downstream follow-up result task
+   result effect task result effect task result effect task result effect task
+   result effect tasks.
+4. Preserve the current boundary: this step created no approval rows, took no
+   activation actions, made no external mutations, did not route or delegate
+   work yet, did not enable capabilities, and did not satisfy capability proof.

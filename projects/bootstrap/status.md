@@ -5008,6 +5008,46 @@ are visible in the dashboard and are not active until approved.
   retries, cost tracking, CI/deploy action by ClankerOS, PRs, or external
   mutation.
 
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Tasks
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks`
+  now creates idempotent pending proof tasks from applied downstream result
+  effect task result effect task result effect task result effect task result
+  decision effects.
+- Initial live task batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_e9880d741b21`
+  created `task_d84ea88202c6` for `hosted_dashboard` from applied effect
+  `effect_10f389f8a6a3` while keeping approval requests, activation actions,
+  and external mutations at zero.
+- Final live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_31a5137db425`
+  reported already recorded with 1 existing downstream task, 0 new tasks,
+  0 approval requests, 0 activation actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Verification evidence:
+  - focused task tests: 3 passed
+  - adjacent chain tests: 18 passed
+  - syntax compile check passed
+  - full suite: 380 passed
+  - stuck sweep, queue health, handoff review, eval-candidates, approvals, and
+    diff-check gates passed
+  - eval-after-change: pass, run `run_0d34a37b268d`
+  - baseline eval: pass
+  - playbooks: 1 active, 280 successful runs
+- Next focus:
+  `Add routing and delegation packets for downstream follow-up result task
+  result effect task result effect task result effect task result effect task
+  result effect tasks.`
+- Non-claims: local pending task rows only; no approval rows, activation
+  actions, external mutations, activation allowance, capability enablement,
+  proof satisfaction, trust promotion, routing, delegation execution,
+  scheduler, retries, cost tracking, CI/deploy action by ClankerOS, PRs, or
+  external mutation.
+
 ## Run run_2f3e9e364ab3
 
 - Goal ID: goal_677ef69a20d1
@@ -5031,3 +5071,15 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_3cef3450e586
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_87857b9c6080/summary.md
+
+## Run run_0d34a37b268d
+
+- Goal ID: goal_096e6a963e08
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_0d34a37b268d/summary.md
+
+## Run run_c86e2ef3dc65
+
+- Goal ID: goal_d3dde20e096c
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_c86e2ef3dc65/summary.md

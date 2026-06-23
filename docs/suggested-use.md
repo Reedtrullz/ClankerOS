@@ -383,6 +383,10 @@ Prefer these files when orienting:
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`
   for applying proposed downstream result effect task result effect task result
   effect task result effect task result decision effects as local records.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`
+  for creating pending downstream proof tasks from applied downstream result
+  effect task result effect task result effect task result effect task result
+  decision effects.
 - `contracts.md` for safety boundaries and evidence expectations.
 - `status.md` for chronological implementation evidence.
 - `projects/bootstrap/handoff.md` for the current continuation edge.
