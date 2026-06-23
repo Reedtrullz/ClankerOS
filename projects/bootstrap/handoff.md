@@ -3100,3 +3100,34 @@ Current focus: Add routing and delegation packets for downstream follow-up resul
    approval rows were created, no activation actions occurred, no external
    systems were mutated, no routing/dispatch occurred, no capability was
    enabled, and proof remains unsatisfied.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Delegations
+
+Current focus: Add result ingestion for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result effect delegation packets.
+
+1. The new command
+   `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations`
+   records local read-only `evidence_review` routing decisions and pending
+   evaluator delegation packets for pending downstream proof tasks.
+2. Live proof first recorded delegation batch
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_05a5a87d6484`
+   and delegation `subagent_delegation_200c581a36a6` for
+   `task_e7034260ac20`.
+3. The idempotency rerun recorded
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_f664161cd5bf`
+   with 0 new routing decisions, 0 new delegations, 1 existing delegation, 0
+   execution starts, 0 network actions, 0 activation actions, and 0 external
+   mutations.
+4. Verification passed: focused delegation-rung tests, adjacent old/new
+   delegation slice, full suite with 429 tests, stuck sweep, queue health,
+   eval-candidates, approvals, diff-check, eval-after-change
+   `run_2b50b6114c48`, baseline eval, playbooks, and GitHub metadata readback.
+5. Continue with:
+   Add result ingestion for downstream follow-up result task result effect task
+   result effect task result effect task result effect task result effect task
+   result effect task result effect delegation packets.
+6. Preserve the current boundary: local routing rows, pending delegation rows,
+   JSON packets, and reports only; no subagent was started, no model provider
+   was called, no approval rows were created, no activation actions occurred,
+   no external systems were mutated, no capability was enabled, and proof
+   remains unsatisfied.

@@ -1261,6 +1261,18 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   `external_mutations_taken: 0`, `activation_allowed: false`,
   `capability_enabled: false`, routing, dispatch, and proof satisfaction
   blocked.
+- Capability activation follow-up result task result effect task result effect
+  task result effect task result effect task result effect task result effect
+  task result effect task delegations: available through
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations`
+  after those pending proof tasks exist. The command writes
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`,
+  records local `evidence_review` routing decisions and pending evaluator
+  delegation packets, and keeps `execution_started: 0`,
+  `network_actions_taken: 0`, `approval_requests_created: 0`,
+  `activation_actions_taken: 0`, `external_mutations_taken: 0`,
+  `activation_allowed: false`, `capability_enabled: false`, dispatch, and
+  proof satisfaction blocked.
 - Eval candidate listing: available through
   `python3 -m agent_os.cli eval-candidates` and mirrored into
   `docs/dashboard.md`.

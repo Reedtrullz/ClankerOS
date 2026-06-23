@@ -2472,3 +2472,22 @@ coverage.
 ## Learning run_a4a2adc56f8c
 
 - Learning: Run run_a4a2adc56f8c showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_2b50b6114c48
+
+- Learning: Run run_2b50b6114c48 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_8aaabd915864
+
+- Learning: Run run_8aaabd915864 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning: Deep Delegation Rungs Need Routing Map Entries
+
+- Delegation rungs must add the newly materialized task type to
+  `TASK_TYPE_CATEGORY_MAP` with `evidence_review`; otherwise the local packet
+  can drift from the intended evaluator profile.
+- When cloning deep generated delegation modules, check CamelCase storage
+  dataclass imports separately from snake_case function and table names.
+- The delegation boundary remains packet creation only: pending evaluator rows
+  and JSON artifacts are evidence of routing intent, not proof execution,
+  model-provider calls, approval, activation, dispatch, or external mutation.

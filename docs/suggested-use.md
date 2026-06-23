@@ -1192,6 +1192,18 @@ See
 `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`
 for the expected task batch report and idempotency check.
 
+After those pending proof tasks exist, route them into read-only evaluator
+delegation packets:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations
+python3 -m agent_os.cli dashboard
+```
+
+See
+`docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`
+for the delegation packet report, idempotency check, and safety counters.
+
 ## When To Commit And Push
 
 Commit when:
@@ -1208,11 +1220,15 @@ For a fuller checklist, use `docs/tutorial-public-snapshot.md`.
 
 ## Practical Next Slices
 
-Good next slices now favor operator review decisions and capability-specific
-guards after local result records exist:
+Good next slices now favor read-only delegation routing, then operator review
+decisions and capability-specific guards after local result records exist:
 
+- completed-delegation result ingestion for downstream result effect task
+  result effect task result effect task result effect task result effect task
+  result effect task result effect task delegation packets;
 - operator review decisions for downstream result effect task result effect
-  task result effect task result effect task result effect task result records;
+  task result effect task result effect task result effect task result effect
+  task result records;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;

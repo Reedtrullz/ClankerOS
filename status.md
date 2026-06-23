@@ -8893,3 +8893,53 @@
   retries, trust promotion, capability enablement, proof satisfaction, CI run,
   deployment, hosted dashboard, remote worker, autonomous scheduler, or
   browser/desktop adapter action.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Delegations
+
+- Added the next local-only delegation rung:
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations`.
+- The command consumes pending downstream proof tasks of type
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task`,
+  records local `evidence_review` routing decisions, and writes pending
+  evaluator delegation packets under `.clanker/delegations/`.
+- Live proof first recorded delegation batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_05a5a87d6484`
+  and delegation `subagent_delegation_200c581a36a6` for pending task
+  `task_e7034260ac20`.
+- The idempotency rerun recorded delegation batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_f664161cd5bf`
+  with 0 new routing decisions, 0 new delegations, 1 existing delegation, 0
+  execution starts, 0 network actions, 0 activation actions, and 0 external
+  mutations.
+- Generated proof:
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`.
+- Operator docs added:
+  `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`,
+  plus README, docs index, command reference, suggested-use, operating summary,
+  dashboard, and iteration visibility.
+- Verification evidence:
+  - syntax compile passed for `agent_os/*.py` and
+    `tests/test_first_milestone.py`.
+  - `git diff --check`: passed.
+  - focused new delegation-rung tests: 3 passed.
+  - adjacent old/new delegation slice: 9 passed.
+  - full suite: 429 passed in 802.21s.
+  - live command and idempotency rerun passed.
+  - `sweep-stuck`: stuck_incidents 0.
+  - `queue-health`: hotspots 0.
+  - `eval-candidates`: 0.
+  - `approvals`: pending_approvals 0.
+  - `eval-after-change`: pass, run `run_2b50b6114c48`.
+  - `eval`: `first_milestone_closed_loop: pass`.
+  - `playbooks`: 1 active playbook, 312 successful runs.
+  - GitHub metadata readback showed PUBLIC visibility, default branch `main`,
+    configured description, README homepage, ADMIN viewer permission, and 20
+    repository topics.
+  - `dashboard` and `iterate` regenerated local operator state.
+- The next queue item is result ingestion for the new downstream delegation
+  packet.
+- Non-claims: local routing decisions, delegation rows, delegation JSON
+  packets, and generated reports only; no subagents were started, no model
+  providers were called, no approval rows were created, no activation actions
+  occurred, no external systems were mutated, no dispatch/scheduling/retry/trust
+  promotion occurred, no capability was enabled, and proof remains unsatisfied.

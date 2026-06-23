@@ -1,7 +1,7 @@
 # First Milestone Closed Loop Playbook
 
 - Source eval: first_milestone_closed_loop
-- Successful runs: 309
+- Successful runs: 312
 - Status: active
 
 ## Trigger
@@ -334,3 +334,6 @@ Use when validating the local goal -> task graph -> execution -> verification ->
 - run_c9bb9046fdd4: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-23T16:23:02.770866+00:00
 - run_cd2dbe1fd296: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-23T17:20:12.645858+00:00
 - run_b521af5fb9d5: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-23T17:20:17.670238+00:00
+- run_cf82e9d703c6: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-23T17:51:42.664733+00:00
+- run_a4a2adc56f8c: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-23T17:51:42.692367+00:00
+- run_2b50b6114c48: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-23T18:24:06.360325+00:00

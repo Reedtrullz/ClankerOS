@@ -5649,3 +5649,49 @@ enablement, and proof satisfaction at zero.
   no approval rows were created, no activation actions occurred, no external
   systems were mutated, no routing/dispatch occurred, no capability was
   enabled, and proof remains unsatisfied.
+
+## Run run_2b50b6114c48
+
+- Goal ID: goal_201af4bd9594
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_2b50b6114c48/summary.md
+
+## Run run_8aaabd915864
+
+- Goal ID: goal_0e9afdbb614e
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_8aaabd915864/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Delegations
+
+- Current focus is now:
+  `Add result ingestion for downstream follow-up result task result effect task
+  result effect task result effect task result effect task result effect task
+  result effect task result effect delegation packets.`
+- The new command
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations`
+  creates read-only evaluator delegation packets for pending downstream proof
+  tasks.
+- Live proof first recorded delegation batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_05a5a87d6484`
+  and delegation `subagent_delegation_200c581a36a6` for
+  `task_e7034260ac20`.
+- The idempotency rerun recorded
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_f664161cd5bf`
+  with 0 new routing decisions, 0 new delegations, 1 existing delegation, 0
+  execution starts, 0 network actions, 0 activation actions, and 0 external
+  mutations.
+- Verification: syntax compile passed; `git diff --check` passed; focused new
+  delegation-rung tests passed with 3 tests; adjacent old/new delegation slice
+  passed with 9 tests; full suite passed with 429 tests; live command and
+  idempotency rerun passed; `sweep-stuck`, `queue-health`,
+  `eval-candidates`, and `approvals` were clear; `eval-after-change` passed
+  as `run_2b50b6114c48`; baseline `eval` passed; playbooks reported 312
+  successful runs; GitHub metadata readback matched the configured public repo
+  description, README homepage, default branch, ADMIN permission, and 20
+  topics.
+- Preserve the boundary: local routing rows, pending evaluator delegation rows,
+  JSON packets, and generated reports only; no subagent was started, no model
+  provider was called, no approval row was created, no activation action
+  occurred, no external system was mutated, no capability was enabled, and
+  proof remains unsatisfied.

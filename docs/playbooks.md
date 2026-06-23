@@ -5,4 +5,4 @@
 
 ## Active Playbooks
 
-- first-milestone-closed-loop: active source=first_milestone_closed_loop successful_runs=309 path=playbooks/first-milestone-closed-loop.md
+- first-milestone-closed-loop: active source=first_milestone_closed_loop successful_runs=312 path=playbooks/first-milestone-closed-loop.md
