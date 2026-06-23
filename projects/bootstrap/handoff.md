@@ -2621,3 +2621,52 @@ Current focus: Add operator review decisions for downstream follow-up result tas
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Decisions
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide`
+  now records review-only operator decisions for downstream result effect task
+  result effect task result effect task result effect local result records.
+- Initial live decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_55bba390ed8d`
+  accepted result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_de9f278ac2cd`
+  while keeping capability activation blocked.
+- Final live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_905597823b2b`
+  reported already recorded with 1 existing decision, 0 new decisions,
+  0 approval requests, 0 activation actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Verification evidence:
+  - focused red/green decision tests: 4 passed after implementation
+  - adjacent chain tests: 14 passed
+  - syntax compile check passed for changed Python modules
+  - `python3 -m pytest -q` -> 370 passed
+  - `git diff --check` -> passed
+  - handoff-review: clear after refreshing this handoff
+  - eval-after-change: pass, run `run_9840a0f8c284`
+  - baseline eval: pass
+  - playbooks: 1 active, 275 successful runs
+- Non-claims: local review decision rows only; no approval rows, subagent
+  execution, model-provider calls, proof satisfaction, activation allowance,
+  capability enablement, trust promotion, scheduler, retries, cost tracking,
+  CI/deploy action by ClankerOS, PRs, or external mutation.
+
+## Next Actions
+
+Current focus: Add local downstream follow-up result task result effect task result effect task result effect task result effect task result decision effect proposals from accepted blocked result effect task result effect task result effect task results.
+
+1. Use `docs/next-iteration.md` to complete:
+   Add local downstream follow-up result task result effect task result effect
+   task result effect task result effect task result decision effect proposals
+   from accepted blocked result effect task result effect task result effect task
+   results.
+2. Create only local proposed effects from accepted blocked decisions; keep
+   activation blocked and preserve idempotency.
+3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
+   budget enforcement, trust promotion, retries, and real-cost tracking
+   blocked until their own evidence and approval contracts are satisfied.

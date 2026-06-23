@@ -161,6 +161,10 @@ Route downstream result effect task result effect task result effect task result
 Ingest completed downstream result effect task result effect task result effect task result effect delegation outputs, and prove that activation remains blocked.
 ```
 
+```text
+Review downstream result effect task result effect task result effect task result effect task result records, accept keeping activation blocked, and prove that no approval rows, activation actions, or external mutations were created.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -953,6 +957,24 @@ creates local result records and per-result JSON artifacts, and keeps
 `external_mutations_taken=0`, `activation_allowed=false`,
 `capability_enabled=false`, and proof satisfaction blocked. Missing result
 artifacts are reported without creating result rows.
+
+After the result record exists, record the operator review decision:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide \
+  --operator-id operator \
+  --selected-action accept_keep_blocked \
+  --selection-note "Accepted downstream result-effect task result-effect task result-effect task result-effect proof-plan result and kept capability activation blocked." \
+  --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md
+python3 -m agent_os.cli dashboard
+```
+
+The decision command writes
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`,
+records the operator action against local result ids, and still keeps
+`approval_requests_created=0`, `activation_actions_taken=0`,
+`external_mutations_taken=0`, `activation_allowed=false`, and
+`capability_enabled=false`.
 
 ## When To Commit And Push
 

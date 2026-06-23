@@ -4893,3 +4893,44 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_579ee7ef085d
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_cb1e42d04bd1/summary.md
+
+## Run run_9840a0f8c284
+
+- Goal ID: goal_d5dd36444f00
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_9840a0f8c284/summary.md
+
+## Run run_987c0d25c356
+
+- Goal ID: goal_195ebe17f7d8
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_987c0d25c356/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Decisions
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide`
+  now records review-only operator decisions for ingested downstream result
+  effect task result effect task result effect task result effect result rows.
+- Live first decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_55bba390ed8d`
+  accepted the blocked local result while keeping approval requests, activation
+  actions, and external mutations at zero.
+- Live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_905597823b2b`
+  reported already recorded with 1 existing decision and 0 new decisions.
+- Verification evidence:
+  - focused decision tests: 4 passed
+  - adjacent chain tests: 14 passed
+  - full suite: 370 passed
+  - eval-after-change: pass, run `run_9840a0f8c284`
+  - baseline eval: pass
+  - playbooks: 1 active, 275 successful runs
+- Next focus:
+  `Add local downstream follow-up result task result effect task result effect
+  task result effect task result effect task result decision effect proposals
+  from accepted blocked result effect task result effect task result effect task
+  results.`
+- Non-claims: local review decision rows only; no approval rows, subagent
+  execution, model-provider calls, proof satisfaction, activation allowance,
+  capability enablement, trust promotion, scheduler, retries, cost tracking,
+  CI/deploy action by ClankerOS, PRs, or external mutation.

@@ -253,41 +253,46 @@
     artifacts while keeping approval rows, external mutations, activation
     actions, activation allowance, capability enablement, and proof
     satisfaction blocked.
-81. Autonomous scheduling proof checklists review the latest
+81. Capability activation follow-up result task result effect task result
+    effect task result effect task result effect task result decisions record
+    review-only operator actions for ingested result records while keeping
+    approval rows, external mutations, activation actions, activation
+    allowance, capability enablement, and proof satisfaction blocked.
+82. Autonomous scheduling proof checklists review the latest
     Real-Cost-sourced remote-worker proof checklist when one exists before any
     scheduler, remote worker, routing change, or claim behavior exists,
     preserving remote-worker proof metadata and the remote-worker source
     proof's own source metadata when present.
-82. Browser desktop adapter proof checklists review the latest
+83. Browser desktop adapter proof checklists review the latest
     Real-Cost-sourced autonomous-scheduling proof checklist when one exists
     before any browser/desktop adapter operation or routing change exists,
     preserving autonomous-scheduling proof metadata and the
     autonomous-scheduling source proof's own source metadata when present.
-83. CI Deploy proof checklists review browser desktop adapter proof checklists
+84. CI Deploy proof checklists review browser desktop adapter proof checklists
     before any CI run, deploy, or routing change exists, preserving
     Real-Cost-sourced browser/desktop adapter proof metadata when present.
-84. Budget Enforcement proof checklists review the latest Real-Cost-sourced
+85. Budget Enforcement proof checklists review the latest Real-Cost-sourced
     CI Deploy proof checklist when one exists before any budget enforcement,
     CI/deploy, or routing change exists, preserving CI Deploy proof metadata
     and the CI Deploy source proof's own source metadata when available.
-85. Trust Promotion proof checklists review the latest Real-Cost-sourced
+86. Trust Promotion proof checklists review the latest Real-Cost-sourced
     Budget Enforcement proof checklist when one exists before any trust
     promotion, budget enforcement, or routing change exists, preserving
     Budget Enforcement proof metadata and the Budget Enforcement source
     proof's own source metadata when available.
-86. Automatic Retry proof checklists review Trust Promotion proof checklists
+87. Automatic Retry proof checklists review Trust Promotion proof checklists
     before any retry, replay, trust promotion, or routing change exists,
     preserving Real-Cost-sourced Trust Promotion proof metadata when present.
-87. Real Cost Tracking proof checklists review Automatic Retry proof
+88. Real Cost Tracking proof checklists review Automatic Retry proof
     checklists before any spend tracking, retry, budget enforcement, or
     routing change exists.
-88. Repeated successful eval runs can be promoted into reusable playbooks.
-89. Equal-score queue choices prefer lower complexity before adding
+89. Repeated successful eval runs can be promoted into reusable playbooks.
+90. Equal-score queue choices prefer lower complexity before adding
     orchestration.
-90. Completed tasks update project memory and activity.
-91. Run summary mirrors status to project files.
-92. Learning loop records one improvement candidate.
-93. Static dashboard generation mirrors queue health, handoff reviews,
+91. Completed tasks update project memory and activity.
+92. Run summary mirrors status to project files.
+93. Learning loop records one improvement candidate.
+94. Static dashboard generation mirrors queue health, handoff reviews,
     eval-after-change checks, learning distillation, budget/trust posture,
     dispatch posture history, dispatch posture snapshot reviews, dispatch
     posture refresh recommendations, capability expansion ledgers, capability
@@ -338,8 +343,10 @@
     task result effect task result effect tasks, capability activation
     follow-up result task result effect task result effect task result effect
     task delegations, capability activation follow-up result task result
-    effect task result effect task result effect task results, playbooks,
-    eval candidates, approvals, stuck tasks,
+    effect task result effect task result effect task results, capability
+    activation follow-up result task result effect task result effect task
+    result effect task result decisions, playbooks, eval candidates, approvals,
+    stuck tasks,
     incidents, and recent evidence.
 
 ## Incident Resolution Lifecycle

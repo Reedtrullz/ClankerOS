@@ -1,11 +1,11 @@
 # Eval After Change
 
-- id: eval_after_change_81c23ee80294
+- id: eval_after_change_5d3d9dda199a
 - status: pass
-- change: Add downstream result effect task result effect task result effect task result effect task results
-- changed_paths: agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_results.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py,README.md,WORKFLOW.md,docs/OPERATING_SUMMARY.md,docs/docs-index.md,docs/suggested-use.md,docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md,docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md,docs/dashboard.md,docs/next-iteration.md,docs/handoff-review.md,tasks.md,status.md,projects/bootstrap/handoff.md,knowledge.md,.clanker/delegations/subagent_delegation_c7fc922aba24-result.json
+- change: capability activation followup result task result effect task result effect task result effect task result effect task result decisions
+- changed_paths: none
 - evals: first_milestone_closed_loop
 - result_paths: evals/results/first_milestone_closed_loop.json
-- run_ids: run_79c55faad757
-- command: python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result effect task result effect task result effect task results" --file "agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_results.py" --file "agent_os/storage.py" --file "agent_os/cli.py" --file "agent_os/dashboard.py" --file "agent_os/iteration.py" --file "tests/test_first_milestone.py" --file "README.md" --file "WORKFLOW.md" --file "docs/OPERATING_SUMMARY.md" --file "docs/docs-index.md" --file "docs/suggested-use.md" --file "docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md" --file "docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md" --file "docs/dashboard.md" --file "docs/next-iteration.md" --file "docs/handoff-review.md" --file "tasks.md" --file "status.md" --file "projects/bootstrap/handoff.md" --file "knowledge.md" --file ".clanker/delegations/subagent_delegation_c7fc922aba24-result.json"
-- completed_at: 2026-06-23T06:19:10.152639+00:00
+- run_ids: run_9840a0f8c284
+- command: python3 -m agent_os.cli eval-after-change --change "capability activation followup result task result effect task result effect task result effect task result effect task result decisions"
+- completed_at: 2026-06-23T06:52:07.488672+00:00

@@ -2137,3 +2137,20 @@ coverage.
 ## Learning run_cb1e42d04bd1
 
 - Learning: Run run_cb1e42d04bd1 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_9840a0f8c284
+
+- Learning: Run run_9840a0f8c284 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_987c0d25c356
+
+- Learning: Run run_987c0d25c356 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Decisions
+
+- Operator decisions for downstream result effect task result effect task
+  result effect task result effect result records should be durable local rows:
+  `accept_keep_blocked` is terminal for idempotency, while
+  `request_more_evidence` and `defer_review` can precede a later accepted
+  blocked decision. Keep approval rows, activation actions, external mutations,
+  activation allowance, capability enablement, and proof satisfaction at zero.
