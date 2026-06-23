@@ -2217,6 +2217,17 @@ coverage.
   approval rows, activation actions, external mutations, activation allowance,
   capability enablement, and proof satisfaction at zero.
 
+## Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Results
+
+- Completed downstream result effect task result effect task result effect task
+  result effect task result effect delegation outputs can be ingested only
+  after `record-delegation-result` supplies structured evaluator output. The
+  ingestion writes local result records and JSON artifacts, preserves source
+  decision, result, application, effect, delegation, task, contract, project,
+  and capability links, and keeps approval rows, activation actions, external
+  mutations, activation allowance, capability enablement, and proof
+  satisfaction at zero.
+
 ## Learning run_91127e0fee7e
 
 - Learning: Run run_91127e0fee7e showed that the first closed loop can be verified through file evidence before expanding to broader domains.
@@ -2224,3 +2235,11 @@ coverage.
 ## Learning run_42f4470845e8
 
 - Learning: Run run_42f4470845e8 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_c31c6dfc8305
+
+- Learning: Run run_c31c6dfc8305 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_9fe48487b396
+
+- Learning: Run run_9fe48487b396 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

@@ -1,0 +1,36 @@
+{
+  "assigned_profile": "evaluator",
+  "category": "evidence_review",
+  "completed_at": "2026-06-23T09:17:33.281523+00:00",
+  "created_at": "2026-06-23T08:46:10.191592+00:00",
+  "execution_started": false,
+  "expected_output_schema": "evidence_review",
+  "external_mutations_taken": 0,
+  "id": "subagent_delegation_2d5c651c4f7f",
+  "network_actions_taken": 0,
+  "non_claims": [
+    "No subagent was started by this ingestion command.",
+    "No model provider was called by this ingestion command.",
+    "No file, git, approval, or external state was mutated beyond this local result record."
+  ],
+  "parent_goal_id": "goal_a87925a4e8f3",
+  "parent_task_id": "task_d84ea88202c6",
+  "recorded_by": "operator",
+  "result_summary": "Evaluator downstream result-effect task result-effect task result-effect task result-effect task result-effect output is ready for local ingestion.",
+  "routing_decision_id": "routing_decision_433a29462d9f",
+  "status": "completed",
+  "structured_output": {
+    "evidence": [
+      {
+        "status": "planned",
+        "summary": "Collect proof for the hosted dashboard downstream result-effect task result-effect task result-effect task result-effect task result-effect follow-up."
+      }
+    ],
+    "findings": [
+      {
+        "summary": "Keep capability activation blocked until operator review and concrete proof exist."
+      }
+    ]
+  },
+  "title": "Plan next downstream result effect task result effect task result effect task result effect task result effect proof evidence for hosted_dashboard"
+}

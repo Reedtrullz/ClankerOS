@@ -5136,3 +5136,59 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_bff548ac9787
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_42f4470845e8/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Results
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results`
+  now creates idempotent local result records and JSON artifacts from
+  completed downstream result effect task result effect task result effect
+  task result effect task result effect evaluator delegation outputs.
+- Live setup recorded completed evaluator output for
+  `subagent_delegation_2d5c651c4f7f` with zero network and external mutation
+  actions.
+- Initial live result batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_03007f4e93de`
+  created
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_d050d817fc2c`
+  for `task_d84ea88202c6` and `hosted_dashboard`.
+- Final live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_465924d992e1`
+  reported 1 existing result and 0 new result rows, approval requests,
+  activation actions, or external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results/subagent_delegation_2d5c651c4f7f-hosted-dashboard.json`
+  - `.clanker/delegations/subagent_delegation_2d5c651c4f7f-result.json`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Verification evidence:
+  - focused result tests: 4 passed
+  - adjacent chain tests: 25 passed
+  - syntax compile check passed
+  - full suite: 387 passed
+  - stuck sweep, queue health, handoff review, eval-candidates, approvals, and
+    diff-check gates passed
+  - eval-after-change: pass, run `run_c31c6dfc8305`
+  - baseline eval: pass
+  - playbooks: 1 active, 285 successful runs
+- Next focus:
+  `Add operator review decisions for downstream follow-up result task result
+  effect task result effect task result effect task result effect task result
+  effect task result records.`
+- Non-claims: local result rows and JSON artifacts only; no subagent started
+  by the ingestion command, no model provider called, no approval rows,
+  activation actions, external mutations, activation allowance, capability
+  enablement, or proof satisfaction.
+
+## Run run_c31c6dfc8305
+
+- Goal ID: goal_86b0ced78bce
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_c31c6dfc8305/summary.md
+
+## Run run_9fe48487b396
+
+- Goal ID: goal_b7162f702381
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_9fe48487b396/summary.md

@@ -242,6 +242,13 @@ The next downstream result effect task result effect task result effect task
 result effect tasks can now also be routed into read-only evaluator delegation
 packets with durable routing decisions, local JSON artifacts, and zero
 execution, network, external mutation, or activation actions.
+Completed downstream result effect task result effect task result effect task
+result effect task result effect delegation outputs can now be ingested as
+local result records and JSON artifacts while preserving source decision,
+result, application, effect, delegation, task, contract, project, and
+capability links. The ingestion keeps `activation_allowed=false`,
+`capability_enabled=false`, `approval_requests_created=0`,
+`activation_actions_taken=0`, and `external_mutations_taken=0`.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -402,6 +409,7 @@ tutorials are advanced evidence packets for blocked activation work.
 - [Create downstream tasks from applied result effect task result effect task result effect task result effects](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md)
 - [Route downstream result effect task result effect task result effect task result effect tasks](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md)
 - [Ingest downstream result effect task result effect task result effect task result effect task results](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md)
+- [Ingest downstream result effect task result effect task result effect task result effect task result effect task results](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md)
 - [Review downstream result effect task result effect task result effect task result effect task results](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md)
 - [Create downstream result effect task result effect task result effect task result effect task result effect proposals](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md)
 - [Apply downstream result effect task result effect task result effect task result effect task result effect records](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md)
@@ -549,6 +557,11 @@ The repository can now:
   applications while preserving source links and keeping approval rows,
   activation actions, external mutations, activation allowance, and capability
   enablement at zero;
+- ingest completed downstream result effect task result effect task result
+  effect task result effect task result effect task delegation outputs into
+  local result records and JSON artifacts while preserving source links and
+  keeping approval rows, activation actions, external mutations, activation
+  allowance, and capability enablement at zero;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -864,6 +877,11 @@ python3 -m pytest tests/test_first_milestone.py -q
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`:
   ingesting completed downstream evaluator outputs into local result records
   and JSON artifacts without satisfying proof or enabling capabilities.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`:
+  ingesting completed downstream result effect task result effect task result
+  effect task result effect task result effect delegation outputs into local
+  result records and JSON artifacts without satisfying proof or enabling
+  capabilities.
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`:
   recording operator review decisions for those ingested result records while
   preserving blocked activation and zero external mutations.

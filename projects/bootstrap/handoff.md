@@ -2784,3 +2784,32 @@ Current focus: Add result ingestion for downstream follow-up result task result 
 5. Preserve the current boundary: no subagent has started, no model provider
    was called, no approval rows were created, no activation actions occurred,
    no external systems were mutated, and capability activation remains blocked.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Results
+
+Current focus: Add operator review decisions for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result records.
+
+1. The new command
+   `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results`
+   ingests completed downstream result effect task result effect task result
+   effect task result effect task result effect delegation outputs into local
+   result records and JSON artifacts.
+2. Live proof first recorded operator-supplied evaluator output for
+   `subagent_delegation_2d5c651c4f7f` with `network_actions_taken=0` and
+   `external_mutations_taken=0`.
+3. The initial result batch
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_03007f4e93de`
+   created result
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_d050d817fc2c`
+   for `task_d84ea88202c6` and `hosted_dashboard`.
+4. The idempotency rerun
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_465924d992e1`
+   found 1 existing result and created 0 new result records.
+5. Continue with:
+   Add operator review decisions for downstream follow-up result task result
+   effect task result effect task result effect task result effect task result
+   effect task result records.
+6. Preserve the current boundary: local result rows and JSON artifacts only;
+   no subagent started by this command, no model provider called, no approval
+   rows created, no activation actions occurred, no external systems were
+   mutated, no capability was enabled, and proof remains unsatisfied.

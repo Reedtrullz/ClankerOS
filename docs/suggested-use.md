@@ -177,6 +177,10 @@ Apply proposed downstream result effect task result effect task result effect ta
 Route downstream result effect task result effect task result effect task result effect tasks to read-only evaluator delegation packets, and prove that no subagent starts.
 ```
 
+```text
+Ingest completed downstream result effect task result effect task result effect task result effect task result effect delegation outputs, and prove that activation remains blocked.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -242,7 +246,10 @@ Route downstream result effect task result effect task result effect task result
 36. Route downstream result effect task result effect task result effect task
     result effect tasks into read-only delegation packets before ingesting the
     next proof-plan output.
-37. Record non-claims before treating the work as safe.
+37. Ingest completed downstream result effect task result effect task result
+    effect task result effect task result effect delegation outputs as local
+    result records before any operator review.
+38. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -394,6 +401,9 @@ Prefer these files when orienting:
   for creating pending downstream proof tasks from applied downstream result
   effect task result effect task result effect task result effect task result
   decision effects.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`
+  for ingesting completed downstream result effect task result effect task
+  result effect task result effect task result effect delegation outputs.
 - `contracts.md` for safety boundaries and evidence expectations.
 - `status.md` for chronological implementation evidence.
 - `projects/bootstrap/handoff.md` for the current continuation edge.
@@ -1029,11 +1039,11 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 
 ## Practical Next Slices
 
-Good next slices now favor result ingestion and capability-specific guards after
-local delegation packets exist:
+Good next slices now favor operator review decisions and capability-specific
+guards after local result records exist:
 
-- result ingestion for downstream result effect task result effect task result
-  effect task result effect delegation packets;
+- operator review decisions for downstream result effect task result effect
+  task result effect task result effect task result effect task result records;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;
