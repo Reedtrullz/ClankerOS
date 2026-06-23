@@ -589,3 +589,13 @@
 
 - Run run_<id> showed that the first closed loop can be verified through file evidence before expanding to broader domains. (occurrences=24, evidence=docs/learning-distillation.md)
 <!-- learning-distillation:end -->
+
+## Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Delegations
+
+- Pending downstream result effect task result effect task result effect task
+  result effect tasks should route into read-only evaluator delegation packets
+  before result ingestion. The routing stage must create durable routing
+  decisions, pending subagent delegation rows, and local JSON artifacts while
+  preserving source links and keeping execution, provider calls, approval rows,
+  activation actions, external mutations, activation allowance, capability
+  enablement, and proof satisfaction at zero.

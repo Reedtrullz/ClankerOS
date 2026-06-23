@@ -273,6 +273,12 @@ Core layers for the bootstrap:
   mutations, activation actions, activation allowance, and capability
   enablement at zero.
 - Capability activation follow-up result task result effect task result effect
+  task result effect task result effect task delegations: pending downstream
+  proof tasks can be routed to read-only `evidence_review` evaluator delegation
+  packets. The batch preserves routing and packet ids while keeping subagent
+  execution, model-provider calls, approval rows, external mutations,
+  activation actions, activation allowance, and capability enablement at zero.
+- Capability activation follow-up result task result effect task result effect
   task result decisions: operators can record accept-keep-blocked,
   request-more-evidence, or defer decisions for downstream result effect task
   result effect result records while keeping approval rows, external
@@ -1123,6 +1129,16 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   `approval_requests_created: 0`, `activation_actions_taken: 0`,
   `external_mutations_taken: 0`, `activation_allowed: false`, and
   `capability_enabled: false`.
+- Capability activation follow-up result task result effect task result effect
+  task result effect task result effect task delegations: available through
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations`
+  after pending downstream proof tasks exist. The command writes
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`,
+  records local `evidence_review` routing decisions and pending evaluator
+  delegation packets, and keeps `execution_started: 0`,
+  `network_actions_taken: 0`, `approval_requests_created: 0`,
+  `activation_actions_taken: 0`, `external_mutations_taken: 0`,
+  `activation_allowed: false`, and `capability_enabled: false`.
 - Eval candidate listing: available through
   `python3 -m agent_os.cli eval-candidates` and mirrored into
   `docs/dashboard.md`.

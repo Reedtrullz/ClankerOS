@@ -153,6 +153,10 @@ Create proposed effects from accepted downstream result effect task result effec
 Create downstream proof tasks from applied downstream result effect task result effect task result effect task result decision effects, and prove that capability activation remains blocked.
 ```
 
+```text
+Route downstream result effect task result effect task result effect task result effect tasks to read-only evaluator delegation packets, and prove that no subagent starts.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -913,6 +917,23 @@ delegation packets, and keeps `execution_started=0`,
 `capability_enabled=false`. The packet is a local proof-planning contract, not
 subagent execution.
 
+Route the next pending downstream proof tasks to read-only evaluator delegation
+packets:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations
+python3 -m agent_os.cli dashboard
+```
+
+The delegation command writes
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`,
+records local `evidence_review` routing decisions and pending evaluator
+delegation packets, and keeps `execution_started=0`,
+`network_actions_taken=0`, `external_mutations_taken=0`,
+`approval_requests_created=0`, `activation_actions_taken=0`,
+`activation_allowed=false`, and `capability_enabled=false`. The packet is still
+a local proof-planning contract, not subagent execution.
+
 ## When To Commit And Push
 
 Commit when:
@@ -928,11 +949,11 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 
 ## Practical Next Slices
 
-Good next slices now favor capability-specific guards after local delegation
-packets exist:
+Good next slices now favor result ingestion and capability-specific guards after
+local delegation packets exist:
 
-- routing and delegation packets for downstream result effect task result
-  effect task result effect task result effect tasks;
+- result ingestion for downstream result effect task result effect task result
+  effect task result effect delegation packets;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;

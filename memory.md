@@ -2373,3 +2373,22 @@
 
 - Goal: Eval: prove first milestone closed loop
 - Learning: Run run_67f2e1009254 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Delegations
+
+- Pending downstream result effect task result effect task result effect task
+  result effect tasks should route into read-only evaluator delegation packets
+  before result ingestion. Keep this stage local and idempotent: routing rows,
+  pending delegation rows, and packet JSON only; no subagent start, provider
+  call, approval row, activation action, external mutation, proof satisfaction,
+  activation allowance, or capability enablement.
+
+## Run run_467a31dc8e9b
+
+- Goal: Eval: prove first milestone closed loop
+- Learning: Run run_467a31dc8e9b showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Run run_347d9c5476f0
+
+- Goal: Eval: prove first milestone closed loop
+- Learning: Run run_347d9c5476f0 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

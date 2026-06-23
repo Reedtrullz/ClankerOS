@@ -67,19 +67,19 @@
 - profile scout: Repo Scout mode=subagent cost=low model=configurable/cheap-fast-model use_for=repo_search,file_mapping,dependency_mapping,summarization
 - profile tester: Verification Tester mode=subagent cost=low model=configurable/cheap-coding-model use_for=test_triage,failure_summary,verification_review
 - recent_decisions:
+- routing_decision_d69a4aaba96b: category=evidence_review selected=evaluator model=configurable/strong-reasoning-model cost=medium task=task_b1f604bef7cf project=bootstrap status=selected
 - routing_decision_95f719e03b8b: category=evidence_review selected=evaluator model=configurable/strong-reasoning-model cost=medium task=task_6392c3a229e5 project=bootstrap status=selected
 - routing_decision_fa59ac712b60: category=evidence_review selected=evaluator model=configurable/strong-reasoning-model cost=medium task=task_c00e6484c25b project=bootstrap status=selected
 - routing_decision_f06f7c756ee3: category=evidence_review selected=evaluator model=configurable/strong-reasoning-model cost=medium task=task_ef5cd385caf4 project=bootstrap status=selected
 - routing_decision_385ccbd6918c: category=evidence_review selected=evaluator model=configurable/strong-reasoning-model cost=medium task=task_b18120b40e5e project=bootstrap status=selected
-- routing_decision_17a5d6070d70: category=evidence_review selected=evaluator model=configurable/strong-reasoning-model cost=medium task=task_4e0c48c4ff48 project=bootstrap status=selected
 
 ### Subagent Delegations
 
+- subagent_delegation_c7fc922aba24: status=pending profile=evaluator category=evidence_review task=task_b1f604bef7cf schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/task_b1f604bef7cf-plan-next-downstream-result-effect-task-result-effect-task-result-effect-task-result-effect-proof-evidence-for-hosted-dashboard.json
 - subagent_delegation_1eb56aef4dee: status=completed profile=evaluator category=evidence_review task=task_6392c3a229e5 schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_1eb56aef4dee-result.json summary=Evaluator drafted downstream result-effect task result-effect task result-effect proof evidence while keeping activation blocked.
 - subagent_delegation_3ceff2056249: status=completed profile=evaluator category=evidence_review task=task_c00e6484c25b schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_3ceff2056249-result.json summary=Evaluator drafted downstream result-effect task result-effect proof evidence while keeping activation blocked.
 - subagent_delegation_eb243c5ba397: status=completed profile=evaluator category=evidence_review task=task_ef5cd385caf4 schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_eb243c5ba397-result.json summary=Evaluator drafted downstream result-effect proof evidence while keeping activation blocked.
 - subagent_delegation_0de281ad619c: status=completed profile=evaluator category=evidence_review task=task_b18120b40e5e schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_0de281ad619c-result.json summary=Evaluator drafted the next hosted dashboard evidence plan while keeping activation blocked.
-- subagent_delegation_48d1cc9f63ae: status=completed profile=evaluator category=evidence_review task=task_4e0c48c4ff48 schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_48d1cc9f63ae-result.json summary=Hosted dashboard follow-up review found no fresh hosted-dashboard proof attached; keep activation blocked.
 
 ## Steering Reviews
 
@@ -96,7 +96,7 @@
 - claimed: 0
 - running: 0
 - verifying: 0
-- completed: 543
+- completed: 547
 - blocked: 0
 - failed: 0
 - active: 0
@@ -105,10 +105,10 @@
 ## Iteration Loop
 
 - status: planned
-- focus: Add routing and delegation packets for downstream follow-up result task result effect task result effect task result effect task result effect tasks.
+- focus: Add result ingestion for downstream follow-up result task result effect task result effect task result effect task result effect delegation packets.
 - source: tasks.md#next
 - packet: docs/next-iteration.md
-- created_at: 2026-06-23T05:08:25.469922+00:00
+- created_at: 2026-06-23T05:35:51.811536+00:00
 
 ## Simplicity Guardrail
 
@@ -116,7 +116,7 @@
 - reason: selected only actionable item with score 9 and complexity 4
 - selected_score: 9
 - selected_complexity: 4
-- selected_focus: Add routing and delegation packets for downstream follow-up result task result effect task result effect task result effect task result effect tasks.
+- selected_focus: Add result ingestion for downstream follow-up result task result effect task result effect task result effect task result effect delegation packets.
 
 ## Expansion Operator Approval Schema Decision
 
@@ -751,6 +751,21 @@
 
 - capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_a8611895b817: status=capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_tasks_already_recorded source_application=capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_b0740cafcdb2 applied_downstream_effects=1 tasks_created=0 existing_downstream_tasks=1 capability_tasks_created=0 approval_requests=0 activation_actions=0 external_mutations=0 report=docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md
 
+## Capability Activation Follow-Up Result Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Delegations
+
+- status: capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_already_recorded
+- downstream_tasks: 1
+- routing_decisions_created: 0
+- delegations_created: 0
+- existing_delegations: 1
+- execution_started: 0
+- network_actions_taken: 0
+- external_mutations_taken: 0
+- activation_actions_taken: 0
+- report: docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md
+
+- capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_7d36e213a5b0: status=capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_already_recorded downstream_tasks=1 routing_decisions_created=0 delegations_created=0 existing_delegations=1 execution_started=0 network_actions=0 activation_actions=0 report=docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md
+
 ## Capability Activation Follow-Up Result Task Result Effect Task Result Effect Application
 
 - status: capability_activation_followup_result_task_result_effect_task_result_effect_application_already_recorded
@@ -917,7 +932,7 @@
 ## Handoff Review
 
 - status: clear
-- current_focus: Add routing and delegation packets for downstream follow-up result task result effect task result effect task result effect task result effect tasks.
+- current_focus: Add result ingestion for downstream follow-up result task result effect task result effect task result effect task result effect delegation packets.
 - blocked_tasks: 0
 - stale_handoffs: 0
 - report: docs/handoff-review.md
@@ -928,11 +943,11 @@
 
 - failed: 0
 
+- eval_after_change_cf0f02489a6e: status=pass change=Add downstream result effect task result effect task result effect task result effect task delegations files=agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,agent_os/profile_routing.py,tests/test_first_milestone.py,README.md,docs/OPERATING_SUMMARY.md,docs/docs-index.md,docs/suggested-use.md,WORKFLOW.md,docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md,docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md,tasks.md,docs/next-iteration.md,projects/bootstrap/handoff.md,knowledge.md,memory.md,projects/bootstrap/knowledge.md evals=first_milestone_closed_loop runs=run_467a31dc8e9b results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_01e8ab0195df: status=pass change=Add downstream result effect task result effect task result effect task result effect tasks files=agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_tasks.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py,README.md,docs/suggested-use.md,docs/docs-index.md,docs/OPERATING_SUMMARY.md,docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md evals=first_milestone_closed_loop runs=run_69f486df6818 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_9131ee3b426e: status=pass change=Add downstream result effect task result effect task result effect task result effect application files=agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py,README.md,docs/suggested-use.md,docs/docs-index.md,docs/OPERATING_SUMMARY.md,docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md evals=first_milestone_closed_loop runs=run_d9353699167b results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_fe04cef6e4f6: status=pass change=Add downstream result effect task result effect task result effect task result effect proposals files=agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py,README.md,docs/suggested-use.md,docs/docs-index.md,docs/OPERATING_SUMMARY.md,docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md evals=first_milestone_closed_loop runs=run_f50924edf3b5 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_87b5c609e7d2: status=pass change=Add downstream result effect task result effect task result effect task decisions files=agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_decisions.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py,README.md,docs/suggested-use.md,docs/docs-index.md,docs/OPERATING_SUMMARY.md,docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-decisions.md evals=first_milestone_closed_loop runs=run_c146d1d3470f results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
-- eval_after_change_b76d1263463d: status=pass change=Add downstream result effect task result effect task result effect task results files=agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_results.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py,README.md,docs/suggested-use.md,docs/docs-index.md,docs/OPERATING_SUMMARY.md,docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results.md evals=first_milestone_closed_loop runs=run_c43a1ca4746c results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 
 ## Learning Distillation
 
@@ -1601,7 +1616,7 @@
 
 - active: 1
 
-- first-milestone-closed-loop: active source=first_milestone_closed_loop successful_runs=269 path=playbooks/first-milestone-closed-loop.md
+- first-milestone-closed-loop: active source=first_milestone_closed_loop successful_runs=271 path=playbooks/first-milestone-closed-loop.md
 
 ## Eval Candidates
 
@@ -1632,11 +1647,11 @@
 
 ## Recent Runs
 
+- run_347d9c5476f0: completed project=bootstrap goal=goal_46b0b2338c0e completed=2026-06-23T05:45:45.095218+00:00 summary=runs/run_347d9c5476f0/summary.md
+- run_467a31dc8e9b: completed project=bootstrap goal=goal_540018b56adf completed=2026-06-23T05:45:40.669965+00:00 summary=runs/run_467a31dc8e9b/summary.md
 - run_67f2e1009254: completed project=bootstrap goal=goal_9383e0394d79 completed=2026-06-23T05:18:55.991656+00:00 summary=runs/run_67f2e1009254/summary.md
 - run_69f486df6818: completed project=bootstrap goal=goal_6bbc97007fa4 completed=2026-06-23T05:18:48.590354+00:00 summary=runs/run_69f486df6818/summary.md
 - run_043ed13bc23a: completed project=bootstrap goal=goal_b9e4e6fc05f4 completed=2026-06-23T04:50:13.793954+00:00 summary=runs/run_043ed13bc23a/summary.md
-- run_d9353699167b: completed project=bootstrap goal=goal_bc8d19bd3d88 completed=2026-06-23T04:50:09.739894+00:00 summary=runs/run_d9353699167b/summary.md
-- run_ebdd7e7884a4: completed project=bootstrap goal=goal_06fa80bbe387 completed=2026-06-23T04:23:39.057774+00:00 summary=runs/run_ebdd7e7884a4/summary.md
 
 ## Recent Evidence Packets
 
@@ -1644,16 +1659,16 @@
 
 ## Recent Learnings
 
+- run_347d9c5476f0: Run run_347d9c5476f0 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_347d9c5476f0/learning.md)
+- run_467a31dc8e9b: Run run_467a31dc8e9b showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_467a31dc8e9b/learning.md)
 - run_67f2e1009254: Run run_67f2e1009254 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_67f2e1009254/learning.md)
 - run_69f486df6818: Run run_69f486df6818 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_69f486df6818/learning.md)
 - run_043ed13bc23a: Run run_043ed13bc23a showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_043ed13bc23a/learning.md)
-- run_d9353699167b: Run run_d9353699167b showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_d9353699167b/learning.md)
-- run_ebdd7e7884a4: Run run_ebdd7e7884a4 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_ebdd7e7884a4/learning.md)
 
 ## Recent Eval Results
 
+- first_milestone_closed_loop: pass run=run_347d9c5476f0 created_at=2026-06-23T05:45:45.105690+00:00
+- first_milestone_closed_loop: pass run=run_467a31dc8e9b created_at=2026-06-23T05:45:40.679773+00:00
 - first_milestone_closed_loop: pass run=run_67f2e1009254 created_at=2026-06-23T05:18:56.000869+00:00
 - first_milestone_closed_loop: pass run=run_69f486df6818 created_at=2026-06-23T05:18:48.599938+00:00
 - first_milestone_closed_loop: pass run=run_043ed13bc23a created_at=2026-06-23T04:50:13.803801+00:00
-- first_milestone_closed_loop: pass run=run_d9353699167b created_at=2026-06-23T04:50:09.751233+00:00
-- first_milestone_closed_loop: pass run=run_ebdd7e7884a4 created_at=2026-06-23T04:23:39.067506+00:00

@@ -4831,3 +4831,53 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_9383e0394d79
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_67f2e1009254/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Delegations
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations`
+  now routes pending downstream result effect task result effect task result
+  effect task result effect proof tasks into read-only evaluator delegation
+  packets.
+- Initial live delegation batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_1e18bea7380f`
+  created pending evaluator packet `subagent_delegation_c7fc922aba24` for
+  task `task_b1f604bef7cf`.
+- Final live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_7d36e213a5b0`
+  reported already recorded with 1 existing delegation, 0 new delegations,
+  0 execution starts, 0 network actions, 0 activation actions, and
+  0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `docs/handoff-review.md`
+- Verification evidence:
+  - focused red/green delegation tests: 3 passed after implementation
+  - adjacent chain tests: 13 passed
+  - full suite: 362 passed
+  - handoff-review: clear after refreshing `projects/bootstrap/handoff.md`
+  - eval-after-change: pass, run `run_467a31dc8e9b`
+  - baseline eval: pass, run `run_347d9c5476f0`
+  - playbooks: 1 active, 271 successful runs
+  - syntax compile check passed for changed Python modules
+- Next focus:
+  `Add result ingestion for downstream follow-up result task result effect task
+  result effect task result effect task result effect delegation packets.`
+- Non-claims: read-only routing and delegation packets only; no approval rows,
+  subagent execution, model-provider calls, proof satisfaction, activation
+  allowance, capability enablement, trust promotion, scheduler, retries, cost
+  tracking, CI/deploy action by ClankerOS, PRs, or external mutation.
+
+## Run run_467a31dc8e9b
+
+- Goal ID: goal_540018b56adf
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_467a31dc8e9b/summary.md
+
+## Run run_347d9c5476f0
+
+- Goal ID: goal_46b0b2338c0e
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_347d9c5476f0/summary.md

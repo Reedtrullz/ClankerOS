@@ -2532,3 +2532,39 @@ Current focus: Add routing and delegation packets for downstream follow-up resul
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Delegations
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations`
+  now routes pending downstream proof tasks into read-only evaluator delegation
+  packets.
+- Initial live delegation batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_1e18bea7380f`
+  created pending evaluator packet `subagent_delegation_c7fc922aba24` for
+  task `task_b1f604bef7cf`.
+- Final live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_7d36e213a5b0`
+  reported already recorded with 1 existing delegation, 0 new delegations,
+  0 network actions, 0 activation actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Non-claims: read-only delegation packets only; no subagent execution,
+  model-provider calls, approval rows, proof satisfaction, activation
+  allowance, capability enablement, trust promotion, scheduler, retries, cost
+  tracking, CI/deploy action by ClankerOS, PRs, or external mutation.
+
+## Next Actions
+
+Current focus: Add result ingestion for downstream follow-up result task result effect task result effect task result effect task result effect delegation packets.
+
+1. Use `docs/next-iteration.md` to complete:
+   Add result ingestion for downstream follow-up result task result effect task
+   result effect task result effect task result effect delegation packets.
+2. Ingest only completed read-only evaluator packet outputs as local result
+   records; keep activation blocked and preserve idempotency.
+3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
+   budget enforcement, trust promotion, retries, and real-cost tracking
+   blocked until their own evidence and approval contracts are satisfied.

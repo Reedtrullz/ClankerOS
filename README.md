@@ -235,6 +235,9 @@ Those downstream result effect task result effect task result effect task
 result decision effects can now be applied as local records only, and the
 applied records can be materialized into pending downstream proof tasks while
 preserving the same source links and keeping activation blocked.
+Those pending downstream proof tasks can now be routed into read-only
+`evidence_review` evaluator delegation packets with durable routing decisions,
+packet JSON, and `execution_started=0`, while still keeping activation blocked.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -393,6 +396,7 @@ tutorials are advanced evidence packets for blocked activation work.
 - [Create downstream result effect task result effect task result effect task result effect proposals](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md)
 - [Apply downstream result effect task result effect task result effect task result effect records](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md)
 - [Create downstream tasks from applied result effect task result effect task result effect task result effects](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md)
+- [Route downstream result effect task result effect task result effect task result effect tasks](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Documentation index](docs/docs-index.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
@@ -711,6 +715,7 @@ python3 -m agent_os.cli capability-activation-followup-result-task-result-effect
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply --operator-id operator --selection-note "Apply accepted downstream result-effect task result-effect task result-effect task result effect proposals as local records only." --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
@@ -834,6 +839,9 @@ python3 -m pytest tests/test_first_milestone.py -q
   creating pending downstream proof tasks from applied downstream result effect
   task result effect task result effect task result decision effect
   applications without enabling capabilities.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`:
+  routing those pending downstream proof tasks into read-only evaluator
+  delegation packets without starting subagents or enabling capabilities.
 - `docs/docs-index.md`: curated map of tutorials, generated reports, status
   files, and bootstrap project continuity files.
 - `docs/suggested-use.md`: operator guidance, prompts, and practical next slices.
