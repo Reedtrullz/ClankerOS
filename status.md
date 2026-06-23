@@ -8257,3 +8257,72 @@
   activation actions, external mutations, activation allowance, capability
   enablement, proof satisfaction, trust promotion, scheduler, retries, cost
   tracking, CI/deploy action by ClankerOS, PRs, or external mutation.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Proposals
+
+- Added
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals`
+  for creating local proposed effect records from accepted blocked downstream
+  result effect task result effect task result effect task result effect task
+  result effect task result decisions.
+- Added public/operator docs updates:
+  - `README.md` is now a concise GitHub-facing landing page.
+  - `docs/tutorial-public-snapshot.md` documents the safe local-to-GitHub
+    snapshot flow.
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+    documents the new proposal command.
+  - `docs/docs-index.md` is now a shorter human map with generated evidence
+    report families.
+  - `docs/suggested-use.md` links the new tutorial and publishing checklist.
+  - `docs/OPERATING_SUMMARY.md` now reflects the existing `commit-approved`
+    local commit flow.
+- Live proposal command created effect
+  `effect_38049b66392f` from decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_8bb5a92311a1`
+  and result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_d050d817fc2c`
+  for `hosted_dashboard`.
+- Live idempotency rerun reported already recorded with 1 existing proposal,
+  0 new proposals, 0 approval requests, 0 activation actions, and 0 external
+  mutations.
+- Evidence:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `README.md`
+  - `docs/tutorial-public-snapshot.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+  - `docs/suggested-use.md`
+  - `docs/docs-index.md`
+- Verification evidence:
+  - red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals"`
+    failed before CLI registration on the missing command.
+  - focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals"`
+    -> 4 passed, 391 deselected.
+  - adjacent chain:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result"`
+    -> 33 passed, 362 deselected.
+  - syntax compile check passed for storage, CLI, dashboard, iteration, the
+    new proposal module, and tests.
+  - `python3 -m pytest -q` -> 395 passed in 590.55s.
+  - `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800` ->
+    stuck_incidents: 0.
+  - `python3 -m agent_os.cli queue-health` -> hotspots: 0.
+  - `python3 -m agent_os.cli eval-candidates` -> eval_candidates: 0.
+  - `python3 -m agent_os.cli approvals` -> pending_approvals: 0.
+  - `git diff --check` -> passed.
+  - `python3 -m agent_os.cli eval-after-change --change "capability activation followup result task result effect task result effect task result effect task result effect task result effect task result effect proposals and public docs" ...`
+    -> pass, run `run_349c6a785d89`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`.
+  - `python3 -m agent_os.cli playbooks` -> playbooks: 1,
+    `first-milestone-closed-loop` active with 290 successful runs.
+- Next focus:
+  `Add local application records for downstream follow-up result task result
+  effect task result effect task result effect task result effect task result
+  effect task result decision effect proposals.`
+- Non-claims: local proposed effect rows and reports only; no approval rows,
+  activation actions, external mutations, activation allowance, capability
+  enablement, proof satisfaction, trust promotion, scheduler, retries, cost
+  tracking, CI/deploy action by ClankerOS, PRs, or external mutation.

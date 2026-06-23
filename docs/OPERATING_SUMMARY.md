@@ -602,7 +602,8 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
 - Worktree-isolated coding run: available through
   `python3 -m agent_os.cli run-goal "<goal>" --project <name> --isolation worktree --command "<safe local command>"`.
   The current flow records a proposed `local_git_commit` effect and approval
-  packet, but it does not create the commit yet.
+  packet. After explicit approval, `commit-approved` re-checks the captured
+  evidence and creates the local worktree commit exactly once.
 - Incident resolution: available through
   `python3 -m agent_os.cli resolve-incident <incident_id> --resolved-by operator --note "..."`.
 - Stuck-task sweep: available through

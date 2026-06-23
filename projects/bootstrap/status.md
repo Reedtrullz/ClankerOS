@@ -5248,3 +5248,60 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_1fbc21a91bfb
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_0dc0258afe93/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Proposals
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals`
+  now creates idempotent local proposed effects from accepted blocked
+  downstream result effect task result effect task result effect task result
+  effect task result effect task result decisions.
+- Initial live proposal created `effect_38049b66392f` for `hosted_dashboard`,
+  linked to decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_8bb5a92311a1`
+  and result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_d050d817fc2c`.
+- Final live idempotency pass found 1 existing proposal and created 0 new
+  effects.
+- Public docs were curated for GitHub use: concise `README.md`, public snapshot
+  tutorial, shorter docs index, suggested-use link, and the new proposal-rung
+  tutorial.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+  - `docs/tutorial-public-snapshot.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Verification evidence:
+  - focused proposal tests: 4 passed
+  - adjacent chain tests: 33 passed
+  - full suite: 395 passed
+  - syntax and diff-check gates passed
+  - stuck sweep, queue health, eval-candidates, and approvals passed
+  - eval-after-change: pass, run `run_349c6a785d89`
+  - baseline eval: pass
+  - playbooks: 1 active, 290 successful runs
+- Next focus:
+  `Add local application records for downstream follow-up result task result
+  effect task result effect task result effect task result effect task result
+  effect task result decision effect proposals.`
+- Non-claims: local proposed effect rows and reports only; no approval rows,
+  activation actions, external mutations, activation allowance, capability
+  enablement, or proof satisfaction.
+
+## Run run_349c6a785d89
+
+- Goal ID: goal_d75e9c202db5
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_349c6a785d89/summary.md
+
+## Run run_8d22761742cc
+
+- Goal ID: goal_9d2efc2012a3
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_8d22761742cc/summary.md
+
+## Run run_4fbedd855cb2
+
+- Goal ID: goal_99558ec492bc
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_4fbedd855cb2/summary.md

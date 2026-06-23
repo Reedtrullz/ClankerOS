@@ -19,7 +19,7 @@ harder to overclaim.
 | Capture subagent-style context without execution | `docs/tutorial-subagent-delegation-results.md` |
 | Review a run before acting | `python3 -m agent_os.cli review <run_id>` |
 | Keep activation blocked while preserving proof state | start with the capability follow-up tutorials below |
-| Publish a coherent snapshot | read `## When To Commit And Push` before pushing |
+| Publish a coherent snapshot | `docs/tutorial-public-snapshot.md` |
 
 ## Good Starting Prompts
 
@@ -183,6 +183,10 @@ Review downstream result effect task result effect task result effect task resul
 
 ```text
 Create proposed local effects from accepted downstream result effect task result effect task result effect task result effect task result decisions, and prove that no approval rows, activation actions, or external mutations were created.
+```
+
+```text
+Create proposed local effects from accepted downstream result effect task result effect task result effect task result effect task result effect task result decisions, and prove that no approval rows, activation actions, or external mutations were created.
 ```
 
 ```text
@@ -1063,6 +1067,7 @@ Commit when:
 
 Push after the branch target and remote are explicit. For the public GitHub
 repo, prefer `main` only for verified snapshots that are useful to share.
+For a fuller checklist, use `docs/tutorial-public-snapshot.md`.
 
 ## Practical Next Slices
 

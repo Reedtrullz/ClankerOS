@@ -2840,3 +2840,29 @@ Current focus: Add local downstream follow-up result task result effect task res
 6. Preserve the current boundary: local decision rows and reports only; no
    approval rows created, no activation actions occurred, no external systems
    were mutated, no capability was enabled, and proof remains unsatisfied.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Proposals
+
+Current focus: Add local application records for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result decision effect proposals.
+
+1. The new command
+   `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals`
+   creates local proposed effect rows from accepted blocked downstream result
+   effect task result effect task result effect task result effect task result
+   effect task result decisions.
+2. Live proof created `effect_38049b66392f` for `hosted_dashboard`, linked to
+   decision
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_8bb5a92311a1`
+   and result
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_d050d817fc2c`.
+3. The idempotency rerun found 1 existing proposal and created 0 new effects.
+4. Public docs now include a concise README, `docs/tutorial-public-snapshot.md`,
+   the new proposal-rung tutorial, and a shorter `docs/docs-index.md`.
+5. Continue with:
+   Add local application records for downstream follow-up result task result
+   effect task result effect task result effect task result effect task result
+   effect task result decision effect proposals.
+6. Preserve the current boundary: local proposed effect rows and reports only;
+   no approval rows created, no activation actions occurred, no external
+   systems were mutated, no capability was enabled, and proof remains
+   unsatisfied.

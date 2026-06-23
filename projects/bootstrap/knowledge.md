@@ -2261,3 +2261,26 @@ coverage.
 ## Learning run_0dc0258afe93
 
 - Learning: Run run_0dc0258afe93 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Proposals
+
+- Accepted blocked downstream result effect task result effect task result
+  effect task result effect task result effect task result decisions can create
+  local proposed generic `effects` rows keyed by decision id and result id.
+  The proposal stage must preserve source links and keep approval rows,
+  activation actions, external mutations, activation allowance, capability
+  enablement, and proof satisfaction at zero. Idempotency is checked by
+  rerunning the proposal command and expecting existing proposals with no new
+  effects.
+
+## Learning run_349c6a785d89
+
+- Learning: Run run_349c6a785d89 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_8d22761742cc
+
+- Learning: Run run_8d22761742cc showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_4fbedd855cb2
+
+- Learning: Run run_4fbedd855cb2 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
