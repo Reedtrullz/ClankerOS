@@ -4204,3 +4204,68 @@ are visible in the dashboard and are not active until approved.
   proof satisfaction, activation allowance, capability enablement, trust
   promotion, scheduler, retries, cost tracking, CI/deploy, push, PR, or
   external mutation.
+
+## Run run_67e2aa5509d1
+
+- Goal ID: goal_62cec18af90f
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_67e2aa5509d1/summary.md
+
+## Run run_726f7a1ffd32
+
+- Goal ID: goal_f7c6c424e21d
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_726f7a1ffd32/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Task Results
+
+- Added
+  `capability-activation-followup-result-task-result-effect-task-result-effect-task-results`
+  to ingest completed downstream result effect task result effect delegation
+  outputs as local result records and JSON artifacts.
+- Precondition live batch:
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_batch_b9beabace83a`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_results_no_completed_delegations`,
+  with 0 completed delegations and 0 result records.
+- Completed `subagent_delegation_3ceff2056249` through
+  `record-delegation-result`, writing
+  `.clanker/delegations/subagent_delegation_3ceff2056249-result.json`.
+- Initial live ingest batch:
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_batch_6c897c6b6932`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_results_recorded`,
+  created result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_968c47605706`
+  for `hosted_dashboard`.
+- Final live idempotency pass:
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_batch_7b3768fc266c`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_results_already_recorded`,
+  with 1 completed delegation, 0 new result records, 1 existing result record,
+  0 approval requests, 0 activation actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-results.md`
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-results/subagent_delegation_3ceff2056249-hosted-dashboard.json`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-results.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `docs/handoff-review.md`
+- Verification evidence:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "result_effect_task_result_effect_task_results"`
+    -> red before implementation, then 4 passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "result_task_result"`
+    -> 41 passed.
+  - `python3 -m pytest -q` -> 324 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result effect task results" --file agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_results.py`
+    -> pass, run `run_67e2aa5509d1`.
+  - `python3 -m agent_os.cli eval` -> pass, run `run_726f7a1ffd32`.
+  - `python3 -m agent_os.cli handoff-review` -> status clear.
+- Next focus:
+  `Add operator review decisions for downstream follow-up result task result
+  effect task result effect task result records.`
+- Non-claims: local result records and JSON artifacts only; no
+  `approval_requests`, subagent execution, model-provider calls, proof
+  satisfaction, activation allowance, capability enablement, trust promotion,
+  scheduler, retries, cost tracking, CI/deploy, push, PR, or external
+  mutation.

@@ -108,6 +108,10 @@ Create downstream proof tasks from applied downstream result effect task result 
 Route downstream result effect task result effect tasks to read-only evaluator delegation packets, and prove that no subagent starts.
 ```
 
+```text
+Ingest completed downstream result effect task result effect delegation outputs, and prove that activation remains blocked.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -148,7 +152,9 @@ Route downstream result effect task result effect tasks to read-only evaluator d
     into pending downstream proof tasks before routing or delegation.
 26. Route downstream result effect task result effect tasks into read-only
     delegation packets before ingesting the next proof-plan output.
-27. Record non-claims before treating the work as safe.
+27. Ingest completed downstream result effect task result effect delegation
+    outputs as local result records before any operator review.
+28. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -272,6 +278,9 @@ Prefer these files when orienting:
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-delegations.md`
   for routing downstream result effect task result effect tasks to read-only
   evaluator delegation packets.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-results.md`
+  for ingesting completed downstream result effect task result effect
+  delegation outputs as local result records.
 - `contracts.md` for safety boundaries and evidence expectations.
 - `status.md` for chronological implementation evidence.
 - `projects/bootstrap/handoff.md` for the current continuation edge.
@@ -725,6 +734,28 @@ JSON artifacts under `.clanker/delegations/`. It keeps
 `activation_actions_taken=0`, `activation_allowed=false`, and
 `capability_enabled=false`.
 
+After a downstream result effect task result effect delegation has been
+completed by recording an operator-supplied structured result, ingest it as a
+local result record:
+
+```bash
+python3 -m agent_os.cli record-delegation-result <delegation_id> \
+  --summary "Evaluator drafted downstream result-effect task result-effect proof evidence while keeping activation blocked." \
+  --output-json '{"evidence":[{"status":"planned","summary":"Collect downstream result-effect task result-effect proof evidence."}],"findings":[{"summary":"Keep activation blocked."}]}'
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-results
+python3 -m agent_os.cli dashboard
+```
+
+The result command writes
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-results.md`,
+stores one local result row per completed downstream result effect task result
+effect task delegation, and writes JSON artifacts under
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-results/`.
+It keeps `approval_requests_created=0`, `activation_actions_taken=0`,
+`external_mutations_taken=0`, `activation_allowed=false`, and
+`capability_enabled=false`; the record is the next preserved evidence plan,
+not capability activation or proof satisfaction.
+
 ## When To Commit And Push
 
 Commit when:
@@ -743,8 +774,8 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 Good next slices now favor capability-specific guards after local delegation
 packets exist:
 
-- result ingestion for downstream result effect task result effect delegation
-  packets;
+- operator review decisions for downstream result effect task result effect
+  result records;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;

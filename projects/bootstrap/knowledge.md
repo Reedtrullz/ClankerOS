@@ -1898,6 +1898,15 @@ coverage.
   execution, provider calls, approval rows, activation actions, external
   mutations, activation allowance, and capability enablement at zero.
 
+## Learning effect task result ingestion bridge
+
+- Completed downstream result effect task result effect delegation packets
+  should become local result records and JSON artifacts before operator
+  review. The ingestion stage should preserve source decision, result,
+  application, effect, delegation, task, contract, project, and capability
+  links while keeping approval rows, activation actions, external mutations,
+  activation allowance, capability enablement, and proof satisfaction at zero.
+
 ## Learning eval serialization
 
 - Run `eval` and `eval-after-change` serially. They share the
@@ -1927,3 +1936,11 @@ coverage.
 ## Learning run_42a378a20457
 
 - Learning: Run run_42a378a20457 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_67e2aa5509d1
+
+- Learning: Run run_67e2aa5509d1 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_726f7a1ffd32
+
+- Learning: Run run_726f7a1ffd32 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

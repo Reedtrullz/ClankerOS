@@ -227,6 +227,13 @@ Core layers for the bootstrap:
   keeping subagent execution, model-provider calls, approval rows, external
   mutations, activation actions, activation allowance, and capability
   enablement at zero.
+- Capability activation follow-up result task result effect task result effect
+  task results: completed downstream result effect task result effect
+  delegation packets can be ingested as local result records and JSON
+  artifacts. Each result preserves source decision, result, application,
+  effect, delegation, task, contract, project, and capability links while
+  keeping approval rows, external mutations, activation actions, activation
+  allowance, capability enablement, and proof satisfaction at zero.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON

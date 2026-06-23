@@ -500,6 +500,12 @@
   rows, and local JSON artifacts while preserving source links and keeping
   execution, provider calls, approval rows, activation actions, external
   mutations, activation allowance, and capability enablement at zero.
+- Completed downstream result effect task result effect delegation packets
+  should become local result records and JSON artifacts before operator
+  review. The ingestion stage must preserve source decision, result,
+  application, effect, delegation, task, contract, project, and capability
+  links while keeping approval rows, activation actions, external mutations,
+  activation allowance, capability enablement, and proof satisfaction at zero.
 - `eval` and `eval-after-change` both write the
   `first_milestone_closed_loop` result path and should be run serially, not in
   parallel. A parallel invocation can leave a failed run artifact even when the

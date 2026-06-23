@@ -272,6 +272,10 @@ from agent_os.capability_activation_followup_result_task_result_effect_task_resu
     render_capability_activation_followup_result_task_result_effect_task_result_effect_task_delegation_batch_line,
     write_capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations,
 )
+from agent_os.capability_activation_followup_result_task_result_effect_task_result_effect_task_results import (
+    render_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_batch_line,
+    write_capability_activation_followup_result_task_result_effect_task_result_effect_task_results,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -968,6 +972,13 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Create read-only delegation packets for downstream result effect "
             "task result effect tasks."
+        ),
+    )
+    subparsers.add_parser(
+        "capability-activation-followup-result-task-result-effect-task-result-effect-task-results",
+        help=(
+            "Ingest completed downstream result effect task result effect "
+            "delegation packets as local result records."
         ),
     )
 
@@ -3695,6 +3706,62 @@ def main(argv: list[str] | None = None) -> int:
                 f"downstream_task={task.id} capability={task.evidence.get('capability')} "
                 f"source_effect={task.evidence.get('source_effect_id')} "
                 f"status={task.status}"
+            )
+        return 0
+
+    if (
+        args.command
+        == "capability-activation-followup-result-task-result-effect-task-result-effect-task-results"
+    ):
+        AgentSystem(root).initialize()
+        (
+            report_path,
+            batch,
+            created_records,
+            existing_records,
+            missing_result_artifact_delegations,
+            completed_delegations,
+        ) = write_capability_activation_followup_result_task_result_effect_task_result_effect_task_results(
+            root
+        )
+        print(
+            "capability_activation_followup_result_task_result_effect_task_result_effect_task_results: "
+            f"{batch.status}"
+        )
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"completed_delegations: {batch.completed_delegation_count}")
+        print(f"result_records_created: {batch.result_record_count}")
+        print(f"existing_result_records: {batch.existing_result_record_count}")
+        print(
+            f"missing_result_artifacts: {len(missing_result_artifact_delegations)}"
+        )
+        print(f"approval_requests_created: {batch.created_approval_request_count}")
+        print(f"activation_actions_taken: {batch.activation_action_count}")
+        print(f"external_mutations_taken: {batch.external_mutation_count}")
+        print(
+            render_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_batch_line(
+                batch
+            ).removeprefix("- ")
+        )
+        for record in created_records:
+            print(
+                f"result={record.id} delegation={record.delegation_id} "
+                f"task={record.downstream_task_id} capability={record.capability}"
+            )
+        for record in existing_records:
+            print(
+                f"existing_result={record.id} delegation={record.delegation_id} "
+                f"task={record.downstream_task_id} capability={record.capability}"
+            )
+        for delegation in missing_result_artifact_delegations:
+            print(
+                f"missing_result_artifact={delegation.id} "
+                f"task={delegation.parent_task_id}"
+            )
+        for delegation in completed_delegations:
+            print(
+                f"completed_delegation={delegation.id} "
+                f"task={delegation.parent_task_id}"
             )
         return 0
 

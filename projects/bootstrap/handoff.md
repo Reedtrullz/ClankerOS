@@ -205,7 +205,8 @@ chain, without starting remote workers, claiming remote work, or changing
 routing.
 Current iteration packet:
 `docs/next-iteration.md` selects
-`Add memory proposal records from completed delegation outputs.`
+`Add operator review decisions for downstream follow-up result task result effect
+task result effect task result records.`
 
 Latest delegation result ingestion:
 `subagent_delegation_7c3ac6139928` is completed with
@@ -2143,16 +2144,56 @@ work, or changing routing.
   deploy, push, open PRs, mark the active goal complete, or mutate external
   systems.
 
+## Latest Downstream Result Effect Task Result Effect Task Results
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-results`
+  now ingests completed downstream result effect task result effect delegation
+  outputs as local result records and JSON artifacts.
+- Live precondition batch:
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_batch_b9beabace83a`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_results_no_completed_delegations`,
+  with 0 completed delegations and 0 created records.
+- The pending evaluator delegation
+  `subagent_delegation_3ceff2056249` was completed through
+  `record-delegation-result` with local artifact
+  `.clanker/delegations/subagent_delegation_3ceff2056249-result.json` and
+  zero network or external mutations.
+- Initial live ingest batch:
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_batch_6c897c6b6932`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_results_recorded`,
+  created result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_968c47605706`
+  for `hosted_dashboard`.
+- Final live idempotency pass:
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_batch_7b3768fc266c`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_results_already_recorded`,
+  with 1 completed delegation, 0 new result records, 1 existing result record,
+  0 approval requests, 0 activation actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-results.md`
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-results/subagent_delegation_3ceff2056249-hosted-dashboard.json`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-results.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Non-claims: downstream result effect task result effect task results do not
+  start subagents, call model providers, create `approval_requests`, satisfy
+  proof, mutate activation contracts, mutate downstream result effect task
+  result records, allow activation, enable capabilities, promote trust,
+  schedule work, retry work, track spend, run CI, deploy, push, open PRs, mark
+  the active goal complete, or mutate external systems.
+
 ## Next Actions
 
-Current focus: Add result ingestion for downstream follow-up result task result effect task result effect delegation packets.
+Current focus: Add operator review decisions for downstream follow-up result task result effect task result effect task result records.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add result ingestion for downstream follow-up result task result effect
-   task result effect delegation packets.
-2. Ingest completed read-only downstream result effect task result effect
-   delegation outputs as local result records without enabling capabilities,
-   satisfying proof, creating approval rows, or allowing activation.
+   Add operator review decisions for downstream follow-up result task result
+   effect task result effect task result records.
+2. Review the ingested downstream result effect task result effect result
+   record with an explicit operator decision while keeping activation blocked.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.

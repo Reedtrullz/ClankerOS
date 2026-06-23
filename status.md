@@ -7027,3 +7027,68 @@
   call, proof satisfaction, activation allowance, capability enablement,
   CI/deploy, push, PR, trust promotion, scheduler, retry, cost tracking, or
   external mutation.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Results
+
+- Added
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-results`
+  for ingesting completed downstream result effect task result effect
+  delegation outputs as local result records and JSON artifacts.
+- Live precondition command recorded batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_batch_b9beabace83a`
+  with status
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_results_no_completed_delegations`.
+- Completed pending evaluator delegation `subagent_delegation_3ceff2056249`
+  through `record-delegation-result`, writing
+  `.clanker/delegations/subagent_delegation_3ceff2056249-result.json` with
+  zero network and external mutations.
+- Live first ingest recorded batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_batch_6c897c6b6932`
+  and created result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_968c47605706`
+  for `task_c00e6484c25b` (`hosted_dashboard`).
+- Live idempotency pass recorded batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_batch_7b3768fc266c`
+  with 1 completed delegation, 0 new result records, 1 existing result
+  record, 0 approval requests, 0 activation actions, and 0 external
+  mutations.
+- Evidence:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-results.md`
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-results/subagent_delegation_3ceff2056249-hosted-dashboard.json`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-results.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `docs/handoff-review.md`
+- Verification evidence:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "result_effect_task_result_effect_task_results"`
+    -> failed with missing CLI command before implementation, as expected.
+  - Focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "result_effect_task_result_effect_task_results"`
+    -> 4 passed, 320 deselected.
+  - Adjacent chain:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "result_task_result"`
+    -> 41 passed, 283 deselected.
+  - `python3 -m py_compile agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_results.py tests/test_first_milestone.py`
+    -> passed.
+  - `python3 -m pytest -q` -> 324 passed in 299.37s.
+  - `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800` ->
+    stuck_incidents: 0.
+  - `python3 -m agent_os.cli queue-health` -> hotspots: 0.
+  - `python3 -m agent_os.cli handoff-review` -> status: clear,
+    blocked_tasks: 0, stale_handoffs: 0.
+  - `python3 -m agent_os.cli eval-candidates` -> eval_candidates: 0.
+  - `python3 -m agent_os.cli approvals` -> pending_approvals: 0.
+  - `python3 -m agent_os.cli playbooks` -> playbooks: 1,
+    `first-milestone-closed-loop` active with 249 successful runs.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result effect task results" --file agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_results.py`
+    -> pass, run `run_67e2aa5509d1`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`,
+    run `run_726f7a1ffd32`.
+- Next focus:
+  `Add operator review decisions for downstream follow-up result task result
+  effect task result effect task result records.`
+- Non-claims: local result records and JSON artifacts only; no
+  approval-row creation, subagent execution, model-provider call, proof
+  satisfaction, activation allowance, capability enablement, CI/deploy, push,
+  PR, trust promotion, scheduler, retry, cost tracking, or external mutation.

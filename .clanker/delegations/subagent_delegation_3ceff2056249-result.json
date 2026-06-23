@@ -1,0 +1,36 @@
+{
+  "assigned_profile": "evaluator",
+  "category": "evidence_review",
+  "completed_at": "2026-06-23T00:50:23.670078+00:00",
+  "created_at": "2026-06-23T00:19:14.442471+00:00",
+  "execution_started": false,
+  "expected_output_schema": "evidence_review",
+  "external_mutations_taken": 0,
+  "id": "subagent_delegation_3ceff2056249",
+  "network_actions_taken": 0,
+  "non_claims": [
+    "No subagent was started by this ingestion command.",
+    "No model provider was called by this ingestion command.",
+    "No file, git, approval, or external state was mutated beyond this local result record."
+  ],
+  "parent_goal_id": "goal_9a2f1136aeed",
+  "parent_task_id": "task_c00e6484c25b",
+  "recorded_by": "operator",
+  "result_summary": "Evaluator drafted downstream result-effect task result-effect proof evidence while keeping activation blocked.",
+  "routing_decision_id": "routing_decision_fa59ac712b60",
+  "status": "completed",
+  "structured_output": {
+    "evidence": [
+      {
+        "status": "planned",
+        "summary": "Collect downstream result-effect task result-effect proof evidence."
+      }
+    ],
+    "findings": [
+      {
+        "summary": "Keep activation blocked."
+      }
+    ]
+  },
+  "title": "Plan next downstream result effect task result effect proof evidence for hosted_dashboard"
+}
