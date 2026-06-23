@@ -4881,3 +4881,15 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_46b0b2338c0e
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_347d9c5476f0/summary.md
+
+## Run run_79c55faad757
+
+- Goal ID: goal_4dd9c0aa16b9
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_79c55faad757/summary.md
+
+## Run run_cb1e42d04bd1
+
+- Goal ID: goal_579ee7ef085d
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_cb1e42d04bd1/summary.md

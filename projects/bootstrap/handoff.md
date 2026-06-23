@@ -2568,3 +2568,56 @@ Current focus: Add result ingestion for downstream follow-up result task result 
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Results
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results`
+  now ingests completed downstream evaluator delegation outputs into local
+  result records and JSON artifacts.
+- Operator-supplied live delegation result:
+  `subagent_delegation_c7fc922aba24` completed with
+  `network_actions_taken=0` and `external_mutations_taken=0`.
+- Initial live result batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_ee2a86d9722b`
+  created result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_de9f278ac2cd`
+  for `hosted_dashboard`.
+- Final live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_2ea27c83d851`
+  reported already recorded with 1 existing result, 0 new results,
+  0 approval requests, 0 activation actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results/subagent_delegation_c7fc922aba24-hosted-dashboard.json`
+  - `.clanker/delegations/subagent_delegation_c7fc922aba24-result.json`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Verification evidence so far:
+  - focused red/green result tests: 4 passed after implementation
+  - adjacent chain tests: 17 passed
+  - syntax compile check passed for changed Python modules
+  - `git diff --check` -> passed
+  - full suite: 366 passed
+  - handoff-review: clear after refreshing this handoff
+  - eval-after-change: pass, run `run_79c55faad757`
+  - baseline eval: pass, run `run_cb1e42d04bd1`
+  - playbooks: 1 active, 272 successful runs
+- Non-claims: local result records only; no approval rows, subagent execution
+  by ClankerOS, model-provider calls, proof satisfaction, activation
+  allowance, capability enablement, trust promotion, scheduler, retries, cost
+  tracking, CI/deploy action by ClankerOS, PRs, or external mutation.
+
+## Next Actions
+
+Current focus: Add operator review decisions for downstream follow-up result task result effect task result effect task result effect task result effect task result records.
+
+1. Use `docs/next-iteration.md` to complete:
+   Add operator review decisions for downstream follow-up result task result
+   effect task result effect task result effect task result effect task result
+   records.
+2. Record review-only accept-keep-blocked, request-more-evidence, or defer
+   decisions for the ingested result record while preserving idempotency.
+3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
+   budget enforcement, trust promotion, retries, and real-cost tracking
+   blocked until their own evidence and approval contracts are satisfied.

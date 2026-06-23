@@ -110,6 +110,9 @@ tutorials and operating docs are the better place to start.
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`
   - route downstream result effect task result effect task result effect task
     result effect tasks to read-only evaluator delegation packets.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`
+  - ingest completed downstream result effect task result effect task result
+    effect task result effect delegation outputs into local result records.
 
 ## Current State
 
@@ -146,6 +149,7 @@ packets, not as marketing docs:
 - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`
 - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`
 - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`
+- `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`
 - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-results.md`
 - `docs/capability-activation-followup-result-task-result-effect-task-results.md`
 - `docs/capability-activation-followup-result-task-result-effect-tasks.md`

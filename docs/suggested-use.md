@@ -157,6 +157,10 @@ Create downstream proof tasks from applied downstream result effect task result 
 Route downstream result effect task result effect task result effect task result effect tasks to read-only evaluator delegation packets, and prove that no subagent starts.
 ```
 
+```text
+Ingest completed downstream result effect task result effect task result effect task result effect delegation outputs, and prove that activation remains blocked.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -933,6 +937,22 @@ delegation packets, and keeps `execution_started=0`,
 `approval_requests_created=0`, `activation_actions_taken=0`,
 `activation_allowed=false`, and `capability_enabled=false`. The packet is still
 a local proof-planning contract, not subagent execution.
+
+After an operator records a completed evaluator output, ingest that local result
+artifact:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results
+python3 -m agent_os.cli dashboard
+```
+
+The result command writes
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`,
+creates local result records and per-result JSON artifacts, and keeps
+`approval_requests_created=0`, `activation_actions_taken=0`,
+`external_mutations_taken=0`, `activation_allowed=false`,
+`capability_enabled=false`, and proof satisfaction blocked. Missing result
+artifacts are reported without creating result rows.
 
 ## When To Commit And Push
 
