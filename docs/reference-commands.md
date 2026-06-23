@@ -7,6 +7,9 @@ the detailed proof for each capability.
 
 ```bash
 python3 -m agent_os.cli init
+python3 -m agent_os.cli projects
+python3 -m agent_os.cli project-status <project>
+python3 -m agent_os.cli project-context <project>
 python3 -m agent_os.cli dashboard
 python3 -m agent_os.cli iterate
 python3 -m agent_os.cli approvals
@@ -30,6 +33,7 @@ python3 -m agent_os.cli inbox
 
 ```bash
 python3 -m agent_os.cli register-project <name> --path /path/to/repo --test-command "python3 -m pytest -q"
+python3 -m agent_os.cli project-context <name>
 python3 -m agent_os.cli run-goal "Make a tiny verified change" --project <name> --isolation worktree --command "<safe local command>"
 python3 -m agent_os.cli approve <approval_id> --decided-by operator --note "reviewed diff and tests"
 python3 -m agent_os.cli commit-approved <approval_id> --committed-by operator

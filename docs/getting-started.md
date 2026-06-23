@@ -48,6 +48,9 @@ Register a local repository and run the work in an isolated worktree:
 python3 -m agent_os.cli register-project my-repo \
   --path /path/to/repo \
   --test-command "python3 -m pytest -q"
+python3 -m agent_os.cli projects
+python3 -m agent_os.cli project-status my-repo
+python3 -m agent_os.cli project-context my-repo
 
 python3 -m agent_os.cli run-goal \
   "Make the smallest verified change" \
@@ -72,6 +75,11 @@ python3 -m agent_os.cli commit-approved <approval_id> --committed-by operator
 
 `commit-approved` creates a local worktree commit only after a fresh evidence
 recheck. It does not push or open a pull request.
+
+`project-context` writes `projects/<name>/context.md` as a durable handoff
+packet for the registered repository. It reads local registry and git metadata
+only; it does not run tests, create a worktree, approve effects, commit, push,
+deploy, or call a model provider.
 
 ## Best Operating Pattern
 

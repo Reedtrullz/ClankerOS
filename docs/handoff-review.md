@@ -1,8 +1,8 @@
 # Handoff Review
 
-- id: handoff_review_d7872e0f6a5b
+- id: handoff_review_88b49dfcb429
 - status: clear
-- current_focus: Add local downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals from accepted blocked result effect task result effect task result effect task results.
+- current_focus: Add first-class `goal`, `plan`, `contract`, `tasks`, and `update-task` commands scoped to registered projects.
 - blocked_tasks: 0
 - stale_handoffs: 0
 - reviewed_paths: 1

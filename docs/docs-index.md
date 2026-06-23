@@ -19,6 +19,9 @@ system.
 - `docs/reference-commands.md` - compact command map.
 - `docs/tutorial-operator-daily-loop.md` - daily operator loop for returning
   to a workspace, choosing one narrow move, and verifying before claims.
+- `docs/tutorial-project-registry.md` - register local git repositories,
+  inspect registry status, and write durable project context packets before
+  running work.
 - `docs/tutorial-public-snapshot.md` - verify, commit, and push a coherent
   public GitHub snapshot without overclaiming.
 - `contracts.md` - safety contract and evidence expectations.
@@ -28,6 +31,7 @@ system.
 ## Core Tutorials
 
 - `docs/tutorial-first-loop.md`
+- `docs/tutorial-project-registry.md`
 - `docs/tutorial-operator-daily-loop.md`
 - `docs/tutorial-approval-gated-coding.md`
 - `docs/tutorial-public-snapshot.md`

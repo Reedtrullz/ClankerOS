@@ -17,6 +17,9 @@ hidden autonomy.
 
 - Tracks goals, tasks, evidence, approvals, effects, incidents, playbooks, and
   iteration packets in SQLite plus human-readable Markdown.
+- Registers local git repositories and exposes `projects`, `project-status`,
+  and `project-context` commands so an operator can inspect target repos before
+  starting work.
 - Generates an operator dashboard and next-iteration packet from current local
   state.
 - Runs worktree-isolated coding goals, captures diffs and verification output,
@@ -32,6 +35,7 @@ hidden autonomy.
 
 ```bash
 python3 -m agent_os.cli init
+python3 -m agent_os.cli projects
 python3 -m agent_os.cli dashboard
 python3 -m agent_os.cli iterate
 python3 -m pytest -q
@@ -46,10 +50,20 @@ Then read:
 - [Command Reference](docs/reference-commands.md)
 - [Documentation Index](docs/docs-index.md)
 - [First Loop Tutorial](docs/tutorial-first-loop.md)
+- [Project Registry Tutorial](docs/tutorial-project-registry.md)
 - [Operator Daily Loop Tutorial](docs/tutorial-operator-daily-loop.md)
 - [Approval-Gated Coding Tutorial](docs/tutorial-approval-gated-coding.md)
 - [Public Snapshot Tutorial](docs/tutorial-public-snapshot.md)
 - [Latest Capability Decision Tutorial](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md)
+
+Register and inspect a target repository before asking ClankerOS to touch it:
+
+```bash
+python3 -m agent_os.cli register-project my-repo --path /path/to/repo --test-command "python3 -m pytest -q"
+python3 -m agent_os.cli projects
+python3 -m agent_os.cli project-status my-repo
+python3 -m agent_os.cli project-context my-repo
+```
 
 ## Current Shape
 

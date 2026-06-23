@@ -13,6 +13,8 @@ harder to overclaim.
 | Understand the local architecture | `docs/architecture.md` |
 | Find a command quickly | `docs/reference-commands.md` |
 | See current state | `python3 -m agent_os.cli dashboard` |
+| Inspect registered projects | `docs/tutorial-project-registry.md` |
+| Build a project context packet | `python3 -m agent_os.cli project-context <project>` |
 | Pick the next safe local task | `python3 -m agent_os.cli iterate` |
 | Resume a workspace safely | `docs/tutorial-operator-daily-loop.md` |
 | Run the first loop | `docs/tutorial-first-loop.md` |
@@ -48,6 +50,10 @@ Run the first local loop, regenerate the dashboard, and summarize what is proven
 
 ```text
 Register this git repo, run a worktree-isolated coding task, capture the diff and tests, then ask me before creating the local worktree commit.
+```
+
+```text
+List registered projects, write a project context packet for the target repo, and tell me what ClankerOS knows before running work.
 ```
 
 ```text
@@ -309,41 +315,49 @@ Use this loop when the desired outcome is an actual local code change:
 python3 -m agent_os.cli register-project <name> --path /path/to/repo --test-command "python3 -m pytest -q"
 ```
 
-2. Run the change in an isolated worktree:
+2. Inspect the registry entry and write a durable project context packet:
+
+```bash
+python3 -m agent_os.cli projects
+python3 -m agent_os.cli project-status <name>
+python3 -m agent_os.cli project-context <name>
+```
+
+3. Run the change in an isolated worktree:
 
 ```bash
 python3 -m agent_os.cli run-goal "Make the smallest verified change" --project <name> --isolation worktree --command "<safe local command>"
 ```
 
-3. Inspect `docs/dashboard.md`, especially `## Operator Cockpit`.
-4. Read `runs/<run_id>/evidence/diff.patch`, `tests.txt`,
+4. Inspect `docs/dashboard.md`, especially `## Operator Cockpit`.
+5. Read `runs/<run_id>/evidence/diff.patch`, `tests.txt`,
    `verification.json`, `effect.json`, and `approval.md`.
-5. Use `python3 -m agent_os.cli approve <approval_id> --decided-by operator --note "..."`
+6. Use `python3 -m agent_os.cli approve <approval_id> --decided-by operator --note "..."`
    only after the diff, tests, and policy evidence are acceptable.
-6. Use `python3 -m agent_os.cli commit-approved <approval_id> --committed-by operator`
+7. Use `python3 -m agent_os.cli commit-approved <approval_id> --committed-by operator`
    to re-check evidence and create the local worktree commit exactly once.
-7. Use `python3 -m agent_os.cli github-handoff <effect_id> --base main --title "..."`
+8. Use `python3 -m agent_os.cli github-handoff <effect_id> --base main --title "..."`
    when you want a local push/draft-PR packet after commit evidence exists.
-8. Use `python3 -m agent_os.cli ci-deploy-evidence <github_handoff_id> --provider github-actions --status success --external-run-id <run_id> --url <run_url>`
+9. Use `python3 -m agent_os.cli ci-deploy-evidence <github_handoff_id> --provider github-actions --status success --external-run-id <run_id> --url <run_url>`
    after real CI/deploy evidence exists and should be preserved locally.
-9. Use `python3 -m agent_os.cli profiles`, `profile-show <name>`, and
+10. Use `python3 -m agent_os.cli profiles`, `profile-show <name>`, and
    `route ...` to record profile routing choices before specialist work.
-10. Use `python3 -m agent_os.cli delegate <task_id> --profile scout --title "..."`
+11. Use `python3 -m agent_os.cli delegate <task_id> --profile scout --title "..."`
    to create a read-only delegation contract when specialist prep is useful.
-11. Use `python3 -m agent_os.cli record-delegation-result <delegation_id> --summary "..." --output-json '{...}'`
+12. Use `python3 -m agent_os.cli record-delegation-result <delegation_id> --summary "..." --output-json '{...}'`
    to attach structured read-only output to an existing delegation.
-12. Use `python3 -m agent_os.cli memory propose-from-delegation <delegation_id> --key "..."`
+13. Use `python3 -m agent_os.cli memory propose-from-delegation <delegation_id> --key "..."`
    to create an inactive memory proposal from completed delegation evidence.
-13. Use `python3 -m agent_os.cli memory approve <memory_id> --approved-by operator`
+14. Use `python3 -m agent_os.cli memory approve <memory_id> --approved-by operator`
    only after reviewing the proposal.
-14. Use `python3 -m agent_os.cli skill propose --project <name> --name "..." --description "..." --from-run <run_id>`
+15. Use `python3 -m agent_os.cli skill propose --project <name> --name "..." --description "..." --from-run <run_id>`
    to create an inactive reusable `SKILL.md` proposal from run evidence.
-15. Use `python3 -m agent_os.cli skill approve <skill_id> --approved-by operator`
+16. Use `python3 -m agent_os.cli skill approve <skill_id> --approved-by operator`
    only after reviewing the generated `SKILL.md`.
-16. Use `python3 -m agent_os.cli review <run_id>`, `evidence <run_id>`, and
+17. Use `python3 -m agent_os.cli review <run_id>`, `evidence <run_id>`, and
    `replay-summary <run_id>` to create operator-readable run packets before
    making follow-up decisions.
-17. Use `python3 -m agent_os.cli cleanup-worktrees --confirm --reason "..."`
+18. Use `python3 -m agent_os.cli cleanup-worktrees --confirm --reason "..."`
    after reviewing terminal effects and deciding the worktree can be removed.
 
 `commit-approved` blocks without committing if the worktree base commit, patch,

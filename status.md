@@ -8603,3 +8603,54 @@
   activation actions, no external mutations, no dispatch, no CI/deploy action,
   no scheduling, no retries, no trust promotion, no activation allowance, no
   capability enablement, and no proof satisfaction.
+
+## 2026-06-23 Project Registry Visibility Commands
+
+- Added executable project registry visibility commands:
+  - `python3 -m agent_os.cli projects`
+  - `python3 -m agent_os.cli project-status <project>`
+  - `python3 -m agent_os.cli project-context <project>`
+- `project-status` now prints local registry, branch, remote, verifier,
+  memory, skills, evidence, and non-claim fields for a registered project.
+- `project-context` writes a durable operator handoff packet at
+  `projects/<name>/context.md`.
+- Registered the live ClankerOS checkout as project `clankeros` with default
+  verifier `python3 -m pytest -q`; context is in
+  `projects/clankeros/context.md`.
+- Added tutorial and suggested-use coverage:
+  - `docs/tutorial-project-registry.md`
+  - `docs/tutorial-approval-gated-coding.md`
+  - `docs/tutorial-operator-daily-loop.md`
+  - `docs/tutorial-first-loop.md`
+  - `docs/getting-started.md`
+  - `docs/suggested-use.md`
+  - `docs/reference-commands.md`
+  - `README.md`
+- Updated `tasks.md` so the next iteration packet now selects:
+  Add first-class `goal`, `plan`, `contract`, `tasks`, and `update-task`
+  commands scoped to registered projects.
+- Verification evidence:
+  - focused project registry tests: 2 passed.
+  - full suite: 412 passed in 717.66s.
+  - live smoke: `init`, `register-project clankeros`, `projects`,
+    `project-status clankeros`, and `project-context clankeros` passed.
+  - syntax compile check passed for `agent_os/*.py` and
+    `tests/test_first_milestone.py`.
+  - `sweep-stuck`: stuck_incidents 0.
+  - `queue-health`: hotspots 0.
+  - `handoff-review`: clear, stale_handoffs 0.
+  - `eval-candidates`: 0.
+  - `approvals`: pending_approvals 0.
+  - `git diff --check`: passed.
+  - `eval-after-change`: pass, run `run_6d0df3abdb79`.
+  - `eval`: `first_milestone_closed_loop: pass`.
+  - `playbooks`: 1 active playbook, 303 successful runs.
+  - GitHub metadata readback showed the configured description, README
+    homepage, ADMIN viewer permission, and 20 repository topics.
+  - `dashboard` and `iterate` regenerated local operator state.
+- Non-claims: local registry rows, local git readbacks, generated context
+  packets, docs, tests, and dashboard state only; no CI run was checked, no
+  deployment was made, no hosted dashboard or remote worker was enabled, no
+  autonomous scheduler ran, no browser/desktop adapter acted, no model
+  provider was called, and no external mutation was performed by the new
+  commands.

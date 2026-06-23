@@ -6,6 +6,7 @@ next without relying on chat memory.
 ## 1. Rebuild The Visible State
 
 ```bash
+python3 -m agent_os.cli projects
 python3 -m agent_os.cli dashboard
 python3 -m agent_os.cli iterate
 ```
@@ -21,6 +22,17 @@ The dashboard is the current local view. The iteration packet is the suggested
 next local work item. Neither file is proof of hosted service availability,
 remote worker execution, CI success, deployment, trust promotion, or automatic
 retry readiness.
+
+If you are returning to a registered target repository, refresh its local
+context packet before starting work:
+
+```bash
+python3 -m agent_os.cli project-status <project>
+python3 -m agent_os.cli project-context <project>
+```
+
+The context packet is a local readback. It does not run tests, create a
+worktree, approve effects, commit, push, deploy, or call model providers.
 
 ## 2. Choose One Narrow Move
 

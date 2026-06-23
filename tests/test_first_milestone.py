@@ -425,6 +425,71 @@ def test_register_project_records_git_repo_and_rejects_non_git_path(
     assert storage.get_registered_project("broken") is None
 
 
+def test_project_visibility_commands_list_status_and_write_context(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    repo_path = tmp_path / "subject-repo"
+    _init_git_repo(repo_path)
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "register-project",
+                "subject",
+                "--path",
+                str(repo_path),
+                "--test-command",
+                "python3 -m pytest -q",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "projects"]) == 0
+    projects_output = capsys.readouterr().out
+    assert "projects: 1" in projects_output
+    assert "subject status=registered" in projects_output
+    assert f"root_path={repo_path.resolve()}" in projects_output
+    assert 'test="python3 -m pytest -q"' in projects_output
+
+    assert main(["--root", str(tmp_path), "project-status", "subject"]) == 0
+    status_output = capsys.readouterr().out
+    assert "project_status: subject" in status_output
+    assert "project_id: subject" in status_output
+    assert f"root_path: {repo_path.resolve()}" in status_output
+    assert "repo_url: unknown" in status_output
+    assert "current_branch:" in status_output
+    assert "default_test_command: python3 -m pytest -q" in status_output
+    assert "memory_path: projects/subject/knowledge.md" in status_output
+    assert "skills_path: .clanker/skills" in status_output
+    assert "evidence_root: projects/subject/artifacts" in status_output
+    assert "last_activity_at:" in status_output
+
+    assert main(["--root", str(tmp_path), "project-context", "subject"]) == 0
+    context_output = capsys.readouterr().out
+    assert "project_context: subject" in context_output
+    assert "context: projects/subject/context.md" in context_output
+
+    context_path = tmp_path / "projects" / "subject" / "context.md"
+    assert context_path.exists()
+    context_text = context_path.read_text(encoding="utf-8")
+    assert "# Project Context: subject" in context_text
+    assert f"- root_path: {repo_path.resolve()}" in context_text
+    assert "- default_test_command: python3 -m pytest -q" in context_text
+    assert "- memory_path: projects/subject/knowledge.md" in context_text
+    assert "python3 -m agent_os.cli project-status subject" in context_text
+    assert "python3 -m agent_os.cli run-goal \"...\" --project subject" in context_text
+    assert "Project context generation does not run tests, commit, push, deploy, or mutate external systems." in context_text
+
+    assert main(["--root", str(tmp_path), "project-status", "missing"]) == 1
+    missing_output = capsys.readouterr().out
+    assert "project_status_failed: project missing not found" in missing_output
+
+
 def test_run_goal_with_worktree_isolation_captures_diff_and_proposes_commit_effect(
     tmp_path: Path,
     capsys,

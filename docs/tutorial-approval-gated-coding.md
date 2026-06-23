@@ -3,17 +3,18 @@
 This tutorial walks through the first executable local coding-agent vertical:
 
 1. register a local git repository;
-2. run a constrained coding command in an isolated git worktree;
-3. capture diff, command, and test evidence;
-4. inspect the proposed `local_git_commit` effect;
-5. make an operator approval decision;
-6. create the approved local worktree commit exactly once;
-7. prepare a GitHub handoff packet from committed local evidence;
-8. record operator-supplied CI/deploy evidence for the handoff;
-9. record profile routing decisions for future specialist work;
-10. record read-only subagent delegation contracts;
-11. ingest structured read-only delegation results;
-12. clean up terminal worktrees after an explicit cleanup decision.
+2. inspect the registry entry and write a project context packet;
+3. run a constrained coding command in an isolated git worktree;
+4. capture diff, command, and test evidence;
+5. inspect the proposed `local_git_commit` effect;
+6. make an operator approval decision;
+7. create the approved local worktree commit exactly once;
+8. prepare a GitHub handoff packet from committed local evidence;
+9. record operator-supplied CI/deploy evidence for the handoff;
+10. record profile routing decisions for future specialist work;
+11. record read-only subagent delegation contracts;
+12. ingest structured read-only delegation results;
+13. clean up terminal worktrees after an explicit cleanup decision.
 
 The flow is intentionally conservative. It creates evidence and an approval
 packet first. It creates a local git commit only after explicit approval and a
@@ -63,7 +64,24 @@ Registration records:
 Registration does not create a worktree, run commands, or change the target
 repository.
 
-## 3. Run A Worktree-Isolated Coding Goal
+## 3. Inspect The Registered Project
+
+Before asking ClankerOS to run work against the target, inspect what was
+registered:
+
+```bash
+python3 -m agent_os.cli projects
+python3 -m agent_os.cli project-status my-repo
+python3 -m agent_os.cli project-context my-repo
+```
+
+`project-context` writes `projects/my-repo/context.md`, including the resolved
+root, local branch/remote readbacks when available, default test command,
+allowed write roots, evidence path, and safe next commands. It does not run
+tests, create a worktree, approve effects, commit, push, deploy, or call a
+model provider.
+
+## 4. Run A Worktree-Isolated Coding Goal
 
 Use `run-goal` with `--isolation worktree` and a narrow local command:
 
@@ -87,7 +105,7 @@ ClankerOS will:
 
 The original repository checkout is not edited by this command.
 
-## 4. Inspect Evidence
+## 5. Inspect Evidence
 
 Regenerate the dashboard:
 
@@ -117,7 +135,7 @@ Important files:
 - `effect.json`: proposed effect payload.
 - `approval.md`: approval packet for the operator.
 
-## 5. Review And Decide
+## 6. Review And Decide
 
 List pending approvals:
 
@@ -136,7 +154,7 @@ python3 -m agent_os.cli approve <approval_id> \
 Approval records the operator decision. It does not create the commit by
 itself.
 
-## 6. Commit The Approved Effect
+## 7. Commit The Approved Effect
 
 After approval, create the local worktree commit:
 
@@ -160,7 +178,7 @@ The command writes `commit-approved.json` beside the original run evidence and
 updates the effect with `status=committed`, `committed_at`, `result_json`, and
 a local `git revert <commit_sha>` compensation note.
 
-## 7. Prepare A GitHub Handoff
+## 8. Prepare A GitHub Handoff
 
 After a committed effect exists, create a local handoff packet:
 
@@ -184,7 +202,7 @@ ClankerOS will:
 This step does not push the branch or open a pull request. The operator can run
 the printed commands later after reviewing the local evidence.
 
-## 8. Record CI/Deploy Evidence
+## 9. Record CI/Deploy Evidence
 
 After an operator has real CI or deploy evidence for the handoff, record it
 locally:
@@ -211,7 +229,7 @@ This step does not fetch the URL, call GitHub Actions, run CI, deploy, or
 mutate an external system. It records operator-supplied proof so the local
 control plane can preserve the evidence trail.
 
-## 9. Record Profile Routing Decisions
+## 10. Record Profile Routing Decisions
 
 Create the default local profile config and record a routing decision:
 
@@ -231,7 +249,7 @@ task/goal/project context, and operator override reason when present.
 This is a control-plane record only. It does not claim tasks, start subagents,
 call model providers, or change approval gates.
 
-## 10. Record Delegation Contracts
+## 11. Record Delegation Contracts
 
 After routing a task, record a read-only specialist delegation contract:
 
@@ -255,7 +273,7 @@ ClankerOS will:
 This step does not start a subagent, call a model provider, write files,
 approve work, commit, or mutate external state.
 
-## 11. Record Delegation Results
+## 12. Record Delegation Results
 
 When read-only specialist output exists, attach it to the delegation:
 
@@ -279,7 +297,7 @@ delegation is rejected.
 This step does not start a subagent, call a model provider, approve work,
 commit, push, run CI, deploy, or mutate external state.
 
-## 12. Clean Up Terminal Worktrees
+## 13. Clean Up Terminal Worktrees
 
 Preview cleanup candidates:
 

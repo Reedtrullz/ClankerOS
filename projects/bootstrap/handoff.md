@@ -205,8 +205,16 @@ chain, without starting remote workers, claiming remote work, or changing
 routing.
 Current iteration packet:
 `docs/next-iteration.md` selects
-`Add routing and delegation packets for downstream follow-up result task result
-effect task result effect task result effect tasks.`
+Add first-class `goal`, `plan`, `contract`, `tasks`, and `update-task`
+commands scoped to registered projects.
+Exact focus: Add first-class `goal`, `plan`, `contract`, `tasks`, and `update-task` commands scoped to registered projects.
+
+Latest project registry visibility:
+`projects`, `project-status <project>`, and `project-context <project>` now
+expose registered local git repositories before work starts. The live
+`clankeros` registry entry points at `/Users/reidar/Documents/Agent System`
+with default verifier `python3 -m pytest -q`, and
+`projects/clankeros/context.md` preserves the local readback and non-claims.
 
 Latest delegation result ingestion:
 `subagent_delegation_7c3ac6139928` is completed with
@@ -1352,8 +1360,10 @@ work, or changing routing.
   `eval_after_change_bd85fa596ed7`, run `run_21b6a386585b`; `eval` -> pass
   with run `run_60c83a6cdc32`; `playbooks` -> `successful_runs=162`.
 - Current iteration packet:
-  `iteration_4e9ed1c65b48` in `docs/next-iteration.md`, fallback objective
-  `Review current evidence and add the next actionable queue item.`
+  `docs/next-iteration.md` selects
+  Add first-class `goal`, `plan`, `contract`, `tasks`, and `update-task`
+  commands scoped to registered projects.
+  Exact focus: Add first-class `goal`, `plan`, `contract`, `tasks`, and `update-task` commands scoped to registered projects.
 
 ## Latest Profile Routing Decision Records
 

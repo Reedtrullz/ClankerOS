@@ -20,7 +20,10 @@ Core layers for the bootstrap:
   with a persisted `approval_requests` record before any worker claim.
 - Project registry: local git repositories can be registered with a resolved
   git root, default test command, and allowed write roots before coding-agent
-  runs target them.
+  runs target them. Operators can list registered projects, inspect local
+  branch/remote/readiness fields, and write durable
+  `projects/<name>/context.md` packets with `projects`, `project-status`, and
+  `project-context` before starting work.
 - Worktree coding loop: a high-risk coding goal can run a constrained command
   inside an isolated git worktree, capture command/test/diff evidence, and
   record a proposed `local_git_commit` effect that waits for operator approval.

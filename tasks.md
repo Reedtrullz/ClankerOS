@@ -11,6 +11,7 @@
 - [x] Add approval rules before risky task dispatch.
 - [x] Create a reusable next-iteration packet loop.
 - [x] Register local git projects for worktree-isolated coding-agent runs.
+- [x] Add project registry visibility commands and durable context packets.
 - [x] Capture worktree command, diff, test, effect, and approval evidence for
   proposed local git commits.
 - [x] Add an operator cockpit to the dashboard for approvals, proposed effects,
@@ -152,6 +153,7 @@
 - [x] Add routing and delegation packets for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect tasks. <!-- score=9 complexity=4 -->
 - [x] Add result ingestion for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect delegation packets. <!-- score=9 complexity=4 -->
 - [x] Add operator review decisions for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result records. <!-- score=9 complexity=4 -->
+- [ ] Add first-class `goal`, `plan`, `contract`, `tasks`, and `update-task` commands scoped to registered projects. <!-- score=10 complexity=5 -->
 - [ ] Add local downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals from accepted blocked result effect task result effect task result effect task results. <!-- score=9 complexity=4 -->
 
 ## blocked

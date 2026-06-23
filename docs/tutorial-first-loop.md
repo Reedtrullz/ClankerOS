@@ -52,6 +52,7 @@ Expected behavior:
 ## 3. Check The Queue And Handoff State
 
 ```bash
+python3 -m agent_os.cli projects
 python3 -m agent_os.cli approvals
 python3 -m agent_os.cli queue-health
 python3 -m agent_os.cli handoff-review
@@ -59,6 +60,8 @@ python3 -m agent_os.cli handoff-review
 
 Useful readings:
 
+- `projects: N` shows how many local git repositories are registered for
+  ClankerOS-targeted work.
 - `pending_approvals: 0` means no current local approval rows are waiting.
 - `hotspots: 0` means no repeated blocked or failed task pattern was found.
 - `status: clear` means the current handoff review found no stale handoff issue.

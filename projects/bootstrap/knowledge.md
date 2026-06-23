@@ -2323,6 +2323,16 @@ coverage.
   external mutations, activation allowance, capability enablement, and proof
   satisfaction at zero.
 
+## Project Registry Visibility
+
+- Registered projects should be listed, inspected, and written into
+  `projects/<name>/context.md` before worktree-isolated coding runs. The
+  project context packet gives the operator a durable local readback of the
+  root path, branch, remote, verifier, allowed write roots, memory path,
+  skills path, evidence root, and non-claims without running tests, creating
+  worktrees, approving effects, committing, pushing, deploying, or calling
+  model providers.
+
 ## Learning run_349c6a785d89
 
 - Learning: Run run_349c6a785d89 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
@@ -2378,3 +2388,11 @@ coverage.
 ## Learning run_a8fb6232bdc7
 
 - Learning: Run run_a8fb6232bdc7 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_6d0df3abdb79
+
+- Learning: Run run_6d0df3abdb79 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_2d4cb12e2218
+
+- Learning: Run run_2d4cb12e2218 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

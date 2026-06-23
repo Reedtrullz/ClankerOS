@@ -443,7 +443,14 @@ from agent_os.profile_routing import (
     route_work,
     write_default_profile_config,
 )
-from agent_os.project_registry import register_project
+from agent_os.project_registry import (
+    list_project_registry,
+    load_project_context,
+    register_project,
+    render_project_line,
+    render_project_status_lines,
+    write_project_context,
+)
 from agent_os.queue_health import render_queue_health_finding, write_queue_health_report
 from agent_os.run_review import (
     write_evidence_index,
@@ -650,6 +657,20 @@ def build_parser() -> argparse.ArgumentParser:
     register_project_parser.add_argument("--path", required=True)
     register_project_parser.add_argument("--test-command", required=True)
     register_project_parser.add_argument("--allowed-write-root", action="append", default=[])
+    subparsers.add_parser(
+        "projects",
+        help="List registered local git projects.",
+    )
+    project_status = subparsers.add_parser(
+        "project-status",
+        help="Show local registry and git status for a registered project.",
+    )
+    project_status.add_argument("project")
+    project_context = subparsers.add_parser(
+        "project-context",
+        help="Write a durable operator context packet for a registered project.",
+    )
+    project_context.add_argument("project")
     subparsers.add_parser(
         "budget-trust-posture",
         help="Report local budget/trust posture metadata without enforcement.",
@@ -2027,6 +2048,44 @@ def main(argv: list[str] | None = None) -> int:
         print(f"default_test_command: {project.default_test_command}")
         print(f"allowed_write_roots: {','.join(project.allowed_write_roots)}")
         print(f"project_note: projects/{project.name}/project.md")
+        return 0
+
+    if args.command == "projects":
+        AgentSystem(root).initialize()
+        projects = list_project_registry(root)
+        print(f"projects: {len(projects)}")
+        if not projects:
+            print("- none")
+        for project in projects:
+            print(render_project_line(project))
+        return 0
+
+    if args.command == "project-status":
+        AgentSystem(root).initialize()
+        try:
+            context = load_project_context(root, args.project)
+        except (KeyError, ValueError) as error:
+            detail = error.args[0] if error.args else args.project
+            print(f"project_status_failed: project {detail} not found")
+            return 1
+        for line in render_project_status_lines(context):
+            print(line)
+        return 0
+
+    if args.command == "project-context":
+        AgentSystem(root).initialize()
+        try:
+            context, context_path = write_project_context(root, args.project)
+        except (KeyError, ValueError) as error:
+            detail = error.args[0] if error.args else args.project
+            print(f"project_context_failed: project {detail} not found")
+            return 1
+        print(f"project_context: {context.project.name}")
+        print(f"context: {context_path.relative_to(root.resolve())}")
+        print(f"project_note: {context.project_note}")
+        print("commands_rerun: 0")
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
         return 0
 
     if args.command == "budget-trust-posture":

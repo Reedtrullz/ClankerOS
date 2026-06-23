@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_66491fcbf113
+- Packet ID: iteration_c7a68d49b418
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add local downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals from accepted blocked result effect task result effect task result effect task results.
+Advance the Agent System north-star goal by completing: Add first-class `goal`, `plan`, `contract`, `tasks`, and `update-task` commands scoped to registered projects.
 
 ## Definition Of Done
 
@@ -120,9 +120,9 @@ Advance the Agent System north-star goal by completing: Add local downstream fol
 ## Simplicity Guardrail
 
 - selection_policy: highest-score-then-lowest-complexity
-- selection_reason: selected only actionable item with score 9 and complexity 4
-- selected_score: 9
-- selected_complexity: 4
+- selection_reason: selected highest score 10; complexity 5 recorded for audit
+- selected_score: 10
+- selected_complexity: 5
 
 ## Guardrails And Non-Claims
 
