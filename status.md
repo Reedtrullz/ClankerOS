@@ -7267,3 +7267,62 @@
   call, no proof satisfaction, no activation allowance, no capability
   enablement, no CI/deploy action by ClankerOS, no trust promotion, no
   scheduler, no retry, no cost tracking, and no external mutation.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Tasks
+
+- Added
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-tasks`
+  for materializing applied downstream result effect task result effect task
+  result decision effect applications into pending local proof tasks.
+- Live first batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_batch_86372e48fa11`
+  created pending task `task_6392c3a229e5` for `hosted_dashboard` from
+  applied effect `effect_cf0963e8c699`, with 1 applied downstream effect,
+  1 task created, 1 capability task, 0 approval requests,
+  0 activation actions, and 0 external mutations.
+- Live idempotency pass recorded
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_batch_fa514e0d2fb0`
+  with status
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_tasks_already_recorded`,
+  0 new tasks, 1 existing downstream task, 0 approval requests,
+  0 activation actions, and 0 external mutations.
+- Evidence:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-tasks.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-tasks.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `docs/handoff-review.md`
+- Verification evidence:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_tasks"`
+    -> failed before implementation on the missing command path.
+  - Focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_tasks"`
+    -> 3 passed, 335 deselected.
+  - Adjacent chain:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result"`
+    -> 18 passed, 320 deselected.
+  - `python3 -m py_compile agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_tasks.py tests/test_first_milestone.py`
+    -> passed.
+  - `python3 -m pytest -q` -> 338 passed in 339.62s.
+  - `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800` ->
+    stuck_incidents: 0.
+  - `python3 -m agent_os.cli queue-health` -> hotspots: 0.
+  - `python3 -m agent_os.cli handoff-review` -> status: clear,
+    blocked_tasks: 0, stale_handoffs: 0.
+  - `python3 -m agent_os.cli eval-candidates` -> eval_candidates: 0.
+  - `python3 -m agent_os.cli approvals` -> pending_approvals: 0.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result effect task result effect tasks" --file agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_tasks.py --file agent_os/storage.py --file agent_os/cli.py --file agent_os/dashboard.py --file agent_os/iteration.py --file tests/test_first_milestone.py`
+    -> pass, run `run_c5205e42e98c`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`,
+    run `run_756c74ab5874`.
+  - `python3 -m agent_os.cli playbooks` -> playbooks: 1,
+    `first-milestone-closed-loop` active with 257 successful runs.
+- Next focus:
+  `Add routing and delegation packets for downstream follow-up result task
+  result effect task result effect task result effect tasks.`
+- Non-claims: pending downstream proof task rows only; no approval-row
+  creation, no subagent execution, no model-provider call, no proof
+  satisfaction, no activation allowance, no capability enablement, no CI/deploy
+  action by ClankerOS, no trust promotion, no scheduler, no retry, no cost
+  tracking, and no external mutation.

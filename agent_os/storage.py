@@ -1623,6 +1623,24 @@ class CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResu
 
 
 @dataclass(frozen=True)
+class CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskBatch:
+    id: str
+    status: str
+    source_application_id: str
+    applied_downstream_effect_count: int
+    task_count: int
+    existing_task_count: int
+    capability_task_count: int
+    created_approval_request_count: int
+    activation_action_count: int
+    external_mutation_count: int
+    created_task_ids: list[str]
+    source_effect_ids: list[str]
+    report_path: str
+    created_at: str
+
+
+@dataclass(frozen=True)
 class CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskBatch:
     id: str
     status: str
@@ -3627,6 +3645,23 @@ class Storage:
                     activation_action_count integer not null,
                     external_mutation_count integer not null,
                     applied_effect_ids text not null,
+                    report_path text not null,
+                    created_at text not null
+                );
+
+                create table if not exists capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_batches (
+                    id text primary key,
+                    status text not null,
+                    source_application_id text not null,
+                    applied_downstream_effect_count integer not null,
+                    task_count integer not null,
+                    existing_task_count integer not null,
+                    capability_task_count integer not null,
+                    created_approval_request_count integer not null,
+                    activation_action_count integer not null,
+                    external_mutation_count integer not null,
+                    created_task_ids text not null,
+                    source_effect_ids text not null,
                     report_path text not null,
                     created_at text not null
                 );
@@ -10750,6 +10785,95 @@ class Storage:
             for row in rows
         ]
 
+    def record_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_batch(
+        self,
+        *,
+        status: str,
+        source_application_id: str,
+        applied_downstream_effect_count: int,
+        task_count: int,
+        existing_task_count: int,
+        capability_task_count: int,
+        created_approval_request_count: int,
+        activation_action_count: int,
+        external_mutation_count: int,
+        created_task_ids: list[str],
+        source_effect_ids: list[str],
+        report_path: str,
+    ) -> CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskBatch:
+        batch_id = new_id(
+            "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_batch"
+        )
+        created_at = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_batches (
+                    id, status, source_application_id,
+                    applied_downstream_effect_count, task_count,
+                    existing_task_count, capability_task_count,
+                    created_approval_request_count, activation_action_count,
+                    external_mutation_count, created_task_ids, source_effect_ids,
+                    report_path, created_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    batch_id,
+                    status,
+                    source_application_id,
+                    applied_downstream_effect_count,
+                    task_count,
+                    existing_task_count,
+                    capability_task_count,
+                    created_approval_request_count,
+                    activation_action_count,
+                    external_mutation_count,
+                    _json_dumps(created_task_ids),
+                    _json_dumps(source_effect_ids),
+                    report_path,
+                    created_at,
+                ),
+            )
+        return CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskBatch(
+            id=batch_id,
+            status=status,
+            source_application_id=source_application_id,
+            applied_downstream_effect_count=applied_downstream_effect_count,
+            task_count=task_count,
+            existing_task_count=existing_task_count,
+            capability_task_count=capability_task_count,
+            created_approval_request_count=created_approval_request_count,
+            activation_action_count=activation_action_count,
+            external_mutation_count=external_mutation_count,
+            created_task_ids=created_task_ids,
+            source_effect_ids=source_effect_ids,
+            report_path=report_path,
+            created_at=created_at,
+        )
+
+    def list_recent_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_batches(
+        self,
+        limit: int = 5,
+    ) -> list[
+        CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskBatch
+    ]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_batches
+                order by created_at desc, id desc
+                limit ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [
+            self._row_to_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_batch(
+                row
+            )
+            for row in rows
+        ]
+
     def record_capability_activation_followup_result_task_result_effect_task_result_effect_task_batch(
         self,
         *,
@@ -16873,6 +16997,29 @@ class Storage:
             activation_action_count=row["activation_action_count"],
             external_mutation_count=row["external_mutation_count"],
             applied_effect_ids=_json_loads(row["applied_effect_ids"], []),
+            report_path=row["report_path"],
+            created_at=row["created_at"],
+        )
+
+    def _row_to_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_batch(
+        self,
+        row: sqlite3.Row,
+    ) -> CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskBatch:
+        return CapabilityActivationFollowupResultTaskResultEffectTaskResultEffectTaskResultEffectTaskBatch(
+            id=row["id"],
+            status=row["status"],
+            source_application_id=row["source_application_id"],
+            applied_downstream_effect_count=row[
+                "applied_downstream_effect_count"
+            ],
+            task_count=row["task_count"],
+            existing_task_count=row["existing_task_count"],
+            capability_task_count=row["capability_task_count"],
+            created_approval_request_count=row["created_approval_request_count"],
+            activation_action_count=row["activation_action_count"],
+            external_mutation_count=row["external_mutation_count"],
+            created_task_ids=_json_loads(row["created_task_ids"], []),
+            source_effect_ids=_json_loads(row["source_effect_ids"], []),
             report_path=row["report_path"],
             created_at=row["created_at"],
         )

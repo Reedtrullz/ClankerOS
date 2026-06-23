@@ -86,6 +86,9 @@ tutorials and operating docs are the better place to start.
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-application.md`
   - apply proposed downstream result effect task result effect result decision
   effects as local records.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-tasks.md`
+  - materialize applied downstream result effect task result effect result
+  decision effects into pending downstream proof tasks.
 
 ## Current State
 
@@ -114,6 +117,7 @@ packets, not as marketing docs:
 - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-decisions.md`
 - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-proposals.md`
 - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-application.md`
+- `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-tasks.md`
 - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-results.md`
 - `docs/capability-activation-followup-result-task-result-effect-task-results.md`
 - `docs/capability-activation-followup-result-task-result-effect-tasks.md`

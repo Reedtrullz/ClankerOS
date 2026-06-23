@@ -827,6 +827,20 @@ records a local application row, marks applicable generic `effects` rows as
 `activation_actions_taken=0`, `external_mutations_taken=0`,
 `activation_allowed=false`, and `capability_enabled=false`.
 
+Materialize those applied effects into pending downstream proof tasks:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-tasks
+python3 -m agent_os.cli dashboard
+```
+
+The task command writes
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-tasks.md`,
+creates pending high-risk local proof tasks, and keeps
+`approval_requests_created=0`, `activation_actions_taken=0`,
+`external_mutations_taken=0`, `activation_allowed=false`, and
+`capability_enabled=false`.
+
 ## When To Commit And Push
 
 Commit when:
@@ -845,8 +859,8 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 Good next slices now favor capability-specific guards after local delegation
 packets exist:
 
-- local application records for accepted downstream result effect task result
-  effect result decision effect proposals;
+- routing and delegation packets for downstream result effect task result
+  effect task result effect tasks;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;

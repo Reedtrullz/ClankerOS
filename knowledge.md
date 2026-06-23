@@ -530,6 +530,12 @@
   result, application, effect, delegation, task, contract, project, and
   capability links, and still keep approval rows, activation actions,
   external mutations, activation allowance, and capability enablement at zero.
+- Applied downstream result effect task result effect result decision effect
+  applications should become pending downstream proof tasks, not activation:
+  preserve source decision, result, application, effect, delegation, task,
+  contract, project, and capability links in task evidence while keeping
+  approval rows, activation actions, external mutations, activation allowance,
+  capability enablement, and proof satisfaction at zero.
 
 ## Stable Distilled Learnings
 

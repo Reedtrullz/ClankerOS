@@ -4448,3 +4448,65 @@ are visible in the dashboard and are not active until approved.
   satisfaction, activation allowance, capability enablement, trust promotion,
   scheduler, retries, cost tracking, CI/deploy action by ClankerOS, PRs, or
   external mutation.
+
+## Run run_c5205e42e98c
+
+- Goal ID: goal_103d5bc73501
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_c5205e42e98c/summary.md
+
+## Run run_756c74ab5874
+
+- Goal ID: goal_996e68b4dcd5
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_756c74ab5874/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Tasks
+
+- Added
+  `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-tasks`
+  to materialize applied downstream result effect task result effect task
+  result decision effect applications into pending local proof tasks.
+- First live batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_batch_86372e48fa11`
+  created pending task `task_6392c3a229e5` for `hosted_dashboard` from
+  applied effect `effect_cf0963e8c699`, with 1 applied downstream effect,
+  1 task created, 0 approval requests, 0 activation actions, and
+  0 external mutations.
+- Idempotent rerun recorded
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_batch_fa514e0d2fb0`
+  as already recorded, with 0 new tasks, 1 existing downstream task,
+  0 approval requests, 0 activation actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-tasks.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-tasks.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `docs/handoff-review.md`
+- Verification evidence:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_tasks"`
+    -> red before implementation, then 3 passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result"`
+    -> 18 passed.
+  - `python3 -m py_compile agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_tasks.py tests/test_first_milestone.py`
+    -> passed.
+  - `python3 -m pytest -q` -> 338 passed.
+  - `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800` ->
+    stuck_incidents: 0.
+  - `python3 -m agent_os.cli queue-health` -> hotspots: 0.
+  - `python3 -m agent_os.cli handoff-review` -> status: clear.
+  - `python3 -m agent_os.cli eval-candidates` -> eval_candidates: 0.
+  - `python3 -m agent_os.cli approvals` -> pending_approvals: 0.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result effect task result effect tasks" --file agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_tasks.py --file agent_os/storage.py --file agent_os/cli.py --file agent_os/dashboard.py --file agent_os/iteration.py --file tests/test_first_milestone.py`
+    -> pass, run `run_c5205e42e98c`.
+  - `python3 -m agent_os.cli eval` -> pass, run `run_756c74ab5874`.
+  - `python3 -m agent_os.cli playbooks` -> 1 active playbook with
+    257 successful runs.
+- Next focus:
+  `Add routing and delegation packets for downstream follow-up result task
+  result effect task result effect task result effect tasks.`
+- Non-claims: pending downstream proof task rows only; no
+  `approval_requests`, subagent execution, model-provider calls, proof
+  satisfaction, activation allowance, capability enablement, trust promotion,
+  scheduler, retries, cost tracking, CI/deploy action by ClankerOS, PRs, or
+  external mutation.

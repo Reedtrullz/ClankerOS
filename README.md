@@ -46,6 +46,7 @@ completed downstream result effect task result effect delegation results -> loca
 local downstream result effect task result effect task result records -> operator review decisions -> blocked activation preserved
 accepted downstream result effect task result effect task result decisions -> proposed effect records -> blocked activation preserved
 applied downstream result effect task result effect task result decision effects -> local application records -> blocked activation preserved
+applied downstream result effect task result effect task result decision effect applications -> downstream proof tasks -> next evidence plan
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -224,6 +225,13 @@ now be applied as local records only, advancing effect status to `applied`
 while preserving `activation_allowed=false`, `capability_enabled=false`,
 `approval_requests_created=0`, `activation_actions_taken=0`, and
 `external_mutations_taken=0`.
+Applied downstream result effect task result effect result decision effect
+applications can now be materialized into pending downstream proof tasks,
+keeping the next evidence plan in the task graph while preserving source
+decision, result, application, effect, delegation, task, contract, project, and
+capability links and still keeping `activation_allowed=false`,
+`capability_enabled=false`, `approval_requests_created=0`,
+`activation_actions_taken=0`, and `external_mutations_taken=0`.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -348,6 +356,7 @@ mutate external systems.
 - [Review downstream result effect task result effect task results](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-decisions.md)
 - [Create downstream result effect task result effect task result effect proposals](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-proposals.md)
 - [Apply downstream result effect task result effect task result effect records](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-application.md)
+- [Create downstream tasks from applied result effect task result effect task result effects](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-tasks.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Documentation index](docs/docs-index.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)

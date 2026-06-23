@@ -205,8 +205,8 @@ chain, without starting remote workers, claiming remote work, or changing
 routing.
 Current iteration packet:
 `docs/next-iteration.md` selects
-`Add downstream task records from applied downstream follow-up result task result
-effect task result effect task result decision effect applications.`
+`Add routing and delegation packets for downstream follow-up result task result
+effect task result effect task result effect tasks.`
 
 Latest delegation result ingestion:
 `subagent_delegation_7c3ac6139928` is completed with
@@ -2270,15 +2270,42 @@ work, or changing routing.
   work, retry work, track spend, run CI, deploy, push, open PRs, or mark the
   active goal complete.
 
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Tasks
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-tasks`
+  now materializes applied downstream result effect task result effect task
+  result decision effect applications into pending local proof tasks.
+- Initial live batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_batch_86372e48fa11`
+  created pending task `task_6392c3a229e5` for `hosted_dashboard` from
+  applied effect `effect_cf0963e8c699`.
+- Final live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_batch_fa514e0d2fb0`
+  reported
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_tasks_already_recorded`
+  with 1 existing downstream task, 0 new tasks, 0 approval requests,
+  0 activation actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-tasks.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-tasks.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Non-claims: downstream result effect task result effect task result effect
+  tasks do not create `approval_requests`, start subagents, call model
+  providers, satisfy proof, mutate activation contracts, mutate external
+  systems, allow activation, enable capabilities, promote trust, schedule
+  work, retry work, track spend, run CI, deploy, push, open PRs, or mark the
+  active goal complete.
+
 ## Next Actions
 
-Current focus: Add downstream task records from applied downstream follow-up result task result effect task result effect task result decision effect applications.
+Current focus: Add routing and delegation packets for downstream follow-up result task result effect task result effect task result effect tasks.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add downstream task records from applied downstream follow-up result task
-   result effect task result effect task result decision effect applications.
-2. Materialize applied downstream result effect task result effect task result
-   decision effect applications into pending local proof tasks while keeping
+   Add routing and delegation packets for downstream follow-up result task
+   result effect task result effect task result effect tasks.
+2. Route the pending downstream result effect task result effect task result
+   effect proof task to read-only evaluator delegation packets while keeping
    activation blocked.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
