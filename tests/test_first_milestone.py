@@ -13614,6 +13614,16 @@ def _capability_activation_followup_result_task_result_effect_task_result_effect
     ]
 
 
+def _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_command(
+    tmp_path: Path,
+) -> list[str]:
+    return [
+        "--root",
+        str(tmp_path),
+        "capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations",
+    ]
+
+
 def _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_tasks_command(
     tmp_path: Path,
 ) -> list[str]:
@@ -14364,6 +14374,25 @@ def _record_one_capability_activation_followup_result_task_result_effect_task_re
     assert (
         main(
             _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_tasks_command(
+                tmp_path
+            )
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+
+def _record_one_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    _record_one_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task(
+        tmp_path,
+        capsys,
+    )
+    assert (
+        main(
+            _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_command(
                 tmp_path
             )
         )
@@ -26868,6 +26897,297 @@ def test_capability_activation_followup_result_task_result_effect_task_result_ef
         "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_tasks_recorded"
     )
     assert len(tasks) == 1
+
+
+def test_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_require_downstream_tasks(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert (
+        main(
+            _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_command(
+                tmp_path
+            )
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations: "
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_no_downstream_tasks"
+    ) in output
+    assert "downstream_tasks: 0" in output
+    assert "routing_decisions_created: 0" in output
+    assert "delegations_created: 0" in output
+    assert "execution_started: 0" in output
+    assert "network_actions_taken: 0" in output
+    assert "external_mutations_taken: 0" in output
+    assert "activation_actions_taken: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batches = (
+        storage.list_recent_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batches()
+    )
+    assert batches[0].status == (
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_no_downstream_tasks"
+    )
+    assert batches[0].downstream_task_count == 0
+    assert batches[0].delegation_count == 0
+    assert storage.list_recent_subagent_delegations(limit=None) == []
+    assert storage.list_recent_approval_requests() == []
+
+    report = (
+        tmp_path
+        / "docs"
+        / "capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md"
+    ).read_text(encoding="utf-8")
+    assert (
+        "# Capability Activation Follow-Up Result Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Delegations"
+        in report
+    )
+    assert (
+        "- status: "
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_no_downstream_tasks"
+    ) in report
+    assert "- Does not start subagents." in report
+    assert "- Does not enable capabilities." in report
+
+
+def test_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_create_read_only_packets(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _record_one_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task(
+        tmp_path,
+        capsys,
+    )
+
+    assert (
+        main(
+            _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_command(
+                tmp_path
+            )
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations: "
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_recorded"
+    ) in output
+    assert "downstream_tasks: 1" in output
+    assert "routing_decisions_created: 1" in output
+    assert "delegations_created: 1" in output
+    assert "existing_delegations: 0" in output
+    assert "execution_started: 0" in output
+    assert "network_actions_taken: 0" in output
+    assert "external_mutations_taken: 0" in output
+    assert "activation_actions_taken: 0" in output
+    assert (
+        "report: "
+        "docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md"
+        in output
+    )
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batch = (
+        storage.list_recent_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batches()[
+            0
+        ]
+    )
+    assert batch.status == (
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_recorded"
+    )
+    assert batch.downstream_task_count == 1
+    assert batch.routing_decision_count == 1
+    assert batch.delegation_count == 1
+    assert batch.existing_delegation_count == 0
+    assert batch.execution_started_count == 0
+    assert batch.network_action_count == 0
+    assert batch.external_mutation_count == 0
+    assert batch.activation_action_count == 0
+    assert len(batch.created_routing_decision_ids) == 1
+    assert len(batch.created_delegation_ids) == 1
+
+    downstream_tasks = [
+        task
+        for task in storage.list_all_tasks()
+        if task.task_type
+        == "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task"
+    ]
+    assert len(downstream_tasks) == 1
+    downstream_task = downstream_tasks[0]
+    assert batch.downstream_task_ids == [downstream_task.id]
+
+    routing_decisions = [
+        decision
+        for decision in storage.list_recent_routing_decisions(limit=None)
+        if decision.task_id == downstream_task.id
+    ]
+    assert len(routing_decisions) == 1
+    assert routing_decisions[0].category == "evidence_review"
+    assert routing_decisions[0].selected_profile == "evaluator"
+    assert routing_decisions[0].status == "selected"
+
+    delegations = [
+        delegation
+        for delegation in storage.list_recent_subagent_delegations(limit=None)
+        if delegation.parent_task_id == downstream_task.id
+    ]
+    assert len(delegations) == 1
+    delegation = delegations[0]
+    assert delegation.assigned_profile == "evaluator"
+    assert delegation.category == "evidence_review"
+    assert delegation.expected_output_schema == "evidence_review"
+    assert delegation.status == "pending"
+    assert delegation.started_at is None
+    assert "write" in delegation.forbidden_actions_json
+    assert "commit" in delegation.forbidden_actions_json
+    assert "external_state_mutation" in delegation.forbidden_actions_json
+    assert "evidence_read" in delegation.allowed_tools_json
+
+    artifact = json.loads(Path(delegation.result_artifact_path).read_text())
+    assert artifact["execution_started"] is False
+    assert artifact["network_actions_taken"] == 0
+    assert artifact["external_mutations_taken"] == 0
+    assert artifact["input_context"]["task_type"] == (
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task"
+    )
+    task_evidence = artifact["input_context"]["task_evidence"]
+    assert task_evidence["source_effect_id"].startswith("effect_")
+    assert task_evidence["source_application_id"].startswith(
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_"
+    )
+    assert task_evidence["source_downstream_result_id"].startswith(
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_"
+    )
+    assert task_evidence["source_application_effect_id"].startswith("effect_")
+    assert task_evidence["source_application_delegation_id"].startswith(
+        "subagent_delegation_"
+    )
+    assert task_evidence["source_downstream_task_id"].startswith("task_")
+    assert task_evidence["source_followup_result_id"].startswith(
+        "capability_activation_followup_result_"
+    )
+    assert task_evidence["upstream_followup_effect_id"].startswith("effect_")
+    assert task_evidence["activation_allowed"] is False
+    assert task_evidence["capability_enabled"] is False
+    assert "next_evidence_plan" in artifact["input_context"]["verification_plan"][
+        "required_gates"
+    ]
+    assert storage.list_recent_approval_requests() == []
+    assert {
+        contract.activation_allowed
+        for contract in storage.list_capability_activation_contracts()
+    } == {False}
+
+    report = (
+        tmp_path
+        / "docs"
+        / "capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md"
+    ).read_text(encoding="utf-8")
+    assert (
+        "# Capability Activation Follow-Up Result Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Delegations"
+        in report
+    )
+    assert (
+        "- status: "
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_recorded"
+        in report
+    )
+    assert "- delegations_created: 1" in report
+    assert f"task={downstream_task.id}" in report
+    assert "schema=evidence_review" in report
+    assert "- Does not start subagents." in report
+    assert "- Does not enable capabilities." in report
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert (
+        "## Capability Activation Follow-Up Result Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Delegations"
+        in dashboard
+    )
+    assert (
+        "- status: "
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_recorded"
+        in dashboard
+    )
+    assert "- delegations_created: 1" in dashboard
+    assert batch.id in dashboard
+
+
+def test_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_are_idempotent(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    _record_one_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task(
+        tmp_path,
+        capsys,
+    )
+
+    command = (
+        _capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_command(
+            tmp_path
+        )
+    )
+    assert main(command) == 0
+    capsys.readouterr()
+
+    assert main(command) == 0
+
+    output = capsys.readouterr().out
+    assert (
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations: "
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_already_recorded"
+    ) in output
+    assert "downstream_tasks: 1" in output
+    assert "routing_decisions_created: 0" in output
+    assert "delegations_created: 0" in output
+    assert "existing_delegations: 1" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    batches = (
+        storage.list_recent_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batches(
+            limit=2
+        )
+    )
+    assert batches[0].status == (
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_already_recorded"
+    )
+    assert batches[0].routing_decision_count == 0
+    assert batches[0].delegation_count == 0
+    assert batches[0].existing_delegation_count == 1
+    assert batches[1].status == (
+        "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_recorded"
+    )
+
+    downstream_task_ids = {
+        task.id
+        for task in storage.list_all_tasks()
+        if task.task_type
+        == "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task"
+    }
+    downstream_delegations = [
+        delegation
+        for delegation in storage.list_recent_subagent_delegations(limit=None)
+        if delegation.parent_task_id in downstream_task_ids
+    ]
+    downstream_routing_decisions = [
+        decision
+        for decision in storage.list_recent_routing_decisions(limit=None)
+        if decision.task_id in downstream_task_ids
+    ]
+    assert len(downstream_delegations) == 1
+    assert len(downstream_routing_decisions) == 1
 
 
 def test_hosted_dashboard_proof_checklist_blocks_blocked_real_cost_tracking_proof(

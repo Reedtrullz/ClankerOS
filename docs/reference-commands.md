@@ -76,10 +76,12 @@ git diff --check
 
 ```bash
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations
 ```
 
 This creates pending downstream proof tasks from applied local effects and
-keeps approval, activation, and external mutation counters at zero.
+then routes those tasks into read-only evaluator delegation packets. Approval,
+activation, execution, network, and external mutation counters stay at zero.
 
 ## Publishing
 

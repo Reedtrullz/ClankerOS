@@ -210,6 +210,10 @@ Apply proposed downstream result effect task result effect task result effect ta
 Create downstream proof tasks from applied downstream result effect task result effect task result effect task result effect task result effect task result decision effects, and prove that capability activation remains blocked.
 ```
 
+```text
+Route downstream result effect task result effect task result effect task result effect task result effect task result effect tasks to read-only evaluator delegation packets, and prove that no subagent starts.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.

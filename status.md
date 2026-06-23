@@ -8364,7 +8364,8 @@
   - `approvals`: pending_approvals 0.
   - `git diff --check`: passed.
   - `eval-after-change`: pass, run `run_feddcf5836ed`.
-  - `eval`: `first_milestone_closed_loop: pass`.
+  - `eval`: `first_milestone_closed_loop: pass`, latest result
+    `run_d65a3d4414ad`.
   - `playbooks`: 1 active playbook, 291 successful runs.
 - Next focus:
   `Add downstream task records from applied downstream follow-up result task
@@ -8424,3 +8425,63 @@
   rows, activation actions, external mutations, routing, dispatch, scheduling,
   CI/deploy action, trust promotion, retries, real cost tracking, activation
   allowance, capability enablement, or proof satisfaction.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Delegations
+
+- Added
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations`
+  for routing pending downstream proof tasks into read-only evaluator
+  delegation packets.
+- Added storage table
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batches`
+  plus typed record/list/readback helpers.
+- Added dashboard and iteration visibility for the new delegation batch.
+- Added tutorial, reference-command, README, and suggested-use docs for the
+  delegation command.
+- Updated GitHub About metadata for `Reedtrullz/ClankerOS`: description plus
+  topics for agent OS, local-first, verification, approvals, task graphs,
+  operator dashboard, worktrees, SQLite, Python, CLI tooling, evals, and
+  Markdown.
+- Live proof first recorded delegation batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_33abb3ae806f`
+  and created pending evaluator delegation
+  `subagent_delegation_4dc659649824` for task `task_3ee0f399e6b6`.
+- Live idempotency rerun recorded
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_7daf5bd6df33`
+  with 1 downstream task, 0 new routing decisions, 0 new delegations, 1
+  existing delegation, 0 execution starts, 0 network actions, 0 activation
+  actions, and 0 external mutations.
+- Evidence:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Verification evidence:
+  - syntax compile check passed for storage, CLI, dashboard, iteration,
+    profile routing, the new delegation module, and tests.
+  - focused delegation-rung tests: 3 passed.
+  - adjacent chain tests: 13 passed.
+  - full suite: 404 passed.
+  - live command and idempotency rerun passed.
+  - `sweep-stuck`: stuck_incidents 0.
+  - `queue-health`: hotspots 0.
+  - `handoff-review`: clear, stale_handoffs 0.
+  - `eval-candidates`: 0.
+  - `approvals`: pending_approvals 0.
+  - `git diff --check`: passed.
+  - `eval-after-change`: pass, run `run_3b0bfb93d0ba`.
+  - `eval`: `first_milestone_closed_loop: pass`.
+  - `playbooks`: 1 active playbook, 296 successful runs.
+  - GitHub metadata readback showed the new description, README homepage, and
+    20 repository topics.
+  - `dashboard` and `iterate` regenerated local operator state.
+- Next focus:
+  `Add result ingestion for downstream follow-up result task result effect task
+  result effect task result effect task result effect task result effect task
+  result effect delegation packets.`
+- Non-claims: local routing decision rows, delegation packet rows, JSON
+  artifacts, and reports only; no subagents started, no model providers
+  called, no approval rows, no activation actions, no external mutations, no
+  dispatch, no CI/deploy action, no scheduling, no retries, no trust
+  promotion, no activation allowance, no capability enablement, and no proof
+  satisfaction.

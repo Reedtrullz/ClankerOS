@@ -2292,6 +2292,17 @@ coverage.
   rows, activation actions, external mutations, routing/dispatch, activation
   allowance, capability enablement, and proof satisfaction at zero.
 
+## Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Delegations
+
+- Pending downstream result effect task result effect task result effect task
+  result effect task result effect task result effect proof tasks can now be
+  routed into read-only evaluator delegation packets. The delegation stage is
+  idempotent by existing `parent_task_id` delegations, records a delegation
+  batch, writes packet JSON under `.clanker/delegations/`, and keeps subagent
+  execution, provider calls, approval rows, activation actions, external
+  mutations, activation allowance, capability enablement, and proof
+  satisfaction at zero.
+
 ## Learning run_349c6a785d89
 
 - Learning: Run run_349c6a785d89 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
@@ -2319,3 +2330,11 @@ coverage.
 ## Learning run_e2b6cba0b53a
 
 - Learning: Run run_e2b6cba0b53a showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_3b0bfb93d0ba
+
+- Learning: Run run_3b0bfb93d0ba showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_d65a3d4414ad
+
+- Learning: Run run_d65a3d4414ad showed that the first closed loop can be verified through file evidence before expanding to broader domains.

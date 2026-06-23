@@ -2921,3 +2921,30 @@ Current focus: Add routing and delegation packets for downstream follow-up resul
    approval rows created, no activation actions occurred, no external systems
    were mutated, no routing/dispatch occurred, no capability was enabled, and
    proof remains unsatisfied.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Delegations
+
+Current focus: Add result ingestion for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect delegation packets.
+
+1. The new command
+   `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations`
+   routes pending downstream proof tasks into read-only evaluator delegation
+   packets.
+2. Live proof first recorded delegation batch
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_33abb3ae806f`
+   and created pending evaluator delegation
+   `subagent_delegation_4dc659649824` for task `task_3ee0f399e6b6`.
+3. The idempotency rerun recorded
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_7daf5bd6df33`
+   with 0 new routing decisions, 0 new delegations, 1 existing delegation, 0
+   execution starts, 0 network actions, 0 activation actions, and 0 external
+   mutations.
+4. Continue with:
+   Add result ingestion for downstream follow-up result task result effect task
+   result effect task result effect task result effect task result effect task
+   result effect delegation packets.
+5. Preserve the current boundary: local routing decisions, pending delegation
+   packets, JSON artifacts, and reports only; no subagents started, no model
+   providers were called, no approval rows were created, no activation actions
+   occurred, no external systems were mutated, no capability was enabled, and
+   proof remains unsatisfied.
