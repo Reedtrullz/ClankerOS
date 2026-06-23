@@ -2303,6 +2303,15 @@ coverage.
   mutations, activation allowance, capability enablement, and proof
   satisfaction at zero.
 
+## Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Results
+
+- Completed read-only evaluator delegation outputs can now be ingested into
+  typed local result records with a batch row and per-result JSON evidence.
+  The ingestion stage is idempotent by delegation id, preserves the upstream
+  task/effect/application/decision/delegation chain, and keeps approval rows,
+  activation actions, external mutations, activation allowance, capability
+  enablement, and proof satisfaction at zero.
+
 ## Learning run_349c6a785d89
 
 - Learning: Run run_349c6a785d89 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
@@ -2338,3 +2347,15 @@ coverage.
 ## Learning run_d65a3d4414ad
 
 - Learning: Run run_d65a3d4414ad showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_9988b9420b95
+
+- Learning: Run run_9988b9420b95 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_1748930f25af
+
+- Learning: Run run_1748930f25af showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_0de2b696835f
+
+- Learning: Run run_0de2b696835f showed that the first closed loop can be verified through file evidence before expanding to broader domains.

@@ -5433,3 +5433,46 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_e5bd91fbd870
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_d65a3d4414ad/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Results
+
+- Current focus is now:
+  `Add operator review decisions for downstream follow-up result task result
+  effect task result effect task result effect task result effect task result
+  effect task result effect task result records.`
+- The new command
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results`
+  ingests completed read-only evaluator outputs as local result records.
+- Live proof recorded result batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_c7eb459388ae`
+  and result record
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_ee5597b442ad`
+  from completed delegation `subagent_delegation_4dc659649824`.
+- The idempotency rerun recorded
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_b549f15b6b12`
+  with 0 new result records and 1 existing result record.
+- Verification: syntax compile passed, focused result-rung tests passed,
+  adjacent delegation/result chain tests passed, full suite passed with 407
+  tests, live command and idempotency rerun passed, `sweep-stuck` found 0
+  incidents, `queue-health` found 0 hotspots, `handoff-review` was clear,
+  `eval-candidates` returned 0, `approvals` returned 0, `git diff --check`
+  passed, `eval-after-change` passed as `run_0de2b696835f`, baseline `eval`
+  passed, playbooks reported 296 successful runs, GitHub metadata readback
+  matched the configured public repo description/homepage/topics, and
+  `dashboard` plus `iterate` regenerated local operator state.
+- Preserve the boundary: local result rows, generated reports, and JSON
+  artifacts only; no subagents started, no provider calls, no approval rows, no
+  activation actions, no external mutations, no activation allowance,
+  capability enablement, or proof satisfaction.
+
+## Run run_9988b9420b95
+
+- Goal ID: goal_cb57d3e0ca0b
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_9988b9420b95/summary.md
+
+## Run run_0de2b696835f
+
+- Goal ID: goal_f2969c99d89e
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_0de2b696835f/summary.md

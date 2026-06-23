@@ -49,7 +49,7 @@ Then read:
 - [Operator Daily Loop Tutorial](docs/tutorial-operator-daily-loop.md)
 - [Approval-Gated Coding Tutorial](docs/tutorial-approval-gated-coding.md)
 - [Public Snapshot Tutorial](docs/tutorial-public-snapshot.md)
-- [Latest Capability Delegation Tutorial](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md)
+- [Latest Capability Result-Ingestion Tutorial](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md)
 
 ## Current Shape
 

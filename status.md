@@ -8485,3 +8485,64 @@
   dispatch, no CI/deploy action, no scheduling, no retries, no trust
   promotion, no activation allowance, no capability enablement, and no proof
   satisfaction.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Results
+
+- Added
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results`
+  for ingesting completed read-only evaluator outputs from the newest
+  downstream delegation packet rung.
+- Added storage tables
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_records`
+  and
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batches`
+  plus typed record/get/list/readback helpers.
+- Added dashboard and iteration visibility for the result batch, a generated
+  result report, per-result JSON evidence, and a capability tutorial for the
+  new command. `docs/tutorial-public-snapshot.md` was also expanded as the
+  public suggested-use guide for coherent GitHub snapshots.
+- Live proof recorded evaluator result artifact
+  `.clanker/delegations/subagent_delegation_4dc659649824-result.json`, result
+  batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_c7eb459388ae`,
+  and result record
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_ee5597b442ad`.
+- Live idempotency rerun recorded batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_b549f15b6b12`
+  with 1 completed delegation, 0 new result records, 1 existing result record,
+  0 approval requests, 0 activation actions, and 0 external mutations.
+- Evidence:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results/subagent_delegation_4dc659649824-hosted-dashboard.json`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`
+  - `docs/tutorial-public-snapshot.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Verification evidence:
+  - syntax compile check passed for storage, CLI, dashboard, iteration, the
+    new result module, and tests.
+  - focused result-rung tests: 3 passed.
+  - adjacent delegation/result chain tests: 9 passed.
+  - full suite: 407 passed.
+  - live record-result, first ingestion, and idempotency rerun passed.
+  - `sweep-stuck`: stuck_incidents 0.
+  - `queue-health`: hotspots 0.
+  - `handoff-review`: clear, stale_handoffs 0.
+  - `eval-candidates`: 0.
+  - `approvals`: pending_approvals 0.
+  - `git diff --check`: passed.
+  - `eval-after-change`: pass, run `run_0de2b696835f`.
+  - `eval`: `first_milestone_closed_loop: pass`.
+  - `playbooks`: 1 active playbook, 296 successful runs.
+  - GitHub metadata readback showed the configured description, README
+    homepage, ADMIN viewer permission, and 20 repository topics.
+  - `dashboard` and `iterate` regenerated local operator state.
+- Next focus:
+  `Add operator review decisions for downstream follow-up result task result
+  effect task result effect task result effect task result effect task result
+  effect task result effect task result records.`
+- Non-claims: local delegation result artifact, result rows, JSON evidence, and
+  reports only; no subagents started, no model providers called, no approval
+  rows, no activation actions, no external mutations, no dispatch, no
+  CI/deploy action, no scheduling, no retries, no trust promotion, no
+  activation allowance, no capability enablement, and no proof satisfaction.

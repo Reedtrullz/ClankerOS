@@ -1,0 +1,42 @@
+{
+  "assigned_profile": "evaluator",
+  "category": "evidence_review",
+  "completed_at": "2026-06-23T12:33:37.462899+00:00",
+  "created_at": "2026-06-23T11:58:11.723751+00:00",
+  "execution_started": false,
+  "expected_output_schema": "evidence_review",
+  "external_mutations_taken": 0,
+  "id": "subagent_delegation_4dc659649824",
+  "network_actions_taken": 0,
+  "non_claims": [
+    "No subagent was started by this ingestion command.",
+    "No model provider was called by this ingestion command.",
+    "No file, git, approval, or external state was mutated beyond this local result record."
+  ],
+  "parent_goal_id": "goal_f6a2102cca01",
+  "parent_task_id": "task_3ee0f399e6b6",
+  "recorded_by": "operator",
+  "result_summary": "Evaluator recorded the next downstream result-effect task proof plan and kept activation blocked.",
+  "routing_decision_id": "routing_decision_a34094305406",
+  "status": "completed",
+  "structured_output": {
+    "evidence": [
+      {
+        "status": "planned",
+        "summary": "Collect and review downstream result-effect task result-effect task result-effect task result-effect task result-effect task proof before any activation."
+      }
+    ],
+    "findings": [
+      {
+        "severity": "medium",
+        "summary": "Keep hosted dashboard activation blocked until operator-reviewed capability proof exists."
+      }
+    ],
+    "non_claims": [
+      "No subagent was started by this result recording.",
+      "No external system was mutated.",
+      "Capability activation remains blocked."
+    ]
+  },
+  "title": "Plan next downstream result effect task result effect task result effect task result effect task result effect task result effect proof evidence for hosted_dashboard"
+}

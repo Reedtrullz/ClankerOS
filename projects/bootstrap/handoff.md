@@ -2948,3 +2948,29 @@ Current focus: Add result ingestion for downstream follow-up result task result 
    providers were called, no approval rows were created, no activation actions
    occurred, no external systems were mutated, no capability was enabled, and
    proof remains unsatisfied.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Results
+
+Current focus: Add operator review decisions for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result records.
+
+1. The new command
+   `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results`
+   ingests completed read-only evaluator outputs into local result records.
+2. Live proof first recorded result batch
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_c7eb459388ae`
+   and result record
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_ee5597b442ad`
+   from completed delegation `subagent_delegation_4dc659649824`.
+3. The idempotency rerun recorded
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_b549f15b6b12`
+   with 0 new result records, 1 existing result record, 0 approval requests, 0
+   activation actions, and 0 external mutations.
+4. Continue with:
+   Add operator review decisions for downstream follow-up result task result
+   effect task result effect task result effect task result effect task result
+   effect task result effect task result records.
+5. Preserve the current boundary: local result rows, generated reports, and
+   JSON artifacts only; no subagents started, no model providers were called,
+   no approval rows were created, no activation actions occurred, no external
+   systems were mutated, no capability was enabled, and proof remains
+   unsatisfied.
