@@ -205,8 +205,9 @@ chain, without starting remote workers, claiming remote work, or changing
 routing.
 Current iteration packet:
 `docs/next-iteration.md` selects
-`Add operator review decisions for downstream follow-up result task result effect
-task result effect task result records.`
+`Add local downstream follow-up result task result effect task result effect task
+result decision effect proposals from accepted blocked result effect task result
+effect task results.`
 
 Latest delegation result ingestion:
 `subagent_delegation_7c3ac6139928` is completed with
@@ -2185,15 +2186,47 @@ work, or changing routing.
   schedule work, retry work, track spend, run CI, deploy, push, open PRs, mark
   the active goal complete, or mutate external systems.
 
+## Latest Downstream Result Effect Task Result Effect Task Decisions
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-decide`
+  now records operator review decisions over downstream result effect task
+  result effect result records.
+- Initial live decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_decision_5a67d5607d7e`
+  accepted result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_968c47605706`
+  while keeping activation blocked for `hosted_dashboard`.
+- Idempotent reruns now report
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_decisions_already_recorded`
+  with 0 new decisions, 1 existing decision, 0 approval requests,
+  0 activation actions, and 0 external mutations. The report still names the
+  existing decided result after reruns.
+- Decision semantics: `request_more_evidence` and `defer_review` are
+  preliminary review states that can be superseded by a later
+  `accept_keep_blocked`; accepted keep-blocked decisions are terminal for the
+  next proposed-effect slice.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-decisions.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-decisions.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Non-claims: downstream result effect task result effect task result
+  decisions do not create `approval_requests`, start subagents, call model
+  providers, satisfy proof, mutate activation contracts, mutate external
+  systems, allow activation, enable capabilities, promote trust, schedule
+  work, retry work, track spend, run CI, deploy, push, open PRs, or mark the
+  active goal complete.
+
 ## Next Actions
 
-Current focus: Add operator review decisions for downstream follow-up result task result effect task result effect task result records.
+Current focus: Add local downstream follow-up result task result effect task result effect task result decision effect proposals from accepted blocked result effect task result effect task results.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add operator review decisions for downstream follow-up result task result
-   effect task result effect task result records.
-2. Review the ingested downstream result effect task result effect result
-   record with an explicit operator decision while keeping activation blocked.
+   Add local downstream follow-up result task result effect task result effect
+   task result decision effect proposals from accepted blocked result effect
+   task result effect task results.
+2. Convert accepted blocked downstream result effect task result effect result
+   decisions into proposed local effects while keeping activation blocked.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.

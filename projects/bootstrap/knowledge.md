@@ -1907,6 +1907,16 @@ coverage.
   links while keeping approval rows, activation actions, external mutations,
   activation allowance, capability enablement, and proof satisfaction at zero.
 
+## Learning effect task result decision bridge
+
+- Downstream result effect task result effect result decisions should allow
+  preliminary `request_more_evidence` or `defer_review` rows to be superseded
+  by a later `accept_keep_blocked` decision for the same result. Accepted
+  keep-blocked decisions are the terminal source for the next proposed-effect
+  slice while preserving zero approval rows, zero activation actions, zero
+  external mutations, `activation_allowed=false`, and
+  `capability_enabled=false`.
+
 ## Learning eval serialization
 
 - Run `eval` and `eval-after-change` serially. They share the
@@ -1944,3 +1954,11 @@ coverage.
 ## Learning run_726f7a1ffd32
 
 - Learning: Run run_726f7a1ffd32 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_ac030ed77372
+
+- Learning: Run run_ac030ed77372 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_365c9386fb0c
+
+- Learning: Run run_365c9386fb0c showed that the first closed loop can be verified through file evidence before expanding to broader domains.

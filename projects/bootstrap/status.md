@@ -4269,3 +4269,67 @@ are visible in the dashboard and are not active until approved.
   satisfaction, activation allowance, capability enablement, trust promotion,
   scheduler, retries, cost tracking, CI/deploy, push, PR, or external
   mutation.
+
+## Run run_ac030ed77372
+
+- Goal ID: goal_409dc012b13e
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_ac030ed77372/summary.md
+
+## Run run_365c9386fb0c
+
+- Goal ID: goal_95ba8bec4e79
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_365c9386fb0c/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Task Decisions
+
+- Added
+  `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-decide`
+  to record operator review decisions over downstream result effect task
+  result effect result records.
+- The command allows `request_more_evidence` or `defer_review` rows to be
+  superseded by a later `accept_keep_blocked` decision for the same result.
+  Accepted keep-blocked decisions are terminal for the next proposed-effect
+  slice.
+- Initial live decision:
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_decision_5a67d5607d7e`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_decisions_recorded`,
+  decided result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_968c47605706`
+  for `hosted_dashboard`.
+- Final live idempotency pass:
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_decision_36376c4118c8`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_decisions_already_recorded`,
+  with 0 new decisions, 1 existing decision, 0 approval requests,
+  0 activation actions, and 0 external mutations. The generated report keeps
+  the existing decided result visible after reruns.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-decisions.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-decisions.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `docs/handoff-review.md`
+- Verification evidence:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "result_effect_task_result_effect_task_result_decisions"`
+    -> red before implementation, red for accept-after-more-evidence
+    semantics, then 4 passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "result_task_result"`
+    -> 45 passed.
+  - `python3 -m pytest -q` -> 328 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result effect task result decisions" --file agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_decisions.py`
+    -> pass, run `run_ac030ed77372`.
+  - `python3 -m agent_os.cli eval` -> pass, run `run_365c9386fb0c`.
+  - `python3 -m agent_os.cli playbooks` -> 1 active playbook with
+    251 successful runs.
+- Next focus:
+  `Add local downstream follow-up result task result effect task result effect
+  task result decision effect proposals from accepted blocked result effect
+  task result effect task results.`
+- Non-claims: local operator review decision rows only; no
+  `approval_requests`, subagent execution, model-provider calls, proof
+  satisfaction, activation allowance, capability enablement, trust promotion,
+  scheduler, retries, cost tracking, CI/deploy, push, PR, or external
+  mutation.

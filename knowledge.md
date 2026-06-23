@@ -510,6 +510,13 @@
   `first_milestone_closed_loop` result path and should be run serially, not in
   parallel. A parallel invocation can leave a failed run artifact even when the
   serial baseline eval passes immediately afterward.
+- Downstream result effect task result effect result decisions should allow
+  preliminary `request_more_evidence` or `defer_review` rows to be superseded
+  by a later `accept_keep_blocked` decision for the same result. Accepted
+  keep-blocked decisions are the terminal source for the next proposed-effect
+  slice while preserving zero approval rows, zero activation actions, zero
+  external mutations, `activation_allowed=false`, and
+  `capability_enabled=false`.
 
 ## Stable Distilled Learnings
 

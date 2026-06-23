@@ -234,6 +234,12 @@ Core layers for the bootstrap:
   effect, delegation, task, contract, project, and capability links while
   keeping approval rows, external mutations, activation actions, activation
   allowance, capability enablement, and proof satisfaction at zero.
+- Capability activation follow-up result task result effect task result effect
+  task result decisions: operators can record accept-keep-blocked,
+  request-more-evidence, or defer decisions for downstream result effect task
+  result effect result records while keeping approval rows, external
+  mutations, activation actions, activation allowance, capability enablement,
+  and proof satisfaction at zero.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON
@@ -958,6 +964,26 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-delegations.md`,
   records read-only routing decisions and pending delegation packets, and
   keeps `execution_started: 0`, `network_actions_taken: 0`,
+  `approval_requests_created: 0`, `activation_actions_taken: 0`,
+  `external_mutations_taken: 0`, `activation_allowed: false`, and
+  `capability_enabled: false`.
+- Capability activation follow-up result task result effect task result effect
+  task results: available through
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-results`
+  after completed downstream result effect task result effect delegation
+  outputs exist. The command writes
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-results.md`,
+  stores local result rows and JSON artifacts, and keeps
+  `approval_requests_created: 0`, `activation_actions_taken: 0`,
+  `external_mutations_taken: 0`, `activation_allowed: false`, and
+  `capability_enabled: false`.
+- Capability activation follow-up result task result effect task result effect
+  task result decisions: available through
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-decide`
+  after downstream result effect task result effect task result records exist.
+  The command writes
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-decisions.md`,
+  stores local operator decision rows, and keeps
   `approval_requests_created: 0`, `activation_actions_taken: 0`,
   `external_mutations_taken: 0`, `activation_allowed: false`, and
   `capability_enabled: false`.

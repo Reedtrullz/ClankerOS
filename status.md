@@ -7092,3 +7092,63 @@
   approval-row creation, subagent execution, model-provider call, proof
   satisfaction, activation allowance, capability enablement, CI/deploy, push,
   PR, trust promotion, scheduler, retry, cost tracking, or external mutation.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Decisions
+
+- Added
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-decide`
+  for recording operator accept-keep-blocked/request-more-evidence/defer
+  decisions over downstream result effect task result effect result records.
+- Decision idempotency now treats accepted keep-blocked decisions as terminal
+  while allowing preliminary `request_more_evidence` or `defer_review` rows to
+  be superseded by a later accepted blocked decision for the same result.
+- Live first decision recorded
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_decision_5a67d5607d7e`
+  for result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_968c47605706`
+  and `hosted_dashboard`, with 1 decision recorded, 1 accepted
+  keep-blocked decision, 0 approval requests, 0 activation actions, and
+  0 external mutations.
+- Live idempotency passes recorded `already_recorded` rows with 0 new
+  decisions, 1 existing decision, 0 approval requests, 0 activation actions,
+  and 0 external mutations. The report keeps the existing decided result
+  visible after idempotent reruns.
+- Evidence:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-decisions.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-decisions.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `docs/handoff-review.md`
+- Verification evidence:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "result_effect_task_result_effect_task_result_decisions"`
+    -> failed before implementation on the missing command, then failed again
+    on accept-after-more-evidence semantics before the idempotency fix.
+  - Focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "result_effect_task_result_effect_task_result_decisions"`
+    -> 4 passed, 324 deselected.
+  - Adjacent chain:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "result_task_result"`
+    -> 45 passed, 283 deselected.
+  - `python3 -m py_compile agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_decisions.py tests/test_first_milestone.py`
+    -> passed.
+  - `python3 -m pytest -q` -> 328 passed in 310.95s.
+  - `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800` ->
+    stuck_incidents: 0.
+  - `python3 -m agent_os.cli queue-health` -> hotspots: 0.
+  - `python3 -m agent_os.cli eval-candidates` -> eval_candidates: 0.
+  - `python3 -m agent_os.cli approvals` -> pending_approvals: 0.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result effect task result decisions" --file agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_decisions.py`
+    -> pass, run `run_ac030ed77372`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`,
+    run `run_365c9386fb0c`.
+  - `python3 -m agent_os.cli playbooks` -> playbooks: 1,
+    `first-milestone-closed-loop` active with 251 successful runs.
+- Next focus:
+  `Add local downstream follow-up result task result effect task result effect
+  task result decision effect proposals from accepted blocked result effect
+  task result effect task results.`
+- Non-claims: local operator review decision records only; no approval-row
+  creation, subagent execution, model-provider call, proof satisfaction,
+  activation allowance, capability enablement, CI/deploy, push, PR, trust
+  promotion, scheduler, retry, cost tracking, or external mutation.
