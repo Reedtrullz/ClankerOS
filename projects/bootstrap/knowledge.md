@@ -2452,3 +2452,23 @@ coverage.
 ## Learning run_b521af5fb9d5
 
 - Learning: Run run_b521af5fb9d5 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning: Deep Task Rungs Preserve Applied Effect Links
+
+- Applied downstream decision-effect task rungs should create exactly one
+  pending proof task per applied effect and use the applied effect id as the
+  idempotency source.
+- Tests should fetch the effect prefix for the current application rung, not
+  the neighboring source result prefix; adjacent old/new task-rung slices catch
+  this class of off-by-one generated-name error.
+- The task rung boundary remains local task graph state only: no routing,
+  dispatch, approval rows, activation actions, external mutations, capability
+  enablement, or proof satisfaction.
+
+## Learning run_cf82e9d703c6
+
+- Learning: Run run_cf82e9d703c6 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_a4a2adc56f8c
+
+- Learning: Run run_a4a2adc56f8c showed that the first closed loop can be verified through file evidence before expanding to broader domains.

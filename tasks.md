@@ -158,7 +158,8 @@
 - [x] Add retry/replan recommendations for failed `run-task` evidence packets and blocked planned tasks. <!-- score=9 complexity=4 -->
 - [x] Add local downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals from accepted blocked result effect task result effect task result effect task results. <!-- score=9 complexity=4 -->
 - [x] Add local application records for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals. <!-- score=9 complexity=4 -->
-- [ ] Add downstream task records from applied downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect applications. <!-- score=9 complexity=4 -->
+- [x] Add downstream task records from applied downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect applications. <!-- score=9 complexity=4 -->
+- [ ] Add routing and delegation packets for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result effect tasks. <!-- score=9 complexity=4 -->
 
 ## blocked
 

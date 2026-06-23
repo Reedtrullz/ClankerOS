@@ -8845,3 +8845,51 @@
   dispatch, scheduling, retries, trust promotion, capability enablement,
   proof satisfaction, hosted dashboard, remote worker, autonomous scheduler,
   browser/desktop adapter action, CI run, or deployment.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Tasks
+
+- Added the next local-only downstream task materialization rung:
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks`.
+- The command reads applied accepted-blocked downstream result-effect
+  task-result decision effects from the latest application rung and creates
+  pending high-risk proof tasks in the local task graph.
+- Live proof first recorded task batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_5e72ca798430`
+  and pending task `task_e7034260ac20` for applied effect
+  `effect_96080d734142`.
+- The idempotency rerun recorded task batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_8fdc7562793d`
+  with 0 new tasks, 1 existing downstream task, 0 approval requests, 0
+  activation actions, and 0 external mutations.
+- Generated proof:
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`.
+- Operator docs added:
+  `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`,
+  plus README, docs index, command reference, suggested-use, operating summary,
+  dashboard, and iteration visibility.
+- Verification evidence:
+  - syntax compile passed for `agent_os/*.py` and
+    `tests/test_first_milestone.py`.
+  - focused new task-rung tests: 3 passed.
+  - adjacent old/new task-rung slice: 6 passed.
+  - full suite: 426 passed in 746.06s.
+  - live command and idempotency rerun passed.
+  - `sweep-stuck`: stuck_incidents 0.
+  - `queue-health`: hotspots 0.
+  - `eval-candidates`: 0.
+  - `approvals`: pending_approvals 0.
+  - `git diff --check`: passed.
+  - `eval-after-change`: pass, run `run_cf82e9d703c6`.
+  - `eval`: `first_milestone_closed_loop: pass`.
+  - `playbooks`: 1 active playbook, 309 successful runs.
+  - GitHub metadata readback showed PUBLIC visibility, default branch `main`,
+    configured description, README homepage, ADMIN viewer permission, and 20
+    repository topics.
+  - `dashboard` and `iterate` regenerated local operator state.
+- The next queue item is routing and delegation packets for these new pending
+  proof tasks.
+- Non-claims: local pending task rows and generated reports only; no approval
+  rows, activation actions, external mutations, routing, dispatch, scheduling,
+  retries, trust promotion, capability enablement, proof satisfaction, CI run,
+  deployment, hosted dashboard, remote worker, autonomous scheduler, or
+  browser/desktop adapter action.

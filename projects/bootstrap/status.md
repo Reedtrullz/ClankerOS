@@ -5605,3 +5605,47 @@ enablement, and proof satisfaction at zero.
 - Goal ID: goal_89e519cf03c8
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_b521af5fb9d5/summary.md
+
+## Run run_cf82e9d703c6
+
+- Goal ID: goal_f4619899fad2
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_cf82e9d703c6/summary.md
+
+## Run run_a4a2adc56f8c
+
+- Goal ID: goal_05c79fcba94f
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_a4a2adc56f8c/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Tasks
+
+- Current focus is now:
+  `Add routing and delegation packets for downstream follow-up result task
+  result effect task result effect task result effect task result effect task
+  result effect task result effect task result effect task result effect
+  tasks.`
+- The new command
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks`
+  creates pending downstream proof tasks from applied local application
+  records.
+- Live proof first recorded task batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_5e72ca798430`
+  and pending task `task_e7034260ac20` for effect `effect_96080d734142`.
+- The idempotency rerun recorded
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_8fdc7562793d`
+  with 0 new tasks, 1 existing downstream task, 0 approval requests, 0
+  activation actions, and 0 external mutations.
+- Verification: syntax compile passed; focused new task-rung tests passed with
+  3 tests; adjacent old/new task-rung slice passed with 6 tests; full suite
+  passed with 426 tests; live command and idempotency rerun passed;
+  `sweep-stuck`, `queue-health`, `eval-candidates`, and `approvals` were
+  clear; `git diff --check` passed; `eval-after-change` passed as
+  `run_cf82e9d703c6`; baseline `eval` passed; playbooks reported 309
+  successful runs; GitHub metadata readback matched the configured public repo
+  description, README homepage, default branch, ADMIN permission, and 20
+  topics; `dashboard` and `iterate` regenerated local operator state.
+- Preserve the boundary: local pending task rows and generated reports only;
+  no approval rows were created, no activation actions occurred, no external
+  systems were mutated, no routing/dispatch occurred, no capability was
+  enabled, and proof remains unsatisfied.

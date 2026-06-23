@@ -1180,6 +1180,18 @@ See
 `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`
 for the application report and idempotency check.
 
+After those local application records exist, create the next pending proof
+tasks:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks
+python3 -m agent_os.cli dashboard
+```
+
+See
+`docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`
+for the expected task batch report and idempotency check.
+
 ## When To Commit And Push
 
 Commit when:
