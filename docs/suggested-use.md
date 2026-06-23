@@ -9,6 +9,7 @@ harder to overclaim.
 | If you want to... | Start with... |
 | --- | --- |
 | Learn the basics | `docs/getting-started.md` |
+| Pick a practical operator recipe | `docs/operator-recipes.md` |
 | Understand the vocabulary | `docs/concepts.md` |
 | Understand the local architecture | `docs/architecture.md` |
 | Find a command quickly | `docs/reference-commands.md` |
@@ -1275,6 +1276,18 @@ See
 `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`
 for the application report, idempotency check, and safety counters.
 
+After the latest application row exists, materialize the next downstream proof
+task:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks
+python3 -m agent_os.cli dashboard
+```
+
+See
+`docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`
+for the task report, idempotency check, and safety counters.
+
 ## When To Commit And Push
 
 Commit when:
@@ -1291,12 +1304,15 @@ For a fuller checklist, use `docs/tutorial-public-snapshot.md`.
 
 ## Practical Next Slices
 
-Good next slices now favor read-only delegation routing, then operator review
-decisions and capability-specific guards after local result records exist:
+Good next slices now favor read-only delegation routing for the latest pending
+proof tasks, then operator review decisions and capability-specific guards
+after local result records exist:
 
-- completed-delegation result ingestion for downstream result effect task
-  result effect task result effect task result effect task result effect task
-  result effect task result effect task delegation packets;
+- routing and delegation packets for downstream result effect task result
+  effect task result effect task result effect task result effect task result
+  effect task result effect task result effect tasks;
+- completed-delegation result ingestion for the resulting read-only evaluator
+  packets;
 - operator review decisions for downstream result effect task result effect
   task result effect task result effect task result effect task result effect
   task result records;

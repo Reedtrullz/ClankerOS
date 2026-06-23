@@ -12,6 +12,9 @@ system.
   prompts.
 - `docs/suggested-use.md` - operator prompts, loops, approval boundaries, and
   publishing guidance.
+- `docs/operator-recipes.md` - short recipes for returning to a workspace,
+  registering a target repo, planning, running one task, capturing specialist
+  input, and publishing a snapshot.
 - `docs/concepts.md` - glossary for goals, tasks, evidence, approvals,
   effects, worktrees, delegations, memory, skills, and non-claims.
 - `docs/architecture.md` - local control plane, runtime artifacts, safety
@@ -19,6 +22,8 @@ system.
 - `docs/reference-commands.md` - compact command map.
 - `docs/tutorial-operator-daily-loop.md` - daily operator loop for returning
   to a workspace, choosing one narrow move, and verifying before claims.
+- `docs/tutorial-first-target-repo.md` - register a real local git repository,
+  create a planning packet, run one task, and inspect the evidence.
 - `docs/tutorial-project-registry.md` - register local git repositories,
   inspect registry status, and write durable project context packets before
   running work.
@@ -36,6 +41,7 @@ system.
 ## Core Tutorials
 
 - `docs/tutorial-first-loop.md`
+- `docs/tutorial-first-target-repo.md`
 - `docs/tutorial-project-registry.md`
 - `docs/tutorial-goal-lifecycle.md`
 - `docs/tutorial-run-task.md`
@@ -100,6 +106,7 @@ verbose because each rung preserves source links and explicit non-claims.
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`
 
 ## Current State
 

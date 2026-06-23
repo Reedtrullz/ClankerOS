@@ -205,10 +205,23 @@ chain, without starting remote workers, claiming remote work, or changing
 routing.
 Current iteration packet:
 `docs/next-iteration.md` selects
-Add downstream task records from applied downstream follow-up result task result
+Add routing and delegation packets for downstream follow-up result task result
 effect task result effect task result effect task result effect task result
-effect task result effect task result decision effect applications.
-Exact focus: Add downstream task records from applied downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect applications.
+effect task result effect task result effect tasks.
+Exact focus: Add routing and delegation packets for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result effect tasks.
+
+Latest downstream result decision-effect task records:
+`python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks`
+now materializes applied accepted-blocked generic `effects` rows into pending
+downstream proof tasks. Live proof created task `task_9da458146eb5` for
+`hosted_dashboard` from `effect_1427bc069283`; the idempotency rerun recorded
+batch
+`capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_af46c0ccab90`,
+found 1 existing downstream task, and created 0 new tasks. The report is
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`.
+This remains a local task-graph bridge only: no approval requests, activation
+actions, external mutations, capability enablement, proof satisfaction, CI, or
+deployment happened.
 
 Latest downstream result decision-effect application:
 `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply`

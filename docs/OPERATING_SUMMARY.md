@@ -1320,6 +1320,19 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   `activation_actions_taken: 0`, `external_mutations_taken: 0`,
   `activation_allowed: false`, `capability_enabled: false`, and proof
   satisfaction blocked.
+- Capability activation follow-up result task result effect task result effect
+  task result effect task result effect task result effect task result effect
+  task result effect task result effect tasks: available through
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks`
+  after latest accepted blocked downstream decision-effect applications exist.
+  The command writes
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`,
+  records pending high-risk downstream proof tasks, preserves source effect,
+  application, result, delegation, downstream task, contract, project, and
+  capability links, and keeps `approval_requests_created: 0`,
+  `activation_actions_taken: 0`, `external_mutations_taken: 0`,
+  `activation_allowed: false`, `capability_enabled: false`, routing,
+  execution, proof satisfaction, and external mutation blocked.
 - Eval candidate listing: available through
   `python3 -m agent_os.cli eval-candidates` and mirrored into
   `docs/dashboard.md`.

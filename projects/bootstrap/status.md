@@ -1,15 +1,19 @@
 # Bootstrap Status
 
-Latest local capability continuation: accepted downstream result decision-effect
-proposals can now be applied as local application records only through
-`capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply`.
-Live proof applied `effect_1427bc069283` for `hosted_dashboard`, wrote
-`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`,
-and the idempotency rerun found one existing applied effect with zero new
-effects. The next iteration packet now selects downstream task records from
-those applied application rows. This is still local evidence only: no approval
-requests, activation actions, external mutations, capability enablement,
-runtime CI/deploy proof, or trust promotion occurred.
+Latest local capability continuation: applied downstream result
+decision-effect application rows can now materialize pending downstream proof
+tasks through
+`capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks`.
+Live proof created pending task `task_9da458146eb5` for `hosted_dashboard`
+from applied effect `effect_1427bc069283`; the idempotency rerun recorded
+batch
+`capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_af46c0ccab90`
+with 0 new tasks and 1 existing downstream task. The report is
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`.
+The next iteration packet now selects routing and delegation packets for those
+pending proof tasks. This is still local evidence only: no approval requests,
+activation actions, external mutations, capability enablement, proof
+satisfaction, runtime CI/deploy proof, or trust promotion occurred.
 
 Milestone 1 is implemented and locally verified. Milestone 2 has a static
 dashboard, queue-health view, failed-verification incidents, stuck-task
@@ -5812,3 +5816,15 @@ local application records for those proposed effects.
 - Goal ID: goal_c8b95d6fc768
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_a6be7fee3515/summary.md
+
+## Run run_8328cc71eb0b
+
+- Goal ID: goal_823dc72e5e07
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_8328cc71eb0b/summary.md
+
+## Run run_0ed134c8fdb8
+
+- Goal ID: goal_7a8d8728b269
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_0ed134c8fdb8/summary.md

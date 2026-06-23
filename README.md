@@ -54,23 +54,23 @@ Then read:
 
 - [Getting Started](docs/getting-started.md)
 - [Suggested Use](docs/suggested-use.md)
+- [Operator Recipes](docs/operator-recipes.md)
 - [Concepts](docs/concepts.md)
 - [Architecture](docs/architecture.md)
 - [Command Reference](docs/reference-commands.md)
 - [Documentation Index](docs/docs-index.md)
 - [First Loop Tutorial](docs/tutorial-first-loop.md)
+- [First Target Repository Tutorial](docs/tutorial-first-target-repo.md)
 - [Project Registry Tutorial](docs/tutorial-project-registry.md)
 - [Goal Planning Lifecycle Tutorial](docs/tutorial-goal-lifecycle.md)
 - [Run A Planned Task Tutorial](docs/tutorial-run-task.md)
 - [Operator Daily Loop Tutorial](docs/tutorial-operator-daily-loop.md)
 - [Approval-Gated Coding Tutorial](docs/tutorial-approval-gated-coding.md)
 - [Public Snapshot Tutorial](docs/tutorial-public-snapshot.md)
-- [Latest Capability Decision Tutorial](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md)
-- [Latest Capability Proposal Tutorial](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md)
-- [Latest Capability Application Tutorial](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md)
-- [Latest Capability Task Tutorial](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md)
-- [Latest Capability Delegation Tutorial](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md)
-- [Latest Capability Result Tutorial](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md)
+
+The capability activation ladder has many intentionally verbose proof
+tutorials. Use the [Documentation Index](docs/docs-index.md#capability-follow-up-tutorials)
+when you need a specific blocked-activation rung.
 
 Register and inspect a target repository before asking ClankerOS to touch it:
 
@@ -114,6 +114,23 @@ manual rerun guidance. If a planned task is blocked, `task-recommendations`
 records `blocked_planned_task_replan` guidance. These records are local
 operator guidance only; they do not retry or change task status by themselves.
 
+## Command Surface
+
+| Need | Command |
+| --- | --- |
+| Initialize local state | `python3 -m agent_os.cli init` |
+| See current operator state | `python3 -m agent_os.cli dashboard` |
+| Select the next narrow slice | `python3 -m agent_os.cli iterate` |
+| Register a local git repo | `python3 -m agent_os.cli register-project <name> --path <path>` |
+| Create planning state | `goal`, `plan`, `contract`, `tasks` |
+| Run one planned task | `python3 -m agent_os.cli run-task <task_id> --profile tester` |
+| Review evidence | `review`, `evidence`, `replay-summary` |
+| Inspect approvals | `python3 -m agent_os.cli approvals` |
+| Prepare GitHub handoff | `python3 -m agent_os.cli github-handoff <effect_id>` |
+
+For common workflows, use [Operator Recipes](docs/operator-recipes.md). For a
+complete command map, use [Command Reference](docs/reference-commands.md).
+
 ## Current Shape
 
 ClankerOS is a Python CLI with a local SQLite control plane, generated Markdown
@@ -141,6 +158,19 @@ For the detailed state, use:
 - [Generated Evidence Reports](docs/docs-index.md#generated-evidence-reports)
 - [Status Log](status.md)
 - [Bootstrap Handoff](projects/bootstrap/handoff.md)
+
+## Key Files
+
+- `agent_os/cli.py` - command entrypoint.
+- `agent_os/storage.py` - SQLite schema and persistence layer.
+- `agent_os/dashboard.py` - generated operator dashboard.
+- `agent_os/iteration.py` - next-iteration packet generator.
+- `docs/OPERATING_SUMMARY.md` - current architecture and proof state.
+- `docs/dashboard.md` - generated operator cockpit.
+- `docs/next-iteration.md` - generated next work packet.
+- `tasks.md` - human-readable momentum queue.
+- `status.md` - chronological implementation evidence.
+- `projects/bootstrap/` - bootstrap project continuity notes.
 
 ## Public Snapshot Checklist
 

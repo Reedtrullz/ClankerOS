@@ -112,6 +112,13 @@ coverage.
   `activation_allowed=false`, `capability_enabled=false`, and zero approval,
   activation, and external mutation counters.
 
+## Learning: Downstream Task Materialization
+
+- Applied blocked capability effects should become pending high-risk proof
+  tasks before any routing, delegation, retry, or execution step exists.
+- Idempotency should key downstream task creation on the source effect id, so
+  reruns preserve the evidence trail while avoiding duplicate proof tasks.
+
 ## Learning: Stable Learning Distillation
 
 - Repeated run learnings are episodic evidence until a deterministic local
@@ -2558,3 +2565,11 @@ coverage.
 ## Learning run_a6be7fee3515
 
 - Learning: Run run_a6be7fee3515 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_8328cc71eb0b
+
+- Learning: Run run_8328cc71eb0b showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_0ed134c8fdb8
+
+- Learning: Run run_0ed134c8fdb8 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

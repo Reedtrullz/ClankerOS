@@ -1,5 +1,57 @@
 # Status
 
+## 2026-06-24 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Records
+
+- Added the next local-only task materialization rung:
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks`.
+- The command reads applied accepted-blocked generic effects from the latest
+  downstream decision-effect application rung and creates pending high-risk
+  downstream proof tasks while preserving source effect, application, result,
+  delegation, downstream task, contract, project, and capability links.
+- Live proof first recorded batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_0ba664b5f07b`
+  and created pending task `task_9da458146eb5` for `hosted_dashboard` from
+  applied effect `effect_1427bc069283`, linked to application
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_025059bc5fb8`.
+- The idempotency rerun recorded batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_batch_af46c0ccab90`
+  with 1 applied downstream effect, 0 new tasks, 1 existing downstream task, 0
+  approval requests, 0 activation actions, and 0 external mutations.
+- Generated proof:
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`.
+- Operator docs added or refreshed:
+  `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`,
+  `docs/tutorial-first-target-repo.md`, `docs/operator-recipes.md`, README,
+  docs index, command reference, suggested-use, operating summary, dashboard,
+  next-iteration, and tasks visibility.
+- GitHub metadata readback for `Reedtrullz/ClankerOS` shows PUBLIC
+  visibility, default branch `main`, the populated About description,
+  README homepage, and 20 repository topics.
+- Verification evidence:
+  - syntax compile passed for touched Python modules and
+    `tests/test_first_milestone.py`.
+  - focused latest task-materialization slice: 3 passed, 443 deselected.
+  - full suite: 446 passed in 882.80s.
+  - live task command and idempotency rerun passed.
+  - `sweep-stuck`: stuck_incidents 0.
+  - `queue-health`: hotspots 0.
+  - `handoff-review`: clear, blocked_tasks 0, stale_handoffs 0.
+  - `eval-candidates`: 0.
+  - `approvals`: pending_approvals 0.
+  - `eval-after-change`: pass, run `run_8328cc71eb0b`.
+  - `eval`: `first_milestone_closed_loop: pass`.
+  - `playbooks`: 1 active playbook, 321 successful runs.
+  - `git diff --check`: passed.
+  - `dashboard` and `iterate` regenerated local operator state.
+- The next queue item is routing and delegation packets for the new downstream
+  proof tasks.
+- Non-claims: local task rows, batch rows, generated reports, tutorial docs,
+  and GitHub metadata only; no approval row was created, no activation action
+  occurred, no external system was mutated by the runtime, no capability was
+  enabled, no proof was satisfied, no CI/deploy proof happened, no hosted
+  dashboard or remote worker was started, no trust was promoted, and the active
+  expansion goal remains open.
+
 ## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Application
 
 - Added the next local-only effect application rung:
