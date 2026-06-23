@@ -1,8 +1,8 @@
 # Handoff Review
 
-- id: handoff_review_b920182e29e6
+- id: handoff_review_cdd811d2417c
 - status: clear
-- current_focus: Add routing and delegation packets for downstream follow-up result task result effect task result effect task result effect tasks.
+- current_focus: Add result ingestion for downstream follow-up result task result effect task result effect task result effect delegation packets.
 - blocked_tasks: 0
 - stale_handoffs: 0
 - reviewed_paths: 1

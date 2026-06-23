@@ -4510,3 +4510,65 @@ are visible in the dashboard and are not active until approved.
   satisfaction, activation allowance, capability enablement, trust promotion,
   scheduler, retries, cost tracking, CI/deploy action by ClankerOS, PRs, or
   external mutation.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Delegations
+
+- Added
+  `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-delegations`
+  to route pending downstream result effect task result effect task result
+  effect tasks to read-only evaluator delegation packets.
+- First live batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_10082bc255e3`
+  created delegation `subagent_delegation_1eb56aef4dee` for
+  `task_6392c3a229e5` (`hosted_dashboard`).
+- Idempotent rerun
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_927a39107ab0`
+  reported already recorded, with 1 downstream task, 0 new routing decisions,
+  0 new delegations, 1 existing delegation, 0 execution starts,
+  0 network actions, 0 external mutations, and 0 activation actions.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`
+  - `.clanker/delegations/task_6392c3a229e5-plan-next-downstream-result-effect-task-result-effect-task-result-effect-proof-evidence-for-hosted-dashboard.json`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `docs/handoff-review.md`
+- Verification evidence:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_delegations"`
+    -> red before implementation, then 3 passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect"`
+    -> 13 passed.
+  - `python3 -m py_compile agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py agent_os/profile_routing.py agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_delegations.py tests/test_first_milestone.py`
+    -> passed.
+  - `python3 -m pytest -q` -> 341 passed.
+  - `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800` ->
+    stuck_incidents: 0.
+  - `python3 -m agent_os.cli queue-health` -> hotspots: 0.
+  - `python3 -m agent_os.cli handoff-review` -> status: clear.
+  - `python3 -m agent_os.cli eval-candidates` -> eval_candidates: 0.
+  - `python3 -m agent_os.cli approvals` -> pending_approvals: 0.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result effect task result effect task delegations" --file agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_delegations.py --file agent_os/storage.py --file agent_os/cli.py --file agent_os/dashboard.py --file agent_os/iteration.py --file agent_os/profile_routing.py --file tests/test_first_milestone.py`
+    -> pass, run `run_b39c91a3d55e`.
+  - `python3 -m agent_os.cli eval` -> pass, run `run_79c09f5f3356`.
+  - `python3 -m agent_os.cli playbooks` -> 1 active playbook with
+    259 successful runs.
+- Next focus:
+  `Add result ingestion for downstream follow-up result task result effect
+  task result effect task result effect delegation packets.`
+- Non-claims: local read-only routing decisions and pending delegation packet
+  rows only; no `approval_requests`, subagent execution, model-provider calls,
+  proof satisfaction, activation allowance, capability enablement, trust
+  promotion, scheduler, retries, cost tracking, CI/deploy action by ClankerOS,
+  PRs, or external mutation.
+
+## Run run_b39c91a3d55e
+
+- Goal ID: goal_68883fbcc7bc
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_b39c91a3d55e/summary.md
+
+## Run run_79c09f5f3356
+
+- Goal ID: goal_4981cc7e17d9
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_79c09f5f3356/summary.md

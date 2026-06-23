@@ -1024,6 +1024,17 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   `approval_requests_created: 0`, `activation_actions_taken: 0`,
   `external_mutations_taken: 0`, `activation_allowed: false`, and
   `capability_enabled: false`.
+- Capability activation follow-up result task result effect task result effect
+  task result effect task delegations: available through
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-delegations`
+  after downstream result effect task result effect task result effect tasks
+  exist. The command writes
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`,
+  records read-only `evidence_review` routing decisions and pending evaluator
+  delegation packets, and keeps `execution_started: 0`,
+  `network_actions_taken: 0`, `approval_requests_created: 0`,
+  `activation_actions_taken: 0`, `external_mutations_taken: 0`,
+  `activation_allowed: false`, and `capability_enabled: false`.
 - Eval candidate listing: available through
   `python3 -m agent_os.cli eval-candidates` and mirrored into
   `docs/dashboard.md`.

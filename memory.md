@@ -2286,6 +2286,14 @@
   actions, external mutations, activation allowance, capability enablement,
   and proof satisfaction at zero.
 
+## Downstream Result Effect Task Result Effect Task Result Effect Task Delegations
+
+- Pending downstream result effect task result effect task result effect tasks
+  should materialize read-only evaluator delegation packets only: preserve
+  source links in routing and packet artifacts and keep execution, provider
+  calls, approval rows, activation actions, external mutations, activation
+  allowance, and capability enablement at zero.
+
 ## Run run_6aac17428229
 
 - Goal: Eval: prove first milestone closed loop
@@ -2305,3 +2313,13 @@
 
 - Goal: Eval: prove first milestone closed loop
 - Learning: Run run_756c74ab5874 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Run run_b39c91a3d55e
+
+- Goal: Eval: prove first milestone closed loop
+- Learning: Run run_b39c91a3d55e showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Run run_79c09f5f3356
+
+- Goal: Eval: prove first milestone closed loop
+- Learning: Run run_79c09f5f3356 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

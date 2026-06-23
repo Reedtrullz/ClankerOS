@@ -536,6 +536,13 @@
   contract, project, and capability links in task evidence while keeping
   approval rows, activation actions, external mutations, activation allowance,
   capability enablement, and proof satisfaction at zero.
+- Pending downstream result effect task result effect task result effect tasks
+  should route into read-only evaluator delegation packets before result
+  ingestion. The routing stage must create durable routing decisions, pending
+  subagent delegation rows, and local JSON artifacts while preserving source
+  links and keeping execution, provider calls, approval rows, activation
+  actions, external mutations, activation allowance, and capability enablement
+  at zero.
 
 ## Stable Distilled Learnings
 

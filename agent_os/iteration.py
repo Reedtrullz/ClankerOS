@@ -108,6 +108,7 @@ VERIFICATION_COMMANDS = [
     "python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-proposals",
     "python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-apply --operator-id operator --selection-note \"Apply accepted downstream result-effect task result-effect task result effect proposals as local records only.\" --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-proposals.md",
     "python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-tasks",
+    "python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-delegations",
     "python3 -m agent_os.cli eval",
     "python3 -m agent_os.cli playbooks",
     "python3 -m agent_os.cli dashboard",
@@ -1191,6 +1192,26 @@ def _current_posture(root: Path) -> list[str]:
                         0
                     ].status
                 )
+        capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_delegations = (
+            "none"
+        )
+        if _table_exists(
+            connection,
+            "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_delegation_batches",
+        ):
+            capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_delegation_rows = Storage(
+                db_path
+            ).list_recent_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_delegation_batches(
+                limit=1
+            )
+            if (
+                capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_delegation_rows
+            ):
+                capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_delegations = (
+                    capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_delegation_rows[
+                        0
+                    ].status
+                )
         handoff_reviews = Storage(db_path).list_recent_handoff_reviews(limit=1)
 
     handoff_blocked_tasks = 0
@@ -1281,6 +1302,7 @@ def _current_posture(root: Path) -> list[str]:
         f"capability activation followup result task result effect task result effect task result effect proposals: {capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_proposals}",
         f"capability activation followup result task result effect task result effect task result effect application: {capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_application}",
         f"capability activation followup result task result effect task result effect task result effect tasks: {capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_tasks}",
+        f"capability activation followup result task result effect task result effect task result effect task delegations: {capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_delegations}",
         f"proposed eval candidates: {proposed_eval_candidates}",
         f"active playbooks: {active_playbooks}",
         f"open stuck-task incidents: {stuck_count}",

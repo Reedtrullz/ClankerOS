@@ -841,6 +841,22 @@ creates pending high-risk local proof tasks, and keeps
 `external_mutations_taken=0`, `activation_allowed=false`, and
 `capability_enabled=false`.
 
+Route those pending tasks to read-only evaluator delegation packets:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-delegations
+python3 -m agent_os.cli dashboard
+```
+
+The delegation command writes
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`,
+records local `evidence_review` routing decisions and pending evaluator
+delegation packets, and keeps `execution_started=0`,
+`network_actions_taken=0`, `external_mutations_taken=0`,
+`activation_actions_taken=0`, `activation_allowed=false`, and
+`capability_enabled=false`. The packet is a local proof-planning contract, not
+subagent execution.
+
 ## When To Commit And Push
 
 Commit when:
