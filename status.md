@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-23 Goal Planning Lifecycle
+
+- Added first-class registered-project planning commands:
+  `goal`, `plan`, `contract`, `tasks`, `update-task`, and `replan`.
+- Added durable SQLite state for plan versions, plan steps, and sprint
+  contracts while preserving existing `run-goal` behavior.
+- `goal --project <registered-project>` now writes `GOAL.md`, versioned
+  `PLAN-vN.md`, latest `PLAN.md`, and `TASKS.md` under
+  `.clanker/projects/<project>/goals/<goal_id>/`.
+- Planned task rows use `status=planned` and `task_type=planned_step`; the
+  current worker does not claim them as executable work.
+- The dashboard now includes recent goal plan versions under `### Goal Plans`.
+- Verification evidence:
+  - Red-first lifecycle test failed before the `goal` command existed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_plan_contract_task_lifecycle_for_registered_project -q` -> 1 passed.
+  - Focused cluster covering project registry, lifecycle, run-goal, dashboard,
+    profiles, and routing -> 7 passed.
+  - `python3 -m pytest -q` -> 413 passed in 747.12s.
+  - `python3 -m agent_os.cli eval-after-change --change "Add registered-project goal planning lifecycle" ...` -> pass, run `run_709a4a66bf91`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`.
+  - `python3 -m agent_os.cli approvals` -> `pending_approvals: 0`.
+  - `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800` -> `stuck_incidents: 0`.
+  - `python3 -m agent_os.cli handoff-review` -> `status: clear`.
+  - `git diff --check` -> no whitespace errors.
+  - Live smoke run for registered `clankeros` created
+    `goal_9b9a52c29e43`, `plan_7b0d95b67749`, `contract_5c2df3a91f86`,
+    replan `plan_41c16517c4f4`, and six planned task rows.
+- `docs/next-iteration.md` now selects:
+  `Add first-class run-task dispatch for planned goal tasks with profile-aware local evidence packets.`
+- Non-claims: planning does not execute tasks, approve work, commit, push,
+  deploy, call model providers, or mutate external systems.
+
 ## 2026-06-21
 
 - Workspace inspected: repository is effectively empty aside from `.git`.

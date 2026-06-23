@@ -29,6 +29,26 @@ python3 -m agent_os.cli next-action <goal_or_project>
 python3 -m agent_os.cli inbox
 ```
 
+## Goal Planning Lifecycle
+
+```bash
+python3 -m agent_os.cli register-project <name> --path /path/to/repo --test-command "python3 -m pytest -q"
+python3 -m agent_os.cli goal "Make the smallest verified improvement" --project <name>
+python3 -m agent_os.cli plan <goal_id>
+python3 -m agent_os.cli contract <goal_id>
+python3 -m agent_os.cli tasks <goal_id>
+python3 -m agent_os.cli update-task <task_id> --status blocked --blocked-reason "waiting on operator scope"
+python3 -m agent_os.cli replan <goal_id> --reason "scope changed after operator review"
+python3 -m agent_os.cli dashboard
+```
+
+`goal` requires a registered project. It creates a durable goal row, plan v1,
+three `planned_step` task rows, and artifacts under
+`.clanker/projects/<project>/goals/<goal_id>/`. `plan` and `replan` keep
+versioned `PLAN-vN.md` files plus the latest `PLAN.md`. `contract` creates a
+draft sprint contract for the latest plan. These commands do not execute
+tasks, approve work, commit, push, deploy, or call model providers.
+
 ## Approval-Gated Coding
 
 ```bash
@@ -67,7 +87,7 @@ python3 -m agent_os.cli skill approve <skill_id> --approved-by operator
 ## Verification
 
 ```bash
-python3 -m py_compile agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py
+python3 -m py_compile agent_os/storage.py agent_os/planning.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py
 python3 -m pytest -q
 python3 -m agent_os.cli eval-candidates
 python3 -m agent_os.cli eval-after-change --change "<change name>" --file <path>

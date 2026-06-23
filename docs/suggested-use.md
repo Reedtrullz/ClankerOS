@@ -15,6 +15,7 @@ harder to overclaim.
 | See current state | `python3 -m agent_os.cli dashboard` |
 | Inspect registered projects | `docs/tutorial-project-registry.md` |
 | Build a project context packet | `python3 -m agent_os.cli project-context <project>` |
+| Plan a registered project goal without executing it | `docs/tutorial-goal-lifecycle.md` |
 | Pick the next safe local task | `python3 -m agent_os.cli iterate` |
 | Resume a workspace safely | `docs/tutorial-operator-daily-loop.md` |
 | Run the first loop | `docs/tutorial-first-loop.md` |
@@ -23,6 +24,40 @@ harder to overclaim.
 | Review a run before acting | `python3 -m agent_os.cli review <run_id>` |
 | Keep activation blocked while preserving proof state | start with the capability follow-up tutorials below |
 | Publish a coherent snapshot | `docs/tutorial-public-snapshot.md` |
+
+## Registered Project Goal Lifecycle
+
+Use the lifecycle commands when you want a durable planning packet before
+execution:
+
+```bash
+python3 -m agent_os.cli register-project my-repo --path /absolute/path/to/repo --test-command "python3 -m pytest -q"
+python3 -m agent_os.cli project-context my-repo
+python3 -m agent_os.cli goal "Make one small verified improvement" --project my-repo
+python3 -m agent_os.cli plan goal_...
+python3 -m agent_os.cli contract goal_...
+python3 -m agent_os.cli tasks goal_...
+python3 -m agent_os.cli dashboard
+```
+
+The `goal` command creates local SQLite rows and markdown artifacts for a
+goal, plan version, and planned tasks under
+`.clanker/projects/<project>/goals/<goal_id>/`. The `contract` command creates
+or reads the local scope and verification agreement for the latest plan. Use
+`update-task` to record operator-visible task state and `replan` to create a
+new plan version when scope changes:
+
+```bash
+python3 -m agent_os.cli update-task task_... --status blocked --blocked-reason "Needs operator review."
+python3 -m agent_os.cli replan goal_... --reason "Scope changed after contract review."
+```
+
+Proof boundary: this lifecycle does not execute tasks, claim work, run tests,
+commit, push, deploy, open PRs, call model providers, or start subagents.
+Planned tasks remain `status=planned` until a later runner or operator
+deliberately advances them.
+
+For the full walkthrough, use `docs/tutorial-goal-lifecycle.md`.
 
 ## Good Starting Prompts
 

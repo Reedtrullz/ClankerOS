@@ -52,8 +52,61 @@ class GoalRecord:
     id: str
     project_id: str
     description: str
+    title: str
+    original_prompt: str
     status: str
+    priority: int
     created_at: str
+    updated_at: str
+    completed_at: str | None
+
+
+@dataclass(frozen=True)
+class PlanRecord:
+    id: str
+    goal_id: str
+    version: int
+    summary: str
+    status: str
+    created_by_profile: str
+    artifact_path: str
+    created_at: str
+    updated_at: str
+
+
+@dataclass(frozen=True)
+class PlanStepRecord:
+    id: str
+    plan_id: str
+    goal_id: str
+    order_index: int
+    title: str
+    description: str
+    acceptance_criteria: str
+    verification_command: str
+    status: str
+    assigned_profile: str
+    blocked_reason: str | None
+    task_id: str | None
+    created_at: str
+    updated_at: str
+
+
+@dataclass(frozen=True)
+class SprintContractRecord:
+    id: str
+    goal_id: str
+    plan_id: str
+    scope: str
+    non_goals: str
+    acceptance_criteria: str
+    verification_plan: str
+    risk_notes: str
+    evaluator_notes: str
+    status: str
+    artifact_path: str
+    created_at: str
+    approved_at: str | None
     updated_at: str
 
 
@@ -2662,9 +2715,13 @@ class Storage:
                     id text primary key,
                     project_id text not null,
                     description text not null,
+                    title text not null default '',
+                    original_prompt text not null default '',
                     status text not null,
+                    priority integer not null default 100,
                     created_at text not null,
-                    updated_at text not null
+                    updated_at text not null,
+                    completed_at text
                 );
 
                 create table if not exists runs (
@@ -2699,6 +2756,53 @@ class Storage:
                     created_at text not null,
                     updated_at text not null,
                     claimed_at text
+                );
+
+                create table if not exists plans (
+                    id text primary key,
+                    goal_id text not null,
+                    version integer not null,
+                    summary text not null,
+                    status text not null,
+                    created_by_profile text not null,
+                    artifact_path text not null,
+                    created_at text not null,
+                    updated_at text not null,
+                    unique(goal_id, version)
+                );
+
+                create table if not exists plan_steps (
+                    id text primary key,
+                    plan_id text not null,
+                    goal_id text not null,
+                    order_index integer not null,
+                    title text not null,
+                    description text not null,
+                    acceptance_criteria text not null,
+                    verification_command text not null,
+                    status text not null,
+                    assigned_profile text not null,
+                    blocked_reason text,
+                    task_id text,
+                    created_at text not null,
+                    updated_at text not null
+                );
+
+                create table if not exists sprint_contracts (
+                    id text primary key,
+                    goal_id text not null,
+                    plan_id text not null,
+                    scope text not null,
+                    non_goals text not null,
+                    acceptance_criteria text not null,
+                    verification_plan text not null,
+                    risk_notes text not null,
+                    evaluator_notes text not null,
+                    status text not null,
+                    artifact_path text not null,
+                    created_at text not null,
+                    approved_at text,
+                    updated_at text not null
                 );
 
                 create table if not exists events (
@@ -5115,6 +5219,10 @@ class Storage:
                 );
                 """
             )
+            self._ensure_column(connection, "goals", "title", "text not null default ''")
+            self._ensure_column(connection, "goals", "original_prompt", "text not null default ''")
+            self._ensure_column(connection, "goals", "priority", "integer not null default 100")
+            self._ensure_column(connection, "goals", "completed_at", "text")
             self._ensure_column(connection, "tasks", "run_id", "text")
             self._ensure_column(connection, "incidents", "resolved_by", "text")
             self._ensure_column(connection, "incidents", "resolution_note", "text")
@@ -5136,6 +5244,20 @@ class Storage:
             self._ensure_column(connection, "memory_entries", "archived_at", "text")
             self._ensure_column(connection, "memory_entries", "archive_reason", "text")
             self._allow_nullable_dispatch_posture_staleness_age(connection)
+            connection.execute(
+                """
+                update goals
+                set title = description
+                where title is null or title = ''
+                """
+            )
+            connection.execute(
+                """
+                update goals
+                set original_prompt = description
+                where original_prompt is null or original_prompt = ''
+                """
+            )
             connection.execute(
                 """
                 update approval_requests
@@ -5183,16 +5305,40 @@ class Storage:
                 """
             )
 
-    def create_goal(self, project_id: str, description: str) -> str:
+    def create_goal(
+        self,
+        project_id: str,
+        description: str,
+        *,
+        title: str | None = None,
+        original_prompt: str | None = None,
+        priority: int = 100,
+    ) -> str:
         goal_id = new_id("goal")
         now = utc_now()
+        goal_title = title or description
+        prompt = original_prompt or description
         with self._connect() as connection:
             connection.execute(
                 """
-                insert into goals (id, project_id, description, status, created_at, updated_at)
-                values (?, ?, ?, ?, ?, ?)
+                insert into goals (
+                    id, project_id, description, title, original_prompt, status,
+                    priority, created_at, updated_at, completed_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (goal_id, project_id, description, "accepted", now, now),
+                (
+                    goal_id,
+                    project_id,
+                    description,
+                    goal_title,
+                    prompt,
+                    "accepted",
+                    priority,
+                    now,
+                    now,
+                    None,
+                ),
             )
         return goal_id
 
@@ -5213,10 +5359,24 @@ class Storage:
             now = utc_now()
             connection.execute(
                 """
-                insert into goals (id, project_id, description, status, created_at, updated_at)
-                values (?, ?, ?, ?, ?, ?)
+                insert into goals (
+                    id, project_id, description, title, original_prompt, status,
+                    priority, created_at, updated_at, completed_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (goal_id, project_id, description, "accepted", now, now),
+                (
+                    goal_id,
+                    project_id,
+                    description,
+                    description,
+                    description,
+                    "accepted",
+                    100,
+                    now,
+                    now,
+                    None,
+                ),
             )
         return goal_id
 
@@ -5231,11 +5391,294 @@ class Storage:
         return self._row_to_goal(row)
 
     def set_goal_status(self, goal_id: str, status: str) -> None:
+        now = utc_now()
+        completed_at = now if status == "completed" else None
+        with self._connect() as connection:
+            if completed_at is not None:
+                connection.execute(
+                    """
+                    update goals
+                    set status = ?, updated_at = ?, completed_at = ?
+                    where id = ?
+                    """,
+                    (status, now, completed_at, goal_id),
+                )
+            else:
+                connection.execute(
+                    "update goals set status = ?, updated_at = ? where id = ?",
+                    (status, now, goal_id),
+                )
+
+    def create_plan(
+        self,
+        *,
+        goal_id: str,
+        version: int,
+        summary: str,
+        status: str,
+        created_by_profile: str,
+        artifact_path: str,
+    ) -> PlanRecord:
+        plan_id = new_id("plan")
+        now = utc_now()
         with self._connect() as connection:
             connection.execute(
-                "update goals set status = ?, updated_at = ? where id = ?",
-                (status, utc_now(), goal_id),
+                """
+                insert into plans (
+                    id, goal_id, version, summary, status, created_by_profile,
+                    artifact_path, created_at, updated_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    plan_id,
+                    goal_id,
+                    version,
+                    summary,
+                    status,
+                    created_by_profile,
+                    artifact_path,
+                    now,
+                    now,
+                ),
             )
+        return PlanRecord(
+            id=plan_id,
+            goal_id=goal_id,
+            version=version,
+            summary=summary,
+            status=status,
+            created_by_profile=created_by_profile,
+            artifact_path=artifact_path,
+            created_at=now,
+            updated_at=now,
+        )
+
+    def list_plans(self, goal_id: str) -> list[PlanRecord]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from plans
+                where goal_id = ?
+                order by version asc, created_at asc, id asc
+                """,
+                (goal_id,),
+            ).fetchall()
+        return [self._row_to_plan(row) for row in rows]
+
+    def list_recent_plans(self, limit: int = 5) -> list[PlanRecord]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from plans
+                order by updated_at desc, version desc, id desc
+                limit ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [self._row_to_plan(row) for row in rows]
+
+    def get_latest_plan(self, goal_id: str) -> PlanRecord:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                select * from plans
+                where goal_id = ?
+                order by version desc, created_at desc, id desc
+                limit 1
+                """,
+                (goal_id,),
+            ).fetchone()
+        if row is None:
+            raise KeyError(goal_id)
+        return self._row_to_plan(row)
+
+    def set_plan_status(self, plan_id: str, status: str) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                "update plans set status = ?, updated_at = ? where id = ?",
+                (status, utc_now(), plan_id),
+            )
+
+    def create_plan_step(
+        self,
+        *,
+        plan_id: str,
+        goal_id: str,
+        order_index: int,
+        title: str,
+        description: str,
+        acceptance_criteria: str,
+        verification_command: str,
+        status: str,
+        assigned_profile: str,
+        blocked_reason: str | None = None,
+        task_id: str | None = None,
+    ) -> PlanStepRecord:
+        step_id = new_id("plan_step")
+        now = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into plan_steps (
+                    id, plan_id, goal_id, order_index, title, description,
+                    acceptance_criteria, verification_command, status,
+                    assigned_profile, blocked_reason, task_id, created_at, updated_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    step_id,
+                    plan_id,
+                    goal_id,
+                    order_index,
+                    title,
+                    description,
+                    acceptance_criteria,
+                    verification_command,
+                    status,
+                    assigned_profile,
+                    blocked_reason,
+                    task_id,
+                    now,
+                    now,
+                ),
+            )
+        return PlanStepRecord(
+            id=step_id,
+            plan_id=plan_id,
+            goal_id=goal_id,
+            order_index=order_index,
+            title=title,
+            description=description,
+            acceptance_criteria=acceptance_criteria,
+            verification_command=verification_command,
+            status=status,
+            assigned_profile=assigned_profile,
+            blocked_reason=blocked_reason,
+            task_id=task_id,
+            created_at=now,
+            updated_at=now,
+        )
+
+    def list_plan_steps(self, plan_id: str) -> list[PlanStepRecord]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select * from plan_steps
+                where plan_id = ?
+                order by order_index asc, created_at asc, id asc
+                """,
+                (plan_id,),
+            ).fetchall()
+        return [self._row_to_plan_step(row) for row in rows]
+
+    def get_plan_step_by_task(self, task_id: str) -> PlanStepRecord | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                "select * from plan_steps where task_id = ?",
+                (task_id,),
+            ).fetchone()
+        return self._row_to_plan_step(row) if row else None
+
+    def update_plan_step_for_task(
+        self,
+        task_id: str,
+        *,
+        status: str,
+        blocked_reason: str | None = None,
+    ) -> PlanStepRecord | None:
+        now = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                update plan_steps
+                set status = ?, blocked_reason = ?, updated_at = ?
+                where task_id = ?
+                """,
+                (status, blocked_reason, now, task_id),
+            )
+            row = connection.execute(
+                "select * from plan_steps where task_id = ?",
+                (task_id,),
+            ).fetchone()
+        return self._row_to_plan_step(row) if row else None
+
+    def create_sprint_contract(
+        self,
+        *,
+        goal_id: str,
+        plan_id: str,
+        scope: str,
+        non_goals: str,
+        acceptance_criteria: str,
+        verification_plan: str,
+        risk_notes: str,
+        evaluator_notes: str,
+        status: str,
+        artifact_path: str,
+    ) -> SprintContractRecord:
+        contract_id = new_id("contract")
+        now = utc_now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into sprint_contracts (
+                    id, goal_id, plan_id, scope, non_goals, acceptance_criteria,
+                    verification_plan, risk_notes, evaluator_notes, status,
+                    artifact_path, created_at, approved_at, updated_at
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    contract_id,
+                    goal_id,
+                    plan_id,
+                    scope,
+                    non_goals,
+                    acceptance_criteria,
+                    verification_plan,
+                    risk_notes,
+                    evaluator_notes,
+                    status,
+                    artifact_path,
+                    now,
+                    None,
+                    now,
+                ),
+            )
+        return SprintContractRecord(
+            id=contract_id,
+            goal_id=goal_id,
+            plan_id=plan_id,
+            scope=scope,
+            non_goals=non_goals,
+            acceptance_criteria=acceptance_criteria,
+            verification_plan=verification_plan,
+            risk_notes=risk_notes,
+            evaluator_notes=evaluator_notes,
+            status=status,
+            artifact_path=artifact_path,
+            created_at=now,
+            approved_at=None,
+            updated_at=now,
+        )
+
+    def get_latest_sprint_contract(
+        self,
+        goal_id: str,
+    ) -> SprintContractRecord | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                select * from sprint_contracts
+                where goal_id = ?
+                order by created_at desc, id desc
+                limit 1
+                """,
+                (goal_id,),
+            ).fetchone()
+        return self._row_to_sprint_contract(row) if row else None
 
     def create_run(self, goal_id: str, project_id: str, runs_root: Path) -> str:
         run_id = new_id("run")
@@ -18614,8 +19057,61 @@ class Storage:
             id=row["id"],
             project_id=row["project_id"],
             description=row["description"],
+            title=row["title"],
+            original_prompt=row["original_prompt"],
             status=row["status"],
+            priority=row["priority"],
             created_at=row["created_at"],
+            updated_at=row["updated_at"],
+            completed_at=row["completed_at"],
+        )
+
+    def _row_to_plan(self, row: sqlite3.Row) -> PlanRecord:
+        return PlanRecord(
+            id=row["id"],
+            goal_id=row["goal_id"],
+            version=row["version"],
+            summary=row["summary"],
+            status=row["status"],
+            created_by_profile=row["created_by_profile"],
+            artifact_path=row["artifact_path"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+        )
+
+    def _row_to_plan_step(self, row: sqlite3.Row) -> PlanStepRecord:
+        return PlanStepRecord(
+            id=row["id"],
+            plan_id=row["plan_id"],
+            goal_id=row["goal_id"],
+            order_index=row["order_index"],
+            title=row["title"],
+            description=row["description"],
+            acceptance_criteria=row["acceptance_criteria"],
+            verification_command=row["verification_command"],
+            status=row["status"],
+            assigned_profile=row["assigned_profile"],
+            blocked_reason=row["blocked_reason"],
+            task_id=row["task_id"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+        )
+
+    def _row_to_sprint_contract(self, row: sqlite3.Row) -> SprintContractRecord:
+        return SprintContractRecord(
+            id=row["id"],
+            goal_id=row["goal_id"],
+            plan_id=row["plan_id"],
+            scope=row["scope"],
+            non_goals=row["non_goals"],
+            acceptance_criteria=row["acceptance_criteria"],
+            verification_plan=row["verification_plan"],
+            risk_notes=row["risk_notes"],
+            evaluator_notes=row["evaluator_notes"],
+            status=row["status"],
+            artifact_path=row["artifact_path"],
+            created_at=row["created_at"],
+            approved_at=row["approved_at"],
             updated_at=row["updated_at"],
         )
 

@@ -81,14 +81,47 @@ packet for the registered repository. It reads local registry and git metadata
 only; it does not run tests, create a worktree, approve effects, commit, push,
 deploy, or call a model provider.
 
+## Plan Before Execution
+
+For operator-led work, start with a durable goal plan before asking ClankerOS
+to run or delegate anything:
+
+```bash
+python3 -m agent_os.cli goal "Make the smallest verified improvement" --project my-repo
+python3 -m agent_os.cli plan <goal_id>
+python3 -m agent_os.cli contract <goal_id>
+python3 -m agent_os.cli tasks <goal_id>
+```
+
+Expected local effects:
+
+- the goal is stored in SQLite with project, title, prompt, status, and
+  priority fields;
+- the first plan version is written to
+  `.clanker/projects/my-repo/goals/<goal_id>/PLAN-v1.md`;
+- `PLAN.md`, `GOAL.md`, and `TASKS.md` mirror the latest operator-readable
+  state;
+- three `planned_step` task rows are created with `status=planned`.
+
+The planning lifecycle does not execute tasks. Use `update-task` to record an
+operator decision on a planned task and `replan` when scope changes:
+
+```bash
+python3 -m agent_os.cli update-task <task_id> --status blocked --blocked-reason "waiting on scope"
+python3 -m agent_os.cli replan <goal_id> --reason "operator narrowed the target"
+```
+
 ## Best Operating Pattern
 
 1. Keep each request narrow and evidence-shaped.
-2. Ask for one local capability boundary at a time.
-3. Prefer report-only proof before action-taking features.
-4. Treat dashboard and generated reports as evidence, not as guarantees.
-5. Commit only coherent, verified increments.
-6. Push only after local tests and metadata readback are clean.
+2. Register the project and inspect `project-context` before planning work.
+3. Create a `goal`, inspect the `plan`, and read the `contract` before
+   execution.
+4. Ask for one local capability boundary at a time.
+5. Prefer report-only proof before action-taking features.
+6. Treat dashboard and generated reports as evidence, not as guarantees.
+7. Commit only coherent, verified increments.
+8. Push only after local tests and metadata readback are clean.
 
 ## Good First Prompts
 
@@ -101,6 +134,10 @@ Register this repo, run a worktree-isolated coding task, capture the diff and te
 ```
 
 ```text
+Create a durable goal, plan, sprint contract, and planned task list for this registered project without executing anything.
+```
+
+```text
 Review the current dashboard and next-iteration packet, then implement the next local proof step with tests.
 ```
 
@@ -109,4 +146,6 @@ Review the current dashboard and next-iteration packet, then implement the next 
 - `docs/concepts.md` for vocabulary.
 - `docs/architecture.md` for the local control-plane shape.
 - `docs/suggested-use.md` for prompt patterns and operating rules.
+- `docs/tutorial-goal-lifecycle.md` for planning a registered project goal
+  before execution.
 - `docs/tutorial-approval-gated-coding.md` for the worktree approval loop.

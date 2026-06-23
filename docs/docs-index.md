@@ -22,6 +22,9 @@ system.
 - `docs/tutorial-project-registry.md` - register local git repositories,
   inspect registry status, and write durable project context packets before
   running work.
+- `docs/tutorial-goal-lifecycle.md` - create a registered-project goal, inspect
+  its plan, write a draft sprint contract, update planned tasks, and replan
+  without executing work.
 - `docs/tutorial-public-snapshot.md` - verify, commit, and push a coherent
   public GitHub snapshot without overclaiming.
 - `contracts.md` - safety contract and evidence expectations.
@@ -32,6 +35,7 @@ system.
 
 - `docs/tutorial-first-loop.md`
 - `docs/tutorial-project-registry.md`
+- `docs/tutorial-goal-lifecycle.md`
 - `docs/tutorial-operator-daily-loop.md`
 - `docs/tutorial-approval-gated-coding.md`
 - `docs/tutorial-public-snapshot.md`

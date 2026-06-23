@@ -429,6 +429,16 @@ from agent_os.playbooks import (
     promote_successful_run_playbooks,
     render_playbook_line,
 )
+from agent_os.planning import (
+    PlanningError,
+    create_contract_for_goal,
+    create_goal_lifecycle,
+    ensure_latest_plan,
+    render_plan_step_line,
+    render_task_line,
+    replan_goal,
+    update_lifecycle_task,
+)
 from agent_os.skill_entries import (
     SkillEntryError,
     approve_skill,
@@ -671,6 +681,40 @@ def build_parser() -> argparse.ArgumentParser:
         help="Write a durable operator context packet for a registered project.",
     )
     project_context.add_argument("project")
+    goal_parser = subparsers.add_parser(
+        "goal",
+        help="Create a durable project-scoped goal with an initial plan and planned tasks.",
+    )
+    goal_parser.add_argument("prompt")
+    goal_parser.add_argument("--project", required=True)
+    plan_parser = subparsers.add_parser(
+        "plan",
+        help="Show or materialize the latest durable plan for a goal.",
+    )
+    plan_parser.add_argument("goal_id")
+    contract_parser = subparsers.add_parser(
+        "contract",
+        help="Create or show a sprint contract for the latest goal plan.",
+    )
+    contract_parser.add_argument("goal_id")
+    tasks_parser = subparsers.add_parser(
+        "tasks",
+        help="List local task records for a goal.",
+    )
+    tasks_parser.add_argument("goal_id")
+    update_task_parser = subparsers.add_parser(
+        "update-task",
+        help="Update a local task and linked plan-step status.",
+    )
+    update_task_parser.add_argument("task_id")
+    update_task_parser.add_argument("--status", required=True)
+    update_task_parser.add_argument("--blocked-reason")
+    replan_parser = subparsers.add_parser(
+        "replan",
+        help="Create a new plan version for an existing goal.",
+    )
+    replan_parser.add_argument("goal_id")
+    replan_parser.add_argument("--reason", required=True)
     subparsers.add_parser(
         "budget-trust-posture",
         help="Report local budget/trust posture metadata without enforcement.",
@@ -2083,6 +2127,151 @@ def main(argv: list[str] | None = None) -> int:
         print(f"project_context: {context.project.name}")
         print(f"context: {context_path.relative_to(root.resolve())}")
         print(f"project_note: {context.project_note}")
+        print("commands_rerun: 0")
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
+        return 0
+
+    if args.command == "goal":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            lifecycle = create_goal_lifecycle(
+                root,
+                system.storage,
+                project_id=args.project,
+                prompt=args.prompt,
+            )
+        except (PlanningError, KeyError) as error:
+            print(f"goal_failed: {error}")
+            return 1
+        print(f"goal_created: {lifecycle.goal.id}")
+        print(f"goal_id: {lifecycle.goal.id}")
+        print(f"project: {lifecycle.goal.project_id}")
+        print(f"title: {lifecycle.goal.title}")
+        print(f"plan_id: {lifecycle.plan.id}")
+        print(f"plan_version: {lifecycle.plan.version}")
+        print(f"tasks: {len(lifecycle.tasks)}")
+        print(f"goal_artifact: {lifecycle.goal_artifact_path.relative_to(root)}")
+        print(f"plan_artifact: {lifecycle.plan_artifact_path.relative_to(root)}")
+        print(f"tasks_artifact: {lifecycle.tasks_artifact_path.relative_to(root)}")
+        print("commands_rerun: 0")
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
+        return 0
+
+    if args.command == "plan":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            goal, plan, steps = ensure_latest_plan(root, system.storage, args.goal_id)
+        except (PlanningError, KeyError) as error:
+            print(f"plan_failed: {error}")
+            return 1
+        print(f"plan: {plan.id}")
+        print(f"goal_id: {goal.id}")
+        print(f"project: {goal.project_id}")
+        print(f"version: {plan.version}")
+        print(f"status: {plan.status}")
+        print(f"summary: {plan.summary}")
+        print(f"artifact: {plan.artifact_path}")
+        print(f"steps: {len(steps)}")
+        for step in steps:
+            print(render_plan_step_line(step))
+        print("commands_rerun: 0")
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
+        return 0
+
+    if args.command == "contract":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            goal, plan, contract = create_contract_for_goal(
+                root,
+                system.storage,
+                args.goal_id,
+            )
+        except (PlanningError, KeyError) as error:
+            print(f"contract_failed: {error}")
+            return 1
+        print(f"contract: {contract.id}")
+        print(f"goal_id: {goal.id}")
+        print(f"project: {goal.project_id}")
+        print(f"plan_id: {plan.id}")
+        print(f"plan_version: {plan.version}")
+        print(f"status: {contract.status}")
+        print(f"artifact: {contract.artifact_path}")
+        print("commands_rerun: 0")
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
+        return 0
+
+    if args.command == "tasks":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            goal = system.storage.get_goal(args.goal_id)
+        except KeyError as error:
+            print(f"tasks_failed: {error}")
+            return 1
+        tasks = system.storage.list_tasks(goal.id)
+        print(f"tasks: {len(tasks)}")
+        print(f"goal_id: {goal.id}")
+        print(f"project: {goal.project_id}")
+        for task in tasks:
+            print(render_task_line(task))
+        print("commands_rerun: 0")
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
+        return 0
+
+    if args.command == "update-task":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            task, step = update_lifecycle_task(
+                root,
+                system.storage,
+                args.task_id,
+                status=args.status,
+                blocked_reason=args.blocked_reason,
+            )
+        except (PlanningError, KeyError) as error:
+            print(f"task_update_failed: {error}")
+            return 1
+        print(f"task_updated: {task.id}")
+        print(f"goal_id: {task.goal_id}")
+        print(f"project: {task.project_id}")
+        print(f"status: {task.status}")
+        print(f"plan_step_id: {step.id if step else 'none'}")
+        print(f"blocked_reason: {args.blocked_reason or 'none'}")
+        print("commands_rerun: 0")
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
+        return 0
+
+    if args.command == "replan":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            goal, plan, steps, previous_count = replan_goal(
+                root,
+                system.storage,
+                args.goal_id,
+                reason=args.reason,
+            )
+        except (PlanningError, KeyError) as error:
+            print(f"replan_failed: {error}")
+            return 1
+        print(f"replan: {plan.id}")
+        print(f"goal_id: {goal.id}")
+        print(f"project: {goal.project_id}")
+        print(f"plan_version: {plan.version}")
+        print(f"previous_plan_versions: {previous_count}")
+        print(f"steps: {len(steps)}")
+        print(f"reason: {args.reason}")
+        print(f"artifact: {plan.artifact_path}")
         print("commands_rerun: 0")
         print("network_actions_taken: 0")
         print("external_mutations_taken: 0")

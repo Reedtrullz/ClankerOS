@@ -24,6 +24,13 @@ Core layers for the bootstrap:
   branch/remote/readiness fields, and write durable
   `projects/<name>/context.md` packets with `projects`, `project-status`, and
   `project-context` before starting work.
+- Goal planning lifecycle: registered projects can receive durable `goal`,
+  `plan`, `contract`, `tasks`, `update-task`, and `replan` records before
+  execution. The lifecycle writes SQLite rows plus versioned artifacts under
+  `.clanker/projects/<project>/goals/<goal_id>/`, keeps planned tasks at
+  `status=planned`, and preserves explicit non-claims around task execution,
+  approval, commits, pushes, deployments, provider calls, and external
+  mutations.
 - Worktree coding loop: a high-risk coding goal can run a constrained command
   inside an isolated git worktree, capture command/test/diff evidence, and
   record a proposed `local_git_commit` effect that waits for operator approval.

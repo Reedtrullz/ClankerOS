@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_c7a68d49b418
+- Packet ID: iteration_71bac40aefa5
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add first-class `goal`, `plan`, `contract`, `tasks`, and `update-task` commands scoped to registered projects.
+Advance the Agent System north-star goal by completing: Add first-class `run-task` dispatch for planned goal tasks with profile-aware local evidence packets.
 
 ## Definition Of Done
 

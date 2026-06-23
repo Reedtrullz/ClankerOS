@@ -490,6 +490,189 @@ def test_project_visibility_commands_list_status_and_write_context(
     assert "project_status_failed: project missing not found" in missing_output
 
 
+def test_goal_plan_contract_task_lifecycle_for_registered_project(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    repo_path = tmp_path / "subject-repo"
+    _init_git_repo(repo_path)
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "register-project",
+                "subject",
+                "--path",
+                str(repo_path),
+                "--test-command",
+                "python3 -m pytest -q",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "goal",
+                "Add a small tested improvement to the CLI help output",
+                "--project",
+                "subject",
+            ]
+        )
+        == 0
+    )
+    goal_output = capsys.readouterr().out
+    assert "goal_created:" in goal_output
+    assert "project: subject" in goal_output
+    assert "plan_version: 1" in goal_output
+    assert "tasks: 3" in goal_output
+    goal_id = next(
+        line.split(": ", 1)[1]
+        for line in goal_output.splitlines()
+        if line.startswith("goal_id: ")
+    )
+    plan_id = next(
+        line.split(": ", 1)[1]
+        for line in goal_output.splitlines()
+        if line.startswith("plan_id: ")
+    )
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    goal = storage.get_goal(goal_id)
+    assert goal.project_id == "subject"
+    assert goal.title == "Add a small tested improvement to the CLI help output"
+    assert goal.original_prompt == goal.title
+    assert goal.priority == 100
+    assert goal.completed_at is None
+
+    plans = storage.list_plans(goal_id)
+    assert len(plans) == 1
+    assert plans[0].id == plan_id
+    assert plans[0].version == 1
+    assert plans[0].status == "active"
+    assert plans[0].created_by_profile == "planner"
+
+    steps = storage.list_plan_steps(plan_id)
+    assert len(steps) == 3
+    assert [step.order_index for step in steps] == [1, 2, 3]
+    assert all(step.status == "planned" for step in steps)
+    assert all(step.task_id for step in steps)
+    assert steps[1].verification_command == "python3 -m pytest -q"
+
+    tasks = storage.list_tasks(goal_id)
+    assert len(tasks) == 3
+    assert [task.status for task in tasks] == ["planned", "planned", "planned"]
+    assert all(task.task_type == "planned_step" for task in tasks)
+    assert all(task.run_id is None for task in tasks)
+    assert all(task.verification_plan["source"] == "plan_step" for task in tasks)
+
+    goal_dir = tmp_path / ".clanker" / "projects" / "subject" / "goals" / goal_id
+    assert (goal_dir / "GOAL.md").exists()
+    assert (goal_dir / "PLAN.md").exists()
+    assert (goal_dir / "PLAN-v1.md").exists()
+    assert (goal_dir / "TASKS.md").exists()
+
+    assert main(["--root", str(tmp_path), "plan", goal_id]) == 0
+    plan_output = capsys.readouterr().out
+    assert f"plan: {plan_id}" in plan_output
+    assert "version: 1" in plan_output
+    assert "step 1:" in plan_output
+    assert "artifact: .clanker/projects/subject/goals/" in plan_output
+
+    assert main(["--root", str(tmp_path), "contract", goal_id]) == 0
+    contract_output = capsys.readouterr().out
+    assert "contract:" in contract_output
+    assert f"goal_id: {goal_id}" in contract_output
+    assert f"plan_id: {plan_id}" in contract_output
+    assert "status: draft" in contract_output
+    assert "artifact: .clanker/projects/subject/goals/" in contract_output
+    assert (goal_dir / "CONTRACT.md").exists()
+    contract = storage.get_latest_sprint_contract(goal_id)
+    assert contract is not None
+    assert contract.plan_id == plan_id
+    assert "python3 -m pytest -q" in contract.verification_plan
+
+    assert main(["--root", str(tmp_path), "tasks", goal_id]) == 0
+    tasks_output = capsys.readouterr().out
+    assert "tasks: 3" in tasks_output
+    assert "planned_step" in tasks_output
+    assert "status=planned" in tasks_output
+
+    task_id = tasks[0].id
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "update-task",
+                task_id,
+                "--status",
+                "blocked",
+                "--blocked-reason",
+                "needs operator scope review",
+            ]
+        )
+        == 0
+    )
+    update_output = capsys.readouterr().out
+    assert f"task_updated: {task_id}" in update_output
+    assert "status: blocked" in update_output
+    assert storage.get_task(task_id).status == "blocked"
+    updated_step = storage.get_plan_step_by_task(task_id)
+    assert updated_step is not None
+    assert updated_step.status == "blocked"
+    assert updated_step.blocked_reason == "needs operator scope review"
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "replan",
+                goal_id,
+                "--reason",
+                "scope changed after operator review",
+            ]
+        )
+        == 0
+    )
+    replan_output = capsys.readouterr().out
+    assert "plan_version: 2" in replan_output
+    assert "previous_plan_versions: 1" in replan_output
+    assert "reason: scope changed after operator review" in replan_output
+    assert (goal_dir / "PLAN-v1.md").exists()
+    assert (goal_dir / "PLAN-v2.md").exists()
+    assert len(storage.list_plans(goal_id)) == 2
+    assert storage.get_latest_plan(goal_id).version == 2
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "### Goal Plans" in dashboard
+    assert goal_id in dashboard
+    assert "version=2" in dashboard
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "goal",
+                "This should fail",
+                "--project",
+                "missing",
+            ]
+        )
+        == 1
+    )
+    missing_output = capsys.readouterr().out
+    assert "goal_failed: project missing is not registered" in missing_output
+
+
 def test_run_goal_with_worktree_isolation_captures_diff_and_proposes_commit_effect(
     tmp_path: Path,
     capsys,

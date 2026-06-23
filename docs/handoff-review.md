@@ -1,8 +1,8 @@
 # Handoff Review
 
-- id: handoff_review_88b49dfcb429
+- id: handoff_review_907d6baca206
 - status: clear
-- current_focus: Add first-class `goal`, `plan`, `contract`, `tasks`, and `update-task` commands scoped to registered projects.
+- current_focus: Add first-class `run-task` dispatch for planned goal tasks with profile-aware local evidence packets.
 - blocked_tasks: 0
 - stale_handoffs: 0
 - reviewed_paths: 1

@@ -2396,3 +2396,22 @@ coverage.
 ## Learning run_2d4cb12e2218
 
 - Learning: Run run_2d4cb12e2218 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning: Registered Project Goal Planning
+
+- Project-scoped work needs a durable planning layer before execution, not
+  only a `run-goal` entry point.
+- `goal`, `plan`, `contract`, `tasks`, `update-task`, and `replan` now keep
+  operator intent, plan versions, sprint acceptance criteria, and planned task
+  rows visible under `.clanker/projects/<project>/goals/<goal_id>/`.
+- Planned lifecycle tasks intentionally remain `status=planned` until a later
+  task runner advances them; this avoids accidental worker claims while making
+  the next execution boundary explicit.
+
+## Learning run_709a4a66bf91
+
+- Learning: Run run_709a4a66bf91 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_24294d88ba47
+
+- Learning: Run run_24294d88ba47 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

@@ -427,6 +427,9 @@ def generate_static_dashboard(root: Path) -> Path:
         registered_projects = []
         if _table_exists(connection, "registered_projects"):
             registered_projects = storage.list_registered_projects()
+        goal_plans = []
+        if _table_exists(connection, "plans"):
+            goal_plans = storage.list_recent_plans(limit=5)
         worktrees = []
         if _table_exists(connection, "worktree_records"):
             worktrees = storage.list_recent_worktree_records(limit=5)
@@ -1850,6 +1853,23 @@ def generate_static_dashboard(root: Path) -> Path:
             lines.append(
                 f"- {project.name}: root={project.root_path} "
                 f"test={project.default_test_command} allowed_write_roots={allowed_roots}"
+            )
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "### Goal Plans", ""])
+    if goal_plans:
+        for plan in goal_plans:
+            try:
+                goal = storage.get_goal(plan.goal_id)
+                goal_title = goal.title
+                project_id = goal.project_id
+            except KeyError:
+                goal_title = "unknown"
+                project_id = "unknown"
+            lines.append(
+                f"- {plan.goal_id}: project={project_id} version={plan.version} "
+                f"status={plan.status} goal={goal_title} artifact={plan.artifact_path}"
             )
     else:
         lines.append("- none")

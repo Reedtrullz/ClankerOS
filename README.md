@@ -20,6 +20,9 @@ hidden autonomy.
 - Registers local git repositories and exposes `projects`, `project-status`,
   and `project-context` commands so an operator can inspect target repos before
   starting work.
+- Creates durable project-scoped `goal`, `plan`, `contract`, and `tasks`
+  records before execution, with versioned plan artifacts and explicit
+  non-claims.
 - Generates an operator dashboard and next-iteration packet from current local
   state.
 - Runs worktree-isolated coding goals, captures diffs and verification output,
@@ -51,6 +54,7 @@ Then read:
 - [Documentation Index](docs/docs-index.md)
 - [First Loop Tutorial](docs/tutorial-first-loop.md)
 - [Project Registry Tutorial](docs/tutorial-project-registry.md)
+- [Goal Planning Lifecycle Tutorial](docs/tutorial-goal-lifecycle.md)
 - [Operator Daily Loop Tutorial](docs/tutorial-operator-daily-loop.md)
 - [Approval-Gated Coding Tutorial](docs/tutorial-approval-gated-coding.md)
 - [Public Snapshot Tutorial](docs/tutorial-public-snapshot.md)
@@ -64,6 +68,19 @@ python3 -m agent_os.cli projects
 python3 -m agent_os.cli project-status my-repo
 python3 -m agent_os.cli project-context my-repo
 ```
+
+Plan a registered project goal before executing work:
+
+```bash
+python3 -m agent_os.cli goal "Make the smallest verified improvement" --project my-repo
+python3 -m agent_os.cli plan <goal_id>
+python3 -m agent_os.cli contract <goal_id>
+python3 -m agent_os.cli tasks <goal_id>
+```
+
+This writes versioned local artifacts under
+`.clanker/projects/<project>/goals/<goal_id>/`. It does not execute tasks,
+commit, push, deploy, or call model providers.
 
 ## Current Shape
 

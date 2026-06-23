@@ -153,7 +153,8 @@
 - [x] Add routing and delegation packets for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect tasks. <!-- score=9 complexity=4 -->
 - [x] Add result ingestion for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect delegation packets. <!-- score=9 complexity=4 -->
 - [x] Add operator review decisions for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result records. <!-- score=9 complexity=4 -->
-- [ ] Add first-class `goal`, `plan`, `contract`, `tasks`, and `update-task` commands scoped to registered projects. <!-- score=10 complexity=5 -->
+- [x] Add first-class `goal`, `plan`, `contract`, `tasks`, and `update-task` commands scoped to registered projects. <!-- score=10 complexity=5 -->
+- [ ] Add first-class `run-task` dispatch for planned goal tasks with profile-aware local evidence packets. <!-- score=10 complexity=5 -->
 - [ ] Add local downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals from accepted blocked result effect task result effect task result effect task results. <!-- score=9 complexity=4 -->
 
 ## blocked

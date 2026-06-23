@@ -205,9 +205,18 @@ chain, without starting remote workers, claiming remote work, or changing
 routing.
 Current iteration packet:
 `docs/next-iteration.md` selects
-Add first-class `goal`, `plan`, `contract`, `tasks`, and `update-task`
-commands scoped to registered projects.
-Exact focus: Add first-class `goal`, `plan`, `contract`, `tasks`, and `update-task` commands scoped to registered projects.
+Add first-class `run-task` dispatch for planned goal tasks with profile-aware
+local evidence packets.
+Exact focus: Add first-class `run-task` dispatch for planned goal tasks with profile-aware local evidence packets.
+
+Latest goal planning lifecycle:
+`goal`, `plan`, `contract`, `tasks`, `update-task`, and `replan` now create
+durable registered-project planning state before execution. The live smoke
+goal `goal_9b9a52c29e43` for `clankeros` wrote versioned plan artifacts,
+`contract_5c2df3a91f86`, and six `planned_step` task rows under
+`.clanker/projects/clankeros/goals/goal_9b9a52c29e43/`. These records are
+planning evidence only: no task execution, approval, commit, push, deploy,
+provider call, or external mutation was performed.
 
 Latest project registry visibility:
 `projects`, `project-status <project>`, and `project-context <project>` now
@@ -1361,9 +1370,9 @@ work, or changing routing.
   with run `run_60c83a6cdc32`; `playbooks` -> `successful_runs=162`.
 - Current iteration packet:
   `docs/next-iteration.md` selects
-  Add first-class `goal`, `plan`, `contract`, `tasks`, and `update-task`
-  commands scoped to registered projects.
-  Exact focus: Add first-class `goal`, `plan`, `contract`, `tasks`, and `update-task` commands scoped to registered projects.
+  Add first-class `run-task` dispatch for planned goal tasks with
+  profile-aware local evidence packets.
+  Exact focus: Add first-class `run-task` dispatch for planned goal tasks with profile-aware local evidence packets.
 
 ## Latest Profile Routing Decision Records
 
