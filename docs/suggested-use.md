@@ -100,6 +100,10 @@ Review downstream result-effect task result records, accept keeping activation b
 Apply proposed downstream result effect task result decision effects as local records only, and prove that capability activation remains blocked.
 ```
 
+```text
+Create downstream proof tasks from applied downstream result effect task result decision effects, and prove that capability activation remains blocked.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -136,7 +140,9 @@ Apply proposed downstream result effect task result decision effects as local re
     proposed effects only after the downstream review decision exists.
 24. Apply downstream result effect task result decision effects as local
     records only after the proposal row exists.
-25. Record non-claims before treating the work as safe.
+25. Materialize applied downstream result effect task result decision effects
+    into pending downstream proof tasks before routing or delegation.
+26. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -254,6 +260,9 @@ Prefer these files when orienting:
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-application.md`
   for applying proposed downstream result effect task result decision effects
   as local records.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-tasks.md`
+  for creating pending downstream proof tasks from applied downstream result
+  effect task result decision effects.
 - `contracts.md` for safety boundaries and evidence expectations.
 - `status.md` for chronological implementation evidence.
 - `projects/bootstrap/handoff.md` for the current continuation edge.
@@ -675,6 +684,21 @@ records a local application row, and marks applicable proposed effects as
 `activation_actions_taken=0`, `external_mutations_taken=0`,
 `activation_allowed=false`, and `capability_enabled=false`.
 
+Create downstream proof tasks from those applied effects:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-tasks
+python3 -m agent_os.cli dashboard
+```
+
+The task command writes
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-tasks.md`,
+records a local batch row, and creates pending high-risk task graph records
+for applied downstream result effect task result decision effects that do not
+already have a downstream task. It keeps `approval_requests_created=0`,
+`activation_actions_taken=0`, `external_mutations_taken=0`,
+`activation_allowed=false`, and `capability_enabled=false`.
+
 ## When To Commit And Push
 
 Commit when:
@@ -693,8 +717,8 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 Good next slices now favor capability-specific guards after local delegation
 packets exist:
 
-- downstream task records from applied downstream result effect task result
-  decision effect applications;
+- routing and delegation packets for downstream result effect task result
+  effect tasks;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;

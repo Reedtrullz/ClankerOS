@@ -488,6 +488,12 @@
   `applied` and write application evidence while still preserving zero
   approval rows, zero activation actions, zero external mutations,
   `activation_allowed=false`, and `capability_enabled=false`.
+- Applied downstream result effect task result decision effects should become
+  pending task graph rows before routing or delegation. The task-materializing
+  stage must preserve source decision, result, application, effect,
+  delegation, task, contract, project, and capability links while keeping
+  approval rows, activation actions, external mutations, activation allowance,
+  and capability enablement at zero.
 - `eval` and `eval-after-change` both write the
   `first_milestone_closed_loop` result path and should be run serially, not in
   parallel. A parallel invocation can leave a failed run artifact even when the

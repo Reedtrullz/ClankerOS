@@ -4084,3 +4084,66 @@ are visible in the dashboard and are not active until approved.
   `approval_requests`, proof satisfaction, activation allowance, capability
   enablement, trust promotion, scheduler, retries, cost tracking, CI/deploy,
   push, PR, or external mutation.
+
+## Run run_bd4187ca97c0
+
+- Goal ID: goal_f238be149826
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_bd4187ca97c0/summary.md
+
+## Run run_8b1f3acec286
+
+- Goal ID: goal_172c28424202
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_8b1f3acec286/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Tasks
+
+- Added
+  `capability-activation-followup-result-task-result-effect-task-result-effect-tasks`
+  to materialize applied downstream result effect task result decision effects
+  into pending downstream proof tasks.
+- Initial live task batch:
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_batch_44eb7afcb823`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_result_effect_tasks_recorded`,
+  created `task_c00e6484c25b` for `hosted_dashboard` from
+  `effect_24a2d688a662`.
+- Final live idempotency pass:
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_batch_45cb2fc89b9c`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_result_effect_tasks_already_recorded`,
+  with 0 new tasks, 1 existing downstream task, 0 approval requests,
+  0 activation actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-tasks.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-tasks.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `docs/handoff-review.md`
+- Verification evidence:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "effect_task_result_effect_tasks"`
+    -> red before implementation, then 3 passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "result_task_result"`
+    -> 34 passed.
+  - `python3 -m pytest -q` -> 317 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result effect tasks" --file agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_tasks.py`
+    -> pass, run `run_bd4187ca97c0`.
+  - `python3 -m agent_os.cli eval` -> pass, run `run_8b1f3acec286`.
+  - `python3 -m agent_os.cli handoff-review` -> status clear.
+- Non-claims: local pending downstream proof task rows only; no
+  `approval_requests`, delegation routing, subagent execution, proof
+  satisfaction, activation allowance, capability enablement, trust promotion,
+  scheduler, retries, cost tracking, CI/deploy, push, PR, or external mutation.
+
+## Run run_bd4187ca97c0
+
+- Goal ID: goal_f238be149826
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_bd4187ca97c0/summary.md
+
+## Run run_8b1f3acec286
+
+- Goal ID: goal_172c28424202
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_8b1f3acec286/summary.md

@@ -1880,6 +1880,15 @@ coverage.
   zero approval rows, zero activation actions, zero external mutations,
   `activation_allowed=false`, and `capability_enabled=false`.
 
+## Learning effect task bridge
+
+- Applied downstream result effect task result decision effects should become
+  pending task graph rows before routing or delegation. The task-materializing
+  stage should preserve source decision, result, application, effect,
+  delegation, task, contract, project, and capability links while keeping
+  approval rows, activation actions, external mutations, activation allowance,
+  and capability enablement at zero.
+
 ## Learning eval serialization
 
 - Run `eval` and `eval-after-change` serially. They share the
@@ -1893,3 +1902,11 @@ coverage.
 ## Learning run_4927d5cebf25
 
 - Learning: Run run_4927d5cebf25 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_bd4187ca97c0
+
+- Learning: Run run_bd4187ca97c0 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_8b1f3acec286
+
+- Learning: Run run_8b1f3acec286 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

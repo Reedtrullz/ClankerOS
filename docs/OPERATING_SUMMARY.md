@@ -213,6 +213,13 @@ Core layers for the bootstrap:
   application, effect, delegation, task, contract, project, and capability
   links while keeping approval row creation, external mutations, activation
   actions, activation allowance, and capability enablement at zero.
+- Capability activation follow-up result task result effect task result effect
+  tasks: applied accepted-blocked downstream result effect task result decision
+  effects can be materialized into pending downstream proof tasks. Each task
+  preserves source decision, result record, application, effect, delegation,
+  task, contract, project, and capability links while keeping approval row
+  creation, external mutations, activation actions, activation allowance, and
+  capability enablement at zero.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON
@@ -917,6 +924,16 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   `docs/capability-activation-followup-result-task-result-effect-task-result-effect-application.md`,
   records local application rows, marks applicable effects `applied`, and
   keeps `approval_requests_created: 0`, `activation_actions_taken: 0`,
+  `external_mutations_taken: 0`, `activation_allowed: false`, and
+  `capability_enabled: false`.
+- Capability activation follow-up result task result effect task result effect
+  tasks: available through
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-tasks`
+  after downstream result effect task result decision effects have been applied
+  locally. The command writes
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-tasks.md`,
+  creates pending downstream proof tasks, and keeps
+  `approval_requests_created: 0`, `activation_actions_taken: 0`,
   `external_mutations_taken: 0`, `activation_allowed: false`, and
   `capability_enabled: false`.
 - Eval candidate listing: available through
