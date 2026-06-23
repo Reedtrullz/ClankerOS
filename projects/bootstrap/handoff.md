@@ -2974,3 +2974,29 @@ Current focus: Add operator review decisions for downstream follow-up result tas
    no approval rows were created, no activation actions occurred, no external
    systems were mutated, no capability was enabled, and proof remains
    unsatisfied.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Decisions
+
+Current focus: Add local downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals from accepted blocked result effect task result effect task result effect task results.
+
+1. The new command
+   `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide --operator-id operator --selected-action accept_keep_blocked --selection-note "Accepted downstream result-effect task result-effect task result-effect task result-effect task result-effect task proof-plan result and kept capability activation blocked." --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`
+   records an operator review decision for the newest downstream result
+   records.
+2. Live proof first recorded decision
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_aa06e26fcd4b`
+   for result
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_ee5597b442ad`.
+3. The idempotency rerun recorded
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_69a8e7934462`
+   with 0 ready results, 0 newly recorded decisions, 1 existing decision, 0
+   approval requests, 0 activation actions, and 0 external mutations.
+4. Continue with:
+   Add local downstream follow-up result task result effect task result effect
+   task result effect task result effect task result effect task result effect
+   task result decision effect proposals from accepted blocked result effect
+   task result effect task result effect task results.
+5. Preserve the current boundary: local decision rows and generated reports
+   only; no approval rows were created, no activation actions occurred, no
+   external systems were mutated, no capability was enabled, and proof remains
+   unsatisfied.

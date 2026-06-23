@@ -8546,3 +8546,60 @@
   rows, no activation actions, no external mutations, no dispatch, no
   CI/deploy action, no scheduling, no retries, no trust promotion, no
   activation allowance, no capability enablement, and no proof satisfaction.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Decisions
+
+- Added
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide`
+  for recording operator review decisions against the newest downstream
+  result records.
+- Added storage table
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decisions`
+  plus typed record/list/readback helpers.
+- Added dashboard and iteration visibility for the new decision row, generated
+  decision report, command reference entry, README tutorial pointer, docs-index
+  entry, and tutorial:
+  `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`.
+- Live proof first recorded decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_aa06e26fcd4b`
+  for result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_ee5597b442ad`.
+- Live idempotency rerun recorded decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_69a8e7934462`
+  with 0 ready results, 0 newly recorded decisions, 1 existing decision, 0
+  approval requests, 0 activation actions, and 0 external mutations.
+- Evidence:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `projects/bootstrap/handoff.md`
+  - `projects/bootstrap/knowledge.md`
+- Verification evidence:
+  - syntax compile check passed for storage, CLI, dashboard, iteration, the
+    new decision module, and tests.
+  - focused decision-rung tests: 4 passed.
+  - adjacent result/decision chain tests: 7 passed.
+  - full suite: 411 passed.
+  - live decision command and idempotency rerun passed.
+  - `sweep-stuck`: stuck_incidents 0.
+  - `queue-health`: hotspots 0.
+  - `handoff-review`: clear, stale_handoffs 0 after handoff refresh.
+  - `eval-candidates`: 0.
+  - `approvals`: pending_approvals 0.
+  - `git diff --check`: passed.
+  - `eval-after-change`: pass, run `run_39e046a89e78`.
+  - `eval`: `first_milestone_closed_loop: pass`.
+  - `playbooks`: 1 active playbook, 301 successful runs.
+  - GitHub metadata readback showed the configured description, README
+    homepage, ADMIN viewer permission, and 20 repository topics.
+  - `dashboard` and `iterate` regenerated local operator state.
+- Next focus:
+  `Add local downstream follow-up result task result effect task result effect
+  task result effect task result effect task result effect task result effect
+  task result decision effect proposals from accepted blocked result effect
+  task result effect task result effect task results.`
+- Non-claims: local decision rows and reports only; no approval rows, no
+  activation actions, no external mutations, no dispatch, no CI/deploy action,
+  no scheduling, no retries, no trust promotion, no activation allowance, no
+  capability enablement, and no proof satisfaction.

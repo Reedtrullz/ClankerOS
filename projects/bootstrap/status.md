@@ -82,6 +82,16 @@ state: verified run evidence can create inactive `skills` proposals plus
 operator can approve them into active skills or archive them. Proposed skills
 are visible in the dashboard and are not active until approved.
 
+Latest downstream result effect task result effect task result effect task
+result effect task result effect task result effect task decisions now record
+operator review rows for ingested result records through
+`python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide`,
+write
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`,
+show in the dashboard and iteration packet, and keep approval requests,
+activation actions, external mutations, activation allowance, capability
+enablement, and proof satisfaction at zero.
+
 ## Verification Evidence
 
 - `python3 -m pytest tests/test_first_milestone.py -q` -> 3 passed.
@@ -5476,3 +5486,15 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_f2969c99d89e
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_0de2b696835f/summary.md
+
+## Run run_39e046a89e78
+
+- Goal ID: goal_8c46c715672e
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_39e046a89e78/summary.md
+
+## Run run_a8fb6232bdc7
+
+- Goal ID: goal_bba8ed9f6b25
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_a8fb6232bdc7/summary.md

@@ -2312,6 +2312,17 @@ coverage.
   activation actions, external mutations, activation allowance, capability
   enablement, and proof satisfaction at zero.
 
+## Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Decisions
+
+- Ingested downstream result effect task result effect task result effect task
+  result effect task result effect task result effect task records can now
+  receive explicit operator review decisions. `accept_keep_blocked` records the
+  accepted blocked decision and becomes the idempotency umbrella, while
+  `request_more_evidence` can be followed by a later accept. The decision rung
+  preserves source result ids and keeps approval rows, activation actions,
+  external mutations, activation allowance, capability enablement, and proof
+  satisfaction at zero.
+
 ## Learning run_349c6a785d89
 
 - Learning: Run run_349c6a785d89 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
@@ -2359,3 +2370,11 @@ coverage.
 ## Learning run_0de2b696835f
 
 - Learning: Run run_0de2b696835f showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_39e046a89e78
+
+- Learning: Run run_39e046a89e78 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_a8fb6232bdc7
+
+- Learning: Run run_a8fb6232bdc7 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
