@@ -2022,6 +2022,15 @@ coverage.
   and preserve zero approval rows, activation actions, external mutations,
   activation allowance, capability enablement, and proof satisfaction.
 
+## Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Proposals
+
+- Accepted blocked downstream result effect task result effect task result
+  effect task result decisions should become proposal-only generic `effects`
+  rows before application. Preserve source decision, result, application,
+  effect, delegation, task, contract, project, and capability links while
+  keeping approval rows, activation actions, external mutations, activation
+  allowance, and capability enablement at zero.
+
 ## Learning run_6aac17428229
 
 - Learning: Run run_6aac17428229 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
@@ -2061,3 +2070,11 @@ coverage.
 ## Learning run_d4e7029a8b97
 
 - Learning: Run run_d4e7029a8b97 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_f50924edf3b5
+
+- Learning: Run run_f50924edf3b5 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_ebdd7e7884a4
+
+- Learning: Run run_ebdd7e7884a4 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

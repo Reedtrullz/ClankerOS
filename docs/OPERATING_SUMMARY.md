@@ -249,6 +249,14 @@ Core layers for the bootstrap:
   records while keeping approval rows, external mutations, activation actions,
   activation allowance, capability enablement, and proof satisfaction at zero.
 - Capability activation follow-up result task result effect task result effect
+  task result effect task result effect proposals: accepted blocked downstream
+  result effect task result effect task result effect task result decisions
+  can be converted into idempotent `proposed` effect rows in the generic
+  effects ledger. Each row links the source decision, result, application,
+  effect, delegation, task, contract, project, and capability while keeping
+  approval row creation, external mutations, activation actions, activation
+  allowance, and capability enablement at zero.
+- Capability activation follow-up result task result effect task result effect
   task result decisions: operators can record accept-keep-blocked,
   request-more-evidence, or defer decisions for downstream result effect task
   result effect result records while keeping approval rows, external
@@ -1059,6 +1067,26 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   directory, and keeps `approval_requests_created: 0`,
   `activation_actions_taken: 0`, `external_mutations_taken: 0`,
   `activation_allowed: false`, and `capability_enabled: false`.
+- Capability activation follow-up result task result effect task result effect
+  task result effect task result decisions: available through
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-decide`
+  after downstream result effect task result effect task result effect task
+  result records exist. The command writes
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`,
+  stores local operator decision rows, and keeps
+  `approval_requests_created: 0`, `activation_actions_taken: 0`,
+  `external_mutations_taken: 0`, `activation_allowed: false`, and
+  `capability_enabled: false`.
+- Capability activation follow-up result task result effect task result effect
+  task result effect task result effect proposals: available through
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals`
+  after accepted downstream result effect task result effect task result effect
+  task result decisions exist. The command writes
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`,
+  stores generic local proposed `effects` rows with idempotency keys, and
+  keeps `approval_requests_created: 0`, `activation_actions_taken: 0`,
+  `external_mutations_taken: 0`, `activation_allowed: false`, and
+  `capability_enabled: false`.
 - Eval candidate listing: available through
   `python3 -m agent_os.cli eval-candidates` and mirrored into
   `docs/dashboard.md`.

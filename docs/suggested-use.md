@@ -128,6 +128,10 @@ Ingest completed downstream result effect task result effect task result effect 
 Review downstream result effect task result effect task result effect task result records, accept keeping activation blocked, and prove that no approval rows, activation actions, or external mutations were created.
 ```
 
+```text
+Create proposed effects from accepted downstream result effect task result effect task result effect task result decisions, and prove that capability activation remains blocked.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -182,7 +186,10 @@ Review downstream result effect task result effect task result effect task resul
     review.
 32. Review downstream result effect task result effect task result effect task
     result records before treating the next evidence plan as operator-accepted.
-33. Record non-claims before treating the work as safe.
+33. Convert accepted downstream result effect task result effect task result
+    effect task result decisions into proposed effects only after the review
+    decision exists.
+34. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 

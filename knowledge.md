@@ -556,6 +556,13 @@
   terminal source for the next proposed-effect slice while preserving zero
   approval rows, zero activation actions, zero external mutations,
   `activation_allowed=false`, and `capability_enabled=false`.
+- Accepted blocked downstream result effect task result effect task result
+  effect task result decisions should become generic proposal-only `effects`
+  rows with a stage-specific idempotency prefix before any application-record
+  slice. The proposal stage should preserve source decision, result,
+  application, effect, delegation, task, contract, project, and capability
+  links while keeping approval rows, activation actions, external mutations,
+  activation allowance, and capability enablement at zero.
 
 ## Stable Distilled Learnings
 

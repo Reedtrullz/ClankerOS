@@ -4685,3 +4685,56 @@ are visible in the dashboard and are not active until approved.
   execution, model-provider calls, proof satisfaction, activation allowance,
   capability enablement, trust promotion, scheduler, retries, cost tracking,
   CI/deploy action by ClankerOS, PRs, or external mutation.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Proposals
+
+- Added
+  `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals`
+  to convert accepted blocked downstream result effect task result effect task
+  result effect task result decisions into proposal-only generic `effects`
+  rows.
+- First live proposal pass created effect `effect_d8299118fb64` from decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_decision_3912924f18b8`
+  and result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_f32b93ffc5ae`
+  while keeping `hosted_dashboard` activation blocked.
+- Idempotent rerun reported already recorded, with 0 new effects,
+  1 existing effect, 0 approval requests, 0 activation actions, and
+  0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `docs/handoff-review.md`
+- Verification evidence:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "effect_task_result_effect_task_result_effect_task_result_effect_proposals"`
+    -> red before implementation, then 4 passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "effect_task_result_effect_task_result_effect_task_result_decisions or effect_task_result_effect_task_result_effect_task_result_effect_proposals"`
+    -> 8 passed.
+  - `python3 -m pytest -q` -> 353 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result effect task result effect task result effect proposals" ...`
+    -> pass, run `run_f50924edf3b5`.
+  - `python3 -m agent_os.cli eval` -> pass, run `run_ebdd7e7884a4`.
+  - `python3 -m agent_os.cli playbooks` -> 1 active playbook with
+    265 successful runs.
+- Next focus:
+  `Add local application records for downstream follow-up result task result
+  effect task result effect task result effect task result decision effect
+  proposals.`
+- Non-claims: local proposed effect rows only; no `approval_requests`,
+  subagent execution, model-provider calls, proof satisfaction, activation
+  allowance, capability enablement, trust promotion, scheduler, retries, cost
+  tracking, CI/deploy action by ClankerOS, PRs, or external mutation.
+
+## Run run_f50924edf3b5
+
+- Goal ID: goal_4d70090a440f
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_f50924edf3b5/summary.md
+
+## Run run_ebdd7e7884a4
+
+- Goal ID: goal_06fa80bbe387
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_ebdd7e7884a4/summary.md

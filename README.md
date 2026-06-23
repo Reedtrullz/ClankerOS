@@ -2,60 +2,38 @@
 
 ClankerOS is a local-first harness for building a durable agentic operating
 system with explicit state, verification evidence, and approval boundaries.
-It starts with the closed loop and then adds a practical approval-gated coding
-vertical:
+It sits above replaceable coding agents and keeps durable project truth in
+SQLite, Markdown, JSON artifacts, tests, and generated operator views.
+
+```text
+user goal
+  -> ClankerOS control plane
+  -> plan, tasks, routing, delegation, and evidence
+  -> replaceable agent/runtime execution
+  -> effects, approvals, dashboard, memory, skills, and evals
+```
+
+The first reliable loop is local and operator-centered:
 
 ```text
 goal -> task graph -> execution -> verification -> memory -> visibility -> learning
 registered repo -> isolated worktree -> verified diff -> proposed effect -> approval
 approval -> freshness recheck -> local worktree commit -> committed effect evidence
 committed effect -> GitHub handoff packet -> operator push/draft-PR commands
-GitHub handoff -> operator-supplied CI/deploy evidence -> local evidence record
-task/category -> profile routing decision -> durable selection record
-routing decision -> read-only subagent delegation contract -> evidence artifact
-delegation contract -> structured result ingestion -> completed local evidence
-completed delegation result -> proposed memory entry -> operator approval/archive
-useful run evidence -> proposed SKILL.md -> operator approval/archive
-run evidence -> human review -> evidence index -> conceptual replay summary
-goal state -> deterministic steering review -> next action -> operator inbox
-approved operator request decisions -> proposed effect records -> blocked activation
-proposed operator effects -> local application record -> capability-specific guard
-applied capability effects -> pending activation tasks -> explicit evidence gates
-pending activation tasks -> capability activation contracts -> blocked evidence/approval packets
-activation contracts -> operator evidence ingestion -> local more-evidence decisions
-more-evidence decisions -> pending follow-up evidence tasks -> task graph
-follow-up evidence tasks -> routing decisions -> read-only delegation packets
-completed follow-up delegation results -> local result records -> blocked proof state preserved
-local result records -> operator follow-up review decisions -> blocked activation preserved
-accepted blocked follow-up decisions -> proposed effect records -> blocked activation preserved
-applied follow-up result effects -> downstream proof tasks -> next evidence plan
-downstream proof tasks -> routing decisions -> read-only delegation packets
-completed downstream proof-plan delegation results -> local result records -> next evidence plan preserved
-local downstream result records -> operator review decisions -> blocked activation preserved
-accepted downstream result decisions -> proposed effect records -> blocked activation preserved
-applied downstream result decision effects -> local application records -> blocked activation preserved
-applied downstream result decision effect applications -> downstream proof tasks -> next evidence plan
-downstream result effect tasks -> routing decisions -> read-only delegation packets
-completed downstream result effect delegation results -> local result records -> next evidence plan preserved
-local downstream result effect task result records -> operator review decisions -> blocked activation preserved
-accepted downstream result effect task result decisions -> proposed effect records -> blocked activation preserved
-applied downstream result effect task result decision effects -> local application records -> blocked activation preserved
-applied downstream result effect task result decision effect applications -> downstream proof tasks -> next evidence plan
-downstream result effect task result effect tasks -> routing decisions -> read-only delegation packets
-completed downstream result effect task result effect delegation results -> local result records -> next evidence plan preserved
-local downstream result effect task result effect task result records -> operator review decisions -> blocked activation preserved
-accepted downstream result effect task result effect task result decisions -> proposed effect records -> blocked activation preserved
-applied downstream result effect task result effect task result decision effects -> local application records -> blocked activation preserved
-applied downstream result effect task result effect task result decision effect applications -> downstream proof tasks -> next evidence plan
-downstream result effect task result effect task result effect tasks -> routing decisions -> read-only delegation packets
-completed downstream result effect task result effect task result effect delegation results -> local result records -> next evidence plan preserved
-local downstream result effect task result effect task result effect task result records -> operator review decisions -> blocked activation preserved
+delegation contract -> structured result ingestion -> proposed memory/skills
+run evidence -> review packet -> evidence index -> replay summary
+goal state -> steering review -> next action -> operator inbox
+accepted blocked decisions -> proposed local effects -> blocked activation preserved
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
 and clear non-claims before any hosted dashboard, remote worker, scheduler,
 browser/desktop adapter, CI/deploy, budget enforcement, trust promotion,
 automatic retry, or real-cost tracking capability is allowed to act.
+
+Detailed generated capability chains live in `docs/OPERATING_SUMMARY.md`,
+`docs/docs-index.md`, `docs/dashboard.md`, and the per-command evidence
+reports. Treat those as proof packets, not marketing copy.
 
 ## About
 
@@ -246,6 +224,13 @@ decisions for those downstream result effect task result effect task result
 effect task result records while preserving `activation_allowed=false`,
 `capability_enabled=false`, `approval_requests_created=0`,
 `activation_actions_taken=0`, and `external_mutations_taken=0`.
+Accepted blocked downstream result effect task result effect task result
+effect task result decisions can now be converted into local `proposed` effect
+rows that link back to the source decision, result, application, effect,
+delegation, task, contract, project, and capability while preserving
+`activation_allowed=false`, `capability_enabled=false`,
+`approval_requests_created=0`, `activation_actions_taken=0`, and
+`external_mutations_taken=0`.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -263,6 +248,30 @@ Suggested GitHub topics:
 ```text
 agent-operating-system, agentic-ai, ai-agents, agent-os, agent-orchestration, subagent-delegation, local-first, coding-agents, automation, sqlite, approval-workflow, human-in-the-loop, cli-tool, developer-tools, worktrees, verification, operator-dashboard, evals, markdown, python
 ```
+
+GitHub homepage:
+
+```text
+https://github.com/Reedtrullz/ClankerOS#readme
+```
+
+## Setup
+
+ClankerOS currently runs from source. It uses Python, SQLite, Git, and local
+files; no package install is required for the core CLI in this repository.
+GitHub handoff and repository metadata commands use the optional `gh` CLI.
+
+```bash
+git clone https://github.com/Reedtrullz/ClankerOS.git
+cd ClankerOS
+python3 --version
+python3 -m agent_os.cli init
+python3 -m pytest -q
+```
+
+Local runtime state is written under `.agent/`, `.clanker/`, `runs/`, and
+generated Markdown reports in `docs/`. Those files are operational evidence,
+not hosted service state.
 
 ## Quick Start
 
@@ -345,6 +354,9 @@ mutate external systems.
 
 ## Tutorials And Suggested Use
 
+Start with the first three docs for normal use; the later capability-chain
+tutorials are advanced evidence packets for blocked activation work.
+
 - [Run the first local loop](docs/tutorial-first-loop.md)
 - [Run an approval-gated coding task](docs/tutorial-approval-gated-coding.md)
 - [Record profile routing, delegation, and delegation results](docs/tutorial-subagent-delegation-results.md)
@@ -374,6 +386,7 @@ mutate external systems.
 - [Route downstream result effect task result effect task result effect tasks](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-delegations.md)
 - [Ingest downstream result effect task result effect task result effect task results](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results.md)
 - [Review downstream result effect task result effect task result effect task results](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-decisions.md)
+- [Create downstream result effect task result effect task result effect task result effect proposals](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Documentation index](docs/docs-index.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
@@ -499,6 +512,10 @@ The repository can now:
   effect task delegation outputs into local result records and JSON artifacts
   while preserving source links and keeping approval rows, activation actions,
   external mutations, activation allowance, and capability enablement at zero;
+- create proposed effect rows from accepted downstream result effect task
+  result effect task result effect task result decisions while preserving
+  source links and keeping approval rows, activation actions, external
+  mutations, activation allowance, and capability enablement at zero;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -676,6 +693,7 @@ python3 -m agent_os.cli capability-activation-followup-result-task-result-effect
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-delegations
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-decide --operator-id operator --selected-action accept_keep_blocked --selection-note "Accepted downstream result-effect task result-effect task result-effect proof-plan result and kept capability activation blocked." --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results.md
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
@@ -791,6 +809,10 @@ python3 -m pytest tests/test_first_milestone.py -q
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`:
   reviewing downstream result effect task result effect task result effect task
   result records without enabling capabilities.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`:
+  creating proposed effects from accepted downstream result effect task result
+  effect task result effect task result decisions without enabling
+  capabilities.
 - `docs/docs-index.md`: curated map of tutorials, generated reports, status
   files, and bootstrap project continuity files.
 - `docs/suggested-use.md`: operator guidance, prompts, and practical next slices.

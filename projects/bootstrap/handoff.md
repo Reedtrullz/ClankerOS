@@ -2409,3 +2409,50 @@ Current focus: Add local downstream follow-up result task result effect task res
 4. Preserve the local coding-to-GitHub-to-CI evidence chain as operator proof,
    but do not treat operator-supplied CI/deploy evidence as a live CI/deploy
    action performed by ClankerOS.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Proposals
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals`
+  now converts accepted blocked downstream result effect task result effect
+  task result effect task result decisions into proposal-only generic
+  `effects` rows.
+- Initial live proposal created effect `effect_d8299118fb64` for
+  `hosted_dashboard` from decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_decision_3912924f18b8`
+  and result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_f32b93ffc5ae`.
+- Final live idempotency pass reported
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals_already_recorded`
+  with 0 new effects, 1 existing effect, 0 approval requests,
+  0 activation actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Verification evidence:
+  - focused red/green proposal tests passed after implementation
+  - adjacent decision/proposal tests: 8 passed
+  - full suite: 353 passed
+  - eval-after-change: pass, run `run_f50924edf3b5`
+  - baseline eval: pass, run `run_ebdd7e7884a4`
+  - playbooks: 1 active, 265 successful runs
+- Non-claims: proposal-only generic effect rows do not create
+  `approval_requests`, start subagents, call model providers, satisfy proof,
+  mutate activation contracts, mutate external systems, allow activation,
+  enable capabilities, promote trust, schedule work, retry work, track spend,
+  run CI, deploy, push, open PRs, or mark the active goal complete.
+
+## Next Actions
+
+Current focus: Add local application records for downstream follow-up result task result effect task result effect task result effect task result decision effect proposals.
+
+1. Use `docs/next-iteration.md` to complete:
+   Add local application records for downstream follow-up result task result
+   effect task result effect task result effect task result decision effect
+   proposals.
+2. Apply only the proposed local effect row as a local application record; keep
+   activation blocked and preserve idempotency.
+3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
+   budget enforcement, trust promotion, retries, and real-cost tracking
+   blocked until their own evidence and approval contracts are satisfied.
