@@ -1,5 +1,58 @@
 # Status
 
+## 2026-06-24 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Delegations
+
+- Added the next local-only delegation rung:
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations`.
+- The command consumes pending downstream proof tasks of type
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task`,
+  records local `evidence_review` routing decisions, and writes pending
+  evaluator delegation packets under `.clanker/delegations/`.
+- Live proof first recorded delegation batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_4442d1a157ab`
+  and delegation `subagent_delegation_f5330975ccec` for pending task
+  `task_9da458146eb5`.
+- The idempotency rerun recorded delegation batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_bf6aa2793324`
+  with 0 new routing decisions, 0 new delegations, 1 existing delegation, 0
+  execution starts, 0 network actions, 0 activation actions, and 0 external
+  mutations.
+- Generated proof:
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`.
+- Operator docs added or refreshed:
+  `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`,
+  README, docs index, command reference, suggested-use, operating summary,
+  dashboard, next-iteration, and tasks visibility.
+- Verification evidence:
+  - syntax compile passed for touched Python modules and
+    `tests/test_first_milestone.py`.
+  - focused new delegation-rung tests: 3 passed, 446 deselected.
+  - adjacent proof-ladder slice: 13 passed, 436 deselected.
+  - full suite: 449 passed in 924.97s.
+  - live delegation command and idempotency rerun passed.
+  - `sweep-stuck`: stuck_incidents 0.
+  - `queue-health`: hotspots 0.
+  - `handoff-review`: clear, blocked_tasks 0, stale_handoffs 0.
+  - `eval-candidates`: 0.
+  - `approvals`: pending_approvals 0.
+  - `eval-after-change`: pass, run `run_d6f00742b957`.
+  - `eval`: `first_milestone_closed_loop: pass`.
+  - `playbooks`: 1 active playbook, 323 successful runs.
+  - `git diff --check`: passed.
+  - GitHub metadata readback for `Reedtrullz/ClankerOS` shows PUBLIC
+    visibility, default branch `main`, the populated About description,
+    README homepage, ADMIN viewer permission, and 20 repository topics.
+  - `dashboard` and `iterate` regenerated local operator state.
+- The next queue item is result ingestion for the new downstream evaluator
+  delegation packet.
+- Non-claims: local routing decisions, pending delegation rows, JSON packet
+  artifacts, generated reports, tutorial docs, and GitHub metadata readback
+  only; no subagent was started, no model provider was called, no approval row
+  was created, no activation action occurred, no external system was mutated,
+  no capability was enabled, no proof was satisfied, no CI/deploy proof
+  happened, no hosted dashboard or remote worker was started, no trust was
+  promoted, and the active expansion goal remains open.
+
 ## 2026-06-24 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Records
 
 - Added the next local-only task materialization rung:

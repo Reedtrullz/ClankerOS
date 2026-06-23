@@ -1,5 +1,26 @@
 # Bootstrap Handoff
 
+## Latest Continuation
+
+- Latest command:
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations`.
+- First live run recorded batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_4442d1a157ab`
+  and pending evaluator delegation `subagent_delegation_f5330975ccec` for
+  downstream proof task `task_9da458146eb5`.
+- Idempotency rerun recorded batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_bf6aa2793324`
+  with 0 new routing decisions, 0 new delegations, and 1 existing delegation.
+- Generated report:
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`.
+- Next packet:
+  `docs/next-iteration.md` selects result ingestion for the pending evaluator
+  delegation packet.
+- Non-claims: no subagent start, model provider call, approval row, activation
+  action, external mutation, capability enablement, proof satisfaction,
+  CI/deploy proof, hosted dashboard, remote worker, scheduler, retry, or trust
+  promotion.
+
 ## Current State
 
 Milestone 1 local closed loop is implemented in `agent_os/` and verified by

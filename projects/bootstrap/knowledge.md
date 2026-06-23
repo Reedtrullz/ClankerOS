@@ -3,6 +3,14 @@
 The first milestone should prove a complete loop rather than broad domain
 coverage.
 
+## Learning: Downstream Delegation Routing
+
+- Every newly materialized capability proof task type that will be delegated
+  must be added to `TASK_TYPE_CATEGORY_MAP` as `evidence_review` before the
+  delegation command runs.
+- The focused red/green slice caught this for the latest downstream proof task:
+  without the map entry, the generic router selected `coder`, which is not a
+  read-only subagent profile.
 
 ## Learning run_ef049fa8bc1b
 
@@ -2573,3 +2581,11 @@ coverage.
 ## Learning run_0ed134c8fdb8
 
 - Learning: Run run_0ed134c8fdb8 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_463966226a1f
+
+- Learning: Run run_463966226a1f showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_d6f00742b957
+
+- Learning: Run run_d6f00742b957 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

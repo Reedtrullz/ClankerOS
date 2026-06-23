@@ -1,5 +1,22 @@
 # Bootstrap Status
 
+Latest local capability continuation: pending downstream proof tasks can now
+be routed into read-only evaluator delegation packets through
+`capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations`.
+Live proof first recorded delegation batch
+`capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_4442d1a157ab`
+and delegation `subagent_delegation_f5330975ccec` for pending task
+`task_9da458146eb5`; the idempotency rerun recorded batch
+`capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_bf6aa2793324`
+with 0 new routing decisions, 0 new delegations, and 1 existing delegation.
+The report is
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`.
+The next iteration packet now selects result ingestion for the pending
+evaluator packet. This is still local evidence only: no subagent was started,
+no model provider was called, no approval requests, activation actions,
+external mutations, capability enablement, proof satisfaction, runtime
+CI/deploy proof, or trust promotion occurred.
+
 Latest local capability continuation: applied downstream result
 decision-effect application rows can now materialize pending downstream proof
 tasks through
@@ -5828,3 +5845,15 @@ local application records for those proposed effects.
 - Goal ID: goal_7a8d8728b269
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_0ed134c8fdb8/summary.md
+
+## Run run_463966226a1f
+
+- Goal ID: goal_5f007d70165b
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_463966226a1f/summary.md
+
+## Run run_d6f00742b957
+
+- Goal ID: goal_4c792e5b18df
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_d6f00742b957/summary.md

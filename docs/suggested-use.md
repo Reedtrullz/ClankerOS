@@ -1288,6 +1288,19 @@ See
 `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`
 for the task report, idempotency check, and safety counters.
 
+After those latest pending proof tasks exist, route them into read-only
+evaluator delegation packets:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations
+python3 -m agent_os.cli dashboard
+```
+
+See
+`docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`
+for the delegation batch report, packet JSON location, idempotency check, and
+safety counters.
+
 ## When To Commit And Push
 
 Commit when:

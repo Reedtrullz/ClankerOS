@@ -38,7 +38,8 @@ hidden autonomy.
 - Supports safe profile routing, read-only delegation contracts, structured
   delegation-result ingestion, proposed memory, and proposed skills.
 - Models capability activation as blocked proof work until evidence, approval,
-  idempotency, and rollback boundaries exist.
+  idempotency, and rollback boundaries exist, including local downstream proof
+  tasks and read-only evaluator delegation packets.
 
 ## Start Here
 
