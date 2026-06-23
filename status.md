@@ -7385,3 +7385,72 @@
   model-provider call, no proof satisfaction, no activation allowance, no
   capability enablement, no CI/deploy action by ClankerOS, no trust promotion,
   no scheduler, no retry, no cost tracking, and no external mutation.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Results
+
+- Added
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results`
+  for ingesting completed downstream result effect task result effect task
+  result effect delegation packets as local result records and JSON artifacts.
+- Live precondition batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_batch_d782cd11b0b1`
+  reported
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_results_no_completed_delegations`
+  with 0 completed delegations and 0 created records.
+- Completed pending evaluator delegation `subagent_delegation_1eb56aef4dee`
+  through `record-delegation-result`, writing
+  `.clanker/delegations/subagent_delegation_1eb56aef4dee-result.json` with
+  zero network actions and zero external mutations.
+- Live first ingest batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_batch_36e9c89e8524`
+  created result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_f32b93ffc5ae`
+  for `hosted_dashboard`.
+- Live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_batch_dd71fd92368f`
+  reported
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_results_already_recorded`
+  with 1 completed delegation, 0 new result records, 1 existing result record,
+  0 approval requests, 0 activation actions, and 0 external mutations.
+- Evidence:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results.md`
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results/subagent_delegation_1eb56aef4dee-hosted-dashboard.json`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `docs/handoff-review.md`
+- Verification evidence:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_results"`
+    -> failed before implementation on the missing CLI command.
+  - Focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_results"`
+    -> 4 passed, 341 deselected.
+  - Adjacent chain:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect"`
+    -> 17 passed, 328 deselected.
+  - `python3 -m py_compile agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_results.py tests/test_first_milestone.py`
+    -> passed.
+  - `python3 -m pytest -q` -> 345 passed in 367.80s.
+  - `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800` ->
+    stuck_incidents: 0.
+  - `python3 -m agent_os.cli queue-health` -> hotspots: 0.
+  - `python3 -m agent_os.cli handoff-review` -> status: clear,
+    blocked_tasks: 0, stale_handoffs: 0.
+  - `python3 -m agent_os.cli eval-candidates` -> eval_candidates: 0.
+  - `python3 -m agent_os.cli approvals` -> pending_approvals: 0.
+  - `git diff --check` -> passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result effect task result effect task results" --file agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_results.py --file agent_os/storage.py --file agent_os/cli.py --file agent_os/dashboard.py --file agent_os/iteration.py --file tests/test_first_milestone.py --file README.md --file docs/suggested-use.md --file docs/docs-index.md --file docs/OPERATING_SUMMARY.md --file docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results.md`
+    -> pass, run `run_c43a1ca4746c`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`,
+    run `run_b0914e88c600`.
+  - `python3 -m agent_os.cli playbooks` -> playbooks: 1,
+    `first-milestone-closed-loop` active with 260 successful runs.
+- Next focus:
+  `Add operator review decisions for downstream follow-up result task result
+  effect task result effect task result effect task result records.`
+- Non-claims: local result records and JSON artifacts only; no approval-row
+  creation, no subagent execution, no model-provider call, no proof
+  satisfaction, no activation allowance, no capability enablement, no
+  CI/deploy action by ClankerOS, no trust promotion, no scheduler, no retry,
+  no cost tracking, and no external mutation.

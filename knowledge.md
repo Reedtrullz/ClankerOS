@@ -543,6 +543,12 @@
   links and keeping execution, provider calls, approval rows, activation
   actions, external mutations, activation allowance, and capability enablement
   at zero.
+- Completed downstream result effect task result effect task result effect
+  delegation outputs should ingest into local result records only. The
+  ingestion stage must preserve source decision, result, application, effect,
+  delegation, task, contract, project, and capability links while keeping
+  proof satisfaction, approval rows, activation actions, external mutations,
+  activation allowance, and capability enablement at zero.
 
 ## Stable Distilled Learnings
 

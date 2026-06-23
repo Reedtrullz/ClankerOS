@@ -235,6 +235,14 @@ Core layers for the bootstrap:
   keeping approval rows, external mutations, activation actions, activation
   allowance, capability enablement, and proof satisfaction at zero.
 - Capability activation follow-up result task result effect task result effect
+  task result effect task results: completed downstream result effect task
+  result effect task result effect delegation packets can be ingested as local
+  result records and JSON artifacts. Each result preserves source decision,
+  result, application, effect, delegation, task, contract, project, and
+  capability links while keeping approval rows, external mutations, activation
+  actions, activation allowance, capability enablement, and proof satisfaction
+  at zero.
+- Capability activation follow-up result task result effect task result effect
   task result decisions: operators can record accept-keep-blocked,
   request-more-evidence, or defer decisions for downstream result effect task
   result effect result records while keeping approval rows, external
@@ -1033,6 +1041,16 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   records read-only `evidence_review` routing decisions and pending evaluator
   delegation packets, and keeps `execution_started: 0`,
   `network_actions_taken: 0`, `approval_requests_created: 0`,
+  `activation_actions_taken: 0`, `external_mutations_taken: 0`,
+  `activation_allowed: false`, and `capability_enabled: false`.
+- Capability activation follow-up result task result effect task result effect
+  task result effect task results: available through
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results`
+  after the read-only evaluator delegation packet has a completed local result.
+  The command writes
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results.md`,
+  stores one JSON artifact per ingested delegation under the matching docs
+  directory, and keeps `approval_requests_created: 0`,
   `activation_actions_taken: 0`, `external_mutations_taken: 0`,
   `activation_allowed: false`, and `capability_enabled: false`.
 - Eval candidate listing: available through

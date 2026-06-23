@@ -236,6 +236,9 @@ from agent_os.capability_activation_followup_result_task_result_effect_task_resu
 from agent_os.capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_delegations import (
     render_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_line,
 )
+from agent_os.capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_results import (
+    render_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_batch_line,
+)
 from agent_os.capability_proof_gap import (
     format_recommended_commands as format_proof_gap_commands,
     render_capability_proof_gap_index_line,
@@ -889,6 +892,16 @@ def generate_static_dashboard(root: Path) -> Path:
                     limit=1
                 )
             )
+        capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_batches = []
+        if _table_exists(
+            connection,
+            "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_batches",
+        ):
+            capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_batches = (
+                storage.list_recent_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_batches(
+                    limit=1
+                )
+            )
         capability_activation_followup_result_task_result_effect_task_result_effect_task_batches = []
         if _table_exists(
             connection,
@@ -1307,6 +1320,13 @@ def generate_static_dashboard(root: Path) -> Path:
             0
         ]
         if capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_delegation_batches
+        else None
+    )
+    latest_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_batch = (
+        capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_batches[
+            0
+        ]
+        if capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_batches
         else None
     )
     latest_capability_activation_followup_result_task_result_effect_task_result_effect_task_batch = (
@@ -2860,6 +2880,42 @@ def generate_static_dashboard(root: Path) -> Path:
                 f"- report: {batch.report_path}",
                 "",
                 render_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_line(
+                    batch
+                ),
+            ]
+        )
+    else:
+        lines.append("- none")
+
+    lines.extend(
+        [
+            "",
+            "## Capability Activation Follow-Up Result Task Result Effect Task Result Effect Task Result Effect Task Results",
+            "",
+        ]
+    )
+    if (
+        latest_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_batch
+        is not None
+    ):
+        batch = (
+            latest_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_batch
+        )
+        lines.extend(
+            [
+                f"- status: {batch.status}",
+                f"- completed_delegations: {batch.completed_delegation_count}",
+                f"- result_records_created: {batch.result_record_count}",
+                f"- existing_result_records: {batch.existing_result_record_count}",
+                (
+                    "- approval_requests_created: "
+                    f"{batch.created_approval_request_count}"
+                ),
+                f"- activation_actions_taken: {batch.activation_action_count}",
+                f"- external_mutations_taken: {batch.external_mutation_count}",
+                f"- report: {batch.report_path}",
+                "",
+                render_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_batch_line(
                     batch
                 ),
             ]

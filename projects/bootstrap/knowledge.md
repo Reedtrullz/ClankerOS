@@ -2005,6 +2005,14 @@ coverage.
   calls, approval rows, activation actions, external mutations, activation
   allowance, and capability enablement at zero.
 
+## Downstream Result Effect Task Result Effect Task Result Effect Task Results
+
+- Completed downstream result effect task result effect task result effect
+  delegation outputs should materialize local result records and JSON
+  artifacts only: preserve source links and structured evaluator output while
+  keeping approval rows, activation actions, external mutations, activation
+  allowance, capability enablement, and proof satisfaction at zero.
+
 ## Learning run_6aac17428229
 
 - Learning: Run run_6aac17428229 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
@@ -2028,3 +2036,11 @@ coverage.
 ## Learning run_79c09f5f3356
 
 - Learning: Run run_79c09f5f3356 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_c43a1ca4746c
+
+- Learning: Run run_c43a1ca4746c showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_b0914e88c600
+
+- Learning: Run run_b0914e88c600 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

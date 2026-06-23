@@ -4572,3 +4572,63 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_4981cc7e17d9
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_79c09f5f3356/summary.md
+
+## Run run_c43a1ca4746c
+
+- Goal ID: goal_d14b8c8e2e3e
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_c43a1ca4746c/summary.md
+
+## Run run_b0914e88c600
+
+- Goal ID: goal_725c698883e5
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_b0914e88c600/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Results
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results`
+  now ingests completed downstream result effect task result effect task result
+  effect delegation outputs as local result records and JSON artifacts.
+- Live precondition batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_batch_d782cd11b0b1`
+  reported no completed delegations.
+- `record-delegation-result` completed
+  `subagent_delegation_1eb56aef4dee` with local artifact
+  `.clanker/delegations/subagent_delegation_1eb56aef4dee-result.json`.
+- First live ingest batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_batch_36e9c89e8524`
+  created result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_f32b93ffc5ae`
+  for `hosted_dashboard`.
+- Idempotent rerun
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_batch_dd71fd92368f`
+  reported already recorded, with 1 completed delegation, 0 new result
+  records, 1 existing result record, 0 approval requests, 0 activation
+  actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results.md`
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results/subagent_delegation_1eb56aef4dee-hosted-dashboard.json`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `docs/handoff-review.md`
+- Verification evidence:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_results"`
+    -> red before implementation, then 4 passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect"`
+    -> 17 passed.
+  - `python3 -m pytest -q` -> 345 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result effect task result effect task results" --file agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_results.py --file agent_os/storage.py --file agent_os/cli.py --file agent_os/dashboard.py --file agent_os/iteration.py --file tests/test_first_milestone.py --file README.md --file docs/suggested-use.md --file docs/docs-index.md --file docs/OPERATING_SUMMARY.md --file docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results.md`
+    -> pass, run `run_c43a1ca4746c`.
+  - `python3 -m agent_os.cli eval` -> pass, run `run_b0914e88c600`.
+  - `python3 -m agent_os.cli playbooks` -> 1 active playbook with
+    260 successful runs.
+- Next focus:
+  `Add operator review decisions for downstream follow-up result task result
+  effect task result effect task result effect task result records.`
+- Non-claims: local result records and JSON artifacts only; no
+  `approval_requests`, subagent execution, model-provider calls, proof
+  satisfaction, activation allowance, capability enablement, trust promotion,
+  scheduler, retries, cost tracking, CI/deploy action by ClankerOS, PRs, or
+  external mutation.

@@ -47,6 +47,8 @@ local downstream result effect task result effect task result records -> operato
 accepted downstream result effect task result effect task result decisions -> proposed effect records -> blocked activation preserved
 applied downstream result effect task result effect task result decision effects -> local application records -> blocked activation preserved
 applied downstream result effect task result effect task result decision effect applications -> downstream proof tasks -> next evidence plan
+downstream result effect task result effect task result effect tasks -> routing decisions -> read-only delegation packets
+completed downstream result effect task result effect task result effect delegation results -> local result records -> next evidence plan preserved
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -232,6 +234,12 @@ decision, result, application, effect, delegation, task, contract, project, and
 capability links and still keeping `activation_allowed=false`,
 `capability_enabled=false`, `approval_requests_created=0`,
 `activation_actions_taken=0`, and `external_mutations_taken=0`.
+Those downstream result effect task result effect task result effect tasks can
+now be routed to read-only evaluator delegation packets, and completed
+delegation outputs can be ingested as local result records and JSON artifacts
+while still keeping `activation_allowed=false`, `capability_enabled=false`,
+`approval_requests_created=0`, `activation_actions_taken=0`, and
+`external_mutations_taken=0`.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -358,6 +366,7 @@ mutate external systems.
 - [Apply downstream result effect task result effect task result effect records](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-application.md)
 - [Create downstream tasks from applied result effect task result effect task result effects](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-tasks.md)
 - [Route downstream result effect task result effect task result effect tasks](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-delegations.md)
+- [Ingest downstream result effect task result effect task result effect task results](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Documentation index](docs/docs-index.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
@@ -479,6 +488,10 @@ The repository can now:
   tasks to read-only evaluator delegation packets with local JSON artifacts
   while keeping execution, approval rows, external mutations, activation
   actions, activation allowance, and capability enablement at zero;
+- ingest completed downstream result effect task result effect task result
+  effect task delegation outputs into local result records and JSON artifacts
+  while preserving source links and keeping approval rows, activation actions,
+  external mutations, activation allowance, and capability enablement at zero;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -763,6 +776,9 @@ python3 -m pytest tests/test_first_milestone.py -q
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`:
   routing downstream result effect task result effect task result effect tasks
   into read-only evaluator delegation packets without starting subagents.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results.md`:
+  ingesting completed downstream result effect task result effect task result
+  effect delegation outputs into local result records.
 - `docs/docs-index.md`: curated map of tutorials, generated reports, status
   files, and bootstrap project continuity files.
 - `docs/suggested-use.md`: operator guidance, prompts, and practical next slices.
