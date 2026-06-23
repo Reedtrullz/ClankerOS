@@ -1,14 +1,14 @@
 # Expansion Operator Approval Schema Migration Decision Ledger
 
-- id: expansion_operator_approval_schema_migration_decision_ledger_272ffdcbec3b
+- id: expansion_operator_approval_schema_migration_decision_ledger_6ef33ed4a8c1
 - status: operator_approval_schema_migration_decision_pending
-- source_request: expansion_operator_approval_schema_migration_approval_request_5823fec40069
+- source_request: expansion_operator_approval_schema_migration_approval_request_852a97a08f32
 - source_status: operator_approval_schema_migration_approval_required
-- source_plan: expansion_operator_approval_schema_migration_plan_43782b35400e
+- source_plan: expansion_operator_approval_schema_migration_plan_66af29eb01d0
 - source_plan_status: operator_approval_schema_migration_plan_ready
-- source_decision: expansion_operator_approval_schema_decision_0682a62c5642
+- source_decision: expansion_operator_approval_schema_decision_f72d6726012f
 - source_decision_status: approval_schema_decision_ready
-- source_review: expansion_operator_approval_request_review_56ad3802e63b
+- source_review: expansion_operator_approval_request_review_e482cca5416c
 - source_review_status: approval_request_schema_review_required
 - target_table: operator_approval_requests
 - planned_columns: 26
@@ -32,7 +32,7 @@
 - existing_approval_requests: 0
 - recommended_next_step: operator_approval_schema_migration_operator_action_required
 - report_path: docs/expansion-operator-approval-schema-migration-decision-ledger.md
-- created_at: 2026-06-22T17:47:07.558359+00:00
+- created_at: 2026-06-23T03:58:04.038644+00:00
 
 ## Decision Items
 

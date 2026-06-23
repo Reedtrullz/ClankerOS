@@ -549,6 +549,13 @@
   delegation, task, contract, project, and capability links while keeping
   proof satisfaction, approval rows, activation actions, external mutations,
   activation allowance, and capability enablement at zero.
+- Downstream result effect task result effect task result effect task result
+  decisions should allow preliminary `request_more_evidence` or
+  `defer_review` rows to be superseded by a later `accept_keep_blocked`
+  decision for the same result. Accepted keep-blocked decisions are the
+  terminal source for the next proposed-effect slice while preserving zero
+  approval rows, zero activation actions, zero external mutations,
+  `activation_allowed=false`, and `capability_enabled=false`.
 
 ## Stable Distilled Learnings
 

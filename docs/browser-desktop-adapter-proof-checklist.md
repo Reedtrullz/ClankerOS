@@ -1,8 +1,8 @@
 # Browser Desktop Adapter Proof Checklist
 
-- id: browser_desktop_adapter_proof_checklist_f39a085d4b18
+- id: browser_desktop_adapter_proof_checklist_9a63aab636f4
 - status: browser_desktop_adapter_proof_blocked
-- source_checklist_id: autonomous_scheduling_proof_checklist_c71c9bac6ad8
+- source_checklist_id: autonomous_scheduling_proof_checklist_78ea854ae244
 - source_checklist_status: autonomous_scheduling_proof_blocked
 - capability_count: 1
 - checklist_items: 1
@@ -19,7 +19,7 @@
 - boundaries: 1
 - recommended_commands: none
 - report_path: docs/browser-desktop-adapter-proof-checklist.md
-- created_at: 2026-06-22T17:47:05.256695+00:00
+- created_at: 2026-06-23T03:58:01.309264+00:00
 
 ## Recommendation
 
@@ -31,9 +31,9 @@
 
 ## Source Autonomous Scheduling Proof Checklist
 
-- id: autonomous_scheduling_proof_checklist_c71c9bac6ad8
+- id: autonomous_scheduling_proof_checklist_78ea854ae244
 - status: autonomous_scheduling_proof_blocked
-- source_checklist_source_checklist_id: remote_worker_proof_checklist_7f7cd3aa32ea
+- source_checklist_source_checklist_id: remote_worker_proof_checklist_2d2fab9178ef
 - source_checklist_source_checklist_status: remote_worker_proof_blocked
 - checklist_items: 1
 - blocked_scheduling_proofs: 1
@@ -46,11 +46,11 @@
 - missing_evidence: 1
 - approvals_required: 1
 - report: docs/autonomous-scheduling-proof-checklist.md
-- source_checklist_source_checklist_source_checklist_id: hosted_dashboard_proof_checklist_b2bcb40524e1
+- source_checklist_source_checklist_source_checklist_id: hosted_dashboard_proof_checklist_b6fc6a812d4f
 - source_checklist_source_checklist_source_checklist_status: hosted_dashboard_proof_blocked
-- source_checklist_source_checklist_source_checklist_source_checklist_id: real_cost_tracking_proof_checklist_88b013aea03b
+- source_checklist_source_checklist_source_checklist_source_checklist_id: real_cost_tracking_proof_checklist_12830b0001e4
 - source_checklist_source_checklist_source_checklist_source_checklist_status: real_cost_tracking_proof_blocked
-- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: automatic_retry_proof_checklist_37df1e5db3a7
+- source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_id: automatic_retry_proof_checklist_e6b8dc080daf
 - source_checklist_source_checklist_source_checklist_source_checklist_source_checklist_status: automatic_retry_proof_blocked
 
 ## Non-Claims

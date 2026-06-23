@@ -1,17 +1,17 @@
 # Expansion Operator Approval Schema Migration Plan
 
-- id: expansion_operator_approval_schema_migration_plan_43782b35400e
+- id: expansion_operator_approval_schema_migration_plan_66af29eb01d0
 - status: operator_approval_schema_migration_plan_ready
-- source_decision: expansion_operator_approval_schema_decision_0682a62c5642
+- source_decision: expansion_operator_approval_schema_decision_f72d6726012f
 - source_status: approval_schema_decision_ready
-- source_review: expansion_operator_approval_request_review_56ad3802e63b
+- source_review: expansion_operator_approval_request_review_e482cca5416c
 - source_review_status: approval_request_schema_review_required
-- source_draft: expansion_operator_approval_draft_6cd8abd426f6
-- source_ledger: expansion_operator_decision_ledger_21c9b282c06a
-- source_checklist: expansion_operator_review_checklist_7c4fcdf41f96
-- source_index: expansion_decision_evidence_index_77621150a88e
-- source_brief: expansion_decision_brief_26db1de5231d
-- source_audit: goal_completion_audit_981a08705399
+- source_draft: expansion_operator_approval_draft_88073b8c63ac
+- source_ledger: expansion_operator_decision_ledger_778156003b5a
+- source_checklist: expansion_operator_review_checklist_b67d47f5e77f
+- source_index: expansion_decision_evidence_index_d04675a7dcfa
+- source_brief: expansion_decision_brief_62ed77a1e8e5
+- source_audit: goal_completion_audit_335503873f5b
 - recommended_option: operator_approval_requests_table
 - target_table: operator_approval_requests
 - affected_requests: 11
@@ -29,7 +29,7 @@
 - existing_approval_requests: 0
 - recommended_next_step: operator_approval_schema_migration_approval_required
 - report_path: docs/expansion-operator-approval-schema-migration-plan.md
-- created_at: 2026-06-22T17:47:07.281113+00:00
+- created_at: 2026-06-23T03:58:03.710794+00:00
 
 ## Planned Columns
 

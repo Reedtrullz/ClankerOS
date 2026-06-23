@@ -243,6 +243,12 @@ Core layers for the bootstrap:
   actions, activation allowance, capability enablement, and proof satisfaction
   at zero.
 - Capability activation follow-up result task result effect task result effect
+  task result effect task result decisions: operators can record
+  accept-keep-blocked, request-more-evidence, or defer decisions for
+  downstream result effect task result effect task result effect task result
+  records while keeping approval rows, external mutations, activation actions,
+  activation allowance, capability enablement, and proof satisfaction at zero.
+- Capability activation follow-up result task result effect task result effect
   task result decisions: operators can record accept-keep-blocked,
   request-more-evidence, or defer decisions for downstream result effect task
   result effect result records while keeping approval rows, external

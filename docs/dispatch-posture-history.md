@@ -1,24 +1,25 @@
 # Dispatch Posture History
 
-- id: dispatch_posture_history_01e722e5f040
+- id: dispatch_posture_history_89dcc8c55494
 - status: report_only
 - snapshots: 25
-- latest_task_count: 435
-- task_count_delta: 161
+- latest_task_count: 549
+- task_count_delta: 271
 - budget_states: not_tracked
 - trust_states: not_tracked
-- first_snapshot_at: 2026-06-22T08:30:12.524778+00:00
-- latest_snapshot_at: 2026-06-22T17:47:02.796997+00:00
+- first_snapshot_at: 2026-06-22T08:47:49.168655+00:00
+- latest_snapshot_at: 2026-06-23T03:57:02.314642+00:00
 - report_path: docs/dispatch-posture-history.md
-- created_at: 2026-06-22T17:47:02.950144+00:00
+- created_at: 2026-06-23T03:57:02.350204+00:00
 
 ## Latest Risk Levels
 
-- high: 18
-- low: 417
+- high: 22
+- low: 527
 
 ## Recent Snapshots
 
+- budget_trust_posture_dc67d3d05f38: tasks=549 risk_counts=high=22,low=527 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-23T03:57:02.314642+00:00
 - budget_trust_posture_2a45c238b87f: tasks=435 risk_counts=high=18,low=417 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T17:47:02.796997+00:00
 - budget_trust_posture_904fb792abcd: tasks=433 risk_counts=high=18,low=415 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T17:03:48.243594+00:00
 - budget_trust_posture_5eb7539650d3: tasks=422 risk_counts=high=9,low=413 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T16:46:24.674735+00:00
@@ -43,7 +44,6 @@
 - budget_trust_posture_5a8d5a060c97: tasks=286 risk_counts=low=286 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T09:05:06.058640+00:00
 - budget_trust_posture_dd2d7023ae8c: tasks=282 risk_counts=low=282 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T08:54:41.261205+00:00
 - budget_trust_posture_c68b05cd8560: tasks=278 risk_counts=low=278 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T08:47:49.168655+00:00
-- budget_trust_posture_6858ecdeea7a: tasks=274 risk_counts=low=274 budget_state=not_tracked trust_state=not_tracked created_at=2026-06-22T08:30:12.524778+00:00
 
 ## Non-Claims
 

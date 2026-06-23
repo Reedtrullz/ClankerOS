@@ -2013,6 +2013,15 @@ coverage.
   keeping approval rows, activation actions, external mutations, activation
   allowance, capability enablement, and proof satisfaction at zero.
 
+## Downstream Result Effect Task Result Effect Task Result Effect Task Result Decisions
+
+- Operator decisions for downstream result effect task result effect task
+  result effect task result records should stay review-only: allow
+  `accept_keep_blocked`, `request_more_evidence`, and `defer_review`, keep
+  accepted blocked decisions as the source for the next proposed-effect slice,
+  and preserve zero approval rows, activation actions, external mutations,
+  activation allowance, capability enablement, and proof satisfaction.
+
 ## Learning run_6aac17428229
 
 - Learning: Run run_6aac17428229 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
@@ -2044,3 +2053,11 @@ coverage.
 ## Learning run_b0914e88c600
 
 - Learning: Run run_b0914e88c600 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_c146d1d3470f
+
+- Learning: Run run_c146d1d3470f showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_d4e7029a8b97
+
+- Learning: Run run_d4e7029a8b97 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

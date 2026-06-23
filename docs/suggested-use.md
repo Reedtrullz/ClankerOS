@@ -124,6 +124,10 @@ Create proposed effects from accepted downstream result effect task result effec
 Ingest completed downstream result effect task result effect task result effect delegation outputs, and prove that activation remains blocked.
 ```
 
+```text
+Review downstream result effect task result effect task result effect task result records, accept keeping activation blocked, and prove that no approval rows, activation actions, or external mutations were created.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -176,7 +180,9 @@ Ingest completed downstream result effect task result effect task result effect 
 31. Ingest completed downstream result effect task result effect task result
     effect delegation outputs as local result records before any operator
     review.
-32. Record non-claims before treating the work as safe.
+32. Review downstream result effect task result effect task result effect task
+    result records before treating the next evidence plan as operator-accepted.
+33. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -306,6 +312,12 @@ Prefer these files when orienting:
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-decisions.md`
   for reviewing downstream result effect task result effect result records
   while keeping activation blocked.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-results.md`
+  for ingesting completed downstream result effect task result effect task
+  result effect delegation outputs as local result records.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`
+  for reviewing downstream result effect task result effect task result effect
+  task result records while keeping activation blocked.
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-proposals.md`
   for creating proposed effects from accepted downstream result effect task
   result effect result decisions.
@@ -885,8 +897,8 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 Good next slices now favor capability-specific guards after local delegation
 packets exist:
 
-- routing and delegation packets for downstream result effect task result
-  effect task result effect tasks;
+- proposed local effects from accepted downstream result effect task result
+  effect task result effect task result decisions;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;
