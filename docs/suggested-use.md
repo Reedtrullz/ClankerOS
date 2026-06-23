@@ -116,6 +116,10 @@ Ingest completed downstream result effect task result effect delegation outputs,
 Review downstream result effect task result effect result records, accept keeping activation blocked, and prove that no approval rows, activation actions, or external mutations were created.
 ```
 
+```text
+Create proposed effects from accepted downstream result effect task result effect result decisions, and prove that capability activation remains blocked.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -160,7 +164,9 @@ Review downstream result effect task result effect result records, accept keepin
     outputs as local result records before any operator review.
 28. Review downstream result effect task result effect result records before
     treating the next evidence plan as operator-accepted.
-29. Record non-claims before treating the work as safe.
+29. Convert accepted downstream result effect task result effect result
+    decisions into proposed effects only after the review decision exists.
+30. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -290,6 +296,9 @@ Prefer these files when orienting:
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-decisions.md`
   for reviewing downstream result effect task result effect result records
   while keeping activation blocked.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+  for creating proposed effects from accepted downstream result effect task
+  result effect result decisions.
 - `contracts.md` for safety boundaries and evidence expectations.
 - `status.md` for chronological implementation evidence.
 - `projects/bootstrap/handoff.md` for the current continuation edge.
@@ -783,6 +792,21 @@ records the operator action, and keeps `approval_requests_created=0`,
 `activation_actions_taken=0`, `external_mutations_taken=0`,
 `activation_allowed=false`, and `capability_enabled=false`.
 
+Create proposed local effects from accepted downstream result effect task
+result effect result decisions:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-proposals
+python3 -m agent_os.cli dashboard
+```
+
+The proposal command writes
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-proposals.md`,
+creates generic local `effects` rows for accepted blocked decisions, and keeps
+`approval_requests_created=0`, `activation_actions_taken=0`,
+`external_mutations_taken=0`, `activation_allowed=false`, and
+`capability_enabled=false`.
+
 ## When To Commit And Push
 
 Commit when:
@@ -801,8 +825,8 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 Good next slices now favor capability-specific guards after local delegation
 packets exist:
 
-- proposed effects from accepted downstream result effect task result effect
-  result decisions;
+- local application records for accepted downstream result effect task result
+  effect result decision effect proposals;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;

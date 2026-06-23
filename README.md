@@ -44,6 +44,7 @@ applied downstream result effect task result decision effect applications -> dow
 downstream result effect task result effect tasks -> routing decisions -> read-only delegation packets
 completed downstream result effect task result effect delegation results -> local result records -> next evidence plan preserved
 local downstream result effect task result effect task result records -> operator review decisions -> blocked activation preserved
+accepted downstream result effect task result effect task result decisions -> proposed effect records -> blocked activation preserved
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -211,6 +212,12 @@ decisions for those downstream result effect task result effect result records
 while preserving `activation_allowed=false`, `capability_enabled=false`,
 `approval_requests_created=0`, `activation_actions_taken=0`, and
 `external_mutations_taken=0`.
+Accepted blocked downstream result effect task result effect result decisions
+can now be converted into local `proposed` effect rows that link back to the
+source decision, result, application, effect, delegation, task, contract,
+project, and capability while preserving `activation_allowed=false`,
+`capability_enabled=false`, `approval_requests_created=0`,
+`activation_actions_taken=0`, and `external_mutations_taken=0`.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -333,6 +340,7 @@ mutate external systems.
 - [Route downstream result effect task result effect tasks](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-delegations.md)
 - [Ingest downstream result effect task result effect task results](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-results.md)
 - [Review downstream result effect task result effect task results](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-decisions.md)
+- [Create downstream result effect task result effect task result effect proposals](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-proposals.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Documentation index](docs/docs-index.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
@@ -438,6 +446,10 @@ The repository can now:
 - review downstream result effect task result effect result records with
   explicit operator decisions while keeping approval rows, activation actions,
   external mutations, activation allowance, and capability enablement at zero;
+- create proposed effect rows from accepted downstream result effect task
+  result effect result decisions while keeping approval rows, activation
+  actions, external mutations, activation allowance, and capability enablement
+  at zero;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;

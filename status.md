@@ -7152,3 +7152,59 @@
   creation, subagent execution, model-provider call, proof satisfaction,
   activation allowance, capability enablement, CI/deploy, push, PR, trust
   promotion, scheduler, retry, cost tracking, or external mutation.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Proposals
+
+- Added
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-proposals`
+  for converting accepted blocked downstream result effect task result effect
+  task result decisions into proposed local effect rows.
+- Live first proposal recorded effect `effect_cf0963e8c699` from decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_decision_5a67d5607d7e`
+  and result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_968c47605706`
+  for `hosted_dashboard`, with 1 accepted decision, 1 accepted result,
+  1 proposed effect, 0 approval requests, 0 activation actions, and
+  0 external mutations.
+- Live idempotency pass reported
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_proposals_already_recorded`
+  with 0 new effects, 1 existing proposed effect, 0 approval requests,
+  0 activation actions, and 0 external mutations.
+- Evidence:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `docs/handoff-review.md`
+- Verification evidence:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "result_effect_task_result_effect_task_result_effect_proposals"`
+    -> failed before implementation on the missing command.
+  - Focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "result_effect_task_result_effect_task_result_effect_proposals"`
+    -> 4 passed, 328 deselected.
+  - Adjacent chain:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "result_task_result"`
+    -> 49 passed, 283 deselected.
+  - `python3 -m py_compile agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_proposals.py tests/test_first_milestone.py`
+    -> passed.
+  - `python3 -m pytest -q` -> 332 passed in 315.00s.
+  - `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800` ->
+    stuck_incidents: 0.
+  - `python3 -m agent_os.cli queue-health` -> hotspots: 0.
+  - `python3 -m agent_os.cli eval-candidates` -> eval_candidates: 0.
+  - `python3 -m agent_os.cli approvals` -> pending_approvals: 0.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result effect task result effect proposals" --file agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_proposals.py --file agent_os/cli.py --file agent_os/dashboard.py --file agent_os/iteration.py --file tests/test_first_milestone.py`
+    -> pass, run `run_684366c03ec9`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`,
+    run `run_47b112a4c033`.
+  - `python3 -m agent_os.cli playbooks` -> playbooks: 1,
+    `first-milestone-closed-loop` active with 253 successful runs.
+- Next focus:
+  `Add local application records for downstream follow-up result task result
+  effect task result effect task result decision effect proposals.`
+- Non-claims: local proposed effect records only; no application rows, no
+  approval-row creation, no subagent execution, no model-provider call, no
+  proof satisfaction, no activation allowance, no capability enablement, no
+  CI/deploy, no push/PR by ClankerOS, no trust promotion, no scheduler, no
+  retry, no cost tracking, and no external mutation.

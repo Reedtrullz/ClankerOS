@@ -4333,3 +4333,57 @@ are visible in the dashboard and are not active until approved.
   satisfaction, activation allowance, capability enablement, trust promotion,
   scheduler, retries, cost tracking, CI/deploy, push, PR, or external
   mutation.
+
+## Run run_684366c03ec9
+
+- Goal ID: goal_f861a7568261
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_684366c03ec9/summary.md
+
+## Run run_47b112a4c033
+
+- Goal ID: goal_366f216bc97d
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_47b112a4c033/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Proposals
+
+- Added
+  `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-proposals`
+  to convert accepted blocked downstream result effect task result effect task
+  result decisions into proposed local effect rows.
+- Initial live proposal recorded effect `effect_cf0963e8c699` from accepted
+  decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_decision_5a67d5607d7e`
+  and result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_968c47605706`
+  for `hosted_dashboard`.
+- Idempotent reruns report
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_proposals_already_recorded`
+  with 0 new effect proposals, 1 existing proposed effect, 0 approval
+  requests, 0 activation actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `docs/handoff-review.md`
+- Verification evidence:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "result_effect_task_result_effect_task_result_effect_proposals"`
+    -> red before implementation, then 4 passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "result_task_result"`
+    -> 49 passed.
+  - `python3 -m pytest -q` -> 332 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result effect task result effect proposals" --file agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_proposals.py --file agent_os/cli.py --file agent_os/dashboard.py --file agent_os/iteration.py --file tests/test_first_milestone.py`
+    -> pass, run `run_684366c03ec9`.
+  - `python3 -m agent_os.cli eval` -> pass, run `run_47b112a4c033`.
+  - `python3 -m agent_os.cli playbooks` -> 1 active playbook with
+    253 successful runs.
+- Next focus:
+  `Add local application records for downstream follow-up result task result
+  effect task result effect task result decision effect proposals.`
+- Non-claims: local proposed effect rows only; no application records,
+  `approval_requests`, subagent execution, model-provider calls, proof
+  satisfaction, activation allowance, capability enablement, trust promotion,
+  scheduler, retries, cost tracking, CI/deploy, push, PR, or external
+  mutation.

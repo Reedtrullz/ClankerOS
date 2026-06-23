@@ -240,6 +240,13 @@ Core layers for the bootstrap:
   result effect result records while keeping approval rows, external
   mutations, activation actions, activation allowance, capability enablement,
   and proof satisfaction at zero.
+- Capability activation follow-up result task result effect task result effect
+  task result effect proposals: accepted blocked downstream result effect task
+  result effect result decisions can be converted into idempotent `proposed`
+  effect rows in the generic effects ledger. Each row links the source
+  decision, result, application, effect, delegation, task, contract, project,
+  and capability while keeping approval row creation, external mutations,
+  activation actions, activation allowance, and capability enablement at zero.
 - Verifier: each completed task is checked by a separate deterministic verifier.
 - Incidents: failed verification opens a first-class incident record with JSON
   evidence under the run directory; operator resolution writes a companion JSON
@@ -985,6 +992,16 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-decisions.md`,
   stores local operator decision rows, and keeps
   `approval_requests_created: 0`, `activation_actions_taken: 0`,
+  `external_mutations_taken: 0`, `activation_allowed: false`, and
+  `capability_enabled: false`.
+- Capability activation follow-up result task result effect task result effect
+  task result effect proposals: available through
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-proposals`
+  after accepted downstream result effect task result effect result decisions
+  exist. The command writes
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-proposals.md`,
+  stores generic local proposed `effects` rows with idempotency keys, and
+  keeps `approval_requests_created: 0`, `activation_actions_taken: 0`,
   `external_mutations_taken: 0`, `activation_allowed: false`, and
   `capability_enabled: false`.
 - Eval candidate listing: available through

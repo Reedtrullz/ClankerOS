@@ -1917,6 +1917,16 @@ coverage.
   external mutations, `activation_allowed=false`, and
   `capability_enabled=false`.
 
+## Learning effect task result proposal bridge
+
+- Accepted blocked downstream result effect task result effect result
+  decisions should become generic proposal-only `effects` rows with a
+  stage-specific idempotency prefix before any application-record slice. The
+  proposal stage should preserve source decision, result, application, effect,
+  delegation, task, contract, project, and capability links while keeping
+  approval rows, activation actions, external mutations, activation allowance,
+  and capability enablement at zero.
+
 ## Learning eval serialization
 
 - Run `eval` and `eval-after-change` serially. They share the
@@ -1962,3 +1972,11 @@ coverage.
 ## Learning run_365c9386fb0c
 
 - Learning: Run run_365c9386fb0c showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_684366c03ec9
+
+- Learning: Run run_684366c03ec9 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_47b112a4c033
+
+- Learning: Run run_47b112a4c033 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
