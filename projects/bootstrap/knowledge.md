@@ -1889,6 +1889,15 @@ coverage.
   approval rows, activation actions, external mutations, activation allowance,
   and capability enablement at zero.
 
+## Learning effect task delegation bridge
+
+- Pending downstream result effect task result effect tasks should route into
+  read-only evaluator delegation packets before result ingestion. The routing
+  stage should create durable routing decisions, pending subagent delegation
+  rows, and local JSON artifacts while preserving source links and keeping
+  execution, provider calls, approval rows, activation actions, external
+  mutations, activation allowance, and capability enablement at zero.
+
 ## Learning eval serialization
 
 - Run `eval` and `eval-after-change` serially. They share the
@@ -1910,3 +1919,11 @@ coverage.
 ## Learning run_8b1f3acec286
 
 - Learning: Run run_8b1f3acec286 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_d2beb553f71a
+
+- Learning: Run run_d2beb553f71a showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_42a378a20457
+
+- Learning: Run run_42a378a20457 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

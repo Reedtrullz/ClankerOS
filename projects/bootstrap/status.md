@@ -4147,3 +4147,60 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_172c28424202
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_8b1f3acec286/summary.md
+
+## Run run_d2beb553f71a
+
+- Goal ID: goal_82312f66050a
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_d2beb553f71a/summary.md
+
+## Run run_42a378a20457
+
+- Goal ID: goal_e8141a99a740
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_42a378a20457/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Task Delegations
+
+- Added
+  `capability-activation-followup-result-task-result-effect-task-result-effect-task-delegations`
+  to route pending downstream result effect task result effect tasks into
+  read-only evaluator delegation packets.
+- Initial live delegation batch:
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_delegation_batch_d01dbec92064`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations_recorded`,
+  created routing decision `routing_decision_fa59ac712b60` and delegation
+  `subagent_delegation_3ceff2056249` for `task_c00e6484c25b`
+  (`hosted_dashboard`).
+- Final live idempotency pass:
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_delegation_batch_fb914325be41`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations_already_recorded`,
+  with 0 new routing decisions, 0 new delegations, 1 existing delegation,
+  0 executions started, 0 network actions, 0 activation actions, and
+  0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-delegations.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-delegations.md`
+  - `.clanker/delegations/task_c00e6484c25b-plan-next-downstream-result-effect-task-result-effect-proof-evidence-for-hosted-dashboard.json`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `docs/handoff-review.md`
+- Verification evidence:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "result_effect_task_result_effect_task_delegations"`
+    -> red before implementation, then 3 passed.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "result_task_result"`
+    -> 37 passed.
+  - `python3 -m pytest -q` -> 320 passed.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result effect task delegations" --file agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py`
+    -> pass, run `run_d2beb553f71a`.
+  - `python3 -m agent_os.cli eval` -> pass, run `run_42a378a20457`.
+  - `python3 -m agent_os.cli handoff-review` -> status clear.
+- Next focus:
+  `Add result ingestion for downstream follow-up result task result effect task result effect delegation packets.`
+- Non-claims: local routing decisions and pending read-only delegation packet
+  rows only; no `approval_requests`, subagent execution, model-provider calls,
+  proof satisfaction, activation allowance, capability enablement, trust
+  promotion, scheduler, retries, cost tracking, CI/deploy, push, PR, or
+  external mutation.

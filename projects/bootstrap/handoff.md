@@ -2111,17 +2111,48 @@ work, or changing routing.
   trust, schedule work, retry work, track spend, run CI, deploy, push, open
   PRs, mark the active goal complete, or mutate external systems.
 
+## Latest Downstream Result Effect Task Result Effect Task Delegations
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-delegations`
+  now routes pending downstream result effect task result effect tasks into
+  read-only evaluator delegation packets.
+- Initial live delegation batch:
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_delegation_batch_d01dbec92064`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations_recorded`,
+  created routing decision `routing_decision_fa59ac712b60` and delegation
+  `subagent_delegation_3ceff2056249` for `task_c00e6484c25b`
+  (`hosted_dashboard`).
+- Final live idempotency pass:
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_delegation_batch_fb914325be41`,
+  status
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations_already_recorded`,
+  with 0 new routing decisions, 0 new delegations, 1 existing delegation,
+  0 executions started, 0 network actions, 0 activation actions, and
+  0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-delegations.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-delegations.md`
+  - `.clanker/delegations/task_c00e6484c25b-plan-next-downstream-result-effect-task-result-effect-proof-evidence-for-hosted-dashboard.json`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Non-claims: downstream result effect task result effect task delegations do
+  not start subagents, call model providers, create `approval_requests`,
+  satisfy proof, mutate activation contracts, allow activation, enable
+  capabilities, promote trust, schedule work, retry work, track spend, run CI,
+  deploy, push, open PRs, mark the active goal complete, or mutate external
+  systems.
+
 ## Next Actions
 
-Current focus: Add routing and delegation packets for downstream follow-up result task result effect task result effect tasks.
+Current focus: Add result ingestion for downstream follow-up result task result effect task result effect delegation packets.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add routing and delegation packets for downstream follow-up result task
-   result effect task result effect tasks.
-2. Route pending downstream result effect task result effect tasks into
-   read-only delegation packets without starting subagents, enabling
-   capabilities, satisfying proof, creating approval rows, or allowing
-   activation.
+   Add result ingestion for downstream follow-up result task result effect
+   task result effect delegation packets.
+2. Ingest completed read-only downstream result effect task result effect
+   delegation outputs as local result records without enabling capabilities,
+   satisfying proof, creating approval rows, or allowing activation.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.

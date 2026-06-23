@@ -104,6 +104,10 @@ Apply proposed downstream result effect task result decision effects as local re
 Create downstream proof tasks from applied downstream result effect task result decision effects, and prove that capability activation remains blocked.
 ```
 
+```text
+Route downstream result effect task result effect tasks to read-only evaluator delegation packets, and prove that no subagent starts.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -142,7 +146,9 @@ Create downstream proof tasks from applied downstream result effect task result 
     records only after the proposal row exists.
 25. Materialize applied downstream result effect task result decision effects
     into pending downstream proof tasks before routing or delegation.
-26. Record non-claims before treating the work as safe.
+26. Route downstream result effect task result effect tasks into read-only
+    delegation packets before ingesting the next proof-plan output.
+27. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -263,6 +269,9 @@ Prefer these files when orienting:
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-tasks.md`
   for creating pending downstream proof tasks from applied downstream result
   effect task result decision effects.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-delegations.md`
+  for routing downstream result effect task result effect tasks to read-only
+  evaluator delegation packets.
 - `contracts.md` for safety boundaries and evidence expectations.
 - `status.md` for chronological implementation evidence.
 - `projects/bootstrap/handoff.md` for the current continuation edge.
@@ -699,6 +708,23 @@ already have a downstream task. It keeps `approval_requests_created=0`,
 `activation_actions_taken=0`, `external_mutations_taken=0`,
 `activation_allowed=false`, and `capability_enabled=false`.
 
+Route those downstream result effect task result effect tasks into read-only
+evaluator delegation packets:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-delegations
+python3 -m agent_os.cli dashboard
+```
+
+The delegation command writes
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-delegations.md`,
+records local routing and delegation batch rows, and writes pending delegation
+JSON artifacts under `.clanker/delegations/`. It keeps
+`execution_started=0`, `network_actions_taken=0`,
+`external_mutations_taken=0`, `approval_requests_created=0`,
+`activation_actions_taken=0`, `activation_allowed=false`, and
+`capability_enabled=false`.
+
 ## When To Commit And Push
 
 Commit when:
@@ -717,8 +743,8 @@ repo, prefer `main` only for verified snapshots that are useful to share.
 Good next slices now favor capability-specific guards after local delegation
 packets exist:
 
-- routing and delegation packets for downstream result effect task result
-  effect tasks;
+- result ingestion for downstream result effect task result effect delegation
+  packets;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;

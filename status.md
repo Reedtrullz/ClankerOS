@@ -6966,3 +6966,64 @@
   approval-row creation, delegation routing, subagent execution, proof
   satisfaction, activation allowance, capability enablement, CI/deploy, push,
   PR, trust promotion, scheduler, retry, cost tracking, or external mutation.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Delegations
+
+- Added
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-delegations`
+  for routing pending downstream result effect task result effect tasks into
+  read-only evaluator delegation packets.
+- Live first run recorded batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_delegation_batch_d01dbec92064`
+  and created routing decision `routing_decision_fa59ac712b60` plus
+  delegation `subagent_delegation_3ceff2056249` for
+  `task_c00e6484c25b` (`hosted_dashboard`).
+- Live idempotency pass recorded batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_delegation_batch_fb914325be41`
+  with 0 new routing decisions, 0 new delegations, 1 existing delegation,
+  0 executions started, 0 network actions, 0 activation actions, and
+  0 external mutations.
+- Evidence:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-delegations.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-delegations.md`
+  - `.clanker/delegations/task_c00e6484c25b-plan-next-downstream-result-effect-task-result-effect-proof-evidence-for-hosted-dashboard.json`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `docs/handoff-review.md`
+- Verification evidence:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "result_effect_task_result_effect_task_delegations"`
+    -> failed with missing CLI command before implementation, as expected.
+  - Focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "result_effect_task_result_effect_task_delegations"`
+    -> 3 passed, 317 deselected.
+  - Adjacent chain:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "result_task_result"`
+    -> 37 passed, 283 deselected.
+  - `python3 -m py_compile agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py agent_os/profile_routing.py agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py tests/test_first_milestone.py`
+    -> passed.
+  - `python3 -m pytest -q` -> 320 passed in 281.92s.
+  - `python3 -m agent_os.cli dashboard` -> regenerated
+    `docs/dashboard.md`.
+  - `python3 -m agent_os.cli iterate` -> selected
+    `Add result ingestion for downstream follow-up result task result effect
+    task result effect delegation packets.`
+  - `python3 -m agent_os.cli handoff-review` -> status: clear,
+    blocked_tasks: 0, stale_handoffs: 0.
+  - `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800` ->
+    stuck_incidents: 0.
+  - `python3 -m agent_os.cli queue-health` -> hotspots: 0.
+  - `python3 -m agent_os.cli eval-candidates` -> eval_candidates: 0.
+  - `python3 -m agent_os.cli approvals` -> pending_approvals: 0.
+  - `python3 -m agent_os.cli playbooks` -> playbooks: 1.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result effect task delegations" --file agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py`
+    -> pass, run `run_d2beb553f71a`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`,
+    run `run_42a378a20457`.
+- Next focus:
+  `Add result ingestion for downstream follow-up result task result effect task result effect delegation packets.`
+- Non-claims: local routing decisions and pending read-only delegation packet
+  rows only; no approval-row creation, subagent execution, model-provider
+  call, proof satisfaction, activation allowance, capability enablement,
+  CI/deploy, push, PR, trust promotion, scheduler, retry, cost tracking, or
+  external mutation.

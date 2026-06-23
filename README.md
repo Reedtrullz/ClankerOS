@@ -41,6 +41,7 @@ local downstream result effect task result records -> operator review decisions 
 accepted downstream result effect task result decisions -> proposed effect records -> blocked activation preserved
 applied downstream result effect task result decision effects -> local application records -> blocked activation preserved
 applied downstream result effect task result decision effect applications -> downstream proof tasks -> next evidence plan
+downstream result effect task result effect tasks -> routing decisions -> read-only delegation packets
 ```
 
 The project deliberately favors report-only proof, conservative local behavior,
@@ -192,6 +193,11 @@ effect, delegation, task, contract, project, and capability links and still
 keeping `activation_allowed=false`, `capability_enabled=false`,
 `approval_requests_created=0`, `activation_actions_taken=0`, and
 `external_mutations_taken=0`.
+Those downstream result effect task result effect tasks can now be routed to
+the read-only evaluator profile and materialized as pending delegation packets
+with local JSON artifacts, without starting a subagent, calling a model
+provider, creating approval rows, mutating external systems, or allowing
+activation.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -311,6 +317,7 @@ mutate external systems.
 - [Create downstream result effect task result effect proposals](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-proposals.md)
 - [Apply downstream result effect task result effect records](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-application.md)
 - [Create downstream tasks from applied result effect task result effects](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-tasks.md)
+- [Route downstream result effect task result effect tasks](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-delegations.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Documentation index](docs/docs-index.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
@@ -405,6 +412,10 @@ The repository can now:
   task result decision effect applications while preserving source links and
   keeping approval rows, activation actions, external mutations, activation
   allowance, and capability enablement at zero;
+- route pending downstream result effect task result effect tasks to
+  read-only evaluator delegation packets with local JSON artifacts while
+  keeping execution, approval rows, external mutations, and activation actions
+  at zero;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;
@@ -573,6 +584,7 @@ python3 -m agent_os.cli capability-activation-followup-result-task-result-effect
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-proposals
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-apply --operator-id operator --selection-note "Apply accepted downstream result-effect task result effect proposals as local records only." --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-proposals.md
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-tasks
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-delegations
 python3 -m agent_os.cli profiles
 python3 -m agent_os.cli route <task_id>
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
@@ -676,6 +688,9 @@ python3 -m pytest tests/test_first_milestone.py -q
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-tasks.md`:
   creating pending downstream proof tasks from applied downstream result effect
   task result decision effect applications without enabling capabilities.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-delegations.md`:
+  routing downstream result effect task result effect tasks into read-only
+  evaluator delegation packets without starting subagents.
 - `docs/docs-index.md`: curated map of tutorials, generated reports, status
   files, and bootstrap project continuity files.
 - `docs/suggested-use.md`: operator guidance, prompts, and practical next slices.
