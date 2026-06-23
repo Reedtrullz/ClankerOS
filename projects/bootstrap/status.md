@@ -4738,3 +4738,52 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_06fa80bbe387
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_ebdd7e7884a4/summary.md
+
+## Run run_d9353699167b
+
+- Goal ID: goal_bc8d19bd3d88
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_d9353699167b/summary.md
+
+## Run run_043ed13bc23a
+
+- Goal ID: goal_b9e4e6fc05f4
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_043ed13bc23a/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Application
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply`
+  now applies proposed downstream result effect task result effect task result
+  effect task result decision effects as local ledger application records.
+- Initial live application
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_f9d9100867a2`
+  applied effect `effect_d8299118fb64` for `hosted_dashboard` while keeping
+  activation blocked.
+- Final live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_b0740cafcdb2`
+  reported already recorded, with 0 new applied effects, 1 existing applied
+  effect, 0 approval requests, 0 activation actions, and 0 external
+  mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `docs/eval-after-change.md`
+- Verification evidence:
+  - focused red/green apply tests: 3 passed after implementation
+  - adjacent chain tests: 7 passed
+  - full suite: 356 passed
+  - handoff-review: clear after refreshing `projects/bootstrap/handoff.md`
+  - eval-after-change: pass, run `run_d9353699167b`
+  - baseline eval: pass, run `run_043ed13bc23a`
+  - playbooks: 1 active, 267 successful runs
+- Next focus:
+  `Add downstream task records from applied downstream follow-up result task
+  result effect task result effect task result effect task result decision
+  effect applications.`
+- Non-claims: local application records only; no `approval_requests`,
+  subagent execution, model-provider calls, proof satisfaction, activation
+  allowance, capability enablement, trust promotion, scheduler, retries, cost
+  tracking, CI/deploy action by ClankerOS, PRs, or external mutation.

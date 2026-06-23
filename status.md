@@ -6899,6 +6899,9 @@
   - `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800` ->
     stuck_incidents: 0.
   - `python3 -m agent_os.cli queue-health` -> hotspots: 0.
+  - `python3 -m agent_os.cli handoff-review` -> status: clear,
+    blocked_tasks: 0, stale_handoffs: 0 after refreshing
+    `projects/bootstrap/handoff.md`.
   - `python3 -m agent_os.cli eval-candidates` -> eval_candidates: 0.
   - `python3 -m agent_os.cli approvals` -> pending_approvals: 0.
   - `python3 -m agent_os.cli playbooks` -> playbooks: 1.
@@ -7572,3 +7575,63 @@
   subagent execution, model-provider calls, proof satisfaction, activation
   allowance, capability enablement, trust promotion, scheduler, retries, cost
   tracking, CI/deploy action by ClankerOS, PRs, or external mutation.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Application
+
+- Added
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply`
+  for applying proposed downstream result effect task result effect task
+  result effect task result decision effects as local ledger records only.
+- Added SQLite table
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_applications`.
+- Live first application
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_f9d9100867a2`
+  marked effect `effect_d8299118fb64` as `applied` for
+  `hosted_dashboard` while keeping activation blocked.
+- Live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_b0740cafcdb2`
+  reported
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_already_recorded`
+  with 0 new applied effects, 1 existing applied effect, 0 approval requests,
+  0 activation actions, and 0 external mutations.
+- Evidence:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+  - `docs/eval-after-change.md`
+- Verification evidence:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_result_effect_apply"`
+    -> failed before implementation on the missing CLI command and missing
+    test helper.
+  - Focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_result_effect_apply"`
+    -> 3 passed, 353 deselected.
+  - Adjacent chain:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "effect_task_result_effect_task_result_effect_task_result_effect"`
+    -> 7 passed, 349 deselected.
+  - `python3 -m py_compile agent_os/storage.py agent_os/cli.py agent_os/dashboard.py agent_os/iteration.py agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application.py tests/test_first_milestone.py`
+    -> passed.
+  - `git diff --check` -> passed.
+  - `python3 -m pytest -q` -> 356 passed in 411.35s.
+  - `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800` ->
+    stuck_incidents: 0.
+  - `python3 -m agent_os.cli queue-health` -> hotspots: 0.
+  - `python3 -m agent_os.cli eval-candidates` -> eval_candidates: 0.
+  - `python3 -m agent_os.cli approvals` -> pending_approvals: 0.
+  - `python3 -m agent_os.cli eval-after-change --change "Add downstream result effect task result effect task result effect task result effect application" ...`
+    -> pass, run `run_d9353699167b`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`,
+    run `run_043ed13bc23a`.
+  - `python3 -m agent_os.cli playbooks` -> playbooks: 1,
+    `first-milestone-closed-loop` active with 267 successful runs.
+- Next focus:
+  `Add downstream task records from applied downstream follow-up result task
+  result effect task result effect task result effect task result decision
+  effect applications.`
+- Non-claims: local application rows and applied generic effects only; no
+  `approval_requests`, subagent execution, model-provider calls, proof
+  satisfaction, activation allowance, capability enablement, trust promotion,
+  scheduler, retries, cost tracking, CI/deploy action by ClankerOS, PRs, or
+  external mutation.

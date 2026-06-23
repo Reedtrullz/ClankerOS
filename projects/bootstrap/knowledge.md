@@ -2031,6 +2031,16 @@ coverage.
   keeping approval rows, activation actions, external mutations, activation
   allowance, and capability enablement at zero.
 
+## Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Application
+
+- Proposed downstream result effect task result effect task result effect task
+  result decision effects should be applied as local ledger records only:
+  record an application row, mark applicable generic `effects` rows as
+  `applied`, preserve source decision, result, application, effect,
+  delegation, task, contract, project, and capability links, and still keep
+  approval rows, activation actions, external mutations, activation allowance,
+  and capability enablement at zero.
+
 ## Learning run_6aac17428229
 
 - Learning: Run run_6aac17428229 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
@@ -2078,3 +2088,11 @@ coverage.
 ## Learning run_ebdd7e7884a4
 
 - Learning: Run run_ebdd7e7884a4 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_d9353699167b
+
+- Learning: Run run_d9353699167b showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_043ed13bc23a
+
+- Learning: Run run_043ed13bc23a showed that the first closed loop can be verified through file evidence before expanding to broader domains.

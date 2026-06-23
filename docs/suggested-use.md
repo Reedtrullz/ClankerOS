@@ -4,6 +4,19 @@ ClankerOS works best as a local operating loop for agentic work, not as a
 black-box autonomous runner. Use it to make work visible, verifiable, and
 harder to overclaim.
 
+## I Want To
+
+| If you want to... | Start with... |
+| --- | --- |
+| See current state | `python3 -m agent_os.cli dashboard` |
+| Pick the next safe local task | `python3 -m agent_os.cli iterate` |
+| Run the first loop | `docs/tutorial-first-loop.md` |
+| Make a coded change safely | `docs/tutorial-approval-gated-coding.md` |
+| Capture subagent-style context without execution | `docs/tutorial-subagent-delegation-results.md` |
+| Review a run before acting | `python3 -m agent_os.cli review <run_id>` |
+| Keep activation blocked while preserving proof state | start with the capability follow-up tutorials below |
+| Publish a coherent snapshot | read `## When To Commit And Push` before pushing |
+
 ## Good Starting Prompts
 
 Use prompts that name a concrete local outcome:
@@ -118,6 +131,10 @@ Review downstream result effect task result effect result records, accept keepin
 
 ```text
 Create proposed effects from accepted downstream result effect task result effect result decisions, and prove that capability activation remains blocked.
+```
+
+```text
+Apply proposed downstream result effect task result effect task result effect task result decision effects as local records only, and prove that capability activation remains blocked.
 ```
 
 ```text

@@ -563,6 +563,13 @@
   application, effect, delegation, task, contract, project, and capability
   links while keeping approval rows, activation actions, external mutations,
   activation allowance, and capability enablement at zero.
+- Downstream result effect task result effect task result effect task result
+  decision effect applications should remain ledger-only: they record an
+  application row, mark applicable generic `effects` rows as `applied`,
+  preserve source decision, result, application, effect, delegation, task,
+  contract, project, and capability links, and still keep approval rows,
+  activation actions, external mutations, activation allowance, and
+  capability enablement at zero.
 
 ## Stable Distilled Learnings
 

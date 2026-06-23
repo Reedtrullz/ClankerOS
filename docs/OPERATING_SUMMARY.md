@@ -257,6 +257,14 @@ Core layers for the bootstrap:
   approval row creation, external mutations, activation actions, activation
   allowance, and capability enablement at zero.
 - Capability activation follow-up result task result effect task result effect
+  task result effect task result effect application: proposed accepted-blocked
+  downstream result effect task result effect task result effect task result
+  decision effects can be applied as local ledger records only. Application
+  rows and applied effects preserve source decision, result, application,
+  effect, delegation, task, contract, project, and capability links while
+  keeping approval row creation, external mutations, activation actions,
+  activation allowance, and capability enablement at zero.
+- Capability activation follow-up result task result effect task result effect
   task result decisions: operators can record accept-keep-blocked,
   request-more-evidence, or defer decisions for downstream result effect task
   result effect result records while keeping approval rows, external
@@ -1087,6 +1095,16 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   keeps `approval_requests_created: 0`, `activation_actions_taken: 0`,
   `external_mutations_taken: 0`, `activation_allowed: false`, and
   `capability_enabled: false`.
+- Capability activation follow-up result task result effect task result effect
+  task result effect task result effect application: available through
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply`
+  after proposed downstream result effect task result effect task result
+  effect task result decision effects exist. The command writes
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`,
+  records local application rows, marks applicable generic `effects` rows as
+  `applied`, and keeps `approval_requests_created: 0`,
+  `activation_actions_taken: 0`, `external_mutations_taken: 0`,
+  `activation_allowed: false`, and `capability_enabled: false`.
 - Eval candidate listing: available through
   `python3 -m agent_os.cli eval-candidates` and mirrored into
   `docs/dashboard.md`.

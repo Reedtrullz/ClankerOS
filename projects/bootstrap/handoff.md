@@ -2456,3 +2456,40 @@ Current focus: Add local application records for downstream follow-up result tas
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Application
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply`
+  now applies proposed downstream result effect task result effect task result
+  effect task result decision effects as local records only.
+- Initial live application
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_f9d9100867a2`
+  applied effect `effect_d8299118fb64` for `hosted_dashboard`.
+- Final live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_b0740cafcdb2`
+  reported already recorded with 1 existing applied effect, 0 approval
+  requests, 0 activation actions, and 0 external mutations.
+- Verification evidence:
+  - focused red/green apply tests: 3 passed after implementation
+  - adjacent chain tests: 7 passed
+  - full suite: 356 passed
+  - eval-after-change: pass, run `run_d9353699167b`
+  - baseline eval: pass, run `run_043ed13bc23a`
+- Non-claims: local application records only; no approval rows, subagent
+  execution, model-provider calls, proof satisfaction, activation allowance,
+  capability enablement, trust promotion, scheduler, retries, cost tracking,
+  CI/deploy action by ClankerOS, PRs, or external mutation.
+
+## Next Actions
+
+Current focus: Add downstream task records from applied downstream follow-up result task result effect task result effect task result effect task result decision effect applications.
+
+1. Use `docs/next-iteration.md` to complete:
+   Add downstream task records from applied downstream follow-up result task
+   result effect task result effect task result effect task result decision
+   effect applications.
+2. Materialize only pending local proof tasks from the applied effect
+   application; keep activation blocked and preserve idempotency.
+3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
+   budget enforcement, trust promotion, retries, and real-cost tracking
+   blocked until their own evidence and approval contracts are satisfied.
