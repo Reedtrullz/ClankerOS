@@ -4970,6 +4970,44 @@ are visible in the dashboard and are not active until approved.
   proof satisfaction, trust promotion, scheduler, retries, cost tracking,
   CI/deploy action by ClankerOS, PRs, or external mutation.
 
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Application
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply`
+  now applies proposed downstream result effect task result effect task result
+  effect task result effect task result decision effects as local records only.
+- Live first application
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_6c5fab8b9577`
+  applied `effect_10f389f8a6a3` for `hosted_dashboard`.
+- Live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_a5fae663a6fc`
+  reported already recorded with 1 existing applied effect, 0 new applied
+  effects, 0 approval requests, 0 activation actions, and 0 external
+  mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Verification evidence:
+  - focused application tests: 3 passed
+  - adjacent chain tests: 15 passed
+  - syntax compile check passed
+  - full suite: 377 passed
+  - stuck sweep, queue health, handoff review, eval-candidates, approvals, and
+    diff-check gates passed
+  - eval-after-change: pass, run `run_bb953d9452f2`
+  - baseline eval: pass
+  - playbooks: 1 active, 279 successful runs
+- Next focus:
+  `Add downstream task records from applied downstream follow-up result task
+  result effect task result effect task result effect task result effect task
+  result decision effect applications.`
+- Non-claims: local application rows and applied effect status only; no
+  approval rows, activation actions, external mutations, activation allowance,
+  capability enablement, proof satisfaction, trust promotion, scheduler,
+  retries, cost tracking, CI/deploy action by ClankerOS, PRs, or external
+  mutation.
+
 ## Run run_2f3e9e364ab3
 
 - Goal ID: goal_677ef69a20d1
@@ -4981,3 +5019,15 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_758ffdbc28e7
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_88c5a2e43a85/summary.md
+
+## Run run_bb953d9452f2
+
+- Goal ID: goal_ea8e219c96b7
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_bb953d9452f2/summary.md
+
+## Run run_87857b9c6080
+
+- Goal ID: goal_3cef3450e586
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_87857b9c6080/summary.md

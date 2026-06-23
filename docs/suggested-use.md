@@ -169,6 +169,10 @@ Review downstream result effect task result effect task result effect task resul
 Create proposed local effects from accepted downstream result effect task result effect task result effect task result effect task result decisions, and prove that no approval rows, activation actions, or external mutations were created.
 ```
 
+```text
+Apply proposed downstream result effect task result effect task result effect task result effect task result decision effects as local records only, and prove that capability activation remains blocked.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -226,10 +230,12 @@ Create proposed local effects from accepted downstream result effect task result
 33. Convert accepted downstream result effect task result effect task result
     effect task result decisions into proposed effects only after the review
     decision exists.
-34. Materialize applied downstream result effect task result effect task result
+34. Apply downstream result effect task result effect task result effect task
+    result decision effects as local records only after the proposal row exists.
+35. Materialize applied downstream result effect task result effect task result
     effect task result decision effects into pending downstream proof tasks
     before routing or delegation.
-35. Record non-claims before treating the work as safe.
+36. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -374,6 +380,9 @@ Prefer these files when orienting:
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`
   for creating pending downstream proof tasks from applied downstream result
   effect task result effect task result effect task result decision effects.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`
+  for applying proposed downstream result effect task result effect task result
+  effect task result effect task result decision effects as local records.
 - `contracts.md` for safety boundaries and evidence expectations.
 - `status.md` for chronological implementation evidence.
 - `projects/bootstrap/handoff.md` for the current continuation edge.

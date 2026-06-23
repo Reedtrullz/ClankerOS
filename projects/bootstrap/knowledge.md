@@ -2164,6 +2164,15 @@ coverage.
   actions, external mutations, activation allowance, capability enablement,
   and proof satisfaction at zero.
 
+## Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Application
+
+- Proposed downstream result effect task result effect task result effect task
+  result effect task result decision effects can be applied as local records
+  only after the proposal rows exist. The application stage marks eligible
+  effects `applied`, records an application row, and must keep approval rows,
+  activation actions, external mutations, activation allowance, capability
+  enablement, and proof satisfaction at zero.
+
 ## Learning run_2f3e9e364ab3
 
 - Learning: Run run_2f3e9e364ab3 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
@@ -2171,3 +2180,11 @@ coverage.
 ## Learning run_88c5a2e43a85
 
 - Learning: Run run_88c5a2e43a85 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_bb953d9452f2
+
+- Learning: Run run_bb953d9452f2 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_87857b9c6080
+
+- Learning: Run run_87857b9c6080 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

@@ -2422,3 +2422,13 @@
 
 - Goal: Eval: prove first milestone closed loop
 - Learning: Run run_88c5a2e43a85 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Run run_bb953d9452f2
+
+- Goal: Eval: prove first milestone closed loop
+- Learning: Run run_bb953d9452f2 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Run run_87857b9c6080
+
+- Goal: Eval: prove first milestone closed loop
+- Learning: Run run_87857b9c6080 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

@@ -7948,3 +7948,61 @@
   actions, external mutations, activation allowance, capability enablement,
   proof satisfaction, trust promotion, scheduler, retries, cost tracking,
   CI/deploy action by ClankerOS, PRs, or external mutation.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Application
+
+- Added
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply`
+  for applying accepted blocked downstream result effect task result effect
+  task result effect task result effect task result decision effect proposals
+  as local records only.
+- Live first application
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_6c5fab8b9577`
+  applied `effect_10f389f8a6a3` for `hosted_dashboard`, with
+  `approval_requests_created=0`, `activation_actions_taken=0`, and
+  `external_mutations_taken=0`.
+- Live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_a5fae663a6fc`
+  reported already recorded with 1 existing applied effect, 0 new applied
+  effects, 0 approval requests, 0 activation actions, and 0 external
+  mutations.
+- Evidence:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Verification evidence:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_apply"`
+    -> failed before CLI registration on the missing command.
+  - Focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_apply"`
+    -> 3 passed, 374 deselected.
+  - Adjacent chain:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result"`
+    -> 15 passed, 362 deselected.
+  - Syntax compile check passed for the new application module, CLI,
+    dashboard, iteration, storage, and tests.
+  - `python3 -m pytest -q` -> 377 passed in 499.79s.
+  - `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800` ->
+    stuck_incidents: 0.
+  - `python3 -m agent_os.cli queue-health` -> hotspots: 0.
+  - `python3 -m agent_os.cli handoff-review` -> clear, blocked_tasks: 0,
+    stale_handoffs: 0 after refreshing `projects/bootstrap/handoff.md`.
+  - `python3 -m agent_os.cli eval-candidates` -> eval_candidates: 0.
+  - `python3 -m agent_os.cli approvals` -> pending_approvals: 0.
+  - `git diff --check` -> passed.
+  - `python3 -m agent_os.cli eval-after-change --change "capability activation followup result task result effect task result effect task result effect task result effect task result effect application" ...`
+    -> pass, run `run_bb953d9452f2`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`.
+  - `python3 -m agent_os.cli playbooks` -> playbooks: 1,
+    `first-milestone-closed-loop` active with 279 successful runs.
+- Next focus:
+  `Add downstream task records from applied downstream follow-up result task
+  result effect task result effect task result effect task result effect task
+  result decision effect applications.`
+- Non-claims: local application rows and applied effect status only; no
+  approval rows, activation actions, external mutations, activation allowance,
+  capability enablement, proof satisfaction, trust promotion, scheduler,
+  retries, cost tracking, CI/deploy action by ClankerOS, PRs, or external
+  mutation.

@@ -400,6 +400,7 @@ tutorials are advanced evidence packets for blocked activation work.
 - [Ingest downstream result effect task result effect task result effect task result effect task results](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md)
 - [Review downstream result effect task result effect task result effect task result effect task results](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md)
 - [Create downstream result effect task result effect task result effect task result effect task result effect proposals](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md)
+- [Apply downstream result effect task result effect task result effect task result effect task result effect records](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md)
 - [Suggested use patterns](docs/suggested-use.md)
 - [Documentation index](docs/docs-index.md)
 - [Operating summary](docs/OPERATING_SUMMARY.md)
@@ -529,6 +530,11 @@ The repository can now:
   result effect task result effect task result decisions while preserving
   source links and keeping approval rows, activation actions, external
   mutations, activation allowance, and capability enablement at zero;
+- apply proposed downstream result effect task result effect task result
+  effect task result effect task result decision effects as local records only
+  while preserving applied effect evidence and keeping approval rows,
+  activation actions, external mutations, activation allowance, and capability
+  enablement at zero;
 - apply proposed downstream result effect task result effect task result
   effect task result decision effects as local records only while preserving
   applied effect evidence and keeping approval rows, activation actions,

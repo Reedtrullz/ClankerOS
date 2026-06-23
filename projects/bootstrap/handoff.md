@@ -2658,14 +2658,14 @@ Current focus: Add operator review decisions for downstream follow-up result tas
 
 ## Next Actions
 
-Current focus: Add local application records for downstream follow-up result task result effect task result effect task result effect task result effect task result decision effect proposals.
+Current focus: Add downstream task records from applied downstream follow-up result task result effect task result effect task result effect task result effect task result decision effect applications.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add local application records for downstream follow-up result task result
-   effect task result effect task result effect task result effect task result
-   decision effect proposals.
-2. Apply only the local proposed effects as local records; keep activation
-   blocked and preserve idempotency.
+   Add downstream task records from applied downstream follow-up result task
+   result effect task result effect task result effect task result effect task
+   result decision effect applications.
+2. Materialize only local pending downstream proof tasks from applied
+   application records; keep activation blocked and preserve idempotency.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.
@@ -2701,3 +2701,42 @@ Current focus: Add local application records for downstream follow-up result tas
   actions, external mutations, activation allowance, capability enablement,
   proof satisfaction, trust promotion, scheduler, retries, cost tracking,
   CI/deploy action by ClankerOS, PRs, or external mutation.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Application
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply`
+  now applies proposed downstream result effect task result effect task result
+  effect task result effect task result decision effects as local records only.
+- Initial live application
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_6c5fab8b9577`
+  applied `effect_10f389f8a6a3` for `hosted_dashboard` while keeping approval
+  requests, activation actions, and external mutations at zero.
+- Final live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_a5fae663a6fc`
+  reported already recorded with 1 existing applied effect, 0 new applied
+  effects, 0 approval requests, 0 activation actions, and 0 external
+  mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Verification evidence:
+  - focused application tests: 3 passed
+  - adjacent chain tests: 15 passed
+  - syntax compile check passed
+  - full suite: 377 passed
+  - stuck sweep, queue health, handoff review, eval-candidates, approvals, and
+    diff-check gates passed
+  - eval-after-change: pass, run `run_bb953d9452f2`
+  - baseline eval: pass
+  - playbooks: 1 active, 279 successful runs
+- Next focus:
+  `Add downstream task records from applied downstream follow-up result task
+  result effect task result effect task result effect task result effect task
+  result decision effect applications.`
+- Non-claims: local application rows and applied effect status only; no
+  approval rows, activation actions, external mutations, activation allowance,
+  capability enablement, proof satisfaction, trust promotion, scheduler,
+  retries, cost tracking, CI/deploy action by ClankerOS, PRs, or external
+  mutation.
