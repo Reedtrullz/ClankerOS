@@ -1,5 +1,53 @@
 # Status
 
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Decisions
+
+- Added the next local-only operator decision rung:
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide`.
+- The command reads the latest downstream result-effect task result-effect
+  task result-effect task result-effect task result-effect task result-effect
+  task result records and records operator decisions with
+  `accept_keep_blocked`, `request_more_evidence`, or `defer_review`.
+- Live proof first recorded decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_6202184ba4ee`
+  for result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_0aa50ade1e23`.
+- The idempotency rerun recorded decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_9db9a60b7212`
+  with 0 new decisions, 1 existing decision, 0 approval requests, 0
+  activation actions, and 0 external mutations.
+- Generated proof:
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`.
+- Operator docs added:
+  `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`,
+  plus README, docs index, command reference, suggested-use, operating summary,
+  dashboard, and iteration visibility.
+- Verification evidence:
+  - syntax compile passed for `agent_os/*.py` and
+    `tests/test_first_milestone.py`.
+  - focused latest result/decision slice: 7 passed, 429 deselected.
+  - full suite: 436 passed in 812.43s.
+  - live prerequisite result command and decision/idempotency commands passed.
+  - `sweep-stuck`: stuck_incidents 0.
+  - `queue-health`: hotspots 0.
+  - `eval-candidates`: 0.
+  - `approvals`: pending_approvals 0.
+  - `handoff-review`: clear, stale_handoffs 0.
+  - `git diff --check`: passed.
+  - `eval-after-change`: pass, run `run_ff0adf2193d8`.
+  - `eval`: `first_milestone_closed_loop: pass`.
+  - `playbooks`: 1 active playbook, 316 successful runs.
+  - GitHub metadata readback showed PUBLIC visibility, default branch `main`,
+    configured description, README homepage, ADMIN viewer permission, and 20
+    repository topics.
+  - `dashboard` and `iterate` regenerated local operator state.
+- The next queue item is local downstream decision-effect proposals from the
+  accepted blocked decision.
+- Non-claims: local operator decision rows and generated reports only; no
+  approval row was created, no activation action occurred, no external system
+  was mutated, no capability was enabled, no proof was satisfied, no CI run or
+  deployment happened, and the active expansion goal remains open.
+
 ## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Results
 
 - Added the next local-only result ingestion rung:

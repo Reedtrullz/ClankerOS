@@ -92,6 +92,18 @@ show in the dashboard and iteration packet, and keep approval requests,
 activation actions, external mutations, activation allowance, capability
 enablement, and proof satisfaction at zero.
 
+Latest downstream result effect task result effect task result effect task
+result effect task result effect task result effect task result effect task
+decisions now record operator review rows for the latest ingested result
+records through
+`python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide`,
+write
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`,
+show in the dashboard and iteration packet, and keep approval requests,
+activation actions, external mutations, activation allowance, capability
+enablement, and proof satisfaction at zero. The next focus is local
+decision-effect proposals from the accepted blocked decision.
+
 ## Verification Evidence
 
 - `python3 -m pytest tests/test_first_milestone.py -q` -> 3 passed.
@@ -5740,3 +5752,15 @@ enablement, and proof satisfaction at zero.
   JSON artifacts only; no subagent was started, no model provider was called,
   no approval row was created, no activation action occurred, no external
   system was mutated, no capability was enabled, and proof remains unsatisfied.
+
+## Run run_ff0adf2193d8
+
+- Goal ID: goal_3ff7f1e85400
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_ff0adf2193d8/summary.md
+
+## Run run_6ba2aef707c7
+
+- Goal ID: goal_0c706f8fecd4
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_6ba2aef707c7/summary.md

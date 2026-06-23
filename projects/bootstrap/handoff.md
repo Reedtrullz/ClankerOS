@@ -3161,3 +3161,37 @@ Current focus: Add operator review decisions for downstream follow-up result tas
    JSON artifacts only; no subagent was started, no model provider was called,
    no approval row was created, no activation action occurred, no external
    system was mutated, no capability was enabled, and proof remains unsatisfied.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Decisions
+
+Current focus: Add local downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals from accepted blocked result effect task result effect task result effect task result effect task result effect task result effect task results.
+
+1. The new command
+   `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide`
+   records local operator review decisions for the latest downstream result
+   effect task result effect task result effect task result effect task result
+   effect task result effect task result records.
+2. Live proof first recorded decision
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_6202184ba4ee`
+   for result
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_0aa50ade1e23`.
+3. The idempotency rerun recorded
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_9db9a60b7212`
+   with 0 new decisions, 1 existing decision, 0 approval requests, 0
+   activation actions, and 0 external mutations.
+4. Verification passed: syntax compile, focused latest result/decision slice
+   with 7 tests, full suite with 436 tests, live prerequisite result command,
+   live decision command, live idempotency command, stuck sweep, queue health,
+   approvals, eval-candidates, handoff review, diff-check, eval-after-change
+   `run_ff0adf2193d8`, baseline eval, playbooks with 316 successful runs, and
+   GitHub metadata readback.
+5. Continue with:
+   Add local downstream follow-up result task result effect task result effect
+   task result effect task result effect task result effect task result effect
+   task result decision effect proposals from accepted blocked result effect
+   task result effect task result effect task result effect task result effect
+   task result effect task results.
+6. Preserve the current boundary: local operator decision rows and generated
+   reports only; no approval row was created, no activation action occurred,
+   no external system was mutated, no capability was enabled, no proof was
+   satisfied, and the active expansion goal remains open.

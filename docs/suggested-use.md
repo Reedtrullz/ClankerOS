@@ -540,6 +540,10 @@ Prefer these files when orienting:
   for ingesting completed downstream result effect task result effect task
   result effect task result effect task result effect task result effect task
   delegation outputs.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`
+  for reviewing downstream result effect task result effect task result effect
+  task result effect task result effect task result effect task result records
+  while keeping activation blocked.
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`
   for ingesting completed downstream result effect task result effect task
   result effect task result effect task result effect delegation outputs.
@@ -1224,6 +1228,21 @@ See
 `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`
 for the result record report, artifact path, idempotency check, and safety
 counters.
+
+After the latest result record exists, record the operator review decision:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide \
+  --operator-id operator \
+  --selected-action accept_keep_blocked \
+  --selection-note "Accepted downstream result-effect task result-effect task result-effect task result-effect task result-effect task result-effect task proof-plan result and kept capability activation blocked." \
+  --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md
+python3 -m agent_os.cli dashboard
+```
+
+See
+`docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`
+for the decision report, idempotency check, and safety counters.
 
 ## When To Commit And Push
 

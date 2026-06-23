@@ -2515,3 +2515,22 @@ coverage.
   enablement, and proof satisfaction at zero.
 - Running baseline evals concurrently can create misleading failed eval runs;
   use serial eval cadence for final proof after `eval-after-change`.
+
+## Learning: Deep Decision Rungs Keep Titles And Identifiers Separate
+
+- Deep decision-rung storage identifiers may use `_task_result_decisions`
+  while report and tutorial paths follow the existing `...-task-decisions`
+  wording.
+- Dashboard tests should assert the latest idempotency state after a repeat
+  run, not the earlier recorded state hidden underneath it.
+- Decision rungs remain review-only: they can preserve an accepted blocked
+  result for the next local effect-proposal rung without creating approvals,
+  activating capabilities, mutating contracts, or satisfying proof.
+
+## Learning run_ff0adf2193d8
+
+- Learning: Run run_ff0adf2193d8 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_6ba2aef707c7
+
+- Learning: Run run_6ba2aef707c7 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
