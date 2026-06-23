@@ -2434,3 +2434,21 @@ coverage.
 ## Learning run_c9bb9046fdd4
 
 - Learning: Run run_c9bb9046fdd4 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning: Deep Application Rungs Need Source-Table Checks
+
+- Application rungs can mechanically clone predecessor tests, but assertions
+  must keep two separate concepts straight: the newly applied effect prefix and
+  the source decision/result table that produced the proposal.
+- Focused new-rung tests can pass while an older cloned assertion is disturbed;
+  rerun an adjacent old/new slice before trusting the full suite.
+- Full-suite proof remains valuable for these deep ladders because long
+  generated names make broad text replacements easy to over-apply.
+
+## Learning run_cd2dbe1fd296
+
+- Learning: Run run_cd2dbe1fd296 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_b521af5fb9d5
+
+- Learning: Run run_b521af5fb9d5 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

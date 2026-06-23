@@ -8801,3 +8801,47 @@
 - Non-claims: no approval rows, activation actions, external mutations,
   dispatch, scheduling, retries, trust promotion, capability enablement, or
   proof satisfaction.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Application
+
+- Added the next local-only effect application rung:
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply`.
+- The command reads proposed accepted-blocked decision effects from the latest
+  downstream result-effect task-result decision-effect proposal rung, records
+  local application rows, and marks applicable generic `effects` rows
+  `applied`.
+- Live proof first recorded application
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_34334ca28bfb`
+  and applied effect `effect_96080d734142`.
+- Live idempotency rerun recorded application
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_8c9d02d70c10`
+  with 0 new effects applied and 1 existing applied effect.
+- Generated proof:
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`.
+- Operator docs added:
+  `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`,
+  plus README, docs index, command reference, suggested-use, operating summary,
+  dashboard, and iteration visibility.
+- Verification evidence:
+  - syntax compile passed for `agent_os/*.py` and
+    `tests/test_first_milestone.py`.
+  - focused latest proposal/application slice: 7 passed.
+  - combined old/new rung slice: 27 passed.
+  - full suite: 423 passed in 721.73s.
+  - `sweep-stuck`: stuck_incidents 0.
+  - `queue-health`: hotspots 0.
+  - `eval-candidates`: 0.
+  - `approvals`: pending_approvals 0.
+  - `git diff --check`: passed.
+  - `eval-after-change`: pass, run `run_cd2dbe1fd296`.
+  - `eval`: `first_milestone_closed_loop: pass`.
+  - `playbooks`: 1 active playbook, 309 successful runs.
+  - GitHub metadata readback showed PUBLIC visibility, default branch `main`,
+    configured description, README homepage, ADMIN viewer permission, and 20
+    repository topics.
+- The next queue item is downstream task records from these applied local
+  application records.
+- Non-claims: no approval rows, activation actions, external mutations,
+  dispatch, scheduling, retries, trust promotion, capability enablement,
+  proof satisfaction, hosted dashboard, remote worker, autonomous scheduler,
+  browser/desktop adapter action, CI run, or deployment.

@@ -1168,7 +1168,17 @@ python3 -m agent_os.cli capability-activation-followup-result-task-result-effect
 
 See
 `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
-for the exact expected report, idempotency check, and safety counters.
+for the exact expected proposal report, idempotency check, and safety counters.
+
+To apply those accepted blocked proposals as local ledger records only, run:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply --operator-id operator --selection-note "Apply accepted downstream result-effect task result-effect task result-effect task result-effect task result-effect task result-effect task result effect proposals as local records only." --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md
+```
+
+See
+`docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`
+for the application report and idempotency check.
 
 ## When To Commit And Push
 

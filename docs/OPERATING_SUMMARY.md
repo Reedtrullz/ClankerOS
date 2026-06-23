@@ -1234,6 +1234,19 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   `approval_requests_created: 0`, `activation_actions_taken: 0`,
   `external_mutations_taken: 0`, `activation_allowed: false`,
   `capability_enabled: false`, and proof satisfaction blocked.
+- Capability activation follow-up result task result effect task result effect
+  task result effect task result effect task result effect task result effect
+  task result effect application: available through
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply`
+  after proposed downstream result effect task result effect task result
+  effect task result effect task result effect task result effect task result
+  effect task result decision effects exist. The command writes
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`,
+  records local application rows, marks applicable generic `effects` rows as
+  `applied`, and keeps `approval_requests_created: 0`,
+  `activation_actions_taken: 0`, `external_mutations_taken: 0`,
+  `activation_allowed: false`, `capability_enabled: false`, and proof
+  satisfaction blocked.
 - Eval candidate listing: available through
   `python3 -m agent_os.cli eval-candidates` and mirrored into
   `docs/dashboard.md`.

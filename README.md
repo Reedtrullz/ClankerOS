@@ -67,6 +67,7 @@ Then read:
 - [Public Snapshot Tutorial](docs/tutorial-public-snapshot.md)
 - [Latest Capability Decision Tutorial](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md)
 - [Latest Capability Proposal Tutorial](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md)
+- [Latest Capability Application Tutorial](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md)
 
 Register and inspect a target repository before asking ClankerOS to touch it:
 

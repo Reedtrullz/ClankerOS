@@ -5562,3 +5562,46 @@ enablement, and proof satisfaction at zero.
 - Goal ID: goal_5db7f6e8f1ea
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_c9bb9046fdd4/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Application
+
+- Current focus is now:
+  `Add downstream task records from applied downstream follow-up result task
+  result effect task result effect task result effect task result effect task
+  result effect task result effect task result decision effect applications.`
+- The new command
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply`
+  applies proposed generic effects as local application records only.
+- Live proof applied effect `effect_96080d734142` through application
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_34334ca28bfb`.
+- The idempotency rerun recorded
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_8c9d02d70c10`
+  with 0 newly applied effects and 1 existing applied effect.
+- The generated report is
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`.
+- Verification: syntax compile passed; focused latest proposal/application
+  tests passed with 7 tests; combined old/new rung slice passed with 27 tests;
+  full suite passed with 423 tests; live idempotency rerun reported 0 new
+  effects and 1 existing applied effect; `sweep-stuck`, `queue-health`,
+  `eval-candidates`, and `approvals` were clear; `git diff --check` passed;
+  `eval-after-change` passed as `run_cd2dbe1fd296`; baseline `eval` passed;
+  playbooks reported 309 successful runs; GitHub metadata readback matched the
+  configured public repo description, README homepage, default branch, ADMIN
+  permission, and 20 topics.
+- Preserve the boundary: local application rows, applied generic effects, and
+  generated reports only; no approval rows, activation actions, external
+  mutations, dispatch, scheduling, retries, trust promotion, capability
+  enablement, proof satisfaction, CI run, deployment, hosted dashboard, remote
+  worker, autonomous scheduler, or browser/desktop adapter action.
+
+## Run run_cd2dbe1fd296
+
+- Goal ID: goal_53c78dba432f
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_cd2dbe1fd296/summary.md
+
+## Run run_b521af5fb9d5
+
+- Goal ID: goal_89e519cf03c8
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_b521af5fb9d5/summary.md

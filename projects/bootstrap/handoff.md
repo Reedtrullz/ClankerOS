@@ -3043,3 +3043,29 @@ Current focus: Add local application records for downstream follow-up result tas
    only; no approval rows were created, no activation actions occurred, no
    external systems were mutated, no capability was enabled, and proof remains
    unsatisfied.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Application
+
+Current focus: Add downstream task records from applied downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect applications.
+
+1. The new command
+   `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply --operator-id operator --selection-note "Apply accepted downstream result-effect task result-effect task result-effect task result-effect task result-effect task result-effect task result effect proposals as local records only." --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+   records local application rows and marks applicable proposed generic
+   effects `applied`.
+2. Live proof first recorded application
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_34334ca28bfb`
+   and applied effect `effect_96080d734142`.
+3. The idempotency rerun recorded
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_8c9d02d70c10`
+   with 0 newly applied effects, 1 existing applied effect, 0 approval
+   requests, 0 activation actions, and 0 external mutations.
+4. The generated report is
+   `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`.
+5. Continue with:
+   Add downstream task records from applied downstream follow-up result task
+   result effect task result effect task result effect task result effect task
+   result effect task result effect task result decision effect applications.
+6. Preserve the current boundary: local application rows and applied generic
+   effects only; no approval rows were created, no activation actions
+   occurred, no external systems were mutated, no capability was enabled, and
+   proof remains unsatisfied.
