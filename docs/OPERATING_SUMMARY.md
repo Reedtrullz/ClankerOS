@@ -249,6 +249,15 @@ Core layers for the bootstrap:
   records while keeping approval rows, external mutations, activation actions,
   activation allowance, capability enablement, and proof satisfaction at zero.
 - Capability activation follow-up result task result effect task result effect
+  task result effect task result effect task result effect proposals:
+  accepted blocked downstream result effect task result effect task result
+  effect task result effect task result decisions can be converted into
+  idempotent `proposed` effect rows in the generic effects ledger. Each row
+  links the source decision, result, application, effect, delegation, task,
+  contract, project, and capability while keeping approval row creation,
+  external mutations, activation actions, activation allowance, and capability
+  enablement at zero.
+- Capability activation follow-up result task result effect task result effect
   task result effect task result effect proposals: accepted blocked downstream
   result effect task result effect task result effect task result decisions
   can be converted into idempotent `proposed` effect rows in the generic
@@ -1157,6 +1166,18 @@ Status: implemented and locally verified by automated tests and CLI smoke runs.
   result effect task result records exist. The command writes
   `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`,
   records review-only operator decisions, and keeps
+  `approval_requests_created: 0`, `activation_actions_taken: 0`,
+  `external_mutations_taken: 0`, `activation_allowed: false`,
+  `capability_enabled: false`, and proof satisfaction blocked.
+- Capability activation follow-up result task result effect task result effect
+  task result effect task result effect task result effect proposals:
+  available through
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals`
+  after accepted blocked downstream result effect task result effect task
+  result effect task result effect task result decisions exist. The command
+  writes
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`,
+  creates idempotent generic `effects` rows, and keeps
   `approval_requests_created: 0`, `activation_actions_taken: 0`,
   `external_mutations_taken: 0`, `activation_allowed: false`,
   `capability_enabled: false`, and proof satisfaction blocked.

@@ -11,7 +11,8 @@
 - Verification evidence:
   - `python3 -m pytest tests/test_first_milestone.py -q` -> 3 passed.
   - `python3 -m agent_os.cli run-goal "Prove the first milestone closed loop in the live repository" --project bootstrap` -> completed as `run_ef049fa8bc1b`.
-  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`,
+    run `run_88c5a2e43a85`.
 - Current eval result: `evals/results/first_milestone_closed_loop.json`.
 - Next focus: Milestone 2 operational visibility.
 
@@ -7890,3 +7891,60 @@
   activation allowance, capability enablement, trust promotion, scheduler,
   retries, cost tracking, CI/deploy action by ClankerOS, PRs, or external
   mutation.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Proposals
+
+- Added
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals`
+  for converting accepted blocked downstream result effect task result effect
+  task result effect task result effect task result decisions into
+  idempotent generic `effects` rows.
+- Live first proposal run created proposed effect `effect_10f389f8a6a3` from
+  decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_55bba390ed8d`
+  and result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_de9f278ac2cd`
+  for `hosted_dashboard`.
+- Live idempotency pass reported
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals_already_recorded`
+  with 1 existing effect, 0 new proposed effects, 0 approval requests,
+  0 activation actions, and 0 external mutations.
+- Evidence:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Verification evidence so far:
+  - Red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals"`
+    -> failed before CLI registration on the missing command.
+  - Focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals"`
+    -> 4 passed, 370 deselected.
+  - Adjacent chain:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result"`
+    -> 12 passed, 362 deselected.
+  - Syntax compile check passed for the new proposal module, CLI, dashboard,
+    iteration, and tests.
+  - `python3 -m pytest -q` -> 374 passed in 489.75s.
+  - `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800` ->
+    stuck_incidents: 0.
+  - `python3 -m agent_os.cli queue-health` -> hotspots: 0.
+  - `python3 -m agent_os.cli handoff-review` -> clear, blocked_tasks: 0,
+    stale_handoffs: 0.
+  - `python3 -m agent_os.cli eval-candidates` -> eval_candidates: 0.
+  - `python3 -m agent_os.cli approvals` -> pending_approvals: 0.
+  - `git diff --check` -> passed.
+  - `python3 -m agent_os.cli eval-after-change --change "capability activation followup result task result effect task result effect task result effect task result effect task result effect proposals" ...`
+    -> pass, run `run_2f3e9e364ab3`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`.
+  - `python3 -m agent_os.cli playbooks` -> playbooks: 1,
+    `first-milestone-closed-loop` active with 277 successful runs.
+- Next focus:
+  `Add local application records for downstream follow-up result task result
+  effect task result effect task result effect task result effect task result
+  decision effect proposals.`
+- Non-claims: local proposed effect rows only; no approval rows, activation
+  actions, external mutations, activation allowance, capability enablement,
+  proof satisfaction, trust promotion, scheduler, retries, cost tracking,
+  CI/deploy action by ClankerOS, PRs, or external mutation.

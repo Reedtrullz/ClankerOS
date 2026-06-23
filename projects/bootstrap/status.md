@@ -4923,7 +4923,7 @@ are visible in the dashboard and are not active until approved.
   - adjacent chain tests: 14 passed
   - full suite: 370 passed
   - eval-after-change: pass, run `run_9840a0f8c284`
-  - baseline eval: pass
+  - baseline eval: pass, run `run_88c5a2e43a85`
   - playbooks: 1 active, 275 successful runs
 - Next focus:
   `Add local downstream follow-up result task result effect task result effect
@@ -4934,3 +4934,50 @@ are visible in the dashboard and are not active until approved.
   execution, model-provider calls, proof satisfaction, activation allowance,
   capability enablement, trust promotion, scheduler, retries, cost tracking,
   CI/deploy action by ClankerOS, PRs, or external mutation.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Proposals
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals`
+  now creates idempotent generic proposed effects from accepted blocked
+  downstream result effect task result effect task result effect task result
+  effect task result decisions.
+- Live first run created proposed effect `effect_10f389f8a6a3` for
+  `hosted_dashboard`.
+- Live idempotency pass reported already recorded with 1 existing effect,
+  0 new proposed effects, 0 approval requests, 0 activation actions, and
+  0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Verification evidence so far:
+  - focused red/green proposal tests: 4 passed after implementation
+  - adjacent chain tests: 12 passed
+  - full suite: 374 passed
+  - syntax compile check passed for changed Python modules
+  - stuck sweep, queue health, handoff review, eval-candidates, approvals, and
+    diff-check gates passed
+  - eval-after-change: pass, run `run_2f3e9e364ab3`
+  - baseline eval: pass
+  - playbooks: 1 active, 277 successful runs
+- Next focus:
+  `Add local application records for downstream follow-up result task result
+  effect task result effect task result effect task result effect task result
+  decision effect proposals.`
+- Non-claims: local proposed effect rows only; no approval rows, activation
+  actions, external mutations, activation allowance, capability enablement,
+  proof satisfaction, trust promotion, scheduler, retries, cost tracking,
+  CI/deploy action by ClankerOS, PRs, or external mutation.
+
+## Run run_2f3e9e364ab3
+
+- Goal ID: goal_677ef69a20d1
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_2f3e9e364ab3/summary.md
+
+## Run run_88c5a2e43a85
+
+- Goal ID: goal_758ffdbc28e7
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_88c5a2e43a85/summary.md

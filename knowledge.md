@@ -609,3 +609,13 @@
   capability links while keeping proof satisfaction, approval rows, activation
   actions, external mutations, activation allowance, and capability enablement
   at zero.
+
+## Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Proposals
+
+- Accepted blocked downstream result effect task result effect task result
+  effect task result effect task result decisions should become generic
+  proposal-only `effects` rows with their own idempotency prefix before any
+  application-record slice. Preserve source decision, result, application,
+  effect, delegation, task, contract, project, and capability links while
+  keeping approval rows, activation actions, external mutations, activation
+  allowance, capability enablement, and proof satisfaction at zero.

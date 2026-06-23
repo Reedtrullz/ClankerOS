@@ -2649,7 +2649,7 @@ Current focus: Add operator review decisions for downstream follow-up result tas
   - `git diff --check` -> passed
   - handoff-review: clear after refreshing this handoff
   - eval-after-change: pass, run `run_9840a0f8c284`
-  - baseline eval: pass
+  - baseline eval: pass, run `run_88c5a2e43a85`
   - playbooks: 1 active, 275 successful runs
 - Non-claims: local review decision rows only; no approval rows, subagent
   execution, model-provider calls, proof satisfaction, activation allowance,
@@ -2658,15 +2658,46 @@ Current focus: Add operator review decisions for downstream follow-up result tas
 
 ## Next Actions
 
-Current focus: Add local downstream follow-up result task result effect task result effect task result effect task result effect task result decision effect proposals from accepted blocked result effect task result effect task result effect task results.
+Current focus: Add local application records for downstream follow-up result task result effect task result effect task result effect task result effect task result decision effect proposals.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add local downstream follow-up result task result effect task result effect
-   task result effect task result effect task result decision effect proposals
-   from accepted blocked result effect task result effect task result effect task
-   results.
-2. Create only local proposed effects from accepted blocked decisions; keep
-   activation blocked and preserve idempotency.
+   Add local application records for downstream follow-up result task result
+   effect task result effect task result effect task result effect task result
+   decision effect proposals.
+2. Apply only the local proposed effects as local records; keep activation
+   blocked and preserve idempotency.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Proposals
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals`
+  now creates idempotent generic proposed effects from accepted blocked
+  downstream result effect task result effect task result effect task result
+  effect task result decisions.
+- Initial live proposed effect: `effect_10f389f8a6a3` for
+  `hosted_dashboard`, sourced from decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_55bba390ed8d`.
+- Final live idempotency pass reported already recorded with 1 existing effect,
+  0 new proposed effects, 0 approval requests, 0 activation actions, and
+  0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Verification evidence:
+  - focused red/green proposal tests: 4 passed after implementation
+  - adjacent chain tests: 12 passed
+  - syntax compile check passed
+  - full suite: 374 passed
+  - stuck sweep, queue health, handoff review, eval-candidates, approvals, and
+    diff-check gates passed
+  - eval-after-change: pass, run `run_2f3e9e364ab3`
+  - baseline eval: pass
+  - playbooks: 1 active, 277 successful runs
+- Non-claims: local proposed effect rows only; no approval rows, activation
+  actions, external mutations, activation allowance, capability enablement,
+  proof satisfaction, trust promotion, scheduler, retries, cost tracking,
+  CI/deploy action by ClankerOS, PRs, or external mutation.

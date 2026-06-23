@@ -165,6 +165,10 @@ Ingest completed downstream result effect task result effect task result effect 
 Review downstream result effect task result effect task result effect task result effect task result records, accept keeping activation blocked, and prove that no approval rows, activation actions, or external mutations were created.
 ```
 
+```text
+Create proposed local effects from accepted downstream result effect task result effect task result effect task result effect task result decisions, and prove that no approval rows, activation actions, or external mutations were created.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -973,6 +977,20 @@ The decision command writes
 `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`,
 records the operator action against local result ids, and still keeps
 `approval_requests_created=0`, `activation_actions_taken=0`,
+`external_mutations_taken=0`, `activation_allowed=false`, and
+`capability_enabled=false`.
+
+After an accepted blocked decision exists, create the local proposed effect:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals
+python3 -m agent_os.cli dashboard
+```
+
+The proposal command writes
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`,
+creates idempotent generic `effects` rows for accepted blocked decisions, and
+still keeps `approval_requests_created=0`, `activation_actions_taken=0`,
 `external_mutations_taken=0`, `activation_allowed=false`, and
 `capability_enabled=false`.
 

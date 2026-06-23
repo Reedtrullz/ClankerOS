@@ -1,11 +1,11 @@
 # Eval After Change
 
-- id: eval_after_change_5d3d9dda199a
+- id: eval_after_change_4796746505b5
 - status: pass
-- change: capability activation followup result task result effect task result effect task result effect task result effect task result decisions
-- changed_paths: none
+- change: capability activation followup result task result effect task result effect task result effect task result effect task result effect proposals
+- changed_paths: agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py,README.md,WORKFLOW.md,docs/OPERATING_SUMMARY.md,docs/docs-index.md,docs/suggested-use.md,docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md,docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md,docs/dashboard.md,docs/next-iteration.md,docs/handoff-review.md,tasks.md,status.md,projects/bootstrap/handoff.md,projects/bootstrap/status.md,projects/bootstrap/knowledge.md,knowledge.md
 - evals: first_milestone_closed_loop
 - result_paths: evals/results/first_milestone_closed_loop.json
-- run_ids: run_9840a0f8c284
-- command: python3 -m agent_os.cli eval-after-change --change "capability activation followup result task result effect task result effect task result effect task result effect task result decisions"
-- completed_at: 2026-06-23T06:52:07.488672+00:00
+- run_ids: run_2f3e9e364ab3
+- command: python3 -m agent_os.cli eval-after-change --change "capability activation followup result task result effect task result effect task result effect task result effect task result effect proposals" --file "agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals.py" --file "agent_os/cli.py" --file "agent_os/dashboard.py" --file "agent_os/iteration.py" --file "tests/test_first_milestone.py" --file "README.md" --file "WORKFLOW.md" --file "docs/OPERATING_SUMMARY.md" --file "docs/docs-index.md" --file "docs/suggested-use.md" --file "docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md" --file "docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md" --file "docs/dashboard.md" --file "docs/next-iteration.md" --file "docs/handoff-review.md" --file "tasks.md" --file "status.md" --file "projects/bootstrap/handoff.md" --file "projects/bootstrap/status.md" --file "projects/bootstrap/knowledge.md" --file "knowledge.md"
+- completed_at: 2026-06-23T07:25:14.347654+00:00

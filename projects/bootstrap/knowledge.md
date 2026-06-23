@@ -2154,3 +2154,20 @@ coverage.
   `request_more_evidence` and `defer_review` can precede a later accepted
   blocked decision. Keep approval rows, activation actions, external mutations,
   activation allowance, capability enablement, and proof satisfaction at zero.
+
+## Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Proposals
+
+- Accepted blocked downstream result effect task result effect task result
+  effect task result effect task result decisions should produce local
+  proposed generic `effects` rows only. The proposal stage is the handoff into
+  the next local application slice and must keep approval rows, activation
+  actions, external mutations, activation allowance, capability enablement,
+  and proof satisfaction at zero.
+
+## Learning run_2f3e9e364ab3
+
+- Learning: Run run_2f3e9e364ab3 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_88c5a2e43a85
+
+- Learning: Run run_88c5a2e43a85 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
