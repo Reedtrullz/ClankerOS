@@ -8763,3 +8763,41 @@
   autonomous scheduler ran, no browser/desktop adapter acted, no model
   provider was called, and no external mutation was performed by the new
   commands.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Proposals
+
+- Added the next local-only effect proposal rung:
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals`.
+- The command reads accepted `accept_keep_blocked` decisions from the latest
+  downstream result-effect task-result result records, skips any record that
+  already allows activation, enables the capability, or reports external
+  mutations, and records idempotent generic `effects` rows with
+  `status=proposed`.
+- Live proof created proposed effect `effect_96080d734142` from decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_aa06e26fcd4b`
+  and result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_ee5597b442ad`.
+- Generated proof:
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`.
+- Verification evidence:
+  - syntax compile passed for `agent_os/*.py` and
+    `tests/test_first_milestone.py`.
+  - focused new proposal tests: 4 passed.
+  - full suite: 420 passed in 714.11s.
+  - live idempotency rerun reported 0 new effects and 1 existing proposal.
+  - `sweep-stuck`: stuck_incidents 0.
+  - `queue-health`: hotspots 0.
+  - `handoff-review`: clear, stale_handoffs 0.
+  - `eval-candidates`: 0.
+  - `approvals`: pending_approvals 0.
+  - `git diff --check`: passed.
+  - `eval-after-change`: pass, run `run_bb9b308e1400`.
+  - `eval`: `first_milestone_closed_loop: pass`.
+  - `playbooks`: 1 active playbook, 306 successful runs.
+  - GitHub metadata readback showed PUBLIC visibility, default branch `main`,
+    configured description, README homepage, and 20 repository topics.
+  - `dashboard` and `iterate` regenerated local operator state.
+- The next queue item is local application records for these proposed effects.
+- Non-claims: no approval rows, activation actions, external mutations,
+  dispatch, scheduling, retries, trust promotion, capability enablement, or
+  proof satisfaction.

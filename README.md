@@ -66,6 +66,7 @@ Then read:
 - [Approval-Gated Coding Tutorial](docs/tutorial-approval-gated-coding.md)
 - [Public Snapshot Tutorial](docs/tutorial-public-snapshot.md)
 - [Latest Capability Decision Tutorial](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md)
+- [Latest Capability Proposal Tutorial](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md)
 
 Register and inspect a target repository before asking ClankerOS to touch it:
 

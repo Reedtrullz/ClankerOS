@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_f8c9ef80a4b5
+- Packet ID: iteration_23eea07a2c66
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add local downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals from accepted blocked result effect task result effect task result effect task results.
+Advance the Agent System north-star goal by completing: Add local application records for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals.
 
 ## Definition Of Done
 
@@ -235,6 +235,7 @@ Advance the Agent System north-star goal by completing: Add local downstream fol
 - capability activation followup result task result effect task result effect task result effect task result effect task result effect task result effect task delegations: capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_already_recorded
 - capability activation followup result task result effect task result effect task result effect task result effect task result effect task result effect task results: capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_results_already_recorded
 - capability activation followup result task result effect task result effect task result effect task result effect task result effect task result effect task result decisions: capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decisions_already_recorded
+- capability activation followup result task result effect task result effect task result effect task result effect task result effect task result effect task result effect proposals: capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals_recorded
 - proposed eval candidates: 0
 - active playbooks: 1
 - open stuck-task incidents: 0

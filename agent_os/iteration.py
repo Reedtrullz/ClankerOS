@@ -38,6 +38,10 @@ from agent_os.capability_activation_followup_result_task_result_effect_task_resu
     IDEMPOTENCY_PREFIX as CAPABILITY_FOLLOWUP_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_DECISION_EFFECT_IDEMPOTENCY_PREFIX,
     PROPOSALS_RECORDED as CAPABILITY_FOLLOWUP_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_DECISION_EFFECT_PROPOSALS_RECORDED,
 )
+from agent_os.capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals import (
+    IDEMPOTENCY_PREFIX as CAPABILITY_FOLLOWUP_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_DECISION_EFFECT_IDEMPOTENCY_PREFIX,
+    PROPOSALS_RECORDED as CAPABILITY_FOLLOWUP_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_DECISION_EFFECT_PROPOSALS_RECORDED,
+)
 from agent_os.storage import IterationPacket, Storage
 
 
@@ -1629,6 +1633,21 @@ def _current_posture(root: Path) -> list[str]:
                         0
                     ].status
                 )
+        capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals = (
+            "none"
+        )
+        if _table_exists(connection, "effects"):
+            capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_rows = Storage(
+                db_path
+            ).list_effects_with_idempotency_prefix(
+                CAPABILITY_FOLLOWUP_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_DECISION_EFFECT_IDEMPOTENCY_PREFIX
+            )
+            if (
+                capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_rows
+            ):
+                capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals = (
+                    CAPABILITY_FOLLOWUP_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_EFFECT_TASK_RESULT_DECISION_EFFECT_PROPOSALS_RECORDED
+                )
         handoff_reviews = Storage(db_path).list_recent_handoff_reviews(limit=1)
 
     handoff_blocked_tasks = 0
@@ -1740,6 +1759,7 @@ def _current_posture(root: Path) -> list[str]:
         f"capability activation followup result task result effect task result effect task result effect task result effect task result effect task result effect task delegations: {capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations}",
         f"capability activation followup result task result effect task result effect task result effect task result effect task result effect task result effect task results: {capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_results}",
         f"capability activation followup result task result effect task result effect task result effect task result effect task result effect task result effect task result decisions: {capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decisions}",
+        f"capability activation followup result task result effect task result effect task result effect task result effect task result effect task result effect task result effect proposals: {capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals}",
         f"proposed eval candidates: {proposed_eval_candidates}",
         f"active playbooks: {active_playbooks}",
         f"open stuck-task incidents: {stuck_count}",

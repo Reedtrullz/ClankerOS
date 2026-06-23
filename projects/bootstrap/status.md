@@ -5522,3 +5522,43 @@ enablement, and proof satisfaction at zero.
 - Goal ID: goal_9797f2b264de
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_24294d88ba47/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Proposals
+
+- Current focus is now:
+  `Add local application records for downstream follow-up result task result
+  effect task result effect task result effect task result effect task result
+  effect task result effect task result decision effect proposals.`
+- The new command
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals`
+  creates local proposed `effects` rows from accepted blocked downstream
+  result-effect task-result decisions.
+- Live proof created effect `effect_96080d734142` from accepted decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_aa06e26fcd4b`.
+- The generated report is
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`.
+- Verification: syntax compile passed; focused new proposal tests passed with
+  4 tests; full suite passed with 420 tests; live idempotency rerun reported 0
+  new effects and 1 existing proposal; `sweep-stuck`, `queue-health`,
+  `handoff-review`, `eval-candidates`, and `approvals` were clear;
+  `git diff --check` passed; `eval-after-change` passed as
+  `run_bb9b308e1400`; baseline `eval` passed; playbooks reported 306
+  successful runs; GitHub metadata readback matched the configured public repo
+  description, README homepage, default branch, and 20 topics; `dashboard` and
+  `iterate` regenerated local operator state.
+- Preserve the boundary: local proposed effects and generated reports only;
+  no approval rows, activation actions, external mutations, dispatch,
+  scheduling, retries, trust promotion, capability enablement, or proof
+  satisfaction.
+
+## Run run_bb9b308e1400
+
+- Goal ID: goal_55f0c9c3bfb9
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_bb9b308e1400/summary.md
+
+## Run run_c9bb9046fdd4
+
+- Goal ID: goal_5db7f6e8f1ea
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_c9bb9046fdd4/summary.md

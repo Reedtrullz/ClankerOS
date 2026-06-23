@@ -1159,6 +1159,17 @@ still keeps `approval_requests_created=0`, `activation_actions_taken=0`,
 `external_mutations_taken=0`, `activation_allowed=false`, and
 `capability_enabled=false`.
 
+The same pattern now extends to the deeper downstream result-effect task-result
+ladder. For the latest proposal rung, use:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals
+```
+
+See
+`docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`
+for the exact expected report, idempotency check, and safety counters.
+
 ## When To Commit And Push
 
 Commit when:

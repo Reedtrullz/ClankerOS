@@ -1,8 +1,8 @@
 # Handoff Review
 
-- id: handoff_review_907d6baca206
+- id: handoff_review_f294f1699103
 - status: clear
-- current_focus: Add first-class `run-task` dispatch for planned goal tasks with profile-aware local evidence packets.
+- current_focus: Add local application records for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals.
 - blocked_tasks: 0
 - stale_handoffs: 0
 - reviewed_paths: 1

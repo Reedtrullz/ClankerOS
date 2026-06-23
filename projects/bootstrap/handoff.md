@@ -3019,3 +3019,27 @@ Current focus: Add local downstream follow-up result task result effect task res
    only; no approval rows were created, no activation actions occurred, no
    external systems were mutated, no capability was enabled, and proof remains
    unsatisfied.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Proposals
+
+Current focus: Add local application records for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals.
+
+1. The new command
+   `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals`
+   creates local proposed effects from accepted blocked downstream result
+   effect task result effect task result effect task result effect task result
+   effect task result decisions.
+2. Live proof recorded proposed effect `effect_96080d734142` for decision
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_aa06e26fcd4b`
+   and source result
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_ee5597b442ad`.
+3. The generated report is
+   `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md`.
+4. Continue with:
+   Add local application records for downstream follow-up result task result
+   effect task result effect task result effect task result effect task result
+   effect task result effect task result decision effect proposals.
+5. Preserve the current boundary: local proposed effects and generated reports
+   only; no approval rows were created, no activation actions occurred, no
+   external systems were mutated, no capability was enabled, and proof remains
+   unsatisfied.

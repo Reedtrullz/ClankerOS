@@ -2415,3 +2415,22 @@ coverage.
 ## Learning run_24294d88ba47
 
 - Learning: Run run_24294d88ba47 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning: Downstream Proposal Rungs Stay Generic
+
+- The deep capability-activation proposal rungs can continue to reuse the
+  generic `effects` ledger with a longer idempotency prefix instead of adding
+  another storage table.
+- Each proposal rung should be fed only by accepted `accept_keep_blocked`
+  decisions and should skip records that already allow activation, enable a
+  capability, or report external mutations.
+- Dashboard and iteration visibility should be added alongside the CLI so a
+  proposed effect does not become hidden state.
+
+## Learning run_bb9b308e1400
+
+- Learning: Run run_bb9b308e1400 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_c9bb9046fdd4
+
+- Learning: Run run_c9bb9046fdd4 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
