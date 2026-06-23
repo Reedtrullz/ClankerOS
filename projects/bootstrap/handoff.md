@@ -205,8 +205,8 @@ chain, without starting remote workers, claiming remote work, or changing
 routing.
 Current iteration packet:
 `docs/next-iteration.md` selects
-`Add local application records for downstream follow-up result task result effect
-task result effect task result decision effect proposals.`
+`Add downstream task records from applied downstream follow-up result task result
+effect task result effect task result decision effect applications.`
 
 Latest delegation result ingestion:
 `subagent_delegation_7c3ac6139928` is completed with
@@ -2243,15 +2243,43 @@ work, or changing routing.
   enable capabilities, promote trust, schedule work, retry work, track spend,
   run CI, deploy, push, open PRs, or mark the active goal complete.
 
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Application
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-apply`
+  now applies proposed downstream result effect task result effect task result
+  decision effects as local ledger application records.
+- Initial live application
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_application_92cfb4350c5b`
+  applied effect `effect_cf0963e8c699` for `hosted_dashboard` while keeping
+  activation blocked.
+- Final live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_application_1f4f0763b33f`
+  reported
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_application_already_recorded`
+  with 0 new applied effects, 1 existing applied effect, 0 approval requests,
+  0 activation actions, and 0 external mutations.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-application.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-application.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Non-claims: downstream result effect task result effect task result effect
+  application records do not create `approval_requests`, start subagents, call
+  model providers, satisfy proof, mutate activation contracts, mutate external
+  systems, allow activation, enable capabilities, promote trust, schedule
+  work, retry work, track spend, run CI, deploy, push, open PRs, or mark the
+  active goal complete.
+
 ## Next Actions
 
-Current focus: Add local application records for downstream follow-up result task result effect task result effect task result decision effect proposals.
+Current focus: Add downstream task records from applied downstream follow-up result task result effect task result effect task result decision effect applications.
 
 1. Use `docs/next-iteration.md` to complete:
-   Add local application records for downstream follow-up result task result
-   effect task result effect task result decision effect proposals.
-2. Apply proposed downstream result effect task result effect task result
-   decision effects as local records only while keeping activation blocked.
+   Add downstream task records from applied downstream follow-up result task
+   result effect task result effect task result decision effect applications.
+2. Materialize applied downstream result effect task result effect task result
+   decision effect applications into pending local proof tasks while keeping
+   activation blocked.
 3. Keep hosted dashboard, remote workers, scheduler, browser/desktop adapters,
    budget enforcement, trust promotion, retries, and real-cost tracking
    blocked until their own evidence and approval contracts are satisfied.

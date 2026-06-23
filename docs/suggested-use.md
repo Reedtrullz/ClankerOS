@@ -299,6 +299,9 @@ Prefer these files when orienting:
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-proposals.md`
   for creating proposed effects from accepted downstream result effect task
   result effect result decisions.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-application.md`
+  for applying proposed downstream result effect task result effect result
+  decision effects as local records.
 - `contracts.md` for safety boundaries and evidence expectations.
 - `status.md` for chronological implementation evidence.
 - `projects/bootstrap/handoff.md` for the current continuation edge.
@@ -806,6 +809,23 @@ creates generic local `effects` rows for accepted blocked decisions, and keeps
 `approval_requests_created=0`, `activation_actions_taken=0`,
 `external_mutations_taken=0`, `activation_allowed=false`, and
 `capability_enabled=false`.
+
+Apply those proposed effects as local application records:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-apply \
+  --operator-id operator \
+  --selection-note "Apply accepted downstream result-effect task result-effect task result effect proposals as local records only." \
+  --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-proposals.md
+python3 -m agent_os.cli dashboard
+```
+
+The application command writes
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-application.md`,
+records a local application row, marks applicable generic `effects` rows as
+`applied`, and keeps `approval_requests_created=0`,
+`activation_actions_taken=0`, `external_mutations_taken=0`,
+`activation_allowed=false`, and `capability_enabled=false`.
 
 ## When To Commit And Push
 

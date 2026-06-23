@@ -1980,3 +1980,19 @@ coverage.
 ## Learning run_47b112a4c033
 
 - Learning: Run run_47b112a4c033 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Downstream Result Effect Task Result Effect Application
+
+- Applied downstream result effect task result effect result decision effects
+  should remain local ledger applications only: record an application row,
+  mark applicable generic `effects` rows as `applied`, preserve source links,
+  and keep approval rows, activation actions, external mutations, activation
+  allowance, and capability enablement at zero.
+
+## Learning run_6aac17428229
+
+- Learning: Run run_6aac17428229 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_a59934b85647
+
+- Learning: Run run_a59934b85647 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
