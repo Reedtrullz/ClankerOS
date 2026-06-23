@@ -173,6 +173,10 @@ Create proposed local effects from accepted downstream result effect task result
 Apply proposed downstream result effect task result effect task result effect task result effect task result decision effects as local records only, and prove that capability activation remains blocked.
 ```
 
+```text
+Route downstream result effect task result effect task result effect task result effect tasks to read-only evaluator delegation packets, and prove that no subagent starts.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -235,7 +239,10 @@ Apply proposed downstream result effect task result effect task result effect ta
 35. Materialize applied downstream result effect task result effect task result
     effect task result decision effects into pending downstream proof tasks
     before routing or delegation.
-36. Record non-claims before treating the work as safe.
+36. Route downstream result effect task result effect task result effect task
+    result effect tasks into read-only delegation packets before ingesting the
+    next proof-plan output.
+37. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 

@@ -2760,3 +2760,27 @@ Current focus: Add routing and delegation packets for downstream follow-up resul
 4. Preserve the current boundary: this step created no approval rows, took no
    activation actions, made no external mutations, did not route or delegate
    work yet, did not enable capabilities, and did not satisfy capability proof.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Delegations
+
+Current focus: Add result ingestion for downstream follow-up result task result effect task result effect task result effect task result effect task result effect delegation packets.
+
+1. The new command
+   `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations`
+   routes pending downstream result effect task result effect task result
+   effect task result effect task result effect tasks into read-only evaluator
+   delegation packets.
+2. Live proof created `subagent_delegation_2d5c651c4f7f` for
+   `task_d84ea88202c6` with profile `evaluator`, category
+   `evidence_review`, and zero execution, network, external mutation, or
+   activation actions.
+3. The idempotency rerun
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_034ecef1749f`
+   found 1 existing delegation and created 0 new routing/delegation rows.
+4. Continue with:
+   Add result ingestion for downstream follow-up result task result effect task
+   result effect task result effect task result effect task result effect
+   delegation packets.
+5. Preserve the current boundary: no subagent has started, no model provider
+   was called, no approval rows were created, no activation actions occurred,
+   no external systems were mutated, and capability activation remains blocked.

@@ -127,6 +127,7 @@ TASK_TYPE_CATEGORY_MAP = {
     "capability_activation_followup_result_task_result_effect_task_result_effect_task": "evidence_review",
     "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task": "evidence_review",
     "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task": "evidence_review",
+    "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task": "evidence_review",
 }
 
 

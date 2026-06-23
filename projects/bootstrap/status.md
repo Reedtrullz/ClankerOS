@@ -5083,3 +5083,56 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_d3dde20e096c
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_c86e2ef3dc65/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Delegations
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations`
+  now creates idempotent read-only evaluator delegation packets for pending
+  downstream result effect task result effect task result effect task result
+  effect task result effect tasks.
+- Routing now maps
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task`
+  to `evidence_review`, ensuring delegation packets select the read-only
+  evaluator profile.
+- Initial live batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_0fd3c8ad989e`
+  created `subagent_delegation_2d5c651c4f7f` for `task_d84ea88202c6`.
+- Final live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_034ecef1749f`
+  reported 1 existing delegation and 0 new routing/delegation rows.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`
+  - `.clanker/delegations/task_d84ea88202c6-plan-next-downstream-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proof-evidence-for-hosted-dashboard.json`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Verification evidence:
+  - focused delegation tests: 3 passed
+  - adjacent chain tests: 21 passed
+  - syntax compile check passed
+  - full suite: 383 passed
+  - stuck sweep, queue health, handoff review, eval-candidates, approvals, and
+    diff-check gates passed
+  - eval-after-change: pass, run `run_91127e0fee7e`
+  - baseline eval: pass
+  - playbooks: 1 active, 283 successful runs
+- Next focus:
+  `Add result ingestion for downstream follow-up result task result effect task
+  result effect task result effect task result effect task result effect
+  delegation packets.`
+- Non-claims: local routing decisions and pending delegation packets only; no
+  subagent started, no model provider called, no approval rows, no activation
+  actions, no external mutations, no activation allowance, no capability
+  enablement, and no proof satisfaction.
+
+## Run run_91127e0fee7e
+
+- Goal ID: goal_4c95bc715685
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_91127e0fee7e/summary.md
+
+## Run run_42f4470845e8
+
+- Goal ID: goal_bff548ac9787
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_42f4470845e8/summary.md

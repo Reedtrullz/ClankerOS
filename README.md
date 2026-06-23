@@ -238,6 +238,10 @@ preserving the same source links and keeping activation blocked.
 Those pending downstream proof tasks can now be routed into read-only
 `evidence_review` evaluator delegation packets with durable routing decisions,
 packet JSON, and `execution_started=0`, while still keeping activation blocked.
+The next downstream result effect task result effect task result effect task
+result effect tasks can now also be routed into read-only evaluator delegation
+packets with durable routing decisions, local JSON artifacts, and zero
+execution, network, external mutation, or activation actions.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.

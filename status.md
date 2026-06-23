@@ -8063,3 +8063,68 @@
   proof satisfaction, trust promotion, routing, delegation execution,
   scheduler, retries, cost tracking, CI/deploy action by ClankerOS, PRs, or
   external mutation.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Delegations
+
+- Added
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations`
+  for routing pending downstream result effect task result effect task result
+  effect task result effect task result effect tasks to read-only evaluator
+  delegation packets.
+- Routing fix: added the new downstream task type to
+  `TASK_TYPE_CATEGORY_MAP` as `evidence_review`, so delegation packets select
+  the read-only `evaluator` profile instead of falling through to
+  implementation/coder routing.
+- Live first delegation batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_0fd3c8ad989e`
+  created routing decision `routing_decision_433a29462d9f` and delegation
+  `subagent_delegation_2d5c651c4f7f` for `task_d84ea88202c6`
+  (`hosted_dashboard`), with `execution_started=0`, `network_actions_taken=0`,
+  `external_mutations_taken=0`, and `activation_actions_taken=0`.
+- Live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_034ecef1749f`
+  reported already recorded with 1 existing delegation, 0 new routing
+  decisions, 0 new delegations, 0 execution starts, 0 network actions,
+  0 external mutations, and 0 activation actions.
+- Evidence:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`
+  - `.clanker/delegations/task_d84ea88202c6-plan-next-downstream-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proof-evidence-for-hosted-dashboard.json`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Verification evidence:
+  - red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations"`
+    failed before CLI registration on the missing command.
+  - focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations"`
+    -> 3 passed, 380 deselected.
+  - adjacent chain:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result"`
+    -> 21 passed, 362 deselected.
+  - syntax compile check passed for the new delegation module, storage, CLI,
+    dashboard, iteration, profile routing, and tests.
+  - `python3 -m pytest -q` -> 383 passed in 526.98s.
+  - `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800` ->
+    stuck_incidents: 0.
+  - `python3 -m agent_os.cli queue-health` -> hotspots: 0.
+  - `python3 -m agent_os.cli handoff-review` -> clear, blocked_tasks: 0,
+    stale_handoffs: 0.
+  - `python3 -m agent_os.cli eval-candidates` -> eval_candidates: 0.
+  - `python3 -m agent_os.cli approvals` -> pending_approvals: 0.
+  - `git diff --check` -> passed.
+  - `python3 -m agent_os.cli eval-after-change --change "capability activation followup result task result effect task result effect task result effect task result effect task result effect task delegations" ...`
+    -> pass, run `run_91127e0fee7e`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`.
+  - `python3 -m agent_os.cli playbooks` -> playbooks: 1,
+    `first-milestone-closed-loop` active with 283 successful runs.
+- Next focus:
+  `Add result ingestion for downstream follow-up result task result effect task
+  result effect task result effect task result effect task result effect
+  delegation packets.`
+- Non-claims: local routing decisions and pending delegation packets only; no
+  subagent started, no model provider called, no approval rows created, no
+  activation actions, no external mutations, no activation allowance, no
+  capability enablement, no proof satisfaction, no trust promotion, no
+  scheduler, no retries, no cost tracking, no CI/deploy action by ClankerOS,
+  and no PR or external mutation.

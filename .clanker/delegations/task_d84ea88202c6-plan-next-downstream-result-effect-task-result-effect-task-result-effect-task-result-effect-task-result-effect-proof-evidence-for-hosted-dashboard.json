@@ -1,0 +1,112 @@
+{
+  "allowed_tools": [
+    "read",
+    "grep",
+    "evidence_read"
+  ],
+  "assigned_profile": "evaluator",
+  "budget": {
+    "seconds": 420,
+    "tokens": 20000
+  },
+  "category": "evidence_review",
+  "execution_started": false,
+  "expected_output_schema": "evidence_review",
+  "external_mutations_taken": 0,
+  "forbidden_actions": [
+    "approve",
+    "commit",
+    "external_state_mutation",
+    "shell",
+    "write"
+  ],
+  "id": "subagent_delegation_2d5c651c4f7f",
+  "input_context": {
+    "model": "configurable/strong-reasoning-model",
+    "parent_goal_id": "goal_a87925a4e8f3",
+    "parent_task_id": "task_d84ea88202c6",
+    "profile": "evaluator",
+    "project_id": "bootstrap",
+    "routing_decision_id": "routing_decision_433a29462d9f",
+    "routing_reason": "task_rule: task_type capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task mapped to category evidence_review selected evaluator",
+    "task_artifacts": [
+      "docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md"
+    ],
+    "task_description": "Prepare the next downstream evidence plan for capability hosted_dashboard from applied downstream result effect task result effect task result effect task result effect task result decision effect effect_10f389f8a6a3; keep activation blocked until fresh proof and explicit operator approval exist.",
+    "task_evidence": {
+      "activation_actions_taken": 0,
+      "activation_allowed": false,
+      "approval_requests_created": 0,
+      "assigned_profile": "evaluator",
+      "capability": "hosted_dashboard",
+      "capability_enabled": false,
+      "evidence_status": "next_evidence_plan_recorded",
+      "external_mutations_taken": 0,
+      "result_evidence_path": "/Users/reidar/Documents/Agent System/docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results/subagent_delegation_c7fc922aba24-hosted-dashboard.json",
+      "selected_action": "accept_keep_blocked",
+      "source_application_decision_id": "capability_activation_followup_result_task_result_decision_584334bef1b8",
+      "source_application_delegation_id": "subagent_delegation_0de281ad619c",
+      "source_application_downstream_result_id": "capability_activation_followup_result_task_result_749b9c23cd2f",
+      "source_application_effect_id": "effect_1204651c2a69",
+      "source_application_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_6c5fab8b9577",
+      "source_application_record_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_f9d9100867a2",
+      "source_contract_id": "capability_activation_contract_5f51a9f00ad5",
+      "source_decision_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_55bba390ed8d",
+      "source_delegation_id": "subagent_delegation_c7fc922aba24",
+      "source_downstream_result_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_de9f278ac2cd",
+      "source_downstream_task_id": "task_b1f604bef7cf",
+      "source_effect_id": "effect_10f389f8a6a3",
+      "source_followup_result_id": "capability_activation_followup_result_4c9b8b0d1c43",
+      "source_goal_id": "goal_39de19806f36",
+      "source_project_id": "bootstrap",
+      "task_origin": "applied_downstream_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_effect",
+      "upstream_downstream_task_id": "task_6392c3a229e5",
+      "upstream_followup_effect_id": "effect_0fa73f003874",
+      "upstream_source_decision_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_decision_3912924f18b8",
+      "upstream_source_downstream_result_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_f32b93ffc5ae"
+    },
+    "task_type": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task",
+    "verification_plan": {
+      "activation_allowed": false,
+      "capability": "hosted_dashboard",
+      "capability_enabled": false,
+      "non_claims": [
+        "does_not_enable_capability",
+        "does_not_allow_activation",
+        "does_not_satisfy_capability_proof",
+        "does_not_mutate_external_systems",
+        "does_not_create_approval_requests",
+        "does_not_mutate_downstream_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_records"
+      ],
+      "required_gates": [
+        "next_evidence_plan",
+        "fresh_verification",
+        "explicit_operator_approval",
+        "non_claim_review"
+      ],
+      "selected_action": "accept_keep_blocked",
+      "source_application_decision_id": "capability_activation_followup_result_task_result_decision_584334bef1b8",
+      "source_application_effect_id": "effect_1204651c2a69",
+      "source_application_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_6c5fab8b9577",
+      "source_application_record_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_f9d9100867a2",
+      "source_decision_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_55bba390ed8d",
+      "source_delegation_id": "subagent_delegation_c7fc922aba24",
+      "source_downstream_result_id": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_de9f278ac2cd",
+      "source_downstream_task_id": "task_b1f604bef7cf",
+      "source_effect_id": "effect_10f389f8a6a3",
+      "type": "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_downstream_task"
+    }
+  },
+  "network_actions_taken": 0,
+  "non_claims": [
+    "No subagent was started.",
+    "No model provider was called.",
+    "No file, git, approval, or external state was mutated."
+  ],
+  "parent_goal_id": "goal_a87925a4e8f3",
+  "parent_task_id": "task_d84ea88202c6",
+  "prompt": "/goal Plan next downstream result effect task result effect task result effect task result effect task result effect proof evidence for hosted_dashboard\n\nContext:\n- parent_goal_id: goal_a87925a4e8f3\n- parent_task_id: task_d84ea88202c6\n- project_id: bootstrap\n- task_type: capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task\n- task_description: Prepare the next downstream evidence plan for capability hosted_dashboard from applied downstream result effect task result effect task result effect task result effect task result decision effect effect_10f389f8a6a3; keep activation blocked until fresh proof and explicit operator approval exist.\n- routing_category: evidence_review\n- assigned_profile: evaluator\n\nBoundaries:\n- Read-only context gathering only.\n- Do not write files, commit, approve, call external services, or mutate state.\n\nDeliverable:\n- Return structured output matching `evidence_review`.",
+  "routing_decision_id": "routing_decision_433a29462d9f",
+  "status": "pending",
+  "title": "Plan next downstream result effect task result effect task result effect task result effect task result effect proof evidence for hosted_dashboard"
+}

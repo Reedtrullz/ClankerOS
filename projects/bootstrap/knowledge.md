@@ -2206,3 +2206,21 @@ coverage.
 ## Learning run_c86e2ef3dc65
 
 - Learning: Run run_c86e2ef3dc65 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Delegations
+
+- Pending downstream result effect task result effect task result effect task
+  result effect task result effect tasks must map to `evidence_review` and
+  create read-only evaluator delegation packets before any result ingestion.
+  The packet stage preserves task, effect, application, result, contract,
+  project, and capability links while keeping execution, provider calls,
+  approval rows, activation actions, external mutations, activation allowance,
+  capability enablement, and proof satisfaction at zero.
+
+## Learning run_91127e0fee7e
+
+- Learning: Run run_91127e0fee7e showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_42f4470845e8
+
+- Learning: Run run_42f4470845e8 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
