@@ -23,7 +23,7 @@
 - Dashboard output: `docs/dashboard.md`.
 - Dashboard contents now include queue status counts, recent runs, recent
   learnings, and recent eval results from SQLite state.
-- Verification evidence so far:
+- Verification evidence:
   - `python3 -m pytest tests/test_first_milestone.py::test_static_dashboard_summarizes_runs_and_queue -q` -> 1 passed.
   - `python3 -m pytest tests/test_first_milestone.py -q` -> 4 passed.
   - `python3 -m agent_os.cli dashboard` -> wrote `docs/dashboard.md`.
@@ -8188,6 +8188,72 @@
   effect task result records.`
 - Non-claims: local result rows and JSON artifacts only; no subagent started
   by this ingestion command, no model provider call, no approval rows,
+  activation actions, external mutations, activation allowance, capability
+  enablement, proof satisfaction, trust promotion, scheduler, retries, cost
+  tracking, CI/deploy action by ClankerOS, PRs, or external mutation.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Decisions
+
+- Added
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide`
+  for recording operator review decisions on downstream result effect task
+  result effect task result effect task result effect task result effect task
+  result records.
+- Added public-facing tutorial and suggested-use docs:
+  `docs/getting-started.md`, `docs/concepts.md`, `docs/architecture.md`,
+  `docs/reference-commands.md`, and
+  `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`.
+- Live decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_8bb5a92311a1`
+  accepted keeping
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_d050d817fc2c`
+  blocked for `hosted_dashboard`, with 1 decision recorded, 0 approval
+  requests, 0 activation actions, and 0 external mutations.
+- Live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_4be1a192e521`
+  reported already recorded with 1 existing decision, 0 new decisions,
+  0 approval requests, 0 activation actions, and 0 external mutations.
+- Evidence:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`
+  - `docs/getting-started.md`
+  - `docs/concepts.md`
+  - `docs/architecture.md`
+  - `docs/reference-commands.md`
+  - `README.md`
+  - `docs/suggested-use.md`
+  - `docs/docs-index.md`
+- Verification evidence so far:
+  - red command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decisions"`
+    failed before CLI registration on the missing command.
+  - focused green command:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decisions"`
+    -> 4 passed, 387 deselected.
+  - adjacent chain:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result"`
+    -> 8 passed, 383 deselected.
+  - syntax compile check passed for storage, CLI, dashboard, iteration, the
+    new decision module, and tests.
+  - `python3 -m pytest -q` -> 391 passed in 576.35s.
+  - `python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800` ->
+    stuck_incidents: 0.
+  - `python3 -m agent_os.cli queue-health` -> hotspots: 0.
+  - `python3 -m agent_os.cli handoff-review` -> clear, blocked_tasks: 0,
+    stale_handoffs: 0.
+  - `python3 -m agent_os.cli eval-candidates` -> eval_candidates: 0.
+  - `python3 -m agent_os.cli approvals` -> pending_approvals: 0.
+  - `git diff --check` -> passed.
+  - `python3 -m agent_os.cli eval-after-change --change "capability activation followup result task result effect task result effect task result effect task result effect task result effect task result decisions and public docs" ...`
+    -> pass, run `run_78eae4fa0664`.
+  - `python3 -m agent_os.cli eval` -> `first_milestone_closed_loop: pass`.
+  - `python3 -m agent_os.cli playbooks` -> playbooks: 1,
+    `first-milestone-closed-loop` active with 287 successful runs.
+- Next focus:
+  `Add local downstream follow-up result task result effect task result effect
+  task result effect task result effect task result effect task result
+  decision effect proposals from accepted blocked result effect task results.`
+- Non-claims: local decision rows and reports only; no approval rows,
   activation actions, external mutations, activation allowance, capability
   enablement, proof satisfaction, trust promotion, scheduler, retries, cost
   tracking, CI/deploy action by ClankerOS, PRs, or external mutation.

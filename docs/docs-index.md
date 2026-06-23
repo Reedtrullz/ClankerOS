@@ -6,6 +6,14 @@ tutorials and operating docs are the better place to start.
 ## Start Here
 
 - `README.md` - product overview, metadata, quick start, and command map.
+- `docs/getting-started.md` - first local loop, expected outputs, and good
+  starter prompts.
+- `docs/concepts.md` - glossary for goals, tasks, evidence, approvals,
+  effects, worktrees, delegations, memory, skills, and non-claims.
+- `docs/architecture.md` - local control plane, runtime artifacts, safety
+  boundaries, and extension order.
+- `docs/reference-commands.md` - compact command map for setup, coding,
+  profiles, memory, verification, and publishing.
 - `docs/suggested-use.md` - operator prompts, loops, approval boundaries, and
   when to commit or push.
 - `docs/OPERATING_SUMMARY.md` - architecture, current runtime capability, and
@@ -132,6 +140,10 @@ tutorials and operating docs are the better place to start.
   - ingest completed downstream result effect task result effect task result
     effect task result effect task result effect delegation outputs into local
     result records.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`
+  - review downstream result effect task result effect task result effect task
+    result effect task result effect task result records while keeping
+    activation blocked.
 
 ## Current State
 
@@ -175,6 +187,7 @@ packets, not as marketing docs:
 - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md`
 - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`
 - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`
+- `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`
 - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-results.md`
 - `docs/capability-activation-followup-result-task-result-effect-task-results.md`
 - `docs/capability-activation-followup-result-task-result-effect-tasks.md`

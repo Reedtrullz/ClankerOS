@@ -35,6 +35,21 @@ Detailed generated capability chains live in `docs/OPERATING_SUMMARY.md`,
 `docs/docs-index.md`, `docs/dashboard.md`, and the per-command evidence
 reports. Treat those as proof packets, not marketing copy.
 
+## Start Here
+
+If you are new to the project, read these first:
+
+- [Getting started](docs/getting-started.md) - first loop, expected outputs,
+  and good starter prompts.
+- [Concepts](docs/concepts.md) - glossary for goals, tasks, evidence,
+  approvals, effects, worktrees, delegations, memory, and non-claims.
+- [Architecture](docs/architecture.md) - local control plane, SQLite,
+  markdown reports, artifacts, and safety boundaries.
+- [Command reference](docs/reference-commands.md) - compact command map for
+  setup, coding, profiles, memory, verification, and publishing.
+- [Suggested use](docs/suggested-use.md) - how to prompt and operate the
+  system without overclaiming.
+
 ## About
 
 ClankerOS is for operators who want agents to become more useful without
@@ -249,6 +264,11 @@ result, application, effect, delegation, task, contract, project, and
 capability links. The ingestion keeps `activation_allowed=false`,
 `capability_enabled=false`, `approval_requests_created=0`,
 `activation_actions_taken=0`, and `external_mutations_taken=0`.
+Operators can now record local accept-keep-blocked, more-evidence, or defer
+decisions for those downstream result effect task result effect task result
+effect task result effect task result effect task result records while still
+keeping approval requests, activation actions, external mutations, activation
+allowance, and capability enablement at zero.
 Deployments and other external side effects remain blocked unless an
 implemented flow explicitly models evidence, authorization, rollback, and
 verification.
@@ -264,7 +284,7 @@ Local-first agent OS harness for durable AI coding work: task graphs, verificati
 Suggested GitHub topics:
 
 ```text
-agent-operating-system, agentic-ai, ai-agents, agent-os, agent-orchestration, subagent-delegation, local-first, coding-agents, automation, sqlite, approval-workflow, human-in-the-loop, cli-tool, developer-tools, worktrees, verification, operator-dashboard, evals, markdown, python
+agent-operating-system, agent-os, ai-agents, agentic-ai, agent-orchestration, coding-agents, local-first, human-in-the-loop, approval-workflow, verification, evidence, task-graph, operator-dashboard, worktrees, sqlite, python, cli-tool, developer-tools, evals, markdown
 ```
 
 GitHub homepage:
@@ -375,6 +395,10 @@ mutate external systems.
 Start with the first three docs for normal use; the later capability-chain
 tutorials are advanced evidence packets for blocked activation work.
 
+- [Getting started](docs/getting-started.md)
+- [Concepts](docs/concepts.md)
+- [Architecture](docs/architecture.md)
+- [Command reference](docs/reference-commands.md)
 - [Run the first local loop](docs/tutorial-first-loop.md)
 - [Run an approval-gated coding task](docs/tutorial-approval-gated-coding.md)
 - [Record profile routing, delegation, and delegation results](docs/tutorial-subagent-delegation-results.md)
@@ -409,8 +433,9 @@ tutorials are advanced evidence packets for blocked activation work.
 - [Create downstream tasks from applied result effect task result effect task result effect task result effects](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md)
 - [Route downstream result effect task result effect task result effect task result effect tasks](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md)
 - [Ingest downstream result effect task result effect task result effect task result effect task results](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md)
-- [Ingest downstream result effect task result effect task result effect task result effect task result effect task results](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md)
 - [Review downstream result effect task result effect task result effect task result effect task results](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md)
+- [Ingest downstream result effect task result effect task result effect task result effect task result effect task results](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md)
+- [Review downstream result effect task result effect task result effect task result effect task result effect task results](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md)
 - [Create downstream result effect task result effect task result effect task result effect task result effect proposals](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals.md)
 - [Apply downstream result effect task result effect task result effect task result effect task result effect records](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md)
 - [Create downstream tasks from applied result effect task result effect task result effect task result effect task result effects](docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks.md)
@@ -562,6 +587,10 @@ The repository can now:
   local result records and JSON artifacts while preserving source links and
   keeping approval rows, activation actions, external mutations, activation
   allowance, and capability enablement at zero;
+- review downstream result effect task result effect task result effect task
+  result effect task result effect task result records with explicit operator
+  decisions while keeping approval rows, activation actions, external
+  mutations, activation allowance, and capability enablement at zero;
 - accept a goal through the CLI;
 - decompose the goal into typed tasks;
 - let a local worker claim and execute tasks;

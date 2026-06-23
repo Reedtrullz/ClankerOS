@@ -8,6 +8,10 @@ harder to overclaim.
 
 | If you want to... | Start with... |
 | --- | --- |
+| Learn the basics | `docs/getting-started.md` |
+| Understand the vocabulary | `docs/concepts.md` |
+| Understand the local architecture | `docs/architecture.md` |
+| Find a command quickly | `docs/reference-commands.md` |
 | See current state | `python3 -m agent_os.cli dashboard` |
 | Pick the next safe local task | `python3 -m agent_os.cli iterate` |
 | Run the first loop | `docs/tutorial-first-loop.md` |
@@ -27,6 +31,14 @@ Create a local proof packet for enabling a hosted dashboard, but do not deploy i
 
 ```text
 Review the current expansion evidence and add the next report-only approval boundary.
+```
+
+```text
+Review the dashboard and next-iteration packet, then implement the next local proof step with tests and explicit non-claims.
+```
+
+```text
+Explain what is locally proven, what is only a report, and what still needs operator approval.
 ```
 
 ```text
@@ -166,6 +178,10 @@ Review downstream result effect task result effect task result effect task resul
 ```
 
 ```text
+Review downstream result effect task result effect task result effect task result effect task result effect task result records, accept keeping activation blocked, and prove that no approval rows, activation actions, or external mutations were created.
+```
+
+```text
 Create proposed local effects from accepted downstream result effect task result effect task result effect task result effect task result decisions, and prove that no approval rows, activation actions, or external mutations were created.
 ```
 
@@ -249,7 +265,10 @@ Ingest completed downstream result effect task result effect task result effect 
 37. Ingest completed downstream result effect task result effect task result
     effect task result effect task result effect delegation outputs as local
     result records before any operator review.
-38. Record non-claims before treating the work as safe.
+38. Review downstream result effect task result effect task result effect task
+    result effect task result effect task result records before treating the
+    next evidence plan as operator-accepted.
+39. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 
@@ -337,6 +356,10 @@ worktrees are recorded as blocked and left in place.
 Prefer these files when orienting:
 
 - `docs/next-iteration.md` for the next suggested local work packet.
+- `docs/getting-started.md` for the short first-use path.
+- `docs/concepts.md` for the project vocabulary.
+- `docs/architecture.md` for the local-first control-plane shape.
+- `docs/reference-commands.md` for a compact command map.
 - `docs/dashboard.md` for the current operational view.
 - `docs/OPERATING_SUMMARY.md` for architecture and guardrails.
 - `docs/tutorial-subagent-delegation-results.md` for the profile routing,
@@ -404,6 +427,10 @@ Prefer these files when orienting:
 - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`
   for ingesting completed downstream result effect task result effect task
   result effect task result effect task result effect delegation outputs.
+- `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`
+  for reviewing downstream result effect task result effect task result effect
+  task result effect task result effect task result records while keeping
+  activation blocked.
 - `contracts.md` for safety boundaries and evidence expectations.
 - `status.md` for chronological implementation evidence.
 - `projects/bootstrap/handoff.md` for the current continuation edge.

@@ -2813,3 +2813,30 @@ Current focus: Add operator review decisions for downstream follow-up result tas
    no subagent started by this command, no model provider called, no approval
    rows created, no activation actions occurred, no external systems were
    mutated, no capability was enabled, and proof remains unsatisfied.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Decisions
+
+Current focus: Add local downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result decision effect proposals from accepted blocked result effect task results.
+
+1. The new command
+   `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide`
+   records operator review decisions for downstream result effect task result
+   effect task result effect task result effect task result effect task result
+   records.
+2. Live proof accepted keeping result
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_d050d817fc2c`
+   blocked for `hosted_dashboard` through decision
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_8bb5a92311a1`.
+3. The idempotency rerun
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_4be1a192e521`
+   found 1 existing decision and created 0 new decisions.
+4. Public operator docs now include `docs/getting-started.md`,
+   `docs/concepts.md`, `docs/architecture.md`, `docs/reference-commands.md`,
+   and the latest decision tutorial.
+5. Continue with:
+   Add local downstream follow-up result task result effect task result effect
+   task result effect task result effect task result effect task result
+   decision effect proposals from accepted blocked result effect task results.
+6. Preserve the current boundary: local decision rows and reports only; no
+   approval rows created, no activation actions occurred, no external systems
+   were mutated, no capability was enabled, and proof remains unsatisfied.

@@ -2228,6 +2228,16 @@ coverage.
   mutations, activation allowance, capability enablement, and proof
   satisfaction at zero.
 
+## Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Decisions
+
+- Operator decisions for downstream result effect task result effect task
+  result effect task result effect task result effect task result records are
+  terminal for idempotency only when `accept_keep_blocked` is recorded. A
+  `request_more_evidence` or `defer_review` row can be followed later by an
+  accepted blocked decision. The decision stage must keep approval rows,
+  activation actions, external mutations, activation allowance, capability
+  enablement, and proof satisfaction at zero.
+
 ## Learning run_91127e0fee7e
 
 - Learning: Run run_91127e0fee7e showed that the first closed loop can be verified through file evidence before expanding to broader domains.
@@ -2243,3 +2253,11 @@ coverage.
 ## Learning run_9fe48487b396
 
 - Learning: Run run_9fe48487b396 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_78eae4fa0664
+
+- Learning: Run run_78eae4fa0664 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_0dc0258afe93
+
+- Learning: Run run_0dc0258afe93 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

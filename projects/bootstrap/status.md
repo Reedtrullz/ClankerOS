@@ -5192,3 +5192,59 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_b7162f702381
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_9fe48487b396/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Decisions
+
+- `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide`
+  now records idempotent operator review decisions for downstream result
+  effect task result effect task result effect task result effect task result
+  effect task result records.
+- Initial live decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_8bb5a92311a1`
+  accepted keeping result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_d050d817fc2c`
+  blocked for `hosted_dashboard`.
+- Final live idempotency pass
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_4be1a192e521`
+  found 1 existing decision and created 0 new decision rows.
+- Public operator docs were added for first use, concepts, architecture,
+  command reference, suggested use, and this latest review rung.
+- Evidence artifacts:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`
+  - `docs/getting-started.md`
+  - `docs/concepts.md`
+  - `docs/architecture.md`
+  - `docs/reference-commands.md`
+  - `README.md`
+  - `docs/suggested-use.md`
+  - `docs/docs-index.md`
+- Verification evidence:
+  - focused decision tests: 4 passed
+  - adjacent chain tests: 8 passed
+  - syntax compile check passed
+  - full suite: 391 passed
+  - stuck sweep, queue health, handoff review, eval-candidates, approvals, and
+    diff-check gates passed
+  - eval-after-change: pass, run `run_78eae4fa0664`
+  - baseline eval: pass
+  - playbooks: 1 active, 287 successful runs
+- Next focus:
+  `Add local downstream follow-up result task result effect task result effect
+  task result effect task result effect task result effect task result
+  decision effect proposals from accepted blocked result effect task results.`
+- Non-claims: local decision rows and reports only; no approval rows,
+  activation actions, external mutations, activation allowance, capability
+  enablement, or proof satisfaction.
+
+## Run run_78eae4fa0664
+
+- Goal ID: goal_ebdf42a7f1e1
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_78eae4fa0664/summary.md
+
+## Run run_0dc0258afe93
+
+- Goal ID: goal_1fbc21a91bfb
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_0dc0258afe93/summary.md
