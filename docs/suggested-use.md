@@ -201,6 +201,10 @@ Route downstream result effect task result effect task result effect task result
 Ingest completed downstream result effect task result effect task result effect task result effect task result effect delegation outputs, and prove that activation remains blocked.
 ```
 
+```text
+Apply proposed downstream result effect task result effect task result effect task result effect task result effect task result decision effects as local records only, and prove that capability activation remains blocked.
+```
+
 ## Recommended Operating Loop
 
 1. Pick one narrow capability or boundary.
@@ -243,36 +247,45 @@ Ingest completed downstream result effect task result effect task result effect 
     delegation packets before ingesting the next proof-plan output.
 27. Ingest completed downstream result effect task result effect delegation
     outputs as local result records before any operator review.
-28. Review downstream result effect task result effect result records before
-    treating the next evidence plan as operator-accepted.
-29. Convert accepted downstream result effect task result effect result
-    decisions into proposed effects only after the review decision exists.
-30. Route downstream result effect task result effect task result effect tasks
-    into read-only delegation packets before ingesting the next proof-plan
-    output.
-31. Ingest completed downstream result effect task result effect task result
-    effect delegation outputs as local result records before any operator
-    review.
-32. Review downstream result effect task result effect task result effect task
-    result records before treating the next evidence plan as operator-accepted.
-33. Convert accepted downstream result effect task result effect task result
-    effect task result decisions into proposed effects only after the review
-    decision exists.
-34. Apply downstream result effect task result effect task result effect task
-    result decision effects as local records only after the proposal row exists.
-35. Materialize applied downstream result effect task result effect task result
-    effect task result decision effects into pending downstream proof tasks
-    before routing or delegation.
-36. Route downstream result effect task result effect task result effect task
-    result effect tasks into read-only delegation packets before ingesting the
-    next proof-plan output.
-37. Ingest completed downstream result effect task result effect task result
-    effect task result effect task result effect delegation outputs as local
-    result records before any operator review.
-38. Review downstream result effect task result effect task result effect task
+28. Review downstream result effect task result effect task result effect task
     result effect task result effect task result records before treating the
     next evidence plan as operator-accepted.
-39. Record non-claims before treating the work as safe.
+29. Convert accepted downstream result effect task result effect task result
+    effect task result effect task result effect task result decisions into
+    proposed effects only after the downstream review decision exists.
+30. Apply downstream result effect task result effect task result effect task
+    result effect task result effect task result decision effects as local
+    records only after the proposal row exists.
+31. Review downstream result effect task result effect result records before
+    treating the next evidence plan as operator-accepted.
+32. Convert accepted downstream result effect task result effect result
+    decisions into proposed effects only after the review decision exists.
+33. Route downstream result effect task result effect task result effect tasks
+    into read-only delegation packets before ingesting the next proof-plan
+    output.
+34. Ingest completed downstream result effect task result effect task result
+    effect delegation outputs as local result records before any operator
+    review.
+35. Review downstream result effect task result effect task result effect task
+    result records before treating the next evidence plan as operator-accepted.
+36. Convert accepted downstream result effect task result effect task result
+    effect task result decisions into proposed effects only after the review
+    decision exists.
+37. Apply downstream result effect task result effect task result effect task
+    result decision effects as local records only after the proposal row exists.
+38. Materialize applied downstream result effect task result effect task result
+    effect task result decision effects into pending downstream proof tasks
+    before routing or delegation.
+39. Route downstream result effect task result effect task result effect task
+    result effect tasks into read-only delegation packets before ingesting the
+    next proof-plan output.
+40. Ingest completed downstream result effect task result effect task result
+    effect task result effect task result effect delegation outputs as local
+    result records before any operator review.
+41. Review downstream result effect task result effect task result effect task
+    result effect task result effect task result records before treating the
+    next evidence plan as operator-accepted.
+42. Record non-claims before treating the work as safe.
 
 ## Approval-Gated Coding Loop
 

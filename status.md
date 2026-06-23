@@ -8326,3 +8326,52 @@
   activation actions, external mutations, activation allowance, capability
   enablement, proof satisfaction, trust promotion, scheduler, retries, cost
   tracking, CI/deploy action by ClankerOS, PRs, or external mutation.
+
+## 2026-06-23 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Application
+
+- Added
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply`
+  for applying accepted downstream result effect task result effect task
+  result effect task result effect task result effect task result decision
+  effect proposals as local records only.
+- Added storage table
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_applications`
+  plus typed record/list/readback helpers.
+- Added dashboard and iteration visibility for the new local application rung.
+- Added tutorial and suggested-use docs for the application command.
+- Live proof first recorded local application
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_9cafc301c8ae`
+  and applied `effect_38049b66392f` for `hosted_dashboard`.
+- Live idempotency rerun recorded
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_3c9a226d96c4`
+  with 0 proposed effects, 0 newly applied effects, 1 existing applied effect,
+  0 approval requests, 0 activation actions, and 0 external mutations.
+- Evidence:
+  - `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`
+  - `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md`
+  - `docs/dashboard.md`
+  - `docs/next-iteration.md`
+- Verification evidence:
+  - syntax compile check passed for storage, CLI, dashboard, iteration, the new
+    application module, and tests.
+  - focused application tests: 3 passed.
+  - adjacent chain tests: 36 passed.
+  - full suite: 398 passed.
+  - `sweep-stuck`: stuck_incidents 0.
+  - `queue-health`: hotspots 0.
+  - `handoff-review`: clear, stale_handoffs 0.
+  - `eval-candidates`: 0.
+  - `approvals`: pending_approvals 0.
+  - `git diff --check`: passed.
+  - `eval-after-change`: pass, run `run_feddcf5836ed`.
+  - `eval`: `first_milestone_closed_loop: pass`.
+  - `playbooks`: 1 active playbook, 291 successful runs.
+- Next focus:
+  `Add downstream task records from applied downstream follow-up result task
+  result effect task result effect task result effect task result effect task
+  result effect task result decision effect applications.`
+- Non-claims: local application rows and generic effect status changes only;
+  no approval rows, activation actions, external mutations, activation
+  allowance, capability enablement, proof satisfaction, hosted dashboard,
+  remote workers, scheduling, CI/deploy action, trust promotion, retries, or
+  real cost tracking.

@@ -2866,3 +2866,28 @@ Current focus: Add local application records for downstream follow-up result tas
    no approval rows created, no activation actions occurred, no external
    systems were mutated, no capability was enabled, and proof remains
    unsatisfied.
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Application
+
+Current focus: Add downstream task records from applied downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result decision effect applications.
+
+1. The new command
+   `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply`
+   applies accepted blocked downstream result effect task result effect task
+   result effect task result effect task result effect task result decision
+   effect proposals as local records only.
+2. Live proof recorded application
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_9cafc301c8ae`
+   and applied `effect_38049b66392f` for `hosted_dashboard`.
+3. The idempotency rerun recorded
+   `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_3c9a226d96c4`
+   with 0 proposed effects, 0 newly applied effects, and 1 existing applied
+   effect.
+4. Continue with:
+   Add downstream task records from applied downstream follow-up result task
+   result effect task result effect task result effect task result effect task
+   result effect task result decision effect applications.
+5. Preserve the current boundary: local application rows and generic effect
+   status changes only; no approval rows created, no activation actions
+   occurred, no external systems were mutated, no capability was enabled, and
+   proof remains unsatisfied.

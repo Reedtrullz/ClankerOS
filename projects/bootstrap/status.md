@@ -5305,3 +5305,43 @@ are visible in the dashboard and are not active until approved.
 - Goal ID: goal_99558ec492bc
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_4fbedd855cb2/summary.md
+
+## Latest Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Application
+
+- Current focus is now:
+  `Add downstream task records from applied downstream follow-up result task
+  result effect task result effect task result effect task result effect task
+  result effect task result decision effect applications.`
+- The new command
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-apply`
+  records local application rows for accepted blocked downstream result effect
+  task result effect task result effect task result effect task result effect
+  task result decision effect proposals.
+- Live proof first recorded application
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_9cafc301c8ae`
+  and applied `effect_38049b66392f` for `hosted_dashboard`.
+- The idempotency rerun recorded
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application_3c9a226d96c4`
+  with 1 existing applied effect and 0 new applications/effect applications.
+- Verification: focused application tests passed, adjacent chain tests passed,
+  full suite passed with 398 tests, `sweep-stuck` found 0 incidents,
+  `queue-health` found 0 hotspots, `handoff-review` was clear,
+  `eval-candidates` returned 0, `approvals` returned 0,
+  `git diff --check` passed, `eval-after-change` passed as
+  `run_feddcf5836ed`, baseline `eval` passed, and playbooks reported 291
+  successful runs.
+- Preserve the boundary: local application rows and generic `effects.status`
+  changes only; no approval rows, activation actions, external mutations,
+  activation allowance, capability enablement, or proof satisfaction.
+
+## Run run_feddcf5836ed
+
+- Goal ID: goal_eb44e3c28298
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_feddcf5836ed/summary.md
+
+## Run run_f364483e641a
+
+- Goal ID: goal_48660736e79b
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_f364483e641a/summary.md

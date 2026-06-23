@@ -2273,6 +2273,16 @@ coverage.
   rerunning the proposal command and expecting existing proposals with no new
   effects.
 
+## Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Application
+
+- Accepted blocked downstream result effect task result effect task result
+  effect task result effect task result effect task result decision effect
+  proposals can be applied only as local ledger/application records. The
+  application stage marks applicable generic `effects` rows as `applied`,
+  preserves source decision/result/application/effect/delegation links, and
+  keeps approval rows, activation actions, external mutations, activation
+  allowance, capability enablement, and proof satisfaction at zero.
+
 ## Learning run_349c6a785d89
 
 - Learning: Run run_349c6a785d89 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
@@ -2284,3 +2294,11 @@ coverage.
 ## Learning run_4fbedd855cb2
 
 - Learning: Run run_4fbedd855cb2 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_feddcf5836ed
+
+- Learning: Run run_feddcf5836ed showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_f364483e641a
+
+- Learning: Run run_f364483e641a showed that the first closed loop can be verified through file evidence before expanding to broader domains.
