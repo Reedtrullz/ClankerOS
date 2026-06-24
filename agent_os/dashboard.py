@@ -2069,6 +2069,11 @@ def generate_static_dashboard(root: Path) -> Path:
         and effect.id not in handed_off_effect_ids
     ]
     open_incidents = [incident for incident in incidents if incident["status"] == "open"]
+    handoff_lines = render_implementation_handoff_dashboard_lines(
+        root,
+        subagent_delegations,
+    )
+    coder_prep_lines = render_coder_prep_dashboard_lines(root)
 
     lines = [
         "# Agent System Dashboard",
@@ -2097,6 +2102,22 @@ def generate_static_dashboard(root: Path) -> Path:
             )
     else:
         lines.append("- none")
+
+    lines.extend(["", "### Primary Implementation Handoff Workflow", ""])
+    lines.extend(
+        [
+            "- operator_path: delegate -> context-pack -> run-delegation -> implementation-handoff -> coder-prep -> review -> dashboard",
+            "- inspect_command: python3 -m agent_os.cli implementation-handoff <delegation_id>",
+            "- prep_command: python3 -m agent_os.cli coder-prep <delegation_id>",
+            "- non_claims: no source edits, task dispatch, approvals, provider calls, commits, pushes, or deploys happen in handoff/coder-prep readback.",
+            "- current_handoffs:",
+        ]
+    )
+    lines.extend([f"  {line}" for line in handoff_lines] if handoff_lines else ["  - none"])
+    lines.append("- current_coder_prep_packets:")
+    lines.extend(
+        [f"  {line}" for line in coder_prep_lines] if coder_prep_lines else ["  - none"]
+    )
 
     lines.extend(["", "### Goal Plans", ""])
     if goal_plans:
@@ -2271,14 +2292,9 @@ def generate_static_dashboard(root: Path) -> Path:
     lines.extend(scout_lines if scout_lines else ["- none"])
 
     lines.extend(["", "### Implementation Handoffs", ""])
-    handoff_lines = render_implementation_handoff_dashboard_lines(
-        root,
-        subagent_delegations,
-    )
     lines.extend(handoff_lines if handoff_lines else ["- none"])
 
     lines.extend(["", "### Coder Prep Packets", ""])
-    coder_prep_lines = render_coder_prep_dashboard_lines(root)
     lines.extend(coder_prep_lines if coder_prep_lines else ["- none"])
 
     lines.extend(["", "## Steering Reviews", ""])

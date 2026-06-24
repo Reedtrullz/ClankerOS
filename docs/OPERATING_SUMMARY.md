@@ -155,12 +155,13 @@ Core layers for the bootstrap:
   recent delegation states.
   These commands do not execute tasks, approve requests, retry, commit, push,
   deploy, or mutate external systems.
-- Operator cockpit: the dashboard starts with active runs, registered projects,
-  goal plans, planned task runs, approval inbox, proposed effects,
-  verification status, recent worktrees, GitHub handoffs, CI/deploy evidence,
-  profile routing decisions, subagent delegations with execution metadata when
-  available, steering reviews, memory proposals, skill proposals, and the next
-  recommended operator action.
+- Operator cockpit: the dashboard starts by making the implementation-handoff
+  workflow explicit: `delegate -> context-pack -> run-delegation ->
+  implementation-handoff -> coder-prep -> review -> dashboard`, then surfaces
+  current handoffs and coder-prep packets before the broader goal, task,
+  approval, effect, verification, routing, steering, memory, and skill
+  sections. Legacy capability proof-ladder records remain available in lower
+  advanced sections, but they are not the default operator path.
 - Operator approval effect proposals: approved local
   `operator_approval_requests` rows can be converted into idempotent
   `proposed` effect records for external-decision and capability surfaces

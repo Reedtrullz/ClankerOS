@@ -3,6 +3,11 @@
 This is a compact map for common ClankerOS commands. Generated reports contain
 the detailed proof for each capability.
 
+Default `python3 -m agent_os.cli --help` now favors the implementation-handoff
+operator workflow and hides legacy proof-ladder commands from the first-view
+command list. The hidden commands remain callable by exact name and are kept in
+this reference for advanced blocked-proof work.
+
 ## Setup And Status
 
 ```bash

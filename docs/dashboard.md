@@ -10,6 +10,17 @@
 
 - clankeros: root=/Users/reidar/Documents/Agent System test=python3 -m pytest -q allowed_write_roots=/Users/reidar/Documents/Agent System
 
+### Primary Implementation Handoff Workflow
+
+- operator_path: delegate -> context-pack -> run-delegation -> implementation-handoff -> coder-prep -> review -> dashboard
+- inspect_command: python3 -m agent_os.cli implementation-handoff <delegation_id>
+- prep_command: python3 -m agent_os.cli coder-prep <delegation_id>
+- non_claims: no source edits, task dispatch, approvals, provider calls, commits, pushes, or deploys happen in handoff/coder-prep readback.
+- current_handoffs:
+  - subagent_delegation_3189127f5f0d: status=completed handoff=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/implementation_handoff.json handoff_readable=true schema_version=1 kind=implementation_context_handoff kind_valid=true run=run_ec43eabad0c4 project=clankeros coder_prep_command=python3 -m agent_os.cli coder-prep subagent_delegation_3189127f5f0d context_pack=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/context_pack.json returned_files_in_inventory=true missing_files=none top_ranked_files=agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json,playbooks/first-milestone-closed-loop.md,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py scout_relevant_files=agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json snippets_embedded=false
+- current_coder_prep_packets:
+  - coder_prep: project=clankeros delegation=subagent_delegation_3189127f5f0d source_handoff_md=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/implementation_handoff.md allowed_files=agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json,playbooks/first-milestone-closed-loop.md,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py run_plan=operator_review task_rows_created=0 source_edits=0 commands_rerun=0 artifact=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/coder_prep/coder_prep.json
+
 ### Goal Plans
 
 - goal_1fa51c15f846: project=clankeros version=1 status=active goal=Demo context-pack repo scouting before edits artifact=.clanker/projects/clankeros/goals/goal_1fa51c15f846/PLAN-v1.md

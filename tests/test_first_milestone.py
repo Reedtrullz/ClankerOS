@@ -4,7 +4,7 @@ import subprocess
 from pathlib import Path
 
 from agent_os.dashboard import generate_static_dashboard
-from agent_os.cli import main
+from agent_os.cli import build_parser, main
 from agent_os.engine import AgentSystem
 from agent_os.eval import run_first_milestone_eval
 from agent_os.subagent_delegation import record_delegation_result
@@ -3128,6 +3128,24 @@ def test_implementation_handoff_reports_missing_for_unrun_delegation(
     assert main(["--root", str(tmp_path), "coder-prep", delegation_id]) == 1
     output = capsys.readouterr().out
     assert "coder_prep_failed: implementation handoff is not readable" in output
+
+
+def test_default_cli_help_prioritizes_handoff_workflow_and_demotes_ladder() -> None:
+    parser = build_parser()
+    help_text = parser.format_help()
+
+    assert "Primary path: scout a repo" in help_text
+    assert "implementation\nhandoff" in help_text
+    assert "implementation-handoff" in help_text
+    assert "coder-prep" in help_text
+    assert "run-delegation" in help_text
+    assert "Legacy proof-ladder" in help_text
+    assert "capability-activation-tasks" not in help_text
+    assert "capability-proof-gap-index" not in help_text
+    assert "capability-activation-followup-result-task-result-effect" not in help_text
+
+    args = parser.parse_args(["capability-activation-tasks"])
+    assert args.command == "capability-activation-tasks"
 
 
 def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(

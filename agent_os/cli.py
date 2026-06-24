@@ -553,6 +553,47 @@ from agent_os.task_runner import TaskRunError, run_planned_task
 from agent_os.worktree_cleanup import cleanup_worktrees
 
 
+PRIMARY_COMMAND_METAVAR = (
+    "{init,dashboard,goal,tasks,delegate,context-pack,run-delegation,"
+    "implementation-handoff,coder-prep,review,...}"
+)
+
+
+LEGACY_PROOF_LADDER_COMMANDS = {
+    "budget-trust-posture",
+    "dispatch-posture-history",
+    "dispatch-posture-staleness",
+    "dispatch-posture-refresh",
+    "goal-completion-audit",
+    "hosted-dashboard-proof-checklist",
+    "remote-worker-proof-checklist",
+    "autonomous-scheduling-proof-checklist",
+    "browser-desktop-adapter-proof-checklist",
+    "ci-deploy-proof-checklist",
+    "budget-enforcement-proof-checklist",
+    "trust-promotion-proof-checklist",
+    "automatic-retry-proof-checklist",
+    "real-cost-tracking-proof-checklist",
+}
+
+
+def _is_legacy_proof_ladder_command(command: str) -> bool:
+    return (
+        command in LEGACY_PROOF_LADDER_COMMANDS
+        or command.startswith("capability-")
+        or command.startswith("expansion-")
+    )
+
+
+def _curate_default_help(subparsers) -> None:
+    subparsers.metavar = PRIMARY_COMMAND_METAVAR
+    subparsers._choices_actions = [
+        action
+        for action in subparsers._choices_actions
+        if not _is_legacy_proof_ladder_command(action.dest)
+    ]
+
+
 def render_eval_candidate_line(candidate) -> str:
     return (
         f"{candidate.id}: {candidate.status} "
@@ -618,7 +659,18 @@ def _print_bool(value: object) -> str:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="agent-os")
+    parser = argparse.ArgumentParser(
+        prog="agent-os",
+        description=(
+            "ClankerOS operator CLI. Primary path: scout a repo, inspect the "
+            "implementation handoff, prepare coder work, then review evidence."
+        ),
+        epilog=(
+            "Legacy proof-ladder and report-only expansion commands remain "
+            "callable by exact name, but are hidden from default help. See "
+            "docs/reference-commands.md for the full command map."
+        ),
+    )
     parser.add_argument(
         "--root",
         default=".",
@@ -1898,6 +1950,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     subparsers.add_parser("capabilities-json", help="Print detected capabilities as JSON.")
+    _curate_default_help(subparsers)
     return parser
 
 

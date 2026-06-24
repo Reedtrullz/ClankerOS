@@ -37,11 +37,11 @@ hidden autonomy.
   exact push and draft-PR commands without taking network action itself.
 - Supports safe profile routing, read-only delegation contracts, deterministic
   context packs, executable local delegation through configured shell adapters,
-  project-aware repo scouting, structured delegation-result ingestion, proposed
-  memory, and proposed skills.
-- Models capability activation as blocked proof work until evidence, approval,
-  idempotency, and rollback boundaries exist, including local downstream proof
-  tasks and read-only evaluator delegation packets.
+  project-aware repo scouting, first-class implementation handoffs, safe
+  coder-prep packets, structured delegation-result ingestion, proposed memory,
+  and proposed skills.
+- Keeps the old capability proof ladder as advanced blocked-proof/reference
+  machinery instead of the default operator path.
 
 ## Start Here
 
@@ -72,8 +72,24 @@ Then read:
 - [Executable Delegation Tutorial](docs/tutorial-executable-delegation.md)
 - [Public Snapshot Tutorial](docs/tutorial-public-snapshot.md)
 
-The capability activation ladder has many intentionally verbose proof
-tutorials. Use the [Documentation Index](docs/docs-index.md#capability-follow-up-tutorials)
+The primary operator surface is the implementation-handoff workflow: scout a
+repo, inspect the generated handoff, prepare a bounded coder plan, then review
+the evidence before any edit or dispatch happens.
+
+```bash
+python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
+python3 -m agent_os.cli context-pack <delegation_id>
+python3 -m agent_os.cli run-delegation <delegation_id>
+python3 -m agent_os.cli implementation-handoff <delegation_id>
+python3 -m agent_os.cli coder-prep <delegation_id>
+python3 -m agent_os.cli review <run_id>
+python3 -m agent_os.cli dashboard
+```
+
+The historical capability proof ladder remains callable and documented for
+advanced blocked-proof work, but it is not the default README or CLI-help path.
+Use the [Command Reference](docs/reference-commands.md#capability-activation-proof-tasks)
+or [Documentation Index](docs/docs-index.md#capability-follow-up-tutorials)
 when you need a specific blocked-activation rung.
 
 Register and inspect a target repository before asking ClankerOS to touch it:
@@ -180,7 +196,7 @@ system root.
 For the full walkthrough, see
 [Executable Delegation](docs/tutorial-executable-delegation.md).
 
-## Command Surface
+## Primary Operator Surface
 
 | Need | Command |
 | --- | --- |
@@ -200,8 +216,9 @@ For the full walkthrough, see
 | Inspect approvals | `python3 -m agent_os.cli approvals` |
 | Prepare GitHub handoff | `python3 -m agent_os.cli github-handoff <effect_id>` |
 
-For common workflows, use [Operator Recipes](docs/operator-recipes.md). For a
-complete command map, use [Command Reference](docs/reference-commands.md).
+For common workflows, use [Operator Recipes](docs/operator-recipes.md). For
+legacy proof-ladder and advanced report-only commands, use
+[Command Reference](docs/reference-commands.md).
 
 ## Executable Delegation
 
@@ -276,14 +293,17 @@ project memory. The first milestone is the closed loop:
 goal -> task graph -> execution -> verification -> memory -> visibility -> learning
 ```
 
-The current control plane includes executable local slices where the verifier
-is explicit (`run-goal`, `run-task`, `run-delegation`) and report-only ladders
-where a capability is still blocked. Accepted blocked decisions can create
-local proposed effects, applied effects can create more proof tasks, and every
-activation step preserves `activation_allowed=false`,
-`capability_enabled=false`, `approval_requests_created=0`,
-`activation_actions_taken=0`, and `external_mutations_taken=0` unless a future
-approved capability boundary changes that contract.
+The current control plane's primary operator path is implementation handoff:
+`run-delegation` writes context and handoff evidence, `implementation-handoff`
+reads it back, `coder-prep` writes a bounded future coding plan, and
+`review`/`dashboard` keep the next step visible. Executable local slices still
+exist where the verifier is explicit (`run-goal`, `run-task`,
+`run-delegation`). The older report-only proof ladders remain available as
+advanced blocked-proof machinery, and every activation step still preserves
+`activation_allowed=false`, `capability_enabled=false`,
+`approval_requests_created=0`, `activation_actions_taken=0`, and
+`external_mutations_taken=0` unless a future approved capability boundary
+changes that contract.
 
 For the detailed state, use:
 

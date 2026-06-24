@@ -1,5 +1,47 @@
 # Status
 
+## 2026-06-24 Primary Handoff Operator Surface
+
+- Made the implementation-handoff workflow the default operator surface across
+  README, CLI help, and dashboard cockpit:
+  `delegate -> context-pack -> run-delegation -> implementation-handoff ->
+  coder-prep -> review -> dashboard`.
+- Updated `python3 -m agent_os.cli --help` with handoff-first description and
+  usage. The default help now lists `implementation-handoff`, `coder-prep`,
+  and `run-delegation` while hiding legacy proof-ladder/report-only expansion
+  commands from the first-view command list.
+- Hidden proof-ladder commands remain callable by exact name; regression
+  coverage parses `capability-activation-tasks` successfully while keeping it
+  out of default help.
+- Added a top-of-cockpit `### Primary Implementation Handoff Workflow` section
+  to `docs/dashboard.md` with current handoff and coder-prep packet state
+  before the older effects/proof sections.
+- Updated README, command reference, operating summary, and `plan.md` so the
+  historical capability proof ladder is described as advanced blocked-proof
+  machinery rather than the default operator path.
+- Verification evidence:
+  - `python3 -m agent_os.cli --help` readback shows the handoff/coder-prep
+    usage path and `Legacy proof-ladder` epilog, with no matches for
+    `capability-activation-tasks`, `capability-proof-gap-index`, or the long
+    `capability-activation-followup-result-task-result-effect` command family.
+  - `python3 -m agent_os.cli dashboard` regenerated `docs/dashboard.md` with
+    `### Primary Implementation Handoff Workflow`.
+  - focused help/handoff slice:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "default_cli_help or implementation_handoff or auto_generates_context_pack"`
+    passed with 3 passed, 475 deselected in 6.28s.
+  - `python3 -m py_compile agent_os/cli.py agent_os/dashboard.py
+    tests/test_first_milestone.py` passed.
+  - broader dashboard/handoff slice:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "default_cli_help or dashboard or implementation_handoff or auto_generates_context_pack"`
+    passed with 59 passed, 419 deselected in 31.13s.
+  - `git diff --check` passed.
+  - full suite: `python3 -m pytest -q` passed with 478 passed in 1044.23s.
+- Non-claims: this is default operator-surface, documentation, dashboard, and
+  CLI-help curation only; it does not remove legacy commands, execute proof
+  ladders, dispatch work, edit target repos, create approvals, call providers,
+  commit, push, deploy, enable hosted dashboard behavior, retry automatically,
+  enforce budgets, promote trust, or track real spend.
+
 ## 2026-06-24 Safe Coder Prep From Implementation Handoffs
 
 - Added `python3 -m agent_os.cli coder-prep <delegation_id>` as an
