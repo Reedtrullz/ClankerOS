@@ -400,6 +400,10 @@ from agent_os.capability_activation_followup_result_task_result_effect_task_resu
     decide_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_results,
     render_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_line,
 )
+from agent_os.capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decisions import (
+    decide_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_results,
+    render_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_line,
+)
 from agent_os.capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals import (
     render_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposal_line,
     write_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals,
@@ -1626,6 +1630,33 @@ def build_parser() -> argparse.ArgumentParser:
                 "Record an operator review decision for downstream result "
                 "effect task result effect task result effect task result "
                 "effect task result effect task result effect task result records."
+            ),
+        )
+    )
+    followup_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decide.add_argument(
+        "--operator-id",
+        required=True,
+    )
+    followup_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decide.add_argument(
+        "--selected-action",
+        required=True,
+        choices=["accept_keep_blocked", "request_more_evidence", "defer_review"],
+    )
+    followup_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decide.add_argument(
+        "--selection-note",
+        required=True,
+    )
+    followup_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decide.add_argument(
+        "--evidence-reference",
+        required=True,
+    )
+    followup_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decide = (
+        subparsers.add_parser(
+            "capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide",
+            help=(
+                "Record an operator review decision for downstream result "
+                "effect task result effect task result effect task result "
+                "effect task result effect task result effect task result effect task result records."
             ),
         )
     )
@@ -6043,6 +6074,53 @@ def main(argv: list[str] | None = None) -> int:
         print(f"external_mutations_taken: {decision.external_mutation_count}")
         print(
             render_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_line(
+                decision
+            ).removeprefix("- ")
+        )
+        for record in decided_records:
+            print(
+                f"result={record.id} delegation={record.delegation_id} "
+                f"task={record.downstream_task_id} capability={record.capability}"
+            )
+        return 0
+
+    if (
+        args.command
+        == "capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide"
+    ):
+        AgentSystem(root).initialize()
+        (
+            report_path,
+            decision,
+            decided_records,
+        ) = decide_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_results(
+            root,
+            operator_id=args.operator_id,
+            selected_action=args.selected_action,
+            selection_note=args.selection_note,
+            evidence_reference=args.evidence_reference,
+        )
+        print(
+            "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decide: "
+            f"{decision.status}"
+        )
+        print(f"report: {report_path.relative_to(root)}")
+        print(f"operator_id: {decision.operator_id}")
+        print(f"selected_action: {decision.selected_action}")
+        print(f"results_ready: {decision.result_record_count}")
+        print(f"decisions_recorded: {decision.decision_count}")
+        print(
+            "accepted_keep_blocked_decisions: "
+            f"{decision.accepted_keep_blocked_decision_count}"
+        )
+        print(f"more_evidence_decisions: {decision.more_evidence_decision_count}")
+        print(f"deferred_decisions: {decision.deferred_decision_count}")
+        print(f"existing_decisions: {decision.existing_decision_count}")
+        print(f"approval_requests_created: {decision.created_approval_request_count}")
+        print(f"activation_actions_taken: {decision.activation_action_count}")
+        print(f"external_mutations_taken: {decision.external_mutation_count}")
+        print(
+            render_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_line(
                 decision
             ).removeprefix("- ")
         )

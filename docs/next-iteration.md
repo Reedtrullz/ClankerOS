@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_16a700572e46
+- Packet ID: iteration_9d02abcc11e2
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add operator review decisions for downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result effect task result records.
+Advance the Agent System north-star goal by completing: Add local downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals from accepted blocked result effect task result effect task result effect task result effect task result effect task result effect task result effect task results.
 
 ## Definition Of Done
 
@@ -116,6 +116,7 @@ Advance the Agent System north-star goal by completing: Add operator review deci
 - `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks`
 - `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations`
 - `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results`
+- `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide --operator-id operator --selected-action accept_keep_blocked --selection-note "Accepted downstream result-effect task result-effect task result-effect task result-effect task result-effect task result-effect task proof-plan result and kept capability activation blocked." --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`
 - `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide --operator-id operator --selected-action accept_keep_blocked --selection-note "Accepted downstream result-effect task result-effect task result-effect task result-effect task result-effect task result-effect task proof-plan result and kept capability activation blocked." --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`
 - `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-proposals`
 - `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks`
@@ -255,6 +256,7 @@ Advance the Agent System north-star goal by completing: Add operator review deci
 - capability activation followup result task result effect task result effect task result effect task result effect task result effect task result effect task result effect task result effect tasks: capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_tasks_already_recorded
 - capability activation followup result task result effect task result effect task result effect task result effect task result effect task result effect task result effect task result effect task delegations: capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations_already_recorded
 - capability activation followup result task result effect task result effect task result effect task result effect task result effect task result effect task result effect task result effect task results: capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_results_already_recorded
+- capability activation followup result task result effect task result effect task result effect task result effect task result effect task result effect task result effect task result effect task result decisions: capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decisions_already_recorded
 - proposed eval candidates: 0
 - active playbooks: 1
 - open stuck-task incidents: 0

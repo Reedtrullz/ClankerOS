@@ -81,6 +81,26 @@ plane without starting an external worker.
 Boundary: delegation records and results are local artifacts. They do not
 start subagents, call model providers, approve work, or write target files.
 
+## Review Latest Capability Result Without Activation
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide \
+  --operator-id operator \
+  --selected-action accept_keep_blocked \
+  --selection-note "Accepted downstream result-effect task result-effect task result-effect task result-effect task result-effect task result-effect task proof-plan result and kept capability activation blocked." \
+  --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md
+python3 -m agent_os.cli dashboard
+```
+
+Use this after the latest downstream result-effect task result-effect task
+result-effect task result-effect task result-effect task result-effect task
+result-effect task result-effect task result records exist and the operator
+wants to preserve the proof-plan output without unblocking activation.
+
+Boundary: this records a local operator decision only. It does not create
+approval rows, enable capabilities, satisfy proof, start subagents, call model
+providers, run CI, deploy, or mutate external systems.
+
 ## Publish A Coherent Snapshot
 
 ```bash

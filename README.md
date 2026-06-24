@@ -132,6 +132,25 @@ operator guidance only; they do not retry or change task status by themselves.
 For common workflows, use [Operator Recipes](docs/operator-recipes.md). For a
 complete command map, use [Command Reference](docs/reference-commands.md).
 
+## Latest Local Decision Rung
+
+When the latest downstream result-effect task result-effect task result-effect
+task result-effect task result-effect task result-effect task result-effect
+task result-effect task result records exist, the operator can accept the
+result while keeping activation blocked:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide \
+  --operator-id operator \
+  --selected-action accept_keep_blocked \
+  --selection-note "Accepted downstream result-effect task result-effect task result-effect task result-effect task result-effect task result-effect task proof-plan result and kept capability activation blocked." \
+  --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md
+```
+
+This is a local review record only. It does not create approval rows, allow
+activation, enable a capability, satisfy proof, run a subagent, call providers,
+or mutate external systems.
+
 ## Current Shape
 
 ClankerOS is a Python CLI with a local SQLite control plane, generated Markdown

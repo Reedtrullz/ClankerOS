@@ -1,5 +1,26 @@
 # Bootstrap Status
 
+Latest local capability continuation: downstream result records can now receive
+review-only operator decisions through
+`capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide`.
+Live proof first recorded decision
+`capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_4698d15d8b41`
+for result
+`capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_730c6175f08a`;
+the idempotency rerun recorded decision
+`capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_53ddb9111d0a`
+with 0 new decisions and 1 existing decision. The report is
+`docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`.
+The next iteration packet now selects local decision-effect proposals from the
+accepted blocked decision. Verification passed locally with syntax compile,
+focused and adjacent slices, full pytest, live decision/idempotency commands,
+stuck sweep, queue health, handoff review, eval-after-change
+`run_b791209a6a0c`, baseline eval, playbooks, dashboard/iterate regeneration,
+and GitHub metadata readback. This is still local evidence only: no approval
+requests, activation actions, external mutations, capability enablement, proof
+satisfaction, runtime CI/deploy proof, hosted dashboard, remote worker, or
+trust promotion occurred.
+
 Latest local capability continuation: completed evaluator delegation packets
 can now be ingested into durable downstream result records through
 `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results`.
@@ -5889,3 +5910,15 @@ local application records for those proposed effects.
 - Goal ID: goal_9200977024a6
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_15b7c378d7e3/summary.md
+
+## Run run_b791209a6a0c
+
+- Goal ID: goal_ab1c3e108961
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_b791209a6a0c/summary.md
+
+## Run run_6486401b5408
+
+- Goal ID: goal_a9da83c8c2cb
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_6486401b5408/summary.md

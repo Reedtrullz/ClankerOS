@@ -1,5 +1,60 @@
 # Status
 
+## 2026-06-24 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Decisions
+
+- Added the next local-only operator decision rung:
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide`.
+- The command reads the latest downstream result-effect task result-effect task
+  result-effect task result-effect task result-effect task result-effect task
+  result-effect task result-effect task result records, records
+  review-only operator decisions, and supports `accept_keep_blocked`,
+  `request_more_evidence`, and `defer_review`.
+- Live proof first recorded decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_4698d15d8b41`
+  for result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_730c6175f08a`.
+- The idempotency rerun recorded decision
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decision_53ddb9111d0a`
+  with 0 new decisions, 1 existing decision, 0 approval requests, 0
+  activation actions, and 0 external mutations.
+- Generated proof:
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`.
+- Operator docs added or refreshed:
+  `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`,
+  README, docs index, command reference, suggested-use, operator recipes,
+  operating summary, dashboard, next-iteration, tasks visibility, bootstrap
+  status, and bootstrap handoff.
+- Verification evidence:
+  - syntax compile passed for touched Python modules and
+    `tests/test_first_milestone.py`.
+  - focused latest decision slice: 3 passed, 452 deselected.
+  - adjacent latest result/decision slice: 6 passed, 449 deselected.
+  - full suite: 455 passed in 953.61s.
+  - live decision command and idempotency rerun passed.
+  - `sweep-stuck`: stuck_incidents 0.
+  - `queue-health`: hotspots 0.
+  - `handoff-review`: clear, blocked_tasks 0, stale_handoffs 0.
+  - `eval-candidates`: 0.
+  - `approvals`: pending_approvals 0.
+  - `budget-trust-posture`: report_only.
+  - `eval-after-change`: pass, run `run_b791209a6a0c`.
+  - `eval`: `first_milestone_closed_loop: pass`.
+  - `playbooks`: 1 active playbook, 328 successful runs.
+  - `dashboard` and `iterate` regenerated local operator state.
+  - GitHub metadata readback for `Reedtrullz/ClankerOS` shows PUBLIC
+    visibility, default branch `main`, populated About description, README
+    homepage, ADMIN viewer permission, and 20 repository topics.
+- The next queue item is local downstream decision-effect proposals from
+  accepted blocked result-effect task result-effect task result-effect task
+  result-effect task result-effect task result-effect task result-effect task
+  result decisions.
+- Non-claims: local operator decision rows, generated reports, tutorial docs,
+  and GitHub metadata readback only; no approval row was created, no activation
+  action occurred, no external system was mutated, no capability was enabled,
+  no proof was satisfied, no CI/deploy proof happened, no hosted dashboard or
+  remote worker was started, no trust was promoted, and the active expansion
+  goal remains open.
+
 ## 2026-06-24 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Results
 
 - Added the next local-only result-ingestion rung:

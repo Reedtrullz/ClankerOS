@@ -1314,6 +1314,22 @@ See
 for the result record report, artifact path, idempotency check, and safety
 counters.
 
+After that latest result record exists, record the next local operator review
+decision:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide \
+  --operator-id operator \
+  --selected-action accept_keep_blocked \
+  --selection-note "Accepted downstream result-effect task result-effect task result-effect task result-effect task result-effect task result-effect task proof-plan result and kept capability activation blocked." \
+  --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md
+python3 -m agent_os.cli dashboard
+```
+
+See
+`docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md`
+for the decision report, idempotency check, and safety counters.
+
 ## When To Commit And Push
 
 Commit when:
@@ -1330,18 +1346,15 @@ For a fuller checklist, use `docs/tutorial-public-snapshot.md`.
 
 ## Practical Next Slices
 
-Good next slices now favor read-only delegation routing for the latest pending
-proof tasks, then operator review decisions and capability-specific guards
-after local result records exist:
+Good next slices now favor operator review for the latest ingested downstream
+result records, then the local effect-proposal and application rungs that keep
+activation blocked:
 
-- routing and delegation packets for downstream result effect task result
-  effect task result effect task result effect task result effect task result
-  effect task result effect task result effect tasks;
-- completed-delegation result ingestion for the resulting read-only evaluator
-  packets;
 - operator review decisions for downstream result effect task result effect
   task result effect task result effect task result effect task result effect
-  task result records;
+  task result effect task result effect task result records;
+- local decision-effect proposals from accepted blocked decisions;
+- local application records for accepted blocked decision-effect proposals;
 - per-request operator decision targeting and inbox refinement;
 - hosted-dashboard proof only after local commit and CI/deploy evidence is
   modeled;

@@ -123,6 +123,7 @@ python3 -m agent_os.cli capability-activation-followup-result-task-result-effect
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-tasks
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations
 python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide --operator-id operator --selected-action accept_keep_blocked --selection-note "Accepted downstream result-effect task result-effect task result-effect task result-effect task result-effect task result-effect task proof-plan result and kept capability activation blocked." --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md
 ```
 
 This creates pending downstream proof tasks from applied local effects and
@@ -140,6 +141,10 @@ Those proposed effect rows can now be applied as local application records
 only, keeping the generic `effects` row applied while preserving zero approval,
 activation, and external mutation counters. The latest applied rows can now
 materialize pending downstream proof tasks without routing or executing them.
+The latest downstream result-effect task result-effect task result-effect task
+result-effect task result-effect task result-effect task result-effect task
+result-effect task result records can now also receive local
+accept-keep-blocked, request-more-evidence, or defer-review decisions.
 Approval, activation, execution,
 network, and external
 mutation counters stay at zero.
