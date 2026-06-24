@@ -6,10 +6,11 @@ This tutorial runs the smallest executable subagent loop in ClankerOS:
 2. create a goal, plan, sprint contract, and planned tasks;
 3. create a read-only scout delegation;
 4. configure a fake local shell adapter;
-5. understand project-aware repo scouting context;
-6. run the delegation;
-7. inspect result, evidence, review, inbox, and dashboard;
-8. optionally propose memory from the completed result.
+5. generate and inspect a deterministic context pack;
+6. understand project-aware repo scouting context;
+7. run the delegation;
+8. inspect result, evidence, review, inbox, and dashboard;
+9. optionally propose memory from the completed result.
 
 The executor is a local shell adapter. ClankerOS owns the durable state,
 prompt/context bundle, schema validation, evidence packet, incident handling,
@@ -84,25 +85,36 @@ from pathlib import Path
 input_path = Path(sys.argv[1])
 payload = json.loads(input_path.read_text(encoding="utf-8"))
 evidence_dir = Path(payload["evidence_dir"])
+context_pack = payload.get("context_pack", {})
+pack = {}
+if context_pack.get("available"):
+    pack = json.loads(Path(context_pack["json_path"]).read_text(encoding="utf-8"))
+top_files = [item["path"] for item in pack.get("ranked_files", [])[:3]]
+if not top_files:
+    top_files = ["agent_os/cli.py", "agent_os/delegation_runner.py"]
 (evidence_dir / "fake-scout-seen.txt").write_text(
     payload["delegation"]["id"],
     encoding="utf-8",
 )
+expected_schema = payload["delegation"]["expected_output_schema"]
+structured_output = {
+    "options": [
+        {
+            "title": "Inspect executable delegation surfaces",
+            "files": top_files,
+            "reason": "These files were selected from the context pack."
+        }
+    ]
+}
+if expected_schema == "file_relevance_report":
+    structured_output = {
+        "files": top_files,
+        "findings": ["Context pack ranked these files as likely relevant."],
+        "relevant_files": top_files
+    }
 print(json.dumps({
     "result_summary": "Identified a safe implementation starting point.",
-    "structured_output": {
-        "options": [
-            {
-                "title": "Inspect executable delegation surfaces",
-                "files": [
-                    "agent_os/cli.py",
-                    "agent_os/delegation_runner.py",
-                    "tests/test_first_milestone.py"
-                ],
-                "reason": "These files contain the command, runner, and regression tests."
-            }
-        ]
-    }
+    "structured_output": structured_output
 }))
 """.lstrip(),
     encoding="utf-8",
@@ -176,7 +188,41 @@ The planned-task flow above usually produces `expected_output_schema` set to
 delegations whose category maps to `file_relevance_report`, provide non-empty
 `files`, `findings`, and `relevant_files` instead.
 
-## 5. Project-Aware Repo Scouting
+## 5. Generate A Context Pack
+
+Generate deterministic repo context before running the adapter:
+
+```bash
+python3 -m agent_os.cli context-pack <delegation_id> \
+  --max-files 12 \
+  --max-snippets 8 \
+  --max-total-chars 12000
+```
+
+Expected output includes:
+
+```text
+context_pack: <delegation_id>
+context_pack_id: context_pack_...
+context_pack_json: .clanker/delegations/<delegation_id>/context/context_pack.json
+context_pack_md: .clanker/delegations/<delegation_id>/context/context_pack.md
+next_recommended_action: run_delegation
+```
+
+Open the Markdown file when you want the human-readable version. The JSON file
+is what fake or real local scouts should read through
+`payload["context_pack"]["json_path"]`.
+
+`run-delegation` also auto-generates the context pack if it is missing and the
+parent task has a registered project. Manual generation is useful when you want
+to inspect or tune the scout context before any adapter runs.
+
+The context pack is distinct from `project-context`: `project-context` writes a
+durable operator summary for a registered repo; `context-pack` writes a
+delegation-specific, capped, ranked file/search/snippet packet for one scout
+run.
+
+## 6. Project-Aware Repo Scouting
 
 When the parent task belongs to a registered project, `run-delegation` writes
 project context into the adapter input bundle:
@@ -194,16 +240,24 @@ project context into the adapter input bundle:
     "root_path": "/absolute/path/to/repo",
     "files": ["README.md", "agent_os/cli.py"],
     "inventory_method": "git ls-files --cached --others --exclude-standard"
+  },
+  "context_pack": {
+    "available": true,
+    "json_path": "/absolute/path/to/evidence/context_pack.json",
+    "markdown_path": "/absolute/path/to/evidence/context_pack.md",
+    "top_ranked_files": ["agent_os/cli.py", "agent_os/delegation_runner.py"]
   }
 }
 ```
 
-The evidence packet includes `project.json` and `repo_files.json` when this
-context is available. With `--working-directory project_root`, the adapter can
-read repository files by relative path while still receiving absolute paths for
-`input.json`, `prompt.md`, and the evidence directory.
+The evidence packet includes `project.json`, `repo_files.json`,
+`context_pack.json`, `context_pack.md`, and `context_pack_metadata.json` when
+this context is available. With `--working-directory project_root`, the adapter
+can read repository files by relative path while still receiving absolute
+paths for `input.json`, `prompt.md`, the context pack, and the evidence
+directory.
 
-## 6. Run The Delegation
+## 7. Run The Delegation
 
 ```bash
 python3 -m agent_os.cli run-delegation <delegation_id>
@@ -236,14 +290,20 @@ raw_output.txt
 parsed_output.json
 validation.json
 result.json
+context_pack.json
+context_pack.md
+context_pack_metadata.json
 memory_proposal.json
 ```
 
 `memory_proposal.json` exists only when `--record-memory` is used.
 `project.json` and `repo_files.json` exist only when the delegation belongs to
-a registered project.
+a registered project. `validation.json` records `context_pack_used`,
+`returned_files_in_inventory`, `returned_files_missing`, and
+`top_ranked_files_referenced` when a context pack was attached. Missing
+returned files are warnings in validation metadata, not hard failures.
 
-## 7. Inspect The Result And Evidence
+## 8. Inspect The Result And Evidence
 
 ```bash
 python3 -m agent_os.cli delegation-result <delegation_id>
@@ -254,10 +314,11 @@ python3 -m agent_os.cli dashboard
 
 `delegation-result` prints runtime metadata when the result came from
 `run-delegation`, including the run id, adapter type, evidence packet, and
-network/provider non-claims. The dashboard and inbox show recent delegation
-state compactly.
+context-pack path. `review <run_id>` includes a `## Scout Context Pack`
+section with top ranked files and test hints. The dashboard includes a
+`### Subagent / Scout Work` section with compact scout status.
 
-## 8. Propose Memory From The Result
+## 9. Propose Memory From The Result
 
 Run the delegation with memory proposal enabled:
 

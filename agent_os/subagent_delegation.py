@@ -203,6 +203,9 @@ def render_subagent_delegation_line(delegation: SubagentDelegation) -> str:
     evidence_dir = metadata.get("execution_evidence_dir") or metadata.get("evidence_dir")
     if evidence_dir:
         line += f" evidence={evidence_dir}"
+    context_pack = metadata.get("context_pack_json")
+    if context_pack:
+        line += f" context_pack={context_pack}"
     incident_id = metadata.get("incident_id")
     if incident_id:
         line += f" incident={incident_id}"
@@ -227,13 +230,23 @@ def load_delegation_result_metadata(delegation: SubagentDelegation) -> dict[str,
         "adapter_type",
         "evidence_dir",
         "execution_adapter_type",
+        "execution_adapter_cwd",
         "execution_evidence_dir",
         "execution_run_id",
         "exit_code",
         "incident_id",
+        "adapter_working_directory",
+        "context_pack_grep_hit_count",
+        "context_pack_id",
+        "context_pack_json",
+        "context_pack_md",
+        "context_pack_ranked_file_count",
+        "context_pack_top_ranked_files",
         "network_actions_taken",
         "provider_calls_taken_by_clankeros",
         "run_id",
+        "target_project_id",
+        "target_project_root",
     }
     return {key: payload[key] for key in keys if key in payload}
 

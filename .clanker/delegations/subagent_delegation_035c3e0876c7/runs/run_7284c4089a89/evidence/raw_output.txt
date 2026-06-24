@@ -1,0 +1,1 @@
+{"result_summary": "Context pack scout demo completed.", "structured_output": {"options": [{"title": "Inspect context-pack surfaces", "files": ["agent_os/context_pack.py", "agent_os/profile_routing.py", "agent_os/browser_desktop_adapter_proof.py"], "reason": "Selected from context_pack ranked_files."}]}}

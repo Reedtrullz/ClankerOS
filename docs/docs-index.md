@@ -33,8 +33,8 @@ system.
 - `docs/tutorial-run-task.md` - dispatch one planned task through a local
   profile-backed verifier, record routing, and inspect the evidence packet.
 - `docs/tutorial-executable-delegation.md` - configure a local shell adapter,
-  run a read-only delegation, inspect project-aware repo-scout evidence, and
-  propose memory.
+  generate a deterministic context pack, run a read-only delegation, inspect
+  project-aware repo-scout evidence, and propose memory.
 - `docs/tutorial-public-snapshot.md` - verify, commit, and push a coherent
   public GitHub snapshot without overclaiming.
 - `contracts.md` - safety contract and evidence expectations.

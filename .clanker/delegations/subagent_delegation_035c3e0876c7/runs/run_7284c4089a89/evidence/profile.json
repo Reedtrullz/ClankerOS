@@ -1,0 +1,40 @@
+{
+  "adapter_config_json": {
+    "command": "python3 .clanker/adapters/context_pack_demo_scout.py",
+    "input_mode": "json_file",
+    "output_mode": "json",
+    "timeout_seconds": 120,
+    "type": "shell",
+    "working_directory": "system_root"
+  },
+  "cost_tier": "low",
+  "created_at": "2026-06-22T12:47:21.564409+00:00",
+  "enabled": true,
+  "id": "profile_af6327d451fc",
+  "label": "Repo Scout",
+  "max_budget_json": {
+    "seconds": 180,
+    "tokens": 8000
+  },
+  "mode": "subagent",
+  "model": "configurable/cheap-fast-model",
+  "name": "scout",
+  "permissions_json": {
+    "commit": "deny",
+    "read": "allow",
+    "shell": "deny",
+    "write": "deny"
+  },
+  "tools_json": [
+    "read",
+    "grep",
+    "summarize"
+  ],
+  "updated_at": "2026-06-24T11:22:21.256755+00:00",
+  "use_for_json": [
+    "repo_search",
+    "file_mapping",
+    "dependency_mapping",
+    "summarization"
+  ]
+}

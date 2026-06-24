@@ -84,14 +84,20 @@ Core layers for the bootstrap:
 - Executable delegation runner: `profile-adapter` stores local shell adapter
   metadata on a profile, and `run-delegation <delegation_id>` executes a
   pending read-only delegation through that configured adapter. The runner
-  writes a prompt/context bundle, invokes the shell command, captures
-  stdout/stderr/exit code, parses JSON output, validates the delegation schema,
-  records the result, writes
+  writes a prompt/context bundle, generates or reuses a deterministic
+  context pack for registered-project parents, invokes the shell command,
+  captures stdout/stderr/exit code, parses JSON output, validates the
+  delegation schema, records the result, writes
   `.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/`, optionally
   proposes memory, and opens incidents for adapter or output failures. For
   registered-project tasks, the input bundle includes project metadata and a
-  capped git file inventory, and the evidence packet includes `project.json`
-  and `repo_files.json`. Adapters run from the system root by default and can
+  capped git file inventory plus compact `context_pack` metadata, and the
+  evidence packet includes `project.json`, `repo_files.json`,
+  `context_pack.json`, `context_pack.md`, and `context_pack_metadata.json`.
+  Context packs rank files with explainable scores, record capped grep hits
+  and snippets, list test/entrypoint/config hints, skip ignored and
+  secret-like paths, and add validation metadata showing whether returned files
+  were in the inventory. Adapters run from the system root by default and can
   opt into `--working-directory project_root` for repo scouting. It supports
   shell adapters only. ClankerOS records
   `provider_calls_taken_by_clankeros=0`, `external_mutations_taken=0`, and

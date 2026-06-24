@@ -5,6 +5,7 @@ import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from agent_os.subagent_delegation import load_delegation_result_metadata
 from agent_os.storage import (
     ApprovalRequest,
     Effect,
@@ -307,6 +308,11 @@ def render_run_review(root: Path, packet: RunEvidencePacket) -> str:
     lines.append(f"- memory_proposals: {len(packet.memory_entries)}")
     lines.append(f"- skill_proposals: {len(packet.skills)}")
 
+    scout_context_lines = _scout_context_pack_lines(root, packet.delegations)
+    if scout_context_lines:
+        lines.extend(["", "## Scout Context Pack", ""])
+        lines.extend(scout_context_lines)
+
     lines.extend(
         [
             "",
@@ -323,6 +329,38 @@ def render_run_review(root: Path, packet: RunEvidencePacket) -> str:
         ]
     )
     return "\n".join(lines)
+
+
+def _scout_context_pack_lines(
+    root: Path,
+    delegations: list[SubagentDelegation],
+) -> list[str]:
+    lines: list[str] = []
+    for delegation in delegations:
+        metadata = load_delegation_result_metadata(delegation)
+        context_pack_path = metadata.get("context_pack_json")
+        if not context_pack_path:
+            continue
+        full_path = root / context_pack_path
+        lines.append(
+            f"- delegation={delegation.id} profile={delegation.assigned_profile} "
+            f"context_pack={context_pack_path}"
+        )
+        try:
+            payload = json.loads(full_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            lines.append("  - context_pack_readable: false")
+            continue
+        top_files = [item["path"] for item in payload.get("ranked_files", [])[:5]]
+        test_hints = [hint["path"] for hint in payload.get("test_hints", [])[:5]]
+        referenced = metadata.get("context_pack_top_ranked_files") or []
+        lines.append(f"  - top_ranked_files: {', '.join(top_files) if top_files else 'none'}")
+        lines.append(f"  - test_hints: {', '.join(test_hints) if test_hints else 'none'}")
+        lines.append(
+            "  - scout_output_referenced_top_files: "
+            f"{', '.join(referenced) if referenced else 'unknown'}"
+        )
+    return lines
 
 
 def render_evidence_index(root: Path, packet: RunEvidencePacket) -> str:

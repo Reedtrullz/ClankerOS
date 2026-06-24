@@ -1,0 +1,19 @@
+{
+  "available": true,
+  "context_pack_id": "context_pack_c77525064b80",
+  "grep_hit_count": 40,
+  "json_path": "/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_c1f5246a0b7f/runs/run_1dd1545c17f1/evidence/context_pack.json",
+  "json_path_relative": ".clanker/delegations/subagent_delegation_c1f5246a0b7f/runs/run_1dd1545c17f1/evidence/context_pack.json",
+  "markdown_path": "/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_c1f5246a0b7f/runs/run_1dd1545c17f1/evidence/context_pack.md",
+  "markdown_path_relative": ".clanker/delegations/subagent_delegation_c1f5246a0b7f/runs/run_1dd1545c17f1/evidence/context_pack.md",
+  "project_id": "clankeros",
+  "ranked_file_count": 8,
+  "test_hints": [],
+  "top_ranked_files": [
+    "agent_os/context_pack.py",
+    "agent_os/profile_routing.py",
+    "evals/results/first_milestone_closed_loop.json",
+    "playbooks/first-milestone-closed-loop.md",
+    "agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py"
+  ]
+}

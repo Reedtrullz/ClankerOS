@@ -35,10 +35,10 @@ hidden autonomy.
   and gates local commits behind explicit approval.
 - Produces GitHub handoff packets after committed local effects, including
   exact push and draft-PR commands without taking network action itself.
-- Supports safe profile routing, read-only delegation contracts, executable
-  local delegation through configured shell adapters, project-aware repo
-  scouting bundles, structured delegation-result ingestion, proposed memory,
-  and proposed skills.
+- Supports safe profile routing, read-only delegation contracts, deterministic
+  context packs, executable local delegation through configured shell adapters,
+  project-aware repo scouting, structured delegation-result ingestion, proposed
+  memory, and proposed skills.
 - Models capability activation as blocked proof work until evidence, approval,
   idempotency, and rollback boundaries exist, including local downstream proof
   tasks and read-only evaluator delegation packets.
@@ -134,6 +134,7 @@ want a replaceable specialist executor:
 
 ```bash
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
+python3 -m agent_os.cli context-pack <delegation_id> --max-files 12 --max-snippets 8
 python3 -m agent_os.cli profile-adapter scout --command "python3 .clanker/adapters/fake_scout.py" --input-mode json_file --output-mode json --timeout-seconds 120
 python3 -m agent_os.cli run-delegation <delegation_id>
 python3 -m agent_os.cli delegation-result <delegation_id>
@@ -147,11 +148,14 @@ handling; the configured adapter is only a local executor. There are no
 built-in OpenAI, Anthropic, Codex, OpenCode, Hermes, Aider, or MCP provider
 integrations yet. Subagent profiles remain read-only by default and cannot be
 used by ClankerOS to commit, push, approve, deploy, or mutate external systems.
-When the parent task belongs to a registered project, the adapter input bundle
-also includes project metadata and a capped repo file inventory. Add
-`--working-directory project_root` when configuring the adapter if the local
-executor should run from the target repository instead of the ClankerOS system
-root.
+When the parent task belongs to a registered project, `context-pack` writes
+ranked files, grep hits, snippets, test hints, entrypoint hints, config hints,
+and non-claims under `.clanker/delegations/<delegation_id>/context/`.
+`run-delegation` auto-generates that pack if it is missing, copies it into the
+run evidence packet, and passes compact `context_pack` metadata to the adapter.
+Add `--working-directory project_root` when configuring the adapter if the
+local executor should run from the target repository instead of the ClankerOS
+system root.
 For the full walkthrough, see
 [Executable Delegation](docs/tutorial-executable-delegation.md).
 
@@ -167,6 +171,7 @@ For the full walkthrough, see
 | Run one planned task | `python3 -m agent_os.cli run-task <task_id> --profile tester` |
 | Configure delegation adapter | `python3 -m agent_os.cli profile-adapter scout --command "python3 .clanker/adapters/fake_scout.py"` |
 | Configure project-root scout adapter | `python3 -m agent_os.cli profile-adapter scout --command "python3 /path/to/scout.py" --working-directory project_root` |
+| Generate scout context | `python3 -m agent_os.cli context-pack <delegation_id>` |
 | Run read-only delegation | `python3 -m agent_os.cli run-delegation <delegation_id>` |
 | Review evidence | `review`, `evidence`, `replay-summary` |
 | Inspect approvals | `python3 -m agent_os.cli approvals` |
@@ -184,9 +189,28 @@ the output against the delegation schema before marking the delegation
 completed.
 
 For registered-project tasks, `input.json` includes a `project` object with
-the registered root path, default test command, and allowed write roots plus a
-`repo_scouting` object with a capped git file inventory. Evidence packets also
-include `project.json` and `repo_files.json` when that context is available.
+the registered root path, default test command, and allowed write roots; a
+`repo_scouting` object with a capped git file inventory; and a `context_pack`
+object pointing at the evidence-local `context_pack.json` and
+`context_pack.md`.
+
+`context-pack` is the deterministic scout preflight. It extracts technical
+terms from the goal, task, delegation prompt, and schema; ranks repository
+files with explainable scores; records capped grep hits and snippets; skips
+ignored and secret-like paths; and writes:
+
+```text
+.clanker/delegations/<delegation_id>/context/context_pack.json
+.clanker/delegations/<delegation_id>/context/context_pack.md
+```
+
+During `run-delegation`, those files are copied into:
+
+```text
+.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/context_pack.json
+.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/context_pack.md
+```
+
 Adapters run from the ClankerOS root by default; configure
 `--working-directory project_root` to let a scout read repo files with relative
 paths.

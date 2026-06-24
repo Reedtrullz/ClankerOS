@@ -24,6 +24,7 @@ harder to overclaim.
 | Make a coded change safely | `docs/tutorial-approval-gated-coding.md` |
 | Capture subagent-style context without execution | `docs/tutorial-subagent-delegation-results.md` |
 | Run a read-only delegation through a fake local adapter | `docs/tutorial-executable-delegation.md` |
+| Generate deterministic context for a scout delegation | `python3 -m agent_os.cli context-pack <delegation_id>` |
 | Scout registered repo files with a local adapter | `profile-adapter ... --working-directory project_root` |
 | Review a run before acting | `python3 -m agent_os.cli review <run_id>` |
 | Keep activation blocked while preserving proof state | start with the capability follow-up tutorials below |
@@ -91,6 +92,32 @@ deploy, open PRs, call model providers, start subagents, schedule retries,
 promote trust, or mutate external systems.
 
 For the full walkthrough, use `docs/tutorial-run-task.md`.
+
+## Scout A Registered Repo Before Editing
+
+Use this loop when you want a local scout to map relevant files before a coding
+agent or operator edits anything:
+
+```bash
+python3 -m agent_os.cli register-project clankeros --path "$PWD" --test-command "python3 -m pytest -q"
+python3 -m agent_os.cli goal "Map executable delegation files before editing" --project clankeros
+python3 -m agent_os.cli tasks <goal_id>
+python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
+python3 -m agent_os.cli context-pack <delegation_id> --max-files 12 --max-snippets 8
+python3 -m agent_os.cli profile-adapter scout --command "python3 /absolute/path/to/scout.py" --input-mode json_file --output-mode json --working-directory project_root
+python3 -m agent_os.cli run-delegation <delegation_id>
+python3 -m agent_os.cli delegation-result <delegation_id>
+python3 -m agent_os.cli review <run_id>
+```
+
+The context pack gives the scout a ranked file list, search hits, snippets,
+test hints, entrypoint hints, and config hints. The adapter can read
+`payload["context_pack"]["json_path"]` and return a `file_relevance_report` or
+`implementation_options` result without ClankerOS calling any model provider.
+
+Proof boundary: this scout loop writes local evidence and proposed memory only
+when requested. It does not edit files, commit, push, deploy, approve effects,
+schedule retries, or mutate external systems.
 
 ## Good Starting Prompts
 

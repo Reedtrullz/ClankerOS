@@ -1,0 +1,19 @@
+{
+  "available": true,
+  "context_pack_id": "context_pack_2bf26861809c",
+  "grep_hit_count": 40,
+  "json_path": "/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_035c3e0876c7/runs/run_7284c4089a89/evidence/context_pack.json",
+  "json_path_relative": ".clanker/delegations/subagent_delegation_035c3e0876c7/runs/run_7284c4089a89/evidence/context_pack.json",
+  "markdown_path": "/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_035c3e0876c7/runs/run_7284c4089a89/evidence/context_pack.md",
+  "markdown_path_relative": ".clanker/delegations/subagent_delegation_035c3e0876c7/runs/run_7284c4089a89/evidence/context_pack.md",
+  "project_id": "clankeros",
+  "ranked_file_count": 8,
+  "test_hints": [],
+  "top_ranked_files": [
+    "agent_os/context_pack.py",
+    "agent_os/profile_routing.py",
+    "agent_os/browser_desktop_adapter_proof.py",
+    "agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations.py",
+    "AGENTS.md"
+  ]
+}

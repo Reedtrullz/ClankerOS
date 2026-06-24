@@ -12,16 +12,17 @@
 
 ### Goal Plans
 
+- goal_1fa51c15f846: project=clankeros version=1 status=active goal=Demo context-pack repo scouting before edits artifact=.clanker/projects/clankeros/goals/goal_1fa51c15f846/PLAN-v1.md
 - goal_9b9a52c29e43: project=clankeros version=2 status=active goal=Add a small tested improvement to the CLI help output artifact=.clanker/projects/clankeros/goals/goal_9b9a52c29e43/PLAN-v2.md
 - goal_9b9a52c29e43: project=clankeros version=1 status=superseded goal=Add a small tested improvement to the CLI help output artifact=.clanker/projects/clankeros/goals/goal_9b9a52c29e43/PLAN-v1.md
 
 ### Task Runs
 
+- task_5481c0c8849e: run=run_f4fab76c7f30 project=bootstrap goal=goal_a97fd18ad951 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_f4fab76c7f30/learning.md
+- task_fdf7a176e10e: run=run_f4fab76c7f30 project=bootstrap goal=goal_a97fd18ad951 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_f4fab76c7f30/goal-artifact.md
 - task_c3dd0a5a892a: run=run_6774975374ff project=bootstrap goal=goal_b4b0c4915037 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_6774975374ff/learning.md
 - task_2cac02ccfd78: run=run_6774975374ff project=bootstrap goal=goal_b4b0c4915037 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_6774975374ff/goal-artifact.md
 - task_ee65d7b27826: run=run_9a51f0da4a49 project=bootstrap goal=goal_0bd03de428f7 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_9a51f0da4a49/learning.md
-- task_5906783f8725: run=run_9a51f0da4a49 project=bootstrap goal=goal_0bd03de428f7 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_9a51f0da4a49/goal-artifact.md
-- task_329111768b13: run=run_851861ade0cb project=bootstrap goal=goal_ef8f982d0fc3 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_851861ade0cb/learning.md
 
 ### Task Recommendations
 
@@ -81,22 +82,27 @@
 - profile coder: Implementation Coder mode=primary cost=high model=configurable/coder-model adapter=none use_for=implementation,refactor,bugfix
 - profile evaluator: Alignment Evaluator mode=subagent cost=medium model=configurable/strong-reasoning-model adapter=none use_for=sprint_contract_review,alignment_review,evidence_review,final_review
 - profile planner: Strategic Planner mode=primary cost=high model=configurable/planner-model adapter=none use_for=ambiguous_goal,architecture,plan_creation,replan
-- profile scout: Repo Scout mode=subagent cost=low model=configurable/cheap-fast-model adapter=none use_for=repo_search,file_mapping,dependency_mapping,summarization
+- profile scout: Repo Scout mode=subagent cost=low model=configurable/cheap-fast-model adapter=shell use_for=repo_search,file_mapping,dependency_mapping,summarization
 - profile tester: Verification Tester mode=subagent cost=low model=configurable/cheap-coding-model adapter=none use_for=test_triage,failure_summary,verification_review
 - recent_decisions:
+- routing_decision_03fb6d7cd55e: category=summarization selected=scout model=configurable/cheap-fast-model cost=low task=task_858971dcc5d7 project=clankeros status=selected
+- routing_decision_ea43f295b261: category=implementation selected=scout model=configurable/cheap-fast-model cost=low task=task_de0322669e63 project=clankeros status=selected
 - routing_decision_a45198918520: category=evidence_review selected=evaluator model=configurable/strong-reasoning-model cost=medium task=task_9da458146eb5 project=bootstrap status=selected
 - routing_decision_ab9f95b25d2e: category=evidence_review selected=evaluator model=configurable/strong-reasoning-model cost=medium task=task_e7034260ac20 project=bootstrap status=selected
 - routing_decision_93b1c07d54a4: category=implementation selected=coder model=configurable/coder-model cost=high task=task_c13d6ab242ec project=clankeros status=dispatched
-- routing_decision_a34094305406: category=evidence_review selected=evaluator model=configurable/strong-reasoning-model cost=medium task=task_3ee0f399e6b6 project=bootstrap status=selected
-- routing_decision_433a29462d9f: category=evidence_review selected=evaluator model=configurable/strong-reasoning-model cost=medium task=task_d84ea88202c6 project=bootstrap status=selected
 
 ### Subagent Delegations
 
+- subagent_delegation_c1f5246a0b7f: status=completed profile=scout category=summarization task=task_858971dcc5d7 schema=file_relevance_report artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_c1f5246a0b7f-result.json run=run_1dd1545c17f1 adapter=shell evidence=.clanker/delegations/subagent_delegation_c1f5246a0b7f/runs/run_1dd1545c17f1/evidence context_pack=.clanker/delegations/subagent_delegation_c1f5246a0b7f/runs/run_1dd1545c17f1/evidence/context_pack.json summary=Context pack scout demo completed.
+- subagent_delegation_035c3e0876c7: status=completed profile=scout category=implementation task=task_de0322669e63 schema=implementation_options artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_035c3e0876c7-result.json run=run_7284c4089a89 adapter=shell evidence=.clanker/delegations/subagent_delegation_035c3e0876c7/runs/run_7284c4089a89/evidence context_pack=.clanker/delegations/subagent_delegation_035c3e0876c7/runs/run_7284c4089a89/evidence/context_pack.json summary=Context pack scout demo completed.
 - subagent_delegation_f5330975ccec: status=completed profile=evaluator category=evidence_review task=task_9da458146eb5 schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_f5330975ccec-result.json summary=Evaluator found hosted dashboard proof remains blocked pending runtime-specific evidence, with no activation-ready proof produced.
 - subagent_delegation_200c581a36a6: status=completed profile=evaluator category=evidence_review task=task_e7034260ac20 schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_200c581a36a6-result.json summary=Evaluator drafted the next downstream result-effect task result-effect task result-effect task result-effect task result-effect task result-effect task proof plan while keeping capability activation blocked.
 - subagent_delegation_4dc659649824: status=completed profile=evaluator category=evidence_review task=task_3ee0f399e6b6 schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_4dc659649824-result.json summary=Evaluator recorded the next downstream result-effect task proof plan and kept activation blocked.
-- subagent_delegation_2d5c651c4f7f: status=completed profile=evaluator category=evidence_review task=task_d84ea88202c6 schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_2d5c651c4f7f-result.json summary=Evaluator downstream result-effect task result-effect task result-effect task result-effect task result-effect output is ready for local ingestion.
-- subagent_delegation_c7fc922aba24: status=completed profile=evaluator category=evidence_review task=task_b1f604bef7cf schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_c7fc922aba24-result.json summary=Evaluator drafted downstream result-effect task result-effect task result-effect task result-effect proof evidence without allowing activation.
+
+### Subagent / Scout Work
+
+- subagent_delegation_c1f5246a0b7f: profile=scout project=clankeros status=completed context_pack=.clanker/delegations/subagent_delegation_c1f5246a0b7f/runs/run_1dd1545c17f1/evidence/context_pack.json top_files=agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json,playbooks/first-milestone-closed-loop.md,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py incident=none
+- subagent_delegation_035c3e0876c7: profile=scout project=clankeros status=completed context_pack=.clanker/delegations/subagent_delegation_035c3e0876c7/runs/run_7284c4089a89/evidence/context_pack.json top_files=agent_os/context_pack.py,agent_os/profile_routing.py,agent_os/browser_desktop_adapter_proof.py,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations.py,AGENTS.md incident=none
 
 ## Steering Reviews
 
@@ -108,12 +114,12 @@
 
 ## Queue Health
 
-- pending: 27
+- pending: 28
 - waiting_approval: 0
 - claimed: 0
 - running: 0
 - verifying: 0
-- completed: 680
+- completed: 682
 - blocked: 0
 - failed: 0
 - active: 0
@@ -1352,6 +1358,7 @@
 
 ## Memory Proposals
 
+- memory_41120ab22cb2: status=proposed project=clankeros scope=project key=repo.scout.context-pack.demo source=subagent_delegation:subagent_delegation_035c3e0876c7 confidence=0.7 artifact=/Users/reidar/Documents/Agent System/.clanker/memory/memory_41120ab22cb2.json value=Context pack scout demo completed.
 - memory_4bc20665a3ec: status=proposed project=bootstrap scope=project key=delegation_result_ingestion_smoke source=subagent_delegation:subagent_delegation_7c3ac6139928 confidence=0.7 artifact=/Users/reidar/Documents/Agent System/.clanker/memory/memory_4bc20665a3ec.json value=Smoke ingestion proved read-only result recording for the delegation loop.
 
 ## Skill Proposals
@@ -2037,28 +2044,28 @@
 
 ## Recent Runs
 
+- run_1dd1545c17f1: completed project=clankeros goal=goal_1fa51c15f846 completed=2026-06-24T11:23:18.925743+00:00 summary=runs/run_1dd1545c17f1/summary.md
+- run_7284c4089a89: completed project=clankeros goal=goal_1fa51c15f846 completed=2026-06-24T11:22:21.647601+00:00 summary=runs/run_7284c4089a89/summary.md
+- run_f4fab76c7f30: completed project=bootstrap goal=goal_a97fd18ad951 completed=2026-06-24T10:39:36.733426+00:00 summary=runs/run_f4fab76c7f30/summary.md
 - run_6774975374ff: completed project=bootstrap goal=goal_b4b0c4915037 completed=2026-06-24T10:39:29.437212+00:00 summary=runs/run_6774975374ff/summary.md
 - run_9a51f0da4a49: completed project=bootstrap goal=goal_0bd03de428f7 completed=2026-06-24T10:03:23.667641+00:00 summary=runs/run_9a51f0da4a49/summary.md
-- run_851861ade0cb: completed project=bootstrap goal=goal_ef8f982d0fc3 completed=2026-06-24T10:03:23.385604+00:00 summary=runs/run_851861ade0cb/summary.md
-- run_82f659ae72cf: completed project=bootstrap goal=goal_497d56730b07 completed=2026-06-24T01:44:12.112445+00:00 summary=runs/run_82f659ae72cf/summary.md
-- run_60c9a37d66ed: completed project=bootstrap goal=goal_0a8ac2a4cae4 completed=2026-06-24T01:43:17.201010+00:00 summary=runs/run_60c9a37d66ed/summary.md
 
 ## Recent Evidence Packets
 
-- run_60c9a37d66ed: review=missing evidence=runs/run_60c9a37d66ed/evidence-index.md replay=missing packet=.clanker/projects/bootstrap/goals/goal_0a8ac2a4cae4/runs/run_60c9a37d66ed/evidence
+- run_7284c4089a89: review=runs/run_7284c4089a89/review.md evidence=missing replay=missing packet=missing
 
 ## Recent Learnings
 
+- run_f4fab76c7f30: Run run_f4fab76c7f30 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_f4fab76c7f30/learning.md)
 - run_6774975374ff: Run run_6774975374ff showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_6774975374ff/learning.md)
 - run_9a51f0da4a49: Run run_9a51f0da4a49 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_9a51f0da4a49/learning.md)
 - run_851861ade0cb: Run run_851861ade0cb showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_851861ade0cb/learning.md)
 - run_82f659ae72cf: Run run_82f659ae72cf showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_82f659ae72cf/learning.md)
-- run_60c9a37d66ed: Run run_60c9a37d66ed showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_60c9a37d66ed/learning.md)
 
 ## Recent Eval Results
 
+- first_milestone_closed_loop: pass run=run_f4fab76c7f30 created_at=2026-06-24T10:39:36.744490+00:00
 - first_milestone_closed_loop: pass run=run_6774975374ff created_at=2026-06-24T10:39:29.451440+00:00
 - first_milestone_closed_loop: pass run=run_9a51f0da4a49 created_at=2026-06-24T10:03:23.678190+00:00
 - first_milestone_closed_loop: pass run=run_851861ade0cb created_at=2026-06-24T10:03:23.394623+00:00
 - first_milestone_closed_loop: pass run=run_82f659ae72cf created_at=2026-06-24T01:44:12.125577+00:00
-- first_milestone_closed_loop: pass run=run_60c9a37d66ed created_at=2026-06-24T01:43:17.211934+00:00

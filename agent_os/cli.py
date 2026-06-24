@@ -73,6 +73,7 @@ from agent_os.ci_deploy_proof import (
     write_ci_deploy_proof_checklist,
 )
 from agent_os.ci_deploy_evidence import record_ci_deploy_evidence
+from agent_os.context_pack import ContextPackError, generate_context_pack
 from agent_os.budget_enforcement_proof import (
     format_recommended_commands as format_budget_enforcement_commands,
     render_budget_enforcement_proof_checklist_line,
@@ -674,6 +675,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="List subagent delegation contracts for a goal.",
     )
     delegations.add_argument("goal_id")
+    context_pack = subparsers.add_parser(
+        "context-pack",
+        help="Generate deterministic repo context for a pending delegation.",
+    )
+    context_pack.add_argument("delegation_id")
+    context_pack.add_argument("--max-files", type=int, default=25)
+    context_pack.add_argument("--max-snippets", type=int, default=40)
+    context_pack.add_argument("--max-snippet-chars", type=int, default=400)
+    context_pack.add_argument("--max-total-chars", type=int, default=20000)
+    context_pack.add_argument("--include-glob", action="append", default=[])
+    context_pack.add_argument("--exclude-glob", action="append", default=[])
+    context_pack.add_argument("--format", choices=["json", "markdown", "both"], default="both")
     delegation_result = subparsers.add_parser(
         "delegation-result",
         help="Show a subagent delegation contract and current result state.",
@@ -1901,6 +1914,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"run_review: {packet.run.id}")
         print(f"run_id: {packet.run.id}")
         print(f"status: {packet.run.status}")
+        print(f"review: {report_path.relative_to(root)}")
         print(f"report: {report_path.relative_to(root)}")
         print(f"tasks: {len(packet.tasks)}")
         print(f"events: {len(packet.events)}")
@@ -2175,6 +2189,38 @@ def main(argv: list[str] | None = None) -> int:
             print(render_subagent_delegation_line(delegation))
         return 0
 
+    if args.command == "context-pack":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            result = generate_context_pack(
+                root,
+                system.storage,
+                args.delegation_id,
+                max_files=args.max_files,
+                max_snippets=args.max_snippets,
+                max_snippet_chars=args.max_snippet_chars,
+                max_total_chars=args.max_total_chars,
+                include_globs=args.include_glob,
+                exclude_globs=args.exclude_glob,
+                output_format=args.format,
+            )
+        except (ContextPackError, OSError, json.JSONDecodeError) as error:
+            print(f"context_pack_failed: {error}")
+            return 1
+        print(f"context_pack: {result.delegation_id}")
+        print(f"context_pack_id: {result.context_pack_id}")
+        print(f"delegation_id: {result.delegation_id}")
+        print(f"project_id: {result.project_id}")
+        print(f"ranked_files: {len(result.payload.get('ranked_files', []))}")
+        print(f"grep_hits: {len(result.payload.get('grep_hits', []))}")
+        if result.json_path is not None:
+            print(f"context_pack_json: {result.json_path.relative_to(root)}")
+        if result.markdown_path is not None:
+            print(f"context_pack_md: {result.markdown_path.relative_to(root)}")
+        print("next_recommended_action: run_delegation")
+        return 0
+
     if args.command == "delegation-result":
         system = AgentSystem(root)
         system.initialize()
@@ -2201,6 +2247,10 @@ def main(argv: list[str] | None = None) -> int:
         evidence_dir = metadata.get("execution_evidence_dir") or metadata.get("evidence_dir")
         if evidence_dir:
             print(f"evidence_packet: {evidence_dir}")
+        if metadata.get("context_pack_json"):
+            print(f"context_pack: {metadata['context_pack_json']}")
+        if metadata.get("context_pack_md"):
+            print(f"context_pack_md: {metadata['context_pack_md']}")
         if "exit_code" in metadata:
             print(f"exit_code: {metadata['exit_code']}")
         if metadata.get("incident_id"):

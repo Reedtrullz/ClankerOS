@@ -1,5 +1,49 @@
 # Status
 
+## 2026-06-24 Deterministic Context Packs For Scout Delegation
+
+- Added `python3 -m agent_os.cli context-pack <delegation_id>` for
+  registered-project read-only delegations.
+- Context packs write JSON/Markdown under
+  `.clanker/delegations/<delegation_id>/context/` with project metadata,
+  query terms, budgets, ranked files, scoring reasons, grep hits, capped
+  snippets, test hints, entrypoint hints, config hints, repo inventory, and
+  explicit non-claims.
+- `run-delegation` now auto-generates a context pack when missing, copies it
+  into `.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/`, includes
+  compact `context_pack` metadata in adapter `input.json`, and records
+  context-pack validation metadata without hard-failing missing returned files.
+- `delegation-result`, `review`, `dashboard`, and delegation-sourced memory
+  proposals now surface context-pack paths and scout context.
+- Updated README, executable-delegation tutorial, command reference, concepts,
+  suggested-use, and operating summary for the context-pack scout workflow.
+- Verification evidence:
+  - context-pack red tests initially failed because the CLI command and runner
+    integration did not exist.
+  - `python3 -m py_compile agent_os/context_pack.py agent_os/delegation_runner.py agent_os/cli.py agent_os/subagent_delegation.py agent_os/run_review.py agent_os/dashboard.py agent_os/memory_entries.py tests/test_first_milestone.py` passed.
+  - context-pack focused slice: 4 passed, 472 deselected.
+  - adjacent delegation/review/dashboard/memory slice: 83 passed, 393
+    deselected.
+  - full suite: 476 passed in 1014.27s.
+  - live implementation-options scout demo:
+    `subagent_delegation_035c3e0876c7`, run `run_7284c4089a89`, evidence
+    `.clanker/delegations/subagent_delegation_035c3e0876c7/runs/run_7284c4089a89/evidence/`.
+  - live file-relevance scout demo:
+    `subagent_delegation_c1f5246a0b7f`, run `run_1dd1545c17f1`, evidence
+    `.clanker/delegations/subagent_delegation_c1f5246a0b7f/runs/run_1dd1545c17f1/evidence/`,
+    with `schema_valid=true`, `context_pack_used=true`, and
+    `returned_files_in_inventory=true`.
+  - `python3 -m agent_os.cli dashboard` regenerated `docs/dashboard.md` with
+    `### Subagent / Scout Work`.
+  - GitHub metadata readback for `Reedtrullz/ClankerOS` shows public repo,
+    default branch `main`, README homepage, updated About description, and 20
+    topics including `context-pack` and `repo-scouting`.
+- Non-claims: local deterministic repo context and shell-adapter evidence only;
+  no built-in model-provider integration, hosted dashboard, remote workers,
+  autonomous scheduling, browser/desktop automation, CI/deploy proof, budget
+  enforcement, trust promotion, automatic retry, real cost tracking, commit,
+  push, deployment, or external mutation is implied.
+
 ## 2026-06-24 Project-Aware Executable Delegation
 
 - Added registered-project context to executable delegation runs. When a parent

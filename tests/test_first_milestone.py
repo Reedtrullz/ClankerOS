@@ -3018,6 +3018,239 @@ def test_run_delegation_project_root_working_directory_lets_adapter_read_repo_fi
     assert input_bundle["adapter"]["resolved_cwd"] == str(repo_path.resolve())
 
 
+def test_context_pack_rejects_missing_delegation_and_unregistered_project(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    assert main(["--root", str(tmp_path), "context-pack", "subagent_missing"]) == 1
+    output = capsys.readouterr().out
+    assert "context_pack_failed: delegation subagent_missing not found" in output
+
+    _storage, _goal_id, _task_id, delegation_id = _create_file_mapping_delegation(
+        tmp_path,
+        capsys,
+    )
+
+    assert main(["--root", str(tmp_path), "context-pack", delegation_id]) == 1
+    output = capsys.readouterr().out
+    assert "context_pack_failed: registered project bootstrap not found" in output
+
+
+def test_context_pack_writes_ranked_search_artifacts_for_registered_delegation(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    _storage, _goal_id, _task_id, delegation_id, _repo_path = (
+        _create_registered_context_pack_delegation(tmp_path, capsys)
+    )
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "context-pack",
+                delegation_id,
+                "--max-files",
+                "8",
+                "--max-snippets",
+                "4",
+                "--max-total-chars",
+                "700",
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert f"context_pack: {delegation_id}" in output
+    assert "next_recommended_action: run_delegation" in output
+    json_line = next(line for line in output.splitlines() if line.startswith("context_pack_json: "))
+    markdown_line = next(line for line in output.splitlines() if line.startswith("context_pack_md: "))
+    pack_path = tmp_path / json_line.split(": ", 1)[1]
+    pack_md_path = tmp_path / markdown_line.split(": ", 1)[1]
+
+    pack = json.loads(pack_path.read_text(encoding="utf-8"))
+    ranked_paths = [file["path"] for file in pack["ranked_files"]]
+    grep_paths = [hit["path"] for hit in pack["grep_hits"]]
+    snippet_paths = [snippet["path"] for snippet in pack["snippets"]]
+
+    assert pack["project_id"] == "subject"
+    assert pack["delegation_id"] == delegation_id
+    assert pack["budgets"]["max_files"] == 8
+    assert "context-pack" in pack["query"]["terms"]
+    assert "delegation_runner" in pack["query"]["terms"]
+    assert "agent_os/delegation_runner.py" in ranked_paths
+    top_delegation_file = next(
+        file for file in pack["ranked_files"] if file["path"] == "agent_os/delegation_runner.py"
+    )
+    assert top_delegation_file["score"] > 0
+    assert top_delegation_file["reasons"]
+    assert "tests/test_delegation_runner.py" in [hint["path"] for hint in pack["test_hints"]]
+    assert "agent_os/cli.py" in [hint["path"] for hint in pack["entrypoint_hints"]]
+    assert "pyproject.toml" in [hint["path"] for hint in pack["config_hints"]]
+    assert "agent_os/delegation_runner.py" in grep_paths
+    assert "subject_marker" in " ".join(hit["snippet"] for hit in pack["grep_hits"])
+    assert "node_modules/ignored.js" not in grep_paths
+    assert ".env" not in ranked_paths
+    assert "credentials.txt" not in ranked_paths
+    assert ".env" not in snippet_paths
+    assert sum(len(snippet["text"]) for snippet in pack["snippets"]) <= 700
+    assert all(len(snippet["text"]) <= 400 for snippet in pack["snippets"])
+    assert "No file was modified." in pack["non_claims"]
+
+    markdown = pack_md_path.read_text(encoding="utf-8")
+    assert "# Context Pack" in markdown
+    assert "agent_os/delegation_runner.py" in markdown
+    assert "## Non-Claims" in markdown
+
+
+def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage, _goal_id, _task_id, delegation_id, repo_path = (
+        _create_registered_context_pack_delegation(tmp_path, capsys)
+    )
+    adapter_path = tmp_path / ".clanker" / "adapters" / "context_pack_scout.py"
+    adapter_path.parent.mkdir(parents=True, exist_ok=True)
+    adapter_path.write_text(
+        "\n".join(
+            [
+                "import json",
+                "import sys",
+                "from pathlib import Path",
+                "",
+                "payload = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))",
+                "context_pack = payload['context_pack']",
+                "pack = json.loads(Path(context_pack['json_path']).read_text(encoding='utf-8'))",
+                "evidence_dir = Path(payload['evidence_dir'])",
+                "assert context_pack['available'] is True",
+                "assert Path.cwd().resolve() == Path(payload['project']['root_path']).resolve()",
+                "top_paths = [item['path'] for item in pack['ranked_files'][:3]]",
+                "(evidence_dir / 'adapter-context-pack.txt').write_text(context_pack['json_path'], encoding='utf-8')",
+                "print(json.dumps({",
+                "  'result_summary': 'Found likely implementation and test files.',",
+                "  'structured_output': {",
+                "    'files': top_paths[:2],",
+                "    'findings': ['context pack ranked implementation and test files'],",
+                "    'relevant_files': top_paths[:2]",
+                "  }",
+                "}))",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    _configure_scout_adapter(
+        tmp_path,
+        capsys,
+        adapter_path,
+        working_directory="project_root",
+    )
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-delegation",
+                delegation_id,
+                "--record-memory",
+                "--memory-key",
+                "repo.scout.context-pack",
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    run_id = next(line for line in output.splitlines() if line.startswith("run_id: ")).split(": ", 1)[1]
+    evidence_line = next(line for line in output.splitlines() if line.startswith("evidence_packet: "))
+    evidence_dir = tmp_path / evidence_line.split(": ", 1)[1]
+    input_bundle = json.loads((evidence_dir / "input.json").read_text(encoding="utf-8"))
+    validation = json.loads((evidence_dir / "validation.json").read_text(encoding="utf-8"))
+    result = json.loads((evidence_dir / "result.json").read_text(encoding="utf-8"))
+    memory_proposal = json.loads((evidence_dir / "memory_proposal.json").read_text(encoding="utf-8"))
+
+    assert (evidence_dir / "context_pack.json").exists()
+    assert (evidence_dir / "context_pack.md").exists()
+    assert input_bundle["context_pack"]["available"] is True
+    assert input_bundle["context_pack"]["json_path"] == str(evidence_dir / "context_pack.json")
+    assert input_bundle["context_pack"]["ranked_file_count"] >= 1
+    assert "agent_os/delegation_runner.py" in [
+        file["path"] for file in json.loads((evidence_dir / "context_pack.json").read_text())["ranked_files"]
+    ]
+    assert validation["context_pack_used"] is True
+    assert validation["schema_valid"] is True
+    assert validation["returned_files_in_inventory"] is True
+    assert validation["returned_files_missing"] == []
+    assert validation["top_ranked_files_referenced"]
+    assert result["context_pack_json"] == str(evidence_dir.relative_to(tmp_path) / "context_pack.json")
+    assert result["context_pack_md"] == str(evidence_dir.relative_to(tmp_path) / "context_pack.md")
+    assert memory_proposal["status"] == "proposed"
+    assert memory_proposal["context_pack_json"] == str(evidence_dir.relative_to(tmp_path) / "context_pack.json")
+
+    memory_entries = storage.list_memory_entries(project_id="subject")
+    assert len(memory_entries) == 1
+    assert memory_entries[0].status == "proposed"
+
+    assert main(["--root", str(tmp_path), "delegation-result", delegation_id]) == 0
+    result_output = capsys.readouterr().out
+    assert "context_pack: .clanker/delegations/" in result_output
+
+    assert main(["--root", str(tmp_path), "review", run_id]) == 0
+    review_output = capsys.readouterr().out
+    review_path = tmp_path / next(
+        line.split(": ", 1)[1]
+        for line in review_output.splitlines()
+        if line.startswith("review: ")
+    )
+    review = review_path.read_text(encoding="utf-8")
+    assert "## Scout Context Pack" in review
+    assert "agent_os/delegation_runner.py" in review
+    assert "tests/test_delegation_runner.py" in review
+
+    dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
+    assert "### Subagent / Scout Work" in dashboard
+    assert delegation_id in dashboard
+    assert "context_pack=" in dashboard
+    assert str(repo_path.resolve()) in input_bundle["project"]["root_path"]
+
+
+def test_run_delegation_context_pack_validation_warns_for_missing_returned_files(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    _storage, _goal_id, _task_id, delegation_id, _repo_path = (
+        _create_registered_context_pack_delegation(tmp_path, capsys)
+    )
+    adapter_path = tmp_path / ".clanker" / "adapters" / "missing_file_scout.py"
+    adapter_path.parent.mkdir(parents=True, exist_ok=True)
+    adapter_path.write_text(
+        "import json\n"
+        "print(json.dumps({"
+        "'result_summary':'Returned a missing file with useful findings.', "
+        "'structured_output': {"
+        "'files': ['missing.py'], "
+        "'findings': ['No matching file was found in the repo inventory.'], "
+        "'relevant_files': ['missing.py']"
+        "}}))\n",
+        encoding="utf-8",
+    )
+    _configure_scout_adapter(tmp_path, capsys, adapter_path)
+
+    assert main(["--root", str(tmp_path), "run-delegation", delegation_id]) == 0
+    output = capsys.readouterr().out
+    evidence_line = next(line for line in output.splitlines() if line.startswith("evidence_packet: "))
+    evidence_dir = tmp_path / evidence_line.split(": ", 1)[1]
+    validation = json.loads((evidence_dir / "validation.json").read_text(encoding="utf-8"))
+
+    assert validation["valid"] is True
+    assert validation["context_pack_used"] is True
+    assert validation["returned_files_in_inventory"] is False
+    assert validation["returned_files_missing"] == ["missing.py"]
+    assert validation["top_ranked_files_referenced"] == []
+
+
 def test_run_delegation_malformed_json_opens_incident(
     tmp_path: Path,
     capsys,
@@ -4301,6 +4534,103 @@ def _create_registered_file_mapping_delegation(
                 "scout",
                 "--title",
                 "Find relevant subject files",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    delegation_id = storage.list_subagent_delegations(goal_id)[0].id
+    return storage, goal_id, task_id, delegation_id, repo_path
+
+
+def _create_registered_context_pack_delegation(
+    tmp_path: Path,
+    capsys,
+) -> tuple[Storage, str, str, str, Path]:
+    repo_path = tmp_path / "subject-repo"
+    _init_git_repo(repo_path)
+    files = {
+        "agent_os/delegation_runner.py": (
+            "def run_delegation():\n"
+            "    repo_scouting = True\n"
+            "    context_pack = 'context-pack'\n"
+            "    subject_marker = 'delegation runner context pack'\n"
+        ),
+        "agent_os/cli.py": (
+            "def build_parser():\n"
+            "    return 'context-pack profile-adapter run-delegation'\n"
+        ),
+        "tests/test_delegation_runner.py": (
+            "def test_context_pack_scouting():\n"
+            "    assert 'context-pack' and 'delegation_runner'\n"
+        ),
+        "docs/tutorial-executable-delegation.md": (
+            "# Executable Delegation\n\n"
+            "Use context-pack before run-delegation for repo scouting.\n"
+        ),
+        "pyproject.toml": "[project]\nname = 'subject'\n",
+        ".env": "CONTEXT_PACK_SECRET=do-not-read\n",
+        "credentials.txt": "context-pack credentials should be skipped\n",
+        "node_modules/ignored.js": "context-pack ignored directory hit\n",
+    }
+    for relative_path, content in files.items():
+        path = repo_path / relative_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+    subprocess.run(["git", "add", "."], cwd=repo_path, check=True)
+    subprocess.run(
+        ["git", "commit", "-m", "add context pack subject files"],
+        cwd=repo_path,
+        check=True,
+        capture_output=True,
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "register-project",
+                "subject",
+                "--path",
+                str(repo_path),
+                "--test-command",
+                "python3 -m pytest -q",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal(
+        "subject",
+        "Make context-pack repo scouting useful for delegation_runner work",
+    )
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        project_id="subject",
+        task_type="record_learning",
+        description=(
+            "Find relevant delegation_runner implementation files and tests "
+            "for context-pack repo scouting."
+        ),
+        verification_plan={
+            "type": "manual_review",
+            "command": "python3 -m pytest tests/test_delegation_runner.py -q",
+        },
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "delegate",
+                task_id,
+                "--profile",
+                "scout",
+                "--title",
+                "Find relevant delegation_runner files and tests for context-pack",
             ]
         )
         == 0

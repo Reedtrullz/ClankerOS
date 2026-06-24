@@ -1,0 +1,57 @@
+{
+  "allowed_tools": [
+    "read",
+    "grep",
+    "summarize"
+  ],
+  "assigned_profile": "scout",
+  "budget": {
+    "seconds": 180,
+    "tokens": 8000
+  },
+  "category": "implementation",
+  "execution_started": false,
+  "expected_output_schema": "implementation_options",
+  "external_mutations_taken": 0,
+  "forbidden_actions": [
+    "approve",
+    "commit",
+    "external_state_mutation",
+    "shell",
+    "write"
+  ],
+  "id": "subagent_delegation_035c3e0876c7",
+  "input_context": {
+    "model": "configurable/cheap-fast-model",
+    "parent_goal_id": "goal_1fa51c15f846",
+    "parent_task_id": "task_de0322669e63",
+    "profile": "scout",
+    "project_id": "clankeros",
+    "routing_decision_id": "routing_decision_ea43f295b261",
+    "routing_reason": "operator_override: selected scout for category implementation",
+    "task_artifacts": [],
+    "task_description": "Confirm target behavior and proof boundary for: Demo context-pack repo scouting before edits.",
+    "task_evidence": {
+      "plan_id": "plan_7e4c179d9102",
+      "source": "plan_step"
+    },
+    "task_type": "planned_step",
+    "verification_plan": {
+      "acceptance_criteria": "Scope, non-goals, and verifier are explicit.",
+      "command": "python3 -m agent_os.cli project-context clankeros",
+      "source": "plan_step"
+    }
+  },
+  "network_actions_taken": 0,
+  "non_claims": [
+    "No subagent was started.",
+    "No model provider was called.",
+    "No file, git, approval, or external state was mutated."
+  ],
+  "parent_goal_id": "goal_1fa51c15f846",
+  "parent_task_id": "task_de0322669e63",
+  "prompt": "/goal Find context-pack implementation files\n\nContext:\n- parent_goal_id: goal_1fa51c15f846\n- parent_task_id: task_de0322669e63\n- project_id: clankeros\n- task_type: planned_step\n- task_description: Confirm target behavior and proof boundary for: Demo context-pack repo scouting before edits.\n- routing_category: implementation\n- assigned_profile: scout\n\nBoundaries:\n- Read-only context gathering only.\n- Do not write files, commit, approve, call external services, or mutate state.\n\nDeliverable:\n- Return structured output matching `implementation_options`.",
+  "routing_decision_id": "routing_decision_ea43f295b261",
+  "status": "pending",
+  "title": "Find context-pack implementation files"
+}

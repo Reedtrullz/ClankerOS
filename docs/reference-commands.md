@@ -90,6 +90,7 @@ python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevan
 python3 -m agent_os.cli delegations <goal_id>
 python3 -m agent_os.cli profile-adapter scout --command "python3 .clanker/adapters/fake_scout.py" --input-mode json_file --output-mode json --timeout-seconds 120
 python3 -m agent_os.cli profile-adapter scout --command "python3 /absolute/path/to/project_scout.py" --input-mode json_file --output-mode json --working-directory project_root --timeout-seconds 120
+python3 -m agent_os.cli context-pack <delegation_id> --max-files 12 --max-snippets 8 --max-total-chars 12000
 python3 -m agent_os.cli run-delegation <delegation_id>
 python3 -m agent_os.cli delegation-result <delegation_id>
 python3 -m agent_os.cli record-delegation-result <delegation_id> --summary "Relevant files identified." --output-json '{"files":["agent_os/cli.py"],"findings":["CLI parser lives in agent_os/cli.py."],"relevant_files":["agent_os/cli.py"]}'
@@ -102,8 +103,30 @@ failures. Adapter configs default to `--working-directory system_root`; use
 `--working-directory project_root` for registered-project repo scouts that need
 relative reads from the target repository. Registered-project delegations add
 `project.json`, `repo_files.json`, `project`, and `repo_scouting` context to
-the evidence packet/input bundle. `record-delegation-result` remains the manual
-ingestion path for operator-supplied output.
+the evidence packet/input bundle.
+
+`context-pack <delegation_id>` writes deterministic scout context before
+execution:
+
+```text
+.clanker/delegations/<delegation_id>/context/context_pack.json
+.clanker/delegations/<delegation_id>/context/context_pack.md
+```
+
+Useful flags:
+
+- `--max-files`
+- `--max-snippets`
+- `--max-snippet-chars`
+- `--max-total-chars`
+- `--include-glob`
+- `--exclude-glob`
+- `--format json|markdown|both`
+
+`run-delegation` auto-generates the pack when it is missing, copies it into the
+run evidence packet, and puts compact `context_pack` metadata in `input.json`.
+`record-delegation-result` remains the manual ingestion path for
+operator-supplied output.
 
 ## Memory And Skills
 

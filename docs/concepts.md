@@ -36,6 +36,13 @@ and project notes.
   is not edited directly by a run.
 - Delegation packet: a local read-only contract for specialist or subagent
   context. Creating a packet does not start a subagent or call a model.
+- Context pack: a delegation-specific repo scout packet generated from the
+  parent goal, task, and delegation prompt. It ranks files, explains scores,
+  records capped grep hits and snippets, lists test/entrypoint/config hints,
+  skips ignored and secret-like paths, and writes JSON/Markdown under
+  `.clanker/delegations/<delegation_id>/context/`.
+- Project context packet: a durable operator summary for a registered project.
+  It is broader and less task-specific than a context pack.
 - Profile: a local routing role such as planner, coder, scout, tester, or
   evaluator.
 - Dashboard: a generated markdown status view at `docs/dashboard.md`.

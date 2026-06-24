@@ -1,0 +1,40 @@
+{
+  "confidence": 0.7,
+  "context_pack_id": "context_pack_2bf26861809c",
+  "context_pack_json": ".clanker/delegations/subagent_delegation_035c3e0876c7/runs/run_7284c4089a89/evidence/context_pack.json",
+  "context_pack_md": ".clanker/delegations/subagent_delegation_035c3e0876c7/runs/run_7284c4089a89/evidence/context_pack.md",
+  "created_at": "2026-06-24T11:22:21.644712+00:00",
+  "created_by_profile": "scout",
+  "external_mutations_taken": 0,
+  "id": "memory_41120ab22cb2",
+  "key": "repo.scout.context-pack.demo",
+  "network_actions_taken": 0,
+  "non_claims": [
+    "Memory was proposed, not activated silently.",
+    "No external system was mutated.",
+    "No model provider was called by this command."
+  ],
+  "project_id": "clankeros",
+  "scope": "project",
+  "source_expected_output_schema": "implementation_options",
+  "source_id": "subagent_delegation_035c3e0876c7",
+  "source_result_artifact_path": "/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_035c3e0876c7-result.json",
+  "source_result_summary": "Context pack scout demo completed.",
+  "source_structured_output": {
+    "options": [
+      {
+        "files": [
+          "agent_os/context_pack.py",
+          "agent_os/profile_routing.py",
+          "agent_os/browser_desktop_adapter_proof.py"
+        ],
+        "reason": "Selected from context_pack ranked_files.",
+        "title": "Inspect context-pack surfaces"
+      }
+    ]
+  },
+  "source_type": "subagent_delegation",
+  "status": "proposed",
+  "updated_at": "2026-06-24T11:22:21.644712+00:00",
+  "value": "Context pack scout demo completed."
+}

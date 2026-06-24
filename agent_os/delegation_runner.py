@@ -8,6 +8,11 @@ from pathlib import Path
 from typing import Any
 
 from agent_os.ids import new_id
+from agent_os.context_pack import (
+    ContextPackError,
+    context_pack_validation_metadata,
+    ensure_context_pack_for_run,
+)
 from agent_os.memory_entries import MemoryEntryError, propose_memory_from_delegation
 from agent_os.storage import (
     AgentProfile,
@@ -170,6 +175,31 @@ def run_delegation(
             parsed_output=None,
         )
 
+    try:
+        context_pack_metadata = ensure_context_pack_for_run(
+            root,
+            storage,
+            delegation,
+            evidence_dir,
+        )
+    except ContextPackError as error:
+        return _fail_run(
+            root,
+            storage,
+            delegation=delegation,
+            task=task,
+            profile=profile,
+            adapter=adapter,
+            run_id=run_id,
+            evidence_dir=evidence_dir,
+            failure_class="context pack failed",
+            message=str(error),
+            exit_code=None,
+            stdout="",
+            stderr="",
+            parsed_output=None,
+        )
+
     input_bundle = _write_input_bundle(
         evidence_dir,
         delegation,
@@ -178,6 +208,7 @@ def run_delegation(
         adapter,
         project=project_payload,
         repo_scouting=repo_scouting_payload,
+        context_pack=context_pack_metadata,
     )
     prompt_path = evidence_dir / "prompt.md"
     stdout_path = evidence_dir / "stdout.txt"
@@ -262,14 +293,20 @@ def run_delegation(
         result_summary = _result_summary(parsed)
         structured_output = _structured_output(parsed)
         _validate_forbidden_actions(delegation, parsed)
+        context_pack_validation = context_pack_validation_metadata(
+            context_pack_metadata,
+            structured_output,
+        )
         validation_path.write_text(
             json.dumps(
                 {
                     "valid": True,
+                    "schema_valid": True,
                     "expected_output_schema": delegation.expected_output_schema,
                     "result_summary_present": True,
                     "structured_output_present": True,
                     "forbidden_actions_detected": [],
+                    **context_pack_validation,
                 },
                 indent=2,
                 sort_keys=True,
@@ -297,6 +334,17 @@ def run_delegation(
                 "execution_evidence_dir": str(evidence_dir.relative_to(root)),
                 "target_project_id": project.name if project else None,
                 "target_project_root": project.root_path if project else None,
+                "context_pack_id": context_pack_metadata.get("context_pack_id"),
+                "context_pack_json": context_pack_metadata.get("json_path_relative"),
+                "context_pack_md": context_pack_metadata.get("markdown_path_relative"),
+                "context_pack_ranked_file_count": context_pack_metadata.get(
+                    "ranked_file_count"
+                ),
+                "context_pack_grep_hit_count": context_pack_metadata.get("grep_hit_count"),
+                "context_pack_top_ranked_files": context_pack_metadata.get(
+                    "top_ranked_files",
+                    [],
+                ),
                 "network_actions_taken": "unknown",
                 "provider_calls_taken_by_clankeros": 0,
                 "external_mutations_taken": 0,
@@ -399,6 +447,7 @@ def run_delegation(
         adapter={**adapter, "command": command},
         project=project_payload,
         repo_scouting=repo_scouting_payload,
+        context_pack=context_pack_metadata,
         run_id=run_id,
         result_summary=result_summary,
         memory_entry=memory_entry,
@@ -608,6 +657,7 @@ def _write_input_bundle(
     *,
     project: dict[str, Any] | None,
     repo_scouting: dict[str, Any],
+    context_pack: dict[str, Any],
 ) -> dict[str, Any]:
     prompt_path = evidence_dir / "prompt.md"
     prompt_path.write_text(delegation.prompt, encoding="utf-8")
@@ -623,6 +673,7 @@ def _write_input_bundle(
         },
         "project": project,
         "repo_scouting": repo_scouting,
+        "context_pack": context_pack,
         "profile": _profile_payload(profile),
         "adapter": _redacted_adapter(adapter),
         "prompt_path": str(prompt_path),
@@ -645,6 +696,11 @@ def _write_input_bundle(
     if repo_scouting.get("available"):
         (evidence_dir / "repo_files.json").write_text(
             json.dumps(repo_scouting, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+    if context_pack.get("available"):
+        (evidence_dir / "context_pack_metadata.json").write_text(
+            json.dumps(context_pack, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
         )
     return bundle
@@ -983,6 +1039,7 @@ def _write_success_summary(
     adapter: dict[str, Any],
     project: dict[str, Any] | None,
     repo_scouting: dict[str, Any],
+    context_pack: dict[str, Any],
     run_id: str,
     result_summary: str,
     memory_entry: MemoryEntry | None,
@@ -997,6 +1054,14 @@ def _write_success_summary(
         evidence_paths.append("- project.json")
     if repo_scouting.get("available"):
         evidence_paths.append("- repo_files.json")
+    if context_pack.get("available"):
+        evidence_paths.extend(
+            [
+                "- context_pack.json",
+                "- context_pack.md",
+                "- context_pack_metadata.json",
+            ]
+        )
     evidence_paths.extend(
         [
             "- prompt.md",
@@ -1023,6 +1088,8 @@ def _write_success_summary(
             f"- adapter_cwd: {adapter.get('resolved_cwd', 'unknown')}",
             f"- target_project_id: {project['id'] if project else 'unregistered'}",
             f"- target_project_root: {project['root_path'] if project else 'none'}",
+            f"- context_pack_id: {context_pack.get('context_pack_id', 'none')}",
+            f"- context_pack_json: {context_pack.get('json_path_relative', 'none')}",
             f"- expected_output_schema: {delegation.expected_output_schema}",
             "- execution_status: completed",
             "- output_validated: true",

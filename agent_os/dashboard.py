@@ -383,7 +383,10 @@ from agent_os.queue_health import (
 )
 from agent_os.steering import render_steering_review_line
 from agent_os.storage import Storage
-from agent_os.subagent_delegation import render_subagent_delegation_line
+from agent_os.subagent_delegation import (
+    load_delegation_result_metadata,
+    render_subagent_delegation_line,
+)
 from agent_os.task_recommendations import render_task_recommendation_line
 
 
@@ -2260,6 +2263,10 @@ def generate_static_dashboard(root: Path) -> Path:
             lines.append(f"- {render_subagent_delegation_line(delegation)}")
     else:
         lines.append("- none")
+
+    lines.extend(["", "### Subagent / Scout Work", ""])
+    scout_lines = _subagent_scout_work_lines(subagent_delegations)
+    lines.extend(scout_lines if scout_lines else ["- none"])
 
     lines.extend(["", "## Steering Reviews", ""])
     if steering_reviews:
@@ -6280,6 +6287,26 @@ def _table_exists(connection: sqlite3.Connection, table_name: str) -> bool:
         (table_name,),
     ).fetchone()
     return row is not None
+
+
+def _subagent_scout_work_lines(subagent_delegations: list[object]) -> list[str]:
+    lines: list[str] = []
+    for delegation in subagent_delegations:
+        metadata = load_delegation_result_metadata(delegation)
+        context_pack = metadata.get("context_pack_json")
+        if delegation.assigned_profile != "scout" and not context_pack:
+            continue
+        top_files = metadata.get("context_pack_top_ranked_files") or []
+        project = metadata.get("target_project_id") or "unknown"
+        incident = metadata.get("incident_id") or "none"
+        lines.append(
+            f"- {delegation.id}: profile={delegation.assigned_profile} "
+            f"project={project} status={delegation.status} "
+            f"context_pack={context_pack or 'none'} "
+            f"top_files={','.join(top_files[:5]) if top_files else 'none'} "
+            f"incident={incident}"
+        )
+    return lines
 
 
 def _relative_to_root(root: Path, path: str | None) -> str:

@@ -1,0 +1,12 @@
+{
+  "context_pack_used": true,
+  "expected_output_schema": "implementation_options",
+  "forbidden_actions_detected": [],
+  "result_summary_present": true,
+  "returned_files_in_inventory": true,
+  "returned_files_missing": [],
+  "schema_valid": true,
+  "structured_output_present": true,
+  "top_ranked_files_referenced": [],
+  "valid": true
+}

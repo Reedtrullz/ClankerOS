@@ -98,6 +98,18 @@ def propose_memory_from_delegation(
             f"delegation {delegation_id} result artifact is missing"
         )
     result_artifact = json.loads(result_artifact_path.read_text(encoding="utf-8"))
+    extra_artifact_fields = {
+        "source_result_artifact_path": str(result_artifact_path),
+        "source_result_summary": delegation.result_summary,
+        "source_expected_output_schema": delegation.expected_output_schema,
+        "source_structured_output": result_artifact.get("structured_output", {}),
+    }
+    if result_artifact.get("context_pack_json"):
+        extra_artifact_fields["context_pack_json"] = result_artifact["context_pack_json"]
+    if result_artifact.get("context_pack_md"):
+        extra_artifact_fields["context_pack_md"] = result_artifact["context_pack_md"]
+    if result_artifact.get("context_pack_id"):
+        extra_artifact_fields["context_pack_id"] = result_artifact["context_pack_id"]
     return propose_memory_entry(
         root,
         storage,
@@ -109,12 +121,7 @@ def propose_memory_from_delegation(
         source_id=delegation.id,
         confidence=confidence,
         created_by_profile=created_by_profile or delegation.assigned_profile,
-        extra_artifact_fields={
-            "source_result_artifact_path": str(result_artifact_path),
-            "source_result_summary": delegation.result_summary,
-            "source_expected_output_schema": delegation.expected_output_schema,
-            "source_structured_output": result_artifact.get("structured_output", {}),
-        },
+        extra_artifact_fields=extra_artifact_fields,
     )
 
 
