@@ -436,6 +436,11 @@ from agent_os.capability_readiness import (
 )
 from agent_os.dashboard import generate_static_dashboard
 from agent_os.coding_workflow import commit_approved_effect, run_worktree_coding_goal
+from agent_os.delegation_runner import (
+    DelegationRunError,
+    configure_profile_adapter,
+    run_delegation,
+)
 from agent_os.dispatch_posture_history import (
     render_dispatch_posture_history_line,
     write_dispatch_posture_history_report,
@@ -526,6 +531,7 @@ from agent_os.steering import (
 from agent_os.subagent_delegation import (
     DelegationError,
     create_subagent_delegation,
+    load_delegation_result_metadata,
     record_delegation_result,
     render_subagent_delegation_line,
 )
@@ -628,6 +634,24 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("profiles", help="List safe local model/profile routing defaults.")
     profile_show = subparsers.add_parser("profile-show", help="Show a named profile.")
     profile_show.add_argument("name")
+    profile_adapter = subparsers.add_parser(
+        "profile-adapter",
+        help="Configure a local executor adapter for a profile.",
+    )
+    profile_adapter.add_argument("name")
+    profile_adapter.add_argument("--type", default="shell")
+    profile_adapter.add_argument("--command", required=True, dest="adapter_command")
+    profile_adapter.add_argument(
+        "--input-mode",
+        choices=["prompt_file", "stdin", "json_file"],
+        default="json_file",
+    )
+    profile_adapter.add_argument(
+        "--output-mode",
+        choices=["json", "text"],
+        default="json",
+    )
+    profile_adapter.add_argument("--timeout-seconds", type=int, default=300)
     route = subparsers.add_parser("route", help="Record a routing decision for a task or category.")
     route.add_argument("task_id", nargs="?")
     route.add_argument("--category")
@@ -650,6 +674,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="Show a subagent delegation contract and current result state.",
     )
     delegation_result.add_argument("delegation_id")
+    run_delegation_parser = subparsers.add_parser(
+        "run-delegation",
+        help="Execute a pending delegation through a configured local adapter.",
+    )
+    run_delegation_parser.add_argument("delegation_id")
+    run_delegation_parser.add_argument("--profile")
+    run_delegation_parser.add_argument("--adapter-command")
+    run_delegation_parser.add_argument("--record-memory", action="store_true")
+    run_delegation_parser.add_argument("--memory-key")
+    run_delegation_parser.add_argument("--operator-id", default="operator")
     record_delegation_result_parser = subparsers.add_parser(
         "record-delegation-result",
         help="Ingest structured read-only subagent output for a delegation.",
@@ -1915,6 +1949,7 @@ def main(argv: list[str] | None = None) -> int:
         steering_reviews = inbox["steering_reviews"]
         pending_approvals = inbox["pending_approvals"]
         open_incidents = inbox["open_incidents"]
+        subagent_delegations = inbox["subagent_delegations"]
         print(f"inbox_items: {inbox['count']}")
         print(f"steering_reviews: {len(steering_reviews)}")
         for review in steering_reviews:
@@ -1931,6 +1966,9 @@ def main(argv: list[str] | None = None) -> int:
                 f"incident {incident.id}: goal={incident.goal_id or 'none'} "
                 f"run={incident.run_id} severity={incident.severity} summary={incident.summary}"
             )
+        print(f"subagent_delegations: {len(subagent_delegations)}")
+        for delegation in subagent_delegations:
+            print(render_subagent_delegation_line(delegation).removeprefix("- "))
         print("network_actions_taken: 0")
         print("external_mutations_taken: 0")
         return 0
@@ -2028,6 +2066,36 @@ def main(argv: list[str] | None = None) -> int:
             print(f"permissions.{key}: {profile.permissions_json[key]}")
         for key in sorted(profile.max_budget_json):
             print(f"max_budget.{key}: {profile.max_budget_json[key]}")
+        if profile.adapter_config_json:
+            for key in sorted(profile.adapter_config_json):
+                print(f"adapter.{key}: {profile.adapter_config_json[key]}")
+        else:
+            print("adapter: none")
+        return 0
+
+    if args.command == "profile-adapter":
+        system = AgentSystem(root)
+        system.initialize()
+        ensure_default_profiles(system.storage)
+        try:
+            profile = configure_profile_adapter(
+                system.storage,
+                args.name,
+                adapter_type=args.type,
+                command=args.adapter_command,
+                input_mode=args.input_mode,
+                output_mode=args.output_mode,
+                timeout_seconds=args.timeout_seconds,
+            )
+        except (DelegationRunError, KeyError) as error:
+            print(f"profile_adapter_failed: {error}")
+            return 1
+        print(f"profile_adapter: {profile.name}")
+        print(f"adapter_type: {profile.adapter_config_json.get('type', 'none')}")
+        print(f"command: {profile.adapter_config_json.get('command', '')}")
+        print(f"input_mode: {profile.adapter_config_json.get('input_mode', '')}")
+        print(f"output_mode: {profile.adapter_config_json.get('output_mode', '')}")
+        print(f"timeout_seconds: {profile.adapter_config_json.get('timeout_seconds', '')}")
         return 0
 
     if args.command == "route":
@@ -2113,7 +2181,67 @@ def main(argv: list[str] | None = None) -> int:
         print(f"expected_output_schema: {delegation.expected_output_schema}")
         print(f"result_summary: {delegation.result_summary or 'none'}")
         print(f"result_artifact_path: {delegation.result_artifact_path}")
+        metadata = load_delegation_result_metadata(delegation)
+        run_id = metadata.get("execution_run_id") or metadata.get("run_id")
+        if run_id:
+            print(f"run_id: {run_id}")
+        adapter_type = metadata.get("execution_adapter_type") or metadata.get("adapter_type")
+        if adapter_type:
+            print(f"adapter_type: {adapter_type}")
+        evidence_dir = metadata.get("execution_evidence_dir") or metadata.get("evidence_dir")
+        if evidence_dir:
+            print(f"evidence_packet: {evidence_dir}")
+        if "exit_code" in metadata:
+            print(f"exit_code: {metadata['exit_code']}")
+        if metadata.get("incident_id"):
+            print(f"incident_id: {metadata['incident_id']}")
+        if "network_actions_taken" in metadata:
+            print(f"network_actions_taken: {metadata['network_actions_taken']}")
+        if "provider_calls_taken_by_clankeros" in metadata:
+            print(
+                "provider_calls_taken_by_clankeros: "
+                f"{metadata['provider_calls_taken_by_clankeros']}"
+            )
         print(f"completed_at: {delegation.completed_at or 'none'}")
+        return 0
+
+    if args.command == "run-delegation":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            result = run_delegation(
+                root,
+                system.storage,
+                args.delegation_id,
+                profile_override=args.profile,
+                adapter_command=args.adapter_command,
+                record_memory=args.record_memory,
+                memory_key=args.memory_key,
+                operator_id=args.operator_id,
+            )
+        except (DelegationRunError, KeyError, MemoryEntryError) as error:
+            print(f"run_delegation_failed: {error}")
+            return 1
+        if result.status == "completed":
+            print(f"run_delegation: {result.delegation_id}")
+        else:
+            print(f"run_delegation_failed: {result.message}")
+        print(f"delegation_id: {result.delegation_id}")
+        print(f"run_id: {result.run_id}")
+        print(f"adapter_type: {result.adapter_type}")
+        print(f"status: {result.status}")
+        print(f"exit_code: {result.exit_code if result.exit_code is not None else 'none'}")
+        if result.result_artifact_path is not None:
+            print(f"result_artifact: {result.result_artifact_path}")
+        print(f"evidence_packet: {result.evidence_dir.relative_to(root)}")
+        if result.incident_id:
+            print(f"incident_id: {result.incident_id}")
+        if result.memory_proposal_id:
+            print(f"memory_proposal: {result.memory_proposal_id}")
+            print("memory_status: proposed")
+        print(f"next_recommended_action: {result.next_recommended_action}")
+        if result.status != "completed":
+            return 1
         return 0
 
     if args.command == "record-delegation-result":

@@ -35,7 +35,8 @@ hidden autonomy.
   and gates local commits behind explicit approval.
 - Produces GitHub handoff packets after committed local effects, including
   exact push and draft-PR commands without taking network action itself.
-- Supports safe profile routing, read-only delegation contracts, structured
+- Supports safe profile routing, read-only delegation contracts, executable
+  local delegation through configured shell adapters, structured
   delegation-result ingestion, proposed memory, and proposed skills.
 - Models capability activation as blocked proof work until evidence, approval,
   idempotency, and rollback boundaries exist, including local downstream proof
@@ -67,6 +68,7 @@ Then read:
 - [Run A Planned Task Tutorial](docs/tutorial-run-task.md)
 - [Operator Daily Loop Tutorial](docs/tutorial-operator-daily-loop.md)
 - [Approval-Gated Coding Tutorial](docs/tutorial-approval-gated-coding.md)
+- [Executable Delegation Tutorial](docs/tutorial-executable-delegation.md)
 - [Public Snapshot Tutorial](docs/tutorial-public-snapshot.md)
 
 The capability activation ladder has many intentionally verbose proof
@@ -126,6 +128,27 @@ manual rerun guidance. If a planned task is blocked, `task-recommendations`
 records `blocked_planned_task_replan` guidance. These records are local
 operator guidance only; they do not retry or change task status by themselves.
 
+Run a read-only delegation through a configured local shell adapter when you
+want a replaceable specialist executor:
+
+```bash
+python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
+python3 -m agent_os.cli profile-adapter scout --command "python3 .clanker/adapters/fake_scout.py" --input-mode json_file --output-mode json --timeout-seconds 120
+python3 -m agent_os.cli run-delegation <delegation_id>
+python3 -m agent_os.cli delegation-result <delegation_id>
+python3 -m agent_os.cli review <run_id>
+python3 -m agent_os.cli dashboard
+```
+
+`run-delegation` is provider-agnostic. ClankerOS owns the durable state,
+prompt/context bundle, evidence packet, schema validation, and incident
+handling; the configured adapter is only a local executor. There are no
+built-in OpenAI, Anthropic, Codex, OpenCode, Hermes, Aider, or MCP provider
+integrations yet. Subagent profiles remain read-only by default and cannot be
+used by ClankerOS to commit, push, approve, deploy, or mutate external systems.
+For the full walkthrough, see
+[Executable Delegation](docs/tutorial-executable-delegation.md).
+
 ## Command Surface
 
 | Need | Command |
@@ -136,6 +159,8 @@ operator guidance only; they do not retry or change task status by themselves.
 | Register a local git repo | `python3 -m agent_os.cli register-project <name> --path <path>` |
 | Create planning state | `goal`, `plan`, `contract`, `tasks` |
 | Run one planned task | `python3 -m agent_os.cli run-task <task_id> --profile tester` |
+| Configure delegation adapter | `python3 -m agent_os.cli profile-adapter scout --command "python3 .clanker/adapters/fake_scout.py"` |
+| Run read-only delegation | `python3 -m agent_os.cli run-delegation <delegation_id>` |
 | Review evidence | `review`, `evidence`, `replay-summary` |
 | Inspect approvals | `python3 -m agent_os.cli approvals` |
 | Prepare GitHub handoff | `python3 -m agent_os.cli github-handoff <effect_id>` |
@@ -143,24 +168,25 @@ operator guidance only; they do not retry or change task status by themselves.
 For common workflows, use [Operator Recipes](docs/operator-recipes.md). For a
 complete command map, use [Command Reference](docs/reference-commands.md).
 
-## Latest Local Decision Rung
+## Executable Delegation
 
-When the latest downstream result-effect task result-effect task result-effect
-task result-effect task result-effect task result-effect task result-effect
-task result-effect task result records exist, the operator can accept the
-result while keeping activation blocked:
+The current delegation loop can execute a pending read-only delegation through
+a locally configured shell adapter. The adapter receives a scoped
+prompt/context bundle, returns a JSON result envelope, and ClankerOS validates
+the output against the delegation schema before marking the delegation
+completed.
 
-```bash
-python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide \
-  --operator-id operator \
-  --selected-action accept_keep_blocked \
-  --selection-note "Accepted downstream result-effect task result-effect task result-effect task result-effect task result-effect task result-effect task proof-plan result and kept capability activation blocked." \
-  --evidence-reference docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md
+Malformed JSON, schema-invalid output, non-zero exits, timeouts, and unsafe
+adapter commands fail safely with local incidents and evidence packets under:
+
+```text
+.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/
 ```
 
-This is a local review record only. It does not create approval rows, allow
-activation, enable a capability, satisfy proof, run a subagent, call providers,
-or mutate external systems.
+This is the first executable delegation primitive, not a general provider
+integration layer. Adapter commands are configured locally per profile, and
+ClankerOS records that network/provider actions taken by the adapter are
+unknown unless the adapter itself proves otherwise.
 
 ## Current Shape
 
@@ -173,13 +199,13 @@ goal -> task graph -> execution -> verification -> memory -> visibility -> learn
 ```
 
 The current control plane includes executable local slices where the verifier
-is explicit (`run-goal`, `run-task`) and report-only ladders where a capability
-is still blocked. Accepted blocked decisions can create local proposed effects,
-applied effects can create more proof tasks, and every activation step
-preserves `activation_allowed=false`, `capability_enabled=false`,
-`approval_requests_created=0`, `activation_actions_taken=0`, and
-`external_mutations_taken=0` unless a future approved capability boundary
-changes that contract.
+is explicit (`run-goal`, `run-task`, `run-delegation`) and report-only ladders
+where a capability is still blocked. Accepted blocked decisions can create
+local proposed effects, applied effects can create more proof tasks, and every
+activation step preserves `activation_allowed=false`,
+`capability_enabled=false`, `approval_requests_created=0`,
+`activation_actions_taken=0`, and `external_mutations_taken=0` unless a future
+approved capability boundary changes that contract.
 
 For the detailed state, use:
 
@@ -224,20 +250,24 @@ recommended flow.
 
 This repository does not yet claim hosted dashboard availability, remote worker
 execution, autonomous scheduling, browser/desktop adapter readiness, live
-CI/deploy proof, budget enforcement, trust promotion, automatic retries, or
-real cost tracking. Those surfaces remain blocked until their evidence and
-approval contracts are satisfied.
+CI/deploy proof, built-in model provider integrations, budget enforcement,
+trust promotion, automatic retries, automatic memory activation, automatic
+skill activation, or real cost tracking. Shell adapters are local configured
+executors; ClankerOS records `provider_calls_taken_by_clankeros=0` and
+`external_mutations_taken=0`, but adapter network/provider behavior is unknown
+unless the adapter writes evidence proving otherwise. Those surfaces remain
+blocked until their evidence and approval contracts are satisfied.
 
 ## GitHub About
 
 Suggested repository description:
 
 ```text
-Local-first agent OS harness for durable AI coding work: task graphs, verification evidence, approvals, and operator-visible autonomy.
+Local-first agent OS harness for durable AI coding: task graphs, executable delegation, verification evidence, and approval gates.
 ```
 
 Suggested topics:
 
 ```text
-agent-operating-system, agent-os, ai-agents, agentic-ai, agent-orchestration, coding-agents, local-first, human-in-the-loop, approval-workflow, verification, evidence, task-graph, operator-dashboard, worktrees, sqlite, python, cli-tool, developer-tools, evals, markdown
+agent-operating-system, agent-os, ai-agents, agentic-ai, coding-agents, agent-orchestration, subagent-delegation, executable-delegation, local-first, human-in-the-loop, approval-workflow, verification, evidence, task-graph, operator-dashboard, worktrees, sqlite, python, cli-tool, developer-tools
 ```

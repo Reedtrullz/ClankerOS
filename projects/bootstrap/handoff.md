@@ -3325,3 +3325,34 @@ Current focus: Add local downstream follow-up result task result effect task res
    satisfied, no CI/deploy proof happened, no hosted dashboard or remote worker
    was started, no trust was promoted, and the active expansion goal remains
    open.
+
+## Latest Executable Delegation Shell Adapter Loop
+
+Current focus: add a first-class delegation run index for richer dashboard
+filtering and explicit retry decisions.
+
+1. Implemented `profile-adapter` and `run-delegation` for local shell adapter
+   execution of pending read-only delegations.
+2. The runner writes prompt/context input bundles, captures stdout/stderr/exit
+   code, validates JSON result envelopes, records completed delegation results,
+   opens incidents for failures, and can propose memory without activating it.
+3. Execution evidence is stored under
+   `.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/`.
+4. Operator surfaces now show delegation run id, adapter type, evidence path,
+   incident id, and precise adapter non-claims when artifact metadata exists.
+5. Verification passed: py_compile, focused delegation tests, broader
+   delegation/memory tests, clean temp-root demo, full suite with 470 tests,
+   eval-after-change `run_851861ade0cb`, baseline eval, playbooks, queue
+   health, approvals, eval-candidates, handoff review, dashboard, and iterate.
+6. GitHub About/tags were updated for `Reedtrullz/ClankerOS` and read back
+   successfully.
+7. Continue with:
+   Add a durable delegation-run index or table so dashboard filtering, explicit
+   retry decisions, and run history no longer need to infer execution metadata
+   from result artifacts alone.
+8. Preserve the current boundary: shell adapters only; no built-in provider
+   integration, hosted dashboard, browser/desktop adapter, remote worker,
+   scheduling, deploy, GitHub PR, automatic retry, automatic memory activation,
+   automatic skill activation, trust promotion, budget enforcement, or real
+   cost tracking. Adapter network/provider behavior is unknown unless adapter
+   evidence proves otherwise.

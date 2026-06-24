@@ -130,6 +130,12 @@ Use `task-recommendations` after a failed planned-task verifier or blocked
 planned task. It records local guidance for review, replan, and manual reset
 without automatically retrying or dispatching work.
 
+To execute a read-only specialist task through a configured fake local shell
+adapter, use `docs/tutorial-executable-delegation.md`. That loop is
+provider-agnostic: ClankerOS records state, evidence, schema validation, and
+incidents, while adapter network/provider behavior remains unknown unless the
+adapter writes evidence proving otherwise.
+
 ## Best Operating Pattern
 
 1. Keep each request narrow and evidence-shaped.
@@ -161,6 +167,10 @@ Run one planned task through the tester profile, write the local evidence packet
 ```
 
 ```text
+Configure a fake local scout adapter, run a pending delegation, inspect its evidence packet, and propose memory without activating it.
+```
+
+```text
 Review the current dashboard and next-iteration packet, then implement the next local proof step with tests.
 ```
 
@@ -168,6 +178,8 @@ Review the current dashboard and next-iteration packet, then implement the next 
 
 - `docs/concepts.md` for vocabulary.
 - `docs/architecture.md` for the local control-plane shape.
+- `docs/tutorial-executable-delegation.md` for configured shell-adapter
+  delegation.
 - `docs/suggested-use.md` for prompt patterns and operating rules.
 - `docs/tutorial-goal-lifecycle.md` for planning a registered project goal
   before execution.

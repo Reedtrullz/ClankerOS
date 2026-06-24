@@ -9421,3 +9421,58 @@
   providers were called, no approval rows were created, no activation actions
   occurred, no external systems were mutated, no dispatch/scheduling/retry/trust
   promotion occurred, no capability was enabled, and proof remains unsatisfied.
+
+## 2026-06-24 Executable Delegation Shell Adapter Loop
+
+- Added the first executable subagent delegation primitive:
+  `profile-adapter` configures local shell adapter metadata on profiles and
+  `run-delegation <delegation_id>` executes pending read-only delegations.
+- Added `agent_os/delegation_runner.py` with shell adapter invocation,
+  prompt/context bundle writing, stdout/stderr/exit capture, JSON envelope
+  parsing, schema validation, evidence packets, failed-run incidents, and
+  optional proposed memory creation.
+- Added profile `adapter_config_json` storage with safe migration, preservation
+  across default profile refreshes, and runtime read-only subagent validation.
+- Evidence packets are written under
+  `.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/` with
+  `summary.md`, `delegation.json`, `profile.json`, `adapter.json`,
+  `input.json`, `prompt.md`, `stdout.txt`, `stderr.txt`, `raw_output.txt`,
+  `parsed_output.json`, `validation.json`, `result.json`, optional
+  `incident.json`, and optional `memory_proposal.json`.
+- Operator surfaces updated: `delegation-result`, dashboard, and inbox render
+  execution run id, adapter type, evidence path, incidents, and precise
+  adapter non-claims when available. Dashboard next action now prioritizes open
+  incidents before new iteration work.
+- Docs added or updated: README, `docs/tutorial-executable-delegation.md`,
+  getting started, suggested use, operator recipes, command reference,
+  operating summary, docs index, first-loop tutorial, approval-gated tutorial,
+  and manual delegation-result tutorial.
+- Verification evidence:
+  - `python3 -m py_compile agent_os/*.py tests/test_first_milestone.py` passed.
+  - Focused executable delegation tests: 14 passed.
+  - Profile/delegation-result slice: 19 passed, 451 deselected.
+  - Broader profile/route/delegate/delegation/memory slice: 82 passed, 388
+    deselected.
+  - Clean temp-root demo passed through init, register-project, goal, plan,
+    contract, tasks, profiles, delegate, profile-adapter, run-delegation,
+    delegation-result, review, dashboard, inbox, memory proposal, and memory
+    list. Demo run: `run_c52c9ce25b4b`; delegation:
+    `subagent_delegation_fb90cac432bb`.
+  - `git diff --check` passed.
+  - Full suite: 470 passed in 981.16s.
+  - `eval-after-change`: pass, run `run_851861ade0cb`.
+  - Baseline `eval`: `first_milestone_closed_loop: pass`.
+  - `playbooks`: 1 active playbook, 335 successful runs.
+  - `queue-health`: hotspots 0; `approvals`: pending 0;
+    `eval-candidates`: 0; `handoff-review`: clear.
+  - Dashboard and next-iteration packet regenerated.
+  - GitHub metadata readback: public repo, default branch `main`, README
+    homepage, executable-delegation description, and 20 topics including
+    `subagent-delegation` and `executable-delegation`.
+- Non-claims: shell adapters only; no built-in OpenAI, Anthropic, Codex,
+  OpenCode, Hermes, Aider, MCP, browser, desktop, hosted dashboard, remote
+  worker, scheduling, deploy, GitHub PR, automatic retry, automatic memory
+  activation, automatic skill activation, trust promotion, budget enforcement,
+  or real cost tracking integration. ClankerOS records
+  `provider_calls_taken_by_clankeros=0` and `external_mutations_taken=0`; adapter
+  network/provider behavior is unknown unless adapter evidence proves otherwise.

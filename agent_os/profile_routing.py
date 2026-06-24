@@ -163,6 +163,15 @@ def write_default_profile_config(root: Path) -> Path:
     lines = [
         "# Safe local defaults for ClankerOS profile routing.",
         "# These are labels and policy hints, not provider credentials.",
+        "# Adapter commands are local executor hooks. Configure them with:",
+        "#   python3 -m agent_os.cli profile-adapter scout --command \"python3 .clanker/adapters/fake_scout.py\"",
+        "# Example adapter fields:",
+        "#   adapter:",
+        "#     type: shell",
+        "#     command: \"python3 .clanker/adapters/fake_scout.py\"",
+        "#     input_mode: json_file",
+        "#     output_mode: json",
+        "#     timeout_seconds: 120",
         "profiles:",
     ]
     for profile in DEFAULT_PROFILES:
@@ -231,9 +240,11 @@ def route_work(storage: Storage, request: RouteRequest) -> RoutingDecision:
 
 def format_profile_line(profile: AgentProfile) -> str:
     use_for = ",".join(profile.use_for_json)
+    adapter_type = profile.adapter_config_json.get("type", "none")
     return (
         f"{profile.name}: {profile.label} mode={profile.mode} "
-        f"cost={profile.cost_tier} model={profile.model} use_for={use_for}"
+        f"cost={profile.cost_tier} model={profile.model} "
+        f"adapter={adapter_type} use_for={use_for}"
     )
 
 

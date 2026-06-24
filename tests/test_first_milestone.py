@@ -2712,6 +2712,459 @@ def test_record_delegation_result_rejects_empty_or_malformed_schema_values(
     ) in output
 
 
+def test_profile_adapter_command_configures_shell_adapter(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    assert main(["--root", str(tmp_path), "profiles"]) == 0
+    capsys.readouterr()
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "profile-adapter",
+                "scout",
+                "--command",
+                "python3 .clanker/adapters/fake_scout.py",
+                "--input-mode",
+                "json_file",
+                "--output-mode",
+                "json",
+                "--timeout-seconds",
+                "120",
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "profile_adapter: scout" in output
+    assert "adapter_type: shell" in output
+    assert "input_mode: json_file" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    profile = storage.get_profile("scout")
+    assert profile is not None
+    assert profile.adapter_config_json["type"] == "shell"
+    assert profile.adapter_config_json["command"] == "python3 .clanker/adapters/fake_scout.py"
+
+    assert main(["--root", str(tmp_path), "profile-show", "scout"]) == 0
+    detail = capsys.readouterr().out
+    assert "adapter.type: shell" in detail
+    assert "adapter.timeout_seconds: 120" in detail
+
+
+def test_profile_adapter_rejects_unsafe_command(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    assert main(["--root", str(tmp_path), "profiles"]) == 0
+    capsys.readouterr()
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "profile-adapter",
+                "scout",
+                "--command",
+                "curl https://example.invalid",
+            ]
+        )
+        == 1
+    )
+    output = capsys.readouterr().out
+    assert "profile_adapter_failed: unsafe adapter command contains curl" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    profile = storage.get_profile("scout")
+    assert profile is not None
+    assert profile.adapter_config_json == {}
+
+
+def test_run_delegation_rejects_missing_delegation(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    assert main(["--root", str(tmp_path), "run-delegation", "subagent_missing"]) == 1
+    output = capsys.readouterr().out
+    assert "run_delegation_failed: delegation subagent_missing not found" in output
+
+
+def test_run_delegation_missing_adapter_config_opens_incident(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage, goal_id, _task_id, delegation_id = _create_file_mapping_delegation(
+        tmp_path,
+        capsys,
+    )
+
+    assert main(["--root", str(tmp_path), "run-delegation", delegation_id]) == 1
+    output = capsys.readouterr().out
+    assert "run_delegation_failed: no executor adapter configured for profile scout" in output
+    assert "incident_id: incident_" in output
+    assert "evidence_packet: .clanker/delegations/" in output
+
+    delegation = storage.get_subagent_delegation(delegation_id)
+    assert delegation is not None
+    assert delegation.status == "failed"
+    incidents = storage.list_recent_incidents()
+    assert len(incidents) == 1
+    assert incidents[0].goal_id == goal_id
+    assert incidents[0].task_id == _task_id
+    assert incidents[0].incident_type == "delegation_execution_failed"
+    assert incidents[0].failure_class == "missing adapter config"
+
+
+def test_run_delegation_shell_adapter_completes_valid_scout_output(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage, goal_id, _task_id, delegation_id = _create_file_mapping_delegation(
+        tmp_path,
+        capsys,
+    )
+    adapter_path = _write_fake_scout_adapter(tmp_path)
+    _configure_scout_adapter(tmp_path, capsys, adapter_path)
+
+    assert main(["--root", str(tmp_path), "run-delegation", delegation_id]) == 0
+    output = capsys.readouterr().out
+    assert f"run_delegation: {delegation_id}" in output
+    assert "status: completed" in output
+    assert "adapter_type: shell" in output
+    assert "next_recommended_action: review_delegation_result" in output
+
+    completed = storage.get_subagent_delegation(delegation_id)
+    assert completed is not None
+    assert completed.status == "completed"
+    assert completed.result_summary == "Found relevant CLI files."
+    result_artifact = json.loads(Path(completed.result_artifact_path).read_text())
+    assert result_artifact["structured_output"]["relevant_files"] == ["agent_os/cli.py"]
+    assert result_artifact["execution_started"] is True
+    assert result_artifact["network_actions_taken"] == "unknown"
+    assert result_artifact["provider_calls_taken_by_clankeros"] == 0
+
+    evidence_line = next(line for line in output.splitlines() if line.startswith("evidence_packet: "))
+    evidence_dir = tmp_path / evidence_line.split(": ", 1)[1]
+    run_id = next(line for line in output.splitlines() if line.startswith("run_id: ")).split(": ", 1)[1]
+    assert result_artifact["execution_run_id"] == run_id
+    assert result_artifact["execution_evidence_dir"] == str(evidence_dir.relative_to(tmp_path))
+    assert (evidence_dir / "delegation.json").exists()
+    assert (evidence_dir / "profile.json").exists()
+    assert (evidence_dir / "adapter.json").exists()
+    assert (evidence_dir / "input.json").exists()
+    assert (evidence_dir / "prompt.md").exists()
+    assert (evidence_dir / "stdout.txt").exists()
+    assert (evidence_dir / "stderr.txt").exists()
+    assert (evidence_dir / "raw_output.txt").exists()
+    assert (evidence_dir / "parsed_output.json").exists()
+    assert (evidence_dir / "validation.json").exists()
+    assert (evidence_dir / "result.json").exists()
+    input_bundle = json.loads((evidence_dir / "input.json").read_text())
+    assert input_bundle["delegation"]["id"] == delegation_id
+    assert input_bundle["delegation"]["expected_output_schema"] == "file_relevance_report"
+    assert (evidence_dir / "adapter-seen.txt").read_text(encoding="utf-8") == delegation_id
+
+    assert main(["--root", str(tmp_path), "delegation-result", delegation_id]) == 0
+    result_output = capsys.readouterr().out
+    assert "status: completed" in result_output
+    assert "result_summary: Found relevant CLI files." in result_output
+    assert f"run_id: {run_id}" in result_output
+    assert "adapter_type: shell" in result_output
+    assert "network_actions_taken: unknown" in result_output
+    assert "provider_calls_taken_by_clankeros: 0" in result_output
+
+    dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
+    assert "### Subagent Delegations" in dashboard
+    assert delegation_id in dashboard
+    assert "status=completed" in dashboard
+    assert f"run={run_id}" in dashboard
+    assert "adapter=shell" in dashboard
+    assert f"evidence={evidence_dir.relative_to(tmp_path)}" in dashboard
+
+    assert main(["--root", str(tmp_path), "inbox"]) == 0
+    inbox_output = capsys.readouterr().out
+    assert "subagent_delegations: 1" in inbox_output
+    assert delegation_id in inbox_output
+    assert "status=completed" in inbox_output
+    assert f"run={run_id}" in inbox_output
+    assert "adapter=shell" in inbox_output
+
+
+def test_run_delegation_malformed_json_opens_incident(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage, _goal_id, _task_id, delegation_id = _create_file_mapping_delegation(
+        tmp_path,
+        capsys,
+    )
+    adapter_path = tmp_path / ".clanker" / "adapters" / "bad_json.py"
+    adapter_path.parent.mkdir(parents=True, exist_ok=True)
+    adapter_path.write_text("print('not json')\n", encoding="utf-8")
+    _configure_scout_adapter(tmp_path, capsys, adapter_path)
+
+    assert main(["--root", str(tmp_path), "run-delegation", delegation_id]) == 1
+    output = capsys.readouterr().out
+    assert "run_delegation_failed: malformed adapter json output" in output
+    assert "incident_id: incident_" in output
+
+    failed = storage.get_subagent_delegation(delegation_id)
+    assert failed is not None
+    assert failed.status == "failed"
+    incidents = storage.list_recent_incidents()
+    assert incidents[0].failure_class == "malformed json"
+    validation_path = Path(failed.result_artifact_path).parent / "validation.json"
+    assert json.loads(validation_path.read_text(encoding="utf-8"))["valid"] is False
+
+    assert main(["--root", str(tmp_path), "inbox"]) == 0
+    inbox_output = capsys.readouterr().out
+    assert "open_incidents: 1" in inbox_output
+    assert "subagent_delegations: 1" in inbox_output
+    assert delegation_id in inbox_output
+    assert "status=failed" in inbox_output
+
+    dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
+    assert "### Next Recommended Action" in dashboard
+    assert "Review open incident" in dashboard
+
+
+def test_run_delegation_schema_invalid_json_opens_incident(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage, _goal_id, _task_id, delegation_id = _create_file_mapping_delegation(
+        tmp_path,
+        capsys,
+    )
+    adapter_path = tmp_path / ".clanker" / "adapters" / "wrong_schema.py"
+    adapter_path.parent.mkdir(parents=True, exist_ok=True)
+    adapter_path.write_text(
+        "import json\n"
+        "print(json.dumps({'result_summary':'Wrong shape.', 'structured_output': {'files': ['agent_os/cli.py']}}))\n",
+        encoding="utf-8",
+    )
+    _configure_scout_adapter(tmp_path, capsys, adapter_path)
+
+    assert main(["--root", str(tmp_path), "run-delegation", delegation_id]) == 1
+    output = capsys.readouterr().out
+    assert "run_delegation_failed: output does not match expected schema file_relevance_report" in output
+    incidents = storage.list_recent_incidents()
+    assert incidents[0].failure_class == "schema validation failed"
+
+
+def test_run_delegation_forbidden_action_claim_opens_incident(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage, _goal_id, _task_id, delegation_id = _create_file_mapping_delegation(
+        tmp_path,
+        capsys,
+    )
+    adapter_path = tmp_path / ".clanker" / "adapters" / "forbidden_claim.py"
+    adapter_path.parent.mkdir(parents=True, exist_ok=True)
+    adapter_path.write_text(
+        "import json\n"
+        "print(json.dumps({"
+        "'result_summary':'Claimed forbidden action.', "
+        "'structured_output': {"
+        "'files': ['agent_os/cli.py'], "
+        "'findings': ['Changed files.'], "
+        "'relevant_files': ['agent_os/cli.py']"
+        "}, "
+        "'forbidden_actions_taken': ['write']"
+        "}))\n",
+        encoding="utf-8",
+    )
+    _configure_scout_adapter(tmp_path, capsys, adapter_path)
+
+    assert main(["--root", str(tmp_path), "run-delegation", delegation_id]) == 1
+    output = capsys.readouterr().out
+    assert "run_delegation_failed: adapter output claims forbidden actions: write" in output
+    incidents = storage.list_recent_incidents()
+    assert incidents[0].failure_class == "forbidden action claimed"
+
+
+def test_run_delegation_nonzero_exit_opens_incident(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage, _goal_id, _task_id, delegation_id = _create_file_mapping_delegation(
+        tmp_path,
+        capsys,
+    )
+    adapter_path = tmp_path / ".clanker" / "adapters" / "exit_bad.py"
+    adapter_path.parent.mkdir(parents=True, exist_ok=True)
+    adapter_path.write_text(
+        "import sys\nprint('adapter failed', file=sys.stderr)\nraise SystemExit(7)\n",
+        encoding="utf-8",
+    )
+    _configure_scout_adapter(tmp_path, capsys, adapter_path)
+
+    assert main(["--root", str(tmp_path), "run-delegation", delegation_id]) == 1
+    output = capsys.readouterr().out
+    assert "run_delegation_failed: adapter command exited with 7" in output
+    incidents = storage.list_recent_incidents()
+    assert incidents[0].failure_class == "adapter non-zero exit"
+
+
+def test_run_delegation_timeout_opens_incident(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage, _goal_id, _task_id, delegation_id = _create_file_mapping_delegation(
+        tmp_path,
+        capsys,
+    )
+    adapter_path = tmp_path / ".clanker" / "adapters" / "sleepy.py"
+    adapter_path.parent.mkdir(parents=True, exist_ok=True)
+    adapter_path.write_text(
+        "import time\n"
+        "time.sleep(3)\n"
+        "print('{\"result_summary\":\"Too slow.\",\"structured_output\":{}}')\n",
+        encoding="utf-8",
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "profile-adapter",
+                "scout",
+                "--command",
+                f"python3 {adapter_path}",
+                "--input-mode",
+                "json_file",
+                "--output-mode",
+                "json",
+                "--timeout-seconds",
+                "1",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "run-delegation", delegation_id]) == 1
+    output = capsys.readouterr().out
+    assert "run_delegation_failed: adapter command timed out after 1 seconds" in output
+    incidents = storage.list_recent_incidents()
+    assert incidents[0].failure_class == "adapter timeout"
+
+
+def test_run_delegation_record_memory_creates_proposed_memory(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage, _goal_id, _task_id, delegation_id = _create_file_mapping_delegation(
+        tmp_path,
+        capsys,
+    )
+    adapter_path = _write_fake_scout_adapter(tmp_path)
+    _configure_scout_adapter(tmp_path, capsys, adapter_path)
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-delegation",
+                delegation_id,
+                "--record-memory",
+                "--memory-key",
+                "repo.cli.entrypoint",
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "memory_proposal: memory_" in output
+    assert "memory_status: proposed" in output
+
+    entries = storage.list_memory_entries(project_id="bootstrap")
+    assert len(entries) == 1
+    assert entries[0].key == "repo.cli.entrypoint"
+    assert entries[0].status == "proposed"
+    assert entries[0].source_type == "subagent_delegation"
+    assert entries[0].source_id == delegation_id
+
+
+def test_run_delegation_rejects_completed_rerun_safely(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    _storage, _goal_id, _task_id, delegation_id = _create_file_mapping_delegation(
+        tmp_path,
+        capsys,
+    )
+    adapter_path = _write_fake_scout_adapter(tmp_path)
+    _configure_scout_adapter(tmp_path, capsys, adapter_path)
+    assert main(["--root", str(tmp_path), "run-delegation", delegation_id]) == 0
+    capsys.readouterr()
+
+    assert main(["--root", str(tmp_path), "run-delegation", delegation_id]) == 1
+    output = capsys.readouterr().out
+    assert f"run_delegation_failed: delegation {delegation_id} is already completed" in output
+
+
+def test_run_delegation_rejects_unsafe_adapter_command(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage, _goal_id, _task_id, delegation_id = _create_file_mapping_delegation(
+        tmp_path,
+        capsys,
+    )
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-delegation",
+                delegation_id,
+                "--adapter-command",
+                "curl https://example.invalid",
+            ]
+        )
+        == 1
+    )
+    output = capsys.readouterr().out
+    assert "run_delegation_failed: unsafe adapter command contains curl" in output
+    incidents = storage.list_recent_incidents()
+    assert incidents[0].failure_class == "unsafe adapter command"
+
+
+def test_run_delegation_rejects_write_enabled_subagent_profile(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage, _goal_id, _task_id, delegation_id = _create_file_mapping_delegation(
+        tmp_path,
+        capsys,
+    )
+    adapter_path = _write_fake_scout_adapter(tmp_path)
+    _configure_scout_adapter(tmp_path, capsys, adapter_path)
+    storage.upsert_profile(
+        name="scout",
+        label="Repo Scout",
+        model="configurable/cheap-fast-model",
+        cost_tier="low",
+        mode="subagent",
+        tools_json=["read", "grep", "summarize"],
+        permissions_json={"read": "allow", "write": "allow", "shell": "deny", "commit": "deny"},
+        use_for_json=["repo_search", "file_mapping"],
+        max_budget_json={"tokens": 20000},
+    )
+
+    assert main(["--root", str(tmp_path), "run-delegation", delegation_id]) == 1
+    output = capsys.readouterr().out
+    assert "run_delegation_failed: profile scout is not a read-only subagent" in output
+
+
 def test_memory_proposal_from_completed_delegation_records_evidence_and_dashboard(
     tmp_path: Path,
     capsys,
@@ -3632,6 +4085,93 @@ def test_static_dashboard_summarizes_runs_and_queue(tmp_path: Path) -> None:
     assert "completed" in dashboard
     assert "## Recent Learnings" in dashboard
     assert "first closed loop" in dashboard
+
+
+def _create_file_mapping_delegation(
+    tmp_path: Path,
+    capsys,
+) -> tuple[Storage, str, str, str]:
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("bootstrap", "map files before coding")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        project_id="bootstrap",
+        task_type="record_learning",
+        description="Find relevant CLI files and summarize them.",
+        verification_plan={"type": "manual_review"},
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "delegate",
+                task_id,
+                "--profile",
+                "scout",
+                "--title",
+                "Find relevant CLI files",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    delegation_id = storage.list_subagent_delegations(goal_id)[0].id
+    return storage, goal_id, task_id, delegation_id
+
+
+def _write_fake_scout_adapter(tmp_path: Path) -> Path:
+    adapter_path = tmp_path / ".clanker" / "adapters" / "fake_scout.py"
+    adapter_path.parent.mkdir(parents=True, exist_ok=True)
+    adapter_path.write_text(
+        "\n".join(
+            [
+                "import json",
+                "import sys",
+                "from pathlib import Path",
+                "",
+                "input_path = Path(sys.argv[1])",
+                "payload = json.loads(input_path.read_text(encoding='utf-8'))",
+                "evidence_dir = Path(payload['evidence_dir'])",
+                "(evidence_dir / 'adapter-seen.txt').write_text(payload['delegation']['id'], encoding='utf-8')",
+                "print(json.dumps({",
+                "  'result_summary': 'Found relevant CLI files.',",
+                "  'structured_output': {",
+                "    'files': ['agent_os/cli.py'],",
+                "    'findings': ['CLI command parser lives in agent_os/cli.py.'],",
+                "    'relevant_files': ['agent_os/cli.py']",
+                "  }",
+                "}))",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return adapter_path
+
+
+def _configure_scout_adapter(tmp_path: Path, capsys, adapter_path: Path) -> None:
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "profile-adapter",
+                "scout",
+                "--command",
+                f"python3 {adapter_path}",
+                "--input-mode",
+                "json_file",
+                "--output-mode",
+                "json",
+                "--timeout-seconds",
+                "30",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
 
 
 def _init_git_repo(repo_path: Path) -> None:

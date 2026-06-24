@@ -280,7 +280,7 @@ When read-only specialist output exists, attach it to the delegation:
 ```bash
 python3 -m agent_os.cli record-delegation-result <delegation_id> \
   --summary "Relevant files identified." \
-  --output-json '{"files":["agent_os/cli.py","tests/test_first_milestone.py"]}' \
+  --output-json '{"files":["agent_os/cli.py","tests/test_first_milestone.py"],"findings":["CLI and tests cover delegation."],"relevant_files":["agent_os/cli.py","tests/test_first_milestone.py"]}' \
   --recorded-by operator
 ```
 

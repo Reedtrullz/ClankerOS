@@ -23,6 +23,7 @@ harder to overclaim.
 | Run the first loop | `docs/tutorial-first-loop.md` |
 | Make a coded change safely | `docs/tutorial-approval-gated-coding.md` |
 | Capture subagent-style context without execution | `docs/tutorial-subagent-delegation-results.md` |
+| Run a read-only delegation through a fake local adapter | `docs/tutorial-executable-delegation.md` |
 | Review a run before acting | `python3 -m agent_os.cli review <run_id>` |
 | Keep activation blocked while preserving proof state | start with the capability follow-up tutorials below |
 | Publish a coherent snapshot | `docs/tutorial-public-snapshot.md` |
@@ -128,6 +129,10 @@ List the safe default profiles and record a scout routing decision for repo sear
 
 ```text
 Record a read-only scout delegation contract for this task and show me the delegation artifact, but do not start a subagent.
+```
+
+```text
+Configure a fake local scout shell adapter, run this pending delegation, show me the evidence packet, and keep provider/network non-claims precise.
 ```
 
 ```text

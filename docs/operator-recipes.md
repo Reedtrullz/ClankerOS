@@ -72,7 +72,7 @@ python3 -m agent_os.cli route --category repo_search --project my-repo
 python3 -m agent_os.cli delegate task_... --profile scout --title "Find relevant files"
 python3 -m agent_os.cli record-delegation-result subagent_delegation_... \
   --summary "Relevant files identified." \
-  --output-json '{"files":["agent_os/cli.py"]}'
+  --output-json '{"files":["agent_os/cli.py"],"findings":["CLI parser lives in agent_os/cli.py."],"relevant_files":["agent_os/cli.py"]}'
 ```
 
 Use this when you want structured specialist-style context in the control
@@ -80,6 +80,29 @@ plane without starting an external worker.
 
 Boundary: delegation records and results are local artifacts. They do not
 start subagents, call model providers, approve work, or write target files.
+
+## Run A Local Delegation Adapter
+
+```bash
+python3 -m agent_os.cli delegate task_... --profile scout --title "Find relevant files"
+python3 -m agent_os.cli profile-adapter scout \
+  --command "python3 .clanker/adapters/fake_scout.py" \
+  --input-mode json_file \
+  --output-mode json \
+  --timeout-seconds 120
+python3 -m agent_os.cli run-delegation subagent_delegation_...
+python3 -m agent_os.cli delegation-result subagent_delegation_...
+python3 -m agent_os.cli inbox
+python3 -m agent_os.cli dashboard
+```
+
+Use this when a read-only specialist should be executed by a locally configured
+shell adapter. The adapter must return a JSON envelope with `result_summary`
+and `structured_output`.
+
+Boundary: ClankerOS records durable state, evidence, validation, and incidents.
+It does not provide built-in model-provider integrations, and adapter network
+behavior is unknown unless the adapter writes evidence proving otherwise.
 
 ## Review Latest Capability Result Without Activation
 

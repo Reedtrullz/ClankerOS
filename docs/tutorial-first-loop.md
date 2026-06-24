@@ -93,6 +93,11 @@ This stores a pending `subagent_delegations` row and a JSON artifact under
 `.clanker/delegations/`. It does not start a subagent, call a model provider,
 write files, approve work, commit, or mutate external systems.
 
+To execute a pending delegation through a configured fake local shell adapter,
+use `docs/tutorial-executable-delegation.md`. That path writes a run/evidence
+packet and preserves the narrower claim that ClankerOS itself made zero
+provider calls while adapter network behavior is unknown unless proven.
+
 ## 6. Record A Delegation Result
 
 If read-only specialist output exists, attach it to the delegation:
@@ -100,7 +105,7 @@ If read-only specialist output exists, attach it to the delegation:
 ```bash
 python3 -m agent_os.cli record-delegation-result <delegation_id> \
   --summary "Relevant files identified." \
-  --output-json '{"files":["agent_os/cli.py"]}'
+  --output-json '{"files":["agent_os/cli.py"],"findings":["CLI parser lives in agent_os/cli.py."],"relevant_files":["agent_os/cli.py"]}'
 ```
 
 This validates the payload against the expected schema family, marks the
@@ -140,7 +145,8 @@ eval runs and remain guidance only; they are not automatic executors.
 - It does not dispatch subagents or call a model provider when recording a
   profile routing decision.
 - It does not start subagents or call model providers when recording a
-  delegation contract.
+  delegation contract. Executable local shell adapters are covered in
+  `docs/tutorial-executable-delegation.md`.
 - It does not start subagents or call model providers when recording a
   delegation result.
 - It does not enforce budgets, promote trust, retry work, or track real spend.

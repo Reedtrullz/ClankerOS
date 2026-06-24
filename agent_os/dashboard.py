@@ -2276,6 +2276,13 @@ def generate_static_dashboard(root: Path) -> Path:
             "deciding with `python3 -m agent_os.cli approve <approval_id> "
             "--decided-by operator --note \"...\"`."
         )
+    elif open_incidents:
+        incident = open_incidents[0]
+        lines.append(
+            f"- Review open incident `{incident['id']}` for run `{incident['run_id']}` "
+            f"before starting new work. Evidence: "
+            f"`{_relative_to_root(root, incident['evidence_path'])}`."
+        )
     elif approved_commit_effects:
         effect = approved_commit_effects[0]
         lines.append(

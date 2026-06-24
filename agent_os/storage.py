@@ -311,6 +311,7 @@ class AgentProfile:
     permissions_json: dict[str, Any]
     use_for_json: list[str]
     max_budget_json: dict[str, Any]
+    adapter_config_json: dict[str, Any]
     enabled: bool
     created_at: str
     updated_at: str
@@ -3326,6 +3327,7 @@ class Storage:
                     permissions_json text not null,
                     use_for_json text not null,
                     max_budget_json text not null,
+                    adapter_config_json text not null default '{}',
                     enabled integer not null,
                     created_at text not null,
                     updated_at text not null
@@ -5777,6 +5779,7 @@ class Storage:
             self._ensure_column(connection, "iteration_packets", "selected_score", "integer")
             self._ensure_column(connection, "iteration_packets", "selected_complexity", "integer")
             self._ensure_column(connection, "effects", "result_json", "text not null default '{}'")
+            self._ensure_column(connection, "profiles", "adapter_config_json", "text not null default '{}'")
             self._ensure_column(connection, "memory_entries", "artifact_path", "text not null default ''")
             self._ensure_column(connection, "memory_entries", "approved_by", "text")
             self._ensure_column(connection, "memory_entries", "approved_at", "text")
@@ -20000,24 +20003,26 @@ class Storage:
         permissions_json: dict[str, Any],
         use_for_json: list[str],
         max_budget_json: dict[str, Any],
+        adapter_config_json: dict[str, Any] | None = None,
         enabled: bool = True,
     ) -> AgentProfile:
         now = utc_now()
         profile_id = new_id("profile")
         with self._connect() as connection:
             row = connection.execute(
-                "select id, created_at from profiles where name = ?",
+                "select id, created_at, adapter_config_json from profiles where name = ?",
                 (name,),
             ).fetchone()
             if row is None:
+                adapter_config = adapter_config_json or {}
                 connection.execute(
                     """
                     insert into profiles (
                         id, name, label, model, cost_tier, mode, tools_json,
                         permissions_json, use_for_json, max_budget_json,
-                        enabled, created_at, updated_at
+                        adapter_config_json, enabled, created_at, updated_at
                     )
-                    values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         profile_id,
@@ -20030,6 +20035,7 @@ class Storage:
                         _json_dumps(permissions_json),
                         _json_dumps(use_for_json),
                         _json_dumps(max_budget_json),
+                        _json_dumps(adapter_config),
                         1 if enabled else 0,
                         now,
                         now,
@@ -20037,12 +20043,18 @@ class Storage:
                 )
             else:
                 profile_id = row["id"]
+                adapter_config = (
+                    adapter_config_json
+                    if adapter_config_json is not None
+                    else _json_loads(row["adapter_config_json"], {})
+                )
                 connection.execute(
                     """
                     update profiles
                     set label = ?, model = ?, cost_tier = ?, mode = ?,
                         tools_json = ?, permissions_json = ?, use_for_json = ?,
-                        max_budget_json = ?, enabled = ?, updated_at = ?
+                        max_budget_json = ?, adapter_config_json = ?, enabled = ?,
+                        updated_at = ?
                     where name = ?
                     """,
                     (
@@ -20054,6 +20066,7 @@ class Storage:
                         _json_dumps(permissions_json),
                         _json_dumps(use_for_json),
                         _json_dumps(max_budget_json),
+                        _json_dumps(adapter_config),
                         1 if enabled else 0,
                         now,
                         name,
@@ -20082,6 +20095,32 @@ class Storage:
                 (name,),
             ).fetchone()
         return self._row_to_profile(row) if row else None
+
+    def update_profile_adapter_config(
+        self,
+        name: str,
+        adapter_config_json: dict[str, Any],
+    ) -> AgentProfile:
+        now = utc_now()
+        with self._connect() as connection:
+            row = connection.execute(
+                "select * from profiles where name = ?",
+                (name,),
+            ).fetchone()
+            if row is None:
+                raise KeyError(name)
+            connection.execute(
+                """
+                update profiles
+                set adapter_config_json = ?, updated_at = ?
+                where name = ?
+                """,
+                (_json_dumps(adapter_config_json), now, name),
+            )
+        profile = self.get_profile(name)
+        if profile is None:
+            raise KeyError(name)
+        return profile
 
     def upsert_routing_rule(
         self,
@@ -20384,6 +20423,85 @@ class Storage:
                     result_summary,
                     result_artifact_path,
                     started_at,
+                    completed_at,
+                    delegation_id,
+                ),
+            )
+            updated = connection.execute(
+                "select * from subagent_delegations where id = ?",
+                (delegation_id,),
+            ).fetchone()
+        return self._row_to_subagent_delegation(updated)
+
+    def mark_subagent_delegation_started(
+        self,
+        delegation_id: str,
+        *,
+        started_at: str | None = None,
+    ) -> SubagentDelegation:
+        started_at = started_at or utc_now()
+        with self._connect() as connection:
+            row = connection.execute(
+                "select * from subagent_delegations where id = ?",
+                (delegation_id,),
+            ).fetchone()
+            if row is None:
+                raise KeyError(delegation_id)
+            if row["status"] != "pending":
+                raise ValueError(
+                    f"delegation {delegation_id} is not pending: {row['status']}"
+                )
+            connection.execute(
+                """
+                update subagent_delegations
+                set started_at = coalesce(started_at, ?)
+                where id = ?
+                """,
+                (started_at, delegation_id),
+            )
+            updated = connection.execute(
+                "select * from subagent_delegations where id = ?",
+                (delegation_id,),
+            ).fetchone()
+        return self._row_to_subagent_delegation(updated)
+
+    def fail_subagent_delegation(
+        self,
+        delegation_id: str,
+        *,
+        result_summary: str,
+        result_artifact_path: str,
+        completed_at: str | None = None,
+    ) -> SubagentDelegation:
+        completed_at = completed_at or utc_now()
+        with self._connect() as connection:
+            row = connection.execute(
+                "select * from subagent_delegations where id = ?",
+                (delegation_id,),
+            ).fetchone()
+            if row is None:
+                raise KeyError(delegation_id)
+            if row["status"] == "completed":
+                raise ValueError(f"delegation {delegation_id} is already completed")
+            if row["status"] not in {"pending", "failed"}:
+                raise ValueError(
+                    f"delegation {delegation_id} cannot be failed from {row['status']}"
+                )
+            connection.execute(
+                """
+                update subagent_delegations
+                set status = ?,
+                    result_summary = ?,
+                    result_artifact_path = ?,
+                    started_at = coalesce(started_at, ?),
+                    completed_at = ?
+                where id = ?
+                """,
+                (
+                    "failed",
+                    result_summary,
+                    result_artifact_path,
+                    completed_at,
                     completed_at,
                     delegation_id,
                 ),
@@ -21326,6 +21444,7 @@ class Storage:
             permissions_json=_json_loads(row["permissions_json"], {}),
             use_for_json=_json_loads(row["use_for_json"], []),
             max_budget_json=_json_loads(row["max_budget_json"], {}),
+            adapter_config_json=_json_loads(row["adapter_config_json"], {}),
             enabled=bool(row["enabled"]),
             created_at=row["created_at"],
             updated_at=row["updated_at"],

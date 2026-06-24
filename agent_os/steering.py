@@ -198,11 +198,18 @@ def collect_inbox_items(root: Path) -> dict[str, object]:
         for incident in storage.list_recent_incidents(limit=10)
         if incident.status == "open"
     ]
+    subagent_delegations = storage.list_recent_subagent_delegations(limit=10)
     return {
         "steering_reviews": steering_reviews,
         "pending_approvals": pending_approvals,
         "open_incidents": open_incidents,
-        "count": len(steering_reviews) + len(pending_approvals) + len(open_incidents),
+        "subagent_delegations": subagent_delegations,
+        "count": (
+            len(steering_reviews)
+            + len(pending_approvals)
+            + len(open_incidents)
+            + len(subagent_delegations)
+        ),
     }
 
 

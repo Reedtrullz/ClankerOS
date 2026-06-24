@@ -5967,3 +5967,38 @@ local application records for those proposed effects.
 - Goal ID: goal_497d56730b07
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_82f659ae72cf/summary.md
+
+## 2026-06-24 Executable Delegation Shell Adapter Loop
+
+- Implemented provider-agnostic local shell adapter execution for pending
+  read-only subagent delegations.
+- New commands: `profile-adapter` and `run-delegation`.
+- New profile schema field: `adapter_config_json`.
+- New evidence path:
+  `.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/`.
+- New docs: `docs/tutorial-executable-delegation.md` plus README, suggested
+  use, command reference, operator recipes, getting started, docs index, and
+  operating summary updates.
+- Verification passed: py_compile, 14 focused executable delegation tests, 19
+  profile/delegation-result tests, 82 broader delegation/memory tests, clean
+  temp-root demo, `git diff --check`, full suite with 470 tests in 981.16s,
+  eval-after-change `run_851861ade0cb`, baseline eval, playbooks, queue health,
+  approvals, eval-candidates, handoff review, dashboard, and iterate.
+- GitHub repo metadata updated and read back with executable-delegation
+  description plus `subagent-delegation` and `executable-delegation` topics.
+- Boundary: shell adapter only; no built-in provider integrations, hosted UI,
+  browser/desktop/remote worker, deploy, scheduling, automatic retries, memory
+  activation, skill activation, trust promotion, budget enforcement, or real
+  cost tracking.
+
+## Run run_851861ade0cb
+
+- Goal ID: goal_ef8f982d0fc3
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_851861ade0cb/summary.md
+
+## Run run_9a51f0da4a49
+
+- Goal ID: goal_0bd03de428f7
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_9a51f0da4a49/summary.md

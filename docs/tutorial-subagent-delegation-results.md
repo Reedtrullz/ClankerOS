@@ -1,6 +1,7 @@
 # Tutorial: Record Delegation Results
 
-This tutorial walks through the local profile-routing and delegation loop:
+This tutorial walks through the manual local profile-routing and delegation
+result-ingestion loop:
 
 1. create or choose a concrete task;
 2. record a safe profile routing decision;
@@ -10,8 +11,9 @@ This tutorial walks through the local profile-routing and delegation loop:
 6. propose useful memory from the completed result.
 
 The loop is local-first. It writes SQLite rows and JSON artifacts. It does not
-start a subagent, call a model provider, approve work, commit, push, deploy, or
-mutate external systems.
+start a shell adapter, call a model provider, approve work, commit, push,
+deploy, or mutate external systems. To execute a pending delegation through a
+configured fake local adapter, use `docs/tutorial-executable-delegation.md`.
 
 ## Prerequisites
 
@@ -90,14 +92,14 @@ result, attach it to the delegation:
 ```bash
 python3 -m agent_os.cli record-delegation-result <delegation_id> \
   --summary "Relevant files identified." \
-  --output-json '{"files":["agent_os/cli.py","tests/test_first_milestone.py"]}' \
+  --output-json '{"files":["agent_os/cli.py","tests/test_first_milestone.py"],"findings":["CLI and tests cover delegation."],"relevant_files":["agent_os/cli.py","tests/test_first_milestone.py"]}' \
   --recorded-by operator
 ```
 
 The command validates the JSON against the delegation's expected schema family.
 Accepted keys must contain a non-empty list or object. Examples:
 
-- `file_relevance_report` accepts non-empty `files`, `findings`, or `relevant_files`.
+- `file_relevance_report` requires non-empty `files`, `findings`, and `relevant_files`.
 - `failing_test_summary` accepts non-empty `failures`, `failing_tests`, or `findings`.
 - `dependency_map` accepts non-empty `dependencies` or `edges`.
 - `risk_review` accepts non-empty `risks` or `findings`.

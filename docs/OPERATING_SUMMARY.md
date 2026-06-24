@@ -81,6 +81,17 @@ Core layers for the bootstrap:
   allowed tools, forbidden actions, expected output schema, budget hints, and
   a JSON artifact. Delegation records do not start subagents, call model
   providers, approve work, commit, write files, or mutate external state.
+- Executable delegation runner: `profile-adapter` stores local shell adapter
+  metadata on a profile, and `run-delegation <delegation_id>` executes a
+  pending read-only delegation through that configured adapter. The runner
+  writes a prompt/context bundle, invokes the shell command, captures
+  stdout/stderr/exit code, parses JSON output, validates the delegation schema,
+  records the result, writes
+  `.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/`, optionally
+  proposes memory, and opens incidents for adapter or output failures. It
+  supports shell adapters only. ClankerOS records
+  `provider_calls_taken_by_clankeros=0`, `external_mutations_taken=0`, and
+  `network_actions_taken=unknown` unless adapter evidence proves otherwise.
 - Delegation result ingestion: `record-delegation-result` attaches structured
   operator-supplied output to an existing delegation, validates the expected
   schema family, marks the delegation completed, and writes a local result
@@ -115,14 +126,16 @@ Core layers for the bootstrap:
   `docs/steering-review.md` plus a `steering_reviews` row from local goal,
   task, approval, and incident state. `next-action <goal_or_project>` refreshes
   the review and prints the recommended operator action. `inbox` lists
-  operator-worthy steering reviews, pending approvals, and open incidents.
+  operator-worthy steering reviews, pending approvals, open incidents, and
+  recent delegation states.
   These commands do not execute tasks, approve requests, retry, commit, push,
   deploy, or mutate external systems.
 - Operator cockpit: the dashboard starts with active runs, registered projects,
   goal plans, planned task runs, approval inbox, proposed effects,
   verification status, recent worktrees, GitHub handoffs, CI/deploy evidence,
-  profile routing decisions, subagent delegations, steering reviews, memory
-  proposals, skill proposals, and the next recommended operator action.
+  profile routing decisions, subagent delegations with execution metadata when
+  available, steering reviews, memory proposals, skill proposals, and the next
+  recommended operator action.
 - Operator approval effect proposals: approved local
   `operator_approval_requests` rows can be converted into idempotent
   `proposed` effect records for external-decision and capability surfaces
