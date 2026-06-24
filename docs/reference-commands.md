@@ -125,6 +125,20 @@ Useful flags:
 
 `run-delegation` auto-generates the pack when it is missing, copies it into the
 run evidence packet, and puts compact `context_pack` metadata in `input.json`.
+Successful executable delegations also write first-class implementation
+handoff artifacts:
+
+```text
+.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/implementation_handoff.json
+.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/implementation_handoff.md
+```
+
+The handoff JSON includes `schema_version: 1`, kind
+`implementation_context_handoff`, context-pack paths/counts, returned-file
+inventory validation, scout returned files, and non-claims. It intentionally
+points at `context_pack.json` and `context_pack.md` instead of embedding large
+snippets. `delegation-result`, `review`, `inbox`, and `dashboard` surface the
+handoff path and validation summary.
 `record-delegation-result` remains the manual ingestion path for
 operator-supplied output.
 

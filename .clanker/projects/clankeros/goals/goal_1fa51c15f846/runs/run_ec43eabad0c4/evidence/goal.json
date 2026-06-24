@@ -1,0 +1,12 @@
+{
+  "completed_at": null,
+  "created_at": "2026-06-24T11:22:00.463131+00:00",
+  "description": "Demo context-pack repo scouting before edits",
+  "id": "goal_1fa51c15f846",
+  "original_prompt": "Demo context-pack repo scouting before edits",
+  "priority": 100,
+  "project_id": "clankeros",
+  "status": "accepted",
+  "title": "Demo context-pack repo scouting before edits",
+  "updated_at": "2026-06-24T11:22:00.463131+00:00"
+}

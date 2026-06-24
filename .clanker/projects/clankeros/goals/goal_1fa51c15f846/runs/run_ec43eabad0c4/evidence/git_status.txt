@@ -1,0 +1,21 @@
+## main...origin/main
+ M README.md
+ M agent_os/cli.py
+ M agent_os/dashboard.py
+ M agent_os/delegation_runner.py
+ M agent_os/run_review.py
+ M agent_os/subagent_delegation.py
+ M docs/OPERATING_SUMMARY.md
+ M docs/concepts.md
+ M docs/dashboard.md
+ M docs/reference-commands.md
+ M docs/suggested-use.md
+ M docs/tutorial-executable-delegation.md
+ M tests/test_first_milestone.py
+?? .clanker/delegations/subagent_delegation_3189127f5f0d-result.json
+?? .clanker/delegations/subagent_delegation_3189127f5f0d/
+?? .clanker/delegations/task_858971dcc5d7-refresh-context-pack-implementation-handoff-proof.json
+?? .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/
+?? "README (1).md"
+?? "docs/docs-index (1).md"
+?? runs/run_ec43eabad0c4/

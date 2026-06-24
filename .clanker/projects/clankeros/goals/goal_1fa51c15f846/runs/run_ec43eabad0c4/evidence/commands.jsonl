@@ -1,0 +1,7 @@
+{"command": "python3 -m agent_os.cli project-context clankeros", "plan_step_id": "plan_step_4dc2f12ca75d", "source": "plan_step", "status": "planned", "task_id": "task_de0322669e63"}
+{"command": "python3 -m pytest -q", "plan_step_id": "plan_step_67668bbeffbd", "source": "plan_step", "status": "planned", "task_id": "task_c2d031736291"}
+{"command": "python3 -m pytest -q", "plan_step_id": "plan_step_3a8b33b90bbf", "source": "plan_step", "status": "planned", "task_id": "task_4720d77d4d70"}
+{"command": "python3 -m agent_os.cli project-context clankeros", "source": "task_verification_plan", "status": "planned", "task_id": "task_de0322669e63"}
+{"command": "python3 -m pytest -q", "source": "task_verification_plan", "status": "planned", "task_id": "task_c2d031736291"}
+{"command": "python3 -m pytest -q", "source": "task_verification_plan", "status": "planned", "task_id": "task_4720d77d4d70"}
+{"command": "python3 -m pytest tests/test_first_milestone.py -k context_pack -q", "source": "task_verification_plan", "status": "pending", "task_id": "task_858971dcc5d7"}

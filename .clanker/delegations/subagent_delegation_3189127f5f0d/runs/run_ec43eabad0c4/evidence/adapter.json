@@ -1,0 +1,9 @@
+{
+  "command": "python3 .clanker/adapters/context_pack_demo_scout.py '/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/input.json'",
+  "input_mode": "json_file",
+  "output_mode": "json",
+  "resolved_cwd": "/Users/reidar/Documents/Agent System",
+  "timeout_seconds": 120,
+  "type": "shell",
+  "working_directory": "system_root"
+}

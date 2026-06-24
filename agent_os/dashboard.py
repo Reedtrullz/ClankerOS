@@ -6297,16 +6297,35 @@ def _subagent_scout_work_lines(subagent_delegations: list[object]) -> list[str]:
         if delegation.assigned_profile != "scout" and not context_pack:
             continue
         top_files = metadata.get("context_pack_top_ranked_files") or []
+        missing_files = metadata.get("context_pack_returned_files_missing") or []
         project = metadata.get("target_project_id") or "unknown"
         incident = metadata.get("incident_id") or "none"
+        returned_files = _dashboard_bool(
+            metadata.get("context_pack_returned_files_in_inventory")
+        )
+        handoff = metadata.get("implementation_handoff_json") or "none"
         lines.append(
             f"- {delegation.id}: profile={delegation.assigned_profile} "
             f"project={project} status={delegation.status} "
+            f"context_pack_id={metadata.get('context_pack_id') or 'none'} "
             f"context_pack={context_pack or 'none'} "
+            f"ranked_files={metadata.get('context_pack_ranked_file_count', 'unknown')} "
+            f"grep_hits={metadata.get('context_pack_grep_hit_count', 'unknown')} "
             f"top_files={','.join(top_files[:5]) if top_files else 'none'} "
+            f"returned_files_in_inventory={returned_files} "
+            f"missing_files={','.join(missing_files) if missing_files else 'none'} "
+            f"implementation_handoff={handoff} "
             f"incident={incident}"
         )
     return lines
+
+
+def _dashboard_bool(value: object) -> str:
+    if value is True:
+        return "true"
+    if value is False:
+        return "false"
+    return "unknown"
 
 
 def _relative_to_root(root: Path, path: str | None) -> str:

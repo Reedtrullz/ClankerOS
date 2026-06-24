@@ -293,6 +293,8 @@ result.json
 context_pack.json
 context_pack.md
 context_pack_metadata.json
+implementation_handoff.json
+implementation_handoff.md
 memory_proposal.json
 ```
 
@@ -302,6 +304,10 @@ a registered project. `validation.json` records `context_pack_used`,
 `returned_files_in_inventory`, `returned_files_missing`, and
 `top_ranked_files_referenced` when a context pack was attached. Missing
 returned files are warnings in validation metadata, not hard failures.
+`implementation_handoff.json` and `.md` are compact downstream implementation
+inputs. They include the context-pack path, ranked/test hint summaries,
+returned-file validation, scout returned files, and non-claims without copying
+large snippets into the handoff.
 
 ## 8. Inspect The Result And Evidence
 
@@ -314,9 +320,11 @@ python3 -m agent_os.cli dashboard
 
 `delegation-result` prints runtime metadata when the result came from
 `run-delegation`, including the run id, adapter type, evidence packet, and
-context-pack path. `review <run_id>` includes a `## Scout Context Pack`
-section with top ranked files and test hints. The dashboard includes a
-`### Subagent / Scout Work` section with compact scout status.
+context-pack and implementation-handoff paths. `review <run_id>` includes a
+`## Scout Context Pack` section with top ranked files, test hints, returned
+file inventory validation, and the handoff path. The dashboard includes a
+`### Subagent / Scout Work` section with compact scout status, context-pack
+counts, missing returned files, and the handoff path.
 
 ## 9. Propose Memory From The Result
 

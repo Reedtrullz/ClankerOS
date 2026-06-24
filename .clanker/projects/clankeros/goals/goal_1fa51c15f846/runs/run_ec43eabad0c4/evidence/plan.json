@@ -1,0 +1,76 @@
+{
+  "plan": {
+    "artifact_path": ".clanker/projects/clankeros/goals/goal_1fa51c15f846/PLAN-v1.md",
+    "created_at": "2026-06-24T11:22:00.471960+00:00",
+    "created_by_profile": "planner",
+    "goal_id": "goal_1fa51c15f846",
+    "id": "plan_7e4c179d9102",
+    "status": "active",
+    "summary": "Initial plan for Demo context-pack repo scouting before edits",
+    "updated_at": "2026-06-24T11:22:00.471960+00:00",
+    "version": 1
+  },
+  "plans": [
+    {
+      "artifact_path": ".clanker/projects/clankeros/goals/goal_1fa51c15f846/PLAN-v1.md",
+      "created_at": "2026-06-24T11:22:00.471960+00:00",
+      "created_by_profile": "planner",
+      "goal_id": "goal_1fa51c15f846",
+      "id": "plan_7e4c179d9102",
+      "status": "active",
+      "summary": "Initial plan for Demo context-pack repo scouting before edits",
+      "updated_at": "2026-06-24T11:22:00.471960+00:00",
+      "version": 1
+    }
+  ],
+  "steps": [
+    {
+      "acceptance_criteria": "Scope, non-goals, and verifier are explicit.",
+      "assigned_profile": "planner",
+      "blocked_reason": null,
+      "created_at": "2026-06-24T11:22:00.480573+00:00",
+      "description": "Confirm target behavior and proof boundary for: Demo context-pack repo scouting before edits.",
+      "goal_id": "goal_1fa51c15f846",
+      "id": "plan_step_4dc2f12ca75d",
+      "order_index": 1,
+      "plan_id": "plan_7e4c179d9102",
+      "status": "planned",
+      "task_id": "task_de0322669e63",
+      "title": "Clarify scope and acceptance criteria",
+      "updated_at": "2026-06-24T11:22:00.480573+00:00",
+      "verification_command": "python3 -m agent_os.cli project-context clankeros"
+    },
+    {
+      "acceptance_criteria": "Changed files are limited to the agreed scope and have local evidence.",
+      "assigned_profile": "coder",
+      "blocked_reason": null,
+      "created_at": "2026-06-24T11:22:00.489262+00:00",
+      "description": "Make the minimal local change that satisfies the goal: Demo context-pack repo scouting before edits.",
+      "goal_id": "goal_1fa51c15f846",
+      "id": "plan_step_67668bbeffbd",
+      "order_index": 2,
+      "plan_id": "plan_7e4c179d9102",
+      "status": "planned",
+      "task_id": "task_c2d031736291",
+      "title": "Implement the smallest safe change",
+      "updated_at": "2026-06-24T11:22:00.489262+00:00",
+      "verification_command": "python3 -m pytest -q"
+    },
+    {
+      "acceptance_criteria": "Tests, dashboard, handoff, and next-action evidence are current.",
+      "assigned_profile": "tester",
+      "blocked_reason": null,
+      "created_at": "2026-06-24T11:22:00.496846+00:00",
+      "description": "Run verification, refresh operator views, and preserve explicit non-claims.",
+      "goal_id": "goal_1fa51c15f846",
+      "id": "plan_step_3a8b33b90bbf",
+      "order_index": 3,
+      "plan_id": "plan_7e4c179d9102",
+      "status": "planned",
+      "task_id": "task_4720d77d4d70",
+      "title": "Verify evidence and decide next action",
+      "updated_at": "2026-06-24T11:22:00.496846+00:00",
+      "verification_command": "python3 -m pytest -q"
+    }
+  ]
+}

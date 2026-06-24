@@ -3186,6 +3186,32 @@ def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
     assert validation["top_ranked_files_referenced"]
     assert result["context_pack_json"] == str(evidence_dir.relative_to(tmp_path) / "context_pack.json")
     assert result["context_pack_md"] == str(evidence_dir.relative_to(tmp_path) / "context_pack.md")
+    assert result["context_pack_returned_files_in_inventory"] is True
+    assert result["context_pack_returned_files_missing"] == []
+    assert result["context_pack_top_ranked_files_referenced"]
+    assert result["implementation_handoff_json"] == str(
+        evidence_dir.relative_to(tmp_path) / "implementation_handoff.json"
+    )
+    assert result["implementation_handoff_md"] == str(
+        evidence_dir.relative_to(tmp_path) / "implementation_handoff.md"
+    )
+    handoff = json.loads(
+        (evidence_dir / "implementation_handoff.json").read_text(encoding="utf-8")
+    )
+    assert handoff["delegation_id"] == delegation_id
+    assert handoff["schema_version"] == 1
+    assert handoff["kind"] == "implementation_context_handoff"
+    assert handoff["run_id"] == run_id
+    assert handoff["project"]["id"] == "subject"
+    assert handoff["context_pack"]["json_path"] == str(
+        evidence_dir.relative_to(tmp_path) / "context_pack.json"
+    )
+    assert handoff["context_pack"]["ranked_file_count"] >= 1
+    assert "agent_os/delegation_runner.py" in handoff["context_pack"]["top_ranked_files"]
+    assert handoff["validation"]["returned_files_in_inventory"] is True
+    assert handoff["scout_output"]["relevant_files"]
+    assert "snippets" not in handoff
+    assert (evidence_dir / "implementation_handoff.md").exists()
     assert memory_proposal["status"] == "proposed"
     assert memory_proposal["context_pack_json"] == str(evidence_dir.relative_to(tmp_path) / "context_pack.json")
 
@@ -3196,6 +3222,8 @@ def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
     assert main(["--root", str(tmp_path), "delegation-result", delegation_id]) == 0
     result_output = capsys.readouterr().out
     assert "context_pack: .clanker/delegations/" in result_output
+    assert "context_pack_returned_files_in_inventory: true" in result_output
+    assert "implementation_handoff: .clanker/delegations/" in result_output
 
     assert main(["--root", str(tmp_path), "review", run_id]) == 0
     review_output = capsys.readouterr().out
@@ -3208,11 +3236,15 @@ def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
     assert "## Scout Context Pack" in review
     assert "agent_os/delegation_runner.py" in review
     assert "tests/test_delegation_runner.py" in review
+    assert "implementation_handoff:" in review
+    assert "returned_files_in_inventory: true" in review
 
     dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
     assert "### Subagent / Scout Work" in dashboard
     assert delegation_id in dashboard
     assert "context_pack=" in dashboard
+    assert "implementation_handoff=" in dashboard
+    assert "returned_files_in_inventory=true" in dashboard
     assert str(repo_path.resolve()) in input_bundle["project"]["root_path"]
 
 
@@ -3240,15 +3272,39 @@ def test_run_delegation_context_pack_validation_warns_for_missing_returned_files
 
     assert main(["--root", str(tmp_path), "run-delegation", delegation_id]) == 0
     output = capsys.readouterr().out
+    run_id = next(line for line in output.splitlines() if line.startswith("run_id: ")).split(": ", 1)[1]
     evidence_line = next(line for line in output.splitlines() if line.startswith("evidence_packet: "))
     evidence_dir = tmp_path / evidence_line.split(": ", 1)[1]
     validation = json.loads((evidence_dir / "validation.json").read_text(encoding="utf-8"))
+    result = json.loads((evidence_dir / "result.json").read_text(encoding="utf-8"))
+    handoff = json.loads(
+        (evidence_dir / "implementation_handoff.json").read_text(encoding="utf-8")
+    )
 
     assert validation["valid"] is True
     assert validation["context_pack_used"] is True
     assert validation["returned_files_in_inventory"] is False
     assert validation["returned_files_missing"] == ["missing.py"]
     assert validation["top_ranked_files_referenced"] == []
+    assert result["context_pack_returned_files_in_inventory"] is False
+    assert result["context_pack_returned_files_missing"] == ["missing.py"]
+    assert handoff["validation"]["returned_files_in_inventory"] is False
+    assert handoff["validation"]["returned_files_missing"] == ["missing.py"]
+
+    assert main(["--root", str(tmp_path), "review", run_id]) == 0
+    review_output = capsys.readouterr().out
+    review_path = tmp_path / next(
+        line.split(": ", 1)[1]
+        for line in review_output.splitlines()
+        if line.startswith("review: ")
+    )
+    review = review_path.read_text(encoding="utf-8")
+    assert "returned_files_in_inventory: false" in review
+    assert "returned_files_missing: missing.py" in review
+
+    dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
+    assert "returned_files_in_inventory=false" in dashboard
+    assert "missing_files=missing.py" in dashboard
 
 
 def test_run_delegation_malformed_json_opens_incident(

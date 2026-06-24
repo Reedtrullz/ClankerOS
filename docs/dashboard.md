@@ -85,24 +85,25 @@
 - profile scout: Repo Scout mode=subagent cost=low model=configurable/cheap-fast-model adapter=shell use_for=repo_search,file_mapping,dependency_mapping,summarization
 - profile tester: Verification Tester mode=subagent cost=low model=configurable/cheap-coding-model adapter=none use_for=test_triage,failure_summary,verification_review
 - recent_decisions:
+- routing_decision_7f1d62946e38: category=summarization selected=scout model=configurable/cheap-fast-model cost=low task=task_858971dcc5d7 project=clankeros status=selected
 - routing_decision_03fb6d7cd55e: category=summarization selected=scout model=configurable/cheap-fast-model cost=low task=task_858971dcc5d7 project=clankeros status=selected
 - routing_decision_ea43f295b261: category=implementation selected=scout model=configurable/cheap-fast-model cost=low task=task_de0322669e63 project=clankeros status=selected
 - routing_decision_a45198918520: category=evidence_review selected=evaluator model=configurable/strong-reasoning-model cost=medium task=task_9da458146eb5 project=bootstrap status=selected
 - routing_decision_ab9f95b25d2e: category=evidence_review selected=evaluator model=configurable/strong-reasoning-model cost=medium task=task_e7034260ac20 project=bootstrap status=selected
-- routing_decision_93b1c07d54a4: category=implementation selected=coder model=configurable/coder-model cost=high task=task_c13d6ab242ec project=clankeros status=dispatched
 
 ### Subagent Delegations
 
+- subagent_delegation_3189127f5f0d: status=completed profile=scout category=summarization task=task_858971dcc5d7 schema=file_relevance_report artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_3189127f5f0d-result.json run=run_ec43eabad0c4 adapter=shell evidence=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence context_pack=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/context_pack.json implementation_handoff=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/implementation_handoff.json context_pack_returned_files_in_inventory=true summary=Context pack scout demo completed.
 - subagent_delegation_c1f5246a0b7f: status=completed profile=scout category=summarization task=task_858971dcc5d7 schema=file_relevance_report artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_c1f5246a0b7f-result.json run=run_1dd1545c17f1 adapter=shell evidence=.clanker/delegations/subagent_delegation_c1f5246a0b7f/runs/run_1dd1545c17f1/evidence context_pack=.clanker/delegations/subagent_delegation_c1f5246a0b7f/runs/run_1dd1545c17f1/evidence/context_pack.json summary=Context pack scout demo completed.
 - subagent_delegation_035c3e0876c7: status=completed profile=scout category=implementation task=task_de0322669e63 schema=implementation_options artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_035c3e0876c7-result.json run=run_7284c4089a89 adapter=shell evidence=.clanker/delegations/subagent_delegation_035c3e0876c7/runs/run_7284c4089a89/evidence context_pack=.clanker/delegations/subagent_delegation_035c3e0876c7/runs/run_7284c4089a89/evidence/context_pack.json summary=Context pack scout demo completed.
 - subagent_delegation_f5330975ccec: status=completed profile=evaluator category=evidence_review task=task_9da458146eb5 schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_f5330975ccec-result.json summary=Evaluator found hosted dashboard proof remains blocked pending runtime-specific evidence, with no activation-ready proof produced.
 - subagent_delegation_200c581a36a6: status=completed profile=evaluator category=evidence_review task=task_e7034260ac20 schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_200c581a36a6-result.json summary=Evaluator drafted the next downstream result-effect task result-effect task result-effect task result-effect task result-effect task result-effect task proof plan while keeping capability activation blocked.
-- subagent_delegation_4dc659649824: status=completed profile=evaluator category=evidence_review task=task_3ee0f399e6b6 schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_4dc659649824-result.json summary=Evaluator recorded the next downstream result-effect task proof plan and kept activation blocked.
 
 ### Subagent / Scout Work
 
-- subagent_delegation_c1f5246a0b7f: profile=scout project=clankeros status=completed context_pack=.clanker/delegations/subagent_delegation_c1f5246a0b7f/runs/run_1dd1545c17f1/evidence/context_pack.json top_files=agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json,playbooks/first-milestone-closed-loop.md,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py incident=none
-- subagent_delegation_035c3e0876c7: profile=scout project=clankeros status=completed context_pack=.clanker/delegations/subagent_delegation_035c3e0876c7/runs/run_7284c4089a89/evidence/context_pack.json top_files=agent_os/context_pack.py,agent_os/profile_routing.py,agent_os/browser_desktop_adapter_proof.py,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations.py,AGENTS.md incident=none
+- subagent_delegation_3189127f5f0d: profile=scout project=clankeros status=completed context_pack_id=context_pack_0d64cfd677cd context_pack=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/context_pack.json ranked_files=25 grep_hits=40 top_files=agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json,playbooks/first-milestone-closed-loop.md,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py returned_files_in_inventory=true missing_files=none implementation_handoff=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/implementation_handoff.json incident=none
+- subagent_delegation_c1f5246a0b7f: profile=scout project=clankeros status=completed context_pack_id=context_pack_c77525064b80 context_pack=.clanker/delegations/subagent_delegation_c1f5246a0b7f/runs/run_1dd1545c17f1/evidence/context_pack.json ranked_files=8 grep_hits=40 top_files=agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json,playbooks/first-milestone-closed-loop.md,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py returned_files_in_inventory=unknown missing_files=none implementation_handoff=none incident=none
+- subagent_delegation_035c3e0876c7: profile=scout project=clankeros status=completed context_pack_id=context_pack_2bf26861809c context_pack=.clanker/delegations/subagent_delegation_035c3e0876c7/runs/run_7284c4089a89/evidence/context_pack.json ranked_files=8 grep_hits=40 top_files=agent_os/context_pack.py,agent_os/profile_routing.py,agent_os/browser_desktop_adapter_proof.py,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations.py,AGENTS.md returned_files_in_inventory=unknown missing_files=none implementation_handoff=none incident=none
 
 ## Steering Reviews
 
@@ -2044,14 +2045,15 @@
 
 ## Recent Runs
 
+- run_ec43eabad0c4: completed project=clankeros goal=goal_1fa51c15f846 completed=2026-06-24T11:41:26.072344+00:00 summary=runs/run_ec43eabad0c4/summary.md
 - run_1dd1545c17f1: completed project=clankeros goal=goal_1fa51c15f846 completed=2026-06-24T11:23:18.925743+00:00 summary=runs/run_1dd1545c17f1/summary.md
 - run_7284c4089a89: completed project=clankeros goal=goal_1fa51c15f846 completed=2026-06-24T11:22:21.647601+00:00 summary=runs/run_7284c4089a89/summary.md
 - run_f4fab76c7f30: completed project=bootstrap goal=goal_a97fd18ad951 completed=2026-06-24T10:39:36.733426+00:00 summary=runs/run_f4fab76c7f30/summary.md
 - run_6774975374ff: completed project=bootstrap goal=goal_b4b0c4915037 completed=2026-06-24T10:39:29.437212+00:00 summary=runs/run_6774975374ff/summary.md
-- run_9a51f0da4a49: completed project=bootstrap goal=goal_0bd03de428f7 completed=2026-06-24T10:03:23.667641+00:00 summary=runs/run_9a51f0da4a49/summary.md
 
 ## Recent Evidence Packets
 
+- run_ec43eabad0c4: review=runs/run_ec43eabad0c4/review.md evidence=runs/run_ec43eabad0c4/evidence-index.md replay=runs/run_ec43eabad0c4/replay-summary.md packet=.clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence
 - run_7284c4089a89: review=runs/run_7284c4089a89/review.md evidence=missing replay=missing packet=missing
 
 ## Recent Learnings

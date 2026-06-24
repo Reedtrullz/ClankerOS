@@ -153,6 +153,16 @@ ranked files, grep hits, snippets, test hints, entrypoint hints, config hints,
 and non-claims under `.clanker/delegations/<delegation_id>/context/`.
 `run-delegation` auto-generates that pack if it is missing, copies it into the
 run evidence packet, and passes compact `context_pack` metadata to the adapter.
+Successful executable delegations also write compact implementation handoff
+artifacts in the run evidence packet. These handoffs point at the context pack,
+returned files, validation status, and relevant test hints without embedding
+the large snippets:
+
+```text
+.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/implementation_handoff.json
+.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/implementation_handoff.md
+```
+
 Add `--working-directory project_root` when configuring the adapter if the
 local executor should run from the target repository instead of the ClankerOS
 system root.
@@ -209,7 +219,14 @@ During `run-delegation`, those files are copied into:
 ```text
 .clanker/delegations/<delegation_id>/runs/<run_id>/evidence/context_pack.json
 .clanker/delegations/<delegation_id>/runs/<run_id>/evidence/context_pack.md
+.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/implementation_handoff.json
+.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/implementation_handoff.md
 ```
+
+`delegation-result`, `review <run_id>`, `inbox`, and `dashboard` surface the
+context-pack path, returned-file inventory validation, missing returned files,
+and implementation handoff paths so a later implementation pass can start from
+paths and metadata instead of pasted snippets.
 
 Adapters run from the ClankerOS root by default; configure
 `--working-directory project_root` to let a scout read repo files with relative

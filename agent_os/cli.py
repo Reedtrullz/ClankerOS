@@ -600,6 +600,14 @@ def _print_skill_proposal(
     print("external_mutations_taken: 0")
 
 
+def _print_bool(value: object) -> str:
+    if value is True:
+        return "true"
+    if value is False:
+        return "false"
+    return "unknown"
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="agent-os")
     parser.add_argument(
@@ -2251,6 +2259,25 @@ def main(argv: list[str] | None = None) -> int:
             print(f"context_pack: {metadata['context_pack_json']}")
         if metadata.get("context_pack_md"):
             print(f"context_pack_md: {metadata['context_pack_md']}")
+        if "context_pack_returned_files_in_inventory" in metadata:
+            print(
+                "context_pack_returned_files_in_inventory: "
+                f"{_print_bool(metadata['context_pack_returned_files_in_inventory'])}"
+            )
+        if metadata.get("context_pack_returned_files_missing"):
+            print(
+                "context_pack_returned_files_missing: "
+                f"{','.join(metadata['context_pack_returned_files_missing'])}"
+            )
+        if metadata.get("context_pack_top_ranked_files_referenced"):
+            print(
+                "context_pack_top_ranked_files_referenced: "
+                f"{','.join(metadata['context_pack_top_ranked_files_referenced'])}"
+            )
+        if metadata.get("implementation_handoff_json"):
+            print(f"implementation_handoff: {metadata['implementation_handoff_json']}")
+        if metadata.get("implementation_handoff_md"):
+            print(f"implementation_handoff_md: {metadata['implementation_handoff_md']}")
         if "exit_code" in metadata:
             print(f"exit_code: {metadata['exit_code']}")
         if metadata.get("incident_id"):

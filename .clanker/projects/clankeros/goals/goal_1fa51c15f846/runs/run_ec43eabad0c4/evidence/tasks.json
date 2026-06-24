@@ -1,0 +1,118 @@
+[
+  {
+    "artifacts": [],
+    "attempts": 0,
+    "claimed_at": null,
+    "created_at": "2026-06-24T11:22:00.474819+00:00",
+    "depends_on": [],
+    "description": "Confirm target behavior and proof boundary for: Demo context-pack repo scouting before edits.",
+    "evidence": {
+      "plan_id": "plan_7e4c179d9102",
+      "source": "plan_step"
+    },
+    "goal_id": "goal_1fa51c15f846",
+    "id": "task_de0322669e63",
+    "owner": null,
+    "priority": 11,
+    "project_id": "clankeros",
+    "risk_level": "low",
+    "run_id": null,
+    "skill_tags": [
+      "plan-lifecycle"
+    ],
+    "status": "planned",
+    "task_type": "planned_step",
+    "updated_at": "2026-06-24T11:22:00.478008+00:00",
+    "verification_plan": {
+      "acceptance_criteria": "Scope, non-goals, and verifier are explicit.",
+      "command": "python3 -m agent_os.cli project-context clankeros",
+      "source": "plan_step"
+    }
+  },
+  {
+    "artifacts": [],
+    "attempts": 0,
+    "claimed_at": null,
+    "created_at": "2026-06-24T11:22:00.483691+00:00",
+    "depends_on": [],
+    "description": "Make the minimal local change that satisfies the goal: Demo context-pack repo scouting before edits.",
+    "evidence": {
+      "plan_id": "plan_7e4c179d9102",
+      "source": "plan_step"
+    },
+    "goal_id": "goal_1fa51c15f846",
+    "id": "task_c2d031736291",
+    "owner": null,
+    "priority": 12,
+    "project_id": "clankeros",
+    "risk_level": "low",
+    "run_id": null,
+    "skill_tags": [
+      "plan-lifecycle"
+    ],
+    "status": "planned",
+    "task_type": "planned_step",
+    "updated_at": "2026-06-24T11:22:00.486520+00:00",
+    "verification_plan": {
+      "acceptance_criteria": "Changed files are limited to the agreed scope and have local evidence.",
+      "command": "python3 -m pytest -q",
+      "source": "plan_step"
+    }
+  },
+  {
+    "artifacts": [],
+    "attempts": 0,
+    "claimed_at": null,
+    "created_at": "2026-06-24T11:22:00.491762+00:00",
+    "depends_on": [],
+    "description": "Run verification, refresh operator views, and preserve explicit non-claims.",
+    "evidence": {
+      "plan_id": "plan_7e4c179d9102",
+      "source": "plan_step"
+    },
+    "goal_id": "goal_1fa51c15f846",
+    "id": "task_4720d77d4d70",
+    "owner": null,
+    "priority": 13,
+    "project_id": "clankeros",
+    "risk_level": "low",
+    "run_id": null,
+    "skill_tags": [
+      "plan-lifecycle"
+    ],
+    "status": "planned",
+    "task_type": "planned_step",
+    "updated_at": "2026-06-24T11:22:00.494553+00:00",
+    "verification_plan": {
+      "acceptance_criteria": "Tests, dashboard, handoff, and next-action evidence are current.",
+      "command": "python3 -m pytest -q",
+      "source": "plan_step"
+    }
+  },
+  {
+    "artifacts": [],
+    "attempts": 0,
+    "claimed_at": null,
+    "created_at": "2026-06-24T11:23:03.888580+00:00",
+    "depends_on": [],
+    "description": "Find files relevant to deterministic context-pack scout delegation and return a file relevance report.",
+    "evidence": {},
+    "goal_id": "goal_1fa51c15f846",
+    "id": "task_858971dcc5d7",
+    "owner": null,
+    "priority": 100,
+    "project_id": "clankeros",
+    "risk_level": "low",
+    "run_id": null,
+    "skill_tags": [
+      "local-files"
+    ],
+    "status": "pending",
+    "task_type": "record_learning",
+    "updated_at": "2026-06-24T11:23:03.888580+00:00",
+    "verification_plan": {
+      "command": "python3 -m pytest tests/test_first_milestone.py -k context_pack -q",
+      "type": "manual_review"
+    }
+  }
+]

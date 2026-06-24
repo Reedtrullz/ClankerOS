@@ -1,0 +1,80 @@
+{
+  "context_pack": {
+    "available": true,
+    "grep_hit_count": 40,
+    "id": "context_pack_0d64cfd677cd",
+    "json_path": ".clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/context_pack.json",
+    "markdown_path": ".clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/context_pack.md",
+    "ranked_file_count": 25,
+    "test_hints": [],
+    "top_ranked_files": [
+      "agent_os/context_pack.py",
+      "agent_os/profile_routing.py",
+      "evals/results/first_milestone_closed_loop.json",
+      "playbooks/first-milestone-closed-loop.md",
+      "agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py"
+    ]
+  },
+  "delegation_id": "subagent_delegation_3189127f5f0d",
+  "expected_output_schema": "file_relevance_report",
+  "implementation_inputs": {
+    "context_pack_json": ".clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/context_pack.json",
+    "context_pack_md": ".clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/context_pack.md",
+    "evidence_dir": ".clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence",
+    "result_artifact": ".clanker/delegations/subagent_delegation_3189127f5f0d-result.json"
+  },
+  "kind": "implementation_context_handoff",
+  "non_claims": [
+    "This handoff does not include large context-pack snippets.",
+    "This handoff does not approve implementation work.",
+    "This handoff does not commit, push, deploy, or call model providers.",
+    "Returned-file validation is advisory and does not hard-fail the delegation."
+  ],
+  "parent_goal_id": "goal_1fa51c15f846",
+  "parent_task_id": "task_858971dcc5d7",
+  "project": {
+    "allowed_write_roots": [
+      "/Users/reidar/Documents/Agent System"
+    ],
+    "created_at": "2026-06-23T13:41:01.603769+00:00",
+    "default_test_command": "python3 -m pytest -q",
+    "id": "clankeros",
+    "name": "clankeros",
+    "root_path": "/Users/reidar/Documents/Agent System",
+    "updated_at": "2026-06-23T13:41:01.603769+00:00"
+  },
+  "repo_scouting": {
+    "available": true,
+    "file_count": 500,
+    "inventory_method": "git ls-files --cached --others --exclude-standard",
+    "truncated": true
+  },
+  "result_summary": "Context pack scout demo completed.",
+  "run_id": "run_ec43eabad0c4",
+  "schema_version": 1,
+  "scout_output": {
+    "files": [
+      "agent_os/context_pack.py",
+      "agent_os/profile_routing.py",
+      "evals/results/first_milestone_closed_loop.json"
+    ],
+    "findings": [
+      "Context pack produced ranked candidate files."
+    ],
+    "relevant_files": [
+      "agent_os/context_pack.py",
+      "agent_os/profile_routing.py",
+      "evals/results/first_milestone_closed_loop.json"
+    ]
+  },
+  "validation": {
+    "context_pack_used": true,
+    "returned_files_in_inventory": true,
+    "returned_files_missing": [],
+    "top_ranked_files_referenced": [
+      "agent_os/context_pack.py",
+      "agent_os/profile_routing.py",
+      "evals/results/first_milestone_closed_loop.json"
+    ]
+  }
+}

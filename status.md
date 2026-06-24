@@ -1,5 +1,58 @@
 # Status
 
+## 2026-06-24 First-Class Context Pack Handoffs
+
+- `run-delegation` now writes compact implementation handoff artifacts for
+  successful executable delegations:
+  `.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/implementation_handoff.json`
+  and `implementation_handoff.md`.
+- Handoff JSON uses `schema_version: 1` and kind
+  `implementation_context_handoff`; it points at context-pack JSON/Markdown,
+  ranked/test hint summaries, scout returned files, context-pack validation,
+  result artifact, evidence directory, and non-claims without embedding large
+  snippets.
+- Delegation result metadata now carries context-pack validation fields:
+  `context_pack_returned_files_in_inventory`,
+  `context_pack_returned_files_missing`, and
+  `context_pack_top_ranked_files_referenced`.
+- `delegation-result`, inbox/delegation lines, run review, and dashboard now
+  surface implementation handoff paths, context-pack ids, ranked/grep counts,
+  returned-file validation, and missing returned files.
+- Updated README, executable-delegation tutorial, command reference, concepts,
+  suggested-use prompts, operating summary, and dashboard output for the
+  first-class handoff workflow.
+- Live proof:
+  - delegated `task_858971dcc5d7` to
+    `subagent_delegation_3189127f5f0d`.
+  - `run-delegation` completed run `run_ec43eabad0c4` with evidence at
+    `.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/`.
+  - `delegation-result` showed `context_pack_returned_files_in_inventory: true`
+    and both `implementation_handoff` paths.
+  - `review run_ec43eabad0c4` wrote `runs/run_ec43eabad0c4/review.md` with
+    `## Scout Context Pack`, handoff path, returned-file validation, and
+    referenced top files.
+  - `evidence run_ec43eabad0c4` wrote replayable packet
+    `.clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence`.
+  - `replay-summary run_ec43eabad0c4` wrote
+    `runs/run_ec43eabad0c4/replay-summary.md`.
+  - `dashboard` regenerated `docs/dashboard.md` with
+    `implementation_handoff=...`, `returned_files_in_inventory=true`, and
+    packet paths for the live proof run.
+- Verification evidence:
+  - red context-pack tests failed first because result metadata lacked
+    validation fields and `implementation_handoff.json` did not exist.
+  - red schema-marker test failed first because handoff JSON lacked
+    `schema_version` and `kind`.
+  - `python3 -m py_compile agent_os/delegation_runner.py agent_os/subagent_delegation.py agent_os/cli.py agent_os/run_review.py agent_os/dashboard.py tests/test_first_milestone.py` passed.
+  - context-pack focused slice: 4 passed, 472 deselected.
+  - adjacent delegation/review/dashboard slice: 105 passed, 371 deselected.
+  - `git diff --check` passed.
+  - full suite: 476 passed in 1033.17s.
+- Non-claims: this is local shell-adapter/evidence workflow only; it does not
+  approve implementation, start a remote worker, call model providers, commit,
+  push, deploy, enable hosted dashboard behavior, retry automatically, enforce
+  budgets, promote trust, or track real spend.
+
 ## 2026-06-24 Deterministic Context Packs For Scout Delegation
 
 - Added `python3 -m agent_os.cli context-pack <delegation_id>` for

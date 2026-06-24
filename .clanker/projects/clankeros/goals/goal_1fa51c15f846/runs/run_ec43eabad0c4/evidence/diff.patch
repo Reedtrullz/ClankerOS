@@ -1,0 +1,745 @@
+diff --git a/README.md b/README.md
+index daf96e06..68b4ab4a 100644
+--- a/README.md
++++ b/README.md
+@@ -153,6 +153,16 @@ ranked files, grep hits, snippets, test hints, entrypoint hints, config hints,
+ and non-claims under `.clanker/delegations/<delegation_id>/context/`.
+ `run-delegation` auto-generates that pack if it is missing, copies it into the
+ run evidence packet, and passes compact `context_pack` metadata to the adapter.
++Successful executable delegations also write compact implementation handoff
++artifacts in the run evidence packet. These handoffs point at the context pack,
++returned files, validation status, and relevant test hints without embedding
++the large snippets:
++
++```text
++.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/implementation_handoff.json
++.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/implementation_handoff.md
++```
++
+ Add `--working-directory project_root` when configuring the adapter if the
+ local executor should run from the target repository instead of the ClankerOS
+ system root.
+@@ -209,8 +219,15 @@ During `run-delegation`, those files are copied into:
+ ```text
+ .clanker/delegations/<delegation_id>/runs/<run_id>/evidence/context_pack.json
+ .clanker/delegations/<delegation_id>/runs/<run_id>/evidence/context_pack.md
++.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/implementation_handoff.json
++.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/implementation_handoff.md
+ ```
+
++`delegation-result`, `review <run_id>`, `inbox`, and `dashboard` surface the
++context-pack path, returned-file inventory validation, missing returned files,
++and implementation handoff paths so a later implementation pass can start from
++paths and metadata instead of pasted snippets.
++
+ Adapters run from the ClankerOS root by default; configure
+ `--working-directory project_root` to let a scout read repo files with relative
+ paths.
+diff --git a/agent_os/cli.py b/agent_os/cli.py
+index f7cc3b7b..28303503 100644
+--- a/agent_os/cli.py
++++ b/agent_os/cli.py
+@@ -600,6 +600,14 @@ def _print_skill_proposal(
+     print("external_mutations_taken: 0")
+
+
++def _print_bool(value: object) -> str:
++    if value is True:
++        return "true"
++    if value is False:
++        return "false"
++    return "unknown"
++
++
+ def build_parser() -> argparse.ArgumentParser:
+     parser = argparse.ArgumentParser(prog="agent-os")
+     parser.add_argument(
+@@ -2251,6 +2259,25 @@ def main(argv: list[str] | None = None) -> int:
+             print(f"context_pack: {metadata['context_pack_json']}")
+         if metadata.get("context_pack_md"):
+             print(f"context_pack_md: {metadata['context_pack_md']}")
++        if "context_pack_returned_files_in_inventory" in metadata:
++            print(
++                "context_pack_returned_files_in_inventory: "
++                f"{_print_bool(metadata['context_pack_returned_files_in_inventory'])}"
++            )
++        if metadata.get("context_pack_returned_files_missing"):
++            print(
++                "context_pack_returned_files_missing: "
++                f"{','.join(metadata['context_pack_returned_files_missing'])}"
++            )
++        if metadata.get("context_pack_top_ranked_files_referenced"):
++            print(
++                "context_pack_top_ranked_files_referenced: "
++                f"{','.join(metadata['context_pack_top_ranked_files_referenced'])}"
++            )
++        if metadata.get("implementation_handoff_json"):
++            print(f"implementation_handoff: {metadata['implementation_handoff_json']}")
++        if metadata.get("implementation_handoff_md"):
++            print(f"implementation_handoff_md: {metadata['implementation_handoff_md']}")
+         if "exit_code" in metadata:
+             print(f"exit_code: {metadata['exit_code']}")
+         if metadata.get("incident_id"):
+diff --git a/agent_os/dashboard.py b/agent_os/dashboard.py
+index 6d90eb7f..86b9e25f 100644
+--- a/agent_os/dashboard.py
++++ b/agent_os/dashboard.py
+@@ -6297,18 +6297,37 @@ def _subagent_scout_work_lines(subagent_delegations: list[object]) -> list[str]:
+         if delegation.assigned_profile != "scout" and not context_pack:
+             continue
+         top_files = metadata.get("context_pack_top_ranked_files") or []
++        missing_files = metadata.get("context_pack_returned_files_missing") or []
+         project = metadata.get("target_project_id") or "unknown"
+         incident = metadata.get("incident_id") or "none"
++        returned_files = _dashboard_bool(
++            metadata.get("context_pack_returned_files_in_inventory")
++        )
++        handoff = metadata.get("implementation_handoff_json") or "none"
+         lines.append(
+             f"- {delegation.id}: profile={delegation.assigned_profile} "
+             f"project={project} status={delegation.status} "
++            f"context_pack_id={metadata.get('context_pack_id') or 'none'} "
+             f"context_pack={context_pack or 'none'} "
++            f"ranked_files={metadata.get('context_pack_ranked_file_count', 'unknown')} "
++            f"grep_hits={metadata.get('context_pack_grep_hit_count', 'unknown')} "
+             f"top_files={','.join(top_files[:5]) if top_files else 'none'} "
++            f"returned_files_in_inventory={returned_files} "
++            f"missing_files={','.join(missing_files) if missing_files else 'none'} "
++            f"implementation_handoff={handoff} "
+             f"incident={incident}"
+         )
+     return lines
+
+
++def _dashboard_bool(value: object) -> str:
++    if value is True:
++        return "true"
++    if value is False:
++        return "false"
++    return "unknown"
++
++
+ def _relative_to_root(root: Path, path: str | None) -> str:
+     if not path:
+         return "none"
+diff --git a/agent_os/delegation_runner.py b/agent_os/delegation_runner.py
+index 1971e6d0..83f394eb 100644
+--- a/agent_os/delegation_runner.py
++++ b/agent_os/delegation_runner.py
+@@ -297,6 +297,19 @@ def run_delegation(
+             context_pack_metadata,
+             structured_output,
+         )
++        implementation_handoff = _write_implementation_handoff(
++            root,
++            evidence_dir,
++            delegation=delegation,
++            task=task,
++            project=project_payload,
++            repo_scouting=repo_scouting_payload,
++            context_pack=context_pack_metadata,
++            context_pack_validation=context_pack_validation,
++            structured_output=structured_output,
++            result_summary=result_summary,
++            run_id=run_id,
++        )
+         validation_path.write_text(
+             json.dumps(
+                 {
+@@ -345,6 +358,21 @@ def run_delegation(
+                     "top_ranked_files",
+                     [],
+                 ),
++                "context_pack_returned_files_in_inventory": (
++                    context_pack_validation.get("returned_files_in_inventory")
++                ),
++                "context_pack_returned_files_missing": context_pack_validation.get(
++                    "returned_files_missing",
++                    [],
++                ),
++                "context_pack_top_ranked_files_referenced": context_pack_validation.get(
++                    "top_ranked_files_referenced",
++                    [],
++                ),
++                "implementation_handoff_json": implementation_handoff["json_path_relative"],
++                "implementation_handoff_md": implementation_handoff[
++                    "markdown_path_relative"
++                ],
+                 "network_actions_taken": "unknown",
+                 "provider_calls_taken_by_clankeros": 0,
+                 "external_mutations_taken": 0,
+@@ -448,6 +476,7 @@ def run_delegation(
+         project=project_payload,
+         repo_scouting=repo_scouting_payload,
+         context_pack=context_pack_metadata,
++        implementation_handoff=implementation_handoff,
+         run_id=run_id,
+         result_summary=result_summary,
+         memory_entry=memory_entry,
+@@ -706,6 +735,168 @@ def _write_input_bundle(
+     return bundle
+
+
++def _write_implementation_handoff(
++    root: Path,
++    evidence_dir: Path,
++    *,
++    delegation: SubagentDelegation,
++    task: Task,
++    project: dict[str, Any] | None,
++    repo_scouting: dict[str, Any],
++    context_pack: dict[str, Any],
++    context_pack_validation: dict[str, Any],
++    structured_output: dict[str, Any],
++    result_summary: str,
++    run_id: str,
++) -> dict[str, Any]:
++    json_path = evidence_dir / "implementation_handoff.json"
++    markdown_path = evidence_dir / "implementation_handoff.md"
++    relevant_files = _handoff_file_list(structured_output, "relevant_files")
++    files = _handoff_file_list(structured_output, "files")
++    payload = {
++        "schema_version": 1,
++        "kind": "implementation_context_handoff",
++        "delegation_id": delegation.id,
++        "run_id": run_id,
++        "parent_goal_id": delegation.parent_goal_id,
++        "parent_task_id": delegation.parent_task_id,
++        "expected_output_schema": delegation.expected_output_schema,
++        "result_summary": result_summary,
++        "project": project
++        or {
++            "id": task.project_id,
++            "root_path": None,
++            "default_test_command": None,
++        },
++        "repo_scouting": {
++            "available": bool(repo_scouting.get("available")),
++            "file_count": repo_scouting.get("file_count", 0),
++            "inventory_method": repo_scouting.get("inventory_method", "none"),
++            "truncated": bool(repo_scouting.get("truncated")),
++        },
++        "context_pack": {
++            "available": bool(context_pack.get("available")),
++            "id": context_pack.get("context_pack_id"),
++            "json_path": context_pack.get("json_path_relative"),
++            "markdown_path": context_pack.get("markdown_path_relative"),
++            "ranked_file_count": context_pack.get("ranked_file_count", 0),
++            "grep_hit_count": context_pack.get("grep_hit_count", 0),
++            "top_ranked_files": context_pack.get("top_ranked_files", []),
++            "test_hints": [
++                hint.get("path", str(hint))
++                for hint in context_pack.get("test_hints", [])
++            ],
++        },
++        "validation": context_pack_validation,
++        "scout_output": {
++            "files": files,
++            "relevant_files": relevant_files,
++            "findings": _handoff_findings(structured_output),
++        },
++        "implementation_inputs": {
++            "context_pack_json": context_pack.get("json_path_relative"),
++            "context_pack_md": context_pack.get("markdown_path_relative"),
++            "result_artifact": str(
++                (root / ".clanker" / "delegations" / f"{delegation.id}-result.json")
++                .relative_to(root)
++            ),
++            "evidence_dir": str(evidence_dir.relative_to(root)),
++        },
++        "non_claims": [
++            "This handoff does not include large context-pack snippets.",
++            "This handoff does not approve implementation work.",
++            "This handoff does not commit, push, deploy, or call model providers.",
++            "Returned-file validation is advisory and does not hard-fail the delegation.",
++        ],
++    }
++    json_path.write_text(
++        json.dumps(payload, indent=2, sort_keys=True) + "\n",
++        encoding="utf-8",
++    )
++    markdown_path.write_text(
++        _render_implementation_handoff_markdown(payload),
++        encoding="utf-8",
++    )
++    return {
++        "json_path": str(json_path),
++        "markdown_path": str(markdown_path),
++        "json_path_relative": str(json_path.relative_to(root)),
++        "markdown_path_relative": str(markdown_path.relative_to(root)),
++    }
++
++
++def _handoff_file_list(structured_output: dict[str, Any], key: str) -> list[str]:
++    value = structured_output.get(key, [])
++    if isinstance(value, str):
++        return [value]
++    if not isinstance(value, list):
++        return []
++    return [str(item) for item in value if str(item)]
++
++
++def _handoff_findings(structured_output: dict[str, Any]) -> list[str]:
++    value = structured_output.get("findings", [])
++    if isinstance(value, str):
++        return [value]
++    if not isinstance(value, list):
++        return []
++    return [str(item) for item in value[:10] if str(item)]
++
++
++def _render_implementation_handoff_markdown(payload: dict[str, Any]) -> str:
++    context_pack = payload["context_pack"]
++    validation = payload["validation"]
++    scout_output = payload["scout_output"]
++    lines = [
++        "# Implementation Handoff",
++        "",
++        f"- delegation_id: {payload['delegation_id']}",
++        f"- run_id: {payload['run_id']}",
++        f"- project_id: {payload['project']['id']}",
++        f"- expected_output_schema: {payload['expected_output_schema']}",
++        f"- result_summary: {payload['result_summary']}",
++        "",
++        "## Context Pack",
++        "",
++        f"- context_pack_id: {context_pack.get('id') or 'none'}",
++        f"- context_pack_json: {context_pack.get('json_path') or 'none'}",
++        f"- context_pack_md: {context_pack.get('markdown_path') or 'none'}",
++        f"- ranked_file_count: {context_pack.get('ranked_file_count', 0)}",
++        f"- grep_hit_count: {context_pack.get('grep_hit_count', 0)}",
++        "",
++        "## Context Pack Validation",
++        "",
++        "- returned_files_in_inventory: "
++        f"{_handoff_bool(validation.get('returned_files_in_inventory'))}",
++        "- returned_files_missing: "
++        f"{', '.join(validation.get('returned_files_missing') or []) or 'none'}",
++        "- top_ranked_files_referenced: "
++        f"{', '.join(validation.get('top_ranked_files_referenced') or []) or 'none'}",
++        "",
++        "## Top Ranked Files",
++        "",
++    ]
++    top_files = context_pack.get("top_ranked_files") or []
++    lines.extend(f"- {path}" for path in top_files) if top_files else lines.append("- none")
++    lines.extend(["", "## Scout Returned Files", ""])
++    returned = scout_output.get("relevant_files") or scout_output.get("files") or []
++    lines.extend(f"- {path}" for path in returned) if returned else lines.append("- none")
++    lines.extend(["", "## Test Hints", ""])
++    test_hints = context_pack.get("test_hints") or []
++    lines.extend(f"- {path}" for path in test_hints) if test_hints else lines.append("- none")
++    lines.extend(["", "## Non-Claims", ""])
++    lines.extend(f"- {claim}" for claim in payload["non_claims"])
++    return "\n".join(lines) + "\n"
++
++
++def _handoff_bool(value: object) -> str:
++    if value is True:
++        return "true"
++    if value is False:
++        return "false"
++    return "unknown"
++
++
+ def _adapter_command(
+     command: str,
+     *,
+@@ -1040,6 +1231,7 @@ def _write_success_summary(
+     project: dict[str, Any] | None,
+     repo_scouting: dict[str, Any],
+     context_pack: dict[str, Any],
++    implementation_handoff: dict[str, Any],
+     run_id: str,
+     result_summary: str,
+     memory_entry: MemoryEntry | None,
+@@ -1062,6 +1254,12 @@ def _write_success_summary(
+                 "- context_pack_metadata.json",
+             ]
+         )
++    evidence_paths.extend(
++        [
++            "- implementation_handoff.json",
++            "- implementation_handoff.md",
++        ]
++    )
+     evidence_paths.extend(
+         [
+             "- prompt.md",
+@@ -1090,6 +1288,8 @@ def _write_success_summary(
+             f"- target_project_root: {project['root_path'] if project else 'none'}",
+             f"- context_pack_id: {context_pack.get('context_pack_id', 'none')}",
+             f"- context_pack_json: {context_pack.get('json_path_relative', 'none')}",
++            "- implementation_handoff_json: "
++            f"{implementation_handoff.get('json_path_relative', 'none')}",
+             f"- expected_output_schema: {delegation.expected_output_schema}",
+             "- execution_status: completed",
+             "- output_validated: true",
+diff --git a/agent_os/run_review.py b/agent_os/run_review.py
+index 5679397d..4db5b90e 100644
+--- a/agent_os/run_review.py
++++ b/agent_os/run_review.py
+@@ -346,6 +346,20 @@ def _scout_context_pack_lines(
+             f"- delegation={delegation.id} profile={delegation.assigned_profile} "
+             f"context_pack={context_pack_path}"
+         )
++        if metadata.get("context_pack_id"):
++            lines.append(f"  - context_pack_id: {metadata['context_pack_id']}")
++        if metadata.get("implementation_handoff_json"):
++            lines.append(
++                f"  - implementation_handoff: {metadata['implementation_handoff_json']}"
++            )
++        if "context_pack_returned_files_in_inventory" in metadata:
++            lines.append(
++                "  - returned_files_in_inventory: "
++                f"{_review_bool(metadata['context_pack_returned_files_in_inventory'])}"
++            )
++        missing = metadata.get("context_pack_returned_files_missing") or []
++        if missing:
++            lines.append(f"  - returned_files_missing: {', '.join(missing)}")
+         try:
+             payload = json.loads(full_path.read_text(encoding="utf-8"))
+         except (OSError, json.JSONDecodeError):
+@@ -353,7 +367,7 @@ def _scout_context_pack_lines(
+             continue
+         top_files = [item["path"] for item in payload.get("ranked_files", [])[:5]]
+         test_hints = [hint["path"] for hint in payload.get("test_hints", [])[:5]]
+-        referenced = metadata.get("context_pack_top_ranked_files") or []
++        referenced = metadata.get("context_pack_top_ranked_files_referenced") or []
+         lines.append(f"  - top_ranked_files: {', '.join(top_files) if top_files else 'none'}")
+         lines.append(f"  - test_hints: {', '.join(test_hints) if test_hints else 'none'}")
+         lines.append(
+@@ -363,6 +377,14 @@ def _scout_context_pack_lines(
+     return lines
+
+
++def _review_bool(value: object) -> str:
++    if value is True:
++        return "true"
++    if value is False:
++        return "false"
++    return "unknown"
++
++
+ def render_evidence_index(root: Path, packet: RunEvidencePacket) -> str:
+     run_files = _existing_paths(
+         root,
+diff --git a/agent_os/subagent_delegation.py b/agent_os/subagent_delegation.py
+index 3cc5ed74..b21de933 100644
+--- a/agent_os/subagent_delegation.py
++++ b/agent_os/subagent_delegation.py
+@@ -206,6 +206,18 @@ def render_subagent_delegation_line(delegation: SubagentDelegation) -> str:
+     context_pack = metadata.get("context_pack_json")
+     if context_pack:
+         line += f" context_pack={context_pack}"
++    handoff = metadata.get("implementation_handoff_json")
++    if handoff:
++        line += f" implementation_handoff={handoff}"
++    returned_files_in_inventory = metadata.get("context_pack_returned_files_in_inventory")
++    if returned_files_in_inventory is not None:
++        line += (
++            " context_pack_returned_files_in_inventory="
++            f"{_metadata_bool(returned_files_in_inventory)}"
++        )
++    missing_files = metadata.get("context_pack_returned_files_missing") or []
++    if missing_files:
++        line += f" missing_context_pack_files={','.join(missing_files)}"
+     incident_id = metadata.get("incident_id")
+     if incident_id:
+         line += f" incident={incident_id}"
+@@ -241,7 +253,12 @@ def load_delegation_result_metadata(delegation: SubagentDelegation) -> dict[str,
+         "context_pack_json",
+         "context_pack_md",
+         "context_pack_ranked_file_count",
++        "context_pack_returned_files_in_inventory",
++        "context_pack_returned_files_missing",
++        "context_pack_top_ranked_files_referenced",
+         "context_pack_top_ranked_files",
++        "implementation_handoff_json",
++        "implementation_handoff_md",
+         "network_actions_taken",
+         "provider_calls_taken_by_clankeros",
+         "run_id",
+@@ -251,6 +268,14 @@ def load_delegation_result_metadata(delegation: SubagentDelegation) -> dict[str,
+     return {key: payload[key] for key in keys if key in payload}
+
+
++def _metadata_bool(value: object) -> str:
++    if value is True:
++        return "true"
++    if value is False:
++        return "false"
++    return "unknown"
++
++
+ def _validate_read_only_subagent(profile: AgentProfile) -> None:
+     permissions = profile.permissions_json
+     if (
+diff --git a/docs/OPERATING_SUMMARY.md b/docs/OPERATING_SUMMARY.md
+index 3991f95e..29ad3ada 100644
+--- a/docs/OPERATING_SUMMARY.md
++++ b/docs/OPERATING_SUMMARY.md
+@@ -97,9 +97,13 @@ Core layers for the bootstrap:
+   Context packs rank files with explainable scores, record capped grep hits
+   and snippets, list test/entrypoint/config hints, skip ignored and
+   secret-like paths, and add validation metadata showing whether returned files
+-  were in the inventory. Adapters run from the system root by default and can
+-  opt into `--working-directory project_root` for repo scouting. It supports
+-  shell adapters only. ClankerOS records
++  were in the inventory. Successful delegation runs also write
++  `implementation_handoff.json` and `implementation_handoff.md` with compact
++  context-pack paths, ranked/test hint summaries, scout returned files,
++  validation health, and non-claims without embedding large snippets. Adapters
++  run from the system root by default and can opt into
++  `--working-directory project_root` for repo scouting. It supports shell
++  adapters only. ClankerOS records
+   `provider_calls_taken_by_clankeros=0`, `external_mutations_taken=0`, and
+   `network_actions_taken=unknown` unless adapter evidence proves otherwise.
+ - Delegation result ingestion: `record-delegation-result` attaches structured
+diff --git a/docs/concepts.md b/docs/concepts.md
+index 6d515ce5..0af899a7 100644
+--- a/docs/concepts.md
++++ b/docs/concepts.md
+@@ -41,6 +41,10 @@ and project notes.
+   records capped grep hits and snippets, lists test/entrypoint/config hints,
+   skips ignored and secret-like paths, and writes JSON/Markdown under
+   `.clanker/delegations/<delegation_id>/context/`.
++- Implementation handoff: a compact run-evidence artifact written after a
++  successful executable delegation. It points at context-pack JSON/Markdown,
++  returned-file validation, scout returned files, and test hints without
++  embedding large snippets or approving implementation work.
+ - Project context packet: a durable operator summary for a registered project.
+   It is broader and less task-specific than a context pack.
+ - Profile: a local routing role such as planner, coder, scout, tester, or
+diff --git a/docs/dashboard.md b/docs/dashboard.md
+index 1431061c..44f6aa2b 100644
+--- a/docs/dashboard.md
++++ b/docs/dashboard.md
+@@ -85,24 +85,25 @@
+ - profile scout: Repo Scout mode=subagent cost=low model=configurable/cheap-fast-model adapter=shell use_for=repo_search,file_mapping,dependency_mapping,summarization
+ - profile tester: Verification Tester mode=subagent cost=low model=configurable/cheap-coding-model adapter=none use_for=test_triage,failure_summary,verification_review
+ - recent_decisions:
++- routing_decision_7f1d62946e38: category=summarization selected=scout model=configurable/cheap-fast-model cost=low task=task_858971dcc5d7 project=clankeros status=selected
+ - routing_decision_03fb6d7cd55e: category=summarization selected=scout model=configurable/cheap-fast-model cost=low task=task_858971dcc5d7 project=clankeros status=selected
+ - routing_decision_ea43f295b261: category=implementation selected=scout model=configurable/cheap-fast-model cost=low task=task_de0322669e63 project=clankeros status=selected
+ - routing_decision_a45198918520: category=evidence_review selected=evaluator model=configurable/strong-reasoning-model cost=medium task=task_9da458146eb5 project=bootstrap status=selected
+ - routing_decision_ab9f95b25d2e: category=evidence_review selected=evaluator model=configurable/strong-reasoning-model cost=medium task=task_e7034260ac20 project=bootstrap status=selected
+-- routing_decision_93b1c07d54a4: category=implementation selected=coder model=configurable/coder-model cost=high task=task_c13d6ab242ec project=clankeros status=dispatched
+
+ ### Subagent Delegations
+
++- subagent_delegation_3189127f5f0d: status=completed profile=scout category=summarization task=task_858971dcc5d7 schema=file_relevance_report artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_3189127f5f0d-result.json run=run_ec43eabad0c4 adapter=shell evidence=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence context_pack=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/context_pack.json implementation_handoff=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/implementation_handoff.json context_pack_returned_files_in_inventory=true summary=Context pack scout demo completed.
+ - subagent_delegation_c1f5246a0b7f: status=completed profile=scout category=summarization task=task_858971dcc5d7 schema=file_relevance_report artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_c1f5246a0b7f-result.json run=run_1dd1545c17f1 adapter=shell evidence=.clanker/delegations/subagent_delegation_c1f5246a0b7f/runs/run_1dd1545c17f1/evidence context_pack=.clanker/delegations/subagent_delegation_c1f5246a0b7f/runs/run_1dd1545c17f1/evidence/context_pack.json summary=Context pack scout demo completed.
+ - subagent_delegation_035c3e0876c7: status=completed profile=scout category=implementation task=task_de0322669e63 schema=implementation_options artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_035c3e0876c7-result.json run=run_7284c4089a89 adapter=shell evidence=.clanker/delegations/subagent_delegation_035c3e0876c7/runs/run_7284c4089a89/evidence context_pack=.clanker/delegations/subagent_delegation_035c3e0876c7/runs/run_7284c4089a89/evidence/context_pack.json summary=Context pack scout demo completed.
+ - subagent_delegation_f5330975ccec: status=completed profile=evaluator category=evidence_review task=task_9da458146eb5 schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_f5330975ccec-result.json summary=Evaluator found hosted dashboard proof remains blocked pending runtime-specific evidence, with no activation-ready proof produced.
+ - subagent_delegation_200c581a36a6: status=completed profile=evaluator category=evidence_review task=task_e7034260ac20 schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_200c581a36a6-result.json summary=Evaluator drafted the next downstream result-effect task result-effect task result-effect task result-effect task result-effect task result-effect task proof plan while keeping capability activation blocked.
+-- subagent_delegation_4dc659649824: status=completed profile=evaluator category=evidence_review task=task_3ee0f399e6b6 schema=evidence_review artifact=/Users/reidar/Documents/Agent System/.clanker/delegations/subagent_delegation_4dc659649824-result.json summary=Evaluator recorded the next downstream result-effect task proof plan and kept activation blocked.
+
+ ### Subagent / Scout Work
+
+-- subagent_delegation_c1f5246a0b7f: profile=scout project=clankeros status=completed context_pack=.clanker/delegations/subagent_delegation_c1f5246a0b7f/runs/run_1dd1545c17f1/evidence/context_pack.json top_files=agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json,playbooks/first-milestone-closed-loop.md,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py incident=none
+-- subagent_delegation_035c3e0876c7: profile=scout project=clankeros status=completed context_pack=.clanker/delegations/subagent_delegation_035c3e0876c7/runs/run_7284c4089a89/evidence/context_pack.json top_files=agent_os/context_pack.py,agent_os/profile_routing.py,agent_os/browser_desktop_adapter_proof.py,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations.py,AGENTS.md incident=none
++- subagent_delegation_3189127f5f0d: profile=scout project=clankeros status=completed context_pack_id=context_pack_0d64cfd677cd context_pack=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/context_pack.json ranked_files=25 grep_hits=40 top_files=agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json,playbooks/first-milestone-closed-loop.md,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py returned_files_in_inventory=true missing_files=none implementation_handoff=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/implementation_handoff.json incident=none
++- subagent_delegation_c1f5246a0b7f: profile=scout project=clankeros status=completed context_pack_id=context_pack_c77525064b80 context_pack=.clanker/delegations/subagent_delegation_c1f5246a0b7f/runs/run_1dd1545c17f1/evidence/context_pack.json ranked_files=8 grep_hits=40 top_files=agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json,playbooks/first-milestone-closed-loop.md,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py returned_files_in_inventory=unknown missing_files=none implementation_handoff=none incident=none
++- subagent_delegation_035c3e0876c7: profile=scout project=clankeros status=completed context_pack_id=context_pack_2bf26861809c context_pack=.clanker/delegations/subagent_delegation_035c3e0876c7/runs/run_7284c4089a89/evidence/context_pack.json ranked_files=8 grep_hits=40 top_files=agent_os/context_pack.py,agent_os/profile_routing.py,agent_os/browser_desktop_adapter_proof.py,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations.py,AGENTS.md returned_files_in_inventory=unknown missing_files=none implementation_handoff=none incident=none
+
+ ## Steering Reviews
+
+@@ -2044,14 +2045,15 @@
+
+ ## Recent Runs
+
++- run_ec43eabad0c4: completed project=clankeros goal=goal_1fa51c15f846 completed=2026-06-24T11:41:26.072344+00:00 summary=runs/run_ec43eabad0c4/summary.md
+ - run_1dd1545c17f1: completed project=clankeros goal=goal_1fa51c15f846 completed=2026-06-24T11:23:18.925743+00:00 summary=runs/run_1dd1545c17f1/summary.md
+ - run_7284c4089a89: completed project=clankeros goal=goal_1fa51c15f846 completed=2026-06-24T11:22:21.647601+00:00 summary=runs/run_7284c4089a89/summary.md
+ - run_f4fab76c7f30: completed project=bootstrap goal=goal_a97fd18ad951 completed=2026-06-24T10:39:36.733426+00:00 summary=runs/run_f4fab76c7f30/summary.md
+ - run_6774975374ff: completed project=bootstrap goal=goal_b4b0c4915037 completed=2026-06-24T10:39:29.437212+00:00 summary=runs/run_6774975374ff/summary.md
+-- run_9a51f0da4a49: completed project=bootstrap goal=goal_0bd03de428f7 completed=2026-06-24T10:03:23.667641+00:00 summary=runs/run_9a51f0da4a49/summary.md
+
+ ## Recent Evidence Packets
+
++- run_ec43eabad0c4: review=runs/run_ec43eabad0c4/review.md evidence=missing replay=missing packet=missing
+ - run_7284c4089a89: review=runs/run_7284c4089a89/review.md evidence=missing replay=missing packet=missing
+
+ ## Recent Learnings
+diff --git a/docs/reference-commands.md b/docs/reference-commands.md
+index a936d02d..485849af 100644
+--- a/docs/reference-commands.md
++++ b/docs/reference-commands.md
+@@ -125,6 +125,20 @@ Useful flags:
+
+ `run-delegation` auto-generates the pack when it is missing, copies it into the
+ run evidence packet, and puts compact `context_pack` metadata in `input.json`.
++Successful executable delegations also write first-class implementation
++handoff artifacts:
++
++```text
++.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/implementation_handoff.json
++.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/implementation_handoff.md
++```
++
++The handoff JSON includes `schema_version: 1`, kind
++`implementation_context_handoff`, context-pack paths/counts, returned-file
++inventory validation, scout returned files, and non-claims. It intentionally
++points at `context_pack.json` and `context_pack.md` instead of embedding large
++snippets. `delegation-result`, `review`, `inbox`, and `dashboard` surface the
++handoff path and validation summary.
+ `record-delegation-result` remains the manual ingestion path for
+ operator-supplied output.
+
+diff --git a/docs/suggested-use.md b/docs/suggested-use.md
+index 4952dbae..48fe9eb2 100644
+--- a/docs/suggested-use.md
++++ b/docs/suggested-use.md
+@@ -167,6 +167,10 @@ Configure a fake local scout shell adapter, run this pending delegation, show me
+ Register this repo, create a scout delegation for the next planned task, run the adapter from the project root, and show me the repo files it marked relevant.
+ ```
+
++```text
++Run the scout delegation, then show me the context-pack validation and implementation handoff path from delegation-result, review, and dashboard.
++```
++
+ ```text
+ Attach this read-only delegation output to the existing contract, validate the schema, and keep the no-provider/non-network claims explicit.
+ ```
+diff --git a/docs/tutorial-executable-delegation.md b/docs/tutorial-executable-delegation.md
+index 05e11149..3a50e081 100644
+--- a/docs/tutorial-executable-delegation.md
++++ b/docs/tutorial-executable-delegation.md
+@@ -293,6 +293,8 @@ result.json
+ context_pack.json
+ context_pack.md
+ context_pack_metadata.json
++implementation_handoff.json
++implementation_handoff.md
+ memory_proposal.json
+ ```
+
+@@ -302,6 +304,10 @@ a registered project. `validation.json` records `context_pack_used`,
+ `returned_files_in_inventory`, `returned_files_missing`, and
+ `top_ranked_files_referenced` when a context pack was attached. Missing
+ returned files are warnings in validation metadata, not hard failures.
++`implementation_handoff.json` and `.md` are compact downstream implementation
++inputs. They include the context-pack path, ranked/test hint summaries,
++returned-file validation, scout returned files, and non-claims without copying
++large snippets into the handoff.
+
+ ## 8. Inspect The Result And Evidence
+
+@@ -314,9 +320,11 @@ python3 -m agent_os.cli dashboard
+
+ `delegation-result` prints runtime metadata when the result came from
+ `run-delegation`, including the run id, adapter type, evidence packet, and
+-context-pack path. `review <run_id>` includes a `## Scout Context Pack`
+-section with top ranked files and test hints. The dashboard includes a
+-`### Subagent / Scout Work` section with compact scout status.
++context-pack and implementation-handoff paths. `review <run_id>` includes a
++`## Scout Context Pack` section with top ranked files, test hints, returned
++file inventory validation, and the handoff path. The dashboard includes a
++`### Subagent / Scout Work` section with compact scout status, context-pack
++counts, missing returned files, and the handoff path.
+
+ ## 9. Propose Memory From The Result
+
+diff --git a/tests/test_first_milestone.py b/tests/test_first_milestone.py
+index 1685d206..a731457e 100644
+--- a/tests/test_first_milestone.py
++++ b/tests/test_first_milestone.py
+@@ -3186,6 +3186,32 @@ def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
+     assert validation["top_ranked_files_referenced"]
+     assert result["context_pack_json"] == str(evidence_dir.relative_to(tmp_path) / "context_pack.json")
+     assert result["context_pack_md"] == str(evidence_dir.relative_to(tmp_path) / "context_pack.md")
++    assert result["context_pack_returned_files_in_inventory"] is True
++    assert result["context_pack_returned_files_missing"] == []
++    assert result["context_pack_top_ranked_files_referenced"]
++    assert result["implementation_handoff_json"] == str(
++        evidence_dir.relative_to(tmp_path) / "implementation_handoff.json"
++    )
++    assert result["implementation_handoff_md"] == str(
++        evidence_dir.relative_to(tmp_path) / "implementation_handoff.md"
++    )
++    handoff = json.loads(
++        (evidence_dir / "implementation_handoff.json").read_text(encoding="utf-8")
++    )
++    assert handoff["delegation_id"] == delegation_id
++    assert handoff["schema_version"] == 1
++    assert handoff["kind"] == "implementation_context_handoff"
++    assert handoff["run_id"] == run_id
++    assert handoff["project"]["id"] == "subject"
++    assert handoff["context_pack"]["json_path"] == str(
++        evidence_dir.relative_to(tmp_path) / "context_pack.json"
++    )
++    assert handoff["context_pack"]["ranked_file_count"] >= 1
++    assert "agent_os/delegation_runner.py" in handoff["context_pack"]["top_ranked_files"]
++    assert handoff["validation"]["returned_files_in_inventory"] is True
++    assert handoff["scout_output"]["relevant_files"]
++    assert "snippets" not in handoff
++    assert (evidence_dir / "implementation_handoff.md").exists()
+     assert memory_proposal["status"] == "proposed"
+     assert memory_proposal["context_pack_json"] == str(evidence_dir.relative_to(tmp_path) / "context_pack.json")
+
+@@ -3196,6 +3222,8 @@ def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
+     assert main(["--root", str(tmp_path), "delegation-result", delegation_id]) == 0
+     result_output = capsys.readouterr().out
+     assert "context_pack: .clanker/delegations/" in result_output
++    assert "context_pack_returned_files_in_inventory: true" in result_output
++    assert "implementation_handoff: .clanker/delegations/" in result_output
+
+     assert main(["--root", str(tmp_path), "review", run_id]) == 0
+     review_output = capsys.readouterr().out
+@@ -3208,11 +3236,15 @@ def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
+     assert "## Scout Context Pack" in review
+     assert "agent_os/delegation_runner.py" in review
+     assert "tests/test_delegation_runner.py" in review
++    assert "implementation_handoff:" in review
++    assert "returned_files_in_inventory: true" in review
+
+     dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
+     assert "### Subagent / Scout Work" in dashboard
+     assert delegation_id in dashboard
+     assert "context_pack=" in dashboard
++    assert "implementation_handoff=" in dashboard
++    assert "returned_files_in_inventory=true" in dashboard
+     assert str(repo_path.resolve()) in input_bundle["project"]["root_path"]
+
+
+@@ -3240,15 +3272,39 @@ def test_run_delegation_context_pack_validation_warns_for_missing_returned_files
+
+     assert main(["--root", str(tmp_path), "run-delegation", delegation_id]) == 0
+     output = capsys.readouterr().out
++    run_id = next(line for line in output.splitlines() if line.startswith("run_id: ")).split(": ", 1)[1]
+     evidence_line = next(line for line in output.splitlines() if line.startswith("evidence_packet: "))
+     evidence_dir = tmp_path / evidence_line.split(": ", 1)[1]
+     validation = json.loads((evidence_dir / "validation.json").read_text(encoding="utf-8"))
++    result = json.loads((evidence_dir / "result.json").read_text(encoding="utf-8"))
++    handoff = json.loads(
++        (evidence_dir / "implementation_handoff.json").read_text(encoding="utf-8")
++    )
+
+     assert validation["valid"] is True
+     assert validation["context_pack_used"] is True
+     assert validation["returned_files_in_inventory"] is False
+     assert validation["returned_files_missing"] == ["missing.py"]
+     assert validation["top_ranked_files_referenced"] == []
++    assert result["context_pack_returned_files_in_inventory"] is False
++    assert result["context_pack_returned_files_missing"] == ["missing.py"]
++    assert handoff["validation"]["returned_files_in_inventory"] is False
++    assert handoff["validation"]["returned_files_missing"] == ["missing.py"]
++
++    assert main(["--root", str(tmp_path), "review", run_id]) == 0
++    review_output = capsys.readouterr().out
++    review_path = tmp_path / next(
++        line.split(": ", 1)[1]
++        for line in review_output.splitlines()
++        if line.startswith("review: ")
++    )
++    review = review_path.read_text(encoding="utf-8")
++    assert "returned_files_in_inventory: false" in review
++    assert "returned_files_missing: missing.py" in review
++
++    dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
++    assert "returned_files_in_inventory=false" in dashboard
++    assert "missing_files=missing.py" in dashboard
+
+
+ def test_run_delegation_malformed_json_opens_incident(

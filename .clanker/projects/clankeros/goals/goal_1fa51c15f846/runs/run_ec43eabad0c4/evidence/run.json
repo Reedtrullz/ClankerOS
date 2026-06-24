@@ -1,0 +1,11 @@
+{
+  "activity_path": "/Users/reidar/Documents/Agent System/runs/run_ec43eabad0c4/activity.md",
+  "completed_at": "2026-06-24T11:41:26.072344+00:00",
+  "events_path": "/Users/reidar/Documents/Agent System/runs/run_ec43eabad0c4/events.jsonl",
+  "goal_id": "goal_1fa51c15f846",
+  "id": "run_ec43eabad0c4",
+  "project_id": "clankeros",
+  "started_at": "2026-06-24T11:41:25.167909+00:00",
+  "status": "completed",
+  "summary_path": "/Users/reidar/Documents/Agent System/runs/run_ec43eabad0c4/summary.md"
+}

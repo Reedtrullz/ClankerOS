@@ -297,6 +297,19 @@ def run_delegation(
             context_pack_metadata,
             structured_output,
         )
+        implementation_handoff = _write_implementation_handoff(
+            root,
+            evidence_dir,
+            delegation=delegation,
+            task=task,
+            project=project_payload,
+            repo_scouting=repo_scouting_payload,
+            context_pack=context_pack_metadata,
+            context_pack_validation=context_pack_validation,
+            structured_output=structured_output,
+            result_summary=result_summary,
+            run_id=run_id,
+        )
         validation_path.write_text(
             json.dumps(
                 {
@@ -345,6 +358,21 @@ def run_delegation(
                     "top_ranked_files",
                     [],
                 ),
+                "context_pack_returned_files_in_inventory": (
+                    context_pack_validation.get("returned_files_in_inventory")
+                ),
+                "context_pack_returned_files_missing": context_pack_validation.get(
+                    "returned_files_missing",
+                    [],
+                ),
+                "context_pack_top_ranked_files_referenced": context_pack_validation.get(
+                    "top_ranked_files_referenced",
+                    [],
+                ),
+                "implementation_handoff_json": implementation_handoff["json_path_relative"],
+                "implementation_handoff_md": implementation_handoff[
+                    "markdown_path_relative"
+                ],
                 "network_actions_taken": "unknown",
                 "provider_calls_taken_by_clankeros": 0,
                 "external_mutations_taken": 0,
@@ -448,6 +476,7 @@ def run_delegation(
         project=project_payload,
         repo_scouting=repo_scouting_payload,
         context_pack=context_pack_metadata,
+        implementation_handoff=implementation_handoff,
         run_id=run_id,
         result_summary=result_summary,
         memory_entry=memory_entry,
@@ -704,6 +733,168 @@ def _write_input_bundle(
             encoding="utf-8",
         )
     return bundle
+
+
+def _write_implementation_handoff(
+    root: Path,
+    evidence_dir: Path,
+    *,
+    delegation: SubagentDelegation,
+    task: Task,
+    project: dict[str, Any] | None,
+    repo_scouting: dict[str, Any],
+    context_pack: dict[str, Any],
+    context_pack_validation: dict[str, Any],
+    structured_output: dict[str, Any],
+    result_summary: str,
+    run_id: str,
+) -> dict[str, Any]:
+    json_path = evidence_dir / "implementation_handoff.json"
+    markdown_path = evidence_dir / "implementation_handoff.md"
+    relevant_files = _handoff_file_list(structured_output, "relevant_files")
+    files = _handoff_file_list(structured_output, "files")
+    payload = {
+        "schema_version": 1,
+        "kind": "implementation_context_handoff",
+        "delegation_id": delegation.id,
+        "run_id": run_id,
+        "parent_goal_id": delegation.parent_goal_id,
+        "parent_task_id": delegation.parent_task_id,
+        "expected_output_schema": delegation.expected_output_schema,
+        "result_summary": result_summary,
+        "project": project
+        or {
+            "id": task.project_id,
+            "root_path": None,
+            "default_test_command": None,
+        },
+        "repo_scouting": {
+            "available": bool(repo_scouting.get("available")),
+            "file_count": repo_scouting.get("file_count", 0),
+            "inventory_method": repo_scouting.get("inventory_method", "none"),
+            "truncated": bool(repo_scouting.get("truncated")),
+        },
+        "context_pack": {
+            "available": bool(context_pack.get("available")),
+            "id": context_pack.get("context_pack_id"),
+            "json_path": context_pack.get("json_path_relative"),
+            "markdown_path": context_pack.get("markdown_path_relative"),
+            "ranked_file_count": context_pack.get("ranked_file_count", 0),
+            "grep_hit_count": context_pack.get("grep_hit_count", 0),
+            "top_ranked_files": context_pack.get("top_ranked_files", []),
+            "test_hints": [
+                hint.get("path", str(hint))
+                for hint in context_pack.get("test_hints", [])
+            ],
+        },
+        "validation": context_pack_validation,
+        "scout_output": {
+            "files": files,
+            "relevant_files": relevant_files,
+            "findings": _handoff_findings(structured_output),
+        },
+        "implementation_inputs": {
+            "context_pack_json": context_pack.get("json_path_relative"),
+            "context_pack_md": context_pack.get("markdown_path_relative"),
+            "result_artifact": str(
+                (root / ".clanker" / "delegations" / f"{delegation.id}-result.json")
+                .relative_to(root)
+            ),
+            "evidence_dir": str(evidence_dir.relative_to(root)),
+        },
+        "non_claims": [
+            "This handoff does not include large context-pack snippets.",
+            "This handoff does not approve implementation work.",
+            "This handoff does not commit, push, deploy, or call model providers.",
+            "Returned-file validation is advisory and does not hard-fail the delegation.",
+        ],
+    }
+    json_path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    markdown_path.write_text(
+        _render_implementation_handoff_markdown(payload),
+        encoding="utf-8",
+    )
+    return {
+        "json_path": str(json_path),
+        "markdown_path": str(markdown_path),
+        "json_path_relative": str(json_path.relative_to(root)),
+        "markdown_path_relative": str(markdown_path.relative_to(root)),
+    }
+
+
+def _handoff_file_list(structured_output: dict[str, Any], key: str) -> list[str]:
+    value = structured_output.get(key, [])
+    if isinstance(value, str):
+        return [value]
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value if str(item)]
+
+
+def _handoff_findings(structured_output: dict[str, Any]) -> list[str]:
+    value = structured_output.get("findings", [])
+    if isinstance(value, str):
+        return [value]
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value[:10] if str(item)]
+
+
+def _render_implementation_handoff_markdown(payload: dict[str, Any]) -> str:
+    context_pack = payload["context_pack"]
+    validation = payload["validation"]
+    scout_output = payload["scout_output"]
+    lines = [
+        "# Implementation Handoff",
+        "",
+        f"- delegation_id: {payload['delegation_id']}",
+        f"- run_id: {payload['run_id']}",
+        f"- project_id: {payload['project']['id']}",
+        f"- expected_output_schema: {payload['expected_output_schema']}",
+        f"- result_summary: {payload['result_summary']}",
+        "",
+        "## Context Pack",
+        "",
+        f"- context_pack_id: {context_pack.get('id') or 'none'}",
+        f"- context_pack_json: {context_pack.get('json_path') or 'none'}",
+        f"- context_pack_md: {context_pack.get('markdown_path') or 'none'}",
+        f"- ranked_file_count: {context_pack.get('ranked_file_count', 0)}",
+        f"- grep_hit_count: {context_pack.get('grep_hit_count', 0)}",
+        "",
+        "## Context Pack Validation",
+        "",
+        "- returned_files_in_inventory: "
+        f"{_handoff_bool(validation.get('returned_files_in_inventory'))}",
+        "- returned_files_missing: "
+        f"{', '.join(validation.get('returned_files_missing') or []) or 'none'}",
+        "- top_ranked_files_referenced: "
+        f"{', '.join(validation.get('top_ranked_files_referenced') or []) or 'none'}",
+        "",
+        "## Top Ranked Files",
+        "",
+    ]
+    top_files = context_pack.get("top_ranked_files") or []
+    lines.extend(f"- {path}" for path in top_files) if top_files else lines.append("- none")
+    lines.extend(["", "## Scout Returned Files", ""])
+    returned = scout_output.get("relevant_files") or scout_output.get("files") or []
+    lines.extend(f"- {path}" for path in returned) if returned else lines.append("- none")
+    lines.extend(["", "## Test Hints", ""])
+    test_hints = context_pack.get("test_hints") or []
+    lines.extend(f"- {path}" for path in test_hints) if test_hints else lines.append("- none")
+    lines.extend(["", "## Non-Claims", ""])
+    lines.extend(f"- {claim}" for claim in payload["non_claims"])
+    return "\n".join(lines) + "\n"
+
+
+def _handoff_bool(value: object) -> str:
+    if value is True:
+        return "true"
+    if value is False:
+        return "false"
+    return "unknown"
 
 
 def _adapter_command(
@@ -1040,6 +1231,7 @@ def _write_success_summary(
     project: dict[str, Any] | None,
     repo_scouting: dict[str, Any],
     context_pack: dict[str, Any],
+    implementation_handoff: dict[str, Any],
     run_id: str,
     result_summary: str,
     memory_entry: MemoryEntry | None,
@@ -1062,6 +1254,12 @@ def _write_success_summary(
                 "- context_pack_metadata.json",
             ]
         )
+    evidence_paths.extend(
+        [
+            "- implementation_handoff.json",
+            "- implementation_handoff.md",
+        ]
+    )
     evidence_paths.extend(
         [
             "- prompt.md",
@@ -1090,6 +1288,8 @@ def _write_success_summary(
             f"- target_project_root: {project['root_path'] if project else 'none'}",
             f"- context_pack_id: {context_pack.get('context_pack_id', 'none')}",
             f"- context_pack_json: {context_pack.get('json_path_relative', 'none')}",
+            "- implementation_handoff_json: "
+            f"{implementation_handoff.get('json_path_relative', 'none')}",
             f"- expected_output_schema: {delegation.expected_output_schema}",
             "- execution_status: completed",
             "- output_validated: true",

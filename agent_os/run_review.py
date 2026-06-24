@@ -346,6 +346,20 @@ def _scout_context_pack_lines(
             f"- delegation={delegation.id} profile={delegation.assigned_profile} "
             f"context_pack={context_pack_path}"
         )
+        if metadata.get("context_pack_id"):
+            lines.append(f"  - context_pack_id: {metadata['context_pack_id']}")
+        if metadata.get("implementation_handoff_json"):
+            lines.append(
+                f"  - implementation_handoff: {metadata['implementation_handoff_json']}"
+            )
+        if "context_pack_returned_files_in_inventory" in metadata:
+            lines.append(
+                "  - returned_files_in_inventory: "
+                f"{_review_bool(metadata['context_pack_returned_files_in_inventory'])}"
+            )
+        missing = metadata.get("context_pack_returned_files_missing") or []
+        if missing:
+            lines.append(f"  - returned_files_missing: {', '.join(missing)}")
         try:
             payload = json.loads(full_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
@@ -353,7 +367,7 @@ def _scout_context_pack_lines(
             continue
         top_files = [item["path"] for item in payload.get("ranked_files", [])[:5]]
         test_hints = [hint["path"] for hint in payload.get("test_hints", [])[:5]]
-        referenced = metadata.get("context_pack_top_ranked_files") or []
+        referenced = metadata.get("context_pack_top_ranked_files_referenced") or []
         lines.append(f"  - top_ranked_files: {', '.join(top_files) if top_files else 'none'}")
         lines.append(f"  - test_hints: {', '.join(test_hints) if test_hints else 'none'}")
         lines.append(
@@ -361,6 +375,14 @@ def _scout_context_pack_lines(
             f"{', '.join(referenced) if referenced else 'unknown'}"
         )
     return lines
+
+
+def _review_bool(value: object) -> str:
+    if value is True:
+        return "true"
+    if value is False:
+        return "false"
+    return "unknown"
 
 
 def render_evidence_index(root: Path, packet: RunEvidencePacket) -> str:

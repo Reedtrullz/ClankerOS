@@ -206,6 +206,18 @@ def render_subagent_delegation_line(delegation: SubagentDelegation) -> str:
     context_pack = metadata.get("context_pack_json")
     if context_pack:
         line += f" context_pack={context_pack}"
+    handoff = metadata.get("implementation_handoff_json")
+    if handoff:
+        line += f" implementation_handoff={handoff}"
+    returned_files_in_inventory = metadata.get("context_pack_returned_files_in_inventory")
+    if returned_files_in_inventory is not None:
+        line += (
+            " context_pack_returned_files_in_inventory="
+            f"{_metadata_bool(returned_files_in_inventory)}"
+        )
+    missing_files = metadata.get("context_pack_returned_files_missing") or []
+    if missing_files:
+        line += f" missing_context_pack_files={','.join(missing_files)}"
     incident_id = metadata.get("incident_id")
     if incident_id:
         line += f" incident={incident_id}"
@@ -241,7 +253,12 @@ def load_delegation_result_metadata(delegation: SubagentDelegation) -> dict[str,
         "context_pack_json",
         "context_pack_md",
         "context_pack_ranked_file_count",
+        "context_pack_returned_files_in_inventory",
+        "context_pack_returned_files_missing",
+        "context_pack_top_ranked_files_referenced",
         "context_pack_top_ranked_files",
+        "implementation_handoff_json",
+        "implementation_handoff_md",
         "network_actions_taken",
         "provider_calls_taken_by_clankeros",
         "run_id",
@@ -249,6 +266,14 @@ def load_delegation_result_metadata(delegation: SubagentDelegation) -> dict[str,
         "target_project_root",
     }
     return {key: payload[key] for key in keys if key in payload}
+
+
+def _metadata_bool(value: object) -> str:
+    if value is True:
+        return "true"
+    if value is False:
+        return "false"
+    return "unknown"
 
 
 def _validate_read_only_subagent(profile: AgentProfile) -> None:

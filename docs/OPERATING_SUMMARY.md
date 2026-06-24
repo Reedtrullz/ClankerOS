@@ -97,9 +97,13 @@ Core layers for the bootstrap:
   Context packs rank files with explainable scores, record capped grep hits
   and snippets, list test/entrypoint/config hints, skip ignored and
   secret-like paths, and add validation metadata showing whether returned files
-  were in the inventory. Adapters run from the system root by default and can
-  opt into `--working-directory project_root` for repo scouting. It supports
-  shell adapters only. ClankerOS records
+  were in the inventory. Successful delegation runs also write
+  `implementation_handoff.json` and `implementation_handoff.md` with compact
+  context-pack paths, ranked/test hint summaries, scout returned files,
+  validation health, and non-claims without embedding large snippets. Adapters
+  run from the system root by default and can opt into
+  `--working-directory project_root` for repo scouting. It supports shell
+  adapters only. ClankerOS records
   `provider_calls_taken_by_clankeros=0`, `external_mutations_taken=0`, and
   `network_actions_taken=unknown` unless adapter evidence proves otherwise.
 - Delegation result ingestion: `record-delegation-result` attaches structured

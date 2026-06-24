@@ -1,0 +1,16 @@
+{
+  "acceptance_criteria": "- Scope, non-goals, and verifier are explicit.\n- Changed files are limited to the agreed scope and have local evidence.\n- Tests, dashboard, handoff, and next-action evidence are current.",
+  "approved_at": null,
+  "artifact_path": ".clanker/projects/clankeros/goals/goal_1fa51c15f846/CONTRACT.md",
+  "created_at": "2026-06-24T11:22:19.118683+00:00",
+  "evaluator_notes": "Review plan alignment, task evidence, and non-claims before execution.",
+  "goal_id": "goal_1fa51c15f846",
+  "id": "contract_e9d4aede9174",
+  "non_goals": "No external side effects, no CI/deploy claim, no autonomous scheduling, and no model-provider dispatch from this contract.",
+  "plan_id": "plan_7e4c179d9102",
+  "risk_notes": "Planned tasks remain status=planned until an operator or later runner explicitly moves them into an executable state.",
+  "scope": "Execute plan v1 for goal: Demo context-pack repo scouting before edits",
+  "status": "draft",
+  "updated_at": "2026-06-24T11:22:19.118683+00:00",
+  "verification_plan": "- python3 -m agent_os.cli project-context clankeros\n- python3 -m pytest -q\n- python3 -m pytest -q"
+}
