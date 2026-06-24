@@ -138,6 +138,7 @@ python3 -m agent_os.cli context-pack <delegation_id> --max-files 12 --max-snippe
 python3 -m agent_os.cli profile-adapter scout --command "python3 .clanker/adapters/fake_scout.py" --input-mode json_file --output-mode json --timeout-seconds 120
 python3 -m agent_os.cli run-delegation <delegation_id>
 python3 -m agent_os.cli delegation-result <delegation_id>
+python3 -m agent_os.cli implementation-handoff <delegation_id>
 python3 -m agent_os.cli review <run_id>
 python3 -m agent_os.cli dashboard
 ```
@@ -163,6 +164,9 @@ the large snippets:
 .clanker/delegations/<delegation_id>/runs/<run_id>/evidence/implementation_handoff.md
 ```
 
+Use `implementation-handoff <delegation_id>` to parse that handoff directly.
+It prints readability, schema/kind, context-pack validation, scout returned
+files, top ranked files, test hints, and whether snippets were embedded.
 Add `--working-directory project_root` when configuring the adapter if the
 local executor should run from the target repository instead of the ClankerOS
 system root.
@@ -183,6 +187,7 @@ For the full walkthrough, see
 | Configure project-root scout adapter | `python3 -m agent_os.cli profile-adapter scout --command "python3 /path/to/scout.py" --working-directory project_root` |
 | Generate scout context | `python3 -m agent_os.cli context-pack <delegation_id>` |
 | Run read-only delegation | `python3 -m agent_os.cli run-delegation <delegation_id>` |
+| Inspect implementation handoff | `python3 -m agent_os.cli implementation-handoff <delegation_id>` |
 | Review evidence | `review`, `evidence`, `replay-summary` |
 | Inspect approvals | `python3 -m agent_os.cli approvals` |
 | Prepare GitHub handoff | `python3 -m agent_os.cli github-handoff <effect_id>` |
@@ -223,10 +228,12 @@ During `run-delegation`, those files are copied into:
 .clanker/delegations/<delegation_id>/runs/<run_id>/evidence/implementation_handoff.md
 ```
 
-`delegation-result`, `review <run_id>`, `inbox`, and `dashboard` surface the
-context-pack path, returned-file inventory validation, missing returned files,
-and implementation handoff paths so a later implementation pass can start from
-paths and metadata instead of pasted snippets.
+`delegation-result`, `implementation-handoff <delegation_id>`,
+`review <run_id>`, `inbox`, and `dashboard` surface the context-pack path,
+returned-file inventory validation, missing returned files, and implementation
+handoff health so a later implementation pass can start from paths and
+metadata instead of pasted snippets. `review` writes a `## Implementation
+Handoff` section, and the dashboard writes `### Implementation Handoffs`.
 
 Adapters run from the ClankerOS root by default; configure
 `--working-directory project_root` to let a scout read repo files with relative

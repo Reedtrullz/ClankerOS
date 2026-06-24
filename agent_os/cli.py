@@ -463,6 +463,10 @@ from agent_os.handoff_review import (
     render_stale_handoff_line,
     write_handoff_review_report,
 )
+from agent_os.implementation_handoff import (
+    render_implementation_handoff_cli_lines,
+    summarize_implementation_handoff,
+)
 from agent_os.github_handoff import create_github_handoff
 from agent_os.iteration import generate_next_iteration_packet
 from agent_os.learning_distillation import (
@@ -700,6 +704,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Show a subagent delegation contract and current result state.",
     )
     delegation_result.add_argument("delegation_id")
+    implementation_handoff = subparsers.add_parser(
+        "implementation-handoff",
+        help="Inspect the implementation handoff artifact for a delegation.",
+    )
+    implementation_handoff.add_argument("delegation_id")
     run_delegation_parser = subparsers.add_parser(
         "run-delegation",
         help="Execute a pending delegation through a configured local adapter.",
@@ -2276,6 +2285,17 @@ def main(argv: list[str] | None = None) -> int:
             )
         if metadata.get("implementation_handoff_json"):
             print(f"implementation_handoff: {metadata['implementation_handoff_json']}")
+            handoff_summary = summarize_implementation_handoff(root, delegation)
+            print(f"implementation_handoff_status: {handoff_summary['status']}")
+            print(
+                "implementation_handoff_schema_version: "
+                f"{handoff_summary['schema_version']}"
+            )
+            print(f"implementation_handoff_kind: {handoff_summary['kind']}")
+            print(
+                "implementation_handoff_snippets_embedded: "
+                f"{_print_bool(handoff_summary['snippets_embedded'])}"
+            )
         if metadata.get("implementation_handoff_md"):
             print(f"implementation_handoff_md: {metadata['implementation_handoff_md']}")
         if "exit_code" in metadata:
@@ -2291,6 +2311,20 @@ def main(argv: list[str] | None = None) -> int:
             )
         print(f"completed_at: {delegation.completed_at or 'none'}")
         return 0
+
+    if args.command == "implementation-handoff":
+        system = AgentSystem(root)
+        system.initialize()
+        delegation = system.storage.get_subagent_delegation(args.delegation_id)
+        if delegation is None:
+            print(f"delegation_missing: {args.delegation_id}")
+            return 1
+        summary = summarize_implementation_handoff(root, delegation)
+        for line in render_implementation_handoff_cli_lines(summary):
+            print(line)
+        if summary["readable"]:
+            return 0
+        return 1
 
     if args.command == "run-delegation":
         system = AgentSystem(root)

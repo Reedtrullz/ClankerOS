@@ -3104,6 +3104,28 @@ def test_context_pack_writes_ranked_search_artifacts_for_registered_delegation(
     assert "## Non-Claims" in markdown
 
 
+def test_implementation_handoff_reports_missing_for_unrun_delegation(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    _storage, _goal_id, _task_id, delegation_id, _repo_path = (
+        _create_registered_context_pack_delegation(tmp_path, capsys)
+    )
+
+    assert main(["--root", str(tmp_path), "implementation-handoff", delegation_id]) == 1
+    output = capsys.readouterr().out
+    assert f"implementation_handoff: {delegation_id}" in output
+    assert "status: missing" in output
+    assert "path: none" in output
+    assert "schema_version: unknown" in output
+    assert "kind: unknown" in output
+    assert "snippets_embedded: false" in output
+
+    assert main(["--root", str(tmp_path), "implementation-handoff", "missing"]) == 1
+    output = capsys.readouterr().out
+    assert "delegation_missing: missing" in output
+
+
 def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
     tmp_path: Path,
     capsys,
@@ -3225,6 +3247,25 @@ def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
     assert "context_pack_returned_files_in_inventory: true" in result_output
     assert "implementation_handoff: .clanker/delegations/" in result_output
 
+    assert main(["--root", str(tmp_path), "implementation-handoff", delegation_id]) == 0
+    handoff_output = capsys.readouterr().out
+    assert f"implementation_handoff: {delegation_id}" in handoff_output
+    assert "status: readable" in handoff_output
+    assert "schema_version: 1" in handoff_output
+    assert "kind: implementation_context_handoff" in handoff_output
+    assert f"run_id: {run_id}" in handoff_output
+    assert "project_id: subject" in handoff_output
+    assert "context_pack: .clanker/delegations/" in handoff_output
+    assert "context_pack_returned_files_in_inventory: true" in handoff_output
+    assert "context_pack_returned_files_missing: none" in handoff_output
+    assert "context_pack_top_ranked_files_referenced: " in handoff_output
+    assert "top_ranked_files: " in handoff_output
+    assert "agent_os/delegation_runner.py" in handoff_output
+    assert "test_hints: tests/test_delegation_runner.py" in handoff_output
+    assert "scout_relevant_files: " in handoff_output
+    assert "snippets_embedded: false" in handoff_output
+    assert "next_recommended_action: implementation_review" in handoff_output
+
     assert main(["--root", str(tmp_path), "review", run_id]) == 0
     review_output = capsys.readouterr().out
     review_path = tmp_path / next(
@@ -3238,6 +3279,12 @@ def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
     assert "tests/test_delegation_runner.py" in review
     assert "implementation_handoff:" in review
     assert "returned_files_in_inventory: true" in review
+    assert "## Implementation Handoff" in review
+    assert "handoff_readable: true" in review
+    assert "schema_version: 1" in review
+    assert "kind: implementation_context_handoff" in review
+    assert "snippets_embedded: false" in review
+    assert "scout_relevant_files:" in review
 
     dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
     assert "### Subagent / Scout Work" in dashboard
@@ -3245,6 +3292,12 @@ def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
     assert "context_pack=" in dashboard
     assert "implementation_handoff=" in dashboard
     assert "returned_files_in_inventory=true" in dashboard
+    assert "### Implementation Handoffs" in dashboard
+    assert "handoff_readable=true" in dashboard
+    assert "schema_version=1" in dashboard
+    assert "kind=implementation_context_handoff" in dashboard
+    assert "snippets_embedded=false" in dashboard
+    assert "scout_relevant_files=" in dashboard
     assert str(repo_path.resolve()) in input_bundle["project"]["root_path"]
 
 

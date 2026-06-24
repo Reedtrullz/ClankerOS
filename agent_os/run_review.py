@@ -5,6 +5,7 @@ import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from agent_os.implementation_handoff import render_implementation_handoff_review_lines
 from agent_os.subagent_delegation import load_delegation_result_metadata
 from agent_os.storage import (
     ApprovalRequest,
@@ -312,6 +313,14 @@ def render_run_review(root: Path, packet: RunEvidencePacket) -> str:
     if scout_context_lines:
         lines.extend(["", "## Scout Context Pack", ""])
         lines.extend(scout_context_lines)
+
+    implementation_handoff_lines = render_implementation_handoff_review_lines(
+        root,
+        packet.delegations,
+    )
+    if implementation_handoff_lines:
+        lines.extend(["", "## Implementation Handoff", ""])
+        lines.extend(implementation_handoff_lines)
 
     lines.extend(
         [

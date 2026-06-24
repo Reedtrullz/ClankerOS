@@ -93,6 +93,7 @@ python3 -m agent_os.cli profile-adapter scout --command "python3 /absolute/path/
 python3 -m agent_os.cli context-pack <delegation_id> --max-files 12 --max-snippets 8 --max-total-chars 12000
 python3 -m agent_os.cli run-delegation <delegation_id>
 python3 -m agent_os.cli delegation-result <delegation_id>
+python3 -m agent_os.cli implementation-handoff <delegation_id>
 python3 -m agent_os.cli record-delegation-result <delegation_id> --summary "Relevant files identified." --output-json '{"files":["agent_os/cli.py"],"findings":["CLI parser lives in agent_os/cli.py."],"relevant_files":["agent_os/cli.py"]}'
 ```
 
@@ -137,8 +138,12 @@ The handoff JSON includes `schema_version: 1`, kind
 `implementation_context_handoff`, context-pack paths/counts, returned-file
 inventory validation, scout returned files, and non-claims. It intentionally
 points at `context_pack.json` and `context_pack.md` instead of embedding large
-snippets. `delegation-result`, `review`, `inbox`, and `dashboard` surface the
-handoff path and validation summary.
+snippets. `implementation-handoff <delegation_id>` parses the artifact and
+prints readability, schema/kind, context-pack validation, top ranked files,
+test hints, scout relevant files, and `snippets_embedded`. Missing or
+unreadable handoffs return non-zero with explicit status. `delegation-result`,
+`review`, `inbox`, and `dashboard` also surface handoff health and validation
+summary.
 `record-delegation-result` remains the manual ingestion path for
 operator-supplied output.
 

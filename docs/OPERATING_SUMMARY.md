@@ -100,8 +100,11 @@ Core layers for the bootstrap:
   were in the inventory. Successful delegation runs also write
   `implementation_handoff.json` and `implementation_handoff.md` with compact
   context-pack paths, ranked/test hint summaries, scout returned files,
-  validation health, and non-claims without embedding large snippets. Adapters
-  run from the system root by default and can opt into
+  validation health, and non-claims without embedding large snippets. The
+  `implementation-handoff <delegation_id>` command reads the artifact back with
+  readability, schema/kind, validation, scout file, and snippet-embedding
+  status; run review and dashboard output include first-class implementation
+  handoff sections. Adapters run from the system root by default and can opt into
   `--working-directory project_root` for repo scouting. It supports shell
   adapters only. ClankerOS records
   `provider_calls_taken_by_clankeros=0`, `external_mutations_taken=0`, and

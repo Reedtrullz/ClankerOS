@@ -44,7 +44,10 @@ and project notes.
 - Implementation handoff: a compact run-evidence artifact written after a
   successful executable delegation. It points at context-pack JSON/Markdown,
   returned-file validation, scout returned files, and test hints without
-  embedding large snippets or approving implementation work.
+  embedding large snippets or approving implementation work. Use
+  `implementation-handoff <delegation_id>` to inspect the artifact directly;
+  review and dashboard outputs also summarize handoff readability and schema
+  health.
 - Project context packet: a durable operator summary for a registered project.
   It is broader and less task-specific than a context pack.
 - Profile: a local routing role such as planner, coder, scout, tester, or

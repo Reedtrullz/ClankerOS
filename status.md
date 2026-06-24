@@ -1,5 +1,56 @@
 # Status
 
+## 2026-06-24 First-Class Implementation Handoff Surfaces
+
+- Added `python3 -m agent_os.cli implementation-handoff <delegation_id>` as a
+  direct readback for executable delegation handoff artifacts.
+- The command parses `implementation_handoff.json` and prints handoff
+  readability, schema version, kind validity, run/project/task ids,
+  context-pack paths/counts, returned-file validation, referenced top-ranked
+  files, top ranked files, test hints, scout files, scout relevant files,
+  snippet-embedding status, and the implementation-review next action.
+- Added shared implementation-handoff summary/rendering code so CLI, run
+  review, and dashboard report the same health fields and explicit
+  missing/unreadable states.
+- `review <run_id>` now writes a first-class `## Implementation Handoff`
+  section. `dashboard` now writes a first-class `### Implementation Handoffs`
+  section alongside the existing scout work section.
+- `delegation-result` still prints the handoff paths and now also prints
+  handoff status, schema version, kind, and snippet-embedding status when a
+  handoff exists.
+- Updated README, command reference, executable delegation tutorial, concepts,
+  suggested-use prompts, operating summary, `runs/run_ec43eabad0c4/review.md`,
+  and `docs/dashboard.md` for the first-class handoff readback.
+- Live proof:
+  - `implementation-handoff subagent_delegation_3189127f5f0d` printed
+    `status: readable`, `schema_version: 1`, kind
+    `implementation_context_handoff`, `kind_valid: true`,
+    `context_pack_returned_files_in_inventory: true`, and
+    `snippets_embedded: false`.
+  - `review run_ec43eabad0c4` regenerated
+    `runs/run_ec43eabad0c4/review.md` with `## Implementation Handoff`,
+    `handoff_readable: true`, schema/kind, scout relevant files, and
+    `snippets_embedded: false`.
+  - `dashboard` regenerated `docs/dashboard.md` with
+    `### Implementation Handoffs`, `handoff_readable=true`,
+    `schema_version=1`, kind `implementation_context_handoff`,
+    scout relevant files, and `snippets_embedded=false`.
+- Verification evidence:
+  - red focused test failed first because `implementation-handoff` was not a
+    recognized CLI command.
+  - `python3 -m py_compile agent_os/implementation_handoff.py agent_os/cli.py
+    agent_os/run_review.py agent_os/dashboard.py tests/test_first_milestone.py`
+    passed.
+  - focused handoff/context-pack slice: 3 passed, 474 deselected.
+  - adjacent delegation/review/dashboard/context-pack slice: 161 passed, 316
+    deselected in 337.92s.
+  - full suite: 477 passed in 1041.04s.
+- Non-claims: this is local handoff readback, review, dashboard, and
+  documentation work only; it does not approve implementation, start a remote
+  worker, call model providers, commit, push, deploy, enable hosted dashboard
+  behavior, retry automatically, enforce budgets, promote trust, or track real
+  spend.
+
 ## 2026-06-24 First-Class Context Pack Handoffs
 
 - `run-delegation` now writes compact implementation handoff artifacts for

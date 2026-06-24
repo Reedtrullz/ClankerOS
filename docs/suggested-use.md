@@ -168,7 +168,7 @@ Register this repo, create a scout delegation for the next planned task, run the
 ```
 
 ```text
-Run the scout delegation, then show me the context-pack validation and implementation handoff path from delegation-result, review, and dashboard.
+Run the scout delegation, then show me the implementation-handoff readback, context-pack validation, and the review/dashboard handoff sections.
 ```
 
 ```text

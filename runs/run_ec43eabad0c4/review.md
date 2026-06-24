@@ -36,6 +36,28 @@ Demo context-pack repo scouting before edits
 - runs/run_ec43eabad0c4/summary.md
 - .clanker/projects/clankeros/goals/goal_1fa51c15f846/PLAN-v1.md
 - .clanker/projects/clankeros/goals/goal_1fa51c15f846/CONTRACT.md
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/summary.md
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/run.json
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/goal.json
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/plan.json
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/contract.json
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/tasks.json
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/events.jsonl
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/routing_decisions.jsonl
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/delegations.jsonl
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/steering_reviews.jsonl
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/commands.jsonl
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/verification.json
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/approvals.jsonl
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/effects.jsonl
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/memory_proposals.jsonl
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/skill_proposals.jsonl
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/incidents.jsonl
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/eval_candidates.jsonl
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/git_status.txt
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/diff.patch
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/changed_files.json
+- .clanker/projects/clankeros/goals/goal_1fa51c15f846/runs/run_ec43eabad0c4/evidence/final_review.md
 - .clanker/delegations/subagent_delegation_3189127f5f0d-result.json
 - .clanker/delegations/subagent_delegation_c1f5246a0b7f-result.json
 - .clanker/delegations/subagent_delegation_035c3e0876c7-result.json
@@ -70,6 +92,24 @@ Demo context-pack repo scouting before edits
   - top_ranked_files: agent_os/context_pack.py, agent_os/profile_routing.py, agent_os/browser_desktop_adapter_proof.py, agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations.py, AGENTS.md
   - test_hints: none
   - scout_output_referenced_top_files: unknown
+
+## Implementation Handoff
+
+- delegation=subagent_delegation_3189127f5f0d handoff=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/implementation_handoff.json
+  - handoff_readable: true
+  - schema_version: 1
+  - kind: implementation_context_handoff
+  - kind_valid: true
+  - run_id: run_ec43eabad0c4
+  - project_id: clankeros
+  - context_pack: .clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/context_pack.json
+  - returned_files_in_inventory: true
+  - returned_files_missing: none
+  - top_ranked_files_referenced: agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json
+  - top_ranked_files: agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json,playbooks/first-milestone-closed-loop.md,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py
+  - test_hints: none
+  - scout_relevant_files: agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json
+  - snippets_embedded: false
 
 ## Recommended Next Action
 

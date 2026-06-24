@@ -313,6 +313,7 @@ large snippets into the handoff.
 
 ```bash
 python3 -m agent_os.cli delegation-result <delegation_id>
+python3 -m agent_os.cli implementation-handoff <delegation_id>
 python3 -m agent_os.cli review <run_id>
 python3 -m agent_os.cli inbox
 python3 -m agent_os.cli dashboard
@@ -320,11 +321,13 @@ python3 -m agent_os.cli dashboard
 
 `delegation-result` prints runtime metadata when the result came from
 `run-delegation`, including the run id, adapter type, evidence packet, and
-context-pack and implementation-handoff paths. `review <run_id>` includes a
-`## Scout Context Pack` section with top ranked files, test hints, returned
-file inventory validation, and the handoff path. The dashboard includes a
-`### Subagent / Scout Work` section with compact scout status, context-pack
-counts, missing returned files, and the handoff path.
+context-pack and implementation-handoff paths. `implementation-handoff` parses
+the handoff JSON and prints readability, schema/kind, returned-file
+validation, top ranked files, test hints, scout relevant files, and whether
+large snippets were embedded. `review <run_id>` includes `## Scout Context
+Pack` and `## Implementation Handoff` sections. The dashboard includes
+`### Subagent / Scout Work` and `### Implementation Handoffs` sections with
+compact scout and handoff health.
 
 ## 9. Propose Memory From The Result
 
