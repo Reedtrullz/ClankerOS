@@ -139,6 +139,7 @@ python3 -m agent_os.cli profile-adapter scout --command "python3 .clanker/adapte
 python3 -m agent_os.cli run-delegation <delegation_id>
 python3 -m agent_os.cli delegation-result <delegation_id>
 python3 -m agent_os.cli implementation-handoff <delegation_id>
+python3 -m agent_os.cli coder-prep <delegation_id>
 python3 -m agent_os.cli review <run_id>
 python3 -m agent_os.cli dashboard
 ```
@@ -167,6 +168,12 @@ the large snippets:
 Use `implementation-handoff <delegation_id>` to parse that handoff directly.
 It prints readability, schema/kind, context-pack validation, scout returned
 files, top ranked files, test hints, and whether snippets were embedded.
+Use `coder-prep <delegation_id>` when an operator wants to turn the handoff
+into a bounded future coding plan before editing anything. It consumes
+`implementation_handoff.md`, writes `coder_prep.json` and `coder_prep.md`
+under the delegation run, and prints zero-effect counters for task rows, runs,
+routing decisions, worktrees, approvals, source edits, command reruns, network
+actions, and external mutations.
 Add `--working-directory project_root` when configuring the adapter if the
 local executor should run from the target repository instead of the ClankerOS
 system root.
@@ -188,6 +195,7 @@ For the full walkthrough, see
 | Generate scout context | `python3 -m agent_os.cli context-pack <delegation_id>` |
 | Run read-only delegation | `python3 -m agent_os.cli run-delegation <delegation_id>` |
 | Inspect implementation handoff | `python3 -m agent_os.cli implementation-handoff <delegation_id>` |
+| Prepare bounded coder plan | `python3 -m agent_os.cli coder-prep <delegation_id>` |
 | Review evidence | `review`, `evidence`, `replay-summary` |
 | Inspect approvals | `python3 -m agent_os.cli approvals` |
 | Prepare GitHub handoff | `python3 -m agent_os.cli github-handoff <effect_id>` |
@@ -229,11 +237,18 @@ During `run-delegation`, those files are copied into:
 ```
 
 `delegation-result`, `implementation-handoff <delegation_id>`,
-`review <run_id>`, `inbox`, and `dashboard` surface the context-pack path,
-returned-file inventory validation, missing returned files, and implementation
-handoff health so a later implementation pass can start from paths and
-metadata instead of pasted snippets. `review` writes a `## Implementation
-Handoff` section, and the dashboard writes `### Implementation Handoffs`.
+`coder-prep <delegation_id>`, `review <run_id>`, `inbox`, and `dashboard`
+surface the context-pack path, returned-file inventory validation, missing
+returned files, and implementation handoff health so a later implementation
+pass can start from paths and metadata instead of pasted snippets. `review`
+writes `## Implementation Handoff` and `## Coder Prep` sections, and the
+dashboard writes `### Implementation Handoffs` and
+`### Coder Prep Packets`.
+
+`coder-prep` is artifact-only and idempotent for the same handoff hash. It
+does not create task rows, dispatch runs, rerun commands, edit source files,
+create worktrees, request approvals, commit, push, deploy, call providers, or
+mutate external systems.
 
 Adapters run from the ClankerOS root by default; configure
 `--working-directory project_root` to let a scout read repo files with relative

@@ -94,6 +94,7 @@ python3 -m agent_os.cli context-pack <delegation_id> --max-files 12 --max-snippe
 python3 -m agent_os.cli run-delegation <delegation_id>
 python3 -m agent_os.cli delegation-result <delegation_id>
 python3 -m agent_os.cli implementation-handoff <delegation_id>
+python3 -m agent_os.cli coder-prep <delegation_id>
 python3 -m agent_os.cli record-delegation-result <delegation_id> --summary "Relevant files identified." --output-json '{"files":["agent_os/cli.py"],"findings":["CLI parser lives in agent_os/cli.py."],"relevant_files":["agent_os/cli.py"]}'
 ```
 
@@ -144,6 +145,24 @@ test hints, scout relevant files, and `snippets_embedded`. Missing or
 unreadable handoffs return non-zero with explicit status. `delegation-result`,
 `review`, `inbox`, and `dashboard` also surface handoff health and validation
 summary.
+
+`coder-prep <delegation_id>` consumes the readable `implementation_handoff.md`
+and writes a bounded future coding packet under:
+
+```text
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_prep/coder_prep.json
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_prep/coder_prep.md
+```
+
+The prep packet records the source handoff hash, allowed files, candidate test
+files, acceptance criteria, risks, and a run plan with
+`status=operator_review_required` and `dispatch_ready=false`. It is
+idempotent for the same handoff hash and reports
+`task_rows_created=0`, `runs_created=0`, `routing_decisions_created=0`,
+`worktrees_created=0`, `approval_requests_created=0`, `source_edits=0`,
+`commands_rerun=0`, `network_actions_taken=0`, and
+`external_mutations_taken=0`. `review` and `dashboard` surface existing coder
+prep packets, but the command does not dispatch work or edit files.
 `record-delegation-result` remains the manual ingestion path for
 operator-supplied output.
 

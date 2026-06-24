@@ -26,6 +26,7 @@ harder to overclaim.
 | Run a read-only delegation through a fake local adapter | `docs/tutorial-executable-delegation.md` |
 | Generate deterministic context for a scout delegation | `python3 -m agent_os.cli context-pack <delegation_id>` |
 | Scout registered repo files with a local adapter | `profile-adapter ... --working-directory project_root` |
+| Prepare a bounded coding plan from a handoff | `python3 -m agent_os.cli coder-prep <delegation_id>` |
 | Review a run before acting | `python3 -m agent_os.cli review <run_id>` |
 | Keep activation blocked while preserving proof state | start with the capability follow-up tutorials below |
 | Publish a coherent snapshot | `docs/tutorial-public-snapshot.md` |
@@ -107,6 +108,8 @@ python3 -m agent_os.cli context-pack <delegation_id> --max-files 12 --max-snippe
 python3 -m agent_os.cli profile-adapter scout --command "python3 /absolute/path/to/scout.py" --input-mode json_file --output-mode json --working-directory project_root
 python3 -m agent_os.cli run-delegation <delegation_id>
 python3 -m agent_os.cli delegation-result <delegation_id>
+python3 -m agent_os.cli implementation-handoff <delegation_id>
+python3 -m agent_os.cli coder-prep <delegation_id>
 python3 -m agent_os.cli review <run_id>
 ```
 
@@ -118,6 +121,13 @@ test hints, entrypoint hints, and config hints. The adapter can read
 Proof boundary: this scout loop writes local evidence and proposed memory only
 when requested. It does not edit files, commit, push, deploy, approve effects,
 schedule retries, or mutate external systems.
+
+Use `coder-prep` after a readable implementation handoff when you want a
+bounded future coding packet without starting implementation. It writes
+`coder_prep.json` and `coder_prep.md`, marks the plan
+`operator_review_required`, and reports zero task rows, runs, routing
+decisions, worktrees, approvals, source edits, command reruns, network actions,
+and external mutations.
 
 ## Good Starting Prompts
 
@@ -169,6 +179,10 @@ Register this repo, create a scout delegation for the next planned task, run the
 
 ```text
 Run the scout delegation, then show me the implementation-handoff readback, context-pack validation, and the review/dashboard handoff sections.
+```
+
+```text
+Run coder-prep for this implementation handoff and show me the allowed files, run plan, and zero-effect counters before editing anything.
 ```
 
 ```text

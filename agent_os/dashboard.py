@@ -368,6 +368,7 @@ from agent_os.handoff_review import (
     render_blocked_task_line,
     render_stale_handoff_line,
 )
+from agent_os.coder_prep import render_coder_prep_dashboard_lines
 from agent_os.implementation_handoff import render_implementation_handoff_dashboard_lines
 from agent_os.learning_distillation import (
     render_learning_distillation_line,
@@ -2275,6 +2276,10 @@ def generate_static_dashboard(root: Path) -> Path:
         subagent_delegations,
     )
     lines.extend(handoff_lines if handoff_lines else ["- none"])
+
+    lines.extend(["", "### Coder Prep Packets", ""])
+    coder_prep_lines = render_coder_prep_dashboard_lines(root)
+    lines.extend(coder_prep_lines if coder_prep_lines else ["- none"])
 
     lines.extend(["", "## Steering Reviews", ""])
     if steering_reviews:

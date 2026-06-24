@@ -163,6 +163,8 @@ def render_implementation_handoff_cli_lines(summary: dict[str, Any]) -> list[str
         f"finding_count: {summary['finding_count']}",
         f"snippets_embedded: {_bool(summary.get('snippets_embedded'))}",
         f"result_summary: {summary['result_summary']}",
+        "coder_prep_command: "
+        f"python3 -m agent_os.cli coder-prep {summary['delegation_id']}",
         "next_recommended_action: implementation_review",
     ]
     if summary.get("error"):
@@ -228,6 +230,8 @@ def render_implementation_handoff_dashboard_lines(
             f"schema_version={summary['schema_version']} "
             f"kind={summary['kind']} kind_valid={_bool(summary['kind_valid'])} "
             f"run={summary['run_id']} project={summary['project_id']} "
+            "coder_prep_command=python3 -m agent_os.cli coder-prep "
+            f"{delegation.id} "
             f"context_pack={summary['context_pack_json']} "
             "returned_files_in_inventory="
             f"{_bool(summary['context_pack_returned_files_in_inventory'])} "

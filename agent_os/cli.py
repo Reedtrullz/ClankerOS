@@ -74,6 +74,11 @@ from agent_os.ci_deploy_proof import (
 )
 from agent_os.ci_deploy_evidence import record_ci_deploy_evidence
 from agent_os.context_pack import ContextPackError, generate_context_pack
+from agent_os.coder_prep import (
+    CoderPrepError,
+    prepare_coder_from_handoff,
+    render_coder_prep_cli_lines,
+)
 from agent_os.budget_enforcement_proof import (
     format_recommended_commands as format_budget_enforcement_commands,
     render_budget_enforcement_proof_checklist_line,
@@ -709,6 +714,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Inspect the implementation handoff artifact for a delegation.",
     )
     implementation_handoff.add_argument("delegation_id")
+    coder_prep = subparsers.add_parser(
+        "coder-prep",
+        help="Write a bounded coder-prep plan from an implementation handoff.",
+    )
+    coder_prep.add_argument("delegation_id")
     run_delegation_parser = subparsers.add_parser(
         "run-delegation",
         help="Execute a pending delegation through a configured local adapter.",
@@ -2325,6 +2335,18 @@ def main(argv: list[str] | None = None) -> int:
         if summary["readable"]:
             return 0
         return 1
+
+    if args.command == "coder-prep":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            result = prepare_coder_from_handoff(root, system.storage, args.delegation_id)
+        except CoderPrepError as error:
+            print(f"coder_prep_failed: {error}")
+            return 1
+        for line in render_coder_prep_cli_lines(root, result):
+            print(line)
+        return 0
 
     if args.command == "run-delegation":
         system = AgentSystem(root)

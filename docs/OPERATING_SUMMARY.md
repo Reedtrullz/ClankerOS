@@ -104,7 +104,15 @@ Core layers for the bootstrap:
   `implementation-handoff <delegation_id>` command reads the artifact back with
   readability, schema/kind, validation, scout file, and snippet-embedding
   status; run review and dashboard output include first-class implementation
-  handoff sections. Adapters run from the system root by default and can opt into
+  handoff sections. The `coder-prep <delegation_id>` command consumes the
+  readable `implementation_handoff.md` and writes
+  `.clanker/delegations/<delegation_id>/runs/<run_id>/coder_prep/` JSON and
+  Markdown packets with allowed files, candidate tests, acceptance criteria,
+  risks, and an operator-review-required future run plan. It is idempotent for
+  the same handoff hash and creates no task rows, runs, routing decisions,
+  worktrees, effects, approvals, source edits, command reruns, network actions,
+  provider calls, or external mutations. Run review and dashboard output also
+  surface existing coder prep packets. Adapters run from the system root by default and can opt into
   `--working-directory project_root` for repo scouting. It supports shell
   adapters only. ClankerOS records
   `provider_calls_taken_by_clankeros=0`, `external_mutations_taken=0`, and

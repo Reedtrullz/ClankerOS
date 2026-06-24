@@ -48,6 +48,12 @@ and project notes.
   `implementation-handoff <delegation_id>` to inspect the artifact directly;
   review and dashboard outputs also summarize handoff readability and schema
   health.
+- Coder prep packet: an artifact-only bridge from an implementation handoff to
+  a future coding run. `coder-prep <delegation_id>` consumes
+  `implementation_handoff.md`, records allowed files, test hints, acceptance
+  criteria, risks, and an operator-review-required run plan, and reports zero
+  task rows, runs, routing decisions, worktrees, approvals, source edits,
+  command reruns, network actions, and external mutations.
 - Project context packet: a durable operator summary for a registered project.
   It is broader and less task-specific than a context pack.
 - Profile: a local routing role such as planner, coder, scout, tester, or

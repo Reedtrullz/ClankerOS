@@ -5,6 +5,7 @@ import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from agent_os.coder_prep import render_coder_prep_review_lines
 from agent_os.implementation_handoff import render_implementation_handoff_review_lines
 from agent_os.subagent_delegation import load_delegation_result_metadata
 from agent_os.storage import (
@@ -321,6 +322,18 @@ def render_run_review(root: Path, packet: RunEvidencePacket) -> str:
     if implementation_handoff_lines:
         lines.extend(["", "## Implementation Handoff", ""])
         lines.extend(implementation_handoff_lines)
+
+    coder_prep_lines: list[str] = []
+    for delegation in packet.delegations:
+        metadata = load_delegation_result_metadata(delegation)
+        run_id = metadata.get("execution_run_id") or metadata.get("run_id")
+        if run_id:
+            coder_prep_lines.extend(
+                render_coder_prep_review_lines(root, delegation.id, str(run_id))
+            )
+    if coder_prep_lines:
+        lines.extend(["", "## Coder Prep", ""])
+        lines.extend(coder_prep_lines)
 
     lines.extend(
         [

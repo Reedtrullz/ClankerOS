@@ -1,5 +1,62 @@
 # Status
 
+## 2026-06-24 Safe Coder Prep From Implementation Handoffs
+
+- Added `python3 -m agent_os.cli coder-prep <delegation_id>` as an
+  artifact-only bridge from a readable implementation handoff to a bounded
+  future coding plan.
+- The command consumes `implementation_handoff.md`, hashes the source handoff,
+  reads the registered project context, derives a bounded file set from scout
+  returned files, ranked files, and test hints, and writes:
+  `.clanker/delegations/<delegation_id>/runs/<run_id>/coder_prep/coder_prep.json`
+  and `coder_prep.md`.
+- Prep packets include `kind: coder_prep_plan`, allowed files, candidate test
+  files, acceptance criteria, risks, forbidden actions, suggested verifier
+  commands, `status=operator_review_required`, and `dispatch_ready=false`.
+- The command is idempotent for the same handoff hash. A rerun of the live
+  packet printed `coder_prep: already_recorded coder_prep`.
+- `implementation-handoff <delegation_id>` now prints the exact
+  `coder-prep` command. `review <run_id>` now writes `## Coder Prep`, and
+  `dashboard` now writes `### Coder Prep Packets`.
+- Updated README, command reference, executable delegation tutorial, concepts,
+  suggested use, operating summary, `runs/run_ec43eabad0c4/review.md`, and
+  `docs/dashboard.md` for the coder-prep loop.
+- Live proof:
+  - `coder-prep subagent_delegation_3189127f5f0d` consumed
+    `.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/implementation_handoff.md`
+    and surfaced `source_handoff_markdown_consumed: true`.
+  - It wrote
+    `.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/coder_prep/coder_prep.json`
+    and `coder_prep.md`.
+  - CLI output reported `task_rows_created: 0`, `runs_created: 0`,
+    `routing_decisions_created: 0`, `worktrees_created: 0`,
+    `effects_created: 0`, `approval_requests_created: 0`,
+    `source_edits: 0`, `commands_rerun: 0`,
+    `network_actions_taken: 0`, and `external_mutations_taken: 0`.
+  - `review run_ec43eabad0c4` regenerated
+    `runs/run_ec43eabad0c4/review.md` with `## Coder Prep`,
+    `kind: coder_prep_plan`, `task_rows_created: 0`, and
+    `source_edits: 0`.
+  - `dashboard` regenerated `docs/dashboard.md` with
+    `coder_prep_command=python3 -m agent_os.cli coder-prep` and
+    `### Coder Prep Packets`.
+- Verification evidence:
+  - focused handoff/context-pack slice:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "implementation_handoff or auto_generates_context_pack or context_pack_validation_warns"`
+    passed with 3 passed, 474 deselected in 6.95s.
+  - `python3 -m py_compile agent_os/coder_prep.py
+    agent_os/implementation_handoff.py agent_os/cli.py agent_os/run_review.py
+    agent_os/dashboard.py tests/test_first_milestone.py` passed.
+  - adjacent delegation/review/dashboard/context-pack slice:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "delegation or review or dashboard or context_pack or implementation_handoff"`
+    passed with 161 passed, 316 deselected in 354.30s.
+  - `git diff --check` passed.
+  - full suite: `python3 -m pytest -q` passed with 477 passed in 1149.63s.
+- Non-claims: coder prep is local artifact generation only; it does not create
+  task rows, dispatch runs, create routing decisions, create worktrees, create
+  effects, request approvals, edit source files, rerun commands, commit, push,
+  deploy, call providers, take network actions, or mutate external systems.
+
 ## 2026-06-24 First-Class Implementation Handoff Surfaces
 
 - Added `python3 -m agent_os.cli implementation-handoff <delegation_id>` as a

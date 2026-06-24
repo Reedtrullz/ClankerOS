@@ -10,7 +10,8 @@ This tutorial runs the smallest executable subagent loop in ClankerOS:
 6. understand project-aware repo scouting context;
 7. run the delegation;
 8. inspect result, evidence, review, inbox, and dashboard;
-9. optionally propose memory from the completed result.
+9. prepare a bounded future coding plan from the implementation handoff;
+10. optionally propose memory from the completed result.
 
 The executor is a local shell adapter. ClankerOS owns the durable state,
 prompt/context bundle, schema validation, evidence packet, incident handling,
@@ -314,6 +315,7 @@ large snippets into the handoff.
 ```bash
 python3 -m agent_os.cli delegation-result <delegation_id>
 python3 -m agent_os.cli implementation-handoff <delegation_id>
+python3 -m agent_os.cli coder-prep <delegation_id>
 python3 -m agent_os.cli review <run_id>
 python3 -m agent_os.cli inbox
 python3 -m agent_os.cli dashboard
@@ -324,12 +326,55 @@ python3 -m agent_os.cli dashboard
 context-pack and implementation-handoff paths. `implementation-handoff` parses
 the handoff JSON and prints readability, schema/kind, returned-file
 validation, top ranked files, test hints, scout relevant files, and whether
-large snippets were embedded. `review <run_id>` includes `## Scout Context
-Pack` and `## Implementation Handoff` sections. The dashboard includes
-`### Subagent / Scout Work` and `### Implementation Handoffs` sections with
-compact scout and handoff health.
+large snippets were embedded. `coder-prep` consumes the handoff Markdown and
+writes a bounded future coding packet without editing source files or
+dispatching work. `review <run_id>` includes `## Scout Context Pack`,
+`## Implementation Handoff`, and `## Coder Prep` sections when a prep packet
+exists. The dashboard includes `### Subagent / Scout Work`,
+`### Implementation Handoffs`, and `### Coder Prep Packets` sections with
+compact scout, handoff, and prep health.
 
-## 9. Propose Memory From The Result
+## 9. Prepare A Bounded Coder Plan
+
+Use this command after the handoff looks readable and relevant:
+
+```bash
+python3 -m agent_os.cli coder-prep <delegation_id>
+```
+
+Expected output includes:
+
+```text
+coder_prep: coder_prep
+delegation_id: <delegation_id>
+source_handoff_md: .clanker/delegations/<delegation_id>/runs/<run_id>/evidence/implementation_handoff.md
+source_handoff_markdown_consumed: true
+artifact: .clanker/delegations/<delegation_id>/runs/<run_id>/coder_prep/coder_prep.json
+markdown: .clanker/delegations/<delegation_id>/runs/<run_id>/coder_prep/coder_prep.md
+run_plan: operator_review_required
+task_rows_created: 0
+runs_created: 0
+routing_decisions_created: 0
+worktrees_created: 0
+effects_created: 0
+approval_requests_created: 0
+source_edits: 0
+commands_rerun: 0
+network_actions_taken: 0
+external_mutations_taken: 0
+```
+
+The JSON packet records allowed files, candidate test files, acceptance
+criteria, risks, forbidden actions, and suggested verification commands for a
+future explicit coding run. It is idempotent for the same handoff hash; a
+second run prints `coder_prep: already_recorded coder_prep`.
+
+Proof boundary: this is a prep artifact only. It does not create task rows,
+runs, routing decisions, worktrees, effects, approvals, source edits, command
+reruns, commits, pushes, deploys, provider calls, network actions, or external
+mutations.
+
+## 10. Propose Memory From The Result
 
 Run the delegation with memory proposal enabled:
 

@@ -3125,6 +3125,10 @@ def test_implementation_handoff_reports_missing_for_unrun_delegation(
     output = capsys.readouterr().out
     assert "delegation_missing: missing" in output
 
+    assert main(["--root", str(tmp_path), "coder-prep", delegation_id]) == 1
+    output = capsys.readouterr().out
+    assert "coder_prep_failed: implementation handoff is not readable" in output
+
 
 def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
     tmp_path: Path,
@@ -3264,7 +3268,71 @@ def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
     assert "test_hints: tests/test_delegation_runner.py" in handoff_output
     assert "scout_relevant_files: " in handoff_output
     assert "snippets_embedded: false" in handoff_output
+    assert f"coder_prep_command: python3 -m agent_os.cli coder-prep {delegation_id}" in handoff_output
     assert "next_recommended_action: implementation_review" in handoff_output
+
+    state_tables = [
+        "tasks",
+        "runs",
+        "routing_decisions",
+        "worktree_records",
+        "effects",
+        "approval_requests",
+    ]
+    before_counts = _table_counts(tmp_path, state_tables)
+    assert main(["--root", str(tmp_path), "coder-prep", delegation_id]) == 0
+    prep_output = capsys.readouterr().out
+    assert "coder_prep: " in prep_output
+    assert f"delegation_id: {delegation_id}" in prep_output
+    assert "source_handoff_md: .clanker/delegations/" in prep_output
+    assert "source_handoff_markdown_consumed: true" in prep_output
+    assert "allowed_files: " in prep_output
+    assert "agent_os/delegation_runner.py" in prep_output
+    assert "run_plan: operator_review_required" in prep_output
+    assert "task_rows_created: 0" in prep_output
+    assert "runs_created: 0" in prep_output
+    assert "routing_decisions_created: 0" in prep_output
+    assert "worktrees_created: 0" in prep_output
+    assert "effects_created: 0" in prep_output
+    assert "approval_requests_created: 0" in prep_output
+    assert "source_edits: 0" in prep_output
+    assert "commands_rerun: 0" in prep_output
+    assert "network_actions_taken: 0" in prep_output
+    assert "external_mutations_taken: 0" in prep_output
+    prep_artifact_line = next(
+        line for line in prep_output.splitlines() if line.startswith("artifact: ")
+    )
+    prep_artifact = tmp_path / prep_artifact_line.split(": ", 1)[1]
+    prep_payload = json.loads(prep_artifact.read_text(encoding="utf-8"))
+    assert prep_payload["kind"] == "coder_prep_plan"
+    assert prep_payload["source"]["handoff_md"].endswith("implementation_handoff.md")
+    assert "agent_os/delegation_runner.py" in prep_payload["bounded_task"]["allowed_files"]
+    assert prep_payload["source_handoff_markdown_consumed"] is True
+    assert prep_payload["source"]["handoff_sha256"]
+    assert prep_payload["safety"]["source_edits_taken"] == 0
+    assert prep_payload["safety"]["task_rows_created"] == 0
+    assert prep_payload["safety"]["runs_created"] == 0
+    assert prep_payload["safety"]["routing_decisions_created"] == 0
+    assert prep_payload["safety"]["worktrees_created"] == 0
+    assert prep_payload["safety"]["effects_created"] == 0
+    assert prep_payload["safety"]["approval_requests_created"] == 0
+    assert prep_payload["safety"]["commands_rerun"] == 0
+    assert prep_payload["safety"]["network_actions_taken"] == 0
+    assert prep_payload["safety"]["external_mutations_taken"] == 0
+    assert prep_payload["run_plan"]["status"] == "operator_review_required"
+    assert prep_payload["run_plan"]["dispatch_ready"] is False
+    assert _table_counts(tmp_path, state_tables) == before_counts
+    assert main(["--root", str(tmp_path), "coder-prep", delegation_id]) == 0
+    rerun_output = capsys.readouterr().out
+    assert "coder_prep: already_recorded" in rerun_output
+    assert _table_counts(tmp_path, state_tables) == before_counts
+    assert subprocess.run(
+        ["git", "status", "--short"],
+        cwd=repo_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout == ""
 
     assert main(["--root", str(tmp_path), "review", run_id]) == 0
     review_output = capsys.readouterr().out
@@ -3298,6 +3366,11 @@ def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
     assert "kind=implementation_context_handoff" in dashboard
     assert "snippets_embedded=false" in dashboard
     assert "scout_relevant_files=" in dashboard
+    assert "coder_prep_command=python3 -m agent_os.cli coder-prep" in dashboard
+    assert "### Coder Prep Packets" in dashboard
+    assert prep_payload["prep_id"] in dashboard
+    assert "task_rows_created=0" in dashboard
+    assert "source_edits=0" in dashboard
     assert str(repo_path.resolve()) in input_bundle["project"]["root_path"]
 
 
@@ -4585,6 +4658,15 @@ def _create_file_mapping_delegation(
     capsys.readouterr()
     delegation_id = storage.list_subagent_delegations(goal_id)[0].id
     return storage, goal_id, task_id, delegation_id
+
+
+def _table_counts(tmp_path: Path, tables: list[str]) -> dict[str, int]:
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        counts: dict[str, int] = {}
+        for table in tables:
+            row = connection.execute(f"select count(*) from {table}").fetchone()
+            counts[table] = int(row[0])
+        return counts
 
 
 def _create_registered_file_mapping_delegation(

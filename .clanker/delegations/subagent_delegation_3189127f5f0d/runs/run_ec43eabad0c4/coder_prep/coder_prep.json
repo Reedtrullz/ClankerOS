@@ -1,0 +1,87 @@
+{
+  "artifacts": {
+    "json": ".clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/coder_prep/coder_prep.json",
+    "markdown": ".clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/coder_prep/coder_prep.md"
+  },
+  "bounded_task": {
+    "acceptance_criteria": [
+      "Implementation remains inside the bounded file set.",
+      "Verification command is selected before execution.",
+      "Non-claims are refreshed before commit, push, or deploy."
+    ],
+    "allowed_files": [
+      "agent_os/context_pack.py",
+      "agent_os/profile_routing.py",
+      "evals/results/first_milestone_closed_loop.json",
+      "playbooks/first-milestone-closed-loop.md",
+      "agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py"
+    ],
+    "candidate_test_files": [],
+    "forbidden_actions": [
+      "edit_source_now",
+      "dispatch",
+      "commit",
+      "push",
+      "deploy",
+      "provider_call",
+      "network"
+    ],
+    "objective": "Context pack scout demo completed.",
+    "risks": [
+      "Handoff output is advisory and requires operator review.",
+      "Coder prep does not prove implementation correctness."
+    ],
+    "title": "Bounded implementation from handoff subagent_delegation_3189127f5f0d"
+  },
+  "kind": "coder_prep_plan",
+  "non_claims": [
+    "Coder prep does not edit source files.",
+    "Coder prep does not create task, run, routing, approval, effect, or worktree rows.",
+    "Coder prep does not commit, push, deploy, or call model providers."
+  ],
+  "prep_id": "coder_prep",
+  "project": {
+    "allowed_write_roots": [
+      "/Users/reidar/Documents/Agent System"
+    ],
+    "default_test_command": "python3 -m pytest -q",
+    "id": "clankeros",
+    "root_path": "/Users/reidar/Documents/Agent System"
+  },
+  "run_plan": {
+    "commands_to_run_now": [],
+    "dispatch_ready": false,
+    "execution_mode": "future_explicit_worktree_or_task_run",
+    "next_recommended_action": "operator_review",
+    "status": "operator_review_required",
+    "suggested_verification_commands": [
+      "python3 -m pytest -q"
+    ]
+  },
+  "safety": {
+    "approval_requests_created": 0,
+    "commands_rerun": 0,
+    "effects_created": 0,
+    "external_mutations_taken": 0,
+    "network_actions_taken": 0,
+    "provider_calls_taken_by_clankeros": 0,
+    "routing_decisions_created": 0,
+    "runs_created": 0,
+    "source_edits_taken": 0,
+    "task_rows_created": 0,
+    "worktrees_created": 0
+  },
+  "schema_version": 1,
+  "source": {
+    "delegation_id": "subagent_delegation_3189127f5f0d",
+    "handoff_json": ".clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/implementation_handoff.json",
+    "handoff_kind": "implementation_context_handoff",
+    "handoff_md": ".clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/implementation_handoff.md",
+    "handoff_schema_version": 1,
+    "handoff_sha256": "3bbaf2e8d52388c3ac426b43cc872b87bc430b61d60bc92e56955a188bde6da2",
+    "parent_task_id": "task_858971dcc5d7",
+    "run_id": "run_ec43eabad0c4"
+  },
+  "source_handoff_markdown_consumed": true,
+  "source_handoff_markdown_excerpt": "# Implementation Handoff\n\n- delegation_id: subagent_delegation_3189127f5f0d\n- run_id: run_ec43eabad0c4\n- project_id: clankeros\n- expected_output_schema: file_relevance_report\n- result_summary: Context pack scout demo completed.\n\n## Context Pack\n\n- context_pack_id: context_pack_0d64cfd677cd\n- context_pack_json: .clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/context_pack.json\n- context_pack_md: .clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/context_pack.md\n- ranked_file_count: 25\n- grep_hit_count: 40\n\n## Context Pack Validation\n\n- returned_files_in_inventory: true\n- returned_files_missing: none\n- top_ranked_files_referenced: agent_os/context_pack.py, agent_os/profile_routing.py, evals/results/first_milestone_closed_loop.json\n\n## Top Ranked Files\n\n- agent_os/context_pack.py\n- agent_os/profile_routing.py\n- evals/results/first_milestone_closed_loop.json\n- playbooks/first-milestone-closed-loop.md\n- agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py\n\n## Scout Returned Files\n\n- agent_os/context_pack.py\n- agent_os/profile_routing.py\n- evals/results/first_milestone_closed_loop.json\n\n## Test Hints\n\n- none\n\n## Non-Claims\n\n- This handoff does not include large context-pack snippets.\n- This handoff does not approve implementation work.\n- This handoff does not commit, push, deploy, or call model providers.\n- Returned-file validation is advisory and does not hard-fail the delegation.\n"
+}
