@@ -1,5 +1,36 @@
 # Status
 
+## 2026-06-25 Coder Commit Gate Hardening
+
+- Tightened the first-class coder commit request/local handoff gate against the
+  full pasted objective. Request creation now validates the worktree is under
+  `.agent/worktrees`, validates git safety before snapshotting, rejects tampered
+  `bounded_file_validation.json`, and keys request idempotency by run hash,
+  diff hash, and commit message.
+- `coder_commit/coder_commit_request.json` now includes
+  `source_bounded_file_validation` plus explicit zero-action counters for
+  commit, push, PR, deploy, provider, network, and external mutation actions.
+- `commit-coder-worktree` now distinguishes `staged_files_outside_allowed_files`
+  from unstaged/untracked `outside_allowed_files_present`, re-inspects staged
+  files after `git add -- <allowed files>`, blocks `nothing_to_commit`, uses
+  `missing_worktree`, `unsafe_git_state`, `commit_message_mismatch`, and
+  `commit_failed` failure classes, and still records incidents for blocked
+  commit attempts.
+- README first-view workflow now includes `coder-commit-request`,
+  `approve-coder-commit`, `commit-coder-worktree`, and `github-handoff`.
+  `docs/status.md` was added as a short status entrypoint to the canonical root
+  `status.md`; `docs/docs-index.md` and command reference wording were updated.
+- Verification:
+  - `python3 -m py_compile agent_os/coder_worktree_execution.py agent_os/cli.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'commit_coder_worktree_requires_approved or coder_commit_request_blocks_tampered or commit_coder_worktree_blocks_staged'` -> `3 passed, 486 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'coder_commit_request_alias or coder_commit_request_blocks_tampered or commit_coder_worktree_blocks_staged or coder_commit_request_and_commit_block or commit_coder_worktree_creates or commit_coder_worktree_requires_approved or coder_commit_request_blocks_when_current_worktree_has_no_changes'` -> `7 passed, 482 deselected`
+  - `python3 -m py_compile agent_os/*.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q` -> `489 passed in 1055.07s`
+  - `python3 -m pytest -q` -> `489 passed in 1054.43s`
+  - `git diff --check`
+  - `python3 -m agent_os.cli --help` and `python3 -m agent_os.cli dashboard`
+    readback showed the modern handoff/commit commands and dashboard path.
+
 ## 2026-06-24 First-Class Coder Commit Request And Local Handoff Gate
 
 - Updated the post-review coder worktree commit gate to the primary operator

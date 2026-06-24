@@ -76,8 +76,9 @@ Then read:
 The primary operator surface is the implementation-handoff workflow: scout a
 repo, inspect the generated handoff, prepare a bounded coder plan, propose an
 approval-gated worktree plan, request explicit approval, run a bounded local
-command in an isolated worktree, then review evidence before any separate
-commit approval.
+command in an isolated worktree, review evidence, request and approve a
+separate local commit, create that commit only inside the isolated worktree,
+then optionally write a GitHub handoff packet.
 
 ```bash
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
@@ -89,8 +90,13 @@ python3 -m agent_os.cli coder-worktree-plan <delegation_id>
 python3 -m agent_os.cli coder-worktree-approval <delegation_id> --requested-by operator --note "Approve bounded worktree execution"
 python3 -m agent_os.cli approve-coder-worktree <approval_id> --decided-by operator --note "Approved bounded execution"
 python3 -m agent_os.cli run-coder-worktree <delegation_id> --command "python3 scripts/local_change.py" --verify
-python3 -m agent_os.cli review <run_id>
+python3 -m agent_os.cli review <coder_worktree_run_id>
+python3 -m agent_os.cli coder-commit-request <coder_worktree_run_id> --requested-by operator --message "Implement bounded change from approved worktree run" --note "Request local commit after review"
+python3 -m agent_os.cli approve-coder-commit <commit_request_id> --decided-by operator --note "Approved local commit"
+python3 -m agent_os.cli commit-coder-worktree <coder_worktree_run_id> --message "Implement bounded change from approved worktree run"
+python3 -m agent_os.cli review <coder_worktree_run_id>
 python3 -m agent_os.cli dashboard
+python3 -m agent_os.cli github-handoff <effect_id>
 ```
 
 The historical capability proof ladder remains callable and documented for

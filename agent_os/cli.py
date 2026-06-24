@@ -97,6 +97,7 @@ from agent_os.coder_worktree_execution import (
     latest_coder_worktree_commit_for_delegation,
     latest_coder_worktree_run_for_delegation,
     promote_coder_worktree_commit,
+    record_coder_worktree_commit_failure_incident,
     render_coder_commit_decision_cli_lines,
     render_coder_commit_request_cli_lines,
     render_coder_worktree_commit_approval_cli_lines,
@@ -2674,6 +2675,13 @@ def main(argv: list[str] | None = None) -> int:
                 force_new=args.force_new,
             )
         except CoderWorktreeCommitError as error:
+            record_coder_worktree_commit_failure_incident(
+                root,
+                system.storage,
+                command=args.command,
+                target_id=args.run_id,
+                error=error,
+            )
             print(f"coder_commit_request_failed: {error}")
             return 1
         for line in render_coder_commit_request_cli_lines(root, result):
@@ -2692,6 +2700,13 @@ def main(argv: list[str] | None = None) -> int:
                 note=args.note,
             )
         except CoderWorktreeCommitError as error:
+            record_coder_worktree_commit_failure_incident(
+                root,
+                system.storage,
+                command=args.command,
+                target_id=args.commit_approval_id,
+                error=error,
+            )
             print(f"approve_coder_commit_failed: {error}")
             return 1
         for line in render_coder_commit_decision_cli_lines(root, result):
@@ -2711,6 +2726,13 @@ def main(argv: list[str] | None = None) -> int:
                 use_approved_message=args.use_approved_message,
             )
         except CoderWorktreeCommitError as error:
+            record_coder_worktree_commit_failure_incident(
+                root,
+                system.storage,
+                command=args.command,
+                target_id=args.run_id,
+                error=error,
+            )
             print(f"commit_coder_worktree_failed: {error}")
             return 1
         for line in render_commit_coder_worktree_cli_lines(root, result):
@@ -2732,6 +2754,13 @@ def main(argv: list[str] | None = None) -> int:
                 force_new=args.force_new,
             )
         except CoderWorktreeCommitError as error:
+            record_coder_worktree_commit_failure_incident(
+                root,
+                system.storage,
+                command=args.command,
+                target_id=args.run_id,
+                error=error,
+            )
             print(f"coder_worktree_commit_approval_failed: {error}")
             return 1
         for line in render_coder_worktree_commit_approval_cli_lines(root, result):
@@ -2750,6 +2779,13 @@ def main(argv: list[str] | None = None) -> int:
                 note=args.note,
             )
         except CoderWorktreeCommitError as error:
+            record_coder_worktree_commit_failure_incident(
+                root,
+                system.storage,
+                command=args.command,
+                target_id=args.commit_approval_id,
+                error=error,
+            )
             print(f"approve_coder_worktree_commit_failed: {error}")
             return 1
         for line in render_coder_worktree_commit_decision_cli_lines(root, result):
@@ -2768,6 +2804,13 @@ def main(argv: list[str] | None = None) -> int:
                 message=args.message,
             )
         except CoderWorktreeCommitError as error:
+            record_coder_worktree_commit_failure_incident(
+                root,
+                system.storage,
+                command=args.command,
+                target_id=args.commit_approval_id,
+                error=error,
+            )
             print(f"coder_worktree_commit_failed: {error}")
             return 1
         for line in render_coder_worktree_commit_cli_lines(root, result):

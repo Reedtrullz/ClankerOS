@@ -686,7 +686,11 @@ def request_coder_worktree_commit_approval(
     worktree_path = Path(run.worktree_path)
     if not worktree_path.exists():
         raise CoderWorktreeCommitError(f"worktree does not exist: {worktree_path}")
+    _validate_worktree_path_boundary(root, worktree_path)
+    _validate_git_worktree_safe(worktree_path, run.branch_name)
     snapshot = _current_worktree_snapshot(worktree_path)
+    if not snapshot["changed_files"]:
+        raise CoderWorktreeCommitError("nothing_to_commit")
     _raise_if_snapshot_stale(
         snapshot=snapshot,
         expected_diff=evidence["diff_text"],
@@ -705,6 +709,7 @@ def request_coder_worktree_commit_approval(
             run.id,
             source_run_sha,
             source_diff_sha,
+            resolved_commit_message,
         )
     )
     if existing is not None:
@@ -957,19 +962,20 @@ def promote_coder_worktree_commit(
             root,
             storage,
             approval,
-            failure_class="worktree_missing",
+            failure_class="missing_worktree",
             detail=f"worktree does not exist: {worktree_path}",
             verification_exit_code=None,
         )
         raise CoderWorktreeCommitError(f"worktree does not exist: {worktree_path}")
 
     try:
+        _validate_worktree_path_boundary(root, worktree_path)
         _validate_git_worktree_safe(worktree_path, approval.branch_name)
     except CoderWorktreeCommitError as error:
         failure_class = (
             "source_state_changed"
             if str(error).startswith("source_state_changed")
-            else "git_state_unsafe"
+            else "unsafe_git_state"
         )
         _block_commit_approval(
             root,
@@ -984,19 +990,32 @@ def promote_coder_worktree_commit(
     allowed_files = set(str(path) for path in evidence["allowed_files"])
     outside_files = [path for path in snapshot["changed_files"] if path not in allowed_files]
     staged_outside = [path for path in snapshot["staged_files"] if path not in allowed_files]
-    if outside_files or staged_outside:
+    if staged_outside:
         _block_commit_approval(
             root,
             storage,
             approval,
-            failure_class="outside_files_present",
+            failure_class="staged_files_outside_allowed_files",
             detail=(
-                "outside files present: "
-                f"{','.join(sorted(set(outside_files + staged_outside)))}"
+                "staged files outside allowed files: "
+                f"{','.join(sorted(set(staged_outside)))}"
             ),
             verification_exit_code=None,
         )
-        raise CoderWorktreeCommitError("outside_files_present")
+        raise CoderWorktreeCommitError("staged_files_outside_allowed_files")
+    if outside_files:
+        _block_commit_approval(
+            root,
+            storage,
+            approval,
+            failure_class="outside_allowed_files_present",
+            detail=(
+                "outside files present: "
+                f"{','.join(sorted(set(outside_files)))}"
+            ),
+            verification_exit_code=None,
+        )
+        raise CoderWorktreeCommitError("outside_allowed_files_present")
     if snapshot["head"] != approval.pre_commit_head:
         _block_commit_approval(
             root,
@@ -1043,11 +1062,11 @@ def promote_coder_worktree_commit(
             root,
             storage,
             approval,
-            failure_class="no_changes",
+            failure_class="nothing_to_commit",
             detail="no changes exist in the coder worktree",
             verification_exit_code=None,
         )
-        raise CoderWorktreeCommitError("no_changes")
+        raise CoderWorktreeCommitError("nothing_to_commit")
 
     verification_command = run.verification_command
     if not verification_command:
@@ -1125,11 +1144,36 @@ def promote_coder_worktree_commit(
             root,
             storage,
             approval,
-            failure_class="git_stage_failed",
+            failure_class="commit_failed",
             detail=commit_result.stderr.strip() or commit_result.stdout.strip(),
             verification_exit_code=verification_result.returncode,
         )
         raise CoderWorktreeCommitError("git stage failed")
+    staged_files = _git_lines(["git", "diff", "--cached", "--name-only"], cwd=worktree_path)
+    staged_outside_after_add = [path for path in staged_files if path not in allowed_files]
+    if staged_outside_after_add:
+        _block_commit_approval(
+            root,
+            storage,
+            approval,
+            failure_class="staged_files_outside_allowed_files",
+            detail=(
+                "staged files outside allowed files: "
+                f"{','.join(sorted(set(staged_outside_after_add)))}"
+            ),
+            verification_exit_code=verification_result.returncode,
+        )
+        raise CoderWorktreeCommitError("staged_files_outside_allowed_files")
+    if not staged_files:
+        _block_commit_approval(
+            root,
+            storage,
+            approval,
+            failure_class="nothing_to_commit",
+            detail="no allowed files were staged for commit",
+            verification_exit_code=verification_result.returncode,
+        )
+        raise CoderWorktreeCommitError("nothing_to_commit")
     parent_commit_sha = _git_output(["git", "rev-parse", "HEAD"], cwd=worktree_path).strip()
     commit_result = subprocess.run(
         [
@@ -1159,7 +1203,7 @@ def promote_coder_worktree_commit(
             root,
             storage,
             approval,
-            failure_class="git_commit_failed",
+            failure_class="commit_failed",
             detail=commit_result.stderr.strip() or commit_result.stdout.strip(),
             verification_exit_code=verification_result.returncode,
         )
@@ -1359,6 +1403,65 @@ def commit_coder_worktree(
         approval.id,
         committed_by=committed_by,
         message=selected_message,
+    )
+
+
+def record_coder_worktree_commit_failure_incident(
+    root: Path,
+    storage: Storage,
+    *,
+    command: str,
+    target_id: str,
+    error: CoderWorktreeCommitError,
+) -> str:
+    root = root.resolve()
+    _ensure_tables(storage)
+    error_text = str(error)
+    failure_class = _commit_failure_class_from_error(error_text)
+    run_id = target_id
+    delegation_id = "unknown"
+    project_id = "unknown"
+    evidence_path: str | None = None
+    approval: CoderWorktreeCommitApprovalRecord | None = None
+    run: CoderWorktreeRunRecord | None = None
+
+    if command in {"approve-coder-commit", "approve-coder-worktree-commit", "promote-coder-worktree-commit"}:
+        approval = get_coder_worktree_commit_approval(storage, target_id)
+    if approval is None and command in {"commit-coder-worktree", "coder-commit-request", "coder-worktree-commit-approval"}:
+        run = get_coder_worktree_run(storage, target_id)
+        if run is not None and command == "commit-coder-worktree":
+            approval = _latest_commit_request_for_run(storage, target_id)
+    if approval is not None:
+        run_id = approval.run_id
+        delegation_id = approval.delegation_id
+        project_id = approval.project_id
+        evidence_path = approval.commit_artifact_path
+    elif run is not None:
+        run_id = run.id
+        delegation_id = run.delegation_id
+        project_id = run.project_id
+        evidence_path = run.evidence_path
+
+    evidence = {
+        "failure_class": failure_class,
+        "summary": error_text,
+        "command": command,
+        "target_id": target_id,
+        "coder_worktree_run_id": run_id,
+        "delegation_id": delegation_id,
+        "project_id": project_id,
+        "evidence_path": evidence_path,
+        "next_recommended_operator_action": _commit_failure_next_action(failure_class),
+    }
+    return _record_coder_worktree_incident(
+        storage,
+        project_id=project_id,
+        run_id=run_id,
+        delegation_id=delegation_id,
+        failure_class=failure_class,
+        summary=f"Coder worktree commit gate failed: {failure_class}",
+        evidence=evidence,
+        evidence_path=evidence_path,
     )
 
 
@@ -2565,6 +2668,7 @@ def _latest_commit_approval_for_run(
     run_id: str,
     source_run_sha256: str,
     source_diff_sha256: str,
+    commit_message: str,
 ) -> CoderWorktreeCommitApprovalRecord | None:
     with _connect(storage) as connection:
         row = connection.execute(
@@ -2573,11 +2677,12 @@ def _latest_commit_approval_for_run(
             where run_id = ?
               and source_coder_worktree_run_sha256 = ?
               and source_diff_sha256 = ?
+              and commit_message = ?
               and status in ('pending_operator_approval', 'approved', 'committed')
             order by requested_at desc, id desc
             limit 1
             """,
-            (run_id, source_run_sha256, source_diff_sha256),
+            (run_id, source_run_sha256, source_diff_sha256, commit_message),
         ).fetchone()
     return _row_to_commit_approval(row) if row is not None else None
 
@@ -2629,6 +2734,60 @@ def _record_coder_worktree_incident(
         artifacts=[evidence_path] if evidence_path else [],
         evidence_path=evidence_path,
     )
+
+
+def _commit_failure_class_from_error(error_text: str) -> str:
+    mapping = [
+        ("coder worktree run not found", "missing_coder_worktree_run"),
+        ("coder worktree run is not completed", "run_not_completed"),
+        ("bounded validation failed", "bounded_file_validation_failed"),
+        ("verification failed", "verification_failed"),
+        ("worktree does not exist", "missing_worktree"),
+        ("unsafe_git_state", "unsafe_git_state"),
+        ("approved commit request is missing", "missing_commit_request"),
+        ("approval is not approved", "commit_request_not_approved"),
+        ("approval is not pending", "commit_request_not_approved"),
+        ("source_hash_mismatch", "source_hash_mismatch"),
+        ("changed_files_mismatch", "changed_files_mismatch"),
+        ("outside_allowed_files_present", "outside_allowed_files_present"),
+        ("staged_files_outside_allowed_files", "staged_files_outside_allowed_files"),
+        ("commit message is required", "empty_commit_message"),
+        ("commit message does not match approved request", "commit_message_mismatch"),
+        ("nothing_to_commit", "nothing_to_commit"),
+        ("git stage failed", "commit_failed"),
+        ("git commit failed", "commit_failed"),
+        ("github handoff unavailable", "github_handoff_unavailable"),
+    ]
+    for needle, failure_class in mapping:
+        if needle in error_text:
+            return failure_class
+    return "commit_failed"
+
+
+def _commit_failure_next_action(failure_class: str) -> str:
+    if failure_class in {
+        "missing_coder_worktree_run",
+        "run_not_completed",
+        "run_failed",
+        "bounded_file_validation_failed",
+        "verification_failed",
+        "nothing_to_commit",
+    }:
+        return "review_coder_worktree_run"
+    if failure_class in {
+        "missing_commit_request",
+        "commit_request_not_approved",
+        "source_hash_mismatch",
+        "changed_files_mismatch",
+        "outside_allowed_files_present",
+        "staged_files_outside_allowed_files",
+        "empty_commit_message",
+        "commit_message_mismatch",
+    }:
+        return "review_and_request_commit"
+    if failure_class == "github_handoff_unavailable":
+        return "review_local_commit_effect"
+    return "inspect_commit_gate_failure"
 
 
 def _project_id_for_delegation(storage: Storage, delegation_id: str) -> str:
@@ -2762,6 +2921,7 @@ def _coder_commit_request_payload(
         "branch_name": legacy_payload["branch_name"],
         "source_run_json": str(evidence["run_json_path"]),
         "source_run_sha256": legacy_payload["source_coder_worktree_run_sha256"],
+        "source_bounded_file_validation": str(evidence["bounded_path"]),
         "approval_required_before": [
             "stage_allowed_files",
             "create_local_commit",
@@ -2780,6 +2940,13 @@ def _coder_commit_request_payload(
             "valid": bool(run_payload.get("changed_files_within_allowed_files")),
             "status": "passed" if run_payload.get("changed_files_within_allowed_files") else "blocked",
         },
+        "commit_created": False,
+        "push_created": False,
+        "pr_created": False,
+        "deploy_created": False,
+        "provider_calls_taken_by_clankeros": 0,
+        "network_actions_taken": 0,
+        "external_mutations_taken": 0,
         "non_claims": [
             "Commit request does not stage files.",
             "Commit request does not create a commit.",
@@ -2846,10 +3013,13 @@ def _load_run_evidence(root: Path, run: CoderWorktreeRunRecord) -> dict[str, Any
         raise CoderWorktreeCommitError("coder worktree run evidence has unexpected kind")
     if sorted(changed_payload.get("changed_files", [])) != sorted(run.changed_files):
         raise CoderWorktreeCommitError("coder worktree run changed-file evidence is stale")
+    if bounded_payload.get("valid") is not True or bounded_payload.get("status") != "passed":
+        raise CoderWorktreeCommitError("bounded validation failed")
     diff_text = diff_path.read_text(encoding="utf-8")
     return {
         "evidence_dir": evidence_dir,
         "run_json_path": run_json_path,
+        "bounded_path": bounded_path,
         "diff_path": diff_path,
         "diff_text": diff_text,
         "run_sha256": hashlib.sha256(run_json_path.read_bytes()).hexdigest(),
@@ -2988,6 +3158,17 @@ def _ensure_recorded_commit_exists(approval: CoderWorktreeCommitApprovalRecord) 
         raise CoderWorktreeCommitError(f"recorded commit is missing: {approval.commit_sha}")
 
 
+def _validate_worktree_path_boundary(root: Path, worktree_path: Path) -> None:
+    safe_root = (root / ".agent" / "worktrees").resolve()
+    resolved_worktree = worktree_path.resolve()
+    try:
+        resolved_worktree.relative_to(safe_root)
+    except ValueError as error:
+        raise CoderWorktreeCommitError(
+            f"unsafe_git_state: worktree path is outside {safe_root}"
+        ) from error
+
+
 def _validate_git_worktree_safe(worktree_path: Path, expected_branch: str) -> None:
     result = subprocess.run(
         ["git", "rev-parse", "--is-inside-work-tree"],
@@ -2996,7 +3177,7 @@ def _validate_git_worktree_safe(worktree_path: Path, expected_branch: str) -> No
         text=True,
     )
     if result.returncode != 0 or result.stdout.strip() != "true":
-        raise CoderWorktreeCommitError("worktree is not a git worktree")
+        raise CoderWorktreeCommitError("unsafe_git_state: worktree is not a git worktree")
     git_dir = Path(_git_output(["git", "rev-parse", "--git-dir"], cwd=worktree_path).strip())
     if not git_dir.is_absolute():
         git_dir = worktree_path / git_dir
@@ -3008,7 +3189,7 @@ def _validate_git_worktree_safe(worktree_path: Path, expected_branch: str) -> No
         git_dir / "rebase-apply",
     ]
     if any(path.exists() for path in unsafe_markers):
-        raise CoderWorktreeCommitError("git state unsafe")
+        raise CoderWorktreeCommitError("unsafe_git_state: git state unsafe")
     branch = _git_output(["git", "branch", "--show-current"], cwd=worktree_path).strip()
     if branch != expected_branch:
         raise CoderWorktreeCommitError(

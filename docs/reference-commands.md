@@ -267,9 +267,10 @@ and modern request artifacts. The modern operator artifacts are:
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/coder_commit_request.md
 ```
 
-The request is idempotent for the same run evidence and diff hash unless
-`--force-new` is used. It does not stage files, create a commit, push, create a
-PR, deploy, call providers, or use the network.
+The request is idempotent for the same run evidence, diff hash, and commit
+message unless `--force-new` is used. A different commit message creates a
+separate request. It does not stage files, create a commit, push, create a PR,
+deploy, call providers, or use the network.
 
 `approve-coder-commit <commit_request_id> --decided-by <id> --note <note>`
 marks that dedicated request approved and writes:
@@ -285,12 +286,13 @@ PR, deploy, call providers, or use the network.
 `commit-coder-worktree <coder_worktree_run_id> --message <commit_message>` is
 the only command in the coder worktree path that stages files and creates a
 local git commit. It requires an approved matching commit request, blocks if the
-source run hash changed, the branch or HEAD moved, outside files appeared, the
-changed file list differs, the commit message differs, or the verifier no
-longer passes. Use `--use-approved-message` only when the operator wants the
-message stored on the approved request. The command stages only reviewed
-allowed files and creates one commit in the isolated coder worktree branch. It
-writes:
+source run hash changed, the worktree path is outside `.agent/worktrees`, the
+branch or HEAD moved, outside files appeared, files outside `allowed_files` are
+already staged, the changed file list differs, the commit message differs, or
+the verifier no longer passes. Use `--use-approved-message` only when the
+operator wants the message stored on the approved request. The command stages
+only reviewed allowed files, re-inspects the staged set before commit, and
+creates one commit in the isolated coder worktree branch. It writes:
 
 ```text
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/commit.json

@@ -35,7 +35,8 @@ system.
 - `docs/tutorial-executable-delegation.md` - configure a local shell adapter,
   generate a deterministic context pack, run a read-only delegation, inspect
   project-aware repo-scout evidence, prepare/approve a bounded coder worktree
-  run, and propose memory.
+  run, request/approve a local worktree commit, and prepare a GitHub handoff
+  packet without pushing.
 - `docs/tutorial-public-snapshot.md` - verify, commit, and push a coherent
   public GitHub snapshot without overclaiming.
 - `contracts.md` - safety contract and evidence expectations.
@@ -125,6 +126,8 @@ verbose because each rung preserves source links and explicit non-claims.
 - `docs/OPERATING_SUMMARY.md` - architecture, runtime capability, guardrails,
   and current local proof state.
 - `status.md` - chronological implementation evidence.
+- `docs/status.md` - short status entrypoint pointing operators to the latest
+  implementation evidence and canonical root status log.
 - `plan.md` - milestone plan.
 - `tasks.md` - momentum queue.
 - `projects/bootstrap/status.md` - bootstrap project implementation log.

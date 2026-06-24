@@ -4214,6 +4214,9 @@ def test_coder_commit_request_alias_writes_coder_commit_artifacts_and_is_idempot
     assert request_payload["commit_request_id"] == commit_request_id
     assert request_payload["coder_worktree_run_id"] == run_id
     assert request_payload["commit_message"] == "Implement bounded change from approved worktree run"
+    assert request_payload["source_bounded_file_validation"].endswith(
+        "coder_worktree/bounded_file_validation.json"
+    )
     assert request_payload["approval_required_before"] == [
         "stage_allowed_files",
         "create_local_commit",
@@ -4221,6 +4224,13 @@ def test_coder_commit_request_alias_writes_coder_commit_artifacts_and_is_idempot
     assert request_payload["bounded_file_validation"]["valid"] is True
     assert request_payload["command_exit_code"] == 0
     assert request_payload["verification_exit_code"] == 0
+    assert request_payload["commit_created"] is False
+    assert request_payload["push_created"] is False
+    assert request_payload["pr_created"] is False
+    assert request_payload["deploy_created"] is False
+    assert request_payload["provider_calls_taken_by_clankeros"] == 0
+    assert request_payload["network_actions_taken"] == 0
+    assert request_payload["external_mutations_taken"] == 0
     assert "agent_os/delegation_runner.py" in request_payload["changed_files"]
     assert request_payload["outside_allowed_files"] == []
     assert (artifact.parent / "coder_commit_request.md").exists()
@@ -4235,7 +4245,7 @@ def test_coder_commit_request_alias_writes_coder_commit_artifacts_and_is_idempot
                 "--requested-by",
                 "operator",
                 "--message",
-                "A different duplicate message is ignored",
+                "Implement bounded change from approved worktree run",
                 "--note",
                 "Request local commit after review",
             ]
@@ -4244,6 +4254,31 @@ def test_coder_commit_request_alias_writes_coder_commit_artifacts_and_is_idempot
     )
     duplicate_output = capsys.readouterr().out
     assert f"coder_commit_request: already_recorded {commit_request_id}" in duplicate_output
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-commit-request",
+                run_id,
+                "--requested-by",
+                "operator",
+                "--message",
+                "Different approved commit message",
+                "--note",
+                "Request separate local commit approval",
+            ]
+        )
+        == 0
+    )
+    different_message_output = capsys.readouterr().out
+    different_commit_request_id = next(
+        line.split(": ", 1)[1]
+        for line in different_message_output.splitlines()
+        if line.startswith("commit_request_id: ")
+    )
+    assert different_commit_request_id != commit_request_id
 
     assert (
         main(
@@ -4338,6 +4373,9 @@ def test_commit_coder_worktree_creates_local_commit_effect_and_github_handoff(
     )
     mismatch_output = capsys.readouterr().out
     assert "commit_coder_worktree_failed: commit message does not match approved request" in mismatch_output
+    incidents = Storage(tmp_path / ".agent" / "state.db").list_recent_incidents(limit=5)
+    assert incidents[0].failure_class == "commit_message_mismatch"
+    assert incidents[0].evidence["next_recommended_operator_action"] == "review_and_request_commit"
 
     before_count = subprocess.run(
         ["git", "rev-list", "--count", "HEAD"],
@@ -4482,6 +4520,65 @@ def test_commit_coder_worktree_creates_local_commit_effect_and_github_handoff(
     repeat_output = capsys.readouterr().out
     assert "commit_coder_worktree: already_committed" in repeat_output
     assert commit_sha in repeat_output
+
+
+def test_commit_coder_worktree_requires_approved_request_and_nonempty_message(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    (
+        source_run_id,
+        _delegation_id,
+        _approval_id,
+        run_id,
+        _evidence_dir,
+        _worktree_path,
+        _repo_path,
+    ) = _run_completed_coder_worktree(tmp_path, capsys)
+    assert main(["--root", str(tmp_path), "review", source_run_id]) == 0
+    capsys.readouterr()
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "commit-coder-worktree",
+                run_id,
+                "--message",
+                "Implement bounded change from approved worktree run",
+            ]
+        )
+        == 1
+    )
+    missing_output = capsys.readouterr().out
+    assert "commit_coder_worktree_failed: approved commit request is missing" in missing_output
+    incidents = Storage(tmp_path / ".agent" / "state.db").list_recent_incidents(limit=5)
+    assert incidents[0].failure_class == "missing_commit_request"
+    assert incidents[0].evidence["coder_worktree_run_id"] == run_id
+    assert incidents[0].evidence["next_recommended_operator_action"] == "review_and_request_commit"
+
+    _request_and_approve_coder_commit(
+        tmp_path,
+        capsys,
+        run_id,
+        commit_message="Implement bounded change from approved worktree run",
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "commit-coder-worktree",
+                run_id,
+                "--message",
+                "",
+            ]
+        )
+        == 1
+    )
+    empty_output = capsys.readouterr().out
+    assert "commit_coder_worktree_failed: commit message is required" in empty_output
 
 
 def test_coder_commit_request_and_commit_block_failed_or_changed_sources(
@@ -4657,7 +4754,7 @@ def test_coder_commit_request_and_commit_block_failed_or_changed_sources(
         == 1
     )
     outside_output = capsys.readouterr().out
-    assert "commit_coder_worktree_failed: outside_files_present" in outside_output
+    assert "commit_coder_worktree_failed: outside_allowed_files_present" in outside_output
     after_status = subprocess.run(
         ["git", "status", "--short"],
         cwd=worktree_path,
@@ -4667,6 +4764,175 @@ def test_coder_commit_request_and_commit_block_failed_or_changed_sources(
     ).stdout
     assert outside.exists()
     assert "?? notes/" in after_status
+
+
+def test_coder_commit_request_blocks_when_current_worktree_has_no_changes(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    (
+        source_run_id,
+        _delegation_id,
+        _approval_id,
+        run_id,
+        _evidence_dir,
+        worktree_path,
+        _repo_path,
+    ) = _run_completed_coder_worktree(tmp_path, capsys)
+    assert main(["--root", str(tmp_path), "review", source_run_id]) == 0
+    capsys.readouterr()
+    subprocess.run(
+        ["git", "restore", "--", "agent_os/delegation_runner.py"],
+        cwd=worktree_path,
+        check=True,
+    )
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-commit-request",
+                run_id,
+                "--requested-by",
+                "operator",
+                "--message",
+                "Implement bounded change from approved worktree run",
+                "--note",
+                "should fail",
+            ]
+        )
+        == 1
+    )
+    output = capsys.readouterr().out
+    assert "coder_commit_request_failed: nothing_to_commit" in output
+
+
+def test_coder_commit_request_blocks_tampered_bounded_evidence_and_unsafe_worktree(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    (
+        source_run_id,
+        _delegation_id,
+        _approval_id,
+        run_id,
+        evidence_dir,
+        _worktree_path,
+        repo_path,
+    ) = _run_completed_coder_worktree(tmp_path, capsys)
+    assert main(["--root", str(tmp_path), "review", source_run_id]) == 0
+    capsys.readouterr()
+
+    bounded_path = evidence_dir / "bounded_file_validation.json"
+    bounded_payload = json.loads(bounded_path.read_text(encoding="utf-8"))
+    bounded_payload["valid"] = False
+    bounded_payload["status"] = "failed"
+    bounded_path.write_text(
+        json.dumps(bounded_payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-commit-request",
+                run_id,
+                "--requested-by",
+                "operator",
+                "--message",
+                "Implement bounded change from approved worktree run",
+                "--note",
+                "should fail",
+            ]
+        )
+        == 1
+    )
+    bounded_output = capsys.readouterr().out
+    assert "coder_commit_request_failed: bounded validation failed" in bounded_output
+    incidents = Storage(tmp_path / ".agent" / "state.db").list_recent_incidents(limit=5)
+    assert incidents[0].failure_class == "bounded_file_validation_failed"
+    assert incidents[0].evidence["coder_worktree_run_id"] == run_id
+    assert incidents[0].evidence["next_recommended_operator_action"] == "review_coder_worktree_run"
+
+    bounded_payload["valid"] = True
+    bounded_payload["status"] = "passed"
+    bounded_path.write_text(
+        json.dumps(bounded_payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        connection.execute(
+            "update coder_worktree_runs set worktree_path = ? where id = ?",
+            (str(repo_path), run_id),
+        )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-commit-request",
+                run_id,
+                "--requested-by",
+                "operator",
+                "--message",
+                "Implement bounded change from approved worktree run",
+                "--note",
+                "should fail",
+            ]
+        )
+        == 1
+    )
+    worktree_output = capsys.readouterr().out
+    assert "coder_commit_request_failed: unsafe_git_state" in worktree_output
+
+
+def test_commit_coder_worktree_blocks_staged_files_outside_allowed_files(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    (
+        source_run_id,
+        _delegation_id,
+        _approval_id,
+        run_id,
+        _evidence_dir,
+        worktree_path,
+        _repo_path,
+    ) = _run_completed_coder_worktree(tmp_path, capsys)
+    assert main(["--root", str(tmp_path), "review", source_run_id]) == 0
+    capsys.readouterr()
+    commit_message = "Implement bounded change from approved worktree run"
+    _request_and_approve_coder_commit(
+        tmp_path,
+        capsys,
+        run_id,
+        commit_message=commit_message,
+    )
+
+    outside = worktree_path / "notes" / "staged-outside.txt"
+    outside.parent.mkdir(parents=True, exist_ok=True)
+    outside.write_text("outside\n", encoding="utf-8")
+    subprocess.run(["git", "add", "--", "notes/staged-outside.txt"], cwd=worktree_path, check=True)
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "commit-coder-worktree",
+                run_id,
+                "--message",
+                commit_message,
+            ]
+        )
+        == 1
+    )
+    output = capsys.readouterr().out
+    assert "commit_coder_worktree_failed: staged_files_outside_allowed_files" in output
+    incidents = Storage(tmp_path / ".agent" / "state.db").list_recent_incidents(limit=5)
+    assert incidents[0].failure_class == "staged_files_outside_allowed_files"
 
 
 def test_run_coder_worktree_blocks_hash_mismatch_unsafe_commands_and_file_violations(
