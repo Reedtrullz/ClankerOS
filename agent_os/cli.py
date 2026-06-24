@@ -511,6 +511,7 @@ from agent_os.project_registry import (
 )
 from agent_os.queue_health import render_queue_health_finding, write_queue_health_report
 from agent_os.run_review import (
+    evidence_packet_dir,
     write_evidence_index,
     write_replay_summary,
     write_run_review,
@@ -1944,6 +1945,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"evidence_packet: {packet.run.id}")
         print(f"status: {packet.run.status}")
         print(f"report: {report_path.relative_to(root)}")
+        print(f"packet_dir: {evidence_packet_dir(root, packet).relative_to(root)}")
         print(
             "database_rows: "
             f"tasks={len(packet.tasks)} events={len(packet.events)} "

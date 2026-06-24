@@ -426,7 +426,8 @@ python3 -m agent_os.cli run-goal "Make the smallest verified change" --project <
    only after reviewing the generated `SKILL.md`.
 17. Use `python3 -m agent_os.cli review <run_id>`, `evidence <run_id>`, and
    `replay-summary <run_id>` to create operator-readable run packets before
-   making follow-up decisions.
+   making follow-up decisions. `evidence` also writes a replayable packet under
+   `.clanker/projects/<project>/goals/<goal_id>/runs/<run_id>/evidence/`.
 18. Use `python3 -m agent_os.cli cleanup-worktrees --confirm --reason "..."`
    after reviewing terminal effects and deciding the worktree can be removed.
 
@@ -454,8 +455,15 @@ the memory active until `memory approve` is run.
 `.clanker/skills/<name>/SKILL.md` from run evidence. It records a skill version
 and does not make the skill active until `skill approve` is run.
 `review`, `evidence`, and `replay-summary` write local Markdown packets under
-`runs/<run_id>/` and expose them in the dashboard. They do not rerun commands,
-approve effects, commit, push, deploy, or mutate external systems.
+`runs/<run_id>/` and expose them in the dashboard. `evidence` also writes
+goal-scoped JSON/JSONL/Markdown packet files for goal, plan, contract, tasks,
+routing decisions, delegations, steering reviews, commands, approvals, effects,
+memory/skill proposals, incidents, eval candidates, and verification summary.
+When command-proof files already exist from `run-task`, the aggregate evidence
+export uses sidecars such as `verification-summary.json` and
+`operator-summary.md` instead of overwriting the executable proof. These
+commands do not rerun commands, approve effects, commit, push, deploy, or
+mutate external systems.
 `steer <goal_id>` writes a local steering review from existing goals, tasks,
 approvals, and incidents. `next-action <goal_or_project>` refreshes that
 review and prints the recommended operator move. `inbox` lists operator-worthy

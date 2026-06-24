@@ -17,11 +17,11 @@
 
 ### Task Runs
 
+- task_58e65ccc8918: run=run_2ea420719720 project=bootstrap goal=goal_027f47ca5a93 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_2ea420719720/learning.md
+- task_7f84e031c7f3: run=run_2ea420719720 project=bootstrap goal=goal_027f47ca5a93 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_2ea420719720/goal-artifact.md
+- task_9c777d57a963: run=run_747764b40afe project=bootstrap goal=goal_9aaccf1668a4 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_747764b40afe/learning.md
+- task_5c5a4cb7df05: run=run_747764b40afe project=bootstrap goal=goal_9aaccf1668a4 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_747764b40afe/goal-artifact.md
 - task_fc2f63430b4e: run=run_6486401b5408 project=bootstrap goal=goal_a9da83c8c2cb status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_6486401b5408/learning.md
-- task_2672fa74bba0: run=run_6486401b5408 project=bootstrap goal=goal_a9da83c8c2cb status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_6486401b5408/goal-artifact.md
-- task_2126f7593eb2: run=run_b791209a6a0c project=bootstrap goal=goal_ab1c3e108961 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_b791209a6a0c/learning.md
-- task_3f6c8ef894c1: run=run_b791209a6a0c project=bootstrap goal=goal_ab1c3e108961 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_b791209a6a0c/goal-artifact.md
-- task_d2563f8c9156: run=run_15b7c378d7e3 project=bootstrap goal=goal_9200977024a6 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_15b7c378d7e3/learning.md
 
 ### Task Recommendations
 
@@ -113,7 +113,7 @@
 - claimed: 0
 - running: 0
 - verifying: 0
-- completed: 666
+- completed: 670
 - blocked: 0
 - failed: 0
 - active: 0
@@ -122,18 +122,18 @@
 ## Iteration Loop
 
 - status: planned
-- focus: Add local downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals from accepted blocked result effect task result effect task result effect task result effect task result effect task result effect task result effect task results.
+- focus: Add git status, diff, and changed-file snapshots to replayable evidence packets without overwriting `run-task` command proof.
 - source: tasks.md#next
 - packet: docs/next-iteration.md
-- created_at: 2026-06-24T00:40:49.742303+00:00
+- created_at: 2026-06-24T01:13:31.388117+00:00
 
 ## Simplicity Guardrail
 
 - policy: highest-score-then-lowest-complexity
-- reason: selected only actionable item with score 9 and complexity 4
-- selected_score: 9
+- reason: selected highest score 10; complexity 4 recorded for audit
+- selected_score: 10
 - selected_complexity: 4
-- selected_focus: Add local downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals from accepted blocked result effect task result effect task result effect task result effect task result effect task result effect task result effect task results.
+- selected_focus: Add git status, diff, and changed-file snapshots to replayable evidence packets without overwriting `run-task` command proof.
 
 ## Expansion Operator Approval Schema Decision
 
@@ -1321,23 +1321,23 @@
 
 ## Handoff Review
 
-- status: clear
-- current_focus: Add local downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals from accepted blocked result effect task result effect task result effect task result effect task result effect task result effect task result effect task results.
+- status: needs_attention
+- current_focus: Add git status, diff, and changed-file snapshots to replayable evidence packets without overwriting `run-task` command proof.
 - blocked_tasks: 0
-- stale_handoffs: 0
+- stale_handoffs: 1
 - report: docs/handoff-review.md
 
-- none
+- stale path=projects/bootstrap/handoff.md reason=does_not_reference_current_focus current_focus=Add git status, diff, and changed-file snapshots to replayable evidence packets without overwriting `run-task` command proof.
 
 ## Eval After Change
 
 - failed: 0
 
+- eval_after_change_0f08959a2555: status=pass change=Export replayable evidence packet sidecars files=agent_os/run_review.py,agent_os/cli.py,agent_os/dashboard.py,tests/test_first_milestone.py,README.md,docs/OPERATING_SUMMARY.md,docs/reference-commands.md,docs/suggested-use.md evals=first_milestone_closed_loop runs=run_2ea420719720 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_ab9a7c32b698: status=pass change=Add downstream result-effect operator decision review files=agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decisions.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py,README.md,docs/suggested-use.md,docs/reference-commands.md,docs/operator-recipes.md,docs/docs-index.md,docs/OPERATING_SUMMARY.md,docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md evals=first_milestone_closed_loop runs=run_b791209a6a0c results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_62f59fca84f3: status=pass change=Add downstream result-effect result ingestion files=agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_results.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py,docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md,docs/suggested-use.md,docs/docs-index.md,docs/OPERATING_SUMMARY.md evals=first_milestone_closed_loop runs=run_1d7e6e2ee7c7 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_c9db7e7870dd: status=pass change=downstream proof task delegation packets files=agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,agent_os/profile_routing.py,tests/test_first_milestone.py evals=first_milestone_closed_loop runs=run_d6f00742b957 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 - eval_after_change_4fcab0dd53bd: status=pass change=count8 downstream task materialization files=agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_tasks.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py evals=first_milestone_closed_loop runs=run_8328cc71eb0b results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
-- eval_after_change_f9358daa41e9: status=pass change=Add downstream result effect application rung files=agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py,README.md,docs/reference-commands.md,docs/suggested-use.md,docs/OPERATING_SUMMARY.md,docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-application.md evals=first_milestone_closed_loop runs=run_9b977e9a4a11 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
 
 ## Learning Distillation
 
@@ -1361,13 +1361,13 @@
 ## Budget And Trust Posture
 
 - status: report_only
-- tasks: 694
+- tasks: 698
 - budget_state: not_tracked
 - trust_state: not_tracked
-- risk_counts: high=27,low=667
+- risk_counts: high=27,low=671
 - report: docs/budget-trust-posture.md
 
-- budget_trust_posture_9d94ca1fbddb: status=report_only tasks=694 budget_state=not_tracked trust_state=not_tracked risk_counts=high=27,low=667 report=docs/budget-trust-posture.md
+- budget_trust_posture_42b62d25bddd: status=report_only tasks=698 budget_state=not_tracked trust_state=not_tracked risk_counts=high=27,low=671 report=docs/budget-trust-posture.md
 
 ## Dispatch Posture History
 
@@ -2006,7 +2006,7 @@
 
 - active: 1
 
-- first-milestone-closed-loop: active source=first_milestone_closed_loop successful_runs=328 path=playbooks/first-milestone-closed-loop.md
+- first-milestone-closed-loop: active source=first_milestone_closed_loop successful_runs=329 path=playbooks/first-milestone-closed-loop.md
 
 ## Eval Candidates
 
@@ -2037,28 +2037,29 @@
 
 ## Recent Runs
 
+- run_2ea420719720: completed project=bootstrap goal=goal_027f47ca5a93 completed=2026-06-24T01:12:58.061392+00:00 summary=runs/run_2ea420719720/summary.md
+- run_747764b40afe: completed project=bootstrap goal=goal_9aaccf1668a4 completed=2026-06-24T01:12:48.167098+00:00 summary=runs/run_747764b40afe/summary.md
 - run_6486401b5408: completed project=bootstrap goal=goal_a9da83c8c2cb completed=2026-06-24T00:39:34.969642+00:00 summary=runs/run_6486401b5408/summary.md
 - run_b791209a6a0c: completed project=bootstrap goal=goal_ab1c3e108961 completed=2026-06-24T00:39:29.166252+00:00 summary=runs/run_b791209a6a0c/summary.md
 - run_15b7c378d7e3: completed project=bootstrap goal=goal_9200977024a6 completed=2026-06-24T00:00:15.033244+00:00 summary=runs/run_15b7c378d7e3/summary.md
-- run_1d7e6e2ee7c7: completed project=bootstrap goal=goal_9f653488a38c completed=2026-06-24T00:00:10.443776+00:00 summary=runs/run_1d7e6e2ee7c7/summary.md
-- run_d6f00742b957: completed project=bootstrap goal=goal_4c792e5b18df completed=2026-06-23T23:13:06.201060+00:00 summary=runs/run_d6f00742b957/summary.md
 
 ## Recent Evidence Packets
 
-- none
+- run_2ea420719720: review=missing evidence=runs/run_2ea420719720/evidence-index.md replay=missing packet=.clanker/projects/bootstrap/goals/goal_027f47ca5a93/runs/run_2ea420719720/evidence
+- run_6486401b5408: review=missing evidence=runs/run_6486401b5408/evidence-index.md replay=missing packet=.clanker/projects/bootstrap/goals/goal_a9da83c8c2cb/runs/run_6486401b5408/evidence
 
 ## Recent Learnings
 
+- run_2ea420719720: Run run_2ea420719720 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_2ea420719720/learning.md)
+- run_747764b40afe: Run run_747764b40afe showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_747764b40afe/learning.md)
 - run_6486401b5408: Run run_6486401b5408 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_6486401b5408/learning.md)
 - run_b791209a6a0c: Run run_b791209a6a0c showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_b791209a6a0c/learning.md)
 - run_15b7c378d7e3: Run run_15b7c378d7e3 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_15b7c378d7e3/learning.md)
-- run_1d7e6e2ee7c7: Run run_1d7e6e2ee7c7 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_1d7e6e2ee7c7/learning.md)
-- run_d6f00742b957: Run run_d6f00742b957 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_d6f00742b957/learning.md)
 
 ## Recent Eval Results
 
+- first_milestone_closed_loop: pass run=run_2ea420719720 created_at=2026-06-24T01:12:58.071742+00:00
+- first_milestone_closed_loop: pass run=run_747764b40afe created_at=2026-06-24T01:12:48.179743+00:00
 - first_milestone_closed_loop: pass run=run_6486401b5408 created_at=2026-06-24T00:39:34.992974+00:00
 - first_milestone_closed_loop: pass run=run_b791209a6a0c created_at=2026-06-24T00:39:29.176621+00:00
 - first_milestone_closed_loop: pass run=run_15b7c378d7e3 created_at=2026-06-24T00:00:15.058453+00:00
-- first_milestone_closed_loop: pass run=run_1d7e6e2ee7c7 created_at=2026-06-24T00:00:10.460197+00:00
-- first_milestone_closed_loop: pass run=run_d6f00742b957 created_at=2026-06-23T23:13:06.213569+00:00

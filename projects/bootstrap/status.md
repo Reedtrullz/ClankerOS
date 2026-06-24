@@ -1,5 +1,26 @@
 # Bootstrap Status
 
+Latest executable harness update: `evidence <run_id>` now exports replayable
+goal-scoped packet sidecars under
+`.clanker/projects/<project>/goals/<goal_id>/runs/<run_id>/evidence/` instead
+of only writing `runs/<run_id>/evidence-index.md`. The packet includes run,
+goal, plan, contract, task, event, routing, delegation, steering, command,
+approval, effect, memory/skill proposal, incident, eval-candidate, verification,
+and final-review snapshots. If a `run-task` packet already owns executable
+command proof files, the export preserves them and writes aggregate sidecars
+such as `verification-summary.json`, `commands-snapshot.jsonl`,
+`tasks-snapshot.json`, and `operator-summary.md`. Live proof wrote packets for
+`run_6486401b5408` and `run_2ea420719720`; the dashboard now links both packet
+directories in Recent Evidence Packets. Verification passed with py_compile,
+focused packet/review/run-task compatibility tests, broader review/routing/
+delegation/run-task/dashboard tests, full pytest `456 passed in 943.01s`,
+operational gates, eval-after-change `run_2ea420719720`, baseline eval, and
+playbooks. The next iteration now selects git status, diff, and changed-file
+snapshots for replayable evidence packets. This is local evidence export only:
+no command rerun during export, approval, commit, push, deploy, provider call,
+subagent start, external mutation, hosted dashboard, remote worker, scheduler,
+trust promotion, or real cost tracking occurred.
+
 Latest local capability continuation: downstream result records can now receive
 review-only operator decisions through
 `capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-decide`.
@@ -5922,3 +5943,15 @@ local application records for those proposed effects.
 - Goal ID: goal_a9da83c8c2cb
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_6486401b5408/summary.md
+
+## Run run_747764b40afe
+
+- Goal ID: goal_9aaccf1668a4
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_747764b40afe/summary.md
+
+## Run run_2ea420719720
+
+- Goal ID: goal_027f47ca5a93
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_2ea420719720/summary.md

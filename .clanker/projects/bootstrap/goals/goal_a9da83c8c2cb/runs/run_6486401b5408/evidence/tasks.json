@@ -1,0 +1,88 @@
+[
+  {
+    "artifacts": [
+      "/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_6486401b5408/goal-artifact.md"
+    ],
+    "attempts": 1,
+    "claimed_at": "2026-06-24T00:39:34.920527+00:00",
+    "created_at": "2026-06-24T00:39:34.907535+00:00",
+    "depends_on": [],
+    "description": "Write a durable artifact proving goal intake and execution.",
+    "evidence": {
+      "checks": {
+        "contains_goal": true,
+        "contains_task_id": true,
+        "exists": true
+      },
+      "method": "file_contains",
+      "passed": true,
+      "path": "/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_6486401b5408/goal-artifact.md",
+      "verified_at": "2026-06-24T00:39:34.929911+00:00"
+    },
+    "goal_id": "goal_a9da83c8c2cb",
+    "id": "task_2672fa74bba0",
+    "owner": "local-worker-1",
+    "priority": 100,
+    "project_id": "bootstrap",
+    "risk_level": "low",
+    "run_id": "run_6486401b5408",
+    "skill_tags": [
+      "local-files"
+    ],
+    "status": "completed",
+    "task_type": "write_goal_artifact",
+    "updated_at": "2026-06-24T00:39:34.930048+00:00",
+    "verification_plan": {
+      "contains": [
+        "Eval: prove first milestone closed loop"
+      ],
+      "path": "/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_6486401b5408/goal-artifact.md",
+      "type": "file_contains"
+    }
+  },
+  {
+    "artifacts": [
+      "/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_6486401b5408/learning.md",
+      "/Users/reidar/Documents/Agent System/evals/candidates/run_6486401b5408-closed-loop.json"
+    ],
+    "attempts": 1,
+    "claimed_at": "2026-06-24T00:39:34.938652+00:00",
+    "created_at": "2026-06-24T00:39:34.912295+00:00",
+    "depends_on": [
+      "task_2672fa74bba0"
+    ],
+    "description": "Record one learning and one eval candidate from the run.",
+    "evidence": {
+      "checks": {
+        "eval_candidate_exists": true,
+        "knowledge_mentions_run": true,
+        "learning_file_exists": true,
+        "memory_mentions_run": true
+      },
+      "method": "learning_recorded",
+      "passed": true,
+      "path": "/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_6486401b5408/learning.md",
+      "verified_at": "2026-06-24T00:39:34.955310+00:00"
+    },
+    "goal_id": "goal_a9da83c8c2cb",
+    "id": "task_fc2f63430b4e",
+    "owner": "local-worker-1",
+    "priority": 100,
+    "project_id": "bootstrap",
+    "risk_level": "low",
+    "run_id": "run_6486401b5408",
+    "skill_tags": [
+      "local-files"
+    ],
+    "status": "completed",
+    "task_type": "record_learning",
+    "updated_at": "2026-06-24T00:39:34.955433+00:00",
+    "verification_plan": {
+      "contains": [
+        "run_6486401b5408"
+      ],
+      "path": "/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_6486401b5408/learning.md",
+      "type": "learning_recorded"
+    }
+  }
+]

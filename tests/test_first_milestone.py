@@ -820,12 +820,62 @@ def test_run_task_dispatches_planned_goal_task_with_profile_evidence(
     )
     summary = (evidence_dir / "summary.md").read_text(encoding="utf-8")
     assert "verified subject repo" in summary
-    assert (evidence_dir / "verification.json").exists()
-    assert (evidence_dir / "routing_decisions.jsonl").exists()
-    assert (evidence_dir / "tasks.json").exists()
-    task_packet = json.loads((evidence_dir / "tasks.json").read_text(encoding="utf-8"))
+    verification_path = evidence_dir / "verification.json"
+    routing_path = evidence_dir / "routing_decisions.jsonl"
+    tasks_path = evidence_dir / "tasks.json"
+    commands_path = evidence_dir / "commands.jsonl"
+    tests_path = evidence_dir / "tests.txt"
+    stdout_path = evidence_dir / "stdout.txt"
+    stderr_path = evidence_dir / "stderr.txt"
+    assert verification_path.exists()
+    assert routing_path.exists()
+    assert tasks_path.exists()
+    assert commands_path.exists()
+    assert tests_path.exists()
+    assert stdout_path.exists()
+    assert stderr_path.exists()
+    command_rows = [
+        json.loads(line)
+        for line in commands_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert command_rows[0]["command"] == test_command
+    assert command_rows[0]["cwd"] == str(repo_path)
+    assert command_rows[0]["profile"] == "tester"
+    assert command_rows[0]["adapter"] == "local_shell"
+    assert command_rows[0]["returncode"] == 0
+    verification_packet = json.loads(verification_path.read_text(encoding="utf-8"))
+    assert verification_packet["command"] == test_command
+    assert verification_packet["returncode"] == 0
+    assert verification_packet["passed"] is True
+    assert verification_packet["adapter"] == "local_shell"
+    task_packet = json.loads(tasks_path.read_text(encoding="utf-8"))
     assert task_packet["task"]["status"] == "completed"
     assert task_packet["plan_step"]["status"] == "completed"
+
+    before_verification = verification_path.read_text(encoding="utf-8")
+    before_commands = commands_path.read_text(encoding="utf-8")
+    before_tasks = tasks_path.read_text(encoding="utf-8")
+    before_summary = (evidence_dir / "summary.md").read_text(encoding="utf-8")
+    assert main(["--root", str(tmp_path), "evidence", run_id]) == 0
+    evidence_output = capsys.readouterr().out
+    assert "packet_dir: .clanker/projects/subject/goals/" in evidence_output
+    assert verification_path.read_text(encoding="utf-8") == before_verification
+    assert commands_path.read_text(encoding="utf-8") == before_commands
+    assert tasks_path.read_text(encoding="utf-8") == before_tasks
+    assert (evidence_dir / "summary.md").read_text(encoding="utf-8") == before_summary
+    verification_summary = json.loads(
+        (evidence_dir / "verification-summary.json").read_text(encoding="utf-8")
+    )
+    assert verification_summary["tasks_total"] == 1
+    assert verification_summary["network_actions_taken"] == 0
+    assert (evidence_dir / "tasks-snapshot.json").exists()
+    assert (evidence_dir / "routing_decisions-snapshot.jsonl").exists()
+    assert (evidence_dir / "commands-snapshot.jsonl").exists()
+    assert (evidence_dir / "operator-summary.md").exists()
+    assert (evidence_dir / "goal.json").exists()
+    assert (evidence_dir / "plan.json").exists()
+    assert (evidence_dir / "contract.json").exists()
 
     assert main(["--root", str(tmp_path), "review", run_id]) == 0
     review_output = capsys.readouterr().out
@@ -3309,6 +3359,161 @@ def test_evidence_command_indexes_run_artifacts_and_database_rows(
     assert "- events: " in report
     assert "## Non-Claims" in report
     assert "Does not replay or rerun the work." in report
+
+
+def test_evidence_command_exports_replayable_operator_packet_files(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    result = system.run_goal(
+        project_id="bootstrap",
+        description="Export a replayable packet with control-plane state.",
+    )
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    tasks = storage.list_tasks(result.goal_id)
+    task_id = tasks[0].id
+    goal_packet_root = (
+        tmp_path
+        / ".clanker"
+        / "projects"
+        / "bootstrap"
+        / "goals"
+        / result.goal_id
+    )
+    plan_artifact = goal_packet_root / "PLAN.md"
+    plan_artifact.parent.mkdir(parents=True, exist_ok=True)
+    plan_artifact.write_text("# Plan\n\nExport the operator packet.\n", encoding="utf-8")
+    plan = storage.create_plan(
+        goal_id=result.goal_id,
+        version=1,
+        summary="Export plan, routing, delegation, and steering evidence.",
+        status="active",
+        created_by_profile="planner",
+        artifact_path=str(plan_artifact),
+    )
+    storage.create_plan_step(
+        plan_id=plan.id,
+        goal_id=result.goal_id,
+        order_index=1,
+        title="Export packet",
+        description="Collect the run control-plane state.",
+        acceptance_criteria="Packet contains plan, routing, delegation, and steering.",
+        verification_command="python3 -m agent_os.cli evidence <run_id>",
+        status="completed",
+        assigned_profile="tester",
+        task_id=task_id,
+    )
+    contract_artifact = goal_packet_root / "CONTRACT.md"
+    contract_artifact.write_text("# Contract\n\nPacket files exist.\n", encoding="utf-8")
+    contract = storage.create_sprint_contract(
+        goal_id=result.goal_id,
+        plan_id=plan.id,
+        scope="Export evidence packet files for review.",
+        non_goals="Do not rerun commands or approve effects.",
+        acceptance_criteria="Packet includes control-plane artifacts.",
+        verification_plan="Inspect packet JSON/JSONL files.",
+        risk_notes="Read-only export only.",
+        evaluator_notes="Evidence should be replayable by an operator.",
+        status="approved",
+        artifact_path=str(contract_artifact),
+    )
+    routing = storage.record_routing_decision(
+        task_id=task_id,
+        goal_id=result.goal_id,
+        project_id="bootstrap",
+        selected_profile="tester",
+        selected_model="configurable/cheap-coding-model",
+        category="test_triage",
+        reason="test packet export should retain routing state",
+        estimated_cost_tier="low",
+    )
+    delegation = storage.record_subagent_delegation(
+        routing_decision_id=routing.id,
+        parent_goal_id=result.goal_id,
+        parent_task_id=task_id,
+        assigned_profile="tester",
+        category="evidence_review",
+        title="Review packet evidence",
+        prompt="Read-only evidence review.",
+        input_context_json={"run_id": result.run_id},
+        allowed_tools_json=["read"],
+        forbidden_actions_json=["write", "commit", "approve"],
+        expected_output_schema="evidence_review",
+        budget_json={"tokens": 1000, "seconds": 60},
+        status="pending",
+        result_summary=None,
+        result_artifact_path=str(goal_packet_root / "delegation.json"),
+    )
+    steering_report = goal_packet_root / "STEERING.md"
+    steering_report.write_text("# Steering\n\nContinue review.\n", encoding="utf-8")
+    steering = storage.record_steering_review(
+        goal_id=result.goal_id,
+        project_id="bootstrap",
+        run_id=result.run_id,
+        reviewed_plan_version="1",
+        current_task_id=task_id,
+        status="reviewed",
+        drift_score="none",
+        findings=[{"status": "aligned", "message": "packet export is aligned"}],
+        recommended_next_action="final_review",
+        requires_operator=False,
+        report_path=str(steering_report),
+    )
+
+    assert main(["--root", str(tmp_path), "evidence", result.run_id]) == 0
+    output = capsys.readouterr().out
+    packet_dir = goal_packet_root / "runs" / result.run_id / "evidence"
+    assert "packet_dir: " + str(packet_dir.relative_to(tmp_path)) in output
+
+    expected_files = [
+        "summary.md",
+        "goal.json",
+        "plan.json",
+        "contract.json",
+        "tasks.json",
+        "routing_decisions.jsonl",
+        "delegations.jsonl",
+        "steering_reviews.jsonl",
+        "verification.json",
+    ]
+    for filename in expected_files:
+        assert (packet_dir / filename).exists(), filename
+
+    goal_json = json.loads((packet_dir / "goal.json").read_text(encoding="utf-8"))
+    assert goal_json["id"] == result.goal_id
+    plan_json = json.loads((packet_dir / "plan.json").read_text(encoding="utf-8"))
+    assert plan_json["plan"]["id"] == plan.id
+    assert plan_json["steps"][0]["task_id"] == task_id
+    contract_json = json.loads((packet_dir / "contract.json").read_text(encoding="utf-8"))
+    assert contract_json["id"] == contract.id
+    routing_lines = (packet_dir / "routing_decisions.jsonl").read_text(
+        encoding="utf-8"
+    )
+    assert routing.id in routing_lines
+    delegation_lines = (packet_dir / "delegations.jsonl").read_text(
+        encoding="utf-8"
+    )
+    assert delegation.id in delegation_lines
+    steering_lines = (packet_dir / "steering_reviews.jsonl").read_text(
+        encoding="utf-8"
+    )
+    assert steering.id in steering_lines
+    verification = json.loads((packet_dir / "verification.json").read_text())
+    assert verification["tasks_total"] == len(tasks)
+    assert verification["network_actions_taken"] == 0
+    assert verification["external_mutations_taken"] == 0
+
+    report = (tmp_path / "runs" / result.run_id / "evidence-index.md").read_text(
+        encoding="utf-8"
+    )
+    assert "## Evidence Packet Files" in report
+    assert "routing_decisions.jsonl" in report
+    assert "steering_reviews.jsonl" in report
+
+    dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
+    assert "## Recent Evidence Packets" in dashboard
+    assert str(packet_dir.relative_to(tmp_path)) in dashboard
 
 
 def test_replay_summary_command_explains_run_without_rerunning(

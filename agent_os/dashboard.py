@@ -6173,13 +6173,30 @@ def generate_static_dashboard(root: Path) -> Path:
         review_path = run_dir / "review.md"
         evidence_path = run_dir / "evidence-index.md"
         replay_path = run_dir / "replay-summary.md"
-        if not (review_path.exists() or evidence_path.exists() or replay_path.exists()):
+        packet_path = (
+            root
+            / ".clanker"
+            / "projects"
+            / run["project_id"]
+            / "goals"
+            / run["goal_id"]
+            / "runs"
+            / run["id"]
+            / "evidence"
+        )
+        if not (
+            review_path.exists()
+            or evidence_path.exists()
+            or replay_path.exists()
+            or packet_path.exists()
+        ):
             continue
         evidence_packet_lines.append(
             f"- {run['id']}: "
             f"review={_relative_to_root(root, str(review_path)) if review_path.exists() else 'missing'} "
             f"evidence={_relative_to_root(root, str(evidence_path)) if evidence_path.exists() else 'missing'} "
-            f"replay={_relative_to_root(root, str(replay_path)) if replay_path.exists() else 'missing'}"
+            f"replay={_relative_to_root(root, str(replay_path)) if replay_path.exists() else 'missing'} "
+            f"packet={_relative_to_root(root, str(packet_path)) if packet_path.exists() else 'missing'}"
         )
     if evidence_packet_lines:
         lines.extend(evidence_packet_lines)

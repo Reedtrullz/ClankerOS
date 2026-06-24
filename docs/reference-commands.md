@@ -29,6 +29,11 @@ python3 -m agent_os.cli next-action <goal_or_project>
 python3 -m agent_os.cli inbox
 ```
 
+`evidence <run_id>` now prints `packet_dir` and writes goal-scoped packet
+files under `.clanker/projects/<project>/goals/<goal_id>/runs/<run_id>/evidence/`.
+For `run-task` runs it preserves executable proof files and writes aggregate
+operator snapshots as sidecars.
+
 ## Goal Planning Lifecycle
 
 ```bash

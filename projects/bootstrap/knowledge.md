@@ -2605,3 +2605,11 @@ coverage.
 ## Learning run_6486401b5408
 
 - Learning: Run run_6486401b5408 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_747764b40afe
+
+- Learning: Run run_747764b40afe showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+
+## Learning run_2ea420719720
+
+- Learning: Run run_2ea420719720 showed that the first closed loop can be verified through file evidence before expanding to broader domains.

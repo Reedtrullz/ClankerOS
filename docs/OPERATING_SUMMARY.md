@@ -93,12 +93,17 @@ Core layers for the bootstrap:
   active until approved.
 - Run evidence review: `review <run_id>` writes a human-first
   `runs/<run_id>/review.md`, `evidence <run_id>` writes
-  `runs/<run_id>/evidence-index.md`, and `replay-summary <run_id>` writes
-  `runs/<run_id>/replay-summary.md`. The reports summarize existing local run
-  rows, task evidence, events, artifacts, approvals, incidents, effects,
-  delegations, memory entries, skills, and eval candidates without rerunning
-  commands, approving effects, committing, pushing, deploying, or mutating
-  external systems.
+  `runs/<run_id>/evidence-index.md` and a replayable packet under
+  `.clanker/projects/<project>/goals/<goal_id>/runs/<run_id>/evidence/`, and
+  `replay-summary <run_id>` writes `runs/<run_id>/replay-summary.md`. The
+  packet includes goal, plan, contract, tasks, routing decisions, delegations,
+  steering reviews, commands, approvals, effects, memory/skill proposals,
+  incidents, eval candidates, and verification summary files. If `run-task`
+  already wrote executable command proof such as `verification.json`,
+  `commands.jsonl`, `tasks.json`, or `summary.md`, `evidence` preserves those
+  files and writes aggregate operator sidecars instead. The reports summarize
+  existing local run rows without rerunning commands, approving effects,
+  committing, pushing, deploying, or mutating external systems.
 - Steering review: `steer <goal_id>` writes a deterministic
   `docs/steering-review.md` plus a `steering_reviews` row from local goal,
   task, approval, and incident state. `next-action <goal_or_project>` refreshes

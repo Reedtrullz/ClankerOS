@@ -1,5 +1,60 @@
 # Status
 
+## 2026-06-24 Replayable Evidence Packet Sidecars
+
+- Strengthened `python3 -m agent_os.cli evidence <run_id>` from a Markdown-only
+  index into a goal-scoped replayable packet export under
+  `.clanker/projects/<project>/goals/<goal_id>/runs/<run_id>/evidence/`.
+- The packet now exports local snapshots for run, goal, plan, contract, tasks,
+  events, routing decisions, delegations, steering reviews, commands,
+  approvals, effects, memory proposals, skill proposals, incidents, eval
+  candidates, verification summary, and a final review markdown.
+- `evidence` now prints `packet_dir`, and the dashboard's Recent Evidence
+  Packets section links the `.clanker` packet directory alongside the legacy
+  `runs/<run_id>/evidence-index.md` path.
+- Compatibility guard: when `run-task` has already written executable command
+  proof files such as `verification.json`, `commands.jsonl`, `tasks.json`, and
+  `summary.md`, the evidence export preserves them and writes aggregate
+  sidecars such as `verification-summary.json`, `commands-snapshot.jsonl`,
+  `tasks-snapshot.json`, and `operator-summary.md`.
+- Live proof:
+  - `python3 -m agent_os.cli evidence run_6486401b5408` wrote
+    `.clanker/projects/bootstrap/goals/goal_a9da83c8c2cb/runs/run_6486401b5408/evidence`
+    and `runs/run_6486401b5408/evidence-index.md`.
+  - `python3 -m agent_os.cli evidence run_2ea420719720` wrote
+    `.clanker/projects/bootstrap/goals/goal_027f47ca5a93/runs/run_2ea420719720/evidence`
+    and `runs/run_2ea420719720/evidence-index.md`.
+  - `python3 -m agent_os.cli dashboard` now lists both packet directories in
+    Recent Evidence Packets.
+  - `python3 -m agent_os.cli iterate` now selects the next executable packet
+    item: add git status, diff, and changed-file snapshots to replayable
+    evidence packets without overwriting `run-task` command proof.
+- Verification evidence:
+  - red test first failed because `evidence` did not print `packet_dir` or
+    write packet files.
+  - syntax compile passed for `agent_os/run_review.py`, `agent_os/cli.py`,
+    `agent_os/dashboard.py`, and `tests/test_first_milestone.py`.
+  - focused packet/review/run-task compatibility slice: 5 passed, 451
+    deselected.
+  - broader review/routing/delegation/run-task/dashboard cluster: 23 passed,
+    433 deselected.
+  - full suite: 456 passed in 943.01s.
+  - `sweep-stuck`: stuck_incidents 0.
+  - `queue-health`: hotspots 0.
+  - `handoff-review`: clear, blocked_tasks 0, stale_handoffs 0.
+  - `eval-candidates`: 0.
+  - `approvals`: pending_approvals 0.
+  - `budget-trust-posture`: report_only, tasks 698.
+  - `eval-after-change`: pass, run `run_2ea420719720`.
+  - baseline `eval`: pass.
+  - `playbooks`: 1 active playbook, 329 successful runs.
+  - `git diff --check`: passed.
+- Non-claims: this is local replayable evidence export only; it does not rerun
+  commands during export, approve effects, commit, push, deploy, call model
+  providers, start subagents, mutate external systems, add browser/desktop
+  automation, enable hosted dashboard/remote workers/scheduling, promote trust,
+  or track real spend.
+
 ## 2026-06-24 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Decisions
 
 - Added the next local-only operator decision rung:

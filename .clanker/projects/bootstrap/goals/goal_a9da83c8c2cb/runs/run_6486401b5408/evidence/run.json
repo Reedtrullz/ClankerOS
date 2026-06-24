@@ -1,0 +1,11 @@
+{
+  "activity_path": "/Users/reidar/Documents/Agent System/runs/run_6486401b5408/activity.md",
+  "completed_at": "2026-06-24T00:39:34.969642+00:00",
+  "events_path": "/Users/reidar/Documents/Agent System/runs/run_6486401b5408/events.jsonl",
+  "goal_id": "goal_a9da83c8c2cb",
+  "id": "run_6486401b5408",
+  "project_id": "bootstrap",
+  "started_at": "2026-06-24T00:39:34.901702+00:00",
+  "status": "completed",
+  "summary_path": "/Users/reidar/Documents/Agent System/runs/run_6486401b5408/summary.md"
+}

@@ -1,8 +1,8 @@
 # Handoff Review
 
-- id: handoff_review_106418d808e3
+- id: handoff_review_8693d54fc7ae
 - status: clear
-- current_focus: Add local downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals from accepted blocked result effect task result effect task result effect task result effect task result effect task result effect task result effect task results.
+- current_focus: Add git status, diff, and changed-file snapshots to replayable evidence packets without overwriting `run-task` command proof.
 - blocked_tasks: 0
 - stale_handoffs: 0
 - reviewed_paths: 1

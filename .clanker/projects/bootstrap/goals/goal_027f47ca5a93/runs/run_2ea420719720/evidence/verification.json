@@ -1,0 +1,17 @@
+{
+  "external_mutations_taken": 0,
+  "goal_id": "goal_027f47ca5a93",
+  "network_actions_taken": 0,
+  "non_claims": [
+    "Evidence packet export does not rerun commands.",
+    "Evidence packet export does not approve effects or commit code.",
+    "Evidence packet export does not call model providers."
+  ],
+  "open_incidents": 0,
+  "pending_approvals": 0,
+  "recommended_next_action": "final_review",
+  "run_id": "run_2ea420719720",
+  "tasks_completed": 2,
+  "tasks_total": 2,
+  "tasks_with_passed_verification": 2
+}

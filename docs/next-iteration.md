@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_9d02abcc11e2
+- Packet ID: iteration_6b154150bd07
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add local downstream follow-up result task result effect task result effect task result effect task result effect task result effect task result effect task result effect task result decision effect proposals from accepted blocked result effect task result effect task result effect task result effect task result effect task result effect task result effect task results.
+Advance the Agent System north-star goal by completing: Add git status, diff, and changed-file snapshots to replayable evidence packets without overwriting `run-task` command proof.
 
 ## Definition Of Done
 
@@ -130,8 +130,8 @@ Advance the Agent System north-star goal by completing: Add local downstream fol
 ## Simplicity Guardrail
 
 - selection_policy: highest-score-then-lowest-complexity
-- selection_reason: selected only actionable item with score 9 and complexity 4
-- selected_score: 9
+- selection_reason: selected highest score 10; complexity 4 recorded for audit
+- selected_score: 10
 - selected_complexity: 4
 
 ## Guardrails And Non-Claims
@@ -150,7 +150,7 @@ Advance the Agent System north-star goal by completing: Add local downstream fol
 - pending approvals: 0
 - queue-health hotspots: 0
 - handoff blocked tasks: 0
-- stale handoffs: 0
+- stale handoffs: 1
 - eval-after-change failures: 0
 - stable distilled learnings: 1
 - budget/trust posture: report_only

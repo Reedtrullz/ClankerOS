@@ -100,6 +100,7 @@ Execute one planned task only after the plan and sprint contract are clear:
 ```bash
 python3 -m agent_os.cli run-task <task_id> --profile tester
 python3 -m agent_os.cli review <run_id>
+python3 -m agent_os.cli evidence <run_id>
 python3 -m agent_os.cli task-recommendations --goal <goal_id>
 python3 -m agent_os.cli dashboard
 ```
@@ -108,6 +109,11 @@ python3 -m agent_os.cli dashboard
 default test command; `coder` can run safe local verifier commands. The command
 creates a local run and evidence packet, but it does not commit, push, deploy,
 start a model provider, or start a subagent.
+
+`evidence <run_id>` adds the replayable operator packet under
+`.clanker/projects/<project>/goals/<goal_id>/runs/<run_id>/evidence/` and
+prints the `packet_dir`. If the run already has command-proof files from
+`run-task`, ClankerOS preserves them and writes aggregate review sidecars.
 
 If a planned task verifier fails, ClankerOS opens a local incident and records
 an open `failed_run_task_recovery` recommendation with review, replan, and

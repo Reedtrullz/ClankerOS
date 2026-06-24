@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+import json
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from agent_os.storage import (
@@ -12,8 +13,13 @@ from agent_os.storage import (
     Incident,
     Learning,
     MemoryEntry,
+    PlanRecord,
+    PlanStepRecord,
+    RoutingDecision,
     RunRecord,
     SkillRecord,
+    SprintContractRecord,
+    SteeringReview,
     Storage,
     SubagentDelegation,
     Task,
@@ -24,8 +30,13 @@ from agent_os.storage import (
 class RunEvidencePacket:
     run: RunRecord
     goal: GoalRecord
+    plans: list[PlanRecord]
+    plan_steps: list[PlanStepRecord]
+    sprint_contract: SprintContractRecord | None
     tasks: list[Task]
     events: list[EventRecord]
+    routing_decisions: list[RoutingDecision]
+    steering_reviews: list[SteeringReview]
     learnings: list[Learning]
     incidents: list[Incident]
     approvals: list[ApprovalRequest]
@@ -71,11 +82,31 @@ def collect_run_evidence(root: Path, run_id: str) -> RunEvidencePacket:
     tasks = storage.list_tasks_for_run(run_id)
     if not tasks:
         tasks = storage.list_tasks(run.goal_id)
+    plans = storage.list_plans(run.goal_id)
+    plan_steps = [
+        step
+        for plan in plans
+        for step in storage.list_plan_steps(plan.id)
+    ]
+    latest_plan = plans[-1] if plans else None
+    sprint_contract = (
+        storage.get_sprint_contract_for_plan(latest_plan.id)
+        if latest_plan is not None
+        else storage.get_latest_sprint_contract(run.goal_id)
+    )
     return RunEvidencePacket(
         run=run,
         goal=goal,
+        plans=plans,
+        plan_steps=plan_steps,
+        sprint_contract=sprint_contract,
         tasks=tasks,
         events=storage.list_events_for_run(run_id),
+        routing_decisions=_routing_decisions_for_packet(storage, run, tasks),
+        steering_reviews=storage.list_recent_steering_reviews(
+            limit=100,
+            goal_id=run.goal_id,
+        ),
         learnings=storage.list_learnings_for_run(run_id),
         incidents=storage.list_incidents_for_run(run_id),
         approvals=storage.list_approval_requests_for_run(run_id),
@@ -100,10 +131,85 @@ def write_run_review(root: Path, run_id: str) -> tuple[Path, RunEvidencePacket]:
 
 def write_evidence_index(root: Path, run_id: str) -> tuple[Path, RunEvidencePacket]:
     packet = collect_run_evidence(root, run_id)
+    write_evidence_packet(root, packet)
     report_path = root / "runs" / run_id / "evidence-index.md"
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(render_evidence_index(root, packet), encoding="utf-8")
     return report_path, packet
+
+
+def evidence_packet_dir(root: Path, packet: RunEvidencePacket) -> Path:
+    return (
+        root
+        / ".clanker"
+        / "projects"
+        / packet.run.project_id
+        / "goals"
+        / packet.run.goal_id
+        / "runs"
+        / packet.run.id
+        / "evidence"
+    )
+
+
+def write_evidence_packet(root: Path, packet: RunEvidencePacket) -> Path:
+    packet_dir = evidence_packet_dir(root, packet)
+    packet_dir.mkdir(parents=True, exist_ok=True)
+    _write_json_preserving(packet_dir / "run.json", packet.run)
+    _write_json_preserving(packet_dir / "goal.json", packet.goal)
+    _write_json_preserving(
+        packet_dir / "plan.json",
+        {
+            "plan": packet.plans[-1] if packet.plans else None,
+            "plans": packet.plans,
+            "steps": packet.plan_steps,
+        },
+    )
+    _write_json_preserving(
+        packet_dir / "contract.json",
+        packet.sprint_contract if packet.sprint_contract is not None else {"contract": None},
+    )
+    _write_json_preserving(packet_dir / "tasks.json", packet.tasks)
+    _write_json_preserving(
+        packet_dir / "verification.json",
+        {
+            "run_id": packet.run.id,
+            "goal_id": packet.run.goal_id,
+            "tasks_total": len(packet.tasks),
+            "tasks_completed": packet.completed_task_count,
+            "tasks_with_passed_verification": packet.passed_verification_count,
+            "open_incidents": packet.open_incident_count,
+            "pending_approvals": packet.pending_approval_count,
+            "recommended_next_action": packet.recommended_next_action,
+            "network_actions_taken": 0,
+            "external_mutations_taken": 0,
+            "non_claims": [
+                "Evidence packet export does not rerun commands.",
+                "Evidence packet export does not approve effects or commit code.",
+                "Evidence packet export does not call model providers.",
+            ],
+        },
+    )
+    _write_jsonl_preserving(packet_dir / "events.jsonl", packet.events)
+    _write_jsonl_preserving(packet_dir / "routing_decisions.jsonl", packet.routing_decisions)
+    _write_jsonl_preserving(packet_dir / "delegations.jsonl", packet.delegations)
+    _write_jsonl_preserving(packet_dir / "steering_reviews.jsonl", packet.steering_reviews)
+    _write_jsonl_preserving(packet_dir / "commands.jsonl", _command_snapshots(packet))
+    _write_jsonl_preserving(packet_dir / "approvals.jsonl", packet.approvals)
+    _write_jsonl_preserving(packet_dir / "effects.jsonl", packet.effects)
+    _write_jsonl_preserving(packet_dir / "memory_proposals.jsonl", packet.memory_entries)
+    _write_jsonl_preserving(packet_dir / "skill_proposals.jsonl", packet.skills)
+    _write_jsonl_preserving(packet_dir / "incidents.jsonl", packet.incidents)
+    _write_jsonl_preserving(packet_dir / "eval_candidates.jsonl", packet.eval_candidates)
+    _write_text_preserving(
+        packet_dir / "summary.md",
+        render_evidence_packet_summary(root, packet),
+    )
+    _write_text_preserving(
+        packet_dir / "final_review.md",
+        render_run_review(root, packet),
+    )
+    return packet_dir
 
 
 def write_replay_summary(root: Path, run_id: str) -> tuple[Path, RunEvidencePacket]:
@@ -131,6 +237,25 @@ def render_run_review(root: Path, packet: RunEvidencePacket) -> str:
         "## Current Plan",
         "",
     ]
+    if packet.plans:
+        latest_plan = packet.plans[-1]
+        lines.append(
+            f"- plan {latest_plan.id}: v{latest_plan.version} "
+            f"status={latest_plan.status} profile={latest_plan.created_by_profile}"
+        )
+        for step in packet.plan_steps:
+            lines.append(
+                f"- step {step.order_index}: {step.status} "
+                f"profile={step.assigned_profile} task={step.task_id or 'none'} "
+                f"title={step.title}"
+            )
+    else:
+        lines.append("- no persistent plan recorded")
+    if packet.sprint_contract is not None:
+        lines.append(
+            f"- contract {packet.sprint_contract.id}: "
+            f"status={packet.sprint_contract.status}"
+        )
     if packet.tasks:
         for task in packet.tasks:
             lines.append(
@@ -165,6 +290,8 @@ def render_run_review(root: Path, packet: RunEvidencePacket) -> str:
     lines.append(f"- incidents: {len(packet.incidents)}")
     lines.append(f"- effects: {len(packet.effects)}")
     lines.append(f"- delegations: {len(packet.delegations)}")
+    lines.append(f"- routing_decisions: {len(packet.routing_decisions)}")
+    lines.append(f"- steering_reviews: {len(packet.steering_reviews)}")
     lines.append(f"- memory_proposals: {len(packet.memory_entries)}")
     lines.append(f"- skill_proposals: {len(packet.skills)}")
 
@@ -202,11 +329,14 @@ def render_evidence_index(root: Path, packet: RunEvidencePacket) -> str:
         f"- run_id: {packet.run.id}",
         f"- project_id: {packet.run.project_id}",
         f"- status: {packet.run.status}",
+        f"- packet_dir: {_relative_to_root(root, str(evidence_packet_dir(root, packet)))}",
         "",
         "## Run Files",
         "",
     ]
     lines.extend(f"- {path}" for path in run_files) if run_files else lines.append("- none")
+    lines.extend(["", "## Evidence Packet Files", ""])
+    lines.extend(f"- {path}" for path in _evidence_packet_file_paths(root, packet))
     lines.extend(["", "## Project Artifacts", ""])
     lines.extend(f"- {path}" for path in project_artifacts) if project_artifacts else lines.append("- none")
     lines.extend(
@@ -215,7 +345,12 @@ def render_evidence_index(root: Path, packet: RunEvidencePacket) -> str:
             "## Database Rows",
             "",
             f"- tasks: {len(packet.tasks)}",
+            f"- plans: {len(packet.plans)}",
+            f"- plan_steps: {len(packet.plan_steps)}",
+            f"- sprint_contracts: {1 if packet.sprint_contract else 0}",
             f"- events: {len(packet.events)}",
+            f"- routing_decisions: {len(packet.routing_decisions)}",
+            f"- steering_reviews: {len(packet.steering_reviews)}",
             f"- learnings: {len(packet.learnings)}",
             f"- incidents: {len(packet.incidents)}",
             f"- approvals: {len(packet.approvals)}",
@@ -298,6 +433,15 @@ def _evidence_paths(root: Path, packet: RunEvidencePacket) -> list[str]:
         ],
     )
     paths.extend(_project_artifact_paths(root, packet))
+    paths.extend(_existing_paths(root, [plan.artifact_path for plan in packet.plans]))
+    paths.extend(
+        _existing_paths(
+            root,
+            [packet.sprint_contract.artifact_path if packet.sprint_contract else None]
+            + [review.report_path for review in packet.steering_reviews],
+        )
+    )
+    paths.extend(_existing_paths(root, _evidence_packet_file_paths(root, packet)))
     paths.extend(
         _existing_paths(
             root,
@@ -323,6 +467,17 @@ def _project_artifact_paths(root: Path, packet: RunEvidencePacket) -> list[str]:
 
 def _proposal_and_effect_lines(root: Path, packet: RunEvidencePacket) -> list[str]:
     lines: list[str] = []
+    for decision in packet.routing_decisions:
+        lines.append(
+            f"- routing {decision.id}: status={decision.status} "
+            f"profile={decision.selected_profile} category={decision.category}"
+        )
+    for review in packet.steering_reviews:
+        lines.append(
+            f"- steering {review.id}: drift={review.drift_score} "
+            f"next={review.recommended_next_action} "
+            f"report={_relative_to_root(root, review.report_path)}"
+        )
     for approval in packet.approvals:
         lines.append(f"- approval {approval.id}: status={approval.status} task={approval.task_id}")
     for incident in packet.incidents:
@@ -345,6 +500,179 @@ def _proposal_and_effect_lines(root: Path, packet: RunEvidencePacket) -> list[st
             f"- skill {skill.id}: status={skill.status} path={_relative_to_root(root, skill.path)}"
         )
     return lines
+
+
+def render_evidence_packet_summary(root: Path, packet: RunEvidencePacket) -> str:
+    return "\n".join(
+        [
+            "# Evidence Packet Summary",
+            "",
+            f"- run_id: {packet.run.id}",
+            f"- goal_id: {packet.run.goal_id}",
+            f"- project_id: {packet.run.project_id}",
+            f"- status: {packet.run.status}",
+            f"- recommended_next_action: {packet.recommended_next_action}",
+            f"- plans: {len(packet.plans)}",
+            f"- plan_steps: {len(packet.plan_steps)}",
+            f"- sprint_contracts: {1 if packet.sprint_contract else 0}",
+            f"- tasks: {len(packet.tasks)}",
+            f"- routing_decisions: {len(packet.routing_decisions)}",
+            f"- delegations: {len(packet.delegations)}",
+            f"- steering_reviews: {len(packet.steering_reviews)}",
+            f"- packet_dir: {_relative_to_root(root, str(evidence_packet_dir(root, packet)))}",
+            "",
+            "## Boundary",
+            "",
+            "- This packet is a local snapshot for operator review.",
+            "- It does not rerun commands, approve effects, commit code, push, deploy, or call model providers.",
+            "- network_actions_taken: 0",
+            "- external_mutations_taken: 0",
+            "",
+        ]
+    )
+
+
+def _evidence_packet_file_paths(root: Path, packet: RunEvidencePacket) -> list[str]:
+    packet_dir = evidence_packet_dir(root, packet)
+    names = [
+        "summary.md",
+        "operator-summary.md",
+        "run.json",
+        "goal.json",
+        "plan.json",
+        "contract.json",
+        "tasks.json",
+        "tasks-snapshot.json",
+        "events.jsonl",
+        "routing_decisions.jsonl",
+        "routing_decisions-snapshot.jsonl",
+        "delegations.jsonl",
+        "steering_reviews.jsonl",
+        "commands.jsonl",
+        "commands-snapshot.jsonl",
+        "verification.json",
+        "verification-summary.json",
+        "approvals.jsonl",
+        "effects.jsonl",
+        "memory_proposals.jsonl",
+        "skill_proposals.jsonl",
+        "incidents.jsonl",
+        "eval_candidates.jsonl",
+        "final_review.md",
+    ]
+    return [
+        _relative_to_root(root, str(packet_dir / name))
+        for name in names
+        if (packet_dir / name).exists()
+    ]
+
+
+def _routing_decisions_for_packet(
+    storage: Storage,
+    run: RunRecord,
+    tasks: list[Task],
+) -> list[RoutingDecision]:
+    task_ids = {task.id for task in tasks}
+    decisions = storage.list_recent_routing_decisions(limit=None)
+    filtered = [
+        decision
+        for decision in decisions
+        if decision.goal_id == run.goal_id or decision.task_id in task_ids
+    ]
+    return list(reversed(filtered))
+
+
+def _command_snapshots(packet: RunEvidencePacket) -> list[dict[str, object]]:
+    commands: list[dict[str, object]] = []
+    for step in packet.plan_steps:
+        if step.verification_command:
+            commands.append(
+                {
+                    "source": "plan_step",
+                    "plan_step_id": step.id,
+                    "task_id": step.task_id,
+                    "command": step.verification_command,
+                    "status": step.status,
+                }
+            )
+    for task in packet.tasks:
+        command = task.verification_plan.get("command")
+        if command:
+            commands.append(
+                {
+                    "source": "task_verification_plan",
+                    "task_id": task.id,
+                    "command": command,
+                    "status": task.status,
+                }
+            )
+        else:
+            commands.append(
+                {
+                    "source": "task_verification_plan",
+                    "task_id": task.id,
+                    "verification_plan": task.verification_plan,
+                    "status": task.status,
+                }
+            )
+    return commands
+
+
+def _write_text_preserving(path: Path, content: str) -> Path:
+    target = _preserving_target(path)
+    target.write_text(content, encoding="utf-8")
+    return target
+
+
+def _write_json_preserving(path: Path, value: object) -> Path:
+    target = _preserving_target(path)
+    _write_json(target, value)
+    return target
+
+
+def _write_jsonl_preserving(path: Path, values: list[object]) -> Path:
+    target = _preserving_target(path)
+    _write_jsonl(target, values)
+    return target
+
+
+def _preserving_target(path: Path) -> Path:
+    if not path.exists():
+        return path
+    sidecars = {
+        "summary.md": "operator-summary.md",
+        "verification.json": "verification-summary.json",
+        "tasks.json": "tasks-snapshot.json",
+        "routing_decisions.jsonl": "routing_decisions-snapshot.jsonl",
+        "commands.jsonl": "commands-snapshot.jsonl",
+    }
+    return path.with_name(sidecars.get(path.name, path.name))
+
+
+def _write_json(path: Path, value: object) -> None:
+    path.write_text(
+        json.dumps(_jsonable(value), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _write_jsonl(path: Path, values: list[object]) -> None:
+    path.write_text(
+        "".join(json.dumps(_jsonable(value), sort_keys=True) + "\n" for value in values),
+        encoding="utf-8",
+    )
+
+
+def _jsonable(value: object) -> object:
+    if hasattr(value, "__dataclass_fields__"):
+        return asdict(value)
+    if isinstance(value, list):
+        return [_jsonable(item) for item in value]
+    if isinstance(value, tuple):
+        return [_jsonable(item) for item in value]
+    if isinstance(value, dict):
+        return {str(key): _jsonable(item) for key, item in value.items()}
+    return value
 
 
 def _existing_paths(root: Path, paths: list[str | None]) -> list[str]:
