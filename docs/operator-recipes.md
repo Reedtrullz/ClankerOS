@@ -152,6 +152,31 @@ bounded-file validation. It does not commit, push, deploy, call providers, or
 intentionally use the network. Any changed file outside `allowed_files` blocks
 the run for operator review.
 
+## Promote A Reviewed Coder Worktree Commit
+
+```bash
+python3 -m agent_os.cli review run_...
+python3 -m agent_os.cli coder-worktree-commit-approval run_... \
+  --requested-by operator \
+  --note "Promote reviewed coder worktree run"
+python3 -m agent_os.cli approve-coder-worktree-commit coder_worktree_commit_approval_... \
+  --decided-by operator \
+  --note "Approved local commit promotion"
+python3 -m agent_os.cli promote-coder-worktree-commit coder_worktree_commit_approval_... \
+  --committed-by operator
+python3 -m agent_os.cli dashboard
+```
+
+Use this only after the completed coder worktree run has been reviewed and the
+diff is acceptable. The approval request is tied to the reviewed run evidence
+and current diff hash. Promotion re-checks HEAD, diff, changed files, and the
+recorded verifier before creating one local commit in the isolated worktree
+branch.
+
+Boundary: request and approval do not commit. Promotion creates no push, PR,
+deploy, provider call, network action, merge into the original checkout, or
+external mutation.
+
 ## Review Latest Capability Result Without Activation
 
 ```bash

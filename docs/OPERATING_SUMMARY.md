@@ -136,8 +136,16 @@ Core layers for the bootstrap:
   `.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/`.
   The run blocks on bounded-file violations, fails on command or verification
   failure, does not auto-revert, and never commits, pushes, deploys, calls
-  providers, or intentionally uses the network. Run review, delegation-result,
-  inbox, and dashboard output surface coder worktree approvals and runs.
+  providers, or intentionally uses the network. A reviewed completed run can
+  then enter `coder-worktree-commit-approval <run_id>`, which refuses
+  unreviewed or stale evidence and writes a dedicated commit-promotion approval
+  request without committing. `approve-coder-worktree-commit` records the
+  operator decision, and `promote-coder-worktree-commit` re-checks source
+  hashes, HEAD, diff, changed files, and verifier output before creating one
+  local git commit in the isolated worktree branch. It never pushes, deploys,
+  calls providers, or mutates external systems. Run review, delegation-result,
+  inbox, and dashboard output surface coder worktree approvals, runs, and
+  commit promotions.
   Adapters run from the system root by default and can opt into
   `--working-directory project_root` for repo scouting. It supports shell
   adapters only. ClankerOS records

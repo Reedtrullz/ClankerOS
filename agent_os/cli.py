@@ -86,13 +86,21 @@ from agent_os.coder_worktree_plan import (
 )
 from agent_os.coder_worktree_execution import (
     CoderWorktreeApprovalError,
+    CoderWorktreeCommitError,
     CoderWorktreeRunError,
+    approve_coder_worktree_commit,
     approve_coder_worktree,
     latest_coder_worktree_approval_for_delegation,
+    latest_coder_worktree_commit_for_delegation,
     latest_coder_worktree_run_for_delegation,
+    promote_coder_worktree_commit,
+    render_coder_worktree_commit_approval_cli_lines,
+    render_coder_worktree_commit_cli_lines,
+    render_coder_worktree_commit_decision_cli_lines,
     render_coder_worktree_approval_cli_lines,
     render_coder_worktree_decision_cli_lines,
     render_coder_worktree_run_cli_lines,
+    request_coder_worktree_commit_approval,
     request_coder_worktree_approval,
     run_approved_coder_worktree,
 )
@@ -572,7 +580,8 @@ from agent_os.worktree_cleanup import cleanup_worktrees
 
 PRIMARY_COMMAND_METAVAR = (
     "{init,dashboard,goal,tasks,delegate,context-pack,run-delegation,"
-    "implementation-handoff,coder-prep,coder-worktree-plan,review,...}"
+    "implementation-handoff,coder-prep,coder-worktree-plan,"
+    "promote-coder-worktree-commit,review,...}"
 )
 
 
@@ -817,6 +826,28 @@ def build_parser() -> argparse.ArgumentParser:
     run_coder_worktree_parser.add_argument("--verify", action="store_true")
     run_coder_worktree_parser.add_argument("--verify-command")
     run_coder_worktree_parser.add_argument("--rerun", action="store_true")
+    coder_worktree_commit_approval = subparsers.add_parser(
+        "coder-worktree-commit-approval",
+        help="Request operator approval to promote a reviewed coder worktree run to a local commit.",
+    )
+    coder_worktree_commit_approval.add_argument("run_id")
+    coder_worktree_commit_approval.add_argument("--requested-by", default="operator")
+    coder_worktree_commit_approval.add_argument("--note", default="")
+    coder_worktree_commit_approval.add_argument("--force-new", action="store_true")
+    approve_coder_worktree_commit_parser = subparsers.add_parser(
+        "approve-coder-worktree-commit",
+        help="Approve a pending coder worktree local commit promotion.",
+    )
+    approve_coder_worktree_commit_parser.add_argument("commit_approval_id")
+    approve_coder_worktree_commit_parser.add_argument("--decided-by", default="operator")
+    approve_coder_worktree_commit_parser.add_argument("--note", required=True)
+    promote_coder_worktree_commit_parser = subparsers.add_parser(
+        "promote-coder-worktree-commit",
+        help="Create the approved local git commit in the isolated coder worktree.",
+    )
+    promote_coder_worktree_commit_parser.add_argument("commit_approval_id")
+    promote_coder_worktree_commit_parser.add_argument("--committed-by", default="operator")
+    promote_coder_worktree_commit_parser.add_argument("--message")
     run_delegation_parser = subparsers.add_parser(
         "run-delegation",
         help="Execute a pending delegation through a configured local adapter.",
@@ -2097,6 +2128,8 @@ def main(argv: list[str] | None = None) -> int:
         subagent_delegations = inbox["subagent_delegations"]
         coder_worktree_approvals = inbox["coder_worktree_approvals"]
         coder_worktree_runs = inbox["coder_worktree_runs"]
+        coder_worktree_commit_approvals = inbox["coder_worktree_commit_approvals"]
+        coder_worktree_commits = inbox["coder_worktree_commits"]
         print(f"inbox_items: {inbox['count']}")
         print(f"steering_reviews: {len(steering_reviews)}")
         for review in steering_reviews:
@@ -2127,6 +2160,19 @@ def main(argv: list[str] | None = None) -> int:
             print(
                 f"coder_worktree_run {run.id}: delegation={run.delegation_id} "
                 f"status={run.status} evidence={run.evidence_path}"
+            )
+        print(f"coder_worktree_commit_approvals: {len(coder_worktree_commit_approvals)}")
+        for approval in coder_worktree_commit_approvals:
+            print(
+                f"coder_worktree_commit_approval {approval.id}: delegation={approval.delegation_id} "
+                f"run={approval.run_id} status={approval.status} request={approval.request_artifact_path}"
+            )
+        print(f"coder_worktree_commits: {len(coder_worktree_commits)}")
+        for commit in coder_worktree_commits:
+            print(
+                f"coder_worktree_commit {commit.id}: delegation={commit.delegation_id} "
+                f"run={commit.run_id} status={commit.status} commit={commit.commit_sha or 'none'} "
+                f"evidence={commit.commit_artifact_path}"
             )
         print("network_actions_taken: 0")
         print("external_mutations_taken: 0")
@@ -2438,6 +2484,13 @@ def main(argv: list[str] | None = None) -> int:
             print(f"coder_worktree_run_status: {coder_run.status}")
             print(f"coder_worktree_run_id: {coder_run.id}")
             print(f"coder_worktree_run_worktree_path: {coder_run.worktree_path}")
+        coder_commit = latest_coder_worktree_commit_for_delegation(root, delegation.id)
+        if coder_commit is not None:
+            print(f"coder_worktree_commit: {coder_commit.commit_artifact_path}")
+            print(f"coder_worktree_commit_status: {coder_commit.status}")
+            print(f"coder_worktree_commit_id: {coder_commit.id}")
+            print(f"coder_worktree_commit_run_id: {coder_commit.run_id}")
+            print(f"coder_worktree_commit_sha: {coder_commit.commit_sha or 'none'}")
         if "exit_code" in metadata:
             print(f"exit_code: {metadata['exit_code']}")
         if metadata.get("incident_id"):
@@ -2552,6 +2605,61 @@ def main(argv: list[str] | None = None) -> int:
         if result.run.status == "completed" or result.already_recorded:
             return 0
         return 1
+
+    if args.command == "coder-worktree-commit-approval":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            result = request_coder_worktree_commit_approval(
+                root,
+                system.storage,
+                args.run_id,
+                requested_by=args.requested_by,
+                note=args.note,
+                force_new=args.force_new,
+            )
+        except CoderWorktreeCommitError as error:
+            print(f"coder_worktree_commit_approval_failed: {error}")
+            return 1
+        for line in render_coder_worktree_commit_approval_cli_lines(root, result):
+            print(line)
+        return 0
+
+    if args.command == "approve-coder-worktree-commit":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            result = approve_coder_worktree_commit(
+                root,
+                system.storage,
+                args.commit_approval_id,
+                decided_by=args.decided_by,
+                note=args.note,
+            )
+        except CoderWorktreeCommitError as error:
+            print(f"approve_coder_worktree_commit_failed: {error}")
+            return 1
+        for line in render_coder_worktree_commit_decision_cli_lines(root, result):
+            print(line)
+        return 0
+
+    if args.command == "promote-coder-worktree-commit":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            result = promote_coder_worktree_commit(
+                root,
+                system.storage,
+                args.commit_approval_id,
+                committed_by=args.committed_by,
+                message=args.message,
+            )
+        except CoderWorktreeCommitError as error:
+            print(f"coder_worktree_commit_failed: {error}")
+            return 1
+        for line in render_coder_worktree_commit_cli_lines(root, result):
+            print(line)
+        return 0
 
     if args.command == "run-delegation":
         system = AgentSystem(root)

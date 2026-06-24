@@ -4,6 +4,7 @@ from pathlib import Path
 
 from agent_os.coder_worktree_execution import (
     list_coder_worktree_approvals,
+    list_coder_worktree_commit_approvals,
     list_coder_worktree_runs,
 )
 from agent_os.storage import ApprovalRequest, Incident, SteeringReview, Storage, Task
@@ -209,6 +210,16 @@ def collect_inbox_items(root: Path) -> dict[str, object]:
         limit=10,
     )
     coder_worktree_runs = list_coder_worktree_runs(root, limit=10)
+    coder_worktree_commit_approvals = list_coder_worktree_commit_approvals(
+        root,
+        status="pending_operator_approval",
+        limit=10,
+    )
+    coder_worktree_commits = list_coder_worktree_commit_approvals(
+        root,
+        status="committed",
+        limit=10,
+    )
     return {
         "steering_reviews": steering_reviews,
         "pending_approvals": pending_approvals,
@@ -216,6 +227,8 @@ def collect_inbox_items(root: Path) -> dict[str, object]:
         "subagent_delegations": subagent_delegations,
         "coder_worktree_approvals": coder_worktree_approvals,
         "coder_worktree_runs": coder_worktree_runs,
+        "coder_worktree_commit_approvals": coder_worktree_commit_approvals,
+        "coder_worktree_commits": coder_worktree_commits,
         "count": (
             len(steering_reviews)
             + len(pending_approvals)
@@ -223,6 +236,8 @@ def collect_inbox_items(root: Path) -> dict[str, object]:
             + len(subagent_delegations)
             + len(coder_worktree_approvals)
             + len(coder_worktree_runs)
+            + len(coder_worktree_commit_approvals)
+            + len(coder_worktree_commits)
         ),
     }
 

@@ -1,5 +1,32 @@
 # Status
 
+## 2026-06-24 Reviewed Coder Worktree Commit Promotion Gate
+
+- Added the post-review commit-promotion path for completed coder worktree
+  runs: `coder-worktree-commit-approval <run_id>`,
+  `approve-coder-worktree-commit <commit_approval_id>`, and
+  `promote-coder-worktree-commit <commit_approval_id> --committed-by <id>`.
+- Commit approval requires a completed bounded coder worktree run that appears
+  in the source run review packet. It captures the reviewed run hash, diff
+  hash, current worktree HEAD, changed files, review path, and worktree branch,
+  then writes `coder_worktree_commit_approval_request.json/.md` without
+  committing.
+- Commit promotion requires an approved commit gate, re-checks source artifact
+  hashes, worktree HEAD, exact diff, changed files, and the recorded verifier,
+  then creates one local git commit in the isolated coder worktree branch.
+  Stale evidence or failed verification blocks promotion and writes
+  `coder_worktree_commit.json` with `status=blocked`.
+- `review`, `dashboard`, `inbox`, and `delegation-result` now surface coder
+  worktree commit approval/promotion status, commit SHA, evidence path,
+  failure class, run id, worktree path, and changed files.
+- Proof boundary: request and approval do not commit. Promotion does not push,
+  deploy, call providers, use the network intentionally, merge into the
+  original checkout, or mutate external systems.
+- Verification:
+  - `python3 -m py_compile agent_os/coder_worktree_execution.py agent_os/cli.py agent_os/run_review.py agent_os/dashboard.py agent_os/steering.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'coder_worktree_commit_promotion'`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'coder_worktree_approval_and_run_capture_bounded_evidence or run_coder_worktree_blocks_hash_mismatch_unsafe_commands_and_file_violations or coder_worktree_commit_promotion'`
+
 ## 2026-06-24 Approved Coder Worktree Execution Gate
 
 - Added the next explicit gate after `coder-worktree-plan`:

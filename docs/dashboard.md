@@ -12,12 +12,15 @@
 
 ### Primary Implementation Handoff Workflow
 
-- operator_path: delegate -> context-pack -> run-delegation -> implementation-handoff -> coder-prep -> coder-worktree-plan -> coder-worktree-approval -> approve-coder-worktree -> run-coder-worktree -> review -> dashboard
+- operator_path: delegate -> context-pack -> run-delegation -> implementation-handoff -> coder-prep -> coder-worktree-plan -> coder-worktree-approval -> approve-coder-worktree -> run-coder-worktree -> review -> coder-worktree-commit-approval -> approve-coder-worktree-commit -> promote-coder-worktree-commit -> dashboard
 - inspect_command: python3 -m agent_os.cli implementation-handoff <delegation_id>
 - prep_command: python3 -m agent_os.cli coder-prep <delegation_id>
 - worktree_plan_command: python3 -m agent_os.cli coder-worktree-plan <delegation_id>
 - approval_command: python3 -m agent_os.cli coder-worktree-approval <delegation_id> --requested-by operator --note "..."
 - run_command: python3 -m agent_os.cli run-coder-worktree <delegation_id> --command "python3 scripts/local_change.py" --verify
+- commit_approval_command: python3 -m agent_os.cli coder-worktree-commit-approval <run_id> --requested-by operator --note "..."
+- commit_decision_command: python3 -m agent_os.cli approve-coder-worktree-commit <commit_approval_id> --decided-by operator --note "..."
+- commit_promotion_command: python3 -m agent_os.cli promote-coder-worktree-commit <commit_approval_id> --committed-by operator
 - non_claims: handoff/coder-prep/worktree-plan/approval readback does not edit source, run commands, create worktrees, commit, push, deploy, call providers, or use the network.
 - current_handoffs:
   - subagent_delegation_3189127f5f0d: status=completed handoff=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/implementation_handoff.json handoff_readable=true schema_version=1 kind=implementation_context_handoff kind_valid=true run=run_ec43eabad0c4 project=clankeros coder_prep_command=python3 -m agent_os.cli coder-prep subagent_delegation_3189127f5f0d context_pack=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/context_pack.json returned_files_in_inventory=true missing_files=none top_ranked_files=agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json,playbooks/first-milestone-closed-loop.md,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py scout_relevant_files=agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json snippets_embedded=false
@@ -28,6 +31,8 @@
 - current_coder_worktree_approvals:
   - none
 - current_coder_worktree_runs:
+  - none
+- current_coder_worktree_commit_promotions:
   - none
 
 ### Goal Plans
@@ -142,6 +147,10 @@
 - none
 
 ### Approved Coder Worktree Runs
+
+- none
+
+### Coder Worktree Commit Promotions
 
 - none
 

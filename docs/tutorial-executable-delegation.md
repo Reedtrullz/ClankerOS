@@ -528,7 +528,57 @@ run still does not commit, push, deploy, call providers, or intentionally use
 the network. The next action is to review the worktree evidence and use a
 separate commit-approval path only if the existing diff is acceptable.
 
-## 12. Propose Memory From The Result
+## 12. Promote A Reviewed Coder Worktree Commit
+
+First write or refresh the review packet for the source delegation run:
+
+```bash
+python3 -m agent_os.cli review <source_run_id>
+```
+
+Then request commit approval for the completed coder worktree run:
+
+```bash
+python3 -m agent_os.cli coder-worktree-commit-approval <coder_worktree_run_id> \
+  --requested-by operator \
+  --note "Promote reviewed coder worktree run"
+```
+
+Expected output includes:
+
+```text
+coder_worktree_commit_approval: coder_worktree_commit_approval_...
+commit_approval_id: coder_worktree_commit_approval_...
+run_id: run_...
+status: pending_operator_approval
+commit_created: false
+push_created: false
+deploy_created: false
+```
+
+Approve the local commit-promotion gate:
+
+```bash
+python3 -m agent_os.cli approve-coder-worktree-commit <commit_approval_id> \
+  --decided-by operator \
+  --note "Approved local commit promotion"
+```
+
+Promote only after approval:
+
+```bash
+python3 -m agent_os.cli promote-coder-worktree-commit <commit_approval_id> \
+  --committed-by operator
+```
+
+Promotion re-checks the reviewed run hash, diff hash, worktree HEAD, exact
+diff, changed files, and verifier output before creating one local git commit
+inside the isolated coder worktree branch. It is idempotent after the commit.
+Stale evidence or failed verification blocks promotion and writes blocked
+evidence without committing. It does not push, deploy, call providers, or
+mutate external systems.
+
+## 13. Propose Memory From The Result
 
 Run the delegation with memory proposal enabled:
 

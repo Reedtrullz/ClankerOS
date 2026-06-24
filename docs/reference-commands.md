@@ -250,6 +250,51 @@ Changed files must be a subset of `allowed_files`; outside files mark the run
 failures mark the run `failed`. Completed approval/plan pairs are not rerun
 unless `--rerun` is provided. The command does not commit, push, deploy, call
 providers, or intentionally use the network.
+
+`coder-worktree-commit-approval <run_id>` is the next gate after a successful
+coder worktree run has been included in `review <source_run_id>`. It refuses
+unreviewed, failed, blocked, outside-file, no-change, missing-worktree, or
+stale-diff runs. For eligible reviewed runs it records the current worktree
+HEAD, source `run.json` hash, `diff.patch` hash, changed-file list, and review
+path, then writes:
+
+```text
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/coder_worktree_commit_approval_request.json
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/coder_worktree_commit_approval_request.md
+```
+
+The request is idempotent for the same run evidence and diff hash unless
+`--force-new` is used. It does not create a commit, push, deploy, call
+providers, or use the network.
+
+`approve-coder-worktree-commit <commit_approval_id>` marks that dedicated
+commit approval row approved and writes:
+
+```text
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/coder_worktree_commit_approval_decision.json
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/coder_worktree_commit_approval_decision.md
+```
+
+`promote-coder-worktree-commit <commit_approval_id>` is the only command in
+the coder worktree path that creates a local git commit. It requires an
+approved commit-promotion row, re-checks the source artifact hashes, worktree
+HEAD, exact diff, and changed-file list, reruns the recorded verifier, stages
+the reviewed changed files, and creates one commit in the isolated coder
+worktree branch. It writes:
+
+```text
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/coder_worktree_commit.json
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/commit_verification_command.txt
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/commit_verification_stdout.txt
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/commit_verification_stderr.txt
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/commit_stdout.txt
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/commit_stderr.txt
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/post_commit_status.txt
+```
+
+Stale evidence or failed verification blocks promotion and writes blocked
+commit evidence without creating a commit. Promotion is idempotent after a
+commit and never pushes, deploys, calls providers, or mutates external systems.
 `record-delegation-result` remains the manual ingestion path for
 operator-supplied output.
 

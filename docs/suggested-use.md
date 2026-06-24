@@ -135,6 +135,12 @@ bounded future worktree/run plan without creating the worktree. It writes
 `operator_approval_required`, keeps `dispatch_ready=false`, and reports zero
 task rows, runs, routing decisions, worktrees, approvals, source edits,
 command reruns, network actions, provider calls, and external mutations.
+Use `coder-worktree-commit-approval` only after a completed coder worktree run
+has appeared in a `review` packet and its diff is acceptable. The commit
+approval request still does not commit. `promote-coder-worktree-commit` is the
+separate final local step: it re-checks reviewed evidence and verifier output
+before creating one commit in the isolated worktree branch, without pushing,
+deploying, calling providers, or mutating external systems.
 
 ## Good Starting Prompts
 

@@ -18,6 +18,9 @@ from agent_os.storage import Storage, utc_now
 APPROVAL_REQUEST_KIND = "coder_worktree_execution_approval_request"
 APPROVAL_DECISION_KIND = "coder_worktree_execution_approval_decision"
 RUN_KIND = "approved_coder_worktree_run"
+COMMIT_APPROVAL_REQUEST_KIND = "coder_worktree_commit_approval_request"
+COMMIT_APPROVAL_DECISION_KIND = "coder_worktree_commit_approval_decision"
+COMMIT_KIND = "coder_worktree_commit"
 
 
 class CoderWorktreeApprovalError(ValueError):
@@ -25,6 +28,10 @@ class CoderWorktreeApprovalError(ValueError):
 
 
 class CoderWorktreeRunError(ValueError):
+    pass
+
+
+class CoderWorktreeCommitError(ValueError):
     pass
 
 
@@ -73,6 +80,37 @@ class CoderWorktreeRunRecord:
 
 
 @dataclass(frozen=True)
+class CoderWorktreeCommitApprovalRecord:
+    id: str
+    run_id: str
+    delegation_id: str
+    source_run_id: str
+    project_id: str
+    status: str
+    failure_class: str | None
+    source_run_evidence_path: str
+    source_coder_worktree_run_sha256: str
+    source_diff_sha256: str
+    review_path: str
+    worktree_path: str
+    branch_name: str
+    pre_commit_head: str
+    changed_files: list[str]
+    request_artifact_path: str
+    decision_artifact_path: str | None
+    commit_artifact_path: str
+    requested_by: str
+    request_note: str
+    decided_by: str | None
+    decision_note: str | None
+    committed_by: str | None
+    commit_sha: str | None
+    requested_at: str
+    decided_at: str | None
+    committed_at: str | None
+
+
+@dataclass(frozen=True)
 class CoderWorktreeApprovalResult:
     approval: CoderWorktreeApprovalRecord
     already_recorded: bool = False
@@ -88,6 +126,26 @@ class CoderWorktreeDecisionResult:
 class CoderWorktreeRunResult:
     run: CoderWorktreeRunRecord
     already_recorded: bool = False
+
+
+@dataclass(frozen=True)
+class CoderWorktreeCommitApprovalResult:
+    approval: CoderWorktreeCommitApprovalRecord
+    already_recorded: bool = False
+
+
+@dataclass(frozen=True)
+class CoderWorktreeCommitDecisionResult:
+    approval: CoderWorktreeCommitApprovalRecord
+    already_approved: bool = False
+
+
+@dataclass(frozen=True)
+class CoderWorktreeCommitResult:
+    approval: CoderWorktreeCommitApprovalRecord
+    status: str
+    commit_sha: str | None
+    evidence_path: str
 
 
 def request_coder_worktree_approval(
@@ -587,6 +645,420 @@ def run_approved_coder_worktree(
     return CoderWorktreeRunResult(run=record)
 
 
+def request_coder_worktree_commit_approval(
+    root: Path,
+    storage: Storage,
+    run_id: str,
+    *,
+    requested_by: str,
+    note: str,
+    force_new: bool = False,
+) -> CoderWorktreeCommitApprovalResult:
+    root = root.resolve()
+    _ensure_tables(storage)
+    run = get_coder_worktree_run(storage, run_id)
+    if run is None:
+        raise CoderWorktreeCommitError(f"coder worktree run not found: {run_id}")
+    _validate_run_commit_eligible(run)
+    evidence = _load_run_evidence(root, run)
+    review_path = _review_path_for_run(root, run)
+    if not _review_mentions_run(review_path, run.id):
+        raise CoderWorktreeCommitError(
+            f"coder worktree run has not been reviewed: {review_path.relative_to(root)}"
+        )
+    worktree_path = Path(run.worktree_path)
+    if not worktree_path.exists():
+        raise CoderWorktreeCommitError(f"worktree does not exist: {worktree_path}")
+    snapshot = _current_worktree_snapshot(worktree_path)
+    _raise_if_snapshot_stale(
+        snapshot=snapshot,
+        expected_diff=evidence["diff_text"],
+        expected_changed_files=run.changed_files,
+        expected_head=None,
+        detail_path=evidence["diff_path"],
+    )
+
+    source_run_sha = evidence["run_sha256"]
+    source_diff_sha = evidence["diff_sha256"]
+    existing = (
+        None
+        if force_new
+        else _latest_commit_approval_for_run(
+            storage,
+            run.id,
+            source_run_sha,
+            source_diff_sha,
+        )
+    )
+    if existing is not None:
+        return CoderWorktreeCommitApprovalResult(
+            approval=existing,
+            already_recorded=True,
+        )
+
+    approval_id = new_id("coder_worktree_commit_approval")
+    now = utc_now()
+    request_artifact = evidence["evidence_dir"] / "coder_worktree_commit_approval_request.json"
+    decision_artifact = evidence["evidence_dir"] / "coder_worktree_commit_approval_decision.json"
+    commit_artifact = evidence["evidence_dir"] / "coder_worktree_commit.json"
+    payload = {
+        "kind": COMMIT_APPROVAL_REQUEST_KIND,
+        "schema_version": 1,
+        "commit_approval_id": approval_id,
+        "run_id": run.id,
+        "delegation_id": run.delegation_id,
+        "source_delegation_run_id": run.source_run_id,
+        "project_id": run.project_id,
+        "source_coder_worktree_run": run.evidence_path,
+        "source_coder_worktree_run_sha256": source_run_sha,
+        "source_diff_sha256": source_diff_sha,
+        "review_path": str(review_path.relative_to(root)),
+        "worktree_path": run.worktree_path,
+        "branch_name": run.branch_name,
+        "pre_commit_head": snapshot["head"],
+        "changed_files": run.changed_files,
+        "verification_command": run.verification_command,
+        "status": "pending_operator_approval",
+        "approval_required_before": [
+            "create_local_commit",
+            "push",
+            "deploy",
+        ],
+        "requested_by": requested_by,
+        "note": note,
+        "requested_at": now,
+        "commit_created": False,
+        "push_created": False,
+        "deploy_created": False,
+        "provider_calls_taken_by_clankeros": 0,
+        "network_actions_taken": 0,
+        "external_mutations_taken": 0,
+        "non_claims": [
+            "Coder worktree commit approval does not create a git commit.",
+            "Coder worktree commit approval does not push, deploy, call providers, or use the network.",
+            "Commit promotion must re-check evidence and rerun verification after operator approval.",
+        ],
+    }
+    _write_json(request_artifact, payload)
+    _write_text(
+        request_artifact.with_suffix(".md"),
+        _render_commit_approval_request_markdown(payload),
+    )
+
+    approval = _insert_commit_approval(
+        storage,
+        approval_id=approval_id,
+        run_id=run.id,
+        delegation_id=run.delegation_id,
+        source_run_id=run.source_run_id,
+        project_id=run.project_id,
+        source_run_evidence_path=run.evidence_path,
+        source_coder_worktree_run_sha256=source_run_sha,
+        source_diff_sha256=source_diff_sha,
+        review_path=str(review_path.relative_to(root)),
+        worktree_path=run.worktree_path,
+        branch_name=run.branch_name,
+        pre_commit_head=snapshot["head"],
+        changed_files=run.changed_files,
+        request_artifact_path=str(request_artifact.relative_to(root)),
+        decision_artifact_path=str(decision_artifact.relative_to(root)),
+        commit_artifact_path=str(commit_artifact.relative_to(root)),
+        requested_by=requested_by,
+        request_note=note,
+        requested_at=now,
+    )
+    return CoderWorktreeCommitApprovalResult(approval=approval)
+
+
+def approve_coder_worktree_commit(
+    root: Path,
+    storage: Storage,
+    approval_id: str,
+    *,
+    decided_by: str,
+    note: str,
+) -> CoderWorktreeCommitDecisionResult:
+    root = root.resolve()
+    _ensure_tables(storage)
+    approval = get_coder_worktree_commit_approval(storage, approval_id)
+    if approval is None:
+        raise CoderWorktreeCommitError(f"commit approval not found: {approval_id}")
+    if approval.status in {"approved", "committed"}:
+        return CoderWorktreeCommitDecisionResult(
+            approval=approval,
+            already_approved=True,
+        )
+    if approval.status != "pending_operator_approval":
+        raise CoderWorktreeCommitError(f"approval is not pending: {approval.status}")
+
+    decided_at = utc_now()
+    decision_path = root / (approval.decision_artifact_path or "")
+    payload = {
+        "kind": COMMIT_APPROVAL_DECISION_KIND,
+        "schema_version": 1,
+        "commit_approval_id": approval.id,
+        "run_id": approval.run_id,
+        "delegation_id": approval.delegation_id,
+        "project_id": approval.project_id,
+        "source_coder_worktree_run": approval.source_run_evidence_path,
+        "source_coder_worktree_run_sha256": approval.source_coder_worktree_run_sha256,
+        "source_diff_sha256": approval.source_diff_sha256,
+        "status": "approved",
+        "decided_by": decided_by,
+        "note": note,
+        "decided_at": decided_at,
+        "commit_created": False,
+        "push_created": False,
+        "deploy_created": False,
+        "provider_calls_taken_by_clankeros": 0,
+        "network_actions_taken": 0,
+        "external_mutations_taken": 0,
+        "non_claims": [
+            "Approving a coder worktree commit request does not create a git commit.",
+            "Approving a coder worktree commit request does not push, deploy, call providers, or use the network.",
+            "Commit promotion still must re-check evidence and rerun verification.",
+        ],
+    }
+    _write_json(decision_path, payload)
+    _write_text(
+        decision_path.with_suffix(".md"),
+        _render_commit_approval_decision_markdown(payload),
+    )
+    updated = _mark_commit_approval_approved(
+        storage,
+        approval.id,
+        decided_by=decided_by,
+        decision_note=note,
+        decided_at=decided_at,
+    )
+    return CoderWorktreeCommitDecisionResult(approval=updated)
+
+
+def promote_coder_worktree_commit(
+    root: Path,
+    storage: Storage,
+    approval_id: str,
+    *,
+    committed_by: str,
+    message: str | None = None,
+) -> CoderWorktreeCommitResult:
+    root = root.resolve()
+    _ensure_tables(storage)
+    approval = get_coder_worktree_commit_approval(storage, approval_id)
+    if approval is None:
+        raise CoderWorktreeCommitError(f"commit approval not found: {approval_id}")
+    if approval.status == "committed":
+        return CoderWorktreeCommitResult(
+            approval=approval,
+            status="already_committed",
+            commit_sha=approval.commit_sha,
+            evidence_path=approval.commit_artifact_path,
+        )
+    if approval.status != "approved":
+        raise CoderWorktreeCommitError("approval is not approved")
+
+    run = get_coder_worktree_run(storage, approval.run_id)
+    if run is None:
+        raise CoderWorktreeCommitError(f"coder worktree run not found: {approval.run_id}")
+    _validate_run_commit_eligible(run)
+    evidence = _load_run_evidence(root, run)
+    try:
+        _raise_if_source_hash_changed(approval, evidence)
+    except CoderWorktreeCommitError as error:
+        _block_commit_approval(
+            root,
+            storage,
+            approval,
+            failure_class="stale_evidence",
+            detail=str(error),
+            verification_exit_code=None,
+        )
+        raise
+    worktree_path = Path(approval.worktree_path)
+    if not worktree_path.exists():
+        _block_commit_approval(
+            root,
+            storage,
+            approval,
+            failure_class="worktree_missing",
+            detail=f"worktree does not exist: {worktree_path}",
+            verification_exit_code=None,
+        )
+        raise CoderWorktreeCommitError(f"worktree does not exist: {worktree_path}")
+
+    try:
+        snapshot = _current_worktree_snapshot(worktree_path)
+        _raise_if_snapshot_stale(
+            snapshot=snapshot,
+            expected_diff=evidence["diff_text"],
+            expected_changed_files=approval.changed_files,
+            expected_head=approval.pre_commit_head,
+            detail_path=evidence["diff_path"],
+        )
+    except CoderWorktreeCommitError as error:
+        _block_commit_approval(
+            root,
+            storage,
+            approval,
+            failure_class="stale_evidence",
+            detail=str(error),
+            verification_exit_code=None,
+        )
+        raise
+
+    verification_command = run.verification_command
+    if not verification_command:
+        _block_commit_approval(
+            root,
+            storage,
+            approval,
+            failure_class="missing_verification",
+            detail="coder worktree run has no verification command",
+            verification_exit_code=None,
+        )
+        raise CoderWorktreeCommitError("coder worktree run has no verification command")
+    try:
+        _validate_safe_command(verification_command)
+    except CoderWorktreeRunError as error:
+        _block_commit_approval(
+            root,
+            storage,
+            approval,
+            failure_class="unsafe_verification_command",
+            detail=str(error),
+            verification_exit_code=None,
+        )
+        raise CoderWorktreeCommitError(str(error)) from error
+
+    evidence_dir = root / approval.source_run_evidence_path
+    command_env = {"PYTHONDONTWRITEBYTECODE": "1"}
+    verification_result = subprocess.run(
+        verification_command,
+        cwd=worktree_path,
+        capture_output=True,
+        text=True,
+        shell=True,
+        env={**os.environ, **command_env},
+    )
+    _write_text(evidence_dir / "commit_verification_command.txt", verification_command + "\n")
+    _write_text(evidence_dir / "commit_verification_stdout.txt", verification_result.stdout)
+    _write_text(evidence_dir / "commit_verification_stderr.txt", verification_result.stderr)
+    if verification_result.returncode != 0:
+        _block_commit_approval(
+            root,
+            storage,
+            approval,
+            failure_class="verification_failed",
+            detail=f"verification command exited {verification_result.returncode}",
+            verification_exit_code=verification_result.returncode,
+        )
+        raise CoderWorktreeCommitError(
+            f"verification failed before commit: {verification_result.returncode}"
+        )
+
+    commit_result = subprocess.run(
+        ["git", "add", "--", *approval.changed_files],
+        cwd=worktree_path,
+        capture_output=True,
+        text=True,
+    )
+    if commit_result.returncode != 0:
+        _block_commit_approval(
+            root,
+            storage,
+            approval,
+            failure_class="git_stage_failed",
+            detail=commit_result.stderr.strip() or commit_result.stdout.strip(),
+            verification_exit_code=verification_result.returncode,
+        )
+        raise CoderWorktreeCommitError("git stage failed")
+    commit_message = message or f"Promote coder worktree run {approval.run_id}"
+    commit_result = subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.name=ClankerOS",
+            "-c",
+            "user.email=clankeros@example.invalid",
+            "commit",
+            "-m",
+            commit_message,
+            "-m",
+            f"Coder-worktree-run: {approval.run_id}",
+            "-m",
+            f"Commit-approval: {approval.id}",
+            "-m",
+            f"Committed-by: {committed_by}",
+        ],
+        cwd=worktree_path,
+        capture_output=True,
+        text=True,
+    )
+    _write_text(evidence_dir / "commit_stdout.txt", commit_result.stdout)
+    _write_text(evidence_dir / "commit_stderr.txt", commit_result.stderr)
+    if commit_result.returncode != 0:
+        _block_commit_approval(
+            root,
+            storage,
+            approval,
+            failure_class="git_commit_failed",
+            detail=commit_result.stderr.strip() or commit_result.stdout.strip(),
+            verification_exit_code=verification_result.returncode,
+        )
+        raise CoderWorktreeCommitError("git commit failed")
+
+    commit_sha = _git_output(["git", "rev-parse", "HEAD"], cwd=worktree_path).strip()
+    committed_at = utc_now()
+    post_status = _git_output(["git", "status", "--short"], cwd=worktree_path)
+    _write_text(evidence_dir / "post_commit_status.txt", post_status)
+    payload = {
+        "kind": COMMIT_KIND,
+        "schema_version": 1,
+        "status": "committed",
+        "commit_approval_id": approval.id,
+        "run_id": approval.run_id,
+        "delegation_id": approval.delegation_id,
+        "source_delegation_run_id": approval.source_run_id,
+        "project_id": approval.project_id,
+        "commit_sha": commit_sha,
+        "base_commit": approval.pre_commit_head,
+        "branch_name": approval.branch_name,
+        "worktree_path": approval.worktree_path,
+        "changed_files": approval.changed_files,
+        "source_coder_worktree_run_sha256": approval.source_coder_worktree_run_sha256,
+        "source_diff_sha256": approval.source_diff_sha256,
+        "verification_command": verification_command,
+        "verification_exit_code": verification_result.returncode,
+        "committed_by": committed_by,
+        "committed_at": committed_at,
+        "commit_created": True,
+        "push_created": False,
+        "deploy_created": False,
+        "provider_calls_taken_by_clankeros": 0,
+        "network_actions_taken": 0,
+        "external_mutations_taken": 0,
+        "non_claims": [
+            "Commit promotion creates one local git commit in the isolated coder worktree branch.",
+            "Commit promotion does not push, deploy, call providers, or use the network.",
+            "Promotion does not merge the worktree branch into the original project checkout.",
+        ],
+    }
+    _write_json(root / approval.commit_artifact_path, payload)
+    updated = _mark_commit_approval_committed(
+        storage,
+        approval.id,
+        committed_by=committed_by,
+        commit_sha=commit_sha,
+        committed_at=committed_at,
+    )
+    return CoderWorktreeCommitResult(
+        approval=updated,
+        status="committed",
+        commit_sha=commit_sha,
+        evidence_path=approval.commit_artifact_path,
+    )
+
+
 def render_coder_worktree_approval_cli_lines(
     root: Path,
     result: CoderWorktreeApprovalResult,
@@ -678,6 +1150,88 @@ def render_coder_worktree_run_cli_lines(
     return lines
 
 
+def render_coder_worktree_commit_approval_cli_lines(
+    root: Path,
+    result: CoderWorktreeCommitApprovalResult,
+) -> list[str]:
+    root = root.resolve()
+    approval = result.approval
+    prefix = "already_recorded " if result.already_recorded else ""
+    return [
+        f"coder_worktree_commit_approval: {prefix}{approval.id}",
+        f"commit_approval_id: {approval.id}",
+        f"run_id: {approval.run_id}",
+        f"delegation_id: {approval.delegation_id}",
+        f"source_delegation_run_id: {approval.source_run_id}",
+        f"project_id: {approval.project_id}",
+        f"status: {approval.status}",
+        f"failure_class: {approval.failure_class or 'none'}",
+        f"source_coder_worktree_run_sha256: {approval.source_coder_worktree_run_sha256}",
+        f"source_diff_sha256: {approval.source_diff_sha256}",
+        f"worktree_path: {approval.worktree_path}",
+        f"branch_name: {approval.branch_name}",
+        f"changed_files: {','.join(approval.changed_files) or 'none'}",
+        f"artifact: {(root / approval.request_artifact_path).relative_to(root)}",
+        "commit_created: false",
+        "push_created: false",
+        "deploy_created: false",
+        "provider_calls_taken_by_clankeros: 0",
+        "network_actions_taken: 0",
+        "external_mutations_taken: 0",
+    ]
+
+
+def render_coder_worktree_commit_decision_cli_lines(
+    root: Path,
+    result: CoderWorktreeCommitDecisionResult,
+) -> list[str]:
+    root = root.resolve()
+    approval = result.approval
+    prefix = "already_approved " if result.already_approved else ""
+    return [
+        f"approved_coder_worktree_commit: {prefix}{approval.id}",
+        f"commit_approval_id: {approval.id}",
+        f"run_id: {approval.run_id}",
+        f"delegation_id: {approval.delegation_id}",
+        f"project_id: {approval.project_id}",
+        f"status: {approval.status}",
+        f"artifact: {(root / (approval.decision_artifact_path or '')).relative_to(root)}",
+        "commit_created: false",
+        "push_created: false",
+        "deploy_created: false",
+        "provider_calls_taken_by_clankeros: 0",
+        "network_actions_taken: 0",
+        "external_mutations_taken: 0",
+    ]
+
+
+def render_coder_worktree_commit_cli_lines(
+    root: Path,
+    result: CoderWorktreeCommitResult,
+) -> list[str]:
+    approval = result.approval
+    return [
+        f"coder_worktree_commit: {result.status}",
+        f"commit_approval_id: {approval.id}",
+        f"run_id: {approval.run_id}",
+        f"delegation_id: {approval.delegation_id}",
+        f"source_delegation_run_id: {approval.source_run_id}",
+        f"project_id: {approval.project_id}",
+        f"status: {approval.status}",
+        f"commit: {result.commit_sha or 'none'}",
+        f"worktree_path: {approval.worktree_path}",
+        f"branch_name: {approval.branch_name}",
+        f"changed_files: {','.join(approval.changed_files) or 'none'}",
+        f"evidence: {result.evidence_path}",
+        "commit_created: true",
+        "push_created: false",
+        "deploy_created: false",
+        "provider_calls_taken_by_clankeros: 0",
+        "network_actions_taken: 0",
+        "external_mutations_taken: 0",
+    ]
+
+
 def render_coder_worktree_approval_dashboard_lines(root: Path) -> list[str]:
     return [
         (
@@ -704,6 +1258,22 @@ def render_coder_worktree_run_dashboard_lines(root: Path) -> list[str]:
             f"{run.verification_exit_code if run.verification_exit_code is not None else 'none'} "
             f"diff={run.evidence_path}/diff.patch "
             "next_action=review_coder_worktree_run"
+        )
+    return lines
+
+
+def render_coder_worktree_commit_dashboard_lines(root: Path) -> list[str]:
+    lines: list[str] = []
+    for approval in list_coder_worktree_commit_approvals(root, limit=10):
+        lines.append(
+            f"- {approval.id}: delegation={approval.delegation_id} project={approval.project_id} "
+            f"run={approval.run_id} status={approval.status} "
+            f"failure_class={approval.failure_class or 'none'} "
+            f"commit={approval.commit_sha or 'none'} "
+            f"worktree={approval.worktree_path} branch={approval.branch_name} "
+            f"changed_files={','.join(approval.changed_files) or 'none'} "
+            f"request={approval.request_artifact_path} "
+            f"evidence={approval.commit_artifact_path}"
         )
     return lines
 
@@ -749,6 +1319,34 @@ def render_coder_worktree_run_review_lines(root: Path, delegation_id: str) -> li
                 f"  - diff: {run.evidence_path}/diff.patch",
                 "  - next_recommended_action: review_coder_worktree_run",
                 "  - non_claims: no commit, push, deploy, provider call, or external mutation",
+            ]
+        )
+    return lines
+
+
+def render_coder_worktree_commit_review_lines(root: Path, delegation_id: str) -> list[str]:
+    approvals = list_coder_worktree_commit_approvals(
+        root,
+        delegation_id=delegation_id,
+        limit=10,
+    )
+    lines: list[str] = []
+    for approval in approvals:
+        lines.extend(
+            [
+                f"- delegation={delegation_id} coder_worktree_commit={approval.commit_artifact_path}",
+                f"  - commit_approval_id: {approval.id}",
+                f"  - run_id: {approval.run_id}",
+                f"  - status: {approval.status}",
+                f"  - failure_class: {approval.failure_class or 'none'}",
+                f"  - commit_sha: {approval.commit_sha or 'none'}",
+                f"  - worktree_path: {approval.worktree_path}",
+                f"  - branch_name: {approval.branch_name}",
+                f"  - changed_files: {','.join(approval.changed_files) or 'none'}",
+                f"  - request: {approval.request_artifact_path}",
+                f"  - decision: {approval.decision_artifact_path or 'none'}",
+                f"  - evidence: {approval.commit_artifact_path}",
+                "  - non_claims: local worktree commit only; no push, deploy, provider call, or external mutation",
             ]
         )
     return lines
@@ -808,6 +1406,38 @@ def list_coder_worktree_runs(
     return [_row_to_run(row) for row in rows]
 
 
+def list_coder_worktree_commit_approvals(
+    root: Path,
+    *,
+    delegation_id: str | None = None,
+    status: str | None = None,
+    limit: int | None = 10,
+) -> list[CoderWorktreeCommitApprovalRecord]:
+    storage = Storage(root.resolve() / ".agent" / "state.db")
+    if not storage.db_path.exists():
+        return []
+    _ensure_tables(storage)
+    clauses: list[str] = []
+    params: list[object] = []
+    if delegation_id is not None:
+        clauses.append("delegation_id = ?")
+        params.append(delegation_id)
+    if status is not None:
+        clauses.append("status = ?")
+        params.append(status)
+    where = f"where {' and '.join(clauses)}" if clauses else ""
+    query = (
+        f"select * from coder_worktree_commit_approvals {where} "
+        "order by requested_at desc, id desc"
+    )
+    if limit is not None:
+        query += " limit ?"
+        params.append(limit)
+    with _connect(storage) as connection:
+        rows = connection.execute(query, tuple(params)).fetchall()
+    return [_row_to_commit_approval(row) for row in rows]
+
+
 def latest_coder_worktree_approval_for_delegation(
     root: Path,
     delegation_id: str,
@@ -828,6 +1458,18 @@ def latest_coder_worktree_run_for_delegation(
     return runs[0] if runs else None
 
 
+def latest_coder_worktree_commit_for_delegation(
+    root: Path,
+    delegation_id: str,
+) -> CoderWorktreeCommitApprovalRecord | None:
+    approvals = list_coder_worktree_commit_approvals(
+        root,
+        delegation_id=delegation_id,
+        limit=1,
+    )
+    return approvals[0] if approvals else None
+
+
 def get_coder_worktree_approval(
     storage: Storage,
     approval_id: str,
@@ -839,6 +1481,32 @@ def get_coder_worktree_approval(
             (approval_id,),
         ).fetchone()
     return _row_to_approval(row) if row is not None else None
+
+
+def get_coder_worktree_run(
+    storage: Storage,
+    run_id: str,
+) -> CoderWorktreeRunRecord | None:
+    _ensure_tables(storage)
+    with _connect(storage) as connection:
+        row = connection.execute(
+            "select * from coder_worktree_runs where id = ?",
+            (run_id,),
+        ).fetchone()
+    return _row_to_run(row) if row is not None else None
+
+
+def get_coder_worktree_commit_approval(
+    storage: Storage,
+    approval_id: str,
+) -> CoderWorktreeCommitApprovalRecord | None:
+    _ensure_tables(storage)
+    with _connect(storage) as connection:
+        row = connection.execute(
+            "select * from coder_worktree_commit_approvals where id = ?",
+            (approval_id,),
+        ).fetchone()
+    return _row_to_commit_approval(row) if row is not None else None
 
 
 def _load_latest_plan(
@@ -1003,6 +1671,36 @@ def _ensure_tables(storage: Storage) -> None:
                 completed_at text not null
             );
 
+            create table if not exists coder_worktree_commit_approvals (
+                id text primary key,
+                run_id text not null,
+                delegation_id text not null,
+                source_run_id text not null,
+                project_id text not null,
+                status text not null,
+                failure_class text,
+                source_run_evidence_path text not null,
+                source_coder_worktree_run_sha256 text not null,
+                source_diff_sha256 text not null,
+                review_path text not null,
+                worktree_path text not null,
+                branch_name text not null,
+                pre_commit_head text not null,
+                changed_files text not null,
+                request_artifact_path text not null,
+                decision_artifact_path text,
+                commit_artifact_path text not null,
+                requested_by text not null,
+                request_note text not null,
+                decided_by text,
+                decision_note text,
+                committed_by text,
+                commit_sha text,
+                requested_at text not null,
+                decided_at text,
+                committed_at text
+            );
+
             create index if not exists idx_coder_worktree_approvals_delegation
                 on coder_worktree_approvals (delegation_id, requested_at);
             create index if not exists idx_coder_worktree_approvals_plan
@@ -1011,6 +1709,15 @@ def _ensure_tables(storage: Storage) -> None:
                 on coder_worktree_runs (delegation_id, completed_at);
             create index if not exists idx_coder_worktree_runs_approval_plan
                 on coder_worktree_runs (approval_id, source_plan_sha256, status);
+            create index if not exists idx_coder_worktree_commit_approvals_delegation
+                on coder_worktree_commit_approvals (delegation_id, requested_at);
+            create index if not exists idx_coder_worktree_commit_approvals_run
+                on coder_worktree_commit_approvals (
+                    run_id,
+                    source_coder_worktree_run_sha256,
+                    source_diff_sha256,
+                    status
+                );
             """
         )
 
@@ -1158,6 +1865,151 @@ def _insert_run(
     return _row_to_run(row)
 
 
+def _insert_commit_approval(
+    storage: Storage,
+    *,
+    approval_id: str,
+    run_id: str,
+    delegation_id: str,
+    source_run_id: str,
+    project_id: str,
+    source_run_evidence_path: str,
+    source_coder_worktree_run_sha256: str,
+    source_diff_sha256: str,
+    review_path: str,
+    worktree_path: str,
+    branch_name: str,
+    pre_commit_head: str,
+    changed_files: list[str],
+    request_artifact_path: str,
+    decision_artifact_path: str,
+    commit_artifact_path: str,
+    requested_by: str,
+    request_note: str,
+    requested_at: str,
+) -> CoderWorktreeCommitApprovalRecord:
+    with _connect(storage) as connection:
+        connection.execute(
+            """
+            insert into coder_worktree_commit_approvals (
+                id, run_id, delegation_id, source_run_id, project_id, status,
+                source_run_evidence_path, source_coder_worktree_run_sha256,
+                source_diff_sha256, review_path, worktree_path, branch_name,
+                pre_commit_head, changed_files, request_artifact_path,
+                decision_artifact_path, commit_artifact_path, requested_by,
+                request_note, requested_at
+            )
+            values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                approval_id,
+                run_id,
+                delegation_id,
+                source_run_id,
+                project_id,
+                "pending_operator_approval",
+                source_run_evidence_path,
+                source_coder_worktree_run_sha256,
+                source_diff_sha256,
+                review_path,
+                worktree_path,
+                branch_name,
+                pre_commit_head,
+                json.dumps(changed_files, sort_keys=True),
+                request_artifact_path,
+                decision_artifact_path,
+                commit_artifact_path,
+                requested_by,
+                request_note,
+                requested_at,
+            ),
+        )
+        row = connection.execute(
+            "select * from coder_worktree_commit_approvals where id = ?",
+            (approval_id,),
+        ).fetchone()
+    return _row_to_commit_approval(row)
+
+
+def _mark_commit_approval_approved(
+    storage: Storage,
+    approval_id: str,
+    *,
+    decided_by: str,
+    decision_note: str,
+    decided_at: str,
+) -> CoderWorktreeCommitApprovalRecord:
+    with _connect(storage) as connection:
+        connection.execute(
+            """
+            update coder_worktree_commit_approvals
+            set status = 'approved',
+                decided_by = ?,
+                decision_note = ?,
+                decided_at = ?,
+                failure_class = null
+            where id = ?
+            """,
+            (decided_by, decision_note, decided_at, approval_id),
+        )
+        row = connection.execute(
+            "select * from coder_worktree_commit_approvals where id = ?",
+            (approval_id,),
+        ).fetchone()
+    return _row_to_commit_approval(row)
+
+
+def _mark_commit_approval_committed(
+    storage: Storage,
+    approval_id: str,
+    *,
+    committed_by: str,
+    commit_sha: str,
+    committed_at: str,
+) -> CoderWorktreeCommitApprovalRecord:
+    with _connect(storage) as connection:
+        connection.execute(
+            """
+            update coder_worktree_commit_approvals
+            set status = 'committed',
+                committed_by = ?,
+                commit_sha = ?,
+                committed_at = ?,
+                failure_class = null
+            where id = ?
+            """,
+            (committed_by, commit_sha, committed_at, approval_id),
+        )
+        row = connection.execute(
+            "select * from coder_worktree_commit_approvals where id = ?",
+            (approval_id,),
+        ).fetchone()
+    return _row_to_commit_approval(row)
+
+
+def _mark_commit_approval_blocked(
+    storage: Storage,
+    approval_id: str,
+    *,
+    failure_class: str,
+) -> CoderWorktreeCommitApprovalRecord:
+    with _connect(storage) as connection:
+        connection.execute(
+            """
+            update coder_worktree_commit_approvals
+            set status = 'blocked',
+                failure_class = ?
+            where id = ?
+            """,
+            (failure_class, approval_id),
+        )
+        row = connection.execute(
+            "select * from coder_worktree_commit_approvals where id = ?",
+            (approval_id,),
+        ).fetchone()
+    return _row_to_commit_approval(row)
+
+
 def _latest_approval_for_plan(
     storage: Storage,
     delegation_id: str,
@@ -1216,6 +2068,28 @@ def _latest_completed_run_for_approval(
             (approval_id, source_plan_sha256),
         ).fetchone()
     return _row_to_run(row) if row is not None else None
+
+
+def _latest_commit_approval_for_run(
+    storage: Storage,
+    run_id: str,
+    source_run_sha256: str,
+    source_diff_sha256: str,
+) -> CoderWorktreeCommitApprovalRecord | None:
+    with _connect(storage) as connection:
+        row = connection.execute(
+            """
+            select * from coder_worktree_commit_approvals
+            where run_id = ?
+              and source_coder_worktree_run_sha256 = ?
+              and source_diff_sha256 = ?
+              and status in ('pending_operator_approval', 'approved', 'committed')
+            order by requested_at desc, id desc
+            limit 1
+            """,
+            (run_id, source_run_sha256, source_diff_sha256),
+        ).fetchone()
+    return _row_to_commit_approval(row) if row is not None else None
 
 
 def _record_coder_worktree_incident(
@@ -1306,6 +2180,38 @@ def _row_to_run(row: sqlite3.Row) -> CoderWorktreeRunRecord:
     )
 
 
+def _row_to_commit_approval(row: sqlite3.Row) -> CoderWorktreeCommitApprovalRecord:
+    return CoderWorktreeCommitApprovalRecord(
+        id=row["id"],
+        run_id=row["run_id"],
+        delegation_id=row["delegation_id"],
+        source_run_id=row["source_run_id"],
+        project_id=row["project_id"],
+        status=row["status"],
+        failure_class=row["failure_class"],
+        source_run_evidence_path=row["source_run_evidence_path"],
+        source_coder_worktree_run_sha256=row["source_coder_worktree_run_sha256"],
+        source_diff_sha256=row["source_diff_sha256"],
+        review_path=row["review_path"],
+        worktree_path=row["worktree_path"],
+        branch_name=row["branch_name"],
+        pre_commit_head=row["pre_commit_head"],
+        changed_files=json.loads(row["changed_files"] or "[]"),
+        request_artifact_path=row["request_artifact_path"],
+        decision_artifact_path=row["decision_artifact_path"],
+        commit_artifact_path=row["commit_artifact_path"],
+        requested_by=row["requested_by"],
+        request_note=row["request_note"],
+        decided_by=row["decided_by"],
+        decision_note=row["decision_note"],
+        committed_by=row["committed_by"],
+        commit_sha=row["commit_sha"],
+        requested_at=row["requested_at"],
+        decided_at=row["decided_at"],
+        committed_at=row["committed_at"],
+    )
+
+
 def _approval_to_payload(approval: CoderWorktreeApprovalRecord) -> dict[str, Any]:
     return {
         "id": approval.id,
@@ -1322,6 +2228,165 @@ def _approval_to_payload(approval: CoderWorktreeApprovalRecord) -> dict[str, Any
         "requested_at": approval.requested_at,
         "decided_at": approval.decided_at,
     }
+
+
+def _validate_run_commit_eligible(run: CoderWorktreeRunRecord) -> None:
+    if run.status != "completed":
+        raise CoderWorktreeCommitError(f"coder worktree run is not completed: {run.status}")
+    if run.outside_allowed_files:
+        raise CoderWorktreeCommitError("coder worktree run changed files outside allowed files")
+    if not run.changed_files:
+        raise CoderWorktreeCommitError("coder worktree run has no changed files to commit")
+
+
+def _load_run_evidence(root: Path, run: CoderWorktreeRunRecord) -> dict[str, Any]:
+    evidence_dir = root / run.evidence_path
+    run_json_path = evidence_dir / "run.json"
+    diff_path = evidence_dir / "diff.patch"
+    changed_files_path = evidence_dir / "changed_files.json"
+    bounded_path = evidence_dir / "bounded_file_validation.json"
+    for path in (run_json_path, diff_path, changed_files_path, bounded_path):
+        if not path.exists():
+            raise CoderWorktreeCommitError(
+                f"coder worktree run evidence is not readable: {path.relative_to(root)}"
+            )
+    try:
+        run_payload = json.loads(run_json_path.read_text(encoding="utf-8"))
+        changed_payload = json.loads(changed_files_path.read_text(encoding="utf-8"))
+        bounded_payload = json.loads(bounded_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise CoderWorktreeCommitError("coder worktree run evidence is not readable") from error
+    if run_payload.get("kind") != RUN_KIND:
+        raise CoderWorktreeCommitError("coder worktree run evidence has unexpected kind")
+    if run_payload.get("status") != "completed":
+        raise CoderWorktreeCommitError(
+            f"coder worktree run evidence is not completed: {run_payload.get('status')}"
+        )
+    if bounded_payload.get("valid") is not True:
+        raise CoderWorktreeCommitError("coder worktree run bounded validation did not pass")
+    if sorted(changed_payload.get("changed_files", [])) != sorted(run.changed_files):
+        raise CoderWorktreeCommitError("coder worktree run changed-file evidence is stale")
+    diff_text = diff_path.read_text(encoding="utf-8")
+    return {
+        "evidence_dir": evidence_dir,
+        "run_json_path": run_json_path,
+        "diff_path": diff_path,
+        "diff_text": diff_text,
+        "run_sha256": hashlib.sha256(run_json_path.read_bytes()).hexdigest(),
+        "diff_sha256": hashlib.sha256(diff_path.read_bytes()).hexdigest(),
+        "run_payload": run_payload,
+    }
+
+
+def _review_path_for_run(root: Path, run: CoderWorktreeRunRecord) -> Path:
+    return root / "runs" / run.source_run_id / "review.md"
+
+
+def _review_mentions_run(review_path: Path, run_id: str) -> bool:
+    try:
+        return run_id in review_path.read_text(encoding="utf-8")
+    except OSError:
+        return False
+
+
+def _current_worktree_snapshot(worktree_path: Path) -> dict[str, Any]:
+    subprocess.run(
+        ["git", "add", "-N", "."],
+        cwd=worktree_path,
+        capture_output=True,
+        text=True,
+    )
+    return {
+        "head": _git_output(["git", "rev-parse", "HEAD"], cwd=worktree_path).strip(),
+        "diff": _git_output(
+            ["git", "diff", "--no-ext-diff", "--binary"],
+            cwd=worktree_path,
+        ),
+        "changed_files": sorted(
+            set(_git_lines(["git", "diff", "--name-only"], cwd=worktree_path))
+        ),
+    }
+
+
+def _raise_if_snapshot_stale(
+    *,
+    snapshot: dict[str, Any],
+    expected_diff: str,
+    expected_changed_files: list[str],
+    expected_head: str | None,
+    detail_path: Path,
+) -> None:
+    if expected_head is not None and snapshot["head"] != expected_head:
+        raise CoderWorktreeCommitError(
+            f"stale evidence: worktree HEAD changed from {expected_head} to {snapshot['head']}"
+        )
+    if snapshot["diff"] != expected_diff:
+        raise CoderWorktreeCommitError(
+            f"stale evidence: current diff no longer matches {detail_path}"
+        )
+    if snapshot["changed_files"] != sorted(expected_changed_files):
+        raise CoderWorktreeCommitError(
+            "stale evidence: current changed files no longer match reviewed run evidence"
+        )
+
+
+def _raise_if_source_hash_changed(
+    approval: CoderWorktreeCommitApprovalRecord,
+    evidence: dict[str, Any],
+) -> None:
+    if evidence["run_sha256"] != approval.source_coder_worktree_run_sha256:
+        raise CoderWorktreeCommitError("stale evidence: coder worktree run evidence changed")
+    if evidence["diff_sha256"] != approval.source_diff_sha256:
+        raise CoderWorktreeCommitError("stale evidence: coder worktree diff evidence changed")
+
+
+def _block_commit_approval(
+    root: Path,
+    storage: Storage,
+    approval: CoderWorktreeCommitApprovalRecord,
+    *,
+    failure_class: str,
+    detail: str,
+    verification_exit_code: int | None,
+) -> CoderWorktreeCommitApprovalRecord:
+    blocked_at = utc_now()
+    payload = {
+        "kind": COMMIT_KIND,
+        "schema_version": 1,
+        "status": "blocked",
+        "failure_class": failure_class,
+        "detail": detail,
+        "commit_approval_id": approval.id,
+        "run_id": approval.run_id,
+        "delegation_id": approval.delegation_id,
+        "project_id": approval.project_id,
+        "commit_sha": None,
+        "verification_exit_code": verification_exit_code,
+        "blocked_at": blocked_at,
+        "commit_created": False,
+        "push_created": False,
+        "deploy_created": False,
+        "provider_calls_taken_by_clankeros": 0,
+        "network_actions_taken": 0,
+        "external_mutations_taken": 0,
+    }
+    _write_json(root / approval.commit_artifact_path, payload)
+    blocked = _mark_commit_approval_blocked(
+        storage,
+        approval.id,
+        failure_class=failure_class,
+    )
+    _record_coder_worktree_incident(
+        storage,
+        project_id=approval.project_id,
+        run_id=approval.run_id,
+        delegation_id=approval.delegation_id,
+        failure_class=failure_class,
+        summary=f"Coder worktree commit promotion blocked: {failure_class}",
+        evidence=payload,
+        evidence_path=approval.commit_artifact_path,
+    )
+    return blocked
 
 
 def _render_approval_request_markdown(payload: dict[str, Any]) -> str:
@@ -1353,6 +2418,53 @@ def _render_approval_decision_markdown(payload: dict[str, Any]) -> str:
             "# Coder Worktree Approval Decision",
             "",
             f"- approval_id: {payload['approval_id']}",
+            f"- status: {payload['status']}",
+            f"- decided_by: {payload['decided_by']}",
+            "",
+            "## Non-Claims",
+            "",
+            *[f"- {claim}" for claim in payload["non_claims"]],
+            "",
+        ]
+    )
+
+
+def _render_commit_approval_request_markdown(payload: dict[str, Any]) -> str:
+    return "\n".join(
+        [
+            "# Coder Worktree Commit Approval Request",
+            "",
+            f"- commit_approval_id: {payload['commit_approval_id']}",
+            f"- run_id: {payload['run_id']}",
+            f"- delegation_id: {payload['delegation_id']}",
+            f"- project_id: {payload['project_id']}",
+            f"- status: {payload['status']}",
+            f"- source_coder_worktree_run_sha256: {payload['source_coder_worktree_run_sha256']}",
+            f"- source_diff_sha256: {payload['source_diff_sha256']}",
+            f"- review_path: {payload['review_path']}",
+            f"- worktree_path: {payload['worktree_path']}",
+            f"- branch_name: {payload['branch_name']}",
+            f"- pre_commit_head: {payload['pre_commit_head']}",
+            "",
+            "## Changed Files",
+            "",
+            *[f"- {path}" for path in payload["changed_files"]],
+            "",
+            "## Non-Claims",
+            "",
+            *[f"- {claim}" for claim in payload["non_claims"]],
+            "",
+        ]
+    )
+
+
+def _render_commit_approval_decision_markdown(payload: dict[str, Any]) -> str:
+    return "\n".join(
+        [
+            "# Coder Worktree Commit Approval Decision",
+            "",
+            f"- commit_approval_id: {payload['commit_approval_id']}",
+            f"- run_id: {payload['run_id']}",
             f"- status: {payload['status']}",
             f"- decided_by: {payload['decided_by']}",
             "",

@@ -221,6 +221,16 @@ stderr, verification output, git status, diff, changed files, and bounded-file
 validation under `.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/`.
 It blocks if changed files are outside `allowed_files`. It does not commit,
 push, deploy, call providers, or intentionally use the network.
+After a successful run, use `review <source_run_id>` before requesting commit
+promotion. `coder-worktree-commit-approval <run_id>` requires that review
+packet, verifies the current worktree still matches the recorded diff and
+changed-file evidence, and writes `coder_worktree_commit_approval_request.json`
+and `.md` in the coder worktree evidence directory without committing.
+`approve-coder-worktree-commit <commit_approval_id>` records the operator
+decision, and only `promote-coder-worktree-commit <commit_approval_id>` reruns
+the verifier, re-checks HEAD/diff/changed files, and creates one local git
+commit in the isolated worktree branch. Promotion never pushes, deploys, calls
+providers, or mutates external systems.
 Add `--working-directory project_root` when configuring the adapter if the
 local executor should run from the target repository instead of the ClankerOS
 system root.
