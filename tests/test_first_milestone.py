@@ -4137,6 +4137,538 @@ def test_coder_worktree_commit_promotion_blocks_stale_evidence_without_commit(
     assert "failure_class=stale_evidence" in dashboard
 
 
+def test_coder_commit_request_alias_writes_coder_commit_artifacts_and_is_idempotent(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    (
+        source_run_id,
+        _delegation_id,
+        _approval_id,
+        run_id,
+        evidence_dir,
+        _worktree_path,
+        _repo_path,
+    ) = _run_completed_coder_worktree(tmp_path, capsys)
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-commit-request",
+                "missing",
+                "--requested-by",
+                "operator",
+                "--message",
+                "Implement bounded change from approved worktree run",
+                "--note",
+                "Request local commit after review",
+            ]
+        )
+        == 1
+    )
+    missing_output = capsys.readouterr().out
+    assert "coder_commit_request_failed: coder worktree run not found: missing" in missing_output
+
+    assert main(["--root", str(tmp_path), "review", source_run_id]) == 0
+    capsys.readouterr()
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-commit-request",
+                run_id,
+                "--requested-by",
+                "operator",
+                "--message",
+                "Implement bounded change from approved worktree run",
+                "--note",
+                "Request local commit after review",
+            ]
+        )
+        == 0
+    )
+    request_output = capsys.readouterr().out
+    assert "coder_commit_request: " in request_output
+    assert f"coder_worktree_run_id: {run_id}" in request_output
+    assert "status: pending_operator_approval" in request_output
+    assert "commit_created: false" in request_output
+    assert "push_created: false" in request_output
+    assert "pr_created: false" in request_output
+    commit_request_id = next(
+        line.split(": ", 1)[1]
+        for line in request_output.splitlines()
+        if line.startswith("commit_request_id: ")
+    )
+    artifact = tmp_path / next(
+        line.split(": ", 1)[1]
+        for line in request_output.splitlines()
+        if line.startswith("artifact: ")
+    )
+    assert artifact == evidence_dir / "coder_commit" / "coder_commit_request.json"
+    request_payload = json.loads(artifact.read_text(encoding="utf-8"))
+    assert request_payload["kind"] == "coder_worktree_commit_request"
+    assert request_payload["commit_request_id"] == commit_request_id
+    assert request_payload["coder_worktree_run_id"] == run_id
+    assert request_payload["commit_message"] == "Implement bounded change from approved worktree run"
+    assert request_payload["approval_required_before"] == [
+        "stage_allowed_files",
+        "create_local_commit",
+    ]
+    assert request_payload["bounded_file_validation"]["valid"] is True
+    assert request_payload["command_exit_code"] == 0
+    assert request_payload["verification_exit_code"] == 0
+    assert "agent_os/delegation_runner.py" in request_payload["changed_files"]
+    assert request_payload["outside_allowed_files"] == []
+    assert (artifact.parent / "coder_commit_request.md").exists()
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-commit-request",
+                run_id,
+                "--requested-by",
+                "operator",
+                "--message",
+                "A different duplicate message is ignored",
+                "--note",
+                "Request local commit after review",
+            ]
+        )
+        == 0
+    )
+    duplicate_output = capsys.readouterr().out
+    assert f"coder_commit_request: already_recorded {commit_request_id}" in duplicate_output
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "approve-coder-commit",
+                commit_request_id,
+                "--decided-by",
+                "operator",
+                "--note",
+                "Approved local commit",
+            ]
+        )
+        == 0
+    )
+    decision_output = capsys.readouterr().out
+    assert f"approved_coder_commit: {commit_request_id}" in decision_output
+    assert "status: approved" in decision_output
+    decision_artifact = tmp_path / next(
+        line.split(": ", 1)[1]
+        for line in decision_output.splitlines()
+        if line.startswith("artifact: ")
+    )
+    assert decision_artifact == evidence_dir / "coder_commit" / "coder_commit_decision.json"
+    decision_payload = json.loads(decision_artifact.read_text(encoding="utf-8"))
+    assert decision_payload["kind"] == "coder_worktree_commit_approval_decision"
+    assert decision_payload["source_request_sha256"]
+    assert decision_payload["staged_files"] == []
+    assert decision_payload["commit_created"] is False
+    assert decision_payload["pr_created"] is False
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "approve-coder-commit",
+                commit_request_id,
+                "--decided-by",
+                "operator",
+                "--note",
+                "Approved local commit",
+            ]
+        )
+        == 0
+    )
+    repeat_output = capsys.readouterr().out
+    assert f"approved_coder_commit: already_approved {commit_request_id}" in repeat_output
+
+
+def test_commit_coder_worktree_creates_local_commit_effect_and_github_handoff(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    (
+        source_run_id,
+        delegation_id,
+        _approval_id,
+        run_id,
+        evidence_dir,
+        worktree_path,
+        repo_path,
+    ) = _run_completed_coder_worktree(tmp_path, capsys)
+    subprocess.run(
+        ["git", "remote", "add", "origin", "git@github.com:example/subject.git"],
+        cwd=repo_path,
+        check=True,
+    )
+    assert main(["--root", str(tmp_path), "review", source_run_id]) == 0
+    capsys.readouterr()
+    commit_message = "Implement bounded change from approved worktree run"
+    commit_request_id = _request_and_approve_coder_commit(
+        tmp_path,
+        capsys,
+        run_id,
+        commit_message=commit_message,
+    )
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "commit-coder-worktree",
+                run_id,
+                "--message",
+                "Different message",
+            ]
+        )
+        == 1
+    )
+    mismatch_output = capsys.readouterr().out
+    assert "commit_coder_worktree_failed: commit message does not match approved request" in mismatch_output
+
+    before_count = subprocess.run(
+        ["git", "rev-list", "--count", "HEAD"],
+        cwd=worktree_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "commit-coder-worktree",
+                run_id,
+                "--message",
+                commit_message,
+            ]
+        )
+        == 0
+    )
+    commit_output = capsys.readouterr().out
+    assert "commit_coder_worktree: committed" in commit_output
+    assert f"commit_request_id: {commit_request_id}" in commit_output
+    assert f"coder_worktree_run_id: {run_id}" in commit_output
+    assert "push_created: false" in commit_output
+    assert "pr_created: false" in commit_output
+    effect_id = next(
+        line.split(": ", 1)[1]
+        for line in commit_output.splitlines()
+        if line.startswith("effect_id: ")
+    )
+    commit_sha = next(
+        line.split(": ", 1)[1]
+        for line in commit_output.splitlines()
+        if line.startswith("commit: ")
+    )
+    parent_sha = next(
+        line.split(": ", 1)[1]
+        for line in commit_output.splitlines()
+        if line.startswith("parent_commit: ")
+    )
+    commit_artifact = tmp_path / next(
+        line.split(": ", 1)[1]
+        for line in commit_output.splitlines()
+        if line.startswith("evidence: ")
+    )
+    assert commit_artifact == evidence_dir / "coder_commit" / "commit.json"
+
+    head = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=worktree_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert head == commit_sha
+    after_count = subprocess.run(
+        ["git", "rev-list", "--count", "HEAD"],
+        cwd=worktree_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert int(after_count) == int(before_count) + 1
+    assert subprocess.run(
+        ["git", "rev-parse", "HEAD^"],
+        cwd=worktree_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip() == parent_sha
+
+    commit_payload = json.loads(commit_artifact.read_text(encoding="utf-8"))
+    assert commit_payload["kind"] == "coder_worktree_local_commit"
+    assert commit_payload["commit_request_id"] == commit_request_id
+    assert commit_payload["commit_approval_id"] == commit_request_id
+    assert commit_payload["commit_sha"] == commit_sha
+    assert commit_payload["parent_commit_sha"] == parent_sha
+    assert commit_payload["commit_message"] == commit_message
+    assert commit_payload["committed_files"] == ["agent_os/delegation_runner.py"]
+    assert commit_payload["next_recommended_action"] == "github_handoff"
+    assert commit_payload["push_created"] is False
+    assert commit_payload["pr_created"] is False
+    assert (commit_artifact.parent / "commit.md").exists()
+    assert (commit_artifact.parent / "pre_commit_status.txt").exists()
+    assert (commit_artifact.parent / "post_commit_status.txt").exists()
+    assert (commit_artifact.parent / "committed_diff.patch").exists()
+    assert (commit_artifact.parent / "committed_files.json").exists()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    effect = storage.get_effect(effect_id)
+    assert effect.status == "committed"
+    assert effect.effect_type == "local_git_commit"
+    assert effect.run_id == run_id
+    assert effect.required_approval_id == commit_request_id
+    assert effect.result_json["commit_sha"] == commit_sha
+    assert effect.result_json["parent_commit_sha"] == parent_sha
+
+    assert main(["--root", str(tmp_path), "github-handoff", effect_id]) == 0
+    handoff_output = capsys.readouterr().out
+    assert "github_handoff: ready_for_operator" in handoff_output
+    assert f"effect_id: {effect_id}" in handoff_output
+    handoff = storage.list_recent_github_handoff_records()[0]
+    handoff_payload = json.loads(Path(handoff.evidence_path).read_text(encoding="utf-8"))
+    assert handoff_payload["worktree_path"] == str(worktree_path)
+    assert handoff_payload["parent_commit_sha"] == parent_sha
+    assert handoff_payload["committed_files"] == ["agent_os/delegation_runner.py"]
+    assert handoff_payload["diff_path"].endswith("coder_commit/committed_diff.patch")
+    assert handoff_payload["network_actions_taken"] == 0
+
+    assert main(["--root", str(tmp_path), "review", run_id]) == 0
+    review_output = capsys.readouterr().out
+    assert f"run_id: {source_run_id}" in review_output
+    review_path = tmp_path / next(
+        line.split(": ", 1)[1]
+        for line in review_output.splitlines()
+        if line.startswith("review: ")
+    )
+    review = review_path.read_text(encoding="utf-8")
+    assert "## Coder Worktree Commit" in review
+    assert commit_sha in review
+
+    assert main(["--root", str(tmp_path), "delegation-result", delegation_id]) == 0
+    delegation_output = capsys.readouterr().out
+    assert f"coder_worktree_commit_effect_id: {effect_id}" in delegation_output
+    assert "coder_worktree_github_handoff_available: true" in delegation_output
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "commit-coder-worktree",
+                run_id,
+                "--message",
+                commit_message,
+            ]
+        )
+        == 0
+    )
+    repeat_output = capsys.readouterr().out
+    assert "commit_coder_worktree: already_committed" in repeat_output
+    assert commit_sha in repeat_output
+
+
+def test_coder_commit_request_and_commit_block_failed_or_changed_sources(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    _storage, _goal_id, _task_id, delegation_id, repo_path = (
+        _create_registered_context_pack_delegation(tmp_path, capsys)
+    )
+    _write_coder_worktree_subject_scripts(repo_path)
+    source_run_id = _run_fake_context_pack_scout(tmp_path, capsys, delegation_id)
+    _prepare_coder_worktree_plan(tmp_path, capsys, delegation_id)
+    _request_and_approve_coder_worktree(tmp_path, capsys, delegation_id)
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-coder-worktree",
+                delegation_id,
+                "--command",
+                "python3 scripts/change_outside.py",
+                "--verify",
+            ]
+        )
+        == 1
+    )
+    blocked_output = capsys.readouterr().out
+    blocked_run_id = next(
+        line.split(": ", 1)[1]
+        for line in blocked_output.splitlines()
+        if line.startswith("run_id: ")
+    )
+    assert main(["--root", str(tmp_path), "review", source_run_id]) == 0
+    capsys.readouterr()
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-commit-request",
+                blocked_run_id,
+                "--requested-by",
+                "operator",
+                "--message",
+                "Commit blocked run",
+                "--note",
+                "should fail",
+            ]
+        )
+        == 1
+    )
+    blocked_request_output = capsys.readouterr().out
+    assert "coder_commit_request_failed: bounded validation failed" in blocked_request_output
+
+    fresh_approval_id = _request_and_approve_coder_worktree(
+        tmp_path,
+        capsys,
+        delegation_id,
+        force_new=True,
+    )
+    assert fresh_approval_id
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-coder-worktree",
+                delegation_id,
+                "--command",
+                "python3 scripts/change_allowed.py",
+                "--verify-command",
+                "python3 scripts/fail_verify.py",
+                "--verify",
+                "--rerun",
+            ]
+        )
+        == 1
+    )
+    failed_output = capsys.readouterr().out
+    failed_run_id = next(
+        line.split(": ", 1)[1]
+        for line in failed_output.splitlines()
+        if line.startswith("run_id: ")
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-commit-request",
+                failed_run_id,
+                "--requested-by",
+                "operator",
+                "--message",
+                "Commit failed run",
+                "--note",
+                "should fail",
+            ]
+        )
+        == 1
+    )
+    failed_request_output = capsys.readouterr().out
+    assert "coder_commit_request_failed: verification failed" in failed_request_output
+
+    fresh_root = tmp_path / "fresh"
+    fresh_root.mkdir()
+    (
+        source_run_id,
+        _delegation_id,
+        _approval_id,
+        run_id,
+        evidence_dir,
+        worktree_path,
+        _repo_path,
+    ) = _run_completed_coder_worktree(fresh_root, capsys)
+    assert main(["--root", str(fresh_root), "review", source_run_id]) == 0
+    capsys.readouterr()
+    commit_message = "Implement bounded change from approved worktree run"
+    _request_and_approve_coder_commit(
+        fresh_root,
+        capsys,
+        run_id,
+        commit_message=commit_message,
+    )
+    run_json = evidence_dir / "run.json"
+    run_payload = json.loads(run_json.read_text(encoding="utf-8"))
+    run_payload["tampered"] = True
+    run_json.write_text(json.dumps(run_payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    assert (
+        main(
+            [
+                "--root",
+                str(fresh_root),
+                "commit-coder-worktree",
+                run_id,
+                "--message",
+                commit_message,
+            ]
+        )
+        == 1
+    )
+    source_output = capsys.readouterr().out
+    assert "commit_coder_worktree_failed: source_hash_mismatch" in source_output
+
+    # Restore source evidence, then introduce an outside file to prove the
+    # commit command re-checks the current worktree before staging. The stale
+    # approval remains blocked after the source-hash mismatch, so create a fresh
+    # commit request from the restored source evidence.
+    run_payload.pop("tampered")
+    run_json.write_text(json.dumps(run_payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    _request_and_approve_coder_commit(
+        fresh_root,
+        capsys,
+        run_id,
+        commit_message=commit_message,
+    )
+    outside = worktree_path / "notes" / "outside.txt"
+    outside.parent.mkdir(parents=True, exist_ok=True)
+    outside.write_text("outside\n", encoding="utf-8")
+    assert (
+        main(
+            [
+                "--root",
+                str(fresh_root),
+                "commit-coder-worktree",
+                run_id,
+                "--message",
+                commit_message,
+            ]
+        )
+        == 1
+    )
+    outside_output = capsys.readouterr().out
+    assert "commit_coder_worktree_failed: outside_files_present" in outside_output
+    after_status = subprocess.run(
+        ["git", "status", "--short"],
+        cwd=worktree_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    assert outside.exists()
+    assert "?? notes/" in after_status
+
+
 def test_run_coder_worktree_blocks_hash_mismatch_unsafe_commands_and_file_violations(
     tmp_path: Path,
     capsys,
@@ -5813,6 +6345,55 @@ def _run_completed_coder_worktree(
         worktree_path,
         repo_path,
     )
+
+
+def _request_and_approve_coder_commit(
+    tmp_path: Path,
+    capsys,
+    run_id: str,
+    *,
+    commit_message: str,
+) -> str:
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-commit-request",
+                run_id,
+                "--requested-by",
+                "operator",
+                "--message",
+                commit_message,
+                "--note",
+                "Request local commit after review",
+            ]
+        )
+        == 0
+    )
+    request_output = capsys.readouterr().out
+    commit_request_id = next(
+        line.split(": ", 1)[1]
+        for line in request_output.splitlines()
+        if line.startswith("commit_request_id: ")
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "approve-coder-commit",
+                commit_request_id,
+                "--decided-by",
+                "operator",
+                "--note",
+                "Approved local commit",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    return commit_request_id
 
 
 def _run_fake_context_pack_scout(tmp_path: Path, capsys, delegation_id: str) -> str:

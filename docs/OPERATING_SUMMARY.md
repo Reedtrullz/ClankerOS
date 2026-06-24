@@ -137,15 +137,21 @@ Core layers for the bootstrap:
   The run blocks on bounded-file violations, fails on command or verification
   failure, does not auto-revert, and never commits, pushes, deploys, calls
   providers, or intentionally uses the network. A reviewed completed run can
-  then enter `coder-worktree-commit-approval <run_id>`, which refuses
-  unreviewed or stale evidence and writes a dedicated commit-promotion approval
-  request without committing. `approve-coder-worktree-commit` records the
-  operator decision, and `promote-coder-worktree-commit` re-checks source
-  hashes, HEAD, diff, changed files, and verifier output before creating one
-  local git commit in the isolated worktree branch. It never pushes, deploys,
-  calls providers, or mutates external systems. Run review, delegation-result,
-  inbox, and dashboard output surface coder worktree approvals, runs, and
-  commit promotions.
+  then enter `coder-commit-request <coder_worktree_run_id>`, which refuses
+  unreviewed, failed, stale, unsafe, or outside-file evidence and writes a
+  dedicated `coder_commit/coder_commit_request.json/.md` request without
+  staging or committing. `approve-coder-commit` records the operator decision
+  in `coder_commit/coder_commit_decision.json/.md` without staging or
+  committing. `commit-coder-worktree` re-checks source hashes, branch/HEAD,
+  changed files, outside files, commit message, and verifier state before
+  staging only reviewed allowed files and creating one local git commit in the
+  isolated worktree branch. It records `coder_commit/commit.json`,
+  `pre_commit_status.txt`, `post_commit_status.txt`, `committed_diff.patch`,
+  `committed_files.json`, and a committed local effect that can feed
+  `github-handoff <effect_id>`. It never pushes, creates a PR, deploys, calls
+  providers, or mutates external systems. Run review, delegation-result,
+  inbox, and dashboard output surface coder commit requests, approvals, local
+  commits, and GitHub handoff availability.
   Adapters run from the system root by default and can opt into
   `--working-directory project_root` for repo scouting. It supports shell
   adapters only. ClankerOS records
@@ -194,9 +200,11 @@ Core layers for the bootstrap:
   workflow explicit: `delegate -> context-pack -> run-delegation ->
   implementation-handoff -> coder-prep -> coder-worktree-plan ->
   coder-worktree-approval -> approve-coder-worktree -> run-coder-worktree ->
-  review -> dashboard`, then surfaces current handoffs, coder-prep packets,
-  coder worktree plans, coder worktree approvals, and approved coder worktree
-  runs before the broader goal, task, approval, effect,
+  review -> coder-commit-request -> approve-coder-commit ->
+  commit-coder-worktree -> dashboard -> github-handoff`, then surfaces current
+  handoffs, coder-prep packets, coder worktree plans, coder worktree approvals,
+  approved coder worktree runs, coder commit requests, and local coder commits
+  before the broader goal, task, approval, effect,
   verification, routing, steering, memory, and skill sections. Legacy
   capability proof-ladder records remain available in lower advanced sections,
   but they are not the default operator path.

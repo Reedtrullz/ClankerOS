@@ -221,16 +221,22 @@ stderr, verification output, git status, diff, changed files, and bounded-file
 validation under `.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/`.
 It blocks if changed files are outside `allowed_files`. It does not commit,
 push, deploy, call providers, or intentionally use the network.
-After a successful run, use `review <source_run_id>` before requesting commit
-promotion. `coder-worktree-commit-approval <run_id>` requires that review
-packet, verifies the current worktree still matches the recorded diff and
-changed-file evidence, and writes `coder_worktree_commit_approval_request.json`
-and `.md` in the coder worktree evidence directory without committing.
-`approve-coder-worktree-commit <commit_approval_id>` records the operator
-decision, and only `promote-coder-worktree-commit <commit_approval_id>` reruns
-the verifier, re-checks HEAD/diff/changed files, and creates one local git
-commit in the isolated worktree branch. Promotion never pushes, deploys, calls
-providers, or mutates external systems.
+After a successful run, use `review <coder_worktree_run_id>` before requesting
+local commit promotion. `coder-commit-request <coder_worktree_run_id>` requires
+completed bounded worktree evidence, a clean verification result, current
+changes still inside `allowed_files`, a readable worktree, and an explicit
+commit message. It writes `coder_commit/coder_commit_request.json` and `.md`
+without staging or committing. `approve-coder-commit <commit_request_id>`
+records the operator decision in `coder_commit/coder_commit_decision.json` and
+`.md` without staging or committing. Only
+`commit-coder-worktree <coder_worktree_run_id>` may stage the reviewed allowed
+files and create one local commit in the isolated worktree branch. It re-checks
+the source run hash, branch/HEAD, current changed files, outside files,
+message, and verifier state, then writes `coder_commit/commit.json`,
+`pre_commit_status.txt`, `post_commit_status.txt`, `committed_diff.patch`, and
+`committed_files.json`. The resulting `effect_id` can be passed to
+`github-handoff <effect_id>` to create local push and draft-PR instructions.
+None of these steps push, deploy, call providers, or mutate external systems.
 Add `--working-directory project_root` when configuring the adapter if the
 local executor should run from the target repository instead of the ClankerOS
 system root.
@@ -257,6 +263,9 @@ For the full walkthrough, see
 | Request coder worktree approval | `python3 -m agent_os.cli coder-worktree-approval <delegation_id> --requested-by operator --note "..."` |
 | Approve coder worktree execution | `python3 -m agent_os.cli approve-coder-worktree <approval_id> --decided-by operator --note "..."` |
 | Run approved bounded worktree command | `python3 -m agent_os.cli run-coder-worktree <delegation_id> --command "python3 scripts/local_change.py" --verify` |
+| Request local commit from reviewed worktree | `python3 -m agent_os.cli coder-commit-request <coder_worktree_run_id> --requested-by operator --message "..." --note "..."` |
+| Approve local commit request | `python3 -m agent_os.cli approve-coder-commit <commit_request_id> --decided-by operator --note "..."` |
+| Create local worktree commit | `python3 -m agent_os.cli commit-coder-worktree <coder_worktree_run_id> --message "..."` |
 | Review evidence | `review`, `evidence`, `replay-summary` |
 | Inspect approvals | `python3 -m agent_os.cli approvals` |
 | Prepare GitHub handoff | `python3 -m agent_os.cli github-handoff <effect_id>` |
@@ -360,9 +369,13 @@ reads it back, `coder-prep` writes a bounded future coding plan, and
 `coder-worktree-approval`, `approve-coder-worktree`, and `run-coder-worktree`
 then provide the first explicit bounded worktree execution gate with local
 evidence but no automatic commit, push, deploy, provider call, or network
-action. Executable local slices still exist where the verifier is explicit
-(`run-goal`, `run-task`, `run-delegation`, `run-coder-worktree`). The older
-report-only proof ladders remain available as
+action. A reviewed successful coder worktree run can then move through the
+separate local-only gate `coder-commit-request -> approve-coder-commit ->
+commit-coder-worktree -> github-handoff`; commit approval remains separate
+from execution approval, and GitHub handoff remains separate from push/PR.
+Executable local slices still exist where the verifier is explicit (`run-goal`,
+`run-task`, `run-delegation`, `run-coder-worktree`). The older report-only
+proof ladders remain available as
 advanced blocked-proof machinery, and every activation step still preserves
 `activation_allowed=false`, `capability_enabled=false`,
 `approval_requests_created=0`, `activation_actions_taken=0`, and

@@ -88,18 +88,25 @@ from agent_os.coder_worktree_execution import (
     CoderWorktreeApprovalError,
     CoderWorktreeCommitError,
     CoderWorktreeRunError,
+    approve_coder_commit,
     approve_coder_worktree_commit,
     approve_coder_worktree,
+    commit_coder_worktree,
+    get_coder_worktree_run,
     latest_coder_worktree_approval_for_delegation,
     latest_coder_worktree_commit_for_delegation,
     latest_coder_worktree_run_for_delegation,
     promote_coder_worktree_commit,
+    render_coder_commit_decision_cli_lines,
+    render_coder_commit_request_cli_lines,
     render_coder_worktree_commit_approval_cli_lines,
     render_coder_worktree_commit_cli_lines,
     render_coder_worktree_commit_decision_cli_lines,
     render_coder_worktree_approval_cli_lines,
     render_coder_worktree_decision_cli_lines,
     render_coder_worktree_run_cli_lines,
+    render_commit_coder_worktree_cli_lines,
+    request_coder_commit,
     request_coder_worktree_commit_approval,
     request_coder_worktree_approval,
     run_approved_coder_worktree,
@@ -581,7 +588,7 @@ from agent_os.worktree_cleanup import cleanup_worktrees
 PRIMARY_COMMAND_METAVAR = (
     "{init,dashboard,goal,tasks,delegate,context-pack,run-delegation,"
     "implementation-handoff,coder-prep,coder-worktree-plan,"
-    "promote-coder-worktree-commit,review,...}"
+    "coder-commit-request,commit-coder-worktree,review,...}"
 )
 
 
@@ -826,13 +833,40 @@ def build_parser() -> argparse.ArgumentParser:
     run_coder_worktree_parser.add_argument("--verify", action="store_true")
     run_coder_worktree_parser.add_argument("--verify-command")
     run_coder_worktree_parser.add_argument("--rerun", action="store_true")
+    coder_commit_request_parser = subparsers.add_parser(
+        "coder-commit-request",
+        help="Request approval to create a local commit from a reviewed coder worktree run.",
+    )
+    coder_commit_request_parser.add_argument("run_id")
+    coder_commit_request_parser.add_argument("--requested-by", default="operator")
+    coder_commit_request_parser.add_argument("--message", required=True)
+    coder_commit_request_parser.add_argument("--note", default="")
+    coder_commit_request_parser.add_argument("--allow-unverified", action="store_true")
+    coder_commit_request_parser.add_argument("--force-new", action="store_true")
+    approve_coder_commit_parser = subparsers.add_parser(
+        "approve-coder-commit",
+        help="Approve a pending local commit request for a coder worktree run.",
+    )
+    approve_coder_commit_parser.add_argument("commit_approval_id")
+    approve_coder_commit_parser.add_argument("--decided-by", default="operator")
+    approve_coder_commit_parser.add_argument("--note", required=True)
+    commit_coder_worktree_parser = subparsers.add_parser(
+        "commit-coder-worktree",
+        help="Create the approved local commit inside an isolated coder worktree.",
+    )
+    commit_coder_worktree_parser.add_argument("run_id")
+    commit_coder_worktree_parser.add_argument("--message", required=True)
+    commit_coder_worktree_parser.add_argument("--committed-by", default="operator")
+    commit_coder_worktree_parser.add_argument("--use-approved-message", action="store_true")
     coder_worktree_commit_approval = subparsers.add_parser(
         "coder-worktree-commit-approval",
         help="Request operator approval to promote a reviewed coder worktree run to a local commit.",
     )
     coder_worktree_commit_approval.add_argument("run_id")
     coder_worktree_commit_approval.add_argument("--requested-by", default="operator")
+    coder_worktree_commit_approval.add_argument("--message")
     coder_worktree_commit_approval.add_argument("--note", default="")
+    coder_worktree_commit_approval.add_argument("--allow-unverified", action="store_true")
     coder_worktree_commit_approval.add_argument("--force-new", action="store_true")
     approve_coder_worktree_commit_parser = subparsers.add_parser(
         "approve-coder-worktree-commit",
@@ -2062,14 +2096,21 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "review":
-        AgentSystem(root).initialize()
+        system = AgentSystem(root)
+        system.initialize()
+        requested_run_id = args.run_id
+        coder_run = get_coder_worktree_run(system.storage, requested_run_id)
+        if coder_run is not None:
+            args.run_id = coder_run.source_run_id
         try:
             report_path, packet = write_run_review(root, args.run_id)
         except KeyError:
-            print(f"review_failed: run {args.run_id} not found")
+            print(f"review_failed: run {requested_run_id} not found")
             return 1
         print(f"run_review: {packet.run.id}")
         print(f"run_id: {packet.run.id}")
+        if requested_run_id != packet.run.id:
+            print(f"requested_run_id: {requested_run_id}")
         print(f"status: {packet.run.status}")
         print(f"review: {report_path.relative_to(root)}")
         print(f"report: {report_path.relative_to(root)}")
@@ -2161,18 +2202,21 @@ def main(argv: list[str] | None = None) -> int:
                 f"coder_worktree_run {run.id}: delegation={run.delegation_id} "
                 f"status={run.status} evidence={run.evidence_path}"
             )
+        print(f"coder_commit_requests: {len(coder_worktree_commit_approvals)}")
         print(f"coder_worktree_commit_approvals: {len(coder_worktree_commit_approvals)}")
         for approval in coder_worktree_commit_approvals:
             print(
-                f"coder_worktree_commit_approval {approval.id}: delegation={approval.delegation_id} "
-                f"run={approval.run_id} status={approval.status} request={approval.request_artifact_path}"
+                f"coder_commit_request {approval.id}: delegation={approval.delegation_id} "
+                f"coder_worktree_run={approval.run_id} status={approval.status} "
+                f"message={approval.commit_message} request={approval.request_artifact_path}"
             )
+        print(f"coder_local_commits: {len(coder_worktree_commits)}")
         print(f"coder_worktree_commits: {len(coder_worktree_commits)}")
         for commit in coder_worktree_commits:
             print(
-                f"coder_worktree_commit {commit.id}: delegation={commit.delegation_id} "
+                f"coder_local_commit {commit.id}: delegation={commit.delegation_id} "
                 f"run={commit.run_id} status={commit.status} commit={commit.commit_sha or 'none'} "
-                f"evidence={commit.commit_artifact_path}"
+                f"effect={commit.effect_id or 'none'} evidence={commit.commit_artifact_path}"
             )
         print("network_actions_taken: 0")
         print("external_mutations_taken: 0")
@@ -2486,11 +2530,20 @@ def main(argv: list[str] | None = None) -> int:
             print(f"coder_worktree_run_worktree_path: {coder_run.worktree_path}")
         coder_commit = latest_coder_worktree_commit_for_delegation(root, delegation.id)
         if coder_commit is not None:
+            print(f"coder_commit_request: {coder_commit.request_artifact_path}")
+            print(f"coder_commit_request_id: {coder_commit.id}")
+            print(f"coder_commit_request_status: {coder_commit.status}")
             print(f"coder_worktree_commit: {coder_commit.commit_artifact_path}")
             print(f"coder_worktree_commit_status: {coder_commit.status}")
             print(f"coder_worktree_commit_id: {coder_commit.id}")
             print(f"coder_worktree_commit_run_id: {coder_commit.run_id}")
             print(f"coder_worktree_commit_sha: {coder_commit.commit_sha or 'none'}")
+            print(f"coder_worktree_local_commit: {coder_commit.commit_artifact_path}")
+            print(f"coder_worktree_commit_effect_id: {coder_commit.effect_id or 'none'}")
+            print(
+                "coder_worktree_github_handoff_available: "
+                f"{_print_bool(bool(coder_commit.effect_id and coder_commit.status == 'committed'))}"
+            )
         if "exit_code" in metadata:
             print(f"exit_code: {metadata['exit_code']}")
         if metadata.get("incident_id"):
@@ -2606,6 +2659,64 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         return 1
 
+    if args.command == "coder-commit-request":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            result = request_coder_commit(
+                root,
+                system.storage,
+                args.run_id,
+                requested_by=args.requested_by,
+                commit_message=args.message,
+                note=args.note,
+                allow_unverified=args.allow_unverified,
+                force_new=args.force_new,
+            )
+        except CoderWorktreeCommitError as error:
+            print(f"coder_commit_request_failed: {error}")
+            return 1
+        for line in render_coder_commit_request_cli_lines(root, result):
+            print(line)
+        return 0
+
+    if args.command == "approve-coder-commit":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            result = approve_coder_commit(
+                root,
+                system.storage,
+                args.commit_approval_id,
+                decided_by=args.decided_by,
+                note=args.note,
+            )
+        except CoderWorktreeCommitError as error:
+            print(f"approve_coder_commit_failed: {error}")
+            return 1
+        for line in render_coder_commit_decision_cli_lines(root, result):
+            print(line)
+        return 0
+
+    if args.command == "commit-coder-worktree":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            result = commit_coder_worktree(
+                root,
+                system.storage,
+                args.run_id,
+                message=args.message,
+                committed_by=args.committed_by,
+                use_approved_message=args.use_approved_message,
+            )
+        except CoderWorktreeCommitError as error:
+            print(f"commit_coder_worktree_failed: {error}")
+            return 1
+        for line in render_commit_coder_worktree_cli_lines(root, result):
+            print(line)
+        return 0
+
     if args.command == "coder-worktree-commit-approval":
         system = AgentSystem(root)
         system.initialize()
@@ -2615,7 +2726,9 @@ def main(argv: list[str] | None = None) -> int:
                 system.storage,
                 args.run_id,
                 requested_by=args.requested_by,
+                commit_message=args.message,
                 note=args.note,
+                allow_unverified=args.allow_unverified,
                 force_new=args.force_new,
             )
         except CoderWorktreeCommitError as error:

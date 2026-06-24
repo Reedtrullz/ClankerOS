@@ -156,26 +156,30 @@ the run for operator review.
 
 ```bash
 python3 -m agent_os.cli review run_...
-python3 -m agent_os.cli coder-worktree-commit-approval run_... \
+python3 -m agent_os.cli coder-commit-request run_... \
   --requested-by operator \
-  --note "Promote reviewed coder worktree run"
-python3 -m agent_os.cli approve-coder-worktree-commit coder_worktree_commit_approval_... \
+  --message "Implement bounded change from approved worktree run" \
+  --note "Request local commit after review"
+python3 -m agent_os.cli approve-coder-commit coder_worktree_commit_approval_... \
   --decided-by operator \
-  --note "Approved local commit promotion"
-python3 -m agent_os.cli promote-coder-worktree-commit coder_worktree_commit_approval_... \
-  --committed-by operator
+  --note "Approved local commit"
+python3 -m agent_os.cli commit-coder-worktree run_... \
+  --message "Implement bounded change from approved worktree run"
+python3 -m agent_os.cli github-handoff effect_...
 python3 -m agent_os.cli dashboard
 ```
 
 Use this only after the completed coder worktree run has been reviewed and the
-diff is acceptable. The approval request is tied to the reviewed run evidence
-and current diff hash. Promotion re-checks HEAD, diff, changed files, and the
-recorded verifier before creating one local commit in the isolated worktree
-branch.
+diff is acceptable. The commit request is tied to the reviewed run evidence,
+current source hash, current diff hash, allowed files, branch, and explicit
+message. `commit-coder-worktree` re-checks HEAD, branch, changed files,
+outside files, and the recorded verifier before creating one local commit in
+the isolated worktree branch.
 
-Boundary: request and approval do not commit. Promotion creates no push, PR,
-deploy, provider call, network action, merge into the original checkout, or
-external mutation.
+Boundary: request and approval do not stage or commit. Commit creates no push,
+PR, deploy, provider call, network action, merge into the original checkout, or
+external mutation. `github-handoff` only writes local push and draft-PR
+instructions for a later operator action.
 
 ## Review Latest Capability Result Without Activation
 

@@ -251,50 +251,65 @@ failures mark the run `failed`. Completed approval/plan pairs are not rerun
 unless `--rerun` is provided. The command does not commit, push, deploy, call
 providers, or intentionally use the network.
 
-`coder-worktree-commit-approval <run_id>` is the next gate after a successful
-coder worktree run has been included in `review <source_run_id>`. It refuses
-unreviewed, failed, blocked, outside-file, no-change, missing-worktree, or
-stale-diff runs. For eligible reviewed runs it records the current worktree
-HEAD, source `run.json` hash, `diff.patch` hash, changed-file list, and review
-path, then writes:
+`coder-commit-request <coder_worktree_run_id> --requested-by <id> --message
+<commit_message> --note <note>` is the next gate after a successful coder
+worktree run has been included in `review <coder_worktree_run_id>` or the
+source delegation run review. It refuses unreviewed, failed, blocked,
+outside-file, no-change, missing-worktree, unsafe-git-state, stale-source, or
+failed-verification runs unless the operator explicitly used
+`--allow-unverified` at request time. For eligible reviewed runs it records the
+current worktree HEAD, source `run.json` hash, `diff.patch` hash, changed-file
+list, review path, branch, and commit message, then writes both compatibility
+and modern request artifacts. The modern operator artifacts are:
 
 ```text
-.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/coder_worktree_commit_approval_request.json
-.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/coder_worktree_commit_approval_request.md
+.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/coder_commit_request.json
+.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/coder_commit_request.md
 ```
 
 The request is idempotent for the same run evidence and diff hash unless
-`--force-new` is used. It does not create a commit, push, deploy, call
-providers, or use the network.
+`--force-new` is used. It does not stage files, create a commit, push, create a
+PR, deploy, call providers, or use the network.
 
-`approve-coder-worktree-commit <commit_approval_id>` marks that dedicated
-commit approval row approved and writes:
-
-```text
-.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/coder_worktree_commit_approval_decision.json
-.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/coder_worktree_commit_approval_decision.md
-```
-
-`promote-coder-worktree-commit <commit_approval_id>` is the only command in
-the coder worktree path that creates a local git commit. It requires an
-approved commit-promotion row, re-checks the source artifact hashes, worktree
-HEAD, exact diff, and changed-file list, reruns the recorded verifier, stages
-the reviewed changed files, and creates one commit in the isolated coder
-worktree branch. It writes:
+`approve-coder-commit <commit_request_id> --decided-by <id> --note <note>`
+marks that dedicated request approved and writes:
 
 ```text
-.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/coder_worktree_commit.json
-.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/commit_verification_command.txt
-.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/commit_verification_stdout.txt
-.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/commit_verification_stderr.txt
-.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/commit_stdout.txt
-.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/commit_stderr.txt
-.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/post_commit_status.txt
+.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/coder_commit_decision.json
+.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/coder_commit_decision.md
 ```
 
-Stale evidence or failed verification blocks promotion and writes blocked
-commit evidence without creating a commit. Promotion is idempotent after a
-commit and never pushes, deploys, calls providers, or mutates external systems.
+The approval decision does not stage files, create a commit, push, create a
+PR, deploy, call providers, or use the network.
+
+`commit-coder-worktree <coder_worktree_run_id> --message <commit_message>` is
+the only command in the coder worktree path that stages files and creates a
+local git commit. It requires an approved matching commit request, blocks if the
+source run hash changed, the branch or HEAD moved, outside files appeared, the
+changed file list differs, the commit message differs, or the verifier no
+longer passes. Use `--use-approved-message` only when the operator wants the
+message stored on the approved request. The command stages only reviewed
+allowed files and creates one commit in the isolated coder worktree branch. It
+writes:
+
+```text
+.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/commit.json
+.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/commit.md
+.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/pre_commit_status.txt
+.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/post_commit_status.txt
+.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/committed_diff.patch
+.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/committed_files.json
+```
+
+The local commit records a committed `local_git_commit` effect. Pass the
+printed `effect_id` to `github-handoff <effect_id>` to write local push and
+draft-PR instructions. The handoff still takes `network_actions_taken=0` and
+does not push, create a PR, deploy, call providers, or mutate external
+systems. Compatibility commands remain available as
+`coder-worktree-commit-approval`, `approve-coder-worktree-commit`, and
+`promote-coder-worktree-commit`, but the shorter `coder-commit-request`,
+`approve-coder-commit`, and `commit-coder-worktree` names are the primary
+operator flow.
 `record-delegation-result` remains the manual ingestion path for
 operator-supplied output.
 

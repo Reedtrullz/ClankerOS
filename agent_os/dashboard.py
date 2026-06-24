@@ -370,6 +370,8 @@ from agent_os.handoff_review import (
 )
 from agent_os.coder_prep import render_coder_prep_dashboard_lines
 from agent_os.coder_worktree_execution import (
+    render_coder_commit_request_dashboard_lines,
+    render_coder_local_commit_dashboard_lines,
     render_coder_worktree_approval_dashboard_lines,
     render_coder_worktree_commit_dashboard_lines,
     render_coder_worktree_run_dashboard_lines,
@@ -2084,6 +2086,8 @@ def generate_static_dashboard(root: Path) -> Path:
     coder_worktree_approval_lines = render_coder_worktree_approval_dashboard_lines(root)
     coder_worktree_run_lines = render_coder_worktree_run_dashboard_lines(root)
     coder_worktree_commit_lines = render_coder_worktree_commit_dashboard_lines(root)
+    coder_commit_request_lines = render_coder_commit_request_dashboard_lines(root)
+    coder_local_commit_lines = render_coder_local_commit_dashboard_lines(root)
     pending_coder_worktree_commit_lines = [
         line for line in coder_worktree_commit_lines if "status=pending_operator_approval" in line
     ]
@@ -2119,15 +2123,16 @@ def generate_static_dashboard(root: Path) -> Path:
     lines.extend(["", "### Primary Implementation Handoff Workflow", ""])
     lines.extend(
         [
-            "- operator_path: delegate -> context-pack -> run-delegation -> implementation-handoff -> coder-prep -> coder-worktree-plan -> coder-worktree-approval -> approve-coder-worktree -> run-coder-worktree -> review -> coder-worktree-commit-approval -> approve-coder-worktree-commit -> promote-coder-worktree-commit -> dashboard",
+            "- operator_path: delegate -> context-pack -> run-delegation -> implementation-handoff -> coder-prep -> coder-worktree-plan -> coder-worktree-approval -> approve-coder-worktree -> run-coder-worktree -> review -> coder-commit-request -> approve-coder-commit -> commit-coder-worktree -> review -> dashboard -> github-handoff",
             "- inspect_command: python3 -m agent_os.cli implementation-handoff <delegation_id>",
             "- prep_command: python3 -m agent_os.cli coder-prep <delegation_id>",
             "- worktree_plan_command: python3 -m agent_os.cli coder-worktree-plan <delegation_id>",
             "- approval_command: python3 -m agent_os.cli coder-worktree-approval <delegation_id> --requested-by operator --note \"...\"",
             "- run_command: python3 -m agent_os.cli run-coder-worktree <delegation_id> --command \"python3 scripts/local_change.py\" --verify",
-            "- commit_approval_command: python3 -m agent_os.cli coder-worktree-commit-approval <run_id> --requested-by operator --note \"...\"",
-            "- commit_decision_command: python3 -m agent_os.cli approve-coder-worktree-commit <commit_approval_id> --decided-by operator --note \"...\"",
-            "- commit_promotion_command: python3 -m agent_os.cli promote-coder-worktree-commit <commit_approval_id> --committed-by operator",
+            "- commit_request_command: python3 -m agent_os.cli coder-commit-request <coder_worktree_run_id> --requested-by operator --message \"...\" --note \"...\"",
+            "- commit_decision_command: python3 -m agent_os.cli approve-coder-commit <commit_request_id> --decided-by operator --note \"...\"",
+            "- commit_command: python3 -m agent_os.cli commit-coder-worktree <coder_worktree_run_id> --message \"...\"",
+            "- github_handoff_command: python3 -m agent_os.cli github-handoff <effect_id>",
             "- non_claims: handoff/coder-prep/worktree-plan/approval readback does not edit source, run commands, create worktrees, commit, push, deploy, call providers, or use the network.",
             "- current_handoffs:",
         ]
@@ -2153,6 +2158,18 @@ def generate_static_dashboard(root: Path) -> Path:
     lines.extend(
         [f"  {line}" for line in coder_worktree_run_lines]
         if coder_worktree_run_lines
+        else ["  - none"]
+    )
+    lines.append("- current_coder_commit_requests:")
+    lines.extend(
+        [f"  {line}" for line in coder_commit_request_lines]
+        if coder_commit_request_lines
+        else ["  - none"]
+    )
+    lines.append("- current_coder_local_commits:")
+    lines.extend(
+        [f"  {line}" for line in coder_local_commit_lines]
+        if coder_local_commit_lines
         else ["  - none"]
     )
     lines.append("- current_coder_worktree_commit_promotions:")
@@ -2349,6 +2366,12 @@ def generate_static_dashboard(root: Path) -> Path:
     lines.extend(["", "### Approved Coder Worktree Runs", ""])
     lines.extend(coder_worktree_run_lines if coder_worktree_run_lines else ["- none"])
 
+    lines.extend(["", "### Coder Commit Requests", ""])
+    lines.extend(coder_commit_request_lines if coder_commit_request_lines else ["- none"])
+
+    lines.extend(["", "### Coder Local Commits", ""])
+    lines.extend(coder_local_commit_lines if coder_local_commit_lines else ["- none"])
+
     lines.extend(["", "### Coder Worktree Commit Promotions", ""])
     lines.extend(coder_worktree_commit_lines if coder_worktree_commit_lines else ["- none"])
 
@@ -2362,8 +2385,8 @@ def generate_static_dashboard(root: Path) -> Path:
     lines.extend(["", "### Next Recommended Action", ""])
     if pending_coder_worktree_commit_lines:
         lines.append(
-            "- Review pending coder worktree commit promotion and decide with "
-            "`python3 -m agent_os.cli approve-coder-worktree-commit <commit_approval_id> "
+            "- Review pending coder commit request and decide with "
+            "`python3 -m agent_os.cli approve-coder-commit <commit_request_id> "
             "--decided-by operator --note \"...\"`."
         )
     elif pending_approvals:

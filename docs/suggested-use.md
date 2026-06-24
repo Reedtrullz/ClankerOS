@@ -135,12 +135,15 @@ bounded future worktree/run plan without creating the worktree. It writes
 `operator_approval_required`, keeps `dispatch_ready=false`, and reports zero
 task rows, runs, routing decisions, worktrees, approvals, source edits,
 command reruns, network actions, provider calls, and external mutations.
-Use `coder-worktree-commit-approval` only after a completed coder worktree run
-has appeared in a `review` packet and its diff is acceptable. The commit
-approval request still does not commit. `promote-coder-worktree-commit` is the
-separate final local step: it re-checks reviewed evidence and verifier output
-before creating one commit in the isolated worktree branch, without pushing,
-deploying, calling providers, or mutating external systems.
+Use `coder-commit-request` only after a completed coder worktree run has
+appeared in a `review` packet and its diff is acceptable. The request still
+does not stage or commit. `approve-coder-commit` records the explicit operator
+decision without staging or committing. `commit-coder-worktree` is the separate
+local step: it re-checks reviewed evidence, branch/HEAD, changed files, outside
+files, commit message, and verifier output before creating one commit in the
+isolated worktree branch. Use the printed `effect_id` with `github-handoff`
+only when you want local push and draft-PR instructions. None of these commands
+push, deploy, call providers, or mutate external systems.
 
 ## Good Starting Prompts
 

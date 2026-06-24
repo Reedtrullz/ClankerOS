@@ -43,6 +43,9 @@ def create_github_handoff(
         raise ValueError("local commit evidence required")
 
     commit_sha = effect.result_json.get("commit_sha")
+    parent_commit_sha = effect.result_json.get("parent_commit_sha") or effect.proposed_payload.get(
+        "base_commit"
+    )
     branch_name = effect.result_json.get("branch_name") or effect.proposed_payload.get(
         "branch_name"
     )
@@ -85,8 +88,17 @@ def create_github_handoff(
         "project_id": effect.project_id,
         "run_id": effect.run_id,
         "task_id": effect.task_id,
+        "worktree_path": effect.result_json.get("worktree_path")
+        or effect.proposed_payload.get("worktree_path"),
         "branch_name": branch_name,
         "commit_sha": commit_sha,
+        "parent_commit_sha": parent_commit_sha,
+        "committed_files": effect.result_json.get("committed_files")
+        or effect.result_json.get("changed_files")
+        or effect.proposed_payload.get("changed_files", []),
+        "diff_path": effect.result_json.get("diff_path")
+        or effect.proposed_payload.get("committed_diff_path")
+        or effect.proposed_payload.get("diff_path"),
         "remote_name": remote,
         "remote_url": remote_url,
         "base_branch": base,
@@ -119,6 +131,10 @@ def create_github_handoff(
                 f"- task_id: {effect.task_id}",
                 f"- branch: {branch_name}",
                 f"- commit: {commit_sha}",
+                f"- parent_commit: {parent_commit_sha or 'unknown'}",
+                f"- worktree: {result_json['worktree_path'] or 'unknown'}",
+                f"- diff: {result_json['diff_path'] or 'unknown'}",
+                f"- committed_files: {','.join(result_json['committed_files']) or 'none'}",
                 f"- evidence: {effect.evidence_path}",
                 "",
                 "## Operator Checklist",

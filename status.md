@@ -1,31 +1,40 @@
 # Status
 
-## 2026-06-24 Reviewed Coder Worktree Commit Promotion Gate
+## 2026-06-24 First-Class Coder Commit Request And Local Handoff Gate
 
-- Added the post-review commit-promotion path for completed coder worktree
-  runs: `coder-worktree-commit-approval <run_id>`,
-  `approve-coder-worktree-commit <commit_approval_id>`, and
-  `promote-coder-worktree-commit <commit_approval_id> --committed-by <id>`.
-- Commit approval requires a completed bounded coder worktree run that appears
-  in the source run review packet. It captures the reviewed run hash, diff
-  hash, current worktree HEAD, changed files, review path, and worktree branch,
-  then writes `coder_worktree_commit_approval_request.json/.md` without
-  committing.
-- Commit promotion requires an approved commit gate, re-checks source artifact
-  hashes, worktree HEAD, exact diff, changed files, and the recorded verifier,
-  then creates one local git commit in the isolated coder worktree branch.
-  Stale evidence or failed verification blocks promotion and writes
-  `coder_worktree_commit.json` with `status=blocked`.
+- Updated the post-review coder worktree commit gate to the primary operator
+  flow: `coder-commit-request <coder_worktree_run_id> --message <msg>`,
+  `approve-coder-commit <commit_request_id>`, and
+  `commit-coder-worktree <coder_worktree_run_id> --message <msg>`.
+- Commit requests require a completed bounded coder worktree run, review
+  evidence, current changes still within `allowed_files`, successful command
+  and verification exits unless explicitly allowed, a readable git worktree,
+  actual changes, and no outside files. Requests write
+  `coder_commit/coder_commit_request.json/.md` without staging, committing,
+  pushing, deploying, creating a PR, calling providers, or using the network.
+- Commit approval writes `coder_commit/coder_commit_decision.json/.md` with
+  explicit zero-action counters. It still does not stage or commit.
+- `commit-coder-worktree` requires the approved request, matching source hash,
+  matching commit message unless `--use-approved-message` is used, unchanged
+  branch/HEAD, no merge/rebase/cherry-pick state, no outside files, current
+  changed files matching the approved set, and verifier success. It stages
+  only approved files, creates one local commit in the isolated worktree, writes
+  `coder_commit/commit.json/.md`, status snapshots, committed diff, committed
+  file list, and records a committed local effect for `github-handoff`.
 - `review`, `dashboard`, `inbox`, and `delegation-result` now surface coder
-  worktree commit approval/promotion status, commit SHA, evidence path,
-  failure class, run id, worktree path, and changed files.
-- Proof boundary: request and approval do not commit. Promotion does not push,
-  deploy, call providers, use the network intentionally, merge into the
-  original checkout, or mutate external systems.
+  commit requests, local commits, effect ids, and GitHub handoff availability
+  while retaining compatibility output for older promotion names.
+- Proof boundary: execution approval is not commit approval; commit approval is
+  not push/PR/deploy approval. The new flow never pushes, creates a PR, deploys,
+  calls providers, uses the network intentionally, merges into the original
+  checkout, or mutates external systems.
 - Verification:
-  - `python3 -m py_compile agent_os/coder_worktree_execution.py agent_os/cli.py agent_os/run_review.py agent_os/dashboard.py agent_os/steering.py`
-  - `python3 -m pytest tests/test_first_milestone.py -q -k 'coder_worktree_commit_promotion'`
-  - `python3 -m pytest tests/test_first_milestone.py -q -k 'coder_worktree_approval_and_run_capture_bounded_evidence or run_coder_worktree_blocks_hash_mismatch_unsafe_commands_and_file_violations or coder_worktree_commit_promotion'`
+  - `python3 -m py_compile agent_os/coder_worktree_execution.py agent_os/cli.py agent_os/github_handoff.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'coder_commit_request_alias or commit_coder_worktree_creates or coder_commit_request_and_commit_block'` -> `3 passed, 482 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'coder_worktree_commit_promotion or coder_commit_request_alias or commit_coder_worktree_creates or coder_commit_request_and_commit_block'` -> `5 passed, 480 deselected`
+  - `python3 -m agent_os.cli dashboard` -> regenerated `docs/dashboard.md`
+  - `python3 -m pytest tests/test_first_milestone.py -q` -> `485 passed`
+  - `git diff --check`
 
 ## 2026-06-24 Approved Coder Worktree Execution Gate
 

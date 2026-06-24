@@ -528,55 +528,74 @@ run still does not commit, push, deploy, call providers, or intentionally use
 the network. The next action is to review the worktree evidence and use a
 separate commit-approval path only if the existing diff is acceptable.
 
-## 12. Promote A Reviewed Coder Worktree Commit
+## 12. Request, Approve, And Create A Local Coder Worktree Commit
 
-First write or refresh the review packet for the source delegation run:
+First write or refresh the review packet for the coder worktree run:
 
 ```bash
-python3 -m agent_os.cli review <source_run_id>
+python3 -m agent_os.cli review <coder_worktree_run_id>
 ```
 
-Then request commit approval for the completed coder worktree run:
+Then request a local commit for the completed coder worktree run:
 
 ```bash
-python3 -m agent_os.cli coder-worktree-commit-approval <coder_worktree_run_id> \
+python3 -m agent_os.cli coder-commit-request <coder_worktree_run_id> \
   --requested-by operator \
-  --note "Promote reviewed coder worktree run"
+  --message "Implement bounded change from approved worktree run" \
+  --note "Request local commit after review"
 ```
 
 Expected output includes:
 
 ```text
-coder_worktree_commit_approval: coder_worktree_commit_approval_...
-commit_approval_id: coder_worktree_commit_approval_...
-run_id: run_...
+coder_commit_request: coder_worktree_commit_approval_...
+commit_request_id: coder_worktree_commit_approval_...
+coder_worktree_run_id: run_...
 status: pending_operator_approval
 commit_created: false
 push_created: false
+pr_created: false
 deploy_created: false
 ```
 
-Approve the local commit-promotion gate:
+Approve the local commit request:
 
 ```bash
-python3 -m agent_os.cli approve-coder-worktree-commit <commit_approval_id> \
+python3 -m agent_os.cli approve-coder-commit <commit_request_id> \
   --decided-by operator \
-  --note "Approved local commit promotion"
+  --note "Approved local commit"
 ```
 
-Promote only after approval:
+Create the local worktree commit only after approval:
 
 ```bash
-python3 -m agent_os.cli promote-coder-worktree-commit <commit_approval_id> \
-  --committed-by operator
+python3 -m agent_os.cli commit-coder-worktree <coder_worktree_run_id> \
+  --message "Implement bounded change from approved worktree run"
 ```
 
-Promotion re-checks the reviewed run hash, diff hash, worktree HEAD, exact
-diff, changed files, and verifier output before creating one local git commit
-inside the isolated coder worktree branch. It is idempotent after the commit.
-Stale evidence or failed verification blocks promotion and writes blocked
-evidence without committing. It does not push, deploy, call providers, or
-mutate external systems.
+The commit command re-checks the approved request hash, reviewed run hash,
+branch/HEAD, changed files, outside files, commit message, and verifier state
+before staging only allowed files and creating one local git commit inside the
+isolated coder worktree branch. It is idempotent after the commit. Stale
+evidence, changed files outside the approved set, failed verification, or a
+mismatched message blocks without committing.
+
+The commit evidence lives in:
+
+```text
+.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/commit.json
+.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/committed_diff.patch
+.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/committed_files.json
+```
+
+Use the printed `effect_id` for an optional local GitHub handoff packet:
+
+```bash
+python3 -m agent_os.cli github-handoff <effect_id>
+```
+
+None of these commands push, create a PR, deploy, call providers, or mutate
+external systems.
 
 ## 13. Propose Memory From The Result
 
