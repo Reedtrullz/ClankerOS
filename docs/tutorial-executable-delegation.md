@@ -316,6 +316,7 @@ large snippets into the handoff.
 python3 -m agent_os.cli delegation-result <delegation_id>
 python3 -m agent_os.cli implementation-handoff <delegation_id>
 python3 -m agent_os.cli coder-prep <delegation_id>
+python3 -m agent_os.cli coder-worktree-plan <delegation_id>
 python3 -m agent_os.cli review <run_id>
 python3 -m agent_os.cli inbox
 python3 -m agent_os.cli dashboard
@@ -328,11 +329,14 @@ the handoff JSON and prints readability, schema/kind, returned-file
 validation, top ranked files, test hints, scout relevant files, and whether
 large snippets were embedded. `coder-prep` consumes the handoff Markdown and
 writes a bounded future coding packet without editing source files or
-dispatching work. `review <run_id>` includes `## Scout Context Pack`,
-`## Implementation Handoff`, and `## Coder Prep` sections when a prep packet
-exists. The dashboard includes `### Subagent / Scout Work`,
-`### Implementation Handoffs`, and `### Coder Prep Packets` sections with
-compact scout, handoff, and prep health.
+dispatching work. `coder-worktree-plan` consumes `coder_prep.md` and writes an
+approval-gated future worktree/run packet without creating a worktree or
+requesting approval. `review <run_id>` includes `## Scout Context Pack`,
+`## Implementation Handoff`, `## Coder Prep`, and `## Coder Worktree Plan`
+sections when those packets exist. The dashboard includes
+`### Subagent / Scout Work`, `### Implementation Handoffs`,
+`### Coder Prep Packets`, and `### Coder Worktree Plans` sections with compact
+scout, handoff, prep, and future-worktree health.
 
 ## 9. Prepare A Bounded Coder Plan
 
@@ -374,7 +378,52 @@ runs, routing decisions, worktrees, effects, approvals, source edits, command
 reruns, commits, pushes, deploys, provider calls, network actions, or external
 mutations.
 
-## 10. Propose Memory From The Result
+## 10. Prepare An Approval-Gated Worktree Plan
+
+Use this command only after the coder-prep packet looks bounded enough for a
+future implementation run:
+
+```bash
+python3 -m agent_os.cli coder-worktree-plan <delegation_id>
+```
+
+Expected output includes:
+
+```text
+coder_worktree_plan: coder_worktree_plan
+delegation_id: <delegation_id>
+source_coder_prep_md: .clanker/delegations/<delegation_id>/runs/<run_id>/coder_prep/coder_prep.md
+source_coder_prep_markdown_consumed: true
+artifact: .clanker/delegations/<delegation_id>/runs/<run_id>/coder_prep/coder_worktree_plan.json
+markdown: .clanker/delegations/<delegation_id>/runs/<run_id>/coder_prep/coder_worktree_plan.md
+approval_gate: operator_approval_required
+dispatch_ready: false
+worktree_created: 0
+task_rows_created: 0
+runs_created: 0
+routing_decisions_created: 0
+worktrees_created: 0
+effects_created: 0
+approval_requests_created: 0
+source_edits: 0
+commands_rerun: 0
+provider_calls_taken_by_clankeros: 0
+network_actions_taken: 0
+external_mutations_taken: 0
+```
+
+The JSON packet records the source prep hash, allowed files, candidate tests,
+approval gate, proposed branch/path, and a future explicit
+`run-goal --isolation worktree` command shape. It is idempotent for the same
+`coder_prep.md` hash; a second run prints
+`coder_worktree_plan: already_recorded coder_worktree_plan`.
+
+Proof boundary: this is a plan artifact only. It does not create task rows,
+runs, routing decisions, worktrees, effects, approvals, source edits, command
+reruns, commits, pushes, deploys, provider calls, network actions, or external
+mutations.
+
+## 11. Propose Memory From The Result
 
 Run the delegation with memory proposal enabled:
 

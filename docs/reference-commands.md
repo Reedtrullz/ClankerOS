@@ -100,6 +100,7 @@ python3 -m agent_os.cli run-delegation <delegation_id>
 python3 -m agent_os.cli delegation-result <delegation_id>
 python3 -m agent_os.cli implementation-handoff <delegation_id>
 python3 -m agent_os.cli coder-prep <delegation_id>
+python3 -m agent_os.cli coder-worktree-plan <delegation_id>
 python3 -m agent_os.cli record-delegation-result <delegation_id> --summary "Relevant files identified." --output-json '{"files":["agent_os/cli.py"],"findings":["CLI parser lives in agent_os/cli.py."],"relevant_files":["agent_os/cli.py"]}'
 ```
 
@@ -168,6 +169,26 @@ idempotent for the same handoff hash and reports
 `commands_rerun=0`, `network_actions_taken=0`, and
 `external_mutations_taken=0`. `review` and `dashboard` surface existing coder
 prep packets, but the command does not dispatch work or edit files.
+
+`coder-worktree-plan <delegation_id>` consumes the readable `coder_prep.md`
+and writes an approval-gated future worktree/run packet beside the prep files:
+
+```text
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_prep/coder_worktree_plan.json
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_prep/coder_worktree_plan.md
+```
+
+The worktree plan records the source prep Markdown hash, bounded allowed files,
+candidate tests, proposed branch/path, future explicit
+`run-goal --isolation worktree` shape, and an approval gate with
+`status=operator_approval_required` and `dispatch_ready=false`. It is
+idempotent for the same `coder_prep.md` hash and reports
+`task_rows_created=0`, `runs_created=0`, `routing_decisions_created=0`,
+`worktrees_created=0`, `approval_requests_created=0`, `source_edits=0`,
+`commands_rerun=0`, `provider_calls_taken_by_clankeros=0`,
+`network_actions_taken=0`, and `external_mutations_taken=0`. It does not
+create a worktree, run commands, request approval, dispatch work, edit files,
+commit, push, deploy, call providers, or mutate external systems.
 `record-delegation-result` remains the manual ingestion path for
 operator-supplied output.
 

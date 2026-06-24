@@ -111,8 +111,16 @@ Core layers for the bootstrap:
   risks, and an operator-review-required future run plan. It is idempotent for
   the same handoff hash and creates no task rows, runs, routing decisions,
   worktrees, effects, approvals, source edits, command reruns, network actions,
-  provider calls, or external mutations. Run review and dashboard output also
-  surface existing coder prep packets. Adapters run from the system root by default and can opt into
+  provider calls, or external mutations. The
+  `coder-worktree-plan <delegation_id>` command consumes the readable
+  `coder_prep.md` and writes sibling `coder_worktree_plan.json` and Markdown
+  packets with the source prep hash, bounded files, proposed branch/path,
+  future explicit worktree-run shape, and an operator-approval-required gate.
+  It is idempotent for the same prep Markdown hash and creates no task rows,
+  runs, routing decisions, worktrees, effects, approvals, source edits,
+  command reruns, network actions, provider calls, or external mutations. Run
+  review and dashboard output also surface existing coder prep packets and
+  coder worktree plans. Adapters run from the system root by default and can opt into
   `--working-directory project_root` for repo scouting. It supports shell
   adapters only. ClankerOS records
   `provider_calls_taken_by_clankeros=0`, `external_mutations_taken=0`, and
@@ -157,11 +165,12 @@ Core layers for the bootstrap:
   deploy, or mutate external systems.
 - Operator cockpit: the dashboard starts by making the implementation-handoff
   workflow explicit: `delegate -> context-pack -> run-delegation ->
-  implementation-handoff -> coder-prep -> review -> dashboard`, then surfaces
-  current handoffs and coder-prep packets before the broader goal, task,
-  approval, effect, verification, routing, steering, memory, and skill
-  sections. Legacy capability proof-ladder records remain available in lower
-  advanced sections, but they are not the default operator path.
+  implementation-handoff -> coder-prep -> coder-worktree-plan -> review ->
+  dashboard`, then surfaces current handoffs, coder-prep packets, and coder
+  worktree plans before the broader goal, task, approval, effect,
+  verification, routing, steering, memory, and skill sections. Legacy
+  capability proof-ladder records remain available in lower advanced sections,
+  but they are not the default operator path.
 - Operator approval effect proposals: approved local
   `operator_approval_requests` rows can be converted into idempotent
   `proposed` effect records for external-decision and capability surfaces

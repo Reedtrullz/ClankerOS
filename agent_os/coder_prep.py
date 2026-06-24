@@ -115,6 +115,7 @@ def render_coder_prep_cli_lines(root: Path, result: CoderPrepResult) -> list[str
         f"markdown: {result.markdown_path.relative_to(root.resolve())}",
         f"allowed_files: {','.join(result.allowed_files)}",
         "run_plan: operator_review_required",
+        f"coder_worktree_plan_command: python3 -m agent_os.cli coder-worktree-plan {result.delegation_id}",
         "task_rows_created: 0",
         "runs_created: 0",
         "routing_decisions_created: 0",
@@ -141,6 +142,8 @@ def render_coder_prep_dashboard_lines(root: Path) -> list[str]:
             f"source_handoff_md={source.get('handoff_md', 'none')} "
             f"allowed_files={','.join(bounded_task.get('allowed_files', [])[:5]) or 'none'} "
             f"run_plan={packet.get('run_plan', {}).get('next_recommended_action', 'unknown')} "
+            "coder_worktree_plan_command=python3 -m agent_os.cli coder-worktree-plan "
+            f"{source.get('delegation_id', 'unknown')} "
             f"task_rows_created={safety.get('task_rows_created', 'unknown')} "
             f"source_edits={safety.get('source_edits_taken', 'unknown')} "
             f"commands_rerun={safety.get('commands_rerun', 'unknown')} "
@@ -174,6 +177,8 @@ def render_coder_prep_review_lines(root: Path, delegation_id: str, run_id: str) 
         "  - allowed_files: "
         f"{','.join(bounded_task.get('allowed_files', [])[:5]) or 'none'}",
         f"  - run_plan: {packet.get('run_plan', {}).get('next_recommended_action', 'unknown')}",
+        "  - coder_worktree_plan_command: "
+        f"python3 -m agent_os.cli coder-worktree-plan {delegation_id}",
         f"  - task_rows_created: {safety.get('task_rows_created', 'unknown')}",
         f"  - source_edits: {safety.get('source_edits_taken', 'unknown')}",
         f"  - commands_rerun: {safety.get('commands_rerun', 'unknown')}",

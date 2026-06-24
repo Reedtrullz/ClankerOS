@@ -3129,6 +3129,10 @@ def test_implementation_handoff_reports_missing_for_unrun_delegation(
     output = capsys.readouterr().out
     assert "coder_prep_failed: implementation handoff is not readable" in output
 
+    assert main(["--root", str(tmp_path), "coder-worktree-plan", delegation_id]) == 1
+    output = capsys.readouterr().out
+    assert "coder_worktree_plan_failed: coder prep is not readable" in output
+
 
 def test_default_cli_help_prioritizes_handoff_workflow_and_demotes_ladder() -> None:
     parser = build_parser()
@@ -3138,6 +3142,7 @@ def test_default_cli_help_prioritizes_handoff_workflow_and_demotes_ladder() -> N
     assert "implementation\nhandoff" in help_text
     assert "implementation-handoff" in help_text
     assert "coder-prep" in help_text
+    assert "coder-worktree-plan" in help_text
     assert "run-delegation" in help_text
     assert "Legacy proof-ladder" in help_text
     assert "capability-activation-tasks" not in help_text
@@ -3307,6 +3312,7 @@ def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
     assert "allowed_files: " in prep_output
     assert "agent_os/delegation_runner.py" in prep_output
     assert "run_plan: operator_review_required" in prep_output
+    assert f"coder_worktree_plan_command: python3 -m agent_os.cli coder-worktree-plan {delegation_id}" in prep_output
     assert "task_rows_created: 0" in prep_output
     assert "runs_created: 0" in prep_output
     assert "routing_decisions_created: 0" in prep_output
@@ -3344,6 +3350,62 @@ def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
     rerun_output = capsys.readouterr().out
     assert "coder_prep: already_recorded" in rerun_output
     assert _table_counts(tmp_path, state_tables) == before_counts
+
+    assert main(["--root", str(tmp_path), "coder-worktree-plan", delegation_id]) == 0
+    worktree_plan_output = capsys.readouterr().out
+    assert "coder_worktree_plan: " in worktree_plan_output
+    assert f"delegation_id: {delegation_id}" in worktree_plan_output
+    assert "source_coder_prep_md: .clanker/delegations/" in worktree_plan_output
+    assert "source_coder_prep_markdown_consumed: true" in worktree_plan_output
+    assert "allowed_files: " in worktree_plan_output
+    assert "agent_os/delegation_runner.py" in worktree_plan_output
+    assert "approval_gate: operator_approval_required" in worktree_plan_output
+    assert "dispatch_ready: false" in worktree_plan_output
+    assert "worktree_created: 0" in worktree_plan_output
+    assert "task_rows_created: 0" in worktree_plan_output
+    assert "runs_created: 0" in worktree_plan_output
+    assert "routing_decisions_created: 0" in worktree_plan_output
+    assert "worktrees_created: 0" in worktree_plan_output
+    assert "effects_created: 0" in worktree_plan_output
+    assert "approval_requests_created: 0" in worktree_plan_output
+    assert "source_edits: 0" in worktree_plan_output
+    assert "commands_rerun: 0" in worktree_plan_output
+    assert "provider_calls_taken_by_clankeros: 0" in worktree_plan_output
+    assert "network_actions_taken: 0" in worktree_plan_output
+    assert "external_mutations_taken: 0" in worktree_plan_output
+    worktree_plan_artifact_line = next(
+        line for line in worktree_plan_output.splitlines() if line.startswith("artifact: ")
+    )
+    worktree_plan_artifact = tmp_path / worktree_plan_artifact_line.split(": ", 1)[1]
+    worktree_plan_payload = json.loads(worktree_plan_artifact.read_text(encoding="utf-8"))
+    assert worktree_plan_payload["kind"] == "coder_worktree_run_plan"
+    assert worktree_plan_payload["source"]["coder_prep_md"].endswith("coder_prep.md")
+    assert worktree_plan_payload["source"]["coder_prep_md_sha256"]
+    assert "agent_os/delegation_runner.py" in worktree_plan_payload["bounded_coding_task"]["allowed_files"]
+    assert worktree_plan_payload["source_coder_prep_markdown_consumed"] is True
+    assert worktree_plan_payload["approval_gate"]["status"] == "operator_approval_required"
+    assert worktree_plan_payload["approval_gate"]["approval_request_created"] is False
+    assert worktree_plan_payload["future_run_plan"]["status"] == "operator_approval_required"
+    assert worktree_plan_payload["future_run_plan"]["dispatch_ready"] is False
+    assert worktree_plan_payload["proposed_worktree"]["status"] == "not_created"
+    assert worktree_plan_payload["proposed_worktree"]["worktree_created"] is False
+    assert worktree_plan_payload["dispatch_ready"] is False
+    assert worktree_plan_payload["safety"]["source_edits_taken"] == 0
+    assert worktree_plan_payload["safety"]["task_rows_created"] == 0
+    assert worktree_plan_payload["safety"]["runs_created"] == 0
+    assert worktree_plan_payload["safety"]["routing_decisions_created"] == 0
+    assert worktree_plan_payload["safety"]["worktrees_created"] == 0
+    assert worktree_plan_payload["safety"]["effects_created"] == 0
+    assert worktree_plan_payload["safety"]["approval_requests_created"] == 0
+    assert worktree_plan_payload["safety"]["commands_rerun"] == 0
+    assert worktree_plan_payload["safety"]["provider_calls_taken_by_clankeros"] == 0
+    assert worktree_plan_payload["safety"]["network_actions_taken"] == 0
+    assert worktree_plan_payload["safety"]["external_mutations_taken"] == 0
+    assert _table_counts(tmp_path, state_tables) == before_counts
+    assert main(["--root", str(tmp_path), "coder-worktree-plan", delegation_id]) == 0
+    rerun_worktree_plan_output = capsys.readouterr().out
+    assert "coder_worktree_plan: already_recorded" in rerun_worktree_plan_output
+    assert _table_counts(tmp_path, state_tables) == before_counts
     assert subprocess.run(
         ["git", "status", "--short"],
         cwd=repo_path,
@@ -3371,6 +3433,12 @@ def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
     assert "kind: implementation_context_handoff" in review
     assert "snippets_embedded: false" in review
     assert "scout_relevant_files:" in review
+    assert "## Coder Prep" in review
+    assert "coder_worktree_plan_command: python3 -m agent_os.cli coder-worktree-plan" in review
+    assert "## Coder Worktree Plan" in review
+    assert "kind: coder_worktree_run_plan" in review
+    assert "approval_gate: operator_approval_required" in review
+    assert "worktrees_created: 0" in review
 
     dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
     assert "### Subagent / Scout Work" in dashboard
@@ -3387,6 +3455,11 @@ def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
     assert "coder_prep_command=python3 -m agent_os.cli coder-prep" in dashboard
     assert "### Coder Prep Packets" in dashboard
     assert prep_payload["prep_id"] in dashboard
+    assert "coder_worktree_plan_command=python3 -m agent_os.cli coder-worktree-plan" in dashboard
+    assert "### Coder Worktree Plans" in dashboard
+    assert worktree_plan_payload["plan_id"] in dashboard
+    assert "approval_gate=operator_approval_required" in dashboard
+    assert "worktrees_created=0" in dashboard
     assert "task_rows_created=0" in dashboard
     assert "source_edits=0" in dashboard
     assert str(repo_path.resolve()) in input_bundle["project"]["root_path"]

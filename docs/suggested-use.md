@@ -110,6 +110,7 @@ python3 -m agent_os.cli run-delegation <delegation_id>
 python3 -m agent_os.cli delegation-result <delegation_id>
 python3 -m agent_os.cli implementation-handoff <delegation_id>
 python3 -m agent_os.cli coder-prep <delegation_id>
+python3 -m agent_os.cli coder-worktree-plan <delegation_id>
 python3 -m agent_os.cli review <run_id>
 ```
 
@@ -128,6 +129,12 @@ bounded future coding packet without starting implementation. It writes
 `operator_review_required`, and reports zero task rows, runs, routing
 decisions, worktrees, approvals, source edits, command reruns, network actions,
 and external mutations.
+Use `coder-worktree-plan` after reviewing `coder_prep.md` when you want a
+bounded future worktree/run plan without creating the worktree. It writes
+`coder_worktree_plan.json` and `.md`, marks the gate
+`operator_approval_required`, keeps `dispatch_ready=false`, and reports zero
+task rows, runs, routing decisions, worktrees, approvals, source edits,
+command reruns, network actions, provider calls, and external mutations.
 
 ## Good Starting Prompts
 

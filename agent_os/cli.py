@@ -79,6 +79,11 @@ from agent_os.coder_prep import (
     prepare_coder_from_handoff,
     render_coder_prep_cli_lines,
 )
+from agent_os.coder_worktree_plan import (
+    CoderWorktreePlanError,
+    prepare_worktree_plan_from_coder_prep,
+    render_coder_worktree_plan_cli_lines,
+)
 from agent_os.budget_enforcement_proof import (
     format_recommended_commands as format_budget_enforcement_commands,
     render_budget_enforcement_proof_checklist_line,
@@ -555,7 +560,7 @@ from agent_os.worktree_cleanup import cleanup_worktrees
 
 PRIMARY_COMMAND_METAVAR = (
     "{init,dashboard,goal,tasks,delegate,context-pack,run-delegation,"
-    "implementation-handoff,coder-prep,review,...}"
+    "implementation-handoff,coder-prep,coder-worktree-plan,review,...}"
 )
 
 
@@ -771,6 +776,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Write a bounded coder-prep plan from an implementation handoff.",
     )
     coder_prep.add_argument("delegation_id")
+    coder_worktree_plan = subparsers.add_parser(
+        "coder-worktree-plan",
+        help="Write an approval-gated future worktree plan from coder prep.",
+    )
+    coder_worktree_plan.add_argument("delegation_id")
     run_delegation_parser = subparsers.add_parser(
         "run-delegation",
         help="Execute a pending delegation through a configured local adapter.",
@@ -2398,6 +2408,22 @@ def main(argv: list[str] | None = None) -> int:
             print(f"coder_prep_failed: {error}")
             return 1
         for line in render_coder_prep_cli_lines(root, result):
+            print(line)
+        return 0
+
+    if args.command == "coder-worktree-plan":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            result = prepare_worktree_plan_from_coder_prep(
+                root,
+                system.storage,
+                args.delegation_id,
+            )
+        except CoderWorktreePlanError as error:
+            print(f"coder_worktree_plan_failed: {error}")
+            return 1
+        for line in render_coder_worktree_plan_cli_lines(root, result):
             print(line)
         return 0
 

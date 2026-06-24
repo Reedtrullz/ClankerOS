@@ -118,7 +118,20 @@ Demo context-pack repo scouting before edits
   - source_handoff_md: .clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/implementation_handoff.md
   - allowed_files: agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json,playbooks/first-milestone-closed-loop.md,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py
   - run_plan: operator_review
+  - coder_worktree_plan_command: python3 -m agent_os.cli coder-worktree-plan subagent_delegation_3189127f5f0d
   - task_rows_created: 0
+  - source_edits: 0
+  - commands_rerun: 0
+
+## Coder Worktree Plan
+
+- delegation=subagent_delegation_3189127f5f0d coder_worktree_plan=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/coder_prep/coder_worktree_plan.json
+  - kind: coder_worktree_run_plan
+  - source_coder_prep_md: .clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/coder_prep/coder_prep.md
+  - allowed_files: agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json,playbooks/first-milestone-closed-loop.md,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py
+  - approval_gate: operator_approval_required
+  - dispatch_ready: false
+  - worktrees_created: 0
   - source_edits: 0
   - commands_rerun: 0
 

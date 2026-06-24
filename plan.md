@@ -26,8 +26,8 @@ research and external-intelligence loops behind explicit policies.
 ## Current Focus
 
 Primary operator handoff flow: make executable delegation, implementation
-handoff readback, coder-prep packets, run review, and the dashboard the default
-way an operator moves from scout evidence toward future coding work. The older
-approval-gated capability proof ladder remains available as advanced
-blocked-proof machinery, but it should not dominate the default README,
-dashboard cockpit, or CLI help surfaces.
+handoff readback, coder-prep packets, approval-gated coder worktree plans, run
+review, and the dashboard the default way an operator moves from scout
+evidence toward future coding work. The older approval-gated capability proof
+ladder remains available as advanced blocked-proof machinery, but it should
+not dominate the default README, dashboard cockpit, or CLI help surfaces.

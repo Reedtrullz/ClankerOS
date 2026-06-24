@@ -104,6 +104,7 @@
 - [x] Export replayable goal-scoped evidence packet sidecars for run review without overwriting `run-task` command proof. <!-- score=10 complexity=4 -->
 - [x] Add git status, diff, and changed-file snapshots to replayable evidence packets without overwriting `run-task` command proof. <!-- score=10 complexity=4 -->
 - [ ] Surface changed-file and diff summaries in review and dashboard operator signals. <!-- score=10 complexity=4 -->
+- [x] Add approval-gated coder worktree plans from `coder_prep.md` without editing files. <!-- score=10 complexity=4 -->
 - [x] Add deterministic steering review records plus `next-action` and `inbox` commands. <!-- score=9 complexity=4 -->
 - [x] Add approval-gated operator approval request table creation from schema migration selection packets. <!-- score=9 complexity=4 -->
 - [x] Add approval-gated operator approval request row creation from expansion approval drafts after the schema exists. <!-- score=9 complexity=4 -->

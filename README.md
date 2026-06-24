@@ -38,8 +38,8 @@ hidden autonomy.
 - Supports safe profile routing, read-only delegation contracts, deterministic
   context packs, executable local delegation through configured shell adapters,
   project-aware repo scouting, first-class implementation handoffs, safe
-  coder-prep packets, structured delegation-result ingestion, proposed memory,
-  and proposed skills.
+  coder-prep packets, approval-gated coder worktree plans, structured
+  delegation-result ingestion, proposed memory, and proposed skills.
 - Keeps the old capability proof ladder as advanced blocked-proof/reference
   machinery instead of the default operator path.
 
@@ -73,8 +73,9 @@ Then read:
 - [Public Snapshot Tutorial](docs/tutorial-public-snapshot.md)
 
 The primary operator surface is the implementation-handoff workflow: scout a
-repo, inspect the generated handoff, prepare a bounded coder plan, then review
-the evidence before any edit or dispatch happens.
+repo, inspect the generated handoff, prepare a bounded coder plan, propose an
+approval-gated worktree plan, then review the evidence before any edit or
+dispatch happens.
 
 ```bash
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
@@ -82,6 +83,7 @@ python3 -m agent_os.cli context-pack <delegation_id>
 python3 -m agent_os.cli run-delegation <delegation_id>
 python3 -m agent_os.cli implementation-handoff <delegation_id>
 python3 -m agent_os.cli coder-prep <delegation_id>
+python3 -m agent_os.cli coder-worktree-plan <delegation_id>
 python3 -m agent_os.cli review <run_id>
 python3 -m agent_os.cli dashboard
 ```
@@ -190,6 +192,12 @@ into a bounded future coding plan before editing anything. It consumes
 under the delegation run, and prints zero-effect counters for task rows, runs,
 routing decisions, worktrees, approvals, source edits, command reruns, network
 actions, and external mutations.
+Use `coder-worktree-plan <delegation_id>` after reviewing the prep packet. It
+consumes `coder_prep.md`, writes `coder_worktree_plan.json` and
+`coder_worktree_plan.md` beside it, proposes a bounded future worktree/run
+shape, and keeps `dispatch_ready=false` with no worktree, approval request, run,
+task, effect, command rerun, source edit, network action, provider call, commit,
+push, deploy, or external mutation.
 Add `--working-directory project_root` when configuring the adapter if the
 local executor should run from the target repository instead of the ClankerOS
 system root.
@@ -212,6 +220,7 @@ For the full walkthrough, see
 | Run read-only delegation | `python3 -m agent_os.cli run-delegation <delegation_id>` |
 | Inspect implementation handoff | `python3 -m agent_os.cli implementation-handoff <delegation_id>` |
 | Prepare bounded coder plan | `python3 -m agent_os.cli coder-prep <delegation_id>` |
+| Prepare approval-gated worktree plan | `python3 -m agent_os.cli coder-worktree-plan <delegation_id>` |
 | Review evidence | `review`, `evidence`, `replay-summary` |
 | Inspect approvals | `python3 -m agent_os.cli approvals` |
 | Prepare GitHub handoff | `python3 -m agent_os.cli github-handoff <effect_id>` |
@@ -254,18 +263,25 @@ During `run-delegation`, those files are copied into:
 ```
 
 `delegation-result`, `implementation-handoff <delegation_id>`,
-`coder-prep <delegation_id>`, `review <run_id>`, `inbox`, and `dashboard`
+`coder-prep <delegation_id>`, `coder-worktree-plan <delegation_id>`,
+`review <run_id>`, `inbox`, and `dashboard`
 surface the context-pack path, returned-file inventory validation, missing
 returned files, and implementation handoff health so a later implementation
 pass can start from paths and metadata instead of pasted snippets. `review`
-writes `## Implementation Handoff` and `## Coder Prep` sections, and the
-dashboard writes `### Implementation Handoffs` and
-`### Coder Prep Packets`.
+writes `## Implementation Handoff`, `## Coder Prep`, and
+`## Coder Worktree Plan` sections, and the dashboard writes
+`### Implementation Handoffs`, `### Coder Prep Packets`, and
+`### Coder Worktree Plans`.
 
 `coder-prep` is artifact-only and idempotent for the same handoff hash. It
 does not create task rows, dispatch runs, rerun commands, edit source files,
 create worktrees, request approvals, commit, push, deploy, call providers, or
 mutate external systems.
+`coder-worktree-plan` is also artifact-only and idempotent for the same
+`coder_prep.md` hash. It proposes a branch/path and future explicit
+`run-goal --isolation worktree` command, but it does not create the worktree,
+run the command, request approval, edit files, commit, push, deploy, call
+providers, or mutate external systems.
 
 Adapters run from the ClankerOS root by default; configure
 `--working-directory project_root` to let a scout read repo files with relative
@@ -296,6 +312,7 @@ goal -> task graph -> execution -> verification -> memory -> visibility -> learn
 The current control plane's primary operator path is implementation handoff:
 `run-delegation` writes context and handoff evidence, `implementation-handoff`
 reads it back, `coder-prep` writes a bounded future coding plan, and
+`coder-worktree-plan` writes an approval-gated future worktree plan before
 `review`/`dashboard` keep the next step visible. Executable local slices still
 exist where the verifier is explicit (`run-goal`, `run-task`,
 `run-delegation`). The older report-only proof ladders remain available as

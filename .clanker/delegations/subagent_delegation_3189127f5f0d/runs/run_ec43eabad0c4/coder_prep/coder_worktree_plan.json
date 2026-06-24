@@ -1,0 +1,114 @@
+{
+  "approval_gate": {
+    "approval_request_created": false,
+    "approval_required_before": [
+      "create_worktree",
+      "run_command",
+      "edit_source",
+      "commit",
+      "push",
+      "deploy"
+    ],
+    "status": "operator_approval_required"
+  },
+  "artifacts": {
+    "json": ".clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/coder_prep/coder_worktree_plan.json",
+    "markdown": ".clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/coder_prep/coder_worktree_plan.md"
+  },
+  "bounded_coding_task": {
+    "acceptance_criteria": [
+      "Implementation remains inside the bounded file set.",
+      "Verification command is selected before execution.",
+      "Non-claims are refreshed before commit, push, or deploy.",
+      "Operator approves this plan before any worktree is created.",
+      "Future implementation writes remain within allowed_files."
+    ],
+    "allowed_files": [
+      "agent_os/context_pack.py",
+      "agent_os/profile_routing.py",
+      "evals/results/first_milestone_closed_loop.json",
+      "playbooks/first-milestone-closed-loop.md",
+      "agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py"
+    ],
+    "candidate_test_files": [],
+    "forbidden_actions": [
+      "create_worktree_now",
+      "edit_source_now",
+      "dispatch_now",
+      "commit",
+      "push",
+      "deploy",
+      "provider_call",
+      "network"
+    ],
+    "objective": "Context pack scout demo completed.",
+    "risks": [
+      "Handoff output is advisory and requires operator review.",
+      "Coder prep does not prove implementation correctness.",
+      "This plan is not proof that the future coding run will pass."
+    ],
+    "title": "Approval-gated worktree plan from coder prep subagent_delegation_3189127f5f0d"
+  },
+  "dispatch_ready": false,
+  "future_run_plan": {
+    "commands_to_run_now": [],
+    "dispatch_ready": false,
+    "execution_mode": "future_explicit_worktree_run",
+    "next_recommended_action": "operator_review",
+    "status": "operator_approval_required",
+    "suggested_future_command": "python3 -m agent_os.cli run-goal \"Context pack scout demo completed.\" --project clankeros --isolation worktree --command \"<operator-approved bounded command>\"",
+    "suggested_verification_commands": [
+      "python3 -m pytest -q"
+    ]
+  },
+  "kind": "coder_worktree_run_plan",
+  "non_claims": [
+    "Coder worktree planning does not create a git worktree.",
+    "Coder worktree planning does not create task, run, routing, approval, or effect rows.",
+    "Coder worktree planning does not edit source files, run commands, commit, push, deploy, or call providers."
+  ],
+  "plan_id": "coder_worktree_plan",
+  "project": {
+    "allowed_write_roots": [
+      "/Users/reidar/Documents/Agent System"
+    ],
+    "default_test_command": "python3 -m pytest -q",
+    "id": "clankeros",
+    "root_path": "/Users/reidar/Documents/Agent System"
+  },
+  "proposed_worktree": {
+    "base_ref": "operator_selected_current_head",
+    "branch_name_suggestion": "codex/coder-prep-3189127f5f0d",
+    "path_suggestion": ".agent/worktrees/clankeros/coder-prep-3189127f5f0d",
+    "status": "not_created",
+    "worktree_created": false
+  },
+  "safety": {
+    "approval_requests_created": 0,
+    "commands_rerun": 0,
+    "effects_created": 0,
+    "external_mutations_taken": 0,
+    "network_actions_taken": 0,
+    "provider_calls_taken_by_clankeros": 0,
+    "routing_decisions_created": 0,
+    "runs_created": 0,
+    "source_edits_taken": 0,
+    "task_rows_created": 0,
+    "worktrees_created": 0
+  },
+  "schema_version": 1,
+  "source": {
+    "coder_prep_json": ".clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/coder_prep/coder_prep.json",
+    "coder_prep_kind": "coder_prep_plan",
+    "coder_prep_md": ".clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/coder_prep/coder_prep.md",
+    "coder_prep_md_sha256": "b4b1fd2c21343c5ac86d23d4a649170a90b709f0e2230637d8d4086094d3be42",
+    "coder_prep_schema_version": 1,
+    "delegation_id": "subagent_delegation_3189127f5f0d",
+    "handoff_md": ".clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/implementation_handoff.md",
+    "handoff_sha256": "3bbaf2e8d52388c3ac426b43cc872b87bc430b61d60bc92e56955a188bde6da2",
+    "parent_task_id": "task_858971dcc5d7",
+    "run_id": "run_ec43eabad0c4"
+  },
+  "source_coder_prep_markdown_consumed": true,
+  "source_coder_prep_markdown_excerpt": "# Coder Prep Plan\n\n- prep_id: coder_prep\n- delegation_id: subagent_delegation_3189127f5f0d\n- source_handoff_md: .clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/implementation_handoff.md\n- source_handoff_sha256: 3bbaf2e8d52388c3ac426b43cc872b87bc430b61d60bc92e56955a188bde6da2\n- project_id: clankeros\n\n## Bounded Task\n\n- title: Bounded implementation from handoff subagent_delegation_3189127f5f0d\n- objective: Context pack scout demo completed.\n\n## Allowed Files\n\n- agent_os/context_pack.py\n- agent_os/profile_routing.py\n- evals/results/first_milestone_closed_loop.json\n- playbooks/first-milestone-closed-loop.md\n- agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py\n\n## Run Plan\n\n- execution_mode: future_explicit_worktree_or_task_run\n- commands_to_run_now: none\n- next_recommended_action: operator_review\n\n## Safety Counters\n\n- source_edits_taken: 0\n- task_rows_created: 0\n- runs_created: 0\n- routing_decisions_created: 0\n- worktrees_created: 0\n- effects_created: 0\n- approval_requests_created: 0\n- commands_rerun: 0\n- provider_calls_taken_by_clankeros: 0\n- network_actions_taken: 0\n- external_mutations_taken: 0\n\n## Non-Claims\n\n- Coder prep does not edit source files.\n- Coder prep does not create task, run, routing, approval, effect, or worktree rows.\n- Coder prep does not commit, push, deploy, or call model providers.\n"
+}

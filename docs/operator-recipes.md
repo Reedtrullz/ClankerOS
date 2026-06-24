@@ -104,6 +104,25 @@ Boundary: ClankerOS records durable state, evidence, validation, and incidents.
 It does not provide built-in model-provider integrations, and adapter network
 behavior is unknown unless the adapter writes evidence proving otherwise.
 
+## Prepare A Worktree Plan From Scout Evidence
+
+```bash
+python3 -m agent_os.cli implementation-handoff subagent_delegation_...
+python3 -m agent_os.cli coder-prep subagent_delegation_...
+python3 -m agent_os.cli coder-worktree-plan subagent_delegation_...
+python3 -m agent_os.cli review run_...
+python3 -m agent_os.cli dashboard
+```
+
+Use this after a read-only scout delegation has produced a readable
+implementation handoff and you want a bounded coding plan before any
+implementation run. The sequence consumes `implementation_handoff.md`, then
+`coder_prep.md`, and leaves JSON/Markdown packets under the delegation run.
+
+Boundary: this recipe prepares operator-review artifacts only. It does not
+create a worktree, dispatch a task, request approval, run commands, edit
+source, commit, push, deploy, call providers, or mutate external systems.
+
 ## Review Latest Capability Result Without Activation
 
 ```bash

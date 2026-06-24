@@ -1,5 +1,53 @@
 # Status
 
+## 2026-06-24 Approval-Gated Coder Worktree Plans
+
+- Added `python3 -m agent_os.cli coder-worktree-plan <delegation_id>` as the
+  next artifact-only bridge after `coder-prep`.
+- The command consumes the readable `coder_prep.md`, hashes the source prep
+  Markdown, reads the sibling prep JSON for bounded files/test hints, and
+  writes:
+  `.clanker/delegations/<delegation_id>/runs/<run_id>/coder_prep/coder_worktree_plan.json`
+  and `coder_worktree_plan.md`.
+- Worktree-plan packets include `kind: coder_worktree_run_plan`, source prep
+  paths/hash, bounded allowed files, proposed branch/path, future explicit
+  `run-goal --isolation worktree` shape, `approval_gate.status=operator_approval_required`,
+  `dispatch_ready=false`, and zero-action safety counters.
+- `coder-prep` output, run review, and dashboard now point to or surface
+  `coder-worktree-plan`, including a new `## Coder Worktree Plan` review
+  section and `### Coder Worktree Plans` dashboard section.
+- Updated README, command reference, executable delegation tutorial, concepts,
+  suggested-use docs, operator recipes, operating summary, `plan.md`,
+  `tasks.md`, `docs/dashboard.md`, and
+  `runs/run_ec43eabad0c4/review.md`.
+- Live proof:
+  - `coder-worktree-plan subagent_delegation_3189127f5f0d` consumed
+    `.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/coder_prep/coder_prep.md`
+    and wrote the sibling JSON/Markdown worktree-plan packet.
+  - A rerun printed `coder_worktree_plan: already_recorded coder_worktree_plan`.
+  - CLI output reported `worktree_created: 0`, `task_rows_created: 0`,
+    `runs_created: 0`, `routing_decisions_created: 0`,
+    `worktrees_created: 0`, `effects_created: 0`,
+    `approval_requests_created: 0`, `source_edits: 0`,
+    `commands_rerun: 0`, `provider_calls_taken_by_clankeros: 0`,
+    `network_actions_taken: 0`, and `external_mutations_taken: 0`.
+- Verification evidence:
+  - `python3 -m py_compile agent_os/coder_worktree_plan.py
+    agent_os/coder_prep.py agent_os/cli.py agent_os/dashboard.py
+    agent_os/run_review.py tests/test_first_milestone.py` passed.
+  - focused handoff slice:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "default_cli_help or implementation_handoff or auto_generates_context_pack"`
+    passed with 3 passed, 475 deselected.
+  - adjacent delegation/review/dashboard/context-pack slice:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "delegation or review or dashboard or context_pack or implementation_handoff"`
+    passed with 161 passed, 317 deselected.
+  - `git diff --check` passed.
+  - full suite: `python3 -m pytest -q` passed with 478 passed in 1075.26s.
+- Non-claims: this is local artifact generation and operator-surface work
+  only; it does not create a worktree, dispatch work, create approvals, run
+  commands, edit source files, commit, push, deploy, call model providers,
+  take network actions, or mutate external systems.
+
 ## 2026-06-24 Primary Handoff Operator Surface
 
 - Made the implementation-handoff workflow the default operator surface across

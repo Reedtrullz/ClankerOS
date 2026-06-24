@@ -54,6 +54,13 @@ and project notes.
   criteria, risks, and an operator-review-required run plan, and reports zero
   task rows, runs, routing decisions, worktrees, approvals, source edits,
   command reruns, network actions, and external mutations.
+- Coder worktree plan: an artifact-only bridge from coder prep to a possible
+  isolated coding run. `coder-worktree-plan <delegation_id>` consumes
+  `coder_prep.md`, records the source prep hash, allowed files, proposed
+  branch/path, future explicit `run-goal --isolation worktree` shape, and an
+  operator-approval-required gate while reporting zero worktrees, approvals,
+  runs, source edits, command reruns, network actions, provider calls, and
+  external mutations.
 - Project context packet: a durable operator summary for a registered project.
   It is broader and less task-specific than a context pack.
 - Profile: a local routing role such as planner, coder, scout, tester, or
