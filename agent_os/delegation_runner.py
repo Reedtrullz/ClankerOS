@@ -12,6 +12,7 @@ from agent_os.memory_entries import MemoryEntryError, propose_memory_from_delega
 from agent_os.storage import (
     AgentProfile,
     MemoryEntry,
+    RegisteredProject,
     Storage,
     SubagentDelegation,
     Task,
@@ -65,6 +66,7 @@ def configure_profile_adapter(
     input_mode: str,
     output_mode: str,
     timeout_seconds: int,
+    working_directory: str = "system_root",
 ) -> AgentProfile:
     if adapter_type != "shell":
         raise DelegationRunError("only shell adapters are supported")
@@ -74,6 +76,8 @@ def configure_profile_adapter(
         raise DelegationRunError(f"unsupported output_mode {output_mode}")
     if timeout_seconds <= 0:
         raise DelegationRunError("timeout_seconds must be positive")
+    if working_directory not in {"system_root", "project_root"}:
+        raise DelegationRunError(f"unsupported working_directory {working_directory}")
     _validate_safe_adapter_command(command)
     return storage.update_profile_adapter_config(
         profile_name,
@@ -83,6 +87,7 @@ def configure_profile_adapter(
             "input_mode": input_mode,
             "output_mode": output_mode,
             "timeout_seconds": timeout_seconds,
+            "working_directory": working_directory,
         },
     )
 
@@ -110,6 +115,11 @@ def run_delegation(
         )
 
     task = storage.get_task(delegation.parent_task_id)
+    if task is None:
+        raise DelegationRunError(f"task {delegation.parent_task_id} not found")
+    project = storage.get_registered_project(task.project_id)
+    project_payload = _project_payload(project)
+    repo_scouting_payload = _repo_scouting_payload(project, task.project_id)
     assigned_profile = storage.get_profile(delegation.assigned_profile)
     if assigned_profile is None:
         raise DelegationRunError(f"profile {delegation.assigned_profile} not found")
@@ -140,6 +150,8 @@ def run_delegation(
 
     try:
         _validate_adapter_config(adapter, profile)
+        adapter_cwd = _adapter_cwd(root, adapter, project, task.project_id)
+        adapter = {**adapter, "resolved_cwd": str(adapter_cwd)}
     except DelegationRunError as error:
         return _fail_run(
             root,
@@ -158,23 +170,51 @@ def run_delegation(
             parsed_output=None,
         )
 
-    input_bundle = _write_input_bundle(evidence_dir, delegation, task, profile, adapter)
+    input_bundle = _write_input_bundle(
+        evidence_dir,
+        delegation,
+        task,
+        profile,
+        adapter,
+        project=project_payload,
+        repo_scouting=repo_scouting_payload,
+    )
     prompt_path = evidence_dir / "prompt.md"
     stdout_path = evidence_dir / "stdout.txt"
     stderr_path = evidence_dir / "stderr.txt"
     raw_output_path = evidence_dir / "raw_output.txt"
     parsed_output_path = evidence_dir / "parsed_output.json"
     validation_path = evidence_dir / "validation.json"
-    command = _adapter_command(
-        adapter["command"],
-        input_mode=adapter["input_mode"],
-        input_path=evidence_dir / "input.json",
-        prompt_path=prompt_path,
-        evidence_dir=evidence_dir,
-    )
+    try:
+        command = _adapter_command(
+            adapter["command"],
+            input_mode=adapter["input_mode"],
+            input_path=evidence_dir / "input.json",
+            prompt_path=prompt_path,
+            evidence_dir=evidence_dir,
+            system_root=root,
+            project_root=Path(project.root_path).resolve() if project else None,
+        )
+    except DelegationRunError as error:
+        return _fail_run(
+            root,
+            storage,
+            delegation=delegation,
+            task=task,
+            profile=profile,
+            adapter=adapter,
+            run_id=run_id,
+            evidence_dir=evidence_dir,
+            failure_class=_failure_class(str(error)),
+            message=str(error),
+            exit_code=None,
+            stdout="",
+            stderr="",
+            parsed_output=None,
+        )
     completed = _run_shell_adapter(
         command,
-        cwd=root,
+        cwd=adapter_cwd,
         timeout_seconds=int(adapter["timeout_seconds"]),
         stdin_text=delegation.prompt if adapter["input_mode"] == "stdin" else None,
     )
@@ -252,7 +292,11 @@ def run_delegation(
                 "execution_run_id": run_id,
                 "execution_adapter_type": adapter["type"],
                 "adapter_type": adapter["type"],
+                "execution_adapter_cwd": str(adapter_cwd),
+                "adapter_working_directory": adapter["working_directory"],
                 "execution_evidence_dir": str(evidence_dir.relative_to(root)),
+                "target_project_id": project.name if project else None,
+                "target_project_root": project.root_path if project else None,
                 "network_actions_taken": "unknown",
                 "provider_calls_taken_by_clankeros": 0,
                 "external_mutations_taken": 0,
@@ -353,6 +397,8 @@ def run_delegation(
         delegation=completed_delegation,
         profile=profile,
         adapter={**adapter, "command": command},
+        project=project_payload,
+        repo_scouting=repo_scouting_payload,
         run_id=run_id,
         result_summary=result_summary,
         memory_entry=memory_entry,
@@ -415,10 +461,125 @@ def _validate_adapter_config(adapter: dict[str, Any], profile: AgentProfile) -> 
         raise DelegationRunError(f"unsupported input_mode {input_mode}")
     if output_mode not in {"json", "text"}:
         raise DelegationRunError(f"unsupported output_mode {output_mode}")
+    working_directory = adapter.get("working_directory", "system_root")
+    if working_directory not in {"system_root", "project_root"}:
+        raise DelegationRunError(f"unsupported working_directory {working_directory}")
     adapter["command"] = command
     adapter["input_mode"] = input_mode
     adapter["output_mode"] = output_mode
     adapter["timeout_seconds"] = int(adapter.get("timeout_seconds", 300))
+    adapter["working_directory"] = working_directory
+
+
+def _adapter_cwd(
+    root: Path,
+    adapter: dict[str, Any],
+    project: RegisteredProject | None,
+    project_id: str,
+) -> Path:
+    working_directory = adapter.get("working_directory", "system_root")
+    if working_directory == "system_root":
+        return root
+    if project is None:
+        raise DelegationRunError(
+            f"working_directory project_root requires registered project {project_id}"
+        )
+    project_root = Path(project.root_path).resolve()
+    if not project_root.exists() or not project_root.is_dir():
+        raise DelegationRunError(f"registered project root unavailable: {project_root}")
+    return project_root
+
+
+def _project_payload(project: RegisteredProject | None) -> dict[str, Any] | None:
+    if project is None:
+        return None
+    return {
+        "id": project.name,
+        "name": project.name,
+        "root_path": project.root_path,
+        "default_test_command": project.default_test_command,
+        "allowed_write_roots": project.allowed_write_roots,
+        "created_at": project.created_at,
+        "updated_at": project.updated_at,
+    }
+
+
+def _repo_scouting_payload(
+    project: RegisteredProject | None,
+    project_id: str,
+) -> dict[str, Any]:
+    if project is None:
+        return {
+            "available": False,
+            "project_id": project_id,
+            "reason": "project is not registered",
+            "root_path": None,
+            "files": [],
+            "file_count": 0,
+            "truncated": False,
+            "inventory_method": "none",
+        }
+    root_path = Path(project.root_path).resolve()
+    if not root_path.exists() or not root_path.is_dir():
+        return {
+            "available": False,
+            "project_id": project.name,
+            "reason": "registered project root is unavailable",
+            "root_path": str(root_path),
+            "files": [],
+            "file_count": 0,
+            "truncated": False,
+            "inventory_method": "none",
+        }
+    inventory_limit = 500
+    inventory, inventory_method = _repo_file_inventory(
+        root_path,
+        limit=inventory_limit + 1,
+    )
+    files = inventory[:inventory_limit]
+    return {
+        "available": True,
+        "project_id": project.name,
+        "root_path": str(root_path),
+        "files": files,
+        "file_count": len(files),
+        "truncated": len(inventory) > inventory_limit,
+        "inventory_method": inventory_method,
+        "default_test_command": project.default_test_command,
+    }
+
+
+def _repo_file_inventory(project_root: Path, limit: int = 500) -> tuple[list[str], str]:
+    git_method = "git ls-files --cached --others --exclude-standard"
+    try:
+        result = subprocess.run(
+            ["git", "ls-files", "--cached", "--others", "--exclude-standard"],
+            cwd=project_root,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except subprocess.TimeoutExpired:
+        result = subprocess.CompletedProcess(args=[], returncode=124, stdout="", stderr="")
+    if result.returncode == 0:
+        files = sorted(line for line in result.stdout.splitlines() if line)[:limit]
+        return files, git_method
+    files: list[str] = []
+    ignored_parts = {".git", ".agent", ".clanker", ".venv", "node_modules", "__pycache__"}
+    for path in project_root.rglob("*"):
+        if not path.is_file():
+            continue
+        try:
+            relative = path.relative_to(project_root)
+        except ValueError:
+            continue
+        if any(part in ignored_parts for part in relative.parts):
+            continue
+        files.append(relative.as_posix())
+        if len(files) >= limit:
+            break
+    return sorted(files), "filesystem walk fallback"
 
 
 def _validate_safe_adapter_command(command: str) -> None:
@@ -444,6 +605,9 @@ def _write_input_bundle(
     task: Task,
     profile: AgentProfile,
     adapter: dict[str, Any],
+    *,
+    project: dict[str, Any] | None,
+    repo_scouting: dict[str, Any],
 ) -> dict[str, Any]:
     prompt_path = evidence_dir / "prompt.md"
     prompt_path.write_text(delegation.prompt, encoding="utf-8")
@@ -457,6 +621,8 @@ def _write_input_bundle(
             "description": task.description,
             "verification_plan": task.verification_plan,
         },
+        "project": project,
+        "repo_scouting": repo_scouting,
         "profile": _profile_payload(profile),
         "adapter": _redacted_adapter(adapter),
         "prompt_path": str(prompt_path),
@@ -471,6 +637,16 @@ def _write_input_bundle(
     )
     _write_profile_and_adapter(evidence_dir, profile, adapter)
     _write_delegation_json(evidence_dir, delegation)
+    if project is not None:
+        (evidence_dir / "project.json").write_text(
+            json.dumps(project, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+    if repo_scouting.get("available"):
+        (evidence_dir / "repo_files.json").write_text(
+            json.dumps(repo_scouting, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
     return bundle
 
 
@@ -481,11 +657,17 @@ def _adapter_command(
     input_path: Path,
     prompt_path: Path,
     evidence_dir: Path,
+    system_root: Path,
+    project_root: Path | None,
 ) -> str:
+    if "{project_root}" in command and project_root is None:
+        raise DelegationRunError("adapter command requires a registered project root")
     replacements = {
         "{input_path}": shlex.quote(str(input_path)),
         "{prompt_path}": shlex.quote(str(prompt_path)),
         "{evidence_dir}": shlex.quote(str(evidence_dir)),
+        "{system_root}": shlex.quote(str(system_root)),
+        "{project_root}": shlex.quote(str(project_root)) if project_root else "",
     }
     formatted = command
     for placeholder, value in replacements.items():
@@ -799,10 +981,33 @@ def _write_success_summary(
     delegation: SubagentDelegation,
     profile: AgentProfile,
     adapter: dict[str, Any],
+    project: dict[str, Any] | None,
+    repo_scouting: dict[str, Any],
     run_id: str,
     result_summary: str,
     memory_entry: MemoryEntry | None,
 ) -> None:
+    evidence_paths = [
+        "- delegation.json",
+        "- profile.json",
+        "- adapter.json",
+        "- input.json",
+    ]
+    if project is not None:
+        evidence_paths.append("- project.json")
+    if repo_scouting.get("available"):
+        evidence_paths.append("- repo_files.json")
+    evidence_paths.extend(
+        [
+            "- prompt.md",
+            "- stdout.txt",
+            "- stderr.txt",
+            "- raw_output.txt",
+            "- parsed_output.json",
+            "- validation.json",
+            "- result.json",
+        ]
+    )
     _write_summary(
         evidence_dir,
         lines=[
@@ -814,6 +1019,10 @@ def _write_success_summary(
             f"- parent_task_id: {delegation.parent_task_id}",
             f"- assigned_profile: {profile.name}",
             f"- adapter_type: {adapter.get('type', 'unknown')}",
+            f"- adapter_working_directory: {adapter.get('working_directory', 'system_root')}",
+            f"- adapter_cwd: {adapter.get('resolved_cwd', 'unknown')}",
+            f"- target_project_id: {project['id'] if project else 'unregistered'}",
+            f"- target_project_root: {project['root_path'] if project else 'none'}",
             f"- expected_output_schema: {delegation.expected_output_schema}",
             "- execution_status: completed",
             "- output_validated: true",
@@ -822,17 +1031,7 @@ def _write_success_summary(
             "",
             "## Evidence Paths",
             "",
-            "- delegation.json",
-            "- profile.json",
-            "- adapter.json",
-            "- input.json",
-            "- prompt.md",
-            "- stdout.txt",
-            "- stderr.txt",
-            "- raw_output.txt",
-            "- parsed_output.json",
-            "- validation.json",
-            "- result.json",
+            *evidence_paths,
             "",
             "## Non-Claims",
             "",

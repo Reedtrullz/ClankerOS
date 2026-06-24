@@ -651,6 +651,11 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["json", "text"],
         default="json",
     )
+    profile_adapter.add_argument(
+        "--working-directory",
+        choices=["system_root", "project_root"],
+        default="system_root",
+    )
     profile_adapter.add_argument("--timeout-seconds", type=int, default=300)
     route = subparsers.add_parser("route", help="Record a routing decision for a task or category.")
     route.add_argument("task_id", nargs="?")
@@ -2086,6 +2091,7 @@ def main(argv: list[str] | None = None) -> int:
                 input_mode=args.input_mode,
                 output_mode=args.output_mode,
                 timeout_seconds=args.timeout_seconds,
+                working_directory=args.working_directory,
             )
         except (DelegationRunError, KeyError) as error:
             print(f"profile_adapter_failed: {error}")
@@ -2095,6 +2101,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"command: {profile.adapter_config_json.get('command', '')}")
         print(f"input_mode: {profile.adapter_config_json.get('input_mode', '')}")
         print(f"output_mode: {profile.adapter_config_json.get('output_mode', '')}")
+        print(
+            "working_directory: "
+            f"{profile.adapter_config_json.get('working_directory', '')}"
+        )
         print(f"timeout_seconds: {profile.adapter_config_json.get('timeout_seconds', '')}")
         return 0
 

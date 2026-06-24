@@ -89,6 +89,7 @@ python3 -m agent_os.cli route --category repo_search --project bootstrap
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
 python3 -m agent_os.cli delegations <goal_id>
 python3 -m agent_os.cli profile-adapter scout --command "python3 .clanker/adapters/fake_scout.py" --input-mode json_file --output-mode json --timeout-seconds 120
+python3 -m agent_os.cli profile-adapter scout --command "python3 /absolute/path/to/project_scout.py" --input-mode json_file --output-mode json --working-directory project_root --timeout-seconds 120
 python3 -m agent_os.cli run-delegation <delegation_id>
 python3 -m agent_os.cli delegation-result <delegation_id>
 python3 -m agent_os.cli record-delegation-result <delegation_id> --summary "Relevant files identified." --output-json '{"files":["agent_os/cli.py"],"findings":["CLI parser lives in agent_os/cli.py."],"relevant_files":["agent_os/cli.py"]}'
@@ -97,8 +98,12 @@ python3 -m agent_os.cli record-delegation-result <delegation_id> --summary "Rele
 `run-delegation` executes a pending read-only delegation through the configured
 local shell adapter, writes `.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/`,
 validates JSON output, and opens local incidents for adapter or validation
-failures. `record-delegation-result` remains the manual ingestion path for
-operator-supplied output.
+failures. Adapter configs default to `--working-directory system_root`; use
+`--working-directory project_root` for registered-project repo scouts that need
+relative reads from the target repository. Registered-project delegations add
+`project.json`, `repo_files.json`, `project`, and `repo_scouting` context to
+the evidence packet/input bundle. `record-delegation-result` remains the manual
+ingestion path for operator-supplied output.
 
 ## Memory And Skills
 

@@ -1,6 +1,6 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_c21da557dbb7
+- Packet ID: iteration_f712fec0c7f1
 - Status: planned
 - Source: tasks.md#next
 
@@ -143,7 +143,7 @@ Advance the Agent System north-star goal by completing: Surface changed-file and
 
 ## Current Posture
 
-- pending tasks: 27
+- pending tasks: 29
 - waiting approval: 0
 - blocked tasks: 0
 - failed tasks: 0

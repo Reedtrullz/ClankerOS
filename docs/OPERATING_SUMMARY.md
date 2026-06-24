@@ -88,8 +88,12 @@ Core layers for the bootstrap:
   stdout/stderr/exit code, parses JSON output, validates the delegation schema,
   records the result, writes
   `.clanker/delegations/<delegation_id>/runs/<run_id>/evidence/`, optionally
-  proposes memory, and opens incidents for adapter or output failures. It
-  supports shell adapters only. ClankerOS records
+  proposes memory, and opens incidents for adapter or output failures. For
+  registered-project tasks, the input bundle includes project metadata and a
+  capped git file inventory, and the evidence packet includes `project.json`
+  and `repo_files.json`. Adapters run from the system root by default and can
+  opt into `--working-directory project_root` for repo scouting. It supports
+  shell adapters only. ClankerOS records
   `provider_calls_taken_by_clankeros=0`, `external_mutations_taken=0`, and
   `network_actions_taken=unknown` unless adapter evidence proves otherwise.
 - Delegation result ingestion: `record-delegation-result` attaches structured

@@ -6,9 +6,10 @@ This tutorial runs the smallest executable subagent loop in ClankerOS:
 2. create a goal, plan, sprint contract, and planned tasks;
 3. create a read-only scout delegation;
 4. configure a fake local shell adapter;
-5. run the delegation;
-6. inspect result, evidence, review, inbox, and dashboard;
-7. optionally propose memory from the completed result.
+5. understand project-aware repo scouting context;
+6. run the delegation;
+7. inspect result, evidence, review, inbox, and dashboard;
+8. optionally propose memory from the completed result.
 
 The executor is a local shell adapter. ClankerOS owns the durable state,
 prompt/context bundle, schema validation, evidence packet, incident handling,
@@ -119,6 +120,28 @@ python3 -m agent_os.cli profile-adapter scout \
   --timeout-seconds 120
 ```
 
+Adapters run from the ClankerOS system root by default. Keep that default when
+the adapter script lives under `.clanker/adapters/` and only needs the input
+bundle. For repo scouting against a registered project, use an absolute adapter
+path and opt into the project root as the working directory:
+
+```bash
+python3 -m agent_os.cli profile-adapter scout \
+  --command "python3 /absolute/path/to/project_scout.py" \
+  --input-mode json_file \
+  --output-mode json \
+  --working-directory project_root \
+  --timeout-seconds 120
+```
+
+Command placeholders are available when you need explicit paths:
+
+- `{input_path}` - the JSON input bundle path;
+- `{prompt_path}` - the delegation prompt path;
+- `{evidence_dir}` - the evidence directory;
+- `{system_root}` - the ClankerOS repository root;
+- `{project_root}` - the registered target repository root, when available.
+
 Supported input modes:
 
 - `json_file`: appends the input bundle path to the adapter command.
@@ -153,7 +176,34 @@ The planned-task flow above usually produces `expected_output_schema` set to
 delegations whose category maps to `file_relevance_report`, provide non-empty
 `files`, `findings`, and `relevant_files` instead.
 
-## 5. Run The Delegation
+## 5. Project-Aware Repo Scouting
+
+When the parent task belongs to a registered project, `run-delegation` writes
+project context into the adapter input bundle:
+
+```json
+{
+  "project": {
+    "id": "bootstrap",
+    "root_path": "/absolute/path/to/repo",
+    "default_test_command": "python3 -m pytest -q",
+    "allowed_write_roots": ["/absolute/path/to/repo"]
+  },
+  "repo_scouting": {
+    "available": true,
+    "root_path": "/absolute/path/to/repo",
+    "files": ["README.md", "agent_os/cli.py"],
+    "inventory_method": "git ls-files --cached --others --exclude-standard"
+  }
+}
+```
+
+The evidence packet includes `project.json` and `repo_files.json` when this
+context is available. With `--working-directory project_root`, the adapter can
+read repository files by relative path while still receiving absolute paths for
+`input.json`, `prompt.md`, and the evidence directory.
+
+## 6. Run The Delegation
 
 ```bash
 python3 -m agent_os.cli run-delegation <delegation_id>
@@ -190,8 +240,10 @@ memory_proposal.json
 ```
 
 `memory_proposal.json` exists only when `--record-memory` is used.
+`project.json` and `repo_files.json` exist only when the delegation belongs to
+a registered project.
 
-## 6. Inspect The Result And Evidence
+## 7. Inspect The Result And Evidence
 
 ```bash
 python3 -m agent_os.cli delegation-result <delegation_id>
@@ -205,7 +257,7 @@ python3 -m agent_os.cli dashboard
 network/provider non-claims. The dashboard and inbox show recent delegation
 state compactly.
 
-## 7. Propose Memory From The Result
+## 8. Propose Memory From The Result
 
 Run the delegation with memory proposal enabled:
 

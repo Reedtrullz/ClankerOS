@@ -46,7 +46,29 @@ Read the generated artifacts under
 `.clanker/projects/my-repo/goals/goal_.../`. If the plan is wrong, replan
 before running a task.
 
-## 5. Run One Task
+## 5. Optional: Scout Relevant Files
+
+Before executing a planned task, use a read-only scout delegation when you want
+an adapter to inspect the target repo and return relevant files:
+
+```bash
+python3 -m agent_os.cli delegate task_... --profile scout --title "Find relevant files"
+python3 -m agent_os.cli profile-adapter scout \
+  --command "python3 /absolute/path/to/project_scout.py" \
+  --input-mode json_file \
+  --output-mode json \
+  --working-directory project_root \
+  --timeout-seconds 120
+python3 -m agent_os.cli run-delegation subagent_delegation_...
+```
+
+The scout receives registered project metadata and `repo_scouting.files` in
+`input.json`. With `--working-directory project_root`, the adapter can read the
+target repo using relative paths, while ClankerOS still records schema
+validation, stdout/stderr, `project.json`, `repo_files.json`, and the usual
+non-claims in the delegation evidence packet.
+
+## 6. Run One Task
 
 ```bash
 python3 -m agent_os.cli run-task task_... --profile tester
@@ -58,7 +80,7 @@ python3 -m agent_os.cli dashboard
 Run one task at a time. The useful habit is: choose a small task, run it,
 inspect the evidence packet, then decide the next step from the dashboard.
 
-## 6. Commit Only After Coherent Verification
+## 7. Commit Only After Coherent Verification
 
 ```bash
 git status --short --branch

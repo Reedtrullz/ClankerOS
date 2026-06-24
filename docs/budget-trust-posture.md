@@ -1,17 +1,17 @@
 # Budget And Trust Posture
 
-- id: budget_trust_posture_42b62d25bddd
+- id: budget_trust_posture_204b4ae7436e
 - status: report_only
-- task_count: 698
+- task_count: 710
 - budget_state: not_tracked
 - trust_state: not_tracked
 - report_path: docs/budget-trust-posture.md
-- created_at: 2026-06-24T01:12:48.075831+00:00
+- created_at: 2026-06-24T10:39:20.204038+00:00
 
 ## Risk Levels
 
 - high: 27
-- low: 671
+- low: 683
 
 ## Budget Posture
 

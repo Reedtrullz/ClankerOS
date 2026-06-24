@@ -1,5 +1,52 @@
 # Status
 
+## 2026-06-24 Project-Aware Executable Delegation
+
+- Added registered-project context to executable delegation runs. When a parent
+  task belongs to a registered project, `run-delegation` now writes `project`
+  and `repo_scouting` data into `input.json`, including the project root,
+  default test command, allowed write roots, and a capped
+  `git ls-files --cached --others --exclude-standard` file inventory.
+- Added `project.json` and `repo_files.json` to delegation evidence packets
+  when registered project context is available.
+- Added adapter working-directory control. `profile-adapter` now records
+  `--working-directory system_root` by default and supports
+  `--working-directory project_root` so repo-scout adapters can read target
+  repository files by relative path while still receiving absolute evidence
+  paths.
+- Result metadata now records the adapter cwd, adapter working-directory mode,
+  target project id, and target project root for completed executable
+  delegation runs.
+- Updated README, executable-delegation, project-registry, first-target-repo,
+  suggested-use, command-reference, docs-index, operating-summary, and tasks
+  docs so operators can use registered-project repo scouting intentionally.
+- Verification evidence:
+  - red tests first failed because project context was missing and
+    `--working-directory` was not recognized.
+  - `python3 -m py_compile agent_os/delegation_runner.py agent_os/cli.py
+    tests/test_first_milestone.py` passed.
+  - project-aware delegation slice: 2 passed, 470 deselected.
+  - profile/delegation regression slice: 16 passed, 456 deselected.
+  - `git diff --check` passed.
+  - full suite: 472 passed in 987.75s.
+  - `queue-health`: hotspots 0.
+  - `handoff-review`: clear, blocked_tasks 0, stale_handoffs 0.
+  - `eval-candidates`: 0.
+  - `approvals`: pending_approvals 0.
+  - `budget-trust-posture`: report_only, tasks 710.
+  - `eval-after-change`: pass, run `run_6774975374ff`.
+  - baseline `eval`: `first_milestone_closed_loop: pass`.
+  - `playbooks`: 1 active playbook, 336 successful runs.
+  - `dashboard` and `iterate` regenerated local operator state.
+  - GitHub metadata readback for `Reedtrullz/ClankerOS` shows PUBLIC
+    visibility, default branch `main`, README homepage, ADMIN viewer
+    permission, populated About description, and 20 repository topics.
+- Non-claims: local shell-adapter execution only; no built-in provider
+  integration, no remote worker, no hosted dashboard, no scheduling, no
+  autonomous retry, no budget enforcement, no trust promotion, no CI/deploy
+  proof, no external mutation, no commit, no push, and no deployment are
+  implied by this status entry.
+
 ## 2026-06-24 Replayable Evidence Packet Sidecars
 
 - Strengthened `python3 -m agent_os.cli evidence <run_id>` from a Markdown-only

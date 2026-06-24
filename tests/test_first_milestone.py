@@ -2894,6 +2894,130 @@ def test_run_delegation_shell_adapter_completes_valid_scout_output(
     assert "adapter=shell" in inbox_output
 
 
+def test_run_delegation_input_bundle_includes_registered_project_context_for_repo_scouting(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage, _goal_id, _task_id, delegation_id, repo_path = (
+        _create_registered_file_mapping_delegation(tmp_path, capsys)
+    )
+    adapter_path = tmp_path / ".clanker" / "adapters" / "project_context_scout.py"
+    adapter_path.parent.mkdir(parents=True, exist_ok=True)
+    adapter_path.write_text(
+        "\n".join(
+            [
+                "import json",
+                "import sys",
+                "from pathlib import Path",
+                "",
+                "input_path = Path(sys.argv[1])",
+                "payload = json.loads(input_path.read_text(encoding='utf-8'))",
+                "project = payload['project']",
+                "scouting = payload['repo_scouting']",
+                "evidence_dir = Path(payload['evidence_dir'])",
+                "assert project['id'] == 'subject'",
+                "assert Path(project['root_path']).resolve() == Path(scouting['root_path']).resolve()",
+                "assert project['default_test_command'] == 'python3 -m pytest -q'",
+                "assert 'src/app.py' in scouting['files']",
+                "(evidence_dir / 'project-seen.txt').write_text(project['id'], encoding='utf-8')",
+                "print(json.dumps({",
+                "  'result_summary': 'Mapped registered project files.',",
+                "  'structured_output': {",
+                "    'files': scouting['files'],",
+                "    'findings': ['Registered project context was available to the adapter.'],",
+                "    'relevant_files': ['src/app.py']",
+                "  }",
+                "}))",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    _configure_scout_adapter(tmp_path, capsys, adapter_path)
+
+    assert main(["--root", str(tmp_path), "run-delegation", delegation_id]) == 0
+    output = capsys.readouterr().out
+    evidence_line = next(line for line in output.splitlines() if line.startswith("evidence_packet: "))
+    evidence_dir = tmp_path / evidence_line.split(": ", 1)[1]
+    input_bundle = json.loads((evidence_dir / "input.json").read_text(encoding="utf-8"))
+
+    assert input_bundle["project"]["id"] == "subject"
+    assert input_bundle["project"]["root_path"] == str(repo_path.resolve())
+    assert input_bundle["project"]["default_test_command"] == "python3 -m pytest -q"
+    assert input_bundle["project"]["allowed_write_roots"] == [str(repo_path.resolve())]
+    assert input_bundle["repo_scouting"]["root_path"] == str(repo_path.resolve())
+    assert "README.md" in input_bundle["repo_scouting"]["files"]
+    assert "src/app.py" in input_bundle["repo_scouting"]["files"]
+    assert (evidence_dir / "project.json").exists()
+    assert (evidence_dir / "repo_files.json").exists()
+    assert (evidence_dir / "project-seen.txt").read_text(encoding="utf-8") == "subject"
+
+    completed = storage.get_subagent_delegation(delegation_id)
+    assert completed is not None
+    assert completed.status == "completed"
+    result_artifact = json.loads(Path(completed.result_artifact_path).read_text())
+    assert result_artifact["target_project_id"] == "subject"
+    assert result_artifact["target_project_root"] == str(repo_path.resolve())
+    assert result_artifact["structured_output"]["relevant_files"] == ["src/app.py"]
+
+
+def test_run_delegation_project_root_working_directory_lets_adapter_read_repo_files(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    _storage, _goal_id, _task_id, delegation_id, repo_path = (
+        _create_registered_file_mapping_delegation(tmp_path, capsys)
+    )
+    adapter_path = tmp_path / ".clanker" / "adapters" / "project_cwd_scout.py"
+    adapter_path.parent.mkdir(parents=True, exist_ok=True)
+    adapter_path.write_text(
+        "\n".join(
+            [
+                "import json",
+                "import sys",
+                "from pathlib import Path",
+                "",
+                "payload = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))",
+                "evidence_dir = Path(payload['evidence_dir'])",
+                "cwd = Path.cwd().resolve()",
+                "project_root = Path(payload['project']['root_path']).resolve()",
+                "assert cwd == project_root",
+                "source_text = Path('src/app.py').read_text(encoding='utf-8')",
+                "(evidence_dir / 'cwd.txt').write_text(str(cwd), encoding='utf-8')",
+                "print(json.dumps({",
+                "  'result_summary': 'Read repo file from project cwd.',",
+                "  'structured_output': {",
+                "    'files': ['src/app.py'],",
+                "    'findings': [source_text.strip()],",
+                "    'relevant_files': ['src/app.py']",
+                "  }",
+                "}))",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    _configure_scout_adapter(
+        tmp_path,
+        capsys,
+        adapter_path,
+        working_directory="project_root",
+    )
+
+    assert main(["--root", str(tmp_path), "run-delegation", delegation_id]) == 0
+    output = capsys.readouterr().out
+    evidence_line = next(line for line in output.splitlines() if line.startswith("evidence_packet: "))
+    evidence_dir = tmp_path / evidence_line.split(": ", 1)[1]
+    adapter_payload = json.loads((evidence_dir / "adapter.json").read_text(encoding="utf-8"))
+    input_bundle = json.loads((evidence_dir / "input.json").read_text(encoding="utf-8"))
+
+    assert (evidence_dir / "cwd.txt").read_text(encoding="utf-8") == str(repo_path.resolve())
+    assert adapter_payload["working_directory"] == "project_root"
+    assert adapter_payload["resolved_cwd"] == str(repo_path.resolve())
+    assert input_bundle["adapter"]["working_directory"] == "project_root"
+    assert input_bundle["adapter"]["resolved_cwd"] == str(repo_path.resolve())
+
+
 def test_run_delegation_malformed_json_opens_incident(
     tmp_path: Path,
     capsys,
@@ -4121,6 +4245,71 @@ def _create_file_mapping_delegation(
     return storage, goal_id, task_id, delegation_id
 
 
+def _create_registered_file_mapping_delegation(
+    tmp_path: Path,
+    capsys,
+) -> tuple[Storage, str, str, str, Path]:
+    repo_path = tmp_path / "subject-repo"
+    _init_git_repo(repo_path)
+    (repo_path / "src").mkdir()
+    (repo_path / "src" / "app.py").write_text(
+        "def main():\n    return 'subject app'\n",
+        encoding="utf-8",
+    )
+    subprocess.run(["git", "add", "src/app.py"], cwd=repo_path, check=True)
+    subprocess.run(
+        ["git", "commit", "-m", "add subject app"],
+        cwd=repo_path,
+        check=True,
+        capture_output=True,
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "register-project",
+                "subject",
+                "--path",
+                str(repo_path),
+                "--test-command",
+                "python3 -m pytest -q",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    goal_id = storage.create_goal("subject", "map subject files before coding")
+    task_id = storage.create_task(
+        goal_id=goal_id,
+        project_id="subject",
+        task_type="record_learning",
+        description="Find relevant subject repository files and summarize them.",
+        verification_plan={"type": "manual_review"},
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "delegate",
+                task_id,
+                "--profile",
+                "scout",
+                "--title",
+                "Find relevant subject files",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    delegation_id = storage.list_subagent_delegations(goal_id)[0].id
+    return storage, goal_id, task_id, delegation_id, repo_path
+
+
 def _write_fake_scout_adapter(tmp_path: Path) -> Path:
     adapter_path = tmp_path / ".clanker" / "adapters" / "fake_scout.py"
     adapter_path.parent.mkdir(parents=True, exist_ok=True)
@@ -4151,24 +4340,31 @@ def _write_fake_scout_adapter(tmp_path: Path) -> Path:
     return adapter_path
 
 
-def _configure_scout_adapter(tmp_path: Path, capsys, adapter_path: Path) -> None:
+def _configure_scout_adapter(
+    tmp_path: Path,
+    capsys,
+    adapter_path: Path,
+    *,
+    working_directory: str | None = None,
+) -> None:
+    args = [
+        "--root",
+        str(tmp_path),
+        "profile-adapter",
+        "scout",
+        "--command",
+        f"python3 {adapter_path}",
+        "--input-mode",
+        "json_file",
+        "--output-mode",
+        "json",
+        "--timeout-seconds",
+        "30",
+    ]
+    if working_directory:
+        args.extend(["--working-directory", working_directory])
     assert (
-        main(
-            [
-                "--root",
-                str(tmp_path),
-                "profile-adapter",
-                "scout",
-                "--command",
-                f"python3 {adapter_path}",
-                "--input-mode",
-                "json_file",
-                "--output-mode",
-                "json",
-                "--timeout-seconds",
-                "30",
-            ]
-        )
+        main(args)
         == 0
     )
     capsys.readouterr()

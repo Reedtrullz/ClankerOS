@@ -6002,3 +6002,15 @@ local application records for those proposed effects.
 - Goal ID: goal_0bd03de428f7
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_9a51f0da4a49/summary.md
+
+## Run run_6774975374ff
+
+- Goal ID: goal_b4b0c4915037
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_6774975374ff/summary.md
+
+## Run run_f4fab76c7f30
+
+- Goal ID: goal_a97fd18ad951
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_f4fab76c7f30/summary.md

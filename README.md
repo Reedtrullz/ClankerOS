@@ -36,8 +36,9 @@ hidden autonomy.
 - Produces GitHub handoff packets after committed local effects, including
   exact push and draft-PR commands without taking network action itself.
 - Supports safe profile routing, read-only delegation contracts, executable
-  local delegation through configured shell adapters, structured
-  delegation-result ingestion, proposed memory, and proposed skills.
+  local delegation through configured shell adapters, project-aware repo
+  scouting bundles, structured delegation-result ingestion, proposed memory,
+  and proposed skills.
 - Models capability activation as blocked proof work until evidence, approval,
   idempotency, and rollback boundaries exist, including local downstream proof
   tasks and read-only evaluator delegation packets.
@@ -146,6 +147,11 @@ handling; the configured adapter is only a local executor. There are no
 built-in OpenAI, Anthropic, Codex, OpenCode, Hermes, Aider, or MCP provider
 integrations yet. Subagent profiles remain read-only by default and cannot be
 used by ClankerOS to commit, push, approve, deploy, or mutate external systems.
+When the parent task belongs to a registered project, the adapter input bundle
+also includes project metadata and a capped repo file inventory. Add
+`--working-directory project_root` when configuring the adapter if the local
+executor should run from the target repository instead of the ClankerOS system
+root.
 For the full walkthrough, see
 [Executable Delegation](docs/tutorial-executable-delegation.md).
 
@@ -160,6 +166,7 @@ For the full walkthrough, see
 | Create planning state | `goal`, `plan`, `contract`, `tasks` |
 | Run one planned task | `python3 -m agent_os.cli run-task <task_id> --profile tester` |
 | Configure delegation adapter | `python3 -m agent_os.cli profile-adapter scout --command "python3 .clanker/adapters/fake_scout.py"` |
+| Configure project-root scout adapter | `python3 -m agent_os.cli profile-adapter scout --command "python3 /path/to/scout.py" --working-directory project_root` |
 | Run read-only delegation | `python3 -m agent_os.cli run-delegation <delegation_id>` |
 | Review evidence | `review`, `evidence`, `replay-summary` |
 | Inspect approvals | `python3 -m agent_os.cli approvals` |
@@ -175,6 +182,14 @@ a locally configured shell adapter. The adapter receives a scoped
 prompt/context bundle, returns a JSON result envelope, and ClankerOS validates
 the output against the delegation schema before marking the delegation
 completed.
+
+For registered-project tasks, `input.json` includes a `project` object with
+the registered root path, default test command, and allowed write roots plus a
+`repo_scouting` object with a capped git file inventory. Evidence packets also
+include `project.json` and `repo_files.json` when that context is available.
+Adapters run from the ClankerOS root by default; configure
+`--working-directory project_root` to let a scout read repo files with relative
+paths.
 
 Malformed JSON, schema-invalid output, non-zero exits, timeouts, and unsafe
 adapter commands fail safely with local incidents and evidence packets under:

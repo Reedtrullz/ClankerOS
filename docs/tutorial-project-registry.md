@@ -73,7 +73,31 @@ Use that file as the project handoff before starting a goal. It names the
 target repository, the default verifier, the safe write boundary, and the next
 operator commands to consider.
 
-## 6. Continue Into A Goal
+## 6. Scout Before Editing
+
+After a task exists for the registered project, you can create a read-only
+scout delegation before running implementation work:
+
+```bash
+python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
+python3 -m agent_os.cli profile-adapter scout \
+  --command "python3 /absolute/path/to/project_scout.py" \
+  --input-mode json_file \
+  --output-mode json \
+  --working-directory project_root \
+  --timeout-seconds 120
+python3 -m agent_os.cli run-delegation <delegation_id>
+python3 -m agent_os.cli delegation-result <delegation_id>
+```
+
+For registered-project tasks, the adapter input bundle includes the project
+root, default test command, allowed write roots, and a capped git file
+inventory under `repo_scouting.files`. The evidence packet adds `project.json`
+and `repo_files.json`. This makes repo scouting useful without making the
+scout profile write, commit, push, approve, deploy, or call a model provider
+through ClankerOS.
+
+## 7. Continue Into A Goal
 
 After the context looks right, choose a narrow goal:
 

@@ -95,6 +95,7 @@
 - [x] Add default profile config and routing decision records. <!-- score=9 complexity=4 -->
 - [x] Add subagent delegation records from routing decisions. <!-- score=9 complexity=4 -->
 - [x] Add executable local shell-adapter delegation runner with evidence and incidents. <!-- score=10 complexity=4 -->
+- [x] Make executable delegation project-aware for registered-repo scouting. <!-- score=9 complexity=4 -->
 - [x] Add delegation result ingestion for read-only subagent outputs. <!-- score=8 complexity=4 -->
 - [x] Add memory proposal records from completed delegation outputs. <!-- score=8 complexity=4 -->
 - [ ] Add a first-class delegation run index for richer dashboard filtering and retry decisions. <!-- score=9 complexity=4 -->
