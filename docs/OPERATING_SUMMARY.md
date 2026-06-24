@@ -120,7 +120,25 @@ Core layers for the bootstrap:
   runs, routing decisions, worktrees, effects, approvals, source edits,
   command reruns, network actions, provider calls, or external mutations. Run
   review and dashboard output also surface existing coder prep packets and
-  coder worktree plans. Adapters run from the system root by default and can opt into
+  coder worktree plans. `coder-worktree-approval <delegation_id>` creates a
+  dedicated local approval request for the current plan hash and writes
+  `coder_worktree_approval_request.json/.md` beside the plan without creating
+  a worktree, editing source, running commands, committing, pushing,
+  deploying, calling providers, or using the network.
+  `approve-coder-worktree <approval_id>` marks that request approved and
+  writes `coder_worktree_approval_decision.json/.md` without running the work.
+  `run-coder-worktree <delegation_id> --command "<safe local command>" --verify`
+  requires the approved matching plan hash, creates an isolated local git
+  worktree under `.agent/worktrees/<project>/<run_id>/`, runs the explicit
+  safe command inside it, optionally runs the default or operator-supplied
+  verifier, captures stdout/stderr/status/diff/changed files, validates that
+  changed files are a subset of `allowed_files`, and writes evidence under
+  `.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/`.
+  The run blocks on bounded-file violations, fails on command or verification
+  failure, does not auto-revert, and never commits, pushes, deploys, calls
+  providers, or intentionally uses the network. Run review, delegation-result,
+  inbox, and dashboard output surface coder worktree approvals and runs.
+  Adapters run from the system root by default and can opt into
   `--working-directory project_root` for repo scouting. It supports shell
   adapters only. ClankerOS records
   `provider_calls_taken_by_clankeros=0`, `external_mutations_taken=0`, and
@@ -159,15 +177,18 @@ Core layers for the bootstrap:
   `docs/steering-review.md` plus a `steering_reviews` row from local goal,
   task, approval, and incident state. `next-action <goal_or_project>` refreshes
   the review and prints the recommended operator action. `inbox` lists
-  operator-worthy steering reviews, pending approvals, open incidents, and
-  recent delegation states.
+  operator-worthy steering reviews, pending approvals, open incidents, recent
+  delegation states, pending coder worktree approvals, and recent coder
+  worktree runs.
   These commands do not execute tasks, approve requests, retry, commit, push,
   deploy, or mutate external systems.
 - Operator cockpit: the dashboard starts by making the implementation-handoff
   workflow explicit: `delegate -> context-pack -> run-delegation ->
-  implementation-handoff -> coder-prep -> coder-worktree-plan -> review ->
-  dashboard`, then surfaces current handoffs, coder-prep packets, and coder
-  worktree plans before the broader goal, task, approval, effect,
+  implementation-handoff -> coder-prep -> coder-worktree-plan ->
+  coder-worktree-approval -> approve-coder-worktree -> run-coder-worktree ->
+  review -> dashboard`, then surfaces current handoffs, coder-prep packets,
+  coder worktree plans, coder worktree approvals, and approved coder worktree
+  runs before the broader goal, task, approval, effect,
   verification, routing, steering, memory, and skill sections. Legacy
   capability proof-ladder records remain available in lower advanced sections,
   but they are not the default operator path.

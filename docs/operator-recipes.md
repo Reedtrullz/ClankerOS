@@ -123,6 +123,35 @@ Boundary: this recipe prepares operator-review artifacts only. It does not
 create a worktree, dispatch a task, request approval, run commands, edit
 source, commit, push, deploy, call providers, or mutate external systems.
 
+## Approve And Run A Bounded Coder Worktree
+
+```bash
+python3 -m agent_os.cli coder-worktree-approval subagent_delegation_... \
+  --requested-by operator \
+  --note "Approve bounded worktree execution"
+python3 -m agent_os.cli approve-coder-worktree coder_worktree_approval_... \
+  --decided-by operator \
+  --note "Approved bounded execution"
+python3 -m agent_os.cli run-coder-worktree subagent_delegation_... \
+  --command "python3 scripts/local_change.py" \
+  --verify
+python3 -m agent_os.cli review run_...
+python3 -m agent_os.cli dashboard
+```
+
+Use this only after `coder-worktree-plan` has produced a bounded plan with
+allowed files you are willing to authorize. The approval request is tied to
+the current plan hash, and `run-coder-worktree` refuses to run if the plan
+changes after approval.
+
+Boundary: approval request and approval decision still do not create a
+worktree or run commands. `run-coder-worktree` creates a local isolated
+worktree and runs the explicitly provided safe local command, then writes
+stdout, stderr, verification output, git status, diff, changed files, and
+bounded-file validation. It does not commit, push, deploy, call providers, or
+intentionally use the network. Any changed file outside `allowed_files` blocks
+the run for operator review.
+
 ## Review Latest Capability Result Without Activation
 
 ```bash

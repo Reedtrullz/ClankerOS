@@ -3133,6 +3133,24 @@ def test_implementation_handoff_reports_missing_for_unrun_delegation(
     output = capsys.readouterr().out
     assert "coder_worktree_plan_failed: coder prep is not readable" in output
 
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-worktree-approval",
+                delegation_id,
+                "--requested-by",
+                "operator",
+                "--note",
+                "Approve bounded worktree execution",
+            ]
+        )
+        == 1
+    )
+    output = capsys.readouterr().out
+    assert "coder_worktree_approval_failed: coder worktree plan is not readable" in output
+
 
 def test_default_cli_help_prioritizes_handoff_workflow_and_demotes_ladder() -> None:
     parser = build_parser()
@@ -3463,6 +3481,385 @@ def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
     assert "task_rows_created=0" in dashboard
     assert "source_edits=0" in dashboard
     assert str(repo_path.resolve()) in input_bundle["project"]["root_path"]
+
+
+def test_coder_worktree_approval_and_run_capture_bounded_evidence(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    _storage, _goal_id, _task_id, delegation_id, repo_path = (
+        _create_registered_context_pack_delegation(tmp_path, capsys)
+    )
+    _write_coder_worktree_subject_scripts(repo_path)
+    source_run_id = _run_fake_context_pack_scout(tmp_path, capsys, delegation_id)
+    _prepare_coder_worktree_plan(tmp_path, capsys, delegation_id)
+
+    assert main(["--root", str(tmp_path), "coder-worktree-approval", "missing"]) == 1
+    output = capsys.readouterr().out
+    assert "coder_worktree_approval_failed: delegation not found: missing" in output
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-worktree-approval",
+                delegation_id,
+                "--requested-by",
+                "operator",
+                "--note",
+                "Approve bounded worktree execution",
+            ]
+        )
+        == 0
+    )
+    approval_output = capsys.readouterr().out
+    assert "coder_worktree_approval: " in approval_output
+    assert "status: pending_operator_approval" in approval_output
+    assert "worktrees_created: 0" in approval_output
+    approval_id = next(
+        line.split(": ", 1)[1]
+        for line in approval_output.splitlines()
+        if line.startswith("approval_id: ")
+    )
+    request_artifact = tmp_path / next(
+        line.split(": ", 1)[1]
+        for line in approval_output.splitlines()
+        if line.startswith("artifact: ")
+    )
+    request_payload = json.loads(request_artifact.read_text(encoding="utf-8"))
+    assert request_payload["kind"] == "coder_worktree_execution_approval_request"
+    assert request_payload["status"] == "pending_operator_approval"
+    assert request_payload["source_plan_sha256"]
+    assert "agent_os/delegation_runner.py" in request_payload["allowed_files"]
+    assert (request_artifact.parent / "coder_worktree_approval_request.md").exists()
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-worktree-approval",
+                delegation_id,
+                "--requested-by",
+                "operator",
+                "--note",
+                "Approve bounded worktree execution",
+            ]
+        )
+        == 0
+    )
+    duplicate_output = capsys.readouterr().out
+    assert f"coder_worktree_approval: already_recorded {approval_id}" in duplicate_output
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-coder-worktree",
+                delegation_id,
+                "--command",
+                "python3 scripts/change_allowed.py",
+                "--verify",
+            ]
+        )
+        == 1
+    )
+    pending_run_output = capsys.readouterr().out
+    assert "run_coder_worktree_failed: approval is not approved" in pending_run_output
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "approve-coder-worktree",
+                approval_id,
+                "--decided-by",
+                "operator",
+                "--note",
+                "Approved bounded execution",
+            ]
+        )
+        == 0
+    )
+    decision_output = capsys.readouterr().out
+    assert f"approved_coder_worktree: {approval_id}" in decision_output
+    assert "status: approved" in decision_output
+    assert "worktrees_created: 0" in decision_output
+    decision_artifact = tmp_path / next(
+        line.split(": ", 1)[1]
+        for line in decision_output.splitlines()
+        if line.startswith("artifact: ")
+    )
+    decision_payload = json.loads(decision_artifact.read_text(encoding="utf-8"))
+    assert decision_payload["kind"] == "coder_worktree_execution_approval_decision"
+    assert decision_payload["status"] == "approved"
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "approve-coder-worktree",
+                approval_id,
+                "--decided-by",
+                "operator",
+                "--note",
+                "Approved bounded execution",
+            ]
+        )
+        == 0
+    )
+    already_approved_output = capsys.readouterr().out
+    assert f"approved_coder_worktree: already_approved {approval_id}" in already_approved_output
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-coder-worktree",
+                delegation_id,
+                "--command",
+                "python3 scripts/change_allowed.py",
+                "--verify",
+            ]
+        )
+        == 0
+    )
+    run_output = capsys.readouterr().out
+    assert "coder_worktree_run: completed" in run_output
+    assert f"approval_id: {approval_id}" in run_output
+    assert "changed_files_within_allowed_files: true" in run_output
+    assert "commit_created: false" in run_output
+    assert "push_created: false" in run_output
+    assert "provider_calls_taken_by_clankeros: 0" in run_output
+    run_id = next(
+        line.split(": ", 1)[1]
+        for line in run_output.splitlines()
+        if line.startswith("run_id: ")
+    )
+    assert run_id.startswith("run_")
+    evidence_dir = tmp_path / next(
+        line.split(": ", 1)[1]
+        for line in run_output.splitlines()
+        if line.startswith("evidence: ")
+    )
+    run_payload = json.loads((evidence_dir / "run.json").read_text(encoding="utf-8"))
+    assert run_payload["kind"] == "approved_coder_worktree_run"
+    assert run_payload["status"] == "completed"
+    assert run_payload["approval_status"] == "approved"
+    assert run_payload["source_delegation_run_id"] == source_run_id
+    assert run_payload["command_exit_code"] == 0
+    assert run_payload["verification_exit_code"] == 0
+    assert run_payload["commit_created"] is False
+    assert run_payload["push_created"] is False
+    assert run_payload["deploy_created"] is False
+    assert run_payload["provider_calls_taken_by_clankeros"] == 0
+    assert run_payload["network_actions_taken"] == 0
+    assert run_payload["external_mutations_taken"] == 0
+    assert "agent_os/delegation_runner.py" in run_payload["changed_files"]
+    assert "allowed-change" in (evidence_dir / "stdout.txt").read_text(encoding="utf-8")
+    assert (evidence_dir / "stderr.txt").exists()
+    assert (evidence_dir / "verification_stdout.txt").exists()
+    assert (evidence_dir / "verification_stderr.txt").exists()
+    assert "agent_os/delegation_runner.py" in (evidence_dir / "git_status.txt").read_text(encoding="utf-8")
+    assert "allowed-change" in (evidence_dir / "diff.patch").read_text(encoding="utf-8")
+    changed_files = json.loads((evidence_dir / "changed_files.json").read_text(encoding="utf-8"))
+    assert "agent_os/delegation_runner.py" in changed_files["changed_files"]
+    bounded = json.loads((evidence_dir / "bounded_file_validation.json").read_text(encoding="utf-8"))
+    assert bounded["valid"] is True
+    assert bounded["outside_allowed_files"] == []
+    assert json.loads((evidence_dir / "approval.json").read_text(encoding="utf-8"))["id"] == approval_id
+    assert json.loads((evidence_dir / "source_plan.json").read_text(encoding="utf-8"))["kind"] == "coder_worktree_run_plan"
+    assert "review_coder_worktree_run" in (evidence_dir / "summary.md").read_text(encoding="utf-8")
+    assert subprocess.run(
+        ["git", "status", "--short"],
+        cwd=repo_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout == ""
+    assert subprocess.run(
+        ["git", "log", "--oneline", "-1"],
+        cwd=repo_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.endswith("add context pack subject files\n")
+
+    assert main(["--root", str(tmp_path), "review", source_run_id]) == 0
+    review_output = capsys.readouterr().out
+    review_path = tmp_path / next(
+        line.split(": ", 1)[1]
+        for line in review_output.splitlines()
+        if line.startswith("review: ")
+    )
+    review = review_path.read_text(encoding="utf-8")
+    assert "## Coder Worktree Approval" in review
+    assert approval_id in review
+    assert "## Coder Worktree Run" in review
+    assert "changed_files_within_allowed_files: true" in review
+    assert "diff.patch" in review
+
+    dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
+    assert "### Coder Worktree Approvals" in dashboard
+    assert approval_id in dashboard
+    assert "status=approved" in dashboard
+    assert "### Approved Coder Worktree Runs" in dashboard
+    assert run_id in dashboard
+    assert "changed_files=agent_os/delegation_runner.py" in dashboard
+
+    assert main(["--root", str(tmp_path), "delegation-result", delegation_id]) == 0
+    delegation_output = capsys.readouterr().out
+    assert "coder_worktree_approval_request: .clanker/delegations/" in delegation_output
+    assert "coder_worktree_approval_status: approved" in delegation_output
+    assert "coder_worktree_run_status: completed" in delegation_output
+    assert "coder_worktree_run: .clanker/delegations/" in delegation_output
+
+    assert main(["--root", str(tmp_path), "inbox"]) == 0
+    inbox_output = capsys.readouterr().out
+    assert "coder_worktree_approvals: 0" in inbox_output
+    assert "coder_worktree_runs: 1" in inbox_output
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-coder-worktree",
+                delegation_id,
+                "--command",
+                "python3 scripts/change_allowed.py",
+                "--verify",
+            ]
+        )
+        == 0
+    )
+    rerun_output = capsys.readouterr().out
+    assert "coder_worktree_run: already_recorded" in rerun_output
+
+
+def test_run_coder_worktree_blocks_hash_mismatch_unsafe_commands_and_file_violations(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    _storage, _goal_id, _task_id, delegation_id, repo_path = (
+        _create_registered_context_pack_delegation(tmp_path, capsys)
+    )
+    _write_coder_worktree_subject_scripts(repo_path)
+    _run_fake_context_pack_scout(tmp_path, capsys, delegation_id)
+    plan_path = _prepare_coder_worktree_plan(tmp_path, capsys, delegation_id)
+    approval_id = _request_and_approve_coder_worktree(tmp_path, capsys, delegation_id)
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-coder-worktree",
+                delegation_id,
+                "--command",
+                "curl https://example.com",
+                "--verify",
+            ]
+        )
+        == 1
+    )
+    unsafe_output = capsys.readouterr().out
+    assert "run_coder_worktree_failed: unsafe command token: curl" in unsafe_output
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-coder-worktree",
+                delegation_id,
+                "--command",
+                "python3 scripts/change_outside.py",
+                "--verify",
+            ]
+        )
+        == 1
+    )
+    outside_output = capsys.readouterr().out
+    assert "coder_worktree_run: blocked" in outside_output
+    assert "failure_class: bounded_file_violation" in outside_output
+    outside_evidence = tmp_path / next(
+        line.split(": ", 1)[1]
+        for line in outside_output.splitlines()
+        if line.startswith("evidence: ")
+    )
+    bounded = json.loads(
+        (outside_evidence / "bounded_file_validation.json").read_text(encoding="utf-8")
+    )
+    assert bounded["valid"] is False
+    assert bounded["failure_class"] == "bounded_file_violation"
+    assert "notes/outside.txt" in bounded["outside_allowed_files"]
+
+    plan_payload = json.loads(plan_path.read_text(encoding="utf-8"))
+    plan_payload["hash_mismatch_probe"] = True
+    plan_path.write_text(json.dumps(plan_payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-coder-worktree",
+                delegation_id,
+                "--command",
+                "python3 scripts/change_allowed.py",
+                "--verify",
+                "--rerun",
+            ]
+        )
+        == 1
+    )
+    mismatch_output = capsys.readouterr().out
+    assert "approval source hash does not match current plan" in mismatch_output
+    assert approval_id in mismatch_output
+
+    fresh_approval_id = _request_and_approve_coder_worktree(
+        tmp_path,
+        capsys,
+        delegation_id,
+        force_new=True,
+    )
+    assert fresh_approval_id != approval_id
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-coder-worktree",
+                delegation_id,
+                "--command",
+                "python3 scripts/change_allowed.py",
+                "--verify-command",
+                "python3 scripts/fail_verify.py",
+                "--verify",
+                "--rerun",
+            ]
+        )
+        == 1
+    )
+    verification_output = capsys.readouterr().out
+    assert "coder_worktree_run: failed" in verification_output
+    assert "failure_class: verification_failed" in verification_output
+    verification_evidence = tmp_path / next(
+        line.split(": ", 1)[1]
+        for line in verification_output.splitlines()
+        if line.startswith("evidence: ")
+    )
+    run_payload = json.loads((verification_evidence / "run.json").read_text(encoding="utf-8"))
+    assert run_payload["status"] == "failed"
+    assert run_payload["verification_exit_code"] == 7
+    assert run_payload["commit_created"] is False
+    assert run_payload["push_created"] is False
+    assert run_payload["provider_calls_taken_by_clankeros"] == 0
 
 
 def test_run_delegation_context_pack_validation_warns_for_missing_returned_files(
@@ -4920,6 +5317,149 @@ def _create_registered_context_pack_delegation(
     capsys.readouterr()
     delegation_id = storage.list_subagent_delegations(goal_id)[0].id
     return storage, goal_id, task_id, delegation_id, repo_path
+
+
+def _write_coder_worktree_subject_scripts(repo_path: Path) -> None:
+    scripts_dir = repo_path / "scripts"
+    scripts_dir.mkdir(parents=True, exist_ok=True)
+    (scripts_dir / "change_allowed.py").write_text(
+        "\n".join(
+            [
+                "from pathlib import Path",
+                "",
+                "target = Path('agent_os/delegation_runner.py')",
+                "text = target.read_text(encoding='utf-8')",
+                "target.write_text(text + \"\\nallowed_change = 'allowed-change'\\n\", encoding='utf-8')",
+                "print('allowed-change')",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (scripts_dir / "change_outside.py").write_text(
+        "\n".join(
+            [
+                "from pathlib import Path",
+                "",
+                "target = Path('notes/outside.txt')",
+                "target.parent.mkdir(parents=True, exist_ok=True)",
+                "target.write_text('outside-change\\n', encoding='utf-8')",
+                "print('outside-change')",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (scripts_dir / "fail_verify.py").write_text(
+        "import sys\nprint('verification-failed')\nsys.exit(7)\n",
+        encoding="utf-8",
+    )
+    subprocess.run(["git", "add", "scripts"], cwd=repo_path, check=True)
+    subprocess.run(
+        ["git", "commit", "--amend", "--no-edit"],
+        cwd=repo_path,
+        check=True,
+        capture_output=True,
+    )
+
+
+def _run_fake_context_pack_scout(tmp_path: Path, capsys, delegation_id: str) -> str:
+    adapter_path = tmp_path / ".clanker" / "adapters" / "context_pack_scout.py"
+    adapter_path.parent.mkdir(parents=True, exist_ok=True)
+    adapter_path.write_text(
+        "\n".join(
+            [
+                "import json",
+                "import sys",
+                "from pathlib import Path",
+                "",
+                "payload = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))",
+                "evidence_dir = Path(payload['evidence_dir'])",
+                "(evidence_dir / 'scout.txt').write_text('context-pack-scout', encoding='utf-8')",
+                "print(json.dumps({",
+                "  'result_summary': 'Found bounded implementation files for delegation_runner.',",
+                "  'structured_output': {",
+                "    'files': ['agent_os/delegation_runner.py', 'tests/test_delegation_runner.py'],",
+                "    'findings': ['The delegation runner implementation and test are the bounded coding target.'],",
+                "    'relevant_files': ['agent_os/delegation_runner.py', 'tests/test_delegation_runner.py']",
+                "  }",
+                "}))",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    _configure_scout_adapter(tmp_path, capsys, adapter_path)
+
+    assert main(["--root", str(tmp_path), "context-pack", delegation_id]) == 0
+    capsys.readouterr()
+    assert main(["--root", str(tmp_path), "run-delegation", delegation_id]) == 0
+    output = capsys.readouterr().out
+    return next(
+        line.split(": ", 1)[1]
+        for line in output.splitlines()
+        if line.startswith("run_id: ")
+    )
+
+
+def _prepare_coder_worktree_plan(tmp_path: Path, capsys, delegation_id: str) -> Path:
+    assert main(["--root", str(tmp_path), "implementation-handoff", delegation_id]) == 0
+    capsys.readouterr()
+    assert main(["--root", str(tmp_path), "coder-prep", delegation_id]) == 0
+    capsys.readouterr()
+    assert main(["--root", str(tmp_path), "coder-worktree-plan", delegation_id]) == 0
+    output = capsys.readouterr().out
+    artifact = next(
+        line.split(": ", 1)[1]
+        for line in output.splitlines()
+        if line.startswith("artifact: ")
+    )
+    return tmp_path / artifact
+
+
+def _request_and_approve_coder_worktree(
+    tmp_path: Path,
+    capsys,
+    delegation_id: str,
+    *,
+    force_new: bool = False,
+) -> str:
+    request_args = [
+        "--root",
+        str(tmp_path),
+        "coder-worktree-approval",
+        delegation_id,
+        "--requested-by",
+        "operator",
+        "--note",
+        "Approve bounded worktree execution",
+    ]
+    if force_new:
+        request_args.append("--force-new")
+    assert main(request_args) == 0
+    request_output = capsys.readouterr().out
+    approval_id = next(
+        line.split(": ", 1)[1]
+        for line in request_output.splitlines()
+        if line.startswith("approval_id: ")
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "approve-coder-worktree",
+                approval_id,
+                "--decided-by",
+                "operator",
+                "--note",
+                "Approved bounded execution",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    return approval_id
 
 
 def _write_fake_scout_adapter(tmp_path: Path) -> Path:

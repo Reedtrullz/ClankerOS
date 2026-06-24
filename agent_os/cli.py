@@ -84,6 +84,18 @@ from agent_os.coder_worktree_plan import (
     prepare_worktree_plan_from_coder_prep,
     render_coder_worktree_plan_cli_lines,
 )
+from agent_os.coder_worktree_execution import (
+    CoderWorktreeApprovalError,
+    CoderWorktreeRunError,
+    approve_coder_worktree,
+    latest_coder_worktree_approval_for_delegation,
+    latest_coder_worktree_run_for_delegation,
+    render_coder_worktree_approval_cli_lines,
+    render_coder_worktree_decision_cli_lines,
+    render_coder_worktree_run_cli_lines,
+    request_coder_worktree_approval,
+    run_approved_coder_worktree,
+)
 from agent_os.budget_enforcement_proof import (
     format_recommended_commands as format_budget_enforcement_commands,
     render_budget_enforcement_proof_checklist_line,
@@ -781,6 +793,30 @@ def build_parser() -> argparse.ArgumentParser:
         help="Write an approval-gated future worktree plan from coder prep.",
     )
     coder_worktree_plan.add_argument("delegation_id")
+    coder_worktree_approval = subparsers.add_parser(
+        "coder-worktree-approval",
+        help="Request explicit operator approval for a coder worktree run plan.",
+    )
+    coder_worktree_approval.add_argument("delegation_id")
+    coder_worktree_approval.add_argument("--requested-by", default="operator")
+    coder_worktree_approval.add_argument("--note", default="")
+    coder_worktree_approval.add_argument("--force-new", action="store_true")
+    approve_coder_worktree_parser = subparsers.add_parser(
+        "approve-coder-worktree",
+        help="Approve a pending coder worktree execution request.",
+    )
+    approve_coder_worktree_parser.add_argument("approval_id")
+    approve_coder_worktree_parser.add_argument("--decided-by", default="operator")
+    approve_coder_worktree_parser.add_argument("--note", required=True)
+    run_coder_worktree_parser = subparsers.add_parser(
+        "run-coder-worktree",
+        help="Run an approved bounded local command in an isolated coder worktree.",
+    )
+    run_coder_worktree_parser.add_argument("delegation_id")
+    run_coder_worktree_parser.add_argument("--command", dest="exec_command", required=True)
+    run_coder_worktree_parser.add_argument("--verify", action="store_true")
+    run_coder_worktree_parser.add_argument("--verify-command")
+    run_coder_worktree_parser.add_argument("--rerun", action="store_true")
     run_delegation_parser = subparsers.add_parser(
         "run-delegation",
         help="Execute a pending delegation through a configured local adapter.",
@@ -2059,6 +2095,8 @@ def main(argv: list[str] | None = None) -> int:
         pending_approvals = inbox["pending_approvals"]
         open_incidents = inbox["open_incidents"]
         subagent_delegations = inbox["subagent_delegations"]
+        coder_worktree_approvals = inbox["coder_worktree_approvals"]
+        coder_worktree_runs = inbox["coder_worktree_runs"]
         print(f"inbox_items: {inbox['count']}")
         print(f"steering_reviews: {len(steering_reviews)}")
         for review in steering_reviews:
@@ -2078,6 +2116,18 @@ def main(argv: list[str] | None = None) -> int:
         print(f"subagent_delegations: {len(subagent_delegations)}")
         for delegation in subagent_delegations:
             print(render_subagent_delegation_line(delegation).removeprefix("- "))
+        print(f"coder_worktree_approvals: {len(coder_worktree_approvals)}")
+        for approval in coder_worktree_approvals:
+            print(
+                f"coder_worktree_approval {approval.id}: delegation={approval.delegation_id} "
+                f"status={approval.status} request={approval.request_artifact_path}"
+            )
+        print(f"coder_worktree_runs: {len(coder_worktree_runs)}")
+        for run in coder_worktree_runs:
+            print(
+                f"coder_worktree_run {run.id}: delegation={run.delegation_id} "
+                f"status={run.status} evidence={run.evidence_path}"
+            )
         print("network_actions_taken: 0")
         print("external_mutations_taken: 0")
         return 0
@@ -2371,6 +2421,23 @@ def main(argv: list[str] | None = None) -> int:
             )
         if metadata.get("implementation_handoff_md"):
             print(f"implementation_handoff_md: {metadata['implementation_handoff_md']}")
+        coder_approval = latest_coder_worktree_approval_for_delegation(
+            root,
+            delegation.id,
+        )
+        if coder_approval is not None:
+            print(
+                "coder_worktree_approval_request: "
+                f"{coder_approval.request_artifact_path}"
+            )
+            print(f"coder_worktree_approval_status: {coder_approval.status}")
+            print(f"coder_worktree_approval_id: {coder_approval.id}")
+        coder_run = latest_coder_worktree_run_for_delegation(root, delegation.id)
+        if coder_run is not None:
+            print(f"coder_worktree_run: {coder_run.evidence_path}")
+            print(f"coder_worktree_run_status: {coder_run.status}")
+            print(f"coder_worktree_run_id: {coder_run.id}")
+            print(f"coder_worktree_run_worktree_path: {coder_run.worktree_path}")
         if "exit_code" in metadata:
             print(f"exit_code: {metadata['exit_code']}")
         if metadata.get("incident_id"):
@@ -2426,6 +2493,65 @@ def main(argv: list[str] | None = None) -> int:
         for line in render_coder_worktree_plan_cli_lines(root, result):
             print(line)
         return 0
+
+    if args.command == "coder-worktree-approval":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            result = request_coder_worktree_approval(
+                root,
+                system.storage,
+                args.delegation_id,
+                requested_by=args.requested_by,
+                note=args.note,
+                force_new=args.force_new,
+            )
+        except CoderWorktreeApprovalError as error:
+            print(f"coder_worktree_approval_failed: {error}")
+            return 1
+        for line in render_coder_worktree_approval_cli_lines(root, result):
+            print(line)
+        return 0
+
+    if args.command == "approve-coder-worktree":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            result = approve_coder_worktree(
+                root,
+                system.storage,
+                args.approval_id,
+                decided_by=args.decided_by,
+                note=args.note,
+            )
+        except CoderWorktreeApprovalError as error:
+            print(f"approve_coder_worktree_failed: {error}")
+            return 1
+        for line in render_coder_worktree_decision_cli_lines(root, result):
+            print(line)
+        return 0
+
+    if args.command == "run-coder-worktree":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            result = run_approved_coder_worktree(
+                root,
+                system.storage,
+                args.delegation_id,
+                command=args.exec_command,
+                verify=args.verify,
+                verify_command=args.verify_command,
+                rerun=args.rerun,
+            )
+        except (CoderWorktreeApprovalError, CoderWorktreeRunError) as error:
+            print(f"run_coder_worktree_failed: {error}")
+            return 1
+        for line in render_coder_worktree_run_cli_lines(root, result):
+            print(line)
+        if result.run.status == "completed" or result.already_recorded:
+            return 0
+        return 1
 
     if args.command == "run-delegation":
         system = AgentSystem(root)

@@ -38,7 +38,8 @@ hidden autonomy.
 - Supports safe profile routing, read-only delegation contracts, deterministic
   context packs, executable local delegation through configured shell adapters,
   project-aware repo scouting, first-class implementation handoffs, safe
-  coder-prep packets, approval-gated coder worktree plans, structured
+  coder-prep packets, approval-gated coder worktree plans, explicit coder
+  worktree approvals, bounded worktree execution with evidence, structured
   delegation-result ingestion, proposed memory, and proposed skills.
 - Keeps the old capability proof ladder as advanced blocked-proof/reference
   machinery instead of the default operator path.
@@ -74,8 +75,9 @@ Then read:
 
 The primary operator surface is the implementation-handoff workflow: scout a
 repo, inspect the generated handoff, prepare a bounded coder plan, propose an
-approval-gated worktree plan, then review the evidence before any edit or
-dispatch happens.
+approval-gated worktree plan, request explicit approval, run a bounded local
+command in an isolated worktree, then review evidence before any separate
+commit approval.
 
 ```bash
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
@@ -84,6 +86,9 @@ python3 -m agent_os.cli run-delegation <delegation_id>
 python3 -m agent_os.cli implementation-handoff <delegation_id>
 python3 -m agent_os.cli coder-prep <delegation_id>
 python3 -m agent_os.cli coder-worktree-plan <delegation_id>
+python3 -m agent_os.cli coder-worktree-approval <delegation_id> --requested-by operator --note "Approve bounded worktree execution"
+python3 -m agent_os.cli approve-coder-worktree <approval_id> --decided-by operator --note "Approved bounded execution"
+python3 -m agent_os.cli run-coder-worktree <delegation_id> --command "python3 scripts/local_change.py" --verify
 python3 -m agent_os.cli review <run_id>
 python3 -m agent_os.cli dashboard
 ```
@@ -158,6 +163,10 @@ python3 -m agent_os.cli run-delegation <delegation_id>
 python3 -m agent_os.cli delegation-result <delegation_id>
 python3 -m agent_os.cli implementation-handoff <delegation_id>
 python3 -m agent_os.cli coder-prep <delegation_id>
+python3 -m agent_os.cli coder-worktree-plan <delegation_id>
+python3 -m agent_os.cli coder-worktree-approval <delegation_id> --requested-by operator --note "Approve bounded worktree execution"
+python3 -m agent_os.cli approve-coder-worktree <approval_id> --decided-by operator --note "Approved bounded execution"
+python3 -m agent_os.cli run-coder-worktree <delegation_id> --command "python3 scripts/local_change.py" --verify
 python3 -m agent_os.cli review <run_id>
 python3 -m agent_os.cli dashboard
 ```
@@ -198,6 +207,20 @@ consumes `coder_prep.md`, writes `coder_worktree_plan.json` and
 shape, and keeps `dispatch_ready=false` with no worktree, approval request, run,
 task, effect, command rerun, source edit, network action, provider call, commit,
 push, deploy, or external mutation.
+Use `coder-worktree-approval <delegation_id>` to request the explicit operator
+gate for that exact plan hash. It writes `coder_worktree_approval_request.json`
+and `.md` beside the plan and still creates no worktree, runs no command, and
+edits no source.
+Use `approve-coder-worktree <approval_id>` to mark that local approval request
+approved. It writes `coder_worktree_approval_decision.json` and `.md`, but it
+still does not create a worktree or run commands.
+Only `run-coder-worktree <delegation_id> --command "<safe local cmd>" --verify`
+can create the isolated worktree. It requires an approved matching plan hash,
+runs the operator-provided safe local command in that worktree, captures stdout,
+stderr, verification output, git status, diff, changed files, and bounded-file
+validation under `.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/`.
+It blocks if changed files are outside `allowed_files`. It does not commit,
+push, deploy, call providers, or intentionally use the network.
 Add `--working-directory project_root` when configuring the adapter if the
 local executor should run from the target repository instead of the ClankerOS
 system root.
@@ -221,6 +244,9 @@ For the full walkthrough, see
 | Inspect implementation handoff | `python3 -m agent_os.cli implementation-handoff <delegation_id>` |
 | Prepare bounded coder plan | `python3 -m agent_os.cli coder-prep <delegation_id>` |
 | Prepare approval-gated worktree plan | `python3 -m agent_os.cli coder-worktree-plan <delegation_id>` |
+| Request coder worktree approval | `python3 -m agent_os.cli coder-worktree-approval <delegation_id> --requested-by operator --note "..."` |
+| Approve coder worktree execution | `python3 -m agent_os.cli approve-coder-worktree <approval_id> --decided-by operator --note "..."` |
+| Run approved bounded worktree command | `python3 -m agent_os.cli run-coder-worktree <delegation_id> --command "python3 scripts/local_change.py" --verify` |
 | Review evidence | `review`, `evidence`, `replay-summary` |
 | Inspect approvals | `python3 -m agent_os.cli approvals` |
 | Prepare GitHub handoff | `python3 -m agent_os.cli github-handoff <effect_id>` |
@@ -264,14 +290,17 @@ During `run-delegation`, those files are copied into:
 
 `delegation-result`, `implementation-handoff <delegation_id>`,
 `coder-prep <delegation_id>`, `coder-worktree-plan <delegation_id>`,
-`review <run_id>`, `inbox`, and `dashboard`
+`coder-worktree-approval <delegation_id>`, `approve-coder-worktree <approval_id>`,
+`run-coder-worktree <delegation_id>`, `review <run_id>`, `inbox`, and `dashboard`
 surface the context-pack path, returned-file inventory validation, missing
 returned files, and implementation handoff health so a later implementation
 pass can start from paths and metadata instead of pasted snippets. `review`
 writes `## Implementation Handoff`, `## Coder Prep`, and
-`## Coder Worktree Plan` sections, and the dashboard writes
+`## Coder Worktree Plan`, `## Coder Worktree Approval`, and
+`## Coder Worktree Run` sections, and the dashboard writes
 `### Implementation Handoffs`, `### Coder Prep Packets`, and
-`### Coder Worktree Plans`.
+`### Coder Worktree Plans`, `### Coder Worktree Approvals`, and
+`### Approved Coder Worktree Runs`.
 
 `coder-prep` is artifact-only and idempotent for the same handoff hash. It
 does not create task rows, dispatch runs, rerun commands, edit source files,
@@ -282,6 +311,11 @@ mutate external systems.
 `run-goal --isolation worktree` command, but it does not create the worktree,
 run the command, request approval, edit files, commit, push, deploy, call
 providers, or mutate external systems.
+`coder-worktree-approval` is idempotent for the same plan hash unless
+`--force-new` is used. `approve-coder-worktree` tolerates already-approved
+requests and prints `already_approved`. `run-coder-worktree` refuses to run
+without an approved matching plan hash and does not rerun a completed
+approval/plan pair unless `--rerun` is provided.
 
 Adapters run from the ClankerOS root by default; configure
 `--working-directory project_root` to let a scout read repo files with relative
@@ -312,10 +346,13 @@ goal -> task graph -> execution -> verification -> memory -> visibility -> learn
 The current control plane's primary operator path is implementation handoff:
 `run-delegation` writes context and handoff evidence, `implementation-handoff`
 reads it back, `coder-prep` writes a bounded future coding plan, and
-`coder-worktree-plan` writes an approval-gated future worktree plan before
-`review`/`dashboard` keep the next step visible. Executable local slices still
-exist where the verifier is explicit (`run-goal`, `run-task`,
-`run-delegation`). The older report-only proof ladders remain available as
+`coder-worktree-plan` writes an approval-gated future worktree plan.
+`coder-worktree-approval`, `approve-coder-worktree`, and `run-coder-worktree`
+then provide the first explicit bounded worktree execution gate with local
+evidence but no automatic commit, push, deploy, provider call, or network
+action. Executable local slices still exist where the verifier is explicit
+(`run-goal`, `run-task`, `run-delegation`, `run-coder-worktree`). The older
+report-only proof ladders remain available as
 advanced blocked-proof machinery, and every activation step still preserves
 `activation_allowed=false`, `capability_enabled=false`,
 `approval_requests_created=0`, `activation_actions_taken=0`, and

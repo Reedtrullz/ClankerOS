@@ -1,5 +1,72 @@
 # Status
 
+## 2026-06-24 Approved Coder Worktree Execution Gate
+
+- Added the next explicit gate after `coder-worktree-plan`:
+  `coder-worktree-approval <delegation_id>`,
+  `approve-coder-worktree <approval_id>`, and
+  `run-coder-worktree <delegation_id> --command "<safe local command>" --verify`.
+- `coder-worktree-approval` validates the latest
+  `coder_worktree_plan.json`, source hash, registered project, approval gate,
+  and bounded allowed-file list, then writes
+  `coder_worktree_approval_request.json/.md` beside the plan and records a
+  dedicated local SQLite approval row. It is idempotent for the same plan hash
+  unless `--force-new` is used.
+- `approve-coder-worktree` marks the dedicated approval row approved and writes
+  `coder_worktree_approval_decision.json/.md`. Re-approving an approved row
+  prints `already_approved`.
+- `run-coder-worktree` now refuses to run without an approved matching plan
+  hash, rejects obvious unsafe local command tokens, creates a local git
+  worktree under `.agent/worktrees/<project>/<run_id>/`, runs the
+  operator-provided command inside that worktree, optionally runs the default
+  project verifier or `--verify-command`, and writes evidence under
+  `.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/`.
+- Worktree run evidence includes `run.json`, `command.txt`, `stdout.txt`,
+  `stderr.txt`, `verification_command.txt`, `verification_stdout.txt`,
+  `verification_stderr.txt`, `git_status.txt`, `diff.patch`,
+  `changed_files.json`, `bounded_file_validation.json`, `approval.json`,
+  `source_plan.json`, and `summary.md`.
+- Bounded-file validation blocks a run with
+  `failure_class=bounded_file_violation` when changed files are outside
+  `allowed_files`; command and verification failures are recorded as failed
+  runs. Completed approval/plan pairs are not rerun unless `--rerun` is used.
+- `review`, `dashboard`, `inbox`, and `delegation-result` now surface coder
+  worktree approval and run status, request/evidence paths, worktree path,
+  branch, changed/outside files, exit codes, diff path, next action, and
+  non-claims. `docs/dashboard.md` was regenerated with `### Coder Worktree
+  Approvals` and `### Approved Coder Worktree Runs`.
+- Updated README, executable delegation tutorial, operator recipes, command
+  reference, documentation index, and operating summary so the public/default
+  workflow is:
+  `delegate -> context-pack -> run-delegation -> implementation-handoff ->
+  coder-prep -> coder-worktree-plan -> coder-worktree-approval ->
+  approve-coder-worktree -> run-coder-worktree -> review -> dashboard`.
+- Verification evidence:
+  - `python3 -m py_compile agent_os/coder_worktree_execution.py
+    agent_os/cli.py agent_os/dashboard.py agent_os/run_review.py
+    agent_os/steering.py` passed.
+  - focused coder worktree slice:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'coder_worktree'`
+    passed with 2 passed, 478 deselected.
+  - focused coder worktree plus missing-plan handoff slice:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'coder_worktree or implementation_handoff'`
+    passed with 3 passed, 477 deselected.
+  - broader delegation/review/dashboard/handoff/inbox slice:
+    `python3 -m pytest tests/test_first_milestone.py -q -k 'coder_worktree or delegation or review or dashboard or implementation_handoff or default_cli_help or inbox'`
+    passed with 164 passed, 316 deselected.
+  - `python3 -m agent_os.cli dashboard` regenerated `docs/dashboard.md`.
+  - `python3 -m agent_os.cli --help | sed -n '1,45p'` showed the new
+    `coder-worktree-approval` and `approve-coder-worktree` commands in the
+    primary help surface.
+  - `git diff --check` passed before the full suite.
+  - full suite: `python3 -m pytest -q` passed with 480 passed in 1014.23s.
+- Non-claims: approval request and approval decision do not create worktrees,
+  run commands, edit source, commit, push, deploy, call providers, use the
+  network, or mutate external systems. `run-coder-worktree` can create a local
+  worktree and run the explicit safe local command, but still does not commit,
+  push, deploy, call providers, intentionally use the network, auto-revert, or
+  auto-clean worktrees.
+
 ## 2026-06-24 Approval-Gated Coder Worktree Plans
 
 - Added `python3 -m agent_os.cli coder-worktree-plan <delegation_id>` as the

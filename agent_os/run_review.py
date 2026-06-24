@@ -6,6 +6,10 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from agent_os.coder_prep import render_coder_prep_review_lines
+from agent_os.coder_worktree_execution import (
+    render_coder_worktree_approval_review_lines,
+    render_coder_worktree_run_review_lines,
+)
 from agent_os.coder_worktree_plan import render_coder_worktree_plan_review_lines
 from agent_os.implementation_handoff import render_implementation_handoff_review_lines
 from agent_os.subagent_delegation import load_delegation_result_metadata
@@ -351,6 +355,22 @@ def render_run_review(root: Path, packet: RunEvidencePacket) -> str:
     if coder_worktree_plan_lines:
         lines.extend(["", "## Coder Worktree Plan", ""])
         lines.extend(coder_worktree_plan_lines)
+
+    coder_worktree_approval_lines: list[str] = []
+    coder_worktree_run_lines: list[str] = []
+    for delegation in packet.delegations:
+        coder_worktree_approval_lines.extend(
+            render_coder_worktree_approval_review_lines(root, delegation.id)
+        )
+        coder_worktree_run_lines.extend(
+            render_coder_worktree_run_review_lines(root, delegation.id)
+        )
+    if coder_worktree_approval_lines:
+        lines.extend(["", "## Coder Worktree Approval", ""])
+        lines.extend(coder_worktree_approval_lines)
+    if coder_worktree_run_lines:
+        lines.extend(["", "## Coder Worktree Run", ""])
+        lines.extend(coder_worktree_run_lines)
 
     lines.extend(
         [

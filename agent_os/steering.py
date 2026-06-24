@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from agent_os.coder_worktree_execution import (
+    list_coder_worktree_approvals,
+    list_coder_worktree_runs,
+)
 from agent_os.storage import ApprovalRequest, Incident, SteeringReview, Storage, Task
 
 
@@ -199,16 +203,26 @@ def collect_inbox_items(root: Path) -> dict[str, object]:
         if incident.status == "open"
     ]
     subagent_delegations = storage.list_recent_subagent_delegations(limit=10)
+    coder_worktree_approvals = list_coder_worktree_approvals(
+        root,
+        status="pending_operator_approval",
+        limit=10,
+    )
+    coder_worktree_runs = list_coder_worktree_runs(root, limit=10)
     return {
         "steering_reviews": steering_reviews,
         "pending_approvals": pending_approvals,
         "open_incidents": open_incidents,
         "subagent_delegations": subagent_delegations,
+        "coder_worktree_approvals": coder_worktree_approvals,
+        "coder_worktree_runs": coder_worktree_runs,
         "count": (
             len(steering_reviews)
             + len(pending_approvals)
             + len(open_incidents)
             + len(subagent_delegations)
+            + len(coder_worktree_approvals)
+            + len(coder_worktree_runs)
         ),
     }
 

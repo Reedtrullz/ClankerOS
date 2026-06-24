@@ -101,6 +101,9 @@ python3 -m agent_os.cli delegation-result <delegation_id>
 python3 -m agent_os.cli implementation-handoff <delegation_id>
 python3 -m agent_os.cli coder-prep <delegation_id>
 python3 -m agent_os.cli coder-worktree-plan <delegation_id>
+python3 -m agent_os.cli coder-worktree-approval <delegation_id> --requested-by operator --note "Approve bounded worktree execution"
+python3 -m agent_os.cli approve-coder-worktree <approval_id> --decided-by operator --note "Approved bounded execution"
+python3 -m agent_os.cli run-coder-worktree <delegation_id> --command "python3 scripts/local_change.py" --verify
 python3 -m agent_os.cli record-delegation-result <delegation_id> --summary "Relevant files identified." --output-json '{"files":["agent_os/cli.py"],"findings":["CLI parser lives in agent_os/cli.py."],"relevant_files":["agent_os/cli.py"]}'
 ```
 
@@ -189,6 +192,64 @@ idempotent for the same `coder_prep.md` hash and reports
 `network_actions_taken=0`, and `external_mutations_taken=0`. It does not
 create a worktree, run commands, request approval, dispatch work, edit files,
 commit, push, deploy, call providers, or mutate external systems.
+
+`coder-worktree-approval <delegation_id>` loads the latest
+`coder_worktree_plan.json`, validates the kind, `dispatch_ready=false`,
+approval gate, source hash, registered project, and non-empty allowed files,
+then writes:
+
+```text
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_prep/coder_worktree_approval_request.json
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_prep/coder_worktree_approval_request.md
+```
+
+It creates a dedicated local approval record tied to the current plan hash and
+is idempotent for that hash unless `--force-new` is used. It does not create a
+worktree, run commands, edit source, commit, push, deploy, call providers, or
+use the network.
+
+`approve-coder-worktree <approval_id>` marks a pending coder worktree request
+approved and writes:
+
+```text
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_prep/coder_worktree_approval_decision.json
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_prep/coder_worktree_approval_decision.md
+```
+
+It tolerates already-approved requests and prints `already_approved`. It does
+not create a worktree, run commands, edit source, commit, push, deploy, call
+providers, or use the network.
+
+`run-coder-worktree <delegation_id> --command "<safe local command>" --verify`
+requires readable plan/prep/handoff artifacts, a registered project root, a
+non-empty allowed-file list, an approved matching plan hash, and a command
+that passes conservative local-command validation. It creates a local git
+worktree under `.agent/worktrees/<project>/<run_id>/`, runs the command inside
+that worktree, optionally runs the registered default verifier or
+`--verify-command`, and writes:
+
+```text
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/run.json
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/command.txt
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/stdout.txt
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/stderr.txt
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/verification_command.txt
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/verification_stdout.txt
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/verification_stderr.txt
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/git_status.txt
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/diff.patch
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/changed_files.json
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/bounded_file_validation.json
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/approval.json
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/source_plan.json
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/summary.md
+```
+
+Changed files must be a subset of `allowed_files`; outside files mark the run
+`blocked` with `failure_class=bounded_file_violation`. Command or verification
+failures mark the run `failed`. Completed approval/plan pairs are not rerun
+unless `--rerun` is provided. The command does not commit, push, deploy, call
+providers, or intentionally use the network.
 `record-delegation-result` remains the manual ingestion path for
 operator-supplied output.
 

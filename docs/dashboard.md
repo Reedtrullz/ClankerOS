@@ -12,17 +12,23 @@
 
 ### Primary Implementation Handoff Workflow
 
-- operator_path: delegate -> context-pack -> run-delegation -> implementation-handoff -> coder-prep -> coder-worktree-plan -> review -> dashboard
+- operator_path: delegate -> context-pack -> run-delegation -> implementation-handoff -> coder-prep -> coder-worktree-plan -> coder-worktree-approval -> approve-coder-worktree -> run-coder-worktree -> review -> dashboard
 - inspect_command: python3 -m agent_os.cli implementation-handoff <delegation_id>
 - prep_command: python3 -m agent_os.cli coder-prep <delegation_id>
 - worktree_plan_command: python3 -m agent_os.cli coder-worktree-plan <delegation_id>
-- non_claims: no source edits, task dispatch, worktrees, approvals, provider calls, commits, pushes, or deploys happen in handoff/coder-prep/worktree-plan readback.
+- approval_command: python3 -m agent_os.cli coder-worktree-approval <delegation_id> --requested-by operator --note "..."
+- run_command: python3 -m agent_os.cli run-coder-worktree <delegation_id> --command "python3 scripts/local_change.py" --verify
+- non_claims: handoff/coder-prep/worktree-plan/approval readback does not edit source, run commands, create worktrees, commit, push, deploy, call providers, or use the network.
 - current_handoffs:
   - subagent_delegation_3189127f5f0d: status=completed handoff=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/implementation_handoff.json handoff_readable=true schema_version=1 kind=implementation_context_handoff kind_valid=true run=run_ec43eabad0c4 project=clankeros coder_prep_command=python3 -m agent_os.cli coder-prep subagent_delegation_3189127f5f0d context_pack=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/context_pack.json returned_files_in_inventory=true missing_files=none top_ranked_files=agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json,playbooks/first-milestone-closed-loop.md,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py scout_relevant_files=agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json snippets_embedded=false
 - current_coder_prep_packets:
   - coder_prep: project=clankeros delegation=subagent_delegation_3189127f5f0d source_handoff_md=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/implementation_handoff.md allowed_files=agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json,playbooks/first-milestone-closed-loop.md,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py run_plan=operator_review coder_worktree_plan_command=python3 -m agent_os.cli coder-worktree-plan subagent_delegation_3189127f5f0d task_rows_created=0 source_edits=0 commands_rerun=0 artifact=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/coder_prep/coder_prep.json
 - current_coder_worktree_plans:
   - coder_worktree_plan: project=clankeros delegation=subagent_delegation_3189127f5f0d source_coder_prep_md=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/coder_prep/coder_prep.md allowed_files=agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json,playbooks/first-milestone-closed-loop.md,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py approval_gate=operator_approval_required dispatch_ready=false worktrees_created=0 source_edits=0 commands_rerun=0 artifact=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/coder_prep/coder_worktree_plan.json
+- current_coder_worktree_approvals:
+  - none
+- current_coder_worktree_runs:
+  - none
 
 ### Goal Plans
 
@@ -130,6 +136,14 @@
 ### Coder Worktree Plans
 
 - coder_worktree_plan: project=clankeros delegation=subagent_delegation_3189127f5f0d source_coder_prep_md=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/coder_prep/coder_prep.md allowed_files=agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json,playbooks/first-milestone-closed-loop.md,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py approval_gate=operator_approval_required dispatch_ready=false worktrees_created=0 source_edits=0 commands_rerun=0 artifact=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/coder_prep/coder_worktree_plan.json
+
+### Coder Worktree Approvals
+
+- none
+
+### Approved Coder Worktree Runs
+
+- none
 
 ## Steering Reviews
 

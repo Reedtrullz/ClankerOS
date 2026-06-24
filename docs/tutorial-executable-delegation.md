@@ -11,7 +11,9 @@ This tutorial runs the smallest executable subagent loop in ClankerOS:
 7. run the delegation;
 8. inspect result, evidence, review, inbox, and dashboard;
 9. prepare a bounded future coding plan from the implementation handoff;
-10. optionally propose memory from the completed result.
+10. request and approve bounded worktree execution;
+11. run the approved local command in an isolated worktree;
+12. optionally propose memory from the completed result.
 
 The executor is a local shell adapter. ClankerOS owns the durable state,
 prompt/context bundle, schema validation, evidence packet, incident handling,
@@ -317,6 +319,9 @@ python3 -m agent_os.cli delegation-result <delegation_id>
 python3 -m agent_os.cli implementation-handoff <delegation_id>
 python3 -m agent_os.cli coder-prep <delegation_id>
 python3 -m agent_os.cli coder-worktree-plan <delegation_id>
+python3 -m agent_os.cli coder-worktree-approval <delegation_id> --requested-by operator --note "Approve bounded worktree execution"
+python3 -m agent_os.cli approve-coder-worktree <approval_id> --decided-by operator --note "Approved bounded execution"
+python3 -m agent_os.cli run-coder-worktree <delegation_id> --command "python3 scripts/local_change.py" --verify
 python3 -m agent_os.cli review <run_id>
 python3 -m agent_os.cli inbox
 python3 -m agent_os.cli dashboard
@@ -331,12 +336,18 @@ large snippets were embedded. `coder-prep` consumes the handoff Markdown and
 writes a bounded future coding packet without editing source files or
 dispatching work. `coder-worktree-plan` consumes `coder_prep.md` and writes an
 approval-gated future worktree/run packet without creating a worktree or
-requesting approval. `review <run_id>` includes `## Scout Context Pack`,
-`## Implementation Handoff`, `## Coder Prep`, and `## Coder Worktree Plan`
-sections when those packets exist. The dashboard includes
+requesting approval. `coder-worktree-approval` requests the explicit operator
+gate for the current plan hash without creating a worktree. `approve-coder-worktree`
+records the local decision without running commands. `run-coder-worktree` is
+the first command in this flow that can create a worktree and run the
+operator-provided safe local command. `review <run_id>` includes
+`## Scout Context Pack`, `## Implementation Handoff`, `## Coder Prep`,
+`## Coder Worktree Plan`, `## Coder Worktree Approval`, and
+`## Coder Worktree Run` sections when those packets exist. The dashboard includes
 `### Subagent / Scout Work`, `### Implementation Handoffs`,
-`### Coder Prep Packets`, and `### Coder Worktree Plans` sections with compact
-scout, handoff, prep, and future-worktree health.
+`### Coder Prep Packets`, `### Coder Worktree Plans`,
+`### Coder Worktree Approvals`, and `### Approved Coder Worktree Runs`
+sections with compact scout, handoff, prep, approval, and worktree-run health.
 
 ## 9. Prepare A Bounded Coder Plan
 
@@ -423,7 +434,101 @@ runs, routing decisions, worktrees, effects, approvals, source edits, command
 reruns, commits, pushes, deploys, provider calls, network actions, or external
 mutations.
 
-## 11. Propose Memory From The Result
+## 11. Approve And Run A Bounded Coder Worktree
+
+Request approval for the exact current `coder_worktree_plan.json` hash:
+
+```bash
+python3 -m agent_os.cli coder-worktree-approval <delegation_id> \
+  --requested-by operator \
+  --note "Approve bounded worktree execution"
+```
+
+Expected output includes:
+
+```text
+coder_worktree_approval: coder_worktree_approval_...
+approval_id: coder_worktree_approval_...
+status: pending_operator_approval
+artifact: .clanker/delegations/<delegation_id>/runs/<run_id>/coder_prep/coder_worktree_approval_request.json
+worktrees_created: 0
+commands_run: 0
+source_edits: 0
+commit_created: false
+push_created: false
+deploy_created: false
+provider_calls_taken_by_clankeros: 0
+network_actions_taken: 0
+external_mutations_taken: 0
+```
+
+Approve that local request:
+
+```bash
+python3 -m agent_os.cli approve-coder-worktree <approval_id> \
+  --decided-by operator \
+  --note "Approved bounded execution"
+```
+
+Expected output includes:
+
+```text
+approved_coder_worktree: <approval_id>
+status: approved
+artifact: .clanker/delegations/<delegation_id>/runs/<run_id>/coder_prep/coder_worktree_approval_decision.json
+worktrees_created: 0
+commands_run: 0
+source_edits: 0
+commit_created: false
+push_created: false
+deploy_created: false
+```
+
+Run the approved bounded command:
+
+```bash
+python3 -m agent_os.cli run-coder-worktree <delegation_id> \
+  --command "python3 scripts/local_change.py" \
+  --verify
+```
+
+The command must be explicitly provided and pass conservative local-command
+validation. Obvious network, deploy, push, publish, shell-destructive, and
+desktop-control tokens are rejected before a worktree is created.
+
+Run evidence is written under:
+
+```text
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/
+```
+
+Required files include:
+
+```text
+run.json
+command.txt
+stdout.txt
+stderr.txt
+verification_command.txt
+verification_stdout.txt
+verification_stderr.txt
+git_status.txt
+diff.patch
+changed_files.json
+bounded_file_validation.json
+approval.json
+source_plan.json
+summary.md
+```
+
+If changed files are outside the plan's `allowed_files`, the run is marked
+`blocked` with `failure_class: bounded_file_violation`; ClankerOS does not
+auto-revert. If verification fails, the run is marked `failed`. A successful
+run still does not commit, push, deploy, call providers, or intentionally use
+the network. The next action is to review the worktree evidence and use a
+separate commit-approval path only if the existing diff is acceptable.
+
+## 12. Propose Memory From The Result
 
 Run the delegation with memory proposal enabled:
 
@@ -461,6 +566,13 @@ Memory stays `status=proposed` until the operator explicitly approves it.
 Failed evidence packets include `incident.json`, `validation.json`,
 `stdout.txt`, `stderr.txt`, and `result.json`. ClankerOS does not retry
 automatically.
+
+`run-coder-worktree` also fails or blocks safely for missing plans, unreadable
+prep/handoff artifacts, changed plan hashes after approval, missing or pending
+approvals, unsafe command strings, worktree creation failures, command
+failures, verification failures, bounded-file violations, and evidence write
+failures. These records are local incidents/recommendations; ClankerOS does
+not auto-retry, auto-commit, auto-push, deploy, or clean the worktree.
 
 ## Non-Claims
 

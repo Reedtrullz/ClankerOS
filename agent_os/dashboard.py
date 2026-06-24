@@ -369,6 +369,10 @@ from agent_os.handoff_review import (
     render_stale_handoff_line,
 )
 from agent_os.coder_prep import render_coder_prep_dashboard_lines
+from agent_os.coder_worktree_execution import (
+    render_coder_worktree_approval_dashboard_lines,
+    render_coder_worktree_run_dashboard_lines,
+)
 from agent_os.coder_worktree_plan import render_coder_worktree_plan_dashboard_lines
 from agent_os.implementation_handoff import render_implementation_handoff_dashboard_lines
 from agent_os.learning_distillation import (
@@ -2076,6 +2080,8 @@ def generate_static_dashboard(root: Path) -> Path:
     )
     coder_prep_lines = render_coder_prep_dashboard_lines(root)
     coder_worktree_plan_lines = render_coder_worktree_plan_dashboard_lines(root)
+    coder_worktree_approval_lines = render_coder_worktree_approval_dashboard_lines(root)
+    coder_worktree_run_lines = render_coder_worktree_run_dashboard_lines(root)
 
     lines = [
         "# Agent System Dashboard",
@@ -2108,11 +2114,13 @@ def generate_static_dashboard(root: Path) -> Path:
     lines.extend(["", "### Primary Implementation Handoff Workflow", ""])
     lines.extend(
         [
-            "- operator_path: delegate -> context-pack -> run-delegation -> implementation-handoff -> coder-prep -> coder-worktree-plan -> review -> dashboard",
+            "- operator_path: delegate -> context-pack -> run-delegation -> implementation-handoff -> coder-prep -> coder-worktree-plan -> coder-worktree-approval -> approve-coder-worktree -> run-coder-worktree -> review -> dashboard",
             "- inspect_command: python3 -m agent_os.cli implementation-handoff <delegation_id>",
             "- prep_command: python3 -m agent_os.cli coder-prep <delegation_id>",
             "- worktree_plan_command: python3 -m agent_os.cli coder-worktree-plan <delegation_id>",
-            "- non_claims: no source edits, task dispatch, worktrees, approvals, provider calls, commits, pushes, or deploys happen in handoff/coder-prep/worktree-plan readback.",
+            "- approval_command: python3 -m agent_os.cli coder-worktree-approval <delegation_id> --requested-by operator --note \"...\"",
+            "- run_command: python3 -m agent_os.cli run-coder-worktree <delegation_id> --command \"python3 scripts/local_change.py\" --verify",
+            "- non_claims: handoff/coder-prep/worktree-plan/approval readback does not edit source, run commands, create worktrees, commit, push, deploy, call providers, or use the network.",
             "- current_handoffs:",
         ]
     )
@@ -2125,6 +2133,18 @@ def generate_static_dashboard(root: Path) -> Path:
     lines.extend(
         [f"  {line}" for line in coder_worktree_plan_lines]
         if coder_worktree_plan_lines
+        else ["  - none"]
+    )
+    lines.append("- current_coder_worktree_approvals:")
+    lines.extend(
+        [f"  {line}" for line in coder_worktree_approval_lines]
+        if coder_worktree_approval_lines
+        else ["  - none"]
+    )
+    lines.append("- current_coder_worktree_runs:")
+    lines.extend(
+        [f"  {line}" for line in coder_worktree_run_lines]
+        if coder_worktree_run_lines
         else ["  - none"]
     )
 
@@ -2308,6 +2328,12 @@ def generate_static_dashboard(root: Path) -> Path:
 
     lines.extend(["", "### Coder Worktree Plans", ""])
     lines.extend(coder_worktree_plan_lines if coder_worktree_plan_lines else ["- none"])
+
+    lines.extend(["", "### Coder Worktree Approvals", ""])
+    lines.extend(coder_worktree_approval_lines if coder_worktree_approval_lines else ["- none"])
+
+    lines.extend(["", "### Approved Coder Worktree Runs", ""])
+    lines.extend(coder_worktree_run_lines if coder_worktree_run_lines else ["- none"])
 
     lines.extend(["", "## Steering Reviews", ""])
     if steering_reviews:
