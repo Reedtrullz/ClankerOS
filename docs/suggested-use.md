@@ -1301,6 +1301,19 @@ See
 for the delegation batch report, packet JSON location, idempotency check, and
 safety counters.
 
+After an operator records structured output for one of those latest delegation
+packets, ingest the completed result:
+
+```bash
+python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results
+python3 -m agent_os.cli dashboard
+```
+
+See
+`docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`
+for the result record report, artifact path, idempotency check, and safety
+counters.
+
 ## When To Commit And Push
 
 Commit when:

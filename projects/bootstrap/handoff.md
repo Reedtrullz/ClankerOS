@@ -3,23 +3,30 @@
 ## Latest Continuation
 
 - Latest command:
-  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations`.
-- First live run recorded batch
-  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_4442d1a157ab`
-  and pending evaluator delegation `subagent_delegation_f5330975ccec` for
-  downstream proof task `task_9da458146eb5`.
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results`.
+- Precondition run recorded batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_534490b6084e`
+  with no completed delegations.
+- `record-delegation-result` completed evaluator delegation
+  `subagent_delegation_f5330975ccec` for downstream proof task
+  `task_9da458146eb5` and wrote structured result artifact
+  `.clanker/delegations/subagent_delegation_f5330975ccec-result.json`.
+- Live result ingestion recorded batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_1def86ac1c40`
+  and result record
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_730c6175f08a`.
 - Idempotency rerun recorded batch
-  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegation_batch_bf6aa2793324`
-  with 0 new routing decisions, 0 new delegations, and 1 existing delegation.
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_5a6e668f9fe5`
+  with 0 new result records and 1 existing result record.
 - Generated report:
-  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-delegations.md`.
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`.
 - Next packet:
-  `docs/next-iteration.md` selects result ingestion for the pending evaluator
-  delegation packet.
-- Non-claims: no subagent start, model provider call, approval row, activation
-  action, external mutation, capability enablement, proof satisfaction,
-  CI/deploy proof, hosted dashboard, remote worker, scheduler, retry, or trust
-  promotion.
+  `docs/next-iteration.md` selects operator review decisions for the new
+  downstream result record.
+- Non-claims: no subagent start by ingestion, model provider call, approval
+  row, activation action, external mutation, capability enablement, proof
+  satisfaction, CI/deploy proof, hosted dashboard, remote worker, scheduler,
+  retry, or trust promotion.
 
 ## Current State
 

@@ -1798,6 +1798,24 @@ def _current_posture(root: Path) -> list[str]:
                         0
                     ].status
                 )
+        capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_results = "none"
+        if _table_exists(
+            connection,
+            "capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batches",
+        ):
+            capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_rows = Storage(
+                db_path
+            ).list_recent_capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batches(
+                limit=1
+            )
+            if (
+                capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_rows
+            ):
+                capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_results = (
+                    capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_rows[
+                        0
+                    ].status
+                )
         handoff_reviews = Storage(db_path).list_recent_handoff_reviews(limit=1)
 
     handoff_blocked_tasks = 0
@@ -1919,6 +1937,7 @@ def _current_posture(root: Path) -> list[str]:
         f"capability activation followup result task result effect task result effect task result effect task result effect task result effect task result effect task result effect task result effect application: {capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_application}",
         f"capability activation followup result task result effect task result effect task result effect task result effect task result effect task result effect task result effect task result effect tasks: {capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_tasks}",
         f"capability activation followup result task result effect task result effect task result effect task result effect task result effect task result effect task result effect task result effect task delegations: {capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations}",
+        f"capability activation followup result task result effect task result effect task result effect task result effect task result effect task result effect task result effect task result effect task results: {capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_results}",
         f"proposed eval candidates: {proposed_eval_candidates}",
         f"active playbooks: {active_playbooks}",
         f"open stuck-task incidents: {stuck_count}",

@@ -1,5 +1,67 @@
 # Status
 
+## 2026-06-24 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Results
+
+- Added the next local-only result-ingestion rung:
+  `python3 -m agent_os.cli capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results`.
+- The command consumes completed `evidence_review` evaluator delegations for
+  the latest downstream proof task type, requires non-empty structured
+  delegation output, records local result rows, and writes per-result JSON
+  artifacts under
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results/`.
+- Live precondition proof first recorded batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_534490b6084e`
+  with status `..._results_no_completed_delegations`.
+- Recorded local structured output for delegation
+  `subagent_delegation_f5330975ccec` using `record-delegation-result`, which
+  wrote `.clanker/delegations/subagent_delegation_f5330975ccec-result.json`
+  and kept network and external mutation counters at 0.
+- Live result ingestion then recorded batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_1def86ac1c40`
+  and result
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_730c6175f08a`
+  for hosted dashboard proof planning.
+- The idempotency rerun recorded batch
+  `capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_batch_5a6e668f9fe5`
+  with 0 new result records, 1 existing result record, 0 missing artifacts, 0
+  approval requests, 0 activation actions, and 0 external mutations.
+- Generated proof:
+  `docs/capability-activation-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`.
+- Operator docs added or refreshed:
+  `docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md`,
+  docs index, command reference, suggested-use, operating summary, dashboard,
+  next-iteration, and tasks visibility.
+- Verification evidence:
+  - syntax compile passed for touched Python modules and
+    `tests/test_first_milestone.py`.
+  - focused latest result-ingestion slice: 6 passed, 446 deselected.
+  - adjacent delegation/result slice: 12 passed, 440 deselected.
+  - full suite: 452 passed in 955.22s.
+  - live precondition, result-ingestion, and idempotency commands passed.
+  - `sweep-stuck`: stuck_incidents 0.
+  - `queue-health`: hotspots 0.
+  - `handoff-review`: clear, blocked_tasks 0, stale_handoffs 0.
+  - `eval-candidates`: 0.
+  - `approvals`: pending_approvals 0.
+  - `budget-trust-posture`: report_only.
+  - `eval-after-change`: pass, run `run_1d7e6e2ee7c7`.
+  - `eval`: `first_milestone_closed_loop: pass`.
+  - `playbooks`: 1 active playbook, 326 successful runs.
+  - `dashboard` and `iterate` regenerated local operator state.
+  - `git diff --check`: passed.
+  - GitHub metadata readback for `Reedtrullz/ClankerOS` shows PUBLIC
+    visibility, default branch `main`, populated About description, README
+    homepage, ADMIN viewer permission, and 20 repository topics.
+- The next queue item is operator review decisions for the new downstream
+  result record.
+- Non-claims: local structured result artifact, SQLite result rows, generated
+  reports, and tutorial docs only; no subagent was started by ingestion, no
+  model provider was called, no approval row was created, no activation action
+  occurred, no external system was mutated, no capability was enabled, no
+  proof was satisfied, no CI/deploy proof happened, no hosted dashboard or
+  remote worker was started, no trust was promoted, and the active expansion
+  goal remains open.
+
 ## 2026-06-24 Downstream Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Result Effect Task Delegations
 
 - Added the next local-only delegation rung:
