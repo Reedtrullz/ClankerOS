@@ -1,0 +1,772 @@
+diff --git a/README.md b/README.md
+index cb82df89..f10879d5 100644
+--- a/README.md
++++ b/README.md
+@@ -114,6 +114,11 @@ start a model provider, or start a subagent.
+ `.clanker/projects/<project>/goals/<goal_id>/runs/<run_id>/evidence/` and
+ prints the `packet_dir`. If the run already has command-proof files from
+ `run-task`, ClankerOS preserves them and writes aggregate review sidecars.
++The packet also includes `git_status.txt`, `diff.patch`, and
++`changed_files.json` for the selected evidence target: the registered project
++repo when the run belongs to one, otherwise the ClankerOS system root. These
++files are local snapshots only; export does not fetch, pull, commit, push, or
++mutate the repo.
+ 
+ If a planned task verifier fails, ClankerOS opens a local incident and records
+ an open `failed_run_task_recovery` recommendation with review, replan, and
+diff --git a/agent_os/run_review.py b/agent_os/run_review.py
+index 43a3debb..9b207e2d 100644
+--- a/agent_os/run_review.py
++++ b/agent_os/run_review.py
+@@ -1,6 +1,7 @@
+ from __future__ import annotations
+ 
+ import json
++import subprocess
+ from dataclasses import asdict, dataclass
+ from pathlib import Path
+ 
+@@ -75,6 +76,13 @@ class RunEvidencePacket:
+         return "continue_run_review"
+ 
+ 
++@dataclass(frozen=True)
++class GitEvidenceSnapshot:
++    status_text: str
++    diff_text: str
++    changed_files: dict[str, object]
++
++
+ def collect_run_evidence(root: Path, run_id: str) -> RunEvidencePacket:
+     storage = Storage(root / ".agent" / "state.db")
+     run = storage.get_run(run_id)
+@@ -201,6 +209,10 @@ def write_evidence_packet(root: Path, packet: RunEvidencePacket) -> Path:
+     _write_jsonl_preserving(packet_dir / "skill_proposals.jsonl", packet.skills)
+     _write_jsonl_preserving(packet_dir / "incidents.jsonl", packet.incidents)
+     _write_jsonl_preserving(packet_dir / "eval_candidates.jsonl", packet.eval_candidates)
++    git_snapshot = _collect_git_evidence_snapshot(root, packet)
++    _write_text_preserving(packet_dir / "git_status.txt", git_snapshot.status_text)
++    _write_text_preserving(packet_dir / "diff.patch", git_snapshot.diff_text)
++    _write_json_preserving(packet_dir / "changed_files.json", git_snapshot.changed_files)
+     _write_text_preserving(
+         packet_dir / "summary.md",
+         render_evidence_packet_summary(root, packet),
+@@ -558,6 +570,9 @@ def _evidence_packet_file_paths(root: Path, packet: RunEvidencePacket) -> list[s
+         "skill_proposals.jsonl",
+         "incidents.jsonl",
+         "eval_candidates.jsonl",
++        "git_status.txt",
++        "diff.patch",
++        "changed_files.json",
+         "final_review.md",
+     ]
+     return [
+@@ -618,6 +633,143 @@ def _command_snapshots(packet: RunEvidencePacket) -> list[dict[str, object]]:
+     return commands
+ 
+ 
++def _collect_git_evidence_snapshot(root: Path, packet: RunEvidencePacket) -> GitEvidenceSnapshot:
++    target_root, target_source = _git_evidence_target(root, packet)
++    resolved_target = target_root.resolve()
++    rev_parse = _run_git(resolved_target, ["rev-parse", "--show-toplevel"])
++    if rev_parse.returncode != 0:
++        return GitEvidenceSnapshot(
++            status_text=(
++                f"not_git_repo: {resolved_target}\n"
++                f"command: git rev-parse --show-toplevel\n"
++                f"returncode: {rev_parse.returncode}\n"
++                f"stdout:\n{rev_parse.stdout}\n"
++                f"stderr:\n{rev_parse.stderr}"
++            ),
++            diff_text="",
++            changed_files={
++                "is_git_repo": False,
++                "target_root": str(resolved_target),
++                "target_source": target_source,
++                "commands": {
++                    "git_root": "git rev-parse --show-toplevel",
++                },
++                "returncodes": {
++                    "git_root": rev_parse.returncode,
++                },
++                "changed_files": [],
++                "tracked_changed_files": [],
++                "untracked_files": [],
++                "network_actions_taken": 0,
++                "external_mutations_taken": 0,
++                "non_claims": [
++                    "Git snapshot export does not commit, push, fetch, pull, or mutate files.",
++                    "No git diff is available because the selected target is not a git repository.",
++                ],
++            },
++        )
++
++    status = _run_git(resolved_target, ["status", "--short", "--branch"])
++    diff, diff_command = _git_output_with_head_fallback(
++        resolved_target,
++        ["diff", "--no-ext-diff", "--binary", "HEAD", "--"],
++        ["diff", "--no-ext-diff", "--binary"],
++    )
++    tracked, tracked_command = _git_output_with_head_fallback(
++        resolved_target,
++        ["diff", "--name-only", "HEAD", "--"],
++        ["diff", "--name-only"],
++    )
++    untracked = _run_git(resolved_target, ["ls-files", "--others", "--exclude-standard"])
++    tracked_files = _split_git_path_lines(tracked.stdout if tracked.returncode == 0 else "")
++    untracked_files = _split_git_path_lines(
++        untracked.stdout if untracked.returncode == 0 else ""
++    )
++    changed_files = sorted(set(tracked_files + untracked_files))
++    return GitEvidenceSnapshot(
++        status_text=status.stdout if status.returncode == 0 else status.stderr,
++        diff_text=diff.stdout if diff.returncode == 0 else diff.stderr,
++        changed_files={
++            "is_git_repo": True,
++            "target_root": str(resolved_target),
++            "target_source": target_source,
++            "git_root": rev_parse.stdout.strip(),
++            "commands": {
++                "git_root": "git rev-parse --show-toplevel",
++                "status": "git status --short --branch",
++                "diff": _format_git_command(diff_command),
++                "tracked_changed_files": _format_git_command(tracked_command),
++                "untracked_files": "git ls-files --others --exclude-standard",
++            },
++            "returncodes": {
++                "git_root": rev_parse.returncode,
++                "status": status.returncode,
++                "diff": diff.returncode,
++                "tracked_changed_files": tracked.returncode,
++                "untracked_files": untracked.returncode,
++            },
++            "changed_files": changed_files,
++            "tracked_changed_files": tracked_files,
++            "untracked_files": untracked_files,
++            "network_actions_taken": 0,
++            "external_mutations_taken": 0,
++            "non_claims": [
++                "Git snapshot export does not commit, push, fetch, pull, or mutate files.",
++                "Untracked file contents are listed by path only and are not embedded in diff.patch.",
++            ],
++        },
++    )
++
++
++def _git_evidence_target(root: Path, packet: RunEvidencePacket) -> tuple[Path, str]:
++    project = Storage(root / ".agent" / "state.db").get_registered_project(
++        packet.run.project_id
++    )
++    if project is not None:
++        return Path(project.root_path), "registered_project"
++    return root, "system_root"
++
++
++def _git_output_with_head_fallback(
++    cwd: Path,
++    primary_args: list[str],
++    fallback_args: list[str],
++) -> tuple[subprocess.CompletedProcess[str], list[str]]:
++    primary = _run_git(cwd, primary_args)
++    if primary.returncode == 0:
++        return primary, primary_args
++    fallback = _run_git(cwd, fallback_args)
++    if fallback.returncode == 0:
++        return fallback, fallback_args
++    return primary, primary_args
++
++
++def _run_git(cwd: Path, args: list[str]) -> subprocess.CompletedProcess[str]:
++    try:
++        return subprocess.run(
++            ["git", *args],
++            cwd=cwd,
++            check=False,
++            capture_output=True,
++            text=True,
++        )
++    except OSError as exc:
++        return subprocess.CompletedProcess(
++            args=["git", *args],
++            returncode=127,
++            stdout="",
++            stderr=str(exc),
++        )
++
++
++def _format_git_command(args: list[str]) -> str:
++    return "git " + " ".join(args)
++
++
++def _split_git_path_lines(output: str) -> list[str]:
++    return [line.strip() for line in output.splitlines() if line.strip()]
++
++
+ def _write_text_preserving(path: Path, content: str) -> Path:
+     target = _preserving_target(path)
+     target.write_text(content, encoding="utf-8")
+diff --git a/docs/OPERATING_SUMMARY.md b/docs/OPERATING_SUMMARY.md
+index 37fab78c..7c662fa4 100644
+--- a/docs/OPERATING_SUMMARY.md
++++ b/docs/OPERATING_SUMMARY.md
+@@ -40,6 +40,13 @@ Core layers for the bootstrap:
+   updates the task and linked plan step, and opens a local incident if
+   verification fails. It does not commit, push, deploy, call model providers,
+   start subagents, or mutate external systems.
++- Run evidence packets: `evidence <run_id>` writes replayable review files for
++  the run, including `git_status.txt`, `diff.patch`, and `changed_files.json`.
++  The git snapshot target is the registered project repo for registered
++  project runs, otherwise the ClankerOS root. Existing `run-task` command proof
++  files are preserved and aggregate review sidecars are written separately.
++  The export does not rerun commands, fetch, pull, commit, push, approve
++  effects, or mutate external systems.
+ - Task recovery recommendations: failed planned-task runs and blocked planned
+   tasks can create idempotent `task_recommendations` rows plus local JSON
+   evidence. Failed `run-task` evidence packets include
+diff --git a/docs/dashboard.md b/docs/dashboard.md
+index 16c22591..340db74c 100644
+--- a/docs/dashboard.md
++++ b/docs/dashboard.md
+@@ -17,11 +17,11 @@
+ 
+ ### Task Runs
+ 
++- task_3c20a0a2614b: run=run_82f659ae72cf project=bootstrap goal=goal_497d56730b07 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_82f659ae72cf/learning.md
++- task_c9d164595618: run=run_82f659ae72cf project=bootstrap goal=goal_497d56730b07 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_82f659ae72cf/goal-artifact.md
++- task_855300e5c180: run=run_60c9a37d66ed project=bootstrap goal=goal_0a8ac2a4cae4 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_60c9a37d66ed/learning.md
++- task_d509f4796259: run=run_60c9a37d66ed project=bootstrap goal=goal_0a8ac2a4cae4 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_60c9a37d66ed/goal-artifact.md
+ - task_58e65ccc8918: run=run_2ea420719720 project=bootstrap goal=goal_027f47ca5a93 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_2ea420719720/learning.md
+-- task_7f84e031c7f3: run=run_2ea420719720 project=bootstrap goal=goal_027f47ca5a93 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_2ea420719720/goal-artifact.md
+-- task_9c777d57a963: run=run_747764b40afe project=bootstrap goal=goal_9aaccf1668a4 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_747764b40afe/learning.md
+-- task_5c5a4cb7df05: run=run_747764b40afe project=bootstrap goal=goal_9aaccf1668a4 status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_747764b40afe/goal-artifact.md
+-- task_fc2f63430b4e: run=run_6486401b5408 project=bootstrap goal=goal_a9da83c8c2cb status=completed profile=local-worker-1 artifact=/Users/reidar/Documents/Agent System/projects/bootstrap/artifacts/run_6486401b5408/learning.md
+ 
+ ### Task Recommendations
+ 
+@@ -113,7 +113,7 @@
+ - claimed: 0
+ - running: 0
+ - verifying: 0
+-- completed: 670
++- completed: 674
+ - blocked: 0
+ - failed: 0
+ - active: 0
+@@ -122,10 +122,10 @@
+ ## Iteration Loop
+ 
+ - status: planned
+-- focus: Add git status, diff, and changed-file snapshots to replayable evidence packets without overwriting `run-task` command proof.
++- focus: Surface changed-file and diff summaries in review and dashboard operator signals.
+ - source: tasks.md#next
+ - packet: docs/next-iteration.md
+-- created_at: 2026-06-24T01:13:31.388117+00:00
++- created_at: 2026-06-24T01:43:25.882638+00:00
+ 
+ ## Simplicity Guardrail
+ 
+@@ -133,7 +133,7 @@
+ - reason: selected highest score 10; complexity 4 recorded for audit
+ - selected_score: 10
+ - selected_complexity: 4
+-- selected_focus: Add git status, diff, and changed-file snapshots to replayable evidence packets without overwriting `run-task` command proof.
++- selected_focus: Surface changed-file and diff summaries in review and dashboard operator signals.
+ 
+ ## Expansion Operator Approval Schema Decision
+ 
+@@ -1321,23 +1321,23 @@
+ 
+ ## Handoff Review
+ 
+-- status: needs_attention
+-- current_focus: Add git status, diff, and changed-file snapshots to replayable evidence packets without overwriting `run-task` command proof.
++- status: clear
++- current_focus: Surface changed-file and diff summaries in review and dashboard operator signals.
+ - blocked_tasks: 0
+-- stale_handoffs: 1
++- stale_handoffs: 0
+ - report: docs/handoff-review.md
+ 
+-- stale path=projects/bootstrap/handoff.md reason=does_not_reference_current_focus current_focus=Add git status, diff, and changed-file snapshots to replayable evidence packets without overwriting `run-task` command proof.
++- none
+ 
+ ## Eval After Change
+ 
+ - failed: 0
+ 
++- eval_after_change_32ab2fea1f0e: status=pass change=Add git snapshots to replayable evidence packets files=agent_os/run_review.py,tests/test_first_milestone.py,README.md,docs/OPERATING_SUMMARY.md,docs/reference-commands.md,docs/suggested-use.md,docs/tutorial-run-review.md,docs/tutorial-run-task.md,tasks.md evals=first_milestone_closed_loop runs=run_60c9a37d66ed results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
+ - eval_after_change_0f08959a2555: status=pass change=Export replayable evidence packet sidecars files=agent_os/run_review.py,agent_os/cli.py,agent_os/dashboard.py,tests/test_first_milestone.py,README.md,docs/OPERATING_SUMMARY.md,docs/reference-commands.md,docs/suggested-use.md evals=first_milestone_closed_loop runs=run_2ea420719720 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
+ - eval_after_change_ab9a7c32b698: status=pass change=Add downstream result-effect operator decision review files=agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_decisions.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py,README.md,docs/suggested-use.md,docs/reference-commands.md,docs/operator-recipes.md,docs/docs-index.md,docs/OPERATING_SUMMARY.md,docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-decisions.md evals=first_milestone_closed_loop runs=run_b791209a6a0c results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
+ - eval_after_change_62f59fca84f3: status=pass change=Add downstream result-effect result ingestion files=agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_results.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py,docs/tutorial-capability-followup-result-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-result-effect-task-results.md,docs/suggested-use.md,docs/docs-index.md,docs/OPERATING_SUMMARY.md evals=first_milestone_closed_loop runs=run_1d7e6e2ee7c7 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
+ - eval_after_change_c9db7e7870dd: status=pass change=downstream proof task delegation packets files=agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_delegations.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,agent_os/profile_routing.py,tests/test_first_milestone.py evals=first_milestone_closed_loop runs=run_d6f00742b957 results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
+-- eval_after_change_4fcab0dd53bd: status=pass change=count8 downstream task materialization files=agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_tasks.py,agent_os/storage.py,agent_os/cli.py,agent_os/dashboard.py,agent_os/iteration.py,tests/test_first_milestone.py evals=first_milestone_closed_loop runs=run_8328cc71eb0b results=evals/results/first_milestone_closed_loop.json report=docs/eval-after-change.md
+ 
+ ## Learning Distillation
+ 
+@@ -2006,7 +2006,7 @@
+ 
+ - active: 1
+ 
+-- first-milestone-closed-loop: active source=first_milestone_closed_loop successful_runs=329 path=playbooks/first-milestone-closed-loop.md
++- first-milestone-closed-loop: active source=first_milestone_closed_loop successful_runs=332 path=playbooks/first-milestone-closed-loop.md
+ 
+ ## Eval Candidates
+ 
+@@ -2037,11 +2037,11 @@
+ 
+ ## Recent Runs
+ 
++- run_82f659ae72cf: completed project=bootstrap goal=goal_497d56730b07 completed=2026-06-24T01:44:12.112445+00:00 summary=runs/run_82f659ae72cf/summary.md
++- run_60c9a37d66ed: completed project=bootstrap goal=goal_0a8ac2a4cae4 completed=2026-06-24T01:43:17.201010+00:00 summary=runs/run_60c9a37d66ed/summary.md
+ - run_2ea420719720: completed project=bootstrap goal=goal_027f47ca5a93 completed=2026-06-24T01:12:58.061392+00:00 summary=runs/run_2ea420719720/summary.md
+ - run_747764b40afe: completed project=bootstrap goal=goal_9aaccf1668a4 completed=2026-06-24T01:12:48.167098+00:00 summary=runs/run_747764b40afe/summary.md
+ - run_6486401b5408: completed project=bootstrap goal=goal_a9da83c8c2cb completed=2026-06-24T00:39:34.969642+00:00 summary=runs/run_6486401b5408/summary.md
+-- run_b791209a6a0c: completed project=bootstrap goal=goal_ab1c3e108961 completed=2026-06-24T00:39:29.166252+00:00 summary=runs/run_b791209a6a0c/summary.md
+-- run_15b7c378d7e3: completed project=bootstrap goal=goal_9200977024a6 completed=2026-06-24T00:00:15.033244+00:00 summary=runs/run_15b7c378d7e3/summary.md
+ 
+ ## Recent Evidence Packets
+ 
+@@ -2050,16 +2050,16 @@
+ 
+ ## Recent Learnings
+ 
++- run_82f659ae72cf: Run run_82f659ae72cf showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_82f659ae72cf/learning.md)
++- run_60c9a37d66ed: Run run_60c9a37d66ed showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_60c9a37d66ed/learning.md)
+ - run_2ea420719720: Run run_2ea420719720 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_2ea420719720/learning.md)
+ - run_747764b40afe: Run run_747764b40afe showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_747764b40afe/learning.md)
+ - run_6486401b5408: Run run_6486401b5408 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_6486401b5408/learning.md)
+-- run_b791209a6a0c: Run run_b791209a6a0c showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_b791209a6a0c/learning.md)
+-- run_15b7c378d7e3: Run run_15b7c378d7e3 showed that the first closed loop can be verified through file evidence before expanding to broader domains. (project=bootstrap, source=projects/bootstrap/artifacts/run_15b7c378d7e3/learning.md)
+ 
+ ## Recent Eval Results
+ 
++- first_milestone_closed_loop: pass run=run_82f659ae72cf created_at=2026-06-24T01:44:12.125577+00:00
++- first_milestone_closed_loop: pass run=run_60c9a37d66ed created_at=2026-06-24T01:43:17.211934+00:00
+ - first_milestone_closed_loop: pass run=run_2ea420719720 created_at=2026-06-24T01:12:58.071742+00:00
+ - first_milestone_closed_loop: pass run=run_747764b40afe created_at=2026-06-24T01:12:48.179743+00:00
+ - first_milestone_closed_loop: pass run=run_6486401b5408 created_at=2026-06-24T00:39:34.992974+00:00
+-- first_milestone_closed_loop: pass run=run_b791209a6a0c created_at=2026-06-24T00:39:29.176621+00:00
+-- first_milestone_closed_loop: pass run=run_15b7c378d7e3 created_at=2026-06-24T00:00:15.058453+00:00
+diff --git a/docs/eval-after-change.md b/docs/eval-after-change.md
+index 02aeabf8..1a10f9e6 100644
+--- a/docs/eval-after-change.md
++++ b/docs/eval-after-change.md
+@@ -1,11 +1,11 @@
+ # Eval After Change
+ 
+-- id: eval_after_change_0f08959a2555
++- id: eval_after_change_32ab2fea1f0e
+ - status: pass
+-- change: Export replayable evidence packet sidecars
+-- changed_paths: agent_os/run_review.py,agent_os/cli.py,agent_os/dashboard.py,tests/test_first_milestone.py,README.md,docs/OPERATING_SUMMARY.md,docs/reference-commands.md,docs/suggested-use.md
++- change: Add git snapshots to replayable evidence packets
++- changed_paths: agent_os/run_review.py,tests/test_first_milestone.py,README.md,docs/OPERATING_SUMMARY.md,docs/reference-commands.md,docs/suggested-use.md,docs/tutorial-run-review.md,docs/tutorial-run-task.md,tasks.md
+ - evals: first_milestone_closed_loop
+ - result_paths: evals/results/first_milestone_closed_loop.json
+-- run_ids: run_2ea420719720
+-- command: python3 -m agent_os.cli eval-after-change --change "Export replayable evidence packet sidecars" --file "agent_os/run_review.py" --file "agent_os/cli.py" --file "agent_os/dashboard.py" --file "tests/test_first_milestone.py" --file "README.md" --file "docs/OPERATING_SUMMARY.md" --file "docs/reference-commands.md" --file "docs/suggested-use.md"
+-- completed_at: 2026-06-24T01:12:58.073956+00:00
++- run_ids: run_60c9a37d66ed
++- command: python3 -m agent_os.cli eval-after-change --change "Add git snapshots to replayable evidence packets" --file "agent_os/run_review.py" --file "tests/test_first_milestone.py" --file "README.md" --file "docs/OPERATING_SUMMARY.md" --file "docs/reference-commands.md" --file "docs/suggested-use.md" --file "docs/tutorial-run-review.md" --file "docs/tutorial-run-task.md" --file "tasks.md"
++- completed_at: 2026-06-24T01:43:17.215332+00:00
+diff --git a/docs/handoff-review.md b/docs/handoff-review.md
+index 3ede9ea9..a9b6ae89 100644
+--- a/docs/handoff-review.md
++++ b/docs/handoff-review.md
+@@ -1,8 +1,8 @@
+ # Handoff Review
+ 
+-- id: handoff_review_8693d54fc7ae
++- id: handoff_review_8e96267ebb47
+ - status: clear
+-- current_focus: Add git status, diff, and changed-file snapshots to replayable evidence packets without overwriting `run-task` command proof.
++- current_focus: Surface changed-file and diff summaries in review and dashboard operator signals.
+ - blocked_tasks: 0
+ - stale_handoffs: 0
+ - reviewed_paths: 1
+diff --git a/docs/next-iteration.md b/docs/next-iteration.md
+index ed06e7c8..6c70bb83 100644
+--- a/docs/next-iteration.md
++++ b/docs/next-iteration.md
+@@ -1,12 +1,12 @@
+ # Next Iteration Packet
+ 
+-- Packet ID: iteration_6b154150bd07
++- Packet ID: iteration_f8462adbe433
+ - Status: planned
+ - Source: tasks.md#next
+ 
+ ## Objective
+ 
+-Advance the Agent System north-star goal by completing: Add git status, diff, and changed-file snapshots to replayable evidence packets without overwriting `run-task` command proof.
++Advance the Agent System north-star goal by completing: Surface changed-file and diff summaries in review and dashboard operator signals.
+ 
+ ## Definition Of Done
+ 
+@@ -150,7 +150,7 @@ Advance the Agent System north-star goal by completing: Add git status, diff, an
+ - pending approvals: 0
+ - queue-health hotspots: 0
+ - handoff blocked tasks: 0
+-- stale handoffs: 1
++- stale handoffs: 0
+ - eval-after-change failures: 0
+ - stable distilled learnings: 1
+ - budget/trust posture: report_only
+diff --git a/docs/playbooks.md b/docs/playbooks.md
+index 5bc769b1..516073ef 100644
+--- a/docs/playbooks.md
++++ b/docs/playbooks.md
+@@ -5,4 +5,4 @@
+ 
+ ## Active Playbooks
+ 
+-- first-milestone-closed-loop: active source=first_milestone_closed_loop successful_runs=329 path=playbooks/first-milestone-closed-loop.md
++- first-milestone-closed-loop: active source=first_milestone_closed_loop successful_runs=332 path=playbooks/first-milestone-closed-loop.md
+diff --git a/docs/reference-commands.md b/docs/reference-commands.md
+index 30ef9d94..19f0af1b 100644
+--- a/docs/reference-commands.md
++++ b/docs/reference-commands.md
+@@ -58,6 +58,11 @@ draft sprint contract for the latest plan. `run-task` dispatches one
+ routing decision, creates a run, writes an evidence packet under the goal, and
+ updates the linked plan step. It does not commit, push, deploy, call model
+ providers, start subagents, or mutate external systems.
++`evidence <run_id>` preserves existing command-proof files from `run-task` and
++adds review-side packet files, including `git_status.txt`, `diff.patch`, and
++`changed_files.json`. The git target is the registered project repo when one is
++known for the run, otherwise the ClankerOS root. This is a local snapshot; it
++does not fetch, pull, commit, push, rerun commands, or approve effects.
+ `task-recommendations` records idempotent local `task_recommendations` rows and
+ writes `docs/task-recommendations.md` for failed planned-task runs and blocked
+ planned tasks. It recommends review/replan/manual reset commands but does not
+diff --git a/docs/suggested-use.md b/docs/suggested-use.md
+index 346a93d4..a32cfae3 100644
+--- a/docs/suggested-use.md
++++ b/docs/suggested-use.md
+@@ -458,7 +458,8 @@ and does not make the skill active until `skill approve` is run.
+ `runs/<run_id>/` and expose them in the dashboard. `evidence` also writes
+ goal-scoped JSON/JSONL/Markdown packet files for goal, plan, contract, tasks,
+ routing decisions, delegations, steering reviews, commands, approvals, effects,
+-memory/skill proposals, incidents, eval candidates, and verification summary.
++memory/skill proposals, incidents, eval candidates, verification summary,
++`git_status.txt`, `diff.patch`, and `changed_files.json`.
+ When command-proof files already exist from `run-task`, the aggregate evidence
+ export uses sidecars such as `verification-summary.json` and
+ `operator-summary.md` instead of overwriting the executable proof. These
+diff --git a/docs/tutorial-run-review.md b/docs/tutorial-run-review.md
+index 42f05c72..2a75686e 100644
+--- a/docs/tutorial-run-review.md
++++ b/docs/tutorial-run-review.md
+@@ -42,6 +42,7 @@ This writes:
+ 
+ ```text
+ runs/<run_id>/evidence-index.md
++.clanker/projects/<project>/goals/<goal_id>/runs/<run_id>/evidence/
+ ```
+ 
+ Read it when you need to audit the files and database rows attached to the
+@@ -49,6 +50,12 @@ run. It indexes run files, project artifacts, task rows, event rows,
+ incidents, approvals, effects, delegations, memory entries, skills, and eval
+ candidates when they exist.
+ 
++The packet directory includes `git_status.txt`, `diff.patch`, and
++`changed_files.json`. For registered-project runs, those files describe the
++registered repo. For bootstrap or system-root runs, they describe the ClankerOS
++root. Existing command-proof files from `run-task` stay in place; the review
++command writes sidecars instead of replacing them.
++
+ ## 4. Write The Conceptual Replay
+ 
+ ```bash
+@@ -75,6 +82,6 @@ The dashboard shows generated run packets under `## Recent Evidence Packets`.
+ ## Non-Claims
+ 
+ These commands do not rerun commands, mutate files, approve effects, commit,
+-push, deploy, start remote workers, schedule work, promote trust, retry work,
+-or track spend. They write local Markdown reports from existing local state
+-and preserve `network_actions_taken=0`.
++push, fetch, pull, deploy, start remote workers, schedule work, promote trust,
++retry work, or track spend. They write local Markdown reports from existing
++local state and preserve `network_actions_taken=0`.
+diff --git a/docs/tutorial-run-task.md b/docs/tutorial-run-task.md
+index 010c4138..a2513bb8 100644
+--- a/docs/tutorial-run-task.md
++++ b/docs/tutorial-run-task.md
+@@ -117,6 +117,9 @@ Important files:
+ - `routing_decisions.jsonl` - the profile/model selection row.
+ - `commands.jsonl` - local command adapter metadata.
+ - `tasks.json` - task, plan-step, and contract snapshot.
++- `git_status.txt`, `diff.patch`, and `changed_files.json` - added by
++  `evidence <run_id>` as local git snapshots for the registered project repo.
++  They do not fetch, pull, commit, push, or rerun the verifier.
+ - `recommendations.jsonl` - present when failed verification created recovery
+   guidance.
+ - `stdout.txt` and `stderr.txt` - raw verifier output.
+diff --git a/evals/results/first_milestone_closed_loop.json b/evals/results/first_milestone_closed_loop.json
+index c636063e..c3e69638 100644
+--- a/evals/results/first_milestone_closed_loop.json
++++ b/evals/results/first_milestone_closed_loop.json
+@@ -7,8 +7,8 @@
+     "run_status": "completed",
+     "tasks_completed": 2
+   },
+-  "created_at": "2026-06-24T01:12:58.071348+00:00",
++  "created_at": "2026-06-24T01:44:12.124426+00:00",
+   "name": "first_milestone_closed_loop",
+-  "run_id": "run_2ea420719720",
++  "run_id": "run_82f659ae72cf",
+   "status": "pass"
+ }
+diff --git a/memory.md b/memory.md
+index f9b1037b..6decfbc6 100644
+--- a/memory.md
++++ b/memory.md
+@@ -2697,3 +2697,13 @@
+ 
+ - Goal: Eval: prove first milestone closed loop
+ - Learning: Run run_2ea420719720 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
++
++## Run run_60c9a37d66ed
++
++- Goal: Eval: prove first milestone closed loop
++- Learning: Run run_60c9a37d66ed showed that the first closed loop can be verified through file evidence before expanding to broader domains.
++
++## Run run_82f659ae72cf
++
++- Goal: Eval: prove first milestone closed loop
++- Learning: Run run_82f659ae72cf showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+diff --git a/playbooks/first-milestone-closed-loop.md b/playbooks/first-milestone-closed-loop.md
+index 29dd08f6..f5037638 100644
+--- a/playbooks/first-milestone-closed-loop.md
++++ b/playbooks/first-milestone-closed-loop.md
+@@ -1,7 +1,7 @@
+ # First Milestone Closed Loop Playbook
+ 
+ - Source eval: first_milestone_closed_loop
+-- Successful runs: 329
++- Successful runs: 332
+ - Status: active
+ 
+ ## Trigger
+@@ -354,3 +354,6 @@ Use when validating the local goal -> task graph -> execution -> verification ->
+ - run_15b7c378d7e3: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-24T00:00:15.058453+00:00
+ - run_b791209a6a0c: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-24T00:39:29.176621+00:00
+ - run_6486401b5408: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-24T00:39:34.992974+00:00
++- run_747764b40afe: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-24T01:12:48.179743+00:00
++- run_2ea420719720: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-24T01:12:58.071742+00:00
++- run_60c9a37d66ed: eval=first_milestone_closed_loop status=pass tasks_completed=2 created_at=2026-06-24T01:43:17.211934+00:00
+diff --git a/projects/bootstrap/handoff.md b/projects/bootstrap/handoff.md
+index 9b54b0a2..b5fd30e7 100644
+--- a/projects/bootstrap/handoff.md
++++ b/projects/bootstrap/handoff.md
+@@ -8,23 +8,27 @@
+   `.clanker/projects/<project>/goals/<goal_id>/runs/<run_id>/evidence/` with
+   run, goal, plan, contract, task, event, routing, delegation, steering,
+   command, approval, effect, memory/skill proposal, incident, eval-candidate,
+-  verification, and final-review snapshots.
++  verification, git status, diff, changed-file, and final-review snapshots.
+ - Compatibility guard: existing `run-task` command-proof files are preserved;
+   aggregate export files use sidecars such as `verification-summary.json`,
+   `commands-snapshot.jsonl`, `tasks-snapshot.json`, and
+   `operator-summary.md` when needed.
++- Git snapshot guard: `evidence <run_id>` writes `git_status.txt`,
++  `diff.patch`, and `changed_files.json` for the registered project repo when
++  the run belongs to one, otherwise the ClankerOS root; export does not fetch,
++  pull, commit, push, or mutate the repo.
+ - Live proof packets:
+   `.clanker/projects/bootstrap/goals/goal_a9da83c8c2cb/runs/run_6486401b5408/evidence`
+   and
+   `.clanker/projects/bootstrap/goals/goal_027f47ca5a93/runs/run_2ea420719720/evidence`.
+-- Latest eval-after-change proof: `run_2ea420719720`.
+-- Full verification: `python3 -m pytest -q` passed 456 tests in 943.01s;
++- Latest eval-after-change proof: `run_60c9a37d66ed`.
++- Full verification: `python3 -m pytest -q` passed 456 tests in 956.25s;
+   focused packet/review/run-task compatibility tests and broader
+   review/routing/delegation/run-task/dashboard tests also passed.
+ - Next packet:
+-  `docs/next-iteration.md` selects git status, diff, and changed-file
+-  snapshots for replayable evidence packets.
+-- Current focus: Add git status, diff, and changed-file snapshots to replayable evidence packets without overwriting `run-task` command proof.
++  `docs/next-iteration.md` selects changed-file and diff summaries in review
++  and dashboard operator signals.
++- Current focus: Surface changed-file and diff summaries in review and dashboard operator signals.
+ - Non-claims: no command rerun during export, approval, commit, push, deploy,
+   provider call, subagent start, external mutation, hosted dashboard, remote
+   worker, scheduler, trust promotion, or real cost tracking.
+diff --git a/projects/bootstrap/knowledge.md b/projects/bootstrap/knowledge.md
+index 76245b27..712e4de4 100644
+--- a/projects/bootstrap/knowledge.md
++++ b/projects/bootstrap/knowledge.md
+@@ -2613,3 +2613,11 @@ coverage.
+ ## Learning run_2ea420719720
+ 
+ - Learning: Run run_2ea420719720 showed that the first closed loop can be verified through file evidence before expanding to broader domains.
++
++## Learning run_60c9a37d66ed
++
++- Learning: Run run_60c9a37d66ed showed that the first closed loop can be verified through file evidence before expanding to broader domains.
++
++## Learning run_82f659ae72cf
++
++- Learning: Run run_82f659ae72cf showed that the first closed loop can be verified through file evidence before expanding to broader domains.
+diff --git a/projects/bootstrap/status.md b/projects/bootstrap/status.md
+index b6daf86c..d5f1f4bd 100644
+--- a/projects/bootstrap/status.md
++++ b/projects/bootstrap/status.md
+@@ -5955,3 +5955,15 @@ local application records for those proposed effects.
+ - Goal ID: goal_027f47ca5a93
+ - Status: completed
+ - Summary: /Users/reidar/Documents/Agent System/runs/run_2ea420719720/summary.md
++
++## Run run_60c9a37d66ed
++
++- Goal ID: goal_0a8ac2a4cae4
++- Status: completed
++- Summary: /Users/reidar/Documents/Agent System/runs/run_60c9a37d66ed/summary.md
++
++## Run run_82f659ae72cf
++
++- Goal ID: goal_497d56730b07
++- Status: completed
++- Summary: /Users/reidar/Documents/Agent System/runs/run_82f659ae72cf/summary.md
+diff --git a/tasks.md b/tasks.md
+index f3248372..db4d4728 100644
+--- a/tasks.md
++++ b/tasks.md
+@@ -99,7 +99,8 @@
+ - [x] Add skill proposal records and approval-gated SKILL.md writing. <!-- score=8 complexity=4 -->
+ - [x] Add human-first `review`, `evidence`, and `replay-summary` commands for run evidence packets. <!-- score=8 complexity=4 -->
+ - [x] Export replayable goal-scoped evidence packet sidecars for run review without overwriting `run-task` command proof. <!-- score=10 complexity=4 -->
+-- [ ] Add git status, diff, and changed-file snapshots to replayable evidence packets without overwriting `run-task` command proof. <!-- score=10 complexity=4 -->
++- [x] Add git status, diff, and changed-file snapshots to replayable evidence packets without overwriting `run-task` command proof. <!-- score=10 complexity=4 -->
++- [ ] Surface changed-file and diff summaries in review and dashboard operator signals. <!-- score=10 complexity=4 -->
+ - [x] Add deterministic steering review records plus `next-action` and `inbox` commands. <!-- score=9 complexity=4 -->
+ - [x] Add approval-gated operator approval request table creation from schema migration selection packets. <!-- score=9 complexity=4 -->
+ - [x] Add approval-gated operator approval request row creation from expansion approval drafts after the schema exists. <!-- score=9 complexity=4 -->
+diff --git a/tests/test_first_milestone.py b/tests/test_first_milestone.py
+index 36fa3ccc..107ddf96 100644
+--- a/tests/test_first_milestone.py
++++ b/tests/test_first_milestone.py
+@@ -824,6 +824,9 @@ def test_run_task_dispatches_planned_goal_task_with_profile_evidence(
+     routing_path = evidence_dir / "routing_decisions.jsonl"
+     tasks_path = evidence_dir / "tasks.json"
+     commands_path = evidence_dir / "commands.jsonl"
++    git_status_path = evidence_dir / "git_status.txt"
++    diff_path = evidence_dir / "diff.patch"
++    changed_files_path = evidence_dir / "changed_files.json"
+     tests_path = evidence_dir / "tests.txt"
+     stdout_path = evidence_dir / "stdout.txt"
+     stderr_path = evidence_dir / "stderr.txt"
+@@ -876,6 +879,16 @@ def test_run_task_dispatches_planned_goal_task_with_profile_evidence(
+     assert (evidence_dir / "goal.json").exists()
+     assert (evidence_dir / "plan.json").exists()
+     assert (evidence_dir / "contract.json").exists()
++    assert git_status_path.exists()
++    assert diff_path.exists()
++    assert changed_files_path.exists()
++    changed_files = json.loads(changed_files_path.read_text(encoding="utf-8"))
++    assert changed_files["is_git_repo"] is True
++    assert changed_files["target_root"] == str(repo_path.resolve())
++    assert changed_files["target_source"] == "registered_project"
++    assert changed_files["changed_files"] == []
++    assert changed_files["network_actions_taken"] == 0
++    assert changed_files["external_mutations_taken"] == 0
+ 
+     assert main(["--root", str(tmp_path), "review", run_id]) == 0
+     review_output = capsys.readouterr().out
+@@ -3357,19 +3370,46 @@ def test_evidence_command_indexes_run_artifacts_and_database_rows(
+     assert "## Database Rows" in report
+     assert "- tasks: 2" in report
+     assert "- events: " in report
++    assert "git_status.txt" in report
++    assert "diff.patch" in report
++    assert "changed_files.json" in report
+     assert "## Non-Claims" in report
+     assert "Does not replay or rerun the work." in report
+ 
++    packet_dir = (
++        tmp_path
++        / ".clanker"
++        / "projects"
++        / "bootstrap"
++        / "goals"
++        / result.goal_id
++        / "runs"
++        / result.run_id
++        / "evidence"
++    )
++    changed_files = json.loads(
++        (packet_dir / "changed_files.json").read_text(encoding="utf-8")
++    )
++    assert changed_files["is_git_repo"] is False
++    assert changed_files["changed_files"] == []
++    assert changed_files["network_actions_taken"] == 0
++    assert changed_files["external_mutations_taken"] == 0
++
+ 
+ def test_evidence_command_exports_replayable_operator_packet_files(
+     tmp_path: Path,
+     capsys,
+ ) -> None:
++    _init_git_repo(tmp_path)
+     system = AgentSystem(tmp_path)
+     result = system.run_goal(
+         project_id="bootstrap",
+         description="Export a replayable packet with control-plane state.",
+     )
++    (tmp_path / "README.md").write_text(
++        "# Subject\n\nChanged for evidence snapshot.\n",
++        encoding="utf-8",
++    )
+     storage = Storage(tmp_path / ".agent" / "state.db")
+     tasks = storage.list_tasks(result.goal_id)
+     task_id = tasks[0].id
+@@ -3476,6 +3516,9 @@ def test_evidence_command_exports_replayable_operator_packet_files(
+         "delegations.jsonl",
+         "steering_reviews.jsonl",
+         "verification.json",
++        "git_status.txt",
++        "diff.patch",
++        "changed_files.json",
+     ]
+     for filename in expected_files:
+         assert (packet_dir / filename).exists(), filename
+@@ -3503,6 +3546,20 @@ def test_evidence_command_exports_replayable_operator_packet_files(
+     assert verification["tasks_total"] == len(tasks)
+     assert verification["network_actions_taken"] == 0
+     assert verification["external_mutations_taken"] == 0
++    git_status = (packet_dir / "git_status.txt").read_text(encoding="utf-8")
++    assert "README.md" in git_status
++    diff = (packet_dir / "diff.patch").read_text(encoding="utf-8")
++    assert "diff --git a/README.md b/README.md" in diff
++    changed_files = json.loads(
++        (packet_dir / "changed_files.json").read_text(encoding="utf-8")
++    )
++    assert changed_files["is_git_repo"] is True
++    assert changed_files["target_root"] == str(tmp_path.resolve())
++    assert changed_files["target_source"] == "system_root"
++    assert "README.md" in changed_files["changed_files"]
++    assert "git diff --no-ext-diff --binary HEAD --" in changed_files["commands"]["diff"]
++    assert changed_files["network_actions_taken"] == 0
++    assert changed_files["external_mutations_taken"] == 0
+ 
+     report = (tmp_path / "runs" / result.run_id / "evidence-index.md").read_text(
+         encoding="utf-8"
+@@ -3510,6 +3567,9 @@ def test_evidence_command_exports_replayable_operator_packet_files(
+     assert "## Evidence Packet Files" in report
+     assert "routing_decisions.jsonl" in report
+     assert "steering_reviews.jsonl" in report
++    assert "git_status.txt" in report
++    assert "diff.patch" in report
++    assert "changed_files.json" in report
+ 
+     dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
+     assert "## Recent Evidence Packets" in dashboard
+@@ -3575,7 +3635,7 @@ def test_static_dashboard_summarizes_runs_and_queue(tmp_path: Path) -> None:
+ 
+ 
+ def _init_git_repo(repo_path: Path) -> None:
+-    repo_path.mkdir()
++    repo_path.mkdir(exist_ok=True)
+     subprocess.run(["git", "init"], cwd=repo_path, check=True, capture_output=True)
+     subprocess.run(
+         ["git", "config", "user.email", "clankeros@example.invalid"],

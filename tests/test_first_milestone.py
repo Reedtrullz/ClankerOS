@@ -824,6 +824,9 @@ def test_run_task_dispatches_planned_goal_task_with_profile_evidence(
     routing_path = evidence_dir / "routing_decisions.jsonl"
     tasks_path = evidence_dir / "tasks.json"
     commands_path = evidence_dir / "commands.jsonl"
+    git_status_path = evidence_dir / "git_status.txt"
+    diff_path = evidence_dir / "diff.patch"
+    changed_files_path = evidence_dir / "changed_files.json"
     tests_path = evidence_dir / "tests.txt"
     stdout_path = evidence_dir / "stdout.txt"
     stderr_path = evidence_dir / "stderr.txt"
@@ -876,6 +879,16 @@ def test_run_task_dispatches_planned_goal_task_with_profile_evidence(
     assert (evidence_dir / "goal.json").exists()
     assert (evidence_dir / "plan.json").exists()
     assert (evidence_dir / "contract.json").exists()
+    assert git_status_path.exists()
+    assert diff_path.exists()
+    assert changed_files_path.exists()
+    changed_files = json.loads(changed_files_path.read_text(encoding="utf-8"))
+    assert changed_files["is_git_repo"] is True
+    assert changed_files["target_root"] == str(repo_path.resolve())
+    assert changed_files["target_source"] == "registered_project"
+    assert changed_files["changed_files"] == []
+    assert changed_files["network_actions_taken"] == 0
+    assert changed_files["external_mutations_taken"] == 0
 
     assert main(["--root", str(tmp_path), "review", run_id]) == 0
     review_output = capsys.readouterr().out
@@ -3357,18 +3370,45 @@ def test_evidence_command_indexes_run_artifacts_and_database_rows(
     assert "## Database Rows" in report
     assert "- tasks: 2" in report
     assert "- events: " in report
+    assert "git_status.txt" in report
+    assert "diff.patch" in report
+    assert "changed_files.json" in report
     assert "## Non-Claims" in report
     assert "Does not replay or rerun the work." in report
+
+    packet_dir = (
+        tmp_path
+        / ".clanker"
+        / "projects"
+        / "bootstrap"
+        / "goals"
+        / result.goal_id
+        / "runs"
+        / result.run_id
+        / "evidence"
+    )
+    changed_files = json.loads(
+        (packet_dir / "changed_files.json").read_text(encoding="utf-8")
+    )
+    assert changed_files["is_git_repo"] is False
+    assert changed_files["changed_files"] == []
+    assert changed_files["network_actions_taken"] == 0
+    assert changed_files["external_mutations_taken"] == 0
 
 
 def test_evidence_command_exports_replayable_operator_packet_files(
     tmp_path: Path,
     capsys,
 ) -> None:
+    _init_git_repo(tmp_path)
     system = AgentSystem(tmp_path)
     result = system.run_goal(
         project_id="bootstrap",
         description="Export a replayable packet with control-plane state.",
+    )
+    (tmp_path / "README.md").write_text(
+        "# Subject\n\nChanged for evidence snapshot.\n",
+        encoding="utf-8",
     )
     storage = Storage(tmp_path / ".agent" / "state.db")
     tasks = storage.list_tasks(result.goal_id)
@@ -3476,6 +3516,9 @@ def test_evidence_command_exports_replayable_operator_packet_files(
         "delegations.jsonl",
         "steering_reviews.jsonl",
         "verification.json",
+        "git_status.txt",
+        "diff.patch",
+        "changed_files.json",
     ]
     for filename in expected_files:
         assert (packet_dir / filename).exists(), filename
@@ -3503,6 +3546,20 @@ def test_evidence_command_exports_replayable_operator_packet_files(
     assert verification["tasks_total"] == len(tasks)
     assert verification["network_actions_taken"] == 0
     assert verification["external_mutations_taken"] == 0
+    git_status = (packet_dir / "git_status.txt").read_text(encoding="utf-8")
+    assert "README.md" in git_status
+    diff = (packet_dir / "diff.patch").read_text(encoding="utf-8")
+    assert "diff --git a/README.md b/README.md" in diff
+    changed_files = json.loads(
+        (packet_dir / "changed_files.json").read_text(encoding="utf-8")
+    )
+    assert changed_files["is_git_repo"] is True
+    assert changed_files["target_root"] == str(tmp_path.resolve())
+    assert changed_files["target_source"] == "system_root"
+    assert "README.md" in changed_files["changed_files"]
+    assert "git diff --no-ext-diff --binary HEAD --" in changed_files["commands"]["diff"]
+    assert changed_files["network_actions_taken"] == 0
+    assert changed_files["external_mutations_taken"] == 0
 
     report = (tmp_path / "runs" / result.run_id / "evidence-index.md").read_text(
         encoding="utf-8"
@@ -3510,6 +3567,9 @@ def test_evidence_command_exports_replayable_operator_packet_files(
     assert "## Evidence Packet Files" in report
     assert "routing_decisions.jsonl" in report
     assert "steering_reviews.jsonl" in report
+    assert "git_status.txt" in report
+    assert "diff.patch" in report
+    assert "changed_files.json" in report
 
     dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
     assert "## Recent Evidence Packets" in dashboard
@@ -3575,7 +3635,7 @@ def test_static_dashboard_summarizes_runs_and_queue(tmp_path: Path) -> None:
 
 
 def _init_git_repo(repo_path: Path) -> None:
-    repo_path.mkdir()
+    repo_path.mkdir(exist_ok=True)
     subprocess.run(["git", "init"], cwd=repo_path, check=True, capture_output=True)
     subprocess.run(
         ["git", "config", "user.email", "clankeros@example.invalid"],

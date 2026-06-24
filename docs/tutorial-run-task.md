@@ -117,6 +117,9 @@ Important files:
 - `routing_decisions.jsonl` - the profile/model selection row.
 - `commands.jsonl` - local command adapter metadata.
 - `tasks.json` - task, plan-step, and contract snapshot.
+- `git_status.txt`, `diff.patch`, and `changed_files.json` - added by
+  `evidence <run_id>` as local git snapshots for the registered project repo.
+  They do not fetch, pull, commit, push, or rerun the verifier.
 - `recommendations.jsonl` - present when failed verification created recovery
   guidance.
 - `stdout.txt` and `stderr.txt` - raw verifier output.

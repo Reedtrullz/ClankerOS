@@ -114,6 +114,11 @@ start a model provider, or start a subagent.
 `.clanker/projects/<project>/goals/<goal_id>/runs/<run_id>/evidence/` and
 prints the `packet_dir`. If the run already has command-proof files from
 `run-task`, ClankerOS preserves them and writes aggregate review sidecars.
+The packet also includes `git_status.txt`, `diff.patch`, and
+`changed_files.json` for the selected evidence target: the registered project
+repo when the run belongs to one, otherwise the ClankerOS system root. These
+files are local snapshots only; export does not fetch, pull, commit, push, or
+mutate the repo.
 
 If a planned task verifier fails, ClankerOS opens a local incident and records
 an open `failed_run_task_recovery` recommendation with review, replan, and

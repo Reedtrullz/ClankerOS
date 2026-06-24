@@ -8,23 +8,27 @@
   `.clanker/projects/<project>/goals/<goal_id>/runs/<run_id>/evidence/` with
   run, goal, plan, contract, task, event, routing, delegation, steering,
   command, approval, effect, memory/skill proposal, incident, eval-candidate,
-  verification, and final-review snapshots.
+  verification, git status, diff, changed-file, and final-review snapshots.
 - Compatibility guard: existing `run-task` command-proof files are preserved;
   aggregate export files use sidecars such as `verification-summary.json`,
   `commands-snapshot.jsonl`, `tasks-snapshot.json`, and
   `operator-summary.md` when needed.
+- Git snapshot guard: `evidence <run_id>` writes `git_status.txt`,
+  `diff.patch`, and `changed_files.json` for the registered project repo when
+  the run belongs to one, otherwise the ClankerOS root; export does not fetch,
+  pull, commit, push, or mutate the repo.
 - Live proof packets:
   `.clanker/projects/bootstrap/goals/goal_a9da83c8c2cb/runs/run_6486401b5408/evidence`
   and
   `.clanker/projects/bootstrap/goals/goal_027f47ca5a93/runs/run_2ea420719720/evidence`.
-- Latest eval-after-change proof: `run_2ea420719720`.
-- Full verification: `python3 -m pytest -q` passed 456 tests in 943.01s;
+- Latest eval-after-change proof: `run_60c9a37d66ed`.
+- Full verification: `python3 -m pytest -q` passed 456 tests in 956.25s;
   focused packet/review/run-task compatibility tests and broader
   review/routing/delegation/run-task/dashboard tests also passed.
 - Next packet:
-  `docs/next-iteration.md` selects git status, diff, and changed-file
-  snapshots for replayable evidence packets.
-- Current focus: Add git status, diff, and changed-file snapshots to replayable evidence packets without overwriting `run-task` command proof.
+  `docs/next-iteration.md` selects changed-file and diff summaries in review
+  and dashboard operator signals.
+- Current focus: Surface changed-file and diff summaries in review and dashboard operator signals.
 - Non-claims: no command rerun during export, approval, commit, push, deploy,
   provider call, subagent start, external mutation, hosted dashboard, remote
   worker, scheduler, trust promotion, or real cost tracking.

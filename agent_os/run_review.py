@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -73,6 +74,13 @@ class RunEvidencePacket:
         if self.run.status == "completed":
             return "final_review"
         return "continue_run_review"
+
+
+@dataclass(frozen=True)
+class GitEvidenceSnapshot:
+    status_text: str
+    diff_text: str
+    changed_files: dict[str, object]
 
 
 def collect_run_evidence(root: Path, run_id: str) -> RunEvidencePacket:
@@ -201,6 +209,10 @@ def write_evidence_packet(root: Path, packet: RunEvidencePacket) -> Path:
     _write_jsonl_preserving(packet_dir / "skill_proposals.jsonl", packet.skills)
     _write_jsonl_preserving(packet_dir / "incidents.jsonl", packet.incidents)
     _write_jsonl_preserving(packet_dir / "eval_candidates.jsonl", packet.eval_candidates)
+    git_snapshot = _collect_git_evidence_snapshot(root, packet)
+    _write_text_preserving(packet_dir / "git_status.txt", git_snapshot.status_text)
+    _write_text_preserving(packet_dir / "diff.patch", git_snapshot.diff_text)
+    _write_json_preserving(packet_dir / "changed_files.json", git_snapshot.changed_files)
     _write_text_preserving(
         packet_dir / "summary.md",
         render_evidence_packet_summary(root, packet),
@@ -558,6 +570,9 @@ def _evidence_packet_file_paths(root: Path, packet: RunEvidencePacket) -> list[s
         "skill_proposals.jsonl",
         "incidents.jsonl",
         "eval_candidates.jsonl",
+        "git_status.txt",
+        "diff.patch",
+        "changed_files.json",
         "final_review.md",
     ]
     return [
@@ -616,6 +631,143 @@ def _command_snapshots(packet: RunEvidencePacket) -> list[dict[str, object]]:
                 }
             )
     return commands
+
+
+def _collect_git_evidence_snapshot(root: Path, packet: RunEvidencePacket) -> GitEvidenceSnapshot:
+    target_root, target_source = _git_evidence_target(root, packet)
+    resolved_target = target_root.resolve()
+    rev_parse = _run_git(resolved_target, ["rev-parse", "--show-toplevel"])
+    if rev_parse.returncode != 0:
+        return GitEvidenceSnapshot(
+            status_text=(
+                f"not_git_repo: {resolved_target}\n"
+                f"command: git rev-parse --show-toplevel\n"
+                f"returncode: {rev_parse.returncode}\n"
+                f"stdout:\n{rev_parse.stdout}\n"
+                f"stderr:\n{rev_parse.stderr}"
+            ),
+            diff_text="",
+            changed_files={
+                "is_git_repo": False,
+                "target_root": str(resolved_target),
+                "target_source": target_source,
+                "commands": {
+                    "git_root": "git rev-parse --show-toplevel",
+                },
+                "returncodes": {
+                    "git_root": rev_parse.returncode,
+                },
+                "changed_files": [],
+                "tracked_changed_files": [],
+                "untracked_files": [],
+                "network_actions_taken": 0,
+                "external_mutations_taken": 0,
+                "non_claims": [
+                    "Git snapshot export does not commit, push, fetch, pull, or mutate files.",
+                    "No git diff is available because the selected target is not a git repository.",
+                ],
+            },
+        )
+
+    status = _run_git(resolved_target, ["status", "--short", "--branch"])
+    diff, diff_command = _git_output_with_head_fallback(
+        resolved_target,
+        ["diff", "--no-ext-diff", "--binary", "HEAD", "--"],
+        ["diff", "--no-ext-diff", "--binary"],
+    )
+    tracked, tracked_command = _git_output_with_head_fallback(
+        resolved_target,
+        ["diff", "--name-only", "HEAD", "--"],
+        ["diff", "--name-only"],
+    )
+    untracked = _run_git(resolved_target, ["ls-files", "--others", "--exclude-standard"])
+    tracked_files = _split_git_path_lines(tracked.stdout if tracked.returncode == 0 else "")
+    untracked_files = _split_git_path_lines(
+        untracked.stdout if untracked.returncode == 0 else ""
+    )
+    changed_files = sorted(set(tracked_files + untracked_files))
+    return GitEvidenceSnapshot(
+        status_text=status.stdout if status.returncode == 0 else status.stderr,
+        diff_text=diff.stdout if diff.returncode == 0 else diff.stderr,
+        changed_files={
+            "is_git_repo": True,
+            "target_root": str(resolved_target),
+            "target_source": target_source,
+            "git_root": rev_parse.stdout.strip(),
+            "commands": {
+                "git_root": "git rev-parse --show-toplevel",
+                "status": "git status --short --branch",
+                "diff": _format_git_command(diff_command),
+                "tracked_changed_files": _format_git_command(tracked_command),
+                "untracked_files": "git ls-files --others --exclude-standard",
+            },
+            "returncodes": {
+                "git_root": rev_parse.returncode,
+                "status": status.returncode,
+                "diff": diff.returncode,
+                "tracked_changed_files": tracked.returncode,
+                "untracked_files": untracked.returncode,
+            },
+            "changed_files": changed_files,
+            "tracked_changed_files": tracked_files,
+            "untracked_files": untracked_files,
+            "network_actions_taken": 0,
+            "external_mutations_taken": 0,
+            "non_claims": [
+                "Git snapshot export does not commit, push, fetch, pull, or mutate files.",
+                "Untracked file contents are listed by path only and are not embedded in diff.patch.",
+            ],
+        },
+    )
+
+
+def _git_evidence_target(root: Path, packet: RunEvidencePacket) -> tuple[Path, str]:
+    project = Storage(root / ".agent" / "state.db").get_registered_project(
+        packet.run.project_id
+    )
+    if project is not None:
+        return Path(project.root_path), "registered_project"
+    return root, "system_root"
+
+
+def _git_output_with_head_fallback(
+    cwd: Path,
+    primary_args: list[str],
+    fallback_args: list[str],
+) -> tuple[subprocess.CompletedProcess[str], list[str]]:
+    primary = _run_git(cwd, primary_args)
+    if primary.returncode == 0:
+        return primary, primary_args
+    fallback = _run_git(cwd, fallback_args)
+    if fallback.returncode == 0:
+        return fallback, fallback_args
+    return primary, primary_args
+
+
+def _run_git(cwd: Path, args: list[str]) -> subprocess.CompletedProcess[str]:
+    try:
+        return subprocess.run(
+            ["git", *args],
+            cwd=cwd,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except OSError as exc:
+        return subprocess.CompletedProcess(
+            args=["git", *args],
+            returncode=127,
+            stdout="",
+            stderr=str(exc),
+        )
+
+
+def _format_git_command(args: list[str]) -> str:
+    return "git " + " ".join(args)
+
+
+def _split_git_path_lines(output: str) -> list[str]:
+    return [line.strip() for line in output.splitlines() if line.strip()]
 
 
 def _write_text_preserving(path: Path, content: str) -> Path:

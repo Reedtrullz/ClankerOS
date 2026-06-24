@@ -40,6 +40,13 @@ Core layers for the bootstrap:
   updates the task and linked plan step, and opens a local incident if
   verification fails. It does not commit, push, deploy, call model providers,
   start subagents, or mutate external systems.
+- Run evidence packets: `evidence <run_id>` writes replayable review files for
+  the run, including `git_status.txt`, `diff.patch`, and `changed_files.json`.
+  The git snapshot target is the registered project repo for registered
+  project runs, otherwise the ClankerOS root. Existing `run-task` command proof
+  files are preserved and aggregate review sidecars are written separately.
+  The export does not rerun commands, fetch, pull, commit, push, approve
+  effects, or mutate external systems.
 - Task recovery recommendations: failed planned-task runs and blocked planned
   tasks can create idempotent `task_recommendations` rows plus local JSON
   evidence. Failed `run-task` evidence packets include

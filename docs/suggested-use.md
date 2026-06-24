@@ -458,7 +458,8 @@ and does not make the skill active until `skill approve` is run.
 `runs/<run_id>/` and expose them in the dashboard. `evidence` also writes
 goal-scoped JSON/JSONL/Markdown packet files for goal, plan, contract, tasks,
 routing decisions, delegations, steering reviews, commands, approvals, effects,
-memory/skill proposals, incidents, eval candidates, and verification summary.
+memory/skill proposals, incidents, eval candidates, verification summary,
+`git_status.txt`, `diff.patch`, and `changed_files.json`.
 When command-proof files already exist from `run-task`, the aggregate evidence
 export uses sidecars such as `verification-summary.json` and
 `operator-summary.md` instead of overwriting the executable proof. These

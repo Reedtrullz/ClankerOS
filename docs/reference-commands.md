@@ -58,6 +58,11 @@ draft sprint contract for the latest plan. `run-task` dispatches one
 routing decision, creates a run, writes an evidence packet under the goal, and
 updates the linked plan step. It does not commit, push, deploy, call model
 providers, start subagents, or mutate external systems.
+`evidence <run_id>` preserves existing command-proof files from `run-task` and
+adds review-side packet files, including `git_status.txt`, `diff.patch`, and
+`changed_files.json`. The git target is the registered project repo when one is
+known for the run, otherwise the ClankerOS root. This is a local snapshot; it
+does not fetch, pull, commit, push, rerun commands, or approve effects.
 `task-recommendations` records idempotent local `task_recommendations` rows and
 writes `docs/task-recommendations.md` for failed planned-task runs and blocked
 planned tasks. It recommends review/replan/manual reset commands but does not

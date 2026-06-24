@@ -42,12 +42,19 @@ This writes:
 
 ```text
 runs/<run_id>/evidence-index.md
+.clanker/projects/<project>/goals/<goal_id>/runs/<run_id>/evidence/
 ```
 
 Read it when you need to audit the files and database rows attached to the
 run. It indexes run files, project artifacts, task rows, event rows,
 incidents, approvals, effects, delegations, memory entries, skills, and eval
 candidates when they exist.
+
+The packet directory includes `git_status.txt`, `diff.patch`, and
+`changed_files.json`. For registered-project runs, those files describe the
+registered repo. For bootstrap or system-root runs, they describe the ClankerOS
+root. Existing command-proof files from `run-task` stay in place; the review
+command writes sidecars instead of replacing them.
 
 ## 4. Write The Conceptual Replay
 
@@ -75,6 +82,6 @@ The dashboard shows generated run packets under `## Recent Evidence Packets`.
 ## Non-Claims
 
 These commands do not rerun commands, mutate files, approve effects, commit,
-push, deploy, start remote workers, schedule work, promote trust, retry work,
-or track spend. They write local Markdown reports from existing local state
-and preserve `network_actions_taken=0`.
+push, fetch, pull, deploy, start remote workers, schedule work, promote trust,
+retry work, or track spend. They write local Markdown reports from existing
+local state and preserve `network_actions_taken=0`.

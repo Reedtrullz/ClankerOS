@@ -1,0 +1,30 @@
+## main...origin/main
+ M README.md
+ M agent_os/run_review.py
+ M docs/OPERATING_SUMMARY.md
+ M docs/dashboard.md
+ M docs/eval-after-change.md
+ M docs/handoff-review.md
+ M docs/next-iteration.md
+ M docs/playbooks.md
+ M docs/reference-commands.md
+ M docs/suggested-use.md
+ M docs/tutorial-run-review.md
+ M docs/tutorial-run-task.md
+ M evals/results/first_milestone_closed_loop.json
+ M memory.md
+ M playbooks/first-milestone-closed-loop.md
+ M projects/bootstrap/handoff.md
+ M projects/bootstrap/knowledge.md
+ M projects/bootstrap/status.md
+ M tasks.md
+ M tests/test_first_milestone.py
+?? .clanker/projects/bootstrap/goals/goal_0a8ac2a4cae4/
+?? "README (1).md"
+?? "docs/docs-index (1).md"
+?? evals/candidates/run_60c9a37d66ed-closed-loop.json
+?? evals/candidates/run_82f659ae72cf-closed-loop.json
+?? projects/bootstrap/artifacts/run_60c9a37d66ed/
+?? projects/bootstrap/artifacts/run_82f659ae72cf/
+?? runs/run_60c9a37d66ed/
+?? runs/run_82f659ae72cf/

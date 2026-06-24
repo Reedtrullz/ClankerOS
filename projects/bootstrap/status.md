@@ -5955,3 +5955,15 @@ local application records for those proposed effects.
 - Goal ID: goal_027f47ca5a93
 - Status: completed
 - Summary: /Users/reidar/Documents/Agent System/runs/run_2ea420719720/summary.md
+
+## Run run_60c9a37d66ed
+
+- Goal ID: goal_0a8ac2a4cae4
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_60c9a37d66ed/summary.md
+
+## Run run_82f659ae72cf
+
+- Goal ID: goal_497d56730b07
+- Status: completed
+- Summary: /Users/reidar/Documents/Agent System/runs/run_82f659ae72cf/summary.md

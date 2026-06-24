@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_6b154150bd07
+- Packet ID: iteration_f8462adbe433
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add git status, diff, and changed-file snapshots to replayable evidence packets without overwriting `run-task` command proof.
+Advance the Agent System north-star goal by completing: Surface changed-file and diff summaries in review and dashboard operator signals.
 
 ## Definition Of Done
 
@@ -150,7 +150,7 @@ Advance the Agent System north-star goal by completing: Add git status, diff, an
 - pending approvals: 0
 - queue-health hotspots: 0
 - handoff blocked tasks: 0
-- stale handoffs: 1
+- stale handoffs: 0
 - eval-after-change failures: 0
 - stable distilled learnings: 1
 - budget/trust posture: report_only
