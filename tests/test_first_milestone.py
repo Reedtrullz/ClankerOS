@@ -3350,6 +3350,33 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "open_project_incidents" in project.body
     assert "task_recommendations" in project.body
 
+    workflow_for_delegation = render_local_app_route(
+        tmp_path,
+        f"/workflow?delegation_id={result.delegation_id}",
+    )
+    assert workflow_for_delegation.status == 200
+    assert "Selected Workflow State" in workflow_for_delegation.body
+    assert result.delegation_id in workflow_for_delegation.body
+    assert "context_pack_status" in workflow_for_delegation.body
+    assert "implementation_handoff_status" in workflow_for_delegation.body
+    assert "coder_prep_status" in workflow_for_delegation.body
+    assert "coder_worktree_plan_status" in workflow_for_delegation.body
+    assert "worktree_approval_status" in workflow_for_delegation.body
+    assert "worktree_run_status" in workflow_for_delegation.body
+    assert "bounded_file_validation_status" in workflow_for_delegation.body
+    assert "commit_request_status" in workflow_for_delegation.body
+    assert "publication_handoff_status" in workflow_for_delegation.body
+    assert "next_recommended_action" in workflow_for_delegation.body
+    assert "request_commit_for_reviewed_run" in workflow_for_delegation.body
+
+    workflow_for_run = render_local_app_route(
+        tmp_path,
+        f"/workflow?run_id={result.coder_worktree_run_id}",
+    )
+    assert workflow_for_run.status == 200
+    assert result.coder_worktree_run_id in workflow_for_run.body
+    assert "selected_run_id" in workflow_for_run.body
+
     approvals = render_local_app_route(tmp_path, "/approvals")
     assert approvals.status == 200
     assert result.approval_id in approvals.body

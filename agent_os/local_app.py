@@ -197,7 +197,15 @@ def render_local_app_route(
         if path == "/":
             return _html_page(root, "Dashboard", _dashboard(root, host=host, port=port))
         if path == "/workflow":
-            return _html_page(root, "Workflow", _workflow(root))
+            return _html_page(
+                root,
+                "Workflow",
+                _workflow(
+                    root,
+                    delegation_id=_one(query, "delegation_id"),
+                    run_id=_one(query, "run_id"),
+                ),
+            )
         if path == "/projects":
             return _html_page(root, "Projects", _projects(root))
         if path == "/inbox":
@@ -539,11 +547,17 @@ def _dashboard(root: Path, *, host: str, port: int) -> str:
     )
 
 
-def _workflow(root: Path) -> str:
+def _workflow(
+    root: Path,
+    *,
+    delegation_id: str | None = None,
+    run_id: str | None = None,
+) -> str:
     return "".join(
         [
             "<section><h1>Modern Operator Workflow</h1>",
             _non_claim_banner(),
+            _selected_workflow_state(root, delegation_id=delegation_id, run_id=run_id),
             _workflow_list(compact=False),
             "</section>",
         ]
@@ -1943,6 +1957,135 @@ def _delegation_workflow_readiness(
     ) + "</section>"
 
 
+def _selected_workflow_state(
+    root: Path,
+    *,
+    delegation_id: str | None = None,
+    run_id: str | None = None,
+) -> str:
+    if not delegation_id and not run_id:
+        return ""
+
+    storage = _storage(root)
+    selected_run = None
+    if run_id:
+        selected_run = next(
+            (item for item in list_coder_worktree_runs(root, limit=200) if item.id == run_id),
+            None,
+        )
+        if selected_run is None:
+            return "<section><h2>Selected Workflow State</h2>" + _kv(
+                [
+                    ("selection_status", "run_not_found"),
+                    ("selected_run_id", run_id),
+                    ("selected_delegation_id", delegation_id or "unknown"),
+                ]
+            ) + "</section>"
+        if delegation_id and selected_run.delegation_id != delegation_id:
+            return "<section><h2>Selected Workflow State</h2>" + _kv(
+                [
+                    ("selection_status", "run_delegation_mismatch"),
+                    ("selected_run_id", run_id),
+                    ("selected_run_delegation_id", selected_run.delegation_id),
+                    ("selected_delegation_id", delegation_id),
+                ]
+            ) + "</section>"
+        delegation_id = selected_run.delegation_id
+
+    delegation = storage.get_subagent_delegation(delegation_id or "")
+    if delegation is None:
+        return "<section><h2>Selected Workflow State</h2>" + _kv(
+            [
+                ("selection_status", "delegation_not_found"),
+                ("selected_delegation_id", delegation_id or "unknown"),
+                ("selected_run_id", run_id or "none"),
+            ]
+        ) + "</section>"
+
+    summary = summarize_implementation_handoff(root, delegation)
+    prep_packets = [
+        item
+        for item in list_coder_prep_packets(root)
+        if item.get("source", {}).get("delegation_id") == delegation.id
+    ]
+    plan_packets = [
+        item
+        for item in list_coder_worktree_plan_packets(root)
+        if item.get("source", {}).get("delegation_id") == delegation.id
+    ]
+    worktree_approvals = list_coder_worktree_approvals(
+        root,
+        delegation_id=delegation.id,
+        limit=50,
+    )
+    worktree_runs = list_coder_worktree_runs(root, delegation_id=delegation.id, limit=50)
+    if selected_run is None and len(worktree_runs) == 1:
+        selected_run = worktree_runs[0]
+    commit_approvals = list_coder_worktree_commit_approvals(
+        root,
+        delegation_id=delegation.id,
+        limit=50,
+    )
+    publications = list_coder_publications(root, delegation_id=delegation.id, limit=50)
+    bounded_status = "none"
+    if selected_run is not None:
+        bounded_status = _artifact_status(
+            root,
+            Path(selected_run.evidence_path) / "bounded_file_validation.json",
+        )
+    elif worktree_runs:
+        bounded_status = "select_run"
+
+    return "<section><h2>Selected Workflow State</h2>" + _kv(
+        [
+            ("selection_status", "found"),
+            ("selected_delegation_id", delegation.id),
+            ("selected_run_id", selected_run.id if selected_run is not None else run_id or "none"),
+            ("delegation_status", delegation.status),
+            ("context_pack_status", _artifact_status(root, summary["context_pack_json"])),
+            ("context_pack_path", _artifact_link(summary["context_pack_json"])),
+            ("implementation_handoff_status", str(summary["status"])),
+            ("implementation_handoff_path", _artifact_link(summary["markdown_path"])),
+            ("coder_prep_status", "available" if prep_packets else "missing"),
+            ("coder_worktree_plan_status", "available" if plan_packets else "missing"),
+            ("worktree_approval_status", _status_counts(worktree_approvals)),
+            (
+                "worktree_run_status",
+                selected_run.status if selected_run is not None else _status_counts(worktree_runs),
+            ),
+            ("bounded_file_validation_status", bounded_status),
+            ("commit_request_status", _status_counts(commit_approvals)),
+            (
+                "commit_sha",
+                next(
+                    (item.commit_sha for item in commit_approvals if item.commit_sha),
+                    "none",
+                ),
+            ),
+            ("publication_request_status", _status_counts(publications)),
+            (
+                "publication_handoff_status",
+                "available"
+                if any(item.status == "ready_for_operator" for item in publications)
+                else "missing",
+            ),
+            (
+                "next_recommended_action",
+                _delegation_next_action(
+                    root,
+                    summary=summary,
+                    prep_count=len(prep_packets),
+                    plan_count=len(plan_packets),
+                    worktree_approvals=worktree_approvals,
+                    worktree_runs=worktree_runs,
+                    commit_approvals=commit_approvals,
+                    publications=publications,
+                ),
+            ),
+        ]
+    ) + "</section>"
+
+
 def _delegation_next_action(
     root: Path,
     *,
@@ -1998,6 +2141,16 @@ def _artifact_status(root: Path, relative_path: object) -> str:
 
 def _count_status(items: list[Any], status: str) -> int:
     return sum(1 for item in items if item.status == status)
+
+
+def _status_counts(items: list[Any]) -> str:
+    if not items:
+        return "none"
+    counts: dict[str, int] = {}
+    for item in items:
+        status = str(getattr(item, "status", "unknown"))
+        counts[status] = counts.get(status, 0) + 1
+    return ", ".join(f"{status}:{count}" for status, count in sorted(counts.items()))
 
 
 def _joined(value: object) -> str:

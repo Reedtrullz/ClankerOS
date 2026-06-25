@@ -27,6 +27,10 @@
 - Project detail pages now include `Project Operator Guidance` with
   project-scoped incidents, task recommendations, approval/run/commit/
   publication counts, and a next recommended operator action.
+- `/workflow` now accepts `delegation_id` or `run_id` query parameters and
+  renders a selected workflow-state readback with context-pack, handoff,
+  coder-prep, worktree-plan, approval/run, bounded-file-validation, commit,
+  publication, and next-action status while remaining read-only.
 - Focused app test coverage now walks the browser-route action path from demo
   run detail through commit request, commit approval, isolated local commit,
   publication request, publication approval, and publication handoff.

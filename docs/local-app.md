@@ -39,7 +39,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 
 - `/` - local operator dashboard.
 - `/workflow` - modern handoff/worktree/commit/publication workflow stepper,
-  including `coder-prep-from-handoff` as the artifact-first prep route.
+  including `coder-prep-from-handoff` as the artifact-first prep route. Add
+  `?delegation_id=<id>` or `?run_id=<coder_worktree_run_id>` to show selected
+  workflow state, artifact status, approval/run/commit/publication status, and
+  the next recommended local operator action.
 - `/projects` - registered project list.
 - `/projects/<project_id>` - project detail, linked artifacts, project-scoped
   incidents/recommendations, and next recommended operator action.
