@@ -46,6 +46,7 @@ from agent_os.engine import AgentSystem
 from agent_os.ids import new_id
 from agent_os.implementation_handoff import summarize_implementation_handoff
 from agent_os.storage import Storage, utc_now
+from agent_os.steering import collect_inbox_items
 from agent_os.subagent_delegation import load_delegation_result_metadata
 
 
@@ -194,6 +195,8 @@ def render_local_app_route(
             return _html_page(root, "Workflow", _workflow(root))
         if path == "/projects":
             return _html_page(root, "Projects", _projects(root))
+        if path == "/inbox":
+            return _html_page(root, "Inbox", _inbox(root))
         if path == "/approvals":
             return _html_page(root, "Approvals", _approvals(root))
         if path == "/incidents":
@@ -229,7 +232,7 @@ def render_local_app_route(
 
 def run_local_app_smoke_test(root: Path) -> dict[str, Any]:
     root = root.resolve()
-    routes = ["/", "/workflow", "/projects", "/approvals", "/incidents", "/health", "/demo"]
+    routes = ["/", "/workflow", "/projects", "/inbox", "/approvals", "/incidents", "/health", "/demo"]
     results = []
     for route in routes:
         response = render_local_app_route(root, route)
@@ -426,7 +429,7 @@ def write_local_app_status(root: Path, *, host: str, port: int) -> Path:
         "commit": state["commit"],
         "dirty_tracked_files": state["dirty_tracked_files"],
         "untracked_files": state["untracked_files"],
-        "routes_available": ["/", "/workflow", "/projects", "/delegations/<id>", "/runs/<id>", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
+        "routes_available": ["/", "/workflow", "/projects", "/delegations/<id>", "/runs/<id>", "/inbox", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
         "supported_workflow_stages": [step[0] for step in WORKFLOW_STEPS],
         "non_claims": NO_EXTERNAL_EFFECT_CLAIMS,
         "known_gaps": [
@@ -480,6 +483,7 @@ def _dashboard(root: Path, *, host: str, port: int) -> str:
             _list_section("Recent Commit Requests / Local Commits", rows["commit_requests"]),
             _list_section("Recent Publication Requests", rows["publication_requests"]),
             _list_section("Recent Publication Handoffs", rows["publication_handoffs"]),
+            _list_section("Operator Inbox", rows["inbox"], "/inbox"),
             _list_section("Pending Approvals", rows["approvals"], "/approvals"),
             _list_section("Incidents / Recommendations", rows["incidents"], "/incidents"),
             "<section><h2>Next Recommended Action</h2><p>Review the workflow page, run the demo scenario, then inspect a delegation or artifact.</p></section>",
@@ -506,6 +510,67 @@ def _projects(root: Path) -> str:
         for project in projects
     ]
     return "<section><h1>Projects</h1>" + _ul(items) + "</section>"
+
+
+def _inbox(root: Path) -> str:
+    inbox = collect_inbox_items(root)
+    return "".join(
+        [
+            "<section><h1>Operator Inbox</h1>",
+            "<p class='muted'>Read-only local operator queue assembled from steering reviews, approvals, incidents, delegations, coder runs, commits, and publication handoffs.</p>",
+            "</section>",
+            _list_section(
+                "Inbox Summary",
+                _inbox_summary_lines(root)
+                + ["network_actions_taken: 0", "external_mutations_taken: 0"],
+            ),
+            _list_section(
+                "Steering Reviews",
+                [_steering_review_line(item) for item in inbox["steering_reviews"]],
+            ),
+            _list_section(
+                "Pending Approval Requests",
+                [_operator_approval_line(item) for item in inbox["pending_approvals"]],
+            ),
+            _list_section(
+                "Open Incidents",
+                [_incident_line(item) for item in inbox["open_incidents"]],
+                "/incidents",
+            ),
+            _list_section(
+                "Subagent Delegations",
+                [_delegation_line(item) for item in inbox["subagent_delegations"]],
+            ),
+            _list_section(
+                "Pending Worktree Approvals",
+                [_approval_line(item) for item in inbox["coder_worktree_approvals"]],
+                "/approvals",
+            ),
+            _list_section(
+                "Coder Worktree Runs",
+                [_coder_run_line(item) for item in inbox["coder_worktree_runs"]],
+            ),
+            _list_section(
+                "Pending Commit Approvals",
+                [_commit_line(item) for item in inbox["coder_worktree_commit_approvals"]],
+                "/approvals",
+            ),
+            _list_section(
+                "Local Coder Commits",
+                [_commit_line(item) for item in inbox["coder_worktree_commits"]],
+            ),
+            _list_section(
+                "Pending Publication Requests",
+                [_publication_line(root, item) for item in inbox["coder_publication_requests"]],
+                "/approvals",
+            ),
+            _list_section(
+                "Publication Handoffs",
+                [_publication_line(root, item) for item in inbox["coder_publication_handoffs"]],
+            ),
+            _non_claim_banner(),
+        ]
+    )
 
 
 def _approvals(root: Path) -> str:
@@ -1009,6 +1074,23 @@ def _pending_approval_lines(root: Path) -> list[str]:
     return lines
 
 
+def _inbox_summary_lines(root: Path) -> list[str]:
+    inbox = collect_inbox_items(root)
+    return [
+        f"inbox_items: {inbox['count']}",
+        f"steering_reviews: {len(inbox['steering_reviews'])}",
+        f"pending_approvals: {len(inbox['pending_approvals'])}",
+        f"open_incidents: {len(inbox['open_incidents'])}",
+        f"subagent_delegations: {len(inbox['subagent_delegations'])}",
+        f"coder_worktree_approvals: {len(inbox['coder_worktree_approvals'])}",
+        f"coder_worktree_runs: {len(inbox['coder_worktree_runs'])}",
+        f"coder_worktree_commit_approvals: {len(inbox['coder_worktree_commit_approvals'])}",
+        f"coder_worktree_commits: {len(inbox['coder_worktree_commits'])}",
+        f"coder_publication_requests: {len(inbox['coder_publication_requests'])}",
+        f"coder_publication_handoffs: {len(inbox['coder_publication_handoffs'])}",
+    ]
+
+
 def _worktree_approval_action_line(item: Any) -> str:
     return (
         f"{_approval_line(item)} "
@@ -1039,6 +1121,39 @@ def _publication_approval_action_line(root: Path, item: Any) -> str:
             {"publication_id": item.id, "decided_by": "operator"},
             {"note": "Approved publication handoff preparation"},
         )
+    )
+
+
+def _steering_review_line(item: Any) -> str:
+    return (
+        f"{_e(item.id)}: status={_e(item.status)} goal={_e(item.goal_id)} "
+        f"action={_e(item.recommended_next_action)} "
+        f"requires_operator={str(item.requires_operator).lower()} "
+        f"report={_artifact_link(item.report_path)}"
+    )
+
+
+def _operator_approval_line(item: Any) -> str:
+    return (
+        f"{_e(item.id)}: status={_e(item.status)} goal={_e(item.goal_id)} "
+        f"run={_e(item.run_id or 'none')} task={_e(item.task_id)} "
+        f"risk={_e(item.risk_level)} reason={_e(item.reason)}"
+    )
+
+
+def _incident_line(item: Any) -> str:
+    return (
+        f"{_e(item.id)}: status={_e(item.status)} project={_e(item.project_id)} "
+        f"run={_e(item.run_id)} severity={_e(item.severity)} "
+        f"summary={_e(item.summary)} evidence={_artifact_link(item.evidence_path or 'none')}"
+    )
+
+
+def _delegation_line(item: Any) -> str:
+    return (
+        f"<a href='/delegations/{quote(item.id)}'>{_e(item.id)}</a>: "
+        f"status={_e(item.status)} profile={_e(item.assigned_profile)} "
+        f"category={_e(item.category)} title={_e(item.title)}"
     )
 
 
@@ -1127,7 +1242,7 @@ def _html_page(root: Path, title: str, content: str, *, status: int = 200) -> Lo
 <body>
   <header>
     <strong>ClankerOS Local Operator</strong>
-    <nav><a href="/">Dashboard</a><a href="/workflow">Workflow</a><a href="/projects">Projects</a><a href="/health">Health</a><a href="/demo">Demo</a></nav>
+    <nav><a href="/">Dashboard</a><a href="/workflow">Workflow</a><a href="/projects">Projects</a><a href="/inbox">Inbox</a><a href="/approvals">Approvals</a><a href="/incidents">Incidents</a><a href="/health">Health</a><a href="/demo">Demo</a></nav>
   </header>
   <main>{content}</main>
 </body>
@@ -1213,6 +1328,7 @@ def _summary_rows(root: Path, storage: Storage) -> dict[str, list[str]]:
             _publication_line(root, item)
             for item in list_coder_publications(root, status="ready_for_operator", limit=10)
         ],
+        "inbox": _inbox_summary_lines(root),
         "approvals": _pending_approval_lines(root),
         "incidents": [
             f"{row['id']}: {row['status']} {row['summary']}"
@@ -1290,6 +1406,7 @@ def _workflow_import_status() -> dict[str, str]:
         "coder_worktree_plan": "ok",
         "coder_worktree_execution": "ok",
         "coder_publication": "ok",
+        "inbox": "ok",
     }
 
 
@@ -1311,6 +1428,7 @@ def _key_commands() -> list[str]:
         "coder-publication-request",
         "approve-coder-publication",
         "coder-publication-handoff",
+        "inbox",
     ]
 
 

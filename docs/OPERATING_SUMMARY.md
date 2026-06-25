@@ -71,8 +71,9 @@ Core layers for the bootstrap:
   project -> goal/task -> scout -> context-pack -> implementation-handoff ->
   coder-prep -> worktree-plan -> approval -> bounded execution -> commit ->
   publication handoff path, plus project, delegation/run, artifact, health, and
-  demo pages. It also includes local approval and incident pages for pending
-  worktree, commit, and publication decisions plus incident evidence readback.
+  demo pages. It also includes a read-only operator inbox plus local approval
+  and incident pages for pending worktree, commit, and publication decisions,
+  operator-worthy queue items, and incident evidence readback.
   The app reads existing SQLite state and repo artifacts, writes a local
   health/status artifact, and exposes only explicit local forms for safe
   artifact-producing and approval-producing actions. It does not push, create

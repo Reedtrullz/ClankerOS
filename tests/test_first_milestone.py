@@ -3220,6 +3220,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
 
     projects = render_local_app_route(tmp_path, "/projects")
     assert projects.status == 200
+    inbox = render_local_app_route(tmp_path, "/inbox")
+    assert inbox.status == 200
+    assert "Operator Inbox" in inbox.body
+    assert "inbox_items" in inbox.body
+    assert "network_actions_taken" in inbox.body
     approvals = render_local_app_route(tmp_path, "/approvals")
     assert approvals.status == 200
     assert "Approvals" in approvals.body
@@ -3307,6 +3312,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert approvals.status == 200
     assert result.approval_id in approvals.body
     assert "approve-coder-worktree" in approvals.body
+    inbox = render_local_app_route(tmp_path, "/inbox")
+    assert inbox.status == 200
+    assert "Operator Inbox" in inbox.body
+    assert result.approval_id in inbox.body
+    assert "coder_worktree_approvals: 1" in inbox.body
+    assert "Pending Worktree Approvals" in inbox.body
 
     confirmation = render_local_app_route(
         tmp_path,
@@ -3378,6 +3389,7 @@ def test_local_app_cli_commands_and_bind_safety(
     smoke_output = capsys.readouterr().out
     assert "app_smoke_test: passed" in smoke_output
     assert "route /workflow: 200" in smoke_output
+    assert "route /inbox: 200" in smoke_output
     assert "network_actions_taken: 0" in smoke_output
 
     assert main(["--root", str(tmp_path), "app-demo"]) == 0

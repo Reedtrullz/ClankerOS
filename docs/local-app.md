@@ -45,6 +45,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/delegations/<delegation_id>` - delegation, handoff, prep, worktree, commit,
   and publication state.
 - `/runs/<run_id>` - run or coder-worktree run detail.
+- `/inbox` - read-only operator queue for steering reviews, approval requests,
+  incidents, delegations, coder runs, commits, and publication handoffs.
 - `/approvals` - pending worktree, commit, and publication approvals.
 - `/incidents` - recent local incidents and evidence links.
 - `/artifacts?path=<relative_path>` - safe read-only artifact viewer.
@@ -100,6 +102,11 @@ approval request, commit request, publication request, approval decisions, and
 publication handoff when the required approval exists. Delegation pages also
 expose implementation handoff readback and link the handoff Markdown through
 the safe artifact viewer.
+
+The `/inbox`, `/approvals`, and `/incidents` pages are local operator surfaces.
+The inbox is read-only and mirrors the CLI's operator-worthy queue without
+starting work, approving requests, retrying tasks, committing, pushing, creating
+PRs, deploying, calling providers, or using external network actions.
 
 Execution and commit actions remain CLI-first in this version. Push and PR
 creation are never executed by the app.
