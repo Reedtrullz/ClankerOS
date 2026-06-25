@@ -4522,6 +4522,447 @@ def test_commit_coder_worktree_creates_local_commit_effect_and_github_handoff(
     assert commit_sha in repeat_output
 
 
+def test_coder_publication_request_approval_and_handoff_are_local_only(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    (
+        source_run_id,
+        delegation_id,
+        _approval_id,
+        run_id,
+        evidence_dir,
+        worktree_path,
+        _repo_path,
+        commit_sha,
+        parent_sha,
+        branch_name,
+    ) = _commit_completed_coder_worktree(tmp_path, capsys)
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-publication-request",
+                run_id,
+                "--requested-by",
+                "operator",
+                "--remote",
+                "origin",
+                "--target-branch",
+                "main",
+                "--note",
+                "Request publication handoff",
+            ]
+        )
+        == 0
+    )
+    request_output = capsys.readouterr().out
+    assert "coder_publication_request: " in request_output
+    assert f"coder_worktree_run_id: {run_id}" in request_output
+    assert "status: pending_operator_approval" in request_output
+    assert "push_created: false" in request_output
+    assert "pr_created: false" in request_output
+    assert "network_actions_taken: 0" in request_output
+    publication_request_id = next(
+        line.split(": ", 1)[1]
+        for line in request_output.splitlines()
+        if line.startswith("publication_request_id: ")
+    )
+    request_artifact = tmp_path / next(
+        line.split(": ", 1)[1]
+        for line in request_output.splitlines()
+        if line.startswith("artifact: ")
+    )
+    assert request_artifact == evidence_dir / "coder_publication" / "publication_request.json"
+    request_payload = json.loads(request_artifact.read_text(encoding="utf-8"))
+    assert request_payload["kind"] == "coder_worktree_publication_request"
+    assert request_payload["publication_request_id"] == publication_request_id
+    assert request_payload["commit_sha"] == commit_sha
+    assert request_payload["parent_commit_sha"] == parent_sha
+    assert request_payload["remote"] == "origin"
+    assert request_payload["target_branch"] == "main"
+    assert request_payload["committed_files"] == ["agent_os/delegation_runner.py"]
+    assert request_payload["outside_allowed_files"] == []
+    assert request_payload["push_created"] is False
+    assert request_payload["pr_created"] is False
+    assert request_payload["deploy_created"] is False
+    assert request_payload["provider_calls_taken_by_clankeros"] == 0
+    assert request_payload["network_actions_taken"] == 0
+    assert request_payload["external_mutations_taken"] == 0
+    assert (request_artifact.parent / "publication_request.md").exists()
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-publication-request",
+                run_id,
+                "--requested-by",
+                "operator",
+                "--remote",
+                "origin",
+                "--target-branch",
+                "main",
+                "--note",
+                "Request publication handoff",
+            ]
+        )
+        == 0
+    )
+    duplicate_output = capsys.readouterr().out
+    assert f"coder_publication_request: already_recorded {publication_request_id}" in duplicate_output
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "approve-coder-publication",
+                publication_request_id,
+                "--decided-by",
+                "operator",
+                "--note",
+                "Approved publication handoff preparation",
+            ]
+        )
+        == 0
+    )
+    approval_output = capsys.readouterr().out
+    assert f"approved_coder_publication: {publication_request_id}" in approval_output
+    decision_artifact = tmp_path / next(
+        line.split(": ", 1)[1]
+        for line in approval_output.splitlines()
+        if line.startswith("artifact: ")
+    )
+    decision_payload = json.loads(decision_artifact.read_text(encoding="utf-8"))
+    assert decision_payload["kind"] == "coder_worktree_publication_approval_decision"
+    assert decision_payload["source_request_sha256"]
+    assert decision_payload["push_created"] is False
+    assert decision_payload["pr_created"] is False
+    assert decision_payload["network_actions_taken"] == 0
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "approve-coder-publication",
+                publication_request_id,
+                "--decided-by",
+                "operator",
+                "--note",
+                "Approved publication handoff preparation",
+            ]
+        )
+        == 0
+    )
+    repeat_approval_output = capsys.readouterr().out
+    assert f"approved_coder_publication: already_approved {publication_request_id}" in repeat_approval_output
+
+    assert main(["--root", str(tmp_path), "coder-publication-handoff", run_id]) == 0
+    handoff_output = capsys.readouterr().out
+    assert "coder_publication_handoff: ready_for_operator" in handoff_output
+    assert f"publication_request_id: {publication_request_id}" in handoff_output
+    assert f"commit: {commit_sha}" in handoff_output
+    assert f"branch: {branch_name}" in handoff_output
+    assert f"worktree_path: {worktree_path}" in handoff_output
+    assert "push_created: false" in handoff_output
+    assert "pr_created: false" in handoff_output
+    handoff_artifact = tmp_path / next(
+        line.split(": ", 1)[1]
+        for line in handoff_output.splitlines()
+        if line.startswith("artifact: ")
+    )
+    handoff_payload = json.loads(handoff_artifact.read_text(encoding="utf-8"))
+    assert handoff_payload["kind"] == "coder_worktree_publication_handoff"
+    assert handoff_payload["commit_sha"] == commit_sha
+    assert handoff_payload["parent_commit_sha"] == parent_sha
+    assert handoff_payload["verification_exit_code"] == 0
+    assert handoff_payload["verification_status"] == "passed"
+    assert handoff_payload["bounded_file_validation"] == {
+        "valid": True,
+        "status": "passed",
+    }
+    assert handoff_payload["suggested_push_command"] == f"git push origin {branch_name}"
+    assert (
+        handoff_payload["suggested_draft_pr_command"]
+        == f"gh pr create --draft --base main --head {branch_name} --title \"Implement bounded change from approved worktree run\" --body-file {handoff_payload['handoff_body_path']}"
+    )
+    assert handoff_payload["push_created"] is False
+    assert handoff_payload["pr_created"] is False
+    assert handoff_payload["deploy_created"] is False
+    assert handoff_payload["provider_calls_taken_by_clankeros"] == 0
+    assert handoff_payload["network_actions_taken"] == 0
+    assert handoff_payload["external_mutations_taken"] == 0
+    assert Path(handoff_payload["handoff_body_path"]).exists()
+    handoff_markdown = handoff_artifact.with_suffix(".md").read_text(encoding="utf-8")
+    assert "verification_status: passed" in handoff_markdown
+    assert "bounded_file_validation_status: passed" in handoff_markdown
+
+    assert main(["--root", str(tmp_path), "review", run_id]) == 0
+    review_output = capsys.readouterr().out
+    review_path = tmp_path / next(
+        line.split(": ", 1)[1]
+        for line in review_output.splitlines()
+        if line.startswith("review: ")
+    )
+    review = review_path.read_text(encoding="utf-8")
+    assert "## Coder Publication" in review
+    assert publication_request_id in review
+    assert "coder_publication_handoff" in review
+    assert f"suggested_push_command: git push origin {branch_name}" in review
+    assert "suggested_draft_pr_command: gh pr create --draft --base main" in review
+
+    dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
+    assert "### Coder Publication Requests" in dashboard
+    assert "### Coder Publication Handoffs" in dashboard
+    assert publication_request_id in dashboard
+    assert commit_sha in dashboard
+    assert f"suggested_push_command=git push origin {branch_name}" in dashboard
+    assert "suggested_draft_pr_command=gh pr create --draft --base main" in dashboard
+
+    assert main(["--root", str(tmp_path), "inbox"]) == 0
+    inbox_output = capsys.readouterr().out
+    assert "coder_publication_requests: 0" in inbox_output
+    assert "coder_publication_handoffs: 1" in inbox_output
+    assert f"suggested_push_command=git push origin {branch_name}" in inbox_output
+    assert "suggested_draft_pr_command=gh pr create --draft --base main" in inbox_output
+
+    assert main(["--root", str(tmp_path), "delegation-result", delegation_id]) == 0
+    delegation_output = capsys.readouterr().out
+    assert f"coder_publication_request_id: {publication_request_id}" in delegation_output
+    assert "coder_publication_handoff_available: true" in delegation_output
+    assert f"coder_publication_commit_sha: {commit_sha}" in delegation_output
+    assert (
+        f"coder_publication_suggested_push_command: git push origin {branch_name}"
+        in delegation_output
+    )
+    assert (
+        "coder_publication_suggested_draft_pr_command: "
+        "gh pr create --draft --base main" in delegation_output
+    )
+    assert f"run_id: {source_run_id}" in delegation_output
+
+
+def test_coder_publication_request_blocks_missing_commit_and_unsafe_names(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    (
+        source_run_id,
+        _delegation_id,
+        _approval_id,
+        run_id,
+        _evidence_dir,
+        _worktree_path,
+        _repo_path,
+    ) = _run_completed_coder_worktree(tmp_path, capsys)
+    assert main(["--root", str(tmp_path), "review", source_run_id]) == 0
+    capsys.readouterr()
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-publication-request",
+                run_id,
+                "--requested-by",
+                "operator",
+                "--remote",
+                "origin",
+                "--target-branch",
+                "main",
+                "--note",
+                "should fail",
+            ]
+        )
+        == 1
+    )
+    missing_output = capsys.readouterr().out
+    assert "coder_publication_request_failed: local commit artifact missing" in missing_output
+    incidents = Storage(tmp_path / ".agent" / "state.db").list_recent_incidents(limit=5)
+    assert incidents[0].failure_class == "missing_local_commit"
+
+    committed_root = tmp_path / "committed"
+    committed_root.mkdir()
+    (
+        _source_run_id,
+        _delegation_id,
+        _approval_id,
+        run_id,
+        _evidence_dir,
+        _worktree_path,
+        _repo_path,
+        _commit_sha,
+        _parent_sha,
+        _branch_name,
+    ) = _commit_completed_coder_worktree(committed_root, capsys)
+    assert (
+        main(
+            [
+                "--root",
+                str(committed_root),
+                "coder-publication-request",
+                run_id,
+                "--requested-by",
+                "operator",
+                "--remote",
+                "origin;git push",
+                "--target-branch",
+                "main",
+                "--note",
+                "should fail",
+            ]
+        )
+        == 1
+    )
+    unsafe_remote_output = capsys.readouterr().out
+    assert "coder_publication_request_failed: unsafe_remote" in unsafe_remote_output
+
+
+def test_coder_publication_request_blocks_tampered_commit_artifact(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    (
+        _source_run_id,
+        _delegation_id,
+        _approval_id,
+        run_id,
+        evidence_dir,
+        _worktree_path,
+        _repo_path,
+        _commit_sha,
+        _parent_sha,
+        _branch_name,
+    ) = _commit_completed_coder_worktree(tmp_path, capsys)
+    commit_artifact = evidence_dir / "coder_commit" / "commit.json"
+    commit_payload = json.loads(commit_artifact.read_text(encoding="utf-8"))
+
+    missing_sha_payload = {**commit_payload, "commit_sha": ""}
+    commit_artifact.write_text(
+        json.dumps(missing_sha_payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-publication-request",
+                run_id,
+                "--requested-by",
+                "operator",
+                "--remote",
+                "origin",
+                "--target-branch",
+                "main",
+                "--note",
+                "should fail",
+            ]
+        )
+        == 1
+    )
+    missing_sha_output = capsys.readouterr().out
+    assert "coder_publication_request_failed: commit_sha_missing" in missing_sha_output
+
+    bad_sha_payload = {**commit_payload, "commit_sha": "a" * 40}
+    commit_artifact.write_text(
+        json.dumps(bad_sha_payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-publication-request",
+                run_id,
+                "--requested-by",
+                "operator",
+                "--remote",
+                "origin",
+                "--target-branch",
+                "main",
+                "--note",
+                "should fail",
+            ]
+        )
+        == 1
+    )
+    bad_sha_output = capsys.readouterr().out
+    assert "coder_publication_request_failed: commit_sha_not_found" in bad_sha_output
+
+    outside_payload = {
+        **commit_payload,
+        "committed_files": [*commit_payload["committed_files"], "notes/outside.txt"],
+    }
+    commit_artifact.write_text(
+        json.dumps(outside_payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-publication-request",
+                run_id,
+                "--requested-by",
+                "operator",
+                "--remote",
+                "origin",
+                "--target-branch",
+                "main",
+                "--note",
+                "should fail",
+            ]
+        )
+        == 1
+    )
+    outside_output = capsys.readouterr().out
+    assert "coder_publication_request_failed: outside_allowed_files_present" in outside_output
+
+
+def test_coder_publication_handoff_blocks_without_approval_and_source_drift(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    (
+        _source_run_id,
+        _delegation_id,
+        _approval_id,
+        run_id,
+        evidence_dir,
+        _worktree_path,
+        _repo_path,
+        _commit_sha,
+        _parent_sha,
+        _branch_name,
+    ) = _commit_completed_coder_worktree(tmp_path, capsys)
+
+    assert main(["--root", str(tmp_path), "coder-publication-handoff", run_id]) == 1
+    missing_output = capsys.readouterr().out
+    assert "coder_publication_handoff_failed: approved publication request is missing" in missing_output
+
+    publication_request_id = _request_and_approve_coder_publication(tmp_path, capsys, run_id)
+    commit_artifact = evidence_dir / "coder_commit" / "commit.json"
+    commit_payload = json.loads(commit_artifact.read_text(encoding="utf-8"))
+    commit_payload["tampered"] = True
+    commit_artifact.write_text(
+        json.dumps(commit_payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    assert main(["--root", str(tmp_path), "coder-publication-handoff", run_id]) == 1
+    drift_output = capsys.readouterr().out
+    assert "coder_publication_handoff_failed: source_hash_mismatch" in drift_output
+    assert publication_request_id in drift_output
+
+
 def test_commit_coder_worktree_requires_approved_request_and_nonempty_message(
     tmp_path: Path,
     capsys,
@@ -6660,6 +7101,125 @@ def _request_and_approve_coder_commit(
     )
     capsys.readouterr()
     return commit_request_id
+
+
+def _commit_completed_coder_worktree(
+    tmp_path: Path,
+    capsys,
+) -> tuple[str, str, str, str, Path, Path, Path, str, str, str]:
+    (
+        source_run_id,
+        delegation_id,
+        approval_id,
+        run_id,
+        evidence_dir,
+        worktree_path,
+        repo_path,
+    ) = _run_completed_coder_worktree(tmp_path, capsys)
+    assert main(["--root", str(tmp_path), "review", source_run_id]) == 0
+    capsys.readouterr()
+    commit_message = "Implement bounded change from approved worktree run"
+    _request_and_approve_coder_commit(
+        tmp_path,
+        capsys,
+        run_id,
+        commit_message=commit_message,
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "commit-coder-worktree",
+                run_id,
+                "--message",
+                commit_message,
+            ]
+        )
+        == 0
+    )
+    commit_output = capsys.readouterr().out
+    commit_sha = next(
+        line.split(": ", 1)[1]
+        for line in commit_output.splitlines()
+        if line.startswith("commit: ")
+    )
+    parent_sha = next(
+        line.split(": ", 1)[1]
+        for line in commit_output.splitlines()
+        if line.startswith("parent_commit: ")
+    )
+    commit_artifact = tmp_path / next(
+        line.split(": ", 1)[1]
+        for line in commit_output.splitlines()
+        if line.startswith("evidence: ")
+    )
+    commit_payload = json.loads(commit_artifact.read_text(encoding="utf-8"))
+    branch_name = commit_payload["branch_name"]
+    return (
+        source_run_id,
+        delegation_id,
+        approval_id,
+        run_id,
+        evidence_dir,
+        worktree_path,
+        repo_path,
+        commit_sha,
+        parent_sha,
+        branch_name,
+    )
+
+
+def _request_and_approve_coder_publication(
+    tmp_path: Path,
+    capsys,
+    run_id: str,
+    *,
+    remote: str = "origin",
+    target_branch: str = "main",
+) -> str:
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-publication-request",
+                run_id,
+                "--requested-by",
+                "operator",
+                "--remote",
+                remote,
+                "--target-branch",
+                target_branch,
+                "--note",
+                "Request publication handoff",
+            ]
+        )
+        == 0
+    )
+    request_output = capsys.readouterr().out
+    publication_request_id = next(
+        line.split(": ", 1)[1]
+        for line in request_output.splitlines()
+        if line.startswith("publication_request_id: ")
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "approve-coder-publication",
+                publication_request_id,
+                "--decided-by",
+                "operator",
+                "--note",
+                "Approved publication handoff preparation",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    return publication_request_id
 
 
 def _run_fake_context_pack_scout(tmp_path: Path, capsys, delegation_id: str) -> str:

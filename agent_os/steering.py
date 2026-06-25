@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from agent_os.coder_publication import list_coder_publications
 from agent_os.coder_worktree_execution import (
     list_coder_worktree_approvals,
     list_coder_worktree_commit_approvals,
@@ -220,6 +221,16 @@ def collect_inbox_items(root: Path) -> dict[str, object]:
         status="committed",
         limit=10,
     )
+    coder_publication_requests = list_coder_publications(
+        root,
+        status="pending_operator_approval",
+        limit=10,
+    )
+    coder_publication_handoffs = list_coder_publications(
+        root,
+        status="ready_for_operator",
+        limit=10,
+    )
     return {
         "steering_reviews": steering_reviews,
         "pending_approvals": pending_approvals,
@@ -229,6 +240,8 @@ def collect_inbox_items(root: Path) -> dict[str, object]:
         "coder_worktree_runs": coder_worktree_runs,
         "coder_worktree_commit_approvals": coder_worktree_commit_approvals,
         "coder_worktree_commits": coder_worktree_commits,
+        "coder_publication_requests": coder_publication_requests,
+        "coder_publication_handoffs": coder_publication_handoffs,
         "count": (
             len(steering_reviews)
             + len(pending_approvals)
@@ -238,6 +251,8 @@ def collect_inbox_items(root: Path) -> dict[str, object]:
             + len(coder_worktree_runs)
             + len(coder_worktree_commit_approvals)
             + len(coder_worktree_commits)
+            + len(coder_publication_requests)
+            + len(coder_publication_handoffs)
         ),
     }
 

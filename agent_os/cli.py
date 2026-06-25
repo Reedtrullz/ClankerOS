@@ -79,6 +79,18 @@ from agent_os.coder_prep import (
     prepare_coder_from_handoff,
     render_coder_prep_cli_lines,
 )
+from agent_os.coder_publication import (
+    CoderPublicationError,
+    approve_coder_publication,
+    create_coder_publication_handoff,
+    latest_coder_publication_for_delegation,
+    load_coder_publication_handoff_payload,
+    record_coder_publication_failure_incident,
+    render_coder_publication_decision_cli_lines,
+    render_coder_publication_handoff_cli_lines,
+    render_coder_publication_request_cli_lines,
+    request_coder_publication,
+)
 from agent_os.coder_worktree_plan import (
     CoderWorktreePlanError,
     prepare_worktree_plan_from_coder_prep,
@@ -589,7 +601,8 @@ from agent_os.worktree_cleanup import cleanup_worktrees
 PRIMARY_COMMAND_METAVAR = (
     "{init,dashboard,goal,tasks,delegate,context-pack,run-delegation,"
     "implementation-handoff,coder-prep,coder-worktree-plan,"
-    "coder-commit-request,commit-coder-worktree,review,...}"
+    "coder-commit-request,commit-coder-worktree,coder-publication-request,"
+    "coder-publication-handoff,review,...}"
 )
 
 
@@ -859,6 +872,28 @@ def build_parser() -> argparse.ArgumentParser:
     commit_coder_worktree_parser.add_argument("--message", required=True)
     commit_coder_worktree_parser.add_argument("--committed-by", default="operator")
     commit_coder_worktree_parser.add_argument("--use-approved-message", action="store_true")
+    coder_publication_request_parser = subparsers.add_parser(
+        "coder-publication-request",
+        help="Request approval to prepare local-only publication commands for a coder commit.",
+    )
+    coder_publication_request_parser.add_argument("run_id")
+    coder_publication_request_parser.add_argument("--requested-by", default="operator")
+    coder_publication_request_parser.add_argument("--remote", default="origin")
+    coder_publication_request_parser.add_argument("--target-branch", default="main")
+    coder_publication_request_parser.add_argument("--note", default="")
+    coder_publication_request_parser.add_argument("--force-new", action="store_true")
+    approve_coder_publication_parser = subparsers.add_parser(
+        "approve-coder-publication",
+        help="Approve local-only publication handoff preparation for a coder commit.",
+    )
+    approve_coder_publication_parser.add_argument("publication_approval_id")
+    approve_coder_publication_parser.add_argument("--decided-by", default="operator")
+    approve_coder_publication_parser.add_argument("--note", required=True)
+    coder_publication_handoff_parser = subparsers.add_parser(
+        "coder-publication-handoff",
+        help="Write local suggested push and draft-PR commands for an approved coder publication.",
+    )
+    coder_publication_handoff_parser.add_argument("run_id")
     coder_worktree_commit_approval = subparsers.add_parser(
         "coder-worktree-commit-approval",
         help="Request operator approval to promote a reviewed coder worktree run to a local commit.",
@@ -2172,6 +2207,8 @@ def main(argv: list[str] | None = None) -> int:
         coder_worktree_runs = inbox["coder_worktree_runs"]
         coder_worktree_commit_approvals = inbox["coder_worktree_commit_approvals"]
         coder_worktree_commits = inbox["coder_worktree_commits"]
+        coder_publication_requests = inbox["coder_publication_requests"]
+        coder_publication_handoffs = inbox["coder_publication_handoffs"]
         print(f"inbox_items: {inbox['count']}")
         print(f"steering_reviews: {len(steering_reviews)}")
         for review in steering_reviews:
@@ -2218,6 +2255,25 @@ def main(argv: list[str] | None = None) -> int:
                 f"coder_local_commit {commit.id}: delegation={commit.delegation_id} "
                 f"run={commit.run_id} status={commit.status} commit={commit.commit_sha or 'none'} "
                 f"effect={commit.effect_id or 'none'} evidence={commit.commit_artifact_path}"
+            )
+        print(f"coder_publication_requests: {len(coder_publication_requests)}")
+        for publication in coder_publication_requests:
+            print(
+                f"coder_publication_request {publication.id}: delegation={publication.delegation_id} "
+                f"run={publication.run_id} status={publication.status} commit={publication.commit_sha} "
+                f"remote={publication.remote} target_branch={publication.target_branch} "
+                f"request={publication.request_artifact_path}"
+            )
+        print(f"coder_publication_handoffs: {len(coder_publication_handoffs)}")
+        for publication in coder_publication_handoffs:
+            handoff_payload = load_coder_publication_handoff_payload(root, publication)
+            print(
+                f"coder_publication_handoff {publication.id}: delegation={publication.delegation_id} "
+                f"run={publication.run_id} commit={publication.commit_sha} "
+                f"branch={publication.branch_name} handoff={publication.handoff_artifact_path} "
+                f"suggested_push_command={handoff_payload.get('suggested_push_command', 'unavailable')} "
+                f"suggested_draft_pr_command={handoff_payload.get('suggested_draft_pr_command', 'unavailable')} "
+                f"handoff_body_path={handoff_payload.get('handoff_body_path', 'unavailable')}"
             )
         print("network_actions_taken: 0")
         print("external_mutations_taken: 0")
@@ -2545,6 +2601,34 @@ def main(argv: list[str] | None = None) -> int:
                 "coder_worktree_github_handoff_available: "
                 f"{_print_bool(bool(coder_commit.effect_id and coder_commit.status == 'committed'))}"
             )
+        coder_publication = latest_coder_publication_for_delegation(root, delegation.id)
+        if coder_publication is not None:
+            handoff_payload = load_coder_publication_handoff_payload(root, coder_publication)
+            print(f"coder_publication_request: {coder_publication.request_artifact_path}")
+            print(f"coder_publication_request_id: {coder_publication.id}")
+            print(f"coder_publication_request_status: {coder_publication.status}")
+            print(f"coder_publication_run_id: {coder_publication.run_id}")
+            print(f"coder_publication_commit_sha: {coder_publication.commit_sha}")
+            print(f"coder_publication_branch_name: {coder_publication.branch_name}")
+            print(f"coder_publication_remote: {coder_publication.remote}")
+            print(f"coder_publication_target_branch: {coder_publication.target_branch}")
+            print(f"coder_publication_handoff: {coder_publication.handoff_artifact_path}")
+            print(
+                "coder_publication_suggested_push_command: "
+                f"{handoff_payload.get('suggested_push_command', 'unavailable')}"
+            )
+            print(
+                "coder_publication_suggested_draft_pr_command: "
+                f"{handoff_payload.get('suggested_draft_pr_command', 'unavailable')}"
+            )
+            print(
+                "coder_publication_handoff_body_path: "
+                f"{handoff_payload.get('handoff_body_path', 'unavailable')}"
+            )
+            print(
+                "coder_publication_handoff_available: "
+                f"{_print_bool(coder_publication.status == 'ready_for_operator')}"
+            )
         if "exit_code" in metadata:
             print(f"exit_code: {metadata['exit_code']}")
         if metadata.get("incident_id"):
@@ -2736,6 +2820,82 @@ def main(argv: list[str] | None = None) -> int:
             print(f"commit_coder_worktree_failed: {error}")
             return 1
         for line in render_commit_coder_worktree_cli_lines(root, result):
+            print(line)
+        return 0
+
+    if args.command == "coder-publication-request":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            result = request_coder_publication(
+                root,
+                system.storage,
+                args.run_id,
+                requested_by=args.requested_by,
+                remote=args.remote,
+                target_branch=args.target_branch,
+                note=args.note,
+                force_new=args.force_new,
+            )
+        except CoderPublicationError as error:
+            record_coder_publication_failure_incident(
+                root,
+                system.storage,
+                command=args.command,
+                target_id=args.run_id,
+                error=error,
+            )
+            print(f"coder_publication_request_failed: {error}")
+            return 1
+        for line in render_coder_publication_request_cli_lines(root, result):
+            print(line)
+        return 0
+
+    if args.command == "approve-coder-publication":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            result = approve_coder_publication(
+                root,
+                system.storage,
+                args.publication_approval_id,
+                decided_by=args.decided_by,
+                note=args.note,
+            )
+        except CoderPublicationError as error:
+            record_coder_publication_failure_incident(
+                root,
+                system.storage,
+                command=args.command,
+                target_id=args.publication_approval_id,
+                error=error,
+            )
+            print(f"approve_coder_publication_failed: {error}")
+            return 1
+        for line in render_coder_publication_decision_cli_lines(root, result):
+            print(line)
+        return 0
+
+    if args.command == "coder-publication-handoff":
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            result = create_coder_publication_handoff(
+                root,
+                system.storage,
+                args.run_id,
+            )
+        except CoderPublicationError as error:
+            record_coder_publication_failure_incident(
+                root,
+                system.storage,
+                command=args.command,
+                target_id=args.run_id,
+                error=error,
+            )
+            print(f"coder_publication_handoff_failed: {error}")
+            return 1
+        for line in render_coder_publication_handoff_cli_lines(root, result):
             print(line)
         return 0
 

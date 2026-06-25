@@ -35,8 +35,8 @@ system.
 - `docs/tutorial-executable-delegation.md` - configure a local shell adapter,
   generate a deterministic context pack, run a read-only delegation, inspect
   project-aware repo-scout evidence, prepare/approve a bounded coder worktree
-  run, request/approve a local worktree commit, and prepare a GitHub handoff
-  packet without pushing.
+  run, request/approve a local worktree commit, and prepare an approved
+  publication handoff packet without pushing or creating a PR.
 - `docs/tutorial-public-snapshot.md` - verify, commit, and push a coherent
   public GitHub snapshot without overclaiming.
 - `contracts.md` - safety contract and evidence expectations.

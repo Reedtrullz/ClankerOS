@@ -369,6 +369,10 @@ from agent_os.handoff_review import (
     render_stale_handoff_line,
 )
 from agent_os.coder_prep import render_coder_prep_dashboard_lines
+from agent_os.coder_publication import (
+    render_coder_publication_handoff_dashboard_lines,
+    render_coder_publication_request_dashboard_lines,
+)
 from agent_os.coder_worktree_execution import (
     render_coder_commit_request_dashboard_lines,
     render_coder_local_commit_dashboard_lines,
@@ -2088,8 +2092,13 @@ def generate_static_dashboard(root: Path) -> Path:
     coder_worktree_commit_lines = render_coder_worktree_commit_dashboard_lines(root)
     coder_commit_request_lines = render_coder_commit_request_dashboard_lines(root)
     coder_local_commit_lines = render_coder_local_commit_dashboard_lines(root)
+    coder_publication_request_lines = render_coder_publication_request_dashboard_lines(root)
+    coder_publication_handoff_lines = render_coder_publication_handoff_dashboard_lines(root)
     pending_coder_worktree_commit_lines = [
         line for line in coder_worktree_commit_lines if "status=pending_operator_approval" in line
+    ]
+    pending_coder_publication_lines = [
+        line for line in coder_publication_request_lines if "status=pending_operator_approval" in line
     ]
 
     lines = [
@@ -2123,7 +2132,7 @@ def generate_static_dashboard(root: Path) -> Path:
     lines.extend(["", "### Primary Implementation Handoff Workflow", ""])
     lines.extend(
         [
-            "- operator_path: delegate -> context-pack -> run-delegation -> implementation-handoff -> coder-prep -> coder-worktree-plan -> coder-worktree-approval -> approve-coder-worktree -> run-coder-worktree -> review -> coder-commit-request -> approve-coder-commit -> commit-coder-worktree -> review -> dashboard -> github-handoff",
+            "- operator_path: delegate -> context-pack -> run-delegation -> implementation-handoff -> coder-prep -> coder-worktree-plan -> coder-worktree-approval -> approve-coder-worktree -> run-coder-worktree -> review -> coder-commit-request -> approve-coder-commit -> commit-coder-worktree -> coder-publication-request -> approve-coder-publication -> coder-publication-handoff -> review -> dashboard -> inbox",
             "- inspect_command: python3 -m agent_os.cli implementation-handoff <delegation_id>",
             "- prep_command: python3 -m agent_os.cli coder-prep <delegation_id>",
             "- worktree_plan_command: python3 -m agent_os.cli coder-worktree-plan <delegation_id>",
@@ -2132,7 +2141,9 @@ def generate_static_dashboard(root: Path) -> Path:
             "- commit_request_command: python3 -m agent_os.cli coder-commit-request <coder_worktree_run_id> --requested-by operator --message \"...\" --note \"...\"",
             "- commit_decision_command: python3 -m agent_os.cli approve-coder-commit <commit_request_id> --decided-by operator --note \"...\"",
             "- commit_command: python3 -m agent_os.cli commit-coder-worktree <coder_worktree_run_id> --message \"...\"",
-            "- github_handoff_command: python3 -m agent_os.cli github-handoff <effect_id>",
+            "- publication_request_command: python3 -m agent_os.cli coder-publication-request <coder_worktree_run_id> --requested-by operator --remote origin --target-branch main --note \"...\"",
+            "- publication_decision_command: python3 -m agent_os.cli approve-coder-publication <publication_request_id> --decided-by operator --note \"...\"",
+            "- publication_handoff_command: python3 -m agent_os.cli coder-publication-handoff <coder_worktree_run_id>",
             "- non_claims: handoff/coder-prep/worktree-plan/approval readback does not edit source, run commands, create worktrees, commit, push, deploy, call providers, or use the network.",
             "- current_handoffs:",
         ]
@@ -2176,6 +2187,18 @@ def generate_static_dashboard(root: Path) -> Path:
     lines.extend(
         [f"  {line}" for line in coder_worktree_commit_lines]
         if coder_worktree_commit_lines
+        else ["  - none"]
+    )
+    lines.append("- current_coder_publication_requests:")
+    lines.extend(
+        [f"  {line}" for line in coder_publication_request_lines]
+        if coder_publication_request_lines
+        else ["  - none"]
+    )
+    lines.append("- current_coder_publication_handoffs:")
+    lines.extend(
+        [f"  {line}" for line in coder_publication_handoff_lines]
+        if coder_publication_handoff_lines
         else ["  - none"]
     )
 
@@ -2375,6 +2398,12 @@ def generate_static_dashboard(root: Path) -> Path:
     lines.extend(["", "### Coder Worktree Commit Promotions", ""])
     lines.extend(coder_worktree_commit_lines if coder_worktree_commit_lines else ["- none"])
 
+    lines.extend(["", "### Coder Publication Requests", ""])
+    lines.extend(coder_publication_request_lines if coder_publication_request_lines else ["- none"])
+
+    lines.extend(["", "### Coder Publication Handoffs", ""])
+    lines.extend(coder_publication_handoff_lines if coder_publication_handoff_lines else ["- none"])
+
     lines.extend(["", "## Steering Reviews", ""])
     if steering_reviews:
         for review in steering_reviews:
@@ -2383,7 +2412,13 @@ def generate_static_dashboard(root: Path) -> Path:
         lines.append("- none")
 
     lines.extend(["", "### Next Recommended Action", ""])
-    if pending_coder_worktree_commit_lines:
+    if pending_coder_publication_lines:
+        lines.append(
+            "- Review pending coder publication request and decide with "
+            "`python3 -m agent_os.cli approve-coder-publication <publication_request_id> "
+            "--decided-by operator --note \"...\"`."
+        )
+    elif pending_coder_worktree_commit_lines:
         lines.append(
             "- Review pending coder commit request and decide with "
             "`python3 -m agent_os.cli approve-coder-commit <commit_request_id> "

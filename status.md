@@ -1,5 +1,39 @@
 # Status
 
+## 2026-06-25 Coder Publication Boundary
+
+- Added the next approval-gated boundary after isolated coder worktree local
+  commits: `coder-publication-request`, `approve-coder-publication`, and
+  `coder-publication-handoff`.
+- Publication requests validate the existing `coder_commit/commit.json`, commit
+  SHA existence inside the isolated worktree, `.agent/worktrees` safety, safe
+  remote and target branch names, committed files within `allowed_files`, and
+  zero push/PR/deploy/provider/network/external-mutation counters before
+  writing `coder_publication/publication_request.json/.md`.
+- Publication approval writes `coder_publication/publication_decision.json/.md`
+  without pushing or creating a PR. Publication handoff revalidates the source
+  commit artifact hash and writes `publication_handoff.json`,
+  `publication_handoff.md`, and `publication_handoff_body.md` with suggested
+  `git push` and draft `gh pr create` commands only. The handoff packet and
+  Markdown include verification status and bounded-file validation status.
+- `review`, `dashboard`, `inbox`, and `delegation-result` now surface
+  publication request/approval/handoff state, including the suggested push
+  command, suggested draft PR command, handoff body path, and zero-action
+  counters. README, command reference, executable-delegation tutorial,
+  operator recipes, operating summary, docs index, and `docs/status.md` now
+  show the modern publication boundary.
+- Verification:
+  - Red-first publication slice failed before implementation because
+    `coder-publication-request` and `coder-publication-handoff` were missing.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'coder_publication'` -> `4 passed, 489 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'coder_publication or coder_commit_request_alias or commit_coder_worktree_creates or coder_commit_request_and_commit_block or commit_coder_worktree_requires_approved'` -> `7 passed, 485 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'coder_publication or default_cli_help or dashboard or inbox or delegation_result'` -> `66 passed, 427 deselected`
+  - `python3 -m py_compile agent_os/*.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q` -> `493 passed in 1081.09s`
+  - `python3 -m pytest -q` -> `493 passed in 1045.93s`
+  - `git diff --check`
+  - `python3 -m agent_os.cli dashboard` regenerated `docs/dashboard.md`.
+
 ## 2026-06-25 Coder Commit Gate Hardening
 
 - Tightened the first-class coder commit request/local handoff gate against the

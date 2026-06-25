@@ -312,6 +312,48 @@ systems. Compatibility commands remain available as
 `promote-coder-worktree-commit`, but the shorter `coder-commit-request`,
 `approve-coder-commit`, and `commit-coder-worktree` names are the primary
 operator flow.
+
+`coder-publication-request <coder_worktree_run_id> --requested-by <id>
+--remote origin --target-branch main --note <note>` is the next boundary after
+the isolated local coder worktree commit. It requires a valid
+`coder_commit/commit.json`, verifies the commit SHA exists in the isolated
+worktree, checks committed files remain inside `allowed_files`, validates safe
+remote and target branch names, and writes:
+
+```text
+.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_request.json
+.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_request.md
+```
+
+The request is idempotent for the same commit artifact hash, remote, and target
+branch unless `--force-new` is used. It does not push, create a PR, deploy,
+call providers, use the network, run `git fetch`, or contact GitHub.
+
+`approve-coder-publication <publication_request_id> --decided-by <id> --note
+<note>` marks that request approved and writes:
+
+```text
+.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_decision.json
+.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_decision.md
+```
+
+The approval decision does not push, create a PR, deploy, call providers, or
+use the network.
+
+`coder-publication-handoff <coder_worktree_run_id>` requires an approved
+publication request, revalidates the commit artifact hash and commit SHA, then
+writes local suggested commands only:
+
+```text
+.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_handoff.json
+.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_handoff.md
+.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_handoff_body.md
+```
+
+The handoff includes `git push <remote> <branch>` and a draft `gh pr create`
+command with a body-file path. It does not execute either command. Manual
+operator execution remains required for push or PR creation, and deploy remains
+out of scope.
 `record-delegation-result` remains the manual ingestion path for
 operator-supplied output.
 

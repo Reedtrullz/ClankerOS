@@ -165,7 +165,15 @@ python3 -m agent_os.cli approve-coder-commit coder_worktree_commit_approval_... 
   --note "Approved local commit"
 python3 -m agent_os.cli commit-coder-worktree run_... \
   --message "Implement bounded change from approved worktree run"
-python3 -m agent_os.cli github-handoff effect_...
+python3 -m agent_os.cli coder-publication-request run_... \
+  --requested-by operator \
+  --remote origin \
+  --target-branch main \
+  --note "Request publication handoff"
+python3 -m agent_os.cli approve-coder-publication coder_publication_request_... \
+  --decided-by operator \
+  --note "Approved publication handoff preparation"
+python3 -m agent_os.cli coder-publication-handoff run_...
 python3 -m agent_os.cli dashboard
 ```
 
@@ -176,10 +184,11 @@ message. `commit-coder-worktree` re-checks HEAD, branch, changed files,
 outside files, and the recorded verifier before creating one local commit in
 the isolated worktree branch.
 
-Boundary: request and approval do not stage or commit. Commit creates no push,
-PR, deploy, provider call, network action, merge into the original checkout, or
-external mutation. `github-handoff` only writes local push and draft-PR
-instructions for a later operator action.
+Boundary: commit request and approval do not stage or commit. The commit
+creates no push, PR, deploy, provider call, network action, merge into the
+original checkout, or external mutation. Publication request and approval do
+not push or create PRs. `coder-publication-handoff` only writes suggested local
+push and draft-PR commands for later manual operator execution.
 
 ## Review Latest Capability Result Without Activation
 

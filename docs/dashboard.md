@@ -12,7 +12,7 @@
 
 ### Primary Implementation Handoff Workflow
 
-- operator_path: delegate -> context-pack -> run-delegation -> implementation-handoff -> coder-prep -> coder-worktree-plan -> coder-worktree-approval -> approve-coder-worktree -> run-coder-worktree -> review -> coder-commit-request -> approve-coder-commit -> commit-coder-worktree -> review -> dashboard -> github-handoff
+- operator_path: delegate -> context-pack -> run-delegation -> implementation-handoff -> coder-prep -> coder-worktree-plan -> coder-worktree-approval -> approve-coder-worktree -> run-coder-worktree -> review -> coder-commit-request -> approve-coder-commit -> commit-coder-worktree -> coder-publication-request -> approve-coder-publication -> coder-publication-handoff -> review -> dashboard -> inbox
 - inspect_command: python3 -m agent_os.cli implementation-handoff <delegation_id>
 - prep_command: python3 -m agent_os.cli coder-prep <delegation_id>
 - worktree_plan_command: python3 -m agent_os.cli coder-worktree-plan <delegation_id>
@@ -21,7 +21,9 @@
 - commit_request_command: python3 -m agent_os.cli coder-commit-request <coder_worktree_run_id> --requested-by operator --message "..." --note "..."
 - commit_decision_command: python3 -m agent_os.cli approve-coder-commit <commit_request_id> --decided-by operator --note "..."
 - commit_command: python3 -m agent_os.cli commit-coder-worktree <coder_worktree_run_id> --message "..."
-- github_handoff_command: python3 -m agent_os.cli github-handoff <effect_id>
+- publication_request_command: python3 -m agent_os.cli coder-publication-request <coder_worktree_run_id> --requested-by operator --remote origin --target-branch main --note "..."
+- publication_decision_command: python3 -m agent_os.cli approve-coder-publication <publication_request_id> --decided-by operator --note "..."
+- publication_handoff_command: python3 -m agent_os.cli coder-publication-handoff <coder_worktree_run_id>
 - non_claims: handoff/coder-prep/worktree-plan/approval readback does not edit source, run commands, create worktrees, commit, push, deploy, call providers, or use the network.
 - current_handoffs:
   - subagent_delegation_3189127f5f0d: status=completed handoff=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/implementation_handoff.json handoff_readable=true schema_version=1 kind=implementation_context_handoff kind_valid=true run=run_ec43eabad0c4 project=clankeros coder_prep_command=python3 -m agent_os.cli coder-prep subagent_delegation_3189127f5f0d context_pack=.clanker/delegations/subagent_delegation_3189127f5f0d/runs/run_ec43eabad0c4/evidence/context_pack.json returned_files_in_inventory=true missing_files=none top_ranked_files=agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json,playbooks/first-milestone-closed-loop.md,agent_os/capability_activation_followup_result_task_result_effect_task_result_effect_task_delegations.py scout_relevant_files=agent_os/context_pack.py,agent_os/profile_routing.py,evals/results/first_milestone_closed_loop.json snippets_embedded=false
@@ -38,6 +40,10 @@
 - current_coder_local_commits:
   - none
 - current_coder_worktree_commit_promotions:
+  - none
+- current_coder_publication_requests:
+  - none
+- current_coder_publication_handoffs:
   - none
 
 ### Goal Plans
@@ -164,6 +170,14 @@
 - none
 
 ### Coder Worktree Commit Promotions
+
+- none
+
+### Coder Publication Requests
+
+- none
+
+### Coder Publication Handoffs
 
 - none
 

@@ -149,9 +149,20 @@ Core layers for the bootstrap:
   `pre_commit_status.txt`, `post_commit_status.txt`, `committed_diff.patch`,
   `committed_files.json`, and a committed local effect that can feed
   `github-handoff <effect_id>`. It never pushes, creates a PR, deploys, calls
-  providers, or mutates external systems. Run review, delegation-result,
-  inbox, and dashboard output surface coder commit requests, approvals, local
-  commits, and GitHub handoff availability.
+  providers, or mutates external systems. A committed coder worktree run can
+  then enter `coder-publication-request <coder_worktree_run_id>`, which
+  validates the local commit artifact, commit SHA, safe worktree, safe remote
+  and target branch names, committed-file bounds, and zero push/PR/deploy
+  counters before writing `coder_publication/publication_request.json/.md`.
+  `approve-coder-publication` writes the local decision without pushing or
+  creating a PR. `coder-publication-handoff` requires the approved request,
+  revalidates the commit artifact hash, and writes
+  `publication_handoff.json`, `publication_handoff.md`, and a PR body draft
+  with suggested push and draft-PR commands only. It does not execute those
+  commands, run `git fetch`, contact GitHub, deploy, call providers, use the
+  network, or mutate external systems. Run review, delegation-result, inbox,
+  and dashboard output surface coder commit requests, approvals, local commits,
+  publication requests, and publication handoffs.
   Adapters run from the system root by default and can opt into
   `--working-directory project_root` for repo scouting. It supports shell
   adapters only. ClankerOS records
@@ -201,10 +212,13 @@ Core layers for the bootstrap:
   implementation-handoff -> coder-prep -> coder-worktree-plan ->
   coder-worktree-approval -> approve-coder-worktree -> run-coder-worktree ->
   review -> coder-commit-request -> approve-coder-commit ->
-  commit-coder-worktree -> dashboard -> github-handoff`, then surfaces current
+  commit-coder-worktree -> coder-publication-request ->
+  approve-coder-publication -> coder-publication-handoff -> review ->
+  dashboard -> inbox`, then surfaces current
   handoffs, coder-prep packets, coder worktree plans, coder worktree approvals,
-  approved coder worktree runs, coder commit requests, and local coder commits
-  before the broader goal, task, approval, effect,
+  approved coder worktree runs, coder commit requests, local coder commits,
+  coder publication requests, and coder publication handoffs before the broader
+  goal, task, approval, effect,
   verification, routing, steering, memory, and skill sections. Legacy
   capability proof-ladder records remain available in lower advanced sections,
   but they are not the default operator path.

@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from agent_os.coder_prep import render_coder_prep_review_lines
+from agent_os.coder_publication import render_coder_publication_review_lines
 from agent_os.coder_worktree_execution import (
     render_coder_worktree_approval_review_lines,
     render_coder_worktree_commit_review_lines,
@@ -360,6 +361,7 @@ def render_run_review(root: Path, packet: RunEvidencePacket) -> str:
     coder_worktree_approval_lines: list[str] = []
     coder_worktree_run_lines: list[str] = []
     coder_worktree_commit_lines: list[str] = []
+    coder_publication_lines: list[str] = []
     for delegation in packet.delegations:
         coder_worktree_approval_lines.extend(
             render_coder_worktree_approval_review_lines(root, delegation.id)
@@ -370,6 +372,9 @@ def render_run_review(root: Path, packet: RunEvidencePacket) -> str:
         coder_worktree_commit_lines.extend(
             render_coder_worktree_commit_review_lines(root, delegation.id)
         )
+        coder_publication_lines.extend(
+            render_coder_publication_review_lines(root, delegation.id)
+        )
     if coder_worktree_approval_lines:
         lines.extend(["", "## Coder Worktree Approval", ""])
         lines.extend(coder_worktree_approval_lines)
@@ -379,6 +384,9 @@ def render_run_review(root: Path, packet: RunEvidencePacket) -> str:
     if coder_worktree_commit_lines:
         lines.extend(["", "## Coder Worktree Commit", ""])
         lines.extend(coder_worktree_commit_lines)
+    if coder_publication_lines:
+        lines.extend(["", "## Coder Publication", ""])
+        lines.extend(coder_publication_lines)
 
     lines.extend(
         [

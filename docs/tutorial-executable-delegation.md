@@ -343,11 +343,16 @@ the first command in this flow that can create a worktree and run the
 operator-provided safe local command. `review <run_id>` includes
 `## Scout Context Pack`, `## Implementation Handoff`, `## Coder Prep`,
 `## Coder Worktree Plan`, `## Coder Worktree Approval`, and
-`## Coder Worktree Run` sections when those packets exist. The dashboard includes
+`## Coder Worktree Run` sections when those packets exist, then adds
+`## Coder Worktree Commit` and `## Coder Publication` after those gates run.
+The dashboard includes
 `### Subagent / Scout Work`, `### Implementation Handoffs`,
 `### Coder Prep Packets`, `### Coder Worktree Plans`,
-`### Coder Worktree Approvals`, and `### Approved Coder Worktree Runs`
-sections with compact scout, handoff, prep, approval, and worktree-run health.
+`### Coder Worktree Approvals`, `### Approved Coder Worktree Runs`,
+`### Coder Commit Requests`, `### Coder Local Commits`,
+`### Coder Publication Requests`, and `### Coder Publication Handoffs`
+sections with compact scout, handoff, prep, approval, worktree-run, commit,
+and publication health.
 
 ## 9. Prepare A Bounded Coder Plan
 
@@ -588,14 +593,27 @@ The commit evidence lives in:
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/committed_files.json
 ```
 
-Use the printed `effect_id` for an optional local GitHub handoff packet:
+Request the next publication handoff boundary after the isolated local commit:
 
 ```bash
-python3 -m agent_os.cli github-handoff <effect_id>
+python3 -m agent_os.cli coder-publication-request <coder_worktree_run_id> \
+  --requested-by operator \
+  --remote origin \
+  --target-branch main \
+  --note "Request publication handoff"
+
+python3 -m agent_os.cli approve-coder-publication <publication_request_id> \
+  --decided-by operator \
+  --note "Approved publication handoff preparation"
+
+python3 -m agent_os.cli coder-publication-handoff <coder_worktree_run_id>
 ```
 
-None of these commands push, create a PR, deploy, call providers, or mutate
-external systems.
+The publication request and approval do not push or create PRs. The handoff
+writes local JSON/Markdown plus a PR body draft with suggested `git push` and
+draft `gh pr create` commands, but does not execute those commands, run
+`git fetch`, contact GitHub, deploy, call providers, or mutate external
+systems. Manual operator execution is required for any future push or PR.
 
 ## 13. Propose Memory From The Result
 

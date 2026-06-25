@@ -78,7 +78,8 @@ repo, inspect the generated handoff, prepare a bounded coder plan, propose an
 approval-gated worktree plan, request explicit approval, run a bounded local
 command in an isolated worktree, review evidence, request and approve a
 separate local commit, create that commit only inside the isolated worktree,
-then optionally write a GitHub handoff packet.
+then request and approve a local-only publication handoff packet with suggested
+push and draft-PR commands.
 
 ```bash
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
@@ -94,9 +95,12 @@ python3 -m agent_os.cli review <coder_worktree_run_id>
 python3 -m agent_os.cli coder-commit-request <coder_worktree_run_id> --requested-by operator --message "Implement bounded change from approved worktree run" --note "Request local commit after review"
 python3 -m agent_os.cli approve-coder-commit <commit_request_id> --decided-by operator --note "Approved local commit"
 python3 -m agent_os.cli commit-coder-worktree <coder_worktree_run_id> --message "Implement bounded change from approved worktree run"
+python3 -m agent_os.cli coder-publication-request <coder_worktree_run_id> --requested-by operator --remote origin --target-branch main --note "Request publication handoff"
+python3 -m agent_os.cli approve-coder-publication <publication_request_id> --decided-by operator --note "Approved publication handoff preparation"
+python3 -m agent_os.cli coder-publication-handoff <coder_worktree_run_id>
 python3 -m agent_os.cli review <coder_worktree_run_id>
 python3 -m agent_os.cli dashboard
-python3 -m agent_os.cli github-handoff <effect_id>
+python3 -m agent_os.cli inbox
 ```
 
 The historical capability proof ladder remains callable and documented for
@@ -240,9 +244,15 @@ files and create one local commit in the isolated worktree branch. It re-checks
 the source run hash, branch/HEAD, current changed files, outside files,
 message, and verifier state, then writes `coder_commit/commit.json`,
 `pre_commit_status.txt`, `post_commit_status.txt`, `committed_diff.patch`, and
-`committed_files.json`. The resulting `effect_id` can be passed to
-`github-handoff <effect_id>` to create local push and draft-PR instructions.
-None of these steps push, deploy, call providers, or mutate external systems.
+`committed_files.json`. After the local commit exists, use
+`coder-publication-request <coder_worktree_run_id>` to request the next
+boundary. `approve-coder-publication <publication_request_id>` records the
+operator decision without pushing or creating a PR.
+`coder-publication-handoff <coder_worktree_run_id>` writes
+`coder_publication/publication_handoff.json`, a Markdown handoff, and a PR body
+draft with suggested `git push` and draft `gh pr create` commands. It does not
+execute those commands, contact GitHub, push, create a PR, deploy, call
+providers, or mutate external systems.
 Add `--working-directory project_root` when configuring the adapter if the
 local executor should run from the target repository instead of the ClankerOS
 system root.
@@ -272,9 +282,12 @@ For the full walkthrough, see
 | Request local commit from reviewed worktree | `python3 -m agent_os.cli coder-commit-request <coder_worktree_run_id> --requested-by operator --message "..." --note "..."` |
 | Approve local commit request | `python3 -m agent_os.cli approve-coder-commit <commit_request_id> --decided-by operator --note "..."` |
 | Create local worktree commit | `python3 -m agent_os.cli commit-coder-worktree <coder_worktree_run_id> --message "..."` |
+| Request publication handoff | `python3 -m agent_os.cli coder-publication-request <coder_worktree_run_id> --requested-by operator --remote origin --target-branch main --note "..."` |
+| Approve publication handoff | `python3 -m agent_os.cli approve-coder-publication <publication_request_id> --decided-by operator --note "..."` |
+| Write publication handoff | `python3 -m agent_os.cli coder-publication-handoff <coder_worktree_run_id>` |
 | Review evidence | `review`, `evidence`, `replay-summary` |
 | Inspect approvals | `python3 -m agent_os.cli approvals` |
-| Prepare GitHub handoff | `python3 -m agent_os.cli github-handoff <effect_id>` |
+| Inspect operator queue | `python3 -m agent_os.cli inbox` |
 
 For common workflows, use [Operator Recipes](docs/operator-recipes.md). For
 legacy proof-ladder and advanced report-only commands, use
@@ -377,8 +390,11 @@ then provide the first explicit bounded worktree execution gate with local
 evidence but no automatic commit, push, deploy, provider call, or network
 action. A reviewed successful coder worktree run can then move through the
 separate local-only gate `coder-commit-request -> approve-coder-commit ->
-commit-coder-worktree -> github-handoff`; commit approval remains separate
-from execution approval, and GitHub handoff remains separate from push/PR.
+commit-coder-worktree -> coder-publication-request ->
+approve-coder-publication -> coder-publication-handoff`; commit approval
+remains separate from execution approval, publication approval remains separate
+from commit approval, and the publication handoff remains separate from manual
+push/PR execution.
 Executable local slices still exist where the verifier is explicit (`run-goal`,
 `run-task`, `run-delegation`, `run-coder-worktree`). The older report-only
 proof ladders remain available as
