@@ -84,8 +84,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/incidents` - recent local incidents and evidence links.
 - `/artifacts?path=<relative_path>` - safe read-only artifact viewer.
 - `/health` - Python, git, storage, command, import, route, and counter health.
-- `/demo` - demo scenario instructions plus state-aware dogfooding links after
-  `demo-app-scenario` has created fixture state.
+- `/demo` - demo scenario instructions plus state-aware dogfooding links and a
+  read-only browser-progress checklist after `demo-app-scenario` has created
+  fixture state.
 
 ## Demo Scenario
 
@@ -119,7 +120,12 @@ current fixture state and links directly to the demo project, selected
 workflow, delegation, coder worktree run, review artifact, inbox, approvals,
 and health page. The same page includes a manual browser script for the first
 dogfooding pass through commit request, commit approval, typed local commit,
-publication request, publication approval, and publication handoff.
+publication request, publication approval, and publication handoff. The
+`Demo Browser Progress` section reads existing local commit/publication
+records for the selected fixture run and shows the current status for commit
+request, commit approval, local commit, publication request, publication
+approval, publication handoff, and the final manual push/PR boundary outside
+ClankerOS.
 
 ## Artifact Viewer
 

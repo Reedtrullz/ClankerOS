@@ -1830,6 +1830,7 @@ def _demo_dogfooding_state(root: Path) -> str:
             "</section>",
             _list_section("Demo Artifacts", artifact_lines),
             _list_section("Pending Demo Approvals", approval_lines, "/approvals"),
+            _demo_browser_progress(root, selected_run.id if selected_run else ""),
             _manual_browser_script(
                 {
                     "project_id": project.name,
@@ -1840,6 +1841,103 @@ def _demo_dogfooding_state(root: Path) -> str:
             ),
         ]
     )
+
+
+def _demo_browser_progress(root: Path, run_id: str) -> str:
+    if not run_id:
+        return _list_section(
+            "Demo Browser Progress",
+            [
+                "selected_run_status: missing",
+                "next_operator_step: run demo scenario and select a coder worktree run",
+                "network_actions_taken: 0",
+                "external_mutations_taken: 0",
+            ],
+        )
+    commit_records = [
+        item
+        for item in list_coder_worktree_commit_approvals(root, limit=50)
+        if item.run_id == run_id
+    ]
+    publications = [
+        item
+        for item in list_coder_publications(root, limit=50)
+        if item.run_id == run_id
+    ]
+    commit_status = _preferred_status(
+        commit_records,
+        ["committed", "approved", "pending_operator_approval", "rejected"],
+        "not_requested",
+    )
+    publication_status = _preferred_status(
+        publications,
+        ["ready_for_operator", "approved", "pending_operator_approval", "rejected"],
+        "not_requested",
+    )
+    local_commit_status = (
+        "available" if any(item.commit_sha for item in commit_records) else "missing"
+    )
+    publication_handoff_status = (
+        "available"
+        if any(item.status == "ready_for_operator" for item in publications)
+        else "missing"
+    )
+    manual_status = (
+        "ready_outside_clankeros"
+        if publication_handoff_status == "available"
+        else "not_ready"
+    )
+    next_step = _demo_next_operator_step(
+        commit_status=commit_status,
+        local_commit_status=local_commit_status,
+        publication_status=publication_status,
+        publication_handoff_status=publication_handoff_status,
+    )
+    lines = [
+        f"selected_run_id: {_e(run_id)}",
+        f"commit_request_status: {_e(commit_status)}",
+        f"commit_approval_status: {_e(commit_status)}",
+        f"local_commit_status: {_e(local_commit_status)}",
+        f"publication_request_status: {_e(publication_status)}",
+        f"publication_approval_status: {_e(publication_status)}",
+        f"publication_handoff_status: {_e(publication_handoff_status)}",
+        f"manual_push_pr_status: {_e(manual_status)}",
+        f"next_operator_step: {_e(next_step)}",
+        "network_actions_taken: 0",
+        "external_mutations_taken: 0",
+    ]
+    return _list_section("Demo Browser Progress", lines, f"/runs/{quote(run_id)}")
+
+
+def _preferred_status(items: list[Any], statuses: list[str], default: str) -> str:
+    for status in statuses:
+        if any(item.status == status for item in items):
+            return status
+    return default
+
+
+def _demo_next_operator_step(
+    *,
+    commit_status: str,
+    local_commit_status: str,
+    publication_status: str,
+    publication_handoff_status: str,
+) -> str:
+    if commit_status == "not_requested":
+        return "request_commit_for_reviewed_run"
+    if commit_status == "pending_operator_approval":
+        return "approve_or_reject_commit_request"
+    if commit_status == "approved":
+        return "commit_approved_worktree"
+    if local_commit_status == "available" and publication_status == "not_requested":
+        return "request_publication_handoff"
+    if publication_status == "pending_operator_approval":
+        return "approve_or_reject_publication_request"
+    if publication_status == "approved":
+        return "prepare_publication_handoff"
+    if publication_handoff_status == "available":
+        return "manual_operator_push_pr_outside_clankeros"
+    return "review_demo_state"
 
 
 def _manual_browser_script(state: dict[str, str] | None) -> str:

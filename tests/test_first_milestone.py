@@ -3417,6 +3417,15 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"/workflow?run_id={result.coder_worktree_run_id}" in demo.body
     assert f"/runs/{result.coder_worktree_run_id}" in demo.body
     assert result.review_path.relative_to(tmp_path).as_posix() in demo.body
+    assert "Demo Browser Progress" in demo.body
+    assert "commit_request_status" in demo.body
+    assert "commit_approval_status" in demo.body
+    assert "local_commit_status" in demo.body
+    assert "publication_request_status" in demo.body
+    assert "publication_approval_status" in demo.body
+    assert "publication_handoff_status" in demo.body
+    assert "manual_push_pr_status" in demo.body
+    assert "manual_push_pr_status: not_ready" in demo.body
 
     dashboard = render_local_app_route(tmp_path, "/")
     assert dashboard.status == 200
@@ -3828,6 +3837,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert ready.handoff_artifact_path
     assert (tmp_path / ready.handoff_artifact_path).exists()
     assert (Path(tmp_path / ready.handoff_artifact_path).parent / "pr_body.md").exists()
+    demo_after_handoff = render_local_app_route(tmp_path, "/demo")
+    assert demo_after_handoff.status == 200
+    assert "Demo Browser Progress" in demo_after_handoff.body
+    assert "commit_request_status: committed" in demo_after_handoff.body
+    assert "commit_approval_status: committed" in demo_after_handoff.body
+    assert "local_commit_status: available" in demo_after_handoff.body
+    assert "publication_request_status: ready_for_operator" in demo_after_handoff.body
+    assert "publication_approval_status: ready_for_operator" in demo_after_handoff.body
+    assert "publication_handoff_status: available" in demo_after_handoff.body
+    assert "manual_push_pr_status: ready_outside_clankeros" in demo_after_handoff.body
 
 
 def test_local_app_cli_commands_and_bind_safety(

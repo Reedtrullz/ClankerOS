@@ -1,5 +1,30 @@
 # Status
 
+## 2026-06-26 Local App Demo Browser Progress
+
+- Added a read-only `Demo Browser Progress` section to `/demo`. It derives the
+  selected fixture run's commit request, commit approval, local commit,
+  publication request, publication approval, publication handoff, and final
+  manual push/PR boundary from existing local records.
+- The progress section gives the operator a "keep going from here" checkpoint
+  after using the browser action path, without creating approvals, commits,
+  publication handoffs, pushes, PRs, deploys, provider calls, or network
+  actions.
+- Focused test coverage now verifies the section is present before the manual
+  browser flow and advances to `ready_outside_clankeros` after the fixture
+  commit/publication/handoff path completes.
+- Compact local verification for this slice so far:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_cli_commands_and_bind_safety`
+  - `python3 -m agent_os.cli app-smoke-test`
+  - `git diff --check`
+- Non-claims: this is a read-only demo progress readback only; no new
+  arbitrary command execution, push, PR, deploy, provider call, hosted/remote
+  worker, scheduler, browser/desktop adapter, or non-loopback network
+  capability was added.
+
 ## 2026-06-26 Local App Safe Action Catalog
 
 - Added `/actions` as a read-only safe action catalog. It lists local app

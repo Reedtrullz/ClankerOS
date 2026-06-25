@@ -95,7 +95,11 @@ python3 -m agent_os.cli app
 For the first manual browser pass, run `python3 -m agent_os.cli
 demo-app-scenario`, open `/demo`, and follow the state-aware dogfooding links
 into the demo project, selected workflow, delegation, coder worktree run,
-review artifact, approvals, and inbox.
+review artifact, approvals, and inbox. The `/demo` page also shows a
+read-only `Demo Browser Progress` checklist for the selected fixture run, so
+you can see whether the app path is waiting on commit request, commit
+approval, local commit, publication request, publication approval,
+publication handoff, or manual push/PR outside ClankerOS.
 
 Use `/delegation-runs` when you want a compact read-only index of scout
 execution evidence, context packs, implementation handoffs, zero-effect
