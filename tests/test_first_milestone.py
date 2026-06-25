@@ -3343,6 +3343,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "local-app-demo" in project.body
     assert "Implementation Handoffs" in project.body
     assert "coder-prep-from-handoff" in project.body
+    assert "Project Operator Guidance" in project.body
+    assert "project_next_recommended_action" in project.body
+    assert "request_commit_for_reviewed_run" in project.body
+    assert "Incidents / Recommendations" in project.body
+    assert "open_project_incidents" in project.body
+    assert "task_recommendations" in project.body
 
     approvals = render_local_app_route(tmp_path, "/approvals")
     assert approvals.status == 200

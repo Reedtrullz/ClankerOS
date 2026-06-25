@@ -24,6 +24,9 @@
   request, the local commit action appears only after commit approval,
   publication request appears only after the isolated local commit is recorded,
   and publication handoff appears only after publication approval.
+- Project detail pages now include `Project Operator Guidance` with
+  project-scoped incidents, task recommendations, approval/run/commit/
+  publication counts, and a next recommended operator action.
 - Focused app test coverage now walks the browser-route action path from demo
   run detail through commit request, commit approval, isolated local commit,
   publication request, publication approval, and publication handoff.

@@ -723,6 +723,12 @@ def _project_detail(root: Path, project_id: str) -> str:
                     for delegation in delegations
                 ],
             ),
+            _project_operator_guidance(
+                root,
+                storage,
+                project_id=project_id,
+                task_rows=task_rows,
+            ),
             _list_section(
                 "Implementation Handoffs",
                 _implementation_handoff_lines(root, storage, project_id=project_id, limit=20),
@@ -740,6 +746,167 @@ def _project_detail(root: Path, project_id: str) -> str:
                 ),
             ),
         ]
+    )
+
+
+def _project_operator_guidance(
+    root: Path,
+    storage: Storage,
+    *,
+    project_id: str,
+    task_rows: list[sqlite3.Row],
+) -> str:
+    task_ids = [str(row["id"]) for row in task_rows]
+    incidents = _table_rows(
+        storage.db_path,
+        "select id, status, severity, summary, evidence_path from incidents where project_id = ? order by created_at desc limit 20",
+        (project_id,),
+    )
+    open_incidents = [row for row in incidents if row["status"] == "open"]
+    recommendations = _project_task_recommendations(storage, task_ids)
+    worktree_approvals = [
+        item
+        for item in list_coder_worktree_approvals(root, limit=100)
+        if item.project_id == project_id
+    ]
+    worktree_runs = [
+        item
+        for item in list_coder_worktree_runs(root, limit=100)
+        if item.project_id == project_id
+    ]
+    commit_approvals = [
+        item
+        for item in list_coder_worktree_commit_approvals(root, limit=100)
+        if item.project_id == project_id
+    ]
+    publications = [
+        item
+        for item in list_coder_publications(root, limit=100)
+        if item.project_id == project_id
+    ]
+    completed_runs = [item for item in worktree_runs if item.status == "completed"]
+    reviewed_runs = [
+        item
+        for item in completed_runs
+        if (root / "runs" / item.source_run_id / "review.md").exists()
+    ]
+    guidance = "<section><h2>Project Operator Guidance</h2>" + _kv(
+        [
+            (
+                "project_next_recommended_action",
+                _project_next_action(
+                    root,
+                    open_incidents=open_incidents,
+                    recommendations=recommendations,
+                    worktree_approvals=worktree_approvals,
+                    worktree_runs=worktree_runs,
+                    commit_approvals=commit_approvals,
+                    publications=publications,
+                ),
+            ),
+            ("tasks", str(len(task_rows))),
+            ("open_project_incidents", str(len(open_incidents))),
+            ("task_recommendations", str(len(recommendations))),
+            (
+                "pending_worktree_approvals",
+                str(_count_status(worktree_approvals, "pending_operator_approval")),
+            ),
+            ("completed_worktree_runs", str(len(completed_runs))),
+            ("reviewed_completed_worktree_runs", str(len(reviewed_runs))),
+            (
+                "pending_commit_approvals",
+                str(_count_status(commit_approvals, "pending_operator_approval")),
+            ),
+            ("local_commits", str(_count_status(commit_approvals, "committed"))),
+            (
+                "pending_publication_approvals",
+                str(_count_status(publications, "pending_operator_approval")),
+            ),
+            ("publication_handoffs", str(_count_status(publications, "ready_for_operator"))),
+        ]
+    ) + "</section>"
+    incident_lines = [
+        f"{_e(row['id'])}: status={_e(row['status'])} severity={_e(row['severity'])} "
+        f"{_e(row['summary'])} evidence={_artifact_link(row['evidence_path'] or 'none')}"
+        for row in incidents
+    ]
+    recommendation_lines = [
+        _task_recommendation_line(item)
+        for item in recommendations
+    ]
+    return guidance + _list_section(
+        "Incidents / Recommendations",
+        incident_lines + recommendation_lines,
+        "/incidents" if incidents else None,
+    )
+
+
+def _project_task_recommendations(
+    storage: Storage,
+    task_ids: list[str],
+) -> list[Any]:
+    recommendations: list[Any] = []
+    seen: set[str] = set()
+    for task_id in task_ids:
+        for item in storage.list_task_recommendations(
+            task_id=task_id,
+            status="open",
+            limit=10,
+        ):
+            if item.id in seen:
+                continue
+            seen.add(item.id)
+            recommendations.append(item)
+    return recommendations[:20]
+
+
+def _project_next_action(
+    root: Path,
+    *,
+    open_incidents: list[Any],
+    recommendations: list[Any],
+    worktree_approvals: list[Any],
+    worktree_runs: list[Any],
+    commit_approvals: list[Any],
+    publications: list[Any],
+) -> str:
+    if open_incidents:
+        return "review_project_incidents"
+    if recommendations:
+        return "review_task_recommendations"
+    if _count_status(publications, "ready_for_operator"):
+        return "manual_operator_push_pr_outside_clankeros"
+    if _count_status(publications, "approved"):
+        return "prepare_publication_handoff"
+    if _count_status(publications, "pending_operator_approval"):
+        return "approve_or_reject_publication_request"
+    if _count_status(commit_approvals, "committed") and not publications:
+        return "request_publication_handoff"
+    if _count_status(commit_approvals, "approved"):
+        return "commit_approved_worktree"
+    if _count_status(commit_approvals, "pending_operator_approval"):
+        return "approve_or_reject_commit_request"
+    reviewed_runs = [
+        item
+        for item in worktree_runs
+        if item.status == "completed"
+        and (root / "runs" / item.source_run_id / "review.md").exists()
+    ]
+    if reviewed_runs and not commit_approvals:
+        return "request_commit_for_reviewed_run"
+    if _count_status(worktree_approvals, "pending_operator_approval"):
+        return "decide_pending_worktree_approval"
+    if _count_status(worktree_approvals, "approved") and not worktree_runs:
+        return "run_approved_worktree_from_cli"
+    return "review_project_state"
+
+
+def _task_recommendation_line(item: Any) -> str:
+    commands = ", ".join(item.recommended_commands) or "none"
+    return (
+        f"{_e(item.id)}: status={_e(item.status)} task={_e(item.task_id)} "
+        f"type={_e(item.recommendation_type)} reason={_e(item.reason)} "
+        f"commands={_e(commands)} evidence={_artifact_link(item.evidence_path)}"
     )
 
 

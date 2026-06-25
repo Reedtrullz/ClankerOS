@@ -41,7 +41,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/workflow` - modern handoff/worktree/commit/publication workflow stepper,
   including `coder-prep-from-handoff` as the artifact-first prep route.
 - `/projects` - registered project list.
-- `/projects/<project_id>` - project detail and linked artifacts.
+- `/projects/<project_id>` - project detail, linked artifacts, project-scoped
+  incidents/recommendations, and next recommended operator action.
 - `/delegations/<delegation_id>` - delegation, handoff, prep, worktree, commit,
   and publication state, including a compact workflow-readiness summary and
   next recommended operator action.
