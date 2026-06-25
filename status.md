@@ -1,5 +1,30 @@
 # Status
 
+## 2026-06-26 Local App Project Workflow Index
+
+- Upgraded `/projects` from a bare registered-project list into a read-only
+  `Project Workflow Index` showing each project's root path, default test
+  command, current branch/commit, goal/task/delegation counts, next
+  recommended local operator action, and direct project/workflow links.
+- The index now helps the operator start at the `project -> goal/task` part of
+  the product loop, then jump into project detail, the full workflow stepper,
+  or selected delegation/coder run workflow views without inferring state from
+  scattered pages.
+- Focused red coverage first failed because `/projects` still rendered the old
+  `Projects` section and did not include `Project Workflow Index`; the route
+  now passes the fixture-backed demo scenario with
+  `project_next_recommended_action=request_commit_for_reviewed_run`.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario` -> red before implementation, then `1 passed, 497 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario or local_app_routes_render_modern_workflow_and_health or local_app_cli_commands_and_bind_safety"` -> `3 passed, 495 deselected`
+  - `python3 -m agent_os.cli app-smoke-test` -> rendered the core local app routes with status 200 and zero provider/network/external-mutation counters.
+  - `git diff --check`
+- Non-claims: this is a read-only index/navigation improvement only; it does
+  not execute work, approve requests, commit, push, create PRs, deploy, call
+  providers, fetch GitHub status, execute arbitrary commands, or perform
+  non-loopback network actions.
+
 ## 2026-06-26 Local App Project Workflow Launchpad
 
 - Added a `Project Workflow Launchpad` to `/projects/<project_id>` so the

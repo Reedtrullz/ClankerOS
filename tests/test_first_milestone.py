@@ -3618,6 +3618,21 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "open_project_incidents" in project.body
     assert "task_recommendations" in project.body
 
+    projects_index = render_local_app_route(tmp_path, "/projects")
+    assert projects_index.status == 200
+    assert "Project Workflow Index" in projects_index.body
+    assert "local-app-demo" in projects_index.body
+    assert f"/projects/{result.project_id}" in projects_index.body
+    assert "default_test_command" in projects_index.body
+    assert "current_branch" in projects_index.body
+    assert "current_commit" in projects_index.body
+    assert "goals: 1" in projects_index.body
+    assert "tasks: 1" in projects_index.body
+    assert "delegations: 1" in projects_index.body
+    assert "project_next_recommended_action=request_commit_for_reviewed_run" in projects_index.body
+    assert f"/workflow?delegation_id={result.delegation_id}" in projects_index.body
+    assert f"/workflow?run_id={result.coder_worktree_run_id}" in projects_index.body
+
     workflow_for_delegation = render_local_app_route(
         tmp_path,
         f"/workflow?delegation_id={result.delegation_id}",

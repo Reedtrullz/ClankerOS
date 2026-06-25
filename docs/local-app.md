@@ -68,7 +68,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   fixture, walking demo/workflow/project/delegation/run routes, using local
   commit and publication gates, and handing full-suite proof to GitHub Actions
   after a push without fetching GitHub status.
-- `/projects` - registered project list.
+- `/projects` - read-only project workflow index with root path, default test
+  command, current branch/commit, goal/task/delegation counts, next
+  recommended local operator action, project detail links, and selected
+  delegation/run workflow shortcuts.
 - `/projects/<project_id>` - project detail with first-class project goals,
   goal-linked tasks, linked artifacts, project-scoped incidents/
   recommendations, next recommended operator action, and a project workflow

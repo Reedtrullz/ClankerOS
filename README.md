@@ -111,6 +111,11 @@ execution evidence, context packs, implementation handoffs, zero-effect
 counters, retry signals, and next local operator actions before handing work to
 coder prep.
 
+Use `/projects` as the project workflow index. It shows each registered
+project's root, default test command, current branch/commit, goal/task/
+delegation counts, next recommended local operator action, and direct project
+or selected workflow links.
+
 Use `/projects/<project_id>` as the project-level launchpad. It shows goals,
 tasks, delegations, artifacts, project guidance, scoped workflow links for
 delegations and coder runs, and links back to safe actions, dogfooding, and

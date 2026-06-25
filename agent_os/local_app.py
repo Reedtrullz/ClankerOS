@@ -916,11 +916,76 @@ def _action_catalog_line(item: tuple[str, str, str, str, str, str, str]) -> str:
 def _projects(root: Path) -> str:
     storage = _storage(root)
     projects = storage.list_registered_projects()
-    items = [
-        f"<li><a href='/projects/{quote(project.name)}'>{_e(project.name)}</a> <span>{_e(project.root_path)}</span></li>"
-        for project in projects
+    return "".join(
+        [
+            "<section><h1>Project Workflow Index</h1>",
+            "<p class='muted'>Read-only project entry points with local repo posture, goal/task counts, delegation links, workflow shortcuts, and the next local operator action.</p>",
+            _ul([_project_index_line(root, storage, project) for project in projects]),
+            "</section>",
+            _non_claim_banner(),
+        ]
+    )
+
+
+def _project_index_line(root: Path, storage: Storage, project: Any) -> str:
+    project_id = project.name
+    repo = _repo_state(Path(project.root_path))
+    goal_rows = _table_rows(
+        storage.db_path,
+        "select id from goals where project_id = ?",
+        (project_id,),
+    )
+    task_rows = _table_rows(
+        storage.db_path,
+        "select id from tasks where project_id = ?",
+        (project_id,),
+    )
+    delegations = [
+        delegation
+        for delegation in storage.list_recent_subagent_delegations(limit=None)
+        if _task_project(storage, delegation.parent_task_id) == project_id
     ]
-    return "<section><h1>Projects</h1>" + _ul(items) + "</section>"
+    state = _project_operator_state(
+        root,
+        storage,
+        project_id=project_id,
+        task_rows=task_rows,
+    )
+    next_action = _project_next_action(
+        root,
+        open_incidents=state["open_incidents"],
+        recommendations=state["recommendations"],
+        worktree_approvals=state["worktree_approvals"],
+        worktree_runs=state["worktree_runs"],
+        commit_approvals=state["commit_approvals"],
+        publications=state["publications"],
+    )
+    workflow_links = [
+        f"<a href='/projects/{quote(project_id)}'>open project</a>",
+        "<a href='/workflow'>open workflow</a>",
+    ]
+    if delegations:
+        delegation = delegations[0]
+        workflow_links.append(
+            f"<a href='/workflow?delegation_id={quote(delegation.id)}'>open selected delegation workflow</a>"
+        )
+    if state["worktree_runs"]:
+        run = state["worktree_runs"][0]
+        workflow_links.append(
+            f"<a href='/workflow?run_id={quote(run.id)}'>open selected coder run workflow</a>"
+        )
+    return (
+        f"<strong><a href='/projects/{quote(project_id)}'>{_e(project_id)}</a></strong>: "
+        f"root_path={_e(project.root_path)} "
+        f"default_test_command={_e(project.default_test_command)} "
+        f"current_branch={_e(repo['branch'])} "
+        f"current_commit={_e(repo['commit'])} "
+        f"goals: {len(goal_rows)} "
+        f"tasks: {len(task_rows)} "
+        f"delegations: {len(delegations)} "
+        f"project_next_recommended_action={_e(next_action)} "
+        + " ".join(workflow_links)
+    )
 
 
 def _delegation_runs(root: Path) -> str:
@@ -1166,34 +1231,19 @@ def _project_operator_guidance(
     project_id: str,
     task_rows: list[sqlite3.Row],
 ) -> str:
-    task_ids = [str(row["id"]) for row in task_rows]
-    incidents = _table_rows(
-        storage.db_path,
-        "select id, status, severity, summary, evidence_path from incidents where project_id = ? order by created_at desc limit 20",
-        (project_id,),
+    state = _project_operator_state(
+        root,
+        storage,
+        project_id=project_id,
+        task_rows=task_rows,
     )
-    open_incidents = [row for row in incidents if row["status"] == "open"]
-    recommendations = _project_task_recommendations(storage, task_ids)
-    worktree_approvals = [
-        item
-        for item in list_coder_worktree_approvals(root, limit=100)
-        if item.project_id == project_id
-    ]
-    worktree_runs = [
-        item
-        for item in list_coder_worktree_runs(root, limit=100)
-        if item.project_id == project_id
-    ]
-    commit_approvals = [
-        item
-        for item in list_coder_worktree_commit_approvals(root, limit=100)
-        if item.project_id == project_id
-    ]
-    publications = [
-        item
-        for item in list_coder_publications(root, limit=100)
-        if item.project_id == project_id
-    ]
+    incidents = state["incidents"]
+    open_incidents = state["open_incidents"]
+    recommendations = state["recommendations"]
+    worktree_approvals = state["worktree_approvals"]
+    worktree_runs = state["worktree_runs"]
+    commit_approvals = state["commit_approvals"]
+    publications = state["publications"]
     completed_runs = [item for item in worktree_runs if item.status == "completed"]
     reviewed_runs = [
         item
@@ -1291,6 +1341,46 @@ def _project_workflow_launchpad(
             _list_section("Launch Coder Run Workflows", run_lines),
         ]
     )
+
+
+def _project_operator_state(
+    root: Path,
+    storage: Storage,
+    *,
+    project_id: str,
+    task_rows: list[sqlite3.Row],
+) -> dict[str, Any]:
+    task_ids = [str(row["id"]) for row in task_rows]
+    incidents = _table_rows(
+        storage.db_path,
+        "select id, status, severity, summary, evidence_path from incidents where project_id = ? order by created_at desc limit 20",
+        (project_id,),
+    )
+    return {
+        "incidents": incidents,
+        "open_incidents": [row for row in incidents if row["status"] == "open"],
+        "recommendations": _project_task_recommendations(storage, task_ids),
+        "worktree_approvals": [
+            item
+            for item in list_coder_worktree_approvals(root, limit=100)
+            if item.project_id == project_id
+        ],
+        "worktree_runs": [
+            item
+            for item in list_coder_worktree_runs(root, limit=100)
+            if item.project_id == project_id
+        ],
+        "commit_approvals": [
+            item
+            for item in list_coder_worktree_commit_approvals(root, limit=100)
+            if item.project_id == project_id
+        ],
+        "publications": [
+            item
+            for item in list_coder_publications(root, limit=100)
+            if item.project_id == project_id
+        ],
+    }
 
 
 def _project_task_recommendations(

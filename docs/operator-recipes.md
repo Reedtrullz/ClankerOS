@@ -27,10 +27,12 @@ open http://127.0.0.1:8787
 
 Use this when you want to inspect the current ClankerOS workflow from a local
 browser instead of stitching together CLI readbacks. Start with `/workflow`,
-then check `/projects`, `/health`, and a delegation or run page. Project detail
-pages include a workflow launchpad with scoped workflow links for the
-project's delegations and coder runs, plus links to safe actions, dogfooding,
-and verification.
+then check `/projects`, `/health`, and a delegation or run page. The project
+index shows each registered project's local repo posture, goal/task/delegation
+counts, next recommended local operator action, and selected workflow links.
+Project detail pages include a workflow launchpad with scoped workflow links
+for the project's delegations and coder runs, plus links to safe actions,
+dogfooding, and verification.
 
 For a safe dogfooding fixture:
 
