@@ -103,6 +103,34 @@ def prepare_coder_from_handoff(
     )
 
 
+def prepare_coder_from_handoff_markdown(
+    root: Path,
+    storage: Storage,
+    handoff_md: str,
+) -> CoderPrepResult:
+    root = root.resolve()
+    source_handoff_md_path = _resolve_handoff_markdown(root, handoff_md)
+    handoff_json_path = source_handoff_md_path.with_name("implementation_handoff.json")
+    handoff_payload = _read_existing(handoff_json_path)
+    if not handoff_payload:
+        raise CoderPrepError("implementation handoff json is not readable")
+    if handoff_payload.get("kind") != IMPLEMENTATION_HANDOFF_KIND:
+        raise CoderPrepError(
+            f"unsupported implementation handoff kind: {handoff_payload.get('kind', 'unknown')}"
+        )
+    delegation_id = str(handoff_payload.get("delegation_id") or "").strip()
+    if not delegation_id:
+        raise CoderPrepError("implementation handoff is missing delegation_id")
+
+    result = prepare_coder_from_handoff(root, storage, delegation_id)
+    requested = str(source_handoff_md_path.relative_to(root))
+    if result.source_handoff_md != requested:
+        raise CoderPrepError(
+            "requested implementation handoff markdown is not the current delegation handoff"
+        )
+    return result
+
+
 def render_coder_prep_cli_lines(root: Path, result: CoderPrepResult) -> list[str]:
     prefix = "already_recorded " if result.already_recorded else ""
     return [
@@ -360,3 +388,26 @@ def _resolve(root: Path, path: str) -> Path:
     if parsed.is_absolute():
         return parsed
     return root / parsed
+
+
+def _resolve_handoff_markdown(root: Path, path: str) -> Path:
+    raw = str(path).strip()
+    if not raw:
+        raise CoderPrepError("implementation handoff markdown path is required")
+    parsed = Path(raw)
+    if parsed.is_absolute():
+        raise CoderPrepError("implementation handoff markdown path must be relative to repo root")
+    if ".." in parsed.parts:
+        raise CoderPrepError("implementation handoff markdown path must not contain parent traversal")
+    resolved = (root / parsed).resolve()
+    try:
+        resolved.relative_to(root)
+    except ValueError as error:
+        raise CoderPrepError(
+            "implementation handoff markdown path resolves outside repo root"
+        ) from error
+    if resolved.name != "implementation_handoff.md":
+        raise CoderPrepError("expected an implementation_handoff.md artifact")
+    if not resolved.exists():
+        raise CoderPrepError("implementation handoff markdown file is missing")
+    return resolved

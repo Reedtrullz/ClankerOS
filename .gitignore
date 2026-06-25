@@ -1,5 +1,6 @@
 .DS_Store
 .agent/
+.clanker/app/
 __pycache__/
 *.pyc
 .pytest_cache/

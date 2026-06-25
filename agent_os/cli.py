@@ -77,6 +77,7 @@ from agent_os.context_pack import ContextPackError, generate_context_pack
 from agent_os.coder_prep import (
     CoderPrepError,
     prepare_coder_from_handoff,
+    prepare_coder_from_handoff_markdown,
     render_coder_prep_cli_lines,
 )
 from agent_os.coder_publication import (
@@ -524,6 +525,14 @@ from agent_os.learning_distillation import (
     distill_learnings,
     render_stable_learning_line,
 )
+from agent_os.local_app import (
+    DEFAULT_HOST as LOCAL_APP_DEFAULT_HOST,
+    DEFAULT_PORT as LOCAL_APP_DEFAULT_PORT,
+    run_demo_app_scenario,
+    run_local_app_smoke_test,
+    serve_local_app,
+    validate_bind_host,
+)
 from agent_os.memory_entries import (
     MemoryEntryError,
     approve_memory_entry,
@@ -599,10 +608,10 @@ from agent_os.worktree_cleanup import cleanup_worktrees
 
 
 PRIMARY_COMMAND_METAVAR = (
-    "{init,dashboard,goal,tasks,delegate,context-pack,run-delegation,"
-    "implementation-handoff,coder-prep,coder-worktree-plan,"
+    "{init,app,dashboard,goal,tasks,delegate,context-pack,run-delegation,"
+    "implementation-handoff,coder-prep,coder-prep-from-handoff,coder-worktree-plan,"
     "coder-commit-request,commit-coder-worktree,coder-publication-request,"
-    "coder-publication-handoff,review,...}"
+    "coder-publication-handoff,demo-app-scenario,review,...}"
 )
 
 
@@ -727,6 +736,23 @@ def build_parser() -> argparse.ArgumentParser:
 
     subparsers.add_parser("init", help="Initialize local harness files and database.")
     subparsers.add_parser("capability-matrix", help="Write the runtime capability matrix.")
+    app = subparsers.add_parser(
+        "app",
+        aliases=["local-app", "serve"],
+        help="Start the local-only browser operator app.",
+    )
+    app.add_argument("--host", default=LOCAL_APP_DEFAULT_HOST)
+    app.add_argument("--port", type=int, default=LOCAL_APP_DEFAULT_PORT)
+    app.add_argument("--allow-nonlocal-bind", action="store_true")
+    subparsers.add_parser(
+        "demo-app-scenario",
+        aliases=["app-demo"],
+        help="Create fixture-backed local app demo state.",
+    )
+    subparsers.add_parser(
+        "app-smoke-test",
+        help="Render core local app routes without starting a server.",
+    )
     subparsers.add_parser("dashboard", help="Write the static dashboard.")
     subparsers.add_parser("iterate", help="Write the next iteration packet from repo queues.")
     review = subparsers.add_parser("review", help="Write a human-first run review packet.")
@@ -818,6 +844,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Write a bounded coder-prep plan from an implementation handoff.",
     )
     coder_prep.add_argument("delegation_id")
+    coder_prep_from_handoff = subparsers.add_parser(
+        "coder-prep-from-handoff",
+        aliases=["coder-prep-md"],
+        help="Write a bounded coder-prep plan from implementation_handoff.md.",
+    )
+    coder_prep_from_handoff.add_argument("handoff_md")
     coder_worktree_plan = subparsers.add_parser(
         "coder-worktree-plan",
         help="Write an approval-gated future worktree plan from coder prep.",
@@ -2118,6 +2150,52 @@ def main(argv: list[str] | None = None) -> int:
         print(matrix_path)
         return 0
 
+    if args.command in {"app", "local-app", "serve"}:
+        try:
+            validate_bind_host(
+                args.host,
+                allow_nonlocal_bind=args.allow_nonlocal_bind,
+            )
+        except ValueError as error:
+            print(f"local_app_failed: {error}")
+            return 1
+        serve_local_app(
+            root,
+            host=args.host,
+            port=args.port,
+            allow_nonlocal_bind=args.allow_nonlocal_bind,
+        )
+        return 0
+
+    if args.command in {"demo-app-scenario", "app-demo"}:
+        result = run_demo_app_scenario(root)
+        print("demo_app_scenario: ready")
+        print(f"project_id: {result.project_id}")
+        print(f"goal_id: {result.goal_id}")
+        print(f"task_id: {result.task_id}")
+        print(f"delegation_id: {result.delegation_id}")
+        print(f"run_id: {result.run_id}")
+        print(f"project_root: {result.project_root.relative_to(root)}")
+        print(f"implementation_handoff_md: {result.handoff_md.relative_to(root)}")
+        print(f"coder_prep_md: {result.coder_prep_md.relative_to(root)}")
+        print(f"coder_worktree_plan_md: {result.coder_worktree_plan_md.relative_to(root)}")
+        print(f"worktree_approval_id: {result.approval_id}")
+        print("fixture_backed: true")
+        print("provider_calls_taken_by_clankeros: 0")
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
+        return 0
+
+    if args.command == "app-smoke-test":
+        result = run_local_app_smoke_test(root)
+        print(f"app_smoke_test: {result['status']}")
+        for route in result["routes"]:
+            print(f"route {route['route']}: {route['status']}")
+        print("provider_calls_taken_by_clankeros: 0")
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
+        return 0 if result["status"] == "passed" else 1
+
     if args.command == "dashboard":
         dashboard_path = generate_static_dashboard(root)
         print(dashboard_path)
@@ -2667,6 +2745,22 @@ def main(argv: list[str] | None = None) -> int:
         system.initialize()
         try:
             result = prepare_coder_from_handoff(root, system.storage, args.delegation_id)
+        except CoderPrepError as error:
+            print(f"coder_prep_failed: {error}")
+            return 1
+        for line in render_coder_prep_cli_lines(root, result):
+            print(line)
+        return 0
+
+    if args.command in {"coder-prep-from-handoff", "coder-prep-md"}:
+        system = AgentSystem(root)
+        system.initialize()
+        try:
+            result = prepare_coder_from_handoff_markdown(
+                root,
+                system.storage,
+                args.handoff_md,
+            )
         except CoderPrepError as error:
             print(f"coder_prep_failed: {error}")
             return 1

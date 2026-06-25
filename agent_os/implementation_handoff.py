@@ -165,6 +165,8 @@ def render_implementation_handoff_cli_lines(summary: dict[str, Any]) -> list[str
         f"result_summary: {summary['result_summary']}",
         "coder_prep_command: "
         f"python3 -m agent_os.cli coder-prep {summary['delegation_id']}",
+        "coder_prep_from_handoff_command: "
+        f"python3 -m agent_os.cli coder-prep-from-handoff {summary['markdown_path']}",
         "next_recommended_action: implementation_review",
     ]
     if summary.get("error"):
@@ -209,6 +211,10 @@ def render_implementation_handoff_review_lines(
             f"  - scout_relevant_files: {_joined(summary['scout_relevant_files'])}"
         )
         lines.append(f"  - snippets_embedded: {_bool(summary['snippets_embedded'])}")
+        lines.append(
+            "  - coder_prep_from_handoff_command: "
+            f"python3 -m agent_os.cli coder-prep-from-handoff {summary['markdown_path']}"
+        )
         if summary.get("error"):
             lines.append(f"  - error: {summary['error']}")
     return lines
@@ -232,6 +238,8 @@ def render_implementation_handoff_dashboard_lines(
             f"run={summary['run_id']} project={summary['project_id']} "
             "coder_prep_command=python3 -m agent_os.cli coder-prep "
             f"{delegation.id} "
+            "coder_prep_from_handoff_command=python3 -m agent_os.cli coder-prep-from-handoff "
+            f"{summary['markdown_path']} "
             f"context_pack={summary['context_pack_json']} "
             "returned_files_in_inventory="
             f"{_bool(summary['context_pack_returned_files_in_inventory'])} "

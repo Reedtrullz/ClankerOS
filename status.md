@@ -1,5 +1,49 @@
 # Status
 
+## 2026-06-25 Local Operator App MVP
+
+- Added a standard-library local browser operator app with `app`, `local-app`,
+  and `serve` CLI commands. The default bind is `127.0.0.1:8787`; non-local
+  binds are refused unless `--allow-nonlocal-bind` is supplied.
+- Implemented browser routes for `/`, `/workflow`, `/projects`,
+  `/projects/<project_id>`, `/delegations/<delegation_id>`, `/runs/<run_id>`,
+  `/artifacts`, `/health`, and `/demo`. The app surfaces the modern
+  implementation-handoff, coder-prep, worktree, commit, and publication
+  workflow instead of the old proof-ladder-first surface.
+- Added `coder-prep-from-handoff` / `coder-prep-md` so operators can consume a
+  repo-relative `implementation_handoff.md` artifact directly. The command
+  rejects absolute paths and parent traversal, verifies the sibling
+  `implementation_handoff.json`, and writes the same bounded coder-prep
+  packet without source edits, task/run rows, worktrees, approvals, command
+  reruns, network actions, provider calls, or external mutations.
+- Promoted implementation handoffs in the local app dashboard, project pages,
+  delegation pages, safe action forms, and health command list. Handoff
+  readback now prints both delegation-based and markdown-path coder-prep next
+  commands.
+- Added a safe relative-path artifact viewer that rejects absolute paths, `..`,
+  and paths resolving outside the repo root, and renders Markdown, JSON, text,
+  patch, diff, and log files as inert text with truncation.
+- Added `demo-app-scenario` / `app-demo` to create fixture-backed local demo
+  state under `.clanker/demo/`, including a project, goal/task, completed demo
+  delegation, context pack, implementation handoff, coder prep, worktree plan,
+  and pending worktree approval request. Added `app-smoke-test` for route
+  rendering without starting a server.
+- The app writes `.clanker/app/local_app_status.json` from app start or
+  `/health` with route, bind, repo, branch/commit, dirty/untracked, workflow,
+  non-claim, and known-gap metadata.
+- Non-claims: the app does not push, create PRs, deploy, call providers,
+  execute arbitrary commands, start remote workers, expose hosted dashboards,
+  run schedulers, or use the network beyond local loopback.
+- Verification so far:
+  - `python3 -m py_compile agent_os/coder_prep.py agent_os/implementation_handoff.py agent_os/local_app.py agent_os/cli.py tests/test_first_milestone.py`
+  - `python3 -m agent_os.cli coder-prep-from-handoff --help`
+  - `python3 -m agent_os.cli app-smoke-test`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app or default_cli_help or implementation_handoff"` -> `16 passed, 481 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app or default_cli_help or implementation_handoff or coder_worktree or delegation_result or dashboard or inbox or coder_publication"` -> `88 passed, 409 deselected`
+  - `curl -sS --max-time 5 http://127.0.0.1:8787/health` against a local app server returned the health page and `coder-prep-from-handoff` command list entry.
+  - `curl -sS --max-time 5 http://127.0.0.1:8788/workflow` against a local app server returned the workflow page with `coder-prep / coder-prep-from-handoff`.
+  - `python3 -m agent_os.cli dashboard` regenerated `docs/dashboard.md`, and `rg -n "coder-prep-from-handoff|current_handoffs|Implementation Handoff" docs/dashboard.md` showed the markdown-path prep command in the cockpit and Implementation Handoffs section.
+
 ## 2026-06-25 Coder Publication Boundary Tightening
 
 - Tightened the publication boundary against the stricter handoff objective.

@@ -15,6 +15,8 @@ system.
 - `docs/operator-recipes.md` - short recipes for returning to a workspace,
   registering a target repo, planning, running one task, capturing specialist
   input, and publishing a snapshot.
+- `docs/local-app.md` - launch, routes, demo scenario, artifact viewer,
+  health, safe actions, and non-claims for the local browser operator app.
 - `docs/concepts.md` - glossary for goals, tasks, evidence, approvals,
   effects, worktrees, delegations, memory, skills, and non-claims.
 - `docs/architecture.md` - local control plane, runtime artifacts, safety

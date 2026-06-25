@@ -18,6 +18,30 @@ Use this when you are resuming after time away. Read `docs/dashboard.md` and
 Boundary: these commands inspect and generate local state. They do not execute
 tasks, approve work, commit, push, deploy, or call providers.
 
+## Start The Local Operator App
+
+```bash
+python3 -m agent_os.cli app
+open http://127.0.0.1:8787
+```
+
+Use this when you want to inspect the current ClankerOS workflow from a local
+browser instead of stitching together CLI readbacks. Start with `/workflow`,
+then check `/projects`, `/health`, and a delegation or run page.
+
+For a safe dogfooding fixture:
+
+```bash
+python3 -m agent_os.cli demo-app-scenario
+python3 -m agent_os.cli app
+```
+
+Boundary: the app is local-only by default and binds to `127.0.0.1`. It reads
+local SQLite state and repo artifacts, writes a local app status artifact, and
+uses explicit forms for local artifact-producing actions. It does not push,
+create PRs, deploy, call providers, execute arbitrary commands, or use the
+network beyond local browser/server loopback.
+
 ## Start Work On A Target Repo
 
 ```bash
@@ -109,6 +133,7 @@ behavior is unknown unless the adapter writes evidence proving otherwise.
 ```bash
 python3 -m agent_os.cli implementation-handoff subagent_delegation_...
 python3 -m agent_os.cli coder-prep subagent_delegation_...
+python3 -m agent_os.cli coder-prep-from-handoff .clanker/delegations/.../implementation_handoff.md
 python3 -m agent_os.cli coder-worktree-plan subagent_delegation_...
 python3 -m agent_os.cli review run_...
 python3 -m agent_os.cli dashboard
@@ -116,8 +141,10 @@ python3 -m agent_os.cli dashboard
 
 Use this after a read-only scout delegation has produced a readable
 implementation handoff and you want a bounded coding plan before any
-implementation run. The sequence consumes `implementation_handoff.md`, then
-`coder_prep.md`, and leaves JSON/Markdown packets under the delegation run.
+implementation run. You can prepare from the delegation id or directly from
+the repo-relative `implementation_handoff.md`. The sequence consumes that
+handoff, then `coder_prep.md`, and leaves JSON/Markdown packets under the
+delegation run.
 
 Boundary: this recipe prepares operator-review artifacts only. It does not
 create a worktree, dispatch a task, request approval, run commands, edit

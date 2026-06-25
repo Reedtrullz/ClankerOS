@@ -66,6 +66,16 @@ Core layers for the bootstrap:
   local handoff packet with branch, commit, remote, push command, and draft PR
   command while recording `network_actions_taken=0`. The loop does not push or
   open a PR.
+- Local operator app: `app` / `local-app` / `serve` starts a standard-library
+  browser UI on `127.0.0.1:8787` by default. It surfaces the modern
+  project -> goal/task -> scout -> context-pack -> implementation-handoff ->
+  coder-prep -> worktree-plan -> approval -> bounded execution -> commit ->
+  publication handoff path, plus project, delegation/run, artifact, health, and
+  demo pages. The app reads existing SQLite state and repo artifacts, writes a
+  local health/status artifact, and exposes only explicit local forms for safe
+  artifact-producing actions. It does not push, create PRs, deploy, call
+  providers, execute arbitrary commands, or use the network beyond local
+  browser/server loopback.
 - CI/deploy evidence ingestion: an operator can attach CI or deploy proof to a
   GitHub handoff packet with `ci-deploy-evidence`. The record preserves
   provider, external run id, URL, commit, branch, handoff, and JSON evidence
@@ -111,7 +121,11 @@ Core layers for the bootstrap:
   risks, and an operator-review-required future run plan. It is idempotent for
   the same handoff hash and creates no task rows, runs, routing decisions,
   worktrees, effects, approvals, source edits, command reruns, network actions,
-  provider calls, or external mutations. The
+  provider calls, or external mutations. `coder-prep-from-handoff
+  <path/to/implementation_handoff.md>` is the artifact-first equivalent: it
+  rejects absolute paths and parent traversal, reads the sibling
+  `implementation_handoff.json`, verifies the current delegation handoff, and
+  writes the same bounded prep packet with the same zero-effect counters. The
   `coder-worktree-plan <delegation_id>` command consumes the readable
   `coder_prep.md` and writes sibling `coder_worktree_plan.json` and Markdown
   packets with the source prep hash, bounded files, proposed branch/path,

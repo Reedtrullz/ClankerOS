@@ -12,6 +12,11 @@ this reference for advanced blocked-proof work.
 
 ```bash
 python3 -m agent_os.cli init
+python3 -m agent_os.cli app
+python3 -m agent_os.cli app --port 8788
+python3 -m agent_os.cli local-app
+python3 -m agent_os.cli demo-app-scenario
+python3 -m agent_os.cli app-smoke-test
 python3 -m agent_os.cli projects
 python3 -m agent_os.cli project-status <project>
 python3 -m agent_os.cli project-context <project>
@@ -21,6 +26,16 @@ python3 -m agent_os.cli approvals
 python3 -m agent_os.cli queue-health
 python3 -m agent_os.cli handoff-review
 ```
+
+`app` starts the local-only browser operator UI at
+`http://127.0.0.1:8787` by default. Aliases are `local-app` and `serve`.
+It refuses non-local binds unless `--allow-nonlocal-bind` is supplied. The app
+wraps existing local state and artifacts; it does not replace the CLI, push,
+create PRs, deploy, call providers, execute arbitrary commands, or use the
+network beyond local browser/server loopback. `demo-app-scenario` creates a
+fixture-backed local demo under `.clanker/demo/` with project, delegation,
+handoff, coder-prep, worktree-plan, and pending approval state. `app-smoke-test`
+renders the core routes without starting a server.
 
 ## First Loop
 
@@ -100,6 +115,7 @@ python3 -m agent_os.cli run-delegation <delegation_id>
 python3 -m agent_os.cli delegation-result <delegation_id>
 python3 -m agent_os.cli implementation-handoff <delegation_id>
 python3 -m agent_os.cli coder-prep <delegation_id>
+python3 -m agent_os.cli coder-prep-from-handoff <path/to/implementation_handoff.md>
 python3 -m agent_os.cli coder-worktree-plan <delegation_id>
 python3 -m agent_os.cli coder-worktree-approval <delegation_id> --requested-by operator --note "Approve bounded worktree execution"
 python3 -m agent_os.cli approve-coder-worktree <approval_id> --decided-by operator --note "Approved bounded execution"
@@ -151,9 +167,11 @@ points at `context_pack.json` and `context_pack.md` instead of embedding large
 snippets. `implementation-handoff <delegation_id>` parses the artifact and
 prints readability, schema/kind, context-pack validation, top ranked files,
 test hints, scout relevant files, and `snippets_embedded`. Missing or
-unreadable handoffs return non-zero with explicit status. `delegation-result`,
-`review`, `inbox`, and `dashboard` also surface handoff health and validation
-summary.
+unreadable handoffs return non-zero with explicit status. The output includes
+both `coder-prep <delegation_id>` and
+`coder-prep-from-handoff <path/to/implementation_handoff.md>` next commands.
+`delegation-result`, `review`, `inbox`, and `dashboard` also surface handoff
+health and validation summary.
 
 `coder-prep <delegation_id>` consumes the readable `implementation_handoff.md`
 and writes a bounded future coding packet under:
@@ -172,6 +190,16 @@ idempotent for the same handoff hash and reports
 `commands_rerun=0`, `network_actions_taken=0`, and
 `external_mutations_taken=0`. `review` and `dashboard` surface existing coder
 prep packets, but the command does not dispatch work or edit files.
+
+`coder-prep-from-handoff <path/to/implementation_handoff.md>` is the
+artifact-first equivalent. It requires a repo-relative
+`implementation_handoff.md`, rejects absolute paths and parent traversal, reads
+the sibling `implementation_handoff.json` to identify the delegation, and then
+writes the same bounded `coder_prep.json` and `coder_prep.md` packet with the
+same zero-effect counters. It does not create task rows, runs, routing
+decisions, worktrees, approvals, effects, source edits, command reruns,
+network actions, provider calls, commits, pushes, deploys, or external
+mutations.
 
 `coder-worktree-plan <delegation_id>` consumes the readable `coder_prep.md`
 and writes an approval-gated future worktree/run packet beside the prep files:

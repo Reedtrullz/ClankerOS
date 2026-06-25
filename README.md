@@ -6,7 +6,9 @@ explicit, and shows operators what is actually proven before any autonomous
 capability is allowed to act.
 
 ```text
-goal -> task graph -> execution -> verification -> memory -> visibility -> learning
+project -> goal/task -> scout delegation -> context pack -> implementation handoff
+-> coder prep -> coder worktree plan -> approval -> bounded execution
+-> commit request -> local commit -> publication request -> publication handoff
 ```
 
 The project is intentionally conservative. It prefers local state, reportable
@@ -31,6 +33,9 @@ hidden autonomy.
   dispatching work.
 - Generates an operator dashboard and next-iteration packet from current local
   state.
+- Starts a local-only browser operator app with `python3 -m agent_os.cli app`
+  at `http://127.0.0.1:8787`, wrapping existing local state, artifacts, health,
+  workflow, project, delegation/run, artifact, and demo pages.
 - Runs worktree-isolated coding goals, captures diffs and verification output,
   and gates local commits behind explicit approval.
 - Produces GitHub handoff packets after committed local effects, including
@@ -48,6 +53,8 @@ hidden autonomy.
 
 ```bash
 python3 -m agent_os.cli init
+python3 -m agent_os.cli app
+python3 -m agent_os.cli demo-app-scenario
 python3 -m agent_os.cli projects
 python3 -m agent_os.cli dashboard
 python3 -m agent_os.cli iterate
@@ -59,6 +66,7 @@ Then read:
 - [Getting Started](docs/getting-started.md)
 - [Suggested Use](docs/suggested-use.md)
 - [Operator Recipes](docs/operator-recipes.md)
+- [Local Operator App](docs/local-app.md)
 - [Concepts](docs/concepts.md)
 - [Architecture](docs/architecture.md)
 - [Command Reference](docs/reference-commands.md)
@@ -73,13 +81,27 @@ Then read:
 - [Executable Delegation Tutorial](docs/tutorial-executable-delegation.md)
 - [Public Snapshot Tutorial](docs/tutorial-public-snapshot.md)
 
-The primary operator surface is the implementation-handoff workflow: scout a
-repo, inspect the generated handoff, prepare a bounded coder plan, propose an
-approval-gated worktree plan, request explicit approval, run a bounded local
-command in an isolated worktree, review evidence, request and approve a
-separate local commit, create that commit only inside the isolated worktree,
-then request and approve a local-only publication handoff packet with suggested
-push and draft-PR commands.
+The primary operator surface is now the local app plus the CLI. Start the app
+for a browser view of projects, workflow, delegations, runs, health, artifacts,
+and demo state:
+
+```bash
+python3 -m agent_os.cli app
+```
+
+The app is local-only by default, binds to `127.0.0.1`, and refuses non-local
+binds unless `--allow-nonlocal-bind` is explicitly supplied. It does not push,
+create PRs, deploy, call providers, or perform network actions beyond local
+browser/server loopback. Stop it with `Ctrl-C`.
+
+The underlying CLI workflow remains the source of truth: scout a repo, inspect
+the generated handoff, prepare a bounded coder plan from either the delegation
+or the `implementation_handoff.md` artifact, propose an approval-gated
+worktree plan, request explicit approval, run a bounded local command in an
+isolated worktree, review evidence, request and approve a separate local
+commit, create that commit only inside the isolated worktree, then request and
+approve a local-only publication handoff packet with suggested push and
+draft-PR commands.
 
 ```bash
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
@@ -87,6 +109,7 @@ python3 -m agent_os.cli context-pack <delegation_id>
 python3 -m agent_os.cli run-delegation <delegation_id>
 python3 -m agent_os.cli implementation-handoff <delegation_id>
 python3 -m agent_os.cli coder-prep <delegation_id>
+python3 -m agent_os.cli coder-prep-from-handoff <path/to/implementation_handoff.md>
 python3 -m agent_os.cli coder-worktree-plan <delegation_id>
 python3 -m agent_os.cli coder-worktree-approval <delegation_id> --requested-by operator --note "Approve bounded worktree execution"
 python3 -m agent_os.cli approve-coder-worktree <approval_id> --decided-by operator --note "Approved bounded execution"

@@ -7,6 +7,12 @@ from agent_os.dashboard import generate_static_dashboard
 from agent_os.cli import build_parser, main
 from agent_os.engine import AgentSystem
 from agent_os.eval import run_first_milestone_eval
+from agent_os.local_app import (
+    render_local_app_route,
+    resolve_artifact_path,
+    run_demo_app_scenario,
+    validate_bind_host,
+)
 from agent_os.subagent_delegation import record_delegation_result
 from agent_os.storage import Storage, Task
 from agent_os.capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals import (
@@ -3157,9 +3163,12 @@ def test_default_cli_help_prioritizes_handoff_workflow_and_demotes_ladder() -> N
     help_text = parser.format_help()
 
     assert "Primary path: scout a repo" in help_text
+    assert "app" in help_text
+    assert "demo-app-scenario" in help_text
     assert "implementation\nhandoff" in help_text
     assert "implementation-handoff" in help_text
     assert "coder-prep" in help_text
+    assert "coder-prep-from-handoff" in help_text
     assert "coder-worktree-plan" in help_text
     assert "run-delegation" in help_text
     assert "Legacy proof-ladder" in help_text
@@ -3169,6 +3178,147 @@ def test_default_cli_help_prioritizes_handoff_workflow_and_demotes_ladder() -> N
 
     args = parser.parse_args(["capability-activation-tasks"])
     assert args.command == "capability-activation-tasks"
+
+
+def test_local_app_routes_render_modern_workflow_and_health(
+    tmp_path: Path,
+) -> None:
+    AgentSystem(tmp_path).initialize()
+
+    root = render_local_app_route(tmp_path, "/")
+    assert root.status == 200
+    assert "ClankerOS Local Operator" in root.body
+    assert "implementation-handoff" in root.body
+    assert "Recent Implementation Handoffs" in root.body
+    assert "coder-prep" in root.body
+    assert "coder-prep-from-handoff" in root.body
+    assert "coder-publication-handoff" in root.body
+    assert "no push" in root.body
+    assert "no PR creation" in root.body
+    assert "no deploy" in root.body
+    assert "no provider calls" in root.body
+    assert "no network actions except local browser/server loopback" in root.body
+
+    workflow = render_local_app_route(tmp_path, "/workflow")
+    assert workflow.status == 200
+    for label in [
+        "Goal / task",
+        "Implementation handoff",
+        "Coder prep",
+        "Publication handoff",
+        "Manual operator push/PR outside ClankerOS",
+    ]:
+        assert label in workflow.body
+
+    health = render_local_app_route(tmp_path, "/health")
+    assert health.status == 200
+    assert "System Health" in health.body
+    assert "storage_initializes" in health.body
+    assert "app" in health.body
+    assert (tmp_path / ".clanker" / "app" / "local_app_status.json").exists()
+
+    projects = render_local_app_route(tmp_path, "/projects")
+    assert projects.status == 200
+    demo = render_local_app_route(tmp_path, "/demo")
+    assert demo.status == 200
+    assert "demo-app-scenario" in demo.body
+
+
+def test_local_app_artifact_viewer_is_read_only_and_bounded(
+    tmp_path: Path,
+) -> None:
+    AgentSystem(tmp_path).initialize()
+    docs = tmp_path / "docs"
+    docs.mkdir(exist_ok=True)
+    (docs / "sample.md").write_text("# Sample\n", encoding="utf-8")
+    (docs / "sample.json").write_text('{"ok": true}\n', encoding="utf-8")
+    (docs / "sample.txt").write_text("plain text\n", encoding="utf-8")
+
+    markdown = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.md")
+    assert markdown.status == 200
+    assert "# Sample" in markdown.body
+    json_response = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.json")
+    assert json_response.status == 200
+    assert "&quot;ok&quot;: true" in json_response.body
+    text_response = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.txt")
+    assert text_response.status == 200
+    assert "plain text" in text_response.body
+
+    absolute = render_local_app_route(
+        tmp_path,
+        f"/artifacts?path={tmp_path / 'docs' / 'sample.md'}",
+    )
+    assert absolute.status == 400
+    assert "absolute artifact paths are rejected" in absolute.body
+    traversal = render_local_app_route(tmp_path, "/artifacts?path=../README.md")
+    assert traversal.status == 400
+    assert "parent traversal is rejected" in traversal.body
+
+    outside = tmp_path.parent / f"{tmp_path.name}-outside.txt"
+    outside.write_text("outside\n", encoding="utf-8")
+    symlink = docs / "outside.txt"
+    symlink.symlink_to(outside)
+    outside_link = render_local_app_route(tmp_path, "/artifacts?path=docs/outside.txt")
+    assert outside_link.status == 400
+    assert "outside repo root" in outside_link.body
+
+    assert resolve_artifact_path(tmp_path, "docs/sample.md") == docs / "sample.md"
+
+
+def test_local_app_demo_scenario_populates_fixture_state(
+    tmp_path: Path,
+) -> None:
+    result = run_demo_app_scenario(tmp_path)
+
+    assert result.project_id == "local-app-demo"
+    assert result.project_root.exists()
+    assert result.handoff_md.exists()
+    assert result.coder_prep_md.exists()
+    assert result.coder_worktree_plan_md.exists()
+    assert result.approval_id.startswith("coder_worktree_approval_")
+
+    delegation = render_local_app_route(
+        tmp_path,
+        f"/delegations/{result.delegation_id}",
+    )
+    assert delegation.status == 200
+    assert "Implementation Handoff" in delegation.body
+    assert "Coder Prep" in delegation.body
+    assert "Coder Worktree Plan" in delegation.body
+    assert "Safe Local Actions" in delegation.body
+    assert "implementation-handoff" in delegation.body
+    assert "coder-prep-from-handoff" in delegation.body
+
+    project = render_local_app_route(tmp_path, "/projects/local-app-demo")
+    assert project.status == 200
+    assert "local-app-demo" in project.body
+    assert "Implementation Handoffs" in project.body
+    assert "coder-prep-from-handoff" in project.body
+
+
+def test_local_app_cli_commands_and_bind_safety(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    assert main(["--root", str(tmp_path), "app-smoke-test"]) == 0
+    smoke_output = capsys.readouterr().out
+    assert "app_smoke_test: passed" in smoke_output
+    assert "route /workflow: 200" in smoke_output
+    assert "network_actions_taken: 0" in smoke_output
+
+    assert main(["--root", str(tmp_path), "app-demo"]) == 0
+    demo_output = capsys.readouterr().out
+    assert "demo_app_scenario: ready" in demo_output
+    assert "fixture_backed: true" in demo_output
+    assert "network_actions_taken: 0" in demo_output
+
+    try:
+        validate_bind_host("0.0.0.0")
+    except ValueError as error:
+        assert "refusing non-local bind host" in str(error)
+    else:
+        raise AssertionError("expected non-local bind to be rejected")
+    validate_bind_host("0.0.0.0", allow_nonlocal_bind=True)
 
 
 def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
@@ -3310,6 +3460,13 @@ def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
     assert "scout_relevant_files: " in handoff_output
     assert "snippets_embedded: false" in handoff_output
     assert f"coder_prep_command: python3 -m agent_os.cli coder-prep {delegation_id}" in handoff_output
+    handoff_md_path = next(
+        line for line in handoff_output.splitlines() if line.startswith("markdown_path: ")
+    ).split(": ", 1)[1]
+    assert (
+        "coder_prep_from_handoff_command: "
+        f"python3 -m agent_os.cli coder-prep-from-handoff {handoff_md_path}"
+    ) in handoff_output
     assert "next_recommended_action: implementation_review" in handoff_output
 
     state_tables = [
@@ -3321,7 +3478,10 @@ def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
         "approval_requests",
     ]
     before_counts = _table_counts(tmp_path, state_tables)
-    assert main(["--root", str(tmp_path), "coder-prep", delegation_id]) == 0
+    assert (
+        main(["--root", str(tmp_path), "coder-prep-from-handoff", handoff_md_path])
+        == 0
+    )
     prep_output = capsys.readouterr().out
     assert "coder_prep: " in prep_output
     assert f"delegation_id: {delegation_id}" in prep_output
@@ -3367,6 +3527,33 @@ def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
     assert main(["--root", str(tmp_path), "coder-prep", delegation_id]) == 0
     rerun_output = capsys.readouterr().out
     assert "coder_prep: already_recorded" in rerun_output
+    assert _table_counts(tmp_path, state_tables) == before_counts
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-prep-from-handoff",
+                str(tmp_path / handoff_md_path),
+            ]
+        )
+        == 1
+    )
+    absolute_output = capsys.readouterr().out
+    assert "coder_prep_failed: implementation handoff markdown path must be relative" in absolute_output
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-prep-from-handoff",
+                "../implementation_handoff.md",
+            ]
+        )
+        == 1
+    )
+    traversal_output = capsys.readouterr().out
+    assert "coder_prep_failed: implementation handoff markdown path must not contain parent traversal" in traversal_output
     assert _table_counts(tmp_path, state_tables) == before_counts
 
     assert main(["--root", str(tmp_path), "coder-worktree-plan", delegation_id]) == 0
