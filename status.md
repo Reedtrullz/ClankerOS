@@ -1,5 +1,28 @@
 # Status
 
+## 2026-06-26 Local App Health Warning Readback
+
+- Added local app warning readback to `/health` and
+  `.clanker/app/local_app_status.json` so non-local bind opt-ins, dirty
+  tracked files, ahead-of-origin state, and known duplicate untracked files
+  remain visible beyond the root dashboard.
+- This tightens the safety surface required by the local app goal: the app can
+  still be explicitly bound non-locally only by operator opt-in, and the health
+  page/status artifact now preserve that warning when it happens.
+- Focused red coverage first failed because `/health` did not render
+  `Warnings` for `host="0.0.0.0"` and the status artifact had no `warnings`
+  field; the route now renders the warning and writes it into JSON.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health` -> red before implementation, then `1 passed, 497 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_cli_commands_and_bind_safety or local_app_demo_scenario"` -> `3 passed, 495 deselected`
+  - `python3 -m agent_os.cli app-smoke-test` -> rendered the core local app routes with status 200 and zero provider/network/external-mutation counters.
+  - `git diff --check`
+- Non-claims: this is a warning/status readback improvement only; it does not
+  execute work, approve requests, commit, push, create PRs, deploy, call
+  providers, fetch GitHub status, execute arbitrary commands, or perform app
+  network actions beyond local browser/server loopback.
+
 ## 2026-06-26 Local App Project Workflow Index
 
 - Upgraded `/projects` from a bare registered-project list into a read-only

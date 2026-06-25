@@ -528,6 +528,7 @@ def run_demo_app_scenario(root: Path) -> DemoScenarioResult:
 def write_local_app_status(root: Path, *, host: str, port: int) -> Path:
     root = root.resolve()
     state = _repo_state(root)
+    warnings = _warning_items(state, host)
     status = {
         "checked_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "host": host,
@@ -537,6 +538,7 @@ def write_local_app_status(root: Path, *, host: str, port: int) -> Path:
         "commit": state["commit"],
         "dirty_tracked_files": state["dirty_tracked_files"],
         "untracked_files": state["untracked_files"],
+        "warnings": warnings,
         "routes_available": ["/", "/workflow", "/actions", "/verification", "/ci-evidence", "/dogfooding", "/projects", "/delegation-runs", "/delegations/<id>", "/runs/<id>", "/inbox", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
         "supported_workflow_stages": [step[0] for step in WORKFLOW_STEPS],
         "non_claims": NO_EXTERNAL_EFFECT_CLAIMS,
@@ -2047,10 +2049,12 @@ def _health(root: Path, *, host: str, port: int) -> str:
     storage = _storage(root)
     counts = _counts(storage.db_path)
     state = _repo_state(root)
+    warnings = _warning_items(state, host)
     imports = _workflow_import_status()
     return "".join(
         [
             "<section><h1>System Health</h1>",
+            _warnings(warnings),
             _kv(
                 [
                     ("python", sys.version.split()[0]),

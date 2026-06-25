@@ -145,7 +145,10 @@ browser/server loopback. Confirmation pages show submitted payloads before
 local writes, and confirmed actions return an `Action Result Details` page with
 the payload, result fields, artifact links, next-page link, and safety
 boundary. Following the next-page link renders an `Action Notice` banner on
-the target page so the operator keeps context. Stop it with `Ctrl-C`.
+the target page so the operator keeps context. The dashboard and `/health`
+surface the same warning posture for non-local binds, dirty tracked files,
+ahead-of-origin state, and known duplicate untracked files, and the local app
+status artifact records those warnings for later review. Stop it with `Ctrl-C`.
 
 The underlying CLI workflow remains the source of truth: scout a repo, inspect
 the generated handoff, prepare a bounded coder plan from either the delegation

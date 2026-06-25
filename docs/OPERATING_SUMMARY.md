@@ -112,7 +112,8 @@ Core layers for the bootstrap:
   manual browser dogfooding script, and a read-only browser-progress checklist
   for commit/publication handoff status.
   The app reads existing SQLite state and repo artifacts, writes a local
-  health/status artifact, and exposes only explicit local forms for safe
+  health/status artifact with current warning readbacks, and exposes only
+  explicit local forms for safe
   artifact-producing and approval-producing actions. Confirmation pages render
   the submitted action payload and safety boundary before a confirmed local
   write; confirmed action result pages render the submitted payload, local

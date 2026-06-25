@@ -3421,6 +3421,18 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "app" in health.body
     assert "approve-coder-publication" in health.body
     assert (tmp_path / ".clanker" / "app" / "local_app_status.json").exists()
+    nonlocal_health = render_local_app_route(
+        tmp_path,
+        "/health",
+        host="0.0.0.0",
+    )
+    assert nonlocal_health.status == 200
+    assert "Warnings" in nonlocal_health.body
+    assert "App is bound to a non-localhost interface." in nonlocal_health.body
+    nonlocal_status = json.loads(
+        (tmp_path / ".clanker" / "app" / "local_app_status.json").read_text(encoding="utf-8")
+    )
+    assert "App is bound to a non-localhost interface." in nonlocal_status["warnings"]
 
     projects = render_local_app_route(tmp_path, "/projects")
     assert projects.status == 200

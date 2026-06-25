@@ -256,8 +256,10 @@ Visiting `/health` or starting the app writes:
 ```
 
 The status artifact records host, port, repo root, branch, commit,
-dirty/untracked summaries, routes, supported workflow stages, non-claims, and
-known gaps. It does not include secrets.
+dirty/untracked summaries, warning readbacks, routes, supported workflow
+stages, non-claims, and known gaps. `/health` renders the same warnings for
+non-local binds, dirty tracked files, ahead-of-origin state, and known
+duplicate untracked files. The artifact does not include secrets.
 
 ## Stop The App
 
