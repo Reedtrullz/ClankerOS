@@ -36,6 +36,11 @@ python3 -m agent_os.cli demo-app-scenario
 python3 -m agent_os.cli app
 ```
 
+Then open `http://127.0.0.1:8787/demo`. After fixture state exists, the page
+shows direct dogfooding links for the demo project, selected workflow,
+delegation, coder worktree run, review artifact, inbox, approvals, and a
+manual browser script for walking the safe local app path.
+
 Boundary: the app is local-only by default and binds to `127.0.0.1`. It reads
 local SQLite state and repo artifacts, writes a local app status artifact, and
 uses explicit forms for local artifact-producing actions. It does not push,

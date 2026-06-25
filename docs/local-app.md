@@ -65,7 +65,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/incidents` - recent local incidents and evidence links.
 - `/artifacts?path=<relative_path>` - safe read-only artifact viewer.
 - `/health` - Python, git, storage, command, import, route, and counter health.
-- `/demo` - demo scenario instructions.
+- `/demo` - demo scenario instructions plus state-aware dogfooding links after
+  `demo-app-scenario` has created fixture state.
 
 ## Demo Scenario
 
@@ -93,6 +94,13 @@ The demo creates fixture-backed local state under `.clanker/demo/`:
 
 It is local-only. It does not call providers, push, create PRs, deploy, use the
 network, or modify external projects outside the repo demo area.
+
+After running the demo command, open `/demo` in the local app. It reads the
+current fixture state and links directly to the demo project, selected
+workflow, delegation, coder worktree run, review artifact, inbox, approvals,
+and health page. The same page includes a manual browser script for the first
+dogfooding pass through commit request, commit approval, typed local commit,
+publication request, publication approval, and publication handoff.
 
 ## Artifact Viewer
 

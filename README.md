@@ -91,6 +91,11 @@ the operator inbox, approvals, incidents, and demo state:
 python3 -m agent_os.cli app
 ```
 
+For the first manual browser pass, run `python3 -m agent_os.cli
+demo-app-scenario`, open `/demo`, and follow the state-aware dogfooding links
+into the demo project, selected workflow, delegation, coder worktree run,
+review artifact, approvals, and inbox.
+
 The app is local-only by default, binds to `127.0.0.1`, and refuses non-local
 binds unless `--allow-nonlocal-bind` is explicitly supplied. It does not push,
 create PRs, deploy, call providers, or perform network actions beyond local

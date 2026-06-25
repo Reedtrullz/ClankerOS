@@ -39,6 +39,10 @@
   bounded-file-validation, commit, publication, and next-action status.
 - The dashboard now exposes a confirmed `refresh-dashboard-state` action that
   rewrites only `.clanker/app/local_app_status.json` from current local state.
+- `/demo` now becomes a state-aware dogfooding launchpad after
+  `demo-app-scenario`, linking the demo project, selected workflow,
+  delegation, coder worktree run, review artifact, approvals, inbox, and a
+  first manual browser script.
 - Focused app test coverage now walks the browser-route action path from demo
   run detail through commit request, commit approval, isolated local commit,
   publication request, publication approval, and publication handoff.

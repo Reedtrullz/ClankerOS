@@ -3347,6 +3347,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert result.review_path.exists()
     assert result.coder_worktree_run_id in result.review_path.read_text(encoding="utf-8")
 
+    demo = render_local_app_route(tmp_path, "/demo")
+    assert demo.status == 200
+    assert "Demo Dogfooding Links" in demo.body
+    assert "Manual Browser Script" in demo.body
+    assert f"/projects/{result.project_id}" in demo.body
+    assert f"/delegations/{result.delegation_id}" in demo.body
+    assert f"/workflow?delegation_id={result.delegation_id}" in demo.body
+    assert f"/workflow?run_id={result.coder_worktree_run_id}" in demo.body
+    assert f"/runs/{result.coder_worktree_run_id}" in demo.body
+    assert result.review_path.relative_to(tmp_path).as_posix() in demo.body
+
     delegation = render_local_app_route(
         tmp_path,
         f"/delegations/{result.delegation_id}",

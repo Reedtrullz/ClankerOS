@@ -1229,6 +1229,176 @@ def _demo_page(root: Path) -> str:
             "<p>The command creates or reuses a demo project under <code>.clanker/demo/local-app-project</code>, writes context-pack and implementation-handoff fixture artifacts, prepares coder prep and worktree-plan packets, and leaves a pending worktree approval request.</p>",
             _non_claim_banner(),
             "</section>",
+            _demo_dogfooding_state(root),
+        ]
+    )
+
+
+def _demo_dogfooding_state(root: Path) -> str:
+    storage = _storage(root)
+    project = storage.get_registered_project("local-app-demo")
+    if project is None:
+        return "".join(
+            [
+                "<section><h2>Demo Dogfooding Links</h2>",
+                "<p class='muted'>Run <code>python3 -m agent_os.cli demo-app-scenario</code> to create fixture state and unlock direct demo links.</p>",
+                "</section>",
+                _manual_browser_script(None),
+            ]
+        )
+
+    delegations = [
+        delegation
+        for delegation in storage.list_recent_subagent_delegations(limit=None)
+        if _task_project(storage, delegation.parent_task_id) == project.name
+    ]
+    selected_delegation = delegations[0] if delegations else None
+    selected_run = None
+    if selected_delegation is not None:
+        runs = list_coder_worktree_runs(
+            root,
+            delegation_id=selected_delegation.id,
+            limit=20,
+        )
+        selected_run = next((run for run in runs if run.status == "completed"), None)
+        if selected_run is None and runs:
+            selected_run = runs[0]
+
+    links = [f"<a href='/projects/{quote(project.name)}'>Project: {_e(project.name)}</a>"]
+    artifact_lines: list[str] = []
+    approval_lines: list[str] = []
+    review_path = "none"
+
+    if selected_delegation is not None:
+        summary = summarize_implementation_handoff(root, selected_delegation)
+        links.extend(
+            [
+                f"<a href='/delegations/{quote(selected_delegation.id)}'>Delegation: {_e(selected_delegation.id)}</a>",
+                f"<a href='/workflow?delegation_id={quote(selected_delegation.id)}'>Workflow scoped to delegation</a>",
+            ]
+        )
+        artifact_lines.extend(
+            [
+                f"implementation_handoff: {_artifact_link(str(summary['markdown_path']))}",
+                f"context_pack: {_artifact_link(str(summary['context_pack_json']))}",
+            ]
+        )
+        prep_packets = [
+            item
+            for item in list_coder_prep_packets(root)
+            if item.get("source", {}).get("delegation_id") == selected_delegation.id
+        ]
+        plan_packets = [
+            item
+            for item in list_coder_worktree_plan_packets(root)
+            if item.get("source", {}).get("delegation_id") == selected_delegation.id
+        ]
+        artifact_lines.extend(_artifact_links(prep_packets, delegation_id=selected_delegation.id))
+        artifact_lines.extend(_artifact_links(plan_packets, delegation_id=selected_delegation.id))
+        approval_lines.extend(
+            _approval_line(item)
+            for item in list_coder_worktree_approvals(
+                root,
+                delegation_id=selected_delegation.id,
+                status="pending_operator_approval",
+                limit=20,
+            )
+        )
+
+    if selected_run is not None:
+        links.extend(
+            [
+                f"<a href='/runs/{quote(selected_run.id)}'>Coder worktree run: {_e(selected_run.id)}</a>",
+                f"<a href='/workflow?run_id={quote(selected_run.id)}'>Workflow scoped to run</a>",
+            ]
+        )
+        candidate_review = root / "runs" / selected_run.source_run_id / "review.md"
+        if candidate_review.exists():
+            review_path = candidate_review.relative_to(root).as_posix()
+            artifact_lines.append(f"review: {_artifact_link(review_path)}")
+        artifact_lines.extend(
+            [
+                f"diff: {_artifact_link(str(Path(selected_run.evidence_path) / 'diff.patch'))}",
+                f"changed_files: {_artifact_link(str(Path(selected_run.evidence_path) / 'changed_files.json'))}",
+                f"bounded_file_validation: {_artifact_link(str(Path(selected_run.evidence_path) / 'bounded_file_validation.json'))}",
+            ]
+        )
+
+    links.extend(
+        [
+            "<a href='/approvals'>Approvals</a>",
+            "<a href='/inbox'>Inbox</a>",
+            "<a href='/health'>Health</a>",
+        ]
+    )
+
+    state = [
+        ("project_id", project.name),
+        ("delegation_id", selected_delegation.id if selected_delegation else "none"),
+        ("coder_worktree_run_id", selected_run.id if selected_run else "none"),
+        ("review_path", _artifact_link(review_path)),
+        ("fixture_backed", "true"),
+        ("network_actions_taken", "0"),
+        ("external_mutations_taken", "0"),
+    ]
+    return "".join(
+        [
+            "<section><h2>Demo Dogfooding Links</h2>",
+            "<p class='muted'>These links are read from current local fixture state. They do not create state or execute actions.</p>",
+            _kv(state),
+            _ul(links),
+            "</section>",
+            _list_section("Demo Artifacts", artifact_lines),
+            _list_section("Pending Demo Approvals", approval_lines, "/approvals"),
+            _manual_browser_script(
+                {
+                    "project_id": project.name,
+                    "delegation_id": selected_delegation.id if selected_delegation else "",
+                    "run_id": selected_run.id if selected_run else "",
+                    "review_path": review_path,
+                }
+            ),
+        ]
+    )
+
+
+def _manual_browser_script(state: dict[str, str] | None) -> str:
+    delegation_id = (state or {}).get("delegation_id", "")
+    run_id = (state or {}).get("run_id", "")
+    project_id = (state or {}).get("project_id", "local-app-demo")
+    steps = [
+        "Run `python3 -m agent_os.cli demo-app-scenario` to refresh fixture state.",
+        "Start `python3 -m agent_os.cli app` and open `http://127.0.0.1:8787/demo`.",
+        f"Open `/projects/{project_id}` and confirm Project Operator Guidance shows the demo next action.",
+    ]
+    if delegation_id:
+        steps.extend(
+            [
+                f"Open `/workflow?delegation_id={delegation_id}` and scan selected_status tokens.",
+                f"Open `/delegations/{delegation_id}` and inspect handoff, coder prep, worktree plan, and pending approval state.",
+            ]
+        )
+    if run_id:
+        steps.extend(
+            [
+                f"Open `/workflow?run_id={run_id}` and confirm the run-scoped workflow state.",
+                f"Open `/runs/{run_id}` and review diff, changed files, bounded validation, stdout/stderr, and review artifacts.",
+                "From the run page, walk commit request, commit approval, typed local commit, publication request, publication approval, and publication handoff.",
+            ]
+        )
+    steps.extend(
+        [
+            "Open `/approvals` and `/inbox` to verify pending decisions stay visible.",
+            "Stop before any manual push or PR command; ClankerOS only writes the publication handoff and suggested commands.",
+        ]
+    )
+    rendered_steps = [f"{index}. {_e(step)}" for index, step in enumerate(steps, start=1)]
+    return "".join(
+        [
+            "<section><h2>Manual Browser Script</h2>",
+            "<p class='muted'>Use this as the first manual dogfooding pass after a pushed app change.</p>",
+            _ul(rendered_steps),
+            "</section>",
         ]
     )
 
