@@ -57,6 +57,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   their forms appear, required previous artifacts, output artifacts,
   confirmation requirements, local mutation posture, and external-effect
   boundary. It also includes the confirmed dashboard status refresh form.
+- `/verification` - read-only verification handoff showing the checked-in
+  GitHub Actions workflow posture, compact local checks, remote full-suite
+  boundary, and explicit CI non-claims without contacting GitHub.
 - `/projects` - registered project list.
 - `/projects/<project_id>` - project detail with first-class project goals,
   goal-linked tasks, linked artifacts, project-scoped incidents/
@@ -126,6 +129,21 @@ records for the selected fixture run and shows the current status for commit
 request, commit approval, local commit, publication request, publication
 approval, publication handoff, and the final manual push/PR boundary outside
 ClankerOS.
+
+## Verification Handoff
+
+`/verification` is a local read-only testing map. It reads
+`.github/workflows/tests.yml`, shows whether push-to-main, pull-request, and
+manual workflow triggers are configured, lists the GitHub Actions steps, and
+keeps the compact local checks visible:
+
+- `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+- focused local app pytest slices
+- `python3 -m agent_os.cli app-smoke-test`
+- `git diff --check`
+
+The page does not fetch GitHub status. A pushed commit is not CI proof until
+the GitHub Actions run completes successfully.
 
 ## Artifact Viewer
 

@@ -3207,6 +3207,34 @@ def test_local_app_routes_render_modern_workflow_and_health(
     tmp_path: Path,
 ) -> None:
     AgentSystem(tmp_path).initialize()
+    workflow_file = tmp_path / ".github" / "workflows" / "tests.yml"
+    workflow_file.parent.mkdir(parents=True, exist_ok=True)
+    workflow_file.write_text(
+        "\n".join(
+            [
+                "name: Tests",
+                "on:",
+                "  push:",
+                "    branches: [main]",
+                "  pull_request:",
+                "    branches: [main]",
+                "  workflow_dispatch:",
+                "jobs:",
+                "  verify:",
+                "    steps:",
+                "      - name: Compile source and tests",
+                "        run: python -m compileall -q agent_os tests",
+                "      - name: Run local CLI smoke checks",
+                "        run: python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-smoke-test",
+                "      - name: Check whitespace",
+                "        run: git diff --check",
+                "      - name: Run full test suite",
+                "        run: python -m pytest -q",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
     root = render_local_app_route(tmp_path, "/")
     assert root.status == 200
@@ -3259,6 +3287,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert refreshed_status["port"] == 8787
     assert "no push" in refreshed_status["non_claims"]
     assert "/actions" in refreshed_status["routes_available"]
+    assert "/verification" in refreshed_status["routes_available"]
     dashboard_notice = render_local_app_route(
         tmp_path,
         "/?notice=local_app_status%3A%20.clanker/app/local_app_status.json",
@@ -3303,6 +3332,21 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "manual_operator_push_pr_outside_clankeros" in actions.body
     assert "external_effects=none" in actions.body
     assert "no push" in actions.body
+
+    verification = render_local_app_route(tmp_path, "/verification")
+    assert verification.status == 200
+    assert "Verification Handoff" in verification.body
+    assert "GitHub Actions Workflow" in verification.body
+    assert ".github/workflows/tests.yml" in verification.body
+    assert "push_to_main: configured" in verification.body
+    assert "pull_request_to_main: configured" in verification.body
+    assert "workflow_dispatch: configured" in verification.body
+    assert "Run full test suite" in verification.body
+    assert "python -m pytest -q" in verification.body
+    assert "Compact Local Checks" in verification.body
+    assert "python3 -m agent_os.cli app-smoke-test" in verification.body
+    assert "CI proof requires a completed passing GitHub Actions run" in verification.body
+    assert "app_network_actions_taken: 0" in verification.body
 
     health = render_local_app_route(tmp_path, "/health")
     assert health.status == 200
@@ -3858,6 +3902,7 @@ def test_local_app_cli_commands_and_bind_safety(
     assert "app_smoke_test: passed" in smoke_output
     assert "route /workflow: 200" in smoke_output
     assert "route /actions: 200" in smoke_output
+    assert "route /verification: 200" in smoke_output
     assert "route /inbox: 200" in smoke_output
     assert "network_actions_taken: 0" in smoke_output
 

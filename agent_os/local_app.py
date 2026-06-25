@@ -237,6 +237,8 @@ def render_local_app_route(
             )
         if path == "/actions":
             return page("Actions", _actions_page(root))
+        if path == "/verification":
+            return page("Verification", _verification_page(root))
         if path == "/projects":
             return page("Projects", _projects(root))
         if path == "/delegation-runs":
@@ -281,6 +283,7 @@ def run_local_app_smoke_test(root: Path) -> dict[str, Any]:
         "/",
         "/workflow",
         "/actions",
+        "/verification",
         "/projects",
         "/delegation-runs",
         "/inbox",
@@ -528,7 +531,7 @@ def write_local_app_status(root: Path, *, host: str, port: int) -> Path:
         "commit": state["commit"],
         "dirty_tracked_files": state["dirty_tracked_files"],
         "untracked_files": state["untracked_files"],
-        "routes_available": ["/", "/workflow", "/actions", "/projects", "/delegation-runs", "/delegations/<id>", "/runs/<id>", "/inbox", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
+        "routes_available": ["/", "/workflow", "/actions", "/verification", "/projects", "/delegation-runs", "/delegations/<id>", "/runs/<id>", "/inbox", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
         "supported_workflow_stages": [step[0] for step in WORKFLOW_STEPS],
         "non_claims": NO_EXTERNAL_EFFECT_CLAIMS,
         "known_gaps": [
@@ -661,6 +664,86 @@ def _actions_page(root: Path) -> str:
             ),
         ]
     )
+
+
+def _verification_page(root: Path) -> str:
+    workflow_path = root / ".github" / "workflows" / "tests.yml"
+    workflow_text = (
+        workflow_path.read_text(encoding="utf-8") if workflow_path.exists() else ""
+    )
+    workflow_lines = [
+        ("workflow_path", ".github/workflows/tests.yml"),
+        (
+            "workflow_file_status",
+            "available" if workflow_path.exists() else "missing",
+        ),
+        (
+            "push_to_main",
+            "configured" if _workflow_has_push_main(workflow_text) else "missing",
+        ),
+        (
+            "pull_request_to_main",
+            "configured" if _workflow_has_pull_request_main(workflow_text) else "missing",
+        ),
+        (
+            "workflow_dispatch",
+            "configured" if "workflow_dispatch:" in workflow_text else "missing",
+        ),
+        (
+            "full_suite_command",
+            "python -m pytest -q" if "python -m pytest -q" in workflow_text else "missing",
+        ),
+        ("CI_proof_boundary", "CI proof requires a completed passing GitHub Actions run"),
+        ("app_network_actions_taken", "0"),
+        ("app_external_mutations_taken", "0"),
+    ]
+    workflow_step_lines = [
+        "Compile source and tests: python -m compileall -q agent_os tests",
+        "Run local CLI smoke checks: app-smoke-test, demo-app-scenario, app --help, dashboard, iterate",
+        "Check whitespace: git diff --check",
+        "Run full test suite: python -m pytest -q",
+    ]
+    workflow_summary_lines = [
+        f"{key}: {value}" for key, value in workflow_lines
+    ]
+    compact_checks = [
+        "python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py",
+        "python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health",
+        "python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario",
+        "python3 -m pytest tests/test_first_milestone.py -q -k local_app_cli_commands_and_bind_safety",
+        "python3 -m agent_os.cli app-smoke-test",
+        "git diff --check",
+    ]
+    return "".join(
+        [
+            "<section><h1>Verification Handoff</h1>",
+            "<p class='muted'>Read-only testing map for the local operator app. Use compact local checks while GitHub Actions runs the slow full suite after a pushed commit.</p>",
+            _non_claim_banner(),
+            "</section>",
+            "<section><h2>GitHub Actions Workflow</h2>",
+            _kv(workflow_lines),
+            "</section>",
+            _list_section("Workflow Configuration Summary", workflow_summary_lines),
+            _list_section("GitHub Actions Steps", workflow_step_lines),
+            _list_section("Compact Local Checks", compact_checks),
+            _list_section(
+                "Non-Claims",
+                [
+                    "The app does not contact GitHub or fetch CI status.",
+                    "A pushed commit is not CI proof until the GitHub Actions run completes successfully.",
+                    "No push, PR, deploy, provider call, or external mutation is executed by this page.",
+                ],
+            ),
+        ]
+    )
+
+
+def _workflow_has_push_main(workflow_text: str) -> bool:
+    return "push:" in workflow_text and "branches: [main]" in workflow_text
+
+
+def _workflow_has_pull_request_main(workflow_text: str) -> bool:
+    return "pull_request:" in workflow_text and "branches: [main]" in workflow_text
 
 
 def _action_catalog_line(item: tuple[str, str, str, str, str, str, str]) -> str:
@@ -2589,7 +2672,7 @@ def _html_page(root: Path, title: str, content: str, *, status: int = 200) -> Lo
 <body>
   <header>
     <strong>ClankerOS Local Operator</strong>
-    <nav><a href="/">Dashboard</a><a href="/workflow">Workflow</a><a href="/actions">Actions</a><a href="/projects">Projects</a><a href="/delegation-runs">Delegation Runs</a><a href="/inbox">Inbox</a><a href="/approvals">Approvals</a><a href="/incidents">Incidents</a><a href="/health">Health</a><a href="/demo">Demo</a></nav>
+    <nav><a href="/">Dashboard</a><a href="/workflow">Workflow</a><a href="/actions">Actions</a><a href="/verification">Verification</a><a href="/projects">Projects</a><a href="/delegation-runs">Delegation Runs</a><a href="/inbox">Inbox</a><a href="/approvals">Approvals</a><a href="/incidents">Incidents</a><a href="/health">Health</a><a href="/demo">Demo</a></nav>
   </header>
   <main>{content}</main>
 </body>

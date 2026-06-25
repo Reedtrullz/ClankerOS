@@ -37,10 +37,11 @@ fixture-backed local demo under `.clanker/demo/` with project, delegation,
 handoff, coder-prep, worktree-plan, and pending approval state. `app-smoke-test`
 renders the core routes without starting a server. The app includes
 `/delegation-runs` for read-only delegation execution evidence, zero-effect
-counters, retry signals, and next local operator actions, `/inbox` for the
-read-only operator queue, `/approvals` for pending worktree, commit, and
-publication decisions, and `/incidents` for local incident readback; all remain
-local-only operator surfaces.
+counters, retry signals, and next local operator actions, `/verification` for
+the local-vs-GitHub testing handoff without contacting GitHub, `/inbox` for
+the read-only operator queue, `/approvals` for pending worktree, commit, and
+publication decisions, and `/incidents` for local incident readback; all
+remain local-only operator surfaces.
 
 ## First Loop
 

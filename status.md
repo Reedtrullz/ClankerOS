@@ -1,5 +1,31 @@
 # Status
 
+## 2026-06-26 Local App Verification Handoff
+
+- Added `/verification` as a read-only local operator page for the
+  local-vs-GitHub testing split. It reads `.github/workflows/tests.yml`, shows
+  push-to-main, pull-request, and manual workflow trigger posture, lists the
+  GitHub Actions full-suite steps, and keeps compact local checks visible.
+- The page explicitly states that CI proof requires a completed passing GitHub
+  Actions run and that the app does not fetch GitHub status, push, create PRs,
+  deploy, call providers, or mutate external systems.
+- The local app status artifact, nav, and smoke-test route list now include
+  `/verification`.
+- Focused red coverage first failed because `/verification` was not in
+  `routes_available`; the route test now checks the workflow readback and
+  compact-local-check copy.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_cli_commands_and_bind_safety`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario`
+  - `python3 -m agent_os.cli app-smoke-test`
+  - `git diff --check`
+- Non-claims: this is a read-only workflow-file readback only; no GitHub API
+  call, provider call, push, PR, deploy, hosted/remote worker, scheduler,
+  browser/desktop adapter, arbitrary command execution, or non-loopback
+  network capability was added.
+
 ## 2026-06-26 Local App Demo Browser Progress
 
 - Added a read-only `Demo Browser Progress` section to `/demo`. It derives the

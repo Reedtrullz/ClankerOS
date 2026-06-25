@@ -85,8 +85,8 @@ Then read:
 
 The primary operator surface is now the local app plus the CLI. Start the app
 for a browser view of projects, workflow, delegations, delegation runs, coder
-runs, safe action catalog, health, artifacts, the operator inbox, approvals,
-incidents, and demo state:
+runs, safe action catalog, verification handoff, health, artifacts, the
+operator inbox, approvals, incidents, and demo state:
 
 ```bash
 python3 -m agent_os.cli app
@@ -109,6 +109,11 @@ coder prep.
 Use `/actions` when you want a read-only catalog of available local app
 actions, where their forms appear, what previous artifact they require, what
 local artifact or approval they write, and the no-external-effects boundary.
+
+Use `/verification` when you want the local-vs-GitHub testing split in one
+place. It reads the checked-in GitHub Actions workflow, lists the compact local
+checks to run before a push, and states that CI proof requires a completed
+passing GitHub Actions run. The page itself does not contact GitHub.
 
 The app is local-only by default, binds to `127.0.0.1`, and refuses non-local
 binds unless `--allow-nonlocal-bind` is explicitly supplied. It does not push,

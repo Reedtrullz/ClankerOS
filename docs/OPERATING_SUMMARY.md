@@ -88,15 +88,18 @@ Core layers for the bootstrap:
   context-pack and handoff status, zero-effect counters, and next-action
   readback; a read-only `/actions` catalog for safe local action requirements,
   form locations, output artifacts, confirmation posture, and external-effect
-  boundaries; a read-only operator inbox plus local approval and incident pages
-  for pending worktree, commit, and publication decisions, operator-worthy
-  queue items, incident evidence readback, a confirmed dashboard refresh action
-  for rewriting the local app status artifact from current repo and route
-  state, a read-only state-aware root dashboard recommendation that points to
-  the next operator surface, and a state-aware `/demo` launchpad that links the
-  fixture project, selected workflow, delegation, coder worktree run, review
-  artifact, inbox, approvals, first manual browser dogfooding script, and a
-  read-only browser-progress checklist for commit/publication handoff status.
+  boundaries; a read-only `/verification` handoff for the checked-in GitHub
+  Actions workflow, compact local checks, and CI proof boundary without
+  contacting GitHub; a read-only operator inbox plus local approval and
+  incident pages for pending worktree, commit, and publication decisions,
+  operator-worthy queue items, incident evidence readback, a confirmed
+  dashboard refresh action for rewriting the local app status artifact from
+  current repo and route state, a read-only state-aware root dashboard
+  recommendation that points to the next operator surface, and a state-aware
+  `/demo` launchpad that links the fixture project, selected workflow,
+  delegation, coder worktree run, review artifact, inbox, approvals, first
+  manual browser dogfooding script, and a read-only browser-progress checklist
+  for commit/publication handoff status.
   The app reads existing SQLite state and repo artifacts, writes a local
   health/status artifact, and exposes only explicit local forms for safe
   artifact-producing and approval-producing actions. Confirmation pages render
