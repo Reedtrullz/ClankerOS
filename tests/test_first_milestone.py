@@ -3221,6 +3221,36 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "no deploy" in root.body
     assert "no provider calls" in root.body
     assert "no network actions except local browser/server loopback" in root.body
+    assert "Dashboard Refresh" in root.body
+    assert "refresh-dashboard-state" in root.body
+
+    refresh_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/refresh-dashboard-state",
+        method="POST",
+        form={"requested_by": ["operator"]},
+    )
+    assert refresh_confirmation.status == 409
+    assert "Confirm refresh-dashboard-state" in refresh_confirmation.body
+    status_path = tmp_path / ".clanker" / "app" / "local_app_status.json"
+    if status_path.exists():
+        status_path.unlink()
+    refresh_response = render_local_app_route(
+        tmp_path,
+        "/actions/refresh-dashboard-state",
+        method="POST",
+        form={"requested_by": ["operator"], "confirm": ["yes"]},
+    )
+    assert refresh_response.status == 303
+    assert refresh_response.headers
+    assert refresh_response.headers["Location"].startswith(
+        "/?notice=local_app_status"
+    )
+    assert status_path.exists()
+    refreshed_status = json.loads(status_path.read_text(encoding="utf-8"))
+    assert refreshed_status["host"] == "127.0.0.1"
+    assert refreshed_status["port"] == 8787
+    assert "no push" in refreshed_status["non_claims"]
 
     workflow = render_local_app_route(tmp_path, "/workflow")
     assert workflow.status == 200

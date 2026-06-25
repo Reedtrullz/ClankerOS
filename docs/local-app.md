@@ -38,6 +38,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 ## Pages
 
 - `/` - local operator dashboard.
+- `/` includes a confirmed `refresh-dashboard-state` action that rewrites the
+  local `.clanker/app/local_app_status.json` artifact from current repository
+  and route state without providers, pushes, PRs, deploys, or external
+  mutations.
 - `/workflow` - modern handoff/worktree/commit/publication workflow stepper,
   including `coder-prep-from-handoff` as the artifact-first prep route. Add
   `?delegation_id=<id>` or `?run_id=<coder_worktree_run_id>` to show selected
@@ -112,9 +116,10 @@ The first app version exposes low-risk and local artifact-producing actions
 through explicit forms, including context pack generation, coder prep,
 coder prep from `implementation_handoff.md`, coder-worktree plan, worktree
 approval request, commit request, publication request, approval decisions, and
-publication handoff when the required approval exists. Delegation pages also
-expose implementation handoff readback and link the handoff Markdown through
-the safe artifact viewer.
+publication handoff when the required approval exists. The dashboard also
+exposes a confirmed `refresh-dashboard-state` form for rewriting only the
+local app status artifact. Delegation pages also expose implementation handoff
+readback and link the handoff Markdown through the safe artifact viewer.
 
 Run pages for completed coder worktree runs link the local review, `run.json`,
 `diff.patch`, `changed_files.json`, `bounded_file_validation.json`,

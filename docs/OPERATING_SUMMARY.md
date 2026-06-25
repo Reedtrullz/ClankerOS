@@ -77,8 +77,9 @@ Core layers for the bootstrap:
   run detail pages include the same upstream and downstream workflow posture as
   a `Run Workflow State` readback. The app also includes a read-only operator
   inbox plus local approval and incident pages for pending worktree, commit,
-  and publication decisions, operator-worthy queue items, and incident evidence
-  readback.
+  and publication decisions, operator-worthy queue items, incident evidence
+  readback, and a confirmed dashboard refresh action for rewriting the local
+  app status artifact from current repo and route state.
   The app reads existing SQLite state and repo artifacts, writes a local
   health/status artifact, and exposes only explicit local forms for safe
   artifact-producing and approval-producing actions. It does not push, create

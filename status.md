@@ -37,6 +37,8 @@
 - Coder worktree run detail pages now include `Run Workflow State` with
   upstream context-pack, handoff, prep, plan, approval/run,
   bounded-file-validation, commit, publication, and next-action status.
+- The dashboard now exposes a confirmed `refresh-dashboard-state` action that
+  rewrites only `.clanker/app/local_app_status.json` from current local state.
 - Focused app test coverage now walks the browser-route action path from demo
   run detail through commit request, commit approval, isolated local commit,
   publication request, publication approval, and publication handoff.

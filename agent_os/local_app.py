@@ -526,6 +526,13 @@ def _dashboard(root: Path, *, host: str, port: int) -> str:
                 ]
             ),
             "</section>",
+            "<section><h2>Dashboard Refresh</h2>",
+            "<p class='muted'>Refresh the local app status artifact from current repository and route state.</p>",
+            "<form method='post' action='/actions/refresh-dashboard-state'>"
+            "<input type='hidden' name='requested_by' value='operator'>"
+            "<button type='submit'>refresh-dashboard-state</button>"
+            "</form>",
+            "</section>",
             "<section><h2>Modern Workflow</h2>",
             "<p><a href='/workflow'>Open workflow stepper</a></p>",
             _workflow_list(compact=True),
@@ -1238,7 +1245,15 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
         )
     storage = _storage(root)
     try:
-        if action == "context-pack":
+        if action == "refresh-dashboard-state":
+            status_path = write_local_app_status(
+                root,
+                host=DEFAULT_HOST,
+                port=DEFAULT_PORT,
+            )
+            message = f"local_app_status: {status_path.relative_to(root)}"
+            location = "/"
+        elif action == "context-pack":
             delegation_id = _required(form, "delegation_id")
             result = generate_context_pack(root, storage, delegation_id)
             message = f"context_pack: {result.context_pack_id}"
