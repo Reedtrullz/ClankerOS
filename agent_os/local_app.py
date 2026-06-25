@@ -1133,6 +1133,12 @@ def _project_detail(root: Path, project_id: str) -> str:
                 project_id=project_id,
                 task_rows=task_rows,
             ),
+            _project_workflow_launchpad(
+                root,
+                storage,
+                project_id=project_id,
+                delegations=delegations,
+            ),
             _list_section(
                 "Implementation Handoffs",
                 _implementation_handoff_lines(root, storage, project_id=project_id, limit=20),
@@ -1242,6 +1248,48 @@ def _project_operator_guidance(
         "Incidents / Recommendations",
         incident_lines + recommendation_lines,
         "/incidents" if incidents else None,
+    )
+
+
+def _project_workflow_launchpad(
+    root: Path,
+    storage: Storage,
+    *,
+    project_id: str,
+    delegations: list[Any],
+) -> str:
+    coder_runs = [
+        item
+        for item in list_coder_worktree_runs(root, limit=100)
+        if item.project_id == project_id
+    ]
+    project_lines = [
+        "project_workflow_stage: project_ready",
+        "<a href='/workflow'>open full workflow stepper</a>",
+        "<a href='/actions'>open safe action catalog</a>",
+        "<a href='/dogfooding'>open manual dogfooding checklist</a>",
+        "<a href='/verification'>open verification handoff</a>",
+    ]
+    delegation_lines = [
+        f"<a href='/delegations/{quote(delegation.id)}'>{_e(delegation.id)}</a>: "
+        f"<a href='/workflow?delegation_id={quote(delegation.id)}'>selected workflow</a> "
+        f"status={_e(delegation.status)} title={_e(delegation.title)}"
+        for delegation in delegations[:10]
+    ]
+    run_lines = [
+        f"<a href='/runs/{quote(run.id)}'>{_e(run.id)}</a>: "
+        f"<a href='/workflow?run_id={quote(run.id)}'>selected workflow</a> "
+        f"status={_e(run.status)} changed_files={_e(str(len(run.changed_files)))}"
+        for run in coder_runs[:10]
+    ]
+    return "".join(
+        [
+            "<section><h2>Project Workflow Launchpad</h2>",
+            _ul(project_lines),
+            "</section>",
+            _list_section("Launch Delegation Workflows", delegation_lines),
+            _list_section("Launch Coder Run Workflows", run_lines),
+        ]
     )
 
 

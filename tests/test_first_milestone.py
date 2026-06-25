@@ -3606,6 +3606,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Project Operator Guidance" in project.body
     assert "project_next_recommended_action" in project.body
     assert "request_commit_for_reviewed_run" in project.body
+    assert "Project Workflow Launchpad" in project.body
+    assert "project_workflow_stage: project_ready" in project.body
+    assert f"/workflow?delegation_id={result.delegation_id}" in project.body
+    assert f"/workflow?run_id={result.coder_worktree_run_id}" in project.body
+    assert f"/delegations/{result.delegation_id}" in project.body
+    assert f"/runs/{result.coder_worktree_run_id}" in project.body
+    assert "/actions" in project.body
+    assert "/dogfooding" in project.body
     assert "Incidents / Recommendations" in project.body
     assert "open_project_incidents" in project.body
     assert "task_recommendations" in project.body

@@ -71,7 +71,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/projects` - registered project list.
 - `/projects/<project_id>` - project detail with first-class project goals,
   goal-linked tasks, linked artifacts, project-scoped incidents/
-  recommendations, and next recommended operator action.
+  recommendations, next recommended operator action, and a project workflow
+  launchpad that links the project to selected delegation/run workflow views,
+  the safe action catalog, dogfooding checklist, and verification handoff.
 - `/delegation-runs` - read-only delegation execution run index with evidence
   directories, result artifacts, context-pack and implementation-handoff links,
   zero-effect counters, retry signals, and next recommended local operator

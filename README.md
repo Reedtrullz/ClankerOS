@@ -111,6 +111,11 @@ execution evidence, context packs, implementation handoffs, zero-effect
 counters, retry signals, and next local operator actions before handing work to
 coder prep.
 
+Use `/projects/<project_id>` as the project-level launchpad. It shows goals,
+tasks, delegations, artifacts, project guidance, scoped workflow links for
+delegations and coder runs, and links back to safe actions, dogfooding, and
+verification without executing external effects.
+
 Use `/actions` when you want a read-only catalog of available local app
 actions, where their forms appear, what previous artifact they require, what
 local artifact or approval they write, and the no-external-effects boundary.

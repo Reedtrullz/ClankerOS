@@ -1,5 +1,29 @@
 # Status
 
+## 2026-06-26 Local App Project Workflow Launchpad
+
+- Added a `Project Workflow Launchpad` to `/projects/<project_id>` so the
+  project page now links directly to the full workflow stepper, scoped
+  delegation workflow views, scoped coder run workflow views, `/actions`,
+  `/dogfooding`, and `/verification`.
+- The launchpad makes the first product step, `project -> goal/task`, a
+  stronger entry point into the modern local app workflow instead of requiring
+  the operator to jump through dashboard or artifact lists first.
+- Focused red coverage first failed because the demo project page did not
+  render `Project Workflow Launchpad`; the project page now renders
+  `project_workflow_stage: project_ready` plus selected workflow links for the
+  demo delegation and coder run.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario` -> `1 passed, 497 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario or local_app_routes_render_modern_workflow_and_health or local_app_cli_commands_and_bind_safety"` -> `3 passed, 495 deselected`
+  - `python3 -m agent_os.cli app-smoke-test` -> rendered the core local app routes with status 200 and zero provider/network/external-mutation counters.
+  - `git diff --check`
+- Non-claims: this is a read-only navigation improvement only; it does not
+  execute work, approve requests, commit, push, create PRs, deploy, call
+  providers, fetch GitHub status, execute arbitrary commands, or perform
+  non-loopback network actions.
+
 ## 2026-06-26 Local App CI In-Progress Guidance
 
 - Updated `/verification` so the local app reads and displays the checked-in

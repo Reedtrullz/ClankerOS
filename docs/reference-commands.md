@@ -36,8 +36,10 @@ network beyond local browser/server loopback. `demo-app-scenario` creates a
 fixture-backed local demo under `.clanker/demo/` with project, delegation,
 handoff, coder-prep, worktree-plan, and pending approval state. `app-smoke-test`
 renders the core routes without starting a server. The app includes
-`/delegation-runs` for read-only delegation execution evidence, zero-effect
-counters, retry signals, and next local operator actions, `/verification` for
+`/projects/<project_id>` for project goals, tasks, artifacts, guidance, and
+workflow launch links, `/delegation-runs` for read-only delegation execution
+evidence, zero-effect counters, retry signals, and next local operator actions,
+`/verification` for
 the local-vs-GitHub testing handoff, job timeout, and in-progress-run
 non-proof guidance without contacting GitHub, `/ci-evidence` for locally
 recorded operator-supplied CI/deploy evidence, `/dogfooding` for
