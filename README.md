@@ -118,7 +118,10 @@ local artifact or approval they write, and the no-external-effects boundary.
 Use `/verification` when you want the local-vs-GitHub testing split in one
 place. It reads the checked-in GitHub Actions workflow, lists the compact local
 checks to run before a push, and states that CI proof requires a completed
-passing GitHub Actions run. The page itself does not contact GitHub.
+passing GitHub Actions run. It also shows the configured job timeout and makes
+clear that an in-progress GitHub run is pending proof, not CI proof, so you can
+wait on GitHub instead of rerunning the full suite locally. The page itself
+does not contact GitHub.
 
 Use `/ci-evidence` after recording CI proof with `ci-deploy-evidence`. It shows
 operator-supplied GitHub Actions/deploy evidence already stored in local

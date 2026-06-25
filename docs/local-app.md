@@ -143,7 +143,8 @@ ClankerOS.
 `/verification` is a local read-only testing map. It reads
 `.github/workflows/tests.yml`, shows whether push-to-main, pull-request, and
 manual workflow triggers are configured, lists the GitHub Actions steps, and
-keeps the compact local checks visible:
+keeps the compact local checks visible. It also shows the workflow job timeout
+and labels an in-progress GitHub run as pending proof rather than CI proof:
 
 - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
 - focused local app pytest slices
@@ -151,7 +152,10 @@ keeps the compact local checks visible:
 - `git diff --check`
 
 The page does not fetch GitHub status. A pushed commit is not CI proof until
-the GitHub Actions run completes successfully.
+the GitHub Actions run completes successfully. If a GitHub run is still in
+progress, keep waiting on GitHub instead of rerunning the full suite locally;
+if it fails or reaches the timeout, inspect the failed job log and fix that
+specific CI issue.
 
 `/ci-evidence` is the read-only companion for proof that has already been
 recorded locally with `ci-deploy-evidence`. It shows the provider, status,

@@ -699,6 +699,8 @@ def _verification_page(root: Path) -> str:
             "full_suite_command",
             "python -m pytest -q" if "python -m pytest -q" in workflow_text else "missing",
         ),
+        ("job_timeout_minutes", _workflow_timeout_minutes(workflow_text)),
+        ("in_progress_run_status", "not_ci_proof"),
         ("CI_proof_boundary", "CI proof requires a completed passing GitHub Actions run"),
         ("app_network_actions_taken", "0"),
         ("app_external_mutations_taken", "0"),
@@ -731,6 +733,14 @@ def _verification_page(root: Path) -> str:
             "</section>",
             _list_section("Workflow Configuration Summary", workflow_summary_lines),
             _list_section("GitHub Actions Steps", workflow_step_lines),
+            _list_section(
+                "Remote Run State Guidance",
+                [
+                    "If a GitHub run is still in progress, keep waiting on GitHub rather than rerunning the full suite locally.",
+                    "If the GitHub run fails, inspect the failed job log and fix that specific failure before pushing another app slice.",
+                    "If the GitHub run reaches the job timeout, treat it as missing full-suite proof and narrow the slow or blocked test in CI.",
+                ],
+            ),
             _list_section("Compact Local Checks", compact_checks),
             _list_section(
                 "Recorded CI Evidence",
@@ -879,6 +889,14 @@ def _workflow_has_push_main(workflow_text: str) -> bool:
 
 def _workflow_has_pull_request_main(workflow_text: str) -> bool:
     return "pull_request:" in workflow_text and "branches: [main]" in workflow_text
+
+
+def _workflow_timeout_minutes(workflow_text: str) -> str:
+    for line in workflow_text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("timeout-minutes:"):
+            return stripped.split(":", 1)[1].strip() or "missing"
+    return "missing"
 
 
 def _action_catalog_line(item: tuple[str, str, str, str, str, str, str]) -> str:

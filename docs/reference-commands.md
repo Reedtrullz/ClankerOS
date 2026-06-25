@@ -38,8 +38,9 @@ handoff, coder-prep, worktree-plan, and pending approval state. `app-smoke-test`
 renders the core routes without starting a server. The app includes
 `/delegation-runs` for read-only delegation execution evidence, zero-effect
 counters, retry signals, and next local operator actions, `/verification` for
-the local-vs-GitHub testing handoff without contacting GitHub, `/ci-evidence`
-for locally recorded operator-supplied CI/deploy evidence, `/dogfooding` for
+the local-vs-GitHub testing handoff, job timeout, and in-progress-run
+non-proof guidance without contacting GitHub, `/ci-evidence` for locally
+recorded operator-supplied CI/deploy evidence, `/dogfooding` for
 the first manual browser checklist before push, `/inbox` for
 the read-only operator queue, `/approvals` for pending worktree, commit, and
 publication decisions, and `/incidents` for local incident readback; all

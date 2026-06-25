@@ -3221,6 +3221,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
                 "  workflow_dispatch:",
                 "jobs:",
                 "  verify:",
+                "    timeout-minutes: 45",
                 "    steps:",
                 "      - name: Compile source and tests",
                 "        run: python -m compileall -q agent_os tests",
@@ -3379,6 +3380,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workflow_dispatch: configured" in verification.body
     assert "Run full test suite" in verification.body
     assert "python -m pytest -q" in verification.body
+    assert "job_timeout_minutes: 45" in verification.body
+    assert "in_progress_run_status: not_ci_proof" in verification.body
+    assert "If a GitHub run is still in progress, keep waiting on GitHub rather than rerunning the full suite locally." in verification.body
     assert "Compact Local Checks" in verification.body
     assert "python3 -m agent_os.cli app-smoke-test" in verification.body
     assert "CI proof requires a completed passing GitHub Actions run" in verification.body

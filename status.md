@@ -1,5 +1,28 @@
 # Status
 
+## 2026-06-26 Local App CI In-Progress Guidance
+
+- Updated `/verification` so the local app reads and displays the checked-in
+  GitHub Actions job timeout as `job_timeout_minutes` and labels
+  `in_progress_run_status: not_ci_proof`.
+- Added read-only operator guidance for slow remote runs: keep waiting on
+  GitHub while a run is in progress; if it fails or reaches the timeout,
+  inspect the failed job log and fix that specific CI issue before pushing
+  another app slice.
+- Focused red coverage first failed because `/verification` did not expose
+  `job_timeout_minutes: 45`; the page now renders the timeout and in-progress
+  proof boundary.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health` -> `1 passed, 497 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_cli_commands_and_bind_safety or github_actions"` -> `3 passed, 495 deselected`
+  - `python3 -m agent_os.cli app-smoke-test` -> rendered `/verification` and the core local app routes with status 200 and zero provider/network/external-mutation counters.
+  - `git diff --check`
+- Non-claims: this is a read-only workflow-file readback and guidance update
+  only; the app still does not fetch GitHub status, push, create PRs, deploy,
+  call providers, execute arbitrary commands, or perform non-loopback network
+  actions.
+
 ## 2026-06-26 Local App CI Evidence Records
 
 - Added `/ci-evidence` as a read-only local operator page for

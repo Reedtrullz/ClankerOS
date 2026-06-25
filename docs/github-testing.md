@@ -24,6 +24,11 @@ python -m pytest -q
 The temporary root keeps CI smoke commands such as `dashboard` and `iterate`
 from rewriting repository docs with runner-specific paths.
 
+The job has a 45-minute timeout. While a run is still in progress, treat it as
+pending proof and keep waiting on GitHub instead of rerunning the full suite
+locally. If the run fails or reaches the timeout, inspect the failed job log
+and fix that specific CI failure before pushing another app slice.
+
 ## Fast Local Loop
 
 Before pushing, use focused checks that match the files you touched:
