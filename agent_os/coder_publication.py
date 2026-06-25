@@ -92,6 +92,7 @@ def request_coder_publication(
 ) -> CoderPublicationRequestResult:
     root = root.resolve()
     _ensure_tables(storage)
+    _validate_required_note(note)
     _validate_remote_name(remote)
     _validate_branch_name(target_branch, failure_class="unsafe_target_branch")
     context = _load_commit_context(root, storage, run_id)
@@ -239,6 +240,7 @@ def create_coder_publication_handoff(
     if current_hash != publication.source_commit_artifact_sha256:
         _block_publication(storage, publication.id, failure_class="source_hash_mismatch")
         raise CoderPublicationError(f"source_hash_mismatch: {publication.id}")
+    _validate_approved_request_hash(root, storage, publication)
     if publication.status == "ready_for_operator" and (root / publication.handoff_artifact_path).exists():
         return CoderPublicationHandoffResult(
             publication=publication,
@@ -251,8 +253,11 @@ def create_coder_publication_handoff(
     handoff_path = root / publication.handoff_artifact_path
     _write_json(handoff_path, payload)
     _write_text(handoff_path.with_suffix(".md"), _render_publication_handoff_markdown(payload))
-    body_path = Path(payload["handoff_body_path"])
-    _write_text(body_path, _render_publication_pr_body(payload))
+    body_path = Path(payload["pr_body_path"])
+    try:
+        _write_text(body_path, _render_publication_pr_body(payload))
+    except OSError as error:
+        raise CoderPublicationError("handoff_body_write_failed") from error
     updated = _mark_publication_ready(storage, publication.id, handoff_at=payload["created_at"])
     return CoderPublicationHandoffResult(
         publication=updated,
@@ -395,6 +400,7 @@ def render_coder_publication_handoff_cli_lines(
         f"target_branch: {publication.target_branch}",
         f"suggested_push_command: {payload['suggested_push_command']}",
         f"suggested_draft_pr_command: {payload['suggested_draft_pr_command']}",
+        f"pr_body_path: {payload['pr_body_path']}",
         f"handoff_body_path: {payload['handoff_body_path']}",
         f"artifact: {result.artifact_path}",
         "push_created: false",
@@ -435,6 +441,7 @@ def render_coder_publication_handoff_dashboard_lines(root: Path) -> list[str]:
             f"handoff={publication.handoff_artifact_path} "
             f"suggested_push_command={payload.get('suggested_push_command', 'unavailable')} "
             f"suggested_draft_pr_command={payload.get('suggested_draft_pr_command', 'unavailable')} "
+            f"pr_body_path={payload.get('pr_body_path', 'unavailable')} "
             f"handoff_body_path={payload.get('handoff_body_path', 'unavailable')} "
             "next_action=operator_may_manually_push_or_create_draft_pr "
             "push_created=false pr_created=false deploy_created=false"
@@ -464,6 +471,7 @@ def render_coder_publication_review_lines(root: Path, delegation_id: str) -> lis
                 f"  - coder_publication_handoff: {publication.handoff_artifact_path if handoff_available else 'none'}",
                 f"  - suggested_push_command: {payload.get('suggested_push_command', 'none') if handoff_available else 'none'}",
                 f"  - suggested_draft_pr_command: {payload.get('suggested_draft_pr_command', 'none') if handoff_available else 'none'}",
+                f"  - pr_body_path: {payload.get('pr_body_path', 'none') if handoff_available else 'none'}",
                 f"  - handoff_body_path: {payload.get('handoff_body_path', 'none') if handoff_available else 'none'}",
                 "  - push_created: false",
                 "  - pr_created: false",
@@ -861,6 +869,29 @@ def _validate_commit_context(root: Path, context: dict[str, Any]) -> None:
         raise CoderPublicationError("publication_state_already_mutated")
 
 
+def _validate_approved_request_hash(
+    root: Path,
+    storage: Storage,
+    publication: CoderPublicationRecord,
+) -> None:
+    request_path = root / publication.request_artifact_path
+    decision_path = root / (publication.decision_artifact_path or "")
+    if not request_path.exists():
+        raise CoderPublicationError("publication request artifact missing")
+    if not decision_path.exists():
+        raise CoderPublicationError("publication decision artifact missing")
+    try:
+        decision_payload = json.loads(decision_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise CoderPublicationError("publication decision artifact unreadable") from error
+    approved_request_hash = str(decision_payload.get("source_request_sha256") or "")
+    if not approved_request_hash:
+        raise CoderPublicationError("approved_request_hash_missing")
+    if _sha256_path(request_path) != approved_request_hash:
+        _block_publication(storage, publication.id, failure_class="source_request_hash_mismatch")
+        raise CoderPublicationError(f"source_request_hash_mismatch: {publication.id}")
+
+
 def _publication_request_payload(
     *,
     root: Path,
@@ -922,7 +953,7 @@ def _publication_handoff_payload(
 ) -> dict[str, Any]:
     payload = context["commit_payload"]
     handoff_path = root / publication.handoff_artifact_path
-    body_path = handoff_path.with_name("publication_handoff_body.md")
+    body_path = handoff_path.with_name("pr_body.md")
     title = str(payload.get("commit_message") or f"Publish coder worktree commit {publication.commit_sha}")
     push_command = f"git push {publication.remote} {publication.branch_name}"
     draft_pr_command = (
@@ -951,6 +982,7 @@ def _publication_handoff_payload(
             {"valid": not payload.get("outside_allowed_files", []), "status": "unknown"},
         ),
         "diff_path": str(context["commit_artifact_path"].with_name("committed_diff.patch")),
+        "pr_body_path": str(body_path),
         "suggested_push_command": push_command,
         "suggested_draft_pr_command": draft_pr_command,
         "handoff_body_path": str(body_path),
@@ -1012,6 +1044,11 @@ def _validate_branch_name(branch_name: str, *, failure_class: str) -> None:
         raise CoderPublicationError(failure_class)
 
 
+def _validate_required_note(note: str) -> None:
+    if not note.strip():
+        raise CoderPublicationError("publication_request_note_required")
+
+
 def _safe_git_name(value: str) -> bool:
     if not value or value.startswith("-") or value.endswith("/") or ".." in value or "@{" in value:
         return False
@@ -1032,12 +1069,18 @@ def _publication_failure_class_from_error(error_text: str) -> str:
         ("unsafe_branch", "unsafe_branch"),
         ("unsafe_git_state", "unsafe_git_state"),
         ("source_hash_mismatch", "source_hash_mismatch"),
+        ("source_request_hash_mismatch", "source_request_hash_mismatch"),
         ("approved publication request is missing", "missing_publication_approval"),
         ("publication request is not approved", "publication_not_approved"),
         ("publication approval is not pending", "publication_not_pending"),
+        ("publication_request_note_required", "publication_request_note_required"),
         ("outside_allowed_files_present", "outside_allowed_files_present"),
         ("publication_state_already_mutated", "publication_state_already_mutated"),
         ("publication request artifact missing", "evidence_write_failed"),
+        ("publication decision artifact missing", "evidence_write_failed"),
+        ("publication decision artifact unreadable", "evidence_write_failed"),
+        ("approved_request_hash_missing", "source_request_hash_mismatch"),
+        ("handoff_body_write_failed", "evidence_write_failed"),
     ]
     for needle, failure_class in mapping:
         if needle in error_text:
@@ -1059,6 +1102,7 @@ def _publication_failure_next_action(failure_class: str) -> str:
         "publication_not_approved",
         "publication_not_pending",
         "source_hash_mismatch",
+        "source_request_hash_mismatch",
     }:
         return "review_and_request_publication"
     return "inspect_publication_gate_failure"
@@ -1153,6 +1197,7 @@ def _render_publication_handoff_markdown(payload: dict[str, Any]) -> str:
             f"- diff_path: {payload['diff_path']}",
             f"- suggested_push_command: {payload['suggested_push_command']}",
             f"- suggested_draft_pr_command: {payload['suggested_draft_pr_command']}",
+            f"- pr_body_path: {payload['pr_body_path']}",
             f"- handoff_body_path: {payload['handoff_body_path']}",
             "",
             "## Non-Claims",

@@ -1,5 +1,28 @@
 # Status
 
+## 2026-06-25 Coder Publication Boundary Tightening
+
+- Tightened the publication boundary against the stricter handoff objective.
+  `coder-publication-request` now requires a non-empty request note in addition
+  to the existing local commit, safe worktree, safe branch/remote/target, file
+  bounds, and zero-action counter checks.
+- `coder-publication-handoff` now revalidates the approved publication request
+  artifact hash as well as the commit artifact hash before writing a handoff.
+  If the request JSON drifts after approval, the publication row is blocked
+  with `source_request_hash_mismatch`.
+- Publication handoff packets now write the PR body draft to
+  `coder_publication/pr_body.md` and expose first-class `pr_body_path`, while
+  retaining `handoff_body_path` as a compatibility alias.
+- Focused tests now cover empty request notes, unsafe target branches, prior
+  push/PR/deploy/provider/network/external-mutation counters, source request
+  drift, handoff idempotency, and the PR body path.
+- Verification:
+  - `python3 -m py_compile agent_os/coder_publication.py agent_os/cli.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'coder_publication'` -> `4 passed, 489 deselected`
+  - `python3 -m py_compile agent_os/*.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q` -> `493 passed in 1021.37s`
+  - `python3 -m pytest -q` -> `493 passed in 1029.20s`
+
 ## 2026-06-25 Coder Publication Boundary
 
 - Added the next approval-gated boundary after isolated coder worktree local
@@ -8,17 +31,19 @@
 - Publication requests validate the existing `coder_commit/commit.json`, commit
   SHA existence inside the isolated worktree, `.agent/worktrees` safety, safe
   remote and target branch names, committed files within `allowed_files`, and
-  zero push/PR/deploy/provider/network/external-mutation counters before
-  writing `coder_publication/publication_request.json/.md`.
+  zero push/PR/deploy/provider/network/external-mutation counters, and require
+  a non-empty request note before writing
+  `coder_publication/publication_request.json/.md`.
 - Publication approval writes `coder_publication/publication_decision.json/.md`
   without pushing or creating a PR. Publication handoff revalidates the source
-  commit artifact hash and writes `publication_handoff.json`,
-  `publication_handoff.md`, and `publication_handoff_body.md` with suggested
-  `git push` and draft `gh pr create` commands only. The handoff packet and
-  Markdown include verification status and bounded-file validation status.
+  request hash and commit artifact hash, then writes
+  `publication_handoff.json`, `publication_handoff.md`, and `pr_body.md` with
+  suggested `git push` and draft `gh pr create` commands only. The handoff
+  packet and Markdown include verification status and bounded-file validation
+  status.
 - `review`, `dashboard`, `inbox`, and `delegation-result` now surface
   publication request/approval/handoff state, including the suggested push
-  command, suggested draft PR command, handoff body path, and zero-action
+  command, suggested draft PR command, PR body path, and zero-action
   counters. README, command reference, executable-delegation tutorial,
   operator recipes, operating summary, docs index, and `docs/status.md` now
   show the modern publication boundary.

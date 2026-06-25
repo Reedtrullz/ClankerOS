@@ -250,9 +250,9 @@ boundary. `approve-coder-publication <publication_request_id>` records the
 operator decision without pushing or creating a PR.
 `coder-publication-handoff <coder_worktree_run_id>` writes
 `coder_publication/publication_handoff.json`, a Markdown handoff, and a PR body
-draft with suggested `git push` and draft `gh pr create` commands. It does not
-execute those commands, contact GitHub, push, create a PR, deploy, call
-providers, or mutate external systems.
+draft at `coder_publication/pr_body.md` with suggested `git push` and draft
+`gh pr create` commands. It does not execute those commands, contact GitHub,
+push, create a PR, deploy, call providers, or mutate external systems.
 Add `--working-directory project_root` when configuring the adapter if the
 local executor should run from the target repository instead of the ClankerOS
 system root.

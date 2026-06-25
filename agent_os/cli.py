@@ -2273,6 +2273,7 @@ def main(argv: list[str] | None = None) -> int:
                 f"branch={publication.branch_name} handoff={publication.handoff_artifact_path} "
                 f"suggested_push_command={handoff_payload.get('suggested_push_command', 'unavailable')} "
                 f"suggested_draft_pr_command={handoff_payload.get('suggested_draft_pr_command', 'unavailable')} "
+                f"pr_body_path={handoff_payload.get('pr_body_path', 'unavailable')} "
                 f"handoff_body_path={handoff_payload.get('handoff_body_path', 'unavailable')}"
             )
         print("network_actions_taken: 0")
@@ -2624,6 +2625,10 @@ def main(argv: list[str] | None = None) -> int:
             print(
                 "coder_publication_handoff_body_path: "
                 f"{handoff_payload.get('handoff_body_path', 'unavailable')}"
+            )
+            print(
+                "coder_publication_pr_body_path: "
+                f"{handoff_payload.get('pr_body_path', 'unavailable')}"
             )
             print(
                 "coder_publication_handoff_available: "

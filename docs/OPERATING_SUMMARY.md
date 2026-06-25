@@ -152,16 +152,17 @@ Core layers for the bootstrap:
   providers, or mutates external systems. A committed coder worktree run can
   then enter `coder-publication-request <coder_worktree_run_id>`, which
   validates the local commit artifact, commit SHA, safe worktree, safe remote
-  and target branch names, committed-file bounds, and zero push/PR/deploy
-  counters before writing `coder_publication/publication_request.json/.md`.
+  and target branch names, committed-file bounds, zero push/PR/deploy
+  counters, and a non-empty operator note before writing
+  `coder_publication/publication_request.json/.md`.
   `approve-coder-publication` writes the local decision without pushing or
   creating a PR. `coder-publication-handoff` requires the approved request,
-  revalidates the commit artifact hash, and writes
-  `publication_handoff.json`, `publication_handoff.md`, and a PR body draft
-  with suggested push and draft-PR commands only. It does not execute those
-  commands, run `git fetch`, contact GitHub, deploy, call providers, use the
-  network, or mutate external systems. Run review, delegation-result, inbox,
-  and dashboard output surface coder commit requests, approvals, local commits,
+  revalidates the request artifact hash and commit artifact hash, and writes
+  `publication_handoff.json`, `publication_handoff.md`, and `pr_body.md` with
+  suggested push and draft-PR commands only. It does not execute those commands,
+  run `git fetch`, contact GitHub, deploy, call providers, use the network, or
+  mutate external systems. Run review, delegation-result, inbox, and dashboard
+  output surface coder commit requests, approvals, local commits,
   publication requests, and publication handoffs.
   Adapters run from the system root by default and can opt into
   `--working-directory project_root` for repo scouting. It supports shell

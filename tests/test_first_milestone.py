@@ -4689,18 +4689,27 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     assert handoff_payload["suggested_push_command"] == f"git push origin {branch_name}"
     assert (
         handoff_payload["suggested_draft_pr_command"]
-        == f"gh pr create --draft --base main --head {branch_name} --title \"Implement bounded change from approved worktree run\" --body-file {handoff_payload['handoff_body_path']}"
+        == f"gh pr create --draft --base main --head {branch_name} --title \"Implement bounded change from approved worktree run\" --body-file {handoff_payload['pr_body_path']}"
     )
+    assert handoff_payload["pr_body_path"].endswith("coder_publication/pr_body.md")
+    assert handoff_payload["handoff_body_path"] == handoff_payload["pr_body_path"]
     assert handoff_payload["push_created"] is False
     assert handoff_payload["pr_created"] is False
     assert handoff_payload["deploy_created"] is False
     assert handoff_payload["provider_calls_taken_by_clankeros"] == 0
     assert handoff_payload["network_actions_taken"] == 0
     assert handoff_payload["external_mutations_taken"] == 0
-    assert Path(handoff_payload["handoff_body_path"]).exists()
+    assert Path(handoff_payload["pr_body_path"]).exists()
     handoff_markdown = handoff_artifact.with_suffix(".md").read_text(encoding="utf-8")
     assert "verification_status: passed" in handoff_markdown
     assert "bounded_file_validation_status: passed" in handoff_markdown
+    assert "pr_body_path:" in handoff_markdown
+    first_handoff_text = handoff_artifact.read_text(encoding="utf-8")
+
+    assert main(["--root", str(tmp_path), "coder-publication-handoff", run_id]) == 0
+    repeat_handoff_output = capsys.readouterr().out
+    assert "coder_publication_handoff: already_ready" in repeat_handoff_output
+    assert handoff_artifact.read_text(encoding="utf-8") == first_handoff_text
 
     assert main(["--root", str(tmp_path), "review", run_id]) == 0
     review_output = capsys.readouterr().out
@@ -4730,6 +4739,7 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     assert "coder_publication_handoffs: 1" in inbox_output
     assert f"suggested_push_command=git push origin {branch_name}" in inbox_output
     assert "suggested_draft_pr_command=gh pr create --draft --base main" in inbox_output
+    assert "pr_body_path=" in inbox_output
 
     assert main(["--root", str(tmp_path), "delegation-result", delegation_id]) == 0
     delegation_output = capsys.readouterr().out
@@ -4744,6 +4754,7 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
         "coder_publication_suggested_draft_pr_command: "
         "gh pr create --draft --base main" in delegation_output
     )
+    assert "coder_publication_pr_body_path: " in delegation_output
     assert f"run_id: {source_run_id}" in delegation_output
 
 
@@ -4822,6 +4833,50 @@ def test_coder_publication_request_blocks_missing_commit_and_unsafe_names(
     )
     unsafe_remote_output = capsys.readouterr().out
     assert "coder_publication_request_failed: unsafe_remote" in unsafe_remote_output
+
+    assert (
+        main(
+            [
+                "--root",
+                str(committed_root),
+                "coder-publication-request",
+                run_id,
+                "--requested-by",
+                "operator",
+                "--remote",
+                "origin",
+                "--target-branch",
+                "main;git-push",
+                "--note",
+                "should fail",
+            ]
+        )
+        == 1
+    )
+    unsafe_target_output = capsys.readouterr().out
+    assert "coder_publication_request_failed: unsafe_target_branch" in unsafe_target_output
+
+    assert (
+        main(
+            [
+                "--root",
+                str(committed_root),
+                "coder-publication-request",
+                run_id,
+                "--requested-by",
+                "operator",
+                "--remote",
+                "origin",
+                "--target-branch",
+                "main",
+                "--note",
+                "",
+            ]
+        )
+        == 1
+    )
+    empty_note_output = capsys.readouterr().out
+    assert "coder_publication_request_failed: publication_request_note_required" in empty_note_output
 
 
 def test_coder_publication_request_blocks_tampered_commit_artifact(
@@ -4927,6 +4982,44 @@ def test_coder_publication_request_blocks_tampered_commit_artifact(
     outside_output = capsys.readouterr().out
     assert "coder_publication_request_failed: outside_allowed_files_present" in outside_output
 
+    for mutated_key, mutated_value in (
+        ("push_created", True),
+        ("pr_created", True),
+        ("deploy_created", True),
+        ("provider_calls_taken_by_clankeros", 1),
+        ("network_actions_taken", 1),
+        ("external_mutations_taken", 1),
+    ):
+        mutated_payload = {**commit_payload, mutated_key: mutated_value}
+        commit_artifact.write_text(
+            json.dumps(mutated_payload, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        assert (
+            main(
+                [
+                    "--root",
+                    str(tmp_path),
+                    "coder-publication-request",
+                    run_id,
+                    "--requested-by",
+                    "operator",
+                    "--remote",
+                    "origin",
+                    "--target-branch",
+                    "main",
+                    "--note",
+                    "should fail",
+                ]
+            )
+            == 1
+        )
+        mutated_output = capsys.readouterr().out
+        assert (
+            "coder_publication_request_failed: publication_state_already_mutated"
+            in mutated_output
+        )
+
 
 def test_coder_publication_handoff_blocks_without_approval_and_source_drift(
     tmp_path: Path,
@@ -4961,6 +5054,51 @@ def test_coder_publication_handoff_blocks_without_approval_and_source_drift(
     drift_output = capsys.readouterr().out
     assert "coder_publication_handoff_failed: source_hash_mismatch" in drift_output
     assert publication_request_id in drift_output
+
+    request_drift_root = tmp_path / "request-drift"
+    request_drift_root.mkdir()
+    (
+        _source_run_id,
+        _delegation_id,
+        _approval_id,
+        request_drift_run_id,
+        request_drift_evidence_dir,
+        _worktree_path,
+        _repo_path,
+        _commit_sha,
+        _parent_sha,
+        _branch_name,
+    ) = _commit_completed_coder_worktree(request_drift_root, capsys)
+    request_drift_publication_id = _request_and_approve_coder_publication(
+        request_drift_root,
+        capsys,
+        request_drift_run_id,
+    )
+    request_artifact = (
+        request_drift_evidence_dir
+        / "coder_publication"
+        / "publication_request.json"
+    )
+    request_payload = json.loads(request_artifact.read_text(encoding="utf-8"))
+    request_payload["tampered"] = True
+    request_artifact.write_text(
+        json.dumps(request_payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(request_drift_root),
+                "coder-publication-handoff",
+                request_drift_run_id,
+            ]
+        )
+        == 1
+    )
+    request_drift_output = capsys.readouterr().out
+    assert "coder_publication_handoff_failed: source_request_hash_mismatch" in request_drift_output
+    assert request_drift_publication_id in request_drift_output
 
 
 def test_commit_coder_worktree_requires_approved_request_and_nonempty_message(

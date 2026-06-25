@@ -318,7 +318,7 @@ operator flow.
 the isolated local coder worktree commit. It requires a valid
 `coder_commit/commit.json`, verifies the commit SHA exists in the isolated
 worktree, checks committed files remain inside `allowed_files`, validates safe
-remote and target branch names, and writes:
+remote and target branch names, requires a non-empty request note, and writes:
 
 ```text
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_request.json
@@ -341,13 +341,13 @@ The approval decision does not push, create a PR, deploy, call providers, or
 use the network.
 
 `coder-publication-handoff <coder_worktree_run_id>` requires an approved
-publication request, revalidates the commit artifact hash and commit SHA, then
-writes local suggested commands only:
+publication request, revalidates the request artifact hash, commit artifact
+hash, and commit SHA, then writes local suggested commands only:
 
 ```text
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_handoff.json
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_handoff.md
-.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_handoff_body.md
+.clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/pr_body.md
 ```
 
 The handoff includes `git push <remote> <branch>` and a draft `gh pr create`
