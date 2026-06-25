@@ -3330,6 +3330,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "coder-prep-from-handoff" in delegation.body
     assert "coder-worktree-approval" in delegation.body
     assert result.coder_worktree_run_id in delegation.body
+    assert "Workflow Readiness" in delegation.body
+    assert "context_pack_status" in delegation.body
+    assert "context_pack_returned_files_in_inventory" in delegation.body
+    assert "pending_worktree_approvals" in delegation.body
+    assert "completed_worktree_runs" in delegation.body
+    assert "next_recommended_action" in delegation.body
+    assert "request_commit_for_reviewed_run" in delegation.body
 
     project = render_local_app_route(tmp_path, "/projects/local-app-demo")
     assert project.status == 200
@@ -3364,8 +3371,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "git_status.txt" in run_page.body
     assert "review.md" in run_page.body
     assert "coder-commit-request" in run_page.body
-    assert "commit-coder-worktree" in run_page.body
-    assert "coder-publication-request" in run_page.body
+    assert "commit-coder-worktree" not in run_page.body
+    assert "coder-publication-request" not in run_page.body
+    assert "coder-publication-handoff" not in run_page.body
 
     commit_message = "Implement bounded change from approved worktree run"
     commit_request_confirmation = render_local_app_route(
@@ -3431,6 +3439,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
         },
     )
     assert commit_approval_response.status == 303
+    run_page_after_commit_approval = render_local_app_route(
+        tmp_path,
+        f"/runs/{result.coder_worktree_run_id}",
+    )
+    assert run_page_after_commit_approval.status == 200
+    assert "Confirmed Local Commit Action" in run_page_after_commit_approval.body
+    assert "commit-coder-worktree" in run_page_after_commit_approval.body
+    assert (
+        "creates one local commit only inside the isolated coder worktree"
+        in run_page_after_commit_approval.body
+    )
+    assert "coder-publication-handoff" not in run_page_after_commit_approval.body
 
     commit_confirmation = render_local_app_route(
         tmp_path,
@@ -3467,6 +3487,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ]
     assert len(committed) == 1
     assert committed[0].commit_sha
+    run_page_after_commit = render_local_app_route(
+        tmp_path,
+        f"/runs/{result.coder_worktree_run_id}",
+    )
+    assert run_page_after_commit.status == 200
+    assert "Publication Request Action" in run_page_after_commit.body
+    assert "coder-publication-request" in run_page_after_commit.body
+    assert "coder-publication-handoff" not in run_page_after_commit.body
 
     publication_request = render_local_app_route(
         tmp_path,
@@ -3528,6 +3556,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
         },
     )
     assert publication_approval.status == 303
+    run_page_after_publication_approval = render_local_app_route(
+        tmp_path,
+        f"/runs/{result.coder_worktree_run_id}",
+    )
+    assert run_page_after_publication_approval.status == 200
+    assert "Publication Handoff Action" in run_page_after_publication_approval.body
+    assert "coder-publication-handoff" in run_page_after_publication_approval.body
+
     publication_handoff_confirmation = render_local_app_route(
         tmp_path,
         "/actions/coder-publication-handoff",

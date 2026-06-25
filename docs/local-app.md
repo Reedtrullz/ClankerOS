@@ -43,7 +43,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/projects` - registered project list.
 - `/projects/<project_id>` - project detail and linked artifacts.
 - `/delegations/<delegation_id>` - delegation, handoff, prep, worktree, commit,
-  and publication state.
+  and publication state, including a compact workflow-readiness summary and
+  next recommended operator action.
 - `/runs/<run_id>` - run or coder-worktree run detail.
 - `/inbox` - read-only operator queue for steering reviews, approval requests,
   incidents, delegations, coder runs, commits, and publication handoffs.
@@ -109,11 +110,14 @@ the safe artifact viewer.
 Run pages for completed coder worktree runs link the local review, `run.json`,
 `diff.patch`, `changed_files.json`, `bounded_file_validation.json`,
 `git_status.txt`, stdout/stderr, and verification output before showing
-approval forms. `commit-coder-worktree` is exposed only as an explicit
-confirmed local action with a typed commit message that must match the
-approved request. It creates a commit only inside the isolated coder worktree
-after the existing commit gate re-checks review, source hashes, branch/HEAD,
-changed files, bounded-file validation, and verifier state.
+state-aware forms. The initial reviewed run page exposes a commit-request form
+only. `commit-coder-worktree` appears only after commit approval and is still
+an explicit confirmed local action with a typed commit message that must match
+the approved request. Publication request appears only after the isolated local
+commit is recorded, and publication handoff appears only after publication
+approval. The commit action creates a commit only inside the isolated coder
+worktree after the existing commit gate re-checks review, source hashes,
+branch/HEAD, changed files, bounded-file validation, and verifier state.
 
 The `/inbox`, `/approvals`, and `/incidents` pages are local operator surfaces.
 The inbox is read-only and mirrors the CLI's operator-worthy queue without

@@ -765,6 +765,7 @@ def _delegation_detail(root: Path, delegation_id: str) -> str:
         ),
         "</section>",
         _handoff_block(summary),
+        _delegation_workflow_readiness(root, delegation, summary),
         _list_section("Coder Prep", _artifact_links(list_coder_prep_packets(root), delegation_id=delegation_id)),
         _list_section("Coder Worktree Plan", _artifact_links(list_coder_worktree_plan_packets(root), delegation_id=delegation_id)),
         _list_section("Worktree Approvals", [_approval_line(item) for item in list_coder_worktree_approvals(root, delegation_id=delegation_id, limit=20)]),
@@ -773,7 +774,6 @@ def _delegation_detail(root: Path, delegation_id: str) -> str:
         _list_section("Publication Requests / Handoffs", [_publication_line(root, item) for item in list_coder_publications(root, delegation_id=delegation_id, limit=20)]),
         _safe_action_forms(
             delegation_id=delegation_id,
-            run_id=str(run_id),
             handoff_md=str(summary["markdown_path"]),
         ),
     ]
@@ -839,7 +839,7 @@ def _run_detail(root: Path, run_id: str) -> str:
                 ],
             )
         )
-        parts.append(_run_action_forms(coder_run.id))
+        parts.append(_run_action_forms(root, coder_run.id))
     parts.append("</section>")
     return "".join(parts)
 
@@ -1085,26 +1085,47 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
     )
 
 
-def _safe_action_forms(*, delegation_id: str, run_id: str, handoff_md: str) -> str:
+def _safe_action_forms(*, delegation_id: str, handoff_md: str) -> str:
     return f"""
     <section><h2>Safe Local Actions</h2>
-      <p class="muted">Artifact-producing actions require an explicit confirmation page. Execution, local commit, push, PR, deploy, provider, and arbitrary command actions are not exposed here.</p>
+      <p class="muted">Delegation-scoped artifact and approval actions require an explicit confirmation page. Worktree execution, local commit, publication handoff, push, PR, deploy, provider, and arbitrary command actions are not exposed here.</p>
       {_form('implementation-handoff', {'delegation_id': delegation_id})}
       {_form('context-pack', {'delegation_id': delegation_id})}
       {_form('coder-prep', {'delegation_id': delegation_id})}
       {_form('coder-prep-from-handoff', {'handoff_md': handoff_md})}
       {_form('coder-worktree-plan', {'delegation_id': delegation_id})}
       {_form('coder-worktree-approval', {'delegation_id': delegation_id, 'note': 'Approve bounded worktree execution from local app'})}
-      {_form('coder-publication-handoff', {'run_id': run_id})}
     </section>
     """
 
 
-def _run_action_forms(run_id: str) -> str:
-    return "".join(
-        [
-            "<section><h2>Run Approval Actions</h2>",
-            "<p class='muted'>These forms create local approval/request artifacts only. They do not stage, commit, push, create PRs, deploy, call providers, or use the network.</p>",
+def _run_action_forms(root: Path, run_id: str) -> str:
+    commit_approvals = [
+        item
+        for item in list_coder_worktree_commit_approvals(root, limit=50)
+        if item.run_id == run_id
+    ]
+    publications = [
+        item
+        for item in list_coder_publications(root, limit=50)
+        if item.run_id == run_id
+    ]
+    pending_commit = [item for item in commit_approvals if item.status == "pending_operator_approval"]
+    approved_commit = [item for item in commit_approvals if item.status == "approved"]
+    committed = [item for item in commit_approvals if item.status == "committed"]
+    pending_publication = [
+        item for item in publications if item.status == "pending_operator_approval"
+    ]
+    approved_publication = [item for item in publications if item.status == "approved"]
+    ready_publication = [
+        item for item in publications if item.status == "ready_for_operator"
+    ]
+    sections: list[str] = [
+        "<section><h2>Run Approval Actions</h2>",
+        "<p class='muted'>These forms create local approval/request artifacts only. They do not stage, commit, push, create PRs, deploy, call providers, or use the network.</p>",
+    ]
+    if not commit_approvals:
+        sections.append(
             _input_form(
                 "coder-commit-request",
                 {"run_id": run_id, "requested_by": "operator"},
@@ -1112,26 +1133,74 @@ def _run_action_forms(run_id: str) -> str:
                     "message": "Implement bounded change from approved worktree run",
                     "note": "Request local commit after review",
                 },
-            ),
-            _input_form(
-                "coder-publication-request",
-                {
-                    "run_id": run_id,
-                    "requested_by": "operator",
-                    "remote": "origin",
-                    "target_branch": "main",
-                },
-                {"note": "Request publication handoff"},
-            ),
-            _input_form(
-                "commit-coder-worktree",
-                {"run_id": run_id, "committed_by": "operator"},
-                {"message": "Implement bounded change from approved worktree run"},
-            ),
-            _form("coder-publication-handoff", {"run_id": run_id}),
-            "</section>",
-        ]
-    )
+            )
+        )
+    elif pending_commit:
+        sections.append(
+            f"<p class='muted'>commit_request_pending: {_e(pending_commit[0].id)}</p>"
+        )
+    elif approved_commit:
+        sections.append(
+            f"<p class='muted'>commit_request_approved: {_e(approved_commit[0].id)}</p>"
+        )
+    elif committed:
+        sections.append(
+            f"<p class='muted'>local_commit_recorded: {_e(committed[0].commit_sha or 'unknown')}</p>"
+        )
+    if committed and not publications:
+        sections.extend(
+            [
+                "<h3>Publication Request Action</h3>",
+                "<p class='muted'>This writes a local publication approval request. It does not push, create a PR, deploy, call providers, or use the network.</p>",
+                _input_form(
+                    "coder-publication-request",
+                    {
+                        "run_id": run_id,
+                        "requested_by": "operator",
+                        "remote": "origin",
+                        "target_branch": "main",
+                    },
+                    {"note": "Request publication handoff"},
+                ),
+            ]
+        )
+    elif pending_publication:
+        sections.append(
+            f"<p class='muted'>publication_request_pending: {_e(pending_publication[0].id)}</p>"
+        )
+    elif approved_publication:
+        sections.append(
+            f"<p class='muted'>publication_request_approved: {_e(approved_publication[0].id)}</p>"
+        )
+    elif ready_publication:
+        sections.append(
+            "<p class='muted'>publication_handoff_ready: "
+            f"{_artifact_link(ready_publication[0].handoff_artifact_path)}</p>"
+        )
+    sections.append("</section>")
+    if approved_commit:
+        sections.extend(
+            [
+                "<section><h2>Confirmed Local Commit Action</h2>",
+                "<p class='muted'>This creates one local commit only inside the isolated coder worktree after the existing commit gate re-checks review, source hashes, branch/HEAD, changed files, bounded-file validation, and verifier state. It does not push, create PRs, deploy, call providers, or use the network.</p>",
+                _input_form(
+                    "commit-coder-worktree",
+                    {"run_id": run_id, "committed_by": "operator"},
+                    {"message": "Implement bounded change from approved worktree run"},
+                ),
+                "</section>",
+            ]
+        )
+    if approved_publication:
+        sections.extend(
+            [
+                "<section><h2>Publication Handoff Action</h2>",
+                "<p class='muted'>This writes local publication handoff and PR-body artifacts with suggested manual commands only. It does not push, create a PR, deploy, call providers, or use the network.</p>",
+                _form("coder-publication-handoff", {"run_id": run_id}),
+                "</section>",
+            ]
+        )
+    return "".join(sections)
 
 
 def _pending_approval_lines(root: Path) -> list[str]:
@@ -1595,6 +1664,181 @@ def _handoff_block(summary: dict[str, Any]) -> str:
             ("snippets_embedded", str(summary["snippets_embedded"]).lower()),
         ]
     ) + "</section>"
+
+
+def _delegation_workflow_readiness(
+    root: Path,
+    delegation: Any,
+    summary: dict[str, Any],
+) -> str:
+    delegation_id = delegation.id
+    prep_packets = list_coder_prep_packets(root)
+    delegation_prep = [
+        item
+        for item in prep_packets
+        if item.get("source", {}).get("delegation_id") == delegation_id
+    ]
+    plan_packets = list_coder_worktree_plan_packets(root)
+    delegation_plans = [
+        item
+        for item in plan_packets
+        if item.get("source", {}).get("delegation_id") == delegation_id
+    ]
+    worktree_approvals = list_coder_worktree_approvals(
+        root,
+        delegation_id=delegation_id,
+        limit=50,
+    )
+    worktree_runs = list_coder_worktree_runs(
+        root,
+        delegation_id=delegation_id,
+        limit=50,
+    )
+    commit_approvals = list_coder_worktree_commit_approvals(
+        root,
+        delegation_id=delegation_id,
+        limit=50,
+    )
+    publications = list_coder_publications(
+        root,
+        delegation_id=delegation_id,
+        limit=50,
+    )
+    completed_runs = [item for item in worktree_runs if item.status == "completed"]
+    reviewed_runs = [
+        item
+        for item in completed_runs
+        if (root / "runs" / item.source_run_id / "review.md").exists()
+    ]
+    committed = [item for item in commit_approvals if item.status == "committed"]
+    ready_publications = [
+        item for item in publications if item.status == "ready_for_operator"
+    ]
+    return "<section><h2>Workflow Readiness</h2>" + _kv(
+        [
+            ("context_pack_status", _artifact_status(root, summary["context_pack_json"])),
+            ("context_pack_path", _artifact_link(summary["context_pack_json"])),
+            ("context_pack_markdown", _artifact_link(summary["context_pack_md"])),
+            (
+                "context_pack_returned_files_in_inventory",
+                str(summary.get("context_pack_returned_files_in_inventory")).lower(),
+            ),
+            (
+                "context_pack_returned_files_missing",
+                _joined(summary.get("context_pack_returned_files_missing")),
+            ),
+            ("implementation_handoff_status", str(summary["status"])),
+            ("implementation_handoff_path", _artifact_link(summary["markdown_path"])),
+            ("coder_prep_packets", str(len(delegation_prep))),
+            ("coder_worktree_plans", str(len(delegation_plans))),
+            (
+                "pending_worktree_approvals",
+                str(_count_status(worktree_approvals, "pending_operator_approval")),
+            ),
+            (
+                "approved_worktree_approvals",
+                str(_count_status(worktree_approvals, "approved")),
+            ),
+            ("completed_worktree_runs", str(len(completed_runs))),
+            ("reviewed_completed_worktree_runs", str(len(reviewed_runs))),
+            (
+                "pending_commit_approvals",
+                str(_count_status(commit_approvals, "pending_operator_approval")),
+            ),
+            (
+                "approved_commit_approvals",
+                str(_count_status(commit_approvals, "approved")),
+            ),
+            ("local_commits", str(len(committed))),
+            (
+                "pending_publication_approvals",
+                str(_count_status(publications, "pending_operator_approval")),
+            ),
+            (
+                "approved_publication_approvals",
+                str(_count_status(publications, "approved")),
+            ),
+            ("publication_handoffs", str(len(ready_publications))),
+            (
+                "next_recommended_action",
+                _delegation_next_action(
+                    root,
+                    summary=summary,
+                    prep_count=len(delegation_prep),
+                    plan_count=len(delegation_plans),
+                    worktree_approvals=worktree_approvals,
+                    worktree_runs=worktree_runs,
+                    commit_approvals=commit_approvals,
+                    publications=publications,
+                ),
+            ),
+        ]
+    ) + "</section>"
+
+
+def _delegation_next_action(
+    root: Path,
+    *,
+    summary: dict[str, Any],
+    prep_count: int,
+    plan_count: int,
+    worktree_approvals: list[Any],
+    worktree_runs: list[Any],
+    commit_approvals: list[Any],
+    publications: list[Any],
+) -> str:
+    if _artifact_status(root, summary["context_pack_json"]) == "missing":
+        return "generate_context_pack"
+    if summary["status"] != "readable":
+        return "run_delegation_or_review_implementation_handoff"
+    if prep_count == 0:
+        return "prepare_coder_from_handoff"
+    if plan_count == 0:
+        return "prepare_coder_worktree_plan"
+    completed_runs = [item for item in worktree_runs if item.status == "completed"]
+    reviewed_runs = [
+        item
+        for item in completed_runs
+        if (root / "runs" / item.source_run_id / "review.md").exists()
+    ]
+    if reviewed_runs and not commit_approvals:
+        return "request_commit_for_reviewed_run"
+    if _count_status(commit_approvals, "pending_operator_approval"):
+        return "approve_or_reject_commit_request"
+    if _count_status(commit_approvals, "approved"):
+        return "commit_approved_worktree"
+    if _count_status(commit_approvals, "committed") and not publications:
+        return "request_publication_handoff"
+    if _count_status(publications, "pending_operator_approval"):
+        return "approve_or_reject_publication_request"
+    if _count_status(publications, "approved"):
+        return "prepare_publication_handoff"
+    if _count_status(publications, "ready_for_operator"):
+        return "manual_operator_push_pr_outside_clankeros"
+    if _count_status(worktree_approvals, "pending_operator_approval"):
+        return "decide_pending_worktree_approval"
+    if _count_status(worktree_approvals, "approved") and not worktree_runs:
+        return "run_approved_worktree_from_cli"
+    return "review_delegation_state"
+
+
+def _artifact_status(root: Path, relative_path: object) -> str:
+    path = str(relative_path)
+    if not path or path == "none":
+        return "none"
+    return "available" if (root / path).exists() else "missing"
+
+
+def _count_status(items: list[Any], status: str) -> int:
+    return sum(1 for item in items if item.status == status)
+
+
+def _joined(value: object) -> str:
+    if isinstance(value, list):
+        return ", ".join(str(item) for item in value) or "none"
+    if value in (None, "", "none"):
+        return "none"
+    return str(value)
 
 
 def _workflow_list(*, compact: bool) -> str:

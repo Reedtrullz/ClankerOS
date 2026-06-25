@@ -16,6 +16,14 @@
 - Run detail pages now link the review, `run.json`, `diff.patch`,
   `changed_files.json`, `bounded_file_validation.json`, `git_status.txt`,
   stdout/stderr, and verification output before showing local approval forms.
+- Delegation detail pages now include a compact `Workflow Readiness` block for
+  context-pack availability, handoff readability, coder prep, worktree plan,
+  approvals, completed/reviewed worktree runs, commit/publication state, and
+  the next recommended operator action.
+- Run action forms are now state-aware: reviewed runs first show only commit
+  request, the local commit action appears only after commit approval,
+  publication request appears only after the isolated local commit is recorded,
+  and publication handoff appears only after publication approval.
 - Focused app test coverage now walks the browser-route action path from demo
   run detail through commit request, commit approval, isolated local commit,
   publication request, publication approval, and publication handoff.
