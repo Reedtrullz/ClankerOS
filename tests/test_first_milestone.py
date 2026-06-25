@@ -3368,6 +3368,19 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "publication_handoff_status" in workflow_for_delegation.body
     assert "next_recommended_action" in workflow_for_delegation.body
     assert "request_commit_for_reviewed_run" in workflow_for_delegation.body
+    for expected_step_status in [
+        "selected_status",
+        "task_available",
+        "delegation_completed",
+        "context_pack_available",
+        "handoff_readable",
+        "coder_prep_available",
+        "worktree_plan_available",
+        "bounded_file_validation_available",
+        "commit_request_none",
+        "publication_handoff_missing",
+    ]:
+        assert expected_step_status in workflow_for_delegation.body
 
     workflow_for_run = render_local_app_route(
         tmp_path,

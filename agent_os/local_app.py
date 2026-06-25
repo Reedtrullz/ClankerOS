@@ -553,12 +553,17 @@ def _workflow(
     delegation_id: str | None = None,
     run_id: str | None = None,
 ) -> str:
+    selected_statuses = _workflow_step_statuses(
+        root,
+        delegation_id=delegation_id,
+        run_id=run_id,
+    )
     return "".join(
         [
             "<section><h1>Modern Operator Workflow</h1>",
             _non_claim_banner(),
             _selected_workflow_state(root, delegation_id=delegation_id, run_id=run_id),
-            _workflow_list(compact=False),
+            _workflow_list(compact=False, selected_statuses=selected_statuses),
             "</section>",
         ]
     )
@@ -2086,6 +2091,142 @@ def _selected_workflow_state(
     ) + "</section>"
 
 
+def _workflow_step_statuses(
+    root: Path,
+    *,
+    delegation_id: str | None = None,
+    run_id: str | None = None,
+) -> dict[str, str]:
+    if not delegation_id and not run_id:
+        return {}
+
+    storage = _storage(root)
+    selected_run = None
+    if run_id:
+        selected_run = next(
+            (item for item in list_coder_worktree_runs(root, limit=200) if item.id == run_id),
+            None,
+        )
+        if selected_run is None:
+            return {"Approved worktree execution": "run_not_found"}
+        if delegation_id and selected_run.delegation_id != delegation_id:
+            return {
+                "Delegate scout": "run_delegation_mismatch",
+                "Approved worktree execution": "run_delegation_mismatch",
+            }
+        delegation_id = selected_run.delegation_id
+
+    delegation = storage.get_subagent_delegation(delegation_id or "")
+    if delegation is None:
+        return {"Delegate scout": "delegation_not_found"}
+
+    summary = summarize_implementation_handoff(root, delegation)
+    prep_packets = [
+        item
+        for item in list_coder_prep_packets(root)
+        if item.get("source", {}).get("delegation_id") == delegation.id
+    ]
+    plan_packets = [
+        item
+        for item in list_coder_worktree_plan_packets(root)
+        if item.get("source", {}).get("delegation_id") == delegation.id
+    ]
+    worktree_approvals = list_coder_worktree_approvals(
+        root,
+        delegation_id=delegation.id,
+        limit=50,
+    )
+    worktree_runs = list_coder_worktree_runs(root, delegation_id=delegation.id, limit=50)
+    if selected_run is None and len(worktree_runs) == 1:
+        selected_run = worktree_runs[0]
+    commit_approvals = list_coder_worktree_commit_approvals(
+        root,
+        delegation_id=delegation.id,
+        limit=50,
+    )
+    publications = list_coder_publications(root, delegation_id=delegation.id, limit=50)
+    bounded_status = "none"
+    if selected_run is not None:
+        bounded_status = _artifact_status(
+            root,
+            Path(selected_run.evidence_path) / "bounded_file_validation.json",
+        )
+    elif worktree_runs:
+        bounded_status = "select_run"
+    local_commit_status = (
+        "available" if any(item.commit_sha for item in commit_approvals) else "missing"
+    )
+    publication_handoff_status = (
+        "available"
+        if any(item.status == "ready_for_operator" for item in publications)
+        else "missing"
+    )
+    manual_publication_status = (
+        "ready" if publication_handoff_status == "available" else "not_ready"
+    )
+    return {
+        "Goal / task": _workflow_status_token(
+            "task",
+            "available" if storage.get_task(delegation.parent_task_id) else "missing",
+        ),
+        "Delegate scout": _workflow_status_token("delegation", delegation.status),
+        "Context pack": _workflow_status_token(
+            "context_pack",
+            _artifact_status(root, summary["context_pack_json"]),
+        ),
+        "Run delegation": _workflow_status_token("delegation_run", delegation.status),
+        "Implementation handoff": _workflow_status_token(
+            "handoff",
+            str(summary["status"]),
+        ),
+        "Coder prep": _workflow_status_token(
+            "coder_prep",
+            "available" if prep_packets else "missing",
+        ),
+        "Coder worktree plan": _workflow_status_token(
+            "worktree_plan",
+            "available" if plan_packets else "missing",
+        ),
+        "Worktree approval": _workflow_status_token(
+            "worktree_approval",
+            _status_counts(worktree_approvals),
+        ),
+        "Approved worktree execution": _workflow_status_token(
+            "worktree_run",
+            selected_run.status if selected_run is not None else _status_counts(worktree_runs),
+        ),
+        "Bounded-file validation": _workflow_status_token(
+            "bounded_file_validation",
+            bounded_status,
+        ),
+        "Commit request": _workflow_status_token(
+            "commit_request",
+            _status_counts(commit_approvals),
+        ),
+        "Commit approval": _workflow_status_token(
+            "commit_approval",
+            _status_counts(commit_approvals),
+        ),
+        "Local commit": _workflow_status_token("local_commit", local_commit_status),
+        "Publication request": _workflow_status_token(
+            "publication_request",
+            _status_counts(publications),
+        ),
+        "Publication approval": _workflow_status_token(
+            "publication_approval",
+            _status_counts(publications),
+        ),
+        "Publication handoff": _workflow_status_token(
+            "publication_handoff",
+            publication_handoff_status,
+        ),
+        "Manual operator push/PR outside ClankerOS": _workflow_status_token(
+            "external_manual",
+            manual_publication_status,
+        ),
+    }
+
+
 def _delegation_next_action(
     root: Path,
     *,
@@ -2153,6 +2294,20 @@ def _status_counts(items: list[Any]) -> str:
     return ", ".join(f"{status}:{count}" for status, count in sorted(counts.items()))
 
 
+def _workflow_status_token(prefix: str, value: object) -> str:
+    return f"{prefix}_{_status_slug(value)}"
+
+
+def _status_slug(value: object) -> str:
+    slug = "".join(
+        character.lower() if character.isalnum() else "_"
+        for character in str(value)
+    ).strip("_")
+    while "__" in slug:
+        slug = slug.replace("__", "_")
+    return slug or "unknown"
+
+
 def _joined(value: object) -> str:
     if isinstance(value, list):
         return ", ".join(str(item) for item in value) or "none"
@@ -2161,25 +2316,31 @@ def _joined(value: object) -> str:
     return str(value)
 
 
-def _workflow_list(*, compact: bool) -> str:
+def _workflow_list(
+    *,
+    compact: bool,
+    selected_statuses: dict[str, str] | None = None,
+) -> str:
     items = []
+    selected_statuses = selected_statuses or {}
     for index, (label, command, mutation, required, output) in enumerate(WORKFLOW_STEPS, start=1):
         if compact:
             items.append(f"<li>{index}. {_e(label)} <code>{_e(command)}</code></li>")
         else:
+            rows = [
+                ("command", command),
+                ("available", "true"),
+                ("mutates_local_state", str(mutation in {"local_state", "local_artifact", "local_approval", "local_execution", "local_git_only"}).lower()),
+                ("creates_external_effects", "false" if "Manual operator" not in label else "outside_clankeros"),
+                ("required_previous_artifact", required),
+                ("output_artifact", output),
+            ]
+            if label in selected_statuses:
+                rows.append(("selected_status", selected_statuses[label]))
             items.append(
                 "<li>"
                 f"<strong>{index}. {_e(label)}</strong>"
-                + _kv(
-                    [
-                        ("command", command),
-                        ("available", "true"),
-                        ("mutates_local_state", str(mutation in {"local_state", "local_artifact", "local_approval", "local_execution", "local_git_only"}).lower()),
-                        ("creates_external_effects", "false" if "Manual operator" not in label else "outside_clankeros"),
-                        ("required_previous_artifact", required),
-                        ("output_artifact", output),
-                    ]
-                )
+                + _kv(rows)
                 + "</li>"
             )
     return "<ol class='workflow'>" + "".join(items) + "</ol>"

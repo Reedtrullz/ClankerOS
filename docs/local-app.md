@@ -42,7 +42,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   including `coder-prep-from-handoff` as the artifact-first prep route. Add
   `?delegation_id=<id>` or `?run_id=<coder_worktree_run_id>` to show selected
   workflow state, artifact status, approval/run/commit/publication status, and
-  the next recommended local operator action.
+  the next recommended local operator action. When a delegation or run is
+  selected, each related workflow step also shows a `selected_status` token so
+  the stepper itself can be scanned as the operator state map.
 - `/projects` - registered project list.
 - `/projects/<project_id>` - project detail, linked artifacts, project-scoped
   incidents/recommendations, and next recommended operator action.

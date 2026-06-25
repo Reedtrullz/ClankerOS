@@ -31,6 +31,9 @@
   renders a selected workflow-state readback with context-pack, handoff,
   coder-prep, worktree-plan, approval/run, bounded-file-validation, commit,
   publication, and next-action status while remaining read-only.
+- The selected workflow state is now reflected directly on related workflow
+  stepper rows through `selected_status` tokens, so a delegation or coder run
+  can be scanned step-by-step without leaving `/workflow`.
 - Focused app test coverage now walks the browser-route action path from demo
   run detail through commit request, commit approval, isolated local commit,
   publication request, publication approval, and publication handoff.
