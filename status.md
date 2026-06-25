@@ -27,6 +27,9 @@
 - Project detail pages now include `Project Operator Guidance` with
   project-scoped incidents, task recommendations, approval/run/commit/
   publication counts, and a next recommended operator action.
+- Project detail pages now render `Project Goals` separately from
+  goal-linked `Project Tasks`, so the app visibly follows
+  `project -> goal/task` before delegation and handoff.
 - `/workflow` now accepts `delegation_id` or `run_id` query parameters and
   renders a selected workflow-state readback with context-pack, handoff,
   coder-prep, worktree-plan, approval/run, bounded-file-validation, commit,

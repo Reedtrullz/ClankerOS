@@ -50,8 +50,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   selected, each related workflow step also shows a `selected_status` token so
   the stepper itself can be scanned as the operator state map.
 - `/projects` - registered project list.
-- `/projects/<project_id>` - project detail, linked artifacts, project-scoped
-  incidents/recommendations, and next recommended operator action.
+- `/projects/<project_id>` - project detail with first-class project goals,
+  goal-linked tasks, linked artifacts, project-scoped incidents/
+  recommendations, and next recommended operator action.
 - `/delegations/<delegation_id>` - delegation, handoff, prep, worktree, commit,
   and publication state, including a compact workflow-readiness summary and
   next recommended operator action.

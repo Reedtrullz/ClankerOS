@@ -712,9 +712,14 @@ def _project_detail(root: Path, project_id: str) -> str:
     if project is None:
         return "<p class='error'>Project not found.</p>"
     repo = _repo_state(Path(project.root_path))
+    goal_rows = _table_rows(
+        storage.db_path,
+        "select id, status, title, description from goals where project_id = ? order by updated_at desc limit 20",
+        (project_id,),
+    )
     task_rows = _table_rows(
         storage.db_path,
-        "select id, status, task_type, description from tasks where project_id = ? order by updated_at desc limit 20",
+        "select id, goal_id, status, task_type, description from tasks where project_id = ? order by updated_at desc limit 20",
         (project_id,),
     )
     delegations = [
@@ -736,9 +741,19 @@ def _project_detail(root: Path, project_id: str) -> str:
             ),
             "</section>",
             _list_section(
-                "Tasks / Goals",
+                "Project Goals",
                 [
-                    f"{row['id']}: {row['status']} {row['task_type']} - {row['description']}"
+                    f"{_e(row['id'])}: status={_e(row['status'])} "
+                    f"title={_e(row['title'] or row['description'])} "
+                    f"description={_e(row['description'])}"
+                    for row in goal_rows
+                ],
+            ),
+            _list_section(
+                "Project Tasks",
+                [
+                    f"{_e(row['id'])}: status={_e(row['status'])} "
+                    f"goal={_e(row['goal_id'])} type={_e(row['task_type'])} - {_e(row['description'])}"
                     for row in task_rows
                 ],
             ),

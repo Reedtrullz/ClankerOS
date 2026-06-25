@@ -3382,6 +3382,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     project = render_local_app_route(tmp_path, "/projects/local-app-demo")
     assert project.status == 200
     assert "local-app-demo" in project.body
+    assert "Project Goals" in project.body
+    assert result.goal_id in project.body
     assert "Implementation Handoffs" in project.body
     assert "coder-prep-from-handoff" in project.body
     assert "Project Operator Guidance" in project.body

@@ -71,9 +71,12 @@ Core layers for the bootstrap:
   project -> goal/task -> scout -> context-pack -> implementation-handoff ->
   coder-prep -> worktree-plan -> approval -> bounded execution -> commit ->
   publication handoff path, plus project, delegation/run, artifact, health, and
-  demo pages. The workflow page can be scoped with a delegation or coder run
-  id, then annotates related stepper rows with selected local artifact,
-  approval, run, commit, publication, and next-action status. Coder worktree
+  demo pages. Project detail pages now separate project goals from goal-linked
+  project tasks so the operator can start from the product path rather than
+  infer goals from task rows. The workflow page can be scoped with a
+  delegation or coder run id, then annotates related stepper rows with
+  selected local artifact, approval, run, commit, publication, and next-action
+  status. Coder worktree
   run detail pages include the same upstream and downstream workflow posture as
   a `Run Workflow State` readback. The app also includes a read-only operator
   inbox plus local approval and incident pages for pending worktree, commit,
