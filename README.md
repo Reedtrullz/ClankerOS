@@ -85,8 +85,8 @@ Then read:
 
 The primary operator surface is now the local app plus the CLI. Start the app
 for a browser view of projects, workflow, delegations, delegation runs, coder
-runs, health, artifacts, the operator inbox, approvals, incidents, and demo
-state:
+runs, safe action catalog, health, artifacts, the operator inbox, approvals,
+incidents, and demo state:
 
 ```bash
 python3 -m agent_os.cli app
@@ -101,6 +101,10 @@ Use `/delegation-runs` when you want a compact read-only index of scout
 execution evidence, context packs, implementation handoffs, zero-effect
 counters, retry signals, and next local operator actions before handing work to
 coder prep.
+
+Use `/actions` when you want a read-only catalog of available local app
+actions, where their forms appear, what previous artifact they require, what
+local artifact or approval they write, and the no-external-effects boundary.
 
 The app is local-only by default, binds to `127.0.0.1`, and refuses non-local
 binds unless `--allow-nonlocal-bind` is explicitly supplied. It does not push,

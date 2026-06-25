@@ -3258,6 +3258,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert refreshed_status["host"] == "127.0.0.1"
     assert refreshed_status["port"] == 8787
     assert "no push" in refreshed_status["non_claims"]
+    assert "/actions" in refreshed_status["routes_available"]
     dashboard_notice = render_local_app_route(
         tmp_path,
         "/?notice=local_app_status%3A%20.clanker/app/local_app_status.json",
@@ -3292,6 +3293,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "Manual operator push/PR outside ClankerOS",
     ]:
         assert label in workflow.body
+
+    actions = render_local_app_route(tmp_path, "/actions")
+    assert actions.status == 200
+    assert "Safe Action Catalog" in actions.body
+    assert "refresh-dashboard-state" in actions.body
+    assert "context-pack" in actions.body
+    assert "commit-coder-worktree" in actions.body
+    assert "manual_operator_push_pr_outside_clankeros" in actions.body
+    assert "external_effects=none" in actions.body
+    assert "no push" in actions.body
 
     health = render_local_app_route(tmp_path, "/health")
     assert health.status == 200
@@ -3827,6 +3838,7 @@ def test_local_app_cli_commands_and_bind_safety(
     smoke_output = capsys.readouterr().out
     assert "app_smoke_test: passed" in smoke_output
     assert "route /workflow: 200" in smoke_output
+    assert "route /actions: 200" in smoke_output
     assert "route /inbox: 200" in smoke_output
     assert "network_actions_taken: 0" in smoke_output
 

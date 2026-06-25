@@ -53,6 +53,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   the next recommended local operator action. When a delegation or run is
   selected, each related workflow step also shows a `selected_status` token so
   the stepper itself can be scanned as the operator state map.
+- `/actions` - read-only safe action catalog showing local app actions, where
+  their forms appear, required previous artifacts, output artifacts,
+  confirmation requirements, local mutation posture, and external-effect
+  boundary. It also includes the confirmed dashboard status refresh form.
 - `/projects` - registered project list.
 - `/projects/<project_id>` - project detail with first-class project goals,
   goal-linked tasks, linked artifacts, project-scoped incidents/
@@ -136,14 +140,18 @@ file size and truncation status. Artifact content is never executed.
 
 ## Safe Actions
 
-The first app version exposes low-risk and local artifact-producing actions
-through explicit forms, including context pack generation, coder prep,
-coder prep from `implementation_handoff.md`, coder-worktree plan, worktree
-approval request, commit request, publication request, approval decisions, and
-publication handoff when the required approval exists. The dashboard also
-exposes a confirmed `refresh-dashboard-state` form for rewriting only the
-local app status artifact. Delegation pages also expose implementation handoff
-readback and link the handoff Markdown through the safe artifact viewer.
+The `/actions` page is the first-stop safe action catalog. It maps low-risk and
+local artifact-producing actions to the page where each form appears, the
+required previous artifact, the output artifact, whether confirmation is
+required, and the no-external-effects boundary. The app exposes these actions
+through explicit forms, including context pack generation, coder prep, coder
+prep from `implementation_handoff.md`, coder-worktree plan, worktree approval
+request, commit request, publication request, approval decisions, and
+publication handoff when the required approval exists. The dashboard and
+`/actions` page also expose a confirmed `refresh-dashboard-state` form for
+rewriting only the local app status artifact. Delegation pages also expose
+implementation handoff readback and link the handoff Markdown through the safe
+artifact viewer.
 Confirmation pages show the submitted action payload as visible read-only
 fields plus the safety boundary before resubmitting with `confirm=yes`, so the
 operator can review exactly what will be written before a local artifact or

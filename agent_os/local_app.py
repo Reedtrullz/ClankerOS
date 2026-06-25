@@ -88,6 +88,22 @@ WORKFLOW_STEPS = [
     ("Publication handoff", "coder-publication-handoff", "local_artifact", "approved publication", "publication_handoff.md + pr_body.md"),
     ("Manual operator push/PR outside ClankerOS", "manual git/gh", "external_manual_only", "publication handoff", "outside ClankerOS"),
 ]
+ACTION_CATALOG = [
+    ("refresh-dashboard-state", "low-risk", "dashboard", "yes", "yes", "current repo/app route state", ".clanker/app/local_app_status.json"),
+    ("context-pack", "local artifact", "delegation detail", "yes", "yes", "delegation_id", "context_pack.json/.md"),
+    ("implementation-handoff", "readback", "delegation detail", "no", "no", "completed delegation", "implementation handoff status/readback"),
+    ("coder-prep", "local artifact", "delegation detail", "yes", "yes", "readable implementation_handoff.md", "coder_prep.json/.md"),
+    ("coder-prep-from-handoff", "local artifact", "delegation detail", "yes", "yes", "repo-relative implementation_handoff.md", "coder_prep.json/.md"),
+    ("coder-worktree-plan", "local artifact", "delegation detail", "yes", "yes", "coder_prep.md", "coder_worktree_plan.json/.md"),
+    ("coder-worktree-approval", "approval request", "delegation detail", "yes", "yes", "coder_worktree_plan.md", "coder_worktree_approval_request.json/.md"),
+    ("approve-coder-worktree", "approval decision", "approvals", "yes", "yes", "pending worktree approval", "coder_worktree_approval_decision.json/.md"),
+    ("coder-commit-request", "approval request", "run detail", "yes", "yes", "reviewed completed coder worktree run", "coder_commit_request.json/.md"),
+    ("approve-coder-commit", "approval decision", "approvals", "yes", "yes", "pending commit approval", "coder_commit_decision.json/.md"),
+    ("commit-coder-worktree", "local git only", "run detail", "yes", "yes", "approved commit request plus typed matching message", "commit.json and isolated worktree commit"),
+    ("coder-publication-request", "approval request", "run detail", "yes", "yes", "isolated local commit", "publication_request.json/.md"),
+    ("approve-coder-publication", "approval decision", "approvals", "yes", "yes", "pending publication approval", "publication_decision.json/.md"),
+    ("coder-publication-handoff", "local artifact", "run detail", "yes", "yes", "approved publication request", "publication_handoff.json/.md plus pr_body.md"),
+]
 
 
 @dataclass(frozen=True)
@@ -219,6 +235,8 @@ def render_local_app_route(
                     run_id=_one(query, "run_id"),
                 ),
             )
+        if path == "/actions":
+            return page("Actions", _actions_page(root))
         if path == "/projects":
             return page("Projects", _projects(root))
         if path == "/delegation-runs":
@@ -262,6 +280,7 @@ def run_local_app_smoke_test(root: Path) -> dict[str, Any]:
     routes = [
         "/",
         "/workflow",
+        "/actions",
         "/projects",
         "/delegation-runs",
         "/inbox",
@@ -509,7 +528,7 @@ def write_local_app_status(root: Path, *, host: str, port: int) -> Path:
         "commit": state["commit"],
         "dirty_tracked_files": state["dirty_tracked_files"],
         "untracked_files": state["untracked_files"],
-        "routes_available": ["/", "/workflow", "/projects", "/delegation-runs", "/delegations/<id>", "/runs/<id>", "/inbox", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
+        "routes_available": ["/", "/workflow", "/actions", "/projects", "/delegation-runs", "/delegations/<id>", "/runs/<id>", "/inbox", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
         "supported_workflow_stages": [step[0] for step in WORKFLOW_STEPS],
         "non_claims": NO_EXTERNAL_EFFECT_CLAIMS,
         "known_gaps": [
@@ -600,6 +619,61 @@ def _workflow(
             _workflow_list(compact=False, selected_statuses=selected_statuses),
             "</section>",
         ]
+    )
+
+
+def _actions_page(root: Path) -> str:
+    return "".join(
+        [
+            "<section><h1>Safe Action Catalog</h1>",
+            "<p class='muted'>Read-only map of local app actions, where their forms appear, what they require, and what local artifact or decision they produce.</p>",
+            _non_claim_banner(),
+            "</section>",
+            _list_section(
+                "Navigation Actions",
+                [
+                    "<a href='/'>view dashboard</a>: read current local repository/app state",
+                    "<a href='/projects'>view projects</a>: inspect registered project state",
+                    "<a href='/delegation-runs'>view delegation runs</a>: inspect scout execution evidence",
+                    "<a href='/inbox'>view inbox</a>: inspect operator queue",
+                    "<a href='/approvals'>view approvals</a>: inspect pending local decisions",
+                    "<a href='/incidents'>view incidents</a>: inspect local incident evidence",
+                    "<a href='/health'>view health</a>: inspect local status and write status artifact",
+                ],
+            ),
+            "<section><h2>Dashboard Action</h2>",
+            "<p class='muted'>This confirmed action rewrites only the local app status artifact from current state.</p>",
+            "<form method='post' action='/actions/refresh-dashboard-state'>"
+            "<input type='hidden' name='requested_by' value='operator'>"
+            "<button type='submit'>refresh-dashboard-state</button>"
+            "</form>",
+            "</section>",
+            _list_section(
+                "Local Artifact And Approval Actions",
+                [_action_catalog_line(item) for item in ACTION_CATALOG],
+            ),
+            _list_section(
+                "Execution Boundary",
+                [
+                    "run-coder-worktree: CLI-first outside fixture-backed demo setup; not exposed as a general app action",
+                    "manual_operator_push_pr_outside_clankeros: outside ClankerOS; app displays suggested commands only after publication handoff",
+                ],
+            ),
+        ]
+    )
+
+
+def _action_catalog_line(item: tuple[str, str, str, str, str, str, str]) -> str:
+    action, category, surface, mutates, confirmation, requires, output = item
+    return (
+        f"<strong>{_e(action)}</strong>: "
+        f"category={_e(category)} "
+        f"surface={_e(surface)} "
+        f"mutates_local_state={_e(mutates)} "
+        f"requires_confirmation={_e(confirmation)} "
+        f"required_previous_artifact={_e(requires)} "
+        f"output_artifact={_e(output)} "
+        "external_effects=none"
     )
 
 
@@ -2417,7 +2491,7 @@ def _html_page(root: Path, title: str, content: str, *, status: int = 200) -> Lo
 <body>
   <header>
     <strong>ClankerOS Local Operator</strong>
-    <nav><a href="/">Dashboard</a><a href="/workflow">Workflow</a><a href="/projects">Projects</a><a href="/delegation-runs">Delegation Runs</a><a href="/inbox">Inbox</a><a href="/approvals">Approvals</a><a href="/incidents">Incidents</a><a href="/health">Health</a><a href="/demo">Demo</a></nav>
+    <nav><a href="/">Dashboard</a><a href="/workflow">Workflow</a><a href="/actions">Actions</a><a href="/projects">Projects</a><a href="/delegation-runs">Delegation Runs</a><a href="/inbox">Inbox</a><a href="/approvals">Approvals</a><a href="/incidents">Incidents</a><a href="/health">Health</a><a href="/demo">Demo</a></nav>
   </header>
   <main>{content}</main>
 </body>

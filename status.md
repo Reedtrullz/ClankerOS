@@ -1,5 +1,26 @@
 # Status
 
+## 2026-06-26 Local App Safe Action Catalog
+
+- Added `/actions` as a read-only safe action catalog. It lists local app
+  actions, where forms appear, required previous artifacts, output artifacts,
+  confirmation requirements, local mutation posture, and
+  `external_effects=none`.
+- The catalog includes the confirmed `refresh-dashboard-state` form and
+  explicitly labels `run-coder-worktree` as CLI-first outside fixture-backed
+  demo setup, while manual push/PR remains outside ClankerOS.
+- The local app status artifact and smoke route list now include `/actions`.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_cli_commands_and_bind_safety`
+  - `python3 -m agent_os.cli app-smoke-test`
+  - `git diff --check`
+- Non-claims: this is an inert operator catalog plus existing status refresh
+  form only; no new worktree execution, arbitrary command execution, push, PR,
+  deploy, provider call, hosted/remote worker, scheduler, or non-loopback
+  network capability was added.
+
 ## 2026-06-26 Local App Action Result Pages
 
 - Confirmed local app POST actions now render `Action Result Details` instead

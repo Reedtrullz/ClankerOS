@@ -86,7 +86,9 @@ Core layers for the bootstrap:
   and next local operator actions; `/runs/<run_id>` now also recognizes
   delegation execution run ids and renders scout evidence, result artifacts,
   context-pack and handoff status, zero-effect counters, and next-action
-  readback; a read-only operator inbox plus local approval and incident pages
+  readback; a read-only `/actions` catalog for safe local action requirements,
+  form locations, output artifacts, confirmation posture, and external-effect
+  boundaries; a read-only operator inbox plus local approval and incident pages
   for pending worktree, commit, and publication decisions, operator-worthy
   queue items, incident evidence readback, a confirmed dashboard refresh action
   for rewriting the local app status artifact from current repo and route
