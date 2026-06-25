@@ -34,6 +34,9 @@
 - The selected workflow state is now reflected directly on related workflow
   stepper rows through `selected_status` tokens, so a delegation or coder run
   can be scanned step-by-step without leaving `/workflow`.
+- Coder worktree run detail pages now include `Run Workflow State` with
+  upstream context-pack, handoff, prep, plan, approval/run,
+  bounded-file-validation, commit, publication, and next-action status.
 - Focused app test coverage now walks the browser-route action path from demo
   run detail through commit request, commit approval, isolated local commit,
   publication request, publication approval, and publication handoff.

@@ -3407,6 +3407,25 @@ def test_local_app_demo_scenario_populates_fixture_state(
 
     run_page = render_local_app_route(tmp_path, f"/runs/{result.coder_worktree_run_id}")
     assert run_page.status == 200
+    assert "Run Workflow State" in run_page.body
+    for expected_run_state in [
+        "context_pack_status",
+        "implementation_handoff_status",
+        "coder_prep_status",
+        "coder_worktree_plan_status",
+        "worktree_approval_status",
+        "worktree_run_status",
+        "bounded_file_validation_status",
+        "commit_request_status",
+        "commit_approval_status",
+        "commit_sha",
+        "publication_request_status",
+        "publication_approval_status",
+        "publication_handoff_status",
+        "next_recommended_action",
+        "request_commit_for_reviewed_run",
+    ]:
+        assert expected_run_state in run_page.body
     assert "Run Approval Actions" in run_page.body
     assert "changed_files" in run_page.body
     assert "demo.txt" in run_page.body

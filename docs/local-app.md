@@ -51,7 +51,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/delegations/<delegation_id>` - delegation, handoff, prep, worktree, commit,
   and publication state, including a compact workflow-readiness summary and
   next recommended operator action.
-- `/runs/<run_id>` - run or coder-worktree run detail.
+- `/runs/<run_id>` - run or coder-worktree run detail, including a
+  `Run Workflow State` block for upstream context-pack, handoff, prep, plan,
+  approval/run, bounded validation, commit, publication, and next-action
+  status when the run is a coder worktree run.
 - `/inbox` - read-only operator queue for steering reviews, approval requests,
   incidents, delegations, coder runs, commits, and publication handoffs.
 - `/approvals` - pending worktree, commit, and publication approvals.

@@ -1015,6 +1015,7 @@ def _run_detail(root: Path, run_id: str) -> str:
                 ]
             )
         )
+        parts.append(_run_workflow_state(root, coder_run))
         parts.append(
             _list_section(
                 "Coder Worktree Evidence",
@@ -1028,6 +1029,104 @@ def _run_detail(root: Path, run_id: str) -> str:
         parts.append(_run_action_forms(root, coder_run.id))
     parts.append("</section>")
     return "".join(parts)
+
+
+def _run_workflow_state(root: Path, coder_run: Any) -> str:
+    storage = _storage(root)
+    delegation = storage.get_subagent_delegation(coder_run.delegation_id)
+    if delegation is None:
+        return "<section><h2>Run Workflow State</h2>" + _kv(
+            [
+                ("selection_status", "delegation_not_found"),
+                ("delegation_id", coder_run.delegation_id),
+                ("run_id", coder_run.id),
+            ]
+        ) + "</section>"
+
+    summary = summarize_implementation_handoff(root, delegation)
+    prep_packets = [
+        item
+        for item in list_coder_prep_packets(root)
+        if item.get("source", {}).get("delegation_id") == delegation.id
+    ]
+    plan_packets = [
+        item
+        for item in list_coder_worktree_plan_packets(root)
+        if item.get("source", {}).get("delegation_id") == delegation.id
+    ]
+    worktree_approvals = list_coder_worktree_approvals(
+        root,
+        delegation_id=delegation.id,
+        limit=50,
+    )
+    worktree_runs = list_coder_worktree_runs(root, delegation_id=delegation.id, limit=50)
+    commit_approvals = list_coder_worktree_commit_approvals(
+        root,
+        delegation_id=delegation.id,
+        limit=50,
+    )
+    publications = list_coder_publications(root, delegation_id=delegation.id, limit=50)
+    bounded_status = _artifact_status(
+        root,
+        Path(coder_run.evidence_path) / "bounded_file_validation.json",
+    )
+    verification_status = (
+        "passed"
+        if coder_run.verification_exit_code == 0
+        else "failed"
+        if coder_run.verification_exit_code is not None
+        else "not_run"
+    )
+    ready_publications = [
+        item for item in publications if item.status == "ready_for_operator"
+    ]
+    return "<section><h2>Run Workflow State</h2>" + _non_claim_banner() + _kv(
+        [
+            ("delegation_id", coder_run.delegation_id),
+            ("run_id", coder_run.id),
+            ("context_pack_status", _artifact_status(root, summary["context_pack_json"])),
+            ("context_pack_path", _artifact_link(summary["context_pack_json"])),
+            ("implementation_handoff_status", str(summary["status"])),
+            ("implementation_handoff_path", _artifact_link(summary["markdown_path"])),
+            ("coder_prep_status", "available" if prep_packets else "missing"),
+            ("coder_worktree_plan_status", "available" if plan_packets else "missing"),
+            ("worktree_approval_status", _status_counts(worktree_approvals)),
+            ("worktree_run_status", coder_run.status),
+            ("bounded_file_validation_status", bounded_status),
+            ("changed_files", ", ".join(coder_run.changed_files) or "none"),
+            ("outside_allowed_files", ", ".join(coder_run.outside_allowed_files) or "none"),
+            ("verification_status", verification_status),
+            ("verification_exit_code", str(coder_run.verification_exit_code)),
+            ("commit_request_status", _status_counts(commit_approvals)),
+            ("commit_approval_status", _status_counts(commit_approvals)),
+            (
+                "commit_sha",
+                next(
+                    (item.commit_sha for item in commit_approvals if item.commit_sha),
+                    "none",
+                ),
+            ),
+            ("publication_request_status", _status_counts(publications)),
+            ("publication_approval_status", _status_counts(publications)),
+            (
+                "publication_handoff_status",
+                "available" if ready_publications else "missing",
+            ),
+            (
+                "next_recommended_action",
+                _delegation_next_action(
+                    root,
+                    summary=summary,
+                    prep_count=len(prep_packets),
+                    plan_count=len(plan_packets),
+                    worktree_approvals=worktree_approvals,
+                    worktree_runs=worktree_runs,
+                    commit_approvals=commit_approvals,
+                    publications=publications,
+                ),
+            ),
+        ]
+    ) + "</section>"
 
 
 def _artifact_viewer(root: Path, relative_path: str | None) -> LocalAppResponse:
