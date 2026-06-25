@@ -83,7 +83,7 @@ Then read:
 
 The primary operator surface is now the local app plus the CLI. Start the app
 for a browser view of projects, workflow, delegations, runs, health, artifacts,
-and demo state:
+approvals, incidents, and demo state:
 
 ```bash
 python3 -m agent_os.cli app

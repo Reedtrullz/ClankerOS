@@ -3215,10 +3215,17 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "System Health" in health.body
     assert "storage_initializes" in health.body
     assert "app" in health.body
+    assert "approve-coder-publication" in health.body
     assert (tmp_path / ".clanker" / "app" / "local_app_status.json").exists()
 
     projects = render_local_app_route(tmp_path, "/projects")
     assert projects.status == 200
+    approvals = render_local_app_route(tmp_path, "/approvals")
+    assert approvals.status == 200
+    assert "Approvals" in approvals.body
+    incidents = render_local_app_route(tmp_path, "/incidents")
+    assert incidents.status == 200
+    assert "Incidents" in incidents.body
     demo = render_local_app_route(tmp_path, "/demo")
     assert demo.status == 200
     assert "demo-app-scenario" in demo.body
@@ -3288,12 +3295,79 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Safe Local Actions" in delegation.body
     assert "implementation-handoff" in delegation.body
     assert "coder-prep-from-handoff" in delegation.body
+    assert "coder-worktree-approval" in delegation.body
 
     project = render_local_app_route(tmp_path, "/projects/local-app-demo")
     assert project.status == 200
     assert "local-app-demo" in project.body
     assert "Implementation Handoffs" in project.body
     assert "coder-prep-from-handoff" in project.body
+
+    approvals = render_local_app_route(tmp_path, "/approvals")
+    assert approvals.status == 200
+    assert result.approval_id in approvals.body
+    assert "approve-coder-worktree" in approvals.body
+
+    confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-worktree",
+        method="POST",
+        form={"approval_id": [result.approval_id], "note": ["Approved in test"]},
+    )
+    assert confirmation.status == 409
+    assert "Confirm approve-coder-worktree" in confirmation.body
+    approved = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-worktree",
+        method="POST",
+        form={
+            "approval_id": [result.approval_id],
+            "note": ["Approved in test"],
+            "confirm": ["yes"],
+        },
+    )
+    assert approved.status == 303
+    assert approved.headers and approved.headers["Location"].startswith("/")
+
+    commit_request = render_local_app_route(
+        tmp_path,
+        "/actions/coder-commit-request",
+        method="POST",
+        form={
+            "run_id": [result.run_id],
+            "message": ["Demo commit request"],
+            "note": ["Demo only"],
+            "confirm": ["yes"],
+        },
+    )
+    assert commit_request.status == 400
+    assert "coder worktree run not found" in commit_request.body
+    publication_request = render_local_app_route(
+        tmp_path,
+        "/actions/coder-publication-request",
+        method="POST",
+        form={
+            "run_id": [result.run_id],
+            "remote": ["origin"],
+            "target_branch": ["main"],
+            "note": ["Demo only"],
+            "confirm": ["yes"],
+        },
+    )
+    assert publication_request.status == 400
+    assert "coder worktree run not found" in publication_request.body
+    publication_approval = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-publication",
+        method="POST",
+        form={
+            "publication_id": ["missing_publication"],
+            "note": ["Demo only"],
+            "confirm": ["yes"],
+        },
+    )
+    assert publication_approval.status == 400
+    assert "publication request not found" in publication_approval.body
 
 
 def test_local_app_cli_commands_and_bind_safety(

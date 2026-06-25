@@ -20,11 +20,14 @@ from agent_os.coder_prep import (
 )
 from agent_os.coder_publication import (
     CoderPublicationError,
+    approve_coder_publication,
     create_coder_publication_handoff,
     list_coder_publications,
+    request_coder_publication,
 )
 from agent_os.coder_worktree_execution import (
     CoderWorktreeApprovalError,
+    CoderWorktreeCommitError,
     approve_coder_worktree,
     approve_coder_worktree_commit,
     list_coder_worktree_approvals,
@@ -191,6 +194,10 @@ def render_local_app_route(
             return _html_page(root, "Workflow", _workflow(root))
         if path == "/projects":
             return _html_page(root, "Projects", _projects(root))
+        if path == "/approvals":
+            return _html_page(root, "Approvals", _approvals(root))
+        if path == "/incidents":
+            return _html_page(root, "Incidents", _incidents(root))
         if path.startswith("/projects/"):
             project_id = unquote(path.removeprefix("/projects/"))
             return _html_page(root, f"Project {project_id}", _project_detail(root, project_id))
@@ -222,7 +229,7 @@ def render_local_app_route(
 
 def run_local_app_smoke_test(root: Path) -> dict[str, Any]:
     root = root.resolve()
-    routes = ["/", "/workflow", "/projects", "/health", "/demo"]
+    routes = ["/", "/workflow", "/projects", "/approvals", "/incidents", "/health", "/demo"]
     results = []
     for route in routes:
         response = render_local_app_route(root, route)
@@ -419,7 +426,7 @@ def write_local_app_status(root: Path, *, host: str, port: int) -> Path:
         "commit": state["commit"],
         "dirty_tracked_files": state["dirty_tracked_files"],
         "untracked_files": state["untracked_files"],
-        "routes_available": ["/", "/workflow", "/projects", "/delegations/<id>", "/runs/<id>", "/artifacts", "/health", "/demo"],
+        "routes_available": ["/", "/workflow", "/projects", "/delegations/<id>", "/runs/<id>", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
         "supported_workflow_stages": [step[0] for step in WORKFLOW_STEPS],
         "non_claims": NO_EXTERNAL_EFFECT_CLAIMS,
         "known_gaps": [
@@ -473,7 +480,8 @@ def _dashboard(root: Path, *, host: str, port: int) -> str:
             _list_section("Recent Commit Requests / Local Commits", rows["commit_requests"]),
             _list_section("Recent Publication Requests", rows["publication_requests"]),
             _list_section("Recent Publication Handoffs", rows["publication_handoffs"]),
-            _list_section("Incidents / Recommendations", rows["incidents"]),
+            _list_section("Pending Approvals", rows["approvals"], "/approvals"),
+            _list_section("Incidents / Recommendations", rows["incidents"], "/incidents"),
             "<section><h2>Next Recommended Action</h2><p>Review the workflow page, run the demo scenario, then inspect a delegation or artifact.</p></section>",
         ]
     )
@@ -498,6 +506,65 @@ def _projects(root: Path) -> str:
         for project in projects
     ]
     return "<section><h1>Projects</h1>" + _ul(items) + "</section>"
+
+
+def _approvals(root: Path) -> str:
+    worktree_approvals = list_coder_worktree_approvals(
+        root,
+        status="pending_operator_approval",
+        limit=50,
+    )
+    commit_approvals = list_coder_worktree_commit_approvals(
+        root,
+        status="pending_operator_approval",
+        limit=50,
+    )
+    publication_approvals = list_coder_publications(
+        root,
+        status="pending_operator_approval",
+        limit=50,
+    )
+    return "".join(
+        [
+            "<section><h1>Approvals</h1>",
+            "<p class='muted'>Approval forms write local decision artifacts only. They do not execute work, commit, push, create PRs, deploy, call providers, or use the network.</p>",
+            "</section>",
+            _list_section(
+                "Pending Worktree Approvals",
+                [_worktree_approval_action_line(item) for item in worktree_approvals],
+            ),
+            _list_section(
+                "Pending Commit Approvals",
+                [_commit_approval_action_line(item) for item in commit_approvals],
+            ),
+            _list_section(
+                "Pending Publication Approvals",
+                [_publication_approval_action_line(root, item) for item in publication_approvals],
+            ),
+            _non_claim_banner(),
+        ]
+    )
+
+
+def _incidents(root: Path) -> str:
+    storage = _storage(root)
+    rows = _table_rows(
+        storage.db_path,
+        "select id, status, severity, summary, evidence_path from incidents order by created_at desc limit 50",
+    )
+    return "".join(
+        [
+            "<section><h1>Incidents</h1>",
+            _ul(
+                [
+                    f"{_e(row['id'])}: status={_e(row['status'])} severity={_e(row['severity'])} "
+                    f"{_e(row['summary'])} evidence={_artifact_link(row['evidence_path'] or 'none')}"
+                    for row in rows
+                ]
+            ),
+            "</section>",
+        ]
+    )
 
 
 def _project_detail(root: Path, project_id: str) -> str:
@@ -634,6 +701,7 @@ def _run_detail(root: Path, run_id: str) -> str:
                 ]
             )
         )
+        parts.append(_run_action_forms(coder_run.id))
     parts.append("</section>")
     return "".join(parts)
 
@@ -804,7 +872,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 storage,
                 run_id,
                 requested_by=_one(form, "requested_by") or "operator",
-                message=_required(form, "message"),
+                commit_message=_required(form, "message"),
                 note=_one(form, "note") or "Requested from local app.",
             )
             message = f"coder_commit_request: {result.approval.id}"
@@ -820,6 +888,30 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             )
             message = f"approved_coder_commit: {result.approval.id}"
             location = "/"
+        elif action == "coder-publication-request":
+            run_id = _required(form, "run_id")
+            result = request_coder_publication(
+                root,
+                storage,
+                run_id,
+                requested_by=_one(form, "requested_by") or "operator",
+                remote=_one(form, "remote") or "origin",
+                target_branch=_one(form, "target_branch") or "main",
+                note=_required(form, "note"),
+            )
+            message = f"coder_publication_request: {result.publication.id}"
+            location = f"/runs/{quote(run_id)}"
+        elif action == "approve-coder-publication":
+            publication_id = _required(form, "publication_id")
+            result = approve_coder_publication(
+                root,
+                storage,
+                publication_id,
+                decided_by=_one(form, "decided_by") or "operator",
+                note=_one(form, "note") or "Approved from local app.",
+            )
+            message = f"approved_coder_publication: {result.publication.id}"
+            location = "/approvals"
         elif action == "coder-publication-handoff":
             run_id = _required(form, "run_id")
             result = create_coder_publication_handoff(root, storage, run_id)
@@ -833,6 +925,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
         CoderPrepError,
         CoderWorktreePlanError,
         CoderWorktreeApprovalError,
+        CoderWorktreeCommitError,
         CoderPublicationError,
     ) as error:
         return _html_page(root, "Action Error", f"<p class='error'>{_e(str(error))}</p>", status=400)
@@ -858,11 +951,122 @@ def _safe_action_forms(*, delegation_id: str, run_id: str, handoff_md: str) -> s
     """
 
 
+def _run_action_forms(run_id: str) -> str:
+    return "".join(
+        [
+            "<section><h2>Run Approval Actions</h2>",
+            "<p class='muted'>These forms create local approval/request artifacts only. They do not stage, commit, push, create PRs, deploy, call providers, or use the network.</p>",
+            _input_form(
+                "coder-commit-request",
+                {"run_id": run_id, "requested_by": "operator"},
+                {
+                    "message": "Implement bounded change from approved worktree run",
+                    "note": "Request local commit after review",
+                },
+            ),
+            _input_form(
+                "coder-publication-request",
+                {
+                    "run_id": run_id,
+                    "requested_by": "operator",
+                    "remote": "origin",
+                    "target_branch": "main",
+                },
+                {"note": "Request publication handoff"},
+            ),
+            _form("coder-publication-handoff", {"run_id": run_id}),
+            "</section>",
+        ]
+    )
+
+
+def _pending_approval_lines(root: Path) -> list[str]:
+    lines: list[str] = []
+    lines.extend(
+        _approval_line(item)
+        for item in list_coder_worktree_approvals(
+            root,
+            status="pending_operator_approval",
+            limit=10,
+        )
+    )
+    lines.extend(
+        _commit_line(item)
+        for item in list_coder_worktree_commit_approvals(
+            root,
+            status="pending_operator_approval",
+            limit=10,
+        )
+    )
+    lines.extend(
+        _publication_line(root, item)
+        for item in list_coder_publications(
+            root,
+            status="pending_operator_approval",
+            limit=10,
+        )
+    )
+    return lines
+
+
+def _worktree_approval_action_line(item: Any) -> str:
+    return (
+        f"{_approval_line(item)} "
+        + _input_form(
+            "approve-coder-worktree",
+            {"approval_id": item.id, "decided_by": "operator"},
+            {"note": "Approved bounded execution"},
+        )
+    )
+
+
+def _commit_approval_action_line(item: Any) -> str:
+    return (
+        f"{_commit_line(item)} request={_artifact_link(item.request_artifact_path)} "
+        + _input_form(
+            "approve-coder-commit",
+            {"approval_id": item.id, "decided_by": "operator"},
+            {"note": "Approved local commit"},
+        )
+    )
+
+
+def _publication_approval_action_line(root: Path, item: Any) -> str:
+    return (
+        f"{_publication_line(root, item)} request={_artifact_link(item.request_artifact_path)} "
+        + _input_form(
+            "approve-coder-publication",
+            {"publication_id": item.id, "decided_by": "operator"},
+            {"note": "Approved publication handoff preparation"},
+        )
+    )
+
+
 def _form(action: str, fields: dict[str, str]) -> str:
     inputs = "".join(
         f"<input type='hidden' name='{_e(key)}' value='{_e(value)}'>"
         for key, value in fields.items()
     )
+    return (
+        f"<form method='post' action='/actions/{_e(action)}'>"
+        f"{inputs}<button type='submit'>{_e(action)}</button></form>"
+    )
+
+
+def _input_form(
+    action: str,
+    hidden_fields: dict[str, str],
+    text_fields: dict[str, str],
+) -> str:
+    inputs = "".join(
+        f"<input type='hidden' name='{_e(key)}' value='{_e(value)}'>"
+        for key, value in hidden_fields.items()
+    )
+    for key, value in text_fields.items():
+        inputs += (
+            f"<label>{_e(key)} "
+            f"<input name='{_e(key)}' value='{_e(value)}'></label>"
+        )
     return (
         f"<form method='post' action='/actions/{_e(action)}'>"
         f"{inputs}<button type='submit'>{_e(action)}</button></form>"
@@ -1009,6 +1213,7 @@ def _summary_rows(root: Path, storage: Storage) -> dict[str, list[str]]:
             _publication_line(root, item)
             for item in list_coder_publications(root, status="ready_for_operator", limit=10)
         ],
+        "approvals": _pending_approval_lines(root),
         "incidents": [
             f"{row['id']}: {row['status']} {row['summary']}"
             for row in _table_rows(storage.db_path, "select id, status, summary from incidents order by created_at desc limit 10")
@@ -1099,6 +1304,12 @@ def _key_commands() -> list[str]:
         "coder-prep",
         "coder-prep-from-handoff",
         "coder-worktree-plan",
+        "coder-worktree-approval",
+        "approve-coder-worktree",
+        "coder-commit-request",
+        "approve-coder-commit",
+        "coder-publication-request",
+        "approve-coder-publication",
         "coder-publication-handoff",
     ]
 

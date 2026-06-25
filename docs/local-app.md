@@ -45,6 +45,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/delegations/<delegation_id>` - delegation, handoff, prep, worktree, commit,
   and publication state.
 - `/runs/<run_id>` - run or coder-worktree run detail.
+- `/approvals` - pending worktree, commit, and publication approvals.
+- `/incidents` - recent local incidents and evidence links.
 - `/artifacts?path=<relative_path>` - safe read-only artifact viewer.
 - `/health` - Python, git, storage, command, import, route, and counter health.
 - `/demo` - demo scenario instructions.
@@ -94,9 +96,10 @@ executed.
 The first app version exposes low-risk and local artifact-producing actions
 through explicit forms, including context pack generation, coder prep,
 coder prep from `implementation_handoff.md`, coder-worktree plan, worktree
-approval request, and publication handoff when the required approval exists.
-Delegation pages also expose implementation handoff readback and link the
-handoff Markdown through the safe artifact viewer.
+approval request, commit request, publication request, approval decisions, and
+publication handoff when the required approval exists. Delegation pages also
+expose implementation handoff readback and link the handoff Markdown through
+the safe artifact viewer.
 
 Execution and commit actions remain CLI-first in this version. Push and PR
 creation are never executed by the app.

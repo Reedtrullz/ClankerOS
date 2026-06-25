@@ -71,11 +71,13 @@ Core layers for the bootstrap:
   project -> goal/task -> scout -> context-pack -> implementation-handoff ->
   coder-prep -> worktree-plan -> approval -> bounded execution -> commit ->
   publication handoff path, plus project, delegation/run, artifact, health, and
-  demo pages. The app reads existing SQLite state and repo artifacts, writes a
-  local health/status artifact, and exposes only explicit local forms for safe
-  artifact-producing actions. It does not push, create PRs, deploy, call
-  providers, execute arbitrary commands, or use the network beyond local
-  browser/server loopback.
+  demo pages. It also includes local approval and incident pages for pending
+  worktree, commit, and publication decisions plus incident evidence readback.
+  The app reads existing SQLite state and repo artifacts, writes a local
+  health/status artifact, and exposes only explicit local forms for safe
+  artifact-producing and approval-producing actions. It does not push, create
+  PRs, deploy, call providers, execute arbitrary commands, or use the network
+  beyond local browser/server loopback.
 - CI/deploy evidence ingestion: an operator can attach CI or deploy proof to a
   GitHub handoff packet with `ci-deploy-evidence`. The record preserves
   provider, external run id, URL, commit, branch, handoff, and JSON evidence

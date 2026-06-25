@@ -20,6 +20,11 @@
   delegation pages, safe action forms, and health command list. Handoff
   readback now prints both delegation-based and markdown-path coder-prep next
   commands.
+- Added `/approvals` and `/incidents` operator pages plus run-level forms for
+  commit requests, publication requests, publication handoff preparation, and
+  pending worktree/commit/publication approval decisions. These forms still
+  require confirmation before local mutations and do not execute work, commit,
+  push, create PRs, deploy, call providers, or use the network.
 - Added a safe relative-path artifact viewer that rejects absolute paths, `..`,
   and paths resolving outside the repo root, and renders Markdown, JSON, text,
   patch, diff, and log files as inert text with truncation.
@@ -34,14 +39,24 @@
 - Non-claims: the app does not push, create PRs, deploy, call providers,
   execute arbitrary commands, start remote workers, expose hosted dashboards,
   run schedulers, or use the network beyond local loopback.
+- Known dogfooding gap: positive app-path commit/publication request creation
+  still needs a manual end-to-end browser/operator test against a real eligible
+  reviewed worktree run.
 - Verification so far:
   - `python3 -m py_compile agent_os/coder_prep.py agent_os/implementation_handoff.py agent_os/local_app.py agent_os/cli.py tests/test_first_milestone.py`
+  - `python3 -m py_compile agent_os/*.py`
   - `python3 -m agent_os.cli coder-prep-from-handoff --help`
-  - `python3 -m agent_os.cli app-smoke-test`
+  - `python3 -m agent_os.cli app --help`
+  - `python3 -m agent_os.cli demo-app-scenario --help`
+  - `python3 -m agent_os.cli app-smoke-test` -> rendered `/`, `/workflow`, `/projects`, `/approvals`, `/incidents`, `/health`, and `/demo` with status 200 and zero provider/network/external-mutation counters.
   - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app or default_cli_help or implementation_handoff"` -> `16 passed, 481 deselected`
   - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app or default_cli_help or implementation_handoff or coder_worktree or delegation_result or dashboard or inbox or coder_publication"` -> `88 passed, 409 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q` -> `497 passed in 1140.47s`
+  - `python3 -m pytest -q` -> `497 passed in 1076.80s`
+  - `git diff --check`
   - `curl -sS --max-time 5 http://127.0.0.1:8787/health` against a local app server returned the health page and `coder-prep-from-handoff` command list entry.
   - `curl -sS --max-time 5 http://127.0.0.1:8788/workflow` against a local app server returned the workflow page with `coder-prep / coder-prep-from-handoff`.
+  - `curl -sS --max-time 5 http://127.0.0.1:8789/approvals` and `/incidents` against a local app server returned the approval and incident pages.
   - `python3 -m agent_os.cli dashboard` regenerated `docs/dashboard.md`, and `rg -n "coder-prep-from-handoff|current_handoffs|Implementation Handoff" docs/dashboard.md` showed the markdown-path prep command in the cockpit and Implementation Handoffs section.
 
 ## 2026-06-25 Coder Publication Boundary Tightening
