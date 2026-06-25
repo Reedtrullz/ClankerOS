@@ -64,10 +64,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/delegations/<delegation_id>` - delegation, handoff, prep, worktree, commit,
   and publication state, including a compact workflow-readiness summary and
   next recommended operator action.
-- `/runs/<run_id>` - run or coder-worktree run detail, including a
+- `/runs/<run_id>` - run detail. For delegation execution run ids, the page
+  shows scout evidence, result artifacts, context-pack and
+  implementation-handoff links, zero-effect counters, retry signals, and next
+  local operator action. For coder worktree run ids, it includes a
   `Run Workflow State` block for upstream context-pack, handoff, prep, plan,
   approval/run, bounded validation, commit, publication, and next-action
-  status when the run is a coder worktree run.
+  status.
 - Coder worktree run rows in the app include `changed_files_count` and a
   compact `diff_summary` read from existing `diff.patch` evidence, so the
   operator can scan change size without opening the artifact first.

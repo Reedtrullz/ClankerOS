@@ -3393,12 +3393,27 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Delegation Run Index" in delegation_runs.body
     assert result.delegation_id in delegation_runs.body
     assert result.run_id in delegation_runs.body
+    assert f"/runs/{result.run_id}" in delegation_runs.body
     assert "implementation_handoff" in delegation_runs.body
     assert "context_pack" in delegation_runs.body
     assert "next_recommended_action" in delegation_runs.body
     assert "prepare_coder_from_handoff" in delegation_runs.body
     assert "provider_calls_taken_by_clankeros=0" in delegation_runs.body
     assert "network_actions_taken=0" in delegation_runs.body
+
+    delegation_run_page = render_local_app_route(tmp_path, f"/runs/{result.run_id}")
+    assert delegation_run_page.status == 200
+    assert "Delegation Run Evidence" in delegation_run_page.body
+    assert "Delegation Execution Artifacts" in delegation_run_page.body
+    assert "Delegation Run Workflow State" in delegation_run_page.body
+    assert result.delegation_id in delegation_run_page.body
+    assert result.run_id in delegation_run_page.body
+    assert "implementation_handoff_status" in delegation_run_page.body
+    assert "context_pack_status" in delegation_run_page.body
+    assert "next_recommended_action" in delegation_run_page.body
+    assert "prepare_coder_from_handoff" in delegation_run_page.body
+    assert "provider_calls_taken_by_clankeros" in delegation_run_page.body
+    assert "0" in delegation_run_page.body
 
     delegation = render_local_app_route(
         tmp_path,

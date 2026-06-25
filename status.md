@@ -7,12 +7,19 @@
   with delegation id, run id, evidence directory, result artifact,
   context-pack and implementation-handoff links, zero-effect counters, incident
   and retry signals, and a next recommended local operator action.
+- `/runs/<run_id>` now recognizes source delegation execution run ids from
+  delegation result metadata. The detail page renders `Delegation Run
+  Evidence`, `Delegation Execution Artifacts`, and `Delegation Run Workflow
+  State` sections with context-pack, implementation-handoff, zero-effect
+  counters, retry posture, and next recommended local operator action.
 - The demo fixture now records `execution_evidence_dir` in delegation result
   metadata so the run index can show the source evidence directory without
   rerunning delegation work.
 - Compact local verification for this slice:
   - `python3 -m py_compile agent_os/local_app.py agent_os/subagent_delegation.py tests/test_first_milestone.py`
   - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario`
+  - `python3 -m agent_os.cli app-smoke-test`
+  - `git diff --check`
 - Extended the fixture-backed `demo-app-scenario` so it now preserves a
   pending coder worktree approval for inbox/approval dogfooding, prepares a
   separate completed bounded coder worktree run in an isolated demo worktree,

@@ -1236,7 +1236,8 @@ def _run_detail(root: Path, run_id: str) -> str:
     storage = _storage(root)
     run = storage.get_run(run_id) if _row_exists(storage.db_path, "runs", run_id) else None
     coder_runs = [item for item in list_coder_worktree_runs(root, limit=50) if item.id == run_id]
-    if run is None and not coder_runs:
+    delegation_run = _delegation_for_execution_run(storage, run_id)
+    if run is None and not coder_runs and delegation_run is None:
         return "<p class='error'>Run not found.</p>"
     parts = [f"<section><h1>Run {_e(run_id)}</h1>"]
     if run is not None:
@@ -1293,8 +1294,134 @@ def _run_detail(root: Path, run_id: str) -> str:
             )
         )
         parts.append(_run_action_forms(root, coder_run.id))
+    if delegation_run is not None:
+        delegation, metadata = delegation_run
+        parts.append(_delegation_execution_run_detail(root, storage, delegation, metadata, run_id))
     parts.append("</section>")
     return "".join(parts)
+
+
+def _delegation_for_execution_run(
+    storage: Storage,
+    run_id: str,
+) -> tuple[Any, dict[str, Any]] | None:
+    for delegation in storage.list_recent_subagent_delegations(limit=None):
+        metadata = load_delegation_result_metadata(delegation)
+        metadata_run_id = metadata.get("execution_run_id") or metadata.get("run_id")
+        if metadata_run_id == run_id:
+            return delegation, metadata
+    return None
+
+
+def _delegation_execution_run_detail(
+    root: Path,
+    storage: Storage,
+    delegation: Any,
+    metadata: dict[str, Any],
+    run_id: str,
+) -> str:
+    summary = summarize_implementation_handoff(root, delegation)
+    project_id = str(metadata.get("target_project_id") or _task_project(storage, delegation.parent_task_id))
+    evidence_dir = str(metadata.get("execution_evidence_dir") or metadata.get("evidence_dir") or "none")
+    next_action = _delegation_run_next_action(delegation, metadata)
+    context_pack_status = "available" if (
+        metadata.get("context_pack_json") or metadata.get("context_pack_md")
+    ) else "missing"
+    implementation_handoff_status = "available" if (
+        metadata.get("implementation_handoff_json") or metadata.get("implementation_handoff_md")
+    ) else "missing"
+    retry_candidate = str(
+        delegation.status != "completed" or bool(metadata.get("incident_id"))
+    ).lower()
+    return "".join(
+        [
+            "<section><h2>Delegation Run Evidence</h2>",
+            _kv(
+                [
+                    ("delegation_id", SafeHtml(f"<a href='/delegations/{quote(delegation.id)}'>{_e(delegation.id)}</a>")),
+                    ("run_id", run_id),
+                    ("status", delegation.status),
+                    ("project_id", project_id),
+                    ("profile", delegation.assigned_profile),
+                    ("category", delegation.category),
+                    ("parent_task_id", delegation.parent_task_id),
+                    ("result_summary", delegation.result_summary or "none"),
+                    ("evidence_dir", evidence_dir),
+                    ("provider_calls_taken_by_clankeros", str(metadata.get("provider_calls_taken_by_clankeros", "unknown"))),
+                    ("network_actions_taken", str(metadata.get("network_actions_taken", "unknown"))),
+                    ("external_mutations_taken", str(metadata.get("external_mutations_taken", "unknown"))),
+                    ("incident", str(metadata.get("incident_id") or "none")),
+                    ("retry_candidate", retry_candidate),
+                    ("next_recommended_action", next_action),
+                ]
+            ),
+            "</section>",
+            _list_section(
+                "Delegation Execution Artifacts",
+                _delegation_execution_artifact_lines(root, delegation, metadata),
+            ),
+            "<section><h2>Delegation Run Workflow State</h2>",
+            _kv(
+                [
+                    ("context_pack_status", context_pack_status),
+                    ("context_pack", _artifact_link(str(metadata.get("context_pack_md") or metadata.get("context_pack_json") or "none"))),
+                    ("implementation_handoff_status", implementation_handoff_status),
+                    ("implementation_handoff", _artifact_link(str(metadata.get("implementation_handoff_md") or metadata.get("implementation_handoff_json") or "none"))),
+                    ("implementation_handoff_readback", str(summary["status"])),
+                    ("coder_prep_status", _delegation_packet_status(list_coder_prep_packets(root), delegation.id)),
+                    ("coder_worktree_plan_status", _delegation_packet_status(list_coder_worktree_plan_packets(root), delegation.id)),
+                    ("next_recommended_action", next_action),
+                ]
+            ),
+            "</section>",
+        ]
+    )
+
+
+def _delegation_execution_artifact_lines(
+    root: Path,
+    delegation: Any,
+    metadata: dict[str, Any],
+) -> list[str]:
+    artifacts: list[tuple[str, str]] = [
+        ("result_artifact", _repo_relative_artifact_path(root, delegation.result_artifact_path)),
+        ("context_pack_json", str(metadata.get("context_pack_json") or "none")),
+        ("context_pack_md", str(metadata.get("context_pack_md") or "none")),
+        ("implementation_handoff_json", str(metadata.get("implementation_handoff_json") or "none")),
+        ("implementation_handoff_md", str(metadata.get("implementation_handoff_md") or "none")),
+    ]
+    evidence_dir = metadata.get("execution_evidence_dir") or metadata.get("evidence_dir")
+    if evidence_dir:
+        for filename in [
+            "input.json",
+            "prompt.md",
+            "stdout.txt",
+            "stderr.txt",
+            "raw_output.txt",
+            "parsed_output.json",
+            "validation.json",
+            "result.json",
+            "project.json",
+            "repo_files.json",
+            "context_pack_metadata.json",
+        ]:
+            artifacts.append((filename, str(Path(str(evidence_dir)) / filename)))
+    lines = []
+    seen: set[str] = set()
+    for label, path in artifacts:
+        if not path or path == "none" or path in seen:
+            continue
+        seen.add(path)
+        if (root / path).exists():
+            lines.append(f"{_e(label)}: {_artifact_link(path)}")
+    return lines
+
+
+def _delegation_packet_status(packets: list[dict[str, Any]], delegation_id: str) -> str:
+    return "available" if any(
+        packet.get("source", {}).get("delegation_id") == delegation_id
+        for packet in packets
+    ) else "missing"
 
 
 def _run_workflow_state(root: Path, coder_run: Any) -> str:
@@ -2329,6 +2456,11 @@ def _delegation_run_line(
     incident_id = metadata.get("incident_id") or "none"
     retry_candidate = str(delegation.status != "completed" or incident_id != "none").lower()
     next_action = _delegation_run_next_action(delegation, metadata)
+    run_link: SafeHtml | str = (
+        SafeHtml(f"<a href='/runs/{quote(str(run_id))}'>{_e(run_id)}</a>")
+        if run_id != "none"
+        else "none"
+    )
     source_review_path = root / "runs" / str(run_id) / "review.md"
     review_link: SafeHtml | str = (
         _artifact_link(str(source_review_path.relative_to(root)))
@@ -2337,7 +2469,7 @@ def _delegation_run_line(
     )
     return (
         f"<a href='/delegations/{quote(delegation.id)}'>{_e(delegation.id)}</a>: "
-        f"status={_e(delegation.status)} run_id={_e(run_id)} "
+        f"status={_e(delegation.status)} run_id={run_link} "
         f"project={_e(project_id)} profile={_e(delegation.assigned_profile)} "
         f"category={_e(delegation.category)} "
         f"evidence_dir={_e(evidence_dir)} "
