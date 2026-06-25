@@ -144,6 +144,10 @@ publication handoff when the required approval exists. The dashboard also
 exposes a confirmed `refresh-dashboard-state` form for rewriting only the
 local app status artifact. Delegation pages also expose implementation handoff
 readback and link the handoff Markdown through the safe artifact viewer.
+Confirmation pages show the submitted action payload as visible read-only
+fields plus the safety boundary before resubmitting with `confirm=yes`, so the
+operator can review exactly what will be written before a local artifact or
+approval action runs.
 
 Run pages for completed coder worktree runs link the local review, `run.json`,
 `diff.patch`, `changed_files.json`, `bounded_file_validation.json`,

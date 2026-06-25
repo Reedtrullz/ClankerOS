@@ -3232,6 +3232,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     )
     assert refresh_confirmation.status == 409
     assert "Confirm refresh-dashboard-state" in refresh_confirmation.body
+    assert "Action Payload" in refresh_confirmation.body
+    assert "requested_by" in refresh_confirmation.body
+    assert "operator" in refresh_confirmation.body
+    assert "Safety boundary" in refresh_confirmation.body
     status_path = tmp_path / ".clanker" / "app" / "local_app_status.json"
     if status_path.exists():
         status_path.unlink()

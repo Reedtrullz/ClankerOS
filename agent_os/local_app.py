@@ -2221,17 +2221,26 @@ def _input_form(
 
 def _confirm_form(action: str, form: dict[str, list[str]]) -> str:
     inputs = []
+    review_rows: list[tuple[str, str]] = []
     for key, values in form.items():
         if key == "confirm":
             continue
+        review_rows.append((key, ", ".join(values) if values else ""))
         for value in values:
             inputs.append(f"<input type='hidden' name='{_e(key)}' value='{_e(value)}'>")
     inputs.append("<input type='hidden' name='confirm' value='yes'>")
-    return (
-        f"<section><h1>Confirm {_e(action)}</h1>"
-        "<p>This action writes local ClankerOS artifacts only. It does not push, create PRs, deploy, call providers, or execute external mutations.</p>"
-        f"<form method='post' action='/actions/{_e(action)}'>{''.join(inputs)}<button type='submit'>Confirm local action</button></form>"
-        "</section>"
+    if not review_rows:
+        review_rows.append(("submitted_fields", "none"))
+    return "".join(
+        [
+            f"<section><h1>Confirm {_e(action)}</h1>",
+            "<p>This action writes local ClankerOS artifacts only. It does not push, create PRs, deploy, call providers, or execute external mutations.</p>",
+            _non_claim_banner(),
+            "<h2>Action Payload</h2>",
+            _kv(review_rows),
+            f"<form method='post' action='/actions/{_e(action)}'>{''.join(inputs)}<button type='submit'>Confirm local action</button></form>",
+            "</section>",
+        ]
     )
 
 
