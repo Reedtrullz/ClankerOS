@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The local app demo now exercises a reviewed, bounded coder worktree run and
+  app-confirmed local commit/publication request path. The app can create the
+  local isolated commit only after an approved commit request and typed
+  matching message; it still never pushes, creates PRs, deploys, calls
+  providers, or uses non-loopback network actions.
 - GitHub Actions testing is now the intended full-suite verification path after
   push, PR, or manual dispatch. Fast local checks should cover compile,
   app-smoke, focused pytest slices, and whitespace before push.

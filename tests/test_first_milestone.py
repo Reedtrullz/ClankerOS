@@ -5,6 +5,8 @@ from pathlib import Path
 
 from agent_os.dashboard import generate_static_dashboard
 from agent_os.cli import build_parser, main
+from agent_os.coder_publication import list_coder_publications
+from agent_os.coder_worktree_execution import list_coder_worktree_commit_approvals
 from agent_os.engine import AgentSystem
 from agent_os.eval import run_first_milestone_eval
 from agent_os.local_app import (
@@ -3309,6 +3311,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert result.coder_prep_md.exists()
     assert result.coder_worktree_plan_md.exists()
     assert result.approval_id.startswith("coder_worktree_approval_")
+    assert result.coder_worktree_run_id.startswith("run_")
+    assert result.review_path.exists()
+    assert result.coder_worktree_run_id in result.review_path.read_text(encoding="utf-8")
 
     delegation = render_local_app_route(
         tmp_path,
@@ -3322,6 +3327,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "implementation-handoff" in delegation.body
     assert "coder-prep-from-handoff" in delegation.body
     assert "coder-worktree-approval" in delegation.body
+    assert result.coder_worktree_run_id in delegation.body
 
     project = render_local_app_route(tmp_path, "/projects/local-app-demo")
     assert project.status == 200
@@ -3331,75 +3337,218 @@ def test_local_app_demo_scenario_populates_fixture_state(
 
     approvals = render_local_app_route(tmp_path, "/approvals")
     assert approvals.status == 200
-    assert result.approval_id in approvals.body
-    assert "approve-coder-worktree" in approvals.body
     inbox = render_local_app_route(tmp_path, "/inbox")
     assert inbox.status == 200
     assert "Operator Inbox" in inbox.body
-    assert result.approval_id in inbox.body
-    assert "coder_worktree_approvals: 1" in inbox.body
-    assert "Pending Worktree Approvals" in inbox.body
+    assert result.coder_worktree_run_id in inbox.body
+    assert "coder_worktree_runs: 1" in inbox.body
+    assert "Coder Worktree Runs" in inbox.body
 
-    confirmation = render_local_app_route(
+    run_page = render_local_app_route(tmp_path, f"/runs/{result.coder_worktree_run_id}")
+    assert run_page.status == 200
+    assert "Run Approval Actions" in run_page.body
+    assert "changed_files" in run_page.body
+    assert "demo.txt" in run_page.body
+    assert "Coder Worktree Evidence" in run_page.body
+    assert "diff.patch" in run_page.body
+    assert "changed_files.json" in run_page.body
+    assert "bounded_file_validation.json" in run_page.body
+    assert "git_status.txt" in run_page.body
+    assert "review.md" in run_page.body
+    assert "coder-commit-request" in run_page.body
+    assert "commit-coder-worktree" in run_page.body
+    assert "coder-publication-request" in run_page.body
+
+    commit_message = "Implement bounded change from approved worktree run"
+    commit_request_confirmation = render_local_app_route(
         tmp_path,
-        "/actions/approve-coder-worktree",
-        method="POST",
-        form={"approval_id": [result.approval_id], "note": ["Approved in test"]},
-    )
-    assert confirmation.status == 409
-    assert "Confirm approve-coder-worktree" in confirmation.body
-    approved = render_local_app_route(
-        tmp_path,
-        "/actions/approve-coder-worktree",
+        "/actions/coder-commit-request",
         method="POST",
         form={
-            "approval_id": [result.approval_id],
-            "note": ["Approved in test"],
-            "confirm": ["yes"],
+            "run_id": [result.coder_worktree_run_id],
+            "message": [commit_message],
+            "note": ["Demo commit request"],
         },
     )
-    assert approved.status == 303
-    assert approved.headers and approved.headers["Location"].startswith("/")
-
+    assert commit_request_confirmation.status == 409
+    assert "Confirm coder-commit-request" in commit_request_confirmation.body
     commit_request = render_local_app_route(
         tmp_path,
         "/actions/coder-commit-request",
         method="POST",
         form={
-            "run_id": [result.run_id],
-            "message": ["Demo commit request"],
-            "note": ["Demo only"],
+            "run_id": [result.coder_worktree_run_id],
+            "message": [commit_message],
+            "note": ["Demo commit request"],
             "confirm": ["yes"],
         },
     )
-    assert commit_request.status == 400
-    assert "coder worktree run not found" in commit_request.body
+    assert commit_request.status == 303
+    commit_approvals = [
+        item
+        for item in list_coder_worktree_commit_approvals(
+            tmp_path,
+            status="pending_operator_approval",
+            limit=10,
+        )
+        if item.run_id == result.coder_worktree_run_id
+    ]
+    assert len(commit_approvals) == 1
+    commit_approval = commit_approvals[0]
+
+    approvals = render_local_app_route(tmp_path, "/approvals")
+    assert approvals.status == 200
+    assert commit_approval.id in approvals.body
+    assert "approve-coder-commit" in approvals.body
+
+    commit_approval_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-commit",
+        method="POST",
+        form={
+            "approval_id": [commit_approval.id],
+            "note": ["Approve demo commit"],
+        },
+    )
+    assert commit_approval_confirmation.status == 409
+    assert "Confirm approve-coder-commit" in commit_approval_confirmation.body
+    commit_approval_response = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-commit",
+        method="POST",
+        form={
+            "approval_id": [commit_approval.id],
+            "note": ["Approve demo commit"],
+            "confirm": ["yes"],
+        },
+    )
+    assert commit_approval_response.status == 303
+
+    commit_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/commit-coder-worktree",
+        method="POST",
+        form={
+            "run_id": [result.coder_worktree_run_id],
+            "message": [commit_message],
+            "committed_by": ["operator"],
+        },
+    )
+    assert commit_confirmation.status == 409
+    assert "Confirm commit-coder-worktree" in commit_confirmation.body
+    commit_response = render_local_app_route(
+        tmp_path,
+        "/actions/commit-coder-worktree",
+        method="POST",
+        form={
+            "run_id": [result.coder_worktree_run_id],
+            "message": [commit_message],
+            "committed_by": ["operator"],
+            "confirm": ["yes"],
+        },
+    )
+    assert commit_response.status == 303
+    committed = [
+        item
+        for item in list_coder_worktree_commit_approvals(
+            tmp_path,
+            status="committed",
+            limit=10,
+        )
+        if item.run_id == result.coder_worktree_run_id
+    ]
+    assert len(committed) == 1
+    assert committed[0].commit_sha
+
     publication_request = render_local_app_route(
         tmp_path,
         "/actions/coder-publication-request",
         method="POST",
         form={
-            "run_id": [result.run_id],
+            "run_id": [result.coder_worktree_run_id],
             "remote": ["origin"],
             "target_branch": ["main"],
-            "note": ["Demo only"],
+            "note": ["Demo publication request"],
+        },
+    )
+    assert publication_request.status == 409
+    assert "Confirm coder-publication-request" in publication_request.body
+    publication_request = render_local_app_route(
+        tmp_path,
+        "/actions/coder-publication-request",
+        method="POST",
+        form={
+            "run_id": [result.coder_worktree_run_id],
+            "remote": ["origin"],
+            "target_branch": ["main"],
+            "note": ["Demo publication request"],
             "confirm": ["yes"],
         },
     )
-    assert publication_request.status == 400
-    assert "coder worktree run not found" in publication_request.body
+    assert publication_request.status == 303
+    publications = [
+        item
+        for item in list_coder_publications(
+            tmp_path,
+            status="pending_operator_approval",
+            limit=10,
+        )
+        if item.run_id == result.coder_worktree_run_id
+    ]
+    assert len(publications) == 1
+    publication = publications[0]
+
+    publication_approval_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-publication",
+        method="POST",
+        form={
+            "publication_id": [publication.id],
+            "note": ["Approve demo publication handoff"],
+        },
+    )
+    assert publication_approval_confirmation.status == 409
+    assert "Confirm approve-coder-publication" in publication_approval_confirmation.body
     publication_approval = render_local_app_route(
         tmp_path,
         "/actions/approve-coder-publication",
         method="POST",
         form={
-            "publication_id": ["missing_publication"],
-            "note": ["Demo only"],
+            "publication_id": [publication.id],
+            "note": ["Approve demo publication handoff"],
             "confirm": ["yes"],
         },
     )
-    assert publication_approval.status == 400
-    assert "publication request not found" in publication_approval.body
+    assert publication_approval.status == 303
+    publication_handoff_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/coder-publication-handoff",
+        method="POST",
+        form={"run_id": [result.coder_worktree_run_id]},
+    )
+    assert publication_handoff_confirmation.status == 409
+    assert "Confirm coder-publication-handoff" in publication_handoff_confirmation.body
+    publication_handoff = render_local_app_route(
+        tmp_path,
+        "/actions/coder-publication-handoff",
+        method="POST",
+        form={"run_id": [result.coder_worktree_run_id], "confirm": ["yes"]},
+    )
+    assert publication_handoff.status == 303
+    ready_publications = [
+        item
+        for item in list_coder_publications(
+            tmp_path,
+            status="ready_for_operator",
+            limit=10,
+        )
+        if item.run_id == result.coder_worktree_run_id
+    ]
+    assert len(ready_publications) == 1
+    ready = ready_publications[0]
+    assert ready.handoff_artifact_path
+    assert (tmp_path / ready.handoff_artifact_path).exists()
+    assert (Path(tmp_path / ready.handoff_artifact_path).parent / "pr_body.md").exists()
 
 
 def test_local_app_cli_commands_and_bind_safety(

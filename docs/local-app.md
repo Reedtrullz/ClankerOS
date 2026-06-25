@@ -72,7 +72,9 @@ The demo creates fixture-backed local state under `.clanker/demo/`:
 - a completed fixture-backed scout delegation
 - context-pack and implementation-handoff artifacts
 - coder prep and coder worktree plan packets
-- a pending coder worktree approval request
+- an approved fixture-backed coder worktree execution
+- a completed bounded coder worktree run with changed-file, diff, git-status,
+  bounded-validation, stdout/stderr, verification, and review artifacts
 
 It is local-only. It does not call providers, push, create PRs, deploy, use the
 network, or modify external projects outside the repo demo area.
@@ -103,13 +105,22 @@ publication handoff when the required approval exists. Delegation pages also
 expose implementation handoff readback and link the handoff Markdown through
 the safe artifact viewer.
 
+Run pages for completed coder worktree runs link the local review, `run.json`,
+`diff.patch`, `changed_files.json`, `bounded_file_validation.json`,
+`git_status.txt`, stdout/stderr, and verification output before showing
+approval forms. `commit-coder-worktree` is exposed only as an explicit
+confirmed local action with a typed commit message that must match the
+approved request. It creates a commit only inside the isolated coder worktree
+after the existing commit gate re-checks review, source hashes, branch/HEAD,
+changed files, bounded-file validation, and verifier state.
+
 The `/inbox`, `/approvals`, and `/incidents` pages are local operator surfaces.
 The inbox is read-only and mirrors the CLI's operator-worthy queue without
 starting work, approving requests, retrying tasks, committing, pushing, creating
 PRs, deploying, calling providers, or using external network actions.
 
-Execution and commit actions remain CLI-first in this version. Push and PR
-creation are never executed by the app.
+Worktree execution remains CLI-first outside the fixture-backed demo setup.
+Push and PR creation are never executed by the app.
 
 ## Health Artifact
 

@@ -1,5 +1,32 @@
 # Status
 
+## 2026-06-25 Local App Dogfooding Path
+
+- Extended the fixture-backed `demo-app-scenario` so it now prepares a real
+  completed bounded coder worktree run in an isolated demo worktree, writes a
+  fixture review file for the source delegation run, and keeps all provider,
+  network, push, PR, deploy, and external mutation counters at zero.
+- Added an explicitly confirmed `commit-coder-worktree` POST action to the
+  local app. The action requires the existing approved commit request and a
+  typed matching commit message, then reuses the existing commit gate to
+  re-check review, source hashes, branch/HEAD, changed files, bounded-file
+  validation, and verifier state before creating a local commit only inside the
+  isolated coder worktree.
+- Run detail pages now link the review, `run.json`, `diff.patch`,
+  `changed_files.json`, `bounded_file_validation.json`, `git_status.txt`,
+  stdout/stderr, and verification output before showing local approval forms.
+- Focused app test coverage now walks the browser-route action path from demo
+  run detail through commit request, commit approval, isolated local commit,
+  publication request, publication approval, and publication handoff.
+- Verification so far:
+  - `python3 -m py_compile agent_os/local_app.py agent_os/cli.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario"` -> `1 passed, 497 deselected`
+  - `python3 -m agent_os.cli app-smoke-test` -> rendered `/`, `/workflow`, `/projects`, `/inbox`, `/approvals`, `/incidents`, `/health`, and `/demo` with status 200 and zero provider/network/external-mutation counters.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app or inbox"` -> `15 passed, 483 deselected`
+- Non-claims: the app still does not expose arbitrary command execution,
+  worktree execution outside the fixture-backed demo setup, push, PR creation,
+  deploy, provider calls, or non-loopback network actions.
+
 ## 2026-06-25 GitHub Actions Test Automation
 
 - Added `.github/workflows/tests.yml` so GitHub can run the slow verification

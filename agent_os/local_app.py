@@ -30,11 +30,13 @@ from agent_os.coder_worktree_execution import (
     CoderWorktreeCommitError,
     approve_coder_worktree,
     approve_coder_worktree_commit,
+    commit_coder_worktree,
     list_coder_worktree_approvals,
     list_coder_worktree_commit_approvals,
     list_coder_worktree_runs,
     request_coder_worktree_approval,
     request_coder_worktree_commit_approval,
+    run_approved_coder_worktree,
 )
 from agent_os.coder_worktree_plan import (
     CoderWorktreePlanError,
@@ -102,11 +104,13 @@ class DemoScenarioResult:
     task_id: str
     delegation_id: str
     run_id: str
+    coder_worktree_run_id: str
     project_root: Path
     handoff_md: Path
     coder_prep_md: Path
     coder_worktree_plan_md: Path
     approval_id: str
+    review_path: Path
 
 
 def validate_bind_host(host: str, *, allow_nonlocal_bind: bool = False) -> None:
@@ -402,6 +406,37 @@ def run_demo_app_scenario(root: Path) -> DemoScenarioResult:
         requested_by="operator",
         note="Demo approval request only; no execution.",
     ).approval
+    approve_coder_worktree(
+        root,
+        storage,
+        approval.id,
+        decided_by="local_app_demo",
+        note="Approve fixture-backed demo worktree execution.",
+    )
+    coder_run = run_approved_coder_worktree(
+        root,
+        storage,
+        delegation.id,
+        command="python3 scripts/change_demo.py",
+        verify=True,
+    ).run
+    review_path = root / "runs" / run_id / "review.md"
+    review_path.parent.mkdir(parents=True, exist_ok=True)
+    review_path.write_text(
+        "\n".join(
+            [
+                "# Demo Run Review",
+                "",
+                f"- source_run_id: {run_id}",
+                f"- coder_worktree_run_id: {coder_run.id}",
+                "- review_status: fixture_reviewed",
+                "- changed_files_within_allowed_files: true",
+                "- non_claim: fixture review does not commit, push, deploy, call providers, or use the network.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
     write_local_app_status(root, host=DEFAULT_HOST, port=DEFAULT_PORT)
     return DemoScenarioResult(
         project_id=project.name,
@@ -409,11 +444,13 @@ def run_demo_app_scenario(root: Path) -> DemoScenarioResult:
         task_id=task_id,
         delegation_id=delegation.id,
         run_id=run_id,
+        coder_worktree_run_id=coder_run.id,
         project_root=project_root,
         handoff_md=handoff_md,
         coder_prep_md=prep.markdown_path,
         coder_worktree_plan_md=plan.markdown_path,
         approval_id=approval.id,
+        review_path=review_path,
     )
 
 
@@ -434,7 +471,8 @@ def write_local_app_status(root: Path, *, host: str, port: int) -> Path:
         "non_claims": NO_EXTERNAL_EFFECT_CLAIMS,
         "known_gaps": [
             "No authentication for localhost MVP.",
-            "Execution and commit actions remain CLI-first in this initial app version.",
+            "Worktree execution remains CLI-first except for fixture-backed demo setup.",
+            "Local commit action requires an approved commit request, typed matching message, and explicit confirmation.",
             "Publication push and PR creation are displayed as manual commands only.",
         ],
     }
@@ -752,11 +790,26 @@ def _run_detail(root: Path, run_id: str) -> str:
             )
         )
     for coder_run in coder_runs:
+        evidence_path = Path(coder_run.evidence_path)
+        review_path = Path("runs") / coder_run.source_run_id / "review.md"
+        evidence_links = [
+            ("review", str(review_path)),
+            ("run_json", str(evidence_path / "run.json")),
+            ("diff", str(evidence_path / "diff.patch")),
+            ("changed_files", str(evidence_path / "changed_files.json")),
+            ("bounded_file_validation", str(evidence_path / "bounded_file_validation.json")),
+            ("git_status", str(evidence_path / "git_status.txt")),
+            ("stdout", str(evidence_path / "stdout.txt")),
+            ("stderr", str(evidence_path / "stderr.txt")),
+            ("verification_stdout", str(evidence_path / "verification_stdout.txt")),
+            ("verification_stderr", str(evidence_path / "verification_stderr.txt")),
+        ]
         parts.append(
             _kv(
                 [
                     ("coder_worktree_status", coder_run.status),
                     ("delegation_id", coder_run.delegation_id),
+                    ("source_run_id", coder_run.source_run_id),
                     ("worktree_path", coder_run.worktree_path),
                     ("branch_name", coder_run.branch_name),
                     ("changed_files", ", ".join(coder_run.changed_files) or "none"),
@@ -764,6 +817,16 @@ def _run_detail(root: Path, run_id: str) -> str:
                     ("verification_exit_code", str(coder_run.verification_exit_code)),
                     ("evidence_path", coder_run.evidence_path),
                 ]
+            )
+        )
+        parts.append(
+            _list_section(
+                "Coder Worktree Evidence",
+                [
+                    f"{_e(label)}: {_artifact_link(path)}"
+                    for label, path in evidence_links
+                    if (root / path).exists()
+                ],
             )
         )
         parts.append(_run_action_forms(coder_run.id))
@@ -953,6 +1016,17 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             )
             message = f"approved_coder_commit: {result.approval.id}"
             location = "/"
+        elif action == "commit-coder-worktree":
+            run_id = _required(form, "run_id")
+            result = commit_coder_worktree(
+                root,
+                storage,
+                run_id,
+                message=_required(form, "message"),
+                committed_by=_one(form, "committed_by") or "operator",
+            )
+            message = f"commit_coder_worktree: {result.status}"
+            location = f"/runs/{quote(run_id)}"
         elif action == "coder-publication-request":
             run_id = _required(form, "run_id")
             result = request_coder_publication(
@@ -1038,6 +1112,11 @@ def _run_action_forms(run_id: str) -> str:
                     "target_branch": "main",
                 },
                 {"note": "Request publication handoff"},
+            ),
+            _input_form(
+                "commit-coder-worktree",
+                {"run_id": run_id, "committed_by": "operator"},
+                {"message": "Implement bounded change from approved worktree run"},
             ),
             _form("coder-publication-handoff", {"run_id": run_id}),
             "</section>",
@@ -1454,11 +1533,32 @@ def _ensure_demo_git_project(project_root: Path) -> None:
         "def test_demo_fixture():\n    assert True\n",
         encoding="utf-8",
     )
+    (project_root / "scripts").mkdir(exist_ok=True)
+    (project_root / "scripts" / "change_demo.py").write_text(
+        "\n".join(
+            [
+                "from pathlib import Path",
+                "",
+                "path = Path('demo.txt')",
+                "text = path.read_text(encoding='utf-8')",
+                "marker = 'allowed local app demo change'",
+                "if marker not in text:",
+                "    path.write_text(text.rstrip() + '\\n' + marker + '\\n', encoding='utf-8')",
+                "print('allowed-demo-change')",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
     if not (project_root / ".git").exists():
         subprocess.run(["git", "init"], cwd=project_root, check=True, capture_output=True)
         subprocess.run(["git", "config", "user.email", "demo@example.invalid"], cwd=project_root, check=True)
         subprocess.run(["git", "config", "user.name", "ClankerOS Demo"], cwd=project_root, check=True)
-    subprocess.run(["git", "add", "demo.txt", "tests/test_demo.py"], cwd=project_root, check=True)
+    subprocess.run(
+        ["git", "add", "demo.txt", "tests/test_demo.py", "scripts/change_demo.py"],
+        cwd=project_root,
+        check=True,
+    )
     if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=project_root).returncode != 0:
         subprocess.run(
             ["git", "commit", "-m", "Add local app demo fixture"],
