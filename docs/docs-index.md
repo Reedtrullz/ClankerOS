@@ -16,7 +16,8 @@ system.
   registering a target repo, planning, running one task, capturing specialist
   input, and publishing a snapshot.
 - `docs/local-app.md` - launch, routes, demo scenario, artifact viewer,
-  health, safe actions, and non-claims for the local browser operator app.
+  verification, CI evidence records, health, safe actions, and non-claims for
+  the local browser operator app.
 - `docs/concepts.md` - glossary for goals, tasks, evidence, approvals,
   effects, worktrees, delegations, memory, skills, and non-claims.
 - `docs/architecture.md` - local control plane, runtime artifacts, safety

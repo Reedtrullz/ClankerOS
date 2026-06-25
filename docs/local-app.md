@@ -60,6 +60,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/verification` - read-only verification handoff showing the checked-in
   GitHub Actions workflow posture, compact local checks, remote full-suite
   boundary, and explicit CI non-claims without contacting GitHub.
+- `/ci-evidence` - read-only CI/deploy evidence records that were already
+  supplied by the operator with `ci-deploy-evidence`, including provider,
+  status, external run id, URL, commit, and safe artifact links without
+  fetching GitHub status.
 - `/dogfooding` - read-only manual browser checklist for refreshing the demo
   fixture, walking demo/workflow/project/delegation/run routes, using local
   commit and publication gates, and handing full-suite proof to GitHub Actions
@@ -148,6 +152,13 @@ keeps the compact local checks visible:
 
 The page does not fetch GitHub status. A pushed commit is not CI proof until
 the GitHub Actions run completes successfully.
+
+`/ci-evidence` is the read-only companion for proof that has already been
+recorded locally with `ci-deploy-evidence`. It shows the provider, status,
+external run id, external URL, handoff id, commit, recorded-by field, and
+evidence artifact link for recent CI/deploy evidence records. The page does
+not poll GitHub, refresh statuses, push, create PRs, deploy, call providers, or
+mutate external systems.
 
 ## Manual Dogfooding Checklist
 

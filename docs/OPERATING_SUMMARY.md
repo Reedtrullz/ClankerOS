@@ -90,7 +90,9 @@ Core layers for the bootstrap:
   form locations, output artifacts, confirmation posture, and external-effect
   boundaries; a read-only `/verification` handoff for the checked-in GitHub
   Actions workflow, compact local checks, and CI proof boundary without
-  contacting GitHub; a read-only `/dogfooding` checklist for the first browser
+  contacting GitHub; a read-only `/ci-evidence` page for operator-supplied
+  CI/deploy proof records already stored in local ClankerOS state without
+  fetching GitHub status; a read-only `/dogfooding` checklist for the first browser
   route walk, fixture refresh, local commit/publication gate sequence, and
   GitHub Actions handoff boundary without fetching GitHub status; a read-only
   operator inbox plus local approval and

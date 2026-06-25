@@ -120,6 +120,11 @@ place. It reads the checked-in GitHub Actions workflow, lists the compact local
 checks to run before a push, and states that CI proof requires a completed
 passing GitHub Actions run. The page itself does not contact GitHub.
 
+Use `/ci-evidence` after recording CI proof with `ci-deploy-evidence`. It shows
+operator-supplied GitHub Actions/deploy evidence already stored in local
+ClankerOS state and links the inert evidence artifact. It does not fetch
+GitHub status.
+
 The app is local-only by default, binds to `127.0.0.1`, and refuses non-local
 binds unless `--allow-nonlocal-bind` is explicitly supplied. It does not push,
 create PRs, deploy, call providers, or perform network actions beyond local

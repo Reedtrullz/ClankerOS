@@ -3235,6 +3235,40 @@ def test_local_app_routes_render_modern_workflow_and_health(
         + "\n",
         encoding="utf-8",
     )
+    ci_evidence_path = tmp_path / ".clanker" / "ci" / "github-actions-123.json"
+    ci_evidence_path.parent.mkdir(parents=True, exist_ok=True)
+    ci_evidence_path.write_text(
+        json.dumps(
+            {
+                "status": "success",
+                "network_actions_taken": 0,
+                "external_mutations_taken": 0,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    Storage(tmp_path / ".agent" / "state.db").record_ci_deploy_evidence(
+        github_handoff_id="github_handoff_demo",
+        effect_id="effect_demo",
+        project_id="local-app-demo",
+        run_id="run_demo",
+        task_id="task_demo",
+        branch_name="main",
+        commit_sha="abc123",
+        provider="github-actions",
+        external_run_id="123",
+        external_url="https://github.com/example/subject/actions/runs/123",
+        status="success",
+        recorded_by="operator",
+        evidence_path=str(ci_evidence_path),
+        result_json={
+            "network_actions_taken": 0,
+            "external_mutations_taken": 0,
+            "note": "GitHub Actions run was green.",
+        },
+        idempotency_key="ci-demo",
+    )
 
     root = render_local_app_route(tmp_path, "/")
     assert root.status == 200
@@ -3288,6 +3322,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "no push" in refreshed_status["non_claims"]
     assert "/actions" in refreshed_status["routes_available"]
     assert "/verification" in refreshed_status["routes_available"]
+    assert "/ci-evidence" in refreshed_status["routes_available"]
     assert "/dogfooding" in refreshed_status["routes_available"]
     dashboard_notice = render_local_app_route(
         tmp_path,
@@ -3348,6 +3383,18 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "python3 -m agent_os.cli app-smoke-test" in verification.body
     assert "CI proof requires a completed passing GitHub Actions run" in verification.body
     assert "app_network_actions_taken: 0" in verification.body
+    assert "/ci-evidence" in verification.body
+
+    ci_evidence = render_local_app_route(tmp_path, "/ci-evidence")
+    assert ci_evidence.status == 200
+    assert "CI Evidence Records" in ci_evidence.body
+    assert "github-actions" in ci_evidence.body
+    assert "success" in ci_evidence.body
+    assert "external_run_id: 123" in ci_evidence.body
+    assert "https://github.com/example/subject/actions/runs/123" in ci_evidence.body
+    assert "evidence_path" in ci_evidence.body
+    assert "app_network_actions_taken: 0" in ci_evidence.body
+    assert "no GitHub status fetch" in ci_evidence.body
 
     dogfooding = render_local_app_route(tmp_path, "/dogfooding")
     assert dogfooding.status == 200
@@ -3918,6 +3965,7 @@ def test_local_app_cli_commands_and_bind_safety(
     assert "route /workflow: 200" in smoke_output
     assert "route /actions: 200" in smoke_output
     assert "route /verification: 200" in smoke_output
+    assert "route /ci-evidence: 200" in smoke_output
     assert "route /dogfooding: 200" in smoke_output
     assert "route /inbox: 200" in smoke_output
     assert "network_actions_taken: 0" in smoke_output

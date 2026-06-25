@@ -1,5 +1,29 @@
 # Status
 
+## 2026-06-26 Local App CI Evidence Records
+
+- Added `/ci-evidence` as a read-only local operator page for
+  operator-supplied CI/deploy evidence already recorded with
+  `ci-deploy-evidence`.
+- The page shows provider, status, external run id, external URL, handoff id,
+  commit, recorded-by field, zero app network/external mutation counters, and
+  a safe artifact-viewer link to the local evidence record.
+- `/verification` now links to `/ci-evidence`, and the local app status
+  artifact, nav, and smoke-test route list include `/ci-evidence`.
+- Focused red coverage first failed because `/ci-evidence` was missing from
+  `routes_available` and app smoke output; the route and smoke test now cover
+  recorded CI evidence visibility.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_cli_commands_and_bind_safety"` -> `2 passed, 496 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_cli_commands_and_bind_safety or local_app_demo_scenario"` -> `3 passed, 495 deselected`
+  - `python3 -m agent_os.cli app-smoke-test` -> rendered `/ci-evidence` and the existing core routes with status 200 and zero provider/network/external-mutation counters.
+  - `git diff --check`
+- Non-claims: this is a read-only local state view only; no GitHub API/status
+  fetch, provider call, push, PR, deploy, hosted/remote worker, scheduler,
+  browser/desktop adapter, arbitrary command execution, or non-loopback network
+  capability was added.
+
 ## 2026-06-26 Local App Manual Dogfooding Checklist
 
 - Added `/dogfooding` as a read-only local operator page for the first manual

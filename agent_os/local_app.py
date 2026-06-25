@@ -239,6 +239,8 @@ def render_local_app_route(
             return page("Actions", _actions_page(root))
         if path == "/verification":
             return page("Verification", _verification_page(root))
+        if path == "/ci-evidence":
+            return page("CI Evidence", _ci_evidence_page(root))
         if path == "/dogfooding":
             return page("Dogfooding", _dogfooding_page(root))
         if path == "/projects":
@@ -286,6 +288,7 @@ def run_local_app_smoke_test(root: Path) -> dict[str, Any]:
         "/workflow",
         "/actions",
         "/verification",
+        "/ci-evidence",
         "/dogfooding",
         "/projects",
         "/delegation-runs",
@@ -534,7 +537,7 @@ def write_local_app_status(root: Path, *, host: str, port: int) -> Path:
         "commit": state["commit"],
         "dirty_tracked_files": state["dirty_tracked_files"],
         "untracked_files": state["untracked_files"],
-        "routes_available": ["/", "/workflow", "/actions", "/verification", "/dogfooding", "/projects", "/delegation-runs", "/delegations/<id>", "/runs/<id>", "/inbox", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
+        "routes_available": ["/", "/workflow", "/actions", "/verification", "/ci-evidence", "/dogfooding", "/projects", "/delegation-runs", "/delegations/<id>", "/runs/<id>", "/inbox", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
         "supported_workflow_stages": [step[0] for step in WORKFLOW_STEPS],
         "non_claims": NO_EXTERNAL_EFFECT_CLAIMS,
         "known_gaps": [
@@ -730,6 +733,13 @@ def _verification_page(root: Path) -> str:
             _list_section("GitHub Actions Steps", workflow_step_lines),
             _list_section("Compact Local Checks", compact_checks),
             _list_section(
+                "Recorded CI Evidence",
+                [
+                    "<a href='/ci-evidence'>/ci-evidence</a>: operator-supplied CI/deploy proof records already stored in local ClankerOS state.",
+                    "The local app reads these records from SQLite and does not fetch GitHub status.",
+                ],
+            ),
+            _list_section(
                 "Non-Claims",
                 [
                     "The app does not contact GitHub or fetch CI status.",
@@ -738,6 +748,56 @@ def _verification_page(root: Path) -> str:
                 ],
             ),
         ]
+    )
+
+
+def _ci_evidence_page(root: Path) -> str:
+    records = _storage(root).list_recent_ci_deploy_evidence_records(limit=20)
+    items = [_ci_evidence_line(root, record) for record in records]
+    return "".join(
+        [
+            "<section><h1>CI Evidence Records</h1>",
+            "<p class='muted'>Read-only view of operator-supplied CI/deploy evidence already recorded in local ClankerOS state.</p>",
+            _non_claim_banner(),
+            _kv(
+                [
+                    ("record_count", str(len(records))),
+                    ("app_network_actions_taken", "0"),
+                    ("external_mutations_taken", "0"),
+                    ("github_status_fetch", "none"),
+                ]
+            ),
+            "</section>",
+            _list_section("Recent CI Evidence", items),
+            _list_section(
+                "Non-Claims",
+                [
+                    "app_network_actions_taken: 0",
+                    "external_mutations_taken: 0",
+                    "no GitHub status fetch is performed by the local app.",
+                    "CI proof is only as current as the operator-supplied evidence record.",
+                    "No push, PR, deploy, provider call, or external mutation is executed by this page.",
+                ],
+            ),
+        ]
+    )
+
+
+def _ci_evidence_line(root: Path, record: Any) -> str:
+    evidence_path = _repo_relative_artifact_path(root, record.evidence_path)
+    return (
+        f"{_e(record.id)}: "
+        f"status={_e(record.status)} "
+        f"provider={_e(record.provider)} "
+        f"project={_e(record.project_id)} "
+        f"branch={_e(record.branch_name)} "
+        f"commit={_e(record.commit_sha)} "
+        f"github_handoff={_e(record.github_handoff_id)} "
+        f"external_run_id: {_e(record.external_run_id)} "
+        f"url={_e(record.external_url)} "
+        f"recorded_by={_e(record.recorded_by)} "
+        f"network_actions_taken={_e(record.result_json.get('network_actions_taken', 'unknown'))} "
+        f"evidence_path={_artifact_link(evidence_path)}"
     )
 
 
@@ -2747,7 +2807,7 @@ def _html_page(root: Path, title: str, content: str, *, status: int = 200) -> Lo
 <body>
   <header>
     <strong>ClankerOS Local Operator</strong>
-    <nav><a href="/">Dashboard</a><a href="/workflow">Workflow</a><a href="/actions">Actions</a><a href="/verification">Verification</a><a href="/dogfooding">Dogfooding</a><a href="/projects">Projects</a><a href="/delegation-runs">Delegation Runs</a><a href="/inbox">Inbox</a><a href="/approvals">Approvals</a><a href="/incidents">Incidents</a><a href="/health">Health</a><a href="/demo">Demo</a></nav>
+    <nav><a href="/">Dashboard</a><a href="/workflow">Workflow</a><a href="/actions">Actions</a><a href="/verification">Verification</a><a href="/ci-evidence">CI Evidence</a><a href="/dogfooding">Dogfooding</a><a href="/projects">Projects</a><a href="/delegation-runs">Delegation Runs</a><a href="/inbox">Inbox</a><a href="/approvals">Approvals</a><a href="/incidents">Incidents</a><a href="/health">Health</a><a href="/demo">Demo</a></nav>
   </header>
   <main>{content}</main>
 </body>
