@@ -41,6 +41,8 @@ system.
   publication handoff packet without pushing or creating a PR.
 - `docs/tutorial-public-snapshot.md` - verify, commit, and push a coherent
   public GitHub snapshot without overclaiming.
+- `docs/github-testing.md` - use GitHub Actions for the slow full-suite test
+  loop while keeping local checks focused and fast.
 - `contracts.md` - safety contract and evidence expectations.
 - `WORKFLOW.md` - lifecycle ordering from goal intake through verification,
   approvals, delegation packets, and dashboard visibility.

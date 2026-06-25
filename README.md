@@ -58,7 +58,8 @@ python3 -m agent_os.cli demo-app-scenario
 python3 -m agent_os.cli projects
 python3 -m agent_os.cli dashboard
 python3 -m agent_os.cli iterate
-python3 -m pytest -q
+python3 -m compileall -q agent_os tests
+python3 -m agent_os.cli app-smoke-test
 ```
 
 Then read:
@@ -80,6 +81,7 @@ Then read:
 - [Approval-Gated Coding Tutorial](docs/tutorial-approval-gated-coding.md)
 - [Executable Delegation Tutorial](docs/tutorial-executable-delegation.md)
 - [Public Snapshot Tutorial](docs/tutorial-public-snapshot.md)
+- [GitHub Testing](docs/github-testing.md)
 
 The primary operator surface is now the local app plus the CLI. Start the app
 for a browser view of projects, workflow, delegations, runs, health, artifacts,
@@ -451,18 +453,21 @@ For the detailed state, use:
 
 ## Public Snapshot Checklist
 
-Before pushing a public snapshot:
+Before pushing a public snapshot, run a fast local slice:
 
 ```bash
 git status --short --branch
 git diff --check
-python3 -m pytest -q
-python3 -m agent_os.cli dashboard
-python3 -m agent_os.cli iterate
+python3 -m compileall -q agent_os tests
+python3 -m agent_os.cli app-smoke-test
+python3 -m pytest tests/test_first_milestone.py -q -k "github_actions or local_app or inbox"
 ```
 
-Pushing is not deployment. Local tests are not CI proof. GitHub metadata
-readback is not runtime proof. See
+After pushing or opening a PR, wait for the GitHub `Tests` workflow to run the
+full suite with `python -m pytest -q`. A committed workflow file is not CI
+proof until a GitHub Actions run passes on that commit. Pushing is not
+deployment. GitHub metadata readback is not runtime proof. See
+[GitHub Testing](docs/github-testing.md) and
 [Tutorial: Public Snapshot](docs/tutorial-public-snapshot.md) for the full
 recommended flow.
 

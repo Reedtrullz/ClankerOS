@@ -3180,6 +3180,27 @@ def test_default_cli_help_prioritizes_handoff_workflow_and_demotes_ladder() -> N
     assert args.command == "capability-activation-tasks"
 
 
+def test_github_actions_workflow_runs_automatic_verification() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    workflow_path = repo_root / ".github" / "workflows" / "tests.yml"
+    workflow = workflow_path.read_text(encoding="utf-8")
+
+    for expected in [
+        "push:",
+        "pull_request:",
+        "workflow_dispatch:",
+        "permissions:",
+        "contents: read",
+        'python-version: "3.10"',
+        "python -m compileall -q agent_os tests",
+        "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-smoke-test",
+        "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" dashboard",
+        "git diff --check",
+        "python -m pytest -q",
+    ]:
+        assert expected in workflow
+
+
 def test_local_app_routes_render_modern_workflow_and_health(
     tmp_path: Path,
 ) -> None:

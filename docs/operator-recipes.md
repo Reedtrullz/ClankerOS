@@ -242,14 +242,15 @@ providers, run CI, deploy, or mutate external systems.
 ```bash
 git status --short --branch
 git diff --check
-python3 -m pytest -q
-python3 -m agent_os.cli dashboard
-python3 -m agent_os.cli iterate
+python3 -m compileall -q agent_os tests
+python3 -m agent_os.cli app-smoke-test
+python3 -m pytest tests/test_first_milestone.py -q -k "github_actions or local_app or inbox"
 gh repo view Reedtrullz/ClankerOS --json description,repositoryTopics,homepageUrl
 ```
 
 Commit only a coherent verified increment. Push only after you know the target
-remote and branch.
+remote and branch, then let the GitHub `Tests` workflow run the full suite.
 
 Boundary: local verification is not CI proof. Pushing to GitHub is not
-deployment. GitHub metadata readback is not runtime proof.
+deployment. A committed workflow file is not CI proof until GitHub Actions
+passes on the pushed commit. GitHub metadata readback is not runtime proof.

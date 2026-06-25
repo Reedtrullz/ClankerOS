@@ -1,5 +1,35 @@
 # Status
 
+## 2026-06-25 GitHub Actions Test Automation
+
+- Added `.github/workflows/tests.yml` so GitHub can run the slow verification
+  loop automatically on pushes to `main`, pull requests targeting `main`, and
+  manual `workflow_dispatch` runs.
+- The workflow uses Python 3.10 to match the current local interpreter floor,
+  installs `pytest`, compiles `agent_os` and `tests`, runs local CLI smoke
+  checks against a temporary ClankerOS root, checks whitespace with
+  `git diff --check`, and runs the full suite with `python -m pytest -q`.
+- The CLI smoke commands use `CLANKEROS_CI_ROOT=${{ runner.temp }}/clankeros-ci-root`
+  so generated `dashboard` and `iterate` outputs do not rewrite committed docs
+  with runner-specific paths.
+- Added `docs/github-testing.md` and updated README, command reference,
+  operator recipes, docs index, and status entrypoint so operators use fast
+  local checks before push and wait for GitHub Actions for full-suite proof.
+- Added a regression test that asserts the workflow keeps the trigger,
+  permission, compile, smoke, whitespace, and full-suite commands present.
+- Local verification for this change:
+  - `python3 -m py_compile tests/test_first_milestone.py`
+  - `python3 -m compileall -q agent_os tests`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "github_actions"` -> `1 passed, 497 deselected`
+  - temp-root CI smoke equivalent: `init`, `app-smoke-test`, `demo-app-scenario`, `app --help`, `dashboard`, and `iterate` all completed with zero provider/network/external-mutation counters from the smoke output.
+  - `python3 -m agent_os.cli app-smoke-test` -> rendered `/`, `/workflow`, `/projects`, `/inbox`, `/approvals`, `/incidents`, `/health`, and `/demo` with status 200 and zero provider/network/external-mutation counters.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "github_actions or local_app or inbox"` -> `16 passed, 482 deselected`
+  - `git diff --check`
+- Non-claims: the workflow file has not been pushed or run on GitHub from this
+  local change yet. It is not CI proof until a GitHub Actions run passes on a
+  pushed commit, and it is not deployment, provider, runtime, or capability
+  activation proof.
+
 ## 2026-06-25 Local Operator App MVP
 
 - Added a standard-library local browser operator app with `app`, `local-app`,
