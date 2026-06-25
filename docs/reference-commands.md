@@ -36,9 +36,11 @@ network beyond local browser/server loopback. `demo-app-scenario` creates a
 fixture-backed local demo under `.clanker/demo/` with project, delegation,
 handoff, coder-prep, worktree-plan, and pending approval state. `app-smoke-test`
 renders the core routes without starting a server. The app includes
-`/inbox` for the read-only operator queue, `/approvals` for pending worktree,
-commit, and publication decisions, and `/incidents` for local incident readback;
-all remain local-only operator surfaces.
+`/delegation-runs` for read-only delegation execution evidence, zero-effect
+counters, retry signals, and next local operator actions, `/inbox` for the
+read-only operator queue, `/approvals` for pending worktree, commit, and
+publication decisions, and `/incidents` for local incident readback; all remain
+local-only operator surfaces.
 
 ## First Loop
 

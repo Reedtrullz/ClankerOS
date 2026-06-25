@@ -57,6 +57,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/projects/<project_id>` - project detail with first-class project goals,
   goal-linked tasks, linked artifacts, project-scoped incidents/
   recommendations, and next recommended operator action.
+- `/delegation-runs` - read-only delegation execution run index with evidence
+  directories, result artifacts, context-pack and implementation-handoff links,
+  zero-effect counters, retry signals, and next recommended local operator
+  actions.
 - `/delegations/<delegation_id>` - delegation, handoff, prep, worktree, commit,
   and publication state, including a compact workflow-readiness summary and
   next recommended operator action.
@@ -150,10 +154,11 @@ approval. The commit action creates a commit only inside the isolated coder
 worktree after the existing commit gate re-checks review, source hashes,
 branch/HEAD, changed files, bounded-file validation, and verifier state.
 
-The `/inbox`, `/approvals`, and `/incidents` pages are local operator surfaces.
-The inbox is read-only and mirrors the CLI's operator-worthy queue without
-starting work, approving requests, retrying tasks, committing, pushing, creating
-PRs, deploying, calling providers, or using external network actions.
+The `/delegation-runs`, `/inbox`, `/approvals`, and `/incidents` pages are
+local operator surfaces. The delegation run index and inbox are read-only and
+mirror operator-worthy queue and execution evidence without starting work,
+approving requests, retrying tasks, committing, pushing, creating PRs,
+deploying, calling providers, or using external network actions.
 
 Worktree execution remains CLI-first outside the fixture-backed demo setup.
 Push and PR creation are never executed by the app.

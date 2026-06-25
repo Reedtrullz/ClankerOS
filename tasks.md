@@ -98,7 +98,7 @@
 - [x] Make executable delegation project-aware for registered-repo scouting. <!-- score=9 complexity=4 -->
 - [x] Add delegation result ingestion for read-only subagent outputs. <!-- score=8 complexity=4 -->
 - [x] Add memory proposal records from completed delegation outputs. <!-- score=8 complexity=4 -->
-- [ ] Add a first-class delegation run index for richer dashboard filtering and retry decisions. <!-- score=9 complexity=4 -->
+- [x] Add a first-class delegation run index for richer dashboard filtering and retry decisions. <!-- score=9 complexity=4 -->
 - [x] Add skill proposal records and approval-gated SKILL.md writing. <!-- score=8 complexity=4 -->
 - [x] Add human-first `review`, `evidence`, and `replay-summary` commands for run evidence packets. <!-- score=8 complexity=4 -->
 - [x] Export replayable goal-scoped evidence packet sidecars for run review without overwriting `run-task` command proof. <!-- score=10 complexity=4 -->

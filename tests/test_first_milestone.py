@@ -3383,8 +3383,22 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "dashboard_next_recommended_action" in dashboard.body
     assert "request_commit_for_reviewed_run" in dashboard.body
     assert f"/runs/{result.coder_worktree_run_id}" in dashboard.body
+    assert "Recent Delegation Runs" in dashboard.body
+    assert "/delegation-runs" in dashboard.body
     assert "changed_files_count" in dashboard.body
     assert "diff_summary" in dashboard.body
+
+    delegation_runs = render_local_app_route(tmp_path, "/delegation-runs")
+    assert delegation_runs.status == 200
+    assert "Delegation Run Index" in delegation_runs.body
+    assert result.delegation_id in delegation_runs.body
+    assert result.run_id in delegation_runs.body
+    assert "implementation_handoff" in delegation_runs.body
+    assert "context_pack" in delegation_runs.body
+    assert "next_recommended_action" in delegation_runs.body
+    assert "prepare_coder_from_handoff" in delegation_runs.body
+    assert "provider_calls_taken_by_clankeros=0" in delegation_runs.body
+    assert "network_actions_taken=0" in delegation_runs.body
 
     delegation = render_local_app_route(
         tmp_path,

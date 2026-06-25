@@ -81,14 +81,17 @@ Core layers for the bootstrap:
   a `Run Workflow State` readback. Coder worktree run rows in review,
   dashboard, and the local app include changed-file counts and compact diff
   summaries read from existing evidence. The app also includes a read-only
-  operator inbox plus local approval and incident pages for pending worktree,
-  commit, and publication decisions, operator-worthy queue items, incident
-  evidence readback, a confirmed dashboard refresh action for rewriting the
-  local app status artifact from current repo and route state, a read-only
-  state-aware root dashboard recommendation that points to the next operator
-  surface, and a state-aware `/demo` launchpad that links the fixture project,
-  selected workflow, delegation, coder worktree run, review artifact, inbox,
-  approvals, and first manual browser dogfooding script.
+  `/delegation-runs` index for scout/delegation execution evidence, context
+  pack and implementation handoff links, zero-effect counters, retry signals,
+  and next local operator actions; a read-only operator inbox plus local
+  approval and incident pages for pending worktree, commit, and publication
+  decisions, operator-worthy queue items, incident evidence readback, a
+  confirmed dashboard refresh action for rewriting the local app status
+  artifact from current repo and route state, a read-only state-aware root
+  dashboard recommendation that points to the next operator surface, and a
+  state-aware `/demo` launchpad that links the fixture project, selected
+  workflow, delegation, coder worktree run, review artifact, inbox, approvals,
+  and first manual browser dogfooding script.
   The app reads existing SQLite state and repo artifacts, writes a local
   health/status artifact, and exposes only explicit local forms for safe
   artifact-producing and approval-producing actions. It does not push, create

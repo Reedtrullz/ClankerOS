@@ -84,8 +84,9 @@ Then read:
 - [GitHub Testing](docs/github-testing.md)
 
 The primary operator surface is now the local app plus the CLI. Start the app
-for a browser view of projects, workflow, delegations, runs, health, artifacts,
-the operator inbox, approvals, incidents, and demo state:
+for a browser view of projects, workflow, delegations, delegation runs, coder
+runs, health, artifacts, the operator inbox, approvals, incidents, and demo
+state:
 
 ```bash
 python3 -m agent_os.cli app
@@ -95,6 +96,11 @@ For the first manual browser pass, run `python3 -m agent_os.cli
 demo-app-scenario`, open `/demo`, and follow the state-aware dogfooding links
 into the demo project, selected workflow, delegation, coder worktree run,
 review artifact, approvals, and inbox.
+
+Use `/delegation-runs` when you want a compact read-only index of scout
+execution evidence, context packs, implementation handoffs, zero-effect
+counters, retry signals, and next local operator actions before handing work to
+coder prep.
 
 The app is local-only by default, binds to `127.0.0.1`, and refuses non-local
 binds unless `--allow-nonlocal-bind` is explicitly supplied. It does not push,

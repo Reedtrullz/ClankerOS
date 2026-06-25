@@ -217,6 +217,8 @@ def render_local_app_route(
             )
         if path == "/projects":
             return _html_page(root, "Projects", _projects(root))
+        if path == "/delegation-runs":
+            return _html_page(root, "Delegation Runs", _delegation_runs(root))
         if path == "/inbox":
             return _html_page(root, "Inbox", _inbox(root))
         if path == "/approvals":
@@ -254,7 +256,17 @@ def render_local_app_route(
 
 def run_local_app_smoke_test(root: Path) -> dict[str, Any]:
     root = root.resolve()
-    routes = ["/", "/workflow", "/projects", "/inbox", "/approvals", "/incidents", "/health", "/demo"]
+    routes = [
+        "/",
+        "/workflow",
+        "/projects",
+        "/delegation-runs",
+        "/inbox",
+        "/approvals",
+        "/incidents",
+        "/health",
+        "/demo",
+    ]
     results = []
     for route in routes:
         response = render_local_app_route(root, route)
@@ -402,6 +414,7 @@ def run_demo_app_scenario(root: Path) -> DemoScenarioResult:
                 "provider_calls_taken_by_clankeros": 0,
                 "network_actions_taken": 0,
                 "external_mutations_taken": 0,
+                "execution_evidence_dir": str(evidence_dir.relative_to(root)),
             },
             indent=2,
             sort_keys=True,
@@ -493,7 +506,7 @@ def write_local_app_status(root: Path, *, host: str, port: int) -> Path:
         "commit": state["commit"],
         "dirty_tracked_files": state["dirty_tracked_files"],
         "untracked_files": state["untracked_files"],
-        "routes_available": ["/", "/workflow", "/projects", "/delegations/<id>", "/runs/<id>", "/inbox", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
+        "routes_available": ["/", "/workflow", "/projects", "/delegation-runs", "/delegations/<id>", "/runs/<id>", "/inbox", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
         "supported_workflow_stages": [step[0] for step in WORKFLOW_STEPS],
         "non_claims": NO_EXTERNAL_EFFECT_CLAIMS,
         "known_gaps": [
@@ -551,6 +564,7 @@ def _dashboard(root: Path, *, host: str, port: int) -> str:
             _list_section("Recent Goals", rows["goals"]),
             _list_section("Recent Tasks", rows["tasks"]),
             _list_section("Recent Delegations", rows["delegations"]),
+            _list_section("Recent Delegation Runs", rows["delegation_runs"], "/delegation-runs"),
             _list_section("Recent Implementation Handoffs", rows["implementation_handoffs"]),
             _list_section("Recent Coder Worktree Runs", rows["coder_runs"]),
             _list_section("Recent Commit Requests / Local Commits", rows["commit_requests"]),
@@ -596,6 +610,22 @@ def _projects(root: Path) -> str:
     return "<section><h1>Projects</h1>" + _ul(items) + "</section>"
 
 
+def _delegation_runs(root: Path) -> str:
+    storage = _storage(root)
+    return "".join(
+        [
+            "<section><h1>Delegation Run Index</h1>",
+            "<p class='muted'>Read-only index of scout/delegation execution runs, evidence paths, context packs, handoffs, zero-effect counters, retry signals, and next local operator actions.</p>",
+            "</section>",
+            _list_section(
+                "Recent Delegation Runs",
+                _delegation_run_lines(root, storage, limit=50),
+            ),
+            _non_claim_banner(),
+        ]
+    )
+
+
 def _inbox(root: Path) -> str:
     inbox = collect_inbox_items(root)
     return "".join(
@@ -624,6 +654,11 @@ def _inbox(root: Path) -> str:
             _list_section(
                 "Subagent Delegations",
                 [_delegation_line(item) for item in inbox["subagent_delegations"]],
+            ),
+            _list_section(
+                "Delegation Runs",
+                _delegation_run_lines(root, _storage(root), limit=20),
+                "/delegation-runs",
             ),
             _list_section(
                 "Pending Worktree Approvals",
@@ -773,6 +808,11 @@ def _project_detail(root: Path, project_id: str) -> str:
                     f"<a href='/delegations/{quote(delegation.id)}'>{_e(delegation.id)}</a>: {delegation.status} {delegation.title}"
                     for delegation in delegations
                 ],
+            ),
+            _list_section(
+                "Delegation Runs",
+                _delegation_run_lines(root, storage, project_id=project_id, limit=20),
+                "/delegation-runs",
             ),
             _project_operator_guidance(
                 root,
@@ -2106,7 +2146,7 @@ def _html_page(root: Path, title: str, content: str, *, status: int = 200) -> Lo
 <body>
   <header>
     <strong>ClankerOS Local Operator</strong>
-    <nav><a href="/">Dashboard</a><a href="/workflow">Workflow</a><a href="/projects">Projects</a><a href="/inbox">Inbox</a><a href="/approvals">Approvals</a><a href="/incidents">Incidents</a><a href="/health">Health</a><a href="/demo">Demo</a></nav>
+    <nav><a href="/">Dashboard</a><a href="/workflow">Workflow</a><a href="/projects">Projects</a><a href="/delegation-runs">Delegation Runs</a><a href="/inbox">Inbox</a><a href="/approvals">Approvals</a><a href="/incidents">Incidents</a><a href="/health">Health</a><a href="/demo">Demo</a></nav>
   </header>
   <main>{content}</main>
 </body>
@@ -2184,6 +2224,7 @@ def _summary_rows(root: Path, storage: Storage) -> dict[str, list[str]]:
         "goals": goals,
         "tasks": tasks,
         "delegations": delegations,
+        "delegation_runs": _delegation_run_lines(root, storage, limit=10),
         "implementation_handoffs": _implementation_handoff_lines(root, storage, limit=10),
         "coder_runs": [
             _coder_run_line(root, item)
@@ -2242,6 +2283,98 @@ def _implementation_handoff_lines(
         if len(lines) >= limit:
             break
     return lines
+
+
+def _delegation_run_lines(
+    root: Path,
+    storage: Storage,
+    *,
+    project_id: str | None = None,
+    limit: int = 10,
+) -> list[str]:
+    lines: list[str] = []
+    for delegation in storage.list_recent_subagent_delegations(limit=None):
+        project = str(
+            load_delegation_result_metadata(delegation).get("target_project_id")
+            or _task_project(storage, delegation.parent_task_id)
+        )
+        if project_id and project != project_id:
+            continue
+        lines.append(_delegation_run_line(root, storage, delegation, project_id=project))
+        if len(lines) >= limit:
+            break
+    return lines
+
+
+def _delegation_run_line(
+    root: Path,
+    storage: Storage,
+    delegation: Any,
+    *,
+    project_id: str,
+) -> str:
+    metadata = load_delegation_result_metadata(delegation)
+    run_id = metadata.get("execution_run_id") or metadata.get("run_id") or "none"
+    evidence_dir = metadata.get("execution_evidence_dir") or metadata.get("evidence_dir") or "none"
+    context_pack = metadata.get("context_pack_md") or metadata.get("context_pack_json") or "none"
+    implementation_handoff = (
+        metadata.get("implementation_handoff_md")
+        or metadata.get("implementation_handoff_json")
+        or "none"
+    )
+    result_artifact = _repo_relative_artifact_path(root, delegation.result_artifact_path)
+    provider_calls = metadata.get("provider_calls_taken_by_clankeros", "unknown")
+    network_actions = metadata.get("network_actions_taken", "unknown")
+    external_mutations = metadata.get("external_mutations_taken", "unknown")
+    incident_id = metadata.get("incident_id") or "none"
+    retry_candidate = str(delegation.status != "completed" or incident_id != "none").lower()
+    next_action = _delegation_run_next_action(delegation, metadata)
+    source_review_path = root / "runs" / str(run_id) / "review.md"
+    review_link: SafeHtml | str = (
+        _artifact_link(str(source_review_path.relative_to(root)))
+        if run_id != "none" and source_review_path.exists()
+        else "none"
+    )
+    return (
+        f"<a href='/delegations/{quote(delegation.id)}'>{_e(delegation.id)}</a>: "
+        f"status={_e(delegation.status)} run_id={_e(run_id)} "
+        f"project={_e(project_id)} profile={_e(delegation.assigned_profile)} "
+        f"category={_e(delegation.category)} "
+        f"evidence_dir={_e(evidence_dir)} "
+        f"result_artifact={_artifact_link(result_artifact)} "
+        f"context_pack={_artifact_link(str(context_pack))} "
+        f"implementation_handoff={_artifact_link(str(implementation_handoff))} "
+        f"source_review={review_link} "
+        f"provider_calls_taken_by_clankeros={_e(provider_calls)} "
+        f"network_actions_taken={_e(network_actions)} "
+        f"external_mutations_taken={_e(external_mutations)} "
+        f"incident={_e(incident_id)} retry_candidate={retry_candidate} "
+        f"next_recommended_action={_e(next_action)}"
+    )
+
+
+def _delegation_run_next_action(delegation: Any, metadata: dict[str, Any]) -> str:
+    if metadata.get("incident_id"):
+        return "inspect_delegation_run_incident"
+    if delegation.status != "completed":
+        return "run_delegation"
+    if metadata.get("implementation_handoff_md") or metadata.get("implementation_handoff_json"):
+        return "prepare_coder_from_handoff"
+    if metadata.get("execution_run_id") or metadata.get("run_id"):
+        return "create_implementation_handoff"
+    return "review_delegation_result"
+
+
+def _repo_relative_artifact_path(root: Path, path: str | Path | None) -> str:
+    if not path:
+        return "none"
+    candidate = Path(path)
+    if candidate.is_absolute():
+        try:
+            return candidate.resolve().relative_to(root.resolve()).as_posix()
+        except ValueError:
+            return str(path)
+    return str(path)
 
 
 def _row_exists(db_path: Path, table: str, row_id: str) -> bool:
