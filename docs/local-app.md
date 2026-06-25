@@ -72,6 +72,7 @@ The demo creates fixture-backed local state under `.clanker/demo/`:
 - a completed fixture-backed scout delegation
 - context-pack and implementation-handoff artifacts
 - coder prep and coder worktree plan packets
+- a pending coder worktree approval for inbox/approval dogfooding
 - an approved fixture-backed coder worktree execution
 - a completed bounded coder worktree run with changed-file, diff, git-status,
   bounded-validation, stdout/stderr, verification, and review artifacts

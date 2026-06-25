@@ -110,6 +110,7 @@ class DemoScenarioResult:
     coder_prep_md: Path
     coder_worktree_plan_md: Path
     approval_id: str
+    execution_approval_id: str
     review_path: Path
 
 
@@ -404,12 +405,20 @@ def run_demo_app_scenario(root: Path) -> DemoScenarioResult:
         storage,
         delegation.id,
         requested_by="operator",
-        note="Demo approval request only; no execution.",
+        note="Demo pending approval for inbox and approvals dogfooding.",
+    ).approval
+    execution_approval = request_coder_worktree_approval(
+        root,
+        storage,
+        delegation.id,
+        requested_by="local_app_demo",
+        note="Demo execution approval for fixture-backed worktree run.",
+        force_new=True,
     ).approval
     approve_coder_worktree(
         root,
         storage,
-        approval.id,
+        execution_approval.id,
         decided_by="local_app_demo",
         note="Approve fixture-backed demo worktree execution.",
     )
@@ -450,6 +459,7 @@ def run_demo_app_scenario(root: Path) -> DemoScenarioResult:
         coder_prep_md=prep.markdown_path,
         coder_worktree_plan_md=plan.markdown_path,
         approval_id=approval.id,
+        execution_approval_id=execution_approval.id,
         review_path=review_path,
     )
 

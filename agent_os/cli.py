@@ -2181,6 +2181,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"coder_prep_md: {result.coder_prep_md.relative_to(root)}")
         print(f"coder_worktree_plan_md: {result.coder_worktree_plan_md.relative_to(root)}")
         print(f"worktree_approval_id: {result.approval_id}")
+        print(f"execution_worktree_approval_id: {result.execution_approval_id}")
         print(f"review: {result.review_path.relative_to(root)}")
         print("fixture_backed: true")
         print("provider_calls_taken_by_clankeros: 0")

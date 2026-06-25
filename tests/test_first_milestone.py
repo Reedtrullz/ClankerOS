@@ -3311,6 +3311,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert result.coder_prep_md.exists()
     assert result.coder_worktree_plan_md.exists()
     assert result.approval_id.startswith("coder_worktree_approval_")
+    assert result.execution_approval_id.startswith("coder_worktree_approval_")
+    assert result.execution_approval_id != result.approval_id
     assert result.coder_worktree_run_id.startswith("run_")
     assert result.review_path.exists()
     assert result.coder_worktree_run_id in result.review_path.read_text(encoding="utf-8")
@@ -3337,11 +3339,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
 
     approvals = render_local_app_route(tmp_path, "/approvals")
     assert approvals.status == 200
+    assert result.approval_id in approvals.body
+    assert result.execution_approval_id not in approvals.body
+    assert "approve-coder-worktree" in approvals.body
     inbox = render_local_app_route(tmp_path, "/inbox")
     assert inbox.status == 200
     assert "Operator Inbox" in inbox.body
+    assert result.approval_id in inbox.body
     assert result.coder_worktree_run_id in inbox.body
+    assert "coder_worktree_approvals: 1" in inbox.body
     assert "coder_worktree_runs: 1" in inbox.body
+    assert "Pending Worktree Approvals" in inbox.body
     assert "Coder Worktree Runs" in inbox.body
 
     run_page = render_local_app_route(tmp_path, f"/runs/{result.coder_worktree_run_id}")

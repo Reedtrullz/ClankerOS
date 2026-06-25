@@ -2,10 +2,11 @@
 
 ## 2026-06-25 Local App Dogfooding Path
 
-- Extended the fixture-backed `demo-app-scenario` so it now prepares a real
-  completed bounded coder worktree run in an isolated demo worktree, writes a
-  fixture review file for the source delegation run, and keeps all provider,
-  network, push, PR, deploy, and external mutation counters at zero.
+- Extended the fixture-backed `demo-app-scenario` so it now preserves a
+  pending coder worktree approval for inbox/approval dogfooding, prepares a
+  separate completed bounded coder worktree run in an isolated demo worktree,
+  writes a fixture review file for the source delegation run, and keeps all
+  provider, network, push, PR, deploy, and external mutation counters at zero.
 - Added an explicitly confirmed `commit-coder-worktree` POST action to the
   local app. The action requires the existing approved commit request and a
   typed matching commit message, then reuses the existing commit gate to
