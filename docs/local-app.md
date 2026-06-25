@@ -60,6 +60,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/verification` - read-only verification handoff showing the checked-in
   GitHub Actions workflow posture, compact local checks, remote full-suite
   boundary, and explicit CI non-claims without contacting GitHub.
+- `/dogfooding` - read-only manual browser checklist for refreshing the demo
+  fixture, walking demo/workflow/project/delegation/run routes, using local
+  commit and publication gates, and handing full-suite proof to GitHub Actions
+  after a push without fetching GitHub status.
 - `/projects` - registered project list.
 - `/projects/<project_id>` - project detail with first-class project goals,
   goal-linked tasks, linked artifacts, project-scoped incidents/
@@ -144,6 +148,19 @@ keeps the compact local checks visible:
 
 The page does not fetch GitHub status. A pushed commit is not CI proof until
 the GitHub Actions run completes successfully.
+
+## Manual Dogfooding Checklist
+
+`/dogfooding` is the first-stop browser checklist for a compact local pass
+before pushing. It shows whether the fixture-backed `local-app-demo` state is
+available, points to `/demo`, `/workflow`, `/projects`, `/delegation-runs`,
+`/inbox`, `/approvals`, `/actions`, and `/verification`, and names the local
+commit/publication gate sequence to walk from the selected `/runs/<run_id>`
+page.
+
+The page is read-only. It reports zero app network actions, zero external
+mutations, zero provider calls, no GitHub status fetch, and the manual
+push/PR boundary outside ClankerOS.
 
 ## Artifact Viewer
 

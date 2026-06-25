@@ -85,8 +85,8 @@ Then read:
 
 The primary operator surface is now the local app plus the CLI. Start the app
 for a browser view of projects, workflow, delegations, delegation runs, coder
-runs, safe action catalog, verification handoff, health, artifacts, the
-operator inbox, approvals, incidents, and demo state:
+runs, safe action catalog, verification handoff, dogfooding checklist, health,
+artifacts, the operator inbox, approvals, incidents, and demo state:
 
 ```bash
 python3 -m agent_os.cli app
@@ -100,6 +100,11 @@ read-only `Demo Browser Progress` checklist for the selected fixture run, so
 you can see whether the app path is waiting on commit request, commit
 approval, local commit, publication request, publication approval,
 publication handoff, or manual push/PR outside ClankerOS.
+
+Use `/dogfooding` when you want one checklist for the first browser route walk:
+refresh the fixture, inspect demo/workflow/project/delegation/run surfaces,
+walk the local commit and publication gates, then hand verification to GitHub
+Actions after a push. The page is read-only and does not fetch GitHub status.
 
 Use `/delegation-runs` when you want a compact read-only index of scout
 execution evidence, context packs, implementation handoffs, zero-effect

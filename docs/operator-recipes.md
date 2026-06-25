@@ -41,6 +41,11 @@ shows direct dogfooding links for the demo project, selected workflow,
 delegation, coder worktree run, review artifact, inbox, approvals, and a
 manual browser script for walking the safe local app path.
 
+Open `http://127.0.0.1:8787/dogfooding` when you want a single checklist for
+the local browser pass before push. It points to the demo, workflow, project,
+delegation/run, inbox, approvals, action catalog, and verification surfaces,
+then stops at the manual push/PR boundary outside ClankerOS.
+
 Boundary: the app is local-only by default and binds to `127.0.0.1`. It reads
 local SQLite state and repo artifacts, writes a local app status artifact, and
 uses explicit forms for local artifact-producing actions. It does not push,

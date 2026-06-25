@@ -3288,6 +3288,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "no push" in refreshed_status["non_claims"]
     assert "/actions" in refreshed_status["routes_available"]
     assert "/verification" in refreshed_status["routes_available"]
+    assert "/dogfooding" in refreshed_status["routes_available"]
     dashboard_notice = render_local_app_route(
         tmp_path,
         "/?notice=local_app_status%3A%20.clanker/app/local_app_status.json",
@@ -3347,6 +3348,20 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "python3 -m agent_os.cli app-smoke-test" in verification.body
     assert "CI proof requires a completed passing GitHub Actions run" in verification.body
     assert "app_network_actions_taken: 0" in verification.body
+
+    dogfooding = render_local_app_route(tmp_path, "/dogfooding")
+    assert dogfooding.status == 200
+    assert "Manual Dogfooding Checklist" in dogfooding.body
+    assert "Start Or Refresh Fixture" in dogfooding.body
+    assert "Browser Route Walk" in dogfooding.body
+    assert "Commit And Publication Gate Walk" in dogfooding.body
+    assert "Verification Handoff" in dogfooding.body
+    assert "/demo" in dogfooding.body
+    assert "/workflow" in dogfooding.body
+    assert "/verification" in dogfooding.body
+    assert "app_network_actions_taken: 0" in dogfooding.body
+    assert "provider_calls_taken_by_clankeros: 0" in dogfooding.body
+    assert "no GitHub status fetch" in dogfooding.body
 
     health = render_local_app_route(tmp_path, "/health")
     assert health.status == 200
@@ -3903,6 +3918,7 @@ def test_local_app_cli_commands_and_bind_safety(
     assert "route /workflow: 200" in smoke_output
     assert "route /actions: 200" in smoke_output
     assert "route /verification: 200" in smoke_output
+    assert "route /dogfooding: 200" in smoke_output
     assert "route /inbox: 200" in smoke_output
     assert "network_actions_taken: 0" in smoke_output
 

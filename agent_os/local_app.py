@@ -239,6 +239,8 @@ def render_local_app_route(
             return page("Actions", _actions_page(root))
         if path == "/verification":
             return page("Verification", _verification_page(root))
+        if path == "/dogfooding":
+            return page("Dogfooding", _dogfooding_page(root))
         if path == "/projects":
             return page("Projects", _projects(root))
         if path == "/delegation-runs":
@@ -284,6 +286,7 @@ def run_local_app_smoke_test(root: Path) -> dict[str, Any]:
         "/workflow",
         "/actions",
         "/verification",
+        "/dogfooding",
         "/projects",
         "/delegation-runs",
         "/inbox",
@@ -531,7 +534,7 @@ def write_local_app_status(root: Path, *, host: str, port: int) -> Path:
         "commit": state["commit"],
         "dirty_tracked_files": state["dirty_tracked_files"],
         "untracked_files": state["untracked_files"],
-        "routes_available": ["/", "/workflow", "/actions", "/verification", "/projects", "/delegation-runs", "/delegations/<id>", "/runs/<id>", "/inbox", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
+        "routes_available": ["/", "/workflow", "/actions", "/verification", "/dogfooding", "/projects", "/delegation-runs", "/delegations/<id>", "/runs/<id>", "/inbox", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
         "supported_workflow_stages": [step[0] for step in WORKFLOW_STEPS],
         "non_claims": NO_EXTERNAL_EFFECT_CLAIMS,
         "known_gaps": [
@@ -734,6 +737,78 @@ def _verification_page(root: Path) -> str:
                     "No push, PR, deploy, provider call, or external mutation is executed by this page.",
                 ],
             ),
+        ]
+    )
+
+
+def _dogfooding_page(root: Path) -> str:
+    storage = _storage(root)
+    project = storage.get_registered_project("local-app-demo")
+    fixture_status = "available" if project is not None else "missing"
+    next_surface = "/demo" if project is not None else "demo-app-scenario"
+    fixture_lines = [
+        ("demo_fixture_status", fixture_status),
+        ("next_operator_surface", next_surface),
+        ("app_network_actions_taken", "0"),
+        ("external_mutations_taken", "0"),
+        ("provider_calls_taken_by_clankeros", "0"),
+        ("github_status_fetch", "none"),
+        ("push_pr_deploy_status", "outside_clankeros_manual_only"),
+    ]
+    return "".join(
+        [
+            "<section><h1>Manual Dogfooding Checklist</h1>",
+            "<p class='muted'>A read-only route map for the first browser pass through the local operator app. Use it before pushing, then let GitHub Actions run the slow suite.</p>",
+            _non_claim_banner(),
+            _kv(fixture_lines),
+            "</section>",
+            _list_section(
+                "Start Or Refresh Fixture",
+                [
+                    "Run `python3 -m agent_os.cli demo-app-scenario` to create or refresh fixture-backed local state.",
+                    "Open <a href='/demo'>/demo</a> and confirm demo_fixture_status before following run-specific links.",
+                    "Open <a href='/health'>/health</a> if you need a fresh `.clanker/app/local_app_status.json` readback.",
+                ],
+            ),
+            _list_section(
+                "Browser Route Walk",
+                [
+                    "<a href='/demo'>/demo</a>: fixture launchpad, selected run links, and browser progress.",
+                    "<a href='/workflow'>/workflow</a>: full modern workflow; use scoped delegation or run links from `/demo` when available.",
+                    "<a href='/projects'>/projects</a>: project goals, linked tasks, and project operator guidance.",
+                    "<a href='/delegation-runs'>/delegation-runs</a>: scout evidence, context packs, handoffs, and retry posture.",
+                    "<a href='/inbox'>/inbox</a> and <a href='/approvals'>/approvals</a>: local queue and approval gates.",
+                    "<a href='/actions'>/actions</a>: safe action catalog and confirmation posture.",
+                ],
+            ),
+            _list_section(
+                "Commit And Publication Gate Walk",
+                [
+                    "From the selected `/runs/<run_id>` page, request a commit only after reviewing diff, changed files, bounded validation, stdout/stderr, and review artifacts.",
+                    "Approve the commit request explicitly, type the matching commit message, and keep the commit inside the isolated coder worktree.",
+                    "After the local commit exists, request and approve publication handoff preparation.",
+                    "Stop at publication handoff: manual push and PR commands stay outside ClankerOS.",
+                ],
+            ),
+            _list_section(
+                "Verification Handoff",
+                [
+                    "<a href='/verification'>/verification</a>: checked-in GitHub Actions workflow posture and compact local checks.",
+                    "Run compact local checks before pushing; use GitHub Actions for the full suite.",
+                    "no GitHub status fetch is performed by the local app.",
+                    "CI proof requires a completed passing GitHub Actions run after push.",
+                ],
+            ),
+            _list_section(
+                "Safety Boundary",
+                [
+                    "app_network_actions_taken: 0",
+                    "external_mutations_taken: 0",
+                    "provider_calls_taken_by_clankeros: 0",
+                    "No push, PR creation, deploy, provider call, or GitHub status fetch is executed by this page.",
+                ],
+            ),
+            _demo_dogfooding_state(root),
         ]
     )
 
@@ -2672,7 +2747,7 @@ def _html_page(root: Path, title: str, content: str, *, status: int = 200) -> Lo
 <body>
   <header>
     <strong>ClankerOS Local Operator</strong>
-    <nav><a href="/">Dashboard</a><a href="/workflow">Workflow</a><a href="/actions">Actions</a><a href="/verification">Verification</a><a href="/projects">Projects</a><a href="/delegation-runs">Delegation Runs</a><a href="/inbox">Inbox</a><a href="/approvals">Approvals</a><a href="/incidents">Incidents</a><a href="/health">Health</a><a href="/demo">Demo</a></nav>
+    <nav><a href="/">Dashboard</a><a href="/workflow">Workflow</a><a href="/actions">Actions</a><a href="/verification">Verification</a><a href="/dogfooding">Dogfooding</a><a href="/projects">Projects</a><a href="/delegation-runs">Delegation Runs</a><a href="/inbox">Inbox</a><a href="/approvals">Approvals</a><a href="/incidents">Incidents</a><a href="/health">Health</a><a href="/demo">Demo</a></nav>
   </header>
   <main>{content}</main>
 </body>
