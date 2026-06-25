@@ -42,6 +42,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   local `.clanker/app/local_app_status.json` artifact from current repository
   and route state without providers, pushes, PRs, deploys, or external
   mutations.
+- `/` also includes a read-only state-aware `Next Recommended Action` panel
+  that points to the highest-priority local operator surface, such as
+  incidents, approvals, a reviewed coder run needing a commit request, a
+  publication handoff, project state, or the demo/onboarding page.
 - `/workflow` - modern handoff/worktree/commit/publication workflow stepper,
   including `coder-prep-from-handoff` as the artifact-first prep route. Add
   `?delegation_id=<id>` or `?run_id=<coder_worktree_run_id>` to show selected

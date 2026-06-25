@@ -3377,6 +3377,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"/runs/{result.coder_worktree_run_id}" in demo.body
     assert result.review_path.relative_to(tmp_path).as_posix() in demo.body
 
+    dashboard = render_local_app_route(tmp_path, "/")
+    assert dashboard.status == 200
+    assert "Next Recommended Action" in dashboard.body
+    assert "dashboard_next_recommended_action" in dashboard.body
+    assert "request_commit_for_reviewed_run" in dashboard.body
+    assert f"/runs/{result.coder_worktree_run_id}" in dashboard.body
+
     delegation = render_local_app_route(
         tmp_path,
         f"/delegations/{result.delegation_id}",

@@ -114,6 +114,14 @@ class DemoScenarioResult:
     review_path: Path
 
 
+@dataclass(frozen=True)
+class DashboardNextAction:
+    action: str
+    href: str
+    target: str
+    reason: str
+
+
 def validate_bind_host(host: str, *, allow_nonlocal_bind: bool = False) -> None:
     if host in LOCAL_HOSTS:
         return
@@ -505,6 +513,7 @@ def _dashboard(root: Path, *, host: str, port: int) -> str:
     storage = _storage(root)
     rows = _summary_rows(root, storage)
     warnings = _warning_items(state, host)
+    next_action = _dashboard_next_action(root, storage)
     return "".join(
         [
             "<section class='hero'>",
@@ -549,7 +558,7 @@ def _dashboard(root: Path, *, host: str, port: int) -> str:
             _list_section("Operator Inbox", rows["inbox"], "/inbox"),
             _list_section("Pending Approvals", rows["approvals"], "/approvals"),
             _list_section("Incidents / Recommendations", rows["incidents"], "/incidents"),
-            "<section><h2>Next Recommended Action</h2><p>Review the workflow page, run the demo scenario, then inspect a delegation or artifact.</p></section>",
+            _dashboard_next_action_section(next_action),
         ]
     )
 
@@ -899,6 +908,190 @@ def _project_task_recommendations(
             seen.add(item.id)
             recommendations.append(item)
     return recommendations[:20]
+
+
+def _dashboard_next_action(root: Path, storage: Storage) -> DashboardNextAction:
+    open_incidents = _table_rows(
+        storage.db_path,
+        "select id, project_id, summary from incidents "
+        "where status = 'open' order by created_at desc limit 1",
+    )
+    if open_incidents:
+        incident = open_incidents[0]
+        return DashboardNextAction(
+            "review_project_incidents",
+            "/incidents",
+            str(incident["id"]),
+            str(incident["summary"]),
+        )
+
+    recommendations = _table_rows(
+        storage.db_path,
+        "select id, task_id, reason from task_recommendations "
+        "where status = 'open' order by created_at desc limit 1",
+    )
+    if recommendations:
+        recommendation = recommendations[0]
+        return DashboardNextAction(
+            "review_task_recommendations",
+            "/incidents",
+            str(recommendation["id"]),
+            str(recommendation["reason"]),
+        )
+
+    publications = list_coder_publications(root, limit=200)
+    for status, action, href in [
+        ("ready_for_operator", "manual_operator_push_pr_outside_clankeros", None),
+        ("approved", "prepare_publication_handoff", None),
+        (
+            "pending_operator_approval",
+            "approve_or_reject_publication_request",
+            "/approvals",
+        ),
+    ]:
+        publication = next((item for item in publications if item.status == status), None)
+        if publication is not None:
+            return DashboardNextAction(
+                action,
+                href or f"/runs/{quote(publication.run_id)}",
+                publication.run_id,
+                f"publication_status={publication.status} project={publication.project_id}",
+            )
+
+    commit_approvals = list_coder_worktree_commit_approvals(root, limit=200)
+    publication_run_ids = {item.run_id for item in publications}
+    committed_without_publication = next(
+        (
+            item
+            for item in commit_approvals
+            if item.status == "committed" and item.run_id not in publication_run_ids
+        ),
+        None,
+    )
+    if committed_without_publication is not None:
+        return DashboardNextAction(
+            "request_publication_handoff",
+            f"/runs/{quote(committed_without_publication.run_id)}",
+            committed_without_publication.run_id,
+            f"local_commit={committed_without_publication.commit_sha or 'recorded'}",
+        )
+
+    approved_commit = next(
+        (item for item in commit_approvals if item.status == "approved"),
+        None,
+    )
+    if approved_commit is not None:
+        return DashboardNextAction(
+            "commit_approved_worktree",
+            f"/runs/{quote(approved_commit.run_id)}",
+            approved_commit.run_id,
+            f"commit_approval={approved_commit.id}",
+        )
+
+    pending_commit = next(
+        (
+            item
+            for item in commit_approvals
+            if item.status == "pending_operator_approval"
+        ),
+        None,
+    )
+    if pending_commit is not None:
+        return DashboardNextAction(
+            "approve_or_reject_commit_request",
+            "/approvals",
+            pending_commit.id,
+            f"run={pending_commit.run_id}",
+        )
+
+    worktree_runs = list_coder_worktree_runs(root, limit=200)
+    commit_run_ids = {item.run_id for item in commit_approvals}
+    reviewed_run = next(
+        (
+            item
+            for item in worktree_runs
+            if item.status == "completed"
+            and item.id not in commit_run_ids
+            and (root / "runs" / item.source_run_id / "review.md").exists()
+        ),
+        None,
+    )
+    if reviewed_run is not None:
+        return DashboardNextAction(
+            "request_commit_for_reviewed_run",
+            f"/runs/{quote(reviewed_run.id)}",
+            reviewed_run.id,
+            f"review_exists_for_source_run={reviewed_run.source_run_id}",
+        )
+
+    worktree_approvals = list_coder_worktree_approvals(root, limit=200)
+    pending_worktree = next(
+        (
+            item
+            for item in worktree_approvals
+            if item.status == "pending_operator_approval"
+        ),
+        None,
+    )
+    if pending_worktree is not None:
+        return DashboardNextAction(
+            "decide_pending_worktree_approval",
+            "/approvals",
+            pending_worktree.id,
+            f"delegation={pending_worktree.delegation_id}",
+        )
+
+    run_delegation_ids = {item.delegation_id for item in worktree_runs}
+    approved_worktree = next(
+        (
+            item
+            for item in worktree_approvals
+            if item.status == "approved" and item.delegation_id not in run_delegation_ids
+        ),
+        None,
+    )
+    if approved_worktree is not None:
+        return DashboardNextAction(
+            "run_approved_worktree_from_cli",
+            f"/workflow?delegation_id={quote(approved_worktree.delegation_id)}",
+            approved_worktree.delegation_id,
+            f"worktree_approval={approved_worktree.id}",
+        )
+
+    project_count = len(storage.list_registered_projects())
+    if project_count:
+        return DashboardNextAction(
+            "review_project_state",
+            "/projects",
+            f"projects={project_count}",
+            "no higher-priority approval, reviewed run, publication, incident, or recommendation is pending",
+        )
+    return DashboardNextAction(
+        "run_demo_scenario_or_register_project",
+        "/demo",
+        "no_registered_projects",
+        "create fixture state or register a real local project",
+    )
+
+
+def _dashboard_next_action_section(next_action: DashboardNextAction) -> str:
+    return "<section><h2>Next Recommended Action</h2>" + _kv(
+        [
+            ("dashboard_next_recommended_action", next_action.action),
+            ("target", next_action.target),
+            ("reason", next_action.reason),
+            (
+                "open_surface",
+                SafeHtml(
+                    f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
+                ),
+            ),
+        ]
+    ) + (
+        "<p class='muted'>This is read-only operator guidance; it does not "
+        "execute approvals, commits, publication handoffs, pushes, PRs, "
+        "deploys, provider calls, or external mutations.</p></section>"
+    )
 
 
 def _project_next_action(

@@ -42,6 +42,11 @@
   bounded-file-validation, commit, publication, and next-action status.
 - The dashboard now exposes a confirmed `refresh-dashboard-state` action that
   rewrites only `.clanker/app/local_app_status.json` from current local state.
+- The root dashboard now renders a state-aware read-only
+  `Next Recommended Action` panel. It prioritizes open incidents,
+  recommendations, publication/commit approval gates, reviewed coder runs,
+  worktree approvals, project review, and demo onboarding without executing
+  approvals, commits, pushes, PRs, deploys, providers, or external mutations.
 - The artifact viewer now labels supported inert render types for Markdown,
   JSON, text, patch, diff, and log artifacts while preserving size/truncation
   readback.
@@ -54,6 +59,8 @@
   publication request, publication approval, and publication handoff.
 - Verification so far:
   - `python3 -m py_compile agent_os/local_app.py agent_os/cli.py tests/test_first_milestone.py`
+  - Red-first dashboard recommendation check failed while `/` still rendered
+    the static `Next Recommended Action` copy.
   - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario"` -> `1 passed, 497 deselected`
   - `python3 -m agent_os.cli app-smoke-test` -> rendered `/`, `/workflow`, `/projects`, `/inbox`, `/approvals`, `/incidents`, `/health`, and `/demo` with status 200 and zero provider/network/external-mutation counters.
   - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app or inbox"` -> `15 passed, 483 deselected`
