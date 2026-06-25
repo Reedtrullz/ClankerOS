@@ -150,10 +150,12 @@ operator can review exactly what will be written before a local artifact or
 approval action runs. Confirmed actions render `Action Result Details` with the
 attempted action, submitted payload, result fields, artifact links when paths
 are returned, a next-page link, and the safety boundary, so the operator can
-review what was written before continuing. Failed actions render `Action Error
-Details` with the attempted action, error, submitted payload, and a clear
-no-action-completed message so operators can fix inputs without guessing what
-happened.
+review what was written before continuing. Following that next-page link
+renders an `Action Notice` banner on the target GET page, preserving the action
+result context while the operator reviews the dashboard, run, delegation, or
+approval surface. Failed actions render `Action Error Details` with the
+attempted action, error, submitted payload, and a clear no-action-completed
+message so operators can fix inputs without guessing what happened.
 
 Run pages for completed coder worktree runs link the local review, `run.json`,
 `diff.patch`, `changed_files.json`, `bounded_file_validation.json`,

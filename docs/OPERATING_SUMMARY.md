@@ -99,11 +99,12 @@ Core layers for the bootstrap:
   artifact-producing and approval-producing actions. Confirmation pages render
   the submitted action payload and safety boundary before a confirmed local
   write; confirmed action result pages render the submitted payload, local
-  result fields, artifact links, next-page link, and safety boundary; action
-  error pages render the attempted action, submitted payload, error details,
-  and a no-action-completed non-claim. It does not push, create PRs, deploy,
-  call providers, execute arbitrary commands, or use the network beyond local
-  browser/server loopback.
+  result fields, artifact links, next-page link, and safety boundary; GET pages
+  render an escaped `Action Notice` banner when reached through a notice link;
+  action error pages render the attempted action, submitted payload, error
+  details, and a no-action-completed non-claim. It does not push, create PRs,
+  deploy, call providers, execute arbitrary commands, or use the network
+  beyond local browser/server loopback.
 - CI/deploy evidence ingestion: an operator can attach CI or deploy proof to a
   GitHub handoff packet with `ci-deploy-evidence`. The record preserves
   provider, external run id, URL, commit, branch, handoff, and JSON evidence

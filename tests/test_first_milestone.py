@@ -3258,6 +3258,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert refreshed_status["host"] == "127.0.0.1"
     assert refreshed_status["port"] == 8787
     assert "no push" in refreshed_status["non_claims"]
+    dashboard_notice = render_local_app_route(
+        tmp_path,
+        "/?notice=local_app_status%3A%20.clanker/app/local_app_status.json",
+    )
+    assert dashboard_notice.status == 200
+    assert "Action Notice" in dashboard_notice.body
+    assert "local_app_status: .clanker/app/local_app_status.json" in dashboard_notice.body
 
     action_error = render_local_app_route(
         tmp_path,
@@ -3605,6 +3612,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ]
     assert len(commit_approvals) == 1
     commit_approval = commit_approvals[0]
+    run_notice = render_local_app_route(
+        tmp_path,
+        f"/runs/{result.coder_worktree_run_id}?notice=coder_commit_request%3A%20{commit_approval.id}",
+    )
+    assert run_notice.status == 200
+    assert "Action Notice" in run_notice.body
+    assert f"coder_commit_request: {commit_approval.id}" in run_notice.body
 
     approvals = render_local_app_route(tmp_path, "/approvals")
     assert approvals.status == 200

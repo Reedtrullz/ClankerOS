@@ -7,6 +7,9 @@
   payload, result message, flattened result fields, artifact links for returned
   paths, a next-page link, and the safety boundary before the operator
   continues.
+- Target GET pages now render an escaped `Action Notice` banner when the
+  operator follows a result-page next link, so dashboard/run/delegation/
+  approval pages retain the local action context.
 - The result page is used by refresh, context-pack, implementation-handoff,
   coder-prep, coder-worktree-plan, worktree approval/approval-decision, commit
   request, commit approval, typed local commit, publication request,

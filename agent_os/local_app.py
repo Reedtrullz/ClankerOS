@@ -200,14 +200,18 @@ def render_local_app_route(
     parsed = urlparse(raw_path)
     path = parsed.path
     query = parse_qs(parsed.query)
+    notice = _one(query, "notice")
+
+    def page(title: str, content: str, *, status: int = 200) -> LocalAppResponse:
+        return _html_page(root, title, _notice_banner(notice) + content, status=status)
+
     try:
         if method == "POST":
             return _handle_post(root, path, form or {})
         if path == "/":
-            return _html_page(root, "Dashboard", _dashboard(root, host=host, port=port))
+            return page("Dashboard", _dashboard(root, host=host, port=port))
         if path == "/workflow":
-            return _html_page(
-                root,
+            return page(
                 "Workflow",
                 _workflow(
                     root,
@@ -216,35 +220,34 @@ def render_local_app_route(
                 ),
             )
         if path == "/projects":
-            return _html_page(root, "Projects", _projects(root))
+            return page("Projects", _projects(root))
         if path == "/delegation-runs":
-            return _html_page(root, "Delegation Runs", _delegation_runs(root))
+            return page("Delegation Runs", _delegation_runs(root))
         if path == "/inbox":
-            return _html_page(root, "Inbox", _inbox(root))
+            return page("Inbox", _inbox(root))
         if path == "/approvals":
-            return _html_page(root, "Approvals", _approvals(root))
+            return page("Approvals", _approvals(root))
         if path == "/incidents":
-            return _html_page(root, "Incidents", _incidents(root))
+            return page("Incidents", _incidents(root))
         if path.startswith("/projects/"):
             project_id = unquote(path.removeprefix("/projects/"))
-            return _html_page(root, f"Project {project_id}", _project_detail(root, project_id))
+            return page(f"Project {project_id}", _project_detail(root, project_id))
         if path.startswith("/delegations/"):
             delegation_id = unquote(path.removeprefix("/delegations/"))
-            return _html_page(
-                root,
+            return page(
                 f"Delegation {delegation_id}",
                 _delegation_detail(root, delegation_id),
             )
         if path.startswith("/runs/"):
             run_id = unquote(path.removeprefix("/runs/"))
-            return _html_page(root, f"Run {run_id}", _run_detail(root, run_id))
+            return page(f"Run {run_id}", _run_detail(root, run_id))
         if path == "/artifacts":
             return _artifact_viewer(root, _one(query, "path"))
         if path == "/health":
-            return _html_page(root, "Health", _health(root, host=host, port=port))
+            return page("Health", _health(root, host=host, port=port))
         if path == "/demo":
-            return _html_page(root, "Demo", _demo_page(root))
-        return _html_page(root, "Not Found", "<p>Route not found.</p>", status=404)
+            return page("Demo", _demo_page(root))
+        return page("Not Found", "<p>Route not found.</p>", status=404)
     except Exception as error:  # defensive app boundary
         return _html_page(
             root,
@@ -2360,6 +2363,20 @@ def _submitted_form_rows(form: dict[str, list[str]]) -> list[tuple[str, str]]:
         if key != "confirm"
     ]
     return rows or [("submitted_fields", "none")]
+
+
+def _notice_banner(notice: str | None) -> str:
+    if not notice:
+        return ""
+    trimmed = notice.strip()
+    if not trimmed:
+        return ""
+    if len(trimmed) > 500:
+        trimmed = trimmed[:500] + "... truncated"
+    return (
+        "<div class='banner'><strong>Action Notice</strong> "
+        f"<span>{_e(trimmed)}</span></div>"
+    )
 
 
 def _html_page(root: Path, title: str, content: str, *, status: int = 200) -> LocalAppResponse:
