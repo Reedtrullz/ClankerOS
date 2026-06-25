@@ -3256,6 +3256,22 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert refreshed_status["port"] == 8787
     assert "no push" in refreshed_status["non_claims"]
 
+    action_error = render_local_app_route(
+        tmp_path,
+        "/actions/context-pack",
+        method="POST",
+        form={"requested_by": ["operator"], "confirm": ["yes"]},
+    )
+    assert action_error.status == 400
+    assert "Action Error Details" in action_error.body
+    assert "action" in action_error.body
+    assert "context-pack" in action_error.body
+    assert "Action Payload" in action_error.body
+    assert "requested_by" in action_error.body
+    assert "operator" in action_error.body
+    assert "No action was completed" in action_error.body
+    assert "Safety boundary" in action_error.body
+
     workflow = render_local_app_route(tmp_path, "/workflow")
     assert workflow.status == 200
     for label in [

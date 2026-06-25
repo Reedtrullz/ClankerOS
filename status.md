@@ -15,11 +15,15 @@
 - App confirmation pages now render a visible `Action Payload` section plus
   the safety boundary before resubmitting with `confirm=yes`, so local
   artifact and approval actions can be reviewed before they write state.
+- Action failures now render `Action Error Details` with the attempted action,
+  error type/message, submitted payload, safety boundary, and `No action was
+  completed` non-claim.
 - The demo fixture now records `execution_evidence_dir` in delegation result
   metadata so the run index can show the source evidence directory without
   rerunning delegation work.
 - Compact local verification for this slice:
   - `python3 -m py_compile agent_os/local_app.py agent_os/subagent_delegation.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
   - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario`
   - `python3 -m agent_os.cli app-smoke-test`
   - `git diff --check`

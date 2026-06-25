@@ -1950,7 +1950,12 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
         CoderWorktreeCommitError,
         CoderPublicationError,
     ) as error:
-        return _html_page(root, "Action Error", f"<p class='error'>{_e(str(error))}</p>", status=400)
+        return _html_page(
+            root,
+            "Action Error",
+            _action_error_page(action, form, error),
+            status=400,
+        )
     return LocalAppResponse(
         303,
         "",
@@ -1970,6 +1975,31 @@ def _safe_action_forms(*, delegation_id: str, handoff_md: str) -> str:
       {_form('coder-worktree-approval', {'delegation_id': delegation_id, 'note': 'Approve bounded worktree execution from local app'})}
     </section>
     """
+
+
+def _action_error_page(
+    action: str,
+    form: dict[str, list[str]],
+    error: Exception,
+) -> str:
+    return "".join(
+        [
+            "<section><h1>Action Error Details</h1>",
+            "<p class='error'>No action was completed.</p>",
+            _non_claim_banner(),
+            _kv(
+                [
+                    ("action", action),
+                    ("error_type", type(error).__name__),
+                    ("error", str(error)),
+                ]
+            ),
+            "<h2>Action Payload</h2>",
+            _kv(_submitted_form_rows(form)),
+            "<p class='muted'>Review the submitted fields, fix the missing or invalid value, then retry from the relevant local app page.</p>",
+            "</section>",
+        ]
+    )
 
 
 def _run_action_forms(root: Path, run_id: str) -> str:
@@ -2221,27 +2251,32 @@ def _input_form(
 
 def _confirm_form(action: str, form: dict[str, list[str]]) -> str:
     inputs = []
-    review_rows: list[tuple[str, str]] = []
     for key, values in form.items():
         if key == "confirm":
             continue
-        review_rows.append((key, ", ".join(values) if values else ""))
         for value in values:
             inputs.append(f"<input type='hidden' name='{_e(key)}' value='{_e(value)}'>")
     inputs.append("<input type='hidden' name='confirm' value='yes'>")
-    if not review_rows:
-        review_rows.append(("submitted_fields", "none"))
     return "".join(
         [
             f"<section><h1>Confirm {_e(action)}</h1>",
             "<p>This action writes local ClankerOS artifacts only. It does not push, create PRs, deploy, call providers, or execute external mutations.</p>",
             _non_claim_banner(),
             "<h2>Action Payload</h2>",
-            _kv(review_rows),
+            _kv(_submitted_form_rows(form)),
             f"<form method='post' action='/actions/{_e(action)}'>{''.join(inputs)}<button type='submit'>Confirm local action</button></form>",
             "</section>",
         ]
     )
+
+
+def _submitted_form_rows(form: dict[str, list[str]]) -> list[tuple[str, str]]:
+    rows = [
+        (key, ", ".join(values) if values else "")
+        for key, values in form.items()
+        if key != "confirm"
+    ]
+    return rows or [("submitted_fields", "none")]
 
 
 def _html_page(root: Path, title: str, content: str, *, status: int = 200) -> LocalAppResponse:

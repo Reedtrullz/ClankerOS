@@ -147,7 +147,9 @@ readback and link the handoff Markdown through the safe artifact viewer.
 Confirmation pages show the submitted action payload as visible read-only
 fields plus the safety boundary before resubmitting with `confirm=yes`, so the
 operator can review exactly what will be written before a local artifact or
-approval action runs.
+approval action runs. Failed actions render `Action Error Details` with the
+attempted action, error, submitted payload, and a clear no-action-completed
+message so operators can fix inputs without guessing what happened.
 
 Run pages for completed coder worktree runs link the local review, `run.json`,
 `diff.patch`, `changed_files.json`, `bounded_file_validation.json`,
