@@ -40,6 +40,10 @@
 - Coder worktree run detail pages now include `Run Workflow State` with
   upstream context-pack, handoff, prep, plan, approval/run,
   bounded-file-validation, commit, publication, and next-action status.
+- Coder worktree run review lines, static dashboard rows, and local app coder
+  run list rows now include `changed_files_count` and a compact
+  `diff_summary` from existing `diff.patch` evidence, making changed-file and
+  diff posture visible without rerunning git or mutating worktrees.
 - The dashboard now exposes a confirmed `refresh-dashboard-state` action that
   rewrites only `.clanker/app/local_app_status.json` from current local state.
 - The root dashboard now renders a state-aware read-only
@@ -61,6 +65,9 @@
   - `python3 -m py_compile agent_os/local_app.py agent_os/cli.py tests/test_first_milestone.py`
   - Red-first dashboard recommendation check failed while `/` still rendered
     the static `Next Recommended Action` copy.
+  - Red-first changed-file/diff summary checks failed while review/dashboard
+    rows only showed raw changed-file and `diff.patch` paths.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "coder_worktree_approval_and_run_capture_bounded_evidence or local_app_demo_scenario"` -> `2 passed, 496 deselected`
   - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario"` -> `1 passed, 497 deselected`
   - `python3 -m agent_os.cli app-smoke-test` -> rendered `/`, `/workflow`, `/projects`, `/inbox`, `/approvals`, `/incidents`, `/health`, and `/demo` with status 200 and zero provider/network/external-mutation counters.
   - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app or inbox"` -> `15 passed, 483 deselected`

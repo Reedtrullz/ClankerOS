@@ -1523,6 +1523,7 @@ def render_coder_worktree_run_cli_lines(
     result: CoderWorktreeRunResult,
 ) -> list[str]:
     run = result.run
+    change_summary = coder_worktree_change_summary(root, run)
     status_line = (
         f"coder_worktree_run: already_recorded {run.id}"
         if result.already_recorded
@@ -1543,8 +1544,10 @@ def render_coder_worktree_run_cli_lines(
         "verification_exit_code: "
         f"{run.verification_exit_code if run.verification_exit_code is not None else 'none'}",
         f"changed_files: {','.join(run.changed_files) or 'none'}",
+        f"changed_files_count: {change_summary['changed_files_count']}",
         f"outside_allowed_files: {','.join(run.outside_allowed_files) or 'none'}",
         f"changed_files_within_allowed_files: {_bool(not run.outside_allowed_files)}",
+        f"diff_summary: {change_summary['diff_summary']}",
         f"evidence: {run.evidence_path}",
         "commit_created: false",
         "push_created: false",
@@ -1746,12 +1749,15 @@ def render_coder_worktree_approval_dashboard_lines(root: Path) -> list[str]:
 def render_coder_worktree_run_dashboard_lines(root: Path) -> list[str]:
     lines: list[str] = []
     for run in list_coder_worktree_runs(root, limit=10):
+        change_summary = coder_worktree_change_summary(root, run)
         lines.append(
             f"- {run.id}: delegation={run.delegation_id} project={run.project_id} "
             f"status={run.status} approval={run.approval_id} "
             f"worktree={run.worktree_path} branch={run.branch_name} "
             f"changed_files={','.join(run.changed_files) or 'none'} "
+            f"changed_files_count={change_summary['changed_files_count']} "
             f"outside_allowed_files={','.join(run.outside_allowed_files) or 'none'} "
+            f"diff_summary={change_summary['diff_summary']} "
             f"command_exit={run.command_exit_code if run.command_exit_code is not None else 'none'} "
             "verification_exit="
             f"{run.verification_exit_code if run.verification_exit_code is not None else 'none'} "
@@ -1840,6 +1846,7 @@ def render_coder_worktree_run_review_lines(root: Path, delegation_id: str) -> li
     runs = list_coder_worktree_runs(root, delegation_id=delegation_id, limit=10)
     lines: list[str] = []
     for run in runs:
+        change_summary = coder_worktree_change_summary(root, run)
         lines.extend(
             [
                 f"- delegation={delegation_id} coder_worktree_run={run.evidence_path}",
@@ -1849,8 +1856,10 @@ def render_coder_worktree_run_review_lines(root: Path, delegation_id: str) -> li
                 f"  - worktree_path: {run.worktree_path}",
                 f"  - branch_name: {run.branch_name}",
                 f"  - changed_files: {','.join(run.changed_files) or 'none'}",
+                f"  - changed_files_count: {change_summary['changed_files_count']}",
                 f"  - outside_allowed_files: {','.join(run.outside_allowed_files) or 'none'}",
                 f"  - changed_files_within_allowed_files: {_bool(not run.outside_allowed_files)}",
+                f"  - diff_summary: {change_summary['diff_summary']}",
                 f"  - command_exit_code: {run.command_exit_code if run.command_exit_code is not None else 'none'}",
                 "  - verification_exit_code: "
                 f"{run.verification_exit_code if run.verification_exit_code is not None else 'none'}",
@@ -1860,6 +1869,33 @@ def render_coder_worktree_run_review_lines(root: Path, delegation_id: str) -> li
             ]
         )
     return lines
+
+
+def coder_worktree_change_summary(
+    root: Path,
+    run: CoderWorktreeRunRecord,
+) -> dict[str, str]:
+    diff_summary = _diff_summary_for_run(root, run)
+    return {
+        "changed_files_count": str(len(run.changed_files)),
+        "diff_summary": diff_summary,
+    }
+
+
+def _diff_summary_for_run(root: Path, run: CoderWorktreeRunRecord) -> str:
+    diff_path = root.resolve() / run.evidence_path / "diff.patch"
+    if not diff_path.exists():
+        return f"files:{len(run.changed_files)},added:missing,deleted:missing"
+    added = 0
+    deleted = 0
+    for line in diff_path.read_text(encoding="utf-8", errors="replace").splitlines():
+        if line.startswith(("+++", "---")):
+            continue
+        if line.startswith("+"):
+            added += 1
+        elif line.startswith("-"):
+            deleted += 1
+    return f"files:{len(run.changed_files)},added:{added},deleted:{deleted}"
 
 
 def render_coder_worktree_commit_review_lines(root: Path, delegation_id: str) -> list[str]:

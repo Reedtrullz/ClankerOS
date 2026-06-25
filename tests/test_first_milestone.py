@@ -3383,6 +3383,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "dashboard_next_recommended_action" in dashboard.body
     assert "request_commit_for_reviewed_run" in dashboard.body
     assert f"/runs/{result.coder_worktree_run_id}" in dashboard.body
+    assert "changed_files_count" in dashboard.body
+    assert "diff_summary" in dashboard.body
 
     delegation = render_local_app_route(
         tmp_path,
@@ -4323,6 +4325,8 @@ def test_coder_worktree_approval_and_run_capture_bounded_evidence(
     assert approval_id in review
     assert "## Coder Worktree Run" in review
     assert "changed_files_within_allowed_files: true" in review
+    assert "changed_files_count: 1" in review
+    assert "diff_summary: files:1,added:2,deleted:0" in review
     assert "diff.patch" in review
 
     dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
@@ -4332,6 +4336,8 @@ def test_coder_worktree_approval_and_run_capture_bounded_evidence(
     assert "### Approved Coder Worktree Runs" in dashboard
     assert run_id in dashboard
     assert "changed_files=agent_os/delegation_runner.py" in dashboard
+    assert "changed_files_count=1" in dashboard
+    assert "diff_summary=files:1,added:2,deleted:0" in dashboard
 
     assert main(["--root", str(tmp_path), "delegation-result", delegation_id]) == 0
     delegation_output = capsys.readouterr().out

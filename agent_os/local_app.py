@@ -30,6 +30,7 @@ from agent_os.coder_worktree_execution import (
     CoderWorktreeCommitError,
     approve_coder_worktree,
     approve_coder_worktree_commit,
+    coder_worktree_change_summary,
     commit_coder_worktree,
     list_coder_worktree_approvals,
     list_coder_worktree_commit_approvals,
@@ -631,7 +632,7 @@ def _inbox(root: Path) -> str:
             ),
             _list_section(
                 "Coder Worktree Runs",
-                [_coder_run_line(item) for item in inbox["coder_worktree_runs"]],
+                [_coder_run_line(root, item) for item in inbox["coder_worktree_runs"]],
             ),
             _list_section(
                 "Pending Commit Approvals",
@@ -1170,7 +1171,17 @@ def _delegation_detail(root: Path, delegation_id: str) -> str:
         _list_section("Coder Prep", _artifact_links(list_coder_prep_packets(root), delegation_id=delegation_id)),
         _list_section("Coder Worktree Plan", _artifact_links(list_coder_worktree_plan_packets(root), delegation_id=delegation_id)),
         _list_section("Worktree Approvals", [_approval_line(item) for item in list_coder_worktree_approvals(root, delegation_id=delegation_id, limit=20)]),
-        _list_section("Worktree Runs", [_coder_run_line(item) for item in list_coder_worktree_runs(root, delegation_id=delegation_id, limit=20)]),
+        _list_section(
+            "Worktree Runs",
+            [
+                _coder_run_line(root, item)
+                for item in list_coder_worktree_runs(
+                    root,
+                    delegation_id=delegation_id,
+                    limit=20,
+                )
+            ],
+        ),
         _list_section("Commit Requests / Local Commits", [_commit_line(item) for item in list_coder_worktree_commit_approvals(root, delegation_id=delegation_id, limit=20)]),
         _list_section("Publication Requests / Handoffs", [_publication_line(root, item) for item in list_coder_publications(root, delegation_id=delegation_id, limit=20)]),
         _safe_action_forms(
@@ -2174,7 +2185,10 @@ def _summary_rows(root: Path, storage: Storage) -> dict[str, list[str]]:
         "tasks": tasks,
         "delegations": delegations,
         "implementation_handoffs": _implementation_handoff_lines(root, storage, limit=10),
-        "coder_runs": [_coder_run_line(item) for item in list_coder_worktree_runs(root, limit=10)],
+        "coder_runs": [
+            _coder_run_line(root, item)
+            for item in list_coder_worktree_runs(root, limit=10)
+        ],
         "commit_requests": [_commit_line(item) for item in list_coder_worktree_commit_approvals(root, limit=10)],
         "publication_requests": [_publication_line(root, item) for item in list_coder_publications(root, limit=10)],
         "publication_handoffs": [
@@ -2878,11 +2892,15 @@ def _approval_line(item: Any) -> str:
     return f"{item.id}: status={item.status} project={item.project_id} plan={item.source_plan_sha256}"
 
 
-def _coder_run_line(item: Any) -> str:
+def _coder_run_line(root: Path, item: Any) -> str:
+    change_summary = coder_worktree_change_summary(root, item)
     return (
         f"<a href='/runs/{quote(item.id)}'>{_e(item.id)}</a>: {item.status} "
         f"project={item.project_id} changed={','.join(item.changed_files) or 'none'} "
-        f"outside={','.join(item.outside_allowed_files) or 'none'}"
+        f"changed_files_count={_e(change_summary['changed_files_count'])} "
+        f"outside={','.join(item.outside_allowed_files) or 'none'} "
+        f"diff_summary={_e(change_summary['diff_summary'])} "
+        f"diff={_artifact_link(str(Path(item.evidence_path) / 'diff.patch'))}"
     )
 
 
