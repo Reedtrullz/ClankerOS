@@ -3245,11 +3245,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
         method="POST",
         form={"requested_by": ["operator"], "confirm": ["yes"]},
     )
-    assert refresh_response.status == 303
-    assert refresh_response.headers
-    assert refresh_response.headers["Location"].startswith(
-        "/?notice=local_app_status"
-    )
+    assert refresh_response.status == 200
+    assert "Action Result Details" in refresh_response.body
+    assert "local_app_status" in refresh_response.body
+    assert "Action Payload" in refresh_response.body
+    assert "Result Fields" in refresh_response.body
+    assert "artifact_written" in refresh_response.body
+    assert "Safety boundary" in refresh_response.body
+    assert "href='/?notice=local_app_status" in refresh_response.body
     assert status_path.exists()
     refreshed_status = json.loads(status_path.read_text(encoding="utf-8"))
     assert refreshed_status["host"] == "127.0.0.1"
@@ -3584,7 +3587,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
             "confirm": ["yes"],
         },
     )
-    assert commit_request.status == 303
+    assert commit_request.status == 200
+    assert "Action Result Details" in commit_request.body
+    assert "coder_commit_request" in commit_request.body
+    assert "Action Payload" in commit_request.body
+    assert "Result Fields" in commit_request.body
+    assert "approval.id" in commit_request.body
+    assert f"href='/runs/{result.coder_worktree_run_id}?notice=coder_commit_request" in commit_request.body
     commit_approvals = [
         item
         for item in list_coder_worktree_commit_approvals(
@@ -3623,7 +3632,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
             "confirm": ["yes"],
         },
     )
-    assert commit_approval_response.status == 303
+    assert commit_approval_response.status == 200
+    assert "Action Result Details" in commit_approval_response.body
+    assert "approved_coder_commit" in commit_approval_response.body
+    assert "approval.id" in commit_approval_response.body
     run_page_after_commit_approval = render_local_app_route(
         tmp_path,
         f"/runs/{result.coder_worktree_run_id}",
@@ -3660,7 +3672,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
             "confirm": ["yes"],
         },
     )
-    assert commit_response.status == 303
+    assert commit_response.status == 200
+    assert "Action Result Details" in commit_response.body
+    assert "commit_coder_worktree" in commit_response.body
+    assert "commit_sha" in commit_response.body
+    assert f"href='/runs/{result.coder_worktree_run_id}?notice=commit_coder_worktree" in commit_response.body
     committed = [
         item
         for item in list_coder_worktree_commit_approvals(
@@ -3706,7 +3722,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
             "confirm": ["yes"],
         },
     )
-    assert publication_request.status == 303
+    assert publication_request.status == 200
+    assert "Action Result Details" in publication_request.body
+    assert "coder_publication_request" in publication_request.body
+    assert "publication.id" in publication_request.body
     publications = [
         item
         for item in list_coder_publications(
@@ -3740,7 +3759,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
             "confirm": ["yes"],
         },
     )
-    assert publication_approval.status == 303
+    assert publication_approval.status == 200
+    assert "Action Result Details" in publication_approval.body
+    assert "approved_coder_publication" in publication_approval.body
+    assert "publication.id" in publication_approval.body
     run_page_after_publication_approval = render_local_app_route(
         tmp_path,
         f"/runs/{result.coder_worktree_run_id}",
@@ -3763,7 +3785,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
         method="POST",
         form={"run_id": [result.coder_worktree_run_id], "confirm": ["yes"]},
     )
-    assert publication_handoff.status == 303
+    assert publication_handoff.status == 200
+    assert "Action Result Details" in publication_handoff.body
+    assert "coder_publication_handoff" in publication_handoff.body
+    assert "artifact_path" in publication_handoff.body
     ready_publications = [
         item
         for item in list_coder_publications(

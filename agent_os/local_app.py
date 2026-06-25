@@ -5,7 +5,7 @@ import json
 import sqlite3
 import subprocess
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, fields, is_dataclass
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -1826,6 +1826,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             )
             message = f"local_app_status: {status_path.relative_to(root)}"
             location = "/"
+            result = {"status_path": status_path, "artifact_written": True}
         elif action == "context-pack":
             delegation_id = _required(form, "delegation_id")
             result = generate_context_pack(root, storage, delegation_id)
@@ -1839,6 +1840,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             summary = summarize_implementation_handoff(root, delegation)
             message = f"implementation_handoff_status: {summary['status']}"
             location = f"/delegations/{quote(delegation_id)}"
+            result = summary
         elif action == "coder-prep":
             delegation_id = _required(form, "delegation_id")
             result = prepare_coder_from_handoff(root, storage, delegation_id)
@@ -1956,10 +1958,17 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             _action_error_page(action, form, error),
             status=400,
         )
-    return LocalAppResponse(
-        303,
-        "",
-        headers={"Location": f"{location}?notice={quote(message)}"},
+    return _html_page(
+        root,
+        "Action Result",
+        _action_result_page(
+            root,
+            action=action,
+            form=form,
+            message=message,
+            location=location,
+            result=result,
+        ),
     )
 
 
@@ -2000,6 +2009,80 @@ def _action_error_page(
             "</section>",
         ]
     )
+
+
+def _action_result_page(
+    root: Path,
+    *,
+    action: str,
+    form: dict[str, list[str]],
+    message: str,
+    location: str,
+    result: Any,
+) -> str:
+    next_href = f"{location}?notice={quote(message)}"
+    return "".join(
+        [
+            "<section><h1>Action Result Details</h1>",
+            "<p>Action completed. Review the local result before continuing.</p>",
+            _non_claim_banner(),
+            _kv(
+                [
+                    ("action", action),
+                    ("result", message),
+                    ("next_page", SafeHtml(f"<a href='{_e(next_href)}'>{_e(location)}</a>")),
+                ]
+            ),
+            "<h2>Action Payload</h2>",
+            _kv(_submitted_form_rows(form)),
+            "<h2>Result Fields</h2>",
+            _kv(_action_result_rows(root, result)),
+            "<p class='muted'>This page is a local readback only. Follow the next-page link after checking the payload, artifacts, and safety boundary.</p>",
+            "</section>",
+        ]
+    )
+
+
+def _action_result_rows(root: Path, result: Any) -> list[tuple[str, str | SafeHtml]]:
+    rows = _flatten_action_result(root, "", result)
+    if not rows:
+        return [("result_fields", "none")]
+    limit = 80
+    if len(rows) > limit:
+        return rows[:limit] + [("result_fields_truncated", str(len(rows) - limit))]
+    return rows
+
+
+def _flatten_action_result(
+    root: Path,
+    prefix: str,
+    value: Any,
+) -> list[tuple[str, str | SafeHtml]]:
+    if is_dataclass(value) and not isinstance(value, type):
+        rows: list[tuple[str, str | SafeHtml]] = []
+        for field in fields(value):
+            key = f"{prefix}.{field.name}" if prefix else field.name
+            rows.extend(_flatten_action_result(root, key, getattr(value, field.name)))
+        return rows
+    if isinstance(value, dict):
+        rows = []
+        for key, nested in value.items():
+            field_key = f"{prefix}.{key}" if prefix else str(key)
+            rows.extend(_flatten_action_result(root, field_key, nested))
+        return rows
+    key = prefix or "result"
+    if isinstance(value, Path):
+        return [(key, _artifact_link(_repo_relative_artifact_path(root, value)))]
+    if isinstance(value, (list, tuple, set)):
+        rendered = ", ".join(str(item) for item in value) if value else "none"
+        return [(key, rendered)]
+    if isinstance(value, bool):
+        return [(key, str(value).lower())]
+    if value is None:
+        return [(key, "none")]
+    if key.endswith("_path") or key.endswith("_artifact_path"):
+        return [(key, _artifact_link(_repo_relative_artifact_path(root, str(value))))]
+    return [(key, str(value))]
 
 
 def _run_action_forms(root: Path, run_id: str) -> str:

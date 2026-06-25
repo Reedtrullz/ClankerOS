@@ -105,7 +105,10 @@ coder prep.
 The app is local-only by default, binds to `127.0.0.1`, and refuses non-local
 binds unless `--allow-nonlocal-bind` is explicitly supplied. It does not push,
 create PRs, deploy, call providers, or perform network actions beyond local
-browser/server loopback. Stop it with `Ctrl-C`.
+browser/server loopback. Confirmation pages show submitted payloads before
+local writes, and confirmed actions return an `Action Result Details` page with
+the payload, result fields, artifact links, next-page link, and safety
+boundary. Stop it with `Ctrl-C`.
 
 The underlying CLI workflow remains the source of truth: scout a repo, inspect
 the generated handoff, prepare a bounded coder plan from either the delegation

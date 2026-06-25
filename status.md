@@ -1,5 +1,26 @@
 # Status
 
+## 2026-06-26 Local App Action Result Pages
+
+- Confirmed local app POST actions now render `Action Result Details` instead
+  of immediately redirecting. The page shows the attempted action, submitted
+  payload, result message, flattened result fields, artifact links for returned
+  paths, a next-page link, and the safety boundary before the operator
+  continues.
+- The result page is used by refresh, context-pack, implementation-handoff,
+  coder-prep, coder-worktree-plan, worktree approval/approval-decision, commit
+  request, commit approval, typed local commit, publication request,
+  publication approval, and publication handoff actions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario`
+  - `python3 -m agent_os.cli app-smoke-test`
+  - `git diff --check`
+- Non-claims: the app still does not push, create PRs, deploy, call providers,
+  execute arbitrary commands, expose hosted/remote workers, or use network
+  actions beyond local browser/server loopback.
+
 ## 2026-06-25 Local App Dogfooding Path
 
 - Added `/delegation-runs` as a first-class read-only local app route and
