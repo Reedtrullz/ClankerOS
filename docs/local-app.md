@@ -116,8 +116,9 @@ Supported inert render types are:
 - `.diff`
 - `.log`
 
-Large artifacts are truncated with a visible message. Artifact content is never
-executed.
+Large artifacts are truncated with a visible message. The page shows the
+inert render type (`markdown`, `json`, `text`, `patch`, `diff`, or `log`) plus
+file size and truncation status. Artifact content is never executed.
 
 ## Safe Actions
 

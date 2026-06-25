@@ -42,6 +42,9 @@
   bounded-file-validation, commit, publication, and next-action status.
 - The dashboard now exposes a confirmed `refresh-dashboard-state` action that
   rewrites only `.clanker/app/local_app_status.json` from current local state.
+- The artifact viewer now labels supported inert render types for Markdown,
+  JSON, text, patch, diff, and log artifacts while preserving size/truncation
+  readback.
 - `/demo` now becomes a state-aware dogfooding launchpad after
   `demo-app-scenario`, linking the demo project, selected workflow,
   delegation, coder worktree run, review artifact, approvals, inbox, and a

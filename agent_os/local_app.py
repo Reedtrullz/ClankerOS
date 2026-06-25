@@ -1172,7 +1172,13 @@ def _artifact_viewer(root: Path, relative_path: str | None) -> LocalAppResponse:
     body = "".join(
         [
             f"<section><h1>Artifact {_e(str(path.relative_to(root)))}</h1>",
-            _kv([("size_bytes", str(size)), ("truncated", str(truncated).lower())]),
+            _kv(
+                [
+                    ("artifact_type", _artifact_type(path)),
+                    ("size_bytes", str(size)),
+                    ("truncated", str(truncated).lower()),
+                ]
+            ),
             "<pre>",
             _e(text),
             "</pre>",
@@ -1201,6 +1207,17 @@ def resolve_artifact_path(root: Path, relative_path: str) -> Path:
     if resolved.suffix not in {".md", ".json", ".txt", ".patch", ".diff", ".log"}:
         raise ValueError("artifact file type is not supported")
     return resolved
+
+
+def _artifact_type(path: Path) -> str:
+    return {
+        ".md": "markdown",
+        ".json": "json",
+        ".txt": "text",
+        ".patch": "patch",
+        ".diff": "diff",
+        ".log": "log",
+    }.get(path.suffix, "unknown")
 
 
 def _health(root: Path, *, host: str, port: int) -> str:

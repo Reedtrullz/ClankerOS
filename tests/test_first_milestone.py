@@ -3298,16 +3298,35 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     (docs / "sample.md").write_text("# Sample\n", encoding="utf-8")
     (docs / "sample.json").write_text('{"ok": true}\n', encoding="utf-8")
     (docs / "sample.txt").write_text("plain text\n", encoding="utf-8")
+    (docs / "sample.patch").write_text("--- a/demo.txt\n+++ b/demo.txt\n", encoding="utf-8")
+    (docs / "sample.diff").write_text("diff --git a/demo.txt b/demo.txt\n", encoding="utf-8")
+    (docs / "sample.log").write_text("demo log line\n", encoding="utf-8")
 
     markdown = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.md")
     assert markdown.status == 200
+    assert "artifact_type" in markdown.body
+    assert "markdown" in markdown.body
     assert "# Sample" in markdown.body
     json_response = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.json")
     assert json_response.status == 200
+    assert "json" in json_response.body
     assert "&quot;ok&quot;: true" in json_response.body
     text_response = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.txt")
     assert text_response.status == 200
+    assert "text" in text_response.body
     assert "plain text" in text_response.body
+    patch_response = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.patch")
+    assert patch_response.status == 200
+    assert "patch" in patch_response.body
+    assert "--- a/demo.txt" in patch_response.body
+    diff_response = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.diff")
+    assert diff_response.status == 200
+    assert "diff" in diff_response.body
+    assert "diff --git" in diff_response.body
+    log_response = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.log")
+    assert log_response.status == 200
+    assert "log" in log_response.body
+    assert "demo log line" in log_response.body
 
     absolute = render_local_app_route(
         tmp_path,
