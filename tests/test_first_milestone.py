@@ -5288,6 +5288,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "request_commit_for_reviewed_run" in project.body
     assert "Project Workflow Launchpad" in project.body
     assert "project_workflow_stage: project_ready" in project.body
+    assert "Start Goal For This Project" in project.body
+    assert "project_goal_creation_form_available</dt><dd>true" in project.body
+    assert "project_goal_creation_confirmation_required</dt><dd>true" in project.body
+    assert "project_goal_creation_external_effects_created</dt><dd>false" in project.body
+    assert "action='/actions/create-goal'" in project.body
+    assert "name='project_id' value='local-app-demo'" in project.body
+    assert "name='prompt'" in project.body
     assert f"/workflow?delegation_id={result.delegation_id}" in project.body
     assert f"/workflow?run_id={result.coder_worktree_run_id}" in project.body
     assert f"/delegations/{result.delegation_id}" in project.body

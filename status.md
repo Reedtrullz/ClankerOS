@@ -1,5 +1,28 @@
 # Status
 
+## 2026-06-26 Project-Scoped Goal Creation
+
+- Added a populated-state `Start Goal For This Project` section to
+  `/projects/<project_id>`. It uses the existing confirmed local
+  `create-goal` action with the current project prefilled, so operators can
+  start the next goal from a project detail launchpad without returning to
+  `/goals` or the CLI.
+- The form is local goal lifecycle UI only. Displaying it does not write
+  state, call providers, use the network, push, create PRs, deploy, run
+  delegations/worktrees, or mutate external systems.
+- Compact local verification for this slice:
+  - Focused red test failed first because `/projects/local-app-demo` did not
+    contain `Start Goal For This Project`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Project Registration From Project Index
 
 - Added a populated-state `Register Local Project` section to `/projects`.

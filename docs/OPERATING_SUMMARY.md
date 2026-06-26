@@ -75,9 +75,10 @@ Core layers for the bootstrap:
   a confirmed local `Register Local Project` form, local repo posture, default
   test command, goal/task/delegation counts, next recommended operator action,
   and selected delegation/run workflow links. Project detail pages separate
-  project goals from goal-linked project tasks and include a project workflow
-  launchpad with scoped
-  delegation/run workflow links, safe actions, dogfooding, and verification
+  project goals from goal-linked project tasks, include a confirmed local
+  `Start Goal For This Project` form, and include a project workflow
+  launchpad with scoped delegation/run workflow links, safe actions,
+  dogfooding, and verification
   links so the operator can start from the product path rather than infer
   goals from task rows. The local app now also exposes `/resume` as a
   read-only return-to-work surface over saved `.clanker/app/workspace.json`

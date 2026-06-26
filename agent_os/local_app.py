@@ -5394,6 +5394,7 @@ def _project_detail(root: Path, project_id: str) -> str:
                 ]
             ),
             "</section>",
+            _project_goal_creation_panel(project_id, goal_rows),
             _list_section(
                 "Project Goals",
                 [
@@ -5451,6 +5452,35 @@ def _project_detail(root: Path, project_id: str) -> str:
                     ]
                 ),
             ),
+        ]
+    )
+
+
+def _project_goal_creation_panel(project_id: str, goal_rows: list[sqlite3.Row]) -> str:
+    return "".join(
+        [
+            "<section><h2>Start Goal For This Project</h2>",
+            "<p class='muted'>Create the next local goal for this registered project without leaving the project page.</p>",
+            _kv(
+                [
+                    ("project_goal_creation_form_available", "true"),
+                    ("project_goal_creation_project_id", project_id),
+                    ("project_goal_creation_existing_goal_count", str(len(goal_rows))),
+                    ("project_goal_creation_confirmation_required", "true"),
+                    ("project_goal_creation_provider_calls_taken_by_clankeros", "0"),
+                    ("project_goal_creation_network_actions_taken", "0"),
+                    ("project_goal_creation_external_effects_created", "false"),
+                ]
+            ),
+            _input_form(
+                "create-goal",
+                {"project_id": project_id},
+                {
+                    "prompt": "Describe the next local coding goal for this project.",
+                    "created_by_profile": "planner",
+                },
+            ),
+            "</section>",
         ]
     )
 
