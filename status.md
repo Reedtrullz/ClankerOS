@@ -1,5 +1,28 @@
 # Status
 
+## 2026-06-26 State-Aware First Run Guide
+
+- Upgraded the Home and `/goals` first-run guide from static guidance into a
+  state-aware checklist for Create project -> Create first goal -> Run first
+  delegation. It now reports the current step, project/goal/delegation/context
+  readiness, next local surface, text empty-state illustration, zero-effect
+  counters, and the exact copy-only `run-delegation` command once the context
+  pack is ready.
+- Home keeps showing the first-run guide until the first delegation is
+  completed, so a new operator can continue from project registration through
+  the first delegation handoff without reading docs or hunting through CLI
+  commands.
+- The guide remains local UI only. It does not run delegations, expose browser
+  adapter execution, call providers, fetch GitHub status, push, create PRs,
+  deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+    -> `1 passed, 509 deselected`
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Demo Skill Inventory Seeding
 
 - The fixture-backed local app demo now writes a generated `local-files`

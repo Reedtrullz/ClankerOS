@@ -1044,7 +1044,7 @@ def _home_dashboard(
         _home_recommendations(storage),
         _home_incidents(storage),
     ]
-    if not rows:
+    if not _first_run_progress(root, storage)["complete"]:
         sections.append(_first_run_panel(root, storage))
     return "".join(sections)
 
@@ -1767,16 +1767,38 @@ def _profile_names(lines: list[str]) -> list[str]:
 
 
 def _first_run_panel(root: Path, storage: Storage) -> str:
-    projects = storage.list_registered_projects()
-    default_project = projects[0].name if projects else "clankeros"
+    progress = _first_run_progress(root, storage)
+    default_project = progress["default_project"]
     return "".join(
         [
             "<section><h2>First Run Guide</h2>",
+            "<p class='muted'>A state-aware path for a new operator to create local ClankerOS state and reach the first delegation handoff without reading docs.</p>",
+            _kv(
+                [
+                    ("first_run_guided_path", "Create project -> Create first goal -> Run first delegation"),
+                    ("first_run_current_step", progress["current_step"]),
+                    ("first_run_project_registered", str(progress["project_registered"]).lower()),
+                    ("first_run_goal_created", str(progress["goal_created"]).lower()),
+                    ("first_run_delegation_created", str(progress["delegation_created"]).lower()),
+                    ("first_run_context_pack_ready", str(progress["context_pack_ready"]).lower()),
+                    ("first_run_delegation_completed", str(progress["delegation_completed"]).lower()),
+                    ("first_run_next_surface", progress["next_surface"]),
+                    ("first_run_run_delegation_command", progress["run_delegation_command"]),
+                    ("first_run_browser_execution_exposed", "false"),
+                    ("first_run_provider_calls_taken_by_clankeros", "0"),
+                    ("first_run_external_effects_created", "false"),
+                ]
+            ),
             _ul(
                 [
+                    "first_run_empty_state_illustration: [project] -> [goal] -> [delegation] -> [handoff]",
+                    f"first_run_step: create_project status={_e(_first_run_step_status(progress, 'create_project'))}",
+                    f"first_run_step: create_first_goal status={_e(_first_run_step_status(progress, 'create_first_goal'))}",
+                    f"first_run_step: create_first_delegation status={_e(_first_run_step_status(progress, 'create_first_delegation'))}",
+                    f"first_run_step: run_first_delegation status={_e(_first_run_step_status(progress, 'run_first_delegation'))}",
                     "Create project: register a local git repository.",
                     "Create first goal: materialize a goal, plan, and planned tasks.",
-                    "Run first delegation: open the goal workflow and follow the next recommended local action.",
+                    "Run first delegation: follow the Goal page next action until the copy-only run-delegation handoff is ready.",
                     "<code>python3 -m agent_os.cli demo</code>: populate deterministic local demo data.",
                 ]
             ),
@@ -1804,6 +1826,84 @@ def _first_run_panel(root: Path, storage: Storage) -> str:
             "</section>",
         ]
     )
+
+
+def _first_run_progress(root: Path, storage: Storage) -> dict[str, Any]:
+    projects = storage.list_registered_projects()
+    goals = _goal_rows(storage, limit=100)
+    goal_row = goals[0] if goals else None
+    goal_id = str(goal_row["id"]) if goal_row is not None else ""
+    default_project = (
+        str(goal_row["project_id"])
+        if goal_row is not None
+        else (projects[0].name if projects else "clankeros")
+    )
+    delegations = storage.list_subagent_delegations(goal_id) if goal_id else []
+    delegation = delegations[0] if delegations else None
+    context_pack_ready = False
+    delegation_completed = False
+    run_delegation_command = "pending_until_context_pack_ready"
+    if delegation is not None:
+        metadata = load_delegation_result_metadata(delegation)
+        context_pack_ready = _delegation_has_context_pack(root, delegation, metadata)
+        delegation_completed = delegation.status == "completed"
+        if context_pack_ready:
+            run_delegation_command = f"python3 -m agent_os.cli run-delegation {delegation.id}"
+    project_registered = bool(projects)
+    goal_created = goal_row is not None
+    delegation_created = delegation is not None
+    if not project_registered:
+        current_step = "create_project"
+        next_surface: str | SafeHtml = SafeHtml("<a href='/goals'>/goals</a>")
+    elif not goal_created:
+        current_step = "create_first_goal"
+        next_surface = SafeHtml("<a href='/goals'>/goals</a>")
+    elif not delegation_created:
+        current_step = "create_first_delegation"
+        next_surface = SafeHtml(f"<a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>")
+    elif not context_pack_ready:
+        current_step = "generate_context_pack"
+        next_surface = SafeHtml(f"<a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>")
+    elif not delegation_completed:
+        current_step = "run_first_delegation_from_cli"
+        next_surface = SafeHtml(f"<a href='/delegations/{quote(delegation.id)}'>/delegations/{_e(delegation.id)}</a>")
+    else:
+        current_step = "first_delegation_complete"
+        next_surface = SafeHtml(f"<a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>")
+    return {
+        "project_registered": project_registered,
+        "goal_created": goal_created,
+        "delegation_created": delegation_created,
+        "context_pack_ready": context_pack_ready,
+        "delegation_completed": delegation_completed,
+        "current_step": current_step,
+        "next_surface": next_surface,
+        "run_delegation_command": run_delegation_command,
+        "default_project": default_project,
+        "complete": delegation_completed,
+    }
+
+
+def _first_run_step_status(progress: dict[str, Any], step: str) -> str:
+    if step == "create_project":
+        return "done" if progress["project_registered"] else "current"
+    if step == "create_first_goal":
+        if progress["goal_created"]:
+            return "done"
+        return "current" if progress["project_registered"] else "waiting_for_project"
+    if step == "create_first_delegation":
+        if progress["delegation_created"]:
+            return "done"
+        return "current" if progress["goal_created"] else "waiting_for_goal"
+    if step == "run_first_delegation":
+        if progress["delegation_completed"]:
+            return "done"
+        if progress["context_pack_ready"]:
+            return "current"
+        if progress["delegation_created"]:
+            return "waiting_for_context_pack"
+        return "waiting_for_delegation" if progress["goal_created"] else "waiting_for_goal"
+    return "unknown"
 
 
 def _load_workspace_state(root: Path) -> dict[str, str]:

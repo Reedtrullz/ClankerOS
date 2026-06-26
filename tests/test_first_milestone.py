@@ -4055,6 +4055,15 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Home Incidents" in root.body
     assert "home_incidents_status: none_open" in root.body
     assert "First Run Guide" in root.body
+    assert "first_run_guided_path</dt><dd>Create project -&gt; Create first goal -&gt; Run first delegation" in root.body
+    assert "first_run_current_step</dt><dd>create_project" in root.body
+    assert "first_run_project_registered</dt><dd>false" in root.body
+    assert "first_run_goal_created</dt><dd>false" in root.body
+    assert "first_run_delegation_created</dt><dd>false" in root.body
+    assert "first_run_step: create_project status=current" in root.body
+    assert "first_run_step: create_first_goal status=waiting_for_project" in root.body
+    assert "first_run_step: run_first_delegation status=waiting_for_goal" in root.body
+    assert "first_run_empty_state_illustration" in root.body
     assert "register-project" in root.body
     assert "create-goal" in root.body
     assert "data-command-palette='true'" in root.body
@@ -4182,6 +4191,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert goals.status == 200
     assert "Goal Cockpit" in goals.body
     assert "First Run Guide" in goals.body
+    assert "first_run_current_step</dt><dd>create_project" in goals.body
+    assert "first_run_step: create_project status=current" in goals.body
     assert "Create Project" in goals.body
     assert "Create First Goal" in goals.body
     assert "register-project" in goals.body
@@ -4259,6 +4270,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert register_result.status == 200
     assert "project_registered: first-target" in register_result.body
     assert (tmp_path / "projects" / "first-target" / "project.md").exists()
+    registered_goals = render_local_app_route(tmp_path, "/goals")
+    assert "first_run_current_step</dt><dd>create_first_goal" in registered_goals.body
+    assert "first_run_project_registered</dt><dd>true" in registered_goals.body
+    assert "first_run_goal_created</dt><dd>false" in registered_goals.body
+    assert "first_run_step: create_project status=done" in registered_goals.body
+    assert "first_run_step: create_first_goal status=current" in registered_goals.body
     create_goal_result = render_local_app_route(
         tmp_path,
         "/actions/create-goal",
@@ -4311,6 +4328,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "goal_ci_github_status_fetch: none" in first_goal_page.body
     assert "note_append_form_available: true" in first_goal_page.body
     assert "save-goal-note" in first_goal_page.body
+    goals_after_first_goal = render_local_app_route(tmp_path, "/goals")
+    assert "first_run_current_step</dt><dd>create_first_delegation" in goals_after_first_goal.body
+    assert "first_run_goal_created</dt><dd>true" in goals_after_first_goal.body
+    assert "first_run_delegation_created</dt><dd>false" in goals_after_first_goal.body
+    assert "first_run_step: create_first_goal status=done" in goals_after_first_goal.body
+    assert "first_run_step: create_first_delegation status=current" in goals_after_first_goal.body
+    assert f"/goals/{created_goal_id}" in goals_after_first_goal.body
     storage_after_creation = Storage(tmp_path / ".agent" / "state.db")
     storage_after_creation.set_goal_status(created_goal_id, "paused")
     paused_goal_page = render_local_app_route(tmp_path, f"/goals/{created_goal_id}")
@@ -4500,10 +4524,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "lead_goal_next_action</dt><dd>Run delegation from CLI" in home_after_delegate.body
     assert "Home Recent Activity" in home_after_delegate.body
     assert "Scout delegated" in home_after_delegate.body
+    assert "First Run Guide" in home_after_delegate.body
+    assert "first_run_current_step</dt><dd>run_first_delegation_from_cli" in home_after_delegate.body
+    assert "first_run_context_pack_ready</dt><dd>true" in home_after_delegate.body
+    assert "first_run_step: run_first_delegation status=current" in home_after_delegate.body
+    assert "first_run_run_delegation_command</dt><dd>python3 -m agent_os.cli run-delegation" in home_after_delegate.body
     assert created_goal_id in home_after_delegate.body
     created_goals = render_local_app_route(tmp_path, "/goals")
     assert "first-target" in created_goals.body
     assert "Create a browser-first first-run workflow" in created_goals.body
+    assert "first_run_current_step</dt><dd>run_first_delegation_from_cli" in created_goals.body
 
     actions = render_local_app_route(tmp_path, "/actions")
     assert actions.status == 200

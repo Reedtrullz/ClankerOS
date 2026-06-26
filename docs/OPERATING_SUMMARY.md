@@ -86,9 +86,14 @@ Core layers for the bootstrap:
   generated memories, operator notes, future work, and pin actions; `/skills`
   for available/generated skill records with usage counts; and `/profiles`
   for inactive future provider-routing readback from `.clanker/profiles.yml`.
-  The `/goals` first-run panel now exposes confirmed local `register-project`
-  and `create-goal` forms, moving initial project/goal setup into the browser
-  without adding provider calls or external effects. Goal detail pages now
+  The `/goals` and Home first-run panel now exposes a state-aware
+  Create project -> Create first goal -> Run first delegation checklist plus
+  confirmed local `register-project` and `create-goal` forms, moving initial
+  project/goal setup into the browser without adding provider calls or
+  external effects. The checklist reports the current step, project/goal/
+  delegation/context-pack state, next local surface, and copy-only
+  `run-delegation` handoff once context is ready while keeping browser
+  execution unexposed. Goal detail pages now
   expose first-class Goal Risk and Goal Completion Criteria sections sourced
   from task risk metadata, sprint contracts, plan steps, or task verification
   plans, plus clickable timeline entries with operator-facing lifecycle
@@ -181,8 +186,8 @@ Core layers for the bootstrap:
   The root `/` app page is now a Goal-First Home board with active, paused,
   and completed goal lanes, recent activity, inbox counts, recommendations,
   incidents, saved workspace resume links, an explicit `save-workspace` form
-  for the current lead goal when one exists, and first-run project/goal forms
-  when no goals exist.
+  for the current lead goal when one exists, and a state-aware first-run
+  project/goal/delegation guide until the first delegation is completed.
   Coder worktree run rows in review,
   dashboard, and the local app include changed-file counts and compact diff
   summaries read from existing evidence. The app also includes a read-only

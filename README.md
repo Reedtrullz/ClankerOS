@@ -106,11 +106,14 @@ python3 -m agent_os.cli app
 The root `/` page is the Goal-First Home board. It starts with active,
 paused, and completed goal lanes, recent activity, the operator inbox,
 recommendations, incidents, saved workspace resume links, and first-run
-project/goal forms when the checkout is empty. When a lead goal exists, Home
-also shows an explicit `save-workspace` form so the operator can remember the
-current goal/project context for the next session. Use the compact local app
-smoke commands before pushing, then let GitHub Actions run the fast route
-smoke and full pytest suite for slower proof.
+project/goal/delegation guidance when the checkout has not completed its
+first delegation. The First Run Guide is state-aware: it shows the current
+step across create project, create first goal, create first delegation,
+prepare context, and the copy-only `run-delegation` handoff. When a lead goal
+exists, Home also shows an explicit `save-workspace` form so the operator can
+remember the current goal/project context for the next session. Use the
+compact local app smoke commands before pushing, then let GitHub Actions run
+the fast route smoke and full pytest suite for slower proof.
 
 For the first manual browser pass, run `python3 -m agent_os.cli demo`
 or `python3 -m agent_os.cli demo-app-scenario`, open `/goals`, then `/demo`,
@@ -160,15 +163,18 @@ Patch, or Text and links them through the bounded `/artifacts` viewer instead
 of exposing raw filesystem browsing.
 
 Use `/goals` on a fresh checkout for first-run browser actions. The page now
-renders confirmed local forms for `register-project` and `create-goal`, so a
-new operator can create a project and first goal without switching to CLI
-commands. From the created goal page, the Next Action card can create the
-first read-only scout delegation with a confirmed `delegate` form, writing a
-local contract artifact without starting a subagent or calling a provider.
-After the delegation exists, the same card can generate the local context pack
-with a confirmed `context-pack` form. When the context pack is ready, the card
-shows the exact `run-delegation` CLI handoff because browser adapter execution
-is still not exposed. After a delegation has completed, the Goal Next Action
+renders a state-aware First Run Guide plus confirmed local forms for
+`register-project` and `create-goal`, so a new operator can create a project
+and first goal without switching to CLI commands. The guide tracks whether
+the project, goal, first delegation, and context pack exist, then points to
+the current surface or exact `run-delegation` command. From the created goal
+page, the Next Action card can create the first read-only scout delegation
+with a confirmed `delegate` form, writing a local contract artifact without
+starting a subagent or calling a provider. After the delegation exists, the
+same card can generate the local context pack with a confirmed `context-pack`
+form. When the context pack is ready, the card shows the exact
+`run-delegation` CLI handoff because browser adapter execution is still not
+exposed. After a delegation has completed, the Goal Next Action
 card can also create the local coder prep packet, create the approval-gated
 worktree plan, and request the pending worktree approval with confirmed
 browser forms. It can then approve the pending worktree request. After
