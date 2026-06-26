@@ -1,5 +1,28 @@
 # Status
 
+## 2026-06-27 Browser-First Empty Goal Snapshot
+
+- Removed stale CLI-first language from the empty Home `Goal Snapshot`. A fresh
+  checkout now points the operator to `/goals` for browser guidance, reports
+  the first-run browser path (`register-project -> create-goal -> delegate ->
+  context-pack -> run-delegation`), and explicitly records
+  `first_run_cli_required: false`.
+- Non-claims: this does not run delegations, approve gates, call providers,
+  fetch GitHub status, push, create PRs, deploy, or mutate external systems.
+  It is a local Home guidance/readback improvement only.
+- Compact local verification for this slice:
+  - Focused red pytest first failed because the empty Home `Goal Snapshot`
+    still said `first goal from CLI guidance`.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+    -> `1 passed, 512 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 First Run Context Pack Gate
 
 - Made the browser First Run Guide name `Generate context pack` as its own

@@ -1426,7 +1426,9 @@ def _dashboard_goal_snapshot(root: Path) -> str:
             "Goal Snapshot",
             [
                 "goal_cockpit_status: empty",
-                "first_run_experience: open /goals to create project and first goal from CLI guidance",
+                "first_run_experience: open /goals to create project and first goal from browser guidance",
+                "first_run_browser_path: register-project -> create-goal -> delegate -> context-pack -> run-delegation",
+                "first_run_cli_required: false",
                 "goal_surface: <a href='/goals'>/goals</a>",
             ],
             "/goals",

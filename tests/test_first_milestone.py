@@ -4118,6 +4118,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "dashboard_next_dogfooding_action: run_demo_app_scenario" in root.body
     assert "manual_browser_script_surface" in root.body
     assert "Goal Snapshot" in root.body
+    assert "first_run_experience: open /goals to create project and first goal from browser guidance" in root.body
+    assert "first_run_browser_path: register-project -> create-goal -> delegate -> context-pack -> run-delegation" in root.body
+    assert "first_run_cli_required: false" in root.body
+    assert "first goal from CLI guidance" not in root.body
     assert "/goals" in root.body
     assert "app_network_actions_taken: 0" in root.body
 
