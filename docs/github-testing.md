@@ -88,28 +88,27 @@ The validated direct-push proof path looks like:
 
 ```bash
 gh run view <run_id> --repo Reedtrullz/ClankerOS \
-  --json status,conclusion,headSha,headBranch,url,jobs \
+  --json status,conclusion,headSha,headBranch,databaseId,url,jobs \
 | python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json \
   --project clankeros \
   --branch main \
   --commit <commit_sha> \
-  --external-run-id <run_id> \
   --status-json -
 ```
 
-The recorder refuses pending runs, failed runs, malformed JSON, branch
-mismatches when `headBranch` is present, and commit mismatches.
+The recorder infers the run id and URL from `databaseId`/`url`, then refuses
+pending runs, failed runs, malformed JSON, branch mismatches when `headBranch`
+is present, and commit mismatches.
 
 The scoped fast-smoke proof path looks like:
 
 ```bash
 gh run view <run_id> --repo Reedtrullz/ClankerOS \
-  --json status,conclusion,headSha,headBranch,url,jobs \
+  --json status,conclusion,headSha,headBranch,databaseId,url,jobs \
 | python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json \
   --project clankeros \
   --branch main \
   --commit <commit_sha> \
-  --external-run-id <run_id> \
   --status-json - \
   --job-name "Fast smoke verification"
 ```

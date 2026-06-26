@@ -156,7 +156,7 @@ def record_ci_snapshot_evidence_from_gh_status_json(
     branch_name: str,
     commit_sha: str,
     provider: str,
-    external_run_id: str,
+    external_run_id: str | None = None,
     status_json_text: str,
     external_url: str | None = None,
     recorded_by: str = "operator",
@@ -188,6 +188,12 @@ def record_ci_snapshot_evidence_from_gh_status_json(
     run_url = (external_url or str(payload.get("url", ""))).strip()
     if not run_url:
         raise ValueError("GitHub status JSON did not include url; pass --url")
+    run_id = (external_run_id or "").strip() or _infer_github_run_id(payload, run_url)
+    if not run_id:
+        raise ValueError(
+            "GitHub status JSON did not include databaseId or an actions run URL; "
+            "pass --external-run-id"
+        )
 
     job = None
     requested_job_name = (job_name or "").strip()
@@ -226,6 +232,8 @@ def record_ci_snapshot_evidence_from_gh_status_json(
         "conclusion": conclusion,
         "headSha": head_sha,
         "headBranch": head_branch or None,
+        "databaseId": payload.get("databaseId"),
+        "externalRunId": run_id,
         "url": run_url,
         "jobs": payload.get("jobs", []),
     }
@@ -246,7 +254,7 @@ def record_ci_snapshot_evidence_from_gh_status_json(
         commit_sha=commit_sha,
         provider=provider,
         status="success",
-        external_run_id=external_run_id,
+        external_run_id=run_id,
         external_url=run_url,
         recorded_by=recorded_by,
         note=note,
@@ -262,6 +270,20 @@ def _safe_branch(value: str) -> bool:
 
 def _safe_commit(value: str) -> bool:
     return bool(re.fullmatch(r"[A-Fa-f0-9]{7,64}", value))
+
+
+def _infer_github_run_id(payload: dict[str, Any], run_url: str) -> str:
+    for key in ("databaseId", "runDatabaseId", "id"):
+        raw_value = payload.get(key)
+        if isinstance(raw_value, int):
+            return str(raw_value)
+        value = str(raw_value or "").strip()
+        if value.isdigit():
+            return value
+    match = re.search(r"/actions/runs/([0-9]+)(?:[/?#]|$)", run_url)
+    if match:
+        return match.group(1)
+    return ""
 
 
 def _slug(value: str) -> str:

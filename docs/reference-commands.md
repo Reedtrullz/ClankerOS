@@ -492,8 +492,8 @@ python3 -m pytest tests/test_first_milestone.py -q -k "github_actions or ci_snap
 gh repo view Reedtrullz/ClankerOS --json description,repositoryTopics,homepageUrl
 git push origin main
 python3 -m agent_os.cli ci-snapshot-handoff --project clankeros --branch main --commit <commit_sha> --external-run-id <run_id> --repo Reedtrullz/ClankerOS
-gh run view <run_id> --repo Reedtrullz/ClankerOS --json status,conclusion,headSha,headBranch,url,jobs | python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json --project clankeros --branch main --commit <commit_sha> --external-run-id <run_id> --status-json -
-gh run view <run_id> --repo Reedtrullz/ClankerOS --json status,conclusion,headSha,headBranch,url,jobs | python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json --project clankeros --branch main --commit <commit_sha> --external-run-id <run_id> --status-json - --job-name "Fast smoke verification"
+gh run view <run_id> --repo Reedtrullz/ClankerOS --json status,conclusion,headSha,headBranch,databaseId,url,jobs | python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json --project clankeros --branch main --commit <commit_sha> --status-json -
+gh run view <run_id> --repo Reedtrullz/ClankerOS --json status,conclusion,headSha,headBranch,databaseId,url,jobs | python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json --project clankeros --branch main --commit <commit_sha> --status-json - --job-name "Fast smoke verification"
 python3 -m agent_os.cli ci-snapshot-evidence --project clankeros --branch main --commit <commit_sha> --provider github-actions --status success --external-run-id <run_id> --url <run_url>
 ```
 

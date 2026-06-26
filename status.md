@@ -1,5 +1,29 @@
 # Status
 
+## 2026-06-26 CI JSON Run Identity Inference
+
+- Made `ci-snapshot-evidence-from-gh-json` infer the GitHub Actions run id
+  and URL from supplied `gh run view` JSON (`databaseId` and `url`) when the
+  operator leaves `--external-run-id` or the browser form fields blank.
+- Updated `/ci-evidence`, `/verification`, dashboard, and dogfooding command
+  templates to request `databaseId` and prefer the shorter validated pipeline
+  that records from pasted JSON without manually repeating the run id.
+- The `/ci-evidence` confirmed form now labels `external_run_id` and `url` as
+  optional when the JSON contains the same identity fields, while keeping
+  `github_status_fetch=none`, `network_actions_taken_by_app=0`, and
+  `external_mutations_taken=0`.
+- Compact local verification for this slice:
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "ci_snapshot_evidence_from_gh_json or local_app_records_ci_snapshot_evidence_from_pasted_gh_json or local_app_records_fast_smoke_ci_snapshot_evidence_from_pasted_gh_json or local_app_rejects_pending_ci_snapshot_status_json_without_record or ci_snapshot_handoff_prints_watch_and_record_commands_without_writes or local_app_routes_render_modern_workflow_and_health"`
+    -> `8 passed, 502 deselected`
+  - `python3 -m py_compile agent_os/ci_snapshot_evidence.py agent_os/cli.py agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Goal Section Index
 
 - Added a read-only `Goal Section Index` to `/goals/<goal_id>` with stable

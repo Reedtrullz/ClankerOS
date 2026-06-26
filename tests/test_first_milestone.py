@@ -2237,6 +2237,7 @@ def test_ci_snapshot_evidence_from_gh_json_validates_successful_matching_run(
                 "conclusion": "success",
                 "headSha": "52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9",
                 "headBranch": "main",
+                "databaseId": 28211577106,
                 "url": "https://github.com/Reedtrullz/ClankerOS/actions/runs/28211577106",
                 "jobs": [
                     {
@@ -2267,8 +2268,6 @@ def test_ci_snapshot_evidence_from_gh_json_validates_successful_matching_run(
                 "main",
                 "--commit",
                 "52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9",
-                "--external-run-id",
-                "28211577106",
                 "--status-json",
                 str(status_path),
                 "--recorded-by",
@@ -2292,9 +2291,12 @@ def test_ci_snapshot_evidence_from_gh_json_validates_successful_matching_run(
     assert len(records) == 1
     record = records[0]
     assert record.status == "success"
+    assert record.external_run_id == "28211577106"
     assert record.result_json["status_source"] == "github_status_json"
     assert record.result_json["validated_status_json"]["status"] == "completed"
     assert record.result_json["validated_status_json"]["conclusion"] == "success"
+    assert record.result_json["validated_status_json"]["databaseId"] == 28211577106
+    assert record.result_json["validated_status_json"]["externalRunId"] == "28211577106"
     assert record.result_json["validated_status_json"]["headSha"] == (
         "52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9"
     )
@@ -2519,6 +2521,7 @@ def test_local_app_records_ci_snapshot_evidence_from_pasted_gh_json(
             "conclusion": "success",
             "headSha": "52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9",
             "headBranch": "main",
+            "databaseId": 28211577106,
             "url": "https://github.com/Reedtrullz/ClankerOS/actions/runs/28211577106",
             "jobs": [
                 {
@@ -2540,6 +2543,8 @@ def test_local_app_records_ci_snapshot_evidence_from_pasted_gh_json(
     assert "Record Direct Snapshot From GitHub JSON" in ci_evidence.body
     assert "action='/actions/ci-snapshot-evidence-from-gh-json'" in ci_evidence.body
     assert "status_json" in ci_evidence.body
+    assert "external_run_id_inference</dt><dd>databaseId_or_actions_run_url" in ci_evidence.body
+    assert "optional if JSON has databaseId or URL" in ci_evidence.body
     assert "network_actions_taken_by_app</dt><dd>0" in ci_evidence.body
     assert "github_status_fetch</dt><dd>none" in ci_evidence.body
 
@@ -2552,7 +2557,6 @@ def test_local_app_records_ci_snapshot_evidence_from_pasted_gh_json(
             "branch": ["main"],
             "commit": ["52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9"],
             "provider": ["github-actions"],
-            "external_run_id": ["28211577106"],
             "status_json": [status_json],
             "recorded_by": ["operator"],
             "note": ["Validated from local app."],
@@ -2572,7 +2576,6 @@ def test_local_app_records_ci_snapshot_evidence_from_pasted_gh_json(
             "branch": ["main"],
             "commit": ["52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9"],
             "provider": ["github-actions"],
-            "external_run_id": ["28211577106"],
             "status_json": [status_json],
             "recorded_by": ["operator"],
             "note": ["Validated from local app."],
@@ -2590,7 +2593,9 @@ def test_local_app_records_ci_snapshot_evidence_from_pasted_gh_json(
     storage = Storage(tmp_path / ".agent" / "state.db")
     records = storage.list_recent_ci_snapshot_evidence_records()
     assert len(records) == 1
+    assert records[0].external_run_id == "28211577106"
     assert records[0].result_json["status_source"] == "github_status_json"
+    assert records[0].result_json["validated_status_json"]["externalRunId"] == "28211577106"
 
     ci_evidence_after = render_local_app_route(tmp_path, "/ci-evidence")
     assert ci_evidence_after.status == 200
@@ -4604,7 +4609,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "ci-snapshot-evidence-from-gh-json" in ci_evidence.body
     assert "direct_snapshot_record_after_success_command_template: python3 -m agent_os.cli ci-snapshot-evidence" in ci_evidence.body
     assert (
-        "required_operator_inputs: GitHub Actions run id, run URL, final status or completed job name"
+        "required_operator_inputs: GitHub Actions JSON with status, conclusion, headSha, url, databaseId, and optional completed job name"
         in ci_evidence.body
     )
     assert "github-actions" in ci_evidence.body

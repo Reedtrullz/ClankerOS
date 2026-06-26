@@ -258,7 +258,9 @@ Core layers for the bootstrap:
   status; `/ci-evidence` also exposes a confirmed local
   `ci-snapshot-evidence-from-gh-json` form that records proof from pasted
   GitHub status JSON after validating completed/success status, commit SHA,
-  and branch, while still performing no GitHub polling; a
+  and branch, inferring the run id and URL from `databaseId`/`url` when the
+  operator leaves those form fields blank, while still performing no GitHub
+  polling; a
   read-only root dashboard `Verification Snapshot` for checked-in workflow
   timeout, latest operator-supplied CI evidence, `/verification`,
   `/ci-evidence`, and current direct-snapshot handoff templates without
@@ -340,11 +342,12 @@ Core layers for the bootstrap:
   matching `ci-snapshot-evidence-from-gh-json` pipeline plus the manual
   record-after-success command without fetching GitHub status or writing
   proof. `ci-snapshot-evidence-from-gh-json` consumes supplied `gh run view`
-  JSON from stdin or a file, requires a completed successful run with the
-  expected commit SHA and matching branch when present, then records local
-  proof. It can also take `--job-name "Fast smoke verification"` to validate
-  one completed successful GitHub Actions job from an in-progress workflow
-  run and record scoped early route/CLI proof with
+  JSON from stdin or a file, infers the run id and URL from `databaseId`/`url`,
+  requires a completed successful run with the expected commit SHA and
+  matching branch when present, then records local proof. It can also take
+  `--job-name "Fast smoke verification"` to validate one completed successful
+  GitHub Actions job from an in-progress workflow run and record scoped early
+  route/CLI proof with
   `status_source=github_status_json_job`; that record is not full-suite proof.
   The local app mirrors those commands as display-only templates on
   `/`, `/verification`, `/ci-evidence`, and `/dogfooding`, and `/ci-evidence`

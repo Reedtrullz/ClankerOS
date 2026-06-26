@@ -361,8 +361,9 @@ instead of pretending CI proof exists. Use `ci-snapshot-handoff` from the CLI
 while a direct pushed-snapshot run is pending to print the exact `gh run view`
 plus `ci-snapshot-evidence-from-gh-json` commands without fetching GitHub
 status or writing local proof. The validated recorder consumes operator-supplied
-GitHub status JSON from stdin or a file, refuses pending/failed or wrong-commit
-runs, and then writes the same local direct-snapshot proof record. The root
+GitHub status JSON from stdin or a file, infers the run id and URL from
+`databaseId`/`url`, refuses pending/failed or wrong-commit runs, and then
+writes the same local direct-snapshot proof record. The root
 dashboard, `/verification`, and `/ci-evidence` also show the direct snapshot
 handoff, status-check, JSON-validated record, and manual record-after-success
 command templates from current local branch/commit state when available; those
@@ -389,9 +390,10 @@ handoff. The `CI Evidence Recording Guide` shows a handoff-specific
 direct pushed snapshot. The page also has a confirmed
 `ci-snapshot-evidence-from-gh-json` form where the operator can paste
 `gh run view` JSON and optionally enter a completed job name such as
-`Fast smoke verification`. The app records local proof only after it validates
-the supplied status, conclusion, commit SHA, branch, and, when scoped, the
-named job status. Job-scoped fast-smoke evidence is early route/CLI proof, not
+`Fast smoke verification`. If the JSON includes `databaseId` and `url`, the
+run id and URL fields can stay blank. The app records local proof only after
+it validates the supplied status, conclusion, commit SHA, branch, and, when
+scoped, the named job status. Job-scoped fast-smoke evidence is early route/CLI proof, not
 full-suite proof. The page does not poll GitHub, refresh statuses, push,
 create PRs, deploy, call providers, or mutate external systems.
 

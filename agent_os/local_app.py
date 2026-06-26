@@ -4998,7 +4998,7 @@ def _ci_snapshot_handoff_lines(root: Path, *, key_prefix: str = "ci_snapshot_") 
     )
     status_command = (
         f"gh run view <run_id> --repo {repo} "
-        "--json status,conclusion,headSha,headBranch,url,jobs"
+        "--json status,conclusion,headSha,headBranch,databaseId,url,jobs"
     )
     record_command = (
         "python3 -m agent_os.cli ci-snapshot-evidence "
@@ -5010,15 +5010,13 @@ def _ci_snapshot_handoff_lines(root: Path, *, key_prefix: str = "ci_snapshot_") 
         f"{status_command} | "
         "python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json "
         f"--project clankeros --branch {branch} --commit {commit} "
-        f"--provider github-actions --external-run-id <run_id> "
-        f"--url {run_url} --status-json -"
+        "--provider github-actions --status-json -"
     )
     fast_smoke_record_command = (
         f"{status_command} | "
         "python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json "
         f"--project clankeros --branch {branch} --commit {commit} "
-        f"--provider github-actions --external-run-id <run_id> "
-        f"--url {run_url} --status-json - --job-name 'Fast smoke verification'"
+        "--provider github-actions --status-json - --job-name 'Fast smoke verification'"
     )
     return [
         f"{key_prefix}handoff_command_template: {_e(handoff_command)}",
@@ -5108,14 +5106,14 @@ def _ci_snapshot_json_recording_form(root: Path) -> str:
     return "".join(
         [
             "<section><h2>Record Direct Snapshot From GitHub JSON</h2>",
-            "<p class='muted'>Paste JSON from the displayed <code>gh run view</code> command after GitHub Actions completes, or enter a completed job name to record scoped job proof while the full run is still in progress. The local app validates the supplied JSON before writing CI evidence and never contacts GitHub itself.</p>",
+            "<p class='muted'>Paste JSON from the displayed <code>gh run view</code> command after GitHub Actions completes, or enter a completed job name to record scoped job proof while the full run is still in progress. The local app can infer the run id and URL from the JSON, validates the supplied JSON before writing CI evidence, and never contacts GitHub itself.</p>",
             "<form method='post' action='/actions/ci-snapshot-evidence-from-gh-json'>",
             f"<label>project <input name='project' value='clankeros'></label>",
             f"<label>branch <input name='branch' value='{_e(branch)}'></label>",
             f"<label>commit <input name='commit' value='{_e(commit)}'></label>",
             "<label>provider <input name='provider' value='github-actions'></label>",
-            "<label>external_run_id <input name='external_run_id' value=''></label>",
-            "<label>url <input name='url' value=''></label>",
+            "<label>external_run_id <input name='external_run_id' value='' placeholder='optional if JSON has databaseId or URL'></label>",
+            "<label>url <input name='url' value='' placeholder='optional if JSON has url'></label>",
             "<label>job_name <input name='job_name' value='' placeholder='Fast smoke verification'></label>",
             "<label>recorded_by <input name='recorded_by' value='operator'></label>",
             "<label>note <input name='note' value='Validated from pasted GitHub Actions JSON.'></label>",
@@ -5128,6 +5126,8 @@ def _ci_snapshot_json_recording_form(root: Path) -> str:
                     ("github_status_fetch", "none"),
                     ("network_actions_taken_by_app", "0"),
                     ("external_mutations_taken", "0"),
+                    ("external_run_id_inference", "databaseId_or_actions_run_url"),
+                    ("external_url_inference", "status_json_url"),
                     ("record_when", "run status=completed conclusion=success headSha matches commit"),
                     ("job_record_when", "named job status=completed conclusion=success headSha matches commit"),
                 ]
@@ -5148,7 +5148,7 @@ def _ci_evidence_recording_guide(root: Path) -> str:
                 "record_command_template: unavailable_until_github_handoff_exists",
                 *_ci_snapshot_handoff_lines(root, key_prefix="direct_snapshot_"),
                 "direct_snapshot_record_command_template: python3 -m agent_os.cli ci-snapshot-evidence --project clankeros --branch main --commit <commit_sha> --provider github-actions --status success --external-run-id <run_id> --url <run_url>",
-                "required_operator_inputs: GitHub Actions run id, run URL, final status or completed job name",
+                "required_operator_inputs: GitHub Actions JSON with status, conclusion, headSha, url, databaseId, and optional completed job name",
                 "proof_boundary: operator_supplied_record_only",
                 "direct_snapshot_boundary: use only for direct operator-authorized pushed snapshots, not publication handoffs",
                 "github_status_fetch: none",
@@ -5168,7 +5168,7 @@ def _ci_evidence_recording_guide(root: Path) -> str:
             "record_when: GitHub Actions run has completed and the operator has inspected the result",
             f"record_command_template: python3 -m agent_os.cli ci-deploy-evidence {_e(handoff.id)} --provider github-actions --status success --external-run-id <run_id> --url <run_url>",
             *_ci_snapshot_handoff_lines(root, key_prefix="direct_snapshot_"),
-            "required_operator_inputs: GitHub Actions run id, run URL, final status or completed job name",
+            "required_operator_inputs: GitHub Actions JSON with status, conclusion, headSha, url, databaseId, and optional completed job name",
             "proof_boundary: operator_supplied_record_only",
             "github_status_fetch: none",
         ],
@@ -7759,14 +7759,13 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             message = f"coder_publication_handoff: {result.status}"
             location = f"/runs/{quote(run_id)}"
         elif action == "ci-snapshot-evidence-from-gh-json":
-            external_run_id = _required(form, "external_run_id")
             result = record_ci_snapshot_evidence_from_gh_status_json(
                 root,
                 project_id=_one(form, "project") or "clankeros",
                 branch_name=_one(form, "branch") or "main",
                 commit_sha=_required(form, "commit"),
                 provider=_one(form, "provider") or "github-actions",
-                external_run_id=external_run_id,
+                external_run_id=_one(form, "external_run_id"),
                 status_json_text=_required(form, "status_json"),
                 external_url=_one(form, "url"),
                 recorded_by=_one(form, "recorded_by") or "operator",

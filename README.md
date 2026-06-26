@@ -735,21 +735,22 @@ it only shows what the operator can run outside ClankerOS after a push.
 Prefer the validated record path after GitHub completes:
 
 ```bash
-gh run view <run_id> --repo Reedtrullz/ClankerOS --json status,conclusion,headSha,headBranch,url,jobs \
-| python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json --project clankeros --branch main --commit <commit_sha> --external-run-id <run_id> --status-json -
+gh run view <run_id> --repo Reedtrullz/ClankerOS --json status,conclusion,headSha,headBranch,databaseId,url,jobs \
+| python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json --project clankeros --branch main --commit <commit_sha> --status-json -
 ```
 
 If the fast smoke job is green but the full suite is still running, record
 scoped smoke proof from the same JSON instead:
 
 ```bash
-gh run view <run_id> --repo Reedtrullz/ClankerOS --json status,conclusion,headSha,headBranch,url,jobs \
-| python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json --project clankeros --branch main --commit <commit_sha> --external-run-id <run_id> --status-json - --job-name "Fast smoke verification"
+gh run view <run_id> --repo Reedtrullz/ClankerOS --json status,conclusion,headSha,headBranch,databaseId,url,jobs \
+| python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json --project clankeros --branch main --commit <commit_sha> --status-json - --job-name "Fast smoke verification"
 ```
 
 That smoke record is early route/CLI proof, not full-suite proof.
 
-That command consumes GitHub status JSON from stdin, refuses pending/failed or
+That command consumes GitHub status JSON from stdin, infers the run id and URL
+from `databaseId`/`url`, refuses pending/failed or
 wrong-commit runs, and records local proof only after the status JSON matches.
 The `/ci-evidence` page offers the same validated recorder as a confirmed
 local form for pasted `gh run view` JSON; the app still never contacts GitHub.
