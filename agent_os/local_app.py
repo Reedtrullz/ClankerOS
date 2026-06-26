@@ -1754,6 +1754,7 @@ def _workspace_page(root: Path) -> str:
             "</section>",
             _list_section("Restore Links", restore_links),
             _list_section("Workspace Continuation", _workspace_next_action_lines(root, open_goal)),
+            _workspace_action_form_section(root, open_goal),
             "<section><h2>Save Workspace</h2>",
             _input_form(
                 "save-workspace",
@@ -1778,6 +1779,7 @@ def _workspace_next_action_lines(root: Path, open_goal: str) -> list[str]:
         return [
             "workspace_next_action_status: no_saved_goal",
             "workspace_next_surface: <a href='/goals'>/goals</a>",
+            "workspace_next_action_form_available: false",
             "workspace_next_action_write_on_get: false",
             "workspace_next_action_external_effects_created: false",
         ]
@@ -1785,16 +1787,44 @@ def _workspace_next_action_lines(root: Path, open_goal: str) -> list[str]:
     state = _goal_state(root, storage, open_goal)
     phase = _goal_current_phase(state)
     next_action = _goal_next_action(root, state)
+    form = _goal_next_action_form(state, next_action)
     return [
         f"workspace_current_phase: {_e(phase)}",
         f"workspace_next_action: {_e(next_action.action)}",
         f"workspace_next_reason: {_e(next_action.reason)}",
         f"workspace_operator_attention: {_e(_goal_operator_attention(phase, next_action))}",
         f"workspace_next_surface: <a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
+        f"workspace_next_action_form_available: {str(bool(form)).lower()}",
         "workspace_next_action_source: saved_goal_state",
         "workspace_next_action_write_on_get: false",
         "workspace_next_action_external_effects_created: false",
     ]
+
+
+def _workspace_action_form_section(root: Path, open_goal: str) -> str:
+    if not open_goal:
+        return ""
+    storage = _storage(root)
+    state = _goal_state(root, storage, open_goal)
+    next_action = _goal_next_action(root, state)
+    form = _goal_next_action_form(state, next_action)
+    if not form:
+        return ""
+    return "".join(
+        [
+            "<section><h2>Workspace Action Form</h2>",
+            "<p class='muted'>Run the saved goal's browser-available local next action from the workspace state page.</p>",
+            _kv(
+                [
+                    ("workspace_action_form_goal", open_goal),
+                    ("workspace_action_form_next_action", next_action.action),
+                    ("workspace_action_form_external_effects_created", "false"),
+                ]
+            ),
+            form,
+            "</section>",
+        ]
+    )
 
 
 def _memory_page(root: Path) -> str:

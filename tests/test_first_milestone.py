@@ -5207,6 +5207,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in restored_workspace.body
     )
     assert "workspace_operator_attention: Act: Create commit request" in restored_workspace.body
+    assert "workspace_next_action_form_available: true" in restored_workspace.body
+    assert "Workspace Action Form" in restored_workspace.body
+    assert "action='/actions/coder-commit-request'" in restored_workspace.body
+    assert f"name='run_id' value='{result.coder_worktree_run_id}'" in restored_workspace.body
     assert "workspace_next_action_write_on_get: false" in restored_workspace.body
     restored_home = render_local_app_route(tmp_path, "/")
     assert "Home Resume Workspace" in restored_home.body

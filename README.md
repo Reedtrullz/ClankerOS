@@ -122,8 +122,9 @@ with the saved goal's current phase, one next action, operator attention cue,
 target surface, and the same confirmed local action form that the Goal page
 would show when that next action is browser-available. `/workspace` shows the
 same saved-goal continuation next to the editable saved-state form, so
-operators can inspect and update tomorrow's resume point in one place. Both
-routes report that they write nothing on GET.
+operators can inspect, update, and act from tomorrow's resume point in one
+place when the next action is browser-available. Both routes report that they
+write nothing on GET.
 
 For the first manual browser pass, run `python3 -m agent_os.cli demo`
 or `python3 -m agent_os.cli demo-app-scenario`, open `/goals`, then `/demo`,

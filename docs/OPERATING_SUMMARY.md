@@ -95,8 +95,9 @@ Core layers for the bootstrap:
   approvals, and skills;
   `/workspace` for persistent open project/goal/filter/panel/last-artifact
   state in `.clanker/app/workspace.json` plus the saved goal's current phase,
-  one next action, operator attention cue, and target surface beside the
-  editable saved-state form; `/memory` for project/global/
+  one next action, operator attention cue, target surface, and the same
+  confirmed local action form as the Goal page when that action is
+  browser-available beside the editable saved-state form; `/memory` for project/global/
   generated memories, operator notes, future work, and pin actions; `/skills`
   for available/generated skill records with usage counts; and `/profiles`
   for inactive future provider-routing readback from `.clanker/profiles.yml`.
