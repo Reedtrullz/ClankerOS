@@ -65,11 +65,14 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   GitHub status.
 - `/` also includes a read-only `Goal Snapshot` that links to `/goals`, counts
   active/paused/completed goals, and names the lead goal phase plus next
-  action when goal state exists.
+  action when goal state exists. Home goal lanes use the shared goal row
+  summary with task progress plus open task, incident, and recommendation
+  counts.
 - `/goals` - daily goal cockpit. It separates active, paused, and completed
   goals, links to each goal detail page, and keeps phase, next action, task
-  progress, and first-run browser actions visible. The page exposes a
-  confirmed local `Start Another Goal` form for registered projects, plus
+  progress, open task/incident/recommendation counts, and first-run browser
+  actions visible. The page exposes a confirmed local `Start Another Goal` form
+  for registered projects, plus
   confirmed local `register-project` and `create-goal` forms for a fresh
   checkout.
 - `/goals/<goal_id>` - goal-centered workbench with current phase, next action,

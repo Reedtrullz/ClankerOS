@@ -111,7 +111,9 @@ Core layers for the bootstrap:
   project/goal/
   delegation/context-pack state, next local surface, and copy-only
   `run-delegation` handoff once context is ready while keeping browser
-  execution unexposed. Goal detail pages now
+  execution unexposed. Shared goal rows in Home, `/goals`, and project detail
+  pages now show phase, next action, progress, and compact remaining-work
+  counts for open tasks, incidents, and recommendations. Goal detail pages now
   expose first-class Goal Risk and Goal Completion Criteria sections sourced
   from task risk metadata, sprint contracts, plan steps, or task verification
   plans, plus clickable timeline entries with operator-facing lifecycle

@@ -1,5 +1,27 @@
 # Status
 
+## 2026-06-26 Goal Row Remaining Work
+
+- Added compact remaining-work summaries to the shared goal row renderer used
+  by Home, `/goals`, and project goal rows. Rows now include open task,
+  incident, and recommendation counts beside phase, next action, and progress.
+- This is read-only local state rendering on GET. It does not write goal
+  state, call providers, fetch GitHub status, push, create PRs, deploy, or
+  mutate external systems.
+- Compact local verification for this slice:
+  - Focused red test failed first because Home did not contain
+    `remaining_work=open_tasks:1 open_incidents:0 open_recommendations:0`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Goal Live State Refresh
 
 - Made Goal page live refresh first-class and operator-safe. `/goals/<goal_id>`

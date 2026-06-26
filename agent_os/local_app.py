@@ -2417,7 +2417,21 @@ def _goal_index_line(root: Path, storage: Storage, row: sqlite3.Row) -> str:
         f"project={_e(row['project_id'])} status={_e(row['status'])} "
         f"phase={_e(_goal_current_phase(state))} "
         f"next_action={_e(next_action.action)} "
-        f"progress={_e(_goal_progress_label(state))}"
+        f"progress={_e(_goal_progress_label(state))} "
+        f"remaining_work={_e(_goal_remaining_work_summary(state))}"
+    )
+
+
+def _goal_remaining_work_summary(state: dict[str, Any]) -> str:
+    open_tasks = len([task for task in state["tasks"] if task.status != "completed"])
+    open_incidents = len([row for row in state["incidents"] if row["status"] == "open"])
+    open_recommendations = len(
+        [row for row in state["recommendations"] if row["status"] == "open"]
+    )
+    return (
+        f"open_tasks:{open_tasks} "
+        f"open_incidents:{open_incidents} "
+        f"open_recommendations:{open_recommendations}"
     )
 
 

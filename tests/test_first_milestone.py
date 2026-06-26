@@ -4992,6 +4992,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Snapshot" in dashboard.body
     assert "goal_cockpit_status: populated" in dashboard.body
     assert "lead_goal_phase" in dashboard.body
+    assert "remaining_work=open_tasks:1 open_incidents:0 open_recommendations:0" in dashboard.body
     assert f"/goals/{result.goal_id}" in dashboard.body
 
     goals = render_local_app_route(tmp_path, "/goals")
@@ -5008,6 +5009,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert result.goal_id in goals.body
     assert "phase=Ready to commit" in goals.body
     assert "next_action=Create commit request" in goals.body
+    assert "remaining_work=open_tasks:1 open_incidents:0 open_recommendations:0" in goals.body
 
     goal = render_local_app_route(tmp_path, f"/goals/{result.goal_id}")
     assert goal.status == 200
