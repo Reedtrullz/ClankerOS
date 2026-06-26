@@ -3385,13 +3385,61 @@ def test_github_actions_workflow_runs_automatic_verification() -> None:
         "timeout-minutes: 45",
         'python-version: "3.10"',
         "python -m compileall -q agent_os tests",
+        "CLANKEROS_CI_ROOT: ${{ runner.temp }}/clankeros-ci-root",
+        "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" init",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-smoke-test",
+        "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" demo-app-scenario",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-demo-smoke-test",
+        "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app --help",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" dashboard",
+        "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" iterate",
+        "Run focused local app pytest smoke",
+        "github_actions_smoke_uses_temp_root_and_expected_order",
+        "local_app_artifact_viewer_is_read_only_and_bounded",
+        "local_app_demo_scenario_populates_fixture_state",
         "git diff --check",
         "python -m pytest -q",
     ]:
         assert expected in workflow
+
+
+def test_github_actions_smoke_uses_temp_root_and_expected_order() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    workflow = (repo_root / ".github" / "workflows" / "tests.yml").read_text(
+        encoding="utf-8"
+    )
+
+    ordered_markers = [
+        "python -m compileall -q agent_os tests",
+        "CLANKEROS_CI_ROOT: ${{ runner.temp }}/clankeros-ci-root",
+        "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" init",
+        "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-smoke-test",
+        "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" demo-app-scenario",
+        "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-demo-smoke-test",
+        "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app --help",
+        "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" dashboard",
+        "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" iterate",
+        "python -m pytest tests/test_first_milestone.py -q -k",
+        "git diff --check",
+        "full-suite:",
+        "python -m pytest -q",
+    ]
+    positions = [workflow.index(marker) for marker in ordered_markers]
+    assert positions == sorted(positions)
+
+    focused_pytest_line = next(
+        line for line in workflow.splitlines() if "python -m pytest tests/test_first_milestone.py -q -k" in line
+    )
+    for expected_test in [
+        "github_actions_workflow_runs_automatic_verification",
+        "github_actions_smoke_uses_temp_root_and_expected_order",
+        "ci_snapshot_handoff_prints_watch_and_record_commands_without_writes",
+        "local_app_routes_render_modern_workflow_and_health",
+        "local_app_artifact_viewer_is_read_only_and_bounded",
+        "local_app_demo_scenario_populates_fixture_state",
+        "local_app_cli_commands_and_bind_safety",
+    ]:
+        assert expected_test in focused_pytest_line
 
 
 def test_local_app_routes_render_modern_workflow_and_health(
@@ -4466,6 +4514,10 @@ def test_local_app_cli_commands_and_bind_safety(
     assert "route /ci-evidence: 200 marker=matched required_marker=CI Evidence Records" in smoke_output
     assert "route /dogfooding: 200 marker=matched required_marker=Manual Dogfooding Checklist" in smoke_output
     assert "route /inbox: 200 marker=matched required_marker=Operator Inbox" in smoke_output
+    assert "route /artifacts?path=.clanker/app/smoke-artifacts/sample.md: 200 marker=matched required_marker=artifact_type" in smoke_output
+    assert "absolute artifact paths are rejected" in smoke_output
+    assert "parent traversal is rejected" in smoke_output
+    assert "outside repo root" in smoke_output
     assert "marker=missing" not in smoke_output
     assert "network_actions_taken: 0" in smoke_output
 
@@ -4489,6 +4541,13 @@ def test_local_app_cli_commands_and_bind_safety(
     assert "route /dogfooding: 200 marker=matched required_marker=Manual Dogfooding Checklist expected_snippets=matched" in demo_smoke_output
     assert "route /workflow?run_id=" in demo_smoke_output
     assert "expected_snippets=missing" not in demo_smoke_output
+    demo_route = next(route for route in demo_smoke["routes"] if route["route"] == "/demo")
+    for expected_snippet in [
+        "confirmation_required: true_for_local_writes",
+        "form_action: /actions/coder-commit-request",
+        "external_effects_created: false",
+    ]:
+        assert expected_snippet in demo_route["expected_snippets"]
     assert "fixture_backed: true" in demo_smoke_output
     assert "network_actions_taken: 0" in demo_smoke_output
 

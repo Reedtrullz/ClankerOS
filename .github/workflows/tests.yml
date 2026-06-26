@@ -49,6 +49,10 @@ jobs:
           python -m agent_os.cli --root "$CLANKEROS_CI_ROOT" dashboard
           python -m agent_os.cli --root "$CLANKEROS_CI_ROOT" iterate
 
+      - name: Run focused local app pytest smoke
+        run: |
+          python -m pytest tests/test_first_milestone.py -q -k "github_actions_workflow_runs_automatic_verification or github_actions_smoke_uses_temp_root_and_expected_order or ci_snapshot_handoff_prints_watch_and_record_commands_without_writes or local_app_routes_render_modern_workflow_and_health or local_app_artifact_viewer_is_read_only_and_bounded or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety"
+
       - name: Check whitespace
         run: git diff --check
 

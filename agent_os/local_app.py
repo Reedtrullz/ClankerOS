@@ -5,6 +5,7 @@ import json
 import sqlite3
 import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass, fields, is_dataclass
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -284,6 +285,16 @@ def render_local_app_route(
 
 def run_local_app_smoke_test(root: Path) -> dict[str, Any]:
     root = root.resolve()
+    smoke_artifacts = root / ".clanker" / "app" / "smoke-artifacts"
+    smoke_artifacts.mkdir(parents=True, exist_ok=True)
+    sample_markdown = smoke_artifacts / "sample.md"
+    sample_markdown.write_text("# App Smoke Artifact\n", encoding="utf-8")
+    outside_artifact = Path(tempfile.gettempdir()) / f"{root.name}-app-smoke-outside.txt"
+    outside_artifact.write_text("outside app smoke\n", encoding="utf-8")
+    outside_link = smoke_artifacts / "outside.txt"
+    if outside_link.exists() or outside_link.is_symlink():
+        outside_link.unlink()
+    outside_link.symlink_to(outside_artifact)
     routes = [
         ("/", "ClankerOS Local Operator"),
         ("/workflow", "Modern Operator Workflow"),
@@ -298,20 +309,39 @@ def run_local_app_smoke_test(root: Path) -> dict[str, Any]:
         ("/incidents", "Incidents"),
         ("/health", "System Health"),
         ("/demo", "Demo Scenario"),
+        ("/artifacts?path=.clanker/app/smoke-artifacts/sample.md", "artifact_type"),
+        (
+            f"/artifacts?path={quote(str(sample_markdown), safe='')}",
+            "absolute artifact paths are rejected",
+            400,
+        ),
+        ("/artifacts?path=../README.md", "parent traversal is rejected", 400),
+        (
+            "/artifacts?path=.clanker/app/smoke-artifacts/outside.txt",
+            "outside repo root",
+            400,
+        ),
     ]
     results = []
-    for route, marker in routes:
+    for route_info in routes:
+        route, marker, expected_status = (
+            route_info if len(route_info) == 3 else (*route_info, 200)
+        )
         response = render_local_app_route(root, route)
         marker_found = marker in response.body
         results.append(
             {
                 "route": route,
                 "status": response.status,
+                "expected_status": expected_status,
                 "required_marker": marker,
                 "marker_found": marker_found,
             }
         )
-    ok = all(item["status"] == 200 and item["marker_found"] for item in results)
+    ok = all(
+        item["status"] == item["expected_status"] and item["marker_found"]
+        for item in results
+    )
     return {
         "status": "passed" if ok else "failed",
         "routes": results,
@@ -333,6 +363,9 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "Demo Browser Progress",
                 "Demo Gate Actions",
                 "active_action: coder-commit-request",
+                "confirmation_required: true_for_local_writes",
+                "form_action: /actions/coder-commit-request",
+                "external_effects_created: false",
                 "Manual Browser Checkpoints",
                 demo.coder_worktree_run_id,
             ],

@@ -1,5 +1,20 @@
 # Status
 
+## 2026-06-26 GitHub Fast Smoke Focused Pytest
+
+- Added a focused pytest step to the GitHub Actions `Fast smoke verification`
+  job. After the temp-root CLI smoke commands, GitHub now runs the
+  high-signal workflow, CI snapshot handoff, local app route, artifact
+  viewer, demo scenario, and bind-safety tests before the slow full suite.
+- Added workflow self-test coverage for `CLANKEROS_CI_ROOT`, command order,
+  the focused pytest step, and the smoke/full-suite split. `app-smoke-test`
+  now also covers the artifact viewer's valid relative path plus absolute,
+  parent traversal, and outside-root rejection routes.
+- Non-claims: this strengthens GitHub test orchestration and smoke coverage
+  only. It does not fetch GitHub status from the app, record CI evidence,
+  deploy, push from ClankerOS, create PRs, call providers, or add app-side
+  external mutations.
+
 ## 2026-06-26 Local App Demo Gate Actions
 
 - Added `Demo Gate Actions` to `/demo`. The panel reads the selected fixture

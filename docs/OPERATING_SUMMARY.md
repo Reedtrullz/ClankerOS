@@ -171,8 +171,9 @@ Core layers for the bootstrap:
   same zero provider/network/external-mutation counters. The checked-in GitHub
   Actions workflow now runs a separate 10-minute `smoke` job for compile,
   local CLI smoke, route-marker app smoke, fixture-backed app-demo smoke,
-  demo, dashboard, iterate, and whitespace checks before a dependent 45-minute
-  `full-suite` job spends time on `python -m pytest -q`.
+  demo, dashboard, iterate, focused local-app/CI-handoff pytest, and
+  whitespace checks before a dependent 45-minute `full-suite` job spends time
+  on `python -m pytest -q`.
 - CI/deploy evidence ingestion: an operator can attach CI or deploy proof to a
   GitHub handoff packet with `ci-deploy-evidence`. The record preserves
   provider, external run id, URL, commit, branch, handoff, and JSON evidence
