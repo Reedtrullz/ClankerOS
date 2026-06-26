@@ -2224,6 +2224,168 @@ def test_ci_snapshot_evidence_records_operator_supplied_direct_push_proof(
     assert len(storage.list_recent_ci_snapshot_evidence_records()) == 1
 
 
+def test_ci_snapshot_evidence_from_gh_json_validates_successful_matching_run(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    AgentSystem(tmp_path).initialize()
+    status_path = tmp_path / "gh-run.json"
+    status_path.write_text(
+        json.dumps(
+            {
+                "status": "completed",
+                "conclusion": "success",
+                "headSha": "52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9",
+                "headBranch": "main",
+                "url": "https://github.com/Reedtrullz/ClankerOS/actions/runs/28211577106",
+                "jobs": [
+                    {
+                        "name": "Fast smoke verification",
+                        "status": "completed",
+                        "conclusion": "success",
+                    },
+                    {
+                        "name": "Full pytest suite",
+                        "status": "completed",
+                        "conclusion": "success",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "ci-snapshot-evidence-from-gh-json",
+                "--project",
+                "clankeros",
+                "--branch",
+                "main",
+                "--commit",
+                "52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9",
+                "--external-run-id",
+                "28211577106",
+                "--status-json",
+                str(status_path),
+                "--recorded-by",
+                "operator",
+                "--note",
+                "Validated from gh run view JSON.",
+            ]
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert "ci_snapshot_evidence_from_gh_json: recorded" in output
+    assert "status_source: github_status_json" in output
+    assert "status: success" in output
+    assert "network_actions_taken: 0" in output
+    assert "external_mutations_taken: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    records = storage.list_recent_ci_snapshot_evidence_records()
+    assert len(records) == 1
+    record = records[0]
+    assert record.status == "success"
+    assert record.result_json["status_source"] == "github_status_json"
+    assert record.result_json["validated_status_json"]["status"] == "completed"
+    assert record.result_json["validated_status_json"]["conclusion"] == "success"
+    assert record.result_json["validated_status_json"]["headSha"] == (
+        "52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9"
+    )
+    assert record.result_json["validated_status_json"]["jobs"][1]["name"] == (
+        "Full pytest suite"
+    )
+
+
+def test_ci_snapshot_evidence_from_gh_json_rejects_pending_or_wrong_commit(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    AgentSystem(tmp_path).initialize()
+    pending_path = tmp_path / "pending-gh-run.json"
+    pending_path.write_text(
+        json.dumps(
+            {
+                "status": "in_progress",
+                "conclusion": "",
+                "headSha": "52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9",
+                "url": "https://github.com/Reedtrullz/ClankerOS/actions/runs/28211577106",
+            }
+        ),
+        encoding="utf-8",
+    )
+    wrong_sha_path = tmp_path / "wrong-sha-gh-run.json"
+    wrong_sha_path.write_text(
+        json.dumps(
+            {
+                "status": "completed",
+                "conclusion": "success",
+                "headSha": "abc1234",
+                "url": "https://github.com/Reedtrullz/ClankerOS/actions/runs/28211577106",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "ci-snapshot-evidence-from-gh-json",
+                "--project",
+                "clankeros",
+                "--branch",
+                "main",
+                "--commit",
+                "52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9",
+                "--external-run-id",
+                "28211577106",
+                "--status-json",
+                str(pending_path),
+            ]
+        )
+        == 1
+    )
+    pending_output = capsys.readouterr().out
+    assert "ci_snapshot_evidence_from_gh_json_failed" in pending_output
+    assert "status=in_progress conclusion=missing" in pending_output
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "ci-snapshot-evidence-from-gh-json",
+                "--project",
+                "clankeros",
+                "--branch",
+                "main",
+                "--commit",
+                "52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9",
+                "--external-run-id",
+                "28211577106",
+                "--status-json",
+                str(wrong_sha_path),
+            ]
+        )
+        == 1
+    )
+    wrong_sha_output = capsys.readouterr().out
+    assert "ci_snapshot_evidence_from_gh_json_failed" in wrong_sha_output
+    assert "headSha does not match commit" in wrong_sha_output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    assert storage.list_recent_ci_snapshot_evidence_records() == []
+    assert not (tmp_path / ".clanker" / "ci-snapshots").exists()
+
+
 def test_ci_snapshot_handoff_prints_watch_and_record_commands_without_writes(
     tmp_path: Path,
     capsys,
@@ -2262,6 +2424,9 @@ def test_ci_snapshot_handoff_prints_watch_and_record_commands_without_writes(
     assert "external_url: https://github.com/Reedtrullz/ClankerOS/actions/runs/28211577106" in output
     assert "status_check_command: gh run view 28211577106 --repo Reedtrullz/ClankerOS" in output
     assert "record_when: status=completed conclusion=success headSha matches commit" in output
+    assert "validated_record_command: gh run view 28211577106 --repo Reedtrullz/ClankerOS" in output
+    assert "python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json" in output
+    assert "--status-json -" in output
     assert "record_command: python3 -m agent_os.cli ci-snapshot-evidence" in output
     assert "--status success" in output
     assert "--external-run-id 28211577106" in output
@@ -3394,6 +3559,8 @@ def test_github_actions_workflow_runs_automatic_verification() -> None:
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" dashboard",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" iterate",
         "Run focused local app pytest smoke",
+        "ci_snapshot_evidence_from_gh_json_validates_successful_matching_run",
+        "ci_snapshot_evidence_from_gh_json_rejects_pending_or_wrong_commit",
         "github_actions_smoke_uses_temp_root_and_expected_order",
         "local_app_artifact_viewer_is_read_only_and_bounded",
         "local_app_demo_scenario_populates_fixture_state",
@@ -3433,6 +3600,8 @@ def test_github_actions_smoke_uses_temp_root_and_expected_order() -> None:
     for expected_test in [
         "github_actions_workflow_runs_automatic_verification",
         "github_actions_smoke_uses_temp_root_and_expected_order",
+        "ci_snapshot_evidence_from_gh_json_validates_successful_matching_run",
+        "ci_snapshot_evidence_from_gh_json_rejects_pending_or_wrong_commit",
         "ci_snapshot_handoff_prints_watch_and_record_commands_without_writes",
         "local_app_routes_render_modern_workflow_and_health",
         "local_app_artifact_viewer_is_read_only_and_bounded",
@@ -3566,6 +3735,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "dashboard_github_status_fetch: none" in root.body
     assert "dashboard_ci_snapshot_handoff_command_template: python3 -m agent_os.cli ci-snapshot-handoff" in root.body
     assert "dashboard_ci_snapshot_status_check_command_template: gh run view" in root.body
+    assert "dashboard_ci_snapshot_validated_record_command_template: gh run view" in root.body
+    assert "ci-snapshot-evidence-from-gh-json" in root.body
     assert "dashboard_ci_snapshot_record_after_success_command_template: python3 -m agent_os.cli ci-snapshot-evidence" in root.body
     assert "verification_surface" in root.body
     assert "ci_evidence_surface" in root.body
@@ -3682,6 +3853,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Direct Snapshot CI Handoff" in verification.body
     assert "ci_snapshot_handoff_command_template: python3 -m agent_os.cli ci-snapshot-handoff" in verification.body
     assert "ci_snapshot_status_check_command_template: gh run view" in verification.body
+    assert "ci_snapshot_validated_record_command_template: gh run view" in verification.body
+    assert "ci-snapshot-evidence-from-gh-json" in verification.body
     assert "ci_snapshot_record_after_success_command_template: python3 -m agent_os.cli ci-snapshot-evidence" in verification.body
     assert "handoff_status: template_only" in verification.body
     assert "Latest Recorded CI Evidence" in verification.body
@@ -3709,6 +3882,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert f"ci-deploy-evidence {handoff.id}" in ci_evidence.body
     assert "direct_snapshot_handoff_command_template: python3 -m agent_os.cli ci-snapshot-handoff" in ci_evidence.body
     assert "direct_snapshot_status_check_command_template: gh run view" in ci_evidence.body
+    assert "direct_snapshot_validated_record_command_template: gh run view" in ci_evidence.body
+    assert "ci-snapshot-evidence-from-gh-json" in ci_evidence.body
     assert "direct_snapshot_record_after_success_command_template: python3 -m agent_os.cli ci-snapshot-evidence" in ci_evidence.body
     assert "required_operator_inputs: completed GitHub Actions run id" in ci_evidence.body
     assert "github-actions" in ci_evidence.body
@@ -3728,6 +3903,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "GitHub Actions Follow-up" in dogfooding.body
     assert "dogfooding_ci_snapshot_handoff_command_template: python3 -m agent_os.cli ci-snapshot-handoff" in dogfooding.body
     assert "dogfooding_ci_snapshot_status_check_command_template: gh run view" in dogfooding.body
+    assert "dogfooding_ci_snapshot_validated_record_command_template: gh run view" in dogfooding.body
+    assert "ci-snapshot-evidence-from-gh-json" in dogfooding.body
     assert "dogfooding_ci_snapshot_record_after_success_command_template: python3 -m agent_os.cli ci-snapshot-evidence" in dogfooding.body
     assert "proof_boundary: fast smoke is early proof" in dogfooding.body
     assert "Verification Handoff" in dogfooding.body
@@ -3946,6 +4123,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "GitHub Actions Follow-up" in dogfooding_with_demo.body
     assert "dogfooding_ci_snapshot_handoff_command_template: python3 -m agent_os.cli ci-snapshot-handoff" in dogfooding_with_demo.body
     assert "dogfooding_ci_snapshot_status_check_command_template: gh run view" in dogfooding_with_demo.body
+    assert "dogfooding_ci_snapshot_validated_record_command_template: gh run view" in dogfooding_with_demo.body
+    assert "ci-snapshot-evidence-from-gh-json" in dogfooding_with_demo.body
     assert "dogfooding_ci_snapshot_record_after_success_command_template: python3 -m agent_os.cli ci-snapshot-evidence" in dogfooding_with_demo.body
     assert "external_effects_created: false" in dogfooding_with_demo.body
 

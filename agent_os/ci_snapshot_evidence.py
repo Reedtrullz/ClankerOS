@@ -4,6 +4,7 @@ import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from agent_os.ci_deploy_evidence import ALLOWED_CI_DEPLOY_STATUSES
 from agent_os.storage import CiSnapshotEvidenceRecord, Storage, utc_now
@@ -28,6 +29,8 @@ def record_ci_snapshot_evidence(
     external_url: str,
     recorded_by: str = "operator",
     note: str = "",
+    status_source: str = "operator_supplied",
+    status_json: dict[str, Any] | None = None,
 ) -> CiSnapshotEvidenceResult:
     root = root.resolve()
     storage = Storage(root / ".agent" / "state.db")
@@ -88,6 +91,7 @@ def record_ci_snapshot_evidence(
         "external_url": url,
         "recorded_by": recorded_by,
         "note": note,
+        "status_source": status_source,
         "network_actions_taken": 0,
         "external_mutations_taken": 0,
         "source": {
@@ -105,6 +109,8 @@ def record_ci_snapshot_evidence(
             "Records operator-supplied proof for a direct pushed snapshot, not a publication handoff.",
         ],
     }
+    if status_json is not None:
+        result_json["validated_status_json"] = status_json
     evidence_path.write_text(
         json.dumps(result_json, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -127,6 +133,74 @@ def record_ci_snapshot_evidence(
         status="recorded",
         record=record,
         message="CI snapshot evidence recorded from operator input",
+    )
+
+
+def record_ci_snapshot_evidence_from_gh_status_json(
+    root: Path,
+    *,
+    project_id: str,
+    branch_name: str,
+    commit_sha: str,
+    provider: str,
+    external_run_id: str,
+    status_json_text: str,
+    external_url: str | None = None,
+    recorded_by: str = "operator",
+    note: str = "",
+) -> CiSnapshotEvidenceResult:
+    try:
+        payload = json.loads(status_json_text)
+    except json.JSONDecodeError as error:
+        raise ValueError(f"invalid GitHub status JSON: {error}") from error
+    if not isinstance(payload, dict):
+        raise ValueError("GitHub status JSON must be an object")
+
+    status = str(payload.get("status", "")).strip().lower()
+    conclusion = str(payload.get("conclusion", "")).strip().lower()
+    head_sha = str(payload.get("headSha", "")).strip()
+    head_branch = str(payload.get("headBranch", "")).strip()
+    if status != "completed" or conclusion != "success":
+        raise ValueError(
+            "GitHub run is not successful: "
+            f"status={status or 'missing'} conclusion={conclusion or 'missing'}"
+        )
+    if head_sha != commit_sha:
+        raise ValueError(
+            "GitHub run headSha does not match commit: "
+            f"expected {commit_sha}, got {head_sha or 'missing'}"
+        )
+    if head_branch and head_branch != branch_name:
+        raise ValueError(
+            "GitHub run headBranch does not match branch: "
+            f"expected {branch_name}, got {head_branch}"
+        )
+
+    run_url = (external_url or str(payload.get("url", ""))).strip()
+    if not run_url:
+        raise ValueError("GitHub status JSON did not include url; pass --url")
+
+    validated_payload = {
+        "status": status,
+        "conclusion": conclusion,
+        "headSha": head_sha,
+        "headBranch": head_branch or None,
+        "url": run_url,
+        "jobs": payload.get("jobs", []),
+    }
+    return record_ci_snapshot_evidence(
+        root,
+        project_id=project_id,
+        branch_name=branch_name,
+        commit_sha=commit_sha,
+        provider=provider,
+        status="success",
+        external_run_id=external_run_id,
+        external_url=run_url,
+        recorded_by=recorded_by,
+        note=note,
+        status_source="github_status_json",
+        status_json=validated_payload,
     )
 
 

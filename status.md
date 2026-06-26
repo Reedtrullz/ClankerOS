@@ -1,5 +1,21 @@
 # Status
 
+## 2026-06-26 Validated GitHub CI Snapshot Recording
+
+- Added `ci-snapshot-evidence-from-gh-json`, a local recorder that consumes
+  `gh run view` JSON from stdin or a file and records direct snapshot CI
+  evidence only when GitHub reports `status=completed`,
+  `conclusion=success`, the expected `headSha`, and a matching `headBranch`
+  when present.
+- `ci-snapshot-handoff` now prints a JSON-validated pipeline alongside the
+  older manual `ci-snapshot-evidence` command, and the local app's
+  verification, CI evidence, dashboard, and dogfooding surfaces show the same
+  safer command template.
+- Non-claims: the new ClankerOS command does not fetch GitHub status, run CI,
+  push, create PRs, deploy, call providers, or mutate external systems. Any
+  `gh run view` network call is still an explicit operator command outside
+  the local app.
+
 ## 2026-06-26 Local App Run Review Gate
 
 - Added `Run Review Gate` to coder worktree `/runs/<run_id>` pages. The page
@@ -120,6 +136,8 @@
   shows a `ci-snapshot-handoff` command, a matching `gh run view` status-check
   command, and a `ci-snapshot-evidence` record-after-success command using the
   current local branch, commit, and GitHub `owner/repo` slug when available.
+  Later updates added the preferred JSON-validated
+  `ci-snapshot-evidence-from-gh-json` command template to those same surfaces.
 - Non-claims: these app surfaces do not fetch GitHub status, write CI
   evidence, run tests, deploy, push, create PRs, call providers, or mutate
   external systems. They are copyable operator guidance only.

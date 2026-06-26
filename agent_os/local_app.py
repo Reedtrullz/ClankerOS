@@ -1282,9 +1282,17 @@ def _ci_snapshot_handoff_lines(root: Path, *, key_prefix: str = "ci_snapshot_") 
         f"--provider github-actions --status success --external-run-id <run_id> "
         f"--url {run_url}"
     )
+    validated_record_command = (
+        f"{status_command} | "
+        "python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json "
+        f"--project clankeros --branch {branch} --commit {commit} "
+        f"--provider github-actions --external-run-id <run_id> "
+        f"--url {run_url} --status-json -"
+    )
     return [
         f"{key_prefix}handoff_command_template: {_e(handoff_command)}",
         f"{key_prefix}status_check_command_template: {_e(status_command)}",
+        f"{key_prefix}validated_record_command_template: {_e(validated_record_command)}",
         f"{key_prefix}record_after_success_command_template: {_e(record_command)}",
     ]
 

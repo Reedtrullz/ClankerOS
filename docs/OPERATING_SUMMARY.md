@@ -105,14 +105,16 @@ Core layers for the bootstrap:
   configured job timeout, latest operator-supplied CI evidence summary,
   compact local checks, in-progress run non-proof guidance, and CI proof
   boundary without contacting GitHub; the page also shows a display-only
-  direct `ci-snapshot-handoff`, `gh run view`, and record-after-success
-  template from current branch/commit state; a
+  direct `ci-snapshot-handoff`, `gh run view`, JSON-validated
+  `ci-snapshot-evidence-from-gh-json`, and manual record-after-success
+  templates from current branch/commit state; a
   read-only `/ci-evidence` page for operator-supplied CI/deploy proof records
   already stored in local ClankerOS state, plus a `CI Evidence Recording Guide`
   with the latest local GitHub handoff id, branch, commit, handoff evidence,
   a handoff-specific `ci-deploy-evidence` command template when available, and
-  a direct pushed-snapshot `ci-snapshot-handoff` template, without fetching
-  GitHub status; a
+  direct pushed-snapshot `ci-snapshot-handoff` and
+  `ci-snapshot-evidence-from-gh-json` templates, without fetching GitHub
+  status; a
   read-only root dashboard `Verification Snapshot` for checked-in workflow
   timeout, latest operator-supplied CI evidence, `/verification`,
   `/ci-evidence`, and current direct-snapshot handoff templates without
@@ -120,8 +122,9 @@ Core layers for the bootstrap:
   `Dashboard Dogfooding Snapshot` for fixture availability, next dogfooding
   action, selected workflow/run links, and the `/demo` manual browser script
   surface; a read-only `/dogfooding` GitHub Actions follow-up section with
-  direct pushed-snapshot `ci-snapshot-handoff`, `gh run view`, and
-  record-after-success templates for the current checkout; a
+  direct pushed-snapshot `ci-snapshot-handoff`, `gh run view`,
+  JSON-validated record, and manual record-after-success templates for the
+  current checkout; a
   read-only `/actions` current-demo action surface map that links fixture state
   to the selected project, delegation, workflow, run, approvals, and inbox
   surfaces; a read-only `/dogfooding` checklist and next-action panel for the
@@ -186,13 +189,17 @@ Core layers for the bootstrap:
   against project, branch, and commit without fabricating a publication
   handoff. While a direct pushed-snapshot run is still pending,
   `ci-snapshot-handoff` prints the exact `gh run view` check command and
-  matching record-after-success command without fetching GitHub status or
-  writing proof. The local app mirrors those commands as display-only
-  templates on `/`, `/verification`, and `/ci-evidence`. Snapshot records are
-  surfaced separately in `/verification`, `/ci-evidence`, and the static dashboard, record
-  `network_actions_taken=0` and `external_mutations_taken=0`, and do not fetch
-  GitHub status, run CI, deploy, push, create PRs, call providers, or mutate
-  external systems.
+  matching `ci-snapshot-evidence-from-gh-json` pipeline plus the manual
+  record-after-success command without fetching GitHub status or writing
+  proof. `ci-snapshot-evidence-from-gh-json` consumes supplied `gh run view`
+  JSON from stdin or a file, requires a completed successful run with the
+  expected commit SHA and matching branch when present, then records local
+  proof. The local app mirrors those commands as display-only templates on
+  `/`, `/verification`, `/ci-evidence`, and `/dogfooding`. Snapshot records are
+  surfaced separately in `/verification`, `/ci-evidence`, and the static
+  dashboard, record `network_actions_taken=0` and `external_mutations_taken=0`,
+  and do not fetch GitHub status, run CI, deploy, push, create PRs, call
+  providers, or mutate external systems.
 - Profile routing: safe default planner, coder, scout, tester, and evaluator
   profiles plus routing rules can be materialized into SQLite and
   `.clanker/profiles.yml`. `route` records task/category selection decisions,

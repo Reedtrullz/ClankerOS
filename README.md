@@ -589,7 +589,7 @@ git diff --check
 python3 -m compileall -q agent_os tests
 python3 -m agent_os.cli app-smoke-test
 python3 -m agent_os.cli app-demo-smoke-test
-python3 -m pytest tests/test_first_milestone.py -q -k "github_actions or local_app or inbox"
+python3 -m pytest tests/test_first_milestone.py -q -k "github_actions or ci_snapshot or local_app or inbox"
 ```
 
 After pushing or opening a PR, wait for the GitHub `Tests` workflow to run the
@@ -606,6 +606,16 @@ python3 -m agent_os.cli ci-snapshot-handoff --project clankeros --branch main --
 The local app mirrors this on `/`, `/verification`, and `/ci-evidence` as a
 template-only operator surface. The app never runs the `gh run view` command;
 it only shows what the operator can run outside ClankerOS after a push.
+
+Prefer the validated record path after GitHub completes:
+
+```bash
+gh run view <run_id> --repo Reedtrullz/ClankerOS --json status,conclusion,headSha,headBranch,url,jobs \
+| python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json --project clankeros --branch main --commit <commit_sha> --external-run-id <run_id> --status-json -
+```
+
+That command consumes GitHub status JSON from stdin, refuses pending/failed or
+wrong-commit runs, and records local proof only after the status JSON matches.
 
 For direct pushes, record the completed run locally with
 `python3 -m agent_os.cli ci-snapshot-evidence --project clankeros --branch main --commit <commit_sha> --provider github-actions --status success --external-run-id <run_id> --url <run_url>`.

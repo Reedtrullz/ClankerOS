@@ -259,13 +259,26 @@ git status --short --branch
 git diff --check
 python3 -m compileall -q agent_os tests
 python3 -m agent_os.cli app-smoke-test
-python3 -m pytest tests/test_first_milestone.py -q -k "github_actions or local_app or inbox"
+python3 -m pytest tests/test_first_milestone.py -q -k "github_actions or ci_snapshot or local_app or inbox"
 gh repo view Reedtrullz/ClankerOS --json description,repositoryTopics,homepageUrl
 ```
 
 Commit only a coherent verified increment. Push only after you know the target
 remote and branch, then let the GitHub `Tests` workflow run the full suite.
-After the run passes, record direct-push proof locally:
+After the run passes, prefer the JSON-validated direct-push proof recorder:
+
+```bash
+gh run view <run_id> --repo Reedtrullz/ClankerOS \
+  --json status,conclusion,headSha,headBranch,url,jobs \
+| python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json \
+  --project clankeros \
+  --branch main \
+  --commit <commit_sha> \
+  --external-run-id <run_id> \
+  --status-json -
+```
+
+The older manual direct-push recorder remains available:
 
 ```bash
 python3 -m agent_os.cli ci-snapshot-evidence \
@@ -280,6 +293,7 @@ python3 -m agent_os.cli ci-snapshot-evidence \
 
 Boundary: local verification is not CI proof. Pushing to GitHub is not
 deployment. A committed workflow file is not CI proof until GitHub Actions
-passes on the pushed commit. `ci-snapshot-evidence` records operator-supplied
-proof only; it does not fetch GitHub status, deploy, push, create PRs, or
-mutate external systems. GitHub metadata readback is not runtime proof.
+passes on the pushed commit. `ci-snapshot-evidence-from-gh-json` validates
+supplied GitHub status JSON before writing proof, but still does not fetch
+GitHub status itself, deploy, push, create PRs, or mutate external systems.
+GitHub metadata readback is not runtime proof.

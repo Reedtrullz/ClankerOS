@@ -49,7 +49,7 @@ Before pushing, use focused checks that match the files you touched:
 python3 -m compileall -q agent_os tests
 python3 -m agent_os.cli app-smoke-test
 python3 -m agent_os.cli app-demo-smoke-test
-python3 -m pytest tests/test_first_milestone.py -q -k "github_actions or ci_snapshot_handoff or local_app"
+python3 -m pytest tests/test_first_milestone.py -q -k "github_actions or ci_snapshot or local_app"
 git diff --check
 ```
 
@@ -71,11 +71,29 @@ python3 -m agent_os.cli ci-snapshot-handoff \
   --repo Reedtrullz/ClankerOS
 ```
 
-`ci-snapshot-handoff` prints a `gh run view ...` command for the operator and
-the matching `ci-snapshot-evidence` command to run after GitHub reports
-`status=completed`, `conclusion=success`, and the expected commit SHA. It does
-not fetch GitHub status, write evidence, run tests, deploy, push, create PRs,
-call providers, or mutate external systems.
+`ci-snapshot-handoff` prints a `gh run view ...` command for the operator, a
+JSON-validated `ci-snapshot-evidence-from-gh-json` pipeline, and the older
+manual `ci-snapshot-evidence` command. Prefer the JSON-validated path after
+GitHub reports `status=completed`, `conclusion=success`, and the expected
+commit SHA. The ClankerOS recorder consumes status JSON from stdin or a file;
+it does not fetch GitHub status, run tests, deploy, push, create PRs, call
+providers, or mutate external systems.
+
+The validated direct-push proof path looks like:
+
+```bash
+gh run view <run_id> --repo Reedtrullz/ClankerOS \
+  --json status,conclusion,headSha,headBranch,url,jobs \
+| python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json \
+  --project clankeros \
+  --branch main \
+  --commit <commit_sha> \
+  --external-run-id <run_id> \
+  --status-json -
+```
+
+The recorder refuses pending runs, failed runs, malformed JSON, branch
+mismatches when `headBranch` is present, and commit mismatches.
 
 For publication handoffs, record a completed GitHub Actions run with:
 
@@ -100,9 +118,10 @@ python3 -m agent_os.cli ci-snapshot-evidence \
   --url <run_url>
 ```
 
-Both commands record operator-supplied proof only. They do not fetch GitHub
-status, run CI, deploy, push, open PRs, call providers, or mutate external
-systems.
+Both record commands write operator-supplied proof only. The
+`ci-snapshot-evidence-from-gh-json` command validates supplied GitHub status
+JSON before writing. Neither recorder fetches GitHub status, runs CI, deploys,
+pushes, opens PRs, calls providers, or mutates external systems.
 
 ## Proof Boundaries
 

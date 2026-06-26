@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import shlex
+import sys
 from pathlib import Path
 
 from agent_os.budget_trust import (
@@ -74,7 +75,10 @@ from agent_os.ci_deploy_proof import (
     write_ci_deploy_proof_checklist,
 )
 from agent_os.ci_deploy_evidence import record_ci_deploy_evidence
-from agent_os.ci_snapshot_evidence import record_ci_snapshot_evidence
+from agent_os.ci_snapshot_evidence import (
+    record_ci_snapshot_evidence,
+    record_ci_snapshot_evidence_from_gh_status_json,
+)
 from agent_os.context_pack import ContextPackError, generate_context_pack
 from agent_os.coder_prep import (
     CoderPrepError,
@@ -614,7 +618,8 @@ PRIMARY_COMMAND_METAVAR = (
     "{init,app,dashboard,goal,tasks,delegate,context-pack,run-delegation,"
     "implementation-handoff,coder-prep,coder-prep-from-handoff,coder-worktree-plan,"
     "coder-commit-request,commit-coder-worktree,coder-publication-request,"
-    "coder-publication-handoff,ci-snapshot-handoff,demo-app-scenario,review,...}"
+    "coder-publication-handoff,ci-snapshot-handoff,ci-snapshot-evidence-from-gh-json,"
+    "demo-app-scenario,review,...}"
 )
 
 
@@ -2090,6 +2095,20 @@ def build_parser() -> argparse.ArgumentParser:
     ci_snapshot_evidence_parser.add_argument("--url", required=True)
     ci_snapshot_evidence_parser.add_argument("--recorded-by", default="operator")
     ci_snapshot_evidence_parser.add_argument("--note", default="")
+
+    ci_snapshot_from_gh_json_parser = subparsers.add_parser(
+        "ci-snapshot-evidence-from-gh-json",
+        help="Validate GitHub run JSON and record direct snapshot CI evidence.",
+    )
+    ci_snapshot_from_gh_json_parser.add_argument("--project", default="clankeros")
+    ci_snapshot_from_gh_json_parser.add_argument("--branch", default="main")
+    ci_snapshot_from_gh_json_parser.add_argument("--commit", required=True)
+    ci_snapshot_from_gh_json_parser.add_argument("--provider", default="github-actions")
+    ci_snapshot_from_gh_json_parser.add_argument("--external-run-id", required=True)
+    ci_snapshot_from_gh_json_parser.add_argument("--status-json", required=True)
+    ci_snapshot_from_gh_json_parser.add_argument("--url")
+    ci_snapshot_from_gh_json_parser.add_argument("--recorded-by", default="operator")
+    ci_snapshot_from_gh_json_parser.add_argument("--note", default="")
 
     ci_snapshot_handoff_parser = subparsers.add_parser(
         "ci-snapshot-handoff",
@@ -7542,6 +7561,43 @@ def main(argv: list[str] | None = None) -> int:
         print(f"evidence: {record.evidence_path}")
         return 0
 
+    if args.command == "ci-snapshot-evidence-from-gh-json":
+        try:
+            if args.status_json == "-":
+                status_json_text = sys.stdin.read()
+            else:
+                status_json_text = Path(args.status_json).read_text(encoding="utf-8")
+            result = record_ci_snapshot_evidence_from_gh_status_json(
+                root,
+                project_id=args.project,
+                branch_name=args.branch,
+                commit_sha=args.commit,
+                provider=args.provider,
+                external_run_id=args.external_run_id,
+                status_json_text=status_json_text,
+                external_url=args.url,
+                recorded_by=args.recorded_by,
+                note=args.note,
+            )
+        except (OSError, ValueError) as error:
+            print(f"ci_snapshot_evidence_from_gh_json_failed: {error}")
+            return 1
+        record = result.record
+        print(f"ci_snapshot_evidence_from_gh_json: {result.status}")
+        print(f"record_id: {record.id}")
+        print(f"project: {record.project_id}")
+        print(f"commit: {record.commit_sha}")
+        print(f"branch: {record.branch_name}")
+        print(f"provider: {record.provider}")
+        print(f"status: {record.status}")
+        print(f"status_source: {record.result_json['status_source']}")
+        print(f"external_run_id: {record.external_run_id}")
+        print(f"external_url: {record.external_url}")
+        print(f"network_actions_taken: {record.result_json['network_actions_taken']}")
+        print(f"external_mutations_taken: {record.result_json['external_mutations_taken']}")
+        print(f"evidence: {record.evidence_path}")
+        return 0
+
     if args.command == "ci-snapshot-handoff":
         run_url = args.url
         if not run_url and args.repo:
@@ -7549,8 +7605,8 @@ def main(argv: list[str] | None = None) -> int:
         repo_arg = f" --repo {shlex.quote(args.repo)}" if args.repo else ""
         status_command = (
             f"gh run view {shlex.quote(args.external_run_id)}{repo_arg} "
-            "--json status,conclusion,headSha,url,jobs "
-            "--jq '{status, conclusion, headSha, url, jobs: [.jobs[] | {name, status, conclusion}]}'"
+            "--json status,conclusion,headSha,headBranch,url,jobs "
+            "--jq '{status, conclusion, headSha, headBranch, url, jobs: [.jobs[] | {name, status, conclusion}]}'"
         )
         record_command = (
             "python3 -m agent_os.cli ci-snapshot-evidence "
@@ -7566,6 +7622,22 @@ def main(argv: list[str] | None = None) -> int:
             record_command += f" --recorded-by {shlex.quote(args.recorded_by)}"
         if args.note:
             record_command += f" --note {shlex.quote(args.note)}"
+        validated_record_command = (
+            f"{status_command} | "
+            "python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json "
+            f"--project {shlex.quote(args.project)} "
+            f"--branch {shlex.quote(args.branch)} "
+            f"--commit {shlex.quote(args.commit)} "
+            f"--provider {shlex.quote(args.provider)} "
+            f"--external-run-id {shlex.quote(args.external_run_id)} "
+            "--status-json -"
+        )
+        if run_url:
+            validated_record_command += f" --url {shlex.quote(run_url)}"
+        if args.recorded_by != "operator":
+            validated_record_command += f" --recorded-by {shlex.quote(args.recorded_by)}"
+        if args.note:
+            validated_record_command += f" --note {shlex.quote(args.note)}"
         print("ci_snapshot_handoff: ready")
         print(f"project: {args.project}")
         print(f"branch: {args.branch}")
@@ -7575,6 +7647,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"external_url: {run_url or 'unknown'}")
         print(f"status_check_command: {status_command}")
         print("record_when: status=completed conclusion=success headSha matches commit")
+        print(f"validated_record_command: {validated_record_command}")
         print(f"record_command: {record_command}")
         print("proof_boundary: handoff_only_until_operator_records_success")
         print("github_status_fetch: none")

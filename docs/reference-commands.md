@@ -478,10 +478,11 @@ git status --short --branch
 git diff --check
 python3 -m compileall -q agent_os tests
 python3 -m agent_os.cli app-smoke-test
-python3 -m pytest tests/test_first_milestone.py -q -k "github_actions or local_app or inbox"
+python3 -m pytest tests/test_first_milestone.py -q -k "github_actions or ci_snapshot or local_app or inbox"
 gh repo view Reedtrullz/ClankerOS --json description,repositoryTopics,homepageUrl
 git push origin main
 python3 -m agent_os.cli ci-snapshot-handoff --project clankeros --branch main --commit <commit_sha> --external-run-id <run_id> --repo Reedtrullz/ClankerOS
+gh run view <run_id> --repo Reedtrullz/ClankerOS --json status,conclusion,headSha,headBranch,url,jobs | python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json --project clankeros --branch main --commit <commit_sha> --external-run-id <run_id> --status-json -
 python3 -m agent_os.cli ci-snapshot-evidence --project clankeros --branch main --commit <commit_sha> --provider github-actions --status success --external-run-id <run_id> --url <run_url>
 ```
 
@@ -490,6 +491,11 @@ first, then the dependent slow full-suite job with `python -m pytest -q`.
 Use `ci-snapshot-handoff` while the run is still pending to print the exact
 `gh run view` command and the matching record command without fetching status
 or writing local proof.
+Prefer `ci-snapshot-evidence-from-gh-json` after GitHub completes: it consumes
+the supplied `gh run view` JSON, requires `status=completed`,
+`conclusion=success`, a matching `headSha`, and a matching `headBranch` when
+present, then records local direct-snapshot proof. The recorder does not call
+GitHub itself.
 Use `ci-snapshot-evidence` only after the GitHub run has completed and you are
 recording operator-supplied proof for a direct pushed snapshot. Pushing is not
 deployment. A committed workflow file is not CI proof until GitHub Actions
