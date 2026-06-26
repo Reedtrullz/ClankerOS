@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shlex
 from pathlib import Path
 
 from agent_os.budget_trust import (
@@ -612,7 +613,7 @@ PRIMARY_COMMAND_METAVAR = (
     "{init,app,dashboard,goal,tasks,delegate,context-pack,run-delegation,"
     "implementation-handoff,coder-prep,coder-prep-from-handoff,coder-worktree-plan,"
     "coder-commit-request,commit-coder-worktree,coder-publication-request,"
-    "coder-publication-handoff,demo-app-scenario,review,...}"
+    "coder-publication-handoff,ci-snapshot-handoff,demo-app-scenario,review,...}"
 )
 
 
@@ -2083,6 +2084,20 @@ def build_parser() -> argparse.ArgumentParser:
     ci_snapshot_evidence_parser.add_argument("--url", required=True)
     ci_snapshot_evidence_parser.add_argument("--recorded-by", default="operator")
     ci_snapshot_evidence_parser.add_argument("--note", default="")
+
+    ci_snapshot_handoff_parser = subparsers.add_parser(
+        "ci-snapshot-handoff",
+        help="Print GitHub run watch and CI snapshot record commands without fetching status.",
+    )
+    ci_snapshot_handoff_parser.add_argument("--project", default="clankeros")
+    ci_snapshot_handoff_parser.add_argument("--branch", default="main")
+    ci_snapshot_handoff_parser.add_argument("--commit", required=True)
+    ci_snapshot_handoff_parser.add_argument("--provider", default="github-actions")
+    ci_snapshot_handoff_parser.add_argument("--external-run-id", required=True)
+    ci_snapshot_handoff_parser.add_argument("--url")
+    ci_snapshot_handoff_parser.add_argument("--repo")
+    ci_snapshot_handoff_parser.add_argument("--recorded-by", default="operator")
+    ci_snapshot_handoff_parser.add_argument("--note", default="")
 
     resolve_incident = subparsers.add_parser(
         "resolve-incident",
@@ -7495,6 +7510,46 @@ def main(argv: list[str] | None = None) -> int:
         print(f"network_actions_taken: {record.result_json['network_actions_taken']}")
         print(f"external_mutations_taken: {record.result_json['external_mutations_taken']}")
         print(f"evidence: {record.evidence_path}")
+        return 0
+
+    if args.command == "ci-snapshot-handoff":
+        run_url = args.url
+        if not run_url and args.repo:
+            run_url = f"https://github.com/{args.repo}/actions/runs/{args.external_run_id}"
+        repo_arg = f" --repo {shlex.quote(args.repo)}" if args.repo else ""
+        status_command = (
+            f"gh run view {shlex.quote(args.external_run_id)}{repo_arg} "
+            "--json status,conclusion,headSha,url,jobs "
+            "--jq '{status, conclusion, headSha, url, jobs: [.jobs[] | {name, status, conclusion}]}'"
+        )
+        record_command = (
+            "python3 -m agent_os.cli ci-snapshot-evidence "
+            f"--project {shlex.quote(args.project)} "
+            f"--branch {shlex.quote(args.branch)} "
+            f"--commit {shlex.quote(args.commit)} "
+            f"--provider {shlex.quote(args.provider)} "
+            "--status success "
+            f"--external-run-id {shlex.quote(args.external_run_id)} "
+            f"--url {shlex.quote(run_url or '<run_url>')}"
+        )
+        if args.recorded_by != "operator":
+            record_command += f" --recorded-by {shlex.quote(args.recorded_by)}"
+        if args.note:
+            record_command += f" --note {shlex.quote(args.note)}"
+        print("ci_snapshot_handoff: ready")
+        print(f"project: {args.project}")
+        print(f"branch: {args.branch}")
+        print(f"commit: {args.commit}")
+        print(f"provider: {args.provider}")
+        print(f"external_run_id: {args.external_run_id}")
+        print(f"external_url: {run_url or 'unknown'}")
+        print(f"status_check_command: {status_command}")
+        print("record_when: status=completed conclusion=success headSha matches commit")
+        print(f"record_command: {record_command}")
+        print("proof_boundary: handoff_only_until_operator_records_success")
+        print("github_status_fetch: none")
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
         return 0
 
     if args.command == "resolve-incident":

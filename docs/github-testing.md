@@ -50,6 +50,24 @@ push; otherwise let the GitHub workflow spend the 15-20 minute full-suite time.
 
 ## Recording Proof
 
+While a direct-push run is pending, generate the exact status-check and
+record-after-success commands with:
+
+```bash
+python3 -m agent_os.cli ci-snapshot-handoff \
+  --project clankeros \
+  --branch main \
+  --commit <commit_sha> \
+  --external-run-id <run_id> \
+  --repo Reedtrullz/ClankerOS
+```
+
+`ci-snapshot-handoff` prints a `gh run view ...` command for the operator and
+the matching `ci-snapshot-evidence` command to run after GitHub reports
+`status=completed`, `conclusion=success`, and the expected commit SHA. It does
+not fetch GitHub status, write evidence, run tests, deploy, push, create PRs,
+call providers, or mutate external systems.
+
 For publication handoffs, record a completed GitHub Actions run with:
 
 ```bash

@@ -2223,6 +2223,59 @@ def test_ci_snapshot_evidence_records_operator_supplied_direct_push_proof(
     assert len(storage.list_recent_ci_snapshot_evidence_records()) == 1
 
 
+def test_ci_snapshot_handoff_prints_watch_and_record_commands_without_writes(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    AgentSystem(tmp_path).initialize()
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "ci-snapshot-handoff",
+                "--project",
+                "clankeros",
+                "--branch",
+                "main",
+                "--commit",
+                "52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9",
+                "--external-run-id",
+                "28211577106",
+                "--repo",
+                "Reedtrullz/ClankerOS",
+                "--note",
+                "GitHub Actions full-suite run was green.",
+            ]
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert "ci_snapshot_handoff: ready" in output
+    assert "project: clankeros" in output
+    assert "branch: main" in output
+    assert "commit: 52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9" in output
+    assert "external_run_id: 28211577106" in output
+    assert "external_url: https://github.com/Reedtrullz/ClankerOS/actions/runs/28211577106" in output
+    assert "status_check_command: gh run view 28211577106 --repo Reedtrullz/ClankerOS" in output
+    assert "record_when: status=completed conclusion=success headSha matches commit" in output
+    assert "record_command: python3 -m agent_os.cli ci-snapshot-evidence" in output
+    assert "--status success" in output
+    assert "--external-run-id 28211577106" in output
+    assert "--url https://github.com/Reedtrullz/ClankerOS/actions/runs/28211577106" in output
+    assert "--note 'GitHub Actions full-suite run was green.'" in output
+    assert "proof_boundary: handoff_only_until_operator_records_success" in output
+    assert "github_status_fetch: none" in output
+    assert "network_actions_taken: 0" in output
+    assert "external_mutations_taken: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    assert storage.list_recent_ci_snapshot_evidence_records() == []
+    assert not (tmp_path / ".clanker" / "ci-snapshots").exists()
+
+
 def test_profiles_command_creates_safe_defaults_and_profile_show(
     tmp_path: Path,
     capsys,

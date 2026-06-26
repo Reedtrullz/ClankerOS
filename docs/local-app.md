@@ -183,7 +183,10 @@ in progress, keep waiting on GitHub instead of rerunning the full suite
 locally; if it fails or reaches the timeout, inspect the failed job log and
 fix that specific CI issue. If no CI evidence has been recorded locally, the
 page shows `ci-deploy-evidence` and `ci-snapshot-evidence` command templates
-instead of pretending CI proof exists.
+instead of pretending CI proof exists. Use `ci-snapshot-handoff` from the CLI
+while a direct pushed-snapshot run is pending to print the exact `gh run view`
+and `ci-snapshot-evidence` commands without fetching GitHub status or writing
+local proof.
 The root dashboard mirrors this boundary as a compact `Verification Snapshot`
 with `/verification` and `/ci-evidence` links, and it labels the latest
 operator-supplied source as either `publication_handoff` or

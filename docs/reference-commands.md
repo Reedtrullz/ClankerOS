@@ -476,11 +476,15 @@ python3 -m agent_os.cli app-smoke-test
 python3 -m pytest tests/test_first_milestone.py -q -k "github_actions or local_app or inbox"
 gh repo view Reedtrullz/ClankerOS --json description,repositoryTopics,homepageUrl
 git push origin main
+python3 -m agent_os.cli ci-snapshot-handoff --project clankeros --branch main --commit <commit_sha> --external-run-id <run_id> --repo Reedtrullz/ClankerOS
 python3 -m agent_os.cli ci-snapshot-evidence --project clankeros --branch main --commit <commit_sha> --provider github-actions --status success --external-run-id <run_id> --url <run_url>
 ```
 
 After push or PR creation, the GitHub `Tests` workflow runs a fast smoke job
 first, then the dependent slow full-suite job with `python -m pytest -q`.
+Use `ci-snapshot-handoff` while the run is still pending to print the exact
+`gh run view` command and the matching record command without fetching status
+or writing local proof.
 Use `ci-snapshot-evidence` only after the GitHub run has completed and you are
 recording operator-supplied proof for a direct pushed snapshot. Pushing is not
 deployment. A committed workflow file is not CI proof until GitHub Actions

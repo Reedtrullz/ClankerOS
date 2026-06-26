@@ -160,7 +160,10 @@ Core layers for the bootstrap:
   deploy. Direct operator-authorized pushed snapshots can use
   `ci-snapshot-evidence` to record the completed GitHub Actions run id and URL
   against project, branch, and commit without fabricating a publication
-  handoff. Snapshot records are surfaced separately in `/verification`,
+  handoff. While a direct pushed-snapshot run is still pending,
+  `ci-snapshot-handoff` prints the exact `gh run view` check command and
+  matching record-after-success command without fetching GitHub status or
+  writing proof. Snapshot records are surfaced separately in `/verification`,
   `/ci-evidence`, and the static dashboard, record
   `network_actions_taken=0` and `external_mutations_taken=0`, and do not fetch
   GitHub status, run CI, deploy, push, create PRs, call providers, or mutate

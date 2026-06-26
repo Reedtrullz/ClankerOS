@@ -562,6 +562,13 @@ After pushing or opening a PR, wait for the GitHub `Tests` workflow to run the
 fast smoke job first, then the dependent full-suite job with
 `python -m pytest -q`. The smoke job is early route/CLI proof only; a committed
 workflow file is not CI proof until GitHub Actions passes on that commit.
+While the run is pending, generate a pasteable watch/record handoff without
+contacting GitHub from ClankerOS:
+
+```bash
+python3 -m agent_os.cli ci-snapshot-handoff --project clankeros --branch main --commit <commit_sha> --external-run-id <run_id> --repo Reedtrullz/ClankerOS
+```
+
 For direct pushes, record the completed run locally with
 `python3 -m agent_os.cli ci-snapshot-evidence --project clankeros --branch main --commit <commit_sha> --provider github-actions --status success --external-run-id <run_id> --url <run_url>`.
 Pushing is not deployment. GitHub metadata readback is not runtime proof. See

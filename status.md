@@ -1,5 +1,16 @@
 # Status
 
+## 2026-06-26 CI Snapshot Handoff Command
+
+- Added `ci-snapshot-handoff` as a zero-write CLI bridge for direct
+  pushed-snapshot GitHub Actions runs. It prints a pasteable `gh run view`
+  status command and the matching `ci-snapshot-evidence` command to run only
+  after GitHub reports `status=completed`, `conclusion=success`, and the
+  expected commit SHA.
+- Non-claims: this command does not fetch GitHub status, write CI evidence,
+  run tests, deploy, push, create PRs, call providers, or mutate external
+  systems. It is a handoff/template generator only.
+
 ## 2026-06-26 Direct Snapshot CI Evidence
 
 - Added `ci-snapshot-evidence` for operator-supplied GitHub Actions proof from
