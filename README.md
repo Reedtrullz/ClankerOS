@@ -103,6 +103,12 @@ the operator inbox, approvals, incidents, and demo state:
 python3 -m agent_os.cli app
 ```
 
+The root `/` page is the Goal-First Home board. It starts with active,
+paused, and completed goal lanes, recent activity, the operator inbox,
+recommendations, incidents, and first-run project/goal forms when the checkout
+is empty. Use the compact local app smoke commands before pushing, then let
+GitHub Actions run the fast route smoke and full pytest suite for slower proof.
+
 For the first manual browser pass, run `python3 -m agent_os.cli demo`
 or `python3 -m agent_os.cli demo-app-scenario`, open `/goals`, then `/demo`,
 and follow the state-aware dogfooding links

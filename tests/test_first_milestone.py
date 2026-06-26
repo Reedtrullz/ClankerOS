@@ -4037,6 +4037,23 @@ def test_local_app_routes_render_modern_workflow_and_health(
     root = render_local_app_route(tmp_path, "/")
     assert root.status == 200
     assert "ClankerOS Local Operator" in root.body
+    assert "Goal-First Home" in root.body
+    assert "home_dashboard_goal_first</dt><dd>true" in root.body
+    assert "home_active_goals</dt><dd>0" in root.body
+    assert "home_paused_goals</dt><dd>0" in root.body
+    assert "home_completed_goals</dt><dd>0" in root.body
+    assert "Home Goal Board" in root.body
+    assert "Home Recent Activity" in root.body
+    assert "activity_log_format</dt><dd>human_readable" in root.body
+    assert "Home Inbox" in root.body
+    assert "home_inbox_items" in root.body
+    assert "Home Recommendations" in root.body
+    assert "home_recommendations_status: none_open" in root.body
+    assert "Home Incidents" in root.body
+    assert "home_incidents_status: none_open" in root.body
+    assert "First Run Guide" in root.body
+    assert "register-project" in root.body
+    assert "create-goal" in root.body
     assert "data-command-palette='true'" in root.body
     assert "data-recent-items='true'" in root.body
     assert "data-breadcrumbs='true'" in root.body
@@ -4311,6 +4328,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     delegated_goal_page = render_local_app_route(tmp_path, f"/goals/{created_goal_id}")
     assert "recommended_action</dt><dd>Run or inspect delegation" in delegated_goal_page.body
     assert "next_action_form_available</dt><dd>false" in delegated_goal_page.body
+    home_after_delegate = render_local_app_route(tmp_path, "/")
+    assert "Goal-First Home" in home_after_delegate.body
+    assert "home_active_goals</dt><dd>1" in home_after_delegate.body
+    assert "lead_goal_phase</dt><dd>Running" in home_after_delegate.body
+    assert "lead_goal_next_action</dt><dd>Run or inspect delegation" in home_after_delegate.body
+    assert "Home Recent Activity" in home_after_delegate.body
+    assert "Scout delegated" in home_after_delegate.body
+    assert created_goal_id in home_after_delegate.body
     created_goals = render_local_app_route(tmp_path, "/goals")
     assert "first-target" in created_goals.body
     assert "Create a browser-first first-run workflow" in created_goals.body
@@ -4630,6 +4655,15 @@ def test_local_app_demo_scenario_populates_fixture_state(
 
     dashboard = render_local_app_route(tmp_path, "/")
     assert dashboard.status == 200
+    assert "Goal-First Home" in dashboard.body
+    assert "home_dashboard_goal_first</dt><dd>true" in dashboard.body
+    assert "Home Goal Board" in dashboard.body
+    assert "home_active_goals</dt><dd>1" in dashboard.body
+    assert "Home Recent Activity" in dashboard.body
+    assert "Execution completed" in dashboard.body
+    assert "Home Inbox" in dashboard.body
+    assert "Home Recommendations" in dashboard.body
+    assert "Home Incidents" in dashboard.body
     assert "Next Recommended Action" in dashboard.body
     assert "dashboard_next_recommended_action" in dashboard.body
     assert "request_commit_for_reviewed_run" in dashboard.body

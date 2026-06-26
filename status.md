@@ -1,5 +1,35 @@
 # Status
 
+## 2026-06-26 Goal-First Home Dashboard
+
+- Moved the local app root `/` surface from a repo/control dashboard lead-in to
+  a Goal-First Home board that starts with goal posture and operator attention
+  queues.
+- The Home board now shows active, paused, and completed goal lanes, recent
+  human-readable activity, inbox counts, open recommendations, open incidents,
+  and the existing first-run project/goal forms when no goals exist.
+- The root hero now reports `home_dashboard_goal_first`, goal counts, recent
+  activity count, next action, and lead-goal phase/next-action readbacks when
+  state exists.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health"`
+    -> `1 passed, 506 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario or local_app_cli_commands_and_bind_safety or local_app_routes_render_modern_workflow_and_health"`
+    -> `3 passed, 504 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with matched route markers and zero provider/network/external
+    mutation counters.
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with matched fixture route snippets and zero provider/network/
+    external mutation counters.
+  - `git diff --check`
+    -> passed
+- Non-claims: this is browser UI and route-smoke coverage only. It does not
+  call providers, run subagents, fetch GitHub status from the app, push, create
+  PRs from the app, deploy, or enable external mutation inside ClankerOS.
+
 ## 2026-06-26 Browser Shell, Clickable Timeline, And Scout Delegation Action
 
 - Added a shared browser operator shell to the local app with breadcrumbs,

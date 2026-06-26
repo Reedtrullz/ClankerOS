@@ -37,7 +37,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 
 ## Pages
 
-- `/` - local operator dashboard.
+- `/` - Goal-First Home dashboard. It starts with active, paused, and
+  completed goal lanes, recent activity, the operator inbox, open
+  recommendations, open incidents, and first-run project/goal forms when no
+  goals exist.
 - `/` includes a confirmed `refresh-dashboard-state` action that rewrites the
   local `.clanker/app/local_app_status.json` artifact from current repository
   and route state without providers, pushes, PRs, deploys, or external

@@ -883,11 +883,7 @@ def _dashboard(root: Path, *, host: str, port: int) -> str:
     next_action = _dashboard_next_action(root, storage)
     return "".join(
         [
-            "<section class='hero'>",
-            "<h1>ClankerOS Local Operator</h1>",
-            "<p>Local-first operator UI for the handoff, worktree, commit, and publication workflow.</p>",
-            _non_claim_banner(),
-            "</section>",
+            _home_dashboard(root, storage, next_action),
             _warnings(warnings),
             "<section><h2>Repository</h2>",
             _kv(
@@ -932,6 +928,169 @@ def _dashboard(root: Path, *, host: str, port: int) -> str:
             _dashboard_next_action_section(next_action),
         ]
     )
+
+
+def _home_dashboard(
+    root: Path,
+    storage: Storage,
+    next_action: DashboardNextAction,
+) -> str:
+    rows = _goal_rows(storage, limit=100)
+    active = [row for row in rows if _goal_bucket(row) == "active"]
+    paused = [row for row in rows if _goal_bucket(row) == "paused"]
+    completed = [row for row in rows if _goal_bucket(row) == "completed"]
+    lead_goal = active[0] if active else (paused[0] if paused else (completed[0] if completed else None))
+    lead_lines: list[tuple[str, str | SafeHtml]] = [
+        ("home_active_goals", str(len(active))),
+        ("home_paused_goals", str(len(paused))),
+        ("home_completed_goals", str(len(completed))),
+        ("home_recent_activity_items", str(len(_home_recent_activity_items(root, storage)))),
+        ("home_next_action", next_action.action),
+        ("home_dashboard_goal_first", "true"),
+    ]
+    if lead_goal is not None:
+        lead_state = _goal_state(root, storage, str(lead_goal["id"]))
+        lead_next = _goal_next_action(root, lead_state)
+        lead_lines.extend(
+            [
+                ("lead_goal", SafeHtml(f"<a href='/goals/{quote(str(lead_goal['id']))}'>{_e(lead_goal['title'] or lead_goal['description'])}</a>")),
+                ("lead_goal_phase", _goal_current_phase(lead_state)),
+                ("lead_goal_next_action", lead_next.action),
+            ]
+        )
+    else:
+        lead_lines.append(("lead_goal", "none"))
+
+    sections = [
+        "<section class='hero'><h1>Goal-First Home</h1>",
+        "<p>Daily operating board for goals, activity, inbox, recommendations, and incidents.</p>",
+        _kv(lead_lines),
+        _non_claim_banner(),
+        "</section>",
+        _home_goal_board(root, storage, active=active, paused=paused, completed=completed),
+        _home_recent_activity(root, storage),
+        _home_inbox(root),
+        _home_recommendations(storage),
+        _home_incidents(storage),
+    ]
+    if not rows:
+        sections.append(_first_run_panel(root, storage))
+    return "".join(sections)
+
+
+def _home_goal_board(
+    root: Path,
+    storage: Storage,
+    *,
+    active: list[sqlite3.Row],
+    paused: list[sqlite3.Row],
+    completed: list[sqlite3.Row],
+) -> str:
+    return "".join(
+        [
+            "<section><h2>Home Goal Board</h2>",
+            _kv(
+                [
+                    ("active_goals", str(len(active))),
+                    ("paused_goals", str(len(paused))),
+                    ("completed_goals", str(len(completed))),
+                    ("goal_board_surface", SafeHtml("<a href='/goals'>/goals</a>")),
+                ]
+            ),
+            "<div class='grid'>",
+            _home_goal_lane(root, storage, "Active Goals", active),
+            _home_goal_lane(root, storage, "Paused Goals", paused),
+            _home_goal_lane(root, storage, "Completed Goals", completed),
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _home_goal_lane(
+    root: Path,
+    storage: Storage,
+    title: str,
+    rows: list[sqlite3.Row],
+) -> str:
+    return "".join(
+        [
+            "<div class='panel'>",
+            f"<h3>{_e(title)}</h3>",
+            _ul([_goal_index_line(root, storage, row) for row in rows[:6]]),
+            "</div>",
+        ]
+    )
+
+
+def _home_recent_activity(root: Path, storage: Storage) -> str:
+    items = _home_recent_activity_items(root, storage)
+    return "".join(
+        [
+            "<section><h2>Home Recent Activity</h2>",
+            _kv(
+                [
+                    ("activity_log_format", "human_readable"),
+                    ("recent_activity_items", str(len(items))),
+                ]
+            ),
+            _ul([_timeline_line(item) for item in items[:12]]),
+            "</section>",
+        ]
+    )
+
+
+def _home_recent_activity_items(root: Path, storage: Storage) -> list[dict[str, str]]:
+    items: list[dict[str, str]] = []
+    for row in _goal_rows(storage, limit=12):
+        state = _goal_state(root, storage, str(row["id"]))
+        label = str(row["title"] or row["description"] or row["id"])
+        for item in _goal_timeline_items(root, state)[-5:]:
+            copy = dict(item)
+            copy["message"] = f"{_compact_label(label, 42)}: {copy.get('message', '')}"
+            items.append(copy)
+    return sorted(items, key=lambda item: item.get("at") or "", reverse=True)
+
+
+def _home_inbox(root: Path) -> str:
+    inbox = collect_inbox_items(root)
+    lines = [
+        f"home_inbox_items: {inbox['count']}",
+        f"steering_reviews: {len(inbox['steering_reviews'])}",
+        f"pending_approvals: {len(inbox['pending_approvals'])}",
+        f"open_incidents: {len(inbox['open_incidents'])}",
+        f"subagent_delegations: {len(inbox['subagent_delegations'])}",
+        f"coder_worktree_runs: {len(inbox['coder_worktree_runs'])}",
+        f"commit_approvals: {len(inbox['coder_worktree_commit_approvals'])}",
+        f"publication_requests: {len(inbox['coder_publication_requests'])}",
+        "inbox_surface: <a href='/inbox'>/inbox</a>",
+    ]
+    return _list_section("Home Inbox", lines, "/inbox")
+
+
+def _home_recommendations(storage: Storage) -> str:
+    recommendations = storage.list_recent_task_recommendations(limit=8)
+    lines = [
+        (
+            f"{_e(item.id)}: status={_e(item.status)} goal={_e(item.goal_id)} "
+            f"task={_e(item.task_id)} reason={_e(item.reason)} "
+            f"evidence={_artifact_link(item.evidence_path)}"
+        )
+        for item in recommendations
+    ]
+    if not lines:
+        lines = ["home_recommendations_status: none_open"]
+    return _list_section("Home Recommendations", lines, "/incidents")
+
+
+def _home_incidents(storage: Storage) -> str:
+    incidents = [
+        item for item in storage.list_recent_incidents(limit=8) if item.status == "open"
+    ]
+    lines = [_incident_line(item) for item in incidents]
+    if not lines:
+        lines = ["home_incidents_status: none_open"]
+    return _list_section("Home Incidents", lines, "/incidents")
 
 
 def _dashboard_verification_snapshot(root: Path) -> str:
@@ -5918,6 +6077,7 @@ def _html_page(
     p, li, dd, dt, td, th, button, input {{ font-size:14px; }}
     .hero p {{ color:var(--muted); max-width:760px; }}
     .banner, .warning {{ border:1px solid var(--line); background:var(--panel); padding:12px; margin:12px 0; }}
+    .panel {{ border:1px solid var(--line); background:var(--panel); padding:12px; }}
     .warning {{ border-color:#efc36a; color:var(--warn); }}
     .error {{ color:var(--error); font-weight:600; }}
     .muted {{ color:var(--muted); }}
