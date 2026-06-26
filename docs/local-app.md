@@ -192,14 +192,16 @@ workflow/run links when available, and the `/demo` manual browser script
 surface.
 
 `/ci-evidence` is the read-only companion for proof that has already been
-recorded locally with `ci-deploy-evidence`. It shows the provider, status,
-external run id, external URL, handoff id, commit, recorded-by field, and
-evidence artifact link for recent CI/deploy evidence records. It also shows a
-`CI Evidence Recording Guide`: if a local GitHub handoff exists, the page names
-the latest handoff id, branch, commit, handoff evidence, and a handoff-specific
-`ci-deploy-evidence` command template for the operator to fill with the
-completed GitHub Actions run id and URL. The page does not poll GitHub, refresh
-statuses, push, create PRs, deploy, call providers, or mutate external systems.
+recorded locally with `ci-deploy-evidence` or `ci-snapshot-evidence`. It shows
+the provider, status, external run id, external URL, commit, recorded-by field,
+and evidence artifact link for recent CI/deploy evidence records. Handoff
+records keep the GitHub handoff id; direct snapshot records are labeled
+`direct_public_snapshot` so they do not pretend to come from a publication
+handoff. The `CI Evidence Recording Guide` shows a handoff-specific
+`ci-deploy-evidence` command when a local GitHub handoff exists, and a direct
+`ci-snapshot-evidence` command template when the operator is recording a
+direct pushed snapshot. The page does not poll GitHub, refresh statuses, push,
+create PRs, deploy, call providers, or mutate external systems.
 
 ## Manual Dogfooding Checklist
 

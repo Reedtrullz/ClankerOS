@@ -43,7 +43,8 @@ system.
 - `docs/tutorial-public-snapshot.md` - verify, commit, and push a coherent
   public GitHub snapshot without overclaiming.
 - `docs/github-testing.md` - use GitHub Actions for the slow full-suite test
-  loop while keeping local checks focused and fast.
+  loop while keeping local checks focused and fast, then record handoff or
+  direct snapshot CI evidence without app-side polling.
 - `contracts.md` - safety contract and evidence expectations.
 - `WORKFLOW.md` - lifecycle ordering from goal intake through verification,
   approvals, delegation packets, and dashboard visibility.

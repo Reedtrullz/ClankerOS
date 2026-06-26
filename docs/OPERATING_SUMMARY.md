@@ -157,7 +157,14 @@ Core layers for the bootstrap:
   GitHub handoff packet with `ci-deploy-evidence`. The record preserves
   provider, external run id, URL, commit, branch, handoff, and JSON evidence
   while recording `network_actions_taken=0`; it does not fetch CI, run CI, or
-  deploy.
+  deploy. Direct operator-authorized pushed snapshots can use
+  `ci-snapshot-evidence` to record the completed GitHub Actions run id and URL
+  against project, branch, and commit without fabricating a publication
+  handoff. Snapshot records are surfaced separately in `/verification`,
+  `/ci-evidence`, and the static dashboard, record
+  `network_actions_taken=0` and `external_mutations_taken=0`, and do not fetch
+  GitHub status, run CI, deploy, push, create PRs, call providers, or mutate
+  external systems.
 - Profile routing: safe default planner, coder, scout, tester, and evaluator
   profiles plus routing rules can be materialized into SQLite and
   `.clanker/profiles.yml`. `route` records task/category selection decisions,

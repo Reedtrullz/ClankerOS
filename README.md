@@ -169,12 +169,14 @@ fixture-backed demo state exists, the next dogfooding action, the selected
 workflow/run surface when available, and the `/demo` manual browser script
 link.
 
-Use `/ci-evidence` after recording CI proof with `ci-deploy-evidence`. It shows
-operator-supplied GitHub Actions/deploy evidence already stored in local
-ClankerOS state and links the inert evidence artifact. It also shows the latest
-local GitHub handoff id, branch, commit, handoff evidence, and a handoff-specific
-`ci-deploy-evidence` command template when a recordable handoff exists. It does
-not fetch GitHub status.
+Use `/ci-evidence` after recording CI proof with `ci-deploy-evidence` for a
+publication handoff or `ci-snapshot-evidence` for a direct operator-authorized
+push. It shows operator-supplied GitHub Actions/deploy evidence already stored
+in local ClankerOS state and links the inert evidence artifact. It also shows
+the latest local GitHub handoff id, branch, commit, handoff evidence, and a
+handoff-specific `ci-deploy-evidence` command template when a recordable
+handoff exists. When no handoff exists, it shows a direct snapshot evidence
+template instead. It does not fetch GitHub status.
 
 The app is local-only by default, binds to `127.0.0.1`, and refuses non-local
 binds unless `--allow-nonlocal-bind` is explicitly supplied. It does not push,
@@ -559,6 +561,8 @@ After pushing or opening a PR, wait for the GitHub `Tests` workflow to run the
 fast smoke job first, then the dependent full-suite job with
 `python -m pytest -q`. The smoke job is early route/CLI proof only; a committed
 workflow file is not CI proof until GitHub Actions passes on that commit.
+For direct pushes, record the completed run locally with
+`python3 -m agent_os.cli ci-snapshot-evidence --project clankeros --branch main --commit <commit_sha> --provider github-actions --status success --external-run-id <run_id> --url <run_url>`.
 Pushing is not deployment. GitHub metadata readback is not runtime proof. See
 [GitHub Testing](docs/github-testing.md) and
 [Tutorial: Public Snapshot](docs/tutorial-public-snapshot.md) for the full

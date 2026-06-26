@@ -48,6 +48,35 @@ For non-app work, replace the `-k` expression with the narrow test area you
 changed. Run the full suite locally only when you need local proof before a
 push; otherwise let the GitHub workflow spend the 15-20 minute full-suite time.
 
+## Recording Proof
+
+For publication handoffs, record a completed GitHub Actions run with:
+
+```bash
+python3 -m agent_os.cli ci-deploy-evidence <github_handoff_id> \
+  --provider github-actions \
+  --status success \
+  --external-run-id <run_id> \
+  --url <run_url>
+```
+
+For direct operator-authorized pushes to `main`, record the completed run with:
+
+```bash
+python3 -m agent_os.cli ci-snapshot-evidence \
+  --project clankeros \
+  --branch main \
+  --commit <commit_sha> \
+  --provider github-actions \
+  --status success \
+  --external-run-id <run_id> \
+  --url <run_url>
+```
+
+Both commands record operator-supplied proof only. They do not fetch GitHub
+status, run CI, deploy, push, open PRs, call providers, or mutate external
+systems.
+
 ## Proof Boundaries
 
 A passing fast local loop is not full-suite proof. A committed workflow file is

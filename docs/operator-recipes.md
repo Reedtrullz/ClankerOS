@@ -265,7 +265,21 @@ gh repo view Reedtrullz/ClankerOS --json description,repositoryTopics,homepageUr
 
 Commit only a coherent verified increment. Push only after you know the target
 remote and branch, then let the GitHub `Tests` workflow run the full suite.
+After the run passes, record direct-push proof locally:
+
+```bash
+python3 -m agent_os.cli ci-snapshot-evidence \
+  --project clankeros \
+  --branch main \
+  --commit <commit_sha> \
+  --provider github-actions \
+  --status success \
+  --external-run-id <run_id> \
+  --url <run_url>
+```
 
 Boundary: local verification is not CI proof. Pushing to GitHub is not
 deployment. A committed workflow file is not CI proof until GitHub Actions
-passes on the pushed commit. GitHub metadata readback is not runtime proof.
+passes on the pushed commit. `ci-snapshot-evidence` records operator-supplied
+proof only; it does not fetch GitHub status, deploy, push, create PRs, or
+mutate external systems. GitHub metadata readback is not runtime proof.

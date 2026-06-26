@@ -993,22 +993,53 @@ def _verification_page(root: Path) -> str:
 
 
 def _latest_ci_evidence_panel(root: Path) -> str:
-    records = _storage(root).list_recent_ci_deploy_evidence_records(limit=1)
-    if not records:
+    storage = _storage(root)
+    records = storage.list_recent_ci_deploy_evidence_records(limit=1)
+    snapshot_records = storage.list_recent_ci_snapshot_evidence_records(limit=1)
+    latest_records: list[tuple[str, Any]] = []
+    if records:
+        latest_records.append(("publication_handoff", records[0]))
+    if snapshot_records:
+        latest_records.append(("direct_public_snapshot", snapshot_records[0]))
+    latest_records.sort(
+        key=lambda item: getattr(item[1], "created_at", ""),
+        reverse=True,
+    )
+    if not latest_records:
         return _list_section(
             "Latest Recorded CI Evidence",
             [
                 "latest_ci_status: missing",
-                "next_ci_evidence_action: wait_for_github_actions_success_then_record_ci_deploy_evidence",
+                "next_ci_evidence_action: wait_for_github_actions_success_then_record_ci_snapshot_or_deploy_evidence",
                 "record_command_template: python3 -m agent_os.cli ci-deploy-evidence <github_handoff_id> --provider github-actions --status success --external-run-id <run_id> --url <run_url>",
+                "direct_snapshot_record_command_template: python3 -m agent_os.cli ci-snapshot-evidence --project clankeros --branch main --commit <commit_sha> --provider github-actions --status success --external-run-id <run_id> --url <run_url>",
                 "proof_boundary: no local CI proof record yet",
                 "github_status_fetch: none",
             ],
         )
-    record = records[0]
+    source_kind, record = latest_records[0]
+    if source_kind == "direct_public_snapshot":
+        return _list_section(
+            "Latest Recorded CI Evidence",
+            [
+                "latest_ci_source: direct_public_snapshot",
+                f"latest_ci_status: {_e(record.status)}",
+                f"latest_ci_provider: {_e(record.provider)}",
+                f"latest_ci_commit: {_e(record.commit_sha)}",
+                f"latest_ci_branch: {_e(record.branch_name)}",
+                f"latest_ci_external_run_id: {_e(record.external_run_id)}",
+                f"latest_ci_url: <a href='{_e(record.external_url)}'>{_e(record.external_url)}</a>",
+                "latest_ci_handoff: none",
+                f"latest_ci_recorded_by: {_e(record.recorded_by)}",
+                f"latest_ci_evidence_path: {_artifact_link(_repo_relative_artifact_path(root, record.evidence_path))}",
+                "proof_boundary: operator_supplied_record_only",
+                "github_status_fetch: none",
+            ],
+        )
     return _list_section(
         "Latest Recorded CI Evidence",
         [
+            "latest_ci_source: publication_handoff",
             f"latest_ci_status: {_e(record.status)}",
             f"latest_ci_provider: {_e(record.provider)}",
             f"latest_ci_commit: {_e(record.commit_sha)}",
@@ -1025,8 +1056,13 @@ def _latest_ci_evidence_panel(root: Path) -> str:
 
 
 def _ci_evidence_page(root: Path) -> str:
-    records = _storage(root).list_recent_ci_deploy_evidence_records(limit=20)
+    storage = _storage(root)
+    records = storage.list_recent_ci_deploy_evidence_records(limit=20)
+    snapshot_records = storage.list_recent_ci_snapshot_evidence_records(limit=20)
     items = [_ci_evidence_line(root, record) for record in records]
+    snapshot_items = [
+        _ci_snapshot_evidence_line(root, record) for record in snapshot_records
+    ]
     return "".join(
         [
             "<section><h1>CI Evidence Records</h1>",
@@ -1034,7 +1070,8 @@ def _ci_evidence_page(root: Path) -> str:
             _non_claim_banner(),
             _kv(
                 [
-                    ("record_count", str(len(records))),
+                    ("handoff_record_count", str(len(records))),
+                    ("snapshot_record_count", str(len(snapshot_records))),
                     ("app_network_actions_taken", "0"),
                     ("external_mutations_taken", "0"),
                     ("github_status_fetch", "none"),
@@ -1043,6 +1080,7 @@ def _ci_evidence_page(root: Path) -> str:
             "</section>",
             _ci_evidence_recording_guide(root),
             _list_section("Recent CI Evidence", items),
+            _list_section("Recent Direct Snapshot CI Evidence", snapshot_items),
             _list_section(
                 "Non-Claims",
                 [
@@ -1066,8 +1104,11 @@ def _ci_evidence_recording_guide(root: Path) -> str:
                 "latest_github_handoff: missing",
                 "next_ci_evidence_action: create_publication_handoff_then_manual_push_pr_outside_clankeros",
                 "record_command_template: unavailable_until_github_handoff_exists",
+                "direct_snapshot_record_command_template: python3 -m agent_os.cli ci-snapshot-evidence --project clankeros --branch main --commit <commit_sha> --provider github-actions --status success --external-run-id <run_id> --url <run_url>",
                 "required_operator_inputs: completed GitHub Actions run id, run URL, final status",
                 "proof_boundary: operator_supplied_record_only",
+                "direct_snapshot_boundary: use only for direct operator-authorized pushed snapshots, not publication handoffs",
+                "github_status_fetch: none",
             ],
         )
 
@@ -1100,6 +1141,25 @@ def _ci_evidence_line(root: Path, record: Any) -> str:
         f"branch={_e(record.branch_name)} "
         f"commit={_e(record.commit_sha)} "
         f"github_handoff={_e(record.github_handoff_id)} "
+        f"external_run_id: {_e(record.external_run_id)} "
+        f"url={_e(record.external_url)} "
+        f"recorded_by={_e(record.recorded_by)} "
+        f"network_actions_taken={_e(record.result_json.get('network_actions_taken', 'unknown'))} "
+        f"external_mutations_taken={_e(record.result_json.get('external_mutations_taken', 'unknown'))} "
+        f"evidence_path={_artifact_link(evidence_path)}"
+    )
+
+
+def _ci_snapshot_evidence_line(root: Path, record: Any) -> str:
+    evidence_path = _repo_relative_artifact_path(root, record.evidence_path)
+    return (
+        f"{_e(record.id)}: "
+        "source=direct_public_snapshot "
+        f"status={_e(record.status)} "
+        f"provider={_e(record.provider)} "
+        f"project={_e(record.project_id)} "
+        f"branch={_e(record.branch_name)} "
+        f"commit={_e(record.commit_sha)} "
         f"external_run_id: {_e(record.external_run_id)} "
         f"url={_e(record.external_url)} "
         f"recorded_by={_e(record.recorded_by)} "

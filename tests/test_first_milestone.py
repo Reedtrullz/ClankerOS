@@ -2094,6 +2094,121 @@ def test_ci_deploy_evidence_records_operator_supplied_proof_for_github_handoff(
     assert len(storage.list_recent_ci_deploy_evidence_records()) == 1
 
 
+def test_ci_snapshot_evidence_records_operator_supplied_direct_push_proof(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "ci-snapshot-evidence",
+                "--project",
+                "clankeros",
+                "--branch",
+                "main",
+                "--commit",
+                "abc1234",
+                "--provider",
+                "github-actions",
+                "--status",
+                "success",
+                "--external-run-id",
+                "456",
+                "--url",
+                "https://github.com/example/subject/actions/runs/456",
+                "--recorded-by",
+                "operator",
+                "--note",
+                "GitHub Actions full-suite run was green.",
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "ci_snapshot_evidence: recorded" in output
+    assert "project: clankeros" in output
+    assert "commit: abc1234" in output
+    assert "branch: main" in output
+    assert "provider: github-actions" in output
+    assert "status: success" in output
+    assert "network_actions_taken: 0" in output
+    assert "external_mutations_taken: 0" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    records = storage.list_recent_ci_snapshot_evidence_records()
+    assert len(records) == 1
+    record = records[0]
+    assert record.project_id == "clankeros"
+    assert record.commit_sha == "abc1234"
+    assert record.branch_name == "main"
+    assert record.provider == "github-actions"
+    assert record.external_run_id == "456"
+    assert record.status == "success"
+    assert record.recorded_by == "operator"
+    assert record.result_json["source"]["source_kind"] == "direct_public_snapshot"
+    assert record.result_json["network_actions_taken"] == 0
+    assert record.result_json["external_mutations_taken"] == 0
+    assert Path(record.evidence_path).exists()
+
+    evidence = json.loads(Path(record.evidence_path).read_text(encoding="utf-8"))
+    assert evidence["kind"] == "ci_snapshot_evidence"
+    assert evidence["source"]["commit_sha"] == "abc1234"
+    assert "publication handoff" in " ".join(evidence["non_claims"])
+
+    dashboard_path = generate_static_dashboard(tmp_path)
+    dashboard = dashboard_path.read_text(encoding="utf-8")
+    assert "### Direct Snapshot CI Evidence" in dashboard
+    assert record.id in dashboard
+    assert "github-actions" in dashboard
+    assert "abc1234" in dashboard
+
+    ci_evidence = render_local_app_route(tmp_path, "/ci-evidence")
+    assert ci_evidence.status == 200
+    assert "Recent Direct Snapshot CI Evidence" in ci_evidence.body
+    assert record.id in ci_evidence.body
+    assert "source=direct_public_snapshot" in ci_evidence.body
+    assert "latest_github_handoff: missing" in ci_evidence.body
+    assert "direct_snapshot_record_command_template" in ci_evidence.body
+    verification = render_local_app_route(tmp_path, "/verification")
+    assert verification.status == 200
+    assert "latest_ci_source: direct_public_snapshot" in verification.body
+    assert "latest_ci_handoff: none" in verification.body
+    assert "latest_ci_external_run_id: 456" in verification.body
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "ci-snapshot-evidence",
+                "--project",
+                "clankeros",
+                "--branch",
+                "main",
+                "--commit",
+                "abc1234",
+                "--provider",
+                "github-actions",
+                "--status",
+                "success",
+                "--external-run-id",
+                "456",
+                "--url",
+                "https://github.com/example/subject/actions/runs/456",
+            ]
+        )
+        == 0
+    )
+    repeat_output = capsys.readouterr().out
+    assert "ci_snapshot_evidence: already_recorded" in repeat_output
+    assert len(storage.list_recent_ci_snapshot_evidence_records()) == 1
+
+
 def test_profiles_command_creates_safe_defaults_and_profile_show(
     tmp_path: Path,
     capsys,
@@ -3534,6 +3649,8 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "CI Evidence Recording Guide" in ci_evidence_without_handoff.body
     assert "latest_github_handoff: missing" in ci_evidence_without_handoff.body
     assert "record_command_template: unavailable_until_github_handoff_exists" in ci_evidence_without_handoff.body
+    assert "direct_snapshot_record_command_template" in ci_evidence_without_handoff.body
+    assert "ci-snapshot-evidence" in ci_evidence_without_handoff.body
     assert "proof_boundary: operator_supplied_record_only" in ci_evidence_without_handoff.body
     docs = tmp_path / "docs"
     docs.mkdir(exist_ok=True)

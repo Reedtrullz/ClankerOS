@@ -514,6 +514,11 @@ def generate_static_dashboard(root: Path) -> Path:
             ci_deploy_evidence_records = (
                 storage.list_recent_ci_deploy_evidence_records(limit=5)
             )
+        ci_snapshot_evidence_records = []
+        if _table_exists(connection, "ci_snapshot_evidence_records"):
+            ci_snapshot_evidence_records = (
+                storage.list_recent_ci_snapshot_evidence_records(limit=5)
+            )
         profiles = []
         if _table_exists(connection, "profiles"):
             profiles = storage.list_profiles()
@@ -2344,6 +2349,21 @@ def generate_static_dashboard(root: Path) -> Path:
                 f"handoff={record.github_handoff_id} commit={record.commit_sha} "
                 f"external_run={record.external_run_id} url={record.external_url} "
                 f"network_actions_taken={record.result_json.get('network_actions_taken', 'unknown')} "
+                f"evidence={_relative_to_root(root, record.evidence_path)}"
+            )
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "### Direct Snapshot CI Evidence", ""])
+    if ci_snapshot_evidence_records:
+        for record in ci_snapshot_evidence_records:
+            lines.append(
+                f"- {record.id}: status={record.status} provider={record.provider} "
+                f"project={record.project_id} branch={record.branch_name} "
+                f"commit={record.commit_sha} external_run={record.external_run_id} "
+                f"url={record.external_url} "
+                f"network_actions_taken={record.result_json.get('network_actions_taken', 'unknown')} "
+                f"external_mutations_taken={record.result_json.get('external_mutations_taken', 'unknown')} "
                 f"evidence={_relative_to_root(root, record.evidence_path)}"
             )
     else:

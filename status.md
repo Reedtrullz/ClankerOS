@@ -1,5 +1,17 @@
 # Status
 
+## 2026-06-26 Direct Snapshot CI Evidence
+
+- Added `ci-snapshot-evidence` for operator-supplied GitHub Actions proof from
+  direct pushed snapshots. This complements `ci-deploy-evidence`, which remains
+  tied to local GitHub handoff packets.
+- Direct snapshot records are stored separately, surfaced in `/verification`,
+  `/ci-evidence`, and the static dashboard, and keep
+  `network_actions_taken=0` plus `external_mutations_taken=0`.
+- Non-claims: this does not fetch GitHub status, run CI, deploy, push, create
+  PRs, call providers, or mutate external systems. It records proof only after
+  an operator supplies the completed run id, URL, status, branch, and commit.
+
 ## 2026-06-26 Split GitHub Smoke And Full-Suite Jobs
 
 - Split `.github/workflows/tests.yml` into a fast `smoke` job and a dependent

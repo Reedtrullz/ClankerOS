@@ -73,6 +73,7 @@ from agent_os.ci_deploy_proof import (
     write_ci_deploy_proof_checklist,
 )
 from agent_os.ci_deploy_evidence import record_ci_deploy_evidence
+from agent_os.ci_snapshot_evidence import record_ci_snapshot_evidence
 from agent_os.context_pack import ContextPackError, generate_context_pack
 from agent_os.coder_prep import (
     CoderPrepError,
@@ -2068,6 +2069,20 @@ def build_parser() -> argparse.ArgumentParser:
     ci_deploy_evidence_parser.add_argument("--url", required=True)
     ci_deploy_evidence_parser.add_argument("--recorded-by", default="operator")
     ci_deploy_evidence_parser.add_argument("--note", default="")
+
+    ci_snapshot_evidence_parser = subparsers.add_parser(
+        "ci-snapshot-evidence",
+        help="Record operator-supplied CI evidence for a direct pushed snapshot.",
+    )
+    ci_snapshot_evidence_parser.add_argument("--project", default="clankeros")
+    ci_snapshot_evidence_parser.add_argument("--branch", default="main")
+    ci_snapshot_evidence_parser.add_argument("--commit", required=True)
+    ci_snapshot_evidence_parser.add_argument("--provider", required=True)
+    ci_snapshot_evidence_parser.add_argument("--status", required=True)
+    ci_snapshot_evidence_parser.add_argument("--external-run-id", required=True)
+    ci_snapshot_evidence_parser.add_argument("--url", required=True)
+    ci_snapshot_evidence_parser.add_argument("--recorded-by", default="operator")
+    ci_snapshot_evidence_parser.add_argument("--note", default="")
 
     resolve_incident = subparsers.add_parser(
         "resolve-incident",
@@ -7447,6 +7462,38 @@ def main(argv: list[str] | None = None) -> int:
         print(f"external_run_id: {record.external_run_id}")
         print(f"external_url: {record.external_url}")
         print(f"network_actions_taken: {record.result_json['network_actions_taken']}")
+        print(f"evidence: {record.evidence_path}")
+        return 0
+
+    if args.command == "ci-snapshot-evidence":
+        try:
+            result = record_ci_snapshot_evidence(
+                root,
+                project_id=args.project,
+                branch_name=args.branch,
+                commit_sha=args.commit,
+                provider=args.provider,
+                status=args.status,
+                external_run_id=args.external_run_id,
+                external_url=args.url,
+                recorded_by=args.recorded_by,
+                note=args.note,
+            )
+        except ValueError as error:
+            print(f"ci_snapshot_evidence_failed: {error}")
+            return 1
+        record = result.record
+        print(f"ci_snapshot_evidence: {result.status}")
+        print(f"record_id: {record.id}")
+        print(f"project: {record.project_id}")
+        print(f"commit: {record.commit_sha}")
+        print(f"branch: {record.branch_name}")
+        print(f"provider: {record.provider}")
+        print(f"status: {record.status}")
+        print(f"external_run_id: {record.external_run_id}")
+        print(f"external_url: {record.external_url}")
+        print(f"network_actions_taken: {record.result_json['network_actions_taken']}")
+        print(f"external_mutations_taken: {record.result_json['external_mutations_taken']}")
         print(f"evidence: {record.evidence_path}")
         return 0
 
