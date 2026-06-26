@@ -1,5 +1,30 @@
 # Status
 
+## 2026-06-26 Local App Demo Next Action Panel
+
+- Upgraded `/demo` with a read-only `Demo Next Action` panel that derives the
+  selected fixture run's next local action from existing commit/publication
+  records, then links to the scoped workflow, run detail, `/approvals`, and
+  `/inbox` surfaces.
+- The panel keeps the first dogfooding route from becoming a checklist-only
+  screen: the operator can now see `demo_continue_from` and jump to the
+  right local surface before walking the rest of the manual browser script.
+- Focused red coverage first failed because `/demo` did not render
+  `Demo Next Action`; the demo scenario now shows
+  `demo_continue_from: request_commit_for_reviewed_run` initially and
+  `demo_continue_from: manual_operator_push_pr_outside_clankeros` after the
+  local publication handoff is prepared.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario` -> red before implementation, then `1 passed, 497 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario or local_app_routes_render_modern_workflow_and_health or local_app_cli_commands_and_bind_safety"` -> `3 passed, 495 deselected`
+  - `python3 -m agent_os.cli app-smoke-test` -> rendered the core local app routes with status 200 and zero provider/network/external-mutation counters.
+  - `git diff --check`
+- Non-claims: this is a read-only demo/navigation improvement only; it does
+  not execute work, approve requests, commit, push, create PRs, deploy, call
+  providers, fetch GitHub status, execute arbitrary commands, or perform
+  non-loopback network actions from the local app.
+
 ## 2026-06-26 Local App Workflow Continuation Links
 
 - Upgraded scoped `/workflow?delegation_id=<id>` and

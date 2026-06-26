@@ -3548,6 +3548,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "publication_handoff_status" in demo.body
     assert "manual_push_pr_status" in demo.body
     assert "manual_push_pr_status: not_ready" in demo.body
+    assert "Demo Next Action" in demo.body
+    assert "demo_continue_from: request_commit_for_reviewed_run" in demo.body
+    assert "workflow_surface" in demo.body
+    assert "run_action_surface" in demo.body
+    assert "approvals_surface" in demo.body
+    assert "inbox_surface" in demo.body
+    assert "external_effects_created: false" in demo.body
 
     dashboard = render_local_app_route(tmp_path, "/")
     assert dashboard.status == 200
@@ -4030,6 +4037,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "publication_approval_status: ready_for_operator" in demo_after_handoff.body
     assert "publication_handoff_status: available" in demo_after_handoff.body
     assert "manual_push_pr_status: ready_outside_clankeros" in demo_after_handoff.body
+    assert "demo_continue_from: manual_operator_push_pr_outside_clankeros" in demo_after_handoff.body
+    assert "manual_boundary: outside_clankeros" in demo_after_handoff.body
 
 
 def test_local_app_cli_commands_and_bind_safety(

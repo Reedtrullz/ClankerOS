@@ -144,11 +144,12 @@ workflow, delegation, coder worktree run, review artifact, inbox, approvals,
 and health page. The same page includes a manual browser script for the first
 dogfooding pass through commit request, commit approval, typed local commit,
 publication request, publication approval, and publication handoff. The
-`Demo Browser Progress` section reads existing local commit/publication
-records for the selected fixture run and shows the current status for commit
-request, commit approval, local commit, publication request, publication
-approval, publication handoff, and the final manual push/PR boundary outside
-ClankerOS.
+`Demo Next Action` panel and `Demo Browser Progress` section read existing
+local commit/publication records for the selected fixture run. Together they
+show the current status for commit request, commit approval, local commit,
+publication request, publication approval, publication handoff, and the final
+manual push/PR boundary outside ClankerOS, while linking back to the relevant
+local workflow, run, approvals, and inbox surfaces.
 
 ## Verification Handoff
 

@@ -115,8 +115,8 @@ Core layers for the bootstrap:
   recommendation that points to the next operator surface, and a state-aware
   `/demo` launchpad that links the fixture project, selected workflow,
   delegation, coder worktree run, review artifact, inbox, approvals, first
-  manual browser dogfooding script, and a read-only browser-progress checklist
-  for commit/publication handoff status.
+  manual browser dogfooding script, a read-only next-action panel, and a
+  browser-progress checklist for commit/publication handoff status.
   The app reads existing SQLite state and repo artifacts, writes a local
   health/status artifact with current warning readbacks, and exposes only
   explicit local forms for safe

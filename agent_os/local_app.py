@@ -2219,6 +2219,7 @@ def _demo_dogfooding_state(root: Path) -> str:
             "</section>",
             _list_section("Demo Artifacts", artifact_lines),
             _list_section("Pending Demo Approvals", approval_lines, "/approvals"),
+            _demo_next_action_panel(root, selected_run.id if selected_run else ""),
             _demo_browser_progress(root, selected_run.id if selected_run else ""),
             _manual_browser_script(
                 {
@@ -2233,16 +2234,81 @@ def _demo_dogfooding_state(root: Path) -> str:
 
 
 def _demo_browser_progress(root: Path, run_id: str) -> str:
+    progress = _demo_progress_state(root, run_id)
     if not run_id:
         return _list_section(
             "Demo Browser Progress",
             [
                 "selected_run_status: missing",
-                "next_operator_step: run demo scenario and select a coder worktree run",
+                f"next_operator_step: {_e(progress['next_step'])}",
                 "network_actions_taken: 0",
                 "external_mutations_taken: 0",
             ],
         )
+    lines = [
+        f"selected_run_id: {_e(run_id)}",
+        f"commit_request_status: {_e(progress['commit_status'])}",
+        f"commit_approval_status: {_e(progress['commit_status'])}",
+        f"local_commit_status: {_e(progress['local_commit_status'])}",
+        f"publication_request_status: {_e(progress['publication_status'])}",
+        f"publication_approval_status: {_e(progress['publication_status'])}",
+        f"publication_handoff_status: {_e(progress['publication_handoff_status'])}",
+        f"manual_push_pr_status: {_e(progress['manual_status'])}",
+        f"next_operator_step: {_e(progress['next_step'])}",
+        "network_actions_taken: 0",
+        "external_mutations_taken: 0",
+    ]
+    return _list_section("Demo Browser Progress", lines, f"/runs/{quote(run_id)}")
+
+
+def _demo_next_action_panel(root: Path, run_id: str) -> str:
+    progress = _demo_progress_state(root, run_id)
+    if not run_id:
+        return _list_section(
+            "Demo Next Action",
+            [
+                f"demo_continue_from: {_e(progress['next_step'])}",
+                "demo_command: python3 -m agent_os.cli demo-app-scenario",
+                "external_effects_created: false",
+                "network_actions_taken_by_app: 0",
+            ],
+        )
+
+    next_step = progress["next_step"]
+    action_hints = {
+        "request_commit_for_reviewed_run": "request the local commit gate from the run detail page",
+        "approve_or_reject_commit_request": "decide the pending commit request on approvals",
+        "commit_approved_worktree": "type the commit message and create the local worktree commit from the run detail page",
+        "request_publication_handoff": "request the publication handoff gate from the run detail page",
+        "approve_or_reject_publication_request": "decide the pending publication request on approvals",
+        "prepare_publication_handoff": "prepare the local publication handoff from the run detail page",
+        "manual_operator_push_pr_outside_clankeros": "use the publication handoff outside ClankerOS",
+    }
+    lines = [
+        f"demo_continue_from: {_e(next_step)}",
+        f"operator_surface_hint: {_e(action_hints.get(next_step, 'review demo state'))}",
+        f"workflow_surface: <a href='/workflow?run_id={quote(run_id)}'>/workflow?run_id={_e(run_id)}</a>",
+        f"run_action_surface: <a href='/runs/{quote(run_id)}'>/runs/{_e(run_id)}</a>",
+        "approvals_surface: <a href='/approvals'>/approvals</a>",
+        "inbox_surface: <a href='/inbox'>/inbox</a>",
+        "external_effects_created: false",
+        "network_actions_taken_by_app: 0",
+    ]
+    if next_step == "manual_operator_push_pr_outside_clankeros":
+        lines.append("manual_boundary: outside_clankeros")
+    return _list_section("Demo Next Action", lines)
+
+
+def _demo_progress_state(root: Path, run_id: str) -> dict[str, str]:
+    if not run_id:
+        return {
+            "commit_status": "not_requested",
+            "local_commit_status": "missing",
+            "publication_status": "not_requested",
+            "publication_handoff_status": "missing",
+            "manual_status": "not_ready",
+            "next_step": "run demo scenario and select a coder worktree run",
+        }
     commit_records = [
         item
         for item in list_coder_worktree_commit_approvals(root, limit=50)
@@ -2282,20 +2348,14 @@ def _demo_browser_progress(root: Path, run_id: str) -> str:
         publication_status=publication_status,
         publication_handoff_status=publication_handoff_status,
     )
-    lines = [
-        f"selected_run_id: {_e(run_id)}",
-        f"commit_request_status: {_e(commit_status)}",
-        f"commit_approval_status: {_e(commit_status)}",
-        f"local_commit_status: {_e(local_commit_status)}",
-        f"publication_request_status: {_e(publication_status)}",
-        f"publication_approval_status: {_e(publication_status)}",
-        f"publication_handoff_status: {_e(publication_handoff_status)}",
-        f"manual_push_pr_status: {_e(manual_status)}",
-        f"next_operator_step: {_e(next_step)}",
-        "network_actions_taken: 0",
-        "external_mutations_taken: 0",
-    ]
-    return _list_section("Demo Browser Progress", lines, f"/runs/{quote(run_id)}")
+    return {
+        "commit_status": commit_status,
+        "local_commit_status": local_commit_status,
+        "publication_status": publication_status,
+        "publication_handoff_status": publication_handoff_status,
+        "manual_status": manual_status,
+        "next_step": next_step,
+    }
 
 
 def _preferred_status(items: list[Any], statuses: list[str], default: str) -> str:
