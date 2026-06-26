@@ -4683,7 +4683,50 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "artifact_renderer</dt><dd>markdown_safe_html" in markdown.body
     assert "artifact_raw_filesystem_browsing</dt><dd>false" in markdown.body
     assert "artifact_content_executed</dt><dd>false" in markdown.body
+    assert "Remember Artifact" in markdown.body
+    assert "remember_artifact_form_available</dt><dd>true" in markdown.body
+    assert "remember_artifact_get_writes</dt><dd>false" in markdown.body
+    assert "remember_artifact_external_effects_created</dt><dd>false" in markdown.body
+    assert "action='/actions/save-workspace'" in markdown.body
+    assert "name='last_viewed_artifact' value='docs/sample.md'" in markdown.body
+    assert "name='return_to' value='/artifacts?path=docs/sample.md'" in markdown.body
     assert "<h2 class='artifact-markdown-heading'>Sample</h2>" in markdown.body
+    remember_artifact = render_local_app_route(
+        tmp_path,
+        "/actions/save-workspace",
+        method="POST",
+        form={
+            "open_project": [""],
+            "open_goal": [""],
+            "filters": ["artifact:docs/sample.md"],
+            "expanded_panels": ["artifacts"],
+            "last_viewed_artifact": ["docs/sample.md"],
+            "updated_by": ["operator-artifact"],
+            "return_to": ["/artifacts?path=docs/sample.md"],
+        },
+    )
+    assert remember_artifact.status == 409
+    assert "Confirm save-workspace" in remember_artifact.body
+    remembered = render_local_app_route(
+        tmp_path,
+        "/actions/save-workspace",
+        method="POST",
+        form={
+            "open_project": [""],
+            "open_goal": [""],
+            "filters": ["artifact:docs/sample.md"],
+            "expanded_panels": ["artifacts"],
+            "last_viewed_artifact": ["docs/sample.md"],
+            "updated_by": ["operator-artifact"],
+            "return_to": ["/artifacts?path=docs/sample.md"],
+            "confirm": ["yes"],
+        },
+    )
+    assert remembered.status == 200
+    assert "workspace_saved" in remembered.body
+    workspace_after_artifact = render_local_app_route(tmp_path, "/workspace")
+    assert "last_viewed_artifact</dt><dd>docs/sample.md" in workspace_after_artifact.body
+    assert "operator-artifact" in workspace_after_artifact.body
     json_response = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.json")
     assert json_response.status == 200
     assert "json" in json_response.body

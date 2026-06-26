@@ -1,5 +1,25 @@
 # Status
 
+## 2026-06-26 Artifact Viewer Remember Resume Anchor
+
+- Added a confirmed `Remember Artifact` workspace form to
+  `/artifacts?path=...`. The artifact viewer now preserves existing workspace
+  project/goal context, pre-fills `last_viewed_artifact` with the bounded
+  artifact path, and returns to the same viewer after confirmation.
+- The viewer remains read-only on GET and reports
+  `remember_artifact_get_writes=false` plus
+  `remember_artifact_external_effects_created=false`. This does not browse raw
+  filesystem paths, execute artifact content, call providers, fetch GitHub
+  status, push, create PRs, deploy, or mutate external systems beyond the
+  explicit local workspace save.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_artifact_viewer_is_read_only_and_bounded`
+    -> `1 passed, 509 deselected`
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Goal Operator Notes Timeline
 
 - Saved goal operator notes now become first-class timeline and Activity Log

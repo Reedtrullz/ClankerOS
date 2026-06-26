@@ -5980,9 +5980,41 @@ def _artifact_viewer(
             _render_artifact_content(text, render_family, renderer),
             "<p class='muted'>Artifact content is rendered as inert text and is never executed.</p>",
             "</section>",
+            _remember_artifact_section(root, relative_path, current_path),
         ]
     )
     return _html_page(root, "Artifact", body, current_path=current_path)
+
+
+def _remember_artifact_section(root: Path, relative_path: str, current_path: str) -> str:
+    workspace = _load_workspace_state(root)
+    return "".join(
+        [
+            "<section><h2>Remember Artifact</h2>",
+            "<p class='muted'>Store this artifact as the local resume anchor for the next ClankerOS session. The viewer does not write on page load.</p>",
+            _kv(
+                [
+                    ("remember_artifact_form_available", "true"),
+                    ("remember_artifact_path", relative_path),
+                    ("remember_artifact_get_writes", "false"),
+                    ("remember_artifact_external_effects_created", "false"),
+                ]
+            ),
+            _input_form(
+                "save-workspace",
+                {"return_to": current_path},
+                {
+                    "open_project": workspace.get("open_project", ""),
+                    "open_goal": workspace.get("open_goal", ""),
+                    "filters": f"artifact:{relative_path}",
+                    "expanded_panels": workspace.get("expanded_panels", "") or "artifacts",
+                    "last_viewed_artifact": relative_path,
+                    "updated_by": "operator-artifact",
+                },
+            ),
+            "</section>",
+        ]
+    )
 
 
 def resolve_artifact_path(root: Path, relative_path: str) -> Path:

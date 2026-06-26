@@ -161,7 +161,9 @@ Core layers for the bootstrap:
   viewer now reports render family/renderer posture and renders Markdown as
   escaped headings/lists/paragraphs, JSON as pretty-printed text, patch/diff
   artifacts with scan-friendly line classes, and text/log artifacts as inert
-  text while keeping content execution disabled. Every page shares
+  text while keeping content execution disabled. It also exposes a confirmed
+  local `save-workspace` form so the operator can remember the current artifact
+  as the next-session resume anchor without writing on GET. Every page shares
   a browser operator shell with breadcrumbs, recent local items, a command
   palette, keyboard shortcuts, and a theme toggle. The workflow page can be
   scoped with a
