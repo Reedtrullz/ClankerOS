@@ -2139,6 +2139,18 @@ def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -
         form = _goal_approve_worktree_form(state)
     elif next_action.action == "Create commit request":
         form = _goal_commit_request_form(state["root"], state)
+    elif next_action.action == "Approve commit":
+        form = _goal_approve_commit_form(state)
+    elif next_action.action == "Commit approved worktree":
+        form = _goal_commit_worktree_form(state)
+    elif next_action.action == "Create publication request":
+        form = _goal_publication_request_form(state)
+    elif next_action.action == "Approve publication":
+        form = _goal_approve_publication_form(state)
+    elif next_action.action == "Create publication handoff":
+        form = _goal_publication_handoff_form(state)
+    elif next_action.action == "Manual publish outside ClankerOS":
+        form = _goal_manual_publish_panel(state["root"], state)
     return (
         "<section><h2>Next Action</h2>"
         + _kv(
@@ -2195,6 +2207,111 @@ def _goal_commit_request_form(root: Path, state: dict[str, Any]) -> str:
     )
 
 
+def _goal_approve_commit_form(state: dict[str, Any]) -> str:
+    approval = _goal_pending_commit_approval(state)
+    if approval is None:
+        return "<p class='muted'>approve_commit_form_status: unavailable_until_pending_commit_approval_exists</p>"
+    return "".join(
+        [
+            "<h3>Approve Commit</h3>",
+            "<p class='muted'>Records a local approval decision for the reviewed commit request. It does not stage, commit, push, create a PR, deploy, call a provider, or use the network.</p>",
+            _input_form(
+                "approve-coder-commit",
+                {"approval_id": approval.id},
+                {
+                    "decided_by": "operator",
+                    "note": "Approved local commit from goal page",
+                },
+            ),
+        ]
+    )
+
+
+def _goal_commit_worktree_form(state: dict[str, Any]) -> str:
+    approval = _goal_approved_commit_approval(state)
+    if approval is None:
+        return "<p class='muted'>commit_worktree_form_status: unavailable_until_commit_approval_exists</p>"
+    return "".join(
+        [
+            "<h3>Commit Approved Worktree</h3>",
+            "<p class='muted'>Creates one local commit only inside the isolated coder worktree after the existing backend gate re-checks review, source hashes, branch/HEAD, changed files, bounded-file validation, and verifier state. It does not push, create a PR, deploy, call a provider, or use the network.</p>",
+            _input_form(
+                "commit-coder-worktree",
+                {"run_id": approval.run_id, "committed_by": "operator"},
+                {"message": approval.commit_message},
+            ),
+        ]
+    )
+
+
+def _goal_publication_request_form(state: dict[str, Any]) -> str:
+    approval = _goal_committed_worktree_approval(state)
+    if approval is None:
+        return "<p class='muted'>publication_request_form_status: unavailable_until_local_commit_exists</p>"
+    return "".join(
+        [
+            "<h3>Create Publication Request</h3>",
+            "<p class='muted'>Creates a pending local publication approval request from the isolated local commit. It does not push, create a PR, deploy, call a provider, or use the network.</p>",
+            _input_form(
+                "coder-publication-request",
+                {
+                    "run_id": approval.run_id,
+                    "requested_by": "operator",
+                    "remote": "origin",
+                    "target_branch": "main",
+                },
+                {"note": "Request publication handoff from goal page"},
+            ),
+        ]
+    )
+
+
+def _goal_approve_publication_form(state: dict[str, Any]) -> str:
+    publication = _goal_pending_publication(state)
+    if publication is None:
+        return "<p class='muted'>approve_publication_form_status: unavailable_until_pending_publication_approval_exists</p>"
+    return "".join(
+        [
+            "<h3>Approve Publication</h3>",
+            "<p class='muted'>Records a local approval decision to prepare publication handoff artifacts. It does not push, create a PR, deploy, call a provider, or use the network.</p>",
+            _input_form(
+                "approve-coder-publication",
+                {"publication_id": publication.id},
+                {
+                    "decided_by": "operator",
+                    "note": "Approved publication handoff from goal page",
+                },
+            ),
+        ]
+    )
+
+
+def _goal_publication_handoff_form(state: dict[str, Any]) -> str:
+    publication = _goal_approved_publication(state)
+    if publication is None:
+        return "<p class='muted'>publication_handoff_form_status: unavailable_until_publication_approval_exists</p>"
+    return "".join(
+        [
+            "<h3>Create Publication Handoff</h3>",
+            "<p class='muted'>Writes local publication handoff and PR-body artifacts with suggested manual commands only. It does not push, create a PR, deploy, call a provider, or use the network.</p>",
+            _form("coder-publication-handoff", {"run_id": publication.run_id}),
+        ]
+    )
+
+
+def _goal_manual_publish_panel(root: Path, state: dict[str, Any]) -> str:
+    publication = _goal_ready_publication(state)
+    if publication is None:
+        return "<p class='muted'>manual_publish_status: unavailable_until_publication_handoff_ready</p>"
+    return "".join(
+        [
+            "<h3>Manual Publish Boundary</h3>",
+            "<p class='muted'>Publication handoff is ready. Push and draft PR creation remain outside ClankerOS and must be run manually by the operator.</p>",
+            _publication_handoff_commands_panel(root, publication),
+        ]
+    )
+
+
 def _goal_pending_worktree_approval(state: dict[str, Any]) -> Any | None:
     return next(
         (
@@ -2202,6 +2319,56 @@ def _goal_pending_worktree_approval(state: dict[str, Any]) -> Any | None:
             for item in state.get("worktree_approvals", [])
             if item.status == "pending_operator_approval"
         ),
+        None,
+    )
+
+
+def _goal_pending_commit_approval(state: dict[str, Any]) -> Any | None:
+    return next(
+        (
+            item
+            for item in state.get("commit_approvals", [])
+            if item.status == "pending_operator_approval"
+        ),
+        None,
+    )
+
+
+def _goal_approved_commit_approval(state: dict[str, Any]) -> Any | None:
+    return next(
+        (item for item in state.get("commit_approvals", []) if item.status == "approved"),
+        None,
+    )
+
+
+def _goal_committed_worktree_approval(state: dict[str, Any]) -> Any | None:
+    return next(
+        (item for item in state.get("commit_approvals", []) if item.status == "committed"),
+        None,
+    )
+
+
+def _goal_pending_publication(state: dict[str, Any]) -> Any | None:
+    return next(
+        (
+            item
+            for item in state.get("publications", [])
+            if item.status == "pending_operator_approval"
+        ),
+        None,
+    )
+
+
+def _goal_approved_publication(state: dict[str, Any]) -> Any | None:
+    return next(
+        (item for item in state.get("publications", []) if item.status == "approved"),
+        None,
+    )
+
+
+def _goal_ready_publication(state: dict[str, Any]) -> Any | None:
+    return next(
+        (item for item in state.get("publications", []) if item.status == "ready_for_operator"),
         None,
     )
 

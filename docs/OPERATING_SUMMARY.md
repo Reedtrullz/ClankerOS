@@ -103,9 +103,15 @@ Core layers for the bootstrap:
   completes, the Goal Next Action card exposes confirmed `coder-prep`,
   `coder-worktree-plan`, and `coder-worktree-approval` forms at the matching
   workflow phases, then exposes confirmed `approve-coder-worktree` and
-  `coder-commit-request` forms when the goal is waiting on those gates. These
-  write local artifacts, approval rows, or approval decisions without creating
-  worktrees, running commands, committing, pushing, creating PRs, deploying,
+  `coder-commit-request` forms when the goal is waiting on those gates. After
+  a commit request exists, the Goal Next Action card also exposes confirmed
+  `approve-coder-commit`, `commit-coder-worktree`,
+  `coder-publication-request`, `approve-coder-publication`, and
+  `coder-publication-handoff` forms at the matching phases, then shows the
+  manual publish boundary and copy-only publication handoff commands once the
+  handoff is ready. These write local artifacts, approval rows, approval
+  decisions, or one isolated local worktree commit without running
+  delegations or worktrees from the browser, pushing, creating PRs, deploying,
   calling providers, or mutating external systems. Goal pages also
   include a typed `Goal Artifact Explorer` that groups goal-linked Markdown,
   JSON, Patch/Diff, and Text/Log artifacts and links them through the bounded

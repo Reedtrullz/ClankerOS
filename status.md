@@ -1,5 +1,21 @@
 # Status
 
+## 2026-06-26 Goal Commit And Publication Gate Actions
+
+- Extended the Goal Next Action card beyond commit request creation. When the
+  current goal is waiting on later gates, `/goals/<goal_id>` now renders
+  confirmed local forms for `approve-coder-commit`,
+  `commit-coder-worktree`, `coder-publication-request`,
+  `approve-coder-publication`, and `coder-publication-handoff`.
+- Once the publication handoff is ready, the same card shows the manual
+  publish boundary plus copy-only suggested push and draft-PR commands through
+  the existing handoff panel.
+- Non-claims: this does not expose browser-side delegation execution,
+  browser-side worktree execution, automatic approval, push, PR creation,
+  deploy, provider calls, network actions, or external mutation. The local
+  commit form still uses the existing backend gate and creates one isolated
+  local worktree commit only after approval.
+
 ## 2026-06-26 Goal Approval And Commit Request Actions
 
 - Extended the Goal Next Action card with confirmed local forms for

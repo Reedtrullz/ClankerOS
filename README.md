@@ -163,9 +163,14 @@ card can also create the local coder prep packet, create the approval-gated
 worktree plan, and request the pending worktree approval with confirmed
 browser forms. It can then approve the pending worktree request and create the
 review-gated commit request once a completed run has a passing review gate.
-Those steps write local artifacts, local approval rows, or local approval
-decisions only; they do not create worktrees, run commands, commit, push,
-create PRs, deploy, call providers, or use the network. Use Home or `/workspace` to
+After that, the same Goal card can approve the commit request, create the
+isolated local worktree commit, request and approve publication handoff
+preparation, and write the local publication handoff/PR-body artifacts. Push
+and draft PR creation remain copy-only/manual outside ClankerOS.
+Those steps write local artifacts, local approval rows, local approval
+decisions, or one isolated local worktree commit only; they do not run
+delegations or worktrees from the browser, push, create PRs, deploy, call
+providers, or use the network. Use Home or `/workspace` to
 save and restore open project, open goal, filters, expanded panels, and last
 viewed artifact in `.clanker/app/workspace.json`.
 Use the goal page note form for day-to-day operator breadcrumbs, then find the

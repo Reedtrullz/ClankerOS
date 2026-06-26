@@ -5558,6 +5558,159 @@ def test_goal_next_action_card_exposes_reviewed_commit_request_form(
     assert "create a PR, deploy, call a provider, or use the network" in after_review.body
 
 
+def test_goal_next_action_card_exposes_commit_publication_gate_forms(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    source_run_id, delegation_id, _approval_id, run_id, _evidence_dir, _worktree_path, _repo_path = (
+        _run_completed_coder_worktree(tmp_path, capsys)
+    )
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    delegation = storage.get_subagent_delegation(delegation_id)
+    assert delegation is not None
+    goal_id = delegation.parent_goal_id
+
+    assert main(["--root", str(tmp_path), "review", source_run_id]) == 0
+    capsys.readouterr()
+
+    commit_message = "Implement bounded change from approved worktree run"
+    commit_request = render_local_app_route(
+        tmp_path,
+        "/actions/coder-commit-request",
+        method="POST",
+        form={
+            "run_id": [run_id],
+            "message": [commit_message],
+            "note": ["Goal page commit request"],
+            "confirm": ["yes"],
+        },
+    )
+    assert commit_request.status == 200
+    commit_approval = next(
+        item
+        for item in list_coder_worktree_commit_approvals(
+            tmp_path,
+            status="pending_operator_approval",
+            limit=10,
+        )
+        if item.run_id == run_id
+    )
+
+    pending_commit_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert pending_commit_goal.status == 200
+    assert "recommended_action</dt><dd>Approve commit" in pending_commit_goal.body
+    assert "next_action_form_available</dt><dd>true" in pending_commit_goal.body
+    assert "Approve Commit" in pending_commit_goal.body
+    assert "action='/actions/approve-coder-commit'" in pending_commit_goal.body
+    assert f"name='approval_id' value='{commit_approval.id}'" in pending_commit_goal.body
+    assert "Approved local commit from goal page" in pending_commit_goal.body
+    assert "does not stage, commit, push" in pending_commit_goal.body
+
+    approve_commit = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-commit",
+        method="POST",
+        form={
+            "approval_id": [commit_approval.id],
+            "note": ["Approve goal page commit"],
+            "confirm": ["yes"],
+        },
+    )
+    assert approve_commit.status == 200
+    approved_commit_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert approved_commit_goal.status == 200
+    assert "recommended_action</dt><dd>Commit approved worktree" in approved_commit_goal.body
+    assert "Commit Approved Worktree" in approved_commit_goal.body
+    assert "action='/actions/commit-coder-worktree'" in approved_commit_goal.body
+    assert f"name='run_id' value='{run_id}'" in approved_commit_goal.body
+    assert "Creates one local commit only inside the isolated coder worktree" in approved_commit_goal.body
+
+    commit_response = render_local_app_route(
+        tmp_path,
+        "/actions/commit-coder-worktree",
+        method="POST",
+        form={
+            "run_id": [run_id],
+            "message": [commit_message],
+            "committed_by": ["operator"],
+            "confirm": ["yes"],
+        },
+    )
+    assert commit_response.status == 200
+    publication_request_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert publication_request_goal.status == 200
+    assert "recommended_action</dt><dd>Create publication request" in publication_request_goal.body
+    assert "Create Publication Request" in publication_request_goal.body
+    assert "action='/actions/coder-publication-request'" in publication_request_goal.body
+    assert f"name='run_id' value='{run_id}'" in publication_request_goal.body
+    assert "Request publication handoff from goal page" in publication_request_goal.body
+    assert "does not push, create a PR, deploy" in publication_request_goal.body
+
+    publication_request = render_local_app_route(
+        tmp_path,
+        "/actions/coder-publication-request",
+        method="POST",
+        form={
+            "run_id": [run_id],
+            "remote": ["origin"],
+            "target_branch": ["main"],
+            "note": ["Goal page publication request"],
+            "confirm": ["yes"],
+        },
+    )
+    assert publication_request.status == 200
+    publication = next(
+        item
+        for item in list_coder_publications(
+            tmp_path,
+            status="pending_operator_approval",
+            limit=10,
+        )
+        if item.run_id == run_id
+    )
+    pending_publication_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert pending_publication_goal.status == 200
+    assert "recommended_action</dt><dd>Approve publication" in pending_publication_goal.body
+    assert "Approve Publication" in pending_publication_goal.body
+    assert "action='/actions/approve-coder-publication'" in pending_publication_goal.body
+    assert f"name='publication_id' value='{publication.id}'" in pending_publication_goal.body
+    assert "Approved publication handoff from goal page" in pending_publication_goal.body
+
+    approve_publication = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-publication",
+        method="POST",
+        form={
+            "publication_id": [publication.id],
+            "note": ["Approve goal page publication"],
+            "confirm": ["yes"],
+        },
+    )
+    assert approve_publication.status == 200
+    approved_publication_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert approved_publication_goal.status == 200
+    assert "recommended_action</dt><dd>Create publication handoff" in approved_publication_goal.body
+    assert "Create Publication Handoff" in approved_publication_goal.body
+    assert "action='/actions/coder-publication-handoff'" in approved_publication_goal.body
+    assert f"name='run_id' value='{run_id}'" in approved_publication_goal.body
+    assert "suggested manual commands only" in approved_publication_goal.body
+
+    publication_handoff = render_local_app_route(
+        tmp_path,
+        "/actions/coder-publication-handoff",
+        method="POST",
+        form={"run_id": [run_id], "confirm": ["yes"]},
+    )
+    assert publication_handoff.status == 200
+    manual_publish_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert manual_publish_goal.status == 200
+    assert "recommended_action</dt><dd>Manual publish outside ClankerOS" in manual_publish_goal.body
+    assert "Manual Publish Boundary" in manual_publish_goal.body
+    assert "Publication Handoff Commands" in manual_publish_goal.body
+    assert "manual_boundary: outside_clankeros" in manual_publish_goal.body
+    assert "copy_only: true" in manual_publish_goal.body
+
+
 def test_local_app_cli_commands_and_bind_safety(
     tmp_path: Path,
     capsys,

@@ -78,10 +78,16 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   delegation completes, the card exposes confirmed `coder-prep`,
   `coder-worktree-plan`, and `coder-worktree-approval` forms at the matching
   workflow phases. It also exposes confirmed `approve-coder-worktree` and
-  `coder-commit-request` forms when the goal is waiting on those gates. These
-  create local artifacts, approval rows, or approval decisions only; they do
-  not create worktrees, run commands, commit, push, create PRs, deploy, call
-  providers, or perform external mutations.
+  `coder-commit-request` forms when the goal is waiting on those gates. Once
+  a commit request exists, the same Goal card can drive
+  `approve-coder-commit`, `commit-coder-worktree`,
+  `coder-publication-request`, `approve-coder-publication`, and
+  `coder-publication-handoff` through confirmed local forms, then shows the
+  manual publish boundary and copy-only publication handoff commands. These
+  create local artifacts, approval rows, approval decisions, or one isolated
+  local worktree commit only; they do not run delegations or worktrees from
+  the browser, push, create PRs, deploy, call providers, or perform external
+  mutations.
 - Every app page includes a shared operator shell with breadcrumbs, recent
   local items, a command palette, a dark/light theme toggle, and keyboard
   shortcuts for home, goals, and palette search. These controls only navigate
