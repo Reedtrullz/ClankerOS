@@ -119,8 +119,12 @@ Core layers for the bootstrap:
   from task risk metadata, sprint contracts, plan steps, or task verification
   plans, plus clickable timeline entries with operator-facing lifecycle
   language for approval requested/granted, execution completed, review passed,
-  commit approved, and publication approved states, a browser-native progress
-  bar, and a large Current Phase banner that explains the phase reason,
+  commit approved, and publication approved states. The timeline also
+  backfills generic artifact events from the same bounded Goal Artifact
+  Explorer registry, deduping workflow-specific artifact links so produced
+  context packs, handoffs, diffs, changed-file lists, and text logs stay
+  chronological. Goal pages include a browser-native progress
+  bar and a large Current Phase banner that explains the phase reason,
   operator attention cue, next action surface, latest activity, and zero-effect
   boundary without requiring the CLI. Goal detail pages also include a
   first-class `Next Recommendation` section that identifies whether the current

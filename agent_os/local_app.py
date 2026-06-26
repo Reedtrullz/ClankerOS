@@ -3594,6 +3594,7 @@ def _goal_resume_snapshot(root: Path, state: dict[str, Any]) -> str:
 def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
     items = _goal_timeline_items(root, state)
     operator_note_count = sum(1 for item in items if item.get("kind") == "operator_note")
+    artifact_count = sum(1 for item in items if item.get("kind") == "artifact")
     return "".join(
         [
             "<section><h2>Timeline</h2>",
@@ -3601,6 +3602,7 @@ def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
                 [
                     ("timeline_links_enabled", "true"),
                     ("timeline_items", str(len(items))),
+                    ("timeline_artifact_records", str(artifact_count)),
                     ("timeline_operator_note_artifacts", str(operator_note_count)),
                     ("operator_note_timeline_external_effects_created", "false"),
                 ]
@@ -3771,6 +3773,24 @@ def _goal_timeline_items(root: Path, state: dict[str, Any]) -> list[dict[str, st
             items.append({"at": publication.handoff_at, "message": f"Publication handoff ready: {publication.id}.", "href": href})
     for row in state["events"]:
         items.append({"at": row["created_at"], "message": str(row["message"]), "href": f"/goals/{quote(goal.id)}"})
+    artifact_hrefs = {
+        item.get("href", "")
+        for item in items
+        if item.get("href", "").startswith("/artifacts?path=")
+    }
+    for record in _goal_artifact_records(root, state):
+        href = _artifact_href(root, record["path"])
+        if href in artifact_hrefs:
+            continue
+        artifact_hrefs.add(href)
+        items.append(
+            {
+                "at": _artifact_time(root, record["path"]) or goal.updated_at,
+                "message": f"Artifact recorded: {record['label']}.",
+                "href": href,
+                "kind": "artifact",
+            }
+        )
     return sorted(items, key=lambda item: item.get("at") or "")
 
 

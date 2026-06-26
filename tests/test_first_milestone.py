@@ -5071,9 +5071,15 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "<progress" in goal.body
     assert "Timeline" in goal.body
     assert "timeline_links_enabled</dt><dd>true" in goal.body
+    assert "timeline_artifact_records</dt><dd>" in goal.body
     assert "class='timeline-link'" in goal.body
     assert f"/delegations/{result.delegation_id}" in goal.body
     assert f"/runs/{result.coder_worktree_run_id}" in goal.body
+    assert "Artifact recorded: context_pack_json." in goal.body
+    assert "Artifact recorded: implementation_handoff_json." in goal.body
+    assert f"Artifact recorded: coder run {result.coder_worktree_run_id} changed files." in goal.body
+    assert f"Artifact recorded: coder run {result.coder_worktree_run_id} diff." in goal.body
+    assert f"Artifact recorded: coder run {result.coder_worktree_run_id} git status." in goal.body
     assert "Activity Log" in goal.body
     assert "Goal created" in goal.body
     assert "Scout delegated" in goal.body

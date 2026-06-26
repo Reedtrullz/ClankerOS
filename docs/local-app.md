@@ -236,7 +236,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/goals/<goal_id>` also includes a typed `Goal Artifact Explorer`. It groups
   goal-linked Markdown, JSON, Patch/Diff, and Text/Log artifacts and links each
   item through `/artifacts?path=...`; it does not expose raw filesystem
-  browsing.
+  browsing. The Goal timeline backfills generic `Artifact recorded` entries
+  from the same bounded artifact registry after workflow-specific timeline
+  events are added, so artifacts such as context-pack JSON, handoff JSON,
+  diffs, changed-file lists, and git-status logs appear chronologically.
 - `/inbox` - read-only operator queue for steering reviews, approval requests,
   incidents, delegations, coder runs, commits, and publication handoffs.
   Pending commit and publication rows include run links, approval-queue links,

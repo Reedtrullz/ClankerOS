@@ -167,7 +167,9 @@ Skills Used links to `/skills`, shows task skill usage counts, projects using
 each tag, matching generated or available skill records when present, profile
 usage, and keeps skill execution out of the Goal page.
 Timeline entries link back to the relevant local artifact, delegation, run,
-approval queue, or goal surface, and progress uses a real browser progress
+approval queue, or goal surface, and the timeline also backfills generic
+`Artifact recorded` events from the same bounded artifact registry used by
+the Goal Artifact Explorer. Progress uses a real browser progress
 bar. Operator Notes includes a confirmed `save-goal-note` form that appends
 local resume context to the goal-scoped `operator-notes.md` artifact without
 overwriting earlier notes.
