@@ -28,6 +28,7 @@ Latest status focus:
 - Current local verification guidance: run focused checks locally and let
   `.github/workflows/tests.yml` run `python -m pytest -q` on GitHub. A local
   workflow file is not CI proof until GitHub Actions passes on the pushed
-  commit. Prefer `ci-snapshot-evidence-from-gh-json` after GitHub completes so
-  ClankerOS validates the supplied run JSON before recording direct snapshot
-  CI proof.
+  commit. Prefer `ci-snapshot-evidence-from-gh-json` after GitHub completes,
+  or with `--job-name "Fast smoke verification"` for scoped early smoke proof,
+  so ClankerOS validates the supplied run JSON before recording direct
+  snapshot CI proof.

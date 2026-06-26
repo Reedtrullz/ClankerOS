@@ -483,6 +483,7 @@ gh repo view Reedtrullz/ClankerOS --json description,repositoryTopics,homepageUr
 git push origin main
 python3 -m agent_os.cli ci-snapshot-handoff --project clankeros --branch main --commit <commit_sha> --external-run-id <run_id> --repo Reedtrullz/ClankerOS
 gh run view <run_id> --repo Reedtrullz/ClankerOS --json status,conclusion,headSha,headBranch,url,jobs | python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json --project clankeros --branch main --commit <commit_sha> --external-run-id <run_id> --status-json -
+gh run view <run_id> --repo Reedtrullz/ClankerOS --json status,conclusion,headSha,headBranch,url,jobs | python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json --project clankeros --branch main --commit <commit_sha> --external-run-id <run_id> --status-json - --job-name "Fast smoke verification"
 python3 -m agent_os.cli ci-snapshot-evidence --project clankeros --branch main --commit <commit_sha> --provider github-actions --status success --external-run-id <run_id> --url <run_url>
 ```
 
@@ -496,6 +497,10 @@ the supplied `gh run view` JSON, requires `status=completed`,
 `conclusion=success`, a matching `headSha`, and a matching `headBranch` when
 present, then records local direct-snapshot proof. The recorder does not call
 GitHub itself.
+If the fast smoke job has completed successfully while the full suite is still
+running, add `--job-name "Fast smoke verification"` to record scoped smoke
+proof. That record is early route/CLI proof only, with
+`status_source=github_status_json_job`; it is not full-suite proof.
 Use `ci-snapshot-evidence` only after the GitHub run has completed and you are
 recording operator-supplied proof for a direct pushed snapshot. Pushing is not
 deployment. A committed workflow file is not CI proof until GitHub Actions

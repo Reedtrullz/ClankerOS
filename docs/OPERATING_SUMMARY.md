@@ -197,10 +197,14 @@ Core layers for the bootstrap:
   proof. `ci-snapshot-evidence-from-gh-json` consumes supplied `gh run view`
   JSON from stdin or a file, requires a completed successful run with the
   expected commit SHA and matching branch when present, then records local
-  proof. The local app mirrors those commands as display-only templates on
+  proof. It can also take `--job-name "Fast smoke verification"` to validate
+  one completed successful GitHub Actions job from an in-progress workflow
+  run and record scoped early route/CLI proof with
+  `status_source=github_status_json_job`; that record is not full-suite proof.
+  The local app mirrors those commands as display-only templates on
   `/`, `/verification`, `/ci-evidence`, and `/dogfooding`, and `/ci-evidence`
-  can record the same proof from pasted status JSON through a confirmed local
-  form. Snapshot records are
+  can record the same proof from pasted status JSON plus an optional job name
+  through a confirmed local form. Snapshot records are
   surfaced separately in `/verification`, `/ci-evidence`, and the static
   dashboard, record `network_actions_taken=0` and `external_mutations_taken=0`,
   and do not fetch GitHub status, run CI, deploy, push, create PRs, call

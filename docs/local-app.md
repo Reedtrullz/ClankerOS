@@ -245,11 +245,13 @@ handoff. The `CI Evidence Recording Guide` shows a handoff-specific
 `ci-snapshot-handoff`, `ci-snapshot-evidence-from-gh-json`, and manual
 `ci-snapshot-evidence` command template when the operator is recording a
 direct pushed snapshot. The page also has a confirmed
-`ci-snapshot-evidence-from-gh-json` form where the operator can paste completed
-`gh run view` JSON and record local proof after the app validates the supplied
-status, conclusion, commit SHA, and branch. The page does not poll GitHub,
-refresh statuses, push, create PRs, deploy, call providers, or mutate external
-systems.
+`ci-snapshot-evidence-from-gh-json` form where the operator can paste
+`gh run view` JSON and optionally enter a completed job name such as
+`Fast smoke verification`. The app records local proof only after it validates
+the supplied status, conclusion, commit SHA, branch, and, when scoped, the
+named job status. Job-scoped fast-smoke evidence is early route/CLI proof, not
+full-suite proof. The page does not poll GitHub, refresh statuses, push,
+create PRs, deploy, call providers, or mutate external systems.
 
 ## Manual Dogfooding Checklist
 

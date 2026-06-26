@@ -2106,6 +2106,10 @@ def build_parser() -> argparse.ArgumentParser:
     ci_snapshot_from_gh_json_parser.add_argument("--provider", default="github-actions")
     ci_snapshot_from_gh_json_parser.add_argument("--external-run-id", required=True)
     ci_snapshot_from_gh_json_parser.add_argument("--status-json", required=True)
+    ci_snapshot_from_gh_json_parser.add_argument(
+        "--job-name",
+        help="Validate a completed successful GitHub Actions job from the JSON instead of the whole run.",
+    )
     ci_snapshot_from_gh_json_parser.add_argument("--url")
     ci_snapshot_from_gh_json_parser.add_argument("--recorded-by", default="operator")
     ci_snapshot_from_gh_json_parser.add_argument("--note", default="")
@@ -7578,6 +7582,7 @@ def main(argv: list[str] | None = None) -> int:
                 external_url=args.url,
                 recorded_by=args.recorded_by,
                 note=args.note,
+                job_name=args.job_name,
             )
         except (OSError, ValueError) as error:
             print(f"ci_snapshot_evidence_from_gh_json_failed: {error}")
@@ -7591,6 +7596,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"provider: {record.provider}")
         print(f"status: {record.status}")
         print(f"status_source: {record.result_json['status_source']}")
+        print(f"evidence_scope: {record.result_json['evidence_scope']}")
         print(f"external_run_id: {record.external_run_id}")
         print(f"external_url: {record.external_url}")
         print(f"network_actions_taken: {record.result_json['network_actions_taken']}")
@@ -7638,6 +7644,23 @@ def main(argv: list[str] | None = None) -> int:
             validated_record_command += f" --recorded-by {shlex.quote(args.recorded_by)}"
         if args.note:
             validated_record_command += f" --note {shlex.quote(args.note)}"
+        fast_smoke_record_command = (
+            f"{status_command} | "
+            "python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json "
+            f"--project {shlex.quote(args.project)} "
+            f"--branch {shlex.quote(args.branch)} "
+            f"--commit {shlex.quote(args.commit)} "
+            f"--provider {shlex.quote(args.provider)} "
+            f"--external-run-id {shlex.quote(args.external_run_id)} "
+            "--status-json - "
+            "--job-name 'Fast smoke verification'"
+        )
+        if run_url:
+            fast_smoke_record_command += f" --url {shlex.quote(run_url)}"
+        if args.recorded_by != "operator":
+            fast_smoke_record_command += f" --recorded-by {shlex.quote(args.recorded_by)}"
+        if args.note:
+            fast_smoke_record_command += f" --note {shlex.quote(args.note)}"
         print("ci_snapshot_handoff: ready")
         print(f"project: {args.project}")
         print(f"branch: {args.branch}")
@@ -7646,6 +7669,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"external_run_id: {args.external_run_id}")
         print(f"external_url: {run_url or 'unknown'}")
         print(f"status_check_command: {status_command}")
+        print("fast_smoke_record_when: job='Fast smoke verification' status=completed conclusion=success headSha matches commit")
+        print(f"fast_smoke_validated_record_command: {fast_smoke_record_command}")
         print("record_when: status=completed conclusion=success headSha matches commit")
         print(f"validated_record_command: {validated_record_command}")
         print(f"record_command: {record_command}")

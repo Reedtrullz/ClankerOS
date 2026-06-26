@@ -1,5 +1,19 @@
 # Status
 
+## 2026-06-26 Fast Smoke GitHub CI Evidence
+
+- Added job-scoped `ci-snapshot-evidence-from-gh-json` validation. Operators
+  can pass `--job-name "Fast smoke verification"` with supplied `gh run view`
+  JSON to record completed-success fast-smoke proof even while the overall
+  GitHub Actions run is still in progress.
+- `/ci-evidence`, `/verification`, `/dogfooding`, and dashboard command
+  templates now include the fast-smoke validated record command, and the
+  `/ci-evidence` form accepts an optional `job_name`.
+- Non-claims: job-scoped fast-smoke evidence is early route/CLI proof only.
+  It is not full-suite proof, does not fetch GitHub status from the app, does
+  not run CI locally, and does not push, create PRs, deploy, call providers,
+  or mutate external systems.
+
 ## 2026-06-26 Validated GitHub CI Snapshot Recording
 
 - Added a confirmed `/ci-evidence` local app form for

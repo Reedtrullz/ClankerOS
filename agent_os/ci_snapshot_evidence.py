@@ -31,6 +31,7 @@ def record_ci_snapshot_evidence(
     note: str = "",
     status_source: str = "operator_supplied",
     status_json: dict[str, Any] | None = None,
+    evidence_scope: str = "workflow_run",
 ) -> CiSnapshotEvidenceResult:
     root = root.resolve()
     storage = Storage(root / ".agent" / "state.db")
@@ -65,9 +66,19 @@ def record_ci_snapshot_evidence(
     if not url:
         raise ValueError("external URL is required")
 
-    idempotency_key = ":".join(
-        [project, branch, commit, source_provider, run_id, url, normalized_status]
-    )
+    scope = evidence_scope.strip() or "workflow_run"
+    idempotency_parts = [
+        project,
+        branch,
+        commit,
+        source_provider,
+        run_id,
+        url,
+        normalized_status,
+    ]
+    if scope != "workflow_run":
+        idempotency_parts.append(scope)
+    idempotency_key = ":".join(idempotency_parts)
     existing = storage.get_ci_snapshot_evidence_by_idempotency_key(idempotency_key)
     if existing is not None:
         return CiSnapshotEvidenceResult(
@@ -78,9 +89,10 @@ def record_ci_snapshot_evidence(
 
     evidence_dir = root / ".clanker" / "ci-snapshots" / _slug(project) / _slug(commit)
     evidence_dir.mkdir(parents=True, exist_ok=True)
-    evidence_path = (
-        evidence_dir
-        / f"ci-snapshot-evidence-{_slug(source_provider)}-{_slug(run_id)}.json"
+    scope_suffix = "" if scope == "workflow_run" else f"-{_slug(scope)}"
+    evidence_path = evidence_dir / (
+        f"ci-snapshot-evidence-{_slug(source_provider)}-{_slug(run_id)}"
+        f"{scope_suffix}.json"
     )
     result_json = {
         "kind": "ci_snapshot_evidence",
@@ -92,6 +104,7 @@ def record_ci_snapshot_evidence(
         "recorded_by": recorded_by,
         "note": note,
         "status_source": status_source,
+        "evidence_scope": scope,
         "network_actions_taken": 0,
         "external_mutations_taken": 0,
         "source": {
@@ -148,6 +161,7 @@ def record_ci_snapshot_evidence_from_gh_status_json(
     external_url: str | None = None,
     recorded_by: str = "operator",
     note: str = "",
+    job_name: str | None = None,
 ) -> CiSnapshotEvidenceResult:
     try:
         payload = json.loads(status_json_text)
@@ -160,11 +174,6 @@ def record_ci_snapshot_evidence_from_gh_status_json(
     conclusion = str(payload.get("conclusion", "")).strip().lower()
     head_sha = str(payload.get("headSha", "")).strip()
     head_branch = str(payload.get("headBranch", "")).strip()
-    if status != "completed" or conclusion != "success":
-        raise ValueError(
-            "GitHub run is not successful: "
-            f"status={status or 'missing'} conclusion={conclusion or 'missing'}"
-        )
     if head_sha != commit_sha:
         raise ValueError(
             "GitHub run headSha does not match commit: "
@@ -180,6 +189,38 @@ def record_ci_snapshot_evidence_from_gh_status_json(
     if not run_url:
         raise ValueError("GitHub status JSON did not include url; pass --url")
 
+    job = None
+    requested_job_name = (job_name or "").strip()
+    if requested_job_name:
+        jobs = payload.get("jobs", [])
+        if not isinstance(jobs, list):
+            raise ValueError("GitHub status JSON jobs field must be a list")
+        matches = [
+            item
+            for item in jobs
+            if isinstance(item, dict)
+            and str(item.get("name", "")).strip() == requested_job_name
+        ]
+        if len(matches) != 1:
+            raise ValueError(
+                "GitHub status JSON did not contain exactly one matching job: "
+                f"job_name={requested_job_name} matches={len(matches)}"
+            )
+        job = matches[0]
+        job_status = str(job.get("status", "")).strip().lower()
+        job_conclusion = str(job.get("conclusion", "")).strip().lower()
+        if job_status != "completed" or job_conclusion != "success":
+            raise ValueError(
+                "GitHub job is not successful: "
+                f"job={requested_job_name} status={job_status or 'missing'} "
+                f"conclusion={job_conclusion or 'missing'}"
+            )
+    elif status != "completed" or conclusion != "success":
+        raise ValueError(
+            "GitHub run is not successful: "
+            f"status={status or 'missing'} conclusion={conclusion or 'missing'}"
+        )
+
     validated_payload = {
         "status": status,
         "conclusion": conclusion,
@@ -188,6 +229,16 @@ def record_ci_snapshot_evidence_from_gh_status_json(
         "url": run_url,
         "jobs": payload.get("jobs", []),
     }
+    status_source = "github_status_json"
+    evidence_scope = "workflow_run"
+    if job is not None:
+        validated_payload["validatedJob"] = {
+            "name": requested_job_name,
+            "status": str(job.get("status", "")).strip().lower(),
+            "conclusion": str(job.get("conclusion", "")).strip().lower(),
+        }
+        status_source = "github_status_json_job"
+        evidence_scope = f"workflow_job:{requested_job_name}"
     return record_ci_snapshot_evidence(
         root,
         project_id=project_id,
@@ -199,8 +250,9 @@ def record_ci_snapshot_evidence_from_gh_status_json(
         external_url=run_url,
         recorded_by=recorded_by,
         note=note,
-        status_source="github_status_json",
+        status_source=status_source,
         status_json=validated_payload,
+        evidence_scope=evidence_scope,
     )
 
 

@@ -2303,6 +2303,84 @@ def test_ci_snapshot_evidence_from_gh_json_validates_successful_matching_run(
     )
 
 
+def test_ci_snapshot_evidence_from_gh_json_records_completed_job_while_run_in_progress(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    AgentSystem(tmp_path).initialize()
+    status_path = tmp_path / "gh-run-fast-smoke.json"
+    status_path.write_text(
+        json.dumps(
+            {
+                "status": "in_progress",
+                "conclusion": "",
+                "headSha": "52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9",
+                "headBranch": "main",
+                "url": "https://github.com/Reedtrullz/ClankerOS/actions/runs/28211577106",
+                "jobs": [
+                    {
+                        "name": "Fast smoke verification",
+                        "status": "completed",
+                        "conclusion": "success",
+                    },
+                    {
+                        "name": "Full pytest suite",
+                        "status": "in_progress",
+                        "conclusion": "",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "ci-snapshot-evidence-from-gh-json",
+                "--project",
+                "clankeros",
+                "--branch",
+                "main",
+                "--commit",
+                "52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9",
+                "--external-run-id",
+                "28211577106",
+                "--status-json",
+                str(status_path),
+                "--job-name",
+                "Fast smoke verification",
+                "--note",
+                "Fast smoke finished before full suite.",
+            ]
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out
+    assert "ci_snapshot_evidence_from_gh_json: recorded" in output
+    assert "status_source: github_status_json_job" in output
+    assert "evidence_scope: workflow_job:Fast smoke verification" in output
+    assert "status: success" in output
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    records = storage.list_recent_ci_snapshot_evidence_records()
+    assert len(records) == 1
+    record = records[0]
+    assert record.result_json["status_source"] == "github_status_json_job"
+    assert record.result_json["evidence_scope"] == (
+        "workflow_job:Fast smoke verification"
+    )
+    assert record.result_json["validated_status_json"]["status"] == "in_progress"
+    assert record.result_json["validated_status_json"]["validatedJob"] == {
+        "name": "Fast smoke verification",
+        "status": "completed",
+        "conclusion": "success",
+    }
+
+
 def test_ci_snapshot_evidence_from_gh_json_rejects_pending_or_wrong_commit(
     tmp_path: Path,
     capsys,
@@ -2328,6 +2406,25 @@ def test_ci_snapshot_evidence_from_gh_json_rejects_pending_or_wrong_commit(
                 "conclusion": "success",
                 "headSha": "abc1234",
                 "url": "https://github.com/Reedtrullz/ClankerOS/actions/runs/28211577106",
+            }
+        ),
+        encoding="utf-8",
+    )
+    failed_job_path = tmp_path / "failed-job-gh-run.json"
+    failed_job_path.write_text(
+        json.dumps(
+            {
+                "status": "in_progress",
+                "conclusion": "",
+                "headSha": "52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9",
+                "url": "https://github.com/Reedtrullz/ClankerOS/actions/runs/28211577106",
+                "jobs": [
+                    {
+                        "name": "Fast smoke verification",
+                        "status": "completed",
+                        "conclusion": "failure",
+                    }
+                ],
             }
         ),
         encoding="utf-8",
@@ -2380,6 +2477,32 @@ def test_ci_snapshot_evidence_from_gh_json_rejects_pending_or_wrong_commit(
     wrong_sha_output = capsys.readouterr().out
     assert "ci_snapshot_evidence_from_gh_json_failed" in wrong_sha_output
     assert "headSha does not match commit" in wrong_sha_output
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "ci-snapshot-evidence-from-gh-json",
+                "--project",
+                "clankeros",
+                "--branch",
+                "main",
+                "--commit",
+                "52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9",
+                "--external-run-id",
+                "28211577106",
+                "--status-json",
+                str(failed_job_path),
+                "--job-name",
+                "Fast smoke verification",
+            ]
+        )
+        == 1
+    )
+    failed_job_output = capsys.readouterr().out
+    assert "ci_snapshot_evidence_from_gh_json_failed" in failed_job_output
+    assert "GitHub job is not successful" in failed_job_output
 
     storage = Storage(tmp_path / ".agent" / "state.db")
     assert storage.list_recent_ci_snapshot_evidence_records() == []
@@ -2476,6 +2599,71 @@ def test_local_app_records_ci_snapshot_evidence_from_pasted_gh_json(
     assert "source=direct_public_snapshot" in ci_evidence_after.body
 
 
+def test_local_app_records_fast_smoke_ci_snapshot_evidence_from_pasted_gh_json(
+    tmp_path: Path,
+) -> None:
+    AgentSystem(tmp_path).initialize()
+    status_json = json.dumps(
+        {
+            "status": "in_progress",
+            "conclusion": "",
+            "headSha": "52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9",
+            "headBranch": "main",
+            "url": "https://github.com/Reedtrullz/ClankerOS/actions/runs/28211577106",
+            "jobs": [
+                {
+                    "name": "Fast smoke verification",
+                    "status": "completed",
+                    "conclusion": "success",
+                },
+                {
+                    "name": "Full pytest suite",
+                    "status": "in_progress",
+                    "conclusion": "",
+                },
+            ],
+        }
+    )
+
+    ci_evidence = render_local_app_route(tmp_path, "/ci-evidence")
+    assert ci_evidence.status == 200
+    assert "job_name" in ci_evidence.body
+    assert "fast_smoke_validated_record_command_template" in ci_evidence.body
+
+    response = render_local_app_route(
+        tmp_path,
+        "/actions/ci-snapshot-evidence-from-gh-json",
+        method="POST",
+        form={
+            "project": ["clankeros"],
+            "branch": ["main"],
+            "commit": ["52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9"],
+            "provider": ["github-actions"],
+            "external_run_id": ["28211577106"],
+            "status_json": [status_json],
+            "job_name": ["Fast smoke verification"],
+            "recorded_by": ["operator"],
+            "note": ["Validated fast smoke from local app."],
+            "confirm": ["yes"],
+        },
+    )
+
+    assert response.status == 200
+    assert "ci_snapshot_evidence_from_gh_json: recorded" in response.body
+    assert "status_source</dt><dd>github_status_json_job" in response.body
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    records = storage.list_recent_ci_snapshot_evidence_records()
+    assert len(records) == 1
+    assert records[0].result_json["evidence_scope"] == (
+        "workflow_job:Fast smoke verification"
+    )
+
+    ci_evidence_after = render_local_app_route(tmp_path, "/ci-evidence")
+    assert "status_source=github_status_json_job" in ci_evidence_after.body
+    assert "evidence_scope=workflow_job:Fast smoke verification" in ci_evidence_after.body
+
+
 def test_local_app_rejects_pending_ci_snapshot_status_json_without_record(
     tmp_path: Path,
 ) -> None:
@@ -2551,6 +2739,9 @@ def test_ci_snapshot_handoff_prints_watch_and_record_commands_without_writes(
     assert "external_run_id: 28211577106" in output
     assert "external_url: https://github.com/Reedtrullz/ClankerOS/actions/runs/28211577106" in output
     assert "status_check_command: gh run view 28211577106 --repo Reedtrullz/ClankerOS" in output
+    assert "fast_smoke_record_when: job='Fast smoke verification'" in output
+    assert "fast_smoke_validated_record_command: gh run view 28211577106 --repo Reedtrullz/ClankerOS" in output
+    assert "--job-name 'Fast smoke verification'" in output
     assert "record_when: status=completed conclusion=success headSha matches commit" in output
     assert "validated_record_command: gh run view 28211577106 --repo Reedtrullz/ClankerOS" in output
     assert "python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json" in output
@@ -3688,8 +3879,10 @@ def test_github_actions_workflow_runs_automatic_verification() -> None:
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" iterate",
         "Run focused local app pytest smoke",
         "ci_snapshot_evidence_from_gh_json_validates_successful_matching_run",
+        "ci_snapshot_evidence_from_gh_json_records_completed_job_while_run_in_progress",
         "ci_snapshot_evidence_from_gh_json_rejects_pending_or_wrong_commit",
         "local_app_records_ci_snapshot_evidence_from_pasted_gh_json",
+        "local_app_records_fast_smoke_ci_snapshot_evidence_from_pasted_gh_json",
         "local_app_rejects_pending_ci_snapshot_status_json_without_record",
         "github_actions_smoke_uses_temp_root_and_expected_order",
         "local_app_artifact_viewer_is_read_only_and_bounded",
@@ -3731,8 +3924,10 @@ def test_github_actions_smoke_uses_temp_root_and_expected_order() -> None:
         "github_actions_workflow_runs_automatic_verification",
         "github_actions_smoke_uses_temp_root_and_expected_order",
         "ci_snapshot_evidence_from_gh_json_validates_successful_matching_run",
+        "ci_snapshot_evidence_from_gh_json_records_completed_job_while_run_in_progress",
         "ci_snapshot_evidence_from_gh_json_rejects_pending_or_wrong_commit",
         "local_app_records_ci_snapshot_evidence_from_pasted_gh_json",
+        "local_app_records_fast_smoke_ci_snapshot_evidence_from_pasted_gh_json",
         "local_app_rejects_pending_ci_snapshot_status_json_without_record",
         "ci_snapshot_handoff_prints_watch_and_record_commands_without_writes",
         "local_app_routes_render_modern_workflow_and_health",

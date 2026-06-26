@@ -72,12 +72,15 @@ python3 -m agent_os.cli ci-snapshot-handoff \
 ```
 
 `ci-snapshot-handoff` prints a `gh run view ...` command for the operator, a
-JSON-validated `ci-snapshot-evidence-from-gh-json` pipeline, and the older
-manual `ci-snapshot-evidence` command. Prefer the JSON-validated path after
-GitHub reports `status=completed`, `conclusion=success`, and the expected
-commit SHA. The ClankerOS recorder consumes status JSON from stdin or a file;
-it does not fetch GitHub status, run tests, deploy, push, create PRs, call
-providers, or mutate external systems.
+JSON-validated `ci-snapshot-evidence-from-gh-json` pipeline, a job-scoped
+fast-smoke variant, and the older manual `ci-snapshot-evidence` command.
+Prefer the JSON-validated path after GitHub reports `status=completed`,
+`conclusion=success`, and the expected commit SHA. When the fast smoke job has
+completed successfully but the full suite is still running, pass
+`--job-name "Fast smoke verification"` to record early route/CLI proof without
+pretending the full suite has passed. The ClankerOS recorder consumes status
+JSON from stdin or a file; it does not fetch GitHub status, run tests, deploy,
+push, create PRs, call providers, or mutate external systems.
 
 The validated direct-push proof path looks like:
 
@@ -95,10 +98,28 @@ gh run view <run_id> --repo Reedtrullz/ClankerOS \
 The recorder refuses pending runs, failed runs, malformed JSON, branch
 mismatches when `headBranch` is present, and commit mismatches.
 
+The scoped fast-smoke proof path looks like:
+
+```bash
+gh run view <run_id> --repo Reedtrullz/ClankerOS \
+  --json status,conclusion,headSha,headBranch,url,jobs \
+| python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json \
+  --project clankeros \
+  --branch main \
+  --commit <commit_sha> \
+  --external-run-id <run_id> \
+  --status-json - \
+  --job-name "Fast smoke verification"
+```
+
+This records `status_source=github_status_json_job` and an
+`evidence_scope` for the named job.
+
 The local app offers the same validation on `/ci-evidence`: paste the completed
-`gh run view` JSON into `Record Direct Snapshot From GitHub JSON`, confirm the
-local write, and it records direct snapshot proof only after the JSON passes
-the same checks. The app still does not contact GitHub.
+`gh run view` JSON into `Record Direct Snapshot From GitHub JSON`, optionally
+enter a completed `job_name`, confirm the local write, and it records direct
+snapshot proof only after the JSON passes the same checks. The app still does
+not contact GitHub.
 
 For publication handoffs, record a completed GitHub Actions run with:
 
