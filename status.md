@@ -6,7 +6,8 @@
   direct pushed snapshots. This complements `ci-deploy-evidence`, which remains
   tied to local GitHub handoff packets.
 - Direct snapshot records are stored separately, surfaced in `/verification`,
-  `/ci-evidence`, and the static dashboard, and keep
+  `/ci-evidence`, the root dashboard `Verification Snapshot`, and the static
+  dashboard, and keep
   `network_actions_taken=0` plus `external_mutations_taken=0`.
 - Non-claims: this does not fetch GitHub status, run CI, deploy, push, create
   PRs, call providers, or mutate external systems. It records proof only after

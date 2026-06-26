@@ -182,11 +182,13 @@ until the GitHub Actions run completes successfully. If a GitHub run is still
 in progress, keep waiting on GitHub instead of rerunning the full suite
 locally; if it fails or reaches the timeout, inspect the failed job log and
 fix that specific CI issue. If no CI evidence has been recorded locally, the
-page shows a `ci-deploy-evidence` command template instead of pretending CI
-proof exists.
+page shows `ci-deploy-evidence` and `ci-snapshot-evidence` command templates
+instead of pretending CI proof exists.
 The root dashboard mirrors this boundary as a compact `Verification Snapshot`
-with `/verification` and `/ci-evidence` links, while still avoiding GitHub
-status polling. The same first screen now includes a `Dashboard Dogfooding
+with `/verification` and `/ci-evidence` links, and it labels the latest
+operator-supplied source as either `publication_handoff` or
+`direct_public_snapshot` while still avoiding GitHub status polling. The same
+first screen now includes a `Dashboard Dogfooding
 Snapshot` with fixture availability, the next dogfooding action, selected
 workflow/run links when available, and the `/demo` manual browser script
 surface.

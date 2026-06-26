@@ -626,7 +626,7 @@ def _dashboard_verification_snapshot(root: Path) -> str:
     workflow_text = (
         workflow_path.read_text(encoding="utf-8") if workflow_path.exists() else ""
     )
-    records = _storage(root).list_recent_ci_deploy_evidence_records(limit=1)
+    latest_ci_record = _latest_ci_evidence_record(root)
     lines = [
         f"dashboard_workflow_file_status: {'available' if workflow_path.exists() else 'missing'}",
         f"dashboard_job_timeout_minutes: {_e(_workflow_timeout_minutes(workflow_text))}",
@@ -635,23 +635,28 @@ def _dashboard_verification_snapshot(root: Path) -> str:
         "verification_surface: <a href='/verification'>/verification</a>",
         "ci_evidence_surface: <a href='/ci-evidence'>/ci-evidence</a>",
     ]
-    if records:
-        record = records[0]
+    if latest_ci_record is not None:
+        source_kind, record = latest_ci_record
         lines.extend(
             [
+                f"dashboard_latest_ci_source: {_e(source_kind)}",
                 f"dashboard_latest_ci_status: {_e(record.status)}",
                 f"dashboard_latest_ci_provider: {_e(record.provider)}",
                 f"dashboard_latest_ci_commit: {_e(record.commit_sha)}",
+                f"dashboard_latest_ci_branch: {_e(record.branch_name)}",
                 f"dashboard_ci_external_run_id: {_e(record.external_run_id)}",
                 f"dashboard_ci_url: <a href='{_e(record.external_url)}'>{_e(record.external_url)}</a>",
+                f"dashboard_ci_handoff: {_e(getattr(record, 'github_handoff_id', 'none'))}",
                 "dashboard_ci_record_source: operator_supplied",
+                f"dashboard_ci_network_actions_taken: {_e(record.result_json.get('network_actions_taken', 'unknown'))}",
+                f"dashboard_ci_external_mutations_taken: {_e(record.result_json.get('external_mutations_taken', 'unknown'))}",
             ]
         )
     else:
         lines.extend(
             [
                 "dashboard_latest_ci_status: missing",
-                "dashboard_next_ci_action: wait_for_github_actions_success_then_record_ci_deploy_evidence",
+                "dashboard_next_ci_action: wait_for_github_actions_success_then_record_ci_snapshot_or_deploy_evidence",
                 "dashboard_ci_record_source: none",
             ]
         )
@@ -993,19 +998,8 @@ def _verification_page(root: Path) -> str:
 
 
 def _latest_ci_evidence_panel(root: Path) -> str:
-    storage = _storage(root)
-    records = storage.list_recent_ci_deploy_evidence_records(limit=1)
-    snapshot_records = storage.list_recent_ci_snapshot_evidence_records(limit=1)
-    latest_records: list[tuple[str, Any]] = []
-    if records:
-        latest_records.append(("publication_handoff", records[0]))
-    if snapshot_records:
-        latest_records.append(("direct_public_snapshot", snapshot_records[0]))
-    latest_records.sort(
-        key=lambda item: getattr(item[1], "created_at", ""),
-        reverse=True,
-    )
-    if not latest_records:
+    latest_record = _latest_ci_evidence_record(root)
+    if latest_record is None:
         return _list_section(
             "Latest Recorded CI Evidence",
             [
@@ -1017,7 +1011,7 @@ def _latest_ci_evidence_panel(root: Path) -> str:
                 "github_status_fetch: none",
             ],
         )
-    source_kind, record = latest_records[0]
+    source_kind, record = latest_record
     if source_kind == "direct_public_snapshot":
         return _list_section(
             "Latest Recorded CI Evidence",
@@ -1053,6 +1047,24 @@ def _latest_ci_evidence_panel(root: Path) -> str:
             "github_status_fetch: none",
         ],
     )
+
+
+def _latest_ci_evidence_record(root: Path) -> tuple[str, Any] | None:
+    storage = _storage(root)
+    records = storage.list_recent_ci_deploy_evidence_records(limit=1)
+    snapshot_records = storage.list_recent_ci_snapshot_evidence_records(limit=1)
+    latest_records: list[tuple[str, Any]] = []
+    if records:
+        latest_records.append(("publication_handoff", records[0]))
+    if snapshot_records:
+        latest_records.append(("direct_public_snapshot", snapshot_records[0]))
+    latest_records.sort(
+        key=lambda item: getattr(item[1], "created_at", ""),
+        reverse=True,
+    )
+    if not latest_records:
+        return None
+    return latest_records[0]
 
 
 def _ci_evidence_page(root: Path) -> str:
@@ -1164,6 +1176,7 @@ def _ci_snapshot_evidence_line(root: Path, record: Any) -> str:
         f"url={_e(record.external_url)} "
         f"recorded_by={_e(record.recorded_by)} "
         f"network_actions_taken={_e(record.result_json.get('network_actions_taken', 'unknown'))} "
+        f"external_mutations_taken={_e(record.result_json.get('external_mutations_taken', 'unknown'))} "
         f"evidence_path={_artifact_link(evidence_path)}"
     )
 

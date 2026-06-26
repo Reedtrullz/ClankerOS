@@ -163,7 +163,8 @@ not contact GitHub.
 
 The root dashboard includes the same proof boundary as a compact
 `Verification Snapshot`, with links to `/verification` and `/ci-evidence`, so
-you can see from the first screen whether local CI proof has been recorded.
+you can see from the first screen whether local CI proof has been recorded and
+whether it came from a publication handoff or a direct pushed snapshot.
 It also includes a `Dashboard Dogfooding Snapshot` that shows whether the
 fixture-backed demo state exists, the next dogfooding action, the selected
 workflow/run surface when available, and the `/demo` manual browser script

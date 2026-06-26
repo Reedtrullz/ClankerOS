@@ -2174,6 +2174,20 @@ def test_ci_snapshot_evidence_records_operator_supplied_direct_push_proof(
     assert "source=direct_public_snapshot" in ci_evidence.body
     assert "latest_github_handoff: missing" in ci_evidence.body
     assert "direct_snapshot_record_command_template" in ci_evidence.body
+    assert "external_mutations_taken=0" in ci_evidence.body
+    root = render_local_app_route(tmp_path, "/")
+    assert root.status == 200
+    assert "Verification Snapshot" in root.body
+    assert "dashboard_latest_ci_source: direct_public_snapshot" in root.body
+    assert "dashboard_latest_ci_status: success" in root.body
+    assert "dashboard_latest_ci_provider: github-actions" in root.body
+    assert "dashboard_latest_ci_commit: abc1234" in root.body
+    assert "dashboard_latest_ci_branch: main" in root.body
+    assert "dashboard_ci_external_run_id: 456" in root.body
+    assert "dashboard_ci_handoff: none" in root.body
+    assert "dashboard_ci_network_actions_taken: 0" in root.body
+    assert "dashboard_ci_external_mutations_taken: 0" in root.body
+    assert "dashboard_github_status_fetch: none" in root.body
     verification = render_local_app_route(tmp_path, "/verification")
     assert verification.status == 200
     assert "latest_ci_source: direct_public_snapshot" in verification.body
@@ -3436,10 +3450,15 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Dashboard Refresh" in root.body
     assert "refresh-dashboard-state" in root.body
     assert "Verification Snapshot" in root.body
+    assert "dashboard_latest_ci_source: publication_handoff" in root.body
     assert "dashboard_latest_ci_status: success" in root.body
     assert "dashboard_latest_ci_provider: github-actions" in root.body
     assert "dashboard_latest_ci_commit: abc123" in root.body
+    assert "dashboard_latest_ci_branch: main" in root.body
     assert "dashboard_ci_external_run_id: 123" in root.body
+    assert f"dashboard_ci_handoff: {handoff.id}" in root.body
+    assert "dashboard_ci_network_actions_taken: 0" in root.body
+    assert "dashboard_ci_external_mutations_taken: 0" in root.body
     assert "dashboard_github_status_fetch: none" in root.body
     assert "verification_surface" in root.body
     assert "ci_evidence_surface" in root.body
