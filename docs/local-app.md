@@ -65,10 +65,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   overview, goal risk, completion criteria, progress, chronological timeline,
   activity log, delegations, runs, approvals, evidence, artifacts, memory,
   skills used, git status, operator notes, and remaining work. It uses local
-  polling refresh and does not contact GitHub or providers. When the goal has
-  planned tasks but no delegation yet, the Next Action card exposes a
-  confirmed `delegate` form that writes a read-only scout delegation contract
-  without starting a subagent.
+  polling refresh and does not contact GitHub or providers. Operator Notes
+  includes a confirmed `save-goal-note` form that appends local resume context
+  to `.clanker/projects/<project>/goals/<goal>/operator-notes.md`; it does
+  not overwrite previous notes. When the goal has planned tasks but no
+  delegation yet, the Next Action card exposes a confirmed `delegate` form
+  that writes a read-only scout delegation contract without starting a
+  subagent.
 - Every app page includes a shared operator shell with breadcrumbs, recent
   local items, a command palette, a dark/light theme toggle, and keyboard
   shortcuts for home, goals, and palette search. These controls only navigate
@@ -336,7 +339,9 @@ prep from `implementation_handoff.md`, coder-worktree plan, worktree approval
 request, commit request, publication request, approval decisions, and
 publication handoff when the required approval exists. The dashboard and
 `/actions` page also expose a confirmed `refresh-dashboard-state` form for
-rewriting only the local app status artifact. Delegation pages also expose
+rewriting only the local app status artifact. Goal pages expose
+`save-goal-note` for appending goal-scoped operator notes, and the Memory page
+indexes those note artifacts for later resume. Delegation pages also expose
 implementation handoff readback and link the handoff Markdown through the safe
 artifact viewer. When fixture state exists, `/actions` includes
 `Current Demo Action Surfaces`, a read-only map from the selected demo project

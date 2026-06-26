@@ -139,6 +139,7 @@ ACTION_CATALOG = [
     ("register-project", "local state", "first run / projects", "yes", "yes", "local git repo path plus default test command", "registered project row and projects/<project>/project.md"),
     ("create-goal", "local state", "first run / goals", "yes", "yes", "registered project and goal prompt", "goal row, plan, tasks, and goal artifacts"),
     ("delegate", "local state", "goal next action", "yes", "yes", "planned goal task and read-only scout profile", "subagent delegation contract JSON"),
+    ("save-goal-note", "local artifact", "goal detail", "yes", "yes", "goal id plus operator note text", ".clanker/projects/<project>/goals/<goal>/operator-notes.md"),
     ("save-workspace", "local state", "workspace", "yes", "yes", "open project/goal, filters, panels, last artifact", ".clanker/app/workspace.json"),
     ("pin-memory", "local state", "memory", "yes", "yes", "proposed memory entry", "memory status=active when evidence exists"),
 ]
@@ -1878,7 +1879,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _list_section("Memory", _goal_memory_lines(root, state)),
             _list_section("Skills Used", _goal_skill_lines(state)),
             _goal_git_status(root, state),
-            _list_section("Operator Notes", _goal_operator_note_lines(root, state)),
+            _goal_operator_notes_section(root, state),
             _list_section("Remaining Work", _goal_remaining_work_lines(state, next_action)),
             _non_claim_banner(),
         ]
@@ -2554,13 +2555,39 @@ def _goal_git_status(root: Path, state: dict[str, Any]) -> str:
 
 def _goal_operator_note_lines(root: Path, state: dict[str, Any]) -> list[str]:
     goal = state["goal"]
-    note_path = Path(".clanker") / "projects" / goal.project_id / "goals" / goal.id / "operator-notes.md"
+    note_path = _goal_operator_notes_path(goal)
     if (root / note_path).exists():
-        return [f"operator_notes: {_artifact_link(note_path.as_posix())}"]
+        return [
+            f"operator_notes: {_artifact_link(note_path.as_posix())}",
+            "operator_notes_status: available",
+            "note_append_form_available: true",
+        ]
     return [
         "operator_notes: none",
         f"planned_notes_path: {note_path.as_posix()}",
+        "note_append_form_available: true",
     ]
+
+
+def _goal_operator_notes_section(root: Path, state: dict[str, Any]) -> str:
+    goal = state["goal"]
+    return "".join(
+        [
+            "<section><h2>Operator Notes</h2>",
+            "<p class='muted'>Append a goal-scoped local note for tomorrow's resume context. This writes only the operator-notes artifact.</p>",
+            _ul(_goal_operator_note_lines(root, state)),
+            _input_form(
+                "save-goal-note",
+                {"goal_id": goal.id, "author": "operator"},
+                {"note": "What should future me know about this goal?"},
+            ),
+            "</section>",
+        ]
+    )
+
+
+def _goal_operator_notes_path(goal: Any) -> Path:
+    return Path(".clanker") / "projects" / goal.project_id / "goals" / goal.id / "operator-notes.md"
 
 
 def _goal_remaining_work_lines(state: dict[str, Any], next_action: GoalNextAction) -> list[str]:
@@ -5386,6 +5413,10 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             result = _create_scout_delegation_from_form(root, storage, form)
             message = f"subagent_delegation: {result.id}"
             location = f"/delegations/{quote(result.id)}"
+        elif action == "save-goal-note":
+            result = _append_goal_operator_note(root, storage, form)
+            message = f"goal_operator_note_saved: {result['goal_id']}"
+            location = f"/goals/{quote(result['goal_id'])}"
         elif action == "save-workspace":
             result = _write_workspace_state(
                 root,
@@ -5605,6 +5636,48 @@ def _create_scout_delegation_from_form(
         title=_required(form, "title"),
         profile_override="scout",
     )
+
+
+def _append_goal_operator_note(
+    root: Path,
+    storage: Storage,
+    form: dict[str, list[str]],
+) -> dict[str, Any]:
+    goal_id = _required(form, "goal_id")
+    note = _required(form, "note").strip()
+    if not note:
+        raise ValueError("note is required")
+    goal = storage.get_goal(goal_id)
+    author = (_one(form, "author") or "operator").strip() or "operator"
+    relative_path = _goal_operator_notes_path(goal)
+    note_path = root / relative_path
+    note_path.parent.mkdir(parents=True, exist_ok=True)
+    existing = note_path.read_text(encoding="utf-8") if note_path.exists() else ""
+    if not existing.strip():
+        existing = f"# Operator Notes For {goal.id}\n\n"
+    timestamp = utc_now()
+    entry = "\n".join(
+        [
+            f"## {timestamp}",
+            "",
+            f"- author: {author}",
+            f"- goal: {goal.id}",
+            f"- project: {goal.project_id}",
+            "",
+            note,
+            "",
+        ]
+    )
+    note_path.write_text(existing.rstrip() + "\n\n" + entry, encoding="utf-8")
+    return {
+        "status": "goal_operator_note_saved",
+        "goal_id": goal.id,
+        "project_id": goal.project_id,
+        "note_path": relative_path.as_posix(),
+        "appended_by": author,
+        "network_actions_taken": 0,
+        "external_mutations_taken": 0,
+    }
 
 
 def _safe_action_forms(*, delegation_id: str, handoff_md: str) -> str:

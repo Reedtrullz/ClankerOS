@@ -141,7 +141,9 @@ approvals, artifacts, memory, skills used, git status, operator notes, and
 remaining work. The page auto-refreshes by polling and stays local-only.
 Timeline entries link back to the relevant local artifact, delegation, run,
 approval queue, or goal surface, and progress uses a real browser progress
-bar.
+bar. Operator Notes includes a confirmed `save-goal-note` form that appends
+local resume context to the goal-scoped `operator-notes.md` artifact without
+overwriting earlier notes.
 
 Use `/goals` on a fresh checkout for first-run browser actions. The page now
 renders confirmed local forms for `register-project` and `create-goal`, so a
@@ -151,6 +153,8 @@ first read-only scout delegation with a confirmed `delegate` form, writing a
 local contract artifact without starting a subagent or calling a provider. Use
 Home or `/workspace` to save and restore open project, open goal, filters,
 expanded panels, and last viewed artifact in `.clanker/app/workspace.json`.
+Use the goal page note form for day-to-day operator breadcrumbs, then find the
+same note artifact again from `/memory`.
 Use `/search` for bounded global search across indexed goals, projects,
 delegations, known artifacts, incidents, recommendations, memory, runs, and
 approvals. Use `/memory`, `/skills`, and `/profiles` for local readbacks of

@@ -92,11 +92,13 @@ Core layers for the bootstrap:
   expose first-class Goal Risk and Goal Completion Criteria sections sourced
   from task risk metadata, sprint contracts, plan steps, or task verification
   plans, plus clickable timeline entries, a browser-native progress bar, and
-  a confirmed `delegate` next-action form when a goal has planned tasks but no
-  delegation yet; the form writes a read-only scout delegation contract only
-  and does not start a subagent. Every page shares a browser operator shell
-  with breadcrumbs, recent local items, a command palette, keyboard shortcuts,
-  and a theme toggle. The workflow page can be scoped with a
+  a confirmed `save-goal-note` form that appends local operator resume context
+  to the goal-scoped `operator-notes.md` artifact, plus a confirmed `delegate`
+  next-action form when a goal has planned tasks but no delegation yet; the
+  delegation form writes a read-only scout delegation contract only and does
+  not start a subagent. Every page shares a browser operator shell with
+  breadcrumbs, recent local items, a command palette, keyboard shortcuts, and
+  a theme toggle. The workflow page can be scoped with a
   delegation or coder run id, then annotates related stepper rows with
   selected local artifact, approval, run, commit, publication, and next-action
   status, plus a read-only `Selected Workflow Continuation` block linking the

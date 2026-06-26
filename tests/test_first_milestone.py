@@ -4298,6 +4298,55 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "completion_criteria_source: plan_steps" in first_goal_page.body
     assert "completion_criteria_count: 3" in first_goal_page.body
     assert "Scope, non-goals, and verifier are explicit." in first_goal_page.body
+    assert "note_append_form_available: true" in first_goal_page.body
+    assert "save-goal-note" in first_goal_page.body
+    note_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/save-goal-note",
+        method="POST",
+        form={
+            "goal_id": [created_goal_id],
+            "author": ["operator"],
+            "note": ["Resume by checking the scout delegation state first."],
+        },
+    )
+    assert note_confirmation.status == 409
+    assert "Confirm save-goal-note" in note_confirmation.body
+    assert "Action Payload" in note_confirmation.body
+    assert "Resume by checking the scout delegation state first." in note_confirmation.body
+    note_result = render_local_app_route(
+        tmp_path,
+        "/actions/save-goal-note",
+        method="POST",
+        form={
+            "goal_id": [created_goal_id],
+            "author": ["operator"],
+            "note": ["Resume by checking the scout delegation state first."],
+            "confirm": ["yes"],
+        },
+    )
+    assert note_result.status == 200
+    assert "goal_operator_note_saved" in note_result.body
+    assert "note_path" in note_result.body
+    note_path = (
+        tmp_path
+        / ".clanker"
+        / "projects"
+        / "first-target"
+        / "goals"
+        / created_goal_id
+        / "operator-notes.md"
+    )
+    assert note_path.exists()
+    note_text = note_path.read_text(encoding="utf-8")
+    assert "Resume by checking the scout delegation state first." in note_text
+    assert "- author: operator" in note_text
+    noted_goal_page = render_local_app_route(tmp_path, f"/goals/{created_goal_id}")
+    assert "operator_notes_status: available" in noted_goal_page.body
+    assert f".clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md" in noted_goal_page.body
+    memory_after_note = render_local_app_route(tmp_path, "/memory")
+    assert "operator_note_count</dt><dd>1" in memory_after_note.body
+    assert f".clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md" in memory_after_note.body
     storage_after_goal = Storage(tmp_path / ".agent" / "state.db")
     first_task = storage_after_goal.list_tasks(created_goal_id)[0]
     delegate_confirmation = render_local_app_route(
@@ -4361,6 +4410,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Safe Action Catalog" in actions.body
     assert "refresh-dashboard-state" in actions.body
     assert "delegate" in actions.body
+    assert "save-goal-note" in actions.body
     assert "context-pack" in actions.body
     assert "commit-coder-worktree" in actions.body
     assert "manual_operator_push_pr_outside_clankeros" in actions.body
@@ -4749,6 +4799,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Skills Used" in goal.body
     assert "Git Status" in goal.body
     assert "Operator Notes" in goal.body
+    assert "save-goal-note" in goal.body
+    assert "note_append_form_available: true" in goal.body
     assert "Remaining Work" in goal.body
     assert "goal_live_refresh_interval_seconds</dt><dd>5" in goal.body
     assert result.delegation_id in goal.body

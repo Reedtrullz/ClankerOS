@@ -1,5 +1,34 @@
 # Status
 
+## 2026-06-26 Goal Operator Notes Form
+
+- Added a confirmed `save-goal-note` browser action to `/goals/<goal_id>`.
+  Operators can append day-to-day resume context to the goal-scoped
+  `.clanker/projects/<project>/goals/<goal>/operator-notes.md` artifact
+  without leaving the app.
+- Goal pages now show whether the operator notes artifact exists, keep the
+  append form visible, and link the artifact after the first note is saved.
+  `/memory` discovers the same operator-notes artifact so daily breadcrumbs
+  remain part of the browser resume loop.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state"`
+    -> `2 passed, 505 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety"`
+    -> `3 passed, 504 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with matched route markers and zero provider/network/external
+    mutation counters.
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with matched fixture route snippets and zero provider/network/
+    external mutation counters.
+  - `git diff --check`
+    -> passed
+- Non-claims: this is a confirmed local artifact append only. It does not call
+  providers, fetch GitHub status from the app, run code, push, create PRs,
+  deploy, mutate external systems, or overwrite existing operator notes.
+
 ## 2026-06-26 Goal Risk And Completion Criteria
 
 - Added first-class `Goal Risk` and `Goal Completion Criteria` sections to
