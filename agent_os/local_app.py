@@ -52,9 +52,14 @@ from agent_os.ci_snapshot_evidence import (
     record_ci_snapshot_evidence_from_gh_status_json,
 )
 from agent_os.context_pack import ContextPackError, generate_context_pack
+from agent_os.delegation_runner import (
+    DelegationRunError,
+    run_delegation,
+)
 from agent_os.engine import AgentSystem
 from agent_os.ids import new_id
 from agent_os.implementation_handoff import summarize_implementation_handoff
+from agent_os.memory_entries import MemoryEntryError
 from agent_os.planning import PlanningError, create_goal_lifecycle
 from agent_os.project_registry import register_project
 from agent_os.run_review import write_run_review
@@ -128,6 +133,7 @@ WORKFLOW_STEPS = [
 ACTION_CATALOG = [
     ("refresh-dashboard-state", "low-risk", "dashboard", "yes", "yes", "current repo/app route state", ".clanker/app/local_app_status.json"),
     ("context-pack", "local artifact", "delegation detail", "yes", "yes", "delegation_id", "context_pack.json/.md"),
+    ("run-delegation", "local execution", "goal next action", "yes", "yes", "pending read-only delegation with a safe adapter", "delegation run evidence packet"),
     ("implementation-handoff", "readback", "delegation detail", "no", "no", "completed delegation", "implementation handoff status/readback"),
     ("coder-prep", "local artifact", "delegation detail", "yes", "yes", "readable implementation_handoff.md", "coder_prep.json/.md"),
     ("coder-prep-from-handoff", "local artifact", "delegation detail", "yes", "yes", "repo-relative implementation_handoff.md", "coder_prep.json/.md"),
@@ -2024,7 +2030,8 @@ def _first_run_panel(root: Path, storage: Storage) -> str:
                     ("first_run_delegation_completed", str(progress["delegation_completed"]).lower()),
                     ("first_run_next_surface", progress["next_surface"]),
                     ("first_run_run_delegation_command", progress["run_delegation_command"]),
-                    ("first_run_browser_execution_exposed", "false"),
+                    ("first_run_run_delegation_action", progress["run_delegation_action"]),
+                    ("first_run_browser_execution_exposed", progress["browser_execution_exposed"]),
                     ("first_run_provider_calls_taken_by_clankeros", "0"),
                     ("first_run_external_effects_created", "false"),
                 ]
@@ -2038,7 +2045,7 @@ def _first_run_panel(root: Path, storage: Storage) -> str:
                     f"first_run_step: run_first_delegation status={_e(_first_run_step_status(progress, 'run_first_delegation'))}",
                     "Create project: register a local git repository.",
                     "Create first goal: materialize a goal, plan, and planned tasks.",
-                    "Run first delegation: follow the Goal page next action until the copy-only run-delegation handoff is ready.",
+                    "Run first delegation: follow the Goal page next action and confirm the local run-delegation form.",
                     "<code>python3 -m agent_os.cli demo</code>: populate deterministic local demo data.",
                 ]
             ),
@@ -2083,12 +2090,16 @@ def _first_run_progress(root: Path, storage: Storage) -> dict[str, Any]:
     context_pack_ready = False
     delegation_completed = False
     run_delegation_command = "pending_until_context_pack_ready"
+    run_delegation_action = "pending_until_context_pack_ready"
+    browser_execution_exposed = "false"
     if delegation is not None:
         metadata = load_delegation_result_metadata(delegation)
         context_pack_ready = _delegation_has_context_pack(root, delegation, metadata)
         delegation_completed = delegation.status == "completed"
         if context_pack_ready:
             run_delegation_command = f"python3 -m agent_os.cli run-delegation {delegation.id}"
+            run_delegation_action = f"/actions/run-delegation delegation_id={delegation.id}"
+            browser_execution_exposed = "confirmed_local_only"
     project_registered = bool(projects)
     goal_created = goal_row is not None
     delegation_created = delegation is not None
@@ -2105,8 +2116,8 @@ def _first_run_progress(root: Path, storage: Storage) -> dict[str, Any]:
         current_step = "generate_context_pack"
         next_surface = SafeHtml(f"<a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>")
     elif not delegation_completed:
-        current_step = "run_first_delegation_from_cli"
-        next_surface = SafeHtml(f"<a href='/delegations/{quote(delegation.id)}'>/delegations/{_e(delegation.id)}</a>")
+        current_step = "run_first_delegation"
+        next_surface = SafeHtml(f"<a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>")
     else:
         current_step = "first_delegation_complete"
         next_surface = SafeHtml(f"<a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>")
@@ -2119,6 +2130,8 @@ def _first_run_progress(root: Path, storage: Storage) -> dict[str, Any]:
         "current_step": current_step,
         "next_surface": next_surface,
         "run_delegation_command": run_delegation_command,
+        "run_delegation_action": run_delegation_action,
+        "browser_execution_exposed": browser_execution_exposed,
         "default_project": default_project,
         "complete": delegation_completed,
     }
@@ -2832,7 +2845,7 @@ def _goal_next_action(root: Path, state: dict[str, Any]) -> GoalNextAction:
         metadata = load_delegation_result_metadata(delegation)
         if not _delegation_has_context_pack(root, delegation, metadata):
             return GoalNextAction("Generate context pack", f"/goals/{quote(goal.id)}", f"delegation={delegation.id} context_pack_missing")
-        return GoalNextAction("Run delegation from CLI", f"/delegations/{quote(delegation.id)}", f"delegation={delegation.id} context_pack_ready_browser_execution_not_exposed")
+        return GoalNextAction("Run delegation", f"/goals/{quote(goal.id)}", f"delegation={delegation.id} context_pack_ready_confirmed_browser_action")
     return GoalNextAction("Create scout delegation", f"/goals/{quote(goal.id)}", "goal_has_no_delegation_yet")
 
 
@@ -2843,7 +2856,7 @@ def _goal_next_action_form(state: dict[str, Any], next_action: GoalNextAction) -
         return _goal_resume_form(state)
     if next_action.action == "Generate context pack":
         return _goal_context_pack_form(state)
-    if next_action.action == "Run delegation from CLI":
+    if next_action.action == "Run delegation":
         return _goal_run_delegation_handoff(state)
     if next_action.action == "Run coder prep":
         return _goal_coder_prep_form(state)
@@ -3409,17 +3422,20 @@ def _goal_run_delegation_handoff(state: dict[str, Any]) -> str:
     command = f"python3 -m agent_os.cli run-delegation {delegation.id}"
     return "".join(
         [
-            "<h3>Run Delegation Boundary</h3>",
-            "<p class='muted'>The browser app does not execute delegation adapters yet. Use this exact local command when you are ready to run the read-only delegation.</p>",
+            "<h3>Run Delegation</h3>",
+            "<p class='muted'>Runs the existing read-only delegation adapter after confirmation. The backend keeps the same adapter safety checks and incident recording as the CLI path.</p>",
             _kv(
                 [
                     ("run_delegation_command", command),
-                    ("browser_execution_exposed", "false"),
+                    ("run_delegation_form_available", "true"),
+                    ("browser_execution_exposed", "confirmed_local_only"),
+                    ("adapter_safety_checks", "read_only_profile unsafe_command_filter incident_on_failure"),
                     ("provider_calls_taken_by_clankeros", "0"),
                     ("network_actions_taken_by_app", "0"),
                     ("external_mutations_taken", "0"),
                 ]
             ),
+            _form("run-delegation", {"delegation_id": delegation.id, "operator_id": "operator"}),
         ]
     )
 
@@ -3735,7 +3751,7 @@ def _goal_timeline_items(root: Path, state: dict[str, Any]) -> list[dict[str, st
         if delegation.started_at:
             items.append({"at": delegation.started_at, "message": f"Delegation {delegation.id} started.", "href": delegation_href})
         if delegation.completed_at:
-            items.append({"at": delegation.completed_at, "message": f"Delegation {delegation.id} completed.", "href": delegation_href})
+            items.append({"at": delegation.completed_at, "message": f"Execution completed: delegation {delegation.id}.", "href": delegation_href})
         metadata = load_delegation_result_metadata(delegation)
         for label, key in [
             ("Context pack built", "context_pack_md"),
@@ -4530,9 +4546,9 @@ def _goal_remaining_work_gate_lines(
         pending_if_ready(
             has_handoff,
             has_context_pack or completed_delegation,
-            "Run delegation from CLI",
+            "Run delegation",
         ),
-        next_step="Run delegation from CLI",
+        next_step="Run delegation",
         detail=(
             "completed_delegations="
             f"{sum(1 for delegation in delegations if delegation.status == 'completed')}"
@@ -7713,6 +7729,40 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             result = generate_context_pack(root, storage, delegation_id)
             message = f"context_pack: {result.context_pack_id}"
             location = f"/delegations/{quote(delegation_id)}"
+        elif action == "run-delegation":
+            delegation_id = _required(form, "delegation_id")
+            run_result = run_delegation(
+                root,
+                storage,
+                delegation_id,
+                record_memory=_one(form, "record_memory") == "yes",
+                memory_key=_one(form, "memory_key"),
+                operator_id=_one(form, "operator_id") or "operator",
+            )
+            message = (
+                f"run_delegation: {run_result.delegation_id}"
+                if run_result.status == "completed"
+                else f"run_delegation_failed: {run_result.message}"
+            )
+            location = f"/delegations/{quote(delegation_id)}"
+            result = {
+                "delegation_id": run_result.delegation_id,
+                "run_id": run_result.run_id,
+                "status": run_result.status,
+                "adapter_type": run_result.adapter_type,
+                "exit_code": run_result.exit_code,
+                "stdout_path": run_result.stdout_path,
+                "stderr_path": run_result.stderr_path,
+                "parsed_output_path": run_result.parsed_output_path,
+                "evidence_dir": run_result.evidence_dir,
+                "result_artifact_path": run_result.result_artifact_path,
+                "incident_id": run_result.incident_id,
+                "memory_proposal_id": run_result.memory_proposal_id,
+                "next_recommended_action": run_result.next_recommended_action,
+                "provider_calls_taken_by_clankeros": 0,
+                "network_actions_taken": 0,
+                "external_mutations_taken": 0,
+            }
         elif action == "implementation-handoff":
             delegation_id = _required(form, "delegation_id")
             delegation = storage.get_subagent_delegation(delegation_id)
@@ -7863,6 +7913,8 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
     except (
         ValueError,
         ContextPackError,
+        DelegationRunError,
+        MemoryEntryError,
         CoderPrepError,
         CoderWorktreePlanError,
         CoderWorktreeApprovalError,
@@ -7995,9 +8047,10 @@ def _append_goal_operator_note(
 def _safe_action_forms(*, delegation_id: str, handoff_md: str) -> str:
     return f"""
     <section><h2>Safe Local Actions</h2>
-      <p class="muted">Delegation-scoped artifact and approval actions require an explicit confirmation page. Worktree execution, local commit, publication handoff, push, PR, deploy, provider, and arbitrary command actions are not exposed here.</p>
+      <p class="muted">Delegation-scoped artifact, approval, and read-only delegation run actions require an explicit confirmation page. Worktree execution, local commit, publication handoff, push, PR, deploy, provider, and arbitrary command actions are not exposed here.</p>
       {_form('implementation-handoff', {'delegation_id': delegation_id})}
       {_form('context-pack', {'delegation_id': delegation_id})}
+      {_form('run-delegation', {'delegation_id': delegation_id, 'operator_id': 'operator'})}
       {_form('coder-prep', {'delegation_id': delegation_id})}
       {_form('coder-prep-from-handoff', {'handoff_md': handoff_md})}
       {_form('coder-worktree-plan', {'delegation_id': delegation_id})}

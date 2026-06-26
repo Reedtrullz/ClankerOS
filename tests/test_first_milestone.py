@@ -3936,6 +3936,7 @@ def test_github_actions_smoke_uses_temp_root_and_expected_order() -> None:
         "local_app_rejects_pending_ci_snapshot_status_json_without_record",
         "ci_snapshot_handoff_prints_watch_and_record_commands_without_writes",
         "local_app_routes_render_modern_workflow_and_health",
+        "local_app_runs_delegation_from_browser_action",
         "local_app_artifact_viewer_is_read_only_and_bounded",
         "local_app_demo_scenario_populates_fixture_state",
         "local_app_cli_commands_and_bind_safety",
@@ -4518,27 +4519,30 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert context_pack_result.status == 200
     assert "context_pack:" in context_pack_result.body
     after_context_pack_goal_page = render_local_app_route(tmp_path, f"/goals/{created_goal_id}")
-    assert "recommended_action</dt><dd>Run delegation from CLI" in after_context_pack_goal_page.body
+    assert "recommended_action</dt><dd>Run delegation" in after_context_pack_goal_page.body
     assert "run_delegation_command</dt><dd>python3 -m agent_os.cli run-delegation" in after_context_pack_goal_page.body
     assert delegation.id in after_context_pack_goal_page.body
-    assert "browser_execution_exposed</dt><dd>false" in after_context_pack_goal_page.body
+    assert "run_delegation_form_available</dt><dd>true" in after_context_pack_goal_page.body
+    assert "browser_execution_exposed</dt><dd>confirmed_local_only" in after_context_pack_goal_page.body
     home_after_delegate = render_local_app_route(tmp_path, "/")
     assert "Goal-First Home" in home_after_delegate.body
     assert "home_active_goals</dt><dd>1" in home_after_delegate.body
     assert "lead_goal_phase</dt><dd>Running" in home_after_delegate.body
-    assert "lead_goal_next_action</dt><dd>Run delegation from CLI" in home_after_delegate.body
+    assert "lead_goal_next_action</dt><dd>Run delegation" in home_after_delegate.body
     assert "Home Recent Activity" in home_after_delegate.body
     assert "Scout delegated" in home_after_delegate.body
     assert "First Run Guide" in home_after_delegate.body
-    assert "first_run_current_step</dt><dd>run_first_delegation_from_cli" in home_after_delegate.body
+    assert "first_run_current_step</dt><dd>run_first_delegation" in home_after_delegate.body
     assert "first_run_context_pack_ready</dt><dd>true" in home_after_delegate.body
     assert "first_run_step: run_first_delegation status=current" in home_after_delegate.body
     assert "first_run_run_delegation_command</dt><dd>python3 -m agent_os.cli run-delegation" in home_after_delegate.body
+    assert "first_run_run_delegation_action</dt><dd>/actions/run-delegation delegation_id=" in home_after_delegate.body
+    assert "first_run_browser_execution_exposed</dt><dd>confirmed_local_only" in home_after_delegate.body
     assert created_goal_id in home_after_delegate.body
     created_goals = render_local_app_route(tmp_path, "/goals")
     assert "first-target" in created_goals.body
     assert "Create a browser-first first-run workflow" in created_goals.body
-    assert "first_run_current_step</dt><dd>run_first_delegation_from_cli" in created_goals.body
+    assert "first_run_current_step</dt><dd>run_first_delegation" in created_goals.body
 
     actions = render_local_app_route(tmp_path, "/actions")
     assert actions.status == 200
@@ -4679,6 +4683,76 @@ def test_local_app_routes_render_modern_workflow_and_health(
     demo = render_local_app_route(tmp_path, "/demo")
     assert demo.status == 200
     assert "demo-app-scenario" in demo.body
+
+
+def test_local_app_runs_delegation_from_browser_action(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    storage, goal_id, _task_id, delegation_id, _repo_path = (
+        _create_registered_context_pack_delegation(tmp_path, capsys)
+    )
+    adapter_path = _write_fake_scout_adapter(tmp_path)
+    _configure_scout_adapter(tmp_path, capsys, adapter_path)
+
+    context_pack_result = render_local_app_route(
+        tmp_path,
+        "/actions/context-pack",
+        method="POST",
+        form={"delegation_id": [delegation_id], "confirm": ["yes"]},
+    )
+    assert context_pack_result.status == 200
+
+    goal_before_run = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert "recommended_action</dt><dd>Run delegation" in goal_before_run.body
+    assert "Run Delegation" in goal_before_run.body
+    assert "action='/actions/run-delegation'" in goal_before_run.body
+    assert "run_delegation_form_available</dt><dd>true" in goal_before_run.body
+    assert "browser_execution_exposed</dt><dd>confirmed_local_only" in goal_before_run.body
+    assert "provider_calls_taken_by_clankeros</dt><dd>0" in goal_before_run.body
+    assert "network_actions_taken_by_app</dt><dd>0" in goal_before_run.body
+    assert "external_mutations_taken</dt><dd>0" in goal_before_run.body
+
+    run_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/run-delegation",
+        method="POST",
+        form={"delegation_id": [delegation_id]},
+    )
+    assert run_confirmation.status == 409
+    assert "Confirm run-delegation" in run_confirmation.body
+    assert "Safety boundary" in run_confirmation.body
+
+    run_result = render_local_app_route(
+        tmp_path,
+        "/actions/run-delegation",
+        method="POST",
+        form={
+            "delegation_id": [delegation_id],
+            "operator_id": ["operator"],
+            "confirm": ["yes"],
+        },
+    )
+    assert run_result.status == 200
+    assert "run_delegation:" in run_result.body
+    assert "status</dt><dd>completed" in run_result.body
+    assert "incident_id</dt><dd>none" in run_result.body
+    assert "memory_proposal_id</dt><dd>none" in run_result.body
+    assert "evidence_dir</dt><dd><a href='/artifacts?path=.clanker/delegations/" in run_result.body
+    assert "network_actions_taken</dt><dd>0" in run_result.body
+    assert "external_mutations_taken</dt><dd>0" in run_result.body
+
+    refreshed = Storage(tmp_path / ".agent" / "state.db")
+    completed_delegation = refreshed.get_subagent_delegation(delegation_id)
+    assert completed_delegation is not None
+    assert completed_delegation.status == "completed"
+    assert completed_delegation.result_artifact_path
+
+    goal_after_run = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert "recommended_action</dt><dd>Run coder prep" in goal_after_run.body
+    assert "implementation_handoff.md" in goal_after_run.body
+    assert "Scout delegated" in goal_after_run.body
+    assert "Execution completed" in goal_after_run.body
 
 
 def test_local_app_artifact_viewer_is_read_only_and_bounded(

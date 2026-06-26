@@ -110,8 +110,8 @@ next-action readbacks, the saved-goal browser-available action form, and
 first-run project/goal/delegation guidance when the checkout has not completed
 its first delegation. The First Run Guide is
 state-aware: it shows the current step across create project, create first
-goal, create first delegation, prepare context, and the copy-only
-`run-delegation` handoff. When a lead goal exists, Home also shows an explicit
+goal, create first delegation, prepare context, and the confirmed local
+`run-delegation` action with a copyable CLI fallback. When a lead goal exists, Home also shows an explicit
 `save-workspace` form so the operator can remember the current goal/project
 context for the next session. Use the
 compact local app smoke commands before pushing, then let GitHub Actions run
@@ -197,7 +197,8 @@ renders a state-aware First Run Guide plus confirmed local forms for
 `register-project` and `create-goal`, so a new operator can create a project
 and first goal without switching to CLI commands. The guide tracks whether
 the project, goal, first delegation, and context pack exist, then points to
-the current surface or exact `run-delegation` command. From the created goal
+the current surface, the confirmed local `run-delegation` action, or its exact
+CLI fallback command. From the created goal
 page, the Next Action card can create the first read-only scout delegation
 with a confirmed `delegate` form, writing a local contract artifact without
 starting a subagent or calling a provider. After the delegation exists, the

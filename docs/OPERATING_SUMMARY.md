@@ -110,9 +110,10 @@ Core layers for the bootstrap:
   local `Start Another Goal` form for registered projects, so daily goal
   creation does not require the CLI. The checklist reports the current step,
   project/goal/
-  delegation/context-pack state, next local surface, and copy-only
-  `run-delegation` handoff once context is ready while keeping browser
-  execution unexposed. Shared goal rows in Home, `/goals`, and project detail
+  delegation/context-pack state, next local surface, a confirmed local
+  `run-delegation` action once context is ready, and a copyable CLI fallback
+  while keeping provider calls, network actions, push, PR creation, deploy,
+  and external mutation unexposed. Shared goal rows in Home, `/goals`, and project detail
   pages now show phase, next action, progress, and compact remaining-work
   counts for open tasks, incidents, and recommendations. Goal detail pages now
   expose first-class Goal Risk and Goal Completion Criteria sections sourced
@@ -151,8 +152,9 @@ Core layers for the bootstrap:
   delegation form writes a read-only scout delegation contract only and does
   not start a subagent. Once a delegation exists without a context pack, the
   same Goal Next Action card exposes a confirmed `context-pack` form; after
-  the context pack exists, it shows the exact `run-delegation` CLI handoff and
-  keeps browser adapter execution marked as not exposed. After a delegation
+  the context pack exists, it shows a confirmed `run-delegation` form that
+  reuses the existing read-only adapter checks and incident-on-failure path,
+  plus the exact CLI fallback command. After a delegation
   completes, the Goal Next Action card exposes confirmed `coder-prep`,
   `coder-worktree-plan`, and `coder-worktree-approval` forms at the matching
   workflow phases, then exposes confirmed `approve-coder-worktree`. Once the
@@ -169,8 +171,8 @@ Core layers for the bootstrap:
   `coder-publication-handoff` forms at the matching phases, then shows the
   manual publish boundary and copy-only publication handoff commands once the
   handoff is ready. These write local artifacts, approval rows, approval
-  decisions, or one isolated local worktree commit without running
-  delegations or worktrees from the browser, pushing, creating PRs, deploying,
+  decisions, read-only delegation run evidence, or one isolated local worktree
+  commit without running worktrees from the browser, pushing, creating PRs, deploying,
   calling providers, or mutating external systems. Goal pages also
   include a `Goal Resume Snapshot` that reads saved workspace state, links the
   current goal/project, suggests the newest goal artifact as a resume anchor,

@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-26 Browser Run Delegation Action
+
+- Added a confirmed local `run-delegation` browser action. Once a Goal has a
+  scout delegation and context pack, the Goal Next Action card now recommends
+  `Run delegation`, renders `/actions/run-delegation`, and keeps the exact CLI
+  command as a fallback/readback.
+- The action calls the existing `run_delegation` backend path, so it preserves
+  read-only profile validation, unsafe adapter command rejection, evidence
+  packet creation, implementation handoff creation, and incident-on-failure
+  behavior. First-run guidance now points to the Goal page browser action
+  instead of a CLI-only handoff.
+- Non-claims: this does not expose provider calls, network actions, arbitrary
+  command entry, worktree execution, push, PR creation, deploy, or external
+  mutation. It executes only the already configured local read-only delegation
+  adapter after explicit confirmation.
+- Compact local verification for this slice:
+  - Focused red pytest first failed because the Goal page lacked
+    `/actions/run-delegation`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_runs_delegation_from_browser_action"`
+    -> `1 passed, 511 deselected`
+  - Focused local-app slice:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "github_actions_workflow_runs_automatic_verification or local_app_routes_render_modern_workflow_and_health or local_app_runs_delegation_from_browser_action or local_app_demo_scenario_populates_fixture_state"`
+    -> `4 passed, 508 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Goal Incidents Section
 
 - Added a first-class `Goal Incidents` section to `/goals/<goal_id>`, linked
@@ -496,15 +528,16 @@
   state-aware checklist for Create project -> Create first goal -> Run first
   delegation. It now reports the current step, project/goal/delegation/context
   readiness, next local surface, text empty-state illustration, zero-effect
-  counters, and the exact copy-only `run-delegation` command once the context
-  pack is ready.
+  counters, and the exact `run-delegation` command once the context pack is
+  ready. Later browser work promoted that handoff into a confirmed local
+  `run-delegation` action while retaining the CLI command as fallback.
 - Home keeps showing the first-run guide until the first delegation is
   completed, so a new operator can continue from project registration through
   the first delegation handoff without reading docs or hunting through CLI
   commands.
-- The guide remains local UI only. It does not run delegations, expose browser
-  adapter execution, call providers, fetch GitHub status, push, create PRs,
-  deploy, or mutate external systems.
+- The original guide was local UI only. The current browser action still does
+  not call providers, fetch GitHub status, push, create PRs, deploy, or mutate
+  external systems.
 - Compact local verification for this slice:
   - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
     -> passed
@@ -877,9 +910,9 @@
   no context pack, `/goals/<goal_id>` recommends `Generate context pack` and
   renders the confirmed local `context-pack` form directly on the goal page.
 - After the context pack exists, the Goal page changes the recommendation to
-  `Run delegation from CLI`, shows the exact `python3 -m agent_os.cli
-  run-delegation <delegation_id>` handoff, and keeps
-  `browser_execution_exposed=false`.
+  `Run delegation`, shows a confirmed `/actions/run-delegation` form, keeps
+  the exact `python3 -m agent_os.cli run-delegation <delegation_id>` fallback,
+  and labels browser execution as `confirmed_local_only`.
 - Compact local verification for this slice:
   - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
     -> passed
