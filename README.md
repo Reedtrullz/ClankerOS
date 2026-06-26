@@ -161,9 +161,11 @@ shows the exact `run-delegation` CLI handoff because browser adapter execution
 is still not exposed. After a delegation has completed, the Goal Next Action
 card can also create the local coder prep packet, create the approval-gated
 worktree plan, and request the pending worktree approval with confirmed
-browser forms. Those steps write local artifacts or local approval rows only;
-they do not create worktrees, run commands, approve execution, push, create
-PRs, deploy, call providers, or use the network. Use Home or `/workspace` to
+browser forms. It can then approve the pending worktree request and create the
+review-gated commit request once a completed run has a passing review gate.
+Those steps write local artifacts, local approval rows, or local approval
+decisions only; they do not create worktrees, run commands, commit, push,
+create PRs, deploy, call providers, or use the network. Use Home or `/workspace` to
 save and restore open project, open goal, filters, expanded panels, and last
 viewed artifact in `.clanker/app/workspace.json`.
 Use the goal page note form for day-to-day operator breadcrumbs, then find the

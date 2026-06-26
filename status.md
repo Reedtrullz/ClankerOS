@@ -1,5 +1,17 @@
 # Status
 
+## 2026-06-26 Goal Approval And Commit Request Actions
+
+- Extended the Goal Next Action card with confirmed local forms for
+  `approve-coder-worktree` and `coder-commit-request` when the current goal is
+  waiting on a pending worktree approval or a reviewed completed worktree run.
+- The approval form records a local approval decision only. The commit request
+  form creates a pending local commit approval request only after the existing
+  review gate says the completed run is reviewed.
+- Non-claims: this does not expose worktree execution, source edits, automatic
+  commits, push, PR creation, deploy, provider calls, network actions, or
+  external mutation from the Goal page.
+
 ## 2026-06-26 Goal Post-Delegation Next Actions
 
 - Extended the Goal Next Action card so the post-delegation path is also

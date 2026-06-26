@@ -2135,6 +2135,10 @@ def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -
         form = _goal_worktree_plan_form(state)
     elif next_action.action == "Request worktree approval":
         form = _goal_worktree_approval_form(state)
+    elif next_action.action == "Approve worktree":
+        form = _goal_approve_worktree_form(state)
+    elif next_action.action == "Create commit request":
+        form = _goal_commit_request_form(state["root"], state)
     return (
         "<section><h2>Next Action</h2>"
         + _kv(
@@ -2149,6 +2153,66 @@ def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -
         + form
         + "</section>"
     )
+
+
+def _goal_approve_worktree_form(state: dict[str, Any]) -> str:
+    approval = _goal_pending_worktree_approval(state)
+    if approval is None:
+        return "<p class='muted'>approve_worktree_form_status: unavailable_until_pending_worktree_approval_exists</p>"
+    return "".join(
+        [
+            "<h3>Approve Worktree</h3>",
+            "<p class='muted'>Records a local approval decision for the bounded worktree request. It does not run the worktree, edit source files, call a provider, use the network, commit, push, create a PR, or deploy.</p>",
+            _input_form(
+                "approve-coder-worktree",
+                {"approval_id": approval.id},
+                {
+                    "decided_by": "operator",
+                    "note": "Approved bounded execution from goal page",
+                },
+            ),
+        ]
+    )
+
+
+def _goal_commit_request_form(root: Path, state: dict[str, Any]) -> str:
+    run = _goal_reviewed_completed_worktree_run(root, state)
+    if run is None:
+        return "<p class='muted'>commit_request_form_status: unavailable_until_reviewed_completed_run_exists</p>"
+    return "".join(
+        [
+            "<h3>Create Commit Request</h3>",
+            "<p class='muted'>Creates a pending local commit approval request from the reviewed worktree evidence. It does not stage, commit, push, create a PR, deploy, call a provider, or use the network.</p>",
+            _input_form(
+                "coder-commit-request",
+                {"run_id": run.id, "requested_by": "operator"},
+                {
+                    "message": "Implement bounded change from approved worktree run",
+                    "note": "Request local commit after review from goal page",
+                },
+            ),
+        ]
+    )
+
+
+def _goal_pending_worktree_approval(state: dict[str, Any]) -> Any | None:
+    return next(
+        (
+            item
+            for item in state.get("worktree_approvals", [])
+            if item.status == "pending_operator_approval"
+        ),
+        None,
+    )
+
+
+def _goal_reviewed_completed_worktree_run(root: Path, state: dict[str, Any]) -> Any | None:
+    for run in state.get("worktree_runs", []):
+        if run.status == "completed" and _run_review_gate_state(root, run)[
+            "commit_request_form_available"
+        ]:
+            return run
+    return None
 
 
 def _goal_coder_prep_form(state: dict[str, Any]) -> str:

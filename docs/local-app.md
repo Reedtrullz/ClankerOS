@@ -77,9 +77,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   and makes clear that browser adapter execution is not exposed yet. After a
   delegation completes, the card exposes confirmed `coder-prep`,
   `coder-worktree-plan`, and `coder-worktree-approval` forms at the matching
-  workflow phases. These create local artifacts or a pending local approval
-  request only; they do not create worktrees, run commands, approve execution,
-  call providers, or perform external mutations.
+  workflow phases. It also exposes confirmed `approve-coder-worktree` and
+  `coder-commit-request` forms when the goal is waiting on those gates. These
+  create local artifacts, approval rows, or approval decisions only; they do
+  not create worktrees, run commands, commit, push, create PRs, deploy, call
+  providers, or perform external mutations.
 - Every app page includes a shared operator shell with breadcrumbs, recent
   local items, a command palette, a dark/light theme toggle, and keyboard
   shortcuts for home, goals, and palette search. These controls only navigate

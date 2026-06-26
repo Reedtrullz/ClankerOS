@@ -5498,6 +5498,65 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert "does not approve execution" in after_plan.body
     assert "external_effects_created</dt><dd>false" in after_plan.body
 
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-worktree-approval",
+                delegation_id,
+                "--requested-by",
+                "operator",
+                "--note",
+                "Approve bounded worktree execution",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    pending_approval = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert pending_approval.status == 200
+    assert "recommended_action</dt><dd>Approve worktree" in pending_approval.body
+    assert "next_action_form_available</dt><dd>true" in pending_approval.body
+    assert "Approve Worktree" in pending_approval.body
+    assert "action='/actions/approve-coder-worktree'" in pending_approval.body
+    assert "Approved bounded execution from goal page" in pending_approval.body
+    assert "does not run the worktree" in pending_approval.body
+    assert "push, create a PR, or deploy" in pending_approval.body
+
+
+def test_goal_next_action_card_exposes_reviewed_commit_request_form(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    source_run_id, delegation_id, _approval_id, run_id, _evidence_dir, _worktree_path, _repo_path = (
+        _run_completed_coder_worktree(tmp_path, capsys)
+    )
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    delegation = storage.get_subagent_delegation(delegation_id)
+    assert delegation is not None
+    goal_id = delegation.parent_goal_id
+
+    before_review = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert before_review.status == 200
+    assert "recommended_action</dt><dd>Open review" in before_review.body
+    assert "next_action_form_available</dt><dd>false" in before_review.body
+    assert "action='/actions/coder-commit-request'" not in before_review.body
+
+    assert main(["--root", str(tmp_path), "review", source_run_id]) == 0
+    capsys.readouterr()
+    after_review = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert after_review.status == 200
+    assert "recommended_action</dt><dd>Create commit request" in after_review.body
+    assert "next_action_form_available</dt><dd>true" in after_review.body
+    assert "Create Commit Request" in after_review.body
+    assert "action='/actions/coder-commit-request'" in after_review.body
+    assert f"name='run_id' value='{run_id}'" in after_review.body
+    assert "Implement bounded change from approved worktree run" in after_review.body
+    assert "Request local commit after review from goal page" in after_review.body
+    assert "does not stage, commit, push" in after_review.body
+    assert "create a PR, deploy, call a provider, or use the network" in after_review.body
+
 
 def test_local_app_cli_commands_and_bind_safety(
     tmp_path: Path,

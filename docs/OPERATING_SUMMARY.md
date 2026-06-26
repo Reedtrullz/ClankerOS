@@ -102,9 +102,11 @@ Core layers for the bootstrap:
   keeps browser adapter execution marked as not exposed. After a delegation
   completes, the Goal Next Action card exposes confirmed `coder-prep`,
   `coder-worktree-plan`, and `coder-worktree-approval` forms at the matching
-  workflow phases, writing local artifacts or pending local approval rows
-  without creating worktrees, running commands, approving execution, calling
-  providers, or mutating external systems. Goal pages also
+  workflow phases, then exposes confirmed `approve-coder-worktree` and
+  `coder-commit-request` forms when the goal is waiting on those gates. These
+  write local artifacts, approval rows, or approval decisions without creating
+  worktrees, running commands, committing, pushing, creating PRs, deploying,
+  calling providers, or mutating external systems. Goal pages also
   include a typed `Goal Artifact Explorer` that groups goal-linked Markdown,
   JSON, Patch/Diff, and Text/Log artifacts and links them through the bounded
   inert `/artifacts` viewer without raw filesystem browsing. Every page shares
