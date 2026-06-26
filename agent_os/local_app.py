@@ -825,6 +825,7 @@ def _verification_page(root: Path) -> str:
             "</section>",
             _list_section("Workflow Configuration Summary", workflow_summary_lines),
             _list_section("GitHub Actions Steps", workflow_step_lines),
+            _latest_ci_evidence_panel(root),
             _list_section(
                 "Remote Run State Guidance",
                 [
@@ -850,6 +851,38 @@ def _verification_page(root: Path) -> str:
                 ],
             ),
         ]
+    )
+
+
+def _latest_ci_evidence_panel(root: Path) -> str:
+    records = _storage(root).list_recent_ci_deploy_evidence_records(limit=1)
+    if not records:
+        return _list_section(
+            "Latest Recorded CI Evidence",
+            [
+                "latest_ci_status: missing",
+                "next_ci_evidence_action: wait_for_github_actions_success_then_record_ci_deploy_evidence",
+                "record_command_template: python3 -m agent_os.cli ci-deploy-evidence <github_handoff_id> --provider github-actions --status success --external-run-id <run_id> --url <run_url>",
+                "proof_boundary: no local CI proof record yet",
+                "github_status_fetch: none",
+            ],
+        )
+    record = records[0]
+    return _list_section(
+        "Latest Recorded CI Evidence",
+        [
+            f"latest_ci_status: {_e(record.status)}",
+            f"latest_ci_provider: {_e(record.provider)}",
+            f"latest_ci_commit: {_e(record.commit_sha)}",
+            f"latest_ci_branch: {_e(record.branch_name)}",
+            f"latest_ci_external_run_id: {_e(record.external_run_id)}",
+            f"latest_ci_url: <a href='{_e(record.external_url)}'>{_e(record.external_url)}</a>",
+            f"latest_ci_handoff: {_e(record.github_handoff_id)}",
+            f"latest_ci_recorded_by: {_e(record.recorded_by)}",
+            f"latest_ci_evidence_path: {_artifact_link(_repo_relative_artifact_path(root, record.evidence_path))}",
+            "proof_boundary: operator_supplied_record_only",
+            "github_status_fetch: none",
+        ],
     )
 
 

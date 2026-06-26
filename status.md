@@ -1,5 +1,27 @@
 # Status
 
+## 2026-06-26 Local App Verification Latest CI Evidence
+
+- Upgraded `/verification` with a read-only `Latest Recorded CI Evidence`
+  panel. When operator-supplied CI evidence exists, it shows status,
+  provider, commit, branch, external run id, run URL, handoff id, recorded-by
+  field, and evidence artifact link without fetching GitHub status.
+- When no CI evidence exists, `/verification` now shows a
+  `ci-deploy-evidence` command template and labels the state as missing
+  proof instead of implying that a pushed or in-progress run is enough.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_artifact_viewer"`
+    -> `2 passed, 496 deselected`
+  - `python3 -m agent_os.cli app-smoke-test` -> rendered the core local app
+    routes with status 200 and zero provider/network/external-mutation
+    counters.
+  - `git diff --check`
+- Non-claims: this is a read-only verification/navigation improvement only;
+  it does not execute work, approve requests, commit, push, create PRs,
+  deploy, call providers, fetch GitHub status, execute arbitrary commands, or
+  perform non-loopback network actions from the local app.
+
 ## 2026-06-26 Local App Dogfooding Next Action
 
 - Upgraded `/dogfooding` with a read-only `Dogfooding Next Action` panel.

@@ -156,7 +156,8 @@ local workflow, run, approvals, and inbox surfaces.
 `/verification` is a local read-only testing map. It reads
 `.github/workflows/tests.yml`, shows whether push-to-main, pull-request, and
 manual workflow triggers are configured, lists the GitHub Actions steps, and
-keeps the compact local checks visible. It also shows the workflow job timeout
+keeps the compact local checks visible. It also shows the workflow job timeout,
+summarizes the latest operator-supplied CI evidence record when one exists,
 and labels an in-progress GitHub run as pending proof rather than CI proof:
 
 - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
@@ -168,7 +169,8 @@ The page does not fetch GitHub status. A pushed commit is not CI proof until
 the GitHub Actions run completes successfully. If a GitHub run is still in
 progress, keep waiting on GitHub instead of rerunning the full suite locally;
 if it fails or reaches the timeout, inspect the failed job log and fix that
-specific CI issue.
+specific CI issue. If no CI evidence has been recorded locally, the page shows
+a `ci-deploy-evidence` command template instead of pretending CI proof exists.
 
 `/ci-evidence` is the read-only companion for proof that has already been
 recorded locally with `ci-deploy-evidence`. It shows the provider, status,

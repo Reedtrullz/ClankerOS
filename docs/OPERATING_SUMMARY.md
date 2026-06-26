@@ -96,8 +96,9 @@ Core layers for the bootstrap:
   readback; a read-only `/actions` catalog for safe local action requirements,
   form locations, output artifacts, confirmation posture, and external-effect
   boundaries; a read-only `/verification` handoff for the checked-in GitHub
-  Actions workflow, configured job timeout, compact local checks, in-progress
-  run non-proof guidance, and CI proof boundary without contacting GitHub; a
+  Actions workflow, configured job timeout, latest operator-supplied CI
+  evidence summary, compact local checks, in-progress run non-proof guidance,
+  and CI proof boundary without contacting GitHub; a
   read-only `/ci-evidence` page for operator-supplied CI/deploy proof records
   already stored in local ClankerOS state without fetching GitHub status; a
   read-only `/actions` current-demo action surface map that links fixture state

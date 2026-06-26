@@ -3383,6 +3383,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "job_timeout_minutes: 45" in verification.body
     assert "in_progress_run_status: not_ci_proof" in verification.body
     assert "If a GitHub run is still in progress, keep waiting on GitHub rather than rerunning the full suite locally." in verification.body
+    assert "Latest Recorded CI Evidence" in verification.body
+    assert "latest_ci_status: success" in verification.body
+    assert "latest_ci_provider: github-actions" in verification.body
+    assert "latest_ci_commit: abc123" in verification.body
+    assert "latest_ci_external_run_id: 123" in verification.body
+    assert "latest_ci_url" in verification.body
+    assert "proof_boundary: operator_supplied_record_only" in verification.body
+    assert "github_status_fetch: none" in verification.body
     assert "Compact Local Checks" in verification.body
     assert "python3 -m agent_os.cli app-smoke-test" in verification.body
     assert "CI proof requires a completed passing GitHub Actions run" in verification.body
@@ -3458,6 +3466,12 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     tmp_path: Path,
 ) -> None:
     AgentSystem(tmp_path).initialize()
+    verification_without_ci = render_local_app_route(tmp_path, "/verification")
+    assert verification_without_ci.status == 200
+    assert "Latest Recorded CI Evidence" in verification_without_ci.body
+    assert "latest_ci_status: missing" in verification_without_ci.body
+    assert "record_command_template: python3 -m agent_os.cli ci-deploy-evidence" in verification_without_ci.body
+    assert "github_status_fetch: none" in verification_without_ci.body
     docs = tmp_path / "docs"
     docs.mkdir(exist_ok=True)
     (docs / "sample.md").write_text("# Sample\n", encoding="utf-8")
