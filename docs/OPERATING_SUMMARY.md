@@ -71,11 +71,12 @@ Core layers for the bootstrap:
   project -> goal/task -> scout -> context-pack -> implementation-handoff ->
   coder-prep -> worktree-plan -> approval -> bounded execution -> commit ->
   publication handoff path, plus project, delegation/run, artifact, health, and
-  demo pages. The `/projects` index now acts as a read-only project workflow
-  index with local repo posture, default test command, goal/task/delegation
-  counts, next recommended operator action, and selected delegation/run
-  workflow links. Project detail pages separate project goals from goal-linked
-  project tasks and include a project workflow launchpad with scoped
+  demo pages. The `/projects` index now acts as a project workflow index with
+  a confirmed local `Register Local Project` form, local repo posture, default
+  test command, goal/task/delegation counts, next recommended operator action,
+  and selected delegation/run workflow links. Project detail pages separate
+  project goals from goal-linked project tasks and include a project workflow
+  launchpad with scoped
   delegation/run workflow links, safe actions, dogfooding, and verification
   links so the operator can start from the product path rather than infer
   goals from task rows. The local app now also exposes `/resume` as a

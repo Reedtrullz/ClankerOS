@@ -1,5 +1,29 @@
 # Status
 
+## 2026-06-26 Project Registration From Project Index
+
+- Added a populated-state `Register Local Project` section to `/projects`.
+  It reports confirmation and zero-effect posture, then uses the existing
+  confirmed local `register-project` action with name, path, test command, and
+  allowed write roots fields so operators can add another local repository
+  from the browser project index instead of returning to the CLI.
+- The form is local project-registry UI only. Displaying it does not write
+  state, call providers, use the network, push, create PRs, deploy, run
+  delegations/worktrees, or mutate external systems.
+- Compact local verification for this slice:
+  - Focused red test failed first because populated `/projects` did not
+    contain `Register Local Project`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with `/projects` marker matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Daily Goal Creation From Cockpit
 
 - Added a populated-state `Start Another Goal` section to `/goals`. It lists

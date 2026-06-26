@@ -250,7 +250,10 @@ coder prep.
 Use `/projects` as the project workflow index. It shows each registered
 project's root, default test command, current branch/commit, goal/task/
 delegation counts, next recommended local operator action, and direct project
-or selected workflow links.
+or selected workflow links. It also includes a confirmed local
+`Register Local Project` form backed by the existing `register-project`
+action, so daily project onboarding does not require switching back to the
+CLI.
 
 Use `/projects/<project_id>` as the project-level launchpad. It shows goals,
 tasks, delegations, artifacts, project guidance, scoped workflow links for

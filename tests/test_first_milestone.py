@@ -5301,6 +5301,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     projects_index = render_local_app_route(tmp_path, "/projects")
     assert projects_index.status == 200
     assert "Project Workflow Index" in projects_index.body
+    assert "Register Local Project" in projects_index.body
+    assert "project_registration_form_available</dt><dd>true" in projects_index.body
+    assert "project_registration_confirmation_required</dt><dd>true" in projects_index.body
+    assert "project_registration_network_actions_taken</dt><dd>0" in projects_index.body
+    assert "project_registration_external_effects_created</dt><dd>false" in projects_index.body
+    assert "action='/actions/register-project'" in projects_index.body
+    assert "name='path'" in projects_index.body
+    assert "name='test_command' value='python3 -m pytest -q'" in projects_index.body
     assert "local-app-demo" in projects_index.body
     assert f"/projects/{result.project_id}" in projects_index.body
     assert "default_test_command" in projects_index.body

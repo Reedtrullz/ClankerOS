@@ -179,10 +179,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `GitHub Actions Follow-up` section with direct snapshot
   `ci-snapshot-handoff`, `gh run view`, and `ci-snapshot-evidence`
   record-after-success templates for the current checkout.
-- `/projects` - read-only project workflow index with root path, default test
-  command, current branch/commit, goal/task/delegation counts, next
-  recommended local operator action, project detail links, and selected
-  delegation/run workflow shortcuts.
+- `/projects` - project workflow index with a confirmed local
+  `Register Local Project` form plus root path, default test command, current
+  branch/commit, goal/task/delegation counts, next recommended local operator
+  action, project detail links, and selected delegation/run workflow
+  shortcuts.
 - `/projects/<project_id>` - project detail with first-class project goals,
   goal-linked tasks, linked artifacts, project-scoped incidents/
   recommendations, next recommended operator action, and a project workflow

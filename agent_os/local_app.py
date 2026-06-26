@@ -5110,10 +5110,44 @@ def _projects(root: Path) -> str:
     return "".join(
         [
             "<section><h1>Project Workflow Index</h1>",
-            "<p class='muted'>Read-only project entry points with local repo posture, goal/task counts, delegation links, workflow shortcuts, and the next local operator action.</p>",
+            "<p class='muted'>Project entry points with local repo posture, goal/task counts, delegation links, workflow shortcuts, safe registration, and the next local operator action.</p>",
+            "</section>",
+            _project_registration_panel(root, projects),
+            "<section><h2>Registered Projects</h2>",
             _ul([_project_index_line(root, storage, project) for project in projects]),
             "</section>",
             _non_claim_banner(),
+        ]
+    )
+
+
+def _project_registration_panel(root: Path, projects: list[Any]) -> str:
+    next_index = len(projects) + 1
+    return "".join(
+        [
+            "<section><h2>Register Local Project</h2>",
+            "<p class='muted'>Add another local git repository to the operator cockpit without leaving the browser.</p>",
+            _kv(
+                [
+                    ("project_registration_form_available", "true"),
+                    ("project_registration_registered_project_count", str(len(projects))),
+                    ("project_registration_confirmation_required", "true"),
+                    ("project_registration_provider_calls_taken_by_clankeros", "0"),
+                    ("project_registration_network_actions_taken", "0"),
+                    ("project_registration_external_effects_created", "false"),
+                ]
+            ),
+            _input_form(
+                "register-project",
+                {},
+                {
+                    "name": f"local-project-{next_index}",
+                    "path": str(root),
+                    "test_command": "python3 -m pytest -q",
+                    "allowed_write_roots": str(root),
+                },
+            ),
+            "</section>",
         ]
     )
 
