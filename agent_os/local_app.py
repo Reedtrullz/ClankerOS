@@ -1129,6 +1129,7 @@ def _home_resume_workspace(root: Path, lead_goal: sqlite3.Row | None) -> str:
         lines.append(f"resume_project: <a href='/projects/{quote(open_project)}'>{_e(open_project)}</a>")
     if last_artifact:
         lines.append(f"resume_artifact: {_artifact_link(last_artifact)}")
+    lines.extend(_home_resume_next_action_lines(root, open_goal))
     if not any([open_goal, open_project, last_artifact]):
         lines.append("workspace_status: no_saved_workspace")
     lines.append("resume_surface: <a href='/resume'>/resume</a>")
@@ -1165,6 +1166,29 @@ def _home_resume_workspace(root: Path, lead_goal: sqlite3.Row | None) -> str:
             "</section>",
         ]
     )
+
+
+def _home_resume_next_action_lines(root: Path, open_goal: str) -> list[str]:
+    if not open_goal:
+        return [
+            "home_resume_next_action_status: no_saved_goal",
+            "home_resume_next_action_write_on_get: false",
+            "home_resume_next_action_external_effects_created: false",
+        ]
+    storage = _storage(root)
+    state = _goal_state(root, storage, open_goal)
+    phase = _goal_current_phase(state)
+    next_action = _goal_next_action(root, state)
+    return [
+        f"home_resume_current_phase: {_e(phase)}",
+        f"home_resume_next_action: {_e(next_action.action)}",
+        f"home_resume_next_reason: {_e(next_action.reason)}",
+        f"home_resume_operator_attention: {_e(_goal_operator_attention(phase, next_action))}",
+        f"home_resume_next_surface: <a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
+        "home_resume_next_action_source: saved_goal_state",
+        "home_resume_next_action_write_on_get: false",
+        "home_resume_next_action_external_effects_created: false",
+    ]
 
 
 def _home_recent_activity(root: Path, storage: Storage) -> str:

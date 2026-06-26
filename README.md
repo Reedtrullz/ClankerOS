@@ -105,13 +105,14 @@ python3 -m agent_os.cli app
 
 The root `/` page is the Goal-First Home board. It starts with active,
 paused, and completed goal lanes, recent activity, the operator inbox,
-recommendations, incidents, saved workspace resume links, and first-run
-project/goal/delegation guidance when the checkout has not completed its
-first delegation. The First Run Guide is state-aware: it shows the current
-step across create project, create first goal, create first delegation,
-prepare context, and the copy-only `run-delegation` handoff. When a lead goal
-exists, Home also shows an explicit `save-workspace` form so the operator can
-remember the current goal/project context for the next session. Use the
+recommendations, incidents, saved workspace resume links, saved-goal phase and
+next-action readbacks, and first-run project/goal/delegation guidance when
+the checkout has not completed its first delegation. The First Run Guide is
+state-aware: it shows the current step across create project, create first
+goal, create first delegation, prepare context, and the copy-only
+`run-delegation` handoff. When a lead goal exists, Home also shows an explicit
+`save-workspace` form so the operator can remember the current goal/project
+context for the next session. Use the
 compact local app smoke commands before pushing, then let GitHub Actions run
 the fast route smoke and full pytest suite for slower proof.
 Use `/resume` when returning to ClankerOS after a break. It reads the saved

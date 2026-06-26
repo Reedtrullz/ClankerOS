@@ -5205,6 +5205,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"resume_project: <a href='/projects/{result.project_id}'>{result.project_id}</a>" in restored_home.body
     assert "resume_artifact" in restored_home.body
     assert ".clanker/demo/demo-result.md" in restored_home.body
+    assert "home_resume_current_phase: Ready to commit" in restored_home.body
+    assert "home_resume_next_action: Create commit request" in restored_home.body
+    assert f"home_resume_next_surface: <a href='/runs/{result.coder_worktree_run_id}'" in restored_home.body
+    assert "home_resume_operator_attention: Act: Create commit request" in restored_home.body
     resume = render_local_app_route(tmp_path, "/resume")
     assert resume.status == 200
     assert "Resume Workspace" in resume.body

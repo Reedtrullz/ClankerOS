@@ -198,9 +198,9 @@ Core layers for the bootstrap:
   push and draft-PR commands plus the PR body path with zero-effect counters.
   The root `/` app page is now a Goal-First Home board with active, paused,
   and completed goal lanes, recent activity, inbox counts, recommendations,
-  incidents, saved workspace resume links, a `/resume` landing link, an
-  explicit `save-workspace` form for the current lead goal when one exists,
-  and a state-aware first-run
+  incidents, saved workspace resume links, saved-goal phase and next-action
+  readbacks, a `/resume` landing link, an explicit `save-workspace` form for
+  the current lead goal when one exists, and a state-aware first-run
   project/goal/delegation guide until the first delegation is completed.
   Coder worktree run rows in review,
   dashboard, and the local app include changed-file counts and compact diff
