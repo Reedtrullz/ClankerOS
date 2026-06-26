@@ -3249,8 +3249,31 @@ def test_local_app_routes_render_modern_workflow_and_health(
         + "\n",
         encoding="utf-8",
     )
-    Storage(tmp_path / ".agent" / "state.db").record_ci_deploy_evidence(
-        github_handoff_id="github_handoff_demo",
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    handoff_evidence_path = tmp_path / ".clanker" / "github" / "handoff-demo.json"
+    handoff_evidence_path.parent.mkdir(parents=True, exist_ok=True)
+    handoff_evidence_path.write_text(
+        json.dumps({"status": "ready_for_operator"}) + "\n",
+        encoding="utf-8",
+    )
+    handoff = storage.record_github_handoff(
+        effect_id="effect_demo",
+        project_id="local-app-demo",
+        run_id="run_demo",
+        task_id="task_demo",
+        branch_name="main",
+        commit_sha="abc123",
+        remote_name="origin",
+        remote_url="git@github.com:example/subject.git",
+        base_branch="main",
+        status="ready_for_operator",
+        push_command="git push origin main",
+        draft_pr_command="gh pr create --draft",
+        evidence_path=str(handoff_evidence_path),
+        result_json={"network_actions_taken": 0},
+    )
+    storage.record_ci_deploy_evidence(
+        github_handoff_id=handoff.id,
         effect_id="effect_demo",
         project_id="local-app-demo",
         run_id="run_demo",
@@ -3408,6 +3431,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
     ci_evidence = render_local_app_route(tmp_path, "/ci-evidence")
     assert ci_evidence.status == 200
     assert "CI Evidence Records" in ci_evidence.body
+    assert "CI Evidence Recording Guide" in ci_evidence.body
+    assert f"latest_recordable_handoff_id: {handoff.id}" in ci_evidence.body
+    assert "handoff_commit: abc123" in ci_evidence.body
+    assert "record_when: GitHub Actions run has completed" in ci_evidence.body
+    assert f"ci-deploy-evidence {handoff.id}" in ci_evidence.body
+    assert "required_operator_inputs: completed GitHub Actions run id" in ci_evidence.body
     assert "github-actions" in ci_evidence.body
     assert "success" in ci_evidence.body
     assert "external_run_id: 123" in ci_evidence.body
@@ -3480,6 +3509,12 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "latest_ci_status: missing" in verification_without_ci.body
     assert "record_command_template: python3 -m agent_os.cli ci-deploy-evidence" in verification_without_ci.body
     assert "github_status_fetch: none" in verification_without_ci.body
+    ci_evidence_without_handoff = render_local_app_route(tmp_path, "/ci-evidence")
+    assert ci_evidence_without_handoff.status == 200
+    assert "CI Evidence Recording Guide" in ci_evidence_without_handoff.body
+    assert "latest_github_handoff: missing" in ci_evidence_without_handoff.body
+    assert "record_command_template: unavailable_until_github_handoff_exists" in ci_evidence_without_handoff.body
+    assert "proof_boundary: operator_supplied_record_only" in ci_evidence_without_handoff.body
     docs = tmp_path / "docs"
     docs.mkdir(exist_ok=True)
     (docs / "sample.md").write_text("# Sample\n", encoding="utf-8")

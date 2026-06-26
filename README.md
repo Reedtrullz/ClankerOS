@@ -163,8 +163,10 @@ you can see from the first screen whether local CI proof has been recorded.
 
 Use `/ci-evidence` after recording CI proof with `ci-deploy-evidence`. It shows
 operator-supplied GitHub Actions/deploy evidence already stored in local
-ClankerOS state and links the inert evidence artifact. It does not fetch
-GitHub status.
+ClankerOS state and links the inert evidence artifact. It also shows the latest
+local GitHub handoff id, branch, commit, handoff evidence, and a handoff-specific
+`ci-deploy-evidence` command template when a recordable handoff exists. It does
+not fetch GitHub status.
 
 The app is local-only by default, binds to `127.0.0.1`, and refuses non-local
 binds unless `--allow-nonlocal-bind` is explicitly supplied. It does not push,

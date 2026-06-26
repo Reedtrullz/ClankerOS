@@ -182,9 +182,12 @@ status polling.
 `/ci-evidence` is the read-only companion for proof that has already been
 recorded locally with `ci-deploy-evidence`. It shows the provider, status,
 external run id, external URL, handoff id, commit, recorded-by field, and
-evidence artifact link for recent CI/deploy evidence records. The page does
-not poll GitHub, refresh statuses, push, create PRs, deploy, call providers, or
-mutate external systems.
+evidence artifact link for recent CI/deploy evidence records. It also shows a
+`CI Evidence Recording Guide`: if a local GitHub handoff exists, the page names
+the latest handoff id, branch, commit, handoff evidence, and a handoff-specific
+`ci-deploy-evidence` command template for the operator to fill with the
+completed GitHub Actions run id and URL. The page does not poll GitHub, refresh
+statuses, push, create PRs, deploy, call providers, or mutate external systems.
 
 ## Manual Dogfooding Checklist
 

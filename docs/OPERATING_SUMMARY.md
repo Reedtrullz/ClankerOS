@@ -100,7 +100,10 @@ Core layers for the bootstrap:
   evidence summary, compact local checks, in-progress run non-proof guidance,
   and CI proof boundary without contacting GitHub; a
   read-only `/ci-evidence` page for operator-supplied CI/deploy proof records
-  already stored in local ClankerOS state without fetching GitHub status; a
+  already stored in local ClankerOS state, plus a `CI Evidence Recording Guide`
+  with the latest local GitHub handoff id, branch, commit, handoff evidence,
+  and a handoff-specific `ci-deploy-evidence` command template when available,
+  without fetching GitHub status; a
   read-only root dashboard `Verification Snapshot` for checked-in workflow
   timeout, latest operator-supplied CI evidence, `/verification`, and
   `/ci-evidence` links without contacting GitHub; a

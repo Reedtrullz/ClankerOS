@@ -1,5 +1,28 @@
 # Status
 
+## 2026-06-26 Local App CI Evidence Recording Guide
+
+- Upgraded `/ci-evidence` with a read-only `CI Evidence Recording Guide`.
+  When a local GitHub handoff exists, the page now shows the latest handoff
+  id, project, branch, commit, handoff status, handoff evidence link, and a
+  handoff-specific `ci-deploy-evidence` command template for the operator to
+  fill with a completed GitHub Actions run id and URL.
+- When no handoff exists yet, `/ci-evidence` now labels the handoff as missing
+  and says the record command is unavailable until a local GitHub handoff
+  exists, instead of presenting a generic proof path without source context.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_artifact_viewer"`
+    -> `2 passed, 496 deselected`
+  - `python3 -m agent_os.cli app-smoke-test` -> rendered the core local app
+    routes with status 200 and zero provider/network/external-mutation
+    counters.
+  - `git diff --check`
+- Non-claims: this is a read-only CI-evidence/operator-guidance improvement
+  only; it does not execute work, approve requests, commit, push, create PRs,
+  deploy, call providers, fetch GitHub status, execute arbitrary commands, or
+  perform non-loopback network actions from the local app.
+
 ## 2026-06-26 Local App Dashboard Verification Snapshot
 
 - Upgraded the root dashboard with a read-only `Verification Snapshot` block.
