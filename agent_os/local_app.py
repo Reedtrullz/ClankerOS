@@ -1691,6 +1691,7 @@ def _resume_next_action_section(root: Path, open_goal: str) -> str:
             [
                 "resume_next_action_status: no_saved_goal",
                 "resume_next_surface: <a href='/goals'>/goals</a>",
+                "resume_next_action_form_available: false",
                 "resume_next_action_external_effects_created: false",
             ],
         )
@@ -1698,10 +1699,11 @@ def _resume_next_action_section(root: Path, open_goal: str) -> str:
     state = _goal_state(root, storage, open_goal)
     phase = _goal_current_phase(state)
     next_action = _goal_next_action(root, state)
+    form = _goal_next_action_form(state, next_action)
     return "".join(
         [
             "<section><h2>Resume Next Action</h2>",
-            "<p class='muted'>Continue from the saved goal's current local workflow state.</p>",
+            "<p class='muted'>Continue from the saved goal's current local workflow state without leaving the return-to-work page.</p>",
             _kv(
                 [
                     ("resume_saved_goal", open_goal),
@@ -1710,11 +1712,13 @@ def _resume_next_action_section(root: Path, open_goal: str) -> str:
                     ("resume_next_reason", next_action.reason),
                     ("resume_operator_attention", _goal_operator_attention(phase, next_action)),
                     ("resume_next_surface", SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>")),
+                    ("resume_next_action_form_available", "true" if form else "false"),
                     ("resume_next_action_source", "saved_goal_state"),
                     ("resume_next_action_write_on_get", "false"),
                     ("resume_next_action_external_effects_created", "false"),
                 ]
             ),
+            f"<div class='resume-action-form'><h3>Resume Action Form</h3>{form}</div>" if form else "",
             "</section>",
         ]
     )
@@ -2652,42 +2656,46 @@ def _goal_next_action(root: Path, state: dict[str, Any]) -> GoalNextAction:
     return GoalNextAction("Create scout delegation", f"/goals/{quote(goal.id)}", "goal_has_no_delegation_yet")
 
 
-def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -> str:
-    form = ""
+def _goal_next_action_form(state: dict[str, Any], next_action: GoalNextAction) -> str:
     if next_action.action == "Create scout delegation":
-        form = _goal_scout_delegation_form(state)
-    elif next_action.action == "Resume paused goal":
-        form = _goal_resume_form(state)
-    elif next_action.action == "Generate context pack":
-        form = _goal_context_pack_form(state)
-    elif next_action.action == "Run delegation from CLI":
-        form = _goal_run_delegation_handoff(state)
-    elif next_action.action == "Run coder prep":
-        form = _goal_coder_prep_form(state)
-    elif next_action.action == "Create worktree plan":
-        form = _goal_worktree_plan_form(state)
-    elif next_action.action == "Request worktree approval":
-        form = _goal_worktree_approval_form(state)
-    elif next_action.action == "Approve worktree":
-        form = _goal_approve_worktree_form(state)
-    elif next_action.action == "Run approved worktree from CLI":
-        form = _goal_run_worktree_handoff(state["root"], state)
-    elif next_action.action == "Create commit request":
-        form = _goal_commit_request_form(state["root"], state)
-    elif next_action.action == "Open review":
-        form = _goal_review_run_form(state["root"], state)
-    elif next_action.action == "Approve commit":
-        form = _goal_approve_commit_form(state)
-    elif next_action.action == "Commit approved worktree":
-        form = _goal_commit_worktree_form(state)
-    elif next_action.action == "Create publication request":
-        form = _goal_publication_request_form(state)
-    elif next_action.action == "Approve publication":
-        form = _goal_approve_publication_form(state)
-    elif next_action.action == "Create publication handoff":
-        form = _goal_publication_handoff_form(state)
-    elif next_action.action == "Manual publish outside ClankerOS":
-        form = _goal_manual_publish_panel(state["root"], state)
+        return _goal_scout_delegation_form(state)
+    if next_action.action == "Resume paused goal":
+        return _goal_resume_form(state)
+    if next_action.action == "Generate context pack":
+        return _goal_context_pack_form(state)
+    if next_action.action == "Run delegation from CLI":
+        return _goal_run_delegation_handoff(state)
+    if next_action.action == "Run coder prep":
+        return _goal_coder_prep_form(state)
+    if next_action.action == "Create worktree plan":
+        return _goal_worktree_plan_form(state)
+    if next_action.action == "Request worktree approval":
+        return _goal_worktree_approval_form(state)
+    if next_action.action == "Approve worktree":
+        return _goal_approve_worktree_form(state)
+    if next_action.action == "Run approved worktree from CLI":
+        return _goal_run_worktree_handoff(state["root"], state)
+    if next_action.action == "Create commit request":
+        return _goal_commit_request_form(state["root"], state)
+    if next_action.action == "Open review":
+        return _goal_review_run_form(state["root"], state)
+    if next_action.action == "Approve commit":
+        return _goal_approve_commit_form(state)
+    if next_action.action == "Commit approved worktree":
+        return _goal_commit_worktree_form(state)
+    if next_action.action == "Create publication request":
+        return _goal_publication_request_form(state)
+    if next_action.action == "Approve publication":
+        return _goal_approve_publication_form(state)
+    if next_action.action == "Create publication handoff":
+        return _goal_publication_handoff_form(state)
+    if next_action.action == "Manual publish outside ClankerOS":
+        return _goal_manual_publish_panel(state["root"], state)
+    return ""
+
+
+def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -> str:
+    form = _goal_next_action_form(state, next_action)
     return (
         "<section><h2>Next Action</h2>"
         + _kv(

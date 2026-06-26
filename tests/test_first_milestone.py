@@ -5233,6 +5233,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "resume_next_action</dt><dd>Create commit request" in resume.body
     assert f"resume_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in resume.body
     assert "resume_operator_attention</dt><dd>Act: Create commit request" in resume.body
+    assert "resume_next_action_form_available</dt><dd>true" in resume.body
+    assert "Resume Action Form" in resume.body
+    assert "action='/actions/coder-commit-request'" in resume.body
+    assert f"name='run_id' value='{result.coder_worktree_run_id}'" in resume.body
     assert "resume_workspace_write_on_get</dt><dd>false" in resume.body
     assert "resume_external_effects_created</dt><dd>false" in resume.body
     restored_goal = render_local_app_route(tmp_path, f"/goals/{result.goal_id}")
