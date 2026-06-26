@@ -4341,6 +4341,21 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert ready.handoff_artifact_path
     assert (tmp_path / ready.handoff_artifact_path).exists()
     assert (Path(tmp_path / ready.handoff_artifact_path).parent / "pr_body.md").exists()
+    run_page_after_handoff = render_local_app_route(
+        tmp_path,
+        f"/runs/{result.coder_worktree_run_id}",
+    )
+    assert run_page_after_handoff.status == 200
+    assert "Publication Handoff Commands" in run_page_after_handoff.body
+    assert "handoff_status: ready_for_operator" in run_page_after_handoff.body
+    assert "suggested_push_command: git push origin" in run_page_after_handoff.body
+    assert "suggested_draft_pr_command: gh pr create --draft" in run_page_after_handoff.body
+    assert "pr_body_path" in run_page_after_handoff.body
+    assert "manual_boundary: outside_clankeros" in run_page_after_handoff.body
+    assert "copy_only: true" in run_page_after_handoff.body
+    assert "push_created=false pr_created=false deploy_created=false" in run_page_after_handoff.body
+    assert "network_actions_taken: 0" in run_page_after_handoff.body
+    assert "external_mutations_taken: 0" in run_page_after_handoff.body
     demo_after_handoff = render_local_app_route(tmp_path, "/demo")
     assert demo_after_handoff.status == 200
     assert "Demo Browser Progress" in demo_after_handoff.body

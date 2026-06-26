@@ -85,7 +85,9 @@ Core layers for the bootstrap:
   exact run, approvals, inbox, and dogfooding surfaces without creating
   external effects. Coder worktree
   run detail pages include the same upstream and downstream workflow posture as
-  a `Run Workflow State` readback. Coder worktree run rows in review,
+  a `Run Workflow State` readback, and once publication handoff is ready they
+  show copy-only suggested push and draft-PR commands plus the PR body path
+  with zero-effect counters. Coder worktree run rows in review,
   dashboard, and the local app include changed-file counts and compact diff
   summaries read from existing evidence. The app also includes a read-only
   `/delegation-runs` index for scout/delegation execution evidence, context
@@ -267,9 +269,10 @@ Core layers for the bootstrap:
   `publication_handoff.json`, `publication_handoff.md`, and `pr_body.md` with
   suggested push and draft-PR commands only. It does not execute those commands,
   run `git fetch`, contact GitHub, deploy, call providers, use the network, or
-  mutate external systems. Run review, delegation-result, inbox, and dashboard
-  output surface coder commit requests, approvals, local commits,
-  publication requests, and publication handoffs.
+  mutate external systems. Run review, delegation-result, inbox, dashboard, and
+  local app run-detail output surface coder commit requests, approvals, local
+  commits, publication requests, publication handoffs, and copy-only manual
+  publication commands.
   Adapters run from the system root by default and can opt into
   `--working-directory project_root` for repo scouting. It supports shell
   adapters only. ClankerOS records

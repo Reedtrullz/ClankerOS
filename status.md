@@ -1,5 +1,15 @@
 # Status
 
+## 2026-06-26 Local App Publication Handoff Command Readback
+
+- Added a display-only `Publication Handoff Commands` panel to coder worktree
+  `/runs/<run_id>` pages once a publication handoff is ready. The panel shows
+  the handoff artifact, suggested push command, suggested draft-PR command,
+  PR body path, handoff body path, manual boundary, and zero-effect counters.
+- Non-claims: the panel does not push, create PRs, deploy, fetch GitHub, call
+  providers, run commands, or mutate external systems. It is copy-only
+  operator guidance for actions outside ClankerOS.
+
 ## 2026-06-26 Local App Direct Snapshot CI Handoff Templates
 
 - Added display-only direct pushed-snapshot CI handoff templates to the root

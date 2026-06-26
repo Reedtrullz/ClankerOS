@@ -97,7 +97,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   local operator action. For coder worktree run ids, it includes a
   `Run Workflow State` block for upstream context-pack, handoff, prep, plan,
   approval/run, bounded validation, commit, publication, and next-action
-  status.
+  status. Once a publication handoff is ready, the page also shows display-only
+  suggested push and draft-PR commands plus the PR body path; those commands
+  remain manual actions outside ClankerOS.
 - Coder worktree run rows in the app include `changed_files_count` and a
   compact `diff_summary` read from existing `diff.patch` evidence, so the
   operator can scan change size without opening the artifact first.
@@ -154,6 +156,11 @@ show the current status for commit request, commit approval, local commit,
 publication request, publication approval, publication handoff, and the final
 manual push/PR boundary outside ClankerOS, while linking back to the relevant
 local workflow, run, approvals, and inbox surfaces.
+
+After publication handoff preparation, return to `/runs/<coder_run_id>` to see
+`Publication Handoff Commands`: the suggested push command, draft PR command,
+PR body path, and zero-effect counters. This is a copy-only operator readback;
+the app does not run the commands.
 
 ## Verification Handoff
 

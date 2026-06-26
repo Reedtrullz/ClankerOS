@@ -23,6 +23,7 @@ from agent_os.coder_publication import (
     approve_coder_publication,
     create_coder_publication_handoff,
     list_coder_publications,
+    load_coder_publication_handoff_payload,
     request_coder_publication,
 )
 from agent_os.coder_worktree_execution import (
@@ -3315,6 +3316,7 @@ def _run_action_forms(root: Path, run_id: str) -> str:
             "<p class='muted'>publication_handoff_ready: "
             f"{_artifact_link(ready_publication[0].handoff_artifact_path)}</p>"
         )
+        sections.append(_publication_handoff_commands_panel(root, ready_publication[0]))
     sections.append("</section>")
     if approved_commit:
         sections.extend(
@@ -3339,6 +3341,31 @@ def _run_action_forms(root: Path, run_id: str) -> str:
             ]
         )
     return "".join(sections)
+
+
+def _publication_handoff_commands_panel(root: Path, publication: Any) -> str:
+    payload = load_coder_publication_handoff_payload(root, publication)
+    suggested_push = payload.get("suggested_push_command", "unavailable")
+    suggested_pr = payload.get("suggested_draft_pr_command", "unavailable")
+    pr_body_path = payload.get("pr_body_path", "unavailable")
+    handoff_body_path = payload.get("handoff_body_path", pr_body_path)
+    return _list_section(
+        "Publication Handoff Commands",
+        [
+            "handoff_status: ready_for_operator",
+            f"handoff_artifact: {_artifact_link(publication.handoff_artifact_path)}",
+            f"suggested_push_command: {_e(suggested_push)}",
+            f"suggested_draft_pr_command: {_e(suggested_pr)}",
+            f"pr_body_path: {_artifact_link(str(pr_body_path)) if pr_body_path != 'unavailable' else 'unavailable'}",
+            f"handoff_body_path: {_artifact_link(str(handoff_body_path)) if handoff_body_path != 'unavailable' else 'unavailable'}",
+            "manual_boundary: outside_clankeros",
+            "copy_only: true",
+            "push_created=false pr_created=false deploy_created=false",
+            "provider_calls_taken_by_clankeros: 0",
+            "network_actions_taken: 0",
+            "external_mutations_taken: 0",
+        ],
+    )
 
 
 def _pending_approval_lines(root: Path) -> list[str]:

@@ -112,6 +112,11 @@ read-only `Selected Workflow Continuation` block with the exact next local
 action, run detail surface, approvals queue, inbox, dogfooding checklist, and
 the explicit `external_effects_created: false` boundary.
 
+Use `/runs/<coder_run_id>` after publication handoff preparation when you want
+the display-only manual publication commands. The app shows
+`suggested_push_command`, `suggested_draft_pr_command`, and `pr_body_path`, but
+it does not run them.
+
 Use `/dogfooding` when you want one checklist for the first browser route walk:
 refresh the fixture, inspect demo/workflow/project/delegation/run surfaces,
 walk the local commit and publication gates, then hand verification to GitHub
@@ -203,7 +208,9 @@ worktree plan, request explicit approval, run a bounded local command in an
 isolated worktree, review evidence, request and approve a separate local
 commit, create that commit only inside the isolated worktree, then request and
 approve a local-only publication handoff packet with suggested push and
-draft-PR commands.
+draft-PR commands. Once the handoff is ready, the run detail page shows the
+suggested push command, draft PR command, and PR body path as copy-only
+operator guidance while keeping manual push/PR outside ClankerOS.
 
 ```bash
 python3 -m agent_os.cli delegate <task_id> --profile scout --title "Find relevant files"
