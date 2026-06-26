@@ -252,7 +252,9 @@ approvals. Goal search results include live local phase, one next action, and
 remaining-work counts, so action or phase searches can return the Goal to
 continue. Use `/memory`, `/skills`, and `/profiles` for local readbacks of
 memory entries, generated skills/usage, and inactive future provider-routing
-lanes.
+lanes. `/profiles` now shows both `.clanker/profiles.yml` names and SQLite
+profile storage rows, including labels, modes, cost tiers, write posture,
+adapter status, and `use_for` labels without enabling providers.
 
 The app shell also includes breadcrumbs, recent local items, a command palette,
 keyboard shortcuts, and a dark/light theme toggle on every page. The command

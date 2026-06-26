@@ -1993,9 +1993,11 @@ def _skill_line(root: Path, skill: Any, usage: dict[str, dict[str, Any]]) -> str
 
 
 def _profiles_page(root: Path) -> str:
+    storage = _storage(root)
     profile_path = root / ".clanker" / "profiles.yml"
     profile_lines = profile_path.read_text(encoding="utf-8").splitlines() if profile_path.exists() else []
-    profiles = _profile_names(profile_lines)
+    configured_profiles = _profile_names(profile_lines)
+    storage_profiles = storage.list_profiles(enabled_only=False)
     prepared = [
         "Planning: inactive provider-routing placeholder",
         "Coding: inactive provider-routing placeholder",
@@ -2011,16 +2013,40 @@ def _profiles_page(root: Path) -> str:
             _kv(
                 [
                     ("profiles_path", ".clanker/profiles.yml" if profile_path.exists() else "missing"),
-                    ("profile_count", str(len(profiles))),
+                    ("configured_profile_count", str(len(configured_profiles))),
+                    ("storage_profile_count", str(len(storage_profiles))),
+                    ("profile_storage_ready", "true"),
                     ("provider_routing_active", "false"),
                     ("provider_calls_taken", "0"),
                 ]
             ),
             "</section>",
-            _list_section("Configured Profiles", profiles),
+            _list_section("Configured Profiles", [_profile_config_line(name) for name in configured_profiles]),
+            _list_section(
+                "Storage Profiles",
+                [_storage_profile_line(profile) for profile in storage_profiles]
+                or ["none_recorded_yet provider_routing_active=false provider_calls_taken=0"],
+            ),
             _list_section("Future Profile Lanes", prepared),
             _non_claim_banner(),
         ]
+    )
+
+
+def _profile_config_line(name: str) -> str:
+    return f"profile={_e(name)} source=.clanker/profiles.yml provider=inactive"
+
+
+def _storage_profile_line(profile: Any) -> str:
+    use_for = ",".join(str(item) for item in profile.use_for_json) or "none"
+    write_permission = profile.permissions_json.get("write", "unknown")
+    adapter_state = "configured" if profile.adapter_config_json else "not_configured"
+    return (
+        f"profile={_e(profile.name)} label={_e(profile.label)} "
+        f"mode={_e(profile.mode)} cost={_e(profile.cost_tier)} "
+        f"model={_e(profile.model)} enabled={str(profile.enabled).lower()} "
+        f"write={_e(write_permission)} adapter={_e(adapter_state)} "
+        f"use_for={_e(use_for)} provider=inactive"
     )
 
 

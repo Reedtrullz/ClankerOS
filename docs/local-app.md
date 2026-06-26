@@ -165,6 +165,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   workspace goal or the current lead goal, showing phase, one next action, and
   the target local surface. These controls only navigate local routes or
   submit existing local forms.
+- `/profiles` reads both `.clanker/profiles.yml` and SQLite profile rows. It
+  shows configured profile names, storage-backed profile labels, modes, cost
+  tiers, model placeholders, write posture, adapter status, and `use_for`
+  labels while keeping `provider_routing_active=false` and
+  `provider_calls_taken=0`.
 - `/search` - bounded global search over indexed goals, projects, delegations,
   known artifacts, incidents, recommendations, memory, runs, approvals, and
   skill records. Goal results include live local phase, one next action, and

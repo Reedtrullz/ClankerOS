@@ -1,5 +1,17 @@
 # Status
 
+## 2026-06-27 Storage-Backed Profiles Page
+
+- Made `/profiles` read both `.clanker/profiles.yml` and SQLite profile rows.
+  The page now reports configured-profile count, storage-profile count,
+  `profile_storage_ready=true`, and a first-class `Storage Profiles` list with
+  labels, modes, cost tiers, model placeholders, write posture, adapter status,
+  and `use_for` labels.
+- Non-claims: this does not create profile rows on GET, activate provider
+  routing, call providers, push, create PRs, deploy, fetch GitHub status, or
+  mutate external systems. Providers remain inactive and provider calls remain
+  zero.
+
 ## 2026-06-27 GitHub-First Testing Loop
 
 - Documented the default operator loop for CI-backed iteration: make a small

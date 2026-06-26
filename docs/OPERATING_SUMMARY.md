@@ -101,7 +101,10 @@ Core layers for the bootstrap:
   browser-available beside the editable saved-state form; `/memory` for project/global/
   generated memories, operator notes, future work, and pin actions; `/skills`
   for available/generated skill records with usage counts; and `/profiles`
-  for inactive future provider-routing readback from `.clanker/profiles.yml`.
+  for inactive future provider-routing readback from `.clanker/profiles.yml`
+  and SQLite profile storage rows, including profile labels, modes, cost
+  tiers, model placeholders, write posture, adapter status, and `use_for`
+  labels while keeping provider routing disabled.
   The `/goals` and Home first-run panel now exposes a state-aware
   Create project -> Create first goal -> Create first delegation -> Generate
   context pack -> Run first delegation checklist plus confirmed local

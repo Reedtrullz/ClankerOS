@@ -2801,6 +2801,29 @@ def test_profiles_command_creates_safe_defaults_and_profile_show(
     assert "permissions.write: deny" in detail
 
 
+def test_profiles_route_reads_storage_profiles_without_enabling_providers(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    assert main(["--root", str(tmp_path), "profiles"]) == 0
+    capsys.readouterr()
+
+    profiles = render_local_app_route(tmp_path, "/profiles")
+
+    assert profiles.status == 200
+    assert "Profiles And Routing" in profiles.body
+    assert "profile_storage_ready</dt><dd>true" in profiles.body
+    assert "configured_profile_count</dt><dd>5" in profiles.body
+    assert "storage_profile_count</dt><dd>5" in profiles.body
+    assert "Storage Profiles" in profiles.body
+    assert "profile=planner label=Strategic Planner" in profiles.body
+    assert "profile=scout label=Repo Scout" in profiles.body
+    assert "profile=tester label=Verification Tester" in profiles.body
+    assert "provider=inactive" in profiles.body
+    assert "provider_routing_active</dt><dd>false" in profiles.body
+    assert "provider_calls_taken</dt><dd>0" in profiles.body
+
+
 def test_route_category_records_scout_decision_and_dashboard(
     tmp_path: Path,
     capsys,
