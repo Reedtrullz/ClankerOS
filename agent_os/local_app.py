@@ -2332,6 +2332,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             "</section>",
             _goal_phase_banner(root, state, phase, next_action),
             _goal_next_action_card(state, next_action),
+            _goal_next_recommendation_section(state, next_action),
             _goal_resume_snapshot(root, state),
             _goal_overview(state),
             _goal_risk_section(state),
@@ -2829,6 +2830,54 @@ def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -
             ]
         )
         + form
+        + "</section>"
+    )
+
+
+def _goal_next_recommendation_section(
+    state: dict[str, Any],
+    next_action: GoalNextAction,
+) -> str:
+    recommendation = next(
+        (row for row in state["recommendations"] if row["status"] == "open"),
+        None,
+    )
+    if recommendation is not None:
+        evidence_path = str(recommendation["evidence_path"] or "")
+        rows: list[tuple[str, str | SafeHtml]] = [
+            ("next_recommendation_status", "open_task_recommendation"),
+            ("next_recommendation_source", "task_recommendations"),
+            ("next_recommendation_id", str(recommendation["id"])),
+            ("next_recommendation_type", str(recommendation["recommendation_type"])),
+            ("next_recommendation_task_id", str(recommendation["task_id"])),
+            ("next_recommendation_action", next_action.action),
+            ("next_recommendation_reason", str(recommendation["reason"])),
+            ("next_recommendation_surface", SafeHtml("<a href='/incidents'>/incidents</a>")),
+            (
+                "next_recommendation_evidence",
+                SafeHtml(_artifact_link(evidence_path)) if evidence_path else "missing",
+            ),
+            ("next_recommendation_write_on_get", "false"),
+            ("next_recommendation_external_effects_created", "false"),
+        ]
+    else:
+        rows = [
+            ("next_recommendation_status", "derived_from_goal_state"),
+            ("next_recommendation_source", "current_phase_and_goal_records"),
+            ("next_recommendation_action", next_action.action),
+            ("next_recommendation_reason", next_action.reason),
+            (
+                "next_recommendation_surface",
+                SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"),
+            ),
+            ("next_recommendation_form_surface", "Next Action card"),
+            ("next_recommendation_write_on_get", "false"),
+            ("next_recommendation_external_effects_created", "false"),
+        ]
+    return (
+        "<section><h2>Next Recommendation</h2>"
+        "<p class='muted'>Explains why this goal is pointing at the current action.</p>"
+        + _kv(rows)
         + "</section>"
     )
 

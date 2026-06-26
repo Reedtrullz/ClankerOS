@@ -5040,6 +5040,15 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "phase_banner_external_effects_created</dt><dd>false" in goal.body
     assert "Next Action" in goal.body
     assert "recommended_action</dt><dd>Create commit request" in goal.body
+    assert "Next Recommendation" in goal.body
+    assert "next_recommendation_status</dt><dd>derived_from_goal_state" in goal.body
+    assert "next_recommendation_source</dt><dd>current_phase_and_goal_records" in goal.body
+    assert "next_recommendation_action</dt><dd>Create commit request" in goal.body
+    assert "next_recommendation_reason</dt><dd>reviewed_run=" in goal.body
+    assert f"next_recommendation_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
+    assert "next_recommendation_form_surface</dt><dd>Next Action card" in goal.body
+    assert "next_recommendation_write_on_get</dt><dd>false" in goal.body
+    assert "next_recommendation_external_effects_created</dt><dd>false" in goal.body
     assert "Goal Resume Snapshot" in goal.body
     assert "goal_resume_current_goal" in goal.body
     assert "goal_resume_current_project" in goal.body

@@ -154,12 +154,15 @@ existing local state. The cockpit also includes a confirmed local `Start
 Another Goal` form backed by the existing `create-goal` action, so an operator
 can add the next goal for a registered project without switching to the CLI.
 Use `/goals/<goal_id>` as the
-goal-centered workbench: current phase, next action, progress, timeline,
-activity log, goal risk, completion criteria, evidence, delegations, runs,
-approvals, artifacts, a typed Goal Artifact Explorer, memory, skills used, git
-status, operator notes, a goal-scoped resume snapshot, and remaining work. The
-page auto-refreshes by local polling, pauses while the operator is editing a
-form or the tab is hidden, and stays local-only.
+goal-centered workbench: current phase, next action, next recommendation,
+progress, timeline, activity log, goal risk, completion criteria, evidence,
+delegations, runs, approvals, artifacts, a typed Goal Artifact Explorer,
+memory, skills used, git status, operator notes, a goal-scoped resume
+snapshot, and remaining work. The page auto-refreshes by local polling, pauses
+while the operator is editing a form or the tab is hidden, and stays
+local-only. The Next Recommendation section names whether the recommendation
+comes from an open task recommendation or from current phase plus local goal
+records, then points at the local target surface without writing on GET.
 Skills Used links to `/skills`, shows task skill usage counts, projects using
 each tag, matching generated or available skill records when present, profile
 usage, and keeps skill execution out of the Goal page.

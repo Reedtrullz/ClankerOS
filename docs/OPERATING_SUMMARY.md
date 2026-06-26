@@ -123,6 +123,10 @@ Core layers for the bootstrap:
   bar, and a large Current Phase banner that explains the phase reason,
   operator attention cue, next action surface, latest activity, and zero-effect
   boundary without requiring the CLI. Goal detail pages also include a
+  first-class `Next Recommendation` section that identifies whether the current
+  recommendation came from an open task recommendation or was derived from
+  current phase and local goal records, points at the target local surface, and
+  records write-on-GET and external-effect boundaries. They also include a
   first-class `Goal Live State` readback and local page reload polling that
   pauses while the operator is editing a form or the tab is hidden; it does not
   fetch GitHub status, call providers, push, create PRs, deploy, or mutate

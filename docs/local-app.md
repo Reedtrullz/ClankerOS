@@ -76,15 +76,20 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   confirmed local `register-project` and `create-goal` forms for a fresh
   checkout.
 - `/goals/<goal_id>` - goal-centered workbench with current phase, next action,
-  overview, goal risk, completion criteria, progress, chronological timeline,
-  activity log, delegations, runs, approvals, evidence, artifacts, memory,
-  skills used, git status, operator notes, a goal-scoped resume snapshot, and
-  remaining work. It uses local polling refresh, pauses refresh while the
+  next recommendation, overview, goal risk, completion criteria, progress,
+  chronological timeline, activity log, delegations, runs, approvals,
+  evidence, artifacts, memory, skills used, git status, operator notes, a
+  goal-scoped resume snapshot, and remaining work. It uses local polling
+  refresh, pauses refresh while the
   operator is editing a form or the tab is hidden, and does not contact GitHub
   or providers. The Current Phase banner is the primary operator state readback:
   it shows the large phase label, reason, operator attention cue, next surface,
   latest activity, and zero-effect boundary so the operator knows what is
-  happening without opening the CLI. Skills Used links to `/skills`, shows
+  happening without opening the CLI. The Next Recommendation section explains
+  whether the Goal is following an open task recommendation or deriving the
+  action from current phase and local goal records, then names the target
+  local surface and zero-effect boundary without writing on GET. Skills Used
+  links to `/skills`, shows
   task skill usage counts,
   projects using each tag, matching generated or available skill records when
   present, and profile usage while keeping skill execution out of the Goal
