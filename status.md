@@ -1,5 +1,24 @@
 # Status
 
+## 2026-06-26 Goal Paused Resume Action
+
+- Added a first-class paused-goal state to `/goals/<goal_id>`. Goals with
+  `status=paused` now render a `Paused` current phase, explain that the goal
+  can be resumed locally, and show `Resume paused goal` as the recommended
+  next action.
+- Added a confirmed local `resume-goal` browser action. It only accepts goals
+  whose current status is exactly `paused`, changes that local goal status to
+  `active`, and reports zero network actions and zero external mutations. It
+  does not resume blocked tasks, approve gates, run delegations or worktrees,
+  push, create PRs, deploy, call providers, or perform external mutations.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health"`
+    -> `2 passed, 508 deselected`
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Goal Verification Evidence
 
 - Added a first-class `Goal Verification Evidence` section to

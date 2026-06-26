@@ -143,6 +143,7 @@ ACTION_CATALOG = [
     ("register-project", "local state", "first run / projects", "yes", "yes", "local git repo path plus default test command", "registered project row and projects/<project>/project.md"),
     ("create-goal", "local state", "first run / goals", "yes", "yes", "registered project and goal prompt", "goal row, plan, tasks, and goal artifacts"),
     ("delegate", "local state", "goal next action", "yes", "yes", "planned goal task and read-only scout profile", "subagent delegation contract JSON"),
+    ("resume-goal", "local state", "goal detail", "yes", "yes", "goal status=paused", "goal status=active"),
     ("save-goal-note", "local artifact", "goal detail", "yes", "yes", "goal id plus operator note text", ".clanker/projects/<project>/goals/<goal>/operator-notes.md"),
     ("save-workspace", "local state", "workspace", "yes", "yes", "open project/goal, filters, panels, last artifact", ".clanker/app/workspace.json"),
     ("pin-memory", "local state", "memory", "yes", "yes", "proposed memory entry", "memory status=active when evidence exists"),
@@ -2038,6 +2039,8 @@ def _goal_current_phase(state: dict[str, Any]) -> str:
         return "Missing"
     if goal.status == "completed":
         return "Completed"
+    if goal.status == "paused":
+        return "Paused"
     if any(str(row["status"]) == "open" for row in state["incidents"]):
         return "Blocked"
     if any(task.status in {"failed", "blocked"} for task in state["tasks"]):
@@ -2121,6 +2124,8 @@ def _goal_latest_timeline_item(root: Path, state: dict[str, Any]) -> dict[str, s
 def _goal_phase_reason(root: Path, state: dict[str, Any], phase: str) -> str:
     if phase == "Completed":
         return "goal is marked completed"
+    if phase == "Paused":
+        return "goal status is paused and can be resumed locally"
     if phase == "Blocked":
         open_incident = next((row for row in state["incidents"] if row["status"] == "open"), None)
         if open_incident is not None:
@@ -2203,6 +2208,7 @@ def _goal_operator_attention(phase: str, next_action: GoalNextAction) -> str:
         "Coder prep",
         "Implementation handoff",
         "Ready for delegation",
+        "Paused",
         "Goal accepted",
     }:
         return f"Act: {next_action.action}"
@@ -2213,6 +2219,8 @@ def _goal_next_action(root: Path, state: dict[str, Any]) -> GoalNextAction:
     goal = state.get("goal")
     if goal is None:
         return GoalNextAction("select_existing_goal", "/goals", "goal_not_found")
+    if goal.status == "paused":
+        return GoalNextAction("Resume paused goal", f"/goals/{quote(goal.id)}", "goal_status_paused")
     open_incident = next((row for row in state["incidents"] if row["status"] == "open"), None)
     if open_incident is not None:
         return GoalNextAction("Inspect incident", "/incidents", str(open_incident["summary"]))
@@ -2270,6 +2278,8 @@ def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -
     form = ""
     if next_action.action == "Create scout delegation":
         form = _goal_scout_delegation_form(state)
+    elif next_action.action == "Resume paused goal":
+        form = _goal_resume_form(state)
     elif next_action.action == "Generate context pack":
         form = _goal_context_pack_form(state)
     elif next_action.action == "Run delegation from CLI":
@@ -2313,6 +2323,34 @@ def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -
         )
         + form
         + "</section>"
+    )
+
+
+def _goal_resume_form(state: dict[str, Any]) -> str:
+    goal = state.get("goal")
+    if goal is None or goal.status != "paused":
+        return "<p class='muted'>resume_goal_form_status: unavailable_until_goal_status_is_paused</p>"
+    return "".join(
+        [
+            "<h3>Resume Paused Goal</h3>",
+            "<p class='muted'>Sets this local goal status from paused to active. It does not approve work, run delegations or worktrees, call providers, use the network, push, create a PR, deploy, or mutate external systems.</p>",
+            _kv(
+                [
+                    ("resume_goal_form_available", "true"),
+                    ("resume_goal_required_status", "paused"),
+                    ("resume_goal_new_status", "active"),
+                    ("resume_goal_external_effects_created", "false"),
+                ]
+            ),
+            _input_form(
+                "resume-goal",
+                {"goal_id": goal.id},
+                {
+                    "resumed_by": "operator",
+                    "note": "Resume paused goal from local app.",
+                },
+            ),
+        ]
     )
 
 
@@ -6794,6 +6832,10 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             result = _create_scout_delegation_from_form(root, storage, form)
             message = f"subagent_delegation: {result.id}"
             location = f"/delegations/{quote(result.id)}"
+        elif action == "resume-goal":
+            result = _resume_goal_from_form(storage, form)
+            message = f"goal_resumed: {result['goal_id']}"
+            location = f"/goals/{quote(result['goal_id'])}"
         elif action == "save-goal-note":
             result = _append_goal_operator_note(root, storage, form)
             message = f"goal_operator_note_saved: {result['goal_id']}"
@@ -7037,6 +7079,32 @@ def _create_scout_delegation_from_form(
         title=_required(form, "title"),
         profile_override="scout",
     )
+
+
+def _resume_goal_from_form(
+    storage: Storage,
+    form: dict[str, list[str]],
+) -> dict[str, Any]:
+    goal_id = _required(form, "goal_id")
+    goal = storage.get_goal(goal_id)
+    if goal.status != "paused":
+        raise ValueError("resume-goal only supports status=paused")
+    resumed_by = (_one(form, "resumed_by") or "operator").strip() or "operator"
+    note = (_one(form, "note") or "").strip()
+    storage.set_goal_status(goal.id, "active")
+    return {
+        "status": "goal_resumed",
+        "goal_id": goal.id,
+        "project_id": goal.project_id,
+        "previous_status": goal.status,
+        "new_status": "active",
+        "resumed_by": resumed_by,
+        "note": note or "none",
+        "approvals_created": 0,
+        "work_started": "false",
+        "network_actions_taken": 0,
+        "external_mutations_taken": 0,
+    }
 
 
 def _append_goal_operator_note(

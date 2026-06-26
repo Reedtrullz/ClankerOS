@@ -4311,6 +4311,64 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "goal_ci_github_status_fetch: none" in first_goal_page.body
     assert "note_append_form_available: true" in first_goal_page.body
     assert "save-goal-note" in first_goal_page.body
+    storage_after_creation = Storage(tmp_path / ".agent" / "state.db")
+    storage_after_creation.set_goal_status(created_goal_id, "paused")
+    paused_goal_page = render_local_app_route(tmp_path, f"/goals/{created_goal_id}")
+    assert "status</dt><dd>paused" in paused_goal_page.body
+    assert "current_phase</dt><dd>Paused" in paused_goal_page.body
+    assert "recommended_action</dt><dd>Resume paused goal" in paused_goal_page.body
+    assert "reason</dt><dd>goal_status_paused" in paused_goal_page.body
+    assert "operator_attention</dt><dd>Act: Resume paused goal" in paused_goal_page.body
+    assert "next_action_form_available</dt><dd>true" in paused_goal_page.body
+    assert "Resume Paused Goal" in paused_goal_page.body
+    assert "resume_goal_form_available</dt><dd>true" in paused_goal_page.body
+    assert "resume_goal_external_effects_created</dt><dd>false" in paused_goal_page.body
+    assert "action='/actions/resume-goal'" in paused_goal_page.body
+    resume_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/resume-goal",
+        method="POST",
+        form={
+            "goal_id": [created_goal_id],
+            "resumed_by": ["operator"],
+            "note": ["Resume this paused cockpit goal."],
+        },
+    )
+    assert resume_confirmation.status == 409
+    assert "Confirm resume-goal" in resume_confirmation.body
+    resume_result = render_local_app_route(
+        tmp_path,
+        "/actions/resume-goal",
+        method="POST",
+        form={
+            "goal_id": [created_goal_id],
+            "resumed_by": ["operator"],
+            "note": ["Resume this paused cockpit goal."],
+            "confirm": ["yes"],
+        },
+    )
+    assert resume_result.status == 200
+    assert "goal_resumed:" in resume_result.body
+    assert "previous_status</dt><dd>paused" in resume_result.body
+    assert "new_status</dt><dd>active" in resume_result.body
+    assert "network_actions_taken</dt><dd>0" in resume_result.body
+    assert "external_mutations_taken</dt><dd>0" in resume_result.body
+    assert storage_after_creation.get_goal(created_goal_id).status == "active"
+    resume_again = render_local_app_route(
+        tmp_path,
+        "/actions/resume-goal",
+        method="POST",
+        form={
+            "goal_id": [created_goal_id],
+            "confirm": ["yes"],
+        },
+    )
+    assert resume_again.status == 400
+    assert "resume-goal only supports status=paused" in resume_again.body
+    resumed_goal_page = render_local_app_route(tmp_path, f"/goals/{created_goal_id}")
+    assert "current_phase</dt><dd>Ready for delegation" in resumed_goal_page.body
+    assert "recommended_action</dt><dd>Create scout delegation" in resumed_goal_page.body
+    assert "Resume paused goal" not in resumed_goal_page.body
     note_confirmation = render_local_app_route(
         tmp_path,
         "/actions/save-goal-note",

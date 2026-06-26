@@ -89,6 +89,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   operator-supplied CI records to the current goal project, compares the
   recorded branch/commit to the current project checkout, and reports
   `github_status_fetch: none` so missing or stale project proof stays visible.
+  If a goal is explicitly paused, the Current Phase banner shows `Paused` and
+  the Next Action card exposes a confirmed `resume-goal` form. That action
+  only changes local goal status from `paused` to `active`; it does not resume
+  blocked tasks, approve gates, run work, push, create PRs, deploy, call
+  providers, use the network, or perform external mutations.
   When the
   goal has planned tasks but no
   delegation yet, the Next Action card exposes a confirmed `delegate` form
