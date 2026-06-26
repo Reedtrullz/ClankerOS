@@ -220,7 +220,9 @@ publication handoff when the required approval exists. The dashboard and
 `/actions` page also expose a confirmed `refresh-dashboard-state` form for
 rewriting only the local app status artifact. Delegation pages also expose
 implementation handoff readback and link the handoff Markdown through the safe
-artifact viewer.
+artifact viewer. When fixture state exists, `/actions` includes
+`Current Demo Action Surfaces`, a read-only map from the selected demo project
+and run to the current workflow, action form, approvals, and inbox surfaces.
 The `/approvals` page is the gate queue for pending local decisions. Pending
 commit approvals now show the relevant run link, the `commit-coder-worktree`
 follow-up, and the typed commit-message requirement. Pending publication

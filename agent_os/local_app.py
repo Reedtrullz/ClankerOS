@@ -664,6 +664,7 @@ def _actions_page(root: Path) -> str:
             "<button type='submit'>refresh-dashboard-state</button>"
             "</form>",
             "</section>",
+            _current_demo_action_surfaces(root),
             _list_section(
                 "Local Artifact And Approval Actions",
                 [_action_catalog_line(item) for item in ACTION_CATALOG],
@@ -676,6 +677,90 @@ def _actions_page(root: Path) -> str:
                 ],
             ),
         ]
+    )
+
+
+def _current_demo_action_surfaces(root: Path) -> str:
+    storage = _storage(root)
+    project = storage.get_registered_project("local-app-demo")
+    if project is None:
+        return _list_section(
+            "Current Demo Action Surfaces",
+            [
+                "demo_fixture_status: missing",
+                "next_demo_action: run_demo_app_scenario",
+                "demo_command: python3 -m agent_os.cli demo-app-scenario",
+                "external_effects_created: false",
+                "network_actions_taken_by_app: 0",
+            ],
+        )
+
+    delegations = [
+        delegation
+        for delegation in storage.list_recent_subagent_delegations(limit=None)
+        if _task_project(storage, delegation.parent_task_id) == project.name
+    ]
+    selected_delegation = delegations[0] if delegations else None
+    selected_run = None
+    if selected_delegation is not None:
+        runs = list_coder_worktree_runs(
+            root,
+            delegation_id=selected_delegation.id,
+            limit=20,
+        )
+        selected_run = next((run for run in runs if run.status == "completed"), None)
+        if selected_run is None and runs:
+            selected_run = runs[0]
+
+    next_action = "select_demo_delegation"
+    workflow_surface = "<a href='/workflow'>/workflow</a>"
+    delegation_surface = "none"
+    run_surface = "none"
+    action_form_surface = "<a href='/demo'>/demo</a>"
+    if selected_delegation is not None:
+        delegation_surface = (
+            f"<a href='/delegations/{quote(selected_delegation.id)}'>"
+            f"/delegations/{_e(selected_delegation.id)}</a>"
+        )
+        workflow_surface = (
+            f"<a href='/workflow?delegation_id={quote(selected_delegation.id)}'>"
+            f"/workflow?delegation_id={_e(selected_delegation.id)}</a>"
+        )
+        action_form_surface = delegation_surface
+        next_action = "review_delegation_state"
+    if selected_run is not None:
+        progress = _demo_progress_state(root, selected_run.id)
+        next_action = progress["next_step"]
+        workflow_surface = (
+            f"<a href='/workflow?run_id={quote(selected_run.id)}'>"
+            f"/workflow?run_id={_e(selected_run.id)}</a>"
+        )
+        run_surface = (
+            f"<a href='/runs/{quote(selected_run.id)}'>"
+            f"/runs/{_e(selected_run.id)}</a>"
+        )
+        action_form_surface = run_surface
+        if next_action in {
+            "approve_or_reject_commit_request",
+            "approve_or_reject_publication_request",
+        }:
+            action_form_surface = "<a href='/approvals'>/approvals</a>"
+
+    return _list_section(
+        "Current Demo Action Surfaces",
+        [
+            "demo_fixture_status: available",
+            f"project_surface: <a href='/projects/{quote(project.name)}'>/projects/{_e(project.name)}</a>",
+            f"delegation_surface: {delegation_surface}",
+            f"workflow_surface: {workflow_surface}",
+            f"run_action_surface: {run_surface}",
+            f"next_demo_action: {_e(next_action)}",
+            f"action_form_surface: {action_form_surface}",
+            "approval_queue_surface: <a href='/approvals'>/approvals</a>",
+            "inbox_surface: <a href='/inbox'>/inbox</a>",
+            "external_effects_created: false",
+            "network_actions_taken_by_app: 0",
+        ],
     )
 
 

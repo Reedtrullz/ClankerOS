@@ -100,8 +100,10 @@ Core layers for the bootstrap:
   run non-proof guidance, and CI proof boundary without contacting GitHub; a
   read-only `/ci-evidence` page for operator-supplied CI/deploy proof records
   already stored in local ClankerOS state without fetching GitHub status; a
-  read-only `/dogfooding` checklist for the first browser route walk, fixture
-  refresh, local commit/publication gate sequence, and
+  read-only `/actions` current-demo action surface map that links fixture state
+  to the selected project, delegation, workflow, run, approvals, and inbox
+  surfaces; a read-only `/dogfooding` checklist for the first browser route
+  walk, fixture refresh, local commit/publication gate sequence, and
   GitHub Actions handoff boundary without fetching GitHub status; a read-only
   operator inbox plus local approval and
   incident pages for pending worktree, commit, and publication decisions,

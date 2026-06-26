@@ -131,6 +131,9 @@ verification without executing external effects.
 Use `/actions` when you want a read-only catalog of available local app
 actions, where their forms appear, what previous artifact they require, what
 local artifact or approval they write, and the no-external-effects boundary.
+When the fixture exists, `/actions` also shows `Current Demo Action Surfaces`
+with links to the selected project, delegation, workflow, run, approvals, and
+inbox surfaces.
 
 Use `/approvals` when you want to keep driving the gate sequence from one
 queue. Pending commit and publication approvals link back to the relevant run

@@ -3556,6 +3556,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "inbox_surface" in demo.body
     assert "external_effects_created: false" in demo.body
 
+    actions_with_demo = render_local_app_route(tmp_path, "/actions")
+    assert actions_with_demo.status == 200
+    assert "Current Demo Action Surfaces" in actions_with_demo.body
+    assert "demo_fixture_status: available" in actions_with_demo.body
+    assert "next_demo_action: request_commit_for_reviewed_run" in actions_with_demo.body
+    assert f"/workflow?run_id={result.coder_worktree_run_id}" in actions_with_demo.body
+    assert f"/runs/{result.coder_worktree_run_id}" in actions_with_demo.body
+    assert f"/delegations/{result.delegation_id}" in actions_with_demo.body
+    assert "approval_queue_surface" in actions_with_demo.body
+    assert "external_effects_created: false" in actions_with_demo.body
+
     dashboard = render_local_app_route(tmp_path, "/")
     assert dashboard.status == 200
     assert "Next Recommended Action" in dashboard.body

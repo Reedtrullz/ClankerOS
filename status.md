@@ -1,5 +1,30 @@
 # Status
 
+## 2026-06-26 Local App Actions Current Demo Surfaces
+
+- Upgraded `/actions` with a read-only `Current Demo Action Surfaces` block.
+  When the fixture exists, it links the selected demo project, delegation,
+  scoped workflow, coder run, approval queue, and inbox, and names the current
+  `next_demo_action`.
+- The action catalog is now less abstract during dogfooding: operators can
+  see where the current fixture action should happen without leaving the safe
+  action map or inferring it from static command descriptions.
+- Focused red coverage first failed because `/actions` did not render
+  `Current Demo Action Surfaces`; the fixture-backed demo scenario now shows
+  `next_demo_action: request_commit_for_reviewed_run` and the selected
+  `/workflow?run_id=...`, `/runs/...`, `/delegations/...`, `/approvals`, and
+  `/inbox` surfaces.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario` -> red before implementation, then `1 passed, 497 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario or local_app_routes_render_modern_workflow_and_health or local_app_cli_commands_and_bind_safety"` -> `3 passed, 495 deselected`
+  - `python3 -m agent_os.cli app-smoke-test` -> rendered the core local app routes with status 200 and zero provider/network/external-mutation counters.
+  - `git diff --check`
+- Non-claims: this is a read-only action-surface/navigation improvement only;
+  it does not execute work, approve requests, commit, push, create PRs,
+  deploy, call providers, fetch GitHub status, execute arbitrary commands, or
+  perform non-loopback network actions from the local app.
+
 ## 2026-06-26 Local App Demo Next Action Panel
 
 - Upgraded `/demo` with a read-only `Demo Next Action` panel that derives the
