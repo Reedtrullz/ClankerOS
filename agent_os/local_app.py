@@ -1645,6 +1645,7 @@ def _resume_page(root: Path) -> str:
             ),
             f"<p><a href='{_e(next_href)}'>{_e(next_label)}</a></p>",
             "</section>",
+            _resume_next_action_section(root, open_goal),
             _list_section("Resume Targets", targets),
             _list_section(
                 "Manage Resume State",
@@ -1655,6 +1656,42 @@ def _resume_page(root: Path) -> str:
                 ],
             ),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _resume_next_action_section(root: Path, open_goal: str) -> str:
+    if not open_goal:
+        return _list_section(
+            "Resume Next Action",
+            [
+                "resume_next_action_status: no_saved_goal",
+                "resume_next_surface: <a href='/goals'>/goals</a>",
+                "resume_next_action_external_effects_created: false",
+            ],
+        )
+    storage = _storage(root)
+    state = _goal_state(root, storage, open_goal)
+    phase = _goal_current_phase(state)
+    next_action = _goal_next_action(root, state)
+    return "".join(
+        [
+            "<section><h2>Resume Next Action</h2>",
+            "<p class='muted'>Continue from the saved goal's current local workflow state.</p>",
+            _kv(
+                [
+                    ("resume_saved_goal", open_goal),
+                    ("resume_current_phase", phase),
+                    ("resume_next_action", next_action.action),
+                    ("resume_next_reason", next_action.reason),
+                    ("resume_operator_attention", _goal_operator_attention(phase, next_action)),
+                    ("resume_next_surface", SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>")),
+                    ("resume_next_action_source", "saved_goal_state"),
+                    ("resume_next_action_write_on_get", "false"),
+                    ("resume_next_action_external_effects_created", "false"),
+                ]
+            ),
+            "</section>",
         ]
     )
 

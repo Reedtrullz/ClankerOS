@@ -116,8 +116,9 @@ compact local app smoke commands before pushing, then let GitHub Actions run
 the fast route smoke and full pytest suite for slower proof.
 Use `/resume` when returning to ClankerOS after a break. It reads the saved
 workspace state, shows the exact saved goal/project/artifact links, preserves
-filters and expanded panel readbacks, and reports that it writes nothing on
-GET.
+filters and expanded panel readbacks, and shows a `Resume Next Action` section
+with the saved goal's current phase, one next action, operator attention cue,
+and target surface. It reports that it writes nothing on GET.
 
 For the first manual browser pass, run `python3 -m agent_os.cli demo`
 or `python3 -m agent_os.cli demo-app-scenario`, open `/goals`, then `/demo`,

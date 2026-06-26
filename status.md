@@ -1,5 +1,29 @@
 # Status
 
+## 2026-06-26 Goal-Aware Resume Next Action
+
+- Added a `Resume Next Action` section to `/resume`. When the saved workspace
+  points at a goal, the page now reads that goal's current local state and
+  shows the current phase, one recommended next action, reason, operator
+  attention cue, and target surface.
+- The resume page still writes nothing on GET. This is read-only state
+  reconstruction from `.clanker/app/workspace.json` plus existing goal state;
+  it does not call providers, use the network, push, create PRs, deploy, run
+  delegations/worktrees, or mutate external systems.
+- Compact local verification for this slice:
+  - Focused red test failed first because `/resume` did not contain
+    `Resume Next Action`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with `/resume` marker matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Linked Project Goal Rows
 
 - Promoted `/projects/<project_id>` goal rows into direct goal workbench
