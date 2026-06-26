@@ -257,9 +257,10 @@ CLI.
 
 Use `/projects/<project_id>` as the project-level launchpad. It shows goals,
 tasks, delegations, artifacts, project guidance, a confirmed local
-project-scoped `create-goal` form, scoped workflow links for delegations and
-coder runs, and links back to safe actions, dogfooding, and verification
-without executing external effects.
+project-scoped `create-goal` form, goal rows that link directly to
+`/goals/<goal_id>` with phase, next action, and task progress, scoped workflow
+links for delegations and coder runs, and links back to safe actions,
+dogfooding, and verification without executing external effects.
 
 Use `/actions` when you want a read-only catalog of available local app
 actions, where their forms appear, what previous artifact they require, what

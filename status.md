@@ -1,5 +1,31 @@
 # Status
 
+## 2026-06-26 Linked Project Goal Rows
+
+- Promoted `/projects/<project_id>` goal rows into direct goal workbench
+  launchers. Each row now reuses the goal cockpit renderer, links to
+  `/goals/<goal_id>`, and shows project, status, phase, next action, and task
+  progress.
+- The progress label now uses the same explicit task-completion wording on
+  compact goal rows that goal completion criteria already used, for example
+  `progress=0/1 tasks completed`.
+- This remains local read-only UI on page load. Rendering the project page
+  does not write state, call providers, use the network, push, create PRs,
+  deploy, run delegations/worktrees, or mutate external systems.
+- Compact local verification for this slice:
+  - Focused red test first failed because the demo project page did not show
+    the same phase/next-action/progress goal row context as `/goals`.
+  - Follow-up focused red test failed on the terse progress label
+    `progress=0/1 tasks`, then passed after making the label explicit.
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Project-Scoped Goal Creation
 
 - Added a populated-state `Start Goal For This Project` section to

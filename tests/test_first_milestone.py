@@ -5281,6 +5281,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "local-app-demo" in project.body
     assert "Project Goals" in project.body
     assert result.goal_id in project.body
+    assert f"href='/goals/{result.goal_id}'" in project.body
+    assert "phase=Ready to commit" in project.body
+    assert "next_action=Create commit request" in project.body
+    assert "progress=0/1 tasks completed" in project.body
     assert "Implementation Handoffs" in project.body
     assert "coder-prep-from-handoff" in project.body
     assert "Project Operator Guidance" in project.body

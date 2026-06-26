@@ -185,11 +185,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   action, project detail links, and selected delegation/run workflow
   shortcuts.
 - `/projects/<project_id>` - project detail with first-class project goals, a
-  confirmed local `Start Goal For This Project` form, goal-linked tasks,
-  linked artifacts, project-scoped incidents/recommendations, next recommended
-  operator action, and a project workflow launchpad that links the project to
-  selected delegation/run workflow views, the safe action catalog, dogfooding
-  checklist, and verification handoff.
+  confirmed local `Start Goal For This Project` form, goal rows that link
+  directly to `/goals/<goal_id>` with phase, next action, and task progress,
+  goal-linked tasks, linked artifacts, project-scoped incidents/
+  recommendations, next recommended operator action, and a project workflow
+  launchpad that links the project to selected delegation/run workflow views,
+  the safe action catalog, dogfooding checklist, and verification handoff.
 - `/delegation-runs` - read-only delegation execution run index with evidence
   directories, result artifacts, context-pack and implementation-handoff links,
   zero-effect counters, retry signals, and next recommended local operator

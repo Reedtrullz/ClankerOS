@@ -3250,9 +3250,9 @@ def _goal_progress(state: dict[str, Any]) -> str:
 def _goal_progress_label(state: dict[str, Any]) -> str:
     tasks = state.get("tasks", [])
     if not tasks:
-        return "0/0 tasks"
+        return "0/0 tasks completed"
     completed = sum(1 for task in tasks if task.status == "completed")
-    return f"{completed}/{len(tasks)} tasks"
+    return f"{completed}/{len(tasks)} tasks completed"
 
 
 def _goal_resume_snapshot(root: Path, state: dict[str, Any]) -> str:
@@ -5368,7 +5368,7 @@ def _project_detail(root: Path, project_id: str) -> str:
     repo = _repo_state(Path(project.root_path))
     goal_rows = _table_rows(
         storage.db_path,
-        "select id, status, title, description from goals where project_id = ? order by updated_at desc limit 20",
+        "select * from goals where project_id = ? order by updated_at desc limit 20",
         (project_id,),
     )
     task_rows = _table_rows(
@@ -5398,9 +5398,7 @@ def _project_detail(root: Path, project_id: str) -> str:
             _list_section(
                 "Project Goals",
                 [
-                    f"{_e(row['id'])}: status={_e(row['status'])} "
-                    f"title={_e(row['title'] or row['description'])} "
-                    f"description={_e(row['description'])}"
+                    _goal_index_line(root, storage, row)
                     for row in goal_rows
                 ],
             ),

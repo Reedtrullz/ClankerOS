@@ -80,7 +80,10 @@ Core layers for the bootstrap:
   launchpad with scoped delegation/run workflow links, safe actions,
   dogfooding, and verification
   links so the operator can start from the product path rather than infer
-  goals from task rows. The local app now also exposes `/resume` as a
+  goals from task rows. Project goal rows link directly to
+  `/goals/<goal_id>` and show phase, next action, and task progress so the
+  project page can launch the same goal-centered workbench as `/goals`. The
+  local app now also exposes `/resume` as a
   read-only return-to-work surface over saved `.clanker/app/workspace.json`
   state, showing saved goal, project, artifact, filters, expanded panels,
   zero-effect counters, and a direct next resume link without writing on GET;
