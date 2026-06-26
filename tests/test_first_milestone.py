@@ -3513,6 +3513,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "dashboard_ci_network_actions_taken: 0" in root.body
     assert "dashboard_ci_external_mutations_taken: 0" in root.body
     assert "dashboard_github_status_fetch: none" in root.body
+    assert "dashboard_ci_snapshot_handoff_command_template: python3 -m agent_os.cli ci-snapshot-handoff" in root.body
+    assert "dashboard_ci_snapshot_status_check_command_template: gh run view" in root.body
+    assert "dashboard_ci_snapshot_record_after_success_command_template: python3 -m agent_os.cli ci-snapshot-evidence" in root.body
     assert "verification_surface" in root.body
     assert "ci_evidence_surface" in root.body
     assert "Dashboard Dogfooding Snapshot" in root.body
@@ -3621,6 +3624,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "job_timeout_minutes: 45" in verification.body
     assert "in_progress_run_status: not_ci_proof" in verification.body
     assert "If a GitHub run is still in progress, keep waiting on GitHub rather than rerunning the full suite locally." in verification.body
+    assert "Direct Snapshot CI Handoff" in verification.body
+    assert "ci_snapshot_handoff_command_template: python3 -m agent_os.cli ci-snapshot-handoff" in verification.body
+    assert "ci_snapshot_status_check_command_template: gh run view" in verification.body
+    assert "ci_snapshot_record_after_success_command_template: python3 -m agent_os.cli ci-snapshot-evidence" in verification.body
+    assert "handoff_status: template_only" in verification.body
     assert "Latest Recorded CI Evidence" in verification.body
     assert "latest_ci_status: success" in verification.body
     assert "latest_ci_provider: github-actions" in verification.body
@@ -3643,6 +3651,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "handoff_commit: abc123" in ci_evidence.body
     assert "record_when: GitHub Actions run has completed" in ci_evidence.body
     assert f"ci-deploy-evidence {handoff.id}" in ci_evidence.body
+    assert "direct_snapshot_handoff_command_template: python3 -m agent_os.cli ci-snapshot-handoff" in ci_evidence.body
+    assert "direct_snapshot_status_check_command_template: gh run view" in ci_evidence.body
+    assert "direct_snapshot_record_after_success_command_template: python3 -m agent_os.cli ci-snapshot-evidence" in ci_evidence.body
     assert "required_operator_inputs: completed GitHub Actions run id" in ci_evidence.body
     assert "github-actions" in ci_evidence.body
     assert "success" in ci_evidence.body
@@ -3721,6 +3732,8 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "CI Evidence Recording Guide" in ci_evidence_without_handoff.body
     assert "latest_github_handoff: missing" in ci_evidence_without_handoff.body
     assert "record_command_template: unavailable_until_github_handoff_exists" in ci_evidence_without_handoff.body
+    assert "direct_snapshot_handoff_command_template" in ci_evidence_without_handoff.body
+    assert "ci-snapshot-handoff" in ci_evidence_without_handoff.body
     assert "direct_snapshot_record_command_template" in ci_evidence_without_handoff.body
     assert "ci-snapshot-evidence" in ci_evidence_without_handoff.body
     assert "proof_boundary: operator_supplied_record_only" in ci_evidence_without_handoff.body

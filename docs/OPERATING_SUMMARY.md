@@ -99,15 +99,19 @@ Core layers for the bootstrap:
   Actions workflow, separate fast-smoke and full-suite job readbacks,
   configured job timeout, latest operator-supplied CI evidence summary,
   compact local checks, in-progress run non-proof guidance, and CI proof
-  boundary without contacting GitHub; a
+  boundary without contacting GitHub; the page also shows a display-only
+  direct `ci-snapshot-handoff`, `gh run view`, and record-after-success
+  template from current branch/commit state; a
   read-only `/ci-evidence` page for operator-supplied CI/deploy proof records
   already stored in local ClankerOS state, plus a `CI Evidence Recording Guide`
   with the latest local GitHub handoff id, branch, commit, handoff evidence,
-  and a handoff-specific `ci-deploy-evidence` command template when available,
-  without fetching GitHub status; a
+  a handoff-specific `ci-deploy-evidence` command template when available, and
+  a direct pushed-snapshot `ci-snapshot-handoff` template, without fetching
+  GitHub status; a
   read-only root dashboard `Verification Snapshot` for checked-in workflow
-  timeout, latest operator-supplied CI evidence, `/verification`, and
-  `/ci-evidence` links without contacting GitHub; a read-only root dashboard
+  timeout, latest operator-supplied CI evidence, `/verification`,
+  `/ci-evidence`, and current direct-snapshot handoff templates without
+  contacting GitHub; a read-only root dashboard
   `Dashboard Dogfooding Snapshot` for fixture availability, next dogfooding
   action, selected workflow/run links, and the `/demo` manual browser script
   surface; a
@@ -163,8 +167,9 @@ Core layers for the bootstrap:
   handoff. While a direct pushed-snapshot run is still pending,
   `ci-snapshot-handoff` prints the exact `gh run view` check command and
   matching record-after-success command without fetching GitHub status or
-  writing proof. Snapshot records are surfaced separately in `/verification`,
-  `/ci-evidence`, and the static dashboard, record
+  writing proof. The local app mirrors those commands as display-only
+  templates on `/`, `/verification`, and `/ci-evidence`. Snapshot records are
+  surfaced separately in `/verification`, `/ci-evidence`, and the static dashboard, record
   `network_actions_taken=0` and `external_mutations_taken=0`, and do not fetch
   GitHub status, run CI, deploy, push, create PRs, call providers, or mutate
   external systems.

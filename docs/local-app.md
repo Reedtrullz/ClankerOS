@@ -186,7 +186,10 @@ page shows `ci-deploy-evidence` and `ci-snapshot-evidence` command templates
 instead of pretending CI proof exists. Use `ci-snapshot-handoff` from the CLI
 while a direct pushed-snapshot run is pending to print the exact `gh run view`
 and `ci-snapshot-evidence` commands without fetching GitHub status or writing
-local proof.
+local proof. The root dashboard, `/verification`, and `/ci-evidence` also show
+the direct snapshot handoff, status-check, and record-after-success command
+templates from current local branch/commit state when available; those lines
+are display-only and are never executed by the app.
 The root dashboard mirrors this boundary as a compact `Verification Snapshot`
 with `/verification` and `/ci-evidence` links, and it labels the latest
 operator-supplied source as either `publication_handoff` or
@@ -204,9 +207,10 @@ records keep the GitHub handoff id; direct snapshot records are labeled
 `direct_public_snapshot` so they do not pretend to come from a publication
 handoff. The `CI Evidence Recording Guide` shows a handoff-specific
 `ci-deploy-evidence` command when a local GitHub handoff exists, and a direct
-`ci-snapshot-evidence` command template when the operator is recording a
-direct pushed snapshot. The page does not poll GitHub, refresh statuses, push,
-create PRs, deploy, call providers, or mutate external systems.
+`ci-snapshot-handoff` plus `ci-snapshot-evidence` command template when the
+operator is recording a direct pushed snapshot. The page does not poll GitHub,
+refresh statuses, push, create PRs, deploy, call providers, or mutate external
+systems.
 
 ## Manual Dogfooding Checklist
 

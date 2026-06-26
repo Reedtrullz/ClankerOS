@@ -635,6 +635,7 @@ def _dashboard_verification_snapshot(root: Path) -> str:
         "verification_surface: <a href='/verification'>/verification</a>",
         "ci_evidence_surface: <a href='/ci-evidence'>/ci-evidence</a>",
     ]
+    lines.extend(_ci_snapshot_handoff_lines(root, key_prefix="dashboard_ci_snapshot_"))
     if latest_ci_record is not None:
         source_kind, record = latest_ci_record
         lines.extend(
@@ -967,6 +968,7 @@ def _verification_page(root: Path) -> str:
             "</section>",
             _list_section("Workflow Configuration Summary", workflow_summary_lines),
             _list_section("GitHub Actions Steps", workflow_step_lines),
+            _ci_snapshot_handoff_panel(root),
             _latest_ci_evidence_panel(root),
             _list_section(
                 "Remote Run State Guidance",
@@ -1049,6 +1051,52 @@ def _latest_ci_evidence_panel(root: Path) -> str:
     )
 
 
+def _ci_snapshot_handoff_panel(root: Path) -> str:
+    return _list_section(
+        "Direct Snapshot CI Handoff",
+        [
+            *_ci_snapshot_handoff_lines(root),
+            "handoff_status: template_only",
+            "record_when: GitHub Actions status=completed conclusion=success and headSha matches the expected commit",
+            "proof_boundary: no CI proof is recorded until the operator runs the record-after-success command",
+            "github_status_fetch: none",
+            "app_network_actions_taken: 0",
+            "external_mutations_taken: 0",
+        ],
+    )
+
+
+def _ci_snapshot_handoff_lines(root: Path, *, key_prefix: str = "ci_snapshot_") -> list[str]:
+    state = _repo_state(root)
+    branch = state["branch"] if state["branch"] != "unknown" else "<branch>"
+    full_commit = _git(root, ["rev-parse", "HEAD"])
+    commit = full_commit or (
+        state["commit"] if state["commit"] != "unknown" else "<commit_sha>"
+    )
+    repo = _github_repo_slug(root)
+    run_url = f"https://github.com/{repo}/actions/runs/<run_id>"
+    handoff_command = (
+        "python3 -m agent_os.cli ci-snapshot-handoff "
+        f"--project clankeros --branch {branch} --commit {commit} "
+        f"--external-run-id <run_id> --repo {repo}"
+    )
+    status_command = (
+        f"gh run view <run_id> --repo {repo} "
+        "--json status,conclusion,headSha,headBranch,url,jobs"
+    )
+    record_command = (
+        "python3 -m agent_os.cli ci-snapshot-evidence "
+        f"--project clankeros --branch {branch} --commit {commit} "
+        f"--provider github-actions --status success --external-run-id <run_id> "
+        f"--url {run_url}"
+    )
+    return [
+        f"{key_prefix}handoff_command_template: {_e(handoff_command)}",
+        f"{key_prefix}status_check_command_template: {_e(status_command)}",
+        f"{key_prefix}record_after_success_command_template: {_e(record_command)}",
+    ]
+
+
 def _latest_ci_evidence_record(root: Path) -> tuple[str, Any] | None:
     storage = _storage(root)
     records = storage.list_recent_ci_deploy_evidence_records(limit=1)
@@ -1116,6 +1164,7 @@ def _ci_evidence_recording_guide(root: Path) -> str:
                 "latest_github_handoff: missing",
                 "next_ci_evidence_action: create_publication_handoff_then_manual_push_pr_outside_clankeros",
                 "record_command_template: unavailable_until_github_handoff_exists",
+                *_ci_snapshot_handoff_lines(root, key_prefix="direct_snapshot_"),
                 "direct_snapshot_record_command_template: python3 -m agent_os.cli ci-snapshot-evidence --project clankeros --branch main --commit <commit_sha> --provider github-actions --status success --external-run-id <run_id> --url <run_url>",
                 "required_operator_inputs: completed GitHub Actions run id, run URL, final status",
                 "proof_boundary: operator_supplied_record_only",
@@ -1136,6 +1185,7 @@ def _ci_evidence_recording_guide(root: Path) -> str:
             f"handoff_evidence: {_artifact_link(_repo_relative_artifact_path(root, handoff.evidence_path))}",
             "record_when: GitHub Actions run has completed and the operator has inspected the result",
             f"record_command_template: python3 -m agent_os.cli ci-deploy-evidence {_e(handoff.id)} --provider github-actions --status success --external-run-id <run_id> --url <run_url>",
+            *_ci_snapshot_handoff_lines(root, key_prefix="direct_snapshot_"),
             "required_operator_inputs: completed GitHub Actions run id, run URL, final status",
             "proof_boundary: operator_supplied_record_only",
             "github_status_fetch: none",
@@ -1369,6 +1419,19 @@ def _workflow_timeout_minutes(workflow_text: str, job_name: str = "full-suite") 
         if stripped.startswith("timeout-minutes:"):
             return stripped.split(":", 1)[1].strip() or "missing"
     return "missing"
+
+
+def _github_repo_slug(root: Path) -> str:
+    remote_url = _git(root, ["remote", "get-url", "origin"])
+    if not remote_url or "github.com" not in remote_url:
+        return "<owner/repo>"
+    slug = remote_url.split("github.com", 1)[1].lstrip("/:").strip()
+    if slug.endswith(".git"):
+        slug = slug[:-4]
+    slug = slug.strip("/")
+    if "/" not in slug or slug.startswith("."):
+        return "<owner/repo>"
+    return slug
 
 
 def _action_catalog_line(item: tuple[str, str, str, str, str, str, str]) -> str:

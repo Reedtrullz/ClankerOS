@@ -158,13 +158,17 @@ checks to run before a push, and states that CI proof requires a completed
 passing GitHub Actions run. It also shows the configured job timeout, the
 latest operator-supplied CI evidence record when one exists, and makes clear
 that an in-progress GitHub run is pending proof, not CI proof, so you can wait
-on GitHub instead of rerunning the full suite locally. The page itself does
-not contact GitHub.
+on GitHub instead of rerunning the full suite locally. It also shows a
+copyable `ci-snapshot-handoff` template for the current checkout so you can
+watch a direct pushed-snapshot run and then record it after success. The page
+itself does not contact GitHub.
 
 The root dashboard includes the same proof boundary as a compact
 `Verification Snapshot`, with links to `/verification` and `/ci-evidence`, so
 you can see from the first screen whether local CI proof has been recorded and
 whether it came from a publication handoff or a direct pushed snapshot.
+It also shows the current direct-snapshot handoff, status-check, and
+record-after-success command templates without executing them.
 It also includes a `Dashboard Dogfooding Snapshot` that shows whether the
 fixture-backed demo state exists, the next dogfooding action, the selected
 workflow/run surface when available, and the `/demo` manual browser script
@@ -177,7 +181,8 @@ in local ClankerOS state and links the inert evidence artifact. It also shows
 the latest local GitHub handoff id, branch, commit, handoff evidence, and a
 handoff-specific `ci-deploy-evidence` command template when a recordable
 handoff exists. When no handoff exists, it shows a direct snapshot evidence
-template instead. It does not fetch GitHub status.
+template instead. In both states it also shows the direct `ci-snapshot-handoff`
+template for the current checkout. It does not fetch GitHub status.
 
 The app is local-only by default, binds to `127.0.0.1`, and refuses non-local
 binds unless `--allow-nonlocal-bind` is explicitly supplied. It does not push,
@@ -568,6 +573,10 @@ contacting GitHub from ClankerOS:
 ```bash
 python3 -m agent_os.cli ci-snapshot-handoff --project clankeros --branch main --commit <commit_sha> --external-run-id <run_id> --repo Reedtrullz/ClankerOS
 ```
+
+The local app mirrors this on `/`, `/verification`, and `/ci-evidence` as a
+template-only operator surface. The app never runs the `gh run view` command;
+it only shows what the operator can run outside ClankerOS after a push.
 
 For direct pushes, record the completed run locally with
 `python3 -m agent_os.cli ci-snapshot-evidence --project clankeros --branch main --commit <commit_sha> --provider github-actions --status success --external-run-id <run_id> --url <run_url>`.

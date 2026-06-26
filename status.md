@@ -1,5 +1,16 @@
 # Status
 
+## 2026-06-26 Local App Direct Snapshot CI Handoff Templates
+
+- Added display-only direct pushed-snapshot CI handoff templates to the root
+  `Verification Snapshot`, `/verification`, and `/ci-evidence`. The app now
+  shows a `ci-snapshot-handoff` command, a matching `gh run view` status-check
+  command, and a `ci-snapshot-evidence` record-after-success command using the
+  current local branch, commit, and GitHub `owner/repo` slug when available.
+- Non-claims: these app surfaces do not fetch GitHub status, write CI
+  evidence, run tests, deploy, push, create PRs, call providers, or mutate
+  external systems. They are copyable operator guidance only.
+
 ## 2026-06-26 CI Snapshot Handoff Command
 
 - Added `ci-snapshot-handoff` as a zero-write CLI bridge for direct
