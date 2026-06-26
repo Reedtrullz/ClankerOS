@@ -1,5 +1,44 @@
 # Status
 
+## 2026-06-26 Browser Run Approved Worktree Action
+
+- Added a confirmed local `run-coder-worktree` browser action for Goals whose
+  coder worktree approval is already approved. The Goal Next Action card now
+  recommends `Run approved worktree`, renders `/actions/run-coder-worktree`,
+  and keeps the exact CLI command template as fallback/readback.
+- The action calls the existing `run_approved_coder_worktree` backend path, so
+  the prior approval gate, safe-command validator, verifier, bounded-file
+  validation, evidence packet creation, and incident-on-failure behavior remain
+  the authority. Result pages link the new coder worktree run evidence and then
+  the Goal page advances to `Open review`.
+- Non-claims: this does not expose arbitrary commands, commit, push, create a
+  PR, deploy, call providers, use non-loopback network actions, or mutate
+  external systems. It executes one operator-provided command only after the
+  existing worktree approval and safe-command checks pass, and it records
+  bounded local worktree evidence only.
+- Compact local verification for this slice:
+  - Focused red pytest first failed because the Goal page lacked
+    `/actions/run-coder-worktree`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k goal_runs_approved_worktree_from_browser_action`
+    -> `1 passed, 512 deselected`
+  - Adjacent Goal workflow slice:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "goal_next_action_card_exposes_post_delegation_forms or goal_runs_approved_worktree_from_browser_action or goal_next_action_card_exposes_reviewed_commit_request_form"`
+    -> `3 passed, 510 deselected`
+  - GitHub workflow metadata smoke:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "github_actions_workflow_runs_automatic_verification or github_actions_smoke_uses_temp_root_and_expected_order"`
+    -> `2 passed, 511 deselected`
+  - Checked-in fast-smoke pytest expression:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "github_actions_workflow_runs_automatic_verification or github_actions_smoke_uses_temp_root_and_expected_order or ci_snapshot_evidence_from_gh_json_validates_successful_matching_run or ci_snapshot_evidence_from_gh_json_records_completed_job_while_run_in_progress or ci_snapshot_evidence_from_gh_json_rejects_pending_or_wrong_commit or local_app_records_ci_snapshot_evidence_from_pasted_gh_json or local_app_records_fast_smoke_ci_snapshot_evidence_from_pasted_gh_json or local_app_rejects_pending_ci_snapshot_status_json_without_record or ci_snapshot_handoff_prints_watch_and_record_commands_without_writes or local_app_routes_render_modern_workflow_and_health or local_app_runs_delegation_from_browser_action or goal_runs_approved_worktree_from_browser_action or local_app_artifact_viewer_is_read_only_and_bounded or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety"`
+    -> `15 passed, 498 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Browser Run Delegation Action
 
 - Added a confirmed local `run-delegation` browser action. Once a Goal has a
@@ -796,10 +835,12 @@
   request, the card now shows a copy-only `run-coder-worktree` command
   template plus the approved plan artifact, plan hash, allowed-file preview,
   verifier, expected evidence directory, workflow return link, and future run
-  detail route.
+  detail route. Later browser work promoted this into a confirmed local
+  `run-coder-worktree` action while retaining the CLI command as fallback.
 - The handoff closes the previous blank Goal-card state at
-  `Run approved worktree from CLI` while preserving the existing browser
-  safety boundary.
+  `Run approved worktree from CLI`; the current Goal card now says
+  `Run approved worktree` and preserves the existing approval, safe-command,
+  verifier, and bounded-file checks.
 - Compact local verification for this slice:
   - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
     -> passed
@@ -807,7 +848,8 @@
     -> `2 passed, 508 deselected`
   - `git diff --check`
     -> passed
-- Non-claims: this does not run the approved worktree from the browser,
+- Non-claims: the original slice did not run the approved worktree from the browser.
+  The current browser action still does not expose arbitrary commands,
   execute arbitrary commands, call providers, fetch GitHub status, push,
   create PRs, deploy, or mutate external systems.
 
@@ -1808,9 +1850,10 @@
   actions, where forms appear, required previous artifacts, output artifacts,
   confirmation requirements, local mutation posture, and
   `external_effects=none`.
-- The catalog includes the confirmed `refresh-dashboard-state` form and
-  explicitly labels `run-coder-worktree` as CLI-first outside fixture-backed
-  demo setup, while manual push/PR remains outside ClankerOS.
+- The catalog includes the confirmed `refresh-dashboard-state` form. Later
+  browser work relabeled `run-coder-worktree` as a confirmed goal action only
+  after an approved worktree request and safe local command validation, while
+  manual push/PR remains outside ClankerOS.
 - The local app status artifact and smoke route list now include `/actions`.
 - Compact local verification for this slice:
   - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`

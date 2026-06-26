@@ -158,10 +158,11 @@ Core layers for the bootstrap:
   completes, the Goal Next Action card exposes confirmed `coder-prep`,
   `coder-worktree-plan`, and `coder-worktree-approval` forms at the matching
   workflow phases, then exposes confirmed `approve-coder-worktree`. Once the
-  worktree request is approved, the Goal card shows a copy-only
-  `run-coder-worktree` handoff with approved plan, allowed-file preview,
-  verifier, expected evidence path, and return route while keeping
-  browser-side worktree execution unexposed. It then exposes confirmed
+  worktree request is approved, the Goal card exposes a confirmed
+  `run-coder-worktree` form for one operator-provided safe local command in
+  the isolated worktree, while showing the approved plan, allowed-file
+  preview, verifier, expected evidence path, return route, and exact CLI
+  fallback. It then exposes confirmed
   `review-run` when a completed coder worktree run is waiting on the review
   gate, then `coder-commit-request` once the local review exists and mentions
   the coder run. After a commit request exists, the Goal Next Action card also
@@ -171,8 +172,9 @@ Core layers for the bootstrap:
   `coder-publication-handoff` forms at the matching phases, then shows the
   manual publish boundary and copy-only publication handoff commands once the
   handoff is ready. These write local artifacts, approval rows, approval
-  decisions, read-only delegation run evidence, or one isolated local worktree
-  commit without running worktrees from the browser, pushing, creating PRs, deploying,
+  decisions, read-only delegation run evidence, bounded worktree run evidence,
+  or one isolated local worktree commit without exposing arbitrary commands,
+  pushing, creating PRs, deploying,
   calling providers, or mutating external systems. Goal pages also
   include a `Goal Resume Snapshot` that reads saved workspace state, links the
   current goal/project, suggests the newest goal artifact as a resume anchor,

@@ -204,25 +204,26 @@ with a confirmed `delegate` form, writing a local contract artifact without
 starting a subagent or calling a provider. After the delegation exists, the
 same card can generate the local context pack with a confirmed `context-pack`
 form. When the context pack is ready, the card shows the exact
-`run-delegation` CLI handoff because browser adapter execution is still not
-exposed. After a delegation has completed, the Goal Next Action
+confirmed local `run-delegation` action while keeping the CLI command as a
+fallback/readback. After a delegation has completed, the Goal Next Action
 card can also create the local coder prep packet, create the approval-gated
 worktree plan, and request the pending worktree approval with confirmed
 browser forms. It can then approve the pending worktree request. After
-approval, the Goal card shows a copy-only `run-coder-worktree` handoff with
-the approved plan, allowed-file preview, verifier, expected evidence path, and
-return route because browser-side worktree execution is still not exposed.
-Once the operator has run the bounded command outside the app, the Goal card
-can create the local review artifact for the completed coder worktree run.
-Once that review gate passes, it can create the review-gated commit request.
+approval, the Goal card exposes a confirmed `run-coder-worktree` form for one
+operator-provided safe local command in the isolated worktree. The existing
+approval, safe-command, verifier, and bounded-file checks still apply, and
+the exact CLI fallback remains visible. Once the bounded run completes, the
+Goal card can create the local review artifact for the completed coder
+worktree run. Once that review gate passes, it can create the review-gated
+commit request.
 After that, the same Goal card can approve the commit request, create the
 isolated local worktree commit, request and approve publication handoff
 preparation, and write the local publication handoff/PR-body artifacts. Push
 and draft PR creation remain copy-only/manual outside ClankerOS.
 Those steps write local artifacts, local approval rows, local approval
-decisions, or one isolated local worktree commit only; they do not run
-delegations or worktrees from the browser, push, create PRs, deploy, call
-providers, or use the network. Use Home, `/resume`, or `/workspace` to
+decisions, bounded worktree run evidence, or one isolated local worktree
+commit only; they do not expose arbitrary commands, push, create PRs, deploy,
+call providers, or use the network. Use Home, `/resume`, or `/workspace` to
 save and restore open project, open goal, filters, expanded panels, and last
 viewed artifact in `.clanker/app/workspace.json`, with saved-goal phase and
 next-action readbacks on each return-to-work surface.

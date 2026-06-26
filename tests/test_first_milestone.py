@@ -3937,6 +3937,7 @@ def test_github_actions_smoke_uses_temp_root_and_expected_order() -> None:
         "ci_snapshot_handoff_prints_watch_and_record_commands_without_writes",
         "local_app_routes_render_modern_workflow_and_health",
         "local_app_runs_delegation_from_browser_action",
+        "goal_runs_approved_worktree_from_browser_action",
         "local_app_artifact_viewer_is_read_only_and_bounded",
         "local_app_demo_scenario_populates_fixture_state",
         "local_app_cli_commands_and_bind_safety",
@@ -6211,20 +6212,89 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     capsys.readouterr()
     approved_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert approved_goal.status == 200
-    assert "recommended_action</dt><dd>Run approved worktree from CLI" in approved_goal.body
+    assert "recommended_action</dt><dd>Run approved worktree" in approved_goal.body
     assert "next_action_form_available</dt><dd>true" in approved_goal.body
-    assert "Run Approved Worktree Boundary" in approved_goal.body
+    assert "Run Approved Worktree" in approved_goal.body
+    assert "action='/actions/run-coder-worktree'" in approved_goal.body
     assert "run_coder_worktree_command_template" in approved_goal.body
     assert f"run-coder-worktree {delegation_id}" in approved_goal.body
-    assert "operator-approved bounded command" in approved_goal.body
+    assert "name='command'" in approved_goal.body
+    assert "safe_command_validator</dt><dd>enabled" in approved_goal.body
     assert "approved_plan" in approved_goal.body
     assert "allowed_files_count" in approved_goal.body
     assert "verification_command_with_verify_flag" in approved_goal.body
     assert "expected_evidence_dir" in approved_goal.body
     assert "return_to_workflow" in approved_goal.body
     assert "return_to_run_after_command" in approved_goal.body
-    assert "browser_execution_exposed</dt><dd>false" in approved_goal.body
-    assert "copy_only</dt><dd>true" in approved_goal.body
+    assert "browser_execution_exposed</dt><dd>confirmed_local_only" in approved_goal.body
+    assert "copy_only</dt><dd>false" in approved_goal.body
+
+
+def test_goal_runs_approved_worktree_from_browser_action(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    _storage, goal_id, _task_id, delegation_id, repo_path = (
+        _create_registered_context_pack_delegation(tmp_path, capsys)
+    )
+    _write_coder_worktree_subject_scripts(repo_path)
+    _run_fake_context_pack_scout(tmp_path, capsys, delegation_id)
+    _prepare_coder_worktree_plan(tmp_path, capsys, delegation_id)
+    approval_id = _request_and_approve_coder_worktree(tmp_path, capsys, delegation_id)
+
+    approved_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert approved_goal.status == 200
+    assert "recommended_action</dt><dd>Run approved worktree" in approved_goal.body
+    assert "Run Approved Worktree" in approved_goal.body
+    assert "action='/actions/run-coder-worktree'" in approved_goal.body
+    assert f"name='delegation_id' value='{delegation_id}'" in approved_goal.body
+    assert f"approval_id</dt><dd>{approval_id}" in approved_goal.body
+    assert "name='command'" in approved_goal.body
+    assert "name='verify' value='yes'" in approved_goal.body
+    assert "safe_command_validator</dt><dd>enabled" in approved_goal.body
+    assert "browser_execution_exposed</dt><dd>confirmed_local_only" in approved_goal.body
+    assert "push, create a PR, or deploy" in approved_goal.body
+
+    confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/run-coder-worktree",
+        method="POST",
+        form={
+            "delegation_id": [delegation_id],
+            "command": ["python3 scripts/change_allowed.py"],
+            "verify": ["yes"],
+        },
+    )
+    assert confirmation.status == 409
+    assert "Confirm run-coder-worktree" in confirmation.body
+    assert "python3 scripts/change_allowed.py" in confirmation.body
+    assert "Safety boundary" in confirmation.body
+
+    run_response = render_local_app_route(
+        tmp_path,
+        "/actions/run-coder-worktree",
+        method="POST",
+        form={
+            "delegation_id": [delegation_id],
+            "command": ["python3 scripts/change_allowed.py"],
+            "verify": ["yes"],
+            "confirm": ["yes"],
+        },
+    )
+    assert run_response.status == 200
+    assert "run_coder_worktree: completed" in run_response.body
+    assert "status</dt><dd>completed" in run_response.body
+    assert "changed_files_within_allowed_files</dt><dd>true" in run_response.body
+    assert "commit_created</dt><dd>false" in run_response.body
+    assert "provider_calls_taken_by_clankeros</dt><dd>0" in run_response.body
+    assert "network_actions_taken</dt><dd>0" in run_response.body
+    assert "external_mutations_taken</dt><dd>0" in run_response.body
+    assert "evidence_path</dt><dd><a href='/artifacts?path=.clanker/delegations/" in run_response.body
+
+    refreshed_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert "recommended_action</dt><dd>Open review" in refreshed_goal.body
+    assert "action='/actions/review-run'" in refreshed_goal.body
+    assert "Execution completed" in refreshed_goal.body
 
 
 def test_goal_next_action_card_exposes_reviewed_commit_request_form(

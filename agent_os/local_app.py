@@ -31,6 +31,7 @@ from agent_os.coder_publication import (
 from agent_os.coder_worktree_execution import (
     CoderWorktreeApprovalError,
     CoderWorktreeCommitError,
+    CoderWorktreeRunError,
     approve_coder_worktree,
     approve_coder_worktree_commit,
     coder_worktree_change_summary,
@@ -140,6 +141,7 @@ ACTION_CATALOG = [
     ("coder-worktree-plan", "local artifact", "delegation detail", "yes", "yes", "coder_prep.md", "coder_worktree_plan.json/.md"),
     ("coder-worktree-approval", "approval request", "delegation detail", "yes", "yes", "coder_worktree_plan.md", "coder_worktree_approval_request.json/.md"),
     ("approve-coder-worktree", "approval decision", "approvals", "yes", "yes", "pending worktree approval", "coder_worktree_approval_decision.json/.md"),
+    ("run-coder-worktree", "bounded local execution", "goal next action", "yes", "yes", "approved worktree request plus safe local command", "coder_worktree evidence packet"),
     ("review-run", "local artifact", "goal next action", "yes", "yes", "completed coder worktree run", "runs/<source_run_id>/review.md"),
     ("coder-commit-request", "approval request", "run detail", "yes", "yes", "reviewed completed coder worktree run", "coder_commit_request.json/.md"),
     ("approve-coder-commit", "approval decision", "approvals", "yes", "yes", "pending commit approval", "coder_commit_decision.json/.md"),
@@ -2752,7 +2754,7 @@ def _goal_phase_reason(root: Path, state: dict[str, Any], phase: str) -> str:
             return "delegation is pending or running; browser execution remains unexposed"
         return "local workflow step is running"
     if phase == "Ready to run":
-        return "worktree execution approval is granted; use the bounded CLI handoff"
+        return "worktree execution approval is granted; run the bounded local action or use the CLI fallback"
     if phase == "Planning worktree":
         return "coder prep exists and a bounded worktree plan is the next artifact"
     if phase == "Coder prep":
@@ -2830,7 +2832,7 @@ def _goal_next_action(root: Path, state: dict[str, Any]) -> GoalNextAction:
         return GoalNextAction("Approve worktree", "/approvals", f"approval={pending_worktree.id}")
     approved_worktree = next((item for item in state["worktree_approvals"] if item.status == "approved"), None)
     if approved_worktree is not None:
-        return GoalNextAction("Run approved worktree from CLI", f"/workflow?delegation_id={quote(approved_worktree.delegation_id)}", f"approval={approved_worktree.id}")
+        return GoalNextAction("Run approved worktree", f"/goals/{quote(goal.id)}", f"approval={approved_worktree.id}")
     if state["worktree_plans"]:
         delegation_id = str(state["worktree_plans"][0].get("source", {}).get("delegation_id") or "")
         return GoalNextAction("Request worktree approval", f"/delegations/{quote(delegation_id)}", "coder_worktree_plan_available")
@@ -2866,7 +2868,7 @@ def _goal_next_action_form(state: dict[str, Any], next_action: GoalNextAction) -
         return _goal_worktree_approval_form(state)
     if next_action.action == "Approve worktree":
         return _goal_approve_worktree_form(state)
-    if next_action.action == "Run approved worktree from CLI":
+    if next_action.action == "Run approved worktree":
         return _goal_run_worktree_handoff(state["root"], state)
     if next_action.action == "Create commit request":
         return _goal_commit_request_form(state["root"], state)
@@ -3023,20 +3025,22 @@ def _goal_run_worktree_handoff(root: Path, state: dict[str, Any]) -> str:
     ]
     default_test_command = str(project.get("default_test_command") or "project_default_test_command")
     verifier = verification_commands[0] if verification_commands else default_test_command
-    command = (
+    command_template = (
         f"python3 -m agent_os.cli run-coder-worktree {approval.delegation_id} "
         '--command "<operator-approved bounded command>" --verify'
     )
+    default_browser_command = ""
     run_surface = f"/workflow?delegation_id={quote(approval.delegation_id)}"
     expected_run_surface = f"/runs/<new_coder_worktree_run_id>"
     plan_path = approval.source_plan_path or str(plan_payload.get("_path") or "missing")
     return "".join(
         [
-            "<h3>Run Approved Worktree Boundary</h3>",
-            "<p class='muted'>The browser app does not execute approved worktree commands yet. Use this handoff to run one explicit safe local command in the isolated worktree, then return to the run evidence page for review.</p>",
+            "<h3>Run Approved Worktree</h3>",
+            "<p class='muted'>Runs one operator-provided safe local command in the approved isolated worktree after confirmation. The existing backend approval, safe-command, verifier, and bounded-file checks still apply. It does not commit, call providers, use non-loopback network actions, or push, create a PR, or deploy.</p>",
             _kv(
                 [
-                    ("run_coder_worktree_command_template", command),
+                    ("run_coder_worktree_command_template", command_template),
+                    ("run_coder_worktree_form_available", "true"),
                     ("approval_id", approval.id),
                     ("delegation_id", approval.delegation_id),
                     ("approved_plan", _artifact_link(plan_path)),
@@ -3044,15 +3048,25 @@ def _goal_run_worktree_handoff(root: Path, state: dict[str, Any]) -> str:
                     ("allowed_files_count", str(len(allowed_files))),
                     ("allowed_files_preview", ", ".join(allowed_files[:5]) or "none"),
                     ("verification_command_with_verify_flag", verifier),
+                    ("safe_command_validator", "enabled"),
+                    ("allowed_command_prefixes", "python3 -m pytest, python3 -m py_compile, python3 scripts/, npm test"),
                     ("expected_evidence_dir", f".clanker/delegations/{approval.delegation_id}/runs/<new_run_id>/coder_worktree/"),
                     ("return_to_workflow", SafeHtml(f"<a href='{_e(run_surface)}'>{_e(run_surface)}</a>")),
                     ("return_to_run_after_command", expected_run_surface),
-                    ("browser_execution_exposed", "false"),
-                    ("copy_only", "true"),
+                    ("browser_execution_exposed", "confirmed_local_only"),
+                    ("copy_only", "false"),
                     ("provider_calls_taken_by_clankeros", "0"),
                     ("network_actions_taken_by_app", "0"),
                     ("external_mutations_taken", "0"),
                 ]
+            ),
+            _input_form(
+                "run-coder-worktree",
+                {"delegation_id": approval.delegation_id, "verify": "yes"},
+                {
+                    "command": default_browser_command,
+                    "verify_command": verifier,
+                },
             ),
         ]
     )
@@ -4579,9 +4593,9 @@ def _goal_remaining_work_gate_lines(
         pending_if_ready(
             has_completed_run,
             worktree_approved > 0 or has_running_run,
-            "Run approved worktree from CLI",
+            "Run approved worktree",
         ),
-        next_step="Run approved worktree from CLI",
+        next_step="Run approved worktree",
         detail=(
             f"running={sum(1 for run in state['worktree_runs'] if run.status == 'running')} "
             f"completed={sum(1 for run in state['worktree_runs'] if run.status == 'completed')}"
@@ -4806,7 +4820,7 @@ def _actions_page(root: Path) -> str:
             _list_section(
                 "Execution Boundary",
                 [
-                    "run-coder-worktree: CLI-first outside fixture-backed demo setup; not exposed as a general app action",
+                    "run-coder-worktree: confirmed goal action only after approved worktree request and safe local command validation; not a general arbitrary-command surface",
                     "manual_operator_push_pr_outside_clankeros: outside ClankerOS; app displays suggested commands only after publication handoff",
                 ],
             ),
@@ -7809,6 +7823,50 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             )
             message = f"approved_coder_worktree: {result.approval.id}"
             location = "/"
+        elif action == "run-coder-worktree":
+            delegation_id = _required(form, "delegation_id")
+            run_result = run_approved_coder_worktree(
+                root,
+                storage,
+                delegation_id,
+                command=_required(form, "command"),
+                verify=_one(form, "verify") == "yes",
+                verify_command=_one(form, "verify_command") or None,
+                rerun=_one(form, "rerun") == "yes",
+            )
+            coder_run = run_result.run
+            change_summary = coder_worktree_change_summary(root, coder_run)
+            message = (
+                f"run_coder_worktree: already_recorded {coder_run.id}"
+                if run_result.already_recorded
+                else f"run_coder_worktree: {coder_run.status}"
+            )
+            location = f"/runs/{quote(coder_run.id)}"
+            result = {
+                "run_id": coder_run.id,
+                "delegation_id": coder_run.delegation_id,
+                "source_delegation_run_id": coder_run.source_run_id,
+                "project_id": coder_run.project_id,
+                "approval_id": coder_run.approval_id,
+                "status": coder_run.status,
+                "failure_class": coder_run.failure_class or "none",
+                "worktree_path": coder_run.worktree_path,
+                "branch_name": coder_run.branch_name,
+                "command_exit_code": coder_run.command_exit_code,
+                "verification_exit_code": coder_run.verification_exit_code,
+                "changed_files": coder_run.changed_files,
+                "changed_files_count": change_summary["changed_files_count"],
+                "outside_allowed_files": coder_run.outside_allowed_files,
+                "changed_files_within_allowed_files": not coder_run.outside_allowed_files,
+                "diff_summary": change_summary["diff_summary"],
+                "evidence_path": coder_run.evidence_path,
+                "commit_created": False,
+                "push_created": False,
+                "deploy_created": False,
+                "provider_calls_taken_by_clankeros": 0,
+                "network_actions_taken": 0,
+                "external_mutations_taken": 0,
+            }
         elif action == "review-run":
             requested_run_id = _required(form, "run_id")
             coder_run = get_coder_worktree_run(storage, requested_run_id)
@@ -7918,6 +7976,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
         CoderPrepError,
         CoderWorktreePlanError,
         CoderWorktreeApprovalError,
+        CoderWorktreeRunError,
         CoderWorktreeCommitError,
         CoderPublicationError,
         PlanningError,
@@ -8047,7 +8106,7 @@ def _append_goal_operator_note(
 def _safe_action_forms(*, delegation_id: str, handoff_md: str) -> str:
     return f"""
     <section><h2>Safe Local Actions</h2>
-      <p class="muted">Delegation-scoped artifact, approval, and read-only delegation run actions require an explicit confirmation page. Worktree execution, local commit, publication handoff, push, PR, deploy, provider, and arbitrary command actions are not exposed here.</p>
+      <p class="muted">Delegation-scoped artifact, approval, read-only delegation run, and approved bounded worktree run actions require an explicit confirmation page. Local commit and publication handoff actions stay gate-specific; push, PR, deploy, provider, and arbitrary command actions are not exposed here.</p>
       {_form('implementation-handoff', {'delegation_id': delegation_id})}
       {_form('context-pack', {'delegation_id': delegation_id})}
       {_form('run-delegation', {'delegation_id': delegation_id, 'operator_id': 'operator'})}
