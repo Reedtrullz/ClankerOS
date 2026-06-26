@@ -6508,6 +6508,50 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "Publication Handoff Commands" in manual_publish_goal.body
     assert "manual_boundary: outside_clankeros" in manual_publish_goal.body
     assert "copy_only: true" in manual_publish_goal.body
+    assert "Complete Goal" in manual_publish_goal.body
+    assert "action='/actions/complete-goal'" in manual_publish_goal.body
+    assert f"name='goal_id' value='{goal_id}'" in manual_publish_goal.body
+
+    complete_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/complete-goal",
+        method="POST",
+        form={"goal_id": [goal_id], "completed_by": ["operator"]},
+    )
+    assert complete_confirmation.status == 409
+    assert "Confirm complete-goal" in complete_confirmation.body
+
+    complete_response = render_local_app_route(
+        tmp_path,
+        "/actions/complete-goal",
+        method="POST",
+        form={
+            "goal_id": [goal_id],
+            "completed_by": ["operator"],
+            "note": ["Manual publication finished outside ClankerOS"],
+            "confirm": ["yes"],
+        },
+    )
+    assert complete_response.status == 200
+    assert "goal_completed:" in complete_response.body
+    assert "network_actions_taken</dt><dd>0" in complete_response.body
+    assert "external_mutations_taken</dt><dd>0" in complete_response.body
+
+    completed_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert completed_goal.status == 200
+    assert "current_phase</dt><dd>Completed" in completed_goal.body
+    assert "phase_reason</dt><dd>goal is marked completed" in completed_goal.body
+    assert "recommended_action</dt><dd>Review completed goal evidence" in completed_goal.body
+
+    goals_after_completion = render_local_app_route(tmp_path, "/goals")
+    assert goals_after_completion.status == 200
+    assert "Completed Goals" in goals_after_completion.body
+    assert f"/goals/{goal_id}" in goals_after_completion.body
+
+    home_after_completion = render_local_app_route(tmp_path, "/")
+    assert home_after_completion.status == 200
+    assert "Completed Goals" in home_after_completion.body
+    assert f"href='/goals/{goal_id}'" in home_after_completion.body
 
 
 def test_local_app_cli_commands_and_bind_safety(

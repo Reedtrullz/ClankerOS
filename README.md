@@ -219,7 +219,11 @@ commit request.
 After that, the same Goal card can approve the commit request, create the
 isolated local worktree commit, request and approve publication handoff
 preparation, and write the local publication handoff/PR-body artifacts. Push
-and draft PR creation remain copy-only/manual outside ClankerOS.
+and draft PR creation remain copy-only/manual outside ClankerOS. After the
+operator finishes that manual publication work, the Goal page exposes a
+confirmed local `complete-goal` action that marks the Goal completed and moves
+it into the completed-goals lane without pushing, creating a PR, deploying,
+calling providers, or using the network.
 Those steps write local artifacts, local approval rows, local approval
 decisions, bounded worktree run evidence, or one isolated local worktree
 commit only; they do not expose arbitrary commands, push, create PRs, deploy,

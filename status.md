@@ -1,5 +1,41 @@
 # Status
 
+## 2026-06-26 Browser Goal Completion Action
+
+- Added a confirmed local `complete-goal` browser action at the manual publish
+  boundary. Once a coder publication handoff is `ready_for_operator`, the Goal
+  page still recommends `Manual publish outside ClankerOS`, shows copy-only
+  publication handoff commands, and now offers `Complete Goal` for the operator
+  to record that the manual push/PR work is finished outside the app.
+- The action requires an existing ready publication handoff, calls the local
+  goal status updater, and moves the Goal into the `Completed` phase and
+  completed-goals lanes. Completed goals now recommend `Review completed goal
+  evidence` rather than continuing to show publication work as the next local
+  action.
+- Non-claims: this does not push, create a PR, deploy, call providers, fetch
+  GitHub status, use the network, run worktrees, run arbitrary commands, or
+  mutate external systems. It records local Goal status only after explicit
+  confirmation and an operator-controlled manual publish boundary.
+- Compact local verification for this slice:
+  - Focused red pytest first failed because the Goal page lacked `Complete
+    Goal` and `/actions/complete-goal`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k goal_next_action_card_exposes_commit_publication_gate_forms`
+    -> `1 passed, 512 deselected`
+  - Adjacent Goal/local-app slice:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "goal_next_action_card_exposes_commit_publication_gate_forms or goal_runs_approved_worktree_from_browser_action or local_app_routes_render_modern_workflow_and_health"`
+    -> `3 passed, 510 deselected`
+  - Checked-in fast-smoke pytest expression with the new completion test:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "github_actions_workflow_runs_automatic_verification or github_actions_smoke_uses_temp_root_and_expected_order or ci_snapshot_evidence_from_gh_json_validates_successful_matching_run or ci_snapshot_evidence_from_gh_json_records_completed_job_while_run_in_progress or ci_snapshot_evidence_from_gh_json_rejects_pending_or_wrong_commit or local_app_records_ci_snapshot_evidence_from_pasted_gh_json or local_app_records_fast_smoke_ci_snapshot_evidence_from_pasted_gh_json or local_app_rejects_pending_ci_snapshot_status_json_without_record or ci_snapshot_handoff_prints_watch_and_record_commands_without_writes or local_app_routes_render_modern_workflow_and_health or local_app_runs_delegation_from_browser_action or goal_runs_approved_worktree_from_browser_action or goal_next_action_card_exposes_commit_publication_gate_forms or local_app_artifact_viewer_is_read_only_and_bounded or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety"`
+    -> `16 passed, 497 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Browser Run Approved Worktree Action
 
 - Added a confirmed local `run-coder-worktree` browser action for Goals whose

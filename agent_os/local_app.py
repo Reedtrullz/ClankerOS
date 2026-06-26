@@ -130,6 +130,7 @@ WORKFLOW_STEPS = [
     ("Publication approval", "approve-coder-publication", "local_approval", "publication request", "publication_decision.md"),
     ("Publication handoff", "coder-publication-handoff", "local_artifact", "approved publication", "publication_handoff.md + pr_body.md"),
     ("Manual operator push/PR outside ClankerOS", "manual git/gh", "external_manual_only", "publication handoff", "outside ClankerOS"),
+    ("Goal completion", "complete-goal", "local_state", "manual publication finished", "goal status=completed"),
 ]
 ACTION_CATALOG = [
     ("refresh-dashboard-state", "low-risk", "dashboard", "yes", "yes", "current repo/app route state", ".clanker/app/local_app_status.json"),
@@ -149,6 +150,7 @@ ACTION_CATALOG = [
     ("coder-publication-request", "approval request", "run detail", "yes", "yes", "isolated local commit", "publication_request.json/.md"),
     ("approve-coder-publication", "approval decision", "approvals", "yes", "yes", "pending publication approval", "publication_decision.json/.md"),
     ("coder-publication-handoff", "local artifact", "run detail", "yes", "yes", "approved publication request", "publication_handoff.json/.md plus pr_body.md"),
+    ("complete-goal", "local state", "goal detail", "yes", "yes", "ready publication handoff plus operator confirmation that manual publish is done", "goal status=completed"),
     ("ci-snapshot-evidence-from-gh-json", "local evidence", "ci evidence", "yes", "yes", "operator-supplied gh run view JSON, optionally scoped to a completed job", "ci snapshot evidence JSON"),
     ("register-project", "local state", "first run / projects", "yes", "yes", "local git repo path plus default test command", "registered project row and projects/<project>/project.md"),
     ("create-goal", "local state", "first run / goals", "yes", "yes", "registered project and goal prompt", "goal row, plan, tasks, and goal artifacts"),
@@ -2796,6 +2798,8 @@ def _goal_next_action(root: Path, state: dict[str, Any]) -> GoalNextAction:
     goal = state.get("goal")
     if goal is None:
         return GoalNextAction("select_existing_goal", "/goals", "goal_not_found")
+    if goal.status == "completed":
+        return GoalNextAction("Review completed goal evidence", f"/goals/{quote(goal.id)}", "goal_status_completed")
     if goal.status == "paused":
         return GoalNextAction("Resume paused goal", f"/goals/{quote(goal.id)}", "goal_status_paused")
     open_incident = next((row for row in state["incidents"] if row["status"] == "open"), None)
@@ -3214,6 +3218,16 @@ def _goal_manual_publish_panel(root: Path, state: dict[str, Any]) -> str:
             "<h3>Manual Publish Boundary</h3>",
             "<p class='muted'>Publication handoff is ready. Push and draft PR creation remain outside ClankerOS and must be run manually by the operator.</p>",
             _publication_handoff_commands_panel(root, publication),
+            "<h3>Complete Goal</h3>",
+            "<p class='muted'>After the operator has finished the manual push/PR work outside ClankerOS, this confirmed local action marks the Goal completed. It does not push, create a PR, deploy, call a provider, or use the network.</p>",
+            _input_form(
+                "complete-goal",
+                {"goal_id": state["goal"].id},
+                {
+                    "completed_by": "operator",
+                    "note": "Manual publication finished outside ClankerOS.",
+                },
+            ),
         ]
     )
 
@@ -7710,6 +7724,10 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             result = _resume_goal_from_form(storage, form)
             message = f"goal_resumed: {result['goal_id']}"
             location = f"/goals/{quote(result['goal_id'])}"
+        elif action == "complete-goal":
+            result = _complete_goal_from_form(root, storage, form)
+            message = f"goal_completed: {result['goal_id']}"
+            location = f"/goals/{quote(result['goal_id'])}"
         elif action == "save-goal-note":
             result = _append_goal_operator_note(root, storage, form)
             message = f"goal_operator_note_saved: {result['goal_id']}"
@@ -8056,6 +8074,44 @@ def _resume_goal_from_form(
         "note": note or "none",
         "approvals_created": 0,
         "work_started": "false",
+        "network_actions_taken": 0,
+        "external_mutations_taken": 0,
+    }
+
+
+def _complete_goal_from_form(
+    root: Path,
+    storage: Storage,
+    form: dict[str, list[str]],
+) -> dict[str, Any]:
+    goal_id = _required(form, "goal_id")
+    state = _goal_state(root, storage, goal_id)
+    goal = state.get("goal")
+    if goal is None:
+        raise ValueError("goal not found")
+    if goal.status == "completed":
+        raise ValueError("complete-goal only supports incomplete goals")
+    ready_publication = _goal_ready_publication(state)
+    if ready_publication is None:
+        raise ValueError("complete-goal requires a ready publication handoff")
+    completed_by = (_one(form, "completed_by") or "operator").strip() or "operator"
+    note = (_one(form, "note") or "").strip()
+    storage.set_goal_status(goal.id, "completed")
+    return {
+        "status": "goal_completed",
+        "goal_id": goal.id,
+        "project_id": goal.project_id,
+        "previous_status": goal.status,
+        "new_status": "completed",
+        "completed_by": completed_by,
+        "note": note or "none",
+        "publication_id": ready_publication.id,
+        "publication_status": ready_publication.status,
+        "manual_publish_boundary": "outside_clankeros",
+        "push_created": False,
+        "pr_created": False,
+        "deploy_created": False,
+        "provider_calls_taken_by_clankeros": 0,
         "network_actions_taken": 0,
         "external_mutations_taken": 0,
     }

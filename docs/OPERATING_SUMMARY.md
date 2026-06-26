@@ -171,10 +171,13 @@ Core layers for the bootstrap:
   `coder-publication-request`, `approve-coder-publication`, and
   `coder-publication-handoff` forms at the matching phases, then shows the
   manual publish boundary and copy-only publication handoff commands once the
-  handoff is ready. These write local artifacts, approval rows, approval
+  handoff is ready. After the operator manually finishes the push/PR work
+  outside ClankerOS, the same manual boundary offers a confirmed
+  `complete-goal` action that marks the local Goal completed and moves it into
+  completed-goal lanes. These write local artifacts, approval rows, approval
   decisions, read-only delegation run evidence, bounded worktree run evidence,
-  or one isolated local worktree commit without exposing arbitrary commands,
-  pushing, creating PRs, deploying,
+  one isolated local worktree commit, or a local goal-status update without
+  exposing arbitrary commands, pushing, creating PRs, deploying,
   calling providers, or mutating external systems. Goal pages also
   include a `Goal Resume Snapshot` that reads saved workspace state, links the
   current goal/project, suggests the newest goal artifact as a resume anchor,

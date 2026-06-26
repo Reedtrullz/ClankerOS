@@ -138,10 +138,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `approve-coder-commit`, `commit-coder-worktree`,
   `coder-publication-request`, `approve-coder-publication`, and
   `coder-publication-handoff` through confirmed local forms, then shows the
-  manual publish boundary and copy-only publication handoff commands. These
-  create local artifacts, approval rows, approval decisions, or one isolated
-  local worktree commit only; they do not run delegations or worktrees from
-  the browser, push, create PRs, deploy, call providers, or perform external
+  manual publish boundary and copy-only publication handoff commands. After
+  the operator finishes that manual push/PR work outside ClankerOS, the same
+  boundary exposes a confirmed local `complete-goal` action that marks the
+  Goal completed and moves it into completed-goal lanes. These create local
+  artifacts, approval rows, approval decisions, one isolated local worktree
+  commit, or local goal status only; they do not run delegations or worktrees
+  from the browser, push, create PRs, deploy, call providers, or perform external
   mutations. Remaining Work is a gate-aware checklist sourced from local goal
   state: it shows the current recommended action, open task/incident/
   recommendation counts, and done/pending/waiting status for scout,
