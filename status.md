@@ -1,5 +1,29 @@
 # Status
 
+## 2026-06-26 Local App Dashboard Dogfooding Snapshot
+
+- Upgraded the root dashboard with a read-only `Dashboard Dogfooding Snapshot`.
+  The first app screen now shows fixture availability, the current next
+  dogfooding action, selected workflow/run links when fixture state exists,
+  `/dogfooding`, `/verification`, and the `/demo` manual browser script
+  surface.
+- The snapshot keeps the daily browser route walk visible from `/` without
+  executing fixture refreshes, approvals, commits, publication handoffs, push,
+  PR creation, deploys, provider calls, GitHub status fetches, or other
+  external mutations.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario"`
+    -> `2 passed, 496 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> rendered the core local app routes with status 200 and zero
+    provider/network/external-mutation counters.
+  - `git diff --check`
+- Non-claims: this is a read-only dashboard/dogfooding navigation improvement
+  only; it does not execute work, approve requests, commit, push, create PRs,
+  deploy, call providers, fetch GitHub status, execute arbitrary commands, or
+  perform non-loopback network actions from the local app.
+
 ## 2026-06-26 Local App CI Evidence Recording Guide
 
 - Upgraded `/ci-evidence` with a read-only `CI Evidence Recording Guide`.

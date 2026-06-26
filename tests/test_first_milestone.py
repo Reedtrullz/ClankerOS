@@ -3317,6 +3317,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "dashboard_github_status_fetch: none" in root.body
     assert "verification_surface" in root.body
     assert "ci_evidence_surface" in root.body
+    assert "Dashboard Dogfooding Snapshot" in root.body
+    assert "dashboard_demo_fixture_status: missing" in root.body
+    assert "dashboard_next_dogfooding_action: run_demo_app_scenario" in root.body
+    assert "manual_browser_script_surface" in root.body
+    assert "app_network_actions_taken: 0" in root.body
 
     refresh_confirmation = render_local_app_route(
         tmp_path,
@@ -3646,7 +3651,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Next Recommended Action" in dashboard.body
     assert "dashboard_next_recommended_action" in dashboard.body
     assert "request_commit_for_reviewed_run" in dashboard.body
+    assert "Dashboard Dogfooding Snapshot" in dashboard.body
+    assert "dashboard_demo_fixture_status: available" in dashboard.body
+    assert "dashboard_next_dogfooding_action: request_commit_for_reviewed_run" in dashboard.body
+    assert f"/workflow?run_id={result.coder_worktree_run_id}" in dashboard.body
     assert f"/runs/{result.coder_worktree_run_id}" in dashboard.body
+    assert "manual_browser_script_surface" in dashboard.body
+    assert "dogfooding_surface" in dashboard.body
+    assert "github_status_fetch: none" in dashboard.body
     assert "Recent Delegation Runs" in dashboard.body
     assert "/delegation-runs" in dashboard.body
     assert "changed_files_count" in dashboard.body

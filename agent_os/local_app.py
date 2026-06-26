@@ -590,6 +590,7 @@ def _dashboard(root: Path, *, host: str, port: int) -> str:
             "</form>",
             "</section>",
             _dashboard_verification_snapshot(root),
+            _dashboard_dogfooding_snapshot(root),
             "<section><h2>Modern Workflow</h2>",
             "<p><a href='/workflow'>Open workflow stepper</a></p>",
             _workflow_list(compact=True),
@@ -647,6 +648,81 @@ def _dashboard_verification_snapshot(root: Path) -> str:
             ]
         )
     return _list_section("Verification Snapshot", lines, "/verification")
+
+
+def _dashboard_dogfooding_snapshot(root: Path) -> str:
+    storage = _storage(root)
+    project = storage.get_registered_project("local-app-demo")
+    if project is None:
+        return _list_section(
+            "Dashboard Dogfooding Snapshot",
+            [
+                "dashboard_demo_fixture_status: missing",
+                "dashboard_next_dogfooding_action: run_demo_app_scenario",
+                "demo_command: python3 -m agent_os.cli demo-app-scenario",
+                "dogfooding_surface: <a href='/dogfooding'>/dogfooding</a>",
+                "manual_browser_script_surface: <a href='/demo'>/demo</a>",
+                "app_network_actions_taken: 0",
+                "github_status_fetch: none",
+            ],
+            "/dogfooding",
+        )
+
+    delegations = [
+        delegation
+        for delegation in storage.list_recent_subagent_delegations(limit=None)
+        if _task_project(storage, delegation.parent_task_id) == project.name
+    ]
+    selected_delegation = delegations[0] if delegations else None
+    selected_run = None
+    if selected_delegation is not None:
+        runs = list_coder_worktree_runs(
+            root,
+            delegation_id=selected_delegation.id,
+            limit=20,
+        )
+        selected_run = next((run for run in runs if run.status == "completed"), None)
+        if selected_run is None and runs:
+            selected_run = runs[0]
+
+    next_action = "select_demo_delegation"
+    workflow_surface = "<a href='/workflow'>/workflow</a>"
+    run_surface = "none"
+    if selected_delegation is not None:
+        workflow_surface = (
+            f"<a href='/workflow?delegation_id={quote(selected_delegation.id)}'>"
+            f"/workflow?delegation_id={_e(selected_delegation.id)}</a>"
+        )
+        next_action = "review_delegation_state"
+    if selected_run is not None:
+        progress = _demo_progress_state(root, selected_run.id)
+        next_action = progress["next_step"]
+        workflow_surface = (
+            f"<a href='/workflow?run_id={quote(selected_run.id)}'>"
+            f"/workflow?run_id={_e(selected_run.id)}</a>"
+        )
+        run_surface = (
+            f"<a href='/runs/{quote(selected_run.id)}'>"
+            f"/runs/{_e(selected_run.id)}</a>"
+        )
+
+    return _list_section(
+        "Dashboard Dogfooding Snapshot",
+        [
+            "dashboard_demo_fixture_status: available",
+            f"dashboard_next_dogfooding_action: {_e(next_action)}",
+            f"project_surface: <a href='/projects/{quote(project.name)}'>/projects/{_e(project.name)}</a>",
+            f"workflow_surface: {workflow_surface}",
+            f"run_surface: {run_surface}",
+            "dogfooding_surface: <a href='/dogfooding'>/dogfooding</a>",
+            "manual_browser_script_surface: <a href='/demo'>/demo</a>",
+            "verification_surface: <a href='/verification'>/verification</a>",
+            "app_network_actions_taken: 0",
+            "external_mutations_taken: 0",
+            "github_status_fetch: none",
+        ],
+        "/dogfooding",
+    )
 
 
 def _workflow(

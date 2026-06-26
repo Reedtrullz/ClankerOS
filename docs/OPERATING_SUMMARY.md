@@ -106,7 +106,10 @@ Core layers for the bootstrap:
   without fetching GitHub status; a
   read-only root dashboard `Verification Snapshot` for checked-in workflow
   timeout, latest operator-supplied CI evidence, `/verification`, and
-  `/ci-evidence` links without contacting GitHub; a
+  `/ci-evidence` links without contacting GitHub; a read-only root dashboard
+  `Dashboard Dogfooding Snapshot` for fixture availability, next dogfooding
+  action, selected workflow/run links, and the `/demo` manual browser script
+  surface; a
   read-only `/actions` current-demo action surface map that links fixture state
   to the selected project, delegation, workflow, run, approvals, and inbox
   surfaces; a read-only `/dogfooding` checklist and next-action panel for the

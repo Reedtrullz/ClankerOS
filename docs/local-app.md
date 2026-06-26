@@ -177,7 +177,10 @@ specific CI issue. If no CI evidence has been recorded locally, the page shows
 a `ci-deploy-evidence` command template instead of pretending CI proof exists.
 The root dashboard mirrors this boundary as a compact `Verification Snapshot`
 with `/verification` and `/ci-evidence` links, while still avoiding GitHub
-status polling.
+status polling. The same first screen now includes a `Dashboard Dogfooding
+Snapshot` with fixture availability, the next dogfooding action, selected
+workflow/run links when available, and the `/demo` manual browser script
+surface.
 
 `/ci-evidence` is the read-only companion for proof that has already been
 recorded locally with `ci-deploy-evidence`. It shows the provider, status,
