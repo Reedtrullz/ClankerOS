@@ -3619,9 +3619,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "pull_request_to_main: configured" in verification.body
     assert "workflow_dispatch: configured" in verification.body
     assert "fast_smoke_job: configured" in verification.body
+    assert "route_marker_app_smoke: configured" in verification.body
+    assert "fixture_backed_app_demo_smoke: configured" in verification.body
     assert "full_suite_job: configured" in verification.body
     assert "full_suite_depends_on_smoke: configured" in verification.body
     assert "Fast smoke verification can pass before the full suite finishes" in verification.body
+    assert "fixture-backed app-demo-smoke-test" in verification.body
+    assert "Fixture-backed app demo smoke" in verification.body
     assert "Run full test suite" in verification.body
     assert "python -m pytest -q" in verification.body
     assert "job_timeout_minutes: 45" in verification.body
@@ -3642,6 +3646,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "github_status_fetch: none" in verification.body
     assert "Compact Local Checks" in verification.body
     assert "python3 -m agent_os.cli app-smoke-test" in verification.body
+    assert "python3 -m agent_os.cli app-demo-smoke-test" in verification.body
     assert "CI proof requires a completed passing GitHub Actions run" in verification.body
     assert "app_network_actions_taken: 0" in verification.body
     assert "/ci-evidence" in verification.body

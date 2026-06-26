@@ -1069,6 +1069,14 @@ def _verification_page(root: Path) -> str:
             "configured" if "smoke:" in workflow_text else "missing",
         ),
         (
+            "route_marker_app_smoke",
+            "configured" if "app-smoke-test" in workflow_text else "missing",
+        ),
+        (
+            "fixture_backed_app_demo_smoke",
+            "configured" if "app-demo-smoke-test" in workflow_text else "missing",
+        ),
+        (
             "full_suite_job",
             "configured" if "full-suite:" in workflow_text else "missing",
         ),
@@ -1084,9 +1092,10 @@ def _verification_page(root: Path) -> str:
         ("app_external_mutations_taken", "0"),
     ]
     workflow_step_lines = [
-        "Fast smoke job: compile source/tests, route-marker app-smoke-test, demo-app-scenario, app --help, dashboard, iterate, git diff --check",
+        "Fast smoke job: compile source/tests, route-marker app-smoke-test, fixture-backed app-demo-smoke-test, demo-app-scenario, app --help, dashboard, iterate, git diff --check",
         "Compile source and tests: python -m compileall -q agent_os tests",
-        "Run local CLI smoke checks: app-smoke-test, demo-app-scenario, app --help, dashboard, iterate",
+        "Run local CLI smoke checks: app-smoke-test, app-demo-smoke-test, demo-app-scenario, app --help, dashboard, iterate",
+        "Fixture-backed app demo smoke: creates local demo state and renders demo, dogfooding, selected project, delegation, workflow, run, approvals, inbox, actions, and health pages",
         "Check whitespace: git diff --check",
         "Full suite job: waits for fast smoke verification before spending time on pytest",
         "Run full test suite: python -m pytest -q",
@@ -1100,6 +1109,7 @@ def _verification_page(root: Path) -> str:
         "python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario",
         "python3 -m pytest tests/test_first_milestone.py -q -k local_app_cli_commands_and_bind_safety",
         "python3 -m agent_os.cli app-smoke-test",
+        "python3 -m agent_os.cli app-demo-smoke-test",
         "git diff --check",
     ]
     return "".join(

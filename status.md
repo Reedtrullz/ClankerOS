@@ -1,5 +1,16 @@
 # Status
 
+## 2026-06-26 Verification Page Fixture Smoke Readback
+
+- Updated `/verification` so the local app now names both fast app checks:
+  route-marker `app-smoke-test` and fixture-backed `app-demo-smoke-test`.
+  The page also explains that the fixture smoke creates local demo state and
+  renders demo, dogfooding, selected project, delegation, workflow, run,
+  approvals, inbox, actions, and health pages before the full suite runs.
+- Non-claims: this is read-only app/status visibility. It does not fetch
+  GitHub status, record CI evidence, run tests, push, create PRs, deploy,
+  call providers, or mutate external systems.
+
 ## 2026-06-26 Fixture-Backed App Demo Smoke Test
 
 - Added `app-demo-smoke-test` as a fast, local-only smoke check for the
