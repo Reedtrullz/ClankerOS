@@ -1,5 +1,25 @@
 # Status
 
+## 2026-06-26 Goal Resume Snapshot
+
+- Added a `Goal Resume Snapshot` section to `/goals/<goal_id>`. It reads the
+  saved `.clanker/app/workspace.json` state, links the current goal/project,
+  shows whether the saved workspace already matches the current goal, and
+  suggests the latest existing goal artifact as the resume anchor.
+- The same section exposes a confirmed `save-workspace` form prefilled for the
+  current goal and returns the operator to that goal page after saving through
+  a strictly local return path.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state"`
+    -> `2 passed, 508 deselected`
+  - `git diff --check`
+    -> passed
+- Non-claims: this does not write workspace state on GET, run delegations,
+  run worktrees, execute arbitrary commands, fetch GitHub status, call
+  providers, push, create PRs, deploy, or mutate external systems.
+
 ## 2026-06-26 Goal Review Gate Action
 
 - Added a confirmed local `review-run` action to the Goal Next Action card.

@@ -115,7 +115,11 @@ Core layers for the bootstrap:
   decisions, or one isolated local worktree commit without running
   delegations or worktrees from the browser, pushing, creating PRs, deploying,
   calling providers, or mutating external systems. Goal pages also
-  include a typed `Goal Artifact Explorer` that groups goal-linked Markdown,
+  include a `Goal Resume Snapshot` that reads saved workspace state, links the
+  current goal/project, suggests the newest goal artifact as a resume anchor,
+  and exposes a confirmed `save-workspace` form that returns to the same goal
+  page after saving without writing on GET. They also include a typed
+  `Goal Artifact Explorer` that groups goal-linked Markdown,
   JSON, Patch/Diff, and Text/Log artifacts and links them through the bounded
   inert `/artifacts` viewer without raw filesystem browsing. Every page shares
   a browser operator shell with breadcrumbs, recent local items, a command

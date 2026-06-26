@@ -138,13 +138,19 @@ task progress from existing local state. Use `/goals/<goal_id>` as the
 goal-centered workbench: current phase, next action, progress, timeline,
 activity log, goal risk, completion criteria, evidence, delegations, runs,
 approvals, artifacts, a typed Goal Artifact Explorer, memory, skills used, git
-status, operator notes, and remaining work. The page auto-refreshes by polling
-and stays local-only.
+status, operator notes, a goal-scoped resume snapshot, and remaining work. The
+page auto-refreshes by polling and stays local-only.
 Timeline entries link back to the relevant local artifact, delegation, run,
 approval queue, or goal surface, and progress uses a real browser progress
 bar. Operator Notes includes a confirmed `save-goal-note` form that appends
 local resume context to the goal-scoped `operator-notes.md` artifact without
 overwriting earlier notes.
+The Goal Resume Snapshot reads `.clanker/app/workspace.json`, shows whether
+the saved workspace already points at the current goal, suggests the latest
+goal artifact as the resume anchor, and provides a confirmed `save-workspace`
+form that returns to the same goal page after saving. It does not write on page
+load, fetch GitHub status, call providers, push, create PRs, deploy, or mutate
+external systems.
 The Goal Artifact Explorer groups goal-linked artifacts as Markdown, JSON,
 Patch, or Text and links them through the bounded `/artifacts` viewer instead
 of exposing raw filesystem browsing.

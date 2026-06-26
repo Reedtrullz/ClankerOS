@@ -4291,6 +4291,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "action='/actions/delegate'" in first_goal_page.body
     assert "profile" in first_goal_page.body
     assert "scout" in first_goal_page.body
+    assert "Goal Resume Snapshot" in first_goal_page.body
+    assert "goal_resume_current_goal" in first_goal_page.body
+    assert "Remember This Goal" in first_goal_page.body
+    assert "save_workspace_form_available</dt><dd>true" in first_goal_page.body
+    assert "workspace_auto_write_on_get</dt><dd>false" in first_goal_page.body
+    assert "return_to" in first_goal_page.body
     assert "Goal Risk" in first_goal_page.body
     assert "goal_risk_level: low" in first_goal_page.body
     assert "risk_counts: low=3" in first_goal_page.body
@@ -4798,6 +4804,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Ready to commit" in goal.body
     assert "Next Action" in goal.body
     assert "recommended_action</dt><dd>Create commit request" in goal.body
+    assert "Goal Resume Snapshot" in goal.body
+    assert "goal_resume_current_goal" in goal.body
+    assert "goal_resume_current_project" in goal.body
+    assert "suggested_last_artifact" in goal.body
+    assert "Remember This Goal" in goal.body
+    assert "save_workspace_form_available</dt><dd>true" in goal.body
+    assert "workspace_auto_write_on_get</dt><dd>false" in goal.body
     assert "Goal Risk" in goal.body
     assert "goal_risk_level: low" in goal.body
     assert "risk_counts: low=1" in goal.body
@@ -4884,11 +4897,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
             "expanded_panels": ["timeline,evidence"],
             "last_viewed_artifact": [".clanker/demo/demo-result.md"],
             "updated_by": ["operator"],
+            "return_to": [f"/goals/{result.goal_id}"],
             "confirm": ["yes"],
         },
     )
     assert workspace.status == 200
     assert "workspace_saved" in workspace.body
+    assert f"href='/goals/{result.goal_id}?notice=workspace_saved" in workspace.body
     restored_workspace = render_local_app_route(tmp_path, "/workspace")
     assert result.project_id in restored_workspace.body
     assert result.goal_id in restored_workspace.body

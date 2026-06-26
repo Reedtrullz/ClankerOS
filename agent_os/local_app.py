@@ -1790,6 +1790,21 @@ def _workspace_path(root: Path) -> Path:
     return root / ".clanker" / "app" / "workspace.json"
 
 
+def _safe_local_return_path(value: str | None) -> str:
+    candidate = (value or "").strip()
+    parsed = urlparse(candidate)
+    if (
+        not candidate.startswith("/")
+        or candidate.startswith("//")
+        or parsed.scheme
+        or parsed.netloc
+        or "\n" in candidate
+        or "\r" in candidate
+    ):
+        return ""
+    return candidate
+
+
 def _json_loads_safe(value: str, fallback: Any) -> Any:
     try:
         return json.loads(value)
@@ -1869,6 +1884,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             f"<p><strong>{_e(phase)}</strong></p>",
             "</section>",
             _goal_next_action_card(state, next_action),
+            _goal_resume_snapshot(root, state),
             _goal_overview(state),
             _goal_risk_section(state),
             _goal_completion_criteria(state),
@@ -2703,6 +2719,59 @@ def _goal_progress_label(state: dict[str, Any]) -> str:
     return f"{completed}/{len(tasks)} tasks"
 
 
+def _goal_resume_snapshot(root: Path, state: dict[str, Any]) -> str:
+    goal = state["goal"]
+    workspace = _load_workspace_state(root)
+    saved_goal = workspace.get("open_goal", "")
+    saved_project = workspace.get("open_project", "")
+    latest_artifact = _goal_latest_artifact_path(root, state)
+    saved_goal_link = (
+        SafeHtml(f"<a href='/goals/{quote(saved_goal)}'>{_e(saved_goal)}</a>")
+        if saved_goal
+        else "none"
+    )
+    saved_project_link = (
+        SafeHtml(f"<a href='/projects/{quote(saved_project)}'>{_e(saved_project)}</a>")
+        if saved_project
+        else "none"
+    )
+    return "".join(
+        [
+            "<section><h2>Goal Resume Snapshot</h2>",
+            "<p class='muted'>Save and restore the current goal context for the next operator session. This reads saved workspace state on page load and only writes after confirmation.</p>",
+            _kv(
+                [
+                    ("goal_resume_current_goal", SafeHtml(f"<a href='/goals/{quote(goal.id)}'>{_e(goal.id)}</a>")),
+                    ("goal_resume_current_project", SafeHtml(f"<a href='/projects/{quote(goal.project_id)}'>{_e(goal.project_id)}</a>")),
+                    ("saved_workspace_goal", saved_goal_link),
+                    ("saved_workspace_project", saved_project_link),
+                    ("workspace_goal_matches_current", "true" if saved_goal == goal.id else "false"),
+                    ("workspace_updated_at", workspace.get("updated_at", "never") or "never"),
+                    ("suggested_last_artifact", SafeHtml(_artifact_link(latest_artifact)) if latest_artifact else "none"),
+                    ("workspace_surface", SafeHtml("<a href='/workspace'>/workspace</a>")),
+                    ("save_workspace_form_available", "true"),
+                    ("workspace_auto_write_on_get", "false"),
+                    ("external_effects_created", "false"),
+                ]
+            ),
+            "<h3>Remember This Goal</h3>",
+            _input_form(
+                "save-workspace",
+                {"return_to": f"/goals/{goal.id}"},
+                {
+                    "open_project": goal.project_id,
+                    "open_goal": goal.id,
+                    "filters": f"goal:{goal.id}",
+                    "expanded_panels": "overview,next-action,timeline,evidence,artifacts,notes",
+                    "last_viewed_artifact": latest_artifact,
+                    "updated_by": "operator-goal",
+                },
+            ),
+            "</section>",
+        ]
+    )
+
+
 def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
     items = _goal_timeline_items(root, state)
     return "".join(
@@ -3017,6 +3086,25 @@ def _goal_artifact_records(root: Path, state: dict[str, Any]) -> list[dict[str, 
         ]:
             add(label, path, source="publication")
     return records
+
+
+def _goal_latest_artifact_path(root: Path, state: dict[str, Any]) -> str:
+    records = _goal_artifact_records(root, state)
+    existing = [
+        record
+        for record in records
+        if (root / record["path"]).exists()
+    ]
+    if not existing:
+        note_path = _goal_operator_notes_path(state["goal"])
+        if (root / note_path).exists():
+            return note_path.as_posix()
+        return ""
+    latest = max(
+        existing,
+        key=lambda record: (root / record["path"]).stat().st_mtime,
+    )
+    return latest["path"]
 
 
 def _add_packet_artifacts(
@@ -5962,7 +6050,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 },
             )
             message = "workspace_saved: .clanker/app/workspace.json"
-            location = "/workspace"
+            location = _safe_local_return_path(_one(form, "return_to")) or "/workspace"
         elif action == "pin-memory":
             memory_id = _required(form, "memory_id")
             result = storage.update_memory_entry_status(
