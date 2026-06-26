@@ -3669,6 +3669,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Start Or Refresh Fixture" in dogfooding.body
     assert "Browser Route Walk" in dogfooding.body
     assert "Commit And Publication Gate Walk" in dogfooding.body
+    assert "GitHub Actions Follow-up" in dogfooding.body
+    assert "dogfooding_ci_snapshot_handoff_command_template: python3 -m agent_os.cli ci-snapshot-handoff" in dogfooding.body
+    assert "dogfooding_ci_snapshot_status_check_command_template: gh run view" in dogfooding.body
+    assert "dogfooding_ci_snapshot_record_after_success_command_template: python3 -m agent_os.cli ci-snapshot-evidence" in dogfooding.body
+    assert "proof_boundary: fast smoke is early proof" in dogfooding.body
     assert "Verification Handoff" in dogfooding.body
     assert "Dogfooding Next Action" in dogfooding.body
     assert "next_dogfooding_action: run_demo_app_scenario" in dogfooding.body
@@ -3861,6 +3866,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "inbox_surface" in dogfooding_with_demo.body
     assert "action_catalog_surface" in dogfooding_with_demo.body
     assert "verification_surface" in dogfooding_with_demo.body
+    assert "GitHub Actions Follow-up" in dogfooding_with_demo.body
+    assert "dogfooding_ci_snapshot_handoff_command_template: python3 -m agent_os.cli ci-snapshot-handoff" in dogfooding_with_demo.body
+    assert "dogfooding_ci_snapshot_status_check_command_template: gh run view" in dogfooding_with_demo.body
+    assert "dogfooding_ci_snapshot_record_after_success_command_template: python3 -m agent_os.cli ci-snapshot-evidence" in dogfooding_with_demo.body
     assert "external_effects_created: false" in dogfooding_with_demo.body
 
     dashboard = render_local_app_route(tmp_path, "/")

@@ -123,7 +123,10 @@ walk the local commit and publication gates, then hand verification to GitHub
 Actions after a push. The page now includes a read-only `Dogfooding Next
 Action` panel that names the current fixture-backed next action and links the
 project, delegation, workflow, run, approval queue, inbox, action catalog, and
-verification surfaces. The page is read-only and does not fetch GitHub status.
+verification surfaces. It also shows a copy-only `GitHub Actions Follow-up`
+section with the direct snapshot handoff, `gh run view`, and
+record-after-success command templates for the current checkout. The page is
+read-only and does not fetch GitHub status.
 
 Use `/delegation-runs` when you want a compact read-only index of scout
 execution evidence, context packs, implementation handoffs, zero-effect

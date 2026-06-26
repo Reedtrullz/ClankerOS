@@ -116,7 +116,9 @@ Core layers for the bootstrap:
   contacting GitHub; a read-only root dashboard
   `Dashboard Dogfooding Snapshot` for fixture availability, next dogfooding
   action, selected workflow/run links, and the `/demo` manual browser script
-  surface; a
+  surface; a read-only `/dogfooding` GitHub Actions follow-up section with
+  direct pushed-snapshot `ci-snapshot-handoff`, `gh run view`, and
+  record-after-success templates for the current checkout; a
   read-only `/actions` current-demo action surface map that links fixture state
   to the selected project, delegation, workflow, run, approvals, and inbox
   surfaces; a read-only `/dogfooding` checklist and next-action panel for the

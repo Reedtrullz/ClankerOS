@@ -1,5 +1,18 @@
 # Status
 
+## 2026-06-26 Local App Dogfooding CI Follow-up Commands
+
+- Added a display-only `GitHub Actions Follow-up` section to `/dogfooding`.
+  The dogfooding route now shows the direct pushed-snapshot
+  `ci-snapshot-handoff`, `gh run view`, and `ci-snapshot-evidence`
+  record-after-success command templates for the current checkout, so the
+  first browser walk ends with the same GitHub Actions handoff guidance as
+  `/verification` and `/ci-evidence`.
+- Non-claims: the section does not fetch GitHub status, record CI evidence,
+  run tests, push, create PRs, deploy, call providers, or mutate external
+  systems. It is copy-only operator guidance for after an operator-authorized
+  push and passing GitHub Actions run.
+
 ## 2026-06-26 Local App Publication Handoff Command Readback
 
 - Added a display-only `Publication Handoff Commands` panel to coder worktree

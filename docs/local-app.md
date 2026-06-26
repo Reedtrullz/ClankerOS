@@ -74,7 +74,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/dogfooding` - read-only manual browser checklist for refreshing the demo
   fixture, walking demo/workflow/project/delegation/run routes, using local
   commit and publication gates, and handing full-suite proof to GitHub Actions
-  after a push without fetching GitHub status.
+  after a push without fetching GitHub status. It includes a copy-only
+  `GitHub Actions Follow-up` section with direct snapshot
+  `ci-snapshot-handoff`, `gh run view`, and `ci-snapshot-evidence`
+  record-after-success templates for the current checkout.
 - `/projects` - read-only project workflow index with root path, default test
   command, current branch/commit, goal/task/delegation counts, next
   recommended local operator action, project detail links, and selected

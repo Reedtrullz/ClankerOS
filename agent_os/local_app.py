@@ -1282,6 +1282,7 @@ def _dogfooding_page(root: Path) -> str:
                     "Stop at publication handoff: manual push and PR commands stay outside ClankerOS.",
                 ],
             ),
+            _dogfooding_ci_followup(root),
             _list_section(
                 "Verification Handoff",
                 [
@@ -1302,6 +1303,20 @@ def _dogfooding_page(root: Path) -> str:
             ),
             _demo_dogfooding_state(root),
         ]
+    )
+
+
+def _dogfooding_ci_followup(root: Path) -> str:
+    return _list_section(
+        "GitHub Actions Follow-up",
+        [
+            *_ci_snapshot_handoff_lines(root, key_prefix="dogfooding_ci_snapshot_"),
+            "record_when: GitHub Actions status=completed conclusion=success and headSha matches the expected commit",
+            "proof_boundary: fast smoke is early proof; full-suite CI proof starts only after a completed passing GitHub Actions run is recorded",
+            "github_status_fetch: none",
+            "app_network_actions_taken: 0",
+            "external_mutations_taken: 0",
+        ],
     )
 
 

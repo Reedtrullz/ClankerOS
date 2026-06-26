@@ -45,7 +45,8 @@ evidence, zero-effect counters, retry signals, and next local operator actions,
 the local-vs-GitHub testing handoff, job timeout, and in-progress-run
 non-proof guidance without contacting GitHub, `/ci-evidence` for locally
 recorded operator-supplied CI/deploy evidence, `/dogfooding` for
-the first manual browser checklist before push, `/inbox` for
+the first manual browser checklist before push, including copy-only direct
+snapshot handoff/status-check/record-after-success command templates, `/inbox` for
 the read-only operator queue, `/approvals` for pending worktree, commit, and
 publication decisions, and `/incidents` for local incident readback; all
 remain local-only operator surfaces.
