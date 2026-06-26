@@ -2952,18 +2952,53 @@ def _goal_timeline_items(root: Path, state: dict[str, Any]) -> list[dict[str, st
         href = _artifact_href(root, packet.get("_path")) if packet.get("_path") else f"/goals/{quote(goal.id)}"
         items.append({"at": at or goal.updated_at, "message": "Worktree planned.", "href": href})
     for approval in state["worktree_approvals"]:
-        items.append({"at": approval.requested_at, "message": f"Worktree approval requested: {approval.id}.", "href": "/approvals"})
+        items.append({"at": approval.requested_at, "message": f"Approval requested: worktree execution {approval.id}.", "href": "/approvals"})
         if approval.decided_at:
-            items.append({"at": approval.decided_at, "message": f"Worktree approval {approval.status}: {approval.id}.", "href": "/approvals"})
+            items.append(
+                {
+                    "at": approval.decided_at,
+                    "message": _approval_decision_timeline_message(
+                        "worktree execution",
+                        approval.status,
+                        approval.id,
+                    ),
+                    "href": "/approvals",
+                }
+            )
     for run in state["worktree_runs"]:
         run_href = f"/runs/{quote(run.id)}"
         items.append({"at": run.started_at, "message": f"Approved worktree execution started: {run.id}.", "href": run_href})
         items.append({"at": run.completed_at, "message": f"Execution {run.status}: {run.id}.", "href": run_href})
+        review_state = _run_review_gate_state(root, run)
+        if review_state["exists"]:
+            review_path = str(review_state["review_path"])
+            review_message = (
+                f"Review passed for {run.id}."
+                if review_state["status"] == "reviewed"
+                else f"Review artifact recorded for {run.id}: status={review_state['status']}."
+            )
+            items.append(
+                {
+                    "at": _artifact_time(root, review_path) or run.completed_at,
+                    "message": review_message,
+                    "href": _artifact_href(root, review_path),
+                }
+            )
     for approval in state["commit_approvals"]:
         run_href = f"/runs/{quote(approval.run_id)}"
         items.append({"at": approval.requested_at, "message": f"Commit approval requested: {approval.id}.", "href": run_href})
         if approval.decided_at:
-            items.append({"at": approval.decided_at, "message": f"Commit approval {approval.status}: {approval.id}.", "href": "/approvals"})
+            items.append(
+                {
+                    "at": approval.decided_at,
+                    "message": _gate_decision_timeline_message(
+                        "Commit",
+                        approval.status,
+                        approval.id,
+                    ),
+                    "href": "/approvals",
+                }
+            )
         if approval.commit_artifact_path:
             at = _artifact_time(root, approval.commit_artifact_path)
             if at:
@@ -2972,13 +3007,39 @@ def _goal_timeline_items(root: Path, state: dict[str, Any]) -> list[dict[str, st
         run_href = f"/runs/{quote(publication.run_id)}"
         items.append({"at": publication.requested_at, "message": f"Publication approval requested: {publication.id}.", "href": run_href})
         if publication.decided_at:
-            items.append({"at": publication.decided_at, "message": f"Publication approval {publication.status}: {publication.id}.", "href": "/approvals"})
+            items.append(
+                {
+                    "at": publication.decided_at,
+                    "message": _gate_decision_timeline_message(
+                        "Publication",
+                        publication.status,
+                        publication.id,
+                    ),
+                    "href": "/approvals",
+                }
+            )
         if publication.handoff_at:
             href = _artifact_href(root, publication.handoff_artifact_path) if publication.handoff_artifact_path else run_href
             items.append({"at": publication.handoff_at, "message": f"Publication handoff ready: {publication.id}.", "href": href})
     for row in state["events"]:
         items.append({"at": row["created_at"], "message": str(row["message"]), "href": f"/goals/{quote(goal.id)}"})
     return sorted(items, key=lambda item: item.get("at") or "")
+
+
+def _approval_decision_timeline_message(kind: str, status: str, item_id: str) -> str:
+    if status == "approved":
+        return f"Approval granted: {kind} {item_id}."
+    if status == "rejected":
+        return f"Approval rejected: {kind} {item_id}."
+    return f"Approval decision recorded: {kind} {item_id} status={status}."
+
+
+def _gate_decision_timeline_message(gate: str, status: str, item_id: str) -> str:
+    if status == "approved":
+        return f"{gate} approved: {item_id}."
+    if status == "rejected":
+        return f"{gate} rejected: {item_id}."
+    return f"{gate} decision recorded: {item_id} status={status}."
 
 
 def _timeline_line(item: dict[str, str]) -> str:

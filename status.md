@@ -1,5 +1,27 @@
 # Status
 
+## 2026-06-26 Goal Timeline Lifecycle Language
+
+- Updated `/goals/<goal_id>` timeline entries to use operator-facing lifecycle
+  language for the workflow gates: `Approval requested`, `Approval granted`,
+  `Execution completed`, `Review passed`, `Commit approved`, and
+  `Publication approved`.
+- Review artifacts are now first-class timeline events when
+  `runs/<source_run_id>/review.md` exists; if the artifact mentions the coder
+  worktree run id, the timeline renders `Review passed` and links through the
+  bounded `/artifacts` viewer.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state"`
+    -> `1 passed, 509 deselected`
+  - `git diff --check`
+    -> passed
+- Non-claims: this is read-only browser timeline/activity presentation over
+  existing local state and artifacts. It does not approve work, run
+  delegations, run worktrees, execute arbitrary commands, call providers,
+  fetch GitHub status, push, create PRs, deploy, or mutate external systems.
+
 ## 2026-06-26 Goal Skills Used Readback
 
 - Upgraded `/goals/<goal_id>` `Skills Used` from raw task tags to a

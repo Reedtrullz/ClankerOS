@@ -4836,6 +4836,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Implementation handoff created" in goal.body
     assert "Coder prep finished" in goal.body
     assert "Worktree planned" in goal.body
+    assert "Approval requested" in goal.body
+    assert "Approval granted" in goal.body
+    assert "Execution completed" in goal.body
+    assert "Review passed" in goal.body
     assert "Evidence" in goal.body
     assert "Artifacts" in goal.body
     assert "Goal Artifact Explorer" in goal.body
