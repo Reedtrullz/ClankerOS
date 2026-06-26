@@ -7806,6 +7806,16 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             )
             message = f"project_registered: {project.name}"
             location = f"/projects/{quote(project.name)}"
+            _write_workspace_state(
+                root,
+                {
+                    **_load_workspace_state(root),
+                    "open_project": project.name,
+                    "open_goal": "",
+                    "last_viewed_artifact": f"projects/{project.name}/project.md",
+                    "updated_by": "register-project",
+                },
+            )
             result = project
         elif action == "create-goal":
             lifecycle = create_goal_lifecycle(
@@ -7817,6 +7827,16 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             )
             message = f"goal_created: {lifecycle.goal.id}"
             location = f"/goals/{quote(lifecycle.goal.id)}"
+            _write_workspace_state(
+                root,
+                {
+                    **_load_workspace_state(root),
+                    "open_project": lifecycle.goal.project_id,
+                    "open_goal": lifecycle.goal.id,
+                    "last_viewed_artifact": str(lifecycle.goal_artifact_path.relative_to(root)),
+                    "updated_by": "create-goal",
+                },
+            )
             result = lifecycle
         elif action == "delegate":
             result = _create_scout_delegation_from_form(root, storage, form)

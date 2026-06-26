@@ -43,7 +43,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   phase and next-action readbacks, the same confirmed local action form as the
   Goal page when the saved goal's next action is browser-available, an explicit
   `save-workspace` form for the current lead goal when one exists, and
-  first-run project/goal forms when no goals exist.
+  first-run project/goal forms when no goals exist. Confirmed
+  `register-project` and `create-goal` browser actions also update
+  `.clanker/app/workspace.json`, so `/resume` can restore the new project or
+  goal without a separate manual save step.
 - `/resume` - read-only return-to-work surface for the saved
   `.clanker/app/workspace.json` state. It shows whether resume state exists,
   links the saved goal, project, and last artifact, preserves filters and

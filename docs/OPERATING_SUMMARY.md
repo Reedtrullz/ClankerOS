@@ -106,9 +106,11 @@ Core layers for the bootstrap:
   Create project -> Create first goal -> Create first delegation -> Generate
   context pack -> Run first delegation checklist plus confirmed local
   `register-project` and `create-goal` forms, explicitly defaults the first
-  dogfood project to `clankeros` at the current repository path, and moves
-  initial project/goal setup into the browser without adding provider calls or
-  external effects. The populated `/goals` cockpit also exposes a confirmed
+  dogfood project to `clankeros` at the current repository path, persists
+  resume workspace state after confirmed browser project registration and
+  first goal creation, and moves initial project/goal setup into the browser
+  without adding provider calls or external effects. The populated `/goals`
+  cockpit also exposes a confirmed
   local `Start Another Goal` form for registered projects, so daily goal
   creation does not require the CLI. The checklist reports the current step,
   one `first_run_next_action` with a reason, project/goal/delegation/

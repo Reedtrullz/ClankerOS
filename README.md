@@ -111,7 +111,10 @@ first-run project/goal/delegation guidance when the checkout has not completed
 its first delegation. The First Run Guide is
 state-aware: it shows the current step across create project, create first
 goal, create first delegation, prepare context, and the confirmed local
-`run-delegation` action with a copyable CLI fallback. When a lead goal exists, Home also shows an explicit
+`run-delegation` action with a copyable CLI fallback. Confirmed browser
+project registration and goal creation also update the saved workspace, so
+`/resume` already knows the first project/goal after those actions. When a
+lead goal exists, Home also shows an explicit
 `save-workspace` form so the operator can remember the current goal/project
 context for the next session. Use the
 compact local app smoke commands before pushing, then let GitHub Actions run

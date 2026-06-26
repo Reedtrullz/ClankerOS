@@ -1,5 +1,30 @@
 # Status
 
+## 2026-06-27 First Run Workspace Auto-Resume
+
+- Made confirmed browser `register-project` and `create-goal` actions persist
+  `.clanker/app/workspace.json` automatically. Registering the first project
+  now remembers the project, and creating the first goal remembers both the
+  project and goal so `/resume`, Home, and `/workspace` can restore the
+  operator's next continuation without requiring a separate manual
+  `save-workspace` step.
+- Non-claims: this does not run delegations, approve gates, call providers,
+  fetch GitHub status, push, create PRs, deploy, or mutate external systems.
+  It writes local workspace state only as part of explicit confirmed browser
+  actions.
+- Compact local verification for this slice:
+  - Focused red pytest first failed because confirmed `register-project` did
+    not create `.clanker/app/workspace.json`.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "first_run_browser_actions_persist_resume_workspace or local_app_routes_render_modern_workflow_and_health"`
+    -> `2 passed, 512 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 First Run Next Action Readback
 
 - Made the browser First Run Guide report one state-aware

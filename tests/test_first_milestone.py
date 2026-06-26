@@ -4790,6 +4790,76 @@ def test_local_app_runs_delegation_from_browser_action(
     assert "Execution completed" in goal_after_run.body
 
 
+def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
+    AgentSystem(tmp_path).initialize()
+    target_repo = tmp_path / "clankeros"
+    target_repo.mkdir()
+    subprocess.run(["git", "init"], cwd=target_repo, check=True, capture_output=True)
+
+    register_result = render_local_app_route(
+        tmp_path,
+        "/actions/register-project",
+        method="POST",
+        form={
+            "name": ["clankeros"],
+            "path": [str(target_repo)],
+            "test_command": ["python3 -m pytest -q"],
+            "allowed_write_roots": [str(target_repo)],
+            "confirm": ["yes"],
+        },
+    )
+
+    assert register_result.status == 200
+    workspace_path = tmp_path / ".clanker" / "app" / "workspace.json"
+    assert workspace_path.exists()
+    registered_workspace = json.loads(workspace_path.read_text(encoding="utf-8"))
+    assert registered_workspace["open_project"] == "clankeros"
+    assert registered_workspace["open_goal"] == ""
+    assert registered_workspace["updated_by"] == "register-project"
+    assert registered_workspace["network_actions_taken"] == 0
+    assert registered_workspace["external_mutations_taken"] == 0
+    register_resume = render_local_app_route(tmp_path, "/resume")
+    assert "resume_workspace_available</dt><dd>true" in register_resume.body
+    assert "resume_project: <a href='/projects/clankeros'>clankeros</a>" in register_resume.body
+    assert "<a href='/projects/clankeros'>Open saved project clankeros</a>" in register_resume.body
+
+    create_goal_result = render_local_app_route(
+        tmp_path,
+        "/actions/create-goal",
+        method="POST",
+        form={
+            "project_id": ["clankeros"],
+            "prompt": ["Make ClankerOS resumable after first-run goal creation."],
+            "created_by_profile": ["planner"],
+            "confirm": ["yes"],
+        },
+    )
+
+    assert create_goal_result.status == 200
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        created_goal_id = connection.execute(
+            """
+            select id from goals
+            where project_id = ?
+            order by created_at desc, id desc
+            limit 1
+            """,
+            ("clankeros",),
+        ).fetchone()[0]
+    goal_workspace = json.loads(workspace_path.read_text(encoding="utf-8"))
+    assert goal_workspace["open_project"] == "clankeros"
+    assert goal_workspace["open_goal"] == created_goal_id
+    assert goal_workspace["updated_by"] == "create-goal"
+    resume = render_local_app_route(tmp_path, "/resume")
+    assert "resume_workspace_available</dt><dd>true" in resume.body
+    assert f"resume_goal: <a href='/goals/{created_goal_id}'>{created_goal_id}</a>" in resume.body
+    assert "resume_current_phase</dt><dd>Ready for delegation" in resume.body
+    assert "resume_next_action</dt><dd>Create scout delegation" in resume.body
+    home = render_local_app_route(tmp_path, "/")
+    assert f"resume_goal: <a href='/goals/{created_goal_id}'>{created_goal_id}</a>" in home.body
+    assert "home_resume_next_action: Create scout delegation" in home.body
+
+
 def test_local_app_artifact_viewer_is_read_only_and_bounded(
     tmp_path: Path,
 ) -> None:
