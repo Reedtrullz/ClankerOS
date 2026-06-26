@@ -478,7 +478,8 @@ gh repo view Reedtrullz/ClankerOS --json description,repositoryTopics,homepageUr
 git push origin main
 ```
 
-After push or PR creation, the GitHub `Tests` workflow runs the slow full
-suite with `python -m pytest -q`. Pushing is not deployment. A committed
-workflow file is not CI proof until GitHub Actions passes on the pushed
-commit. GitHub metadata readback is not runtime proof.
+After push or PR creation, the GitHub `Tests` workflow runs a fast smoke job
+first, then the dependent slow full-suite job with `python -m pytest -q`.
+Pushing is not deployment. A committed workflow file is not CI proof until
+GitHub Actions passes on the pushed commit. GitHub metadata readback is not
+runtime proof.

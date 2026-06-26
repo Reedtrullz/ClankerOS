@@ -96,9 +96,10 @@ Core layers for the bootstrap:
   readback; a read-only `/actions` catalog for safe local action requirements,
   form locations, output artifacts, confirmation posture, and external-effect
   boundaries; a read-only `/verification` handoff for the checked-in GitHub
-  Actions workflow, configured job timeout, latest operator-supplied CI
-  evidence summary, compact local checks, in-progress run non-proof guidance,
-  and CI proof boundary without contacting GitHub; a
+  Actions workflow, separate fast-smoke and full-suite job readbacks,
+  configured job timeout, latest operator-supplied CI evidence summary,
+  compact local checks, in-progress run non-proof guidance, and CI proof
+  boundary without contacting GitHub; a
   read-only `/ci-evidence` page for operator-supplied CI/deploy proof records
   already stored in local ClankerOS state, plus a `CI Evidence Recording Guide`
   with the latest local GitHub handoff id, branch, commit, handoff evidence,
@@ -148,7 +149,10 @@ Core layers for the bootstrap:
   Catalog`, `Verification Handoff`, and `CI Evidence Records`, and reports
   `marker=matched` or `marker=missing` per route while preserving
   provider/network/external-mutation counters at zero. The checked-in GitHub
-  Actions workflow runs this smoke before the full pytest suite.
+  Actions workflow now runs a separate 10-minute `smoke` job for compile,
+  local CLI smoke, route-marker app smoke, demo, dashboard, iterate, and
+  whitespace checks before a dependent 45-minute `full-suite` job spends time
+  on `python -m pytest -q`.
 - CI/deploy evidence ingestion: an operator can attach CI or deploy proof to a
   GitHub handoff packet with `ci-deploy-evidence`. The record preserves
   provider, external run id, URL, commit, branch, handoff, and JSON evidence

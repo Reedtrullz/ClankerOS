@@ -12,10 +12,12 @@ The workflow lives at `.github/workflows/tests.yml` and runs on:
 - pull requests targeting `main`;
 - manual `workflow_dispatch` runs from GitHub.
 
-The `Tests` workflow checks out the repo, sets up Python 3.10, installs
-`pytest`, compiles `agent_os` and `tests`, runs local CLI smoke checks against
-a temporary ClankerOS root, checks whitespace with `git diff --check`, and then
-runs the full suite with:
+The `Tests` workflow has two jobs:
+
+- `smoke` checks out the repo, sets up Python 3.10, installs `pytest`,
+  compiles `agent_os` and `tests`, runs local CLI smoke checks against a
+  temporary ClankerOS root, and checks whitespace with `git diff --check`.
+- `full-suite` depends on `smoke` and then runs the slow full suite with:
 
 ```bash
 python -m pytest -q
@@ -24,10 +26,12 @@ python -m pytest -q
 The temporary root keeps CI smoke commands such as `dashboard` and `iterate`
 from rewriting repository docs with runner-specific paths.
 
-The job has a 45-minute timeout. While a run is still in progress, treat it as
-pending proof and keep waiting on GitHub instead of rerunning the full suite
-locally. If the run fails or reaches the timeout, inspect the failed job log
-and fix that specific CI failure before pushing another app slice.
+The smoke job has a 10-minute timeout, and the full-suite job has a 45-minute
+timeout. A passed smoke job is early route/CLI proof only. While a run is still
+in progress, treat it as pending proof and keep waiting on GitHub instead of
+rerunning the full suite locally. If the run fails or reaches the timeout,
+inspect the failed job log and fix that specific CI failure before pushing
+another app slice.
 
 ## Fast Local Loop
 

@@ -556,9 +556,10 @@ python3 -m pytest tests/test_first_milestone.py -q -k "github_actions or local_a
 ```
 
 After pushing or opening a PR, wait for the GitHub `Tests` workflow to run the
-full suite with `python -m pytest -q`. A committed workflow file is not CI
-proof until a GitHub Actions run passes on that commit. Pushing is not
-deployment. GitHub metadata readback is not runtime proof. See
+fast smoke job first, then the dependent full-suite job with
+`python -m pytest -q`. The smoke job is early route/CLI proof only; a committed
+workflow file is not CI proof until GitHub Actions passes on that commit.
+Pushing is not deployment. GitHub metadata readback is not runtime proof. See
 [GitHub Testing](docs/github-testing.md) and
 [Tutorial: Public Snapshot](docs/tutorial-public-snapshot.md) for the full
 recommended flow.

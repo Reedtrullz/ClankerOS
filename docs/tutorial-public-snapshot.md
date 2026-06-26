@@ -84,6 +84,20 @@ git diff --check
 For a documentation-only or otherwise narrow slice, focused checks are fine if
 the final summary says exactly what was and was not verified.
 
+When the snapshot is headed to GitHub, prefer this lightweight local gate and
+let the checked-in workflow spend the slow time:
+
+```bash
+python3 -m compileall -q agent_os tests
+python3 -m agent_os.cli app-smoke-test
+python3 -m pytest tests/test_first_milestone.py -q -k "github_actions or local_app or inbox"
+git diff --check
+```
+
+The GitHub `Tests` workflow runs a fast smoke job first and a dependent
+full-suite job second. The smoke job gives early route/CLI signal; the commit
+is not CI-proven until the full-suite job passes on GitHub.
+
 ## Refresh The Human Views
 
 Regenerate the operator-facing views after verification:

@@ -1,5 +1,21 @@
 # Status
 
+## 2026-06-26 Split GitHub Smoke And Full-Suite Jobs
+
+- Split `.github/workflows/tests.yml` into a fast `smoke` job and a dependent
+  `full-suite` job. The smoke job runs compile, route-marker `app-smoke-test`,
+  demo scenario, CLI help/dashboard/iterate, and whitespace checks with a
+  10-minute timeout; the full-suite job waits for smoke and then runs
+  `python -m pytest -q` with the existing 45-minute timeout.
+- Updated `/verification` so the local app shows `fast_smoke_job`,
+  `full_suite_job`, and `full_suite_depends_on_smoke` as first-class workflow
+  readbacks, while preserving the proof boundary that smoke success is only
+  early route/CLI proof until the full suite passes on GitHub.
+- Non-claims: this changes GitHub test orchestration and local readback/docs
+  only; it does not deploy, fetch GitHub status from the local app, call
+  providers, execute push/PR commands from ClankerOS, or enable blocked
+  autonomy surfaces.
+
 ## 2026-06-26 Local App Marker-Aware Smoke Test
 
 - Upgraded `app-smoke-test` so it now renders each core local app route and

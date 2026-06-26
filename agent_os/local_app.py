@@ -913,6 +913,19 @@ def _verification_page(root: Path) -> str:
             "full_suite_command",
             "python -m pytest -q" if "python -m pytest -q" in workflow_text else "missing",
         ),
+        (
+            "fast_smoke_job",
+            "configured" if "smoke:" in workflow_text else "missing",
+        ),
+        (
+            "full_suite_job",
+            "configured" if "full-suite:" in workflow_text else "missing",
+        ),
+        (
+            "full_suite_depends_on_smoke",
+            "configured" if "needs: smoke" in workflow_text else "missing",
+        ),
+        ("fast_smoke_timeout_minutes", _workflow_timeout_minutes(workflow_text, "smoke")),
         ("job_timeout_minutes", _workflow_timeout_minutes(workflow_text)),
         ("in_progress_run_status", "not_ci_proof"),
         ("CI_proof_boundary", "CI proof requires a completed passing GitHub Actions run"),
@@ -920,9 +933,11 @@ def _verification_page(root: Path) -> str:
         ("app_external_mutations_taken", "0"),
     ]
     workflow_step_lines = [
+        "Fast smoke job: compile source/tests, route-marker app-smoke-test, demo-app-scenario, app --help, dashboard, iterate, git diff --check",
         "Compile source and tests: python -m compileall -q agent_os tests",
         "Run local CLI smoke checks: app-smoke-test, demo-app-scenario, app --help, dashboard, iterate",
         "Check whitespace: git diff --check",
+        "Full suite job: waits for fast smoke verification before spending time on pytest",
         "Run full test suite: python -m pytest -q",
     ]
     workflow_summary_lines = [
@@ -951,6 +966,7 @@ def _verification_page(root: Path) -> str:
             _list_section(
                 "Remote Run State Guidance",
                 [
+                    "Fast smoke verification can pass before the full suite finishes; treat it as early route/CLI proof only.",
                     "If a GitHub run is still in progress, keep waiting on GitHub rather than rerunning the full suite locally.",
                     "If the GitHub run fails, inspect the failed job log and fix that specific failure before pushing another app slice.",
                     "If the GitHub run reaches the job timeout, treat it as missing full-suite proof and narrow the slow or blocked test in CI.",
@@ -1261,7 +1277,20 @@ def _workflow_has_pull_request_main(workflow_text: str) -> bool:
     return "pull_request:" in workflow_text and "branches: [main]" in workflow_text
 
 
-def _workflow_timeout_minutes(workflow_text: str) -> str:
+def _workflow_timeout_minutes(workflow_text: str, job_name: str = "full-suite") -> str:
+    in_requested_job = False
+    requested_prefix = f"{job_name}:"
+    for line in workflow_text.splitlines():
+        stripped = line.strip()
+        if stripped == requested_prefix:
+            in_requested_job = True
+            continue
+        if in_requested_job and line.startswith("  ") and stripped.endswith(":"):
+            return "missing"
+        if in_requested_job and stripped.startswith("timeout-minutes:"):
+            return stripped.split(":", 1)[1].strip() or "missing"
+    if job_name != "full-suite":
+        return "missing"
     for line in workflow_text.splitlines():
         stripped = line.strip()
         if stripped.startswith("timeout-minutes:"):

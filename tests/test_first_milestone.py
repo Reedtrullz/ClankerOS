@@ -3193,6 +3193,13 @@ def test_github_actions_workflow_runs_automatic_verification() -> None:
         "workflow_dispatch:",
         "permissions:",
         "contents: read",
+        "smoke:",
+        "name: Fast smoke verification",
+        "timeout-minutes: 10",
+        "full-suite:",
+        "name: Full pytest suite",
+        "needs: smoke",
+        "timeout-minutes: 45",
         'python-version: "3.10"',
         "python -m compileall -q agent_os tests",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-smoke-test",
@@ -3220,8 +3227,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
                 "    branches: [main]",
                 "  workflow_dispatch:",
                 "jobs:",
-                "  verify:",
-                "    timeout-minutes: 45",
+                "  smoke:",
+                "    timeout-minutes: 10",
                 "    steps:",
                 "      - name: Compile source and tests",
                 "        run: python -m compileall -q agent_os tests",
@@ -3229,6 +3236,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
                 "        run: python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-smoke-test",
                 "      - name: Check whitespace",
                 "        run: git diff --check",
+                "  full-suite:",
+                "    needs: smoke",
+                "    timeout-minutes: 45",
+                "    steps:",
                 "      - name: Run full test suite",
                 "        run: python -m pytest -q",
             ]
@@ -3414,6 +3425,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "push_to_main: configured" in verification.body
     assert "pull_request_to_main: configured" in verification.body
     assert "workflow_dispatch: configured" in verification.body
+    assert "fast_smoke_job: configured" in verification.body
+    assert "full_suite_job: configured" in verification.body
+    assert "full_suite_depends_on_smoke: configured" in verification.body
+    assert "Fast smoke verification can pass before the full suite finishes" in verification.body
     assert "Run full test suite" in verification.body
     assert "python -m pytest -q" in verification.body
     assert "job_timeout_minutes: 45" in verification.body
