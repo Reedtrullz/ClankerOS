@@ -85,6 +85,7 @@ NO_EXTERNAL_EFFECT_CLAIMS = [
 ]
 NAV_ITEMS = [
     ("Dashboard", "/"),
+    ("Resume", "/resume"),
     ("Goals", "/goals"),
     ("Search", "/search"),
     ("Workspace", "/workspace"),
@@ -279,6 +280,8 @@ def render_local_app_route(
             return page("Dashboard", _dashboard(root, host=host, port=port))
         if path == "/goals":
             return page("Goals", _goals(root))
+        if path == "/resume":
+            return page("Resume", _resume_page(root))
         if path == "/search":
             return page("Search", _search_page(root, query=_one(query, "q") or ""))
         if path == "/workspace":
@@ -362,6 +365,7 @@ def run_local_app_smoke_test(root: Path) -> dict[str, Any]:
     outside_link.symlink_to(outside_artifact)
     routes = [
         ("/", "ClankerOS Local Operator"),
+        ("/resume", "Resume Workspace"),
         ("/goals", "Goal Cockpit"),
         ("/search", "Global Search"),
         ("/workspace", "Workspace State"),
@@ -480,6 +484,14 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "search_scope",
                 demo.goal_id,
                 "artifact",
+            ],
+        ),
+        (
+            "/resume",
+            "Resume Workspace",
+            [
+                "resume_workspace_available",
+                "resume_workspace_write_on_get",
             ],
         ),
         (
@@ -1119,6 +1131,7 @@ def _home_resume_workspace(root: Path, lead_goal: sqlite3.Row | None) -> str:
         lines.append(f"resume_artifact: {_artifact_link(last_artifact)}")
     if not any([open_goal, open_project, last_artifact]):
         lines.append("workspace_status: no_saved_workspace")
+    lines.append("resume_surface: <a href='/resume'>/resume</a>")
     lines.append("workspace_surface: <a href='/workspace'>/workspace</a>")
 
     form = ""
@@ -1574,6 +1587,76 @@ def _artifact_contains(root: Path, relative_path: str, needle: str) -> bool:
     except OSError:
         return False
     return needle in text.lower()
+
+
+def _resume_page(root: Path) -> str:
+    state = _load_workspace_state(root)
+    open_project = str(state.get("open_project") or "").strip()
+    open_goal = str(state.get("open_goal") or "").strip()
+    filters = str(state.get("filters") or "").strip()
+    expanded = str(state.get("expanded_panels") or "").strip()
+    last_artifact = str(state.get("last_viewed_artifact") or "").strip()
+    has_workspace = any([open_project, open_goal, filters, expanded, last_artifact])
+
+    targets: list[str] = []
+    if open_goal:
+        targets.append(f"resume_goal: <a href='/goals/{quote(open_goal)}'>{_e(open_goal)}</a>")
+    if open_project:
+        targets.append(f"resume_project: <a href='/projects/{quote(open_project)}'>{_e(open_project)}</a>")
+    if last_artifact:
+        targets.append(f"resume_artifact: {_artifact_link(last_artifact)}")
+    if not targets:
+        targets.extend(
+            [
+                "resume_status: no_saved_workspace",
+                "start_goal_cockpit: <a href='/goals'>/goals</a>",
+                "start_first_run: <a href='/'>Goal-First Home</a>",
+            ]
+        )
+
+    next_href = "/goals"
+    next_label = "Open Goal Cockpit"
+    if open_goal:
+        next_href = f"/goals/{quote(open_goal)}"
+        next_label = f"Open saved goal {open_goal}"
+    elif open_project:
+        next_href = f"/projects/{quote(open_project)}"
+        next_label = f"Open saved project {open_project}"
+    elif last_artifact:
+        next_href = f"/artifacts?path={quote(last_artifact)}"
+        next_label = "Open saved artifact"
+
+    return "".join(
+        [
+            "<section><h1>Resume Workspace</h1>",
+            "<p class='muted'>One local landing page for returning to the last saved ClankerOS operator context.</p>",
+            _kv(
+                [
+                    ("resume_workspace_available", str(has_workspace).lower()),
+                    ("resume_workspace_source", ".clanker/app/workspace.json"),
+                    ("resume_updated_at", state.get("updated_at", "never")),
+                    ("resume_filters", filters or "none"),
+                    ("resume_expanded_panels", expanded or "none"),
+                    ("resume_workspace_write_on_get", "false"),
+                    ("resume_provider_calls_taken_by_clankeros", "0"),
+                    ("resume_network_actions_taken", "0"),
+                    ("resume_external_effects_created", "false"),
+                ]
+            ),
+            f"<p><a href='{_e(next_href)}'>{_e(next_label)}</a></p>",
+            "</section>",
+            _list_section("Resume Targets", targets),
+            _list_section(
+                "Manage Resume State",
+                [
+                    "workspace_surface: <a href='/workspace'>/workspace</a>",
+                    "save_workspace_action: confirmed_local_only",
+                    "raw_filesystem_browsing: false",
+                ],
+            ),
+            _non_claim_banner(),
+        ]
+    )
 
 
 def _workspace_page(root: Path) -> str:
@@ -7962,6 +8045,8 @@ def _recent_operator_links(root: Path, *, limit: int) -> list[tuple[str, str, st
     open_project = str(state.get("open_project") or "").strip()
     open_goal = str(state.get("open_goal") or "").strip()
     last_artifact = str(state.get("last_viewed_artifact") or "").strip()
+    if any([open_goal, open_project, last_artifact]):
+        links.append(("Resume workspace", "/resume", "workspace"))
     if open_goal:
         links.append((f"Goal {open_goal}", f"/goals/{quote(open_goal)}", "workspace goal"))
     if open_project:

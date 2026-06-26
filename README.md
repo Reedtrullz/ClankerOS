@@ -94,10 +94,10 @@ Then read:
 - [GitHub Testing](docs/github-testing.md)
 
 The primary operator surface is now the local app plus the CLI. Start the app
-for a browser view of goals, search, workspace restore, memory, skills,
-profiles, projects, workflow, delegations, delegation runs, coder runs, safe
-action catalog, verification handoff, dogfooding checklist, health, artifacts,
-the operator inbox, approvals, incidents, and demo state:
+for a browser view of goals, resume state, search, workspace restore, memory,
+skills, profiles, projects, workflow, delegations, delegation runs, coder
+runs, safe action catalog, verification handoff, dogfooding checklist, health,
+artifacts, the operator inbox, approvals, incidents, and demo state:
 
 ```bash
 python3 -m agent_os.cli app
@@ -114,6 +114,10 @@ exists, Home also shows an explicit `save-workspace` form so the operator can
 remember the current goal/project context for the next session. Use the
 compact local app smoke commands before pushing, then let GitHub Actions run
 the fast route smoke and full pytest suite for slower proof.
+Use `/resume` when returning to ClankerOS after a break. It reads the saved
+workspace state, shows the exact saved goal/project/artifact links, preserves
+filters and expanded panel readbacks, and reports that it writes nothing on
+GET.
 
 For the first manual browser pass, run `python3 -m agent_os.cli demo`
 or `python3 -m agent_os.cli demo-app-scenario`, open `/goals`, then `/demo`,
@@ -191,7 +195,7 @@ and draft PR creation remain copy-only/manual outside ClankerOS.
 Those steps write local artifacts, local approval rows, local approval
 decisions, or one isolated local worktree commit only; they do not run
 delegations or worktrees from the browser, push, create PRs, deploy, call
-providers, or use the network. Use Home or `/workspace` to
+providers, or use the network. Use Home, `/resume`, or `/workspace` to
 save and restore open project, open goal, filters, expanded panels, and last
 viewed artifact in `.clanker/app/workspace.json`.
 Use the goal page note form for day-to-day operator breadcrumbs, then find the

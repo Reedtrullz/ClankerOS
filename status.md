@@ -1,5 +1,29 @@
 # Status
 
+## 2026-06-26 Resume Workspace Route
+
+- Added `/resume` as a first-class return-to-work surface in the local app.
+  It reads `.clanker/app/workspace.json`, shows whether saved resume state
+  exists, links the saved goal, project, and last viewed artifact, preserves
+  filter and expanded-panel readbacks, and points back to `/workspace` for
+  edits.
+- Home now links the saved workspace state to `/resume`, and the operator
+  shell recent-items rail includes `Resume workspace` when saved context
+  exists. The app smoke route list also covers `/resume`.
+- The route is read-only on GET. It does not write workspace state, browse raw
+  filesystem paths, run delegations or worktrees, call providers, fetch GitHub
+  status, push, create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - Focused red test failed first because `/resume` returned 404.
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed, including `/resume`, with zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 State-Aware First Run Guide
 
 - Upgraded the Home and `/goals` first-run guide from static guidance into a

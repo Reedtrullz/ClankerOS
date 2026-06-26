@@ -5199,6 +5199,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"resume_project: <a href='/projects/{result.project_id}'>{result.project_id}</a>" in restored_home.body
     assert "resume_artifact" in restored_home.body
     assert ".clanker/demo/demo-result.md" in restored_home.body
+    resume = render_local_app_route(tmp_path, "/resume")
+    assert resume.status == 200
+    assert "Resume Workspace" in resume.body
+    assert "resume_workspace_available</dt><dd>true" in resume.body
+    assert f"resume_goal: <a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in resume.body
+    assert f"resume_project: <a href='/projects/{result.project_id}'>{result.project_id}</a>" in resume.body
+    assert "resume_artifact" in resume.body
+    assert ".clanker/demo/demo-result.md" in resume.body
+    assert "resume_filters</dt><dd>active" in resume.body
+    assert "resume_expanded_panels</dt><dd>timeline,evidence" in resume.body
+    assert "resume_workspace_write_on_get</dt><dd>false" in resume.body
+    assert "resume_external_effects_created</dt><dd>false" in resume.body
     restored_goal = render_local_app_route(tmp_path, f"/goals/{result.goal_id}")
     assert "Goal Workspace Restore State" in restored_goal.body
     assert "workspace_restore_available</dt><dd>true" in restored_goal.body

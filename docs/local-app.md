@@ -42,6 +42,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   recommendations, open incidents, saved workspace resume links, an explicit
   `save-workspace` form for the current lead goal when one exists, and
   first-run project/goal forms when no goals exist.
+- `/resume` - read-only return-to-work surface for the saved
+  `.clanker/app/workspace.json` state. It shows whether resume state exists,
+  links the saved goal, project, and last artifact, preserves filters and
+  expanded panel readbacks, points back to `/workspace` for edits, and writes
+  nothing on GET.
 - `/` includes a confirmed `refresh-dashboard-state` action that rewrites the
   local `.clanker/app/local_app_status.json` artifact from current repository
   and route state without providers, pushes, PRs, deploys, or external
