@@ -4808,6 +4808,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_resume_current_goal" in goal.body
     assert "goal_resume_current_project" in goal.body
     assert "suggested_last_artifact" in goal.body
+    assert "Goal Workspace Restore State" in goal.body
+    assert "workspace_restore_available</dt><dd>false" in goal.body
+    assert "workspace_restore_filters</dt><dd>none" in goal.body
+    assert "workspace_restore_expanded_panels</dt><dd>none" in goal.body
+    assert "workspace_restore_write_on_get</dt><dd>false" in goal.body
     assert "Remember This Goal" in goal.body
     assert "save_workspace_form_available</dt><dd>true" in goal.body
     assert "workspace_auto_write_on_get</dt><dd>false" in goal.body
@@ -4913,6 +4918,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"resume_project: <a href='/projects/{result.project_id}'>{result.project_id}</a>" in restored_home.body
     assert "resume_artifact" in restored_home.body
     assert ".clanker/demo/demo-result.md" in restored_home.body
+    restored_goal = render_local_app_route(tmp_path, f"/goals/{result.goal_id}")
+    assert "Goal Workspace Restore State" in restored_goal.body
+    assert "workspace_restore_available</dt><dd>true" in restored_goal.body
+    assert "workspace_restore_goal_matches_current</dt><dd>true" in restored_goal.body
+    assert "workspace_restore_project_matches_current</dt><dd>true" in restored_goal.body
+    assert "workspace_restore_filters</dt><dd>active" in restored_goal.body
+    assert "workspace_restore_expanded_panels</dt><dd>timeline,evidence" in restored_goal.body
+    assert "workspace_restore_last_artifact" in restored_goal.body
+    assert ".clanker/demo/demo-result.md" in restored_goal.body
+    assert "workspace_restore_write_on_get</dt><dd>false" in restored_goal.body
 
     delegation_runs = render_local_app_route(tmp_path, "/delegation-runs")
     assert delegation_runs.status == 200

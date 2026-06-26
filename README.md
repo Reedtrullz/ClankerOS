@@ -147,7 +147,9 @@ local resume context to the goal-scoped `operator-notes.md` artifact without
 overwriting earlier notes.
 The Goal Resume Snapshot reads `.clanker/app/workspace.json`, shows whether
 the saved workspace already points at the current goal, suggests the latest
-goal artifact as the resume anchor, and provides a confirmed `save-workspace`
+goal artifact as the resume anchor, renders saved filters, expanded panels,
+and last-viewed artifact as `Goal Workspace Restore State`, and provides a
+confirmed `save-workspace`
 form that returns to the same goal page after saving. It does not write on page
 load, fetch GitHub status, call providers, push, create PRs, deploy, or mutate
 external systems.

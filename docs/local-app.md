@@ -68,10 +68,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   remaining work. It uses local polling refresh and does not contact GitHub or
   providers. Goal Resume Snapshot reads `.clanker/app/workspace.json`, shows
   whether the saved workspace already points at the current goal, suggests the
-  latest goal artifact as the resume anchor, and exposes a confirmed
-  `save-workspace` form that returns to the same goal page after saving
-  without writing on GET. Operator Notes includes a confirmed `save-goal-note`
-  form that appends local resume context to
+  latest goal artifact as the resume anchor, renders saved filters, expanded
+  panels, and last-viewed artifact as `Goal Workspace Restore State`, and
+  exposes a confirmed `save-workspace` form that returns to the same goal page
+  after saving without writing on GET. Operator Notes includes a confirmed
+  `save-goal-note` form that appends local resume context to
   `.clanker/projects/<project>/goals/<goal>/operator-notes.md`; it does not
   overwrite previous notes. When the goal has planned tasks but no
   delegation yet, the Next Action card exposes a confirmed `delegate` form

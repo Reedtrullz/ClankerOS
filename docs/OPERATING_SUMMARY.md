@@ -121,8 +121,10 @@ Core layers for the bootstrap:
   calling providers, or mutating external systems. Goal pages also
   include a `Goal Resume Snapshot` that reads saved workspace state, links the
   current goal/project, suggests the newest goal artifact as a resume anchor,
-  and exposes a confirmed `save-workspace` form that returns to the same goal
-  page after saving without writing on GET. They also include a typed
+  renders saved filters, expanded panels, and last-viewed artifact as
+  `Goal Workspace Restore State`, and exposes a confirmed `save-workspace`
+  form that returns to the same goal page after saving without writing on GET.
+  They also include a typed
   `Goal Artifact Explorer` that groups goal-linked Markdown,
   JSON, Patch/Diff, and Text/Log artifacts and links them through the bounded
   inert `/artifacts` viewer without raw filesystem browsing. Every page shares

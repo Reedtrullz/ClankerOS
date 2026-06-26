@@ -1,5 +1,26 @@
 # Status
 
+## 2026-06-26 Goal Workspace Restore State
+
+- Added a `Goal Workspace Restore State` readback inside
+  `/goals/<goal_id>` so the Goal page shows saved workspace filters, expanded
+  panels, last-viewed artifact, source path, and current goal/project match
+  status directly from `.clanker/app/workspace.json`.
+- The readback makes the resume loop more first-class on the page the
+  operator actually returns to, instead of requiring a detour through
+  `/workspace` to see whether filters and panel state were preserved.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state"`
+    -> `1 passed, 509 deselected`
+  - `git diff --check`
+    -> passed
+- Non-claims: this reads saved local workspace state on GET only. It does not
+  auto-write workspace state on page load, call providers, fetch GitHub
+  status, execute worktrees or arbitrary commands, push, create PRs, deploy,
+  or mutate external systems.
+
 ## 2026-06-26 Goal Approved Worktree Handoff
 
 - Added a `Run Approved Worktree Boundary` readback to the Goal Next Action

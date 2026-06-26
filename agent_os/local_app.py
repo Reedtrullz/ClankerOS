@@ -2805,7 +2805,13 @@ def _goal_resume_snapshot(root: Path, state: dict[str, Any]) -> str:
     workspace = _load_workspace_state(root)
     saved_goal = workspace.get("open_goal", "")
     saved_project = workspace.get("open_project", "")
+    saved_filters = workspace.get("filters", "").strip()
+    saved_panels = workspace.get("expanded_panels", "").strip()
+    saved_artifact = workspace.get("last_viewed_artifact", "").strip()
     latest_artifact = _goal_latest_artifact_path(root, state)
+    workspace_available = any([saved_goal, saved_project, saved_filters, saved_panels, saved_artifact])
+    goal_matches = saved_goal == goal.id
+    project_matches = saved_project == goal.project_id
     saved_goal_link = (
         SafeHtml(f"<a href='/goals/{quote(saved_goal)}'>{_e(saved_goal)}</a>")
         if saved_goal
@@ -2826,13 +2832,26 @@ def _goal_resume_snapshot(root: Path, state: dict[str, Any]) -> str:
                     ("goal_resume_current_project", SafeHtml(f"<a href='/projects/{quote(goal.project_id)}'>{_e(goal.project_id)}</a>")),
                     ("saved_workspace_goal", saved_goal_link),
                     ("saved_workspace_project", saved_project_link),
-                    ("workspace_goal_matches_current", "true" if saved_goal == goal.id else "false"),
+                    ("workspace_goal_matches_current", "true" if goal_matches else "false"),
                     ("workspace_updated_at", workspace.get("updated_at", "never") or "never"),
                     ("suggested_last_artifact", SafeHtml(_artifact_link(latest_artifact)) if latest_artifact else "none"),
                     ("workspace_surface", SafeHtml("<a href='/workspace'>/workspace</a>")),
                     ("save_workspace_form_available", "true"),
                     ("workspace_auto_write_on_get", "false"),
                     ("external_effects_created", "false"),
+                ]
+            ),
+            "<h3>Goal Workspace Restore State</h3>",
+            _kv(
+                [
+                    ("workspace_restore_available", "true" if workspace_available else "false"),
+                    ("workspace_restore_goal_matches_current", "true" if goal_matches else "false"),
+                    ("workspace_restore_project_matches_current", "true" if project_matches else "false"),
+                    ("workspace_restore_filters", saved_filters or "none"),
+                    ("workspace_restore_expanded_panels", saved_panels or "none"),
+                    ("workspace_restore_last_artifact", SafeHtml(_artifact_link(saved_artifact)) if saved_artifact else "none"),
+                    ("workspace_restore_source", ".clanker/app/workspace.json"),
+                    ("workspace_restore_write_on_get", "false"),
                 ]
             ),
             "<h3>Remember This Goal</h3>",
