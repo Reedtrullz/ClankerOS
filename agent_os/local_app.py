@@ -2025,7 +2025,10 @@ def _first_run_panel(root: Path, storage: Storage) -> str:
             "<p class='muted'>A state-aware path for a new operator to create local ClankerOS state and reach the first delegation handoff without reading docs.</p>",
             _kv(
                 [
-                    ("first_run_guided_path", "Create project -> Create first goal -> Run first delegation"),
+                    (
+                        "first_run_guided_path",
+                        "Create project -> Create first goal -> Create first delegation -> Generate context pack -> Run first delegation",
+                    ),
                     ("first_run_current_step", progress["current_step"]),
                     ("first_run_project_registered", str(progress["project_registered"]).lower()),
                     ("first_run_goal_created", str(progress["goal_created"]).lower()),
@@ -2033,6 +2036,7 @@ def _first_run_panel(root: Path, storage: Storage) -> str:
                     ("first_run_context_pack_ready", str(progress["context_pack_ready"]).lower()),
                     ("first_run_delegation_completed", str(progress["delegation_completed"]).lower()),
                     ("first_run_next_surface", progress["next_surface"]),
+                    ("first_run_context_pack_action", progress["context_pack_action"]),
                     ("first_run_run_delegation_command", progress["run_delegation_command"]),
                     ("first_run_run_delegation_action", progress["run_delegation_action"]),
                     ("first_run_browser_execution_exposed", progress["browser_execution_exposed"]),
@@ -2046,9 +2050,11 @@ def _first_run_panel(root: Path, storage: Storage) -> str:
                     f"first_run_step: create_project status={_e(_first_run_step_status(progress, 'create_project'))}",
                     f"first_run_step: create_first_goal status={_e(_first_run_step_status(progress, 'create_first_goal'))}",
                     f"first_run_step: create_first_delegation status={_e(_first_run_step_status(progress, 'create_first_delegation'))}",
+                    f"first_run_step: generate_context_pack status={_e(_first_run_step_status(progress, 'generate_context_pack'))}",
                     f"first_run_step: run_first_delegation status={_e(_first_run_step_status(progress, 'run_first_delegation'))}",
                     "Create project: register a local git repository.",
                     "Create first goal: materialize a goal, plan, and planned tasks.",
+                    "Generate context pack: prepare the local context artifacts needed before the first delegation run.",
                     "Run first delegation: follow the Goal page next action and confirm the local run-delegation form.",
                     "<code>python3 -m agent_os.cli demo</code>: populate deterministic local demo data.",
                 ]
@@ -2093,6 +2099,7 @@ def _first_run_progress(root: Path, storage: Storage) -> dict[str, Any]:
     delegation = delegations[0] if delegations else None
     context_pack_ready = False
     delegation_completed = False
+    context_pack_action = "pending_until_delegation_exists"
     run_delegation_command = "pending_until_context_pack_ready"
     run_delegation_action = "pending_until_context_pack_ready"
     browser_execution_exposed = "false"
@@ -2100,6 +2107,7 @@ def _first_run_progress(root: Path, storage: Storage) -> dict[str, Any]:
         metadata = load_delegation_result_metadata(delegation)
         context_pack_ready = _delegation_has_context_pack(root, delegation, metadata)
         delegation_completed = delegation.status == "completed"
+        context_pack_action = f"/actions/context-pack delegation_id={delegation.id}"
         if context_pack_ready:
             run_delegation_command = f"python3 -m agent_os.cli run-delegation {delegation.id}"
             run_delegation_action = f"/actions/run-delegation delegation_id={delegation.id}"
@@ -2133,6 +2141,7 @@ def _first_run_progress(root: Path, storage: Storage) -> dict[str, Any]:
         "delegation_completed": delegation_completed,
         "current_step": current_step,
         "next_surface": next_surface,
+        "context_pack_action": context_pack_action,
         "run_delegation_command": run_delegation_command,
         "run_delegation_action": run_delegation_action,
         "browser_execution_exposed": browser_execution_exposed,
@@ -2152,6 +2161,12 @@ def _first_run_step_status(progress: dict[str, Any], step: str) -> str:
         if progress["delegation_created"]:
             return "done"
         return "current" if progress["goal_created"] else "waiting_for_goal"
+    if step == "generate_context_pack":
+        if progress["context_pack_ready"]:
+            return "done"
+        if progress["delegation_created"]:
+            return "current"
+        return "waiting_for_delegation" if progress["goal_created"] else "waiting_for_goal"
     if step == "run_first_delegation":
         if progress["delegation_completed"]:
             return "done"

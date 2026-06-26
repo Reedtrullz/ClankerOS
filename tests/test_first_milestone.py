@@ -4062,13 +4062,18 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Home Incidents" in root.body
     assert "home_incidents_status: none_open" in root.body
     assert "First Run Guide" in root.body
-    assert "first_run_guided_path</dt><dd>Create project -&gt; Create first goal -&gt; Run first delegation" in root.body
+    assert (
+        "first_run_guided_path</dt><dd>Create project -&gt; Create first goal -&gt; "
+        "Create first delegation -&gt; Generate context pack -&gt; Run first delegation"
+    ) in root.body
     assert "first_run_current_step</dt><dd>create_project" in root.body
     assert "first_run_project_registered</dt><dd>false" in root.body
     assert "first_run_goal_created</dt><dd>false" in root.body
     assert "first_run_delegation_created</dt><dd>false" in root.body
+    assert "first_run_context_pack_action</dt><dd>pending_until_delegation_exists" in root.body
     assert "first_run_step: create_project status=current" in root.body
     assert "first_run_step: create_first_goal status=waiting_for_project" in root.body
+    assert "first_run_step: generate_context_pack status=waiting_for_goal" in root.body
     assert "first_run_step: run_first_delegation status=waiting_for_goal" in root.body
     assert "first_run_empty_state_illustration" in root.body
     assert "register-project" in root.body
@@ -4283,6 +4288,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_goal_created</dt><dd>false" in registered_goals.body
     assert "first_run_step: create_project status=done" in registered_goals.body
     assert "first_run_step: create_first_goal status=current" in registered_goals.body
+    assert "first_run_step: generate_context_pack status=waiting_for_goal" in registered_goals.body
     create_goal_result = render_local_app_route(
         tmp_path,
         "/actions/create-goal",
@@ -4341,6 +4347,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_delegation_created</dt><dd>false" in goals_after_first_goal.body
     assert "first_run_step: create_first_goal status=done" in goals_after_first_goal.body
     assert "first_run_step: create_first_delegation status=current" in goals_after_first_goal.body
+    assert "first_run_step: generate_context_pack status=waiting_for_delegation" in goals_after_first_goal.body
     assert f"/goals/{created_goal_id}" in goals_after_first_goal.body
     storage_after_creation = Storage(tmp_path / ".agent" / "state.db")
     storage_after_creation.set_goal_status(created_goal_id, "paused")
@@ -4503,6 +4510,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "next_action_form_available</dt><dd>true" in delegated_goal_page.body
     assert "Generate Context Pack" in delegated_goal_page.body
     assert "action='/actions/context-pack'" in delegated_goal_page.body
+    goals_after_delegation = render_local_app_route(tmp_path, "/goals")
+    assert "first_run_current_step</dt><dd>generate_context_pack" in goals_after_delegation.body
+    assert "first_run_context_pack_ready</dt><dd>false" in goals_after_delegation.body
+    assert "first_run_step: create_first_delegation status=done" in goals_after_delegation.body
+    assert "first_run_step: generate_context_pack status=current" in goals_after_delegation.body
+    assert "first_run_step: run_first_delegation status=waiting_for_context_pack" in goals_after_delegation.body
+    assert f"first_run_context_pack_action</dt><dd>/actions/context-pack delegation_id={delegation.id}" in goals_after_delegation.body
     context_pack_confirmation = render_local_app_route(
         tmp_path,
         "/actions/context-pack",
@@ -4536,6 +4550,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_current_step</dt><dd>run_first_delegation" in home_after_delegate.body
     assert "first_run_context_pack_ready</dt><dd>true" in home_after_delegate.body
     assert "first_run_step: run_first_delegation status=current" in home_after_delegate.body
+    assert "first_run_step: generate_context_pack status=done" in home_after_delegate.body
+    assert f"first_run_context_pack_action</dt><dd>/actions/context-pack delegation_id={delegation.id}" in home_after_delegate.body
     assert "first_run_run_delegation_command</dt><dd>python3 -m agent_os.cli run-delegation" in home_after_delegate.body
     assert "first_run_run_delegation_action</dt><dd>/actions/run-delegation delegation_id=" in home_after_delegate.body
     assert "first_run_browser_execution_exposed</dt><dd>confirmed_local_only" in home_after_delegate.body

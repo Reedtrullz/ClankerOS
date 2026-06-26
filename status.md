@@ -1,5 +1,29 @@
 # Status
 
+## 2026-06-27 First Run Context Pack Gate
+
+- Made the browser First Run Guide name `Generate context pack` as its own
+  required gate between creating the first scout delegation and running that
+  delegation. The guide now reports `first_run_context_pack_action` and
+  per-step status for the context-pack gate, so a new operator can see the
+  browser path rather than inferring why `run-delegation` is waiting.
+- Non-claims: this does not run delegations, approve gates, call providers,
+  fetch GitHub status, push, create PRs, deploy, or mutate external systems.
+  It is a local browser guidance/readback improvement only.
+- Compact local verification for this slice:
+  - Focused red pytest first failed because the First Run Guide still showed
+    `Create project -> Create first goal -> Run first delegation` and lacked
+    the explicit context-pack gate.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+    -> `1 passed, 512 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Demo Final Goal Completion Guidance
 
 - Made the fixture-backed `/demo` flow first-class through the final local
