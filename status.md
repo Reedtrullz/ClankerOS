@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-26 Home Resume Workspace
+
+- Added `Home Resume Workspace` to the local app root `/` page. It reads the
+  saved `.clanker/app/workspace.json` state and shows direct resume links for
+  the saved open goal, project, and last viewed artifact.
+- When Home has a current lead goal, it now renders an explicit
+  `save-workspace` form prefilled with the lead goal/project plus resume
+  defaults, so an operator can remember the current context for the next
+  session without leaving the primary Home surface.
+- The implementation keeps workspace persistence behind the existing
+  confirmation flow. The Home page reads saved state on GET but does not write
+  workspace state until the operator confirms `save-workspace`.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health"`
+    -> `1 passed, 506 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario or local_app_cli_commands_and_bind_safety or local_app_routes_render_modern_workflow_and_health"`
+    -> `3 passed, 504 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with matched route markers and zero provider/network/external
+    mutation counters.
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with matched fixture route snippets and zero provider/network/
+    external mutation counters.
+  - `git diff --check`
+    -> passed
+- Non-claims: this is local browser UI and confirmed local workspace artifact
+  persistence only. It does not auto-write on page load, call providers, fetch
+  GitHub status from the app, push, create PRs from the app, deploy, or enable
+  external mutation inside ClankerOS.
+
 ## 2026-06-26 Goal-First Home Dashboard
 
 - Moved the local app root `/` surface from a repo/control dashboard lead-in to

@@ -105,9 +105,12 @@ python3 -m agent_os.cli app
 
 The root `/` page is the Goal-First Home board. It starts with active,
 paused, and completed goal lanes, recent activity, the operator inbox,
-recommendations, incidents, and first-run project/goal forms when the checkout
-is empty. Use the compact local app smoke commands before pushing, then let
-GitHub Actions run the fast route smoke and full pytest suite for slower proof.
+recommendations, incidents, saved workspace resume links, and first-run
+project/goal forms when the checkout is empty. When a lead goal exists, Home
+also shows an explicit `save-workspace` form so the operator can remember the
+current goal/project context for the next session. Use the compact local app
+smoke commands before pushing, then let GitHub Actions run the fast route
+smoke and full pytest suite for slower proof.
 
 For the first manual browser pass, run `python3 -m agent_os.cli demo`
 or `python3 -m agent_os.cli demo-app-scenario`, open `/goals`, then `/demo`,
@@ -145,8 +148,8 @@ new operator can create a project and first goal without switching to CLI
 commands. From the created goal page, the Next Action card can create the
 first read-only scout delegation with a confirmed `delegate` form, writing a
 local contract artifact without starting a subagent or calling a provider. Use
-`/workspace` to save and restore open project, open goal, filters, expanded
-panels, and last viewed artifact in `.clanker/app/workspace.json`.
+Home or `/workspace` to save and restore open project, open goal, filters,
+expanded panels, and last viewed artifact in `.clanker/app/workspace.json`.
 Use `/search` for bounded global search across indexed goals, projects,
 delegations, known artifacts, incidents, recommendations, memory, runs, and
 approvals. Use `/memory`, `/skills`, and `/profiles` for local readbacks of

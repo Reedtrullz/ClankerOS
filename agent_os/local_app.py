@@ -968,6 +968,7 @@ def _home_dashboard(
         _non_claim_banner(),
         "</section>",
         _home_goal_board(root, storage, active=active, paused=paused, completed=completed),
+        _home_resume_workspace(root, lead_goal),
         _home_recent_activity(root, storage),
         _home_inbox(root),
         _home_recommendations(storage),
@@ -1019,6 +1020,66 @@ def _home_goal_lane(
             f"<h3>{_e(title)}</h3>",
             _ul([_goal_index_line(root, storage, row) for row in rows[:6]]),
             "</div>",
+        ]
+    )
+
+
+def _home_resume_workspace(root: Path, lead_goal: sqlite3.Row | None) -> str:
+    state = _load_workspace_state(root)
+    open_project = str(state.get("open_project") or "").strip()
+    open_goal = str(state.get("open_goal") or "").strip()
+    filters = str(state.get("filters") or "").strip()
+    expanded = str(state.get("expanded_panels") or "").strip()
+    last_artifact = str(state.get("last_viewed_artifact") or "").strip()
+    workspace_path = ".clanker/app/workspace.json"
+    workspace_path_readback = (
+        _artifact_link(workspace_path) if _workspace_path(root).exists() else workspace_path
+    )
+    lines: list[str] = [
+        f"workspace_path: {workspace_path_readback}",
+        f"workspace_updated_at: {_e(state.get('updated_at') or 'never')}",
+        f"workspace_filters: {_e(filters or 'none')}",
+        f"workspace_expanded_panels: {_e(expanded or 'none')}",
+    ]
+    if open_goal:
+        lines.append(f"resume_goal: <a href='/goals/{quote(open_goal)}'>{_e(open_goal)}</a>")
+    if open_project:
+        lines.append(f"resume_project: <a href='/projects/{quote(open_project)}'>{_e(open_project)}</a>")
+    if last_artifact:
+        lines.append(f"resume_artifact: {_artifact_link(last_artifact)}")
+    if not any([open_goal, open_project, last_artifact]):
+        lines.append("workspace_status: no_saved_workspace")
+    lines.append("workspace_surface: <a href='/workspace'>/workspace</a>")
+
+    form = ""
+    if lead_goal is not None:
+        lead_goal_id = str(lead_goal["id"])
+        lead_project = str(lead_goal["project_id"] or "")
+        form = "".join(
+            [
+                "<h3>Remember Current Goal</h3>",
+                _input_form(
+                    "save-workspace",
+                    {},
+                    {
+                        "open_project": lead_project,
+                        "open_goal": lead_goal_id,
+                        "filters": filters or "active",
+                        "expanded_panels": expanded or "timeline,evidence,approvals",
+                        "last_viewed_artifact": last_artifact,
+                        "updated_by": "operator-home",
+                    },
+                ),
+            ]
+        )
+
+    return "".join(
+        [
+            "<section><h2>Home Resume Workspace</h2>",
+            "<p class='muted'>Resume saved local browser context or explicitly remember the current lead goal for tomorrow.</p>",
+            _ul(lines),
+            form,
+            "</section>",
         ]
     )
 

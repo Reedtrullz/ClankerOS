@@ -39,8 +39,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 
 - `/` - Goal-First Home dashboard. It starts with active, paused, and
   completed goal lanes, recent activity, the operator inbox, open
-  recommendations, open incidents, and first-run project/goal forms when no
-  goals exist.
+  recommendations, open incidents, saved workspace resume links, an explicit
+  `save-workspace` form for the current lead goal when one exists, and
+  first-run project/goal forms when no goals exist.
 - `/` includes a confirmed `refresh-dashboard-state` action that rewrites the
   local `.clanker/app/local_app_status.json` artifact from current repository
   and route state without providers, pushes, PRs, deploys, or external
@@ -75,8 +76,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   known artifacts, incidents, recommendations, memory, runs, approvals, and
   skill records. It does not expose arbitrary filesystem browsing.
 - `/workspace` - persistent local workspace state for open project, open goal,
-  filters, expanded panels, and last viewed artifact. The confirmed
-  `save-workspace` form writes `.clanker/app/workspace.json`.
+  filters, expanded panels, and last viewed artifact. Home reads the same
+  saved state for daily resume links. The confirmed `save-workspace` form
+  writes `.clanker/app/workspace.json`.
 - `/memory` - project memories, global memories, generated memories, operator
   notes, future-work recommendations, and confirmed `pin-memory` actions.
 - `/skills` - available/generated skill records with usage count, last-used
