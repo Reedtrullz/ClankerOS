@@ -2097,11 +2097,56 @@ def _goals(root: Path) -> str:
                 ]
             ),
             "</section>",
+            _goal_creation_panel(storage, rows),
             _list_section("Active Goals", [_goal_index_line(root, storage, row) for row in active]),
             _list_section("Paused Goals", [_goal_index_line(root, storage, row) for row in paused]),
             _list_section("Completed Goals", [_goal_index_line(root, storage, row) for row in completed]),
             _first_run_panel(root, storage),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _goal_creation_panel(storage: Storage, rows: list[sqlite3.Row]) -> str:
+    projects = storage.list_registered_projects()
+    project_names = [str(project.name) for project in projects]
+    if not project_names:
+        return _list_section(
+            "Start Another Goal",
+            [
+                "goal_creation_form_available: false",
+                "goal_creation_reason: no_registered_projects",
+                "project_surface: <a href='/projects'>/projects</a>",
+            ],
+        )
+    lead_project = str(rows[0]["project_id"] or "")
+    default_project = lead_project if lead_project in project_names else project_names[0]
+    return "".join(
+        [
+            "<section><h2>Start Another Goal</h2>",
+            "<p class='muted'>Create the next local goal from the cockpit without switching to the CLI.</p>",
+            _kv(
+                [
+                    ("goal_creation_form_available", "true"),
+                    ("goal_creation_project_count", str(len(project_names))),
+                    ("goal_creation_default_project", default_project),
+                    ("goal_creation_project_options", ", ".join(project_names)),
+                    ("goal_creation_confirmation_required", "true"),
+                    ("goal_creation_provider_calls_taken_by_clankeros", "0"),
+                    ("goal_creation_network_actions_taken", "0"),
+                    ("goal_creation_external_effects_created", "false"),
+                ]
+            ),
+            _input_form(
+                "create-goal",
+                {},
+                {
+                    "project_id": default_project,
+                    "prompt": "Describe the next local coding goal.",
+                    "created_by_profile": "planner",
+                },
+            ),
+            "</section>",
         ]
     )
 

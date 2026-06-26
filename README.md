@@ -141,7 +141,10 @@ local surface.
 
 Use `/goals` as the daily cockpit. It separates active, paused, and completed
 goals, links each goal to its detail page, and shows phase, next action, and
-task progress from existing local state. Use `/goals/<goal_id>` as the
+task progress from existing local state. The cockpit also includes a confirmed
+local `Start Another Goal` form backed by the existing `create-goal` action,
+so an operator can add the next goal for a registered project without
+switching to the CLI. Use `/goals/<goal_id>` as the
 goal-centered workbench: current phase, next action, progress, timeline,
 activity log, goal risk, completion criteria, evidence, delegations, runs,
 approvals, artifacts, a typed Goal Artifact Explorer, memory, skills used, git

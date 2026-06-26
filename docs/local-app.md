@@ -64,8 +64,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   action when goal state exists.
 - `/goals` - daily goal cockpit. It separates active, paused, and completed
   goals, links to each goal detail page, and keeps phase, next action, task
-  progress, and first-run browser actions visible. The page exposes confirmed
-  local `register-project` and `create-goal` forms for a fresh checkout.
+  progress, and first-run browser actions visible. The page exposes a
+  confirmed local `Start Another Goal` form for registered projects, plus
+  confirmed local `register-project` and `create-goal` forms for a fresh
+  checkout.
 - `/goals/<goal_id>` - goal-centered workbench with current phase, next action,
   overview, goal risk, completion criteria, progress, chronological timeline,
   activity log, delegations, runs, approvals, evidence, artifacts, memory,

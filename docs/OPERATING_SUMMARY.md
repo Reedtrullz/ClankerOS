@@ -94,7 +94,10 @@ Core layers for the bootstrap:
   Create project -> Create first goal -> Run first delegation checklist plus
   confirmed local `register-project` and `create-goal` forms, moving initial
   project/goal setup into the browser without adding provider calls or
-  external effects. The checklist reports the current step, project/goal/
+  external effects. The populated `/goals` cockpit also exposes a confirmed
+  local `Start Another Goal` form for registered projects, so daily goal
+  creation does not require the CLI. The checklist reports the current step,
+  project/goal/
   delegation/context-pack state, next local surface, and copy-only
   `run-delegation` handoff once context is ready while keeping browser
   execution unexposed. Goal detail pages now

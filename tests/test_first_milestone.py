@@ -4999,6 +4999,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Cockpit" in goals.body
     assert "Active Goals" in goals.body
     assert "goal_first_navigation" in goals.body
+    assert "Start Another Goal" in goals.body
+    assert "goal_creation_form_available</dt><dd>true" in goals.body
+    assert "goal_creation_project_count</dt><dd>1" in goals.body
+    assert "goal_creation_external_effects_created</dt><dd>false" in goals.body
+    assert "action='/actions/create-goal'" in goals.body
+    assert "name='project_id' value='local-app-demo'" in goals.body
     assert result.goal_id in goals.body
     assert "phase=Ready to commit" in goals.body
     assert "next_action=Create commit request" in goals.body
