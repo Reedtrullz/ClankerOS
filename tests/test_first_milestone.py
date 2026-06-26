@@ -6116,9 +6116,51 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "demo_continue_from: manual_operator_push_pr_outside_clankeros" in demo_after_handoff.body
     assert "current_gate: manual_operator_push_pr_outside_clankeros" in demo_after_handoff.body
     assert "active_action: manual_operator_push_pr_outside_clankeros" in demo_after_handoff.body
-    assert "form_action: none" in demo_after_handoff.body
+    assert "form_action: /actions/complete-goal" in demo_after_handoff.body
+    assert f"goal_id: {result.goal_id}" in demo_after_handoff.body
+    assert "required_input: operator confirms manual publication is complete" in demo_after_handoff.body
+    assert "output_artifact: goal status=completed" in demo_after_handoff.body
+    assert "action='/actions/complete-goal'" in demo_after_handoff.body
+    assert f"name='goal_id' value='{result.goal_id}'" in demo_after_handoff.body
+    assert "After manual push/PR outside ClankerOS, return to" in demo_after_handoff.body
+    assert f"/goals/{result.goal_id}" in demo_after_handoff.body
+    assert "complete-goal" in demo_after_handoff.body
     assert "copy_only: true" in demo_after_handoff.body
     assert "manual_boundary: outside_clankeros" in demo_after_handoff.body
+
+    complete_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/complete-goal",
+        method="POST",
+        form={
+            "goal_id": [result.goal_id],
+            "completed_by": ["operator"],
+            "note": ["Demo manual publication finished outside ClankerOS"],
+        },
+    )
+    assert complete_confirmation.status == 409
+    assert "Confirm complete-goal" in complete_confirmation.body
+    complete_response = render_local_app_route(
+        tmp_path,
+        "/actions/complete-goal",
+        method="POST",
+        form={
+            "goal_id": [result.goal_id],
+            "completed_by": ["operator"],
+            "note": ["Demo manual publication finished outside ClankerOS"],
+            "confirm": ["yes"],
+        },
+    )
+    assert complete_response.status == 200
+    assert "goal_completed:" in complete_response.body
+
+    demo_after_completion = render_local_app_route(tmp_path, "/demo")
+    assert demo_after_completion.status == 200
+    assert "demo_continue_from: review_completed_goal_evidence" in demo_after_completion.body
+    assert "current_gate: review_completed_goal_evidence" in demo_after_completion.body
+    assert "active_action: review_completed_goal_evidence" in demo_after_completion.body
+    assert "form_action: none" in demo_after_completion.body
+    assert "goal_completion_status: completed" in demo_after_completion.body
 
 
 def test_goal_next_action_card_exposes_post_delegation_forms(

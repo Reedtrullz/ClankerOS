@@ -7143,6 +7143,7 @@ def _demo_dogfooding_state(root: Path) -> str:
             _manual_browser_script(
                 {
                     "project_id": project.name,
+                    "goal_id": selected_delegation.parent_goal_id if selected_delegation else "",
                     "delegation_id": selected_delegation.id if selected_delegation else "",
                     "run_id": selected_run.id if selected_run else "",
                     "review_path": review_path,
@@ -7166,6 +7167,7 @@ def _demo_browser_progress(root: Path, run_id: str) -> str:
         )
     lines = [
         f"selected_run_id: {_e(run_id)}",
+        f"goal_completion_status: {_e(progress['goal_status'])}",
         f"commit_request_status: {_e(progress['commit_status'])}",
         f"commit_approval_status: {_e(progress['commit_status'])}",
         f"local_commit_status: {_e(progress['local_commit_status'])}",
@@ -7415,18 +7417,45 @@ def _demo_gate_actions(root: Path, run_id: str) -> str:
         )
         form_html = _form("coder-publication-handoff", {"run_id": run_id})
     elif next_step == "manual_operator_push_pr_outside_clankeros":
+        goal_id = progress.get("goal_id", "")
         lines.extend(
             [
                 "active_action: manual_operator_push_pr_outside_clankeros",
-                "form_action: none",
-                f"operator_surface: /runs/{_e(run_id)}",
-                "required_input: operator copies handoff outside ClankerOS",
-                "output_artifact: none_inside_clankeros",
+                "form_action: /actions/complete-goal",
+                f"operator_surface: /goals/{_e(goal_id)}",
+                f"goal_id: {_e(goal_id or 'missing')}",
+                "required_input: operator confirms manual publication is complete",
+                "output_artifact: goal status=completed",
                 "manual_boundary: outside_clankeros",
                 "copy_only: true",
             ]
         )
-        form_html = "<p class='muted'>No ClankerOS form is available for push or PR creation. Use the publication handoff commands outside the app.</p>"
+        if goal_id:
+            form_html = _input_form(
+                "complete-goal",
+                {"goal_id": goal_id},
+                {
+                    "completed_by": "operator",
+                    "note": "Demo manual publication finished outside ClankerOS.",
+                },
+            )
+        else:
+            form_html = "<p class='muted'>complete-goal form unavailable until the demo run is linked to a goal.</p>"
+    elif next_step == "review_completed_goal_evidence":
+        goal_id = progress.get("goal_id", "")
+        lines.extend(
+            [
+                "active_action: review_completed_goal_evidence",
+                "form_action: none",
+                f"operator_surface: /goals/{_e(goal_id)}",
+                f"goal_id: {_e(goal_id or 'missing')}",
+                "required_input: inspect completed goal evidence",
+                "output_artifact: none",
+                "goal_completion_status: completed",
+                "manual_boundary: outside_clankeros",
+            ]
+        )
+        form_html = "<p class='muted'>Goal is locally completed. Review the completed Goal evidence and CI records before merging or continuing outside ClankerOS.</p>"
     else:
         lines.extend(
             [
@@ -7469,7 +7498,8 @@ def _demo_next_action_panel(root: Path, run_id: str) -> str:
         "request_publication_handoff": "request the publication handoff gate from the run detail page",
         "approve_or_reject_publication_request": "decide the pending publication request on approvals",
         "prepare_publication_handoff": "prepare the local publication handoff from the run detail page",
-        "manual_operator_push_pr_outside_clankeros": "use the publication handoff outside ClankerOS",
+        "manual_operator_push_pr_outside_clankeros": "use the publication handoff outside ClankerOS, then mark the Goal completed locally",
+        "review_completed_goal_evidence": "review the completed Goal evidence",
     }
     lines = [
         f"demo_continue_from: {_e(next_step)}",
@@ -7483,12 +7513,16 @@ def _demo_next_action_panel(root: Path, run_id: str) -> str:
     ]
     if next_step == "manual_operator_push_pr_outside_clankeros":
         lines.append("manual_boundary: outside_clankeros")
+    if next_step == "review_completed_goal_evidence":
+        lines.append("goal_completion_status: completed")
     return _list_section("Demo Next Action", lines)
 
 
 def _demo_progress_state(root: Path, run_id: str) -> dict[str, str]:
     if not run_id:
         return {
+            "goal_id": "",
+            "goal_status": "missing",
             "commit_status": "not_requested",
             "local_commit_status": "missing",
             "publication_status": "not_requested",
@@ -7496,6 +7530,14 @@ def _demo_progress_state(root: Path, run_id: str) -> dict[str, str]:
             "manual_status": "not_ready",
             "next_step": "run demo scenario and select a coder worktree run",
         }
+    storage = _storage(root)
+    goal_id = _goal_id_for_coder_run(storage, run_id)
+    goal_status = "missing"
+    if goal_id:
+        try:
+            goal_status = storage.get_goal(goal_id).status
+        except KeyError:
+            goal_status = "missing"
     commit_records = [
         item
         for item in list_coder_worktree_commit_approvals(root, limit=50)
@@ -7530,12 +7572,15 @@ def _demo_progress_state(root: Path, run_id: str) -> dict[str, str]:
         else "not_ready"
     )
     next_step = _demo_next_operator_step(
+        goal_status=goal_status,
         commit_status=commit_status,
         local_commit_status=local_commit_status,
         publication_status=publication_status,
         publication_handoff_status=publication_handoff_status,
     )
     return {
+        "goal_id": goal_id,
+        "goal_status": goal_status,
         "commit_status": commit_status,
         "local_commit_status": local_commit_status,
         "publication_status": publication_status,
@@ -7562,11 +7607,14 @@ def _preferred_record(items: list[Any], statuses: list[str]) -> Any | None:
 
 def _demo_next_operator_step(
     *,
+    goal_status: str,
     commit_status: str,
     local_commit_status: str,
     publication_status: str,
     publication_handoff_status: str,
 ) -> str:
+    if goal_status == "completed":
+        return "review_completed_goal_evidence"
     if commit_status == "not_requested":
         return "request_commit_for_reviewed_run"
     if commit_status == "pending_operator_approval":
@@ -7584,9 +7632,20 @@ def _demo_next_operator_step(
     return "review_demo_state"
 
 
+def _goal_id_for_coder_run(storage: Storage, run_id: str) -> str:
+    coder_run = get_coder_worktree_run(storage, run_id)
+    if coder_run is None:
+        return ""
+    delegation = storage.get_subagent_delegation(coder_run.delegation_id)
+    if delegation is None:
+        return ""
+    return delegation.parent_goal_id
+
+
 def _manual_browser_script(state: dict[str, str] | None) -> str:
     delegation_id = (state or {}).get("delegation_id", "")
     run_id = (state or {}).get("run_id", "")
+    goal_id = (state or {}).get("goal_id", "")
     project_id = (state or {}).get("project_id", "local-app-demo")
     steps = [
         "Run `python3 -m agent_os.cli demo-app-scenario` to refresh fixture state.",
@@ -7608,6 +7667,10 @@ def _manual_browser_script(state: dict[str, str] | None) -> str:
                 "From the run page, walk commit request, commit approval, typed local commit, publication request, publication approval, and publication handoff.",
             ]
         )
+        if goal_id:
+            steps.append(
+                f"After manual push/PR outside ClankerOS, return to `/goals/{goal_id}` and use `complete-goal` to record local Goal completion."
+            )
     steps.extend(
         [
             "Open `/approvals` and `/inbox` to verify pending decisions stay visible.",

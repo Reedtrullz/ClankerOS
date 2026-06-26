@@ -320,7 +320,11 @@ renders the active local gate form, such as `coder-commit-request`,
 `approve-coder-commit`, `commit-coder-worktree`,
 `coder-publication-request`, `approve-coder-publication`, or
 `coder-publication-handoff`; every write still goes through the normal
-confirmation page and existing local safety checks. `Manual Browser
+confirmation page and existing local safety checks. Once the publication
+handoff is ready, the demo gate keeps push/PR work as a manual action outside
+ClankerOS, then renders the confirmed local `complete-goal` form and advances
+the demo to `review_completed_goal_evidence` after the Goal is completed.
+`Manual Browser
 Checkpoints` lists the route markers to confirm during the first visual pass,
 including demo, dogfooding, project, delegation, scoped workflow, run,
 approvals, inbox, verification, and health pages.
@@ -328,7 +332,9 @@ approvals, inbox, verification, and health pages.
 After publication handoff preparation, return to `/runs/<coder_run_id>` to see
 `Publication Handoff Commands`: the suggested push command, draft PR command,
 PR body path, and zero-effect counters. This is a copy-only operator readback;
-the app does not run the commands.
+the app does not run the commands. After those commands are handled outside
+ClankerOS, return to the Goal page or `/demo` and use `complete-goal` to mark
+the local Goal complete.
 
 ## Verification Handoff
 

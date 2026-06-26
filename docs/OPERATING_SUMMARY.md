@@ -311,7 +311,10 @@ Core layers for the bootstrap:
   handoff, and PR-body artifacts as those gates become available, plus a
   state-aware `Demo Gate Actions` panel that names the current gate, local
   form action, required input, expected output artifact, and renders the safe
-  confirmed local form for the active gate when one exists, plus `Manual
+  confirmed local form for the active gate when one exists. At the manual
+  push/PR boundary it keeps publication outside ClankerOS, exposes only the
+  confirmed local `complete-goal` form, and advances completed fixture Goals
+  to `review_completed_goal_evidence`, plus `Manual
   Browser Checkpoints` route-marker expectations for the first visual
   dogfooding pass. The demo also seeds a generated local `local-files` skill
   record and `SKILL.md`, so `/skills` and Goal `Skills Used` show a concrete

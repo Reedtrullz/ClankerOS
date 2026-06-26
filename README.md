@@ -141,7 +141,11 @@ commit decision, local commit artifact, publication request, publication
 decision, publication handoff, and PR-body artifact as those gates become
 available. The `Demo Gate Actions` panel names the current gate, the local
 form action, required input, expected output artifact, and renders the safe
-confirmed local form when the current step can be driven from the app.
+confirmed local form when the current step can be driven from the app. Once
+the publication handoff is ready, the demo keeps push/PR work outside
+ClankerOS and exposes the confirmed local `complete-goal` form so the
+operator can record that manual publication finished and review completed
+Goal evidence.
 `Manual Browser Checkpoints` lists the exact route markers to confirm across
 `/demo`, `/dogfooding`, workflow, project, delegation, run, approvals, inbox,
 verification, and health surfaces, then lets you jump directly to the relevant

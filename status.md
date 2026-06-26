@@ -1,5 +1,33 @@
 # Status
 
+## 2026-06-26 Demo Final Goal Completion Guidance
+
+- Made the fixture-backed `/demo` flow first-class through the final local
+  completion step. Once the publication handoff is ready, `Demo Gate Actions`
+  keeps push/PR work outside ClankerOS, renders the confirmed local
+  `complete-goal` form for the fixture Goal, and then advances the demo to
+  `review_completed_goal_evidence`.
+- Updated the manual browser script and docs so the operator sees the same
+  continuation: use the copy-only publication handoff outside ClankerOS, then
+  return to the Goal or `/demo` to record local Goal completion.
+- Non-claims: this does not push, create a PR, deploy, call providers, fetch
+  GitHub status, run worktrees, run arbitrary commands, or mutate external
+  systems. It only exposes the existing confirmed local completion action at
+  the demo's final manual boundary.
+- Compact local verification for this slice:
+  - Focused red pytest first failed because `/demo` did not render the final
+    `complete-goal` continuation, then failed because the manual browser
+    script did not name the return-to-Goal completion step.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 512 deselected`
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Browser Goal Completion Action
 
 - Added a confirmed local `complete-goal` browser action at the manual publish
