@@ -53,6 +53,8 @@ from agent_os.context_pack import ContextPackError, generate_context_pack
 from agent_os.engine import AgentSystem
 from agent_os.ids import new_id
 from agent_os.implementation_handoff import summarize_implementation_handoff
+from agent_os.planning import PlanningError, create_goal_lifecycle
+from agent_os.project_registry import register_project
 from agent_os.storage import Storage, utc_now
 from agent_os.steering import collect_inbox_items
 from agent_os.subagent_delegation import load_delegation_result_metadata
@@ -109,6 +111,10 @@ ACTION_CATALOG = [
     ("approve-coder-publication", "approval decision", "approvals", "yes", "yes", "pending publication approval", "publication_decision.json/.md"),
     ("coder-publication-handoff", "local artifact", "run detail", "yes", "yes", "approved publication request", "publication_handoff.json/.md plus pr_body.md"),
     ("ci-snapshot-evidence-from-gh-json", "local evidence", "ci evidence", "yes", "yes", "operator-supplied gh run view JSON, optionally scoped to a completed job", "ci snapshot evidence JSON"),
+    ("register-project", "local state", "first run / projects", "yes", "yes", "local git repo path plus default test command", "registered project row and projects/<project>/project.md"),
+    ("create-goal", "local state", "first run / goals", "yes", "yes", "registered project and goal prompt", "goal row, plan, tasks, and goal artifacts"),
+    ("save-workspace", "local state", "workspace", "yes", "yes", "open project/goal, filters, panels, last artifact", ".clanker/app/workspace.json"),
+    ("pin-memory", "local state", "memory", "yes", "yes", "proposed memory entry", "memory status=active when evidence exists"),
 ]
 
 
@@ -234,6 +240,16 @@ def render_local_app_route(
             return page("Dashboard", _dashboard(root, host=host, port=port))
         if path == "/goals":
             return page("Goals", _goals(root))
+        if path == "/search":
+            return page("Search", _search_page(root, query=_one(query, "q") or ""))
+        if path == "/workspace":
+            return page("Workspace", _workspace_page(root))
+        if path == "/memory":
+            return page("Memory", _memory_page(root))
+        if path == "/skills":
+            return page("Skills", _skills_page(root))
+        if path == "/profiles":
+            return page("Profiles", _profiles_page(root))
         if path == "/workflow":
             return page(
                 "Workflow",
@@ -307,6 +323,11 @@ def run_local_app_smoke_test(root: Path) -> dict[str, Any]:
     routes = [
         ("/", "ClankerOS Local Operator"),
         ("/goals", "Goal Cockpit"),
+        ("/search", "Global Search"),
+        ("/workspace", "Workspace State"),
+        ("/memory", "Memory Bank"),
+        ("/skills", "Skills Inventory"),
+        ("/profiles", "Profiles And Routing"),
         ("/workflow", "Modern Operator Workflow"),
         ("/actions", "Safe Action Catalog"),
         ("/verification", "Verification Handoff"),
@@ -410,6 +431,49 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 demo.delegation_id,
                 demo.coder_worktree_run_id,
                 "goal_live_refresh_interval_seconds",
+            ],
+        ),
+        (
+            "/search?q=fixture-backed",
+            "Global Search",
+            [
+                "search_scope",
+                demo.goal_id,
+                "artifact",
+            ],
+        ),
+        (
+            "/workspace",
+            "Workspace State",
+            [
+                "save-workspace",
+                "workspace_path",
+            ],
+        ),
+        (
+            "/memory",
+            "Memory Bank",
+            [
+                "Project Memories",
+                "Generated Memories",
+                "Future Work",
+            ],
+        ),
+        (
+            "/skills",
+            "Skills Inventory",
+            [
+                "Available Skills",
+                "generated_skill_storage",
+                "provider_actions_taken",
+            ],
+        ),
+        (
+            "/profiles",
+            "Profiles And Routing",
+            [
+                "provider_routing_active",
+                "provider_calls_taken",
             ],
         ),
         (
@@ -762,7 +826,7 @@ def write_local_app_status(root: Path, *, host: str, port: int) -> Path:
         "dirty_tracked_files": state["dirty_tracked_files"],
         "untracked_files": state["untracked_files"],
         "warnings": warnings,
-        "routes_available": ["/", "/goals", "/goals/<id>", "/workflow", "/actions", "/verification", "/ci-evidence", "/dogfooding", "/projects", "/delegation-runs", "/delegations/<id>", "/runs/<id>", "/inbox", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
+        "routes_available": ["/", "/goals", "/goals/<id>", "/search", "/workspace", "/memory", "/skills", "/profiles", "/workflow", "/actions", "/verification", "/ci-evidence", "/dogfooding", "/projects", "/delegation-runs", "/delegations/<id>", "/runs/<id>", "/inbox", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
         "supported_workflow_stages": [step[0] for step in WORKFLOW_STEPS],
         "non_claims": NO_EXTERNAL_EFFECT_CLAIMS,
         "known_gaps": [
@@ -990,6 +1054,491 @@ def _dashboard_goal_snapshot(root: Path) -> str:
     )
 
 
+def _search_page(root: Path, *, query: str) -> str:
+    storage = _storage(root)
+    term = query.strip()
+    results = _search_results(root, storage, term) if term else []
+    return "".join(
+        [
+            "<section><h1>Global Search</h1>",
+            "<p class='muted'>Search goals, projects, delegations, artifacts, incidents, recommendations, memory, runs, and approvals from indexed local state.</p>",
+            _search_form(term),
+            _kv(
+                [
+                    ("search_query", term or "none"),
+                    ("search_scope", "goals projects delegations artifacts incidents recommendations memory runs approvals"),
+                    ("raw_filesystem_browsing", "false"),
+                    ("results", str(len(results))),
+                ]
+            ),
+            "</section>",
+            _list_section("Search Results", [_search_result_line(item) for item in results]),
+            _non_claim_banner(),
+        ]
+    )
+
+
+def _search_form(term: str) -> str:
+    return (
+        "<form method='get' action='/search'>"
+        f"<label>q <input name='q' value='{_e(term)}'></label>"
+        "<button type='submit'>search</button>"
+        "</form>"
+    )
+
+
+def _search_results(root: Path, storage: Storage, term: str) -> list[dict[str, str]]:
+    needle = term.lower()
+    results: list[dict[str, str]] = []
+
+    def add(category: str, title: str, href: str, summary: str) -> None:
+        text = " ".join([category, title, href, summary]).lower()
+        if needle in text:
+            results.append(
+                {
+                    "category": category,
+                    "title": title,
+                    "href": href,
+                    "summary": summary,
+                }
+            )
+
+    for row in _goal_rows(storage, limit=200):
+        add(
+            "goal",
+            str(row["title"] or row["description"] or row["id"]),
+            f"/goals/{quote(str(row['id']))}",
+            f"id={row['id']} project={row['project_id']} status={row['status']}",
+        )
+    for project in storage.list_registered_projects():
+        add(
+            "project",
+            project.name,
+            f"/projects/{quote(project.name)}",
+            f"root={project.root_path} test={project.default_test_command}",
+        )
+    for task in _table_rows(
+        storage.db_path,
+        "select * from tasks order by updated_at desc, id desc limit 200",
+    ):
+        add(
+            "task",
+            str(task["description"]),
+            f"/goals/{quote(str(task['goal_id']))}",
+            f"id={task['id']} project={task['project_id']} status={task['status']} type={task['task_type']}",
+        )
+    for delegation in storage.list_recent_subagent_delegations(limit=None):
+        add(
+            "delegation",
+            delegation.title,
+            f"/delegations/{quote(delegation.id)}",
+            f"id={delegation.id} goal={delegation.parent_goal_id} status={delegation.status} profile={delegation.assigned_profile}",
+        )
+    for row in _table_rows(
+        storage.db_path,
+        "select * from runs order by started_at desc, id desc limit 200",
+    ):
+        add(
+            "run",
+            str(row["id"]),
+            f"/runs/{quote(str(row['id']))}",
+            f"goal={row['goal_id']} project={row['project_id']} status={row['status']}",
+        )
+    for incident in storage.list_recent_incidents(limit=100):
+        add(
+            "incident",
+            incident.summary,
+            "/incidents",
+            f"id={incident.id} project={incident.project_id} status={incident.status} severity={incident.severity}",
+        )
+    for recommendation in storage.list_task_recommendations(limit=100):
+        add(
+            "recommendation",
+            recommendation.reason,
+            "/incidents",
+            f"id={recommendation.id} goal={recommendation.goal_id} status={recommendation.status} type={recommendation.recommendation_type}",
+        )
+    for approval in storage.list_recent_approval_requests(limit=100):
+        add(
+            "approval",
+            approval.reason,
+            "/approvals",
+            f"id={approval.id} goal={approval.goal_id} project={approval.project_id} status={approval.status}",
+        )
+    for memory in storage.list_memory_entries(limit=100):
+        add(
+            "memory",
+            memory.key,
+            "/memory",
+            f"project={memory.project_id} scope={memory.scope} status={memory.status} value={memory.value}",
+        )
+    for skill in storage.list_skills(limit=100):
+        add(
+            "skill",
+            skill.name,
+            "/skills",
+            f"project={skill.project_id or 'global'} status={skill.status} description={skill.description}",
+        )
+    for artifact in _known_artifact_paths(root, storage):
+        summary = artifact
+        if _artifact_contains(root, artifact, needle):
+            summary = f"content_match path={artifact}"
+        add("artifact", Path(artifact).name, f"/artifacts?path={quote(artifact)}", summary)
+    return results[:80]
+
+
+def _search_result_line(item: dict[str, str]) -> str:
+    return (
+        f"<strong>{_e(item['category'])}</strong> "
+        f"<a href='{_e(item['href'])}'>{_e(item['title'])}</a>: "
+        f"{_e(item['summary'])}"
+    )
+
+
+def _known_artifact_paths(root: Path, storage: Storage) -> list[str]:
+    paths: list[str] = []
+
+    def remember(path: str | Path | None) -> None:
+        if not path:
+            return
+        relative = _repo_relative_artifact_path(root, path)
+        if relative != "none" and relative not in paths:
+            paths.append(relative)
+
+    for row in _goal_rows(storage, limit=200):
+        goal_dir = Path(".clanker") / "projects" / str(row["project_id"]) / "goals" / str(row["id"])
+        for name in ["GOAL.md", "PLAN.md", "TASKS.md", "CONTRACT.md"]:
+            remember(goal_dir / name)
+    for task in _table_rows(
+        storage.db_path,
+        "select artifacts from tasks order by updated_at desc, id desc limit 200",
+    ):
+        for artifact in _json_loads_safe(str(task["artifacts"] or "[]"), []):
+            remember(artifact)
+    for row in _table_rows(
+        storage.db_path,
+        "select activity_path, summary_path, events_path from runs order by started_at desc, id desc limit 200",
+    ):
+        remember(row["activity_path"])
+        remember(row["summary_path"])
+        remember(row["events_path"])
+    for delegation in storage.list_recent_subagent_delegations(limit=None):
+        remember(delegation.result_artifact_path)
+        metadata = load_delegation_result_metadata(delegation)
+        for key in [
+            "context_pack_json",
+            "context_pack_md",
+            "implementation_handoff_json",
+            "implementation_handoff_md",
+        ]:
+            remember(metadata.get(key))
+    for memory in storage.list_memory_entries(limit=100):
+        remember(memory.artifact_path)
+    for skill in storage.list_skills(limit=100):
+        remember(skill.path)
+    return paths[:200]
+
+
+def _artifact_contains(root: Path, relative_path: str, needle: str) -> bool:
+    try:
+        path = resolve_artifact_path(root, relative_path)
+    except ValueError:
+        return False
+    if not path.exists() or not path.is_file():
+        return False
+    try:
+        text = path.read_bytes()[:MAX_ARTIFACT_BYTES].decode("utf-8", errors="replace")
+    except OSError:
+        return False
+    return needle in text.lower()
+
+
+def _workspace_page(root: Path) -> str:
+    state = _load_workspace_state(root)
+    open_project = state.get("open_project", "")
+    open_goal = state.get("open_goal", "")
+    last_artifact = state.get("last_viewed_artifact", "")
+    restore_links = []
+    if open_project:
+        restore_links.append(f"open_project: <a href='/projects/{quote(open_project)}'>{_e(open_project)}</a>")
+    if open_goal:
+        restore_links.append(f"open_goal: <a href='/goals/{quote(open_goal)}'>{_e(open_goal)}</a>")
+    if last_artifact:
+        restore_links.append(f"last_viewed_artifact: {_artifact_link(last_artifact)}")
+    return "".join(
+        [
+            "<section><h1>Workspace State</h1>",
+            "<p class='muted'>Persistent local browser context for leaving and resuming ClankerOS work.</p>",
+            _kv(
+                [
+                    ("workspace_path", ".clanker/app/workspace.json"),
+                    ("open_project", open_project or "none"),
+                    ("open_goal", open_goal or "none"),
+                    ("filters", state.get("filters", "") or "none"),
+                    ("expanded_panels", state.get("expanded_panels", "") or "none"),
+                    ("last_viewed_artifact", last_artifact or "none"),
+                    ("updated_at", state.get("updated_at", "never")),
+                ]
+            ),
+            "</section>",
+            _list_section("Restore Links", restore_links),
+            "<section><h2>Save Workspace</h2>",
+            _input_form(
+                "save-workspace",
+                {},
+                {
+                    "open_project": open_project,
+                    "open_goal": open_goal,
+                    "filters": state.get("filters", ""),
+                    "expanded_panels": state.get("expanded_panels", ""),
+                    "last_viewed_artifact": last_artifact,
+                    "updated_by": state.get("updated_by", "operator"),
+                },
+            ),
+            "</section>",
+            _non_claim_banner(),
+        ]
+    )
+
+
+def _memory_page(root: Path) -> str:
+    storage = _storage(root)
+    entries = storage.list_memory_entries(limit=100)
+    project_memories = [entry for entry in entries if entry.scope != "global"]
+    global_memories = [entry for entry in entries if entry.scope == "global"]
+    generated = [entry for entry in entries if entry.source_type != "operator"]
+    operator_notes = _operator_note_paths(root)
+    future_work = storage.list_recent_task_recommendations(limit=20)
+    return "".join(
+        [
+            "<section><h1>Memory Bank</h1>",
+            "<p class='muted'>Project memories, global memories, generated memories, operator notes, future work, and pin actions from local records.</p>",
+            _kv(
+                [
+                    ("project_memory_count", str(len(project_memories))),
+                    ("global_memory_count", str(len(global_memories))),
+                    ("generated_memory_count", str(len(generated))),
+                    ("operator_note_count", str(len(operator_notes))),
+                    ("pin_memory_available", "true"),
+                ]
+            ),
+            "</section>",
+            _list_section("Project Memories", [_memory_line(entry) for entry in project_memories]),
+            _list_section("Global Memories", [_memory_line(entry) for entry in global_memories]),
+            _list_section("Generated Memories", [_memory_line(entry) for entry in generated]),
+            _list_section("Operator Notes", [f"operator_note: {_artifact_link(path)}" for path in operator_notes]),
+            _list_section("Future Work", [_task_recommendation_line(item) for item in future_work]),
+            _non_claim_banner(),
+        ]
+    )
+
+
+def _memory_line(entry: Any) -> str:
+    pin = ""
+    if entry.status != "active":
+        pin = " " + _form("pin-memory", {"memory_id": entry.id, "note": "Pinned from memory page"})
+    return (
+        f"{_e(entry.id)}: project={_e(entry.project_id)} scope={_e(entry.scope)} "
+        f"status={_e(entry.status)} key={_e(entry.key)} value={_e(entry.value)} "
+        f"artifact={_artifact_link(entry.artifact_path)}{pin}"
+    )
+
+
+def _operator_note_paths(root: Path) -> list[str]:
+    base = root / ".clanker" / "projects"
+    if not base.exists():
+        return []
+    paths = []
+    for path in sorted(base.glob("*/goals/*/operator-notes.md")):
+        paths.append(_repo_relative_artifact_path(root, path))
+    return paths[:100]
+
+
+def _skills_page(root: Path) -> str:
+    storage = _storage(root)
+    skills = storage.list_skills(limit=100)
+    usage = _skill_usage(storage)
+    available_lines = [_skill_line(root, skill, usage) for skill in skills]
+    generated_lines = [_skill_line(root, skill, usage) for skill in skills if skill.source_run_id]
+    return "".join(
+        [
+            "<section><h1>Skills Inventory</h1>",
+            "<p class='muted'>Available and generated skills from local ClankerOS records. This page reads usage signals only; it does not install or execute skills.</p>",
+            _kv(
+                [
+                    ("available_skill_count", str(len(skills))),
+                    ("generated_skill_storage", "ready"),
+                    ("provider_actions_taken", "0"),
+                ]
+            ),
+            "</section>",
+            _list_section("Available Skills", available_lines or ["none_recorded_yet usage_count=0 last_used=none projects_using=none"]),
+            _list_section("Generated Skills", generated_lines or ["none_recorded_yet usage_count=0 last_used=none projects_using=none"]),
+            _non_claim_banner(),
+        ]
+    )
+
+
+def _skill_usage(storage: Storage) -> dict[str, dict[str, Any]]:
+    usage: dict[str, dict[str, Any]] = {}
+    for row in _table_rows(
+        storage.db_path,
+        "select project_id, skill_tags from tasks order by updated_at desc limit 500",
+    ):
+        for tag in _json_loads_safe(str(row["skill_tags"] or "[]"), []):
+            data = usage.setdefault(str(tag), {"count": 0, "projects": set()})
+            data["count"] += 1
+            data["projects"].add(str(row["project_id"]))
+    return usage
+
+
+def _skill_line(root: Path, skill: Any, usage: dict[str, dict[str, Any]]) -> str:
+    data = usage.get(skill.name, {"count": 0, "projects": set()})
+    projects = ", ".join(sorted(data["projects"])) if data["projects"] else (skill.project_id or "none")
+    return (
+        f"{_e(skill.id)}: name={_e(skill.name)} status={_e(skill.status)} "
+        f"usage_count={data['count']} last_used={_e(skill.last_used_at or skill.updated_at)} "
+        f"projects_using={_e(projects)} path={_artifact_link(_repo_relative_artifact_path(root, skill.path))}"
+    )
+
+
+def _profiles_page(root: Path) -> str:
+    profile_path = root / ".clanker" / "profiles.yml"
+    profile_lines = profile_path.read_text(encoding="utf-8").splitlines() if profile_path.exists() else []
+    profiles = _profile_names(profile_lines)
+    prepared = [
+        "Planning: inactive provider-routing placeholder",
+        "Coding: inactive provider-routing placeholder",
+        "Review: inactive provider-routing placeholder",
+        "Docs: inactive provider-routing placeholder",
+        "Cheap model: inactive provider-routing placeholder",
+        "Frontier model: inactive provider-routing placeholder",
+    ]
+    return "".join(
+        [
+            "<section><h1>Profiles And Routing</h1>",
+            "<p class='muted'>Prepared UI and storage readback for future provider routing. Providers remain inactive.</p>",
+            _kv(
+                [
+                    ("profiles_path", ".clanker/profiles.yml" if profile_path.exists() else "missing"),
+                    ("profile_count", str(len(profiles))),
+                    ("provider_routing_active", "false"),
+                    ("provider_calls_taken", "0"),
+                ]
+            ),
+            "</section>",
+            _list_section("Configured Profiles", profiles),
+            _list_section("Future Profile Lanes", prepared),
+            _non_claim_banner(),
+        ]
+    )
+
+
+def _profile_names(lines: list[str]) -> list[str]:
+    names = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("- name:"):
+            names.append(stripped.removeprefix("- name:").strip())
+    return names
+
+
+def _first_run_panel(root: Path, storage: Storage) -> str:
+    projects = storage.list_registered_projects()
+    default_project = projects[0].name if projects else "clankeros"
+    return "".join(
+        [
+            "<section><h2>First Run Guide</h2>",
+            _ul(
+                [
+                    "Create project: register a local git repository.",
+                    "Create first goal: materialize a goal, plan, and planned tasks.",
+                    "Run first delegation: open the goal workflow and follow the next recommended local action.",
+                    "<code>python3 -m agent_os.cli demo</code>: populate deterministic local demo data.",
+                ]
+            ),
+            "<h3>Create Project</h3>",
+            _input_form(
+                "register-project",
+                {},
+                {
+                    "name": default_project,
+                    "path": str(root),
+                    "test_command": "python3 -m pytest -q",
+                    "allowed_write_roots": str(root),
+                },
+            ),
+            "<h3>Create First Goal</h3>",
+            _input_form(
+                "create-goal",
+                {},
+                {
+                    "project_id": default_project,
+                    "prompt": "Make ClankerOS easier to operate from the browser.",
+                    "created_by_profile": "planner",
+                },
+            ),
+            "</section>",
+        ]
+    )
+
+
+def _load_workspace_state(root: Path) -> dict[str, str]:
+    path = _workspace_path(root)
+    if not path.exists():
+        return {
+            "open_project": "",
+            "open_goal": "",
+            "filters": "",
+            "expanded_panels": "",
+            "last_viewed_artifact": "",
+            "updated_by": "operator",
+            "updated_at": "never",
+        }
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        data = {}
+    return {key: str(data.get(key, "")) for key in [
+        "open_project",
+        "open_goal",
+        "filters",
+        "expanded_panels",
+        "last_viewed_artifact",
+        "updated_by",
+        "updated_at",
+    ]}
+
+
+def _write_workspace_state(root: Path, state: dict[str, str]) -> dict[str, Any]:
+    path = _workspace_path(root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "open_project": state.get("open_project", "").strip(),
+        "open_goal": state.get("open_goal", "").strip(),
+        "filters": state.get("filters", "").strip(),
+        "expanded_panels": state.get("expanded_panels", "").strip(),
+        "last_viewed_artifact": state.get("last_viewed_artifact", "").strip(),
+        "updated_by": state.get("updated_by", "operator").strip() or "operator",
+        "updated_at": utc_now(),
+        "network_actions_taken": 0,
+        "external_mutations_taken": 0,
+    }
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return {"workspace_path": path, "status": "saved", **payload}
+
+
+def _workspace_path(root: Path) -> Path:
+    return root / ".clanker" / "app" / "workspace.json"
+
+
+def _json_loads_safe(value: str, fallback: Any) -> Any:
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        return fallback
+
+
 @dataclass(frozen=True)
 class GoalNextAction:
     action: str
@@ -1006,16 +1555,7 @@ def _goals(root: Path) -> str:
                 "<section><h1>Goal Cockpit</h1>",
                 "<p class='muted'>Everything in ClankerOS revolves around a Goal. No goals exist yet in this local state.</p>",
                 "</section>",
-                "<section><h2>First Run Guide</h2>",
-                _ul(
-                    [
-                        "<code>python3 -m agent_os.cli projects</code>: inspect or register a local project",
-                        "<code>python3 -m agent_os.cli goal &quot;...&quot; --project &lt;project&gt;</code>: create the first goal",
-                        "<code>python3 -m agent_os.cli demo</code>: populate deterministic local demo data",
-                        "<a href='/demo'>/demo</a>: fixture-backed browser walkthrough",
-                    ]
-                ),
-                "</section>",
+                _first_run_panel(root, storage),
                 _non_claim_banner(),
             ]
         )
@@ -1039,6 +1579,7 @@ def _goals(root: Path) -> str:
             _list_section("Active Goals", [_goal_index_line(root, storage, row) for row in active]),
             _list_section("Paused Goals", [_goal_index_line(root, storage, row) for row in paused]),
             _list_section("Completed Goals", [_goal_index_line(root, storage, row) for row in completed]),
+            _first_run_panel(root, storage),
             _non_claim_banner(),
         ]
     )
@@ -4310,6 +4851,57 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             message = f"local_app_status: {status_path.relative_to(root)}"
             location = "/"
             result = {"status_path": status_path, "artifact_written": True}
+        elif action == "register-project":
+            project = register_project(
+                root,
+                name=_required(form, "name"),
+                repo_path=Path(_required(form, "path")),
+                default_test_command=_required(form, "test_command"),
+                allowed_write_roots=[
+                    Path(item.strip())
+                    for item in (_one(form, "allowed_write_roots") or "").split(",")
+                    if item.strip()
+                ]
+                or None,
+            )
+            message = f"project_registered: {project.name}"
+            location = f"/projects/{quote(project.name)}"
+            result = project
+        elif action == "create-goal":
+            lifecycle = create_goal_lifecycle(
+                root,
+                storage,
+                project_id=_required(form, "project_id"),
+                prompt=_required(form, "prompt"),
+                created_by_profile=_one(form, "created_by_profile") or "planner",
+            )
+            message = f"goal_created: {lifecycle.goal.id}"
+            location = f"/goals/{quote(lifecycle.goal.id)}"
+            result = lifecycle
+        elif action == "save-workspace":
+            result = _write_workspace_state(
+                root,
+                {
+                    "open_project": _one(form, "open_project") or "",
+                    "open_goal": _one(form, "open_goal") or "",
+                    "filters": _one(form, "filters") or "",
+                    "expanded_panels": _one(form, "expanded_panels") or "",
+                    "last_viewed_artifact": _one(form, "last_viewed_artifact") or "",
+                    "updated_by": _one(form, "updated_by") or "operator",
+                },
+            )
+            message = "workspace_saved: .clanker/app/workspace.json"
+            location = "/workspace"
+        elif action == "pin-memory":
+            memory_id = _required(form, "memory_id")
+            result = storage.update_memory_entry_status(
+                memory_id,
+                status="active",
+                decided_by=_one(form, "decided_by") or "operator",
+                reason=_one(form, "note") or "Pinned from local app.",
+            )
+            message = f"memory_pinned: {result.id}"
+            location = "/memory"
         elif action == "context-pack":
             delegation_id = _required(form, "delegation_id")
             result = generate_context_pack(root, storage, delegation_id)
@@ -4451,6 +5043,8 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
         CoderWorktreeApprovalError,
         CoderWorktreeCommitError,
         CoderPublicationError,
+        PlanningError,
+        KeyError,
     ) as error:
         return _html_page(
             root,
@@ -4992,7 +5586,7 @@ def _html_page(root: Path, title: str, content: str, *, status: int = 200) -> Lo
 <body>
   <header>
     <strong>ClankerOS Local Operator</strong>
-    <nav><a href="/">Dashboard</a><a href="/goals">Goals</a><a href="/workflow">Workflow</a><a href="/actions">Actions</a><a href="/verification">Verification</a><a href="/ci-evidence">CI Evidence</a><a href="/dogfooding">Dogfooding</a><a href="/projects">Projects</a><a href="/delegation-runs">Delegation Runs</a><a href="/inbox">Inbox</a><a href="/approvals">Approvals</a><a href="/incidents">Incidents</a><a href="/health">Health</a><a href="/demo">Demo</a></nav>
+    <nav><a href="/">Dashboard</a><a href="/goals">Goals</a><a href="/search">Search</a><a href="/workspace">Workspace</a><a href="/memory">Memory</a><a href="/skills">Skills</a><a href="/profiles">Profiles</a><a href="/workflow">Workflow</a><a href="/actions">Actions</a><a href="/verification">Verification</a><a href="/ci-evidence">CI Evidence</a><a href="/dogfooding">Dogfooding</a><a href="/projects">Projects</a><a href="/delegation-runs">Delegation Runs</a><a href="/inbox">Inbox</a><a href="/approvals">Approvals</a><a href="/incidents">Incidents</a><a href="/health">Health</a><a href="/demo">Demo</a></nav>
   </header>
   <main>{content}</main>
 </body>

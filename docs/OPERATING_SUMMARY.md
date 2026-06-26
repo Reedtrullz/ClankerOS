@@ -78,7 +78,18 @@ Core layers for the bootstrap:
   project tasks and include a project workflow launchpad with scoped
   delegation/run workflow links, safe actions, dogfooding, and verification
   links so the operator can start from the product path rather than infer
-  goals from task rows. The workflow page can be scoped with a
+  goals from task rows. The local app now also exposes `/search` for bounded
+  global search across indexed goals, projects, delegations, known artifacts,
+  incidents, recommendations, memory, runs, approvals, and skills;
+  `/workspace` for persistent open project/goal/filter/panel/last-artifact
+  state in `.clanker/app/workspace.json`; `/memory` for project/global/
+  generated memories, operator notes, future work, and pin actions; `/skills`
+  for available/generated skill records with usage counts; and `/profiles`
+  for inactive future provider-routing readback from `.clanker/profiles.yml`.
+  The `/goals` first-run panel now exposes confirmed local `register-project`
+  and `create-goal` forms, moving initial project/goal setup into the browser
+  without adding provider calls or external effects. The workflow page can be
+  scoped with a
   delegation or coder run id, then annotates related stepper rows with
   selected local artifact, approval, run, commit, publication, and next-action
   status, plus a read-only `Selected Workflow Continuation` block linking the
@@ -175,7 +186,8 @@ Core layers for the bootstrap:
   `marker=matched` or `marker=missing` per route while preserving
   provider/network/external-mutation counters at zero. `app-demo-smoke-test`
   creates the fixture-backed demo state and renders the stateful demo,
-  dogfooding, project, delegation, scoped workflow, run, approvals, inbox,
+  dogfooding, goal, search, workspace, memory, skills, profiles, project,
+  delegation, scoped workflow, run, approvals, inbox,
   actions, and health routes with expected snippet checks while preserving the
   same zero provider/network/external-mutation counters. The checked-in GitHub
   Actions workflow now runs a separate 10-minute `smoke` job for compile,

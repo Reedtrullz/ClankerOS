@@ -55,12 +55,25 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   action when goal state exists.
 - `/goals` - daily goal cockpit. It separates active, paused, and completed
   goals, links to each goal detail page, and keeps phase, next action, task
-  progress, and first-run guidance visible.
+  progress, and first-run browser actions visible. The page exposes confirmed
+  local `register-project` and `create-goal` forms for a fresh checkout.
 - `/goals/<goal_id>` - goal-centered workbench with current phase, next action,
   overview, progress, chronological timeline, activity log, delegations, runs,
   approvals, evidence, artifacts, memory, skills used, git status, operator
   notes, and remaining work. It uses local polling refresh and does not contact
   GitHub or providers.
+- `/search` - bounded global search over indexed goals, projects, delegations,
+  known artifacts, incidents, recommendations, memory, runs, approvals, and
+  skill records. It does not expose arbitrary filesystem browsing.
+- `/workspace` - persistent local workspace state for open project, open goal,
+  filters, expanded panels, and last viewed artifact. The confirmed
+  `save-workspace` form writes `.clanker/app/workspace.json`.
+- `/memory` - project memories, global memories, generated memories, operator
+  notes, future-work recommendations, and confirmed `pin-memory` actions.
+- `/skills` - available/generated skill records with usage count, last-used
+  readback, and projects using them.
+- `/profiles` - inactive future provider-routing surface. It reads
+  `.clanker/profiles.yml` when present and keeps provider calls at zero.
 - `/workflow` - modern handoff/worktree/commit/publication workflow stepper,
   including `coder-prep-from-handoff` as the artifact-first prep route. Add
   `?delegation_id=<id>` or `?run_id=<coder_worktree_run_id>` to show selected
@@ -216,11 +229,11 @@ checked-in GitHub Actions workflow runs the same smoke command before the full
 pytest suite.
 
 `app-demo-smoke-test` is the fixture-backed companion. It creates or refreshes
-the local demo scenario, renders the goal cockpit, goal detail, selected
-project, delegation, scoped workflow, coder run, approvals, inbox, actions,
-and health pages, and checks state-specific snippets without starting a server
-or taking network/external actions. The GitHub fast smoke job runs it before
-the full suite.
+the local demo scenario, renders the goal cockpit, goal detail, global search,
+workspace, memory, skills, profiles, selected project, delegation, scoped
+workflow, coder run, approvals, inbox, actions, and health pages, and checks
+state-specific snippets without starting a server or taking network/external
+actions. The GitHub fast smoke job runs it before the full suite.
 
 The page does not fetch GitHub status. The fast smoke job can prove route and
 CLI wiring before the full suite finishes, but a pushed commit is not CI proof

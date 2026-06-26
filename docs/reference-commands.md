@@ -42,9 +42,14 @@ renders the core routes without starting a server. `app-demo-smoke-test`
 creates the demo fixture and renders stateful goal/demo/workflow/project/
 delegation/run/approval routes with expected snippet checks, still without
 starting a server or taking network/external actions. The app includes
-`/goals` as the daily goal cockpit, `/goals/<goal_id>` as the goal-centered
-workbench with phase, next action, timeline, evidence, artifacts, memory,
-skills, git status, operator notes, and remaining work, `/projects` as a
+`/goals` as the daily goal cockpit with confirmed local first-run
+`register-project` and `create-goal` forms, `/goals/<goal_id>` as the
+goal-centered workbench with phase, next action, timeline, evidence,
+artifacts, memory, skills, git status, operator notes, and remaining work,
+`/search` for bounded indexed search, `/workspace` for persistent open
+project/goal/filter/panel/artifact state, `/memory`, `/skills`, and
+`/profiles` for local memory, skill usage, and inactive routing readbacks,
+`/projects` as a
 project workflow index with local repo posture, goal/task/
 delegation counts, next recommended operator action, and selected workflow
 links, `/projects/<project_id>` for project goals, tasks, artifacts, guidance,

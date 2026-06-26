@@ -1,5 +1,45 @@
 # Status
 
+## 2026-06-26 Browser Search, Workspace, Memory, Skills, And First-Run Actions
+
+- Added first-class local app routes for `/search`, `/workspace`, `/memory`,
+  `/skills`, and `/profiles`.
+- `/search` performs bounded global search across indexed goals, projects,
+  tasks, delegations, runs, approvals, incidents, recommendations, memory,
+  skills, and known artifacts without arbitrary filesystem browsing.
+- `/workspace` reads and writes `.clanker/app/workspace.json` through a
+  confirmed `save-workspace` action for open project, open goal, filters,
+  expanded panels, and last viewed artifact.
+- `/memory` shows project/global/generated memories, operator notes, future
+  work, and confirmed `pin-memory` actions. `/skills` shows skill records,
+  generated skills, usage count, last-used readback, and projects using them.
+  `/profiles` shows inactive future routing lanes and `.clanker/profiles.yml`
+  readback with provider calls still at zero.
+- `/goals` now includes confirmed browser first-run actions for
+  `register-project` and `create-goal`, using the existing project registry
+  and goal lifecycle helpers.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py agent_os/cli.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health"`
+    -> `1 passed, 506 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario or local_app_cli_commands_and_bind_safety"`
+    -> `2 passed, 505 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario or local_app_cli_commands_and_bind_safety or local_app_routes_render_modern_workflow_and_health"`
+    -> `3 passed, 504 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> rendered `/search`, `/workspace`, `/memory`, `/skills`, `/profiles`,
+    and the existing local app routes with matched markers and zero
+    provider/network/external-mutation counters.
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> rendered the populated goal/search/workspace/memory/skills/profiles
+    demo path with matched snippets and zero provider/network/external-mutation
+    counters.
+  - `git diff --check`
+- Non-claims: these are local app/readback/confirmed local artifact writes
+  only. They do not deploy, call providers, fetch GitHub status from the app,
+  push, create PRs from the app, run arbitrary commands from the app, or enable
+  external mutation inside ClankerOS.
+
 ## 2026-06-26 Goal-First Local App Cockpit
 
 - Added `/goals` as the local app's daily goal cockpit. It separates active,

@@ -4113,6 +4113,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "/verification" in refreshed_status["routes_available"]
     assert "/ci-evidence" in refreshed_status["routes_available"]
     assert "/dogfooding" in refreshed_status["routes_available"]
+    assert "/search" in refreshed_status["routes_available"]
+    assert "/workspace" in refreshed_status["routes_available"]
+    assert "/memory" in refreshed_status["routes_available"]
+    assert "/skills" in refreshed_status["routes_available"]
+    assert "/profiles" in refreshed_status["routes_available"]
     dashboard_notice = render_local_app_route(
         tmp_path,
         "/?notice=local_app_status%3A%20.clanker/app/local_app_status.json",
@@ -4152,7 +4157,90 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert goals.status == 200
     assert "Goal Cockpit" in goals.body
     assert "First Run Guide" in goals.body
+    assert "Create Project" in goals.body
+    assert "Create First Goal" in goals.body
+    assert "register-project" in goals.body
+    assert "create-goal" in goals.body
     assert "python3 -m agent_os.cli demo" in goals.body
+
+    search = render_local_app_route(tmp_path, "/search")
+    assert search.status == 200
+    assert "Global Search" in search.body
+    assert "raw_filesystem_browsing</dt><dd>false" in search.body
+
+    workspace = render_local_app_route(tmp_path, "/workspace")
+    assert workspace.status == 200
+    assert "Workspace State" in workspace.body
+    assert "save-workspace" in workspace.body
+    workspace_result = render_local_app_route(
+        tmp_path,
+        "/actions/save-workspace",
+        method="POST",
+        form={
+            "open_project": ["first-app"],
+            "open_goal": ["goal_demo"],
+            "filters": ["active"],
+            "expanded_panels": ["timeline,evidence"],
+            "last_viewed_artifact": [".clanker/app/local_app_status.json"],
+            "updated_by": ["operator"],
+            "confirm": ["yes"],
+        },
+    )
+    assert workspace_result.status == 200
+    assert "workspace_saved" in workspace_result.body
+    workspace_json = tmp_path / ".clanker" / "app" / "workspace.json"
+    assert workspace_json.exists()
+    workspace_data = json.loads(workspace_json.read_text(encoding="utf-8"))
+    assert workspace_data["open_project"] == "first-app"
+    assert workspace_data["open_goal"] == "goal_demo"
+    workspace_saved = render_local_app_route(tmp_path, "/workspace")
+    assert "open_project</dt><dd>first-app" in workspace_saved.body
+    assert "open_goal</dt><dd>goal_demo" in workspace_saved.body
+
+    for route, marker in [
+        ("/memory", "Memory Bank"),
+        ("/skills", "Skills Inventory"),
+        ("/profiles", "Profiles And Routing"),
+    ]:
+        response = render_local_app_route(tmp_path, route)
+        assert response.status == 200
+        assert marker in response.body
+
+    target_repo = tmp_path / "first-target"
+    target_repo.mkdir()
+    subprocess.run(["git", "init"], cwd=target_repo, check=True, capture_output=True)
+    register_result = render_local_app_route(
+        tmp_path,
+        "/actions/register-project",
+        method="POST",
+        form={
+            "name": ["first-target"],
+            "path": [str(target_repo)],
+            "test_command": ["python3 -m pytest -q"],
+            "allowed_write_roots": [str(target_repo)],
+            "confirm": ["yes"],
+        },
+    )
+    assert register_result.status == 200
+    assert "project_registered: first-target" in register_result.body
+    assert (tmp_path / "projects" / "first-target" / "project.md").exists()
+    create_goal_result = render_local_app_route(
+        tmp_path,
+        "/actions/create-goal",
+        method="POST",
+        form={
+            "project_id": ["first-target"],
+            "prompt": ["Create a browser-first first-run workflow"],
+            "created_by_profile": ["planner"],
+            "confirm": ["yes"],
+        },
+    )
+    assert create_goal_result.status == 200
+    assert "goal_created:" in create_goal_result.body
+    assert "GOAL.md" in create_goal_result.body
+    created_goals = render_local_app_route(tmp_path, "/goals")
+    assert "first-target" in created_goals.body
+    assert "Create a browser-first first-run workflow" in created_goals.body
 
     actions = render_local_app_route(tmp_path, "/actions")
     assert actions.status == 200
@@ -4521,6 +4609,51 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_live_refresh_interval_seconds</dt><dd>5" in goal.body
     assert result.delegation_id in goal.body
     assert result.coder_worktree_run_id in goal.body
+
+    search = render_local_app_route(tmp_path, "/search?q=fixture-backed")
+    assert search.status == 200
+    assert "Global Search" in search.body
+    assert "goal" in search.body
+    assert result.goal_id in search.body
+    assert "artifact" in search.body
+
+    memory = render_local_app_route(tmp_path, "/memory")
+    assert memory.status == 200
+    assert "Memory Bank" in memory.body
+    assert "Project Memories" in memory.body
+    assert "Generated Memories" in memory.body
+    assert "Future Work" in memory.body
+
+    skills = render_local_app_route(tmp_path, "/skills")
+    assert skills.status == 200
+    assert "Skills Inventory" in skills.body
+    assert "Available Skills" in skills.body
+    assert "usage_count" in skills.body
+
+    profiles = render_local_app_route(tmp_path, "/profiles")
+    assert profiles.status == 200
+    assert "Profiles And Routing" in profiles.body
+    assert "provider_routing_active</dt><dd>false" in profiles.body
+
+    workspace = render_local_app_route(
+        tmp_path,
+        "/actions/save-workspace",
+        method="POST",
+        form={
+            "open_project": [result.project_id],
+            "open_goal": [result.goal_id],
+            "filters": ["active"],
+            "expanded_panels": ["timeline,evidence"],
+            "last_viewed_artifact": [".clanker/demo/demo-result.md"],
+            "updated_by": ["operator"],
+            "confirm": ["yes"],
+        },
+    )
+    assert workspace.status == 200
+    assert "workspace_saved" in workspace.body
+    restored_workspace = render_local_app_route(tmp_path, "/workspace")
+    assert result.project_id in restored_workspace.body
+    assert result.goal_id in restored_workspace.body
 
     delegation_runs = render_local_app_route(tmp_path, "/delegation-runs")
     assert delegation_runs.status == 200
@@ -5087,6 +5220,11 @@ def test_local_app_cli_commands_and_bind_safety(
     smoke_output = capsys.readouterr().out
     assert "app_smoke_test: passed" in smoke_output
     assert "route /goals: 200 marker=matched required_marker=Goal Cockpit" in smoke_output
+    assert "route /search: 200 marker=matched required_marker=Global Search" in smoke_output
+    assert "route /workspace: 200 marker=matched required_marker=Workspace State" in smoke_output
+    assert "route /memory: 200 marker=matched required_marker=Memory Bank" in smoke_output
+    assert "route /skills: 200 marker=matched required_marker=Skills Inventory" in smoke_output
+    assert "route /profiles: 200 marker=matched required_marker=Profiles And Routing" in smoke_output
     assert "route /workflow: 200 marker=matched required_marker=Modern Operator Workflow" in smoke_output
     assert "route /actions: 200 marker=matched required_marker=Safe Action Catalog" in smoke_output
     assert "route /verification: 200 marker=matched required_marker=Verification Handoff" in smoke_output

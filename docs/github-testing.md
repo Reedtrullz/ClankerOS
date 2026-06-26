@@ -17,9 +17,10 @@ The `Tests` workflow has two jobs:
 - `smoke` checks out the repo, sets up Python 3.10, installs `pytest`,
   compiles `agent_os` and `tests`, runs local CLI smoke checks against a
   temporary ClankerOS root, runs the generic route smoke plus the
-  fixture-backed `app-demo-smoke-test`, including `/goals` and
-  `/goals/<goal_id>`, runs a focused pytest slice for the GitHub workflow,
-  CI snapshot handoff, local app route, artifact viewer, demo scenario, and
+  fixture-backed `app-demo-smoke-test`, including `/goals`,
+  `/goals/<goal_id>`, `/search`, `/workspace`, `/memory`, `/skills`, and
+  `/profiles`, runs a focused pytest slice for the GitHub workflow, CI
+  snapshot handoff, local app route, artifact viewer, demo scenario, and
   bind-safety tests, and checks whitespace with
   `git diff --check`.
 - `full-suite` depends on `smoke` and then runs the slow full suite with:

@@ -94,9 +94,10 @@ Then read:
 - [GitHub Testing](docs/github-testing.md)
 
 The primary operator surface is now the local app plus the CLI. Start the app
-for a browser view of goals, projects, workflow, delegations, delegation runs,
-coder runs, safe action catalog, verification handoff, dogfooding checklist,
-health, artifacts, the operator inbox, approvals, incidents, and demo state:
+for a browser view of goals, search, workspace restore, memory, skills,
+profiles, projects, workflow, delegations, delegation runs, coder runs, safe
+action catalog, verification handoff, dogfooding checklist, health, artifacts,
+the operator inbox, approvals, incidents, and demo state:
 
 ```bash
 python3 -m agent_os.cli app
@@ -129,6 +130,17 @@ goal-centered workbench: current phase, next action, progress, timeline,
 activity log, evidence, delegations, runs, approvals, artifacts, memory, skills
 used, git status, operator notes, and remaining work. The page auto-refreshes
 by polling and stays local-only.
+
+Use `/goals` on a fresh checkout for first-run browser actions. The page now
+renders confirmed local forms for `register-project` and `create-goal`, so a
+new operator can create a project and first goal without switching to CLI
+commands. Use `/workspace` to save and restore open project, open goal, filters,
+expanded panels, and last viewed artifact in `.clanker/app/workspace.json`.
+Use `/search` for bounded global search across indexed goals, projects,
+delegations, known artifacts, incidents, recommendations, memory, runs, and
+approvals. Use `/memory`, `/skills`, and `/profiles` for local readbacks of
+memory entries, generated skills/usage, and inactive future provider-routing
+lanes.
 
 Use `/workflow?delegation_id=<id>` or `/workflow?run_id=<coder_run_id>` when
 you want the scoped operator map. The selected workflow page now includes a
