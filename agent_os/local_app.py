@@ -4530,6 +4530,10 @@ def _goal_operator_notes_path(goal: Any) -> Path:
     return Path(".clanker") / "projects" / goal.project_id / "goals" / goal.id / "operator-notes.md"
 
 
+def _goal_file_path(project_id: str, goal_id: str, filename: str) -> Path:
+    return Path(".clanker") / "projects" / project_id / "goals" / goal_id / filename
+
+
 def _goal_remaining_work_lines(
     root: Path,
     state: dict[str, Any],
@@ -7880,6 +7884,19 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             result = _resume_goal_from_form(storage, form)
             message = f"goal_resumed: {result['goal_id']}"
             location = f"/goals/{quote(result['goal_id'])}"
+            _write_workspace_state(
+                root,
+                {
+                    **_load_workspace_state(root),
+                    "open_project": result["project_id"],
+                    "open_goal": result["goal_id"],
+                    "last_viewed_artifact": _repo_relative_artifact_path(
+                        root,
+                        _goal_file_path(result["project_id"], result["goal_id"], "GOAL.md"),
+                    ),
+                    "updated_by": "resume-goal",
+                },
+            )
         elif action == "complete-goal":
             result = _complete_goal_from_form(root, storage, form)
             message = f"goal_completed: {result['goal_id']}"
@@ -7906,6 +7923,16 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             result = _append_goal_operator_note(root, storage, form)
             message = f"goal_operator_note_saved: {result['goal_id']}"
             location = f"/goals/{quote(result['goal_id'])}"
+            _write_workspace_state(
+                root,
+                {
+                    **_load_workspace_state(root),
+                    "open_project": result["project_id"],
+                    "open_goal": result["goal_id"],
+                    "last_viewed_artifact": result["note_path"],
+                    "updated_by": "save-goal-note",
+                },
+            )
         elif action == "save-workspace":
             result = _write_workspace_state(
                 root,

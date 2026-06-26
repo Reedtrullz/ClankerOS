@@ -169,13 +169,17 @@ Core layers for the bootstrap:
   `save-goal-note` form that appends local operator resume context to the
   goal-scoped `operator-notes.md` artifact; saved operator notes also become
   linked `Operator note saved` entries in the Goal timeline and recent
-  Activity Log with zero external effects. They also include a confirmed `delegate`
+  Activity Log with zero external effects, and the confirmed note action now
+  refreshes saved workspace state to the operator-notes artifact so `/resume`,
+  Home, and `/workspace` return to the note context without a separate manual
+  save. They also include a confirmed `delegate`
   next-action form when a goal has planned tasks but no delegation yet. If a
   goal is explicitly paused, the Goal page shows a `Paused` phase and a
   confirmed `resume-goal` next-action form that only changes local goal status
   from `paused` to `active`; it does not resume blocked tasks, approve gates,
   run work, push, create PRs, deploy, call providers, use the network, or
-  mutate external systems. The
+  mutate external systems, and confirmed resume refreshes saved workspace
+  state to the resumed goal artifact. The
   delegation form writes a read-only scout delegation contract only and does
   not start a subagent. Once a delegation exists without a context pack, the
   same Goal Next Action card exposes a confirmed `context-pack` form; after

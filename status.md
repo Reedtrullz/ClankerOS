@@ -1,5 +1,32 @@
 # Status
 
+## 2026-06-27 Operator Note Resume Anchors
+
+- Made confirmed browser `resume-goal` and `save-goal-note` actions refresh
+  `.clanker/app/workspace.json` with the current project, goal, and newest
+  operator-facing artifact. Resuming a paused goal now anchors workspace state
+  to the goal's `GOAL.md`; saving an operator note now anchors workspace state
+  to `operator-notes.md`, so `/resume`, Home, and `/workspace` return to the
+  exact resumed goal or note context without requiring a separate manual
+  `save-workspace` step.
+- Non-claims: this does not resume blocked tasks, approve gates, run work,
+  push, create PRs, deploy, call providers, fetch GitHub status, or mutate
+  external systems. `resume-goal` still only changes local goal status from
+  paused to active, and `save-goal-note` still only appends a local
+  goal-scoped note artifact.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+    -> `1 passed, 513 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace or goal_next_action_card_exposes_post_delegation_forms"`
+    -> `3 passed, 511 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Final Gate Resume Anchors
 
 - Made confirmed browser `approve-coder-commit`, `commit-coder-worktree`,

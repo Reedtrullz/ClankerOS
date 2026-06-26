@@ -4409,6 +4409,18 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "network_actions_taken</dt><dd>0" in resume_result.body
     assert "external_mutations_taken</dt><dd>0" in resume_result.body
     assert storage_after_creation.get_goal(created_goal_id).status == "active"
+    resumed_workspace = json.loads(workspace_json.read_text(encoding="utf-8"))
+    assert resumed_workspace["open_project"] == "first-target"
+    assert resumed_workspace["open_goal"] == created_goal_id
+    assert resumed_workspace["last_viewed_artifact"] == (
+        f".clanker/projects/first-target/goals/{created_goal_id}/GOAL.md"
+    )
+    assert resumed_workspace["updated_by"] == "resume-goal"
+    resumed_workspace_page = render_local_app_route(tmp_path, "/resume")
+    assert "resume_current_phase</dt><dd>Ready for delegation" in resumed_workspace_page.body
+    assert f".clanker/projects/first-target/goals/{created_goal_id}/GOAL.md" in (
+        resumed_workspace_page.body
+    )
     resume_again = render_local_app_route(
         tmp_path,
         "/actions/resume-goal",
@@ -4465,6 +4477,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
     note_text = note_path.read_text(encoding="utf-8")
     assert "Resume by checking the scout delegation state first." in note_text
     assert "- author: operator" in note_text
+    note_workspace = json.loads(workspace_json.read_text(encoding="utf-8"))
+    assert note_workspace["open_project"] == "first-target"
+    assert note_workspace["open_goal"] == created_goal_id
+    assert note_workspace["last_viewed_artifact"] == str(note_path.relative_to(tmp_path))
+    assert note_workspace["updated_by"] == "save-goal-note"
+    note_resume_page = render_local_app_route(tmp_path, "/resume")
+    assert "resume_current_phase</dt><dd>Ready for delegation" in note_resume_page.body
+    assert f".clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md" in (
+        note_resume_page.body
+    )
     noted_goal_page = render_local_app_route(tmp_path, f"/goals/{created_goal_id}")
     assert "operator_notes_status: available" in noted_goal_page.body
     assert f".clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md" in noted_goal_page.body
