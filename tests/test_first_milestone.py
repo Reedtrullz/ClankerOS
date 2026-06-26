@@ -4304,6 +4304,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "completion_criteria_source: plan_steps" in first_goal_page.body
     assert "completion_criteria_count: 3" in first_goal_page.body
     assert "Scope, non-goals, and verifier are explicit." in first_goal_page.body
+    assert "Goal Verification Evidence" in first_goal_page.body
+    assert "goal_ci_project: first-target" in first_goal_page.body
+    assert "goal_ci_latest_status: missing" in first_goal_page.body
+    assert "goal_ci_matches_current_checkout: false" in first_goal_page.body
+    assert "goal_ci_github_status_fetch: none" in first_goal_page.body
     assert "note_append_form_available: true" in first_goal_page.body
     assert "save-goal-note" in first_goal_page.body
     note_confirmation = render_local_app_route(
@@ -4688,6 +4693,54 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert result.review_path.exists()
     assert result.coder_worktree_run_id in result.review_path.read_text(encoding="utf-8")
 
+    project_commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=result.project_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    project_branch = subprocess.run(
+        ["git", "branch", "--show-current"],
+        cwd=result.project_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip() or "unknown"
+    ci_evidence_path = tmp_path / ".clanker" / "ci-snapshots" / "demo-goal-ci.json"
+    ci_evidence_path.parent.mkdir(parents=True, exist_ok=True)
+    ci_evidence_path.write_text(
+        json.dumps(
+            {
+                "status": "success",
+                "status_source": "github_status_json",
+                "evidence_scope": "workflow_run",
+                "network_actions_taken": 0,
+                "external_mutations_taken": 0,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    Storage(tmp_path / ".agent" / "state.db").record_ci_snapshot_evidence(
+        project_id=result.project_id,
+        branch_name=project_branch,
+        commit_sha=project_commit,
+        provider="github-actions",
+        external_run_id="demo-goal-ci",
+        external_url="https://github.com/example/subject/actions/runs/demo-goal-ci",
+        status="success",
+        recorded_by="operator",
+        evidence_path=str(ci_evidence_path),
+        result_json={
+            "status_source": "github_status_json",
+            "evidence_scope": "workflow_run",
+            "network_actions_taken": 0,
+            "external_mutations_taken": 0,
+        },
+        idempotency_key="demo-goal-ci",
+    )
+
     demo = render_local_app_route(tmp_path, "/demo")
     assert demo.status == 200
     assert "Demo Dogfooding Links" in demo.body
@@ -4906,6 +4959,21 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "profile_used: scout count=1" in goal.body
     assert "skill_execution_from_goal_page=false" in goal.body
     assert "Git Status" in goal.body
+    assert "Goal Verification Evidence" in goal.body
+    assert f"goal_ci_project: {result.project_id}" in goal.body
+    assert "goal_ci_latest_status: success" in goal.body
+    assert "goal_ci_latest_source: direct_public_snapshot" in goal.body
+    assert "goal_ci_latest_provider: github-actions" in goal.body
+    assert "goal_ci_latest_status_source: github_status_json" in goal.body
+    assert "goal_ci_latest_evidence_scope: workflow_run" in goal.body
+    assert "goal_ci_branch_matches_current: true" in goal.body
+    assert "goal_ci_commit_matches_current: true" in goal.body
+    assert "goal_ci_matches_current_checkout: true" in goal.body
+    assert "goal_ci_record_source: operator_supplied" in goal.body
+    assert "goal_ci_github_status_fetch: none" in goal.body
+    assert "goal_ci_app_network_actions_taken: 0" in goal.body
+    assert "goal_ci_external_mutations_taken: 0" in goal.body
+    assert "demo-goal-ci.json" in goal.body
     assert "Operator Notes" in goal.body
     assert "save-goal-note" in goal.body
     assert "note_append_form_available: true" in goal.body

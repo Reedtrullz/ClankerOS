@@ -84,7 +84,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   overwrite previous notes. The Goal Memory section links to `/memory`, shows
   project/global memory artifacts, goal-scoped memory entry counts, generated
   memory count, operator-note status, future-work count, and the current pin
-  posture; pinning stays on the confirmed `/memory` action surface. When the
+  posture; pinning stays on the confirmed `/memory` action surface. Goal
+  Verification Evidence links to `/verification` and `/ci-evidence`, filters
+  operator-supplied CI records to the current goal project, compares the
+  recorded branch/commit to the current project checkout, and reports
+  `github_status_fetch: none` so missing or stale project proof stays visible.
+  When the
   goal has planned tasks but no
   delegation yet, the Next Action card exposes a confirmed `delegate` form
   that writes a read-only scout delegation contract without starting a

@@ -1898,6 +1898,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _list_section("Memory", _goal_memory_lines(root, state)),
             _list_section("Skills Used", _goal_skill_lines(root, state)),
             _goal_git_status(root, state),
+            _goal_verification_evidence(root, state),
             _goal_operator_notes_section(root, state),
             _list_section("Remaining Work", _goal_remaining_work_lines(root, state, next_action)),
             _non_claim_banner(),
@@ -3524,6 +3525,76 @@ def _goal_git_status(root: Path, state: dict[str, Any]) -> str:
     ) + "</section>"
 
 
+def _goal_verification_evidence(root: Path, state: dict[str, Any]) -> str:
+    goal = state["goal"]
+    project = _storage(root).get_registered_project(goal.project_id)
+    project_root = Path(project.root_path) if project else root
+    repo = _repo_state(project_root)
+    full_commit = _git(project_root, ["rev-parse", "HEAD"]) or repo["commit"]
+    latest_record = _latest_ci_evidence_record(root, project_id=goal.project_id)
+    lines: list[str] = [
+        f"goal_ci_project: {_e(goal.project_id)}",
+        f"goal_ci_current_branch: {_e(repo['branch'])}",
+        f"goal_ci_current_commit: {_e(full_commit)}",
+        "verification_surface: <a href='/verification'>/verification</a>",
+        "ci_evidence_surface: <a href='/ci-evidence'>/ci-evidence</a>",
+        "goal_ci_github_status_fetch: none",
+        "goal_ci_app_network_actions_taken: 0",
+        "goal_ci_external_mutations_taken: 0",
+    ]
+    if latest_record is None:
+        lines.extend(
+            [
+                "goal_ci_latest_status: missing",
+                "goal_ci_latest_source: none",
+                "goal_ci_matches_current_checkout: false",
+                "goal_ci_next_action: wait_for_github_actions_success_then_record_project_ci_evidence",
+                "goal_ci_proof_boundary: no project-scoped local CI proof record yet",
+            ]
+        )
+        return _list_section("Goal Verification Evidence", lines, "/verification")
+
+    source_kind, record = latest_record
+    branch_matches = record.branch_name == repo["branch"]
+    commit_matches = _commit_refs_match(record.commit_sha, full_commit, repo["commit"])
+    matches_current = branch_matches and commit_matches
+    result = record.result_json if isinstance(record.result_json, dict) else {}
+    lines.extend(
+        [
+            f"goal_ci_latest_status: {_e(record.status)}",
+            f"goal_ci_latest_source: {_e(source_kind)}",
+            f"goal_ci_latest_provider: {_e(record.provider)}",
+            f"goal_ci_latest_branch: {_e(record.branch_name)}",
+            f"goal_ci_latest_commit: {_e(record.commit_sha)}",
+            f"goal_ci_latest_external_run_id: {_e(record.external_run_id)}",
+            f"goal_ci_latest_url: <a href='{_e(record.external_url)}'>{_e(record.external_url)}</a>",
+            f"goal_ci_latest_status_source: {_e(result.get('status_source', 'unknown'))}",
+            f"goal_ci_latest_evidence_scope: {_e(result.get('evidence_scope', 'unknown'))}",
+            f"goal_ci_latest_evidence_path: {_artifact_link(_repo_relative_artifact_path(root, record.evidence_path))}",
+            f"goal_ci_branch_matches_current: {str(branch_matches).lower()}",
+            f"goal_ci_commit_matches_current: {str(commit_matches).lower()}",
+            f"goal_ci_matches_current_checkout: {str(matches_current).lower()}",
+            "goal_ci_record_source: operator_supplied",
+            f"goal_ci_network_actions_taken: {_e(result.get('network_actions_taken', 'unknown'))}",
+            f"goal_ci_external_mutations_taken: {_e(result.get('external_mutations_taken', 'unknown'))}",
+            "goal_ci_proof_boundary: operator_supplied_project_record_only",
+        ]
+    )
+    return _list_section("Goal Verification Evidence", lines, "/verification")
+
+
+def _commit_refs_match(record_commit: str, full_commit: str, short_commit: str) -> bool:
+    record = record_commit.strip()
+    if not record or record == "unknown":
+        return False
+    for candidate in {full_commit.strip(), short_commit.strip()}:
+        if not candidate or candidate == "unknown":
+            continue
+        if record == candidate or candidate.startswith(record) or record.startswith(candidate):
+            return True
+    return False
+
+
 def _goal_operator_note_lines(root: Path, state: dict[str, Any]) -> list[str]:
     goal = state["goal"]
     note_path = _goal_operator_notes_path(goal)
@@ -4254,10 +4325,20 @@ def _ci_snapshot_handoff_lines(root: Path, *, key_prefix: str = "ci_snapshot_") 
     ]
 
 
-def _latest_ci_evidence_record(root: Path) -> tuple[str, Any] | None:
+def _latest_ci_evidence_record(
+    root: Path,
+    *,
+    project_id: str | None = None,
+) -> tuple[str, Any] | None:
     storage = _storage(root)
-    records = storage.list_recent_ci_deploy_evidence_records(limit=1)
-    snapshot_records = storage.list_recent_ci_snapshot_evidence_records(limit=1)
+    limit = None if project_id else 1
+    records = storage.list_recent_ci_deploy_evidence_records(limit=limit)
+    snapshot_records = storage.list_recent_ci_snapshot_evidence_records(limit=limit)
+    if project_id:
+        records = [record for record in records if record.project_id == project_id]
+        snapshot_records = [
+            record for record in snapshot_records if record.project_id == project_id
+        ]
     latest_records: list[tuple[str, Any]] = []
     if records:
         latest_records.append(("publication_handoff", records[0]))

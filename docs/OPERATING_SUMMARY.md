@@ -143,6 +143,10 @@ Core layers for the bootstrap:
   counts, names projects using each tag, links matching generated or available
   local skill records when present, and shows profile usage while keeping
   skill execution unavailable from the Goal page.
+  Goal `Verification Evidence` links to `/verification` and `/ci-evidence`,
+  filters local operator-supplied CI proof records to the current goal project,
+  compares the recorded branch/commit to the current project checkout, and
+  reports missing or stale proof without fetching GitHub status.
   They also include a typed
   `Goal Artifact Explorer` that groups goal-linked Markdown,
   JSON, Patch/Diff, and Text/Log artifacts and links them through the bounded

@@ -1,5 +1,28 @@
 # Status
 
+## 2026-06-26 Goal Verification Evidence
+
+- Added a first-class `Goal Verification Evidence` section to
+  `/goals/<goal_id>`. It links to `/verification` and `/ci-evidence`, filters
+  local operator-supplied CI records to the current goal project, compares the
+  recorded branch/commit to the current project checkout, and reports whether
+  the proof matches current local state.
+- Fresh goals now show a project-scoped missing-proof state instead of
+  borrowing CI evidence from another project. Demo/populated goals can show a
+  matching direct-snapshot record with source, provider, status source,
+  evidence scope, branch/commit match, artifact link, and zero app network/
+  external mutation counters.
+- The section is read-only over existing local state. It does not fetch GitHub
+  status, run CI locally, push, create PRs, deploy, call providers, or mutate
+  external systems.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health"`
+    -> `2 passed, 508 deselected`
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Artifact Viewer Render Modes
 
 - Upgraded `/artifacts?path=...` from a plain inert preformatted blob into a
