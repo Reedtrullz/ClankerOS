@@ -6563,6 +6563,16 @@ def test_goal_runs_approved_worktree_from_browser_action(
     assert "network_actions_taken</dt><dd>0" in run_response.body
     assert "external_mutations_taken</dt><dd>0" in run_response.body
     assert "evidence_path</dt><dd><a href='/artifacts?path=.clanker/delegations/" in run_response.body
+    run_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert run_workspace["open_project"] == "subject"
+    assert run_workspace["open_goal"] == goal_id
+    assert run_workspace["last_viewed_artifact"].startswith(
+        f".clanker/delegations/{delegation_id}/runs/"
+    )
+    assert run_workspace["last_viewed_artifact"].endswith("/coder_worktree/summary.md")
+    assert run_workspace["updated_by"] == "run-coder-worktree"
 
     refreshed_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert "recommended_action</dt><dd>Open review" in refreshed_goal.body
@@ -6616,6 +6626,13 @@ def test_goal_next_action_card_exposes_reviewed_commit_request_form(
     review_path = tmp_path / "runs" / source_run_id / "review.md"
     assert review_path.exists()
     assert run_id in review_path.read_text(encoding="utf-8")
+    review_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert review_workspace["open_project"] == "subject"
+    assert review_workspace["open_goal"] == goal_id
+    assert review_workspace["last_viewed_artifact"] == str(review_path.relative_to(tmp_path))
+    assert review_workspace["updated_by"] == "review-run"
 
     after_review = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert after_review.status == 200
@@ -6667,6 +6684,17 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         )
         if item.run_id == run_id
     )
+    commit_request_md = tmp_path / Path(commit_approval.request_artifact_path).with_suffix(".md")
+    assert commit_request_md.exists()
+    commit_request_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert commit_request_workspace["open_project"] == "subject"
+    assert commit_request_workspace["open_goal"] == goal_id
+    assert commit_request_workspace["last_viewed_artifact"] == str(
+        commit_request_md.relative_to(tmp_path)
+    )
+    assert commit_request_workspace["updated_by"] == "coder-commit-request"
 
     pending_commit_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert pending_commit_goal.status == 200

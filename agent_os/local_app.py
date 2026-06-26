@@ -8096,6 +8096,18 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 "network_actions_taken": 0,
                 "external_mutations_taken": 0,
             }
+            run_summary_path = Path(coder_run.evidence_path) / "summary.md"
+            _remember_delegation_workspace(
+                root,
+                storage,
+                coder_run.delegation_id,
+                artifact_path=(
+                    run_summary_path
+                    if (root / run_summary_path).exists()
+                    else coder_run.evidence_path
+                ),
+                updated_by="run-coder-worktree",
+            )
         elif action == "review-run":
             requested_run_id = _required(form, "run_id")
             coder_run = get_coder_worktree_run(storage, requested_run_id)
@@ -8116,6 +8128,14 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 "network_actions_taken": 0,
                 "external_mutations_taken": 0,
             }
+            if coder_run is not None:
+                _remember_delegation_workspace(
+                    root,
+                    storage,
+                    coder_run.delegation_id,
+                    artifact_path=report_path,
+                    updated_by="review-run",
+                )
         elif action == "coder-commit-request":
             run_id = _required(form, "run_id")
             result = request_coder_worktree_commit_approval(
@@ -8128,6 +8148,13 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             )
             message = f"coder_commit_request: {result.approval.id}"
             location = f"/runs/{quote(run_id)}"
+            _remember_delegation_workspace(
+                root,
+                storage,
+                result.approval.delegation_id,
+                artifact_path=Path(result.approval.request_artifact_path).with_suffix(".md"),
+                updated_by="coder-commit-request",
+            )
         elif action == "approve-coder-commit":
             approval_id = _required(form, "approval_id")
             result = approve_coder_worktree_commit(

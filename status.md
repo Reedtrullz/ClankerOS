@@ -1,5 +1,30 @@
 # Status
 
+## 2026-06-27 Execution Review Commit Resume Anchors
+
+- Made confirmed browser `run-coder-worktree`, `review-run`, and
+  `coder-commit-request` actions refresh `.clanker/app/workspace.json` with
+  the current project, goal, and newest execution/review/commit-request
+  artifact. The restore path now advances to the coder run `summary.md`, local
+  `review.md`, and commit approval request Markdown, so `/resume`, Home, and
+  `/workspace` can return the operator to the current post-execution gate
+  without requiring a separate manual `save-workspace` step.
+- Non-claims: this does not commit, push, create PRs, deploy, call providers,
+  fetch GitHub status, or mutate external systems. The `run-coder-worktree`
+  action still executes only one already approved bounded local worktree
+  command through the existing safety checks; the review and commit-request
+  actions write local artifacts and approval rows only.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "goal_runs_approved_worktree_from_browser_action or goal_next_action_card_exposes_reviewed_commit_request_form or goal_next_action_card_exposes_commit_publication_gate_forms"`
+    -> `3 passed, 511 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Coder Workflow Resume Anchors
 
 - Made confirmed browser `coder-prep`, `coder-prep-from-handoff`,
