@@ -1,5 +1,27 @@
 # Status
 
+## 2026-06-26 Goal Approved Worktree Handoff
+
+- Added a `Run Approved Worktree Boundary` readback to the Goal Next Action
+  card. When `/goals/<goal_id>` is waiting on an approved coder worktree
+  request, the card now shows a copy-only `run-coder-worktree` command
+  template plus the approved plan artifact, plan hash, allowed-file preview,
+  verifier, expected evidence directory, workflow return link, and future run
+  detail route.
+- The handoff closes the previous blank Goal-card state at
+  `Run approved worktree from CLI` while preserving the existing browser
+  safety boundary.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "goal_next_action_card_exposes_post_delegation_forms or local_app_demo_scenario_populates_fixture_state"`
+    -> `2 passed, 508 deselected`
+  - `git diff --check`
+    -> passed
+- Non-claims: this does not run the approved worktree from the browser,
+  execute arbitrary commands, call providers, fetch GitHub status, push,
+  create PRs, deploy, or mutate external systems.
+
 ## 2026-06-26 Goal Resume Snapshot
 
 - Added a `Goal Resume Snapshot` section to `/goals/<goal_id>`. It reads the

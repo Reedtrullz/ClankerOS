@@ -83,9 +83,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   delegation completes, the card exposes confirmed `coder-prep`,
   `coder-worktree-plan`, and `coder-worktree-approval` forms at the matching
   workflow phases. It also exposes confirmed `approve-coder-worktree` and
-  `review-run` when the completed coder worktree run is blocked on the review
-  gate, then `coder-commit-request` once the review exists and mentions the
-  coder run. Once a commit request exists, the same Goal card can drive
+  then a copy-only `run-coder-worktree` handoff once the worktree request is
+  approved. The handoff names the approved plan, allowed-file preview,
+  verifier, expected evidence path, and return route while keeping browser-side
+  worktree execution unexposed. The Goal card exposes `review-run` when the
+  completed coder worktree run is blocked on the review gate, then
+  `coder-commit-request` once the review exists and mentions the coder run.
+  Once a commit request exists, the same Goal card can drive
   `approve-coder-commit`, `commit-coder-worktree`,
   `coder-publication-request`, `approve-coder-publication`, and
   `coder-publication-handoff` through confirmed local forms, then shows the

@@ -2157,6 +2157,8 @@ def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -
         form = _goal_worktree_approval_form(state)
     elif next_action.action == "Approve worktree":
         form = _goal_approve_worktree_form(state)
+    elif next_action.action == "Run approved worktree from CLI":
+        form = _goal_run_worktree_handoff(state["root"], state)
     elif next_action.action == "Create commit request":
         form = _goal_commit_request_form(state["root"], state)
     elif next_action.action == "Open review":
@@ -2204,6 +2206,63 @@ def _goal_approve_worktree_form(state: dict[str, Any]) -> str:
                     "decided_by": "operator",
                     "note": "Approved bounded execution from goal page",
                 },
+            ),
+        ]
+    )
+
+
+def _goal_run_worktree_handoff(root: Path, state: dict[str, Any]) -> str:
+    approval = _goal_approved_worktree_approval(state)
+    if approval is None:
+        return "<p class='muted'>run_worktree_handoff_status: unavailable_until_worktree_approval_is_approved</p>"
+    plan_payload = _goal_worktree_plan_payload(root, approval)
+    bounded_task = plan_payload.get("bounded_coding_task") if isinstance(plan_payload.get("bounded_coding_task"), dict) else {}
+    project = plan_payload.get("project") if isinstance(plan_payload.get("project"), dict) else {}
+    future_run_plan = plan_payload.get("future_run_plan") if isinstance(plan_payload.get("future_run_plan"), dict) else {}
+    raw_allowed_files = bounded_task.get("allowed_files", [])
+    if not isinstance(raw_allowed_files, list):
+        raw_allowed_files = []
+    allowed_files = [str(item) for item in raw_allowed_files if isinstance(item, str)]
+    raw_verification_commands = future_run_plan.get("suggested_verification_commands", [])
+    if not isinstance(raw_verification_commands, list):
+        raw_verification_commands = []
+    verification_commands = [
+        str(item)
+        for item in raw_verification_commands
+        if isinstance(item, str)
+    ]
+    default_test_command = str(project.get("default_test_command") or "project_default_test_command")
+    verifier = verification_commands[0] if verification_commands else default_test_command
+    command = (
+        f"python3 -m agent_os.cli run-coder-worktree {approval.delegation_id} "
+        '--command "<operator-approved bounded command>" --verify'
+    )
+    run_surface = f"/workflow?delegation_id={quote(approval.delegation_id)}"
+    expected_run_surface = f"/runs/<new_coder_worktree_run_id>"
+    plan_path = approval.source_plan_path or str(plan_payload.get("_path") or "missing")
+    return "".join(
+        [
+            "<h3>Run Approved Worktree Boundary</h3>",
+            "<p class='muted'>The browser app does not execute approved worktree commands yet. Use this handoff to run one explicit safe local command in the isolated worktree, then return to the run evidence page for review.</p>",
+            _kv(
+                [
+                    ("run_coder_worktree_command_template", command),
+                    ("approval_id", approval.id),
+                    ("delegation_id", approval.delegation_id),
+                    ("approved_plan", _artifact_link(plan_path)),
+                    ("source_plan_sha256", approval.source_plan_sha256),
+                    ("allowed_files_count", str(len(allowed_files))),
+                    ("allowed_files_preview", ", ".join(allowed_files[:5]) or "none"),
+                    ("verification_command_with_verify_flag", verifier),
+                    ("expected_evidence_dir", f".clanker/delegations/{approval.delegation_id}/runs/<new_run_id>/coder_worktree/"),
+                    ("return_to_workflow", SafeHtml(f"<a href='{_e(run_surface)}'>{_e(run_surface)}</a>")),
+                    ("return_to_run_after_command", expected_run_surface),
+                    ("browser_execution_exposed", "false"),
+                    ("copy_only", "true"),
+                    ("provider_calls_taken_by_clankeros", "0"),
+                    ("network_actions_taken_by_app", "0"),
+                    ("external_mutations_taken", "0"),
+                ]
             ),
         ]
     )
@@ -2364,6 +2423,28 @@ def _goal_pending_worktree_approval(state: dict[str, Any]) -> Any | None:
         ),
         None,
     )
+
+
+def _goal_approved_worktree_approval(state: dict[str, Any]) -> Any | None:
+    return next(
+        (item for item in state.get("worktree_approvals", []) if item.status == "approved"),
+        None,
+    )
+
+
+def _goal_worktree_plan_payload(root: Path, approval: Any) -> dict[str, Any]:
+    plan_path = getattr(approval, "source_plan_path", "") or ""
+    if not plan_path:
+        return {}
+    candidate = root / plan_path
+    try:
+        payload = json.loads(candidate.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if isinstance(payload, dict):
+        payload["_path"] = _repo_relative_artifact_path(root, candidate)
+        return payload
+    return {}
 
 
 def _goal_pending_commit_approval(state: dict[str, Any]) -> Any | None:

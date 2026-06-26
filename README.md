@@ -167,9 +167,13 @@ shows the exact `run-delegation` CLI handoff because browser adapter execution
 is still not exposed. After a delegation has completed, the Goal Next Action
 card can also create the local coder prep packet, create the approval-gated
 worktree plan, and request the pending worktree approval with confirmed
-browser forms. It can then approve the pending worktree request and create the
-local review artifact for a completed coder worktree run. Once that review
-gate passes, it can create the review-gated commit request.
+browser forms. It can then approve the pending worktree request. After
+approval, the Goal card shows a copy-only `run-coder-worktree` handoff with
+the approved plan, allowed-file preview, verifier, expected evidence path, and
+return route because browser-side worktree execution is still not exposed.
+Once the operator has run the bounded command outside the app, the Goal card
+can create the local review artifact for the completed coder worktree run.
+Once that review gate passes, it can create the review-gated commit request.
 After that, the same Goal card can approve the commit request, create the
 isolated local worktree commit, request and approve publication handoff
 preparation, and write the local publication handoff/PR-body artifacts. Push

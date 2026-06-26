@@ -5528,7 +5528,12 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
         )
         == 0
     )
-    capsys.readouterr()
+    approval_output = capsys.readouterr().out
+    approval_id = next(
+        line.split(": ", 1)[1]
+        for line in approval_output.splitlines()
+        if line.startswith("approval_id: ")
+    )
     pending_approval = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert pending_approval.status == 200
     assert "recommended_action</dt><dd>Approve worktree" in pending_approval.body
@@ -5538,6 +5543,39 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert "Approved bounded execution from goal page" in pending_approval.body
     assert "does not run the worktree" in pending_approval.body
     assert "push, create a PR, or deploy" in pending_approval.body
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "approve-coder-worktree",
+                approval_id,
+                "--decided-by",
+                "operator",
+                "--note",
+                "Approved bounded execution",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    approved_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert approved_goal.status == 200
+    assert "recommended_action</dt><dd>Run approved worktree from CLI" in approved_goal.body
+    assert "next_action_form_available</dt><dd>true" in approved_goal.body
+    assert "Run Approved Worktree Boundary" in approved_goal.body
+    assert "run_coder_worktree_command_template" in approved_goal.body
+    assert f"run-coder-worktree {delegation_id}" in approved_goal.body
+    assert "operator-approved bounded command" in approved_goal.body
+    assert "approved_plan" in approved_goal.body
+    assert "allowed_files_count" in approved_goal.body
+    assert "verification_command_with_verify_flag" in approved_goal.body
+    assert "expected_evidence_dir" in approved_goal.body
+    assert "return_to_workflow" in approved_goal.body
+    assert "return_to_run_after_command" in approved_goal.body
+    assert "browser_execution_exposed</dt><dd>false" in approved_goal.body
+    assert "copy_only</dt><dd>true" in approved_goal.body
 
 
 def test_goal_next_action_card_exposes_reviewed_commit_request_form(
