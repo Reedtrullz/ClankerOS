@@ -7981,16 +7981,37 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             result = prepare_coder_from_handoff(root, storage, delegation_id)
             message = f"coder_prep: {result.prep_id}"
             location = f"/delegations/{quote(delegation_id)}"
+            _remember_delegation_workspace(
+                root,
+                storage,
+                delegation_id,
+                artifact_path=result.markdown_path or result.artifact_path,
+                updated_by="coder-prep",
+            )
         elif action == "coder-prep-from-handoff":
             handoff_md = _required(form, "handoff_md")
             result = prepare_coder_from_handoff_markdown(root, storage, handoff_md)
             message = f"coder_prep: {result.prep_id}"
             location = f"/delegations/{quote(result.delegation_id)}"
+            _remember_delegation_workspace(
+                root,
+                storage,
+                result.delegation_id,
+                artifact_path=result.markdown_path or result.artifact_path,
+                updated_by="coder-prep-from-handoff",
+            )
         elif action == "coder-worktree-plan":
             delegation_id = _required(form, "delegation_id")
             result = prepare_worktree_plan_from_coder_prep(root, storage, delegation_id)
             message = f"coder_worktree_plan: {result.plan_id}"
             location = f"/delegations/{quote(delegation_id)}"
+            _remember_delegation_workspace(
+                root,
+                storage,
+                delegation_id,
+                artifact_path=result.markdown_path or result.artifact_path,
+                updated_by="coder-worktree-plan",
+            )
         elif action == "coder-worktree-approval":
             delegation_id = _required(form, "delegation_id")
             result = request_coder_worktree_approval(
@@ -8002,6 +8023,13 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             )
             message = f"coder_worktree_approval: {result.approval.id}"
             location = f"/delegations/{quote(delegation_id)}"
+            _remember_delegation_workspace(
+                root,
+                storage,
+                delegation_id,
+                artifact_path=Path(result.approval.request_artifact_path).with_suffix(".md"),
+                updated_by="coder-worktree-approval",
+            )
         elif action == "approve-coder-worktree":
             approval_id = _required(form, "approval_id")
             result = approve_coder_worktree(
@@ -8013,6 +8041,17 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             )
             message = f"approved_coder_worktree: {result.approval.id}"
             location = "/"
+            _remember_delegation_workspace(
+                root,
+                storage,
+                result.approval.delegation_id,
+                artifact_path=(
+                    Path(result.approval.decision_artifact_path).with_suffix(".md")
+                    if result.approval.decision_artifact_path
+                    else None
+                ),
+                updated_by="approve-coder-worktree",
+            )
         elif action == "run-coder-worktree":
             delegation_id = _required(form, "delegation_id")
             run_result = run_approved_coder_worktree(

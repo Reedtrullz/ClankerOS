@@ -1,5 +1,32 @@
 # Status
 
+## 2026-06-27 Coder Workflow Resume Anchors
+
+- Made confirmed browser `coder-prep`, `coder-prep-from-handoff`,
+  `coder-worktree-plan`, `coder-worktree-approval`, and
+  `approve-coder-worktree` actions refresh `.clanker/app/workspace.json` with
+  the current project, goal, and newest human-readable workflow artifact. The
+  restore path now continues through coder prep packets, bounded worktree
+  plans, approval requests, and approval decisions, so `/resume`, Home, and
+  `/workspace` can return the operator to the current post-delegation gate
+  without requiring a separate manual `save-workspace` step.
+- Non-claims: this does not create worktrees, run commands, edit source files,
+  approve later gates, commit, push, create PRs, deploy, call providers, fetch
+  GitHub status, or mutate external systems. It writes local workspace state
+  only as part of explicit confirmed browser actions.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k goal_next_action_card_exposes_post_delegation_forms`
+    -> `1 passed, 513 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "goal_next_action_card_exposes_post_delegation_forms or goal_runs_approved_worktree_from_browser_action or first_run_browser_actions_persist_resume_workspace"`
+    -> `3 passed, 511 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 First Run Workflow Resume Anchors
 
 - Made confirmed browser `delegate`, `context-pack`, and `run-delegation`

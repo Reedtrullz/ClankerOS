@@ -111,9 +111,14 @@ Core layers for the bootstrap:
   first goal creation, and now refreshes the same saved workspace anchor after
   confirmed first-run scout delegation, context-pack generation, and delegation
   run actions so `/resume`, Home, and `/workspace` return to the newest local
-  workflow artifact without a separate manual save. It moves initial
-  project/goal setup into the browser without adding provider calls or
-  external effects. The populated `/goals`
+  workflow artifact without a separate manual save. Confirmed coder-prep,
+  coder-worktree-plan, coder-worktree-approval, and
+  approve-coder-worktree browser actions also refresh that saved workspace
+  anchor to their newest human-readable local packet or decision artifact, so
+  post-delegation resume continues through the bounded coding gates without
+  creating worktrees or external effects. It moves initial project/goal setup
+  into the browser without adding provider calls or external effects. The
+  populated `/goals`
   cockpit also exposes a confirmed
   local `Start Another Goal` form for registered projects, so daily goal
   creation does not require the CLI. The checklist reports the current step,

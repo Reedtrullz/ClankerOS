@@ -6,7 +6,10 @@ from pathlib import Path
 from agent_os.dashboard import generate_static_dashboard
 from agent_os.cli import build_parser, main
 from agent_os.coder_publication import list_coder_publications
-from agent_os.coder_worktree_execution import list_coder_worktree_commit_approvals
+from agent_os.coder_worktree_execution import (
+    list_coder_worktree_approvals,
+    list_coder_worktree_commit_approvals,
+)
 from agent_os.engine import AgentSystem
 from agent_os.eval import run_first_milestone_eval
 from agent_os.local_app import (
@@ -6316,8 +6319,35 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert f"name='delegation_id' value='{delegation_id}'" in after_delegation.body
     assert "does not edit source files" in after_delegation.body
 
-    assert main(["--root", str(tmp_path), "coder-prep", delegation_id]) == 0
-    capsys.readouterr()
+    workspace_path = tmp_path / ".clanker" / "app" / "workspace.json"
+    prep_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/coder-prep",
+        method="POST",
+        form={"delegation_id": [delegation_id]},
+    )
+    assert prep_confirmation.status == 409
+    assert "Confirm coder-prep" in prep_confirmation.body
+    prep_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-prep",
+        method="POST",
+        form={"delegation_id": [delegation_id], "confirm": ["yes"]},
+    )
+    assert prep_result.status == 200
+    assert "coder_prep:" in prep_result.body
+    coder_prep_md = sorted(
+        (tmp_path / ".clanker" / "delegations" / delegation_id / "runs").glob(
+            "*/coder_prep/coder_prep.md"
+        )
+    )[-1]
+    prep_workspace = json.loads(workspace_path.read_text(encoding="utf-8"))
+    assert prep_workspace["open_project"] == "subject"
+    assert prep_workspace["open_goal"] == goal_id
+    assert prep_workspace["last_viewed_artifact"] == str(
+        coder_prep_md.relative_to(tmp_path)
+    )
+    assert prep_workspace["updated_by"] == "coder-prep"
     after_prep = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert after_prep.status == 200
     assert "recommended_action</dt><dd>Create worktree plan" in after_prep.body
@@ -6327,8 +6357,31 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert f"name='delegation_id' value='{delegation_id}'" in after_prep.body
     assert "does not create a worktree" in after_prep.body
 
-    assert main(["--root", str(tmp_path), "coder-worktree-plan", delegation_id]) == 0
-    capsys.readouterr()
+    plan_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/coder-worktree-plan",
+        method="POST",
+        form={"delegation_id": [delegation_id]},
+    )
+    assert plan_confirmation.status == 409
+    assert "Confirm coder-worktree-plan" in plan_confirmation.body
+    plan_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-worktree-plan",
+        method="POST",
+        form={"delegation_id": [delegation_id], "confirm": ["yes"]},
+    )
+    assert plan_result.status == 200
+    assert "coder_worktree_plan:" in plan_result.body
+    coder_worktree_plan_md = coder_prep_md.with_name("coder_worktree_plan.md")
+    assert coder_worktree_plan_md.exists()
+    plan_workspace = json.loads(workspace_path.read_text(encoding="utf-8"))
+    assert plan_workspace["open_project"] == "subject"
+    assert plan_workspace["open_goal"] == goal_id
+    assert plan_workspace["last_viewed_artifact"] == str(
+        coder_worktree_plan_md.relative_to(tmp_path)
+    )
+    assert plan_workspace["updated_by"] == "coder-worktree-plan"
     after_plan = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert after_plan.status == 200
     assert "recommended_action</dt><dd>Request worktree approval" in after_plan.body
@@ -6340,27 +6393,45 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert "does not approve execution" in after_plan.body
     assert "external_effects_created</dt><dd>false" in after_plan.body
 
-    assert (
-        main(
-            [
-                "--root",
-                str(tmp_path),
-                "coder-worktree-approval",
-                delegation_id,
-                "--requested-by",
-                "operator",
-                "--note",
-                "Approve bounded worktree execution",
-            ]
-        )
-        == 0
+    approval_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/coder-worktree-approval",
+        method="POST",
+        form={
+            "delegation_id": [delegation_id],
+            "requested_by": ["operator"],
+            "note": ["Approve bounded worktree execution"],
+        },
     )
-    approval_output = capsys.readouterr().out
-    approval_id = next(
-        line.split(": ", 1)[1]
-        for line in approval_output.splitlines()
-        if line.startswith("approval_id: ")
+    assert approval_confirmation.status == 409
+    assert "Confirm coder-worktree-approval" in approval_confirmation.body
+    approval_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-worktree-approval",
+        method="POST",
+        form={
+            "delegation_id": [delegation_id],
+            "requested_by": ["operator"],
+            "note": ["Approve bounded worktree execution"],
+            "confirm": ["yes"],
+        },
     )
+    assert approval_result.status == 200
+    assert "coder_worktree_approval:" in approval_result.body
+    approvals = list_coder_worktree_approvals(tmp_path, delegation_id=delegation_id)
+    assert len(approvals) == 1
+    approval_id = approvals[0].id
+    approval_request_md = (
+        tmp_path / Path(approvals[0].request_artifact_path).with_suffix(".md")
+    )
+    assert approval_request_md.exists()
+    approval_workspace = json.loads(workspace_path.read_text(encoding="utf-8"))
+    assert approval_workspace["open_project"] == "subject"
+    assert approval_workspace["open_goal"] == goal_id
+    assert approval_workspace["last_viewed_artifact"] == str(
+        approval_request_md.relative_to(tmp_path)
+    )
+    assert approval_workspace["updated_by"] == "coder-worktree-approval"
     pending_approval = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert pending_approval.status == 200
     assert "recommended_action</dt><dd>Approve worktree" in pending_approval.body
@@ -6371,22 +6442,47 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert "does not run the worktree" in pending_approval.body
     assert "push, create a PR, or deploy" in pending_approval.body
 
-    assert (
-        main(
-            [
-                "--root",
-                str(tmp_path),
-                "approve-coder-worktree",
-                approval_id,
-                "--decided-by",
-                "operator",
-                "--note",
-                "Approved bounded execution",
-            ]
-        )
-        == 0
+    approval_decision_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-worktree",
+        method="POST",
+        form={
+            "approval_id": [approval_id],
+            "decided_by": ["operator"],
+            "note": ["Approved bounded execution"],
+        },
     )
-    capsys.readouterr()
+    assert approval_decision_confirmation.status == 409
+    assert "Confirm approve-coder-worktree" in approval_decision_confirmation.body
+    approval_decision = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-worktree",
+        method="POST",
+        form={
+            "approval_id": [approval_id],
+            "decided_by": ["operator"],
+            "note": ["Approved bounded execution"],
+            "confirm": ["yes"],
+        },
+    )
+    assert approval_decision.status == 200
+    assert "approved_coder_worktree:" in approval_decision.body
+    approved = list_coder_worktree_approvals(
+        tmp_path,
+        delegation_id=delegation_id,
+        status="approved",
+    )[0]
+    approval_decision_md = (
+        tmp_path / Path(approved.decision_artifact_path).with_suffix(".md")
+    )
+    assert approval_decision_md.exists()
+    decision_workspace = json.loads(workspace_path.read_text(encoding="utf-8"))
+    assert decision_workspace["open_project"] == "subject"
+    assert decision_workspace["open_goal"] == goal_id
+    assert decision_workspace["last_viewed_artifact"] == str(
+        approval_decision_md.relative_to(tmp_path)
+    )
+    assert decision_workspace["updated_by"] == "approve-coder-worktree"
     approved_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert approved_goal.status == 200
     assert "recommended_action</dt><dd>Run approved worktree" in approved_goal.body
