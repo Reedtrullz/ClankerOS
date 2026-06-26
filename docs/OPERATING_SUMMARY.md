@@ -114,7 +114,10 @@ Core layers for the bootstrap:
   a handoff-specific `ci-deploy-evidence` command template when available, and
   direct pushed-snapshot `ci-snapshot-handoff` and
   `ci-snapshot-evidence-from-gh-json` templates, without fetching GitHub
-  status; a
+  status; `/ci-evidence` also exposes a confirmed local
+  `ci-snapshot-evidence-from-gh-json` form that records proof from pasted
+  GitHub status JSON after validating completed/success status, commit SHA,
+  and branch, while still performing no GitHub polling; a
   read-only root dashboard `Verification Snapshot` for checked-in workflow
   timeout, latest operator-supplied CI evidence, `/verification`,
   `/ci-evidence`, and current direct-snapshot handoff templates without
@@ -195,7 +198,9 @@ Core layers for the bootstrap:
   JSON from stdin or a file, requires a completed successful run with the
   expected commit SHA and matching branch when present, then records local
   proof. The local app mirrors those commands as display-only templates on
-  `/`, `/verification`, `/ci-evidence`, and `/dogfooding`. Snapshot records are
+  `/`, `/verification`, `/ci-evidence`, and `/dogfooding`, and `/ci-evidence`
+  can record the same proof from pasted status JSON through a confirmed local
+  form. Snapshot records are
   surfaced separately in `/verification`, `/ci-evidence`, and the static
   dashboard, record `network_actions_taken=0` and `external_mutations_taken=0`,
   and do not fetch GitHub status, run CI, deploy, push, create PRs, call

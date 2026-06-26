@@ -616,6 +616,8 @@ gh run view <run_id> --repo Reedtrullz/ClankerOS --json status,conclusion,headSh
 
 That command consumes GitHub status JSON from stdin, refuses pending/failed or
 wrong-commit runs, and records local proof only after the status JSON matches.
+The `/ci-evidence` page offers the same validated recorder as a confirmed
+local form for pasted `gh run view` JSON; the app still never contacts GitHub.
 
 For direct pushes, record the completed run locally with
 `python3 -m agent_os.cli ci-snapshot-evidence --project clankeros --branch main --commit <commit_sha> --provider github-actions --status success --external-run-id <run_id> --url <run_url>`.

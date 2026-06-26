@@ -46,6 +46,9 @@ from agent_os.coder_worktree_plan import (
     list_coder_worktree_plan_packets,
     prepare_worktree_plan_from_coder_prep,
 )
+from agent_os.ci_snapshot_evidence import (
+    record_ci_snapshot_evidence_from_gh_status_json,
+)
 from agent_os.context_pack import ContextPackError, generate_context_pack
 from agent_os.engine import AgentSystem
 from agent_os.ids import new_id
@@ -105,6 +108,7 @@ ACTION_CATALOG = [
     ("coder-publication-request", "approval request", "run detail", "yes", "yes", "isolated local commit", "publication_request.json/.md"),
     ("approve-coder-publication", "approval decision", "approvals", "yes", "yes", "pending publication approval", "publication_decision.json/.md"),
     ("coder-publication-handoff", "local artifact", "run detail", "yes", "yes", "approved publication request", "publication_handoff.json/.md plus pr_body.md"),
+    ("ci-snapshot-evidence-from-gh-json", "local evidence", "ci evidence", "yes", "yes", "operator-supplied gh run view JSON", "ci snapshot evidence JSON"),
 ]
 
 
@@ -1339,6 +1343,7 @@ def _ci_evidence_page(root: Path) -> str:
             ),
             "</section>",
             _ci_evidence_recording_guide(root),
+            _ci_snapshot_json_recording_form(root),
             _list_section("Recent CI Evidence", items),
             _list_section("Recent Direct Snapshot CI Evidence", snapshot_items),
             _list_section(
@@ -1351,6 +1356,43 @@ def _ci_evidence_page(root: Path) -> str:
                     "No push, PR, deploy, provider call, or external mutation is executed by this page.",
                 ],
             ),
+        ]
+    )
+
+
+def _ci_snapshot_json_recording_form(root: Path) -> str:
+    state = _repo_state(root)
+    full_commit = _git(root, ["rev-parse", "HEAD"])
+    commit = full_commit or (
+        state["commit"] if state["commit"] != "unknown" else "<commit_sha>"
+    )
+    branch = state["branch"] if state["branch"] != "unknown" else "main"
+    return "".join(
+        [
+            "<section><h2>Record Direct Snapshot From GitHub JSON</h2>",
+            "<p class='muted'>Paste JSON from the displayed <code>gh run view</code> command after GitHub Actions completes. The local app validates the supplied JSON before writing CI evidence and never contacts GitHub itself.</p>",
+            "<form method='post' action='/actions/ci-snapshot-evidence-from-gh-json'>",
+            f"<label>project <input name='project' value='clankeros'></label>",
+            f"<label>branch <input name='branch' value='{_e(branch)}'></label>",
+            f"<label>commit <input name='commit' value='{_e(commit)}'></label>",
+            "<label>provider <input name='provider' value='github-actions'></label>",
+            "<label>external_run_id <input name='external_run_id' value=''></label>",
+            "<label>url <input name='url' value=''></label>",
+            "<label>recorded_by <input name='recorded_by' value='operator'></label>",
+            "<label>note <input name='note' value='Validated from pasted GitHub Actions JSON.'></label>",
+            "<label>status_json <textarea name='status_json' rows='10' spellcheck='false'></textarea></label>",
+            "<button type='submit'>ci-snapshot-evidence-from-gh-json</button>",
+            "</form>",
+            _kv(
+                [
+                    ("confirmation_required", "true"),
+                    ("github_status_fetch", "none"),
+                    ("network_actions_taken_by_app", "0"),
+                    ("external_mutations_taken", "0"),
+                    ("record_when", "status=completed conclusion=success headSha matches commit"),
+                ]
+            ),
+            "</section>",
         ]
     )
 
@@ -3688,6 +3730,22 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             result = create_coder_publication_handoff(root, storage, run_id)
             message = f"coder_publication_handoff: {result.status}"
             location = f"/runs/{quote(run_id)}"
+        elif action == "ci-snapshot-evidence-from-gh-json":
+            external_run_id = _required(form, "external_run_id")
+            result = record_ci_snapshot_evidence_from_gh_status_json(
+                root,
+                project_id=_one(form, "project") or "clankeros",
+                branch_name=_one(form, "branch") or "main",
+                commit_sha=_required(form, "commit"),
+                provider=_one(form, "provider") or "github-actions",
+                external_run_id=external_run_id,
+                status_json_text=_required(form, "status_json"),
+                external_url=_one(form, "url"),
+                recorded_by=_one(form, "recorded_by") or "operator",
+                note=_one(form, "note") or "Validated from local app.",
+            )
+            message = f"ci_snapshot_evidence_from_gh_json: {result.status}"
+            location = "/ci-evidence"
         else:
             raise ValueError(f"unsupported action: {action}")
     except (

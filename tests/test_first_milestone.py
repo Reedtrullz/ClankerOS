@@ -2386,6 +2386,134 @@ def test_ci_snapshot_evidence_from_gh_json_rejects_pending_or_wrong_commit(
     assert not (tmp_path / ".clanker" / "ci-snapshots").exists()
 
 
+def test_local_app_records_ci_snapshot_evidence_from_pasted_gh_json(
+    tmp_path: Path,
+) -> None:
+    AgentSystem(tmp_path).initialize()
+    status_json = json.dumps(
+        {
+            "status": "completed",
+            "conclusion": "success",
+            "headSha": "52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9",
+            "headBranch": "main",
+            "url": "https://github.com/Reedtrullz/ClankerOS/actions/runs/28211577106",
+            "jobs": [
+                {
+                    "name": "Fast smoke verification",
+                    "status": "completed",
+                    "conclusion": "success",
+                },
+                {
+                    "name": "Full pytest suite",
+                    "status": "completed",
+                    "conclusion": "success",
+                },
+            ],
+        }
+    )
+
+    ci_evidence = render_local_app_route(tmp_path, "/ci-evidence")
+    assert ci_evidence.status == 200
+    assert "Record Direct Snapshot From GitHub JSON" in ci_evidence.body
+    assert "action='/actions/ci-snapshot-evidence-from-gh-json'" in ci_evidence.body
+    assert "status_json" in ci_evidence.body
+    assert "network_actions_taken_by_app</dt><dd>0" in ci_evidence.body
+    assert "github_status_fetch</dt><dd>none" in ci_evidence.body
+
+    confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/ci-snapshot-evidence-from-gh-json",
+        method="POST",
+        form={
+            "project": ["clankeros"],
+            "branch": ["main"],
+            "commit": ["52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9"],
+            "provider": ["github-actions"],
+            "external_run_id": ["28211577106"],
+            "status_json": [status_json],
+            "recorded_by": ["operator"],
+            "note": ["Validated from local app."],
+        },
+    )
+    assert confirmation.status == 409
+    assert "Confirm ci-snapshot-evidence-from-gh-json" in confirmation.body
+    assert "Action Payload" in confirmation.body
+    assert "status_json" in confirmation.body
+
+    response = render_local_app_route(
+        tmp_path,
+        "/actions/ci-snapshot-evidence-from-gh-json",
+        method="POST",
+        form={
+            "project": ["clankeros"],
+            "branch": ["main"],
+            "commit": ["52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9"],
+            "provider": ["github-actions"],
+            "external_run_id": ["28211577106"],
+            "status_json": [status_json],
+            "recorded_by": ["operator"],
+            "note": ["Validated from local app."],
+            "confirm": ["yes"],
+        },
+    )
+    assert response.status == 200
+    assert "Action Result Details" in response.body
+    assert "ci_snapshot_evidence_from_gh_json: recorded" in response.body
+    assert "status_source</dt><dd>github_status_json" in response.body
+    assert "network_actions_taken</dt><dd>0" in response.body
+    assert "external_mutations_taken</dt><dd>0" in response.body
+    assert "href='/ci-evidence?notice=ci_snapshot_evidence_from_gh_json" in response.body
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    records = storage.list_recent_ci_snapshot_evidence_records()
+    assert len(records) == 1
+    assert records[0].result_json["status_source"] == "github_status_json"
+
+    ci_evidence_after = render_local_app_route(tmp_path, "/ci-evidence")
+    assert ci_evidence_after.status == 200
+    assert "Recent Direct Snapshot CI Evidence" in ci_evidence_after.body
+    assert records[0].id in ci_evidence_after.body
+    assert "source=direct_public_snapshot" in ci_evidence_after.body
+
+
+def test_local_app_rejects_pending_ci_snapshot_status_json_without_record(
+    tmp_path: Path,
+) -> None:
+    AgentSystem(tmp_path).initialize()
+    pending_status_json = json.dumps(
+        {
+            "status": "in_progress",
+            "conclusion": "",
+            "headSha": "52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9",
+            "url": "https://github.com/Reedtrullz/ClankerOS/actions/runs/28211577106",
+        }
+    )
+
+    response = render_local_app_route(
+        tmp_path,
+        "/actions/ci-snapshot-evidence-from-gh-json",
+        method="POST",
+        form={
+            "project": ["clankeros"],
+            "branch": ["main"],
+            "commit": ["52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9"],
+            "provider": ["github-actions"],
+            "external_run_id": ["28211577106"],
+            "status_json": [pending_status_json],
+            "confirm": ["yes"],
+        },
+    )
+
+    assert response.status == 400
+    assert "Action Error Details" in response.body
+    assert "ci-snapshot-evidence-from-gh-json" in response.body
+    assert "GitHub run is not successful" in response.body
+    assert "No action was completed" in response.body
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    assert storage.list_recent_ci_snapshot_evidence_records() == []
+    assert not (tmp_path / ".clanker" / "ci-snapshots").exists()
+
+
 def test_ci_snapshot_handoff_prints_watch_and_record_commands_without_writes(
     tmp_path: Path,
     capsys,
@@ -3561,6 +3689,8 @@ def test_github_actions_workflow_runs_automatic_verification() -> None:
         "Run focused local app pytest smoke",
         "ci_snapshot_evidence_from_gh_json_validates_successful_matching_run",
         "ci_snapshot_evidence_from_gh_json_rejects_pending_or_wrong_commit",
+        "local_app_records_ci_snapshot_evidence_from_pasted_gh_json",
+        "local_app_rejects_pending_ci_snapshot_status_json_without_record",
         "github_actions_smoke_uses_temp_root_and_expected_order",
         "local_app_artifact_viewer_is_read_only_and_bounded",
         "local_app_demo_scenario_populates_fixture_state",
@@ -3602,6 +3732,8 @@ def test_github_actions_smoke_uses_temp_root_and_expected_order() -> None:
         "github_actions_smoke_uses_temp_root_and_expected_order",
         "ci_snapshot_evidence_from_gh_json_validates_successful_matching_run",
         "ci_snapshot_evidence_from_gh_json_rejects_pending_or_wrong_commit",
+        "local_app_records_ci_snapshot_evidence_from_pasted_gh_json",
+        "local_app_rejects_pending_ci_snapshot_status_json_without_record",
         "ci_snapshot_handoff_prints_watch_and_record_commands_without_writes",
         "local_app_routes_render_modern_workflow_and_health",
         "local_app_artifact_viewer_is_read_only_and_bounded",

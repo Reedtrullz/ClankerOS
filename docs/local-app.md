@@ -244,8 +244,12 @@ handoff. The `CI Evidence Recording Guide` shows a handoff-specific
 `ci-deploy-evidence` command when a local GitHub handoff exists, and a direct
 `ci-snapshot-handoff`, `ci-snapshot-evidence-from-gh-json`, and manual
 `ci-snapshot-evidence` command template when the operator is recording a
-direct pushed snapshot. The page does not poll GitHub, refresh statuses, push,
-create PRs, deploy, call providers, or mutate external systems.
+direct pushed snapshot. The page also has a confirmed
+`ci-snapshot-evidence-from-gh-json` form where the operator can paste completed
+`gh run view` JSON and record local proof after the app validates the supplied
+status, conclusion, commit SHA, and branch. The page does not poll GitHub,
+refresh statuses, push, create PRs, deploy, call providers, or mutate external
+systems.
 
 ## Manual Dogfooding Checklist
 

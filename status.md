@@ -2,6 +2,11 @@
 
 ## 2026-06-26 Validated GitHub CI Snapshot Recording
 
+- Added a confirmed `/ci-evidence` local app form for
+  `ci-snapshot-evidence-from-gh-json`. Operators can paste completed
+  `gh run view` JSON into the app, confirm the local write, and record direct
+  snapshot CI proof only after the supplied JSON passes the same status,
+  conclusion, commit SHA, and branch validation as the CLI command.
 - Added `ci-snapshot-evidence-from-gh-json`, a local recorder that consumes
   `gh run view` JSON from stdin or a file and records direct snapshot CI
   evidence only when GitHub reports `status=completed`,

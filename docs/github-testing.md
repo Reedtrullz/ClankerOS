@@ -95,6 +95,11 @@ gh run view <run_id> --repo Reedtrullz/ClankerOS \
 The recorder refuses pending runs, failed runs, malformed JSON, branch
 mismatches when `headBranch` is present, and commit mismatches.
 
+The local app offers the same validation on `/ci-evidence`: paste the completed
+`gh run view` JSON into `Record Direct Snapshot From GitHub JSON`, confirm the
+local write, and it records direct snapshot proof only after the JSON passes
+the same checks. The app still does not contact GitHub.
+
 For publication handoffs, record a completed GitHub Actions run with:
 
 ```bash
