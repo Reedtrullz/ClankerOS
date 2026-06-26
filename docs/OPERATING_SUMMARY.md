@@ -86,10 +86,12 @@ Core layers for the bootstrap:
   local app now also exposes `/resume` as a
   read-only return-to-work surface over saved `.clanker/app/workspace.json`
   state, showing saved goal, project, artifact, filters, expanded panels,
-  zero-effect counters, a direct next resume link, and the saved goal's
-  current phase plus one recommended next action and the same confirmed local
-  action form as the Goal page when that action is browser-available, without
-  writing on GET;
+  zero-effect counters, a direct next resume link, a `Resume Readiness`
+  checklist for the saved project, goal, filters, expanded panels, last
+  artifact existence, and next local surface, and the saved goal's current
+  phase plus one recommended next action and the same confirmed local action
+  form as the Goal page when that action is browser-available, without writing
+  on GET;
   `/search` for bounded global search across indexed goals, projects,
   delegations, known artifacts, incidents, recommendations, memory, runs,
   approvals, and skills, with goal results including live local phase, one

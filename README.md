@@ -127,10 +127,12 @@ status-recording commands.
 
 Use `/resume` when returning to ClankerOS after a break. It reads the saved
 workspace state, shows the exact saved goal/project/artifact links, preserves
-filters and expanded panel readbacks, and shows a `Resume Next Action` section
-with the saved goal's current phase, one next action, operator attention cue,
-target surface, and the same confirmed local action form that the Goal page
-would show when that next action is browser-available. `/workspace` shows the
+filters and expanded panel readbacks, adds a `Resume Readiness` checklist for
+the saved project, goal, filters, expanded panels, last artifact existence,
+and next local surface, and shows a `Resume Next Action` section with the
+saved goal's current phase, one next action, operator attention cue, target
+surface, and the same confirmed local action form that the Goal page would
+show when that next action is browser-available. `/workspace` shows the
 same saved-goal continuation next to the editable saved-state form, so
 operators can inspect, update, and act from tomorrow's resume point in one
 place when the next action is browser-available. Both routes report that they

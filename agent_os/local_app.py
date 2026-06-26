@@ -1733,6 +1733,7 @@ def _resume_page(root: Path) -> str:
             ),
             f"<p><a href='{_e(next_href)}'>{_e(next_label)}</a></p>",
             "</section>",
+            _resume_readiness_section(root, state, open_project, open_goal, filters, expanded, last_artifact),
             _resume_next_action_section(root, open_goal),
             _list_section("Resume Targets", targets),
             _list_section(
@@ -1744,6 +1745,59 @@ def _resume_page(root: Path) -> str:
                 ],
             ),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _resume_readiness_section(
+    root: Path,
+    state: dict[str, str],
+    open_project: str,
+    open_goal: str,
+    filters: str,
+    expanded: str,
+    last_artifact: str,
+) -> str:
+    last_artifact_exists = False
+    if last_artifact:
+        try:
+            last_artifact_exists = resolve_artifact_path(root, last_artifact).exists()
+        except ValueError:
+            last_artifact_exists = False
+    required = {
+        "open_project": bool(open_project),
+        "open_goal": bool(open_goal),
+        "filters": bool(filters),
+        "expanded_panels": bool(expanded),
+        "last_viewed_artifact": bool(last_artifact),
+        "last_artifact_exists": last_artifact_exists,
+    }
+    ready = all(required.values())
+    status = "ready" if ready else ("partial" if any(required.values()) else "not_started")
+    next_surface = f"/goals/{quote(open_goal)}" if open_goal else (f"/projects/{quote(open_project)}" if open_project else "/goals")
+    return "".join(
+        [
+            "<section><h2>Resume Readiness</h2>",
+            "<p class='muted'>Checklist for returning tomorrow to the exact saved local operator context.</p>",
+            _kv(
+                [
+                    ("resume_readiness_status", status),
+                    ("resume_readiness_source", ".clanker/app/workspace.json"),
+                    ("resume_readiness_updated_at", state.get("updated_at", "never")),
+                    ("resume_readiness_open_project", "present" if open_project else "missing"),
+                    ("resume_readiness_open_goal", "present" if open_goal else "missing"),
+                    ("resume_readiness_filters", "present" if filters else "missing"),
+                    ("resume_readiness_expanded_panels", "present" if expanded else "missing"),
+                    ("resume_readiness_last_viewed_artifact", "present" if last_artifact else "missing"),
+                    ("resume_readiness_last_artifact_exists", str(last_artifact_exists).lower()),
+                    ("resume_readiness_next_surface", SafeHtml(f"<a href='{_e(next_surface)}'>{_e(next_surface)}</a>")),
+                    ("resume_readiness_come_back_tomorrow_ready", str(ready).lower()),
+                    ("resume_readiness_illustration", "[project] -> [goal] -> [filters/panels] -> [artifact] -> [next action]"),
+                    ("resume_readiness_write_on_get", "false"),
+                    ("resume_readiness_external_effects_created", "false"),
+                ]
+            ),
+            "</section>",
         ]
     )
 

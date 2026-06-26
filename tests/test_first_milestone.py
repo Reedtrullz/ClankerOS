@@ -5759,6 +5759,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert resume.status == 200
     assert "Resume Workspace" in resume.body
     assert "resume_workspace_available</dt><dd>true" in resume.body
+    assert "Resume Readiness" in resume.body
+    assert "resume_readiness_status</dt><dd>ready" in resume.body
+    assert "resume_readiness_open_project</dt><dd>present" in resume.body
+    assert "resume_readiness_open_goal</dt><dd>present" in resume.body
+    assert "resume_readiness_filters</dt><dd>present" in resume.body
+    assert "resume_readiness_expanded_panels</dt><dd>present" in resume.body
+    assert "resume_readiness_last_viewed_artifact</dt><dd>present" in resume.body
+    assert "resume_readiness_last_artifact_exists</dt><dd>true" in resume.body
+    assert "resume_readiness_come_back_tomorrow_ready</dt><dd>true" in resume.body
+    assert "[project] -&gt; [goal] -&gt; [filters/panels] -&gt; [artifact] -&gt; [next action]" in resume.body
+    assert "resume_readiness_write_on_get</dt><dd>false" in resume.body
+    assert "resume_readiness_external_effects_created</dt><dd>false" in resume.body
     assert f"resume_goal: <a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in resume.body
     assert f"resume_project: <a href='/projects/{result.project_id}'>{result.project_id}</a>" in resume.body
     assert "resume_artifact" in resume.body

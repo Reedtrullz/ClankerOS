@@ -1,5 +1,15 @@
 # Status
 
+## 2026-06-27 Resume Readiness Checklist
+
+- Added a read-only `Resume Readiness` section to `/resume` that checks the
+  saved project, goal, filters, expanded panels, last viewed artifact, artifact
+  existence, next local surface, and whether the saved state is ready for a
+  tomorrow-style return to work.
+- Non-claims: this does not write workspace state on GET, run work, activate
+  providers, push, create PRs, deploy, fetch GitHub status, or mutate external
+  systems. It only reads local workspace state and bounded artifact paths.
+
 ## 2026-06-27 Storage-Backed Profiles Page
 
 - Made `/profiles` read both `.clanker/profiles.yml` and SQLite profile rows.
