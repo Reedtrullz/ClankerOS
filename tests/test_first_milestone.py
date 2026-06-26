@@ -4857,6 +4857,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "artifact_type=text" in goal.body
     assert "Memory" in goal.body
     assert "Skills Used" in goal.body
+    assert "skills_surface: <a href='/skills'>/skills</a>" in goal.body
+    assert "goal_skill_usage_source: tasks.skill_tags" in goal.body
+    assert "task_skill: local-files usage_count=1 projects_using=local-app-demo" in goal.body
+    assert "matching_skill_records=0" in goal.body
+    assert "profile_used: scout count=1" in goal.body
+    assert "skill_execution_from_goal_page=false" in goal.body
     assert "Git Status" in goal.body
     assert "Operator Notes" in goal.body
     assert "save-goal-note" in goal.body

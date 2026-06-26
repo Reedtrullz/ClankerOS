@@ -1898,7 +1898,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _list_section("Artifacts", _goal_artifact_lines(root, state)),
             _goal_artifact_explorer(root, state),
             _list_section("Memory", _goal_memory_lines(root, state)),
-            _list_section("Skills Used", _goal_skill_lines(state)),
+            _list_section("Skills Used", _goal_skill_lines(root, state)),
             _goal_git_status(root, state),
             _goal_operator_notes_section(root, state),
             _list_section("Remaining Work", _goal_remaining_work_lines(state, next_action)),
@@ -3247,14 +3247,44 @@ def _goal_memory_lines(root: Path, state: dict[str, Any]) -> list[str]:
     ]
 
 
-def _goal_skill_lines(state: dict[str, Any]) -> list[str]:
+def _goal_skill_lines(root: Path, state: dict[str, Any]) -> list[str]:
+    storage = _storage(root)
+    goal = state["goal"]
+    usage = _skill_usage(storage)
+    skills = storage.list_skills(limit=200)
+    skills_by_name: dict[str, list[Any]] = {}
+    for skill in skills:
+        skills_by_name.setdefault(skill.name, []).append(skill)
     profile_counts: dict[str, int] = {}
     for delegation in state["delegations"]:
         profile_counts[delegation.assigned_profile] = profile_counts.get(delegation.assigned_profile, 0) + 1
-    lines = [f"task_skill: {tag}" for tag in state["skill_tags"]]
+    lines = [
+        "skills_surface: <a href='/skills'>/skills</a>",
+        "goal_skill_usage_source: tasks.skill_tags",
+    ]
+    for tag in state["skill_tags"]:
+        data = usage.get(tag, {"count": 0, "projects": set()})
+        projects = ", ".join(sorted(data["projects"])) if data["projects"] else goal.project_id
+        matching = [
+            skill
+            for skill in skills_by_name.get(tag, [])
+            if skill.project_id in {None, "", goal.project_id}
+        ]
+        if matching:
+            skill_links = ", ".join(
+                f"{_e(skill.id)} status={_e(skill.status)} path={_artifact_link(_repo_relative_artifact_path(root, skill.path))}"
+                for skill in matching[:3]
+            )
+        else:
+            skill_links = "none"
+        lines.append(
+            f"task_skill: {_e(tag)} usage_count={data['count']} projects_using={_e(projects)} "
+            f"matching_skill_records={len(matching)} generated_or_available={skill_links}"
+        )
     lines.extend(f"profile_used: {profile} count={count}" for profile, count in sorted(profile_counts.items()))
-    if not lines:
+    if not state["skill_tags"] and not profile_counts:
         lines.append("none_recorded_yet")
+    lines.append("skill_execution_from_goal_page=false")
     return lines
 
 

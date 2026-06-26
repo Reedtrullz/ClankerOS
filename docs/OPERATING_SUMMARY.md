@@ -124,6 +124,10 @@ Core layers for the bootstrap:
   renders saved filters, expanded panels, and last-viewed artifact as
   `Goal Workspace Restore State`, and exposes a confirmed `save-workspace`
   form that returns to the same goal page after saving without writing on GET.
+  The Goal `Skills Used` section links to `/skills`, reuses task skill usage
+  counts, names projects using each tag, links matching generated or available
+  local skill records when present, and shows profile usage while keeping
+  skill execution unavailable from the Goal page.
   They also include a typed
   `Goal Artifact Explorer` that groups goal-linked Markdown,
   JSON, Patch/Diff, and Text/Log artifacts and links them through the bounded

@@ -1,5 +1,27 @@
 # Status
 
+## 2026-06-26 Goal Skills Used Readback
+
+- Upgraded `/goals/<goal_id>` `Skills Used` from raw task tags to a
+  first-class readback. The section now links to `/skills`, shows
+  `tasks.skill_tags` as the source, task skill usage counts, projects using
+  each tag, matching generated or available local skill records when present,
+  profile usage counts, and `skill_execution_from_goal_page=false`.
+- This makes the Goal page more self-contained for daily operation: an
+  operator can see which capabilities the goal needs and whether ClankerOS has
+  a matching local skill record without detouring into SQLite or the CLI.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state"`
+    -> `1 passed, 509 deselected`
+  - `git diff --check`
+    -> passed
+- Non-claims: this is read-only browser UI over local skill/task state. It
+  does not install, activate, or execute skills; call providers; fetch GitHub
+  status; run arbitrary commands; push; create PRs; deploy; or mutate external
+  systems.
+
 ## 2026-06-26 Goal Workspace Restore State
 
 - Added a `Goal Workspace Restore State` readback inside

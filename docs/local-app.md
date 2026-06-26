@@ -66,7 +66,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   activity log, delegations, runs, approvals, evidence, artifacts, memory,
   skills used, git status, operator notes, a goal-scoped resume snapshot, and
   remaining work. It uses local polling refresh and does not contact GitHub or
-  providers. Goal Resume Snapshot reads `.clanker/app/workspace.json`, shows
+  providers. Skills Used links to `/skills`, shows task skill usage counts,
+  projects using each tag, matching generated or available skill records when
+  present, and profile usage while keeping skill execution out of the Goal
+  page. Goal Resume Snapshot reads `.clanker/app/workspace.json`, shows
   whether the saved workspace already points at the current goal, suggests the
   latest goal artifact as the resume anchor, renders saved filters, expanded
   panels, and last-viewed artifact as `Goal Workspace Restore State`, and
