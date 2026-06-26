@@ -94,8 +94,11 @@ Core layers for the bootstrap:
   plans, plus clickable timeline entries with operator-facing lifecycle
   language for approval requested/granted, execution completed, review passed,
   commit approved, and publication approved states, a browser-native progress
-  bar, and a confirmed `save-goal-note` form that appends local operator resume
-  context to the goal-scoped `operator-notes.md` artifact, plus a confirmed `delegate`
+  bar, and a large Current Phase banner that explains the phase reason,
+  operator attention cue, next action surface, latest activity, and zero-effect
+  boundary without requiring the CLI. They also include a confirmed
+  `save-goal-note` form that appends local operator resume context to the
+  goal-scoped `operator-notes.md` artifact, plus a confirmed `delegate`
   next-action form when a goal has planned tasks but no delegation yet; the
   delegation form writes a read-only scout delegation contract only and does
   not start a subagent. Once a delegation exists without a context pack, the

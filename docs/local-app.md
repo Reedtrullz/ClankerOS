@@ -66,7 +66,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   activity log, delegations, runs, approvals, evidence, artifacts, memory,
   skills used, git status, operator notes, a goal-scoped resume snapshot, and
   remaining work. It uses local polling refresh and does not contact GitHub or
-  providers. Skills Used links to `/skills`, shows task skill usage counts,
+  providers. The Current Phase banner is the primary operator state readback:
+  it shows the large phase label, reason, operator attention cue, next surface,
+  latest activity, and zero-effect boundary so the operator knows what is
+  happening without opening the CLI. Skills Used links to `/skills`, shows
+  task skill usage counts,
   projects using each tag, matching generated or available skill records when
   present, and profile usage while keeping skill execution out of the Goal
   page. Goal Resume Snapshot reads `.clanker/app/workspace.json`, shows

@@ -1880,9 +1880,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
                 ]
             ),
             "</section>",
-            "<section class='banner'><h2>Current Phase</h2>",
-            f"<p><strong>{_e(phase)}</strong></p>",
-            "</section>",
+            _goal_phase_banner(root, state, phase, next_action),
             _goal_next_action_card(state, next_action),
             _goal_resume_snapshot(root, state),
             _goal_overview(state),
@@ -2082,6 +2080,132 @@ def _goal_current_phase(state: dict[str, Any]) -> str:
     if state["tasks"]:
         return "Ready for delegation"
     return "Goal accepted"
+
+
+def _goal_phase_banner(
+    root: Path,
+    state: dict[str, Any],
+    phase: str,
+    next_action: GoalNextAction,
+) -> str:
+    latest_item = _goal_latest_timeline_item(root, state)
+    latest_activity = latest_item.get("message") if latest_item else "none"
+    return "".join(
+        [
+            "<section class='banner goal-phase-banner' aria-live='polite'><h2>Current Phase</h2>",
+            f"<p class='phase-callout'><strong>{_e(phase)}</strong></p>",
+            _kv(
+                [
+                    ("current_phase_banner", phase),
+                    ("current_phase_is_large_banner", "true"),
+                    ("phase_reason", _goal_phase_reason(root, state, phase)),
+                    ("operator_attention", _goal_operator_attention(phase, next_action)),
+                    ("next_recommended_action", next_action.action),
+                    ("next_action_surface", SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>")),
+                    ("latest_activity", latest_activity or "none"),
+                    ("operator_always_knows_what_is_happening", "true"),
+                    ("phase_banner_external_effects_created", "false"),
+                ]
+            ),
+            "</section>",
+        ]
+    )
+
+
+def _goal_latest_timeline_item(root: Path, state: dict[str, Any]) -> dict[str, str] | None:
+    items = _goal_timeline_items(root, state)
+    return items[-1] if items else None
+
+
+def _goal_phase_reason(root: Path, state: dict[str, Any], phase: str) -> str:
+    if phase == "Completed":
+        return "goal is marked completed"
+    if phase == "Blocked":
+        open_incident = next((row for row in state["incidents"] if row["status"] == "open"), None)
+        if open_incident is not None:
+            return f"open incident requires inspection: {open_incident['summary']}"
+        blocked_tasks = [
+            task
+            for task in state["tasks"]
+            if task.status in {"failed", "blocked"}
+        ]
+        if blocked_tasks:
+            return f"{len(blocked_tasks)} task(s) are failed or blocked"
+        return "blocked state detected"
+    if phase == "Ready to publish":
+        if _count_status(state["publications"], "ready_for_operator"):
+            return "publication handoff is ready for manual push/PR outside ClankerOS"
+        if _count_status(state["publications"], "approved"):
+            return "publication is approved and needs a local handoff artifact"
+        if _count_status(state["commit_approvals"], "committed"):
+            return "local commit exists and publication request can be created"
+        return "publication gate is available"
+    if phase == "Ready to commit":
+        if _count_status(state["commit_approvals"], "approved"):
+            return "commit approval is granted; local worktree commit can be recorded"
+        reviewed = [
+            run
+            for run in state["worktree_runs"]
+            if run.status == "completed"
+            and _run_review_gate_state(root, run).get("commit_request_form_available")
+        ]
+        if reviewed:
+            return "reviewed worktree run is ready for commit request"
+        return "commit gate is available"
+    if phase == "Needs review":
+        return "completed worktree run needs a review artifact before commit request"
+    if phase == "Waiting for approval":
+        if _count_status(state["publications"], "pending_operator_approval"):
+            return "publication approval is pending operator decision"
+        if _count_status(state["commit_approvals"], "pending_operator_approval"):
+            return "commit approval is pending operator decision"
+        if _count_status(state["worktree_approvals"], "pending_operator_approval"):
+            return "worktree approval is pending operator decision"
+        if state["worktree_plans"]:
+            return "worktree plan exists and needs an approval request"
+        return "operator approval is required before continuing"
+    if phase == "Running":
+        if any(run.status == "running" for run in state["worktree_runs"]):
+            return "approved worktree execution is running"
+        if any(delegation.status in {"pending", "running"} for delegation in state["delegations"]):
+            return "delegation is pending or running; browser execution remains unexposed"
+        return "local workflow step is running"
+    if phase == "Ready to run":
+        return "worktree execution approval is granted; use the bounded CLI handoff"
+    if phase == "Planning worktree":
+        return "coder prep exists and a bounded worktree plan is the next artifact"
+    if phase == "Coder prep":
+        return "implementation handoff is available and coder prep is next"
+    if phase == "Implementation handoff":
+        return "delegation result is complete and implementation handoff/coder prep is next"
+    if phase == "Ready for delegation":
+        return "goal has planned tasks and needs a scout delegation"
+    if phase == "Goal accepted":
+        return "goal exists and needs planning or task setup"
+    return "phase read from local goal state"
+
+
+def _goal_operator_attention(phase: str, next_action: GoalNextAction) -> str:
+    if phase == "Blocked":
+        return f"Resolve: {next_action.action}"
+    if phase == "Running":
+        return f"Watch: {next_action.action}"
+    if phase == "Completed":
+        return "Done: inspect evidence before closing"
+    if phase in {
+        "Waiting for approval",
+        "Needs review",
+        "Ready to commit",
+        "Ready to publish",
+        "Ready to run",
+        "Planning worktree",
+        "Coder prep",
+        "Implementation handoff",
+        "Ready for delegation",
+        "Goal accepted",
+    }:
+        return f"Act: {next_action.action}"
+    return f"Next: {next_action.action}"
 
 
 def _goal_next_action(root: Path, state: dict[str, Any]) -> GoalNextAction:

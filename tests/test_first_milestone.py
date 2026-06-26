@@ -4802,6 +4802,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-breadcrumbs='true'" in goal.body
     assert "Current Phase" in goal.body
     assert "Ready to commit" in goal.body
+    assert "current_phase_banner</dt><dd>Ready to commit" in goal.body
+    assert "current_phase_is_large_banner</dt><dd>true" in goal.body
+    assert "phase_reason</dt><dd>reviewed worktree run is ready for commit request" in goal.body
+    assert "operator_attention</dt><dd>Act: Create commit request" in goal.body
+    assert "next_recommended_action</dt><dd>Create commit request" in goal.body
+    assert "latest_activity</dt><dd>" in goal.body
+    assert "operator_always_knows_what_is_happening</dt><dd>true" in goal.body
+    assert "phase_banner_external_effects_created</dt><dd>false" in goal.body
     assert "Next Action" in goal.body
     assert "recommended_action</dt><dd>Create commit request" in goal.body
     assert "Goal Resume Snapshot" in goal.body

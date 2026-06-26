@@ -1,5 +1,22 @@
 # Status
 
+## 2026-06-26 Goal Current Phase Banner
+
+- Upgraded `/goals/<goal_id>` `Current Phase` from a thin phase label into a
+  large operator-state banner. The banner now shows the phase, phase reason,
+  operator attention cue, next recommended action, next action surface, latest
+  activity, and `phase_banner_external_effects_created=false`.
+- The banner is still read-only over existing local state and artifacts. It
+  does not run delegations or worktrees, approve anything, call providers,
+  fetch GitHub status, push, create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state"`
+    -> `1 passed, 509 deselected`
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Goal Timeline Lifecycle Language
 
 - Updated `/goals/<goal_id>` timeline entries to use operator-facing lifecycle
