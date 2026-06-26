@@ -119,6 +119,12 @@ lead goal exists, Home also shows an explicit
 context for the next session. Use the
 compact local app smoke commands before pushing, then let GitHub Actions run
 the fast route smoke and full pytest suite for slower proof.
+The default contributor loop is intentionally GitHub-first: make a small
+change, run only the narrow local check that matches it, push the PR branch,
+watch `Fast smoke verification`, and let `Full pytest suite` finish in Actions.
+See [GitHub Testing](docs/github-testing.md) for the exact proof boundaries and
+status-recording commands.
+
 Use `/resume` when returning to ClankerOS after a break. It reads the saved
 workspace state, shows the exact saved goal/project/artifact links, preserves
 filters and expanded panel readbacks, and shows a `Resume Next Action` section

@@ -4,6 +4,24 @@ Use GitHub Actions for the slow, authoritative verification loop. The local
 machine should stay focused on quick checks while the repository workflow runs
 the full suite after a push, pull request, or manual dispatch.
 
+## Default Operator Loop
+
+For normal ClankerOS app slices, do not spend the session running the whole
+suite locally. Use this loop instead:
+
+1. Make a small, reviewable change.
+2. Run the narrowest relevant local check for the touched files. For docs-only
+   changes, `git diff --check` is usually enough. For app/code changes, prefer
+   one focused pytest expression, `app-smoke-test`, or `compileall` over the
+   full suite.
+3. Commit and push the branch tied to the pull request.
+4. Watch the GitHub `Fast smoke verification` job first. If it passes, keep
+   building while `Full pytest suite` runs in GitHub.
+5. Only inspect full-suite logs when GitHub reports a failure or timeout.
+
+This keeps local iteration fast while still making the repository, not the
+chat transcript, the place where slow proof accumulates.
+
 ## Automatic Workflow
 
 The workflow lives at `.github/workflows/tests.yml` and runs on:

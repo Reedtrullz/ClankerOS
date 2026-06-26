@@ -1,5 +1,15 @@
 # Status
 
+## 2026-06-27 GitHub-First Testing Loop
+
+- Documented the default operator loop for CI-backed iteration: make a small
+  change, run the narrowest relevant local check, push the PR branch, watch
+  `Fast smoke verification`, and let `Full pytest suite` finish in GitHub
+  Actions instead of spending the session on repeated local full-suite runs.
+- Non-claims: this does not change workflow behavior, run CI locally, deploy,
+  call providers, fetch GitHub status from the app, or mutate external systems.
+  It only clarifies the existing GitHub Actions testing posture in docs.
+
 ## 2026-06-27 Visible Shortcut Help
 
 - Added a visible `Keyboard Shortcuts` block inside the command palette,
