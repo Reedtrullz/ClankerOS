@@ -2041,6 +2041,9 @@ def _first_run_panel(root: Path, storage: Storage) -> str:
                     ("first_run_context_pack_ready", str(progress["context_pack_ready"]).lower()),
                     ("first_run_delegation_completed", str(progress["delegation_completed"]).lower()),
                     ("first_run_next_surface", progress["next_surface"]),
+                    ("first_run_next_action", progress["next_action"]),
+                    ("first_run_next_reason", progress["next_reason"]),
+                    ("first_run_next_action_source", "state_aware_first_run"),
                     ("first_run_context_pack_action", progress["context_pack_action"]),
                     ("first_run_run_delegation_command", progress["run_delegation_command"]),
                     ("first_run_run_delegation_action", progress["run_delegation_action"]),
@@ -2123,21 +2126,33 @@ def _first_run_progress(root: Path, storage: Storage) -> dict[str, Any]:
     if not project_registered:
         current_step = "create_project"
         next_surface: str | SafeHtml = SafeHtml("<a href='/goals'>/goals</a>")
+        next_action = "Register ClankerOS project"
+        next_reason = "no_project_registered"
     elif not goal_created:
         current_step = "create_first_goal"
         next_surface = SafeHtml("<a href='/goals'>/goals</a>")
+        next_action = "Create first goal"
+        next_reason = "no_goal_created"
     elif not delegation_created:
         current_step = "create_first_delegation"
         next_surface = SafeHtml(f"<a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>")
+        next_action = "Open goal to create scout delegation"
+        next_reason = "goal_ready_for_delegation"
     elif not context_pack_ready:
         current_step = "generate_context_pack"
         next_surface = SafeHtml(f"<a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>")
+        next_action = "Generate context pack"
+        next_reason = "delegation_waiting_for_context_pack"
     elif not delegation_completed:
         current_step = "run_first_delegation"
         next_surface = SafeHtml(f"<a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>")
+        next_action = "Run delegation"
+        next_reason = "context_pack_ready"
     else:
         current_step = "first_delegation_complete"
         next_surface = SafeHtml(f"<a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>")
+        next_action = "Review first delegation evidence"
+        next_reason = "first_delegation_completed"
     return {
         "project_registered": project_registered,
         "goal_created": goal_created,
@@ -2148,6 +2163,8 @@ def _first_run_progress(root: Path, storage: Storage) -> dict[str, Any]:
         "delegation_completed": delegation_completed,
         "current_step": current_step,
         "next_surface": next_surface,
+        "next_action": next_action,
+        "next_reason": next_reason,
         "context_pack_action": context_pack_action,
         "run_delegation_command": run_delegation_command,
         "run_delegation_action": run_delegation_action,

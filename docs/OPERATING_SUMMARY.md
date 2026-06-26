@@ -111,11 +111,11 @@ Core layers for the bootstrap:
   external effects. The populated `/goals` cockpit also exposes a confirmed
   local `Start Another Goal` form for registered projects, so daily goal
   creation does not require the CLI. The checklist reports the current step,
-  project/goal/
-  delegation/context-pack state, next local surface, a confirmed local
-  `run-delegation` action once context is ready, and a copyable CLI fallback
-  while keeping provider calls, network actions, push, PR creation, deploy,
-  and external mutation unexposed. Shared goal rows in Home, `/goals`, and project detail
+  one `first_run_next_action` with a reason, project/goal/delegation/
+  context-pack state, next local surface, a confirmed local `run-delegation`
+  action once context is ready, and a copyable CLI fallback while keeping
+  provider calls, network actions, push, PR creation, deploy, and external
+  mutation unexposed. Shared goal rows in Home, `/goals`, and project detail
   pages now show phase, next action, progress, and compact remaining-work
   counts for open tasks, incidents, and recommendations. Goal detail pages now
   expose first-class Goal Risk and Goal Completion Criteria sections sourced

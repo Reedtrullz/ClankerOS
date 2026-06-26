@@ -1,5 +1,30 @@
 # Status
 
+## 2026-06-27 First Run Next Action Readback
+
+- Made the browser First Run Guide report one state-aware
+  `first_run_next_action`, a `first_run_next_reason`, and
+  `first_run_next_action_source: state_aware_first_run` as the operator moves
+  through project registration, first goal creation, first scout delegation,
+  context-pack generation, and the first delegation run. This makes the empty
+  and early first-run flow behave more like the Goal page's one-next-action
+  cockpit instead of relying on step-state inference.
+- Non-claims: this does not run delegations, approve gates, call providers,
+  fetch GitHub status, push, create PRs, deploy, or mutate external systems.
+  It is a local browser guidance/readback improvement only.
+- Compact local verification for this slice:
+  - Focused red pytest first failed because the First Run Guide did not expose
+    `first_run_next_action`.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+    -> `1 passed, 512 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 First Run Dogfood Project Readback
 
 - Made the browser First Run Guide explicitly report `clankeros` as the
