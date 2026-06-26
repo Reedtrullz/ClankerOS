@@ -81,7 +81,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   after saving without writing on GET. Operator Notes includes a confirmed
   `save-goal-note` form that appends local resume context to
   `.clanker/projects/<project>/goals/<goal>/operator-notes.md`; it does not
-  overwrite previous notes. When the goal has planned tasks but no
+  overwrite previous notes. The Goal Memory section links to `/memory`, shows
+  project/global memory artifacts, goal-scoped memory entry counts, generated
+  memory count, operator-note status, future-work count, and the current pin
+  posture; pinning stays on the confirmed `/memory` action surface. When the
+  goal has planned tasks but no
   delegation yet, the Next Action card exposes a confirmed `delegate` form
   that writes a read-only scout delegation contract without starting a
   subagent. After that, the same Next Action card exposes a confirmed

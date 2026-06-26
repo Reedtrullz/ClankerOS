@@ -134,6 +134,11 @@ Core layers for the bootstrap:
   done/pending/waiting status for scout, context-pack, implementation
   handoff, coder prep, worktree, review, commit, publication, and manual
   publish gates without taking action.
+  Goal `Memory` now links to `/memory`, shows project/global memory artifacts,
+  goal-scoped memory entry counts, generated memory count, operator-note
+  status, future-work count, latest memory summaries, and the fact that
+  pinning remains available on the confirmed `/memory` surface rather than on
+  the read-only Goal page.
   The Goal `Skills Used` section links to `/skills`, reuses task skill usage
   counts, names projects using each tag, links matching generated or available
   local skill records when present, and shows profile usage while keeping

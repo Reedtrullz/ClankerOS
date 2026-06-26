@@ -4868,6 +4868,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "artifact_type=patch" in goal.body
     assert "artifact_type=text" in goal.body
     assert "Memory" in goal.body
+    assert "memory_surface: <a href='/memory'>/memory</a>" in goal.body
+    assert f"goal_memory_project_id: {result.project_id}" in goal.body
+    assert "operator_notes_status: not_started" in goal.body
+    assert "goal_memory_project_entries: 0" in goal.body
+    assert "goal_memory_active_entries: 0" in goal.body
+    assert "goal_memory_proposed_entries: 0" in goal.body
+    assert "goal_generated_memory_count: 0" in goal.body
+    assert "goal_future_work_count: 0" in goal.body
+    assert "pin_memory_action: available_on_memory_page" in goal.body
+    assert "pin_memory_from_goal_page=false" in goal.body
+    assert "goal_memory_external_effects_created=false" in goal.body
+    assert "pin_memory_action: planned_local_only" not in goal.body
     assert "Skills Used" in goal.body
     assert "skills_surface: <a href='/skills'>/skills</a>" in goal.body
     assert "goal_skill_usage_source: tasks.skill_tags" in goal.body
@@ -4916,6 +4928,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Project Memories" in memory.body
     assert "Generated Memories" in memory.body
     assert "Future Work" in memory.body
+    assert "pin_memory_available</dt><dd>true" in memory.body
 
     skills = render_local_app_route(tmp_path, "/skills")
     assert skills.status == 200

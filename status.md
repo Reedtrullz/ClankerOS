@@ -1,5 +1,24 @@
 # Status
 
+## 2026-06-26 Goal Memory Readback
+
+- Upgraded `/goals/<goal_id>` `Memory` from a thin artifact list into a
+  first-class goal-scoped memory readback. It now links to `/memory`, shows
+  project/global memory artifacts, operator-note status, project/active/
+  proposed/global/generated memory entry counts, future-work count, latest
+  memory summaries, and the true pin posture: `pin_memory_action` is
+  available on `/memory`, while `pin_memory_from_goal_page=false`.
+- The Goal page remains read-only for memory pinning. This does not pin
+  memory, approve memory, call providers, fetch GitHub status, push, create
+  PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state"`
+    -> `1 passed, 509 deselected`
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Goal Remaining Work Gates
 
 - Upgraded `/goals/<goal_id>` `Remaining Work` from a thin task/next-action

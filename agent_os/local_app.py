@@ -3419,17 +3419,53 @@ def _goal_artifact_render_kind(path: str) -> str | None:
 
 
 def _goal_memory_lines(root: Path, state: dict[str, Any]) -> list[str]:
+    storage = _storage(root)
     goal = state["goal"]
     project_memory = Path("projects") / goal.project_id / "knowledge.md"
     global_memory = Path("knowledge.md")
     operator_notes = Path(".clanker") / "projects" / goal.project_id / "goals" / goal.id / "operator-notes.md"
+    project_entries = storage.list_memory_entries(project_id=goal.project_id, limit=100)
+    global_entries = [
+        entry for entry in storage.list_memory_entries(limit=100) if entry.scope == "global"
+    ]
+    generated_entries = [
+        entry for entry in project_entries if entry.source_type != "operator"
+    ]
+    active_entries = [entry for entry in project_entries if entry.status == "active"]
+    proposed_entries = [entry for entry in project_entries if entry.status == "proposed"]
+    future_work = [row for row in state["recommendations"] if row["status"] == "open"]
+    latest_generated = generated_entries[0] if generated_entries else None
+    latest_project_entry = project_entries[0] if project_entries else None
+    operator_note_status = "available" if (root / operator_notes).exists() else "not_started"
     return [
+        "memory_surface: <a href='/memory'>/memory</a>",
+        f"goal_memory_project_id: {_e(goal.project_id)}",
         f"project_memory: {_artifact_link(project_memory.as_posix()) if (root / project_memory).exists() else 'missing'}",
         f"global_memory: {_artifact_link(global_memory.as_posix()) if (root / global_memory).exists() else 'missing'}",
-        f"operator_notes: {_artifact_link(operator_notes.as_posix()) if (root / operator_notes).exists() else 'not_started'}",
-        "generated_memories: visible_when_memory_proposals_exist",
-        "pin_memory_action: planned_local_only",
+        f"operator_notes: {_artifact_link(operator_notes.as_posix()) if operator_note_status == 'available' else 'not_started'}",
+        f"operator_notes_status: {operator_note_status}",
+        f"goal_memory_project_entries: {len(project_entries)}",
+        f"goal_memory_active_entries: {len(active_entries)}",
+        f"goal_memory_proposed_entries: {len(proposed_entries)}",
+        f"goal_memory_global_entries: {len(global_entries)}",
+        f"goal_generated_memory_count: {len(generated_entries)}",
+        f"goal_future_work_count: {len(future_work)}",
+        f"latest_project_memory: {_goal_memory_entry_summary(latest_project_entry)}",
+        f"latest_generated_memory: {_goal_memory_entry_summary(latest_generated)}",
+        "pin_memory_action: available_on_memory_page",
+        "pin_memory_from_goal_page=false",
+        "goal_memory_external_effects_created=false",
     ]
+
+
+def _goal_memory_entry_summary(entry: Any | None) -> str:
+    if entry is None:
+        return "none"
+    return (
+        f"{_e(entry.id)} status={_e(entry.status)} "
+        f"scope={_e(entry.scope)} key={_e(entry.key)} "
+        f"artifact={_artifact_link(entry.artifact_path)}"
+    )
 
 
 def _goal_skill_lines(root: Path, state: dict[str, Any]) -> list[str]:
