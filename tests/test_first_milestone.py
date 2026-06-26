@@ -4145,12 +4145,13 @@ def test_local_app_cli_commands_and_bind_safety(
     assert main(["--root", str(tmp_path), "app-smoke-test"]) == 0
     smoke_output = capsys.readouterr().out
     assert "app_smoke_test: passed" in smoke_output
-    assert "route /workflow: 200" in smoke_output
-    assert "route /actions: 200" in smoke_output
-    assert "route /verification: 200" in smoke_output
-    assert "route /ci-evidence: 200" in smoke_output
-    assert "route /dogfooding: 200" in smoke_output
-    assert "route /inbox: 200" in smoke_output
+    assert "route /workflow: 200 marker=matched required_marker=Modern Operator Workflow" in smoke_output
+    assert "route /actions: 200 marker=matched required_marker=Safe Action Catalog" in smoke_output
+    assert "route /verification: 200 marker=matched required_marker=Verification Handoff" in smoke_output
+    assert "route /ci-evidence: 200 marker=matched required_marker=CI Evidence Records" in smoke_output
+    assert "route /dogfooding: 200 marker=matched required_marker=Manual Dogfooding Checklist" in smoke_output
+    assert "route /inbox: 200 marker=matched required_marker=Operator Inbox" in smoke_output
+    assert "marker=missing" not in smoke_output
     assert "network_actions_taken: 0" in smoke_output
 
     assert main(["--root", str(tmp_path), "app-demo"]) == 0

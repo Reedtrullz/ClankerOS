@@ -62,6 +62,10 @@ python3 -m compileall -q agent_os tests
 python3 -m agent_os.cli app-smoke-test
 ```
 
+`app-smoke-test` renders the core local app routes without starting a browser
+server and checks each route for its expected page marker, so GitHub Actions can
+catch blank or wrong operator pages before the full pytest suite finishes.
+
 Then read:
 
 - [Getting Started](docs/getting-started.md)

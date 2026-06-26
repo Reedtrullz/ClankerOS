@@ -169,6 +169,12 @@ and labels an in-progress GitHub run as pending proof rather than CI proof:
 - `python3 -m agent_os.cli app-smoke-test`
 - `git diff --check`
 
+`app-smoke-test` is route-marker aware: it renders the core local app routes
+without starting a server, checks each route for its expected page marker, and
+prints `marker=matched` or `marker=missing` beside the route status. The
+checked-in GitHub Actions workflow runs the same smoke command before the full
+pytest suite.
+
 The page does not fetch GitHub status. A pushed commit is not CI proof until
 the GitHub Actions run completes successfully. If a GitHub run is still in
 progress, keep waiting on GitHub instead of rerunning the full suite locally;

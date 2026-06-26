@@ -142,6 +142,13 @@ Core layers for the bootstrap:
   details, and a no-action-completed non-claim. It does not push, create PRs,
   deploy, call providers, execute arbitrary commands, or use the network
   beyond local browser/server loopback.
+- Local app smoke testing: `app-smoke-test` renders the core local app routes
+  without starting a server, requires route-specific page markers such as
+  `ClankerOS Local Operator`, `Modern Operator Workflow`, `Safe Action
+  Catalog`, `Verification Handoff`, and `CI Evidence Records`, and reports
+  `marker=matched` or `marker=missing` per route while preserving
+  provider/network/external-mutation counters at zero. The checked-in GitHub
+  Actions workflow runs this smoke before the full pytest suite.
 - CI/deploy evidence ingestion: an operator can attach CI or deploy proof to a
   GitHub handoff packet with `ci-deploy-evidence`. The record preserves
   provider, external run id, URL, commit, branch, handoff, and JSON evidence

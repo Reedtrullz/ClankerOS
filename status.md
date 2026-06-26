@@ -1,5 +1,26 @@
 # Status
 
+## 2026-06-26 Local App Marker-Aware Smoke Test
+
+- Upgraded `app-smoke-test` so it now renders each core local app route and
+  checks for the expected route marker, not just HTTP status 200. The CLI
+  output reports `marker=matched` or `marker=missing` with each route.
+- The checked-in GitHub Actions workflow already runs `app-smoke-test` before
+  the full pytest suite, so CI can now catch blank or wrong local-app operator
+  pages earlier.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py agent_os/cli.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_cli_commands_and_bind_safety`
+    -> `1 passed, 497 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> rendered the core local app routes with status 200, `marker=matched`
+    for each route, and zero provider/network/external-mutation counters.
+  - `git diff --check`
+- Non-claims: this strengthens local/CI smoke coverage only; it does not start
+  a server, execute approvals, commit, push, create PRs, deploy, call
+  providers, fetch GitHub status, execute arbitrary commands, or perform
+  non-loopback network actions from the local app.
+
 ## 2026-06-26 Local App Dashboard Dogfooding Snapshot
 
 - Upgraded the root dashboard with a read-only `Dashboard Dogfooding Snapshot`.

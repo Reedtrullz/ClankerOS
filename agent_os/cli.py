@@ -2193,7 +2193,11 @@ def main(argv: list[str] | None = None) -> int:
         result = run_local_app_smoke_test(root)
         print(f"app_smoke_test: {result['status']}")
         for route in result["routes"]:
-            print(f"route {route['route']}: {route['status']}")
+            marker_status = "matched" if route["marker_found"] else "missing"
+            print(
+                f"route {route['route']}: {route['status']} "
+                f"marker={marker_status} required_marker={route['required_marker']}"
+            )
         print("provider_calls_taken_by_clankeros: 0")
         print("network_actions_taken: 0")
         print("external_mutations_taken: 0")

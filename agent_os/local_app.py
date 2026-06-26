@@ -284,25 +284,33 @@ def render_local_app_route(
 def run_local_app_smoke_test(root: Path) -> dict[str, Any]:
     root = root.resolve()
     routes = [
-        "/",
-        "/workflow",
-        "/actions",
-        "/verification",
-        "/ci-evidence",
-        "/dogfooding",
-        "/projects",
-        "/delegation-runs",
-        "/inbox",
-        "/approvals",
-        "/incidents",
-        "/health",
-        "/demo",
+        ("/", "ClankerOS Local Operator"),
+        ("/workflow", "Modern Operator Workflow"),
+        ("/actions", "Safe Action Catalog"),
+        ("/verification", "Verification Handoff"),
+        ("/ci-evidence", "CI Evidence Records"),
+        ("/dogfooding", "Manual Dogfooding Checklist"),
+        ("/projects", "Project Workflow Index"),
+        ("/delegation-runs", "Delegation Run Index"),
+        ("/inbox", "Operator Inbox"),
+        ("/approvals", "Approvals"),
+        ("/incidents", "Incidents"),
+        ("/health", "System Health"),
+        ("/demo", "Demo Scenario"),
     ]
     results = []
-    for route in routes:
+    for route, marker in routes:
         response = render_local_app_route(root, route)
-        results.append({"route": route, "status": response.status})
-    ok = all(item["status"] == 200 for item in results)
+        marker_found = marker in response.body
+        results.append(
+            {
+                "route": route,
+                "status": response.status,
+                "required_marker": marker,
+                "marker_found": marker_found,
+            }
+        )
+    ok = all(item["status"] == 200 and item["marker_found"] for item in results)
     return {
         "status": "passed" if ok else "failed",
         "routes": results,
