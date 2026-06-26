@@ -5540,11 +5540,38 @@ def test_goal_next_action_card_exposes_reviewed_commit_request_form(
     before_review = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert before_review.status == 200
     assert "recommended_action</dt><dd>Open review" in before_review.body
-    assert "next_action_form_available</dt><dd>false" in before_review.body
+    assert "next_action_form_available</dt><dd>true" in before_review.body
+    assert "Create Review" in before_review.body
+    assert "action='/actions/review-run'" in before_review.body
+    assert f"name='run_id' value='{run_id}'" in before_review.body
+    assert f"coder_worktree_run</dt><dd>{run_id}" in before_review.body
+    assert f"source_run_id</dt><dd>{source_run_id}" in before_review.body
+    assert "review_artifact</dt><dd>runs/" in before_review.body
+    assert "does not approve commits, stage files, commit, push" in before_review.body
     assert "action='/actions/coder-commit-request'" not in before_review.body
 
-    assert main(["--root", str(tmp_path), "review", source_run_id]) == 0
-    capsys.readouterr()
+    review_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/review-run",
+        method="POST",
+        form={"run_id": [run_id]},
+    )
+    assert review_confirmation.status == 409
+    assert "Confirm review-run" in review_confirmation.body
+    review_response = render_local_app_route(
+        tmp_path,
+        "/actions/review-run",
+        method="POST",
+        form={"run_id": [run_id], "confirm": ["yes"]},
+    )
+    assert review_response.status == 200
+    assert "Action Result Details" in review_response.body
+    assert "run_review" in review_response.body
+    assert "review_path" in review_response.body
+    review_path = tmp_path / "runs" / source_run_id / "review.md"
+    assert review_path.exists()
+    assert run_id in review_path.read_text(encoding="utf-8")
+
     after_review = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert after_review.status == 200
     assert "recommended_action</dt><dd>Create commit request" in after_review.body

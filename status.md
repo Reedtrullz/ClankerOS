@@ -1,5 +1,19 @@
 # Status
 
+## 2026-06-26 Goal Review Gate Action
+
+- Added a confirmed local `review-run` action to the Goal Next Action card.
+  When `/goals/<goal_id>` is waiting on a completed coder worktree run whose
+  `runs/<source_run_id>/review.md` is missing or does not mention the coder
+  run id, the card now renders a browser form that writes the local review
+  artifact.
+- The action reuses the existing run-review packet writer and then returns the
+  operator to the selected coder run surface, where the backend review gate can
+  expose `coder-commit-request` once the review passes.
+- Non-claims: this does not approve commits, stage files, commit, push,
+  create PRs, deploy, call providers, run delegations, run worktrees, use the
+  network, or mutate external systems.
+
 ## 2026-06-26 Goal Commit And Publication Gate Actions
 
 - Extended the Goal Next Action card beyond commit request creation. When the

@@ -34,6 +34,7 @@ from agent_os.coder_worktree_execution import (
     approve_coder_worktree_commit,
     coder_worktree_change_summary,
     commit_coder_worktree,
+    get_coder_worktree_run,
     list_coder_worktree_approvals,
     list_coder_worktree_commit_approvals,
     list_coder_worktree_runs,
@@ -55,6 +56,7 @@ from agent_os.ids import new_id
 from agent_os.implementation_handoff import summarize_implementation_handoff
 from agent_os.planning import PlanningError, create_goal_lifecycle
 from agent_os.project_registry import register_project
+from agent_os.run_review import write_run_review
 from agent_os.storage import Storage, utc_now
 from agent_os.steering import collect_inbox_items
 from agent_os.subagent_delegation import (
@@ -112,6 +114,7 @@ WORKFLOW_STEPS = [
     ("Worktree approval", "coder-worktree-approval", "local_approval", "coder_worktree_plan.md", "approval request"),
     ("Approved worktree execution", "run-coder-worktree", "local_execution", "approved worktree plan", "coder_worktree evidence"),
     ("Bounded-file validation", "run-coder-worktree", "local_evidence", "worktree run", "bounded_file_validation.json"),
+    ("Review", "review-run", "local_artifact", "completed coder worktree run", "review.md"),
     ("Commit request", "coder-commit-request", "local_approval", "reviewed worktree run", "coder_commit_request.md"),
     ("Commit approval", "approve-coder-commit", "local_approval", "commit request", "coder_commit_decision.md"),
     ("Local commit", "commit-coder-worktree", "local_git_only", "approved commit request", "commit.json"),
@@ -129,6 +132,7 @@ ACTION_CATALOG = [
     ("coder-worktree-plan", "local artifact", "delegation detail", "yes", "yes", "coder_prep.md", "coder_worktree_plan.json/.md"),
     ("coder-worktree-approval", "approval request", "delegation detail", "yes", "yes", "coder_worktree_plan.md", "coder_worktree_approval_request.json/.md"),
     ("approve-coder-worktree", "approval decision", "approvals", "yes", "yes", "pending worktree approval", "coder_worktree_approval_decision.json/.md"),
+    ("review-run", "local artifact", "goal next action", "yes", "yes", "completed coder worktree run", "runs/<source_run_id>/review.md"),
     ("coder-commit-request", "approval request", "run detail", "yes", "yes", "reviewed completed coder worktree run", "coder_commit_request.json/.md"),
     ("approve-coder-commit", "approval decision", "approvals", "yes", "yes", "pending commit approval", "coder_commit_decision.json/.md"),
     ("commit-coder-worktree", "local git only", "run detail", "yes", "yes", "approved commit request plus typed matching message", "commit.json and isolated worktree commit"),
@@ -2139,6 +2143,8 @@ def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -
         form = _goal_approve_worktree_form(state)
     elif next_action.action == "Create commit request":
         form = _goal_commit_request_form(state["root"], state)
+    elif next_action.action == "Open review":
+        form = _goal_review_run_form(state["root"], state)
     elif next_action.action == "Approve commit":
         form = _goal_approve_commit_form(state)
     elif next_action.action == "Commit approved worktree":
@@ -2203,6 +2209,27 @@ def _goal_commit_request_form(root: Path, state: dict[str, Any]) -> str:
                     "note": "Request local commit after review from goal page",
                 },
             ),
+        ]
+    )
+
+
+def _goal_review_run_form(root: Path, state: dict[str, Any]) -> str:
+    run = _goal_unreviewed_completed_worktree_run(root, state)
+    if run is None:
+        return "<p class='muted'>review_run_form_status: unavailable_until_completed_unreviewed_run_exists</p>"
+    review_path = Path("runs") / run.source_run_id / "review.md"
+    return "".join(
+        [
+            "<h3>Create Review</h3>",
+            "<p class='muted'>Writes the local human-readable review artifact required before a commit request. It does not approve commits, stage files, commit, push, create a PR, deploy, call a provider, or use the network.</p>",
+            _kv(
+                [
+                    ("coder_worktree_run", run.id),
+                    ("source_run_id", run.source_run_id),
+                    ("review_artifact", review_path.as_posix()),
+                ]
+            ),
+            _form("review-run", {"run_id": run.id}),
         ]
     )
 
@@ -2376,6 +2403,15 @@ def _goal_ready_publication(state: dict[str, Any]) -> Any | None:
 def _goal_reviewed_completed_worktree_run(root: Path, state: dict[str, Any]) -> Any | None:
     for run in state.get("worktree_runs", []):
         if run.status == "completed" and _run_review_gate_state(root, run)[
+            "commit_request_form_available"
+        ]:
+            return run
+    return None
+
+
+def _goal_unreviewed_completed_worktree_run(root: Path, state: dict[str, Any]) -> Any | None:
+    for run in state.get("worktree_runs", []):
+        if run.status == "completed" and not _run_review_gate_state(root, run)[
             "commit_request_form_available"
         ]:
             return run
@@ -5988,6 +6024,26 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             )
             message = f"approved_coder_worktree: {result.approval.id}"
             location = "/"
+        elif action == "review-run":
+            requested_run_id = _required(form, "run_id")
+            coder_run = get_coder_worktree_run(storage, requested_run_id)
+            if coder_run is not None and coder_run.status != "completed":
+                raise ValueError(f"review-run requires a completed coder worktree run: {coder_run.status}")
+            source_run_id = coder_run.source_run_id if coder_run is not None else requested_run_id
+            report_path, packet = write_run_review(root, source_run_id)
+            message = f"run_review: {packet.run.id}"
+            location = f"/runs/{quote(requested_run_id)}"
+            result = {
+                "run_id": packet.run.id,
+                "requested_run_id": requested_run_id,
+                "coder_worktree_run_id": coder_run.id if coder_run is not None else "none",
+                "review_path": report_path.relative_to(root).as_posix(),
+                "tasks": len(packet.tasks),
+                "events": len(packet.events),
+                "recommended_next_action": packet.recommended_next_action,
+                "network_actions_taken": 0,
+                "external_mutations_taken": 0,
+            }
         elif action == "coder-commit-request":
             run_id = _required(form, "run_id")
             result = request_coder_worktree_commit_approval(

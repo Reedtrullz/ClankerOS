@@ -78,8 +78,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   delegation completes, the card exposes confirmed `coder-prep`,
   `coder-worktree-plan`, and `coder-worktree-approval` forms at the matching
   workflow phases. It also exposes confirmed `approve-coder-worktree` and
-  `coder-commit-request` forms when the goal is waiting on those gates. Once
-  a commit request exists, the same Goal card can drive
+  `review-run` when the completed coder worktree run is blocked on the review
+  gate, then `coder-commit-request` once the review exists and mentions the
+  coder run. Once a commit request exists, the same Goal card can drive
   `approve-coder-commit`, `commit-coder-worktree`,
   `coder-publication-request`, `approve-coder-publication`, and
   `coder-publication-handoff` through confirmed local forms, then shows the
@@ -395,7 +396,11 @@ state-aware forms. `Run Review Gate` mirrors the backend commit-request rule:
 `runs/<source_run_id>/review.md` must exist and mention the coder worktree run
 id before the app exposes `coder-commit-request`. If the review artifact is
 missing or stale, the run page shows the blocked reason and hides the commit
-request form. `commit-coder-worktree` appears only after commit approval and
+request form. The Goal Next Action card exposes a confirmed `review-run` form
+for that missing/stale review gate and writes the same local review artifact
+without approving, committing, pushing, creating PRs, deploying, calling
+providers, or using the network. `commit-coder-worktree` appears only after
+commit approval and
 is still an explicit confirmed local action with a typed commit message that
 must match the approved request. Publication request appears only after the
 isolated local commit is recorded, and publication handoff appears only after

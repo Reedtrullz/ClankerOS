@@ -162,7 +162,8 @@ is still not exposed. After a delegation has completed, the Goal Next Action
 card can also create the local coder prep packet, create the approval-gated
 worktree plan, and request the pending worktree approval with confirmed
 browser forms. It can then approve the pending worktree request and create the
-review-gated commit request once a completed run has a passing review gate.
+local review artifact for a completed coder worktree run. Once that review
+gate passes, it can create the review-gated commit request.
 After that, the same Goal card can approve the commit request, create the
 isolated local worktree commit, request and approve publication handoff
 preparation, and write the local publication handoff/PR-body artifacts. Push
@@ -194,7 +195,9 @@ the explicit `external_effects_created: false` boundary.
 Use `/runs/<coder_run_id>` to review the worktree evidence and gate state. The
 `Run Review Gate` panel shows whether `runs/<source_run_id>/review.md` exists
 and mentions the coder worktree run id. The app only exposes the
-`coder-commit-request` form when that gate passes.
+`coder-commit-request` form when that gate passes. The Goal Next Action card
+can now create that local review artifact with a confirmed `review-run` form
+when the goal is waiting on review.
 
 Use `/runs/<coder_run_id>` after publication handoff preparation when you want
 the display-only manual publication commands. The app shows
