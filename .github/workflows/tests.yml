@@ -44,6 +44,7 @@ jobs:
           python -m agent_os.cli --root "$CLANKEROS_CI_ROOT" init
           python -m agent_os.cli --root "$CLANKEROS_CI_ROOT" app-smoke-test
           python -m agent_os.cli --root "$CLANKEROS_CI_ROOT" demo-app-scenario
+          python -m agent_os.cli --root "$CLANKEROS_CI_ROOT" app-demo-smoke-test
           python -m agent_os.cli --root "$CLANKEROS_CI_ROOT" app --help
           python -m agent_os.cli --root "$CLANKEROS_CI_ROOT" dashboard
           python -m agent_os.cli --root "$CLANKEROS_CI_ROOT" iterate

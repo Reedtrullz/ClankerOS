@@ -161,11 +161,15 @@ Core layers for the bootstrap:
   `ClankerOS Local Operator`, `Modern Operator Workflow`, `Safe Action
   Catalog`, `Verification Handoff`, and `CI Evidence Records`, and reports
   `marker=matched` or `marker=missing` per route while preserving
-  provider/network/external-mutation counters at zero. The checked-in GitHub
+  provider/network/external-mutation counters at zero. `app-demo-smoke-test`
+  creates the fixture-backed demo state and renders the stateful demo,
+  dogfooding, project, delegation, scoped workflow, run, approvals, inbox,
+  actions, and health routes with expected snippet checks while preserving the
+  same zero provider/network/external-mutation counters. The checked-in GitHub
   Actions workflow now runs a separate 10-minute `smoke` job for compile,
-  local CLI smoke, route-marker app smoke, demo, dashboard, iterate, and
-  whitespace checks before a dependent 45-minute `full-suite` job spends time
-  on `python -m pytest -q`.
+  local CLI smoke, route-marker app smoke, fixture-backed app-demo smoke,
+  demo, dashboard, iterate, and whitespace checks before a dependent 45-minute
+  `full-suite` job spends time on `python -m pytest -q`.
 - CI/deploy evidence ingestion: an operator can attach CI or deploy proof to a
   GitHub handoff packet with `ci-deploy-evidence`. The record preserves
   provider, external run id, URL, commit, branch, handoff, and JSON evidence

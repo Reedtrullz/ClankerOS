@@ -321,6 +321,150 @@ def run_local_app_smoke_test(root: Path) -> dict[str, Any]:
     }
 
 
+def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
+    root = root.resolve()
+    demo = run_demo_app_scenario(root)
+    routes = [
+        (
+            "/demo",
+            "Demo Scenario",
+            [
+                "Demo Dogfooding Links",
+                "Demo Browser Progress",
+                "Manual Browser Checkpoints",
+                demo.coder_worktree_run_id,
+            ],
+        ),
+        (
+            "/dogfooding",
+            "Manual Dogfooding Checklist",
+            [
+                "demo_fixture_status: available",
+                "next_dogfooding_action: request_commit_for_reviewed_run",
+                f"/runs/{demo.coder_worktree_run_id}",
+            ],
+        ),
+        (
+            f"/projects/{quote(demo.project_id)}",
+            "Project",
+            [
+                "Project Operator Guidance",
+                "Project Workflow Launchpad",
+                f"/workflow?run_id={demo.coder_worktree_run_id}",
+            ],
+        ),
+        (
+            f"/delegations/{quote(demo.delegation_id)}",
+            "Delegation",
+            [
+                "Workflow Readiness",
+                "Safe Local Actions",
+                "implementation_handoff_status",
+            ],
+        ),
+        (
+            f"/workflow?delegation_id={quote(demo.delegation_id)}",
+            "Modern Operator Workflow",
+            [
+                "Selected Workflow State",
+                "selected_status",
+                "request_commit_for_reviewed_run",
+            ],
+        ),
+        (
+            f"/workflow?run_id={quote(demo.coder_worktree_run_id)}",
+            "Modern Operator Workflow",
+            [
+                "Selected Workflow Continuation",
+                "run_action_surface",
+                "external_effects_created: false",
+            ],
+        ),
+        (
+            f"/runs/{quote(demo.coder_worktree_run_id)}",
+            "Run",
+            [
+                "Run Workflow State",
+                "Run Approval Actions",
+                "Coder Worktree Evidence",
+                "bounded_file_validation_status",
+            ],
+        ),
+        (
+            "/approvals",
+            "Approvals",
+            [
+                demo.approval_id,
+                "approve-coder-worktree",
+                "Pending Worktree Approvals",
+            ],
+        ),
+        (
+            "/inbox",
+            "Operator Inbox",
+            [
+                "Pending Worktree Approvals",
+                "Coder Worktree Runs",
+                demo.coder_worktree_run_id,
+            ],
+        ),
+        (
+            "/actions",
+            "Safe Action Catalog",
+            [
+                "Current Demo Action Surfaces",
+                "next_demo_action: request_commit_for_reviewed_run",
+                "external_effects=none",
+            ],
+        ),
+        (
+            "/health",
+            "System Health",
+            [
+                "storage_initializes",
+                "no provider calls",
+                "no external mutation",
+            ],
+        ),
+    ]
+    results = []
+    for route, marker, snippets in routes:
+        response = render_local_app_route(root, route)
+        missing_snippets = [snippet for snippet in snippets if snippet not in response.body]
+        marker_found = marker in response.body
+        results.append(
+            {
+                "route": route,
+                "status": response.status,
+                "required_marker": marker,
+                "marker_found": marker_found,
+                "expected_snippets": snippets,
+                "missing_snippets": missing_snippets,
+            }
+        )
+    ok = all(
+        item["status"] == 200
+        and item["marker_found"]
+        and not item["missing_snippets"]
+        for item in results
+    )
+    return {
+        "status": "passed" if ok else "failed",
+        "demo": {
+            "project_id": demo.project_id,
+            "delegation_id": demo.delegation_id,
+            "run_id": demo.run_id,
+            "coder_worktree_run_id": demo.coder_worktree_run_id,
+        },
+        "routes": results,
+        "fixture_backed": True,
+        "provider_calls_taken_by_clankeros": 0,
+        "network_actions_taken": 0,
+        "external_mutations_taken": 0,
+        "non_claims": NO_EXTERNAL_EFFECT_CLAIMS,
+    }
+
+
 def run_demo_app_scenario(root: Path) -> DemoScenarioResult:
     root = root.resolve()
     system = AgentSystem(root)

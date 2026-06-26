@@ -16,7 +16,9 @@ The `Tests` workflow has two jobs:
 
 - `smoke` checks out the repo, sets up Python 3.10, installs `pytest`,
   compiles `agent_os` and `tests`, runs local CLI smoke checks against a
-  temporary ClankerOS root, and checks whitespace with `git diff --check`.
+  temporary ClankerOS root, runs the generic route smoke plus the
+  fixture-backed `app-demo-smoke-test`, and checks whitespace with
+  `git diff --check`.
 - `full-suite` depends on `smoke` and then runs the slow full suite with:
 
 ```bash
@@ -40,6 +42,7 @@ Before pushing, use focused checks that match the files you touched:
 ```bash
 python3 -m compileall -q agent_os tests
 python3 -m agent_os.cli app-smoke-test
+python3 -m agent_os.cli app-demo-smoke-test
 python3 -m pytest tests/test_first_milestone.py -q -k "github_actions or local_app or inbox"
 git diff --check
 ```

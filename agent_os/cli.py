@@ -531,6 +531,7 @@ from agent_os.local_app import (
     DEFAULT_HOST as LOCAL_APP_DEFAULT_HOST,
     DEFAULT_PORT as LOCAL_APP_DEFAULT_PORT,
     run_demo_app_scenario,
+    run_local_app_demo_smoke_test,
     run_local_app_smoke_test,
     serve_local_app,
     validate_bind_host,
@@ -754,6 +755,11 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "app-smoke-test",
         help="Render core local app routes without starting a server.",
+    )
+    subparsers.add_parser(
+        "app-demo-smoke-test",
+        aliases=["demo-app-smoke-test"],
+        help="Create the demo fixture and render stateful local app routes.",
     )
     subparsers.add_parser("dashboard", help="Write the static dashboard.")
     subparsers.add_parser("iterate", help="Write the next iteration packet from repo queues.")
@@ -2228,6 +2234,30 @@ def main(argv: list[str] | None = None) -> int:
                 f"route {route['route']}: {route['status']} "
                 f"marker={marker_status} required_marker={route['required_marker']}"
             )
+        print("provider_calls_taken_by_clankeros: 0")
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
+        return 0 if result["status"] == "passed" else 1
+
+    if args.command in {"app-demo-smoke-test", "demo-app-smoke-test"}:
+        result = run_local_app_demo_smoke_test(root)
+        print(f"app_demo_smoke_test: {result['status']}")
+        demo = result["demo"]
+        print(f"project_id: {demo['project_id']}")
+        print(f"delegation_id: {demo['delegation_id']}")
+        print(f"run_id: {demo['run_id']}")
+        print(f"coder_worktree_run_id: {demo['coder_worktree_run_id']}")
+        for route in result["routes"]:
+            marker_status = "matched" if route["marker_found"] else "missing"
+            snippet_status = "matched" if not route["missing_snippets"] else "missing"
+            print(
+                f"route {route['route']}: {route['status']} "
+                f"marker={marker_status} required_marker={route['required_marker']} "
+                f"expected_snippets={snippet_status}"
+            )
+            for missing in route["missing_snippets"]:
+                print(f"missing_snippet {route['route']}: {missing}")
+        print("fixture_backed: true")
         print("provider_calls_taken_by_clankeros: 0")
         print("network_actions_taken: 0")
         print("external_mutations_taken: 0")

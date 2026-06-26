@@ -13,6 +13,7 @@ from agent_os.local_app import (
     render_local_app_route,
     resolve_artifact_path,
     run_demo_app_scenario,
+    run_local_app_demo_smoke_test,
     validate_bind_host,
 )
 from agent_os.subagent_delegation import record_delegation_result
@@ -3385,6 +3386,7 @@ def test_github_actions_workflow_runs_automatic_verification() -> None:
         'python-version: "3.10"',
         "python -m compileall -q agent_os tests",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-smoke-test",
+        "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-demo-smoke-test",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" dashboard",
         "git diff --check",
         "python -m pytest -q",
@@ -3416,6 +3418,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
                 "        run: python -m compileall -q agent_os tests",
                 "      - name: Run local CLI smoke checks",
                 "        run: python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-smoke-test",
+                "        run: python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-demo-smoke-test",
                 "      - name: Check whitespace",
                 "        run: git diff --check",
                 "  full-suite:",
@@ -4425,6 +4428,23 @@ def test_local_app_cli_commands_and_bind_safety(
     assert "demo_app_scenario: ready" in demo_output
     assert "fixture_backed: true" in demo_output
     assert "network_actions_taken: 0" in demo_output
+
+    demo_smoke = run_local_app_demo_smoke_test(tmp_path)
+    assert demo_smoke["status"] == "passed"
+    assert demo_smoke["fixture_backed"] is True
+    assert demo_smoke["network_actions_taken"] == 0
+    assert demo_smoke["external_mutations_taken"] == 0
+    assert all(not route["missing_snippets"] for route in demo_smoke["routes"])
+
+    assert main(["--root", str(tmp_path), "app-demo-smoke-test"]) == 0
+    demo_smoke_output = capsys.readouterr().out
+    assert "app_demo_smoke_test: passed" in demo_smoke_output
+    assert "route /demo: 200 marker=matched required_marker=Demo Scenario expected_snippets=matched" in demo_smoke_output
+    assert "route /dogfooding: 200 marker=matched required_marker=Manual Dogfooding Checklist expected_snippets=matched" in demo_smoke_output
+    assert "route /workflow?run_id=" in demo_smoke_output
+    assert "expected_snippets=missing" not in demo_smoke_output
+    assert "fixture_backed: true" in demo_smoke_output
+    assert "network_actions_taken: 0" in demo_smoke_output
 
     try:
         validate_bind_host("0.0.0.0")

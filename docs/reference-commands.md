@@ -17,6 +17,7 @@ python3 -m agent_os.cli app --port 8788
 python3 -m agent_os.cli local-app
 python3 -m agent_os.cli demo-app-scenario
 python3 -m agent_os.cli app-smoke-test
+python3 -m agent_os.cli app-demo-smoke-test
 python3 -m agent_os.cli projects
 python3 -m agent_os.cli project-status <project>
 python3 -m agent_os.cli project-context <project>
@@ -35,7 +36,10 @@ create PRs, deploy, call providers, execute arbitrary commands, or use the
 network beyond local browser/server loopback. `demo-app-scenario` creates a
 fixture-backed local demo under `.clanker/demo/` with project, delegation,
 handoff, coder-prep, worktree-plan, and pending approval state. `app-smoke-test`
-renders the core routes without starting a server. The app includes
+renders the core routes without starting a server. `app-demo-smoke-test`
+creates the demo fixture and renders stateful demo/workflow/project/
+delegation/run/approval routes with expected snippet checks, still without
+starting a server or taking network/external actions. The app includes
 `/projects` as a project workflow index with local repo posture, goal/task/
 delegation counts, next recommended operator action, and selected workflow
 links, `/projects/<project_id>` for project goals, tasks, artifacts, guidance,

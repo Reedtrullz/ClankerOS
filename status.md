@@ -1,5 +1,19 @@
 # Status
 
+## 2026-06-26 Fixture-Backed App Demo Smoke Test
+
+- Added `app-demo-smoke-test` as a fast, local-only smoke check for the
+  fixture-backed app path. The command creates or refreshes the demo scenario,
+  renders `/demo`, `/dogfooding`, selected project, delegation, scoped
+  workflow, coder run, approvals, inbox, actions, and health routes, and
+  fails if required markers or state-specific snippets are missing.
+- Wired the command into the GitHub Actions `Fast smoke verification` job so
+  the richer local-operator route path is checked before the full pytest suite.
+- Non-claims: this command does not start a server, fetch GitHub status, run
+  the full pytest suite, push, create PRs, deploy, call providers, or mutate
+  external systems. It writes only local fixture/demo state under the selected
+  ClankerOS root.
+
 ## 2026-06-26 Local App Manual Browser Checkpoints
 
 - Added `Manual Browser Checkpoints` to `/demo`. The panel lists exact route

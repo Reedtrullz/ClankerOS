@@ -60,11 +60,15 @@ python3 -m agent_os.cli dashboard
 python3 -m agent_os.cli iterate
 python3 -m compileall -q agent_os tests
 python3 -m agent_os.cli app-smoke-test
+python3 -m agent_os.cli app-demo-smoke-test
 ```
 
 `app-smoke-test` renders the core local app routes without starting a browser
 server and checks each route for its expected page marker, so GitHub Actions can
 catch blank or wrong operator pages before the full pytest suite finishes.
+`app-demo-smoke-test` creates fixture-backed demo state and checks the
+stateful demo, scoped workflow, project, delegation, run, approvals, inbox,
+actions, and health pages for their expected operator markers.
 
 Then read:
 
@@ -576,6 +580,7 @@ git status --short --branch
 git diff --check
 python3 -m compileall -q agent_os tests
 python3 -m agent_os.cli app-smoke-test
+python3 -m agent_os.cli app-demo-smoke-test
 python3 -m pytest tests/test_first_milestone.py -q -k "github_actions or local_app or inbox"
 ```
 

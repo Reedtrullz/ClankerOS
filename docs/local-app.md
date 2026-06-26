@@ -185,6 +185,7 @@ pending proof rather than CI proof:
 - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
 - focused local app pytest slices
 - `python3 -m agent_os.cli app-smoke-test`
+- `python3 -m agent_os.cli app-demo-smoke-test`
 - `git diff --check`
 
 `app-smoke-test` is route-marker aware: it renders the core local app routes
@@ -192,6 +193,12 @@ without starting a server, checks each route for its expected page marker, and
 prints `marker=matched` or `marker=missing` beside the route status. The
 checked-in GitHub Actions workflow runs the same smoke command before the full
 pytest suite.
+
+`app-demo-smoke-test` is the fixture-backed companion. It creates or refreshes
+the local demo scenario, renders the selected project, delegation, scoped
+workflow, coder run, approvals, inbox, actions, and health pages, and checks
+state-specific snippets without starting a server or taking network/external
+actions. The GitHub fast smoke job runs it before the full suite.
 
 The page does not fetch GitHub status. The fast smoke job can prove route and
 CLI wiring before the full suite finishes, but a pushed commit is not CI proof
