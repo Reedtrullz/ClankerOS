@@ -216,7 +216,9 @@ Use the goal page note form for day-to-day operator breadcrumbs, then find the
 same note artifact again from `/memory`.
 Use `/search` for bounded global search across indexed goals, projects,
 delegations, known artifacts, incidents, recommendations, memory, runs, and
-approvals. Use `/memory`, `/skills`, and `/profiles` for local readbacks of
+approvals. Goal search results include live local phase, one next action, and
+remaining-work counts, so action or phase searches can return the Goal to
+continue. Use `/memory`, `/skills`, and `/profiles` for local readbacks of
 memory entries, generated skills/usage, and inactive future provider-routing
 lanes.
 

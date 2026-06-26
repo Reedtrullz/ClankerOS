@@ -151,7 +151,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   submit existing local forms.
 - `/search` - bounded global search over indexed goals, projects, delegations,
   known artifacts, incidents, recommendations, memory, runs, approvals, and
-  skill records. It does not expose arbitrary filesystem browsing.
+  skill records. Goal results include live local phase, one next action, and
+  remaining-work counts, so searches like `Ready to commit` or
+  `Create commit request` return the relevant Goal. It does not expose
+  arbitrary filesystem browsing.
 - `/workspace` - persistent local workspace state for open project, open goal,
   filters, expanded panels, and last viewed artifact. It also shows the saved
   goal's current phase, one next action, operator attention cue, and target

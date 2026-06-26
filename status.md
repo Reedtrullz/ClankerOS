@@ -1,5 +1,26 @@
 # Status
 
+## 2026-06-26 Goal-State Search Results
+
+- Added live local goal-state signals to `/search` goal results. Goal hits now
+  include current phase, one recommended next action, and compact
+  remaining-work counts, so action or phase searches can route the operator
+  back to the relevant Goal.
+- This is read-only local search indexing on GET. It does not run work,
+  approve gates, call providers, fetch GitHub status, push, create PRs,
+  deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Goal-Aware Command Palette Continue
 
 - Added a goal-aware `Continue Current Goal` block to the shared app command

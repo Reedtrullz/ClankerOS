@@ -5174,6 +5174,19 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert result.goal_id in search.body
     assert "artifact" in search.body
 
+    search_next_action = render_local_app_route(tmp_path, "/search?q=Create%20commit%20request")
+    assert search_next_action.status == 200
+    assert "Global Search" in search_next_action.body
+    assert result.goal_id in search_next_action.body
+    assert "phase=Ready to commit" in search_next_action.body
+    assert "next_action=Create commit request" in search_next_action.body
+    assert "remaining_work=open_tasks:1 open_incidents:0 open_recommendations:0" in search_next_action.body
+
+    search_phase = render_local_app_route(tmp_path, "/search?q=Ready%20to%20commit")
+    assert search_phase.status == 200
+    assert result.goal_id in search_phase.body
+    assert "next_action=Create commit request" in search_phase.body
+
     memory = render_local_app_route(tmp_path, "/memory")
     assert memory.status == 200
     assert "Memory Bank" in memory.body

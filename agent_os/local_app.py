@@ -1493,11 +1493,19 @@ def _search_results(root: Path, storage: Storage, term: str) -> list[dict[str, s
             )
 
     for row in _goal_rows(storage, limit=200):
+        goal_id = str(row["id"])
+        goal_state = _goal_state(root, storage, goal_id)
+        next_action = _goal_next_action(root, goal_state)
         add(
             "goal",
             str(row["title"] or row["description"] or row["id"]),
-            f"/goals/{quote(str(row['id']))}",
-            f"id={row['id']} project={row['project_id']} status={row['status']}",
+            f"/goals/{quote(goal_id)}",
+            (
+                f"id={goal_id} project={row['project_id']} status={row['status']} "
+                f"phase={_goal_current_phase(goal_state)} "
+                f"next_action={next_action.action} "
+                f"remaining_work={_goal_remaining_work_summary(goal_state)}"
+            ),
         )
     for project in storage.list_registered_projects():
         add(
