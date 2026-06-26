@@ -136,11 +136,12 @@ Use `/goals` as the daily cockpit. It separates active, paused, and completed
 goals, links each goal to its detail page, and shows phase, next action, and
 task progress from existing local state. Use `/goals/<goal_id>` as the
 goal-centered workbench: current phase, next action, progress, timeline,
-activity log, evidence, delegations, runs, approvals, artifacts, memory, skills
-used, git status, operator notes, and remaining work. The page auto-refreshes
-by polling and stays local-only. Timeline entries link back to the relevant
-local artifact, delegation, run, approval queue, or goal surface, and progress
-uses a real browser progress bar.
+activity log, goal risk, completion criteria, evidence, delegations, runs,
+approvals, artifacts, memory, skills used, git status, operator notes, and
+remaining work. The page auto-refreshes by polling and stays local-only.
+Timeline entries link back to the relevant local artifact, delegation, run,
+approval queue, or goal surface, and progress uses a real browser progress
+bar.
 
 Use `/goals` on a fresh checkout for first-run browser actions. The page now
 renders confirmed local forms for `register-project` and `create-goal`, so a

@@ -4291,6 +4291,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "action='/actions/delegate'" in first_goal_page.body
     assert "profile" in first_goal_page.body
     assert "scout" in first_goal_page.body
+    assert "Goal Risk" in first_goal_page.body
+    assert "goal_risk_level: low" in first_goal_page.body
+    assert "risk_counts: low=3" in first_goal_page.body
+    assert "Goal Completion Criteria" in first_goal_page.body
+    assert "completion_criteria_source: plan_steps" in first_goal_page.body
+    assert "completion_criteria_count: 3" in first_goal_page.body
+    assert "Scope, non-goals, and verifier are explicit." in first_goal_page.body
     storage_after_goal = Storage(tmp_path / ".agent" / "state.db")
     first_task = storage_after_goal.list_tasks(created_goal_id)[0]
     delegate_confirmation = render_local_app_route(
@@ -4716,6 +4723,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Ready to commit" in goal.body
     assert "Next Action" in goal.body
     assert "recommended_action</dt><dd>Create commit request" in goal.body
+    assert "Goal Risk" in goal.body
+    assert "goal_risk_level: low" in goal.body
+    assert "risk_counts: low=1" in goal.body
+    assert "Goal Completion Criteria" in goal.body
+    assert "completion_criteria_source: task_verification_plan" in goal.body
+    assert "completion_progress: 0/1 tasks completed" in goal.body
     assert "progress_bar_enabled</dt><dd>true" in goal.body
     assert "<progress" in goal.body
     assert "Timeline" in goal.body

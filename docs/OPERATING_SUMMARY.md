@@ -89,8 +89,10 @@ Core layers for the bootstrap:
   The `/goals` first-run panel now exposes confirmed local `register-project`
   and `create-goal` forms, moving initial project/goal setup into the browser
   without adding provider calls or external effects. Goal detail pages now
-  expose clickable timeline entries, a browser-native progress bar, and a
-  confirmed `delegate` next-action form when a goal has planned tasks but no
+  expose first-class Goal Risk and Goal Completion Criteria sections sourced
+  from task risk metadata, sprint contracts, plan steps, or task verification
+  plans, plus clickable timeline entries, a browser-native progress bar, and
+  a confirmed `delegate` next-action form when a goal has planned tasks but no
   delegation yet; the form writes a read-only scout delegation contract only
   and does not start a subagent. Every page shares a browser operator shell
   with breadcrumbs, recent local items, a command palette, keyboard shortcuts,

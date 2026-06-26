@@ -62,12 +62,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   progress, and first-run browser actions visible. The page exposes confirmed
   local `register-project` and `create-goal` forms for a fresh checkout.
 - `/goals/<goal_id>` - goal-centered workbench with current phase, next action,
-  overview, progress, chronological timeline, activity log, delegations, runs,
-  approvals, evidence, artifacts, memory, skills used, git status, operator
-  notes, and remaining work. It uses local polling refresh and does not contact
-  GitHub or providers. When the goal has planned tasks but no delegation yet,
-  the Next Action card exposes a confirmed `delegate` form that writes a
-  read-only scout delegation contract without starting a subagent.
+  overview, goal risk, completion criteria, progress, chronological timeline,
+  activity log, delegations, runs, approvals, evidence, artifacts, memory,
+  skills used, git status, operator notes, and remaining work. It uses local
+  polling refresh and does not contact GitHub or providers. When the goal has
+  planned tasks but no delegation yet, the Next Action card exposes a
+  confirmed `delegate` form that writes a read-only scout delegation contract
+  without starting a subagent.
 - Every app page includes a shared operator shell with breadcrumbs, recent
   local items, a command palette, a dark/light theme toggle, and keyboard
   shortcuts for home, goals, and palette search. These controls only navigate

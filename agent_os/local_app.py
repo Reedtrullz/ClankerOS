@@ -1865,6 +1865,8 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             "</section>",
             _goal_next_action_card(state, next_action),
             _goal_overview(state),
+            _goal_risk_section(state),
+            _goal_completion_criteria(state),
             _goal_progress(state),
             _goal_timeline(root, state),
             _goal_activity_log(root, state),
@@ -1978,9 +1980,17 @@ def _goal_state(root: Path, storage: Storage, goal_id: str) -> dict[str, Any]:
     ]
     risks = [task.risk_level for task in tasks]
     skill_tags = sorted({tag for task in tasks for tag in task.skill_tags})
+    plans = storage.list_plans(goal_id)
+    latest_plan = plans[-1] if plans else None
+    plan_steps = storage.list_plan_steps(latest_plan.id) if latest_plan else []
+    sprint_contract = storage.get_latest_sprint_contract(goal_id)
     return {
         "root": root,
         "goal": goal,
+        "plans": plans,
+        "latest_plan": latest_plan,
+        "plan_steps": plan_steps,
+        "sprint_contract": sprint_contract,
         "tasks": tasks,
         "task_ids": task_ids,
         "delegations": delegations,
@@ -2173,6 +2183,79 @@ def _goal_overview(state: dict[str, Any]) -> str:
             ("operator_notes_status", "local_artifact_if_present"),
         ]
     ) + "</section>"
+
+
+def _goal_risk_section(state: dict[str, Any]) -> str:
+    tasks = state.get("tasks", [])
+    counts = _risk_counts(tasks)
+    contract = state.get("sprint_contract")
+    lines = [
+        f"goal_risk_level: {_e(state.get('risk_level') or 'unknown')}",
+        f"risk_counts: {_e(_risk_counts_label(counts))}",
+        f"tasks_with_risk: {len(tasks)}",
+        "approval_boundary: high_or_unknown_risk_requires_operator_approval_before_dispatch",
+        "external_effects_created: false",
+    ]
+    risk_notes = getattr(contract, "risk_notes", "") if contract is not None else ""
+    if risk_notes:
+        lines.append(f"risk_notes: {_e(risk_notes)}")
+    for task in tasks:
+        lines.append(
+            f"{_e(task.id)}: risk={_e(task.risk_level)} status={_e(task.status)} "
+            f"type={_e(task.task_type)}"
+        )
+    return _list_section("Goal Risk", lines)
+
+
+def _goal_completion_criteria(state: dict[str, Any]) -> str:
+    plan = state.get("latest_plan")
+    contract = state.get("sprint_contract")
+    steps = state.get("plan_steps", [])
+    tasks = state.get("tasks", [])
+    contract_items = _criteria_items(
+        getattr(contract, "acceptance_criteria", "") if contract is not None else ""
+    )
+    task_items = _task_completion_items(tasks) if not contract_items and not steps else []
+    source = (
+        "sprint_contract"
+        if contract_items
+        else ("plan_steps" if steps else ("task_verification_plan" if task_items else "none"))
+    )
+    completed_steps = sum(1 for step in steps if step.status == "completed")
+    completed_tasks = sum(1 for task in tasks if task.status == "completed")
+    criteria_count = len(contract_items) if contract_items else (len(steps) if steps else len(task_items))
+    progress = (
+        f"{completed_steps}/{len(steps)} plan steps completed"
+        if steps
+        else f"{completed_tasks}/{len(tasks)} tasks completed"
+    )
+    lines = [
+        f"completion_criteria_source: {source}",
+        f"completion_criteria_count: {criteria_count}",
+        f"completion_progress: {progress}",
+    ]
+    if plan is not None:
+        lines.append(f"latest_plan: {_artifact_link(plan.artifact_path)}")
+        lines.append(f"latest_plan_status: {_e(plan.status)}")
+    if contract is not None:
+        lines.append(f"sprint_contract: {_artifact_link(contract.artifact_path)}")
+        lines.append(f"sprint_contract_status: {_e(contract.status)}")
+    for item in contract_items:
+        lines.append(f"criterion: {_e(item)}")
+    for step in steps:
+        lines.append(
+            f"step {step.order_index}: status={_e(step.status)} "
+            f"acceptance={_e(step.acceptance_criteria)} "
+            f"verifier={_e(step.verification_command)}"
+        )
+    for item in task_items:
+        lines.append(
+            f"task {item['task_id']}: status={_e(item['status'])} "
+            f"acceptance={_e(item['acceptance'])}"
+        )
+    if len(lines) == 3:
+        lines.append("completion_criteria_status: none_available")
+    return _list_section("Goal Completion Criteria", lines)
 
 
 def _goal_progress(state: dict[str, Any]) -> str:
@@ -2496,6 +2579,64 @@ def _highest_risk(risks: list[str]) -> str:
     if not risks:
         return "unknown"
     return max(risks, key=lambda value: order.get(value, 0))
+
+
+def _risk_counts(tasks: list[Any]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for task in tasks:
+        risk = str(getattr(task, "risk_level", "") or "unknown")
+        counts[risk] = counts.get(risk, 0) + 1
+    return counts
+
+
+def _risk_counts_label(counts: dict[str, int]) -> str:
+    if not counts:
+        return "none"
+    order = ["unknown", "high", "medium", "low"]
+    labels = [
+        f"{risk}={counts[risk]}"
+        for risk in order
+        if risk in counts
+    ]
+    labels.extend(
+        f"{risk}={count}"
+        for risk, count in sorted(counts.items())
+        if risk not in order
+    )
+    return ",".join(labels)
+
+
+def _criteria_items(text: str) -> list[str]:
+    items: list[str] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith("- "):
+            stripped = stripped[2:].strip()
+        items.append(stripped)
+    return items
+
+
+def _task_completion_items(tasks: list[Any]) -> list[dict[str, str]]:
+    items: list[dict[str, str]] = []
+    for task in tasks:
+        verification_plan = getattr(task, "verification_plan", {}) or {}
+        acceptance = str(
+            verification_plan.get("acceptance_criteria")
+            or verification_plan.get("expected")
+            or task.description
+        ).strip()
+        if not acceptance:
+            continue
+        items.append(
+            {
+                "task_id": task.id,
+                "status": task.status,
+                "acceptance": acceptance,
+            }
+        )
+    return items
 
 
 def _goal_delegation_has_handoff(state: dict[str, Any], delegation: Any) -> bool:
