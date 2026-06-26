@@ -2129,6 +2129,12 @@ def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -
         form = _goal_context_pack_form(state)
     elif next_action.action == "Run delegation from CLI":
         form = _goal_run_delegation_handoff(state)
+    elif next_action.action == "Run coder prep":
+        form = _goal_coder_prep_form(state)
+    elif next_action.action == "Create worktree plan":
+        form = _goal_worktree_plan_form(state)
+    elif next_action.action == "Request worktree approval":
+        form = _goal_worktree_approval_form(state)
     return (
         "<section><h2>Next Action</h2>"
         + _kv(
@@ -2143,6 +2149,68 @@ def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -
         + form
         + "</section>"
     )
+
+
+def _goal_coder_prep_form(state: dict[str, Any]) -> str:
+    delegation = _goal_completed_delegation(state)
+    if delegation is None:
+        return "<p class='muted'>coder_prep_form_status: unavailable_until_delegation_completes</p>"
+    return "".join(
+        [
+            "<h3>Run Coder Prep</h3>",
+            "<p class='muted'>Creates the local coder prep packet from the implementation handoff. It does not edit source files, create a worktree, run commands, call a provider, or use the network.</p>",
+            _form("coder-prep", {"delegation_id": delegation.id}),
+        ]
+    )
+
+
+def _goal_worktree_plan_form(state: dict[str, Any]) -> str:
+    delegation_id = _goal_packet_delegation_id(state.get("prep_packets", []))
+    if not delegation_id:
+        return "<p class='muted'>coder_worktree_plan_form_status: unavailable_until_coder_prep_exists</p>"
+    return "".join(
+        [
+            "<h3>Create Worktree Plan</h3>",
+            "<p class='muted'>Creates the approval-gated local worktree plan from coder prep. It does not create a worktree, edit files, run commands, approve work, call a provider, or use the network.</p>",
+            _form("coder-worktree-plan", {"delegation_id": delegation_id}),
+        ]
+    )
+
+
+def _goal_worktree_approval_form(state: dict[str, Any]) -> str:
+    delegation_id = _goal_packet_delegation_id(state.get("worktree_plans", []))
+    if not delegation_id:
+        return "<p class='muted'>coder_worktree_approval_form_status: unavailable_until_worktree_plan_exists</p>"
+    return "".join(
+        [
+            "<h3>Request Worktree Approval</h3>",
+            "<p class='muted'>Creates a pending local approval request for bounded worktree execution. It does not approve execution, create a worktree, run commands, call a provider, or mutate external systems.</p>",
+            _input_form(
+                "coder-worktree-approval",
+                {"delegation_id": delegation_id},
+                {
+                    "requested_by": "operator",
+                    "note": "Approve bounded worktree execution from goal page",
+                },
+            ),
+        ]
+    )
+
+
+def _goal_completed_delegation(state: dict[str, Any]) -> Any | None:
+    return next(
+        (item for item in state.get("delegations", []) if item.status == "completed"),
+        None,
+    )
+
+
+def _goal_packet_delegation_id(packets: list[dict[str, Any]]) -> str:
+    for packet in packets:
+        source = packet.get("source") if isinstance(packet.get("source"), dict) else {}
+        delegation_id = str(source.get("delegation_id") or "").strip()
+        if delegation_id:
+            return delegation_id
+    return ""
 
 
 def _goal_scout_delegation_form(state: dict[str, Any]) -> str:

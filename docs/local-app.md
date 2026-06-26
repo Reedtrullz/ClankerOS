@@ -74,7 +74,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   subagent. After that, the same Next Action card exposes a confirmed
   `context-pack` form while the delegation has no context pack. Once the
   context pack exists, the card shows the exact `run-delegation` CLI handoff
-  and makes clear that browser adapter execution is not exposed yet.
+  and makes clear that browser adapter execution is not exposed yet. After a
+  delegation completes, the card exposes confirmed `coder-prep`,
+  `coder-worktree-plan`, and `coder-worktree-approval` forms at the matching
+  workflow phases. These create local artifacts or a pending local approval
+  request only; they do not create worktrees, run commands, approve execution,
+  call providers, or perform external mutations.
 - Every app page includes a shared operator shell with breadcrumbs, recent
   local items, a command palette, a dark/light theme toggle, and keyboard
   shortcuts for home, goals, and palette search. These controls only navigate

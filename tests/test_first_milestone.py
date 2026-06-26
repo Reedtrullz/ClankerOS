@@ -5456,6 +5456,49 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "manual_boundary: outside_clankeros" in demo_after_handoff.body
 
 
+def test_goal_next_action_card_exposes_post_delegation_forms(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    _storage, goal_id, _task_id, delegation_id, _repo_path = (
+        _create_registered_context_pack_delegation(tmp_path, capsys)
+    )
+    _run_fake_context_pack_scout(tmp_path, capsys, delegation_id)
+
+    after_delegation = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert after_delegation.status == 200
+    assert "recommended_action</dt><dd>Run coder prep" in after_delegation.body
+    assert "next_action_form_available</dt><dd>true" in after_delegation.body
+    assert "Run Coder Prep" in after_delegation.body
+    assert "action='/actions/coder-prep'" in after_delegation.body
+    assert f"name='delegation_id' value='{delegation_id}'" in after_delegation.body
+    assert "does not edit source files" in after_delegation.body
+
+    assert main(["--root", str(tmp_path), "coder-prep", delegation_id]) == 0
+    capsys.readouterr()
+    after_prep = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert after_prep.status == 200
+    assert "recommended_action</dt><dd>Create worktree plan" in after_prep.body
+    assert "next_action_form_available</dt><dd>true" in after_prep.body
+    assert "Create Worktree Plan" in after_prep.body
+    assert "action='/actions/coder-worktree-plan'" in after_prep.body
+    assert f"name='delegation_id' value='{delegation_id}'" in after_prep.body
+    assert "does not create a worktree" in after_prep.body
+
+    assert main(["--root", str(tmp_path), "coder-worktree-plan", delegation_id]) == 0
+    capsys.readouterr()
+    after_plan = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert after_plan.status == 200
+    assert "recommended_action</dt><dd>Request worktree approval" in after_plan.body
+    assert "next_action_form_available</dt><dd>true" in after_plan.body
+    assert "Request Worktree Approval" in after_plan.body
+    assert "action='/actions/coder-worktree-approval'" in after_plan.body
+    assert f"name='delegation_id' value='{delegation_id}'" in after_plan.body
+    assert "Approve bounded worktree execution from goal page" in after_plan.body
+    assert "does not approve execution" in after_plan.body
+    assert "external_effects_created</dt><dd>false" in after_plan.body
+
+
 def test_local_app_cli_commands_and_bind_safety(
     tmp_path: Path,
     capsys,

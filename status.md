@@ -1,5 +1,20 @@
 # Status
 
+## 2026-06-26 Goal Post-Delegation Next Actions
+
+- Extended the Goal Next Action card so the post-delegation path is also
+  drivable from `/goals/<goal_id>`. When the current goal state reaches the
+  relevant phase, the card renders confirmed local forms for `coder-prep`,
+  `coder-worktree-plan`, and `coder-worktree-approval`.
+- These forms reuse the existing local app confirmation/result/error flow and
+  the same backend handlers as delegation detail pages. They move coder prep,
+  worktree plan creation, and pending approval request creation into the
+  goal-centered operator path.
+- Non-claims: this does not expose browser-side delegation execution,
+  worktree execution, automatic approval, source edits, arbitrary commands,
+  provider calls, network actions, push, PR creation, deploy, or external
+  mutation.
+
 ## 2026-06-26 Goal Artifact Explorer
 
 - Added a typed `Goal Artifact Explorer` section to `/goals/<goal_id>`.
