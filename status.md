@@ -1,5 +1,16 @@
 # Status
 
+## 2026-06-26 Local App Demo Gate Artifact Map
+
+- Added a read-only `Demo Gate Artifacts` section to `/demo`. For the selected
+  fixture coder run, the page now shows commit request, commit decision, local
+  commit, publication request, publication decision, publication handoff, and
+  PR-body artifact links as those gates become available, with explicit
+  `none` or `pending_until_*` markers before artifacts exist.
+- Non-claims: this section does not approve, commit, push, create PRs, deploy,
+  fetch GitHub, call providers, run commands, or mutate external systems. It
+  only links existing local artifacts for browser dogfooding.
+
 ## 2026-06-26 Local App Dogfooding CI Follow-up Commands
 
 - Added a display-only `GitHub Actions Follow-up` section to `/dogfooding`.

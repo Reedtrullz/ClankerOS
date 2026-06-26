@@ -118,7 +118,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/health` - Python, git, storage, command, import, route, and counter health.
 - `/demo` - demo scenario instructions plus state-aware dogfooding links and a
   read-only browser-progress checklist after `demo-app-scenario` has created
-  fixture state.
+  fixture state. The demo page also includes `Demo Gate Artifacts`, a
+  read-only artifact map for the selected fixture run's commit request,
+  commit decision, local commit, publication request, publication decision,
+  publication handoff, and PR-body artifacts as they become available.
 
 ## Demo Scenario
 

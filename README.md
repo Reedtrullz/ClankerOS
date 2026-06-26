@@ -104,7 +104,10 @@ read-only `Demo Next Action` panel and `Demo Browser Progress` checklist for
 the selected fixture run, so you can see whether the app path is waiting on
 commit request, commit approval, local commit, publication request,
 publication approval, publication handoff, or manual push/PR outside
-ClankerOS, then jump directly to the relevant local surface.
+ClankerOS. It also shows `Demo Gate Artifacts`, linking the commit request,
+commit decision, local commit artifact, publication request, publication
+decision, publication handoff, and PR-body artifact as those gates become
+available, then lets you jump directly to the relevant local surface.
 
 Use `/workflow?delegation_id=<id>` or `/workflow?run_id=<coder_run_id>` when
 you want the scoped operator map. The selected workflow page now includes a

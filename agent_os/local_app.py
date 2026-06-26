@@ -2765,6 +2765,7 @@ def _demo_dogfooding_state(root: Path) -> str:
             _list_section("Pending Demo Approvals", approval_lines, "/approvals"),
             _demo_next_action_panel(root, selected_run.id if selected_run else ""),
             _demo_browser_progress(root, selected_run.id if selected_run else ""),
+            _demo_gate_artifacts(root, selected_run.id if selected_run else ""),
             _manual_browser_script(
                 {
                     "project_id": project.name,
@@ -2803,6 +2804,100 @@ def _demo_browser_progress(root: Path, run_id: str) -> str:
         "external_mutations_taken: 0",
     ]
     return _list_section("Demo Browser Progress", lines, f"/runs/{quote(run_id)}")
+
+
+def _demo_gate_artifacts(root: Path, run_id: str) -> str:
+    if not run_id:
+        return _list_section(
+            "Demo Gate Artifacts",
+            [
+                "selected_run_status: missing",
+                "commit_request_artifact: none",
+                "publication_request_artifact: none",
+                "publication_handoff_artifact: none",
+                "external_mutations_taken: 0",
+            ],
+        )
+
+    commit_records = [
+        item
+        for item in list_coder_worktree_commit_approvals(root, limit=50)
+        if item.run_id == run_id
+    ]
+    publications = [
+        item
+        for item in list_coder_publications(root, limit=50)
+        if item.run_id == run_id
+    ]
+    commit_record = _preferred_record(
+        commit_records,
+        ["committed", "approved", "pending_operator_approval", "rejected"],
+    )
+    publication = _preferred_record(
+        publications,
+        ["ready_for_operator", "approved", "pending_operator_approval", "rejected"],
+    )
+    lines = [f"selected_run_id: {_e(run_id)}"]
+    if commit_record is None:
+        lines.extend(
+            [
+                "commit_request_artifact: none",
+                "commit_decision_artifact: none",
+                "local_commit_artifact: pending_until_local_commit",
+                "commit_sha: none",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                f"commit_request_artifact: {_artifact_link(commit_record.request_artifact_path)}",
+                f"commit_decision_artifact: {_artifact_link(commit_record.decision_artifact_path) if commit_record.decision_artifact_path else 'none'}",
+                (
+                    f"local_commit_artifact: {_artifact_link(commit_record.commit_artifact_path)}"
+                    if commit_record.commit_sha
+                    else "local_commit_artifact: pending_until_local_commit"
+                ),
+                f"commit_sha: {_e(commit_record.commit_sha or 'none')}",
+            ]
+        )
+    if publication is None:
+        lines.extend(
+            [
+                "publication_request_artifact: none",
+                "publication_decision_artifact: none",
+                "publication_handoff_artifact: pending_until_publication_handoff",
+                "publication_pr_body_path: pending_until_publication_handoff",
+            ]
+        )
+    else:
+        pr_body_path = "pending_until_publication_handoff"
+        if publication.status == "ready_for_operator":
+            payload = load_coder_publication_handoff_payload(root, publication)
+            pr_body_path = str(payload.get("pr_body_path", "unavailable"))
+        lines.extend(
+            [
+                f"publication_request_artifact: {_artifact_link(publication.request_artifact_path)}",
+                f"publication_decision_artifact: {_artifact_link(publication.decision_artifact_path) if publication.decision_artifact_path else 'none'}",
+                (
+                    f"publication_handoff_artifact: {_artifact_link(publication.handoff_artifact_path)}"
+                    if publication.status == "ready_for_operator"
+                    else "publication_handoff_artifact: pending_until_publication_handoff"
+                ),
+                (
+                    f"publication_pr_body_path: {_artifact_link(pr_body_path)}"
+                    if publication.status == "ready_for_operator" and pr_body_path != "unavailable"
+                    else f"publication_pr_body_path: {_e(pr_body_path)}"
+                ),
+            ]
+        )
+    lines.extend(
+        [
+            "manual_boundary: outside_clankeros",
+            "network_actions_taken: 0",
+            "external_mutations_taken: 0",
+        ]
+    )
+    return _list_section("Demo Gate Artifacts", lines, f"/runs/{quote(run_id)}")
 
 
 def _demo_next_action_panel(root: Path, run_id: str) -> str:
@@ -2907,6 +3002,14 @@ def _preferred_status(items: list[Any], statuses: list[str], default: str) -> st
         if any(item.status == status for item in items):
             return status
     return default
+
+
+def _preferred_record(items: list[Any], statuses: list[str]) -> Any | None:
+    for status in statuses:
+        for item in items:
+            if item.status == status:
+                return item
+    return items[0] if items else None
 
 
 def _demo_next_operator_step(

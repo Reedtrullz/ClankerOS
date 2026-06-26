@@ -3834,6 +3834,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "publication_handoff_status" in demo.body
     assert "manual_push_pr_status" in demo.body
     assert "manual_push_pr_status: not_ready" in demo.body
+    assert "Demo Gate Artifacts" in demo.body
+    assert "commit_request_artifact: none" in demo.body
+    assert "local_commit_artifact: pending_until_local_commit" in demo.body
+    assert "publication_request_artifact: none" in demo.body
+    assert "publication_handoff_artifact: pending_until_publication_handoff" in demo.body
     assert "Demo Next Action" in demo.body
     assert "demo_continue_from: request_commit_for_reviewed_run" in demo.body
     assert "workflow_surface" in demo.body
@@ -4375,6 +4380,15 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "publication_approval_status: ready_for_operator" in demo_after_handoff.body
     assert "publication_handoff_status: available" in demo_after_handoff.body
     assert "manual_push_pr_status: ready_outside_clankeros" in demo_after_handoff.body
+    assert "Demo Gate Artifacts" in demo_after_handoff.body
+    assert "commit_request_artifact" in demo_after_handoff.body
+    assert "commit_decision_artifact" in demo_after_handoff.body
+    assert "local_commit_artifact" in demo_after_handoff.body
+    assert "commit_sha: " in demo_after_handoff.body
+    assert "publication_request_artifact" in demo_after_handoff.body
+    assert "publication_decision_artifact" in demo_after_handoff.body
+    assert "publication_handoff_artifact" in demo_after_handoff.body
+    assert "publication_pr_body_path" in demo_after_handoff.body
     assert "demo_continue_from: manual_operator_push_pr_outside_clankeros" in demo_after_handoff.body
     assert "manual_boundary: outside_clankeros" in demo_after_handoff.body
 
