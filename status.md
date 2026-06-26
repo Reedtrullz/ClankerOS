@@ -1,5 +1,36 @@
 # Status
 
+## 2026-06-27 Final Gate Resume Anchors
+
+- Made confirmed browser `approve-coder-commit`, `commit-coder-worktree`,
+  `coder-publication-request`, `approve-coder-publication`,
+  `coder-publication-handoff`, and `complete-goal` actions refresh
+  `.clanker/app/workspace.json` with the current project, goal, and newest
+  final-gate artifact. The restore path now advances through commit decision
+  Markdown, local worktree commit Markdown, publication request/decision
+  Markdown, publication handoff Markdown, and the final completed-goal anchor,
+  so `/resume`, Home, and `/workspace` can return the operator to the exact
+  post-commit or manual-publish boundary without a separate manual
+  `save-workspace` step.
+- Non-claims: this does not push, create PRs, deploy, call providers, fetch
+  GitHub status, or mutate external systems. `commit-coder-worktree` still
+  creates one local commit only inside the isolated approved worktree through
+  the existing gate; publication actions write local request/decision/handoff
+  artifacts only; `complete-goal` records local goal status only after the
+  manual publish boundary.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k goal_next_action_card_exposes_commit_publication_gate_forms`
+    -> `1 passed, 513 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "goal_next_action_card_exposes_commit_publication_gate_forms or goal_next_action_card_exposes_reviewed_commit_request_form or goal_runs_approved_worktree_from_browser_action or local_app_demo_scenario_populates_fixture_state"`
+    -> `4 passed, 510 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Execution Review Commit Resume Anchors
 
 - Made confirmed browser `run-coder-worktree`, `review-run`, and

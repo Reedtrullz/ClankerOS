@@ -124,7 +124,14 @@ Core layers for the bootstrap:
   Markdown respectively, so browser resume continues through execution,
   review, and commit-request gates without a separate workspace save and
   without pushing, creating PRs, deploying, calling providers, or fetching
-  GitHub status. The
+  GitHub status. Confirmed `approve-coder-commit`,
+  `commit-coder-worktree`, `coder-publication-request`,
+  `approve-coder-publication`, `coder-publication-handoff`, and
+  `complete-goal` browser actions now do the same for the commit decision,
+  local worktree commit summary, publication request, publication decision,
+  publication handoff, and final completion anchor, keeping resume state
+  current through the manual publish boundary without app-side push, PR,
+  deploy, provider, network, or GitHub polling effects. The
   populated `/goals`
   cockpit also exposes a confirmed
   local `Start Another Goal` form for registered projects, so daily goal

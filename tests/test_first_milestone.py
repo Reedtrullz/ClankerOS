@@ -6717,6 +6717,22 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         },
     )
     assert approve_commit.status == 200
+    commit_decision_md = (
+        tmp_path
+        / Path(commit_approval.source_run_evidence_path)
+        / "coder_commit"
+        / "coder_commit_decision.md"
+    )
+    assert commit_decision_md.exists()
+    commit_decision_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert commit_decision_workspace["open_project"] == "subject"
+    assert commit_decision_workspace["open_goal"] == goal_id
+    assert commit_decision_workspace["last_viewed_artifact"] == str(
+        commit_decision_md.relative_to(tmp_path)
+    )
+    assert commit_decision_workspace["updated_by"] == "approve-coder-commit"
     approved_commit_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert approved_commit_goal.status == 200
     assert "recommended_action</dt><dd>Commit approved worktree" in approved_commit_goal.body
@@ -6737,6 +6753,15 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         },
     )
     assert commit_response.status == 200
+    commit_md = tmp_path / Path(commit_approval.source_run_evidence_path) / "coder_commit" / "commit.md"
+    assert commit_md.exists()
+    commit_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert commit_workspace["open_project"] == "subject"
+    assert commit_workspace["open_goal"] == goal_id
+    assert commit_workspace["last_viewed_artifact"] == str(commit_md.relative_to(tmp_path))
+    assert commit_workspace["updated_by"] == "commit-coder-worktree"
     publication_request_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert publication_request_goal.status == 200
     assert "recommended_action</dt><dd>Create publication request" in publication_request_goal.body
@@ -6768,6 +6793,17 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         )
         if item.run_id == run_id
     )
+    publication_request_md = tmp_path / Path(publication.request_artifact_path).with_suffix(".md")
+    assert publication_request_md.exists()
+    publication_request_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert publication_request_workspace["open_project"] == "subject"
+    assert publication_request_workspace["open_goal"] == goal_id
+    assert publication_request_workspace["last_viewed_artifact"] == str(
+        publication_request_md.relative_to(tmp_path)
+    )
+    assert publication_request_workspace["updated_by"] == "coder-publication-request"
     pending_publication_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert pending_publication_goal.status == 200
     assert "recommended_action</dt><dd>Approve publication" in pending_publication_goal.body
@@ -6787,6 +6823,24 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         },
     )
     assert approve_publication.status == 200
+    approved_publication = next(
+        item
+        for item in list_coder_publications(tmp_path, status="approved", limit=10)
+        if item.run_id == run_id
+    )
+    publication_decision_md = tmp_path / Path(
+        approved_publication.decision_artifact_path
+    ).with_suffix(".md")
+    assert publication_decision_md.exists()
+    publication_decision_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert publication_decision_workspace["open_project"] == "subject"
+    assert publication_decision_workspace["open_goal"] == goal_id
+    assert publication_decision_workspace["last_viewed_artifact"] == str(
+        publication_decision_md.relative_to(tmp_path)
+    )
+    assert publication_decision_workspace["updated_by"] == "approve-coder-publication"
     approved_publication_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert approved_publication_goal.status == 200
     assert "recommended_action</dt><dd>Create publication handoff" in approved_publication_goal.body
@@ -6802,6 +6856,24 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         form={"run_id": [run_id], "confirm": ["yes"]},
     )
     assert publication_handoff.status == 200
+    ready_publication = next(
+        item
+        for item in list_coder_publications(tmp_path, status="ready_for_operator", limit=10)
+        if item.run_id == run_id
+    )
+    publication_handoff_md = tmp_path / Path(
+        ready_publication.handoff_artifact_path
+    ).with_suffix(".md")
+    assert publication_handoff_md.exists()
+    publication_handoff_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert publication_handoff_workspace["open_project"] == "subject"
+    assert publication_handoff_workspace["open_goal"] == goal_id
+    assert publication_handoff_workspace["last_viewed_artifact"] == str(
+        publication_handoff_md.relative_to(tmp_path)
+    )
+    assert publication_handoff_workspace["updated_by"] == "coder-publication-handoff"
     manual_publish_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert manual_publish_goal.status == 200
     assert "recommended_action</dt><dd>Manual publish outside ClankerOS" in manual_publish_goal.body
@@ -6837,6 +6909,15 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "goal_completed:" in complete_response.body
     assert "network_actions_taken</dt><dd>0" in complete_response.body
     assert "external_mutations_taken</dt><dd>0" in complete_response.body
+    complete_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert complete_workspace["open_project"] == "subject"
+    assert complete_workspace["open_goal"] == goal_id
+    assert complete_workspace["last_viewed_artifact"] == str(
+        publication_handoff_md.relative_to(tmp_path)
+    )
+    assert complete_workspace["updated_by"] == "complete-goal"
 
     completed_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert completed_goal.status == 200

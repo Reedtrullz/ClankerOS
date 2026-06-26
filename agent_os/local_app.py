@@ -7884,6 +7884,24 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             result = _complete_goal_from_form(root, storage, form)
             message = f"goal_completed: {result['goal_id']}"
             location = f"/goals/{quote(result['goal_id'])}"
+            handoff_artifact_path = result.get("handoff_artifact_path")
+            _write_workspace_state(
+                root,
+                {
+                    **_load_workspace_state(root),
+                    "open_project": result["project_id"],
+                    "open_goal": result["goal_id"],
+                    "last_viewed_artifact": _repo_relative_artifact_path(
+                        root,
+                        (
+                            Path(str(handoff_artifact_path)).with_suffix(".md")
+                            if handoff_artifact_path
+                            else None
+                        ),
+                    ),
+                    "updated_by": "complete-goal",
+                },
+            )
         elif action == "save-goal-note":
             result = _append_goal_operator_note(root, storage, form)
             message = f"goal_operator_note_saved: {result['goal_id']}"
@@ -8166,6 +8184,17 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             )
             message = f"approved_coder_commit: {result.approval.id}"
             location = "/"
+            _remember_delegation_workspace(
+                root,
+                storage,
+                result.approval.delegation_id,
+                artifact_path=(
+                    Path(result.approval.source_run_evidence_path)
+                    / "coder_commit"
+                    / "coder_commit_decision.md"
+                ),
+                updated_by="approve-coder-commit",
+            )
         elif action == "commit-coder-worktree":
             run_id = _required(form, "run_id")
             result = commit_coder_worktree(
@@ -8177,6 +8206,17 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             )
             message = f"commit_coder_worktree: {result.status}"
             location = f"/runs/{quote(run_id)}"
+            _remember_delegation_workspace(
+                root,
+                storage,
+                result.approval.delegation_id,
+                artifact_path=(
+                    Path(result.alias_evidence_path).with_suffix(".md")
+                    if result.alias_evidence_path
+                    else Path(result.evidence_path).with_suffix(".md")
+                ),
+                updated_by="commit-coder-worktree",
+            )
         elif action == "coder-publication-request":
             run_id = _required(form, "run_id")
             result = request_coder_publication(
@@ -8190,6 +8230,13 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             )
             message = f"coder_publication_request: {result.publication.id}"
             location = f"/runs/{quote(run_id)}"
+            _remember_delegation_workspace(
+                root,
+                storage,
+                result.publication.delegation_id,
+                artifact_path=Path(result.publication.request_artifact_path).with_suffix(".md"),
+                updated_by="coder-publication-request",
+            )
         elif action == "approve-coder-publication":
             publication_id = _required(form, "publication_id")
             result = approve_coder_publication(
@@ -8201,11 +8248,29 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             )
             message = f"approved_coder_publication: {result.publication.id}"
             location = "/approvals"
+            _remember_delegation_workspace(
+                root,
+                storage,
+                result.publication.delegation_id,
+                artifact_path=(
+                    Path(result.publication.decision_artifact_path).with_suffix(".md")
+                    if result.publication.decision_artifact_path
+                    else None
+                ),
+                updated_by="approve-coder-publication",
+            )
         elif action == "coder-publication-handoff":
             run_id = _required(form, "run_id")
             result = create_coder_publication_handoff(root, storage, run_id)
             message = f"coder_publication_handoff: {result.status}"
             location = f"/runs/{quote(run_id)}"
+            _remember_delegation_workspace(
+                root,
+                storage,
+                result.publication.delegation_id,
+                artifact_path=Path(result.artifact_path).with_suffix(".md"),
+                updated_by="coder-publication-handoff",
+            )
         elif action == "ci-snapshot-evidence-from-gh-json":
             result = record_ci_snapshot_evidence_from_gh_status_json(
                 root,
@@ -8345,6 +8410,7 @@ def _complete_goal_from_form(
         "note": note or "none",
         "publication_id": ready_publication.id,
         "publication_status": ready_publication.status,
+        "handoff_artifact_path": ready_publication.handoff_artifact_path,
         "manual_publish_boundary": "outside_clankeros",
         "push_created": False,
         "pr_created": False,
