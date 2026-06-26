@@ -1,5 +1,30 @@
 # Status
 
+## 2026-06-26 Local App Inbox Follow-Up Cues
+
+- Upgraded `/inbox` so pending commit approvals show a read-only
+  `Commit Inbox Follow-Up` with the relevant run link, `/approvals` queue
+  link, `next_inbox_action_after_approval: commit-coder-worktree`, and
+  `typed_commit_message_required: true`.
+- Pending publication requests now show a read-only
+  `Publication Inbox Follow-Up` with the relevant run link, `/approvals` queue
+  link, `next_inbox_action_after_approval: coder-publication-handoff`, and the
+  explicit `push_created=false pr_created=false deploy_created=false`
+  boundary.
+- Focused red coverage first failed because `/inbox` did not render
+  `Commit Inbox Follow-Up`; the demo scenario now passes through commit and
+  publication queue states with inbox continuation cues.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario` -> red before implementation, then `1 passed, 497 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario or local_app_routes_render_modern_workflow_and_health or local_app_cli_commands_and_bind_safety"` -> `3 passed, 495 deselected`
+  - `python3 -m agent_os.cli app-smoke-test` -> rendered the core local app routes with status 200 and zero provider/network/external-mutation counters.
+  - `git diff --check`
+- Non-claims: this is a read-only inbox/navigation improvement only; it does
+  not expose approval forms on `/inbox`, execute work, approve requests,
+  commit, push, create PRs, deploy, call providers, fetch GitHub status,
+  execute arbitrary commands, or perform non-loopback network actions.
+
 ## 2026-06-26 Local App Approval Follow-Up Links
 
 - Upgraded `/approvals` so pending commit approvals show the relevant run link,

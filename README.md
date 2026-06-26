@@ -130,6 +130,11 @@ queue. Pending commit and publication approvals link back to the relevant run
 and name the next local-only follow-up action after approval, including the
 typed commit-message requirement and the manual push/PR boundary.
 
+Use `/inbox` when you want the read-only operator queue. Pending commit and
+publication items include the same run links and next-action cues, but the
+actual decision forms stay on `/approvals` and the state-aware run detail
+pages.
+
 Use `/verification` when you want the local-vs-GitHub testing split in one
 place. It reads the checked-in GitHub Actions workflow, lists the compact local
 checks to run before a push, and states that CI proof requires a completed

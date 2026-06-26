@@ -1051,7 +1051,10 @@ def _inbox(root: Path) -> str:
             ),
             _list_section(
                 "Pending Commit Approvals",
-                [_commit_line(item) for item in inbox["coder_worktree_commit_approvals"]],
+                [
+                    _commit_inbox_follow_up_line(item)
+                    for item in inbox["coder_worktree_commit_approvals"]
+                ],
                 "/approvals",
             ),
             _list_section(
@@ -1060,7 +1063,10 @@ def _inbox(root: Path) -> str:
             ),
             _list_section(
                 "Pending Publication Requests",
-                [_publication_line(root, item) for item in inbox["coder_publication_requests"]],
+                [
+                    _publication_inbox_follow_up_line(root, item)
+                    for item in inbox["coder_publication_requests"]
+                ],
                 "/approvals",
             ),
             _list_section(
@@ -2827,6 +2833,29 @@ def _publication_approval_action_line(root: Path, item: Any) -> str:
             {"publication_id": item.id, "decided_by": "operator"},
             {"note": "Approved publication handoff preparation"},
         )
+    )
+
+
+def _commit_inbox_follow_up_line(item: Any) -> str:
+    return (
+        f"{_commit_line(item)} request={_artifact_link(item.request_artifact_path)} "
+        "<div><strong>Commit Inbox Follow-Up</strong> "
+        f"<a href='/runs/{quote(item.run_id)}'>run detail</a> "
+        "<a href='/approvals'>approval queue</a> "
+        "next_inbox_action_after_approval: commit-coder-worktree "
+        "typed_commit_message_required: true "
+        "push_created=false pr_created=false deploy_created=false</div>"
+    )
+
+
+def _publication_inbox_follow_up_line(root: Path, item: Any) -> str:
+    return (
+        f"{_publication_line(root, item)} request={_artifact_link(item.request_artifact_path)} "
+        "<div><strong>Publication Inbox Follow-Up</strong> "
+        f"<a href='/runs/{quote(item.run_id)}'>run detail</a> "
+        "<a href='/approvals'>approval queue</a> "
+        "next_inbox_action_after_approval: coder-publication-handoff "
+        "push_created=false pr_created=false deploy_created=false</div>"
     )
 
 

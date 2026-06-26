@@ -3793,6 +3793,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"/runs/{result.coder_worktree_run_id}" in approvals.body
     assert "follow_up_action_after_approval: commit-coder-worktree" in approvals.body
     assert "typed_commit_message_required: true" in approvals.body
+    inbox_after_commit_request = render_local_app_route(tmp_path, "/inbox")
+    assert inbox_after_commit_request.status == 200
+    assert commit_approval.id in inbox_after_commit_request.body
+    assert "Commit Inbox Follow-Up" in inbox_after_commit_request.body
+    assert f"/runs/{result.coder_worktree_run_id}" in inbox_after_commit_request.body
+    assert "next_inbox_action_after_approval: commit-coder-worktree" in inbox_after_commit_request.body
+    assert "typed_commit_message_required: true" in inbox_after_commit_request.body
 
     commit_approval_confirmation = render_local_app_route(
         tmp_path,
@@ -3930,6 +3937,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in approvals_after_publication_request.body
     )
     assert "push_created=false pr_created=false deploy_created=false" in approvals_after_publication_request.body
+    inbox_after_publication_request = render_local_app_route(tmp_path, "/inbox")
+    assert inbox_after_publication_request.status == 200
+    assert publication.id in inbox_after_publication_request.body
+    assert "Publication Inbox Follow-Up" in inbox_after_publication_request.body
+    assert f"/runs/{result.coder_worktree_run_id}" in inbox_after_publication_request.body
+    assert (
+        "next_inbox_action_after_approval: coder-publication-handoff"
+        in inbox_after_publication_request.body
+    )
+    assert "push_created=false pr_created=false deploy_created=false" in inbox_after_publication_request.body
 
     publication_approval_confirmation = render_local_app_route(
         tmp_path,

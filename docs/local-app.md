@@ -96,6 +96,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   operator can scan change size without opening the artifact first.
 - `/inbox` - read-only operator queue for steering reviews, approval requests,
   incidents, delegations, coder runs, commits, and publication handoffs.
+  Pending commit and publication rows include run links, approval-queue links,
+  and next-action cues without exposing decision forms on the inbox page.
 - `/approvals` - pending worktree, commit, and publication approvals. Commit
   and publication rows link back to the relevant run and show the next
   local-only follow-up action after approval.
@@ -221,6 +223,9 @@ follow-up, and the typed commit-message requirement. Pending publication
 approvals show the relevant run link and the `coder-publication-handoff`
 follow-up while preserving the explicit `push_created=false`,
 `pr_created=false`, and `deploy_created=false` boundary.
+The `/inbox` page keeps the same commit/publication continuation cues in a
+read-only queue form: it links to the run and approval queue and names the next
+action after approval, but it does not render the approval decision forms.
 Confirmation pages show the submitted action payload as visible read-only
 fields plus the safety boundary before resubmitting with `confirm=yes`, so the
 operator can review exactly what will be written before a local artifact or
