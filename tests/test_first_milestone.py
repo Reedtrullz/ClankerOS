@@ -4820,6 +4820,23 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Worktree planned" in goal.body
     assert "Evidence" in goal.body
     assert "Artifacts" in goal.body
+    assert "Goal Artifact Explorer" in goal.body
+    assert "artifact_explorer_raw_filesystem_browsing</dt><dd>false" in goal.body
+    assert "artifact_render_types</dt><dd>Markdown, JSON, Patch, Text" in goal.body
+    assert "markdown_artifacts</dt><dd>" in goal.body
+    assert "json_artifacts</dt><dd>" in goal.body
+    assert "patch_artifacts</dt><dd>" in goal.body
+    assert "text_artifacts</dt><dd>" in goal.body
+    assert "context_pack.md" in goal.body
+    assert "context_pack.json" in goal.body
+    assert "implementation_handoff.md" in goal.body
+    assert "diff.patch" in goal.body
+    assert "changed_files.json" in goal.body
+    assert "git_status.txt" in goal.body
+    assert "artifact_type=markdown" in goal.body
+    assert "artifact_type=json" in goal.body
+    assert "artifact_type=patch" in goal.body
+    assert "artifact_type=text" in goal.body
     assert "Memory" in goal.body
     assert "Skills Used" in goal.body
     assert "Git Status" in goal.body

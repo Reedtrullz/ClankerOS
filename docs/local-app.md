@@ -148,6 +148,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - Coder worktree run rows in the app include `changed_files_count` and a
   compact `diff_summary` read from existing `diff.patch` evidence, so the
   operator can scan change size without opening the artifact first.
+- `/goals/<goal_id>` also includes a typed `Goal Artifact Explorer`. It groups
+  goal-linked Markdown, JSON, Patch/Diff, and Text/Log artifacts and links each
+  item through `/artifacts?path=...`; it does not expose raw filesystem
+  browsing.
 - `/inbox` - read-only operator queue for steering reviews, approval requests,
   incidents, delegations, coder runs, commits, and publication handoffs.
   Pending commit and publication rows include run links, approval-queue links,

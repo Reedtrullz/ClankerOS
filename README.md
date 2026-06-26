@@ -137,13 +137,17 @@ goals, links each goal to its detail page, and shows phase, next action, and
 task progress from existing local state. Use `/goals/<goal_id>` as the
 goal-centered workbench: current phase, next action, progress, timeline,
 activity log, goal risk, completion criteria, evidence, delegations, runs,
-approvals, artifacts, memory, skills used, git status, operator notes, and
-remaining work. The page auto-refreshes by polling and stays local-only.
+approvals, artifacts, a typed Goal Artifact Explorer, memory, skills used, git
+status, operator notes, and remaining work. The page auto-refreshes by polling
+and stays local-only.
 Timeline entries link back to the relevant local artifact, delegation, run,
 approval queue, or goal surface, and progress uses a real browser progress
 bar. Operator Notes includes a confirmed `save-goal-note` form that appends
 local resume context to the goal-scoped `operator-notes.md` artifact without
 overwriting earlier notes.
+The Goal Artifact Explorer groups goal-linked artifacts as Markdown, JSON,
+Patch, or Text and links them through the bounded `/artifacts` viewer instead
+of exposing raw filesystem browsing.
 
 Use `/goals` on a fresh checkout for first-run browser actions. The page now
 renders confirmed local forms for `register-project` and `create-goal`, so a

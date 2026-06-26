@@ -1876,6 +1876,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _list_section("Approvals", _goal_approval_lines(root, state)),
             _list_section("Evidence", _goal_evidence_lines(root, state)),
             _list_section("Artifacts", _goal_artifact_lines(root, state)),
+            _goal_artifact_explorer(root, state),
             _list_section("Memory", _goal_memory_lines(root, state)),
             _list_section("Skills Used", _goal_skill_lines(state)),
             _goal_git_status(root, state),
@@ -2545,14 +2546,100 @@ def _goal_evidence_lines(root: Path, state: dict[str, Any]) -> list[str]:
 
 
 def _goal_artifact_lines(root: Path, state: dict[str, Any]) -> list[str]:
-    lines: list[str] = []
+    return [
+        f"{_e(record['label'])}: {_artifact_link(record['path'])}"
+        for record in _goal_artifact_records(root, state)
+    ]
+
+
+def _goal_artifact_explorer(root: Path, state: dict[str, Any]) -> str:
+    records = _goal_artifact_records(root, state)
+    groups = {kind: [] for kind in ["markdown", "json", "patch", "text"]}
+    for record in records:
+        groups[record["kind"]].append(record)
+    sections = [
+        "<section><h2>Goal Artifact Explorer</h2>",
+        _kv(
+            [
+                ("artifact_explorer_raw_filesystem_browsing", "false"),
+                ("artifact_viewer_route", "/artifacts?path=<repo-relative-artifact>"),
+                ("artifact_render_types", "Markdown, JSON, Patch, Text"),
+                ("markdown_artifacts", str(len(groups["markdown"]))),
+                ("json_artifacts", str(len(groups["json"]))),
+                ("patch_artifacts", str(len(groups["patch"]))),
+                ("text_artifacts", str(len(groups["text"]))),
+            ]
+        ),
+    ]
+    if not records:
+        sections.append(_ul(["artifact_explorer_status: no_supported_goal_artifacts"]))
+    for kind, heading in [
+        ("markdown", "Markdown"),
+        ("json", "JSON"),
+        ("patch", "Patch"),
+        ("text", "Text"),
+    ]:
+        items = [
+            (
+                f"{_e(record['label'])}: {_artifact_link(record['path'])} "
+                f"artifact_type={_e(record['kind'])} "
+                f"status={_e(record['status'])} "
+                f"source={_e(record['source'])}"
+            )
+            for record in groups[kind]
+        ]
+        sections.append(f"<h3>{heading}</h3>")
+        sections.append(_ul(items or [f"{kind}_artifacts_status: none"]))
+    sections.append("</section>")
+    return "".join(sections)
+
+
+def _goal_artifact_records(root: Path, state: dict[str, Any]) -> list[dict[str, str]]:
+    records: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+
+    def add(label: str, path: str | Path | None, *, source: str) -> None:
+        relative_path = _repo_relative_artifact_path(root, path)
+        if not relative_path or relative_path == "none":
+            return
+        kind = _goal_artifact_render_kind(relative_path)
+        if kind is None:
+            return
+        try:
+            resolve_artifact_path(root, relative_path)
+        except ValueError:
+            return
+        key = (label, relative_path)
+        if key in seen:
+            return
+        seen.add(key)
+        records.append(
+            {
+                "label": label,
+                "path": relative_path,
+                "kind": kind,
+                "status": _artifact_status(root, relative_path),
+                "source": source,
+            }
+        )
+
     for task in state["tasks"]:
         for artifact in task.artifacts:
-            lines.append(f"task {task.id}: {_artifact_link(artifact)}")
+            add(f"task {task.id}", artifact, source="task")
+    for row in state["runs"]:
+        for label, key in [
+            ("run summary", "summary_path"),
+            ("run activity", "activity_path"),
+            ("run events", "events_path"),
+        ]:
+            add(f"{label} {row['id']}", row[key], source="run")
+    for incident in state["incidents"]:
+        add(f"incident {incident['id']}", incident["evidence_path"], source="incident")
+    for recommendation in state["recommendations"]:
+        add(f"recommendation {recommendation['id']}", recommendation["evidence_path"], source="recommendation")
     for delegation in state["delegations"]:
         metadata = load_delegation_result_metadata(delegation)
-        result_artifact = _repo_relative_artifact_path(root, delegation.result_artifact_path)
-        lines.append(f"delegation {delegation.id} result: {_artifact_link(result_artifact)}")
+        add(f"delegation {delegation.id} result", delegation.result_artifact_path, source="delegation")
         for key in [
             "context_pack_json",
             "context_pack_md",
@@ -2560,26 +2647,67 @@ def _goal_artifact_lines(root: Path, state: dict[str, Any]) -> list[str]:
             "implementation_handoff_md",
         ]:
             if metadata.get(key):
-                lines.append(f"{key}: {_artifact_link(str(metadata[key]))}")
-    lines.extend(_artifact_links(state["prep_packets"]))
-    lines.extend(_artifact_links(state["worktree_plans"]))
+                add(key, str(metadata[key]), source="delegation_metadata")
+    for packet in state["prep_packets"]:
+        _add_packet_artifacts(add, packet, source="coder_prep")
+    for packet in state["worktree_plans"]:
+        _add_packet_artifacts(add, packet, source="worktree_plan")
+    for run in state["worktree_runs"]:
+        evidence_path = Path(run.evidence_path)
+        add(f"coder run {run.id} review", Path("runs") / run.source_run_id / "review.md", source="coder_run")
+        for label, path in [
+            ("run json", evidence_path / "run.json"),
+            ("diff", evidence_path / "diff.patch"),
+            ("changed files", evidence_path / "changed_files.json"),
+            ("bounded file validation", evidence_path / "bounded_file_validation.json"),
+            ("git status", evidence_path / "git_status.txt"),
+            ("stdout", evidence_path / "stdout.txt"),
+            ("stderr", evidence_path / "stderr.txt"),
+            ("verification stdout", evidence_path / "verification_stdout.txt"),
+            ("verification stderr", evidence_path / "verification_stderr.txt"),
+        ]:
+            add(f"coder run {run.id} {label}", path, source="coder_run")
     for approval in state["commit_approvals"]:
         for label, path in [
             ("commit_request", approval.request_artifact_path),
             ("commit_decision", approval.decision_artifact_path),
             ("commit_artifact", approval.commit_artifact_path),
         ]:
-            if path:
-                lines.append(f"{label}: {_artifact_link(path)}")
+            add(label, path, source="commit")
     for publication in state["publications"]:
         for label, path in [
             ("publication_request", publication.request_artifact_path),
             ("publication_decision", publication.decision_artifact_path),
             ("publication_handoff", publication.handoff_artifact_path),
         ]:
-            if path:
-                lines.append(f"{label}: {_artifact_link(path)}")
-    return lines
+            add(label, path, source="publication")
+    return records
+
+
+def _add_packet_artifacts(
+    add: Any,
+    packet: dict[str, Any],
+    *,
+    source: str,
+) -> None:
+    kind = str(packet.get("kind", source))
+    add(kind, packet.get("_path") or packet.get("artifacts", {}).get("json"), source=source)
+    artifacts = packet.get("artifacts") if isinstance(packet.get("artifacts"), dict) else {}
+    for label, path in artifacts.items():
+        add(f"{kind}_{label}", path, source=source)
+
+
+def _goal_artifact_render_kind(path: str) -> str | None:
+    suffix = Path(path).suffix.lower()
+    if suffix == ".md":
+        return "markdown"
+    if suffix == ".json":
+        return "json"
+    if suffix in {".patch", ".diff"}:
+        return "patch"
+    if suffix in {".txt", ".log"}:
+        return "text"
+    return None
 
 
 def _goal_memory_lines(root: Path, state: dict[str, Any]) -> list[str]:

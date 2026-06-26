@@ -99,8 +99,11 @@ Core layers for the bootstrap:
   not start a subagent. Once a delegation exists without a context pack, the
   same Goal Next Action card exposes a confirmed `context-pack` form; after
   the context pack exists, it shows the exact `run-delegation` CLI handoff and
-  keeps browser adapter execution marked as not exposed. Every page shares a
-  browser operator shell with breadcrumbs, recent local items, a command
+  keeps browser adapter execution marked as not exposed. Goal pages also
+  include a typed `Goal Artifact Explorer` that groups goal-linked Markdown,
+  JSON, Patch/Diff, and Text/Log artifacts and links them through the bounded
+  inert `/artifacts` viewer without raw filesystem browsing. Every page shares
+  a browser operator shell with breadcrumbs, recent local items, a command
   palette, keyboard shortcuts, and a theme toggle. The workflow page can be
   scoped with a
   delegation or coder run id, then annotates related stepper rows with

@@ -1,5 +1,20 @@
 # Status
 
+## 2026-06-26 Goal Artifact Explorer
+
+- Added a typed `Goal Artifact Explorer` section to `/goals/<goal_id>`.
+  The section groups goal-linked artifacts into Markdown, JSON, Patch, and
+  Text buckets and links each item through the bounded inert `/artifacts`
+  viewer.
+- The explorer includes task artifacts, run summaries, incidents,
+  recommendations, delegation result metadata, context packs, implementation
+  handoffs, coder-prep/worktree-plan packets, coder run review/evidence files,
+  commit artifacts, and publication artifacts when those records exist.
+- Non-claims: this is read-only browser organization over existing local
+  artifact paths. It does not add raw filesystem browsing, execute artifacts,
+  call providers, fetch GitHub status, push, create PRs, deploy, or mutate
+  external systems.
+
 ## 2026-06-26 Goal Context Pack Next Action
 
 - Updated the Goal Next Action card so a freshly created scout delegation no
