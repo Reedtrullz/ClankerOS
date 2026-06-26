@@ -4100,6 +4100,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "aria-keyshortcuts='r'" in root.body
     assert "aria-keyshortcuts='s'" in root.body
     assert "Keyboard shortcuts: slash opens command palette" in root.body
+    assert "Keyboard Shortcuts" in root.body
+    assert "data-shortcut-help='true'" in root.body
+    assert "<kbd>/</kbd> <span>Open command palette</span>" in root.body
+    assert "<kbd>Escape</kbd> <span>Close command palette</span>" in root.body
+    assert "<kbd>r</kbd> <span>Open resume</span>" in root.body
+    assert "<kbd>s</kbd> <span>Open search</span>" in root.body
+    assert "<kbd>t</kbd> <span>Toggle theme</span>" in root.body
     assert 'if (event.key === "Escape") { closePalette(); return; }' in root.body
     assert 'if (event.key === "r") { event.preventDefault(); window.location.href = "/resume"; }' in root.body
     assert 'if (event.key === "s") { event.preventDefault(); window.location.href = "/search"; }' in root.body

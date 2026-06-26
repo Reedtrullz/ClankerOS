@@ -9116,6 +9116,8 @@ def _command_palette(root: Path) -> str:
             "<input id='command-palette-search' name='q' autocomplete='off' placeholder='Search local state'>",
             "<button type='submit'>Search</button>",
             "</form>",
+            "<h3>Keyboard Shortcuts</h3>",
+            _shortcut_help_list(),
             "<h3>Open</h3>",
             "<ul>",
             "".join(rows),
@@ -9123,6 +9125,14 @@ def _command_palette(root: Path) -> str:
             "</dialog>",
         ]
     )
+
+
+def _shortcut_help_list() -> str:
+    rows = [
+        f"<li><kbd>{_e(key)}</kbd> <span>{_e(description)}</span></li>"
+        for key, description in GLOBAL_KEYBOARD_SHORTCUTS.items()
+    ]
+    return "<ul class='shortcut-list' data-shortcut-help='true'>" + "".join(rows) + "</ul>"
 
 
 def _command_palette_continue(root: Path) -> str:
@@ -9316,6 +9326,7 @@ def _html_page(
     .command-palette {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); max-width:720px; width:min(720px, calc(100vw - 32px)); }}
     .command-palette::backdrop {{ background:rgba(15,20,25,.45); }}
     .command-grid {{ display:grid; grid-template-columns:1fr auto; gap:8px; }}
+    .shortcut-list kbd {{ display:inline-block; min-width:52px; border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; padding:2px 6px; background:var(--panel); color:var(--ink); font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px; }}
     .sr-only {{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }}
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}

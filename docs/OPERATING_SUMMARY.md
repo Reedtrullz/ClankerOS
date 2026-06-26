@@ -237,7 +237,10 @@ Core layers for the bootstrap:
   The shared browser shell now exposes accessible shortcut metadata for Home,
   Resume, Goals, Search, palette, and theme controls, and the palette can be
   closed with Escape even while the search input is focused; the shortcut layer
-  remains local-only and creates no server writes.
+  remains local-only and creates no server writes. The command palette also
+  includes a visible keyboard-shortcut help block generated from the same
+  shortcut map, so operators can discover the local navigation shortcuts from
+  inside the app instead of reading external docs.
   The Goal `Skills Used` section links to `/skills`, reuses task skill usage
   counts, names projects using each tag, links matching generated or available
   local skill records when present, and shows profile usage while keeping
