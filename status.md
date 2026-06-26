@@ -1,5 +1,30 @@
 # Status
 
+## 2026-06-26 Home Resume Action Form
+
+- Promoted Home's `Home Resume Workspace` from saved-goal continuation readback
+  to a direct return-to-work action surface. When saved workspace state points
+  at a goal, `Home Resume Action Form` now renders the same confirmed local
+  action form the Goal page would render for that saved goal's one recommended
+  action.
+- Home still writes nothing on GET. The action form is only a local confirmed
+  POST affordance; the page does not call providers, use the network, push,
+  create PRs, deploy, run delegations/worktrees by itself, or mutate external
+  systems.
+- Compact local verification for this slice:
+  - Focused red test failed first because restored Home did not contain
+    `home_resume_next_action_form_available`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with `/` marker matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Workspace Action Form
 
 - Promoted `/workspace` from saved-state editor plus continuation readback to a

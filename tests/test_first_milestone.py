@@ -5222,6 +5222,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_resume_next_action: Create commit request" in restored_home.body
     assert f"home_resume_next_surface: <a href='/runs/{result.coder_worktree_run_id}'" in restored_home.body
     assert "home_resume_operator_attention: Act: Create commit request" in restored_home.body
+    assert "home_resume_next_action_form_available: true" in restored_home.body
+    assert "Home Resume Action Form" in restored_home.body
+    assert "action='/actions/coder-commit-request'" in restored_home.body
+    assert f"name='run_id' value='{result.coder_worktree_run_id}'" in restored_home.body
     resume = render_local_app_route(tmp_path, "/resume")
     assert resume.status == 200
     assert "Resume Workspace" in resume.body

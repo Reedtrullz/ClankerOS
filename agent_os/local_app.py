@@ -1162,6 +1162,7 @@ def _home_resume_workspace(root: Path, lead_goal: sqlite3.Row | None) -> str:
             "<section><h2>Home Resume Workspace</h2>",
             "<p class='muted'>Resume saved local browser context or explicitly remember the current lead goal for tomorrow.</p>",
             _ul(lines),
+            _home_resume_action_form_section(root, open_goal),
             form,
             "</section>",
         ]
@@ -1172,6 +1173,7 @@ def _home_resume_next_action_lines(root: Path, open_goal: str) -> list[str]:
     if not open_goal:
         return [
             "home_resume_next_action_status: no_saved_goal",
+            "home_resume_next_action_form_available: false",
             "home_resume_next_action_write_on_get: false",
             "home_resume_next_action_external_effects_created: false",
         ]
@@ -1179,16 +1181,43 @@ def _home_resume_next_action_lines(root: Path, open_goal: str) -> list[str]:
     state = _goal_state(root, storage, open_goal)
     phase = _goal_current_phase(state)
     next_action = _goal_next_action(root, state)
+    form = _goal_next_action_form(state, next_action)
     return [
         f"home_resume_current_phase: {_e(phase)}",
         f"home_resume_next_action: {_e(next_action.action)}",
         f"home_resume_next_reason: {_e(next_action.reason)}",
         f"home_resume_operator_attention: {_e(_goal_operator_attention(phase, next_action))}",
         f"home_resume_next_surface: <a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
+        f"home_resume_next_action_form_available: {str(bool(form)).lower()}",
         "home_resume_next_action_source: saved_goal_state",
         "home_resume_next_action_write_on_get: false",
         "home_resume_next_action_external_effects_created: false",
     ]
+
+
+def _home_resume_action_form_section(root: Path, open_goal: str) -> str:
+    if not open_goal:
+        return ""
+    storage = _storage(root)
+    state = _goal_state(root, storage, open_goal)
+    next_action = _goal_next_action(root, state)
+    form = _goal_next_action_form(state, next_action)
+    if not form:
+        return ""
+    return "".join(
+        [
+            "<h3>Home Resume Action Form</h3>",
+            "<p class='muted'>Run the saved goal's browser-available local next action from Home.</p>",
+            _kv(
+                [
+                    ("home_resume_action_form_goal", open_goal),
+                    ("home_resume_action_form_next_action", next_action.action),
+                    ("home_resume_action_form_external_effects_created", "false"),
+                ]
+            ),
+            form,
+        ]
+    )
 
 
 def _home_recent_activity(root: Path, storage: Storage) -> str:
