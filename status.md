@@ -1,5 +1,27 @@
 # Status
 
+## 2026-06-26 Local App Workflow Continuation Links
+
+- Upgraded scoped `/workflow?delegation_id=<id>` and
+  `/workflow?run_id=<coder_run_id>` pages with a read-only
+  `Selected Workflow Continuation` block. It names the exact
+  `continue_from` action and links the operator back to the run detail,
+  `/approvals`, `/inbox`, and `/dogfooding`.
+- Focused red coverage first failed because `/workflow?run_id=...` did not
+  render `Selected Workflow Continuation`; the fixture-backed demo scenario
+  now shows `continue_from: request_commit_for_reviewed_run` plus the
+  local-only continuation surfaces.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario` -> red before implementation, then `1 passed, 497 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario or local_app_routes_render_modern_workflow_and_health or local_app_cli_commands_and_bind_safety"` -> `3 passed, 495 deselected`
+  - `python3 -m agent_os.cli app-smoke-test` -> rendered the core local app routes with status 200 and zero provider/network/external-mutation counters.
+  - `git diff --check`
+- Non-claims: this is a read-only workflow/navigation improvement only; it
+  does not execute work, approve requests, commit, push, create PRs, deploy,
+  call providers, fetch GitHub status, execute arbitrary commands, or perform
+  non-loopback network actions from the local app.
+
 ## 2026-06-26 Local App Inbox Follow-Up Cues
 
 - Upgraded `/inbox` so pending commit approvals show a read-only

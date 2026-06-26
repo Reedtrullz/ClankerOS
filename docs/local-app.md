@@ -52,7 +52,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   workflow state, artifact status, approval/run/commit/publication status, and
   the next recommended local operator action. When a delegation or run is
   selected, each related workflow step also shows a `selected_status` token so
-  the stepper itself can be scanned as the operator state map.
+  the stepper itself can be scanned as the operator state map. Scoped workflow
+  pages also render `Selected Workflow Continuation`, a read-only set of
+  continuation links to the run detail, approvals queue, inbox, and dogfooding
+  checklist with `external_effects_created: false`.
 - `/actions` - read-only safe action catalog showing local app actions, where
   their forms appear, required previous artifacts, output artifacts,
   confirmation requirements, local mutation posture, and external-effect

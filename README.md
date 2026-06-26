@@ -101,6 +101,12 @@ you can see whether the app path is waiting on commit request, commit
 approval, local commit, publication request, publication approval,
 publication handoff, or manual push/PR outside ClankerOS.
 
+Use `/workflow?delegation_id=<id>` or `/workflow?run_id=<coder_run_id>` when
+you want the scoped operator map. The selected workflow page now includes a
+read-only `Selected Workflow Continuation` block with the exact next local
+action, run detail surface, approvals queue, inbox, dogfooding checklist, and
+the explicit `external_effects_created: false` boundary.
+
 Use `/dogfooding` when you want one checklist for the first browser route walk:
 refresh the fixture, inspect demo/workflow/project/delegation/run surfaces,
 walk the local commit and publication gates, then hand verification to GitHub

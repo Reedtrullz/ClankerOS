@@ -627,6 +627,11 @@ def _workflow(
             "<section><h1>Modern Operator Workflow</h1>",
             _non_claim_banner(),
             _selected_workflow_state(root, delegation_id=delegation_id, run_id=run_id),
+            _selected_workflow_continuation(
+                root,
+                delegation_id=delegation_id,
+                run_id=run_id,
+            ),
             _workflow_list(compact=False, selected_statuses=selected_statuses),
             "</section>",
         ]
@@ -3609,6 +3614,121 @@ def _selected_workflow_state(
             ),
         ]
     ) + "</section>"
+
+
+def _selected_workflow_continuation(
+    root: Path,
+    *,
+    delegation_id: str | None = None,
+    run_id: str | None = None,
+) -> str:
+    if not delegation_id and not run_id:
+        return ""
+
+    storage = _storage(root)
+    selected_run = None
+    if run_id:
+        selected_run = next(
+            (item for item in list_coder_worktree_runs(root, limit=200) if item.id == run_id),
+            None,
+        )
+        if selected_run is None:
+            return _list_section(
+                "Selected Workflow Continuation",
+                [
+                    "selection_status: run_not_found",
+                    f"selected_run_id: {_e(run_id)}",
+                    "external_effects_created: false",
+                ],
+            )
+        if delegation_id and selected_run.delegation_id != delegation_id:
+            return _list_section(
+                "Selected Workflow Continuation",
+                [
+                    "selection_status: run_delegation_mismatch",
+                    f"selected_run_id: {_e(run_id)}",
+                    f"selected_delegation_id: {_e(delegation_id)}",
+                    "external_effects_created: false",
+                ],
+            )
+        delegation_id = selected_run.delegation_id
+
+    delegation = storage.get_subagent_delegation(delegation_id or "")
+    if delegation is None:
+        return _list_section(
+            "Selected Workflow Continuation",
+            [
+                "selection_status: delegation_not_found",
+                f"selected_delegation_id: {_e(delegation_id or 'unknown')}",
+                f"selected_run_id: {_e(run_id or 'none')}",
+                "external_effects_created: false",
+            ],
+        )
+
+    summary = summarize_implementation_handoff(root, delegation)
+    prep_packets = [
+        item
+        for item in list_coder_prep_packets(root)
+        if item.get("source", {}).get("delegation_id") == delegation.id
+    ]
+    plan_packets = [
+        item
+        for item in list_coder_worktree_plan_packets(root)
+        if item.get("source", {}).get("delegation_id") == delegation.id
+    ]
+    worktree_approvals = list_coder_worktree_approvals(
+        root,
+        delegation_id=delegation.id,
+        limit=50,
+    )
+    worktree_runs = list_coder_worktree_runs(root, delegation_id=delegation.id, limit=50)
+    if selected_run is None and len(worktree_runs) == 1:
+        selected_run = worktree_runs[0]
+    commit_approvals = list_coder_worktree_commit_approvals(
+        root,
+        delegation_id=delegation.id,
+        limit=50,
+    )
+    publications = list_coder_publications(root, delegation_id=delegation.id, limit=50)
+    next_action = _delegation_next_action(
+        root,
+        summary=summary,
+        prep_count=len(prep_packets),
+        plan_count=len(plan_packets),
+        worktree_approvals=worktree_approvals,
+        worktree_runs=worktree_runs,
+        commit_approvals=commit_approvals,
+        publications=publications,
+    )
+    selected_run_id = selected_run.id if selected_run is not None else run_id or "none"
+    run_surface = "select a coder worktree run"
+    if selected_run is not None:
+        run_surface = (
+            f"<a href='/runs/{quote(selected_run.id)}'>"
+            f"/runs/{_e(selected_run.id)}</a>"
+        )
+    action_hints = {
+        "request_commit_for_reviewed_run": "request coder commit on the run detail page",
+        "approve_or_reject_commit_request": "decide the pending commit request on approvals",
+        "commit_approved_worktree": "commit approved worktree from the run detail page",
+        "request_publication_handoff": "request publication handoff on the run detail page",
+        "approve_or_reject_publication_request": "decide the pending publication request on approvals",
+        "prepare_publication_handoff": "prepare the publication handoff on the run detail page",
+        "manual_operator_push_pr_outside_clankeros": "use the publication handoff outside ClankerOS",
+    }
+    lines = [
+        f"continue_from: {_e(next_action)}",
+        f"operator_surface_hint: {_e(action_hints.get(next_action, 'review selected workflow state'))}",
+        f"selected_delegation_id: {_e(delegation.id)}",
+        f"selected_run_id: {_e(selected_run_id)}",
+        f"run_action_surface: {run_surface}",
+        "approvals_surface: <a href='/approvals'>/approvals</a>",
+        "inbox_surface: <a href='/inbox'>/inbox</a>",
+        "dogfooding_surface: <a href='/dogfooding'>/dogfooding</a>",
+        "external_effects_created: false",
+        "network_actions_taken_by_app: 0",
+    ]
+    return _list_section("Selected Workflow Continuation", lines)
 
 
 def _workflow_step_statuses(

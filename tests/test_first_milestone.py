@@ -3684,6 +3684,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert workflow_for_run.status == 200
     assert result.coder_worktree_run_id in workflow_for_run.body
     assert "selected_run_id" in workflow_for_run.body
+    assert "Selected Workflow Continuation" in workflow_for_run.body
+    assert "continue_from: request_commit_for_reviewed_run" in workflow_for_run.body
+    assert f"/runs/{result.coder_worktree_run_id}" in workflow_for_run.body
+    assert "run_action_surface" in workflow_for_run.body
+    assert "approvals_surface" in workflow_for_run.body
+    assert "inbox_surface" in workflow_for_run.body
+    assert "external_effects_created: false" in workflow_for_run.body
 
     approvals = render_local_app_route(tmp_path, "/approvals")
     assert approvals.status == 200

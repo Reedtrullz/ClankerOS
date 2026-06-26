@@ -81,7 +81,9 @@ Core layers for the bootstrap:
   goals from task rows. The workflow page can be scoped with a
   delegation or coder run id, then annotates related stepper rows with
   selected local artifact, approval, run, commit, publication, and next-action
-  status. Coder worktree
+  status, plus a read-only `Selected Workflow Continuation` block linking the
+  exact run, approvals, inbox, and dogfooding surfaces without creating
+  external effects. Coder worktree
   run detail pages include the same upstream and downstream workflow posture as
   a `Run Workflow State` readback. Coder worktree run rows in review,
   dashboard, and the local app include changed-file counts and compact diff
