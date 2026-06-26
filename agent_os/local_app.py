@@ -111,6 +111,21 @@ NAV_ITEMS = [
     ("Health", "/health"),
     ("Demo", "/demo"),
 ]
+ROUTE_KEYBOARD_SHORTCUTS = {
+    "/": "h",
+    "/resume": "r",
+    "/goals": "g",
+    "/search": "s",
+}
+GLOBAL_KEYBOARD_SHORTCUTS = {
+    "/": "Open command palette",
+    "Escape": "Close command palette",
+    "h": "Open home",
+    "g": "Open goals",
+    "r": "Open resume",
+    "s": "Open search",
+    "t": "Toggle theme",
+}
 WORKFLOW_STEPS = [
     ("Goal / task", "goal, tasks", "local_state", "none", "goal row, task rows"),
     ("Delegate scout", "delegate", "local_state", "task", "delegation row"),
@@ -9003,8 +9018,19 @@ def _nav_links(current_path: str) -> str:
     for label, href in NAV_ITEMS:
         current = _is_current_nav(path, href)
         aria = " aria-current='page'" if current else ""
-        links.append(f"<a href='{_e(href)}'{aria}>{_e(label)}</a>")
+        links.append(f"<a href='{_e(href)}'{aria}{_shortcut_attrs(label, href)}>{_e(label)}</a>")
     return "".join(links)
+
+
+def _shortcut_attrs(label: str, href: str) -> str:
+    shortcut = ROUTE_KEYBOARD_SHORTCUTS.get(href)
+    if not shortcut:
+        return ""
+    return (
+        f" data-shortcut='{_e(shortcut)}'"
+        f" aria-keyshortcuts='{_e(shortcut)}'"
+        f" title='{_e(label)} ({_e(shortcut)})'"
+    )
 
 
 def _is_current_nav(path: str, href: str) -> bool:
@@ -9077,7 +9103,8 @@ def _command_palette(root: Path) -> str:
             continue
         seen.add(key)
         rows.append(
-            f"<li><a href='{_e(href)}'>{_e(label)}</a> <span class='muted'>{_e(kind)}</span></li>"
+            f"<li><a href='{_e(href)}'{_shortcut_attrs(label, href)}>{_e(label)}</a> "
+            f"<span class='muted'>{_e(kind)}</span></li>"
         )
     return "".join(
         [
@@ -9289,6 +9316,7 @@ def _html_page(
     .command-palette {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); max-width:720px; width:min(720px, calc(100vw - 32px)); }}
     .command-palette::backdrop {{ background:rgba(15,20,25,.45); }}
     .command-grid {{ display:grid; grid-template-columns:1fr auto; gap:8px; }}
+    .sr-only {{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }}
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
@@ -9299,9 +9327,10 @@ def _html_page(
   <header>
     <strong>ClankerOS Local Operator</strong>
     <nav>{nav}</nav>
-    <div class="header-actions">
-      <button class="icon-button" id="palette-open" type="button" data-shortcut="/">Palette</button>
-      <button class="icon-button" id="theme-toggle" type="button">Theme</button>
+    <div class="header-actions" data-keyboard-shortcuts="true">
+      <span class="sr-only" id="keyboard-shortcuts-help">Keyboard shortcuts: slash opens command palette; Escape closes it; h opens home; g opens goals; r opens resume; s opens search; t toggles theme.</span>
+      <button class="icon-button" id="palette-open" type="button" data-shortcut="/" aria-keyshortcuts="/" aria-describedby="keyboard-shortcuts-help" title="Open command palette (/)">Palette</button>
+      <button class="icon-button" id="theme-toggle" type="button" data-shortcut="t" aria-keyshortcuts="t" aria-describedby="keyboard-shortcuts-help" title="Toggle theme (t)">Theme</button>
     </div>
   </header>
   {palette}
@@ -9332,23 +9361,25 @@ def _html_page(
       if (!palette) {{ return; }}
       if (palette.close) {{ palette.close(); }} else {{ palette.setAttribute("hidden", "hidden"); }}
     }}
-    if (paletteOpen) {{ paletteOpen.addEventListener("click", openPalette); }}
-    if (themeToggle) {{
-      themeToggle.addEventListener("click", function() {{
-        var next = root.dataset.theme === "dark" ? "" : "dark";
-        root.dataset.theme = next;
-        if (window.localStorage) {{ localStorage.setItem("clankeros-theme", next); }}
-      }});
+    function toggleTheme() {{
+      var next = root.dataset.theme === "dark" ? "" : "dark";
+      root.dataset.theme = next;
+      if (window.localStorage) {{ localStorage.setItem("clankeros-theme", next); }}
     }}
+    if (paletteOpen) {{ paletteOpen.addEventListener("click", openPalette); }}
+    if (themeToggle) {{ themeToggle.addEventListener("click", toggleTheme); }}
     document.addEventListener("keydown", function(event) {{
       var target = event.target || {{}};
       var tag = String(target.tagName || "").toLowerCase();
       if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) {{ return; }}
+      if (event.key === "Escape") {{ closePalette(); return; }}
       if (tag === "input" || tag === "textarea" || tag === "select") {{ return; }}
       if (event.key === "/") {{ event.preventDefault(); openPalette(); }}
-      if (event.key === "Escape") {{ closePalette(); }}
       if (event.key === "g") {{ event.preventDefault(); window.location.href = "/goals"; }}
       if (event.key === "h") {{ event.preventDefault(); window.location.href = "/"; }}
+      if (event.key === "r") {{ event.preventDefault(); window.location.href = "/resume"; }}
+      if (event.key === "s") {{ event.preventDefault(); window.location.href = "/search"; }}
+      if (event.key === "t") {{ event.preventDefault(); toggleTheme(); }}
     }});
   }})();
   </script>

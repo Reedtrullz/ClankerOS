@@ -234,6 +234,10 @@ Core layers for the bootstrap:
   the read-only Goal page. Confirmed `/memory` pinning promotes only entries
   with existing evidence artifacts and refreshes saved workspace state to that
   artifact with zero provider, network, or external mutation effects.
+  The shared browser shell now exposes accessible shortcut metadata for Home,
+  Resume, Goals, Search, palette, and theme controls, and the palette can be
+  closed with Escape even while the search input is focused; the shortcut layer
+  remains local-only and creates no server writes.
   The Goal `Skills Used` section links to `/skills`, reuses task skill usage
   counts, names projects using each tag, links matching generated or available
   local skill records when present, and shows profile usage while keeping

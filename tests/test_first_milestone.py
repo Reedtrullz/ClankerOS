@@ -4092,6 +4092,18 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-breadcrumbs='true'" in root.body
     assert "id=\"theme-toggle\"" in root.body
     assert "data-shortcut=\"/\"" in root.body
+    assert "data-keyboard-shortcuts=\"true\"" in root.body
+    assert "aria-keyshortcuts=\"/\"" in root.body
+    assert "aria-keyshortcuts=\"t\"" in root.body
+    assert "aria-keyshortcuts='h'" in root.body
+    assert "aria-keyshortcuts='g'" in root.body
+    assert "aria-keyshortcuts='r'" in root.body
+    assert "aria-keyshortcuts='s'" in root.body
+    assert "Keyboard shortcuts: slash opens command palette" in root.body
+    assert 'if (event.key === "Escape") { closePalette(); return; }' in root.body
+    assert 'if (event.key === "r") { event.preventDefault(); window.location.href = "/resume"; }' in root.body
+    assert 'if (event.key === "s") { event.preventDefault(); window.location.href = "/search"; }' in root.body
+    assert 'if (event.key === "t") { event.preventDefault(); toggleTheme(); }' in root.body
     assert "implementation-handoff" in root.body
     assert "Recent Implementation Handoffs" in root.body
     assert "coder-prep" in root.body

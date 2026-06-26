@@ -1,5 +1,30 @@
 # Status
 
+## 2026-06-27 Accessible Shortcut Layer
+
+- Made the shared browser shell expose first-class shortcut metadata for Home,
+  Resume, Goals, Search, palette, and theme controls. The shell now includes
+  `aria-keyshortcuts`, route `data-shortcut` attributes, hover titles, and a
+  screen-reader-only shortcut summary, while preserving the existing visible
+  compact header.
+- Fixed the palette close path so `Escape` closes the command palette even
+  when focus is inside the palette search input. Added keyboard handlers for
+  `r` -> `/resume`, `s` -> `/search`, and `t` -> theme toggle alongside the
+  existing `/`, `h`, and `g` shortcuts.
+- Non-claims: this does not write local state, run work, push, create PRs,
+  deploy, call providers, fetch GitHub status, or mutate external systems. It
+  only changes shared local app HTML/JS and tests.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+    -> `1 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Memory Pin Resume Anchors
 
 - Made confirmed browser `pin-memory` promotion refresh
