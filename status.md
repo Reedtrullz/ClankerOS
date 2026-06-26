@@ -1,5 +1,25 @@
 # Status
 
+## 2026-06-26 Goal Remaining Work Gates
+
+- Upgraded `/goals/<goal_id>` `Remaining Work` from a thin task/next-action
+  list into a gate-aware checklist. It now shows the local-state source,
+  current next action and surface, open task/incident/recommendation counts,
+  zero external-effect posture, and done/pending/waiting status for scout
+  delegation, context pack, implementation handoff, coder prep, worktree plan,
+  worktree approval/run, review, commit request/approval/local commit,
+  publication request/approval/handoff, and manual publish gates.
+- The readback is still local UI over existing goal state and artifacts. It
+  does not run delegations or worktrees, approve anything, call providers,
+  fetch GitHub status, push, create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state"`
+    -> `1 passed, 509 deselected`
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Goal Current Phase Banner
 
 - Upgraded `/goals/<goal_id>` `Current Phase` from a thin phase label into a

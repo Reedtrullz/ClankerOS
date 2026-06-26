@@ -129,6 +129,11 @@ Core layers for the bootstrap:
   renders saved filters, expanded panels, and last-viewed artifact as
   `Goal Workspace Restore State`, and exposes a confirmed `save-workspace`
   form that returns to the same goal page after saving without writing on GET.
+  Goal `Remaining Work` now renders a gate-aware checklist from local state,
+  showing the next action, open task/incident/recommendation counts, and
+  done/pending/waiting status for scout, context-pack, implementation
+  handoff, coder prep, worktree, review, commit, publication, and manual
+  publish gates without taking action.
   The Goal `Skills Used` section links to `/skills`, reuses task skill usage
   counts, names projects using each tag, links matching generated or available
   local skill records when present, and shows profile usage while keeping

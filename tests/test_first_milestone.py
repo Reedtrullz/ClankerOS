@@ -4880,6 +4880,25 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "save-goal-note" in goal.body
     assert "note_append_form_available: true" in goal.body
     assert "Remaining Work" in goal.body
+    assert "remaining_work_source: goal_state_workflow_gates" in goal.body
+    assert "remaining_work_next_action: Create commit request" in goal.body
+    assert "remaining_work_open_tasks: 1" in goal.body
+    assert "remaining_work_open_incidents: 0" in goal.body
+    assert "remaining_work_external_effects_created: false" in goal.body
+    assert "remaining_work_open_task:" in goal.body
+    assert "remaining_work_gate_counts:" in goal.body
+    assert "remaining_work_gate: scout_delegation status=done" in goal.body
+    assert "remaining_work_gate: context_pack status=done" in goal.body
+    assert "remaining_work_gate: implementation_handoff status=done" in goal.body
+    assert "remaining_work_gate: coder_prep status=done" in goal.body
+    assert "remaining_work_gate: worktree_plan status=done" in goal.body
+    assert "remaining_work_gate: worktree_approval status=done" in goal.body
+    assert "remaining_work_gate: worktree_run status=done" in goal.body
+    assert "remaining_work_gate: review status=done" in goal.body
+    assert "remaining_work_gate: commit_request status=pending next=Create commit request" in goal.body
+    assert "remaining_work_gate: local_commit status=waiting" in goal.body
+    assert "remaining_work_gate: publication_request status=waiting" in goal.body
+    assert "remaining_work_gate: manual_publish status=waiting" in goal.body
     assert "goal_live_refresh_interval_seconds</dt><dd>5" in goal.body
     assert result.delegation_id in goal.body
     assert result.coder_worktree_run_id in goal.body

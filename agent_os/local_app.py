@@ -1899,7 +1899,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _list_section("Skills Used", _goal_skill_lines(root, state)),
             _goal_git_status(root, state),
             _goal_operator_notes_section(root, state),
-            _list_section("Remaining Work", _goal_remaining_work_lines(state, next_action)),
+            _list_section("Remaining Work", _goal_remaining_work_lines(root, state, next_action)),
             _non_claim_banner(),
         ]
     )
@@ -3525,14 +3525,241 @@ def _goal_operator_notes_path(goal: Any) -> Path:
     return Path(".clanker") / "projects" / goal.project_id / "goals" / goal.id / "operator-notes.md"
 
 
-def _goal_remaining_work_lines(state: dict[str, Any], next_action: GoalNextAction) -> list[str]:
+def _goal_remaining_work_lines(
+    root: Path,
+    state: dict[str, Any],
+    next_action: GoalNextAction,
+) -> list[str]:
     tasks = [task for task in state["tasks"] if task.status != "completed"]
-    lines = [f"next_action: {next_action.action}"]
-    lines.extend(f"task {task.id}: status={task.status} type={task.task_type}" for task in tasks[:10])
+    open_incidents = [row for row in state["incidents"] if row["status"] == "open"]
+    open_recommendations = [
+        row for row in state["recommendations"] if row["status"] == "open"
+    ]
+    gate_lines = _goal_remaining_work_gate_lines(root, state, next_action)
+    lines = [
+        "remaining_work_source: goal_state_workflow_gates",
+        f"remaining_work_next_action: {_e(next_action.action)}",
+        f"remaining_work_next_surface: {_e(next_action.href)}",
+        f"remaining_work_open_tasks: {len(tasks)}",
+        f"remaining_work_open_incidents: {len(open_incidents)}",
+        f"remaining_work_open_recommendations: {len(open_recommendations)}",
+        "remaining_work_external_effects_created: false",
+    ]
+    lines.extend(
+        f"remaining_work_open_task: {_e(task.id)} status={_e(task.status)} type={_e(task.task_type)}"
+        for task in tasks[:10]
+    )
+    lines.extend(gate_lines)
     if not tasks and next_action.action == "Manual publish outside ClankerOS":
         lines.append("manual publication remains outside ClankerOS")
-    if not tasks and len(lines) == 1:
+    if not tasks and not any("status=pending" in line for line in gate_lines):
         lines.append("no open task rows; inspect timeline and evidence before marking complete")
+    return lines
+
+
+def _goal_remaining_work_gate_lines(
+    root: Path,
+    state: dict[str, Any],
+    next_action: GoalNextAction,
+) -> list[str]:
+    delegations = state["delegations"]
+    has_delegation = bool(delegations)
+    has_context_pack = any(
+        _delegation_has_context_pack(
+            root,
+            delegation,
+            load_delegation_result_metadata(delegation),
+        )
+        for delegation in delegations
+    )
+    completed_delegation = any(
+        delegation.status == "completed" for delegation in delegations
+    )
+    has_handoff = any(
+        _goal_delegation_has_handoff(state, delegation) for delegation in delegations
+    )
+    has_prep = bool(state["prep_packets"])
+    has_worktree_plan = bool(state["worktree_plans"])
+    worktree_pending = _count_status(
+        state["worktree_approvals"],
+        "pending_operator_approval",
+    )
+    worktree_approved = _count_status(state["worktree_approvals"], "approved")
+    has_completed_run = any(run.status == "completed" for run in state["worktree_runs"])
+    has_running_run = any(run.status == "running" for run in state["worktree_runs"])
+    has_review = any(
+        run.status == "completed"
+        and _run_review_gate_state(root, run).get("commit_request_form_available")
+        for run in state["worktree_runs"]
+    )
+    commit_pending = _count_status(state["commit_approvals"], "pending_operator_approval")
+    commit_approved = _count_status(state["commit_approvals"], "approved")
+    has_local_commit = _count_status(state["commit_approvals"], "committed") > 0
+    publication_pending = _count_status(
+        state["publications"],
+        "pending_operator_approval",
+    )
+    publication_approved = _count_status(state["publications"], "approved")
+    publication_ready = _count_status(state["publications"], "ready_for_operator")
+    has_publication_request = bool(state["publications"])
+
+    gates: list[tuple[str, str, str, str]] = []
+
+    def add(name: str, status: str, *, next_step: str = "", detail: str = "") -> None:
+        gates.append((name, status, next_step, detail))
+
+    def pending_if_ready(done: bool, ready: bool, next_step: str) -> str:
+        if done:
+            return "done"
+        if ready or next_action.action == next_step:
+            return "pending"
+        return "waiting"
+
+    add(
+        "scout_delegation",
+        pending_if_ready(
+            has_delegation,
+            bool(state["tasks"]),
+            "Create scout delegation",
+        ),
+        next_step="Create scout delegation",
+        detail=f"delegations={len(delegations)}",
+    )
+    add(
+        "context_pack",
+        pending_if_ready(has_context_pack, has_delegation, "Generate context pack"),
+        next_step="Generate context pack",
+    )
+    add(
+        "implementation_handoff",
+        pending_if_ready(
+            has_handoff,
+            has_context_pack or completed_delegation,
+            "Run delegation from CLI",
+        ),
+        next_step="Run delegation from CLI",
+        detail=(
+            "completed_delegations="
+            f"{sum(1 for delegation in delegations if delegation.status == 'completed')}"
+        ),
+    )
+    add(
+        "coder_prep",
+        pending_if_ready(has_prep, has_handoff, "Run coder prep"),
+        next_step="Run coder prep",
+    )
+    add(
+        "worktree_plan",
+        pending_if_ready(has_worktree_plan, has_prep, "Create worktree plan"),
+        next_step="Create worktree plan",
+    )
+    add(
+        "worktree_approval",
+        pending_if_ready(
+            worktree_approved > 0 or has_completed_run or has_running_run,
+            has_worktree_plan,
+            "Request worktree approval",
+        ),
+        next_step="Request worktree approval",
+        detail=f"pending={worktree_pending} approved={worktree_approved}",
+    )
+    add(
+        "worktree_run",
+        pending_if_ready(
+            has_completed_run,
+            worktree_approved > 0 or has_running_run,
+            "Run approved worktree from CLI",
+        ),
+        next_step="Run approved worktree from CLI",
+        detail=(
+            f"running={sum(1 for run in state['worktree_runs'] if run.status == 'running')} "
+            f"completed={sum(1 for run in state['worktree_runs'] if run.status == 'completed')}"
+        ),
+    )
+    add(
+        "review",
+        pending_if_ready(has_review, has_completed_run, "Open review"),
+        next_step="Open review",
+    )
+    add(
+        "commit_request",
+        pending_if_ready(
+            bool(state["commit_approvals"]),
+            has_review,
+            "Create commit request",
+        ),
+        next_step="Create commit request",
+        detail=f"requests={len(state['commit_approvals'])}",
+    )
+    add(
+        "commit_approval",
+        pending_if_ready(
+            commit_approved > 0 or has_local_commit,
+            commit_pending > 0,
+            "Approve commit",
+        ),
+        next_step="Approve commit",
+        detail=f"pending={commit_pending} approved={commit_approved}",
+    )
+    add(
+        "local_commit",
+        pending_if_ready(has_local_commit, commit_approved > 0, "Commit approved worktree"),
+        next_step="Commit approved worktree",
+    )
+    add(
+        "publication_request",
+        pending_if_ready(
+            has_publication_request,
+            has_local_commit,
+            "Create publication request",
+        ),
+        next_step="Create publication request",
+        detail=f"requests={len(state['publications'])}",
+    )
+    add(
+        "publication_approval",
+        pending_if_ready(
+            publication_approved > 0 or publication_ready > 0,
+            publication_pending > 0,
+            "Approve publication",
+        ),
+        next_step="Approve publication",
+        detail=f"pending={publication_pending} approved={publication_approved}",
+    )
+    add(
+        "publication_handoff",
+        pending_if_ready(publication_ready > 0, publication_approved > 0, "Create publication handoff"),
+        next_step="Create publication handoff",
+        detail=f"ready_for_operator={publication_ready}",
+    )
+    add(
+        "manual_publish",
+        (
+            "done"
+            if state["goal"].status == "completed"
+            else ("pending" if publication_ready > 0 else "waiting")
+        ),
+        next_step="Manual publish outside ClankerOS",
+        detail="outside_clankeros=true",
+    )
+
+    counts: dict[str, int] = {}
+    for _, status, _, _ in gates:
+        counts[status] = counts.get(status, 0) + 1
+    lines = [
+        "remaining_work_gate_counts: "
+        + " ".join(
+            f"{status}={counts.get(status, 0)}"
+            for status in ["done", "pending", "waiting"]
+        )
+    ]
+    for name, status, next_step, detail in gates:
+        parts = [f"remaining_work_gate: {name}", f"status={status}"]
+        if status == "pending" and next_step:
+            parts.append(f"next={_e(next_step)}")
+        if detail:
+            parts.append(f"detail={_e(detail)}")
+        lines.append(" ".join(parts))
     return lines
 
 

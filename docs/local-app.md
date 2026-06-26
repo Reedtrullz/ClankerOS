@@ -105,7 +105,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   create local artifacts, approval rows, approval decisions, or one isolated
   local worktree commit only; they do not run delegations or worktrees from
   the browser, push, create PRs, deploy, call providers, or perform external
-  mutations.
+  mutations. Remaining Work is a gate-aware checklist sourced from local goal
+  state: it shows the current recommended action, open task/incident/
+  recommendation counts, and done/pending/waiting status for scout,
+  context-pack, handoff, coder prep, worktree, review, commit, publication,
+  and manual publish gates without taking any action.
 - Every app page includes a shared operator shell with breadcrumbs, recent
   local items, a command palette, a dark/light theme toggle, and keyboard
   shortcuts for home, goals, and palette search. These controls only navigate
