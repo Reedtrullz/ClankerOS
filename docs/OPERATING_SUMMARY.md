@@ -88,8 +88,13 @@ Core layers for the bootstrap:
   for inactive future provider-routing readback from `.clanker/profiles.yml`.
   The `/goals` first-run panel now exposes confirmed local `register-project`
   and `create-goal` forms, moving initial project/goal setup into the browser
-  without adding provider calls or external effects. The workflow page can be
-  scoped with a
+  without adding provider calls or external effects. Goal detail pages now
+  expose clickable timeline entries, a browser-native progress bar, and a
+  confirmed `delegate` next-action form when a goal has planned tasks but no
+  delegation yet; the form writes a read-only scout delegation contract only
+  and does not start a subagent. Every page shares a browser operator shell
+  with breadcrumbs, recent local items, a command palette, keyboard shortcuts,
+  and a theme toggle. The workflow page can be scoped with a
   delegation or coder run id, then annotates related stepper rows with
   selected local artifact, approval, run, commit, publication, and next-action
   status, plus a read-only `Selected Workflow Continuation` block linking the

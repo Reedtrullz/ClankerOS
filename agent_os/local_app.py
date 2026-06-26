@@ -57,7 +57,11 @@ from agent_os.planning import PlanningError, create_goal_lifecycle
 from agent_os.project_registry import register_project
 from agent_os.storage import Storage, utc_now
 from agent_os.steering import collect_inbox_items
-from agent_os.subagent_delegation import load_delegation_result_metadata
+from agent_os.subagent_delegation import (
+    DelegationError,
+    create_subagent_delegation,
+    load_delegation_result_metadata,
+)
 
 
 class SafeHtml(str):
@@ -75,6 +79,27 @@ NO_EXTERNAL_EFFECT_CLAIMS = [
     "no PR creation",
     "no deploy",
     "no external mutation",
+]
+NAV_ITEMS = [
+    ("Dashboard", "/"),
+    ("Goals", "/goals"),
+    ("Search", "/search"),
+    ("Workspace", "/workspace"),
+    ("Memory", "/memory"),
+    ("Skills", "/skills"),
+    ("Profiles", "/profiles"),
+    ("Workflow", "/workflow"),
+    ("Actions", "/actions"),
+    ("Verification", "/verification"),
+    ("CI Evidence", "/ci-evidence"),
+    ("Dogfooding", "/dogfooding"),
+    ("Projects", "/projects"),
+    ("Delegation Runs", "/delegation-runs"),
+    ("Inbox", "/inbox"),
+    ("Approvals", "/approvals"),
+    ("Incidents", "/incidents"),
+    ("Health", "/health"),
+    ("Demo", "/demo"),
 ]
 WORKFLOW_STEPS = [
     ("Goal / task", "goal, tasks", "local_state", "none", "goal row, task rows"),
@@ -113,6 +138,7 @@ ACTION_CATALOG = [
     ("ci-snapshot-evidence-from-gh-json", "local evidence", "ci evidence", "yes", "yes", "operator-supplied gh run view JSON, optionally scoped to a completed job", "ci snapshot evidence JSON"),
     ("register-project", "local state", "first run / projects", "yes", "yes", "local git repo path plus default test command", "registered project row and projects/<project>/project.md"),
     ("create-goal", "local state", "first run / goals", "yes", "yes", "registered project and goal prompt", "goal row, plan, tasks, and goal artifacts"),
+    ("delegate", "local state", "goal next action", "yes", "yes", "planned goal task and read-only scout profile", "subagent delegation contract JSON"),
     ("save-workspace", "local state", "workspace", "yes", "yes", "open project/goal, filters, panels, last artifact", ".clanker/app/workspace.json"),
     ("pin-memory", "local state", "memory", "yes", "yes", "proposed memory entry", "memory status=active when evidence exists"),
 ]
@@ -231,7 +257,13 @@ def render_local_app_route(
     notice = _one(query, "notice")
 
     def page(title: str, content: str, *, status: int = 200) -> LocalAppResponse:
-        return _html_page(root, title, _notice_banner(notice) + content, status=status)
+        return _html_page(
+            root,
+            title,
+            _notice_banner(notice) + content,
+            status=status,
+            current_path=raw_path,
+        )
 
     try:
         if method == "POST":
@@ -293,7 +325,7 @@ def render_local_app_route(
             run_id = unquote(path.removeprefix("/runs/"))
             return page(f"Run {run_id}", _run_detail(root, run_id))
         if path == "/artifacts":
-            return _artifact_viewer(root, _one(query, "path"))
+            return _artifact_viewer(root, _one(query, "path"), current_path=raw_path)
         if path == "/health":
             return page("Health", _health(root, host=host, port=port))
         if path == "/demo":
@@ -305,6 +337,7 @@ def render_local_app_route(
             "Local App Error",
             f"<p class='error'>{_e(type(error).__name__)}: {_e(str(error))}</p>",
             status=500,
+            current_path=raw_path,
         )
 
 
@@ -1610,7 +1643,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             "<section class='banner'><h2>Current Phase</h2>",
             f"<p><strong>{_e(phase)}</strong></p>",
             "</section>",
-            _goal_next_action_card(next_action),
+            _goal_next_action_card(state, next_action),
             _goal_overview(state),
             _goal_progress(state),
             _goal_timeline(root, state),
@@ -1849,18 +1882,62 @@ def _goal_next_action(root: Path, state: dict[str, Any]) -> GoalNextAction:
         return GoalNextAction("Run coder prep", f"/delegations/{quote(completed_delegation.id)}", "implementation_handoff_or_result_available")
     if state["delegations"]:
         return GoalNextAction("Run or inspect delegation", f"/delegations/{quote(state['delegations'][0].id)}", "delegation_exists")
-    return GoalNextAction("Create scout delegation", f"/projects/{quote(goal.project_id)}", "goal_has_no_delegation_yet")
+    return GoalNextAction("Create scout delegation", f"/goals/{quote(goal.id)}", "goal_has_no_delegation_yet")
 
 
-def _goal_next_action_card(next_action: GoalNextAction) -> str:
-    return "<section><h2>Next Action</h2>" + _kv(
+def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -> str:
+    form = ""
+    if next_action.action == "Create scout delegation":
+        form = _goal_scout_delegation_form(state)
+    return (
+        "<section><h2>Next Action</h2>"
+        + _kv(
+            [
+                ("recommended_action", next_action.action),
+                ("reason", next_action.reason),
+                ("open_surface", SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>")),
+                ("next_action_form_available", "true" if form else "false"),
+                ("external_effects_created", "false"),
+            ]
+        )
+        + form
+        + "</section>"
+    )
+
+
+def _goal_scout_delegation_form(state: dict[str, Any]) -> str:
+    goal = state.get("goal")
+    if goal is None:
+        return ""
+    task = _goal_delegation_target_task(state)
+    if task is None:
+        return "<p class='muted'>delegate_form_status: unavailable_until_planned_task_exists</p>"
+    return "".join(
         [
-            ("recommended_action", next_action.action),
-            ("reason", next_action.reason),
-            ("open_surface", SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>")),
-            ("external_effects_created", "false"),
+            "<h3>Create Scout Delegation</h3>",
+            "<p class='muted'>Creates a read-only delegation contract for the next planned task. It does not start a subagent or call a provider.</p>",
+            _input_form(
+                "delegate",
+                {
+                    "goal_id": goal.id,
+                    "task_id": task.id,
+                    "profile": "scout",
+                },
+                {
+                    "title": f"Scout {goal.title or goal.description}",
+                    "requested_by": "operator",
+                },
+            ),
         ]
-    ) + "</section>"
+    )
+
+
+def _goal_delegation_target_task(state: dict[str, Any]) -> Any | None:
+    delegated_task_ids = {delegation.parent_task_id for delegation in state.get("delegations", [])}
+    for task in state.get("tasks", []):
+        if task.id not in delegated_task_ids:
+            return task
+    return None
 
 
 def _goal_overview(state: dict[str, Any]) -> str:
@@ -1882,17 +1959,31 @@ def _goal_progress(state: dict[str, Any]) -> str:
     tasks = state["tasks"]
     completed_tasks = [task for task in tasks if task.status == "completed"]
     blocked_tasks = [task for task in tasks if task.status in {"blocked", "failed"}]
-    return "<section><h2>Progress</h2>" + _kv(
-        [
-            ("progress_label", _goal_progress_label(state)),
-            ("tasks_completed", f"{len(completed_tasks)}/{len(tasks)}"),
-            ("blocked_or_failed_tasks", str(len(blocked_tasks))),
-            ("delegations", str(len(state["delegations"]))),
-            ("runs", str(len(state["runs"]) + len(state["worktree_runs"]))),
-            ("approvals", str(len(state["worktree_approvals"]) + len(state["commit_approvals"]) + len(state["publications"]))),
-            ("incidents", str(len(state["incidents"]))),
-        ]
-    ) + "</section>"
+    total = len(tasks)
+    completed = len(completed_tasks)
+    progress = (
+        "<progress value='{value}' max='{max}' aria-label='Goal task progress'></progress>".format(
+            value=completed,
+            max=max(total, 1),
+        )
+    )
+    return (
+        "<section><h2>Progress</h2>"
+        + progress
+        + _kv(
+            [
+                ("progress_label", _goal_progress_label(state)),
+                ("progress_bar_enabled", "true"),
+                ("tasks_completed", f"{completed}/{total}"),
+                ("blocked_or_failed_tasks", str(len(blocked_tasks))),
+                ("delegations", str(len(state["delegations"]))),
+                ("runs", str(len(state["runs"]) + len(state["worktree_runs"]))),
+                ("approvals", str(len(state["worktree_approvals"]) + len(state["commit_approvals"]) + len(state["publications"]))),
+                ("incidents", str(len(state["incidents"]))),
+            ]
+        )
+        + "</section>"
+    )
 
 
 def _goal_progress_label(state: dict[str, Any]) -> str:
@@ -1905,7 +1996,19 @@ def _goal_progress_label(state: dict[str, Any]) -> str:
 
 def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
     items = _goal_timeline_items(root, state)
-    return _list_section("Timeline", [_timeline_line(item) for item in items])
+    return "".join(
+        [
+            "<section><h2>Timeline</h2>",
+            _kv(
+                [
+                    ("timeline_links_enabled", "true"),
+                    ("timeline_items", str(len(items))),
+                ]
+            ),
+            _ul([_timeline_line(item) for item in items]),
+            "</section>",
+        ]
+    )
 
 
 def _goal_activity_log(root: Path, state: dict[str, Any]) -> str:
@@ -1918,18 +2021,35 @@ def _goal_activity_log(root: Path, state: dict[str, Any]) -> str:
 def _goal_timeline_items(root: Path, state: dict[str, Any]) -> list[dict[str, str]]:
     goal = state["goal"]
     items: list[dict[str, str]] = [
-        {"at": goal.created_at, "message": f"Goal created for project {goal.project_id}."}
+        {
+            "at": goal.created_at,
+            "message": f"Goal created for project {goal.project_id}.",
+            "href": f"/goals/{quote(goal.id)}",
+        }
     ]
     for task in state["tasks"]:
-        items.append({"at": task.created_at, "message": f"Task created: {task.task_type}."})
+        items.append(
+            {
+                "at": task.created_at,
+                "message": f"Task created: {task.task_type}.",
+                "href": f"/goals/{quote(goal.id)}",
+            }
+        )
         if task.updated_at != task.created_at:
-            items.append({"at": task.updated_at, "message": f"Task {task.id} status is {task.status}."})
+            items.append(
+                {
+                    "at": task.updated_at,
+                    "message": f"Task {task.id} status is {task.status}.",
+                    "href": f"/goals/{quote(goal.id)}",
+                }
+            )
     for delegation in state["delegations"]:
-        items.append({"at": delegation.created_at, "message": f"Scout delegated: {delegation.title}."})
+        delegation_href = f"/delegations/{quote(delegation.id)}"
+        items.append({"at": delegation.created_at, "message": f"Scout delegated: {delegation.title}.", "href": delegation_href})
         if delegation.started_at:
-            items.append({"at": delegation.started_at, "message": f"Delegation {delegation.id} started."})
+            items.append({"at": delegation.started_at, "message": f"Delegation {delegation.id} started.", "href": delegation_href})
         if delegation.completed_at:
-            items.append({"at": delegation.completed_at, "message": f"Delegation {delegation.id} completed."})
+            items.append({"at": delegation.completed_at, "message": f"Delegation {delegation.id} completed.", "href": delegation_href})
         metadata = load_delegation_result_metadata(delegation)
         for label, key in [
             ("Context pack built", "context_pack_md"),
@@ -1937,41 +2057,59 @@ def _goal_timeline_items(root: Path, state: dict[str, Any]) -> list[dict[str, st
         ]:
             at = _artifact_time(root, str(metadata.get(key) or ""))
             if at:
-                items.append({"at": at, "message": f"{label} for {delegation.id}."})
+                artifact = str(metadata.get(key) or "")
+                items.append(
+                    {
+                        "at": at,
+                        "message": f"{label} for {delegation.id}.",
+                        "href": _artifact_href(root, artifact),
+                    }
+                )
     for packet in state["prep_packets"]:
         at = _artifact_time(root, str(packet.get("_path") or ""))
-        items.append({"at": at or goal.updated_at, "message": "Coder prep finished."})
+        href = _artifact_href(root, packet.get("_path")) if packet.get("_path") else f"/goals/{quote(goal.id)}"
+        items.append({"at": at or goal.updated_at, "message": "Coder prep finished.", "href": href})
     for packet in state["worktree_plans"]:
         at = _artifact_time(root, str(packet.get("_path") or ""))
-        items.append({"at": at or goal.updated_at, "message": "Worktree planned."})
+        href = _artifact_href(root, packet.get("_path")) if packet.get("_path") else f"/goals/{quote(goal.id)}"
+        items.append({"at": at or goal.updated_at, "message": "Worktree planned.", "href": href})
     for approval in state["worktree_approvals"]:
-        items.append({"at": approval.requested_at, "message": f"Worktree approval requested: {approval.id}."})
+        items.append({"at": approval.requested_at, "message": f"Worktree approval requested: {approval.id}.", "href": "/approvals"})
         if approval.decided_at:
-            items.append({"at": approval.decided_at, "message": f"Worktree approval {approval.status}: {approval.id}."})
+            items.append({"at": approval.decided_at, "message": f"Worktree approval {approval.status}: {approval.id}.", "href": "/approvals"})
     for run in state["worktree_runs"]:
-        items.append({"at": run.started_at, "message": f"Approved worktree execution started: {run.id}."})
-        items.append({"at": run.completed_at, "message": f"Execution {run.status}: {run.id}."})
+        run_href = f"/runs/{quote(run.id)}"
+        items.append({"at": run.started_at, "message": f"Approved worktree execution started: {run.id}.", "href": run_href})
+        items.append({"at": run.completed_at, "message": f"Execution {run.status}: {run.id}.", "href": run_href})
     for approval in state["commit_approvals"]:
-        items.append({"at": approval.requested_at, "message": f"Commit approval requested: {approval.id}."})
+        run_href = f"/runs/{quote(approval.run_id)}"
+        items.append({"at": approval.requested_at, "message": f"Commit approval requested: {approval.id}.", "href": run_href})
         if approval.decided_at:
-            items.append({"at": approval.decided_at, "message": f"Commit approval {approval.status}: {approval.id}."})
+            items.append({"at": approval.decided_at, "message": f"Commit approval {approval.status}: {approval.id}.", "href": "/approvals"})
         if approval.commit_artifact_path:
             at = _artifact_time(root, approval.commit_artifact_path)
             if at:
-                items.append({"at": at, "message": f"Local commit artifact recorded for {approval.run_id}."})
+                items.append({"at": at, "message": f"Local commit artifact recorded for {approval.run_id}.", "href": _artifact_href(root, approval.commit_artifact_path)})
     for publication in state["publications"]:
-        items.append({"at": publication.requested_at, "message": f"Publication approval requested: {publication.id}."})
+        run_href = f"/runs/{quote(publication.run_id)}"
+        items.append({"at": publication.requested_at, "message": f"Publication approval requested: {publication.id}.", "href": run_href})
         if publication.decided_at:
-            items.append({"at": publication.decided_at, "message": f"Publication approval {publication.status}: {publication.id}."})
+            items.append({"at": publication.decided_at, "message": f"Publication approval {publication.status}: {publication.id}.", "href": "/approvals"})
         if publication.handoff_at:
-            items.append({"at": publication.handoff_at, "message": f"Publication handoff ready: {publication.id}."})
+            href = _artifact_href(root, publication.handoff_artifact_path) if publication.handoff_artifact_path else run_href
+            items.append({"at": publication.handoff_at, "message": f"Publication handoff ready: {publication.id}.", "href": href})
     for row in state["events"]:
-        items.append({"at": row["created_at"], "message": str(row["message"])})
+        items.append({"at": row["created_at"], "message": str(row["message"]), "href": f"/goals/{quote(goal.id)}"})
     return sorted(items, key=lambda item: item.get("at") or "")
 
 
 def _timeline_line(item: dict[str, str]) -> str:
-    return f"<time>{_e(_format_time(item.get('at') or ''))}</time> {_e(item.get('message') or '')}"
+    timestamp = f"<time>{_e(_format_time(item.get('at') or ''))}</time>"
+    message = _e(item.get("message") or "")
+    href = item.get("href") or ""
+    if href:
+        return f"{timestamp} <a class='timeline-link' href='{_e(href)}'>{message}</a>"
+    return f"{timestamp} {message}"
 
 
 def _format_time(value: str) -> str:
@@ -4065,15 +4203,20 @@ def _run_review_gate_state(root: Path, coder_run: Any) -> dict[str, Any]:
     }
 
 
-def _artifact_viewer(root: Path, relative_path: str | None) -> LocalAppResponse:
+def _artifact_viewer(
+    root: Path,
+    relative_path: str | None,
+    *,
+    current_path: str = "/artifacts",
+) -> LocalAppResponse:
     if not relative_path:
-        return _html_page(root, "Artifact", "<p class='error'>Missing path.</p>", status=400)
+        return _html_page(root, "Artifact", "<p class='error'>Missing path.</p>", status=400, current_path=current_path)
     try:
         path = resolve_artifact_path(root, relative_path)
     except ValueError as error:
-        return _html_page(root, "Artifact Rejected", f"<p class='error'>{_e(str(error))}</p>", status=400)
+        return _html_page(root, "Artifact Rejected", f"<p class='error'>{_e(str(error))}</p>", status=400, current_path=current_path)
     if not path.exists() or not path.is_file():
-        return _html_page(root, "Artifact Missing", "<p class='error'>Artifact file not found.</p>", status=404)
+        return _html_page(root, "Artifact Missing", "<p class='error'>Artifact file not found.</p>", status=404, current_path=current_path)
     size = path.stat().st_size
     data = path.read_bytes()[:MAX_ARTIFACT_BYTES]
     truncated = size > MAX_ARTIFACT_BYTES
@@ -4100,7 +4243,7 @@ def _artifact_viewer(root: Path, relative_path: str | None) -> LocalAppResponse:
             "</section>",
         ]
     )
-    return _html_page(root, "Artifact", body)
+    return _html_page(root, "Artifact", body, current_path=current_path)
 
 
 def resolve_artifact_path(root: Path, relative_path: str) -> Path:
@@ -4878,6 +5021,10 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             message = f"goal_created: {lifecycle.goal.id}"
             location = f"/goals/{quote(lifecycle.goal.id)}"
             result = lifecycle
+        elif action == "delegate":
+            result = _create_scout_delegation_from_form(root, storage, form)
+            message = f"subagent_delegation: {result.id}"
+            location = f"/delegations/{quote(result.id)}"
         elif action == "save-workspace":
             result = _write_workspace_state(
                 root,
@@ -5044,6 +5191,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
         CoderWorktreeCommitError,
         CoderPublicationError,
         PlanningError,
+        DelegationError,
         KeyError,
     ) as error:
         return _html_page(
@@ -5063,6 +5211,38 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             location=location,
             result=result,
         ),
+    )
+
+
+def _create_scout_delegation_from_form(
+    root: Path,
+    storage: Storage,
+    form: dict[str, list[str]],
+) -> Any:
+    goal_id = _required(form, "goal_id")
+    task_id = _required(form, "task_id")
+    profile = _one(form, "profile") or "scout"
+    if profile != "scout":
+        raise ValueError("browser delegate action only supports the read-only scout profile")
+    task = storage.get_task(task_id)
+    if task.goal_id != goal_id:
+        raise ValueError("task does not belong to submitted goal")
+    existing = next(
+        (
+            delegation
+            for delegation in storage.list_subagent_delegations(goal_id)
+            if delegation.parent_task_id == task_id
+        ),
+        None,
+    )
+    if existing is not None:
+        return existing
+    return create_subagent_delegation(
+        root,
+        storage,
+        task_id=task_id,
+        title=_required(form, "title"),
+        profile_override="scout",
     )
 
 
@@ -5548,7 +5728,163 @@ def _notice_banner(notice: str | None) -> str:
     )
 
 
-def _html_page(root: Path, title: str, content: str, *, status: int = 200) -> LocalAppResponse:
+def _nav_links(current_path: str) -> str:
+    path = urlparse(current_path or "/").path or "/"
+    links = []
+    for label, href in NAV_ITEMS:
+        current = _is_current_nav(path, href)
+        aria = " aria-current='page'" if current else ""
+        links.append(f"<a href='{_e(href)}'{aria}>{_e(label)}</a>")
+    return "".join(links)
+
+
+def _is_current_nav(path: str, href: str) -> bool:
+    if href == "/":
+        return path == "/"
+    return path == href or path.startswith(href + "/")
+
+
+def _breadcrumbs(current_path: str, title: str) -> str:
+    path = urlparse(current_path or "/").path or "/"
+    crumbs: list[tuple[str, str | None]] = [("Dashboard", "/")]
+    if path == "/":
+        crumbs = [("Dashboard", None)]
+    elif path.startswith("/goals/"):
+        crumbs.extend([("Goals", "/goals"), (path.removeprefix("/goals/"), None)])
+    elif path.startswith("/projects/"):
+        crumbs.extend([("Projects", "/projects"), (path.removeprefix("/projects/"), None)])
+    elif path.startswith("/delegations/"):
+        crumbs.extend([("Delegations", "/delegation-runs"), (path.removeprefix("/delegations/"), None)])
+    elif path.startswith("/runs/"):
+        crumbs.extend([("Runs", "/delegation-runs"), (path.removeprefix("/runs/"), None)])
+    elif path == "/artifacts":
+        crumbs.append(("Artifact", None))
+    else:
+        label = next((label for label, href in NAV_ITEMS if href == path), title)
+        crumbs.append((label, None))
+    rendered = []
+    for index, (label, href) in enumerate(crumbs):
+        text = _compact_label(unquote(label), 48)
+        if href and index < len(crumbs) - 1:
+            rendered.append(f"<a href='{_e(href)}'>{_e(text)}</a>")
+        else:
+            rendered.append(f"<span>{_e(text)}</span>" if index else f"<strong>{_e(text)}</strong>")
+    return "<nav class='breadcrumbs' aria-label='Breadcrumbs' data-breadcrumbs='true'>" + "".join(rendered) + "</nav>"
+
+
+def _recent_items_panel(root: Path) -> str:
+    items = _recent_operator_links(root, limit=8)
+    if not items:
+        items = [
+            ("Goal cockpit", "/goals", "first-run"),
+            ("Demo", "/demo", "fixture"),
+            ("Verification", "/verification", "proof"),
+        ]
+    rows = [
+        f"<li><a href='{_e(href)}'>{_e(label)}</a><br><span class='muted'>{_e(kind)}</span></li>"
+        for label, href, kind in items
+    ]
+    body = "".join(
+        [
+            "<aside class='operator-side' data-recent-items='true'>",
+            "<h2>Recent Items</h2>",
+            "<ul>",
+            "".join(rows),
+            "</ul>",
+            "</aside>",
+        ]
+    )
+    return body
+
+
+def _command_palette(root: Path) -> str:
+    commands = [(label, href, "route") for label, href in NAV_ITEMS]
+    commands.extend(_recent_operator_links(root, limit=6))
+    seen: set[str] = set()
+    rows = []
+    for label, href, kind in commands:
+        key = f"{href}:{label}"
+        if key in seen:
+            continue
+        seen.add(key)
+        rows.append(
+            f"<li><a href='{_e(href)}'>{_e(label)}</a> <span class='muted'>{_e(kind)}</span></li>"
+        )
+    return "".join(
+        [
+            "<dialog id='command-palette' class='command-palette' data-command-palette='true'>",
+            "<form method='dialog'><button class='icon-button' type='submit'>Close</button></form>",
+            "<h2>Command Palette</h2>",
+            "<form action='/search' method='get' class='command-grid'>",
+            "<input id='command-palette-search' name='q' autocomplete='off' placeholder='Search local state'>",
+            "<button type='submit'>Search</button>",
+            "</form>",
+            "<h3>Open</h3>",
+            "<ul>",
+            "".join(rows),
+            "</ul>",
+            "</dialog>",
+        ]
+    )
+
+
+def _recent_operator_links(root: Path, *, limit: int) -> list[tuple[str, str, str]]:
+    links: list[tuple[str, str, str]] = []
+    state = _load_workspace_state(root)
+    open_project = str(state.get("open_project") or "").strip()
+    open_goal = str(state.get("open_goal") or "").strip()
+    last_artifact = str(state.get("last_viewed_artifact") or "").strip()
+    if open_goal:
+        links.append((f"Goal {open_goal}", f"/goals/{quote(open_goal)}", "workspace goal"))
+    if open_project:
+        links.append((f"Project {open_project}", f"/projects/{quote(open_project)}", "workspace project"))
+    if last_artifact:
+        links.append(("Last artifact", f"/artifacts?path={quote(last_artifact)}", "workspace artifact"))
+
+    try:
+        storage = _storage(root)
+        for row in _goal_rows(storage, limit=3):
+            label = str(row["title"] or row["description"] or row["id"])
+            links.append((label, f"/goals/{quote(str(row['id']))}", "goal"))
+        for delegation in storage.list_recent_subagent_delegations(limit=3):
+            links.append((delegation.title or delegation.id, f"/delegations/{quote(delegation.id)}", "delegation"))
+        for run in list_coder_worktree_runs(root, limit=3):
+            links.append((run.id, f"/runs/{quote(run.id)}", "run"))
+    except Exception:
+        links.append(("Health", "/health", "state unavailable"))
+
+    deduped: list[tuple[str, str, str]] = []
+    seen_hrefs: set[str] = set()
+    for label, href, kind in links:
+        if href in seen_hrefs:
+            continue
+        seen_hrefs.add(href)
+        deduped.append((_compact_label(label, 72), href, kind))
+        if len(deduped) >= limit:
+            break
+    return deduped
+
+
+def _compact_label(value: str, limit: int) -> str:
+    collapsed = " ".join(str(value).split())
+    if len(collapsed) <= limit:
+        return collapsed
+    return collapsed[: max(0, limit - 3)] + "..."
+
+
+def _html_page(
+    root: Path,
+    title: str,
+    content: str,
+    *,
+    status: int = 200,
+    current_path: str = "",
+) -> LocalAppResponse:
+    current_path = current_path or "/"
+    nav = _nav_links(current_path)
+    breadcrumbs = _breadcrumbs(current_path, title)
+    recent_panel = _recent_items_panel(root)
+    palette = _command_palette(root)
     body = f"""<!doctype html>
 <html lang="en">
 <head>
@@ -5556,12 +5892,25 @@ def _html_page(root: Path, title: str, content: str, *, status: int = 200) -> Lo
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{_e(title)} - ClankerOS Local Operator</title>
   <style>
-    :root {{ color-scheme: light; --ink:#15171a; --muted:#5d6672; --line:#d9dee5; --panel:#f7f8fa; --accent:#176b87; --warn:#8a4b00; --error:#9c1d24; }}
+    :root {{ color-scheme: light; --ink:#15171a; --muted:#5d6672; --line:#d9dee5; --panel:#f7f8fa; --surface:#ffffff; --accent:#176b87; --warn:#8a4b00; --error:#9c1d24; }}
+    :root[data-theme="dark"] {{ color-scheme: dark; --ink:#eef4f8; --muted:#a6b0bd; --line:#303842; --panel:#161b22; --surface:#0f1419; --accent:#62b6cb; --warn:#f0bd59; --error:#ff8a94; }}
     * {{ box-sizing: border-box; }}
-    body {{ margin:0; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:var(--ink); background:#ffffff; line-height:1.45; }}
-    header {{ display:flex; justify-content:space-between; align-items:center; gap:16px; padding:14px 24px; border-bottom:1px solid var(--line); background:#fff; position:sticky; top:0; z-index:1; }}
+    body {{ margin:0; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:var(--ink); background:var(--surface); line-height:1.45; }}
+    header {{ display:flex; justify-content:space-between; align-items:center; gap:16px; padding:14px 24px; border-bottom:1px solid var(--line); background:var(--surface); position:sticky; top:0; z-index:2; }}
     header a {{ color:var(--ink); text-decoration:none; font-size:14px; margin-right:14px; }}
-    main {{ max-width:1180px; margin:0 auto; padding:24px; }}
+    header a[aria-current="page"] {{ color:var(--accent); font-weight:700; }}
+    .header-actions {{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }}
+    .icon-button {{ border:1px solid var(--line); background:var(--panel); color:var(--ink); padding:7px 9px; border-radius:6px; }}
+    main {{ max-width:1280px; margin:0 auto; padding:24px; }}
+    .operator-shell {{ display:grid; grid-template-columns:minmax(180px, 240px) minmax(0, 1fr); gap:24px; align-items:start; }}
+    .operator-side {{ position:sticky; top:74px; border:1px solid var(--line); background:var(--panel); padding:12px; }}
+    .operator-side h2 {{ font-size:14px; }}
+    .operator-side ul, .command-palette ul {{ list-style:none; padding:0; margin:0; display:grid; gap:7px; }}
+    .operator-side li, .command-palette li {{ min-width:0; }}
+    .operator-side a, .command-palette a {{ overflow-wrap:anywhere; }}
+    .breadcrumbs {{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; color:var(--muted); margin:0 0 14px; font-size:13px; }}
+    .breadcrumbs a {{ color:var(--muted); }}
+    .breadcrumbs span::before {{ content:"/"; margin-right:6px; color:var(--line); }}
     section {{ border-bottom:1px solid var(--line); padding:20px 0; }}
     h1 {{ font-size:30px; line-height:1.15; margin:0 0 10px; letter-spacing:0; }}
     h2 {{ font-size:18px; margin:0 0 12px; letter-spacing:0; }}
@@ -5576,19 +5925,77 @@ def _html_page(root: Path, title: str, content: str, *, status: int = 200) -> Lo
     dt {{ color:var(--muted); }}
     dd {{ margin:0; word-break:break-word; }}
     ol.workflow {{ list-style:none; padding:0; display:grid; gap:10px; }}
-    ol.workflow li {{ border:1px solid var(--line); padding:12px; background:#fff; }}
+    ol.workflow li {{ border:1px solid var(--line); padding:12px; background:var(--surface); }}
     .grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px; }}
     a {{ color:var(--accent); }}
+    progress {{ width:100%; max-width:420px; height:14px; accent-color:var(--accent); }}
+    .timeline-link {{ display:inline-block; }}
+    .command-palette {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); max-width:720px; width:min(720px, calc(100vw - 32px)); }}
+    .command-palette::backdrop {{ background:rgba(15,20,25,.45); }}
+    .command-grid {{ display:grid; grid-template-columns:1fr auto; gap:8px; }}
+    input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>
   <header>
     <strong>ClankerOS Local Operator</strong>
-    <nav><a href="/">Dashboard</a><a href="/goals">Goals</a><a href="/search">Search</a><a href="/workspace">Workspace</a><a href="/memory">Memory</a><a href="/skills">Skills</a><a href="/profiles">Profiles</a><a href="/workflow">Workflow</a><a href="/actions">Actions</a><a href="/verification">Verification</a><a href="/ci-evidence">CI Evidence</a><a href="/dogfooding">Dogfooding</a><a href="/projects">Projects</a><a href="/delegation-runs">Delegation Runs</a><a href="/inbox">Inbox</a><a href="/approvals">Approvals</a><a href="/incidents">Incidents</a><a href="/health">Health</a><a href="/demo">Demo</a></nav>
+    <nav>{nav}</nav>
+    <div class="header-actions">
+      <button class="icon-button" id="palette-open" type="button" data-shortcut="/">Palette</button>
+      <button class="icon-button" id="theme-toggle" type="button">Theme</button>
+    </div>
   </header>
-  <main>{content}</main>
+  {palette}
+  <main>
+    <div class="operator-shell" data-operator-shell="true">
+      {recent_panel}
+      <article>
+        {breadcrumbs}
+        {content}
+      </article>
+    </div>
+  </main>
+  <script>
+  (function() {{
+    var root = document.documentElement;
+    var storedTheme = window.localStorage ? localStorage.getItem("clankeros-theme") : "";
+    if (storedTheme === "dark") {{ root.dataset.theme = "dark"; }}
+    var palette = document.getElementById("command-palette");
+    var paletteOpen = document.getElementById("palette-open");
+    var paletteSearch = document.getElementById("command-palette-search");
+    var themeToggle = document.getElementById("theme-toggle");
+    function openPalette() {{
+      if (!palette) {{ return; }}
+      if (palette.showModal) {{ palette.showModal(); }} else {{ palette.removeAttribute("hidden"); }}
+      if (paletteSearch) {{ paletteSearch.focus(); }}
+    }}
+    function closePalette() {{
+      if (!palette) {{ return; }}
+      if (palette.close) {{ palette.close(); }} else {{ palette.setAttribute("hidden", "hidden"); }}
+    }}
+    if (paletteOpen) {{ paletteOpen.addEventListener("click", openPalette); }}
+    if (themeToggle) {{
+      themeToggle.addEventListener("click", function() {{
+        var next = root.dataset.theme === "dark" ? "" : "dark";
+        root.dataset.theme = next;
+        if (window.localStorage) {{ localStorage.setItem("clankeros-theme", next); }}
+      }});
+    }}
+    document.addEventListener("keydown", function(event) {{
+      var target = event.target || {{}};
+      var tag = String(target.tagName || "").toLowerCase();
+      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) {{ return; }}
+      if (tag === "input" || tag === "textarea" || tag === "select") {{ return; }}
+      if (event.key === "/") {{ event.preventDefault(); openPalette(); }}
+      if (event.key === "Escape") {{ closePalette(); }}
+      if (event.key === "g") {{ event.preventDefault(); window.location.href = "/goals"; }}
+      if (event.key === "h") {{ event.preventDefault(); window.location.href = "/"; }}
+    }});
+  }})();
+  </script>
 </body>
 </html>"""
     return LocalAppResponse(status, body)
@@ -5820,6 +6227,10 @@ def _repo_relative_artifact_path(root: Path, path: str | Path | None) -> str:
         except ValueError:
             return str(path)
     return str(path)
+
+
+def _artifact_href(root: Path, path: str | Path | None) -> str:
+    return f"/artifacts?path={quote(_repo_relative_artifact_path(root, path))}"
 
 
 def _row_exists(db_path: Path, table: str, row_id: str) -> bool:

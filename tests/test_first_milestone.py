@@ -4037,6 +4037,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     root = render_local_app_route(tmp_path, "/")
     assert root.status == 200
     assert "ClankerOS Local Operator" in root.body
+    assert "data-command-palette='true'" in root.body
+    assert "data-recent-items='true'" in root.body
+    assert "data-breadcrumbs='true'" in root.body
+    assert "id=\"theme-toggle\"" in root.body
+    assert "data-shortcut=\"/\"" in root.body
     assert "implementation-handoff" in root.body
     assert "Recent Implementation Handoffs" in root.body
     assert "coder-prep" in root.body
@@ -4196,6 +4201,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     workspace_saved = render_local_app_route(tmp_path, "/workspace")
     assert "open_project</dt><dd>first-app" in workspace_saved.body
     assert "open_goal</dt><dd>goal_demo" in workspace_saved.body
+    assert "Goal goal_demo" in workspace_saved.body
+    assert "/goals/goal_demo" in workspace_saved.body
+    assert "Project first-app" in workspace_saved.body
+    assert "/projects/first-app" in workspace_saved.body
 
     for route, marker in [
         ("/memory", "Memory Bank"),
@@ -4238,6 +4247,70 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert create_goal_result.status == 200
     assert "goal_created:" in create_goal_result.body
     assert "GOAL.md" in create_goal_result.body
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        created_goal_id = connection.execute(
+            """
+            select id from goals
+            where project_id = ?
+            order by created_at desc, id desc
+            limit 1
+            """,
+            ("first-target",),
+        ).fetchone()[0]
+    first_goal_page = render_local_app_route(tmp_path, f"/goals/{created_goal_id}")
+    assert first_goal_page.status == 200
+    assert "recommended_action</dt><dd>Create scout delegation" in first_goal_page.body
+    assert "next_action_form_available</dt><dd>true" in first_goal_page.body
+    assert "Create Scout Delegation" in first_goal_page.body
+    assert "action='/actions/delegate'" in first_goal_page.body
+    assert "profile" in first_goal_page.body
+    assert "scout" in first_goal_page.body
+    storage_after_goal = Storage(tmp_path / ".agent" / "state.db")
+    first_task = storage_after_goal.list_tasks(created_goal_id)[0]
+    delegate_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/delegate",
+        method="POST",
+        form={
+            "goal_id": [created_goal_id],
+            "task_id": [first_task.id],
+            "profile": ["scout"],
+            "title": ["Scout first browser goal"],
+            "requested_by": ["operator"],
+        },
+    )
+    assert delegate_confirmation.status == 409
+    assert "Confirm delegate" in delegate_confirmation.body
+    assert "Safety boundary" in delegate_confirmation.body
+    delegate_result = render_local_app_route(
+        tmp_path,
+        "/actions/delegate",
+        method="POST",
+        form={
+            "goal_id": [created_goal_id],
+            "task_id": [first_task.id],
+            "profile": ["scout"],
+            "title": ["Scout first browser goal"],
+            "requested_by": ["operator"],
+            "confirm": ["yes"],
+        },
+    )
+    assert delegate_result.status == 200
+    assert "subagent_delegation:" in delegate_result.body
+    assert "Action Result Details" in delegate_result.body
+    delegations = storage_after_goal.list_subagent_delegations(created_goal_id)
+    assert len(delegations) == 1
+    delegation = delegations[0]
+    assert delegation.parent_task_id == first_task.id
+    assert delegation.assigned_profile == "scout"
+    assert delegation.status == "pending"
+    delegation_artifact = json.loads(Path(delegation.result_artifact_path).read_text(encoding="utf-8"))
+    assert delegation_artifact["execution_started"] is False
+    assert delegation_artifact["network_actions_taken"] == 0
+    assert delegation_artifact["external_mutations_taken"] == 0
+    delegated_goal_page = render_local_app_route(tmp_path, f"/goals/{created_goal_id}")
+    assert "recommended_action</dt><dd>Run or inspect delegation" in delegated_goal_page.body
+    assert "next_action_form_available</dt><dd>false" in delegated_goal_page.body
     created_goals = render_local_app_route(tmp_path, "/goals")
     assert "first-target" in created_goals.body
     assert "Create a browser-first first-run workflow" in created_goals.body
@@ -4246,6 +4319,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert actions.status == 200
     assert "Safe Action Catalog" in actions.body
     assert "refresh-dashboard-state" in actions.body
+    assert "delegate" in actions.body
     assert "context-pack" in actions.body
     assert "commit-coder-worktree" in actions.body
     assert "manual_operator_push_pr_outside_clankeros" in actions.body
@@ -4587,11 +4661,20 @@ def test_local_app_demo_scenario_populates_fixture_state(
 
     goal = render_local_app_route(tmp_path, f"/goals/{result.goal_id}")
     assert goal.status == 200
+    assert "data-command-palette='true'" in goal.body
+    assert "data-recent-items='true'" in goal.body
+    assert "data-breadcrumbs='true'" in goal.body
     assert "Current Phase" in goal.body
     assert "Ready to commit" in goal.body
     assert "Next Action" in goal.body
     assert "recommended_action</dt><dd>Create commit request" in goal.body
+    assert "progress_bar_enabled</dt><dd>true" in goal.body
+    assert "<progress" in goal.body
     assert "Timeline" in goal.body
+    assert "timeline_links_enabled</dt><dd>true" in goal.body
+    assert "class='timeline-link'" in goal.body
+    assert f"/delegations/{result.delegation_id}" in goal.body
+    assert f"/runs/{result.coder_worktree_run_id}" in goal.body
     assert "Activity Log" in goal.body
     assert "Goal created" in goal.body
     assert "Scout delegated" in goal.body

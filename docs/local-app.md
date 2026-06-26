@@ -61,7 +61,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   overview, progress, chronological timeline, activity log, delegations, runs,
   approvals, evidence, artifacts, memory, skills used, git status, operator
   notes, and remaining work. It uses local polling refresh and does not contact
-  GitHub or providers.
+  GitHub or providers. When the goal has planned tasks but no delegation yet,
+  the Next Action card exposes a confirmed `delegate` form that writes a
+  read-only scout delegation contract without starting a subagent.
+- Every app page includes a shared operator shell with breadcrumbs, recent
+  local items, a command palette, a dark/light theme toggle, and keyboard
+  shortcuts for home, goals, and palette search. These controls only navigate
+  local routes or submit existing local forms.
 - `/search` - bounded global search over indexed goals, projects, delegations,
   known artifacts, incidents, recommendations, memory, runs, approvals, and
   skill records. It does not expose arbitrary filesystem browsing.

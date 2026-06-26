@@ -129,18 +129,27 @@ task progress from existing local state. Use `/goals/<goal_id>` as the
 goal-centered workbench: current phase, next action, progress, timeline,
 activity log, evidence, delegations, runs, approvals, artifacts, memory, skills
 used, git status, operator notes, and remaining work. The page auto-refreshes
-by polling and stays local-only.
+by polling and stays local-only. Timeline entries link back to the relevant
+local artifact, delegation, run, approval queue, or goal surface, and progress
+uses a real browser progress bar.
 
 Use `/goals` on a fresh checkout for first-run browser actions. The page now
 renders confirmed local forms for `register-project` and `create-goal`, so a
 new operator can create a project and first goal without switching to CLI
-commands. Use `/workspace` to save and restore open project, open goal, filters,
-expanded panels, and last viewed artifact in `.clanker/app/workspace.json`.
+commands. From the created goal page, the Next Action card can create the
+first read-only scout delegation with a confirmed `delegate` form, writing a
+local contract artifact without starting a subagent or calling a provider. Use
+`/workspace` to save and restore open project, open goal, filters, expanded
+panels, and last viewed artifact in `.clanker/app/workspace.json`.
 Use `/search` for bounded global search across indexed goals, projects,
 delegations, known artifacts, incidents, recommendations, memory, runs, and
 approvals. Use `/memory`, `/skills`, and `/profiles` for local readbacks of
 memory entries, generated skills/usage, and inactive future provider-routing
 lanes.
+
+The app shell also includes breadcrumbs, recent local items, a command palette,
+keyboard shortcuts, and a dark/light theme toggle on every page. Those controls
+stay inside the local browser app and do not perform external effects.
 
 Use `/workflow?delegation_id=<id>` or `/workflow?run_id=<coder_run_id>` when
 you want the scoped operator map. The selected workflow page now includes a

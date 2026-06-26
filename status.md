@@ -1,5 +1,36 @@
 # Status
 
+## 2026-06-26 Browser Shell, Clickable Timeline, And Scout Delegation Action
+
+- Added a shared browser operator shell to the local app with breadcrumbs,
+  recent local items, command palette, keyboard shortcuts, and a dark/light
+  theme toggle across routes.
+- Goal detail pages now render a browser-native progress bar and clickable
+  timeline entries that point to relevant local goal, delegation, run,
+  approval, or artifact surfaces.
+- The Goal Next Action card now exposes a confirmed `delegate` form when a
+  goal has planned tasks but no delegation yet. The action forces the
+  read-only `scout` profile, reuses an existing task delegation if present,
+  and writes a pending subagent delegation contract without starting a
+  subagent.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health"`
+    -> `1 passed, 506 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario or local_app_cli_commands_and_bind_safety or local_app_routes_render_modern_workflow_and_health"`
+    -> `3 passed, 504 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with matched route markers and zero provider/network/external
+    mutation counters.
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with matched fixture route snippets and zero provider/network/
+    external mutation counters.
+  - `git diff --check`
+- Non-claims: these are browser UI, local navigation, and confirmed local
+  artifact/state writes only. They do not run a delegation, call providers,
+  fetch GitHub status from the app, push, create PRs, deploy, or enable
+  external mutation inside ClankerOS.
+
 ## 2026-06-26 Browser Search, Workspace, Memory, Skills, And First-Run Actions
 
 - Added first-class local app routes for `/search`, `/workspace`, `/memory`,
