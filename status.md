@@ -1,5 +1,28 @@
 # Status
 
+## 2026-06-26 Goal-First Local App Cockpit
+
+- Added `/goals` as the local app's daily goal cockpit. It separates active,
+  paused, and completed goals and shows phase, next action, and task progress
+  for each goal.
+- Added `/goals/<goal_id>` as the goal-centered workbench with current phase,
+  next action, overview, progress, chronological timeline, activity log,
+  delegations, runs, approvals, evidence, artifacts, memory, skills used, git
+  status, operator notes, remaining work, and local polling refresh.
+- Added a `Goal Snapshot` to the root dashboard, a top-nav `Goals` link, and a
+  short `python3 -m agent_os.cli demo` alias for the fixture-backed browser
+  walkthrough.
+- Hardened the generated demo git fixture so its synthetic commit does not
+  inherit machine-level commit signing settings.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py agent_os/cli.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario or local_app_cli_commands_and_bind_safety or local_app_routes_render_modern_workflow_and_health"`
+    -> `3 passed, 504 deselected`
+  - `git diff --check`
+- Non-claims: this is local app, CLI alias, docs, and smoke coverage only. It
+  does not deploy, call providers, create PRs from the app, fetch GitHub status
+  from the app, or enable external mutation inside ClankerOS.
+
 ## 2026-06-26 Fast Smoke GitHub CI Evidence
 
 - Added job-scoped `ci-snapshot-evidence-from-gh-json` validation. Operators

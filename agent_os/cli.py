@@ -754,7 +754,7 @@ def build_parser() -> argparse.ArgumentParser:
     app.add_argument("--allow-nonlocal-bind", action="store_true")
     subparsers.add_parser(
         "demo-app-scenario",
-        aliases=["app-demo"],
+        aliases=["app-demo", "demo"],
         help="Create fixture-backed local app demo state.",
     )
     subparsers.add_parser(
@@ -2226,7 +2226,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
 
-    if args.command in {"demo-app-scenario", "app-demo"}:
+    if args.command in {"demo-app-scenario", "app-demo", "demo"}:
         result = run_demo_app_scenario(root)
         print("demo_app_scenario: ready")
         print(f"project_id: {result.project_id}")

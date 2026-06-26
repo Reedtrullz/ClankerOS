@@ -232,6 +232,8 @@ def render_local_app_route(
             return _handle_post(root, path, form or {})
         if path == "/":
             return page("Dashboard", _dashboard(root, host=host, port=port))
+        if path == "/goals":
+            return page("Goals", _goals(root))
         if path == "/workflow":
             return page(
                 "Workflow",
@@ -259,6 +261,9 @@ def render_local_app_route(
             return page("Approvals", _approvals(root))
         if path == "/incidents":
             return page("Incidents", _incidents(root))
+        if path.startswith("/goals/"):
+            goal_id = unquote(path.removeprefix("/goals/"))
+            return page(f"Goal {goal_id}", _goal_detail(root, goal_id))
         if path.startswith("/projects/"):
             project_id = unquote(path.removeprefix("/projects/"))
             return page(f"Project {project_id}", _project_detail(root, project_id))
@@ -301,6 +306,7 @@ def run_local_app_smoke_test(root: Path) -> dict[str, Any]:
     outside_link.symlink_to(outside_artifact)
     routes = [
         ("/", "ClankerOS Local Operator"),
+        ("/goals", "Goal Cockpit"),
         ("/workflow", "Modern Operator Workflow"),
         ("/actions", "Safe Action Catalog"),
         ("/verification", "Verification Handoff"),
@@ -381,6 +387,29 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "demo_fixture_status: available",
                 "next_dogfooding_action: request_commit_for_reviewed_run",
                 f"/runs/{demo.coder_worktree_run_id}",
+            ],
+        ),
+        (
+            "/goals",
+            "Goal Cockpit",
+            [
+                "Active Goals",
+                "goal_first_navigation",
+                f"/goals/{demo.goal_id}",
+            ],
+        ),
+        (
+            f"/goals/{quote(demo.goal_id)}",
+            "Current Phase",
+            [
+                "Timeline",
+                "Next Action",
+                "Activity Log",
+                "Memory",
+                "Skills Used",
+                demo.delegation_id,
+                demo.coder_worktree_run_id,
+                "goal_live_refresh_interval_seconds",
             ],
         ),
         (
@@ -733,7 +762,7 @@ def write_local_app_status(root: Path, *, host: str, port: int) -> Path:
         "dirty_tracked_files": state["dirty_tracked_files"],
         "untracked_files": state["untracked_files"],
         "warnings": warnings,
-        "routes_available": ["/", "/workflow", "/actions", "/verification", "/ci-evidence", "/dogfooding", "/projects", "/delegation-runs", "/delegations/<id>", "/runs/<id>", "/inbox", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
+        "routes_available": ["/", "/goals", "/goals/<id>", "/workflow", "/actions", "/verification", "/ci-evidence", "/dogfooding", "/projects", "/delegation-runs", "/delegations/<id>", "/runs/<id>", "/inbox", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
         "supported_workflow_stages": [step[0] for step in WORKFLOW_STEPS],
         "non_claims": NO_EXTERNAL_EFFECT_CLAIMS,
         "known_gaps": [
@@ -785,12 +814,13 @@ def _dashboard(root: Path, *, host: str, port: int) -> str:
             "</section>",
             _dashboard_verification_snapshot(root),
             _dashboard_dogfooding_snapshot(root),
+            _dashboard_goal_snapshot(root),
             "<section><h2>Modern Workflow</h2>",
             "<p><a href='/workflow'>Open workflow stepper</a></p>",
             _workflow_list(compact=True),
             "</section>",
             _list_section("Projects", rows["projects"], "/projects"),
-            _list_section("Recent Goals", rows["goals"]),
+            _list_section("Recent Goals", rows["goals"], "/goals"),
             _list_section("Recent Tasks", rows["tasks"]),
             _list_section("Recent Delegations", rows["delegations"]),
             _list_section("Recent Delegation Runs", rows["delegation_runs"], "/delegation-runs"),
@@ -925,6 +955,655 @@ def _dashboard_dogfooding_snapshot(root: Path) -> str:
     )
 
 
+def _dashboard_goal_snapshot(root: Path) -> str:
+    storage = _storage(root)
+    rows = _goal_rows(storage, limit=6)
+    if not rows:
+        return _list_section(
+            "Goal Snapshot",
+            [
+                "goal_cockpit_status: empty",
+                "first_run_experience: open /goals to create project and first goal from CLI guidance",
+                "goal_surface: <a href='/goals'>/goals</a>",
+            ],
+            "/goals",
+        )
+    active = [row for row in rows if _goal_bucket(row) == "active"]
+    paused = [row for row in rows if _goal_bucket(row) == "paused"]
+    completed = [row for row in rows if _goal_bucket(row) == "completed"]
+    lead_goal = active[0] if active else rows[0]
+    state = _goal_state(root, storage, str(lead_goal["id"]))
+    next_action = _goal_next_action(root, state)
+    return _list_section(
+        "Goal Snapshot",
+        [
+            f"goal_cockpit_status: populated",
+            f"active_goals: {len(active)}",
+            f"paused_goals: {len(paused)}",
+            f"completed_goals: {len(completed)}",
+            f"lead_goal: <a href='/goals/{quote(str(lead_goal['id']))}'>{_e(lead_goal['title'] or lead_goal['description'])}</a>",
+            f"lead_goal_phase: {_e(_goal_current_phase(state))}",
+            f"lead_goal_next_action: {_e(next_action.action)}",
+            f"goal_surface: <a href='/goals'>/goals</a>",
+        ],
+        "/goals",
+    )
+
+
+@dataclass(frozen=True)
+class GoalNextAction:
+    action: str
+    href: str
+    reason: str
+
+
+def _goals(root: Path) -> str:
+    storage = _storage(root)
+    rows = _goal_rows(storage, limit=100)
+    if not rows:
+        return "".join(
+            [
+                "<section><h1>Goal Cockpit</h1>",
+                "<p class='muted'>Everything in ClankerOS revolves around a Goal. No goals exist yet in this local state.</p>",
+                "</section>",
+                "<section><h2>First Run Guide</h2>",
+                _ul(
+                    [
+                        "<code>python3 -m agent_os.cli projects</code>: inspect or register a local project",
+                        "<code>python3 -m agent_os.cli goal &quot;...&quot; --project &lt;project&gt;</code>: create the first goal",
+                        "<code>python3 -m agent_os.cli demo</code>: populate deterministic local demo data",
+                        "<a href='/demo'>/demo</a>: fixture-backed browser walkthrough",
+                    ]
+                ),
+                "</section>",
+                _non_claim_banner(),
+            ]
+        )
+    active = [row for row in rows if _goal_bucket(row) == "active"]
+    paused = [row for row in rows if _goal_bucket(row) == "paused"]
+    completed = [row for row in rows if _goal_bucket(row) == "completed"]
+    return "".join(
+        [
+            "<section><h1>Goal Cockpit</h1>",
+            "<p class='muted'>Daily operator home for active, paused, and completed goals. Each goal owns project intent, phase, evidence, approvals, incidents, memory, and remaining work.</p>",
+            _kv(
+                [
+                    ("active_goals", str(len(active))),
+                    ("paused_goals", str(len(paused))),
+                    ("completed_goals", str(len(completed))),
+                    ("goal_first_navigation", "true"),
+                    ("external_effects_created", "false"),
+                ]
+            ),
+            "</section>",
+            _list_section("Active Goals", [_goal_index_line(root, storage, row) for row in active]),
+            _list_section("Paused Goals", [_goal_index_line(root, storage, row) for row in paused]),
+            _list_section("Completed Goals", [_goal_index_line(root, storage, row) for row in completed]),
+            _non_claim_banner(),
+        ]
+    )
+
+
+def _goal_detail(root: Path, goal_id: str) -> str:
+    storage = _storage(root)
+    state = _goal_state(root, storage, goal_id)
+    goal = state.get("goal")
+    if goal is None:
+        return "<p class='error'>Goal not found.</p>"
+    next_action = _goal_next_action(root, state)
+    phase = _goal_current_phase(state)
+    return "".join(
+        [
+            "<script>setTimeout(function(){ window.location.reload(); }, 5000);</script>",
+            f"<section class='hero'><h1>Goal {_e(goal.id)}</h1>",
+            f"<p>{_e(goal.title or goal.description)}</p>",
+            _kv(
+                [
+                    ("project", SafeHtml(f"<a href='/projects/{quote(goal.project_id)}'>{_e(goal.project_id)}</a>")),
+                    ("status", goal.status),
+                    ("current_phase", phase),
+                    ("goal_live_refresh_interval_seconds", "5"),
+                ]
+            ),
+            "</section>",
+            "<section class='banner'><h2>Current Phase</h2>",
+            f"<p><strong>{_e(phase)}</strong></p>",
+            "</section>",
+            _goal_next_action_card(next_action),
+            _goal_overview(state),
+            _goal_progress(state),
+            _goal_timeline(root, state),
+            _goal_activity_log(root, state),
+            _list_section("Delegations", _goal_delegation_lines(state)),
+            _list_section("Runs", _goal_run_lines(root, state)),
+            _list_section("Approvals", _goal_approval_lines(root, state)),
+            _list_section("Evidence", _goal_evidence_lines(root, state)),
+            _list_section("Artifacts", _goal_artifact_lines(root, state)),
+            _list_section("Memory", _goal_memory_lines(root, state)),
+            _list_section("Skills Used", _goal_skill_lines(state)),
+            _goal_git_status(root, state),
+            _list_section("Operator Notes", _goal_operator_note_lines(root, state)),
+            _list_section("Remaining Work", _goal_remaining_work_lines(state, next_action)),
+            _non_claim_banner(),
+        ]
+    )
+
+
+def _goal_rows(storage: Storage, *, limit: int) -> list[sqlite3.Row]:
+    return _table_rows(
+        storage.db_path,
+        """
+        select * from goals
+        order by updated_at desc, created_at desc, id desc
+        limit ?
+        """,
+        (limit,),
+    )
+
+
+def _goal_bucket(row: sqlite3.Row) -> str:
+    status = str(row["status"]).lower()
+    if status in {"completed", "done", "closed"}:
+        return "completed"
+    if status in {"paused", "blocked", "waiting", "waiting_approval"}:
+        return "paused"
+    return "active"
+
+
+def _goal_index_line(root: Path, storage: Storage, row: sqlite3.Row) -> str:
+    state = _goal_state(root, storage, str(row["id"]))
+    next_action = _goal_next_action(root, state)
+    return (
+        f"<a href='/goals/{quote(str(row['id']))}'>{_e(row['title'] or row['description'])}</a>: "
+        f"project={_e(row['project_id'])} status={_e(row['status'])} "
+        f"phase={_e(_goal_current_phase(state))} "
+        f"next_action={_e(next_action.action)} "
+        f"progress={_e(_goal_progress_label(state))}"
+    )
+
+
+def _goal_state(root: Path, storage: Storage, goal_id: str) -> dict[str, Any]:
+    try:
+        goal = storage.get_goal(goal_id)
+    except KeyError:
+        return {"goal": None}
+    tasks = storage.list_tasks(goal_id)
+    task_ids = {task.id for task in tasks}
+    delegations = storage.list_subagent_delegations(goal_id)
+    delegation_ids = {delegation.id for delegation in delegations}
+    worktree_approvals = [
+        item
+        for item in list_coder_worktree_approvals(root, limit=200)
+        if item.delegation_id in delegation_ids
+    ]
+    worktree_runs = [
+        item
+        for item in list_coder_worktree_runs(root, limit=200)
+        if item.delegation_id in delegation_ids
+    ]
+    commit_approvals = [
+        item
+        for item in list_coder_worktree_commit_approvals(root, limit=200)
+        if item.delegation_id in delegation_ids
+    ]
+    publications = [
+        item
+        for item in list_coder_publications(root, limit=200)
+        if item.delegation_id in delegation_ids
+    ]
+    incidents = _table_rows(
+        storage.db_path,
+        "select * from incidents where goal_id = ? order by created_at desc, id desc",
+        (goal_id,),
+    )
+    recommendations = _table_rows(
+        storage.db_path,
+        "select * from task_recommendations where goal_id = ? order by created_at desc, id desc",
+        (goal_id,),
+    )
+    run_rows = _table_rows(
+        storage.db_path,
+        "select * from runs where goal_id = ? order by started_at desc, id desc",
+        (goal_id,),
+    )
+    event_rows = _table_rows(
+        storage.db_path,
+        "select * from events where goal_id = ? order by created_at asc, id asc",
+        (goal_id,),
+    )
+    steering_reviews = storage.list_recent_steering_reviews(limit=20, goal_id=goal_id)
+    prep_packets = [
+        item
+        for item in list_coder_prep_packets(root)
+        if item.get("source", {}).get("delegation_id") in delegation_ids
+    ]
+    worktree_plans = [
+        item
+        for item in list_coder_worktree_plan_packets(root)
+        if item.get("source", {}).get("delegation_id") in delegation_ids
+    ]
+    risks = [task.risk_level for task in tasks]
+    skill_tags = sorted({tag for task in tasks for tag in task.skill_tags})
+    return {
+        "root": root,
+        "goal": goal,
+        "tasks": tasks,
+        "task_ids": task_ids,
+        "delegations": delegations,
+        "delegation_ids": delegation_ids,
+        "runs": run_rows,
+        "events": event_rows,
+        "worktree_approvals": worktree_approvals,
+        "worktree_runs": worktree_runs,
+        "commit_approvals": commit_approvals,
+        "publications": publications,
+        "incidents": incidents,
+        "recommendations": recommendations,
+        "steering_reviews": steering_reviews,
+        "prep_packets": prep_packets,
+        "worktree_plans": worktree_plans,
+        "risk_level": _highest_risk(risks),
+        "skill_tags": skill_tags,
+    }
+
+
+def _goal_current_phase(state: dict[str, Any]) -> str:
+    goal = state.get("goal")
+    if goal is None:
+        return "Missing"
+    if goal.status == "completed":
+        return "Completed"
+    if any(str(row["status"]) == "open" for row in state["incidents"]):
+        return "Blocked"
+    if any(task.status in {"failed", "blocked"} for task in state["tasks"]):
+        return "Blocked"
+    if _count_status(state["publications"], "ready_for_operator"):
+        return "Ready to publish"
+    if _count_status(state["publications"], "approved"):
+        return "Ready to publish"
+    if _count_status(state["publications"], "pending_operator_approval"):
+        return "Waiting for approval"
+    if _count_status(state["commit_approvals"], "committed"):
+        return "Ready to publish"
+    if _count_status(state["commit_approvals"], "approved"):
+        return "Ready to commit"
+    if _count_status(state["commit_approvals"], "pending_operator_approval"):
+        return "Waiting for approval"
+    completed_runs = [run for run in state["worktree_runs"] if run.status == "completed"]
+    if completed_runs:
+        reviewed = [
+            run
+            for run in completed_runs
+            if _run_review_gate_state(state["root"], run).get("commit_request_form_available")
+        ]
+        return "Ready to commit" if reviewed else "Needs review"
+    if any(run.status == "running" for run in state["worktree_runs"]):
+        return "Running"
+    if _count_status(state["worktree_approvals"], "pending_operator_approval"):
+        return "Waiting for approval"
+    if _count_status(state["worktree_approvals"], "approved"):
+        return "Ready to run"
+    if state["worktree_plans"]:
+        return "Waiting for approval"
+    if state["prep_packets"]:
+        return "Planning worktree"
+    if any(_goal_delegation_has_handoff(state, delegation) for delegation in state["delegations"]):
+        return "Coder prep"
+    if any(delegation.status == "completed" for delegation in state["delegations"]):
+        return "Implementation handoff"
+    if any(delegation.status in {"pending", "running"} for delegation in state["delegations"]):
+        return "Running"
+    if state["tasks"]:
+        return "Ready for delegation"
+    return "Goal accepted"
+
+
+def _goal_next_action(root: Path, state: dict[str, Any]) -> GoalNextAction:
+    goal = state.get("goal")
+    if goal is None:
+        return GoalNextAction("select_existing_goal", "/goals", "goal_not_found")
+    open_incident = next((row for row in state["incidents"] if row["status"] == "open"), None)
+    if open_incident is not None:
+        return GoalNextAction("Inspect incident", "/incidents", str(open_incident["summary"]))
+    recommendation = next((row for row in state["recommendations"] if row["status"] == "open"), None)
+    if recommendation is not None:
+        return GoalNextAction("Review recommendation", "/incidents", str(recommendation["reason"]))
+    for status, action, href in [
+        ("ready_for_operator", "Manual publish outside ClankerOS", None),
+        ("approved", "Create publication handoff", None),
+        ("pending_operator_approval", "Approve publication", "/approvals"),
+    ]:
+        publication = next((item for item in state["publications"] if item.status == status), None)
+        if publication is not None:
+            return GoalNextAction(action, href or f"/runs/{quote(publication.run_id)}", f"publication={publication.id}")
+    committed = next((item for item in state["commit_approvals"] if item.status == "committed"), None)
+    if committed is not None:
+        return GoalNextAction("Create publication request", f"/runs/{quote(committed.run_id)}", f"commit={committed.commit_sha or 'recorded'}")
+    approved_commit = next((item for item in state["commit_approvals"] if item.status == "approved"), None)
+    if approved_commit is not None:
+        return GoalNextAction("Commit approved worktree", f"/runs/{quote(approved_commit.run_id)}", f"approval={approved_commit.id}")
+    pending_commit = next((item for item in state["commit_approvals"] if item.status == "pending_operator_approval"), None)
+    if pending_commit is not None:
+        return GoalNextAction("Approve commit", "/approvals", f"approval={pending_commit.id}")
+    completed_run = next((item for item in state["worktree_runs"] if item.status == "completed"), None)
+    if completed_run is not None:
+        gate = _run_review_gate_state(root, completed_run)
+        if gate["commit_request_form_available"]:
+            return GoalNextAction("Create commit request", f"/runs/{quote(completed_run.id)}", f"reviewed_run={completed_run.id}")
+        return GoalNextAction("Open review", f"/runs/{quote(completed_run.id)}", str(gate["blocked_reason"]))
+    pending_worktree = next((item for item in state["worktree_approvals"] if item.status == "pending_operator_approval"), None)
+    if pending_worktree is not None:
+        return GoalNextAction("Approve worktree", "/approvals", f"approval={pending_worktree.id}")
+    approved_worktree = next((item for item in state["worktree_approvals"] if item.status == "approved"), None)
+    if approved_worktree is not None:
+        return GoalNextAction("Run approved worktree from CLI", f"/workflow?delegation_id={quote(approved_worktree.delegation_id)}", f"approval={approved_worktree.id}")
+    if state["worktree_plans"]:
+        delegation_id = str(state["worktree_plans"][0].get("source", {}).get("delegation_id") or "")
+        return GoalNextAction("Request worktree approval", f"/delegations/{quote(delegation_id)}", "coder_worktree_plan_available")
+    if state["prep_packets"]:
+        delegation_id = str(state["prep_packets"][0].get("source", {}).get("delegation_id") or "")
+        return GoalNextAction("Create worktree plan", f"/delegations/{quote(delegation_id)}", "coder_prep_available")
+    completed_delegation = next((item for item in state["delegations"] if item.status == "completed"), None)
+    if completed_delegation is not None:
+        return GoalNextAction("Run coder prep", f"/delegations/{quote(completed_delegation.id)}", "implementation_handoff_or_result_available")
+    if state["delegations"]:
+        return GoalNextAction("Run or inspect delegation", f"/delegations/{quote(state['delegations'][0].id)}", "delegation_exists")
+    return GoalNextAction("Create scout delegation", f"/projects/{quote(goal.project_id)}", "goal_has_no_delegation_yet")
+
+
+def _goal_next_action_card(next_action: GoalNextAction) -> str:
+    return "<section><h2>Next Action</h2>" + _kv(
+        [
+            ("recommended_action", next_action.action),
+            ("reason", next_action.reason),
+            ("open_surface", SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>")),
+            ("external_effects_created", "false"),
+        ]
+    ) + "</section>"
+
+
+def _goal_overview(state: dict[str, Any]) -> str:
+    goal = state["goal"]
+    return "<section><h2>Overview</h2>" + _kv(
+        [
+            ("intent", goal.description),
+            ("original_prompt", goal.original_prompt),
+            ("created_at", goal.created_at),
+            ("updated_at", goal.updated_at),
+            ("completed_at", goal.completed_at or "none"),
+            ("risk_level", state["risk_level"]),
+            ("operator_notes_status", "local_artifact_if_present"),
+        ]
+    ) + "</section>"
+
+
+def _goal_progress(state: dict[str, Any]) -> str:
+    tasks = state["tasks"]
+    completed_tasks = [task for task in tasks if task.status == "completed"]
+    blocked_tasks = [task for task in tasks if task.status in {"blocked", "failed"}]
+    return "<section><h2>Progress</h2>" + _kv(
+        [
+            ("progress_label", _goal_progress_label(state)),
+            ("tasks_completed", f"{len(completed_tasks)}/{len(tasks)}"),
+            ("blocked_or_failed_tasks", str(len(blocked_tasks))),
+            ("delegations", str(len(state["delegations"]))),
+            ("runs", str(len(state["runs"]) + len(state["worktree_runs"]))),
+            ("approvals", str(len(state["worktree_approvals"]) + len(state["commit_approvals"]) + len(state["publications"]))),
+            ("incidents", str(len(state["incidents"]))),
+        ]
+    ) + "</section>"
+
+
+def _goal_progress_label(state: dict[str, Any]) -> str:
+    tasks = state.get("tasks", [])
+    if not tasks:
+        return "0/0 tasks"
+    completed = sum(1 for task in tasks if task.status == "completed")
+    return f"{completed}/{len(tasks)} tasks"
+
+
+def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
+    items = _goal_timeline_items(root, state)
+    return _list_section("Timeline", [_timeline_line(item) for item in items])
+
+
+def _goal_activity_log(root: Path, state: dict[str, Any]) -> str:
+    return _list_section(
+        "Activity Log",
+        [_timeline_line(item) for item in _goal_timeline_items(root, state)[-12:]],
+    )
+
+
+def _goal_timeline_items(root: Path, state: dict[str, Any]) -> list[dict[str, str]]:
+    goal = state["goal"]
+    items: list[dict[str, str]] = [
+        {"at": goal.created_at, "message": f"Goal created for project {goal.project_id}."}
+    ]
+    for task in state["tasks"]:
+        items.append({"at": task.created_at, "message": f"Task created: {task.task_type}."})
+        if task.updated_at != task.created_at:
+            items.append({"at": task.updated_at, "message": f"Task {task.id} status is {task.status}."})
+    for delegation in state["delegations"]:
+        items.append({"at": delegation.created_at, "message": f"Scout delegated: {delegation.title}."})
+        if delegation.started_at:
+            items.append({"at": delegation.started_at, "message": f"Delegation {delegation.id} started."})
+        if delegation.completed_at:
+            items.append({"at": delegation.completed_at, "message": f"Delegation {delegation.id} completed."})
+        metadata = load_delegation_result_metadata(delegation)
+        for label, key in [
+            ("Context pack built", "context_pack_md"),
+            ("Implementation handoff created", "implementation_handoff_md"),
+        ]:
+            at = _artifact_time(root, str(metadata.get(key) or ""))
+            if at:
+                items.append({"at": at, "message": f"{label} for {delegation.id}."})
+    for packet in state["prep_packets"]:
+        at = _artifact_time(root, str(packet.get("_path") or ""))
+        items.append({"at": at or goal.updated_at, "message": "Coder prep finished."})
+    for packet in state["worktree_plans"]:
+        at = _artifact_time(root, str(packet.get("_path") or ""))
+        items.append({"at": at or goal.updated_at, "message": "Worktree planned."})
+    for approval in state["worktree_approvals"]:
+        items.append({"at": approval.requested_at, "message": f"Worktree approval requested: {approval.id}."})
+        if approval.decided_at:
+            items.append({"at": approval.decided_at, "message": f"Worktree approval {approval.status}: {approval.id}."})
+    for run in state["worktree_runs"]:
+        items.append({"at": run.started_at, "message": f"Approved worktree execution started: {run.id}."})
+        items.append({"at": run.completed_at, "message": f"Execution {run.status}: {run.id}."})
+    for approval in state["commit_approvals"]:
+        items.append({"at": approval.requested_at, "message": f"Commit approval requested: {approval.id}."})
+        if approval.decided_at:
+            items.append({"at": approval.decided_at, "message": f"Commit approval {approval.status}: {approval.id}."})
+        if approval.commit_artifact_path:
+            at = _artifact_time(root, approval.commit_artifact_path)
+            if at:
+                items.append({"at": at, "message": f"Local commit artifact recorded for {approval.run_id}."})
+    for publication in state["publications"]:
+        items.append({"at": publication.requested_at, "message": f"Publication approval requested: {publication.id}."})
+        if publication.decided_at:
+            items.append({"at": publication.decided_at, "message": f"Publication approval {publication.status}: {publication.id}."})
+        if publication.handoff_at:
+            items.append({"at": publication.handoff_at, "message": f"Publication handoff ready: {publication.id}."})
+    for row in state["events"]:
+        items.append({"at": row["created_at"], "message": str(row["message"])})
+    return sorted(items, key=lambda item: item.get("at") or "")
+
+
+def _timeline_line(item: dict[str, str]) -> str:
+    return f"<time>{_e(_format_time(item.get('at') or ''))}</time> {_e(item.get('message') or '')}"
+
+
+def _format_time(value: str) -> str:
+    if not value:
+        return "unknown"
+    normalized = value.replace("Z", "+00:00")
+    try:
+        parsed = datetime.fromisoformat(normalized)
+        return parsed.strftime("%H:%M")
+    except ValueError:
+        return value.split("T")[-1][:5] if "T" in value else value[:16]
+
+
+def _artifact_time(root: Path, path: str) -> str | None:
+    if not path or path == "none":
+        return None
+    candidate = root / path
+    if not candidate.exists():
+        return None
+    return datetime.fromtimestamp(candidate.stat().st_mtime, timezone.utc).isoformat(timespec="seconds")
+
+
+def _goal_delegation_lines(state: dict[str, Any]) -> list[str]:
+    return [
+        f"<a href='/delegations/{quote(delegation.id)}'>{_e(delegation.id)}</a>: status={_e(delegation.status)} profile={_e(delegation.assigned_profile)} title={_e(delegation.title)}"
+        for delegation in state["delegations"]
+    ]
+
+
+def _goal_run_lines(root: Path, state: dict[str, Any]) -> list[str]:
+    lines = [
+        f"<a href='/runs/{quote(str(row['id']))}'>{_e(row['id'])}</a>: status={_e(row['status'])} project={_e(row['project_id'])}"
+        for row in state["runs"]
+    ]
+    lines.extend(_coder_run_line(root, run) for run in state["worktree_runs"])
+    return lines
+
+
+def _goal_approval_lines(root: Path, state: dict[str, Any]) -> list[str]:
+    return (
+        [_approval_line(item) for item in state["worktree_approvals"]]
+        + [_commit_line(item) for item in state["commit_approvals"]]
+        + [_publication_line(root, item) for item in state["publications"]]
+    )
+
+
+def _goal_evidence_lines(root: Path, state: dict[str, Any]) -> list[str]:
+    lines: list[str] = []
+    for row in state["runs"]:
+        for key in ["activity_path", "summary_path", "events_path"]:
+            if row[key]:
+                lines.append(f"{_e(row['id'])} {key}: {_artifact_link(_repo_relative_artifact_path(root, row[key]))}")
+    for incident in state["incidents"]:
+        lines.append(f"incident {incident['id']}: {_artifact_link(str(incident['evidence_path'] or 'none'))}")
+    for recommendation in state["recommendations"]:
+        lines.append(f"recommendation {recommendation['id']}: {_artifact_link(str(recommendation['evidence_path']))}")
+    for run in state["worktree_runs"]:
+        lines.append(f"{_e(run.id)} evidence: {_artifact_link(run.evidence_path)}")
+    return lines
+
+
+def _goal_artifact_lines(root: Path, state: dict[str, Any]) -> list[str]:
+    lines: list[str] = []
+    for task in state["tasks"]:
+        for artifact in task.artifacts:
+            lines.append(f"task {task.id}: {_artifact_link(artifact)}")
+    for delegation in state["delegations"]:
+        metadata = load_delegation_result_metadata(delegation)
+        result_artifact = _repo_relative_artifact_path(root, delegation.result_artifact_path)
+        lines.append(f"delegation {delegation.id} result: {_artifact_link(result_artifact)}")
+        for key in [
+            "context_pack_json",
+            "context_pack_md",
+            "implementation_handoff_json",
+            "implementation_handoff_md",
+        ]:
+            if metadata.get(key):
+                lines.append(f"{key}: {_artifact_link(str(metadata[key]))}")
+    lines.extend(_artifact_links(state["prep_packets"]))
+    lines.extend(_artifact_links(state["worktree_plans"]))
+    for approval in state["commit_approvals"]:
+        for label, path in [
+            ("commit_request", approval.request_artifact_path),
+            ("commit_decision", approval.decision_artifact_path),
+            ("commit_artifact", approval.commit_artifact_path),
+        ]:
+            if path:
+                lines.append(f"{label}: {_artifact_link(path)}")
+    for publication in state["publications"]:
+        for label, path in [
+            ("publication_request", publication.request_artifact_path),
+            ("publication_decision", publication.decision_artifact_path),
+            ("publication_handoff", publication.handoff_artifact_path),
+        ]:
+            if path:
+                lines.append(f"{label}: {_artifact_link(path)}")
+    return lines
+
+
+def _goal_memory_lines(root: Path, state: dict[str, Any]) -> list[str]:
+    goal = state["goal"]
+    project_memory = Path("projects") / goal.project_id / "knowledge.md"
+    global_memory = Path("knowledge.md")
+    operator_notes = Path(".clanker") / "projects" / goal.project_id / "goals" / goal.id / "operator-notes.md"
+    return [
+        f"project_memory: {_artifact_link(project_memory.as_posix()) if (root / project_memory).exists() else 'missing'}",
+        f"global_memory: {_artifact_link(global_memory.as_posix()) if (root / global_memory).exists() else 'missing'}",
+        f"operator_notes: {_artifact_link(operator_notes.as_posix()) if (root / operator_notes).exists() else 'not_started'}",
+        "generated_memories: visible_when_memory_proposals_exist",
+        "pin_memory_action: planned_local_only",
+    ]
+
+
+def _goal_skill_lines(state: dict[str, Any]) -> list[str]:
+    profile_counts: dict[str, int] = {}
+    for delegation in state["delegations"]:
+        profile_counts[delegation.assigned_profile] = profile_counts.get(delegation.assigned_profile, 0) + 1
+    lines = [f"task_skill: {tag}" for tag in state["skill_tags"]]
+    lines.extend(f"profile_used: {profile} count={count}" for profile, count in sorted(profile_counts.items()))
+    if not lines:
+        lines.append("none_recorded_yet")
+    return lines
+
+
+def _goal_git_status(root: Path, state: dict[str, Any]) -> str:
+    goal = state["goal"]
+    project = _storage(root).get_registered_project(goal.project_id)
+    repo = _repo_state(Path(project.root_path)) if project else _repo_state(root)
+    return "<section><h2>Git Status</h2>" + _kv(
+        [
+            ("project", goal.project_id),
+            ("branch", repo["branch"]),
+            ("commit", repo["commit"]),
+            ("dirty_tracked_files", str(len(repo["dirty_tracked_files"]))),
+            ("untracked_files", ", ".join(repo["untracked_files"]) or "none"),
+        ]
+    ) + "</section>"
+
+
+def _goal_operator_note_lines(root: Path, state: dict[str, Any]) -> list[str]:
+    goal = state["goal"]
+    note_path = Path(".clanker") / "projects" / goal.project_id / "goals" / goal.id / "operator-notes.md"
+    if (root / note_path).exists():
+        return [f"operator_notes: {_artifact_link(note_path.as_posix())}"]
+    return [
+        "operator_notes: none",
+        f"planned_notes_path: {note_path.as_posix()}",
+    ]
+
+
+def _goal_remaining_work_lines(state: dict[str, Any], next_action: GoalNextAction) -> list[str]:
+    tasks = [task for task in state["tasks"] if task.status != "completed"]
+    lines = [f"next_action: {next_action.action}"]
+    lines.extend(f"task {task.id}: status={task.status} type={task.task_type}" for task in tasks[:10])
+    if not tasks and next_action.action == "Manual publish outside ClankerOS":
+        lines.append("manual publication remains outside ClankerOS")
+    if not tasks and len(lines) == 1:
+        lines.append("no open task rows; inspect timeline and evidence before marking complete")
+    return lines
+
+
+def _highest_risk(risks: list[str]) -> str:
+    order = {"low": 1, "medium": 2, "high": 3}
+    if not risks:
+        return "unknown"
+    return max(risks, key=lambda value: order.get(value, 0))
+
+
+def _goal_delegation_has_handoff(state: dict[str, Any], delegation: Any) -> bool:
+    metadata = load_delegation_result_metadata(delegation)
+    return bool(metadata.get("implementation_handoff_md") or metadata.get("implementation_handoff_json"))
+
+
 def _workflow(
     root: Path,
     *,
@@ -963,6 +1642,7 @@ def _actions_page(root: Path) -> str:
                 "Navigation Actions",
                 [
                     "<a href='/'>view dashboard</a>: read current local repository/app state",
+                    "<a href='/goals'>view goals</a>: inspect goal-first daily operator cockpit",
                     "<a href='/projects'>view projects</a>: inspect registered project state",
                     "<a href='/delegation-runs'>view delegation runs</a>: inspect scout execution evidence",
                     "<a href='/inbox'>view inbox</a>: inspect operator queue",
@@ -4312,7 +4992,7 @@ def _html_page(root: Path, title: str, content: str, *, status: int = 200) -> Lo
 <body>
   <header>
     <strong>ClankerOS Local Operator</strong>
-    <nav><a href="/">Dashboard</a><a href="/workflow">Workflow</a><a href="/actions">Actions</a><a href="/verification">Verification</a><a href="/ci-evidence">CI Evidence</a><a href="/dogfooding">Dogfooding</a><a href="/projects">Projects</a><a href="/delegation-runs">Delegation Runs</a><a href="/inbox">Inbox</a><a href="/approvals">Approvals</a><a href="/incidents">Incidents</a><a href="/health">Health</a><a href="/demo">Demo</a></nav>
+    <nav><a href="/">Dashboard</a><a href="/goals">Goals</a><a href="/workflow">Workflow</a><a href="/actions">Actions</a><a href="/verification">Verification</a><a href="/ci-evidence">CI Evidence</a><a href="/dogfooding">Dogfooding</a><a href="/projects">Projects</a><a href="/delegation-runs">Delegation Runs</a><a href="/inbox">Inbox</a><a href="/approvals">Approvals</a><a href="/incidents">Incidents</a><a href="/health">Health</a><a href="/demo">Demo</a></nav>
   </header>
   <main>{content}</main>
 </body>
@@ -4374,7 +5054,7 @@ def _summary_rows(root: Path, storage: Storage) -> dict[str, list[str]]:
         for project in storage.list_registered_projects()[:10]
     ]
     goals = [
-        f"{row['id']}: {row['status']} {_e(row['description'])}"
+        f"<a href='/goals/{quote(str(row['id']))}'>{_e(row['id'])}</a>: {row['status']} {_e(row['description'])}"
         for row in _table_rows(storage.db_path, "select id, status, description from goals order by updated_at desc limit 10")
     ]
     tasks = [
@@ -4646,6 +5326,8 @@ def _ensure_demo_git_project(project_root: Path) -> None:
         subprocess.run(["git", "init"], cwd=project_root, check=True, capture_output=True)
         subprocess.run(["git", "config", "user.email", "demo@example.invalid"], cwd=project_root, check=True)
         subprocess.run(["git", "config", "user.name", "ClankerOS Demo"], cwd=project_root, check=True)
+        subprocess.run(["git", "config", "commit.gpgsign", "false"], cwd=project_root, check=True)
+        subprocess.run(["git", "config", "tag.gpgsign", "false"], cwd=project_root, check=True)
     subprocess.run(
         ["git", "add", "demo.txt", "tests/test_demo.py", "scripts/change_demo.py"],
         cwd=project_root,
@@ -4653,7 +5335,7 @@ def _ensure_demo_git_project(project_root: Path) -> None:
     )
     if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=project_root).returncode != 0:
         subprocess.run(
-            ["git", "commit", "-m", "Add local app demo fixture"],
+            ["git", "-c", "commit.gpgsign=false", "commit", "--no-gpg-sign", "-m", "Add local app demo fixture"],
             cwd=project_root,
             check=True,
             capture_output=True,

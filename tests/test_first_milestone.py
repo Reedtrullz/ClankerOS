@@ -4071,6 +4071,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "dashboard_demo_fixture_status: missing" in root.body
     assert "dashboard_next_dogfooding_action: run_demo_app_scenario" in root.body
     assert "manual_browser_script_surface" in root.body
+    assert "Goal Snapshot" in root.body
+    assert "/goals" in root.body
     assert "app_network_actions_taken: 0" in root.body
 
     refresh_confirmation = render_local_app_route(
@@ -4145,6 +4147,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "Manual operator push/PR outside ClankerOS",
     ]:
         assert label in workflow.body
+
+    goals = render_local_app_route(tmp_path, "/goals")
+    assert goals.status == 200
+    assert "Goal Cockpit" in goals.body
+    assert "First Run Guide" in goals.body
+    assert "python3 -m agent_os.cli demo" in goals.body
 
     actions = render_local_app_route(tmp_path, "/actions")
     assert actions.status == 200
@@ -4475,6 +4483,44 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "/delegation-runs" in dashboard.body
     assert "changed_files_count" in dashboard.body
     assert "diff_summary" in dashboard.body
+    assert "Goal Snapshot" in dashboard.body
+    assert "goal_cockpit_status: populated" in dashboard.body
+    assert "lead_goal_phase" in dashboard.body
+    assert f"/goals/{result.goal_id}" in dashboard.body
+
+    goals = render_local_app_route(tmp_path, "/goals")
+    assert goals.status == 200
+    assert "Goal Cockpit" in goals.body
+    assert "Active Goals" in goals.body
+    assert "goal_first_navigation" in goals.body
+    assert result.goal_id in goals.body
+    assert "phase=Ready to commit" in goals.body
+    assert "next_action=Create commit request" in goals.body
+
+    goal = render_local_app_route(tmp_path, f"/goals/{result.goal_id}")
+    assert goal.status == 200
+    assert "Current Phase" in goal.body
+    assert "Ready to commit" in goal.body
+    assert "Next Action" in goal.body
+    assert "recommended_action</dt><dd>Create commit request" in goal.body
+    assert "Timeline" in goal.body
+    assert "Activity Log" in goal.body
+    assert "Goal created" in goal.body
+    assert "Scout delegated" in goal.body
+    assert "Context pack built" in goal.body
+    assert "Implementation handoff created" in goal.body
+    assert "Coder prep finished" in goal.body
+    assert "Worktree planned" in goal.body
+    assert "Evidence" in goal.body
+    assert "Artifacts" in goal.body
+    assert "Memory" in goal.body
+    assert "Skills Used" in goal.body
+    assert "Git Status" in goal.body
+    assert "Operator Notes" in goal.body
+    assert "Remaining Work" in goal.body
+    assert "goal_live_refresh_interval_seconds</dt><dd>5" in goal.body
+    assert result.delegation_id in goal.body
+    assert result.coder_worktree_run_id in goal.body
 
     delegation_runs = render_local_app_route(tmp_path, "/delegation-runs")
     assert delegation_runs.status == 200
@@ -5040,6 +5086,7 @@ def test_local_app_cli_commands_and_bind_safety(
     assert main(["--root", str(tmp_path), "app-smoke-test"]) == 0
     smoke_output = capsys.readouterr().out
     assert "app_smoke_test: passed" in smoke_output
+    assert "route /goals: 200 marker=matched required_marker=Goal Cockpit" in smoke_output
     assert "route /workflow: 200 marker=matched required_marker=Modern Operator Workflow" in smoke_output
     assert "route /actions: 200 marker=matched required_marker=Safe Action Catalog" in smoke_output
     assert "route /verification: 200 marker=matched required_marker=Verification Handoff" in smoke_output
@@ -5058,6 +5105,12 @@ def test_local_app_cli_commands_and_bind_safety(
     assert "demo_app_scenario: ready" in demo_output
     assert "fixture_backed: true" in demo_output
     assert "network_actions_taken: 0" in demo_output
+
+    assert main(["--root", str(tmp_path), "demo"]) == 0
+    short_demo_output = capsys.readouterr().out
+    assert "demo_app_scenario: ready" in short_demo_output
+    assert "fixture_backed: true" in short_demo_output
+    assert "network_actions_taken: 0" in short_demo_output
 
     demo_smoke = run_local_app_demo_smoke_test(tmp_path)
     assert demo_smoke["status"] == "passed"

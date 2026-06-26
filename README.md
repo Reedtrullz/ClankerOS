@@ -55,6 +55,7 @@ hidden autonomy.
 python3 -m agent_os.cli init
 python3 -m agent_os.cli app
 python3 -m agent_os.cli demo-app-scenario
+python3 -m agent_os.cli demo
 python3 -m agent_os.cli projects
 python3 -m agent_os.cli dashboard
 python3 -m agent_os.cli iterate
@@ -67,8 +68,9 @@ python3 -m agent_os.cli app-demo-smoke-test
 server and checks each route for its expected page marker, so GitHub Actions can
 catch blank or wrong operator pages before the full pytest suite finishes.
 `app-demo-smoke-test` creates fixture-backed demo state and checks the
-stateful demo, scoped workflow, project, delegation, run, approvals, inbox,
-actions, and health pages for their expected operator markers.
+stateful goal cockpit, goal detail, demo, scoped workflow, project,
+delegation, run, approvals, inbox, actions, and health pages for their
+expected operator markers.
 
 Then read:
 
@@ -92,16 +94,17 @@ Then read:
 - [GitHub Testing](docs/github-testing.md)
 
 The primary operator surface is now the local app plus the CLI. Start the app
-for a browser view of projects, workflow, delegations, delegation runs, coder
-runs, safe action catalog, verification handoff, dogfooding checklist, health,
-artifacts, the operator inbox, approvals, incidents, and demo state:
+for a browser view of goals, projects, workflow, delegations, delegation runs,
+coder runs, safe action catalog, verification handoff, dogfooding checklist,
+health, artifacts, the operator inbox, approvals, incidents, and demo state:
 
 ```bash
 python3 -m agent_os.cli app
 ```
 
-For the first manual browser pass, run `python3 -m agent_os.cli
-demo-app-scenario`, open `/demo`, and follow the state-aware dogfooding links
+For the first manual browser pass, run `python3 -m agent_os.cli demo`
+or `python3 -m agent_os.cli demo-app-scenario`, open `/goals`, then `/demo`,
+and follow the state-aware dogfooding links
 into the demo project, selected workflow, delegation, coder worktree run,
 review artifact, approvals, and inbox. The `/demo` page also shows a
 read-only `Demo Next Action` panel and `Demo Browser Progress` checklist for
@@ -118,6 +121,14 @@ confirmed local form when the current step can be driven from the app.
 `/demo`, `/dogfooding`, workflow, project, delegation, run, approvals, inbox,
 verification, and health surfaces, then lets you jump directly to the relevant
 local surface.
+
+Use `/goals` as the daily cockpit. It separates active, paused, and completed
+goals, links each goal to its detail page, and shows phase, next action, and
+task progress from existing local state. Use `/goals/<goal_id>` as the
+goal-centered workbench: current phase, next action, progress, timeline,
+activity log, evidence, delegations, runs, approvals, artifacts, memory, skills
+used, git status, operator notes, and remaining work. The page auto-refreshes
+by polling and stays local-only.
 
 Use `/workflow?delegation_id=<id>` or `/workflow?run_id=<coder_run_id>` when
 you want the scoped operator map. The selected workflow page now includes a

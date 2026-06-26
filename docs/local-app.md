@@ -50,6 +50,17 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   checked-in workflow timeout, latest operator-supplied CI evidence when one
   exists, and links to `/verification` plus `/ci-evidence` without polling
   GitHub status.
+- `/` also includes a read-only `Goal Snapshot` that links to `/goals`, counts
+  active/paused/completed goals, and names the lead goal phase plus next
+  action when goal state exists.
+- `/goals` - daily goal cockpit. It separates active, paused, and completed
+  goals, links to each goal detail page, and keeps phase, next action, task
+  progress, and first-run guidance visible.
+- `/goals/<goal_id>` - goal-centered workbench with current phase, next action,
+  overview, progress, chronological timeline, activity log, delegations, runs,
+  approvals, evidence, artifacts, memory, skills used, git status, operator
+  notes, and remaining work. It uses local polling refresh and does not contact
+  GitHub or providers.
 - `/workflow` - modern handoff/worktree/commit/publication workflow stepper,
   including `coder-prep-from-handoff` as the artifact-first prep route. Add
   `?delegation_id=<id>` or `?run_id=<coder_worktree_run_id>` to show selected
@@ -137,6 +148,7 @@ Alias:
 
 ```bash
 python3 -m agent_os.cli app-demo
+python3 -m agent_os.cli demo
 ```
 
 The demo creates fixture-backed local state under `.clanker/demo/`:
@@ -154,7 +166,8 @@ The demo creates fixture-backed local state under `.clanker/demo/`:
 It is local-only. It does not call providers, push, create PRs, deploy, use the
 network, or modify external projects outside the repo demo area.
 
-After running the demo command, open `/demo` in the local app. It reads the
+After running the demo command, open `/goals`, then `/demo` in the local app.
+`/goals` shows the fixture goal phase and next action, while `/demo` reads the
 current fixture state and links directly to the demo project, selected
 workflow, delegation, coder worktree run, review artifact, inbox, approvals,
 and health page. The same page includes a manual browser script for the first
@@ -203,10 +216,11 @@ checked-in GitHub Actions workflow runs the same smoke command before the full
 pytest suite.
 
 `app-demo-smoke-test` is the fixture-backed companion. It creates or refreshes
-the local demo scenario, renders the selected project, delegation, scoped
-workflow, coder run, approvals, inbox, actions, and health pages, and checks
-state-specific snippets without starting a server or taking network/external
-actions. The GitHub fast smoke job runs it before the full suite.
+the local demo scenario, renders the goal cockpit, goal detail, selected
+project, delegation, scoped workflow, coder run, approvals, inbox, actions,
+and health pages, and checks state-specific snippets without starting a server
+or taking network/external actions. The GitHub fast smoke job runs it before
+the full suite.
 
 The page does not fetch GitHub status. The fast smoke job can prove route and
 CLI wiring before the full suite finishes, but a pushed commit is not CI proof
