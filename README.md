@@ -111,7 +111,10 @@ the explicit `external_effects_created: false` boundary.
 Use `/dogfooding` when you want one checklist for the first browser route walk:
 refresh the fixture, inspect demo/workflow/project/delegation/run surfaces,
 walk the local commit and publication gates, then hand verification to GitHub
-Actions after a push. The page is read-only and does not fetch GitHub status.
+Actions after a push. The page now includes a read-only `Dogfooding Next
+Action` panel that names the current fixture-backed next action and links the
+project, delegation, workflow, run, approval queue, inbox, action catalog, and
+verification surfaces. The page is read-only and does not fetch GitHub status.
 
 Use `/delegation-runs` when you want a compact read-only index of scout
 execution evidence, context packs, implementation handoffs, zero-effect

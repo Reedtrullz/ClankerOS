@@ -186,9 +186,12 @@ available, points to `/demo`, `/workflow`, `/projects`, `/delegation-runs`,
 commit/publication gate sequence to walk from the selected `/runs/<run_id>`
 page.
 
-The page is read-only. It reports zero app network actions, zero external
-mutations, zero provider calls, no GitHub status fetch, and the manual
-push/PR boundary outside ClankerOS.
+The page also includes `Dogfooding Next Action`, a read-only state panel that
+names the current fixture-backed next action and links the selected project,
+delegation, scoped workflow, coder run, approval queue, inbox, action catalog,
+and verification surfaces. The page reports zero app network actions, zero
+external mutations, zero provider calls, no GitHub status fetch, and the
+manual push/PR boundary outside ClankerOS.
 
 ## Artifact Viewer
 

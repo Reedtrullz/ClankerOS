@@ -924,6 +924,7 @@ def _dogfooding_page(root: Path) -> str:
             _non_claim_banner(),
             _kv(fixture_lines),
             "</section>",
+            _dogfooding_next_action_panel(root),
             _list_section(
                 "Start Or Refresh Fixture",
                 [
@@ -973,6 +974,94 @@ def _dogfooding_page(root: Path) -> str:
             _demo_dogfooding_state(root),
         ]
     )
+
+
+def _dogfooding_next_action_panel(root: Path) -> str:
+    storage = _storage(root)
+    project = storage.get_registered_project("local-app-demo")
+    if project is None:
+        return _list_section(
+            "Dogfooding Next Action",
+            [
+                "demo_fixture_status: missing",
+                "next_dogfooding_action: run_demo_app_scenario",
+                "demo_command: python3 -m agent_os.cli demo-app-scenario",
+                "demo_surface: <a href='/demo'>/demo</a>",
+                "verification_surface: <a href='/verification'>/verification</a>",
+                "external_effects_created: false",
+                "network_actions_taken_by_app: 0",
+            ],
+        )
+
+    delegations = [
+        delegation
+        for delegation in storage.list_recent_subagent_delegations(limit=None)
+        if _task_project(storage, delegation.parent_task_id) == project.name
+    ]
+    selected_delegation = delegations[0] if delegations else None
+    selected_run = None
+    if selected_delegation is not None:
+        runs = list_coder_worktree_runs(
+            root,
+            delegation_id=selected_delegation.id,
+            limit=20,
+        )
+        selected_run = next((run for run in runs if run.status == "completed"), None)
+        if selected_run is None and runs:
+            selected_run = runs[0]
+
+    next_action = "select_demo_delegation"
+    workflow_surface = "<a href='/workflow'>/workflow</a>"
+    delegation_surface = "none"
+    run_surface = "none"
+    action_surface = "<a href='/demo'>/demo</a>"
+    if selected_delegation is not None:
+        delegation_surface = (
+            f"<a href='/delegations/{quote(selected_delegation.id)}'>"
+            f"/delegations/{_e(selected_delegation.id)}</a>"
+        )
+        workflow_surface = (
+            f"<a href='/workflow?delegation_id={quote(selected_delegation.id)}'>"
+            f"/workflow?delegation_id={_e(selected_delegation.id)}</a>"
+        )
+        action_surface = delegation_surface
+        next_action = "review_delegation_state"
+    if selected_run is not None:
+        progress = _demo_progress_state(root, selected_run.id)
+        next_action = progress["next_step"]
+        workflow_surface = (
+            f"<a href='/workflow?run_id={quote(selected_run.id)}'>"
+            f"/workflow?run_id={_e(selected_run.id)}</a>"
+        )
+        run_surface = (
+            f"<a href='/runs/{quote(selected_run.id)}'>"
+            f"/runs/{_e(selected_run.id)}</a>"
+        )
+        action_surface = run_surface
+        if next_action in {
+            "approve_or_reject_commit_request",
+            "approve_or_reject_publication_request",
+        }:
+            action_surface = "<a href='/approvals'>/approvals</a>"
+
+    lines = [
+        "demo_fixture_status: available",
+        f"next_dogfooding_action: {_e(next_action)}",
+        f"project_surface: <a href='/projects/{quote(project.name)}'>/projects/{_e(project.name)}</a>",
+        f"delegation_surface: {delegation_surface}",
+        f"workflow_surface: {workflow_surface}",
+        f"run_action_surface: {run_surface}",
+        f"action_surface: {action_surface}",
+        "approval_queue_surface: <a href='/approvals'>/approvals</a>",
+        "inbox_surface: <a href='/inbox'>/inbox</a>",
+        "action_catalog_surface: <a href='/actions'>/actions</a>",
+        "verification_surface: <a href='/verification'>/verification</a>",
+        "external_effects_created: false",
+        "network_actions_taken_by_app: 0",
+    ]
+    if next_action == "manual_operator_push_pr_outside_clankeros":
+        lines.append("manual_boundary: outside_clankeros")
+    return _list_section("Dogfooding Next Action", lines)
 
 
 def _workflow_has_push_main(workflow_text: str) -> bool:

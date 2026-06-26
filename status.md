@@ -1,5 +1,28 @@
 # Status
 
+## 2026-06-26 Local App Dogfooding Next Action
+
+- Upgraded `/dogfooding` with a read-only `Dogfooding Next Action` panel.
+  When the demo fixture exists, it links the selected project, delegation,
+  scoped workflow, coder run, approval queue, inbox, action catalog, and
+  verification surfaces, and names the current `next_dogfooding_action`.
+- The dogfooding page now gives the operator one state-aware browser route
+  walk surface before pushing: fixture refresh, current local next action,
+  safe action map, local commit/publication gates, and the GitHub Actions
+  handoff boundary are visible together.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario`
+    -> `1 passed, 497 deselected`
+  - `python3 -m agent_os.cli app-smoke-test` -> rendered the core local app
+    routes with status 200 and zero provider/network/external-mutation
+    counters.
+  - `git diff --check`
+- Non-claims: this is a read-only dogfooding/navigation improvement only; it
+  does not execute work, approve requests, commit, push, create PRs, deploy,
+  call providers, fetch GitHub status, execute arbitrary commands, or perform
+  non-loopback network actions from the local app.
+
 ## 2026-06-26 Local App Actions Current Demo Surfaces
 
 - Upgraded `/actions` with a read-only `Current Demo Action Surfaces` block.

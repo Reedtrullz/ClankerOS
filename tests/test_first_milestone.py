@@ -3407,6 +3407,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Browser Route Walk" in dogfooding.body
     assert "Commit And Publication Gate Walk" in dogfooding.body
     assert "Verification Handoff" in dogfooding.body
+    assert "Dogfooding Next Action" in dogfooding.body
+    assert "next_dogfooding_action: run_demo_app_scenario" in dogfooding.body
     assert "/demo" in dogfooding.body
     assert "/workflow" in dogfooding.body
     assert "/verification" in dogfooding.body
@@ -3566,6 +3568,21 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"/delegations/{result.delegation_id}" in actions_with_demo.body
     assert "approval_queue_surface" in actions_with_demo.body
     assert "external_effects_created: false" in actions_with_demo.body
+
+    dogfooding_with_demo = render_local_app_route(tmp_path, "/dogfooding")
+    assert dogfooding_with_demo.status == 200
+    assert "Dogfooding Next Action" in dogfooding_with_demo.body
+    assert "demo_fixture_status: available" in dogfooding_with_demo.body
+    assert "next_dogfooding_action: request_commit_for_reviewed_run" in dogfooding_with_demo.body
+    assert f"/projects/{result.project_id}" in dogfooding_with_demo.body
+    assert f"/delegations/{result.delegation_id}" in dogfooding_with_demo.body
+    assert f"/workflow?run_id={result.coder_worktree_run_id}" in dogfooding_with_demo.body
+    assert f"/runs/{result.coder_worktree_run_id}" in dogfooding_with_demo.body
+    assert "approval_queue_surface" in dogfooding_with_demo.body
+    assert "inbox_surface" in dogfooding_with_demo.body
+    assert "action_catalog_surface" in dogfooding_with_demo.body
+    assert "verification_surface" in dogfooding_with_demo.body
+    assert "external_effects_created: false" in dogfooding_with_demo.body
 
     dashboard = render_local_app_route(tmp_path, "/")
     assert dashboard.status == 200
