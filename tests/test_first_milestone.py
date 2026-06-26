@@ -4212,7 +4212,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "direct_snapshot_validated_record_command_template: gh run view" in ci_evidence.body
     assert "ci-snapshot-evidence-from-gh-json" in ci_evidence.body
     assert "direct_snapshot_record_after_success_command_template: python3 -m agent_os.cli ci-snapshot-evidence" in ci_evidence.body
-    assert "required_operator_inputs: completed GitHub Actions run id" in ci_evidence.body
+    assert (
+        "required_operator_inputs: GitHub Actions run id, run URL, final status or completed job name"
+        in ci_evidence.body
+    )
     assert "github-actions" in ci_evidence.body
     assert "success" in ci_evidence.body
     assert "external_run_id: 123" in ci_evidence.body
