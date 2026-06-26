@@ -1,5 +1,29 @@
 # Status
 
+## 2026-06-26 Goal-Scoped CI Proof Recording
+
+- Added `Record Goal CI Proof From GitHub JSON` to `/goals/<goal_id>` under
+  Goal Verification Evidence. The form is prefilled with the goal project,
+  current branch, and current commit, accepts pasted GitHub Actions JSON, and
+  returns to the same Goal page after the confirmed local write.
+- The form reuses `ci-snapshot-evidence-from-gh-json`, infers run id and URL
+  from `databaseId`/`url`, validates status, branch, commit, and optional job
+  status, and records project-scoped CI proof without app-side GitHub polling.
+- Non-claims: this does not fetch GitHub status, run CI, push, create PRs,
+  deploy, call providers, or mutate external systems beyond the confirmed
+  local CI evidence artifact/database record.
+- Compact local verification for this slice:
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 CI JSON Run Identity Inference
 
 - Made `ci-snapshot-evidence-from-gh-json` infer the GitHub Actions run id

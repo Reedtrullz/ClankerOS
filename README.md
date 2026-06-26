@@ -166,6 +166,11 @@ records, then points at the local target surface without writing on GET.
 The Goal Section Index near the top links to stable in-page anchors for the
 major Goal surfaces, so the browser page can be used for long sessions without
 hunting through the whole document.
+Goal Verification Evidence links to `/verification` and `/ci-evidence`, shows
+whether the latest operator-supplied CI proof matches the current checkout,
+and includes a confirmed Goal-scoped form for pasted GitHub Actions JSON. The
+form infers run identity from `databaseId`/`url`, validates the supplied JSON,
+and records local CI proof without app-side GitHub polling.
 Skills Used links to `/skills`, shows task skill usage counts, projects using
 each tag, matching generated or available skill records when present, profile
 usage, and keeps skill execution out of the Goal page.

@@ -200,6 +200,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   supplied by the operator with `ci-deploy-evidence`, including provider,
   status, external run id, URL, commit, and safe artifact links without
   fetching GitHub status.
+- `/goals/<goal_id>#goal-verification-evidence` - shows the current goal
+  project's latest local CI proof and provides a confirmed Goal-scoped
+  `ci-snapshot-evidence-from-gh-json` form. The form accepts pasted GitHub
+  Actions JSON, infers run id and URL from `databaseId`/`url`, validates the
+  proof locally, records project-scoped CI evidence, and returns to the Goal
+  page without app-side GitHub polling.
 - `/dogfooding` - read-only manual browser checklist for refreshing the demo
   fixture, walking demo/workflow/project/delegation/run routes, using local
   commit and publication gates, and handing full-suite proof to GitHub Actions

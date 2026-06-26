@@ -194,7 +194,12 @@ Core layers for the bootstrap:
   Goal `Verification Evidence` links to `/verification` and `/ci-evidence`,
   filters local operator-supplied CI proof records to the current goal project,
   compares the recorded branch/commit to the current project checkout, and
-  reports missing or stale proof without fetching GitHub status.
+  reports missing or stale proof without fetching GitHub status. It also
+  exposes a confirmed Goal-scoped `ci-snapshot-evidence-from-gh-json` form
+  that accepts pasted GitHub Actions JSON, infers run identity from
+  `databaseId`/`url`, validates status, branch, commit, and optional job
+  status, then records local project CI proof and returns to the same Goal
+  page without app-side GitHub polling.
   They also include a typed
   `Goal Artifact Explorer` that groups goal-linked Markdown,
   JSON, Patch/Diff, and Text/Log artifacts and links them through the bounded

@@ -5172,6 +5172,91 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_ci_app_network_actions_taken: 0" in goal.body
     assert "goal_ci_external_mutations_taken: 0" in goal.body
     assert "demo-goal-ci.json" in goal.body
+    assert "Record Goal CI Proof From GitHub JSON" in goal.body
+    assert "goal_ci_record_form_available</dt><dd>true" in goal.body
+    assert "goal_ci_record_action</dt><dd>ci-snapshot-evidence-from-gh-json" in goal.body
+    assert f"goal_ci_record_project</dt><dd>{result.project_id}" in goal.body
+    assert f"goal_ci_record_branch</dt><dd>{project_branch}" in goal.body
+    assert f"goal_ci_record_commit</dt><dd>{project_commit}" in goal.body
+    assert "goal_ci_record_return_to_goal</dt><dd>true" in goal.body
+    assert "external_run_id_inference</dt><dd>databaseId_or_actions_run_url" in goal.body
+    assert "network_actions_taken_by_app</dt><dd>0" in goal.body
+    assert "external_mutations_taken</dt><dd>0" in goal.body
+    goal_ci_status_json = json.dumps(
+        {
+            "status": "completed",
+            "conclusion": "success",
+            "headSha": project_commit,
+            "headBranch": project_branch,
+            "databaseId": 282999001,
+            "url": "https://github.com/example/subject/actions/runs/282999001",
+            "jobs": [
+                {
+                    "name": "Fast smoke verification",
+                    "status": "completed",
+                    "conclusion": "success",
+                },
+                {
+                    "name": "Full pytest suite",
+                    "status": "completed",
+                    "conclusion": "success",
+                },
+            ],
+        }
+    )
+    goal_ci_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/ci-snapshot-evidence-from-gh-json",
+        method="POST",
+        form={
+            "project": [result.project_id],
+            "branch": [project_branch],
+            "commit": [project_commit],
+            "provider": ["github-actions"],
+            "status_json": [goal_ci_status_json],
+            "recorded_by": ["operator"],
+            "note": ["Validated from Goal page."],
+            "return_to": [f"/goals/{result.goal_id}"],
+        },
+    )
+    assert goal_ci_confirmation.status == 409
+    assert "Confirm ci-snapshot-evidence-from-gh-json" in goal_ci_confirmation.body
+    assert "Action Payload" in goal_ci_confirmation.body
+    assert "return_to</dt><dd>/goals/" in goal_ci_confirmation.body
+
+    goal_ci_response = render_local_app_route(
+        tmp_path,
+        "/actions/ci-snapshot-evidence-from-gh-json",
+        method="POST",
+        form={
+            "project": [result.project_id],
+            "branch": [project_branch],
+            "commit": [project_commit],
+            "provider": ["github-actions"],
+            "status_json": [goal_ci_status_json],
+            "recorded_by": ["operator"],
+            "note": ["Validated from Goal page."],
+            "return_to": [f"/goals/{result.goal_id}"],
+            "confirm": ["yes"],
+        },
+    )
+    assert goal_ci_response.status == 200
+    assert "ci_snapshot_evidence_from_gh_json: recorded" in goal_ci_response.body
+    assert f"href='/goals/{result.goal_id}?notice=ci_snapshot_evidence_from_gh_json" in goal_ci_response.body
+
+    ci_records = Storage(tmp_path / ".agent" / "state.db").list_recent_ci_snapshot_evidence_records()
+    inferred_record = next(
+        record for record in ci_records if record.external_run_id == "282999001"
+    )
+    assert inferred_record.project_id == result.project_id
+    assert inferred_record.external_url == "https://github.com/example/subject/actions/runs/282999001"
+    assert inferred_record.result_json["validated_status_json"]["externalRunId"] == "282999001"
+    assert inferred_record.result_json["network_actions_taken"] == 0
+    assert inferred_record.result_json["external_mutations_taken"] == 0
+
+    goal_after_ci = render_local_app_route(tmp_path, f"/goals/{result.goal_id}")
+    assert "goal_ci_latest_external_run_id: 282999001" in goal_after_ci.body
+    assert "goal_ci_matches_current_checkout: true" in goal_after_ci.body
     assert "Operator Notes" in goal.body
     assert "save-goal-note" in goal.body
     assert "note_append_form_available: true" in goal.body

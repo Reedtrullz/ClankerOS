@@ -4251,7 +4251,7 @@ def _goal_verification_evidence(root: Path, state: dict[str, Any]) -> str:
             lines,
             "/verification",
             anchor_id="goal-verification-evidence",
-        )
+        ) + _goal_ci_json_recording_form(goal.id, goal.project_id, repo, full_commit)
 
     source_kind, record = latest_record
     branch_matches = record.branch_name == repo["branch"]
@@ -4284,6 +4284,53 @@ def _goal_verification_evidence(root: Path, state: dict[str, Any]) -> str:
         lines,
         "/verification",
         anchor_id="goal-verification-evidence",
+    ) + _goal_ci_json_recording_form(goal.id, goal.project_id, repo, full_commit)
+
+
+def _goal_ci_json_recording_form(
+    goal_id: str,
+    project_id: str,
+    repo: dict[str, Any],
+    full_commit: str,
+) -> str:
+    branch = repo["branch"] if repo["branch"] != "unknown" else "main"
+    commit = full_commit if full_commit != "unknown" else repo["commit"]
+    return "".join(
+        [
+            "<section><h2>Record Goal CI Proof From GitHub JSON</h2>",
+            "<p class='muted'>Paste <code>gh run view</code> JSON after GitHub Actions completes. This validates the supplied JSON and writes a local project-scoped CI evidence record; it does not contact GitHub.</p>",
+            "<form method='post' action='/actions/ci-snapshot-evidence-from-gh-json'>",
+            f"<input type='hidden' name='project' value='{_e(project_id)}'>",
+            f"<input type='hidden' name='branch' value='{_e(branch)}'>",
+            f"<input type='hidden' name='commit' value='{_e(commit)}'>",
+            "<input type='hidden' name='provider' value='github-actions'>",
+            f"<input type='hidden' name='return_to' value='/goals/{_e(quote(goal_id))}'>",
+            "<label>external_run_id <input name='external_run_id' value='' placeholder='optional if JSON has databaseId or URL'></label>",
+            "<label>url <input name='url' value='' placeholder='optional if JSON has url'></label>",
+            "<label>job_name <input name='job_name' value='' placeholder='Fast smoke verification'></label>",
+            "<label>recorded_by <input name='recorded_by' value='operator'></label>",
+            "<label>note <input name='note' value='Validated from Goal page pasted GitHub Actions JSON.'></label>",
+            "<label>status_json <textarea name='status_json' rows='8' spellcheck='false'></textarea></label>",
+            "<button type='submit'>ci-snapshot-evidence-from-gh-json</button>",
+            "</form>",
+            _kv(
+                [
+                    ("goal_ci_record_form_available", "true"),
+                    ("goal_ci_record_action", "ci-snapshot-evidence-from-gh-json"),
+                    ("goal_ci_record_project", project_id),
+                    ("goal_ci_record_branch", branch),
+                    ("goal_ci_record_commit", commit),
+                    ("goal_ci_record_return_to_goal", "true"),
+                    ("confirmation_required", "true"),
+                    ("github_status_fetch", "none"),
+                    ("network_actions_taken_by_app", "0"),
+                    ("external_mutations_taken", "0"),
+                    ("external_run_id_inference", "databaseId_or_actions_run_url"),
+                    ("external_url_inference", "status_json_url"),
+                ]
+            ),
+            "</section>",
+        ]
     )
 
 
@@ -7773,7 +7820,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 job_name=_one(form, "job_name"),
             )
             message = f"ci_snapshot_evidence_from_gh_json: {result.status}"
-            location = "/ci-evidence"
+            location = _safe_local_return_path(_one(form, "return_to")) or "/ci-evidence"
         else:
             raise ValueError(f"unsupported action: {action}")
     except (
