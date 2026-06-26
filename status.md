@@ -1,5 +1,18 @@
 # Status
 
+## 2026-06-26 Local App Run Review Gate
+
+- Added `Run Review Gate` to coder worktree `/runs/<run_id>` pages. The page
+  now shows whether `runs/<source_run_id>/review.md` exists, whether it
+  mentions the selected coder worktree run id, the exact blocked reason, and
+  whether the commit request form is available.
+- The app now hides `coder-commit-request` until the same review condition the
+  backend enforces is true, and dashboard/project/workflow next-action logic
+  uses that stronger reviewed-run gate before recommending commit request.
+- Non-claims: this is local app safety/readback only. It does not create or
+  edit reviews, approve commits, make commits, push, create PRs, deploy, call
+  providers, fetch GitHub status, or bypass backend checks.
+
 ## 2026-06-26 GitHub Fast Smoke Focused Pytest
 
 - Added a focused pytest step to the GitHub Actions `Fast smoke verification`

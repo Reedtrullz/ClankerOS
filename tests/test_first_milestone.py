@@ -4117,6 +4117,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     run_page = render_local_app_route(tmp_path, f"/runs/{result.coder_worktree_run_id}")
     assert run_page.status == 200
     assert "Run Workflow State" in run_page.body
+    assert "Run Review Gate" in run_page.body
+    assert "review_gate_status" in run_page.body
+    assert "review_gate_status</dt><dd>reviewed" in run_page.body
+    assert "review_file_exists</dt><dd>true" in run_page.body
+    assert "review_mentions_run</dt><dd>true" in run_page.body
+    assert "commit_request_form_available</dt><dd>true" in run_page.body
     for expected_run_state in [
         "context_pack_status",
         "implementation_handoff_status",
@@ -4148,6 +4154,23 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "commit-coder-worktree" not in run_page.body
     assert "coder-publication-request" not in run_page.body
     assert "coder-publication-handoff" not in run_page.body
+
+    review_text = result.review_path.read_text(encoding="utf-8")
+    result.review_path.unlink()
+    run_page_without_review = render_local_app_route(
+        tmp_path,
+        f"/runs/{result.coder_worktree_run_id}",
+    )
+    assert run_page_without_review.status == 200
+    assert "Run Review Gate" in run_page_without_review.body
+    assert "review_gate_status</dt><dd>missing" in run_page_without_review.body
+    assert "review_file_exists</dt><dd>false" in run_page_without_review.body
+    assert "review_mentions_run</dt><dd>false" in run_page_without_review.body
+    assert "commit_request_form_available</dt><dd>false" in run_page_without_review.body
+    assert "blocked_reason</dt><dd>review_artifact_missing" in run_page_without_review.body
+    assert "action='/actions/coder-commit-request'" not in run_page_without_review.body
+    assert "commit_request_form_available: false review_gate_status: missing" in run_page_without_review.body
+    result.review_path.write_text(review_text, encoding="utf-8")
 
     commit_message = "Implement bounded change from approved worktree run"
     commit_request_confirmation = render_local_app_route(

@@ -420,6 +420,8 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             "Run",
             [
                 "Run Workflow State",
+                "Run Review Gate",
+                "review_gate_status</dt><dd>reviewed",
                 "Run Approval Actions",
                 "Coder Worktree Evidence",
                 "bounded_file_validation_status",
@@ -1994,7 +1996,7 @@ def _project_operator_guidance(
     reviewed_runs = [
         item
         for item in completed_runs
-        if (root / "runs" / item.source_run_id / "review.md").exists()
+        if _run_review_gate_state(root, item)["commit_request_form_available"]
     ]
     guidance = "<section><h2>Project Operator Guidance</h2>" + _kv(
         [
@@ -2250,7 +2252,7 @@ def _dashboard_next_action(root: Path, storage: Storage) -> DashboardNextAction:
             for item in worktree_runs
             if item.status == "completed"
             and item.id not in commit_run_ids
-            and (root / "runs" / item.source_run_id / "review.md").exists()
+            and _run_review_gate_state(root, item)["commit_request_form_available"]
         ),
         None,
     )
@@ -2362,7 +2364,7 @@ def _project_next_action(
         item
         for item in worktree_runs
         if item.status == "completed"
-        and (root / "runs" / item.source_run_id / "review.md").exists()
+        and _run_review_gate_state(root, item)["commit_request_form_available"]
     ]
     if reviewed_runs and not commit_approvals:
         return "request_commit_for_reviewed_run"
@@ -2480,6 +2482,7 @@ def _run_detail(root: Path, run_id: str) -> str:
             )
         )
         parts.append(_run_workflow_state(root, coder_run))
+        parts.append(_run_review_gate(root, coder_run))
         parts.append(
             _list_section(
                 "Coder Worktree Evidence",
@@ -2717,6 +2720,64 @@ def _run_workflow_state(root: Path, coder_run: Any) -> str:
             ),
         ]
     ) + "</section>"
+
+
+def _run_review_gate(root: Path, coder_run: Any) -> str:
+    state = _run_review_gate_state(root, coder_run)
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("review_gate_status", state["status"]),
+        ("review_path", _artifact_link(state["review_path"]) if state["exists"] else state["review_path"]),
+        ("review_file_exists", str(state["exists"]).lower()),
+        ("review_mentions_run", str(state["mentions_run"]).lower()),
+        ("commit_request_form_available", str(state["commit_request_form_available"]).lower()),
+        ("blocked_reason", state["blocked_reason"]),
+        ("backend_rule", "review.md must mention the coder worktree run id before coder-commit-request"),
+        ("network_actions_taken", "0"),
+        ("external_mutations_taken", "0"),
+    ]
+    return "".join(
+        [
+            "<section><h2>Run Review Gate</h2>",
+            "<p class='muted'>This readback mirrors the existing commit-request backend gate before the app offers a local commit request form.</p>",
+            _kv(rows),
+            "</section>",
+        ]
+    )
+
+
+def _run_review_gate_state(root: Path, coder_run: Any) -> dict[str, Any]:
+    review_path = Path("runs") / coder_run.source_run_id / "review.md"
+    absolute_review_path = root / review_path
+    exists = absolute_review_path.is_file()
+    mentions_run = False
+    if exists:
+        try:
+            mentions_run = coder_run.id in absolute_review_path.read_text(encoding="utf-8")
+        except OSError:
+            mentions_run = False
+    commit_request_form_available = (
+        coder_run.status == "completed" and exists and mentions_run
+    )
+    if commit_request_form_available:
+        status = "reviewed"
+        blocked_reason = "none"
+    elif not exists:
+        status = "missing"
+        blocked_reason = "review_artifact_missing"
+    elif not mentions_run:
+        status = "stale_or_unmatched"
+        blocked_reason = "review_artifact_does_not_mention_run"
+    else:
+        status = "not_ready"
+        blocked_reason = f"coder_worktree_status_{coder_run.status}"
+    return {
+        "review_path": review_path.as_posix(),
+        "exists": exists,
+        "mentions_run": mentions_run,
+        "status": status,
+        "blocked_reason": blocked_reason,
+        "commit_request_form_available": commit_request_form_available,
+    }
 
 
 def _artifact_viewer(root: Path, relative_path: str | None) -> LocalAppResponse:
@@ -3764,6 +3825,19 @@ def _flatten_action_result(
 
 
 def _run_action_forms(root: Path, run_id: str) -> str:
+    coder_run = next(
+        (item for item in list_coder_worktree_runs(root, limit=50) if item.id == run_id),
+        None,
+    )
+    review_gate = (
+        _run_review_gate_state(root, coder_run)
+        if coder_run is not None
+        else {
+            "status": "run_missing",
+            "blocked_reason": "coder_worktree_run_not_found",
+            "commit_request_form_available": False,
+        }
+    )
     commit_approvals = [
         item
         for item in list_coder_worktree_commit_approvals(root, limit=50)
@@ -3789,16 +3863,23 @@ def _run_action_forms(root: Path, run_id: str) -> str:
         "<p class='muted'>These forms create local approval/request artifacts only. They do not stage, commit, push, create PRs, deploy, call providers, or use the network.</p>",
     ]
     if not commit_approvals:
-        sections.append(
-            _input_form(
-                "coder-commit-request",
-                {"run_id": run_id, "requested_by": "operator"},
-                {
-                    "message": "Implement bounded change from approved worktree run",
-                    "note": "Request local commit after review",
-                },
+        if review_gate["commit_request_form_available"]:
+            sections.append(
+                _input_form(
+                    "coder-commit-request",
+                    {"run_id": run_id, "requested_by": "operator"},
+                    {
+                        "message": "Implement bounded change from approved worktree run",
+                        "note": "Request local commit after review",
+                    },
+                )
             )
-        )
+        else:
+            sections.append(
+                "<p class='muted'>commit_request_form_available: false "
+                f"review_gate_status: {_e(review_gate['status'])} "
+                f"blocked_reason: {_e(review_gate['blocked_reason'])}</p>"
+            )
     elif pending_commit:
         sections.append(
             f"<p class='muted'>commit_request_pending: {_e(pending_commit[0].id)}</p>"

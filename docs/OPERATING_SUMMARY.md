@@ -85,9 +85,12 @@ Core layers for the bootstrap:
   exact run, approvals, inbox, and dogfooding surfaces without creating
   external effects. Coder worktree
   run detail pages include the same upstream and downstream workflow posture as
-  a `Run Workflow State` readback, and once publication handoff is ready they
-  show copy-only suggested push and draft-PR commands plus the PR body path
-  with zero-effect counters. Coder worktree run rows in review,
+  a `Run Workflow State` readback, plus a `Run Review Gate` readback that
+  mirrors the backend requirement that `runs/<source_run_id>/review.md`
+  exists and mentions the coder worktree run id before `coder-commit-request`
+  is offered; once publication handoff is ready they show copy-only suggested
+  push and draft-PR commands plus the PR body path with zero-effect counters.
+  Coder worktree run rows in review,
   dashboard, and the local app include changed-file counts and compact diff
   summaries read from existing evidence. The app also includes a read-only
   `/delegation-runs` index for scout/delegation execution evidence, context

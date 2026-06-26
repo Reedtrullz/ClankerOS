@@ -318,14 +318,18 @@ message so operators can fix inputs without guessing what happened.
 Run pages for completed coder worktree runs link the local review, `run.json`,
 `diff.patch`, `changed_files.json`, `bounded_file_validation.json`,
 `git_status.txt`, stdout/stderr, and verification output before showing
-state-aware forms. The initial reviewed run page exposes a commit-request form
-only. `commit-coder-worktree` appears only after commit approval and is still
-an explicit confirmed local action with a typed commit message that must match
-the approved request. Publication request appears only after the isolated local
-commit is recorded, and publication handoff appears only after publication
-approval. The commit action creates a commit only inside the isolated coder
-worktree after the existing commit gate re-checks review, source hashes,
-branch/HEAD, changed files, bounded-file validation, and verifier state.
+state-aware forms. `Run Review Gate` mirrors the backend commit-request rule:
+`runs/<source_run_id>/review.md` must exist and mention the coder worktree run
+id before the app exposes `coder-commit-request`. If the review artifact is
+missing or stale, the run page shows the blocked reason and hides the commit
+request form. `commit-coder-worktree` appears only after commit approval and
+is still an explicit confirmed local action with a typed commit message that
+must match the approved request. Publication request appears only after the
+isolated local commit is recorded, and publication handoff appears only after
+publication approval. The commit action creates a commit only inside the
+isolated coder worktree after the existing commit gate re-checks review,
+source hashes, branch/HEAD, changed files, bounded-file validation, and
+verifier state.
 
 The `/delegation-runs`, `/inbox`, `/approvals`, and `/incidents` pages are
 local operator surfaces. The delegation run index and inbox are read-only and

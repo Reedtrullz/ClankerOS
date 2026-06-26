@@ -125,6 +125,11 @@ read-only `Selected Workflow Continuation` block with the exact next local
 action, run detail surface, approvals queue, inbox, dogfooding checklist, and
 the explicit `external_effects_created: false` boundary.
 
+Use `/runs/<coder_run_id>` to review the worktree evidence and gate state. The
+`Run Review Gate` panel shows whether `runs/<source_run_id>/review.md` exists
+and mentions the coder worktree run id. The app only exposes the
+`coder-commit-request` form when that gate passes.
+
 Use `/runs/<coder_run_id>` after publication handoff preparation when you want
 the display-only manual publication commands. The app shows
 `suggested_push_command`, `suggested_draft_pr_command`, and `pr_body_path`, but
