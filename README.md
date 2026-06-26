@@ -157,7 +157,8 @@ goal-centered workbench: current phase, next action, progress, timeline,
 activity log, goal risk, completion criteria, evidence, delegations, runs,
 approvals, artifacts, a typed Goal Artifact Explorer, memory, skills used, git
 status, operator notes, a goal-scoped resume snapshot, and remaining work. The
-page auto-refreshes by polling and stays local-only.
+page auto-refreshes by local polling, pauses while the operator is editing a
+form or the tab is hidden, and stays local-only.
 Skills Used links to `/skills`, shows task skill usage counts, projects using
 each tag, matching generated or available skill records when present, profile
 usage, and keeps skill execution out of the Goal page.

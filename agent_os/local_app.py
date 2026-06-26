@@ -2310,7 +2310,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
     phase = _goal_current_phase(state)
     return "".join(
         [
-            "<script>setTimeout(function(){ window.location.reload(); }, 5000);</script>",
+            _goal_live_state(),
             f"<section class='hero'><h1>Goal {_e(goal.id)}</h1>",
             f"<p>{_e(goal.title or goal.description)}</p>",
             _kv(
@@ -2344,6 +2344,46 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_operator_notes_section(root, state),
             _list_section("Remaining Work", _goal_remaining_work_lines(root, state, next_action)),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _goal_live_state() -> str:
+    return "".join(
+        [
+            "<section class='panel' data-live-refresh='goal'><h2>Goal Live State</h2>",
+            "<p class='muted'>Keeps this goal page current while preserving local form edits.</p>",
+            _kv(
+                [
+                    ("goal_live_refresh_enabled", "true"),
+                    ("goal_live_refresh_interval_seconds", "5"),
+                    ("goal_live_refresh_mode", "local_page_reload"),
+                    ("goal_live_refresh_pause_when_editing", "true"),
+                    ("goal_live_refresh_pause_when_hidden", "true"),
+                    ("goal_live_refresh_network_scope", "local_browser_loopback_only"),
+                    ("goal_live_refresh_external_effects_created", "false"),
+                ]
+            ),
+            """
+<script data-live-refresh-script='goal'>
+(function() {
+  var intervalMs = 5000;
+  function refreshPaused() {
+    var active = document.activeElement;
+    var tag = active && active.tagName ? active.tagName.toLowerCase() : "";
+    return document.hidden || tag === "input" || tag === "textarea" || tag === "select" || Boolean(active && active.isContentEditable);
+  }
+  function tick() {
+    if (!refreshPaused()) {
+      window.location.reload();
+      return;
+    }
+    window.setTimeout(tick, intervalMs);
+  }
+  window.setTimeout(tick, intervalMs);
+})();
+</script>""",
+            "</section>",
         ]
     )
 

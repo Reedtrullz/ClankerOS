@@ -119,7 +119,11 @@ Core layers for the bootstrap:
   commit approved, and publication approved states, a browser-native progress
   bar, and a large Current Phase banner that explains the phase reason,
   operator attention cue, next action surface, latest activity, and zero-effect
-  boundary without requiring the CLI. They also include a confirmed
+  boundary without requiring the CLI. Goal detail pages also include a
+  first-class `Goal Live State` readback and local page reload polling that
+  pauses while the operator is editing a form or the tab is hidden; it does not
+  fetch GitHub status, call providers, push, create PRs, deploy, or mutate
+  external systems. They also include a confirmed
   `save-goal-note` form that appends local operator resume context to the
   goal-scoped `operator-notes.md` artifact; saved operator notes also become
   linked `Operator note saved` entries in the Goal timeline and recent

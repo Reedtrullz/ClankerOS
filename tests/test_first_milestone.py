@@ -5142,7 +5142,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "remaining_work_gate: local_commit status=waiting" in goal.body
     assert "remaining_work_gate: publication_request status=waiting" in goal.body
     assert "remaining_work_gate: manual_publish status=waiting" in goal.body
+    assert "Goal Live State" in goal.body
+    assert "data-live-refresh='goal'" in goal.body
+    assert "goal_live_refresh_enabled</dt><dd>true" in goal.body
     assert "goal_live_refresh_interval_seconds</dt><dd>5" in goal.body
+    assert "goal_live_refresh_pause_when_editing</dt><dd>true" in goal.body
+    assert "goal_live_refresh_pause_when_hidden</dt><dd>true" in goal.body
+    assert "goal_live_refresh_external_effects_created</dt><dd>false" in goal.body
+    assert "document.hidden" in goal.body
     assert result.delegation_id in goal.body
     assert result.coder_worktree_run_id in goal.body
 

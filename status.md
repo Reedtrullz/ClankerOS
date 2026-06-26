@@ -1,5 +1,28 @@
 # Status
 
+## 2026-06-26 Goal Live State Refresh
+
+- Made Goal page live refresh first-class and operator-safe. `/goals/<goal_id>`
+  now renders `Goal Live State` with explicit refresh posture, a five-second
+  local page reload loop, and readbacks for edit/hidden-tab pauses.
+- The refresh loop pauses while an input, textarea, select, or contenteditable
+  element has focus and while the document is hidden. It still performs no
+  provider calls, GitHub polling, push, PR creation, deploy, or external
+  mutation.
+- Compact local verification for this slice:
+  - Focused red test failed first because the demo goal page did not contain
+    `Goal Live State`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Home Resume Action Form
 
 - Promoted Home's `Home Resume Workspace` from saved-goal continuation readback
