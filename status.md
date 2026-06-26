@@ -1,5 +1,28 @@
 # Status
 
+## 2026-06-27 First Run Dogfood Project Readback
+
+- Made the browser First Run Guide explicitly report `clankeros` as the
+  first dogfood project, the current repository path as
+  `first_run_project_path`, and the selected `first_run_default_project`.
+  A fresh checkout now makes "ClankerOS manages ClankerOS first" visible in
+  the operator readback instead of only pre-filling hidden form defaults.
+- Non-claims: this does not run delegations, approve gates, call providers,
+  fetch GitHub status, push, create PRs, deploy, or mutate external systems.
+  It is a local browser guidance/readback improvement only.
+- Compact local verification for this slice:
+  - Focused red pytest first failed because the First Run Guide did not expose
+    `first_run_dogfood_project`.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+    -> `1 passed, 512 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Browser-First Empty Goal Snapshot
 
 - Removed stale CLI-first language from the empty Home `Goal Snapshot`. A fresh

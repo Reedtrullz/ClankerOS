@@ -103,9 +103,11 @@ Core layers for the bootstrap:
   for available/generated skill records with usage counts; and `/profiles`
   for inactive future provider-routing readback from `.clanker/profiles.yml`.
   The `/goals` and Home first-run panel now exposes a state-aware
-  Create project -> Create first goal -> Run first delegation checklist plus
-  confirmed local `register-project` and `create-goal` forms, moving initial
-  project/goal setup into the browser without adding provider calls or
+  Create project -> Create first goal -> Create first delegation -> Generate
+  context pack -> Run first delegation checklist plus confirmed local
+  `register-project` and `create-goal` forms, explicitly defaults the first
+  dogfood project to `clankeros` at the current repository path, and moves
+  initial project/goal setup into the browser without adding provider calls or
   external effects. The populated `/goals` cockpit also exposes a confirmed
   local `Start Another Goal` form for registered projects, so daily goal
   creation does not require the CLI. The checklist reports the current step,

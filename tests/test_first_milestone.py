@@ -4070,6 +4070,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_project_registered</dt><dd>false" in root.body
     assert "first_run_goal_created</dt><dd>false" in root.body
     assert "first_run_delegation_created</dt><dd>false" in root.body
+    assert "first_run_dogfood_project</dt><dd>clankeros" in root.body
+    assert "first_run_default_project</dt><dd>clankeros" in root.body
+    assert f"first_run_project_path</dt><dd>{tmp_path}" in root.body
     assert "first_run_context_pack_action</dt><dd>pending_until_delegation_exists" in root.body
     assert "first_run_step: create_project status=current" in root.body
     assert "first_run_step: create_first_goal status=waiting_for_project" in root.body
