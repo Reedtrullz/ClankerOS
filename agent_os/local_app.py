@@ -2344,6 +2344,12 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _list_section("Delegations", _goal_delegation_lines(state), anchor_id="goal-delegations"),
             _list_section("Runs", _goal_run_lines(root, state), anchor_id="goal-runs"),
             _list_section("Approvals", _goal_approval_lines(root, state), anchor_id="goal-approvals"),
+            _list_section(
+                "Goal Incidents",
+                _goal_incident_lines(root, state),
+                "/incidents",
+                anchor_id="goal-incidents",
+            ),
             _list_section("Evidence", _goal_evidence_lines(root, state), anchor_id="goal-evidence"),
             _list_section("Artifacts", _goal_artifact_lines(root, state), anchor_id="goal-artifacts"),
             _goal_artifact_explorer(root, state),
@@ -2419,6 +2425,7 @@ def _goal_section_index() -> str:
         ("Delegations", "goal-delegations"),
         ("Runs", "goal-runs"),
         ("Approvals", "goal-approvals"),
+        ("Incidents", "goal-incidents"),
         ("Evidence", "goal-evidence"),
         ("Artifacts", "goal-artifacts"),
         ("Artifact explorer", "goal-artifact-explorer"),
@@ -3912,6 +3919,36 @@ def _goal_approval_lines(root: Path, state: dict[str, Any]) -> list[str]:
         + [_commit_line(item) for item in state["commit_approvals"]]
         + [_publication_line(root, item) for item in state["publications"]]
     )
+
+
+def _goal_incident_lines(root: Path, state: dict[str, Any]) -> list[str]:
+    incidents = state["incidents"]
+    open_incidents = [row for row in incidents if row["status"] == "open"]
+    resolved_incidents = [row for row in incidents if row["status"] == "resolved"]
+    lines = [
+        "goal_incident_surface: <a href='/incidents'>/incidents</a>",
+        f"goal_incident_open_count: {len(open_incidents)}",
+        f"goal_incident_resolved_count: {len(resolved_incidents)}",
+        f"goal_incident_total_count: {len(incidents)}",
+        "goal_incidents_write_on_get: false",
+        "goal_incidents_external_effects_created: false",
+    ]
+    if not incidents:
+        lines.append("goal_incident_status: none")
+        return lines
+    for incident in incidents[:10]:
+        evidence_path = str(incident["evidence_path"] or "none")
+        lines.append(
+            f"goal_incident: {_e(incident['id'])} status={_e(incident['status'])} "
+            f"severity={_e(incident['severity'])} run={_e(incident['run_id'] or 'none')} "
+            f"task={_e(incident['task_id'] or 'none')} summary={_e(incident['summary'])}"
+        )
+        lines.append(
+            f"goal_incident_evidence: {_artifact_link(_repo_relative_artifact_path(root, evidence_path))}"
+        )
+    if len(incidents) > 10:
+        lines.append(f"goal_incident_more_count: {len(incidents) - 10}")
+    return lines
 
 
 def _goal_evidence_lines(root: Path, state: dict[str, Any]) -> list[str]:

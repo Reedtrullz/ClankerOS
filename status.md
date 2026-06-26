@@ -1,5 +1,31 @@
 # Status
 
+## 2026-06-26 Goal Incidents Section
+
+- Added a first-class `Goal Incidents` section to `/goals/<goal_id>`, linked
+  from the Goal Section Index. It shows open/resolved/total incident counts
+  plus each goal-owned incident's status, severity, run, task, summary, and
+  evidence artifact link.
+- Open goal incidents continue to drive the Goal Next Action card toward
+  `Inspect incident`; the new section makes that state visible without
+  leaving the Goal workbench.
+- Non-claims: this does not resolve incidents, retry work, run tasks, approve
+  gates, call providers, fetch GitHub status, push, create PRs, deploy, or
+  mutate external systems. It is read-only local rendering on GET.
+- Compact local verification for this slice:
+  - Focused red pytest first failed because the Goal page did not contain
+    `Goal Incidents`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "goal_page_promotes_goal_incidents or local_app_demo_scenario_populates_fixture_state"`
+    -> `2 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Goal-Scoped CI Proof Recording
 
 - Added `Record Goal CI Proof From GitHub JSON` to `/goals/<goal_id>` under

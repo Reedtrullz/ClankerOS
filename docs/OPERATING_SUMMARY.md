@@ -177,6 +177,9 @@ Core layers for the bootstrap:
   renders saved filters, expanded panels, and last-viewed artifact as
   `Goal Workspace Restore State`, and exposes a confirmed `save-workspace`
   form that returns to the same goal page after saving without writing on GET.
+  Goal `Incidents` now links to `/incidents`, shows open/resolved/total
+  incident counts, and lists goal-owned incident status, severity, run, task,
+  summary, and evidence artifact links without taking action.
   Goal `Remaining Work` now renders a gate-aware checklist from local state,
   showing the next action, open task/incident/recommendation counts, and
   done/pending/waiting status for scout, context-pack, implementation

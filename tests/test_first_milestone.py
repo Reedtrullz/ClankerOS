@@ -4818,6 +4818,60 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert resolve_artifact_path(tmp_path, "docs/sample.md") == docs / "sample.md"
 
 
+def test_goal_page_promotes_goal_incidents(tmp_path: Path) -> None:
+    result = run_demo_app_scenario(tmp_path)
+    evidence_path = tmp_path / ".clanker" / "incidents" / "demo-goal-incident.json"
+    evidence_path.parent.mkdir(parents=True, exist_ok=True)
+    evidence_path.write_text(
+        json.dumps(
+            {
+                "incident": "demo goal incident",
+                "next_recommended_operator_action": "inspect_goal_incident",
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    incident_id = Storage(tmp_path / ".agent" / "state.db").record_incident(
+        project_id=result.project_id,
+        run_id=result.coder_worktree_run_id,
+        goal_id=result.goal_id,
+        task_id=result.task_id,
+        task_type="record_learning",
+        incident_type="operator_attention",
+        severity="high",
+        status="open",
+        summary="Review blocked demo incident",
+        failure_class="demo_incident_review",
+        verification_method="manual_review",
+        verification_path=str(result.review_path.relative_to(tmp_path)),
+        failed_checks=["demo_incident_review"],
+        evidence={"next_recommended_operator_action": "inspect_goal_incident"},
+        artifacts=[str(evidence_path.relative_to(tmp_path))],
+        evidence_path=str(evidence_path.relative_to(tmp_path)),
+    )
+
+    goal = render_local_app_route(tmp_path, f"/goals/{result.goal_id}")
+
+    assert goal.status == 200
+    assert "Goal Incidents" in goal.body
+    assert "href='#goal-incidents'" in goal.body
+    assert "id='goal-incidents'" in goal.body
+    assert "recommended_action</dt><dd>Inspect incident" in goal.body
+    assert "goal_incident_open_count: 1" in goal.body
+    assert "goal_incident_resolved_count: 0" in goal.body
+    assert (
+        f"goal_incident: {incident_id} status=open severity=high "
+        f"run={result.coder_worktree_run_id} task={result.task_id} "
+        "summary=Review blocked demo incident"
+    ) in goal.body
+    assert "goal_incident_evidence: " in goal.body
+    assert ".clanker/incidents/demo-goal-incident.json" in goal.body
+    assert "goal_incidents_external_effects_created: false" in goal.body
+
+
 def test_local_app_demo_scenario_populates_fixture_state(
     tmp_path: Path,
 ) -> None:
