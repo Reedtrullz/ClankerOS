@@ -5812,19 +5812,24 @@ def _artifact_viewer(
             text = json.dumps(json.loads(text), indent=2, sort_keys=True)
         except json.JSONDecodeError:
             pass
+    artifact_type = _artifact_type(path)
+    render_family = _artifact_render_family(path)
+    renderer = _artifact_renderer_name(path)
     body = "".join(
         [
             f"<section><h1>Artifact {_e(str(path.relative_to(root)))}</h1>",
             _kv(
                 [
-                    ("artifact_type", _artifact_type(path)),
+                    ("artifact_type", artifact_type),
+                    ("artifact_render_family", render_family),
+                    ("artifact_renderer", renderer),
+                    ("artifact_raw_filesystem_browsing", "false"),
+                    ("artifact_content_executed", "false"),
                     ("size_bytes", str(size)),
                     ("truncated", str(truncated).lower()),
                 ]
             ),
-            "<pre>",
-            _e(text),
-            "</pre>",
+            _render_artifact_content(text, render_family, renderer),
             "<p class='muted'>Artifact content is rendered as inert text and is never executed.</p>",
             "</section>",
         ]
@@ -5861,6 +5866,103 @@ def _artifact_type(path: Path) -> str:
         ".diff": "diff",
         ".log": "log",
     }.get(path.suffix, "unknown")
+
+
+def _artifact_render_family(path: Path) -> str:
+    if path.suffix == ".md":
+        return "markdown"
+    if path.suffix == ".json":
+        return "json"
+    if path.suffix in {".patch", ".diff"}:
+        return "patch"
+    return "text"
+
+
+def _artifact_renderer_name(path: Path) -> str:
+    family = _artifact_render_family(path)
+    if family == "markdown":
+        return "markdown_safe_html"
+    if family == "json":
+        return "json_pretty_pre"
+    if family == "patch":
+        return "patch_line_view"
+    return "text_pre"
+
+
+def _render_artifact_content(text: str, render_family: str, renderer: str) -> str:
+    if render_family == "markdown":
+        return _render_markdown_artifact(text, renderer)
+    if render_family == "patch":
+        return _render_patch_artifact(text, renderer)
+    class_name = "artifact-json" if render_family == "json" else "artifact-text"
+    return (
+        f"<div class='artifact-render-shell' data-artifact-renderer='{_e(renderer)}'>"
+        f"<pre class='{class_name}'>{_e(text)}</pre>"
+        "</div>"
+    )
+
+
+def _render_markdown_artifact(text: str, renderer: str) -> str:
+    parts = [
+        f"<div class='artifact-render-shell artifact-markdown' data-artifact-renderer='{_e(renderer)}'>"
+    ]
+    in_list = False
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            if in_list:
+                parts.append("</ul>")
+                in_list = False
+            continue
+        if stripped.startswith("- "):
+            if not in_list:
+                parts.append("<ul class='artifact-markdown-list'>")
+                in_list = True
+            parts.append(f"<li>{_e(stripped[2:].strip())}</li>")
+            continue
+        if in_list:
+            parts.append("</ul>")
+            in_list = False
+        heading_level = len(stripped) - len(stripped.lstrip("#"))
+        if (
+            1 <= heading_level <= 6
+            and stripped[heading_level:heading_level + 1] == " "
+        ):
+            tag = "h2" if heading_level == 1 else "h3"
+            parts.append(
+                f"<{tag} class='artifact-markdown-heading'>{_e(stripped[heading_level:].strip())}</{tag}>"
+            )
+        else:
+            parts.append(f"<p>{_e(stripped)}</p>")
+    if in_list:
+        parts.append("</ul>")
+    parts.append("</div>")
+    return "".join(parts)
+
+
+def _render_patch_artifact(text: str, renderer: str) -> str:
+    lines = [
+        f"<div class='artifact-render-shell' data-artifact-renderer='{_e(renderer)}'>",
+        "<pre class='artifact-patch'>",
+    ]
+    for line in text.splitlines():
+        class_name = "artifact-patch-line"
+        if line.startswith("+") and not line.startswith("+++"):
+            class_name += " artifact-patch-add"
+        elif line.startswith("-") and not line.startswith("---"):
+            class_name += " artifact-patch-delete"
+        elif line.startswith("@@"):
+            class_name += " artifact-patch-hunk"
+        elif (
+            line.startswith("diff ")
+            or line.startswith("index ")
+            or line.startswith("---")
+            or line.startswith("+++")
+        ):
+            class_name += " artifact-patch-meta"
+        lines.append(f"<span class='{class_name}'>{_e(line)}</span>")
+    lines.extend(["</pre>", "</div>"])
+    return "".join(lines)
 
 
 def _health(root: Path, *, host: str, port: int) -> str:

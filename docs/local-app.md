@@ -372,7 +372,12 @@ Supported inert render types are:
 
 Large artifacts are truncated with a visible message. The page shows the
 inert render type (`markdown`, `json`, `text`, `patch`, `diff`, or `log`) plus
-file size and truncation status. Artifact content is never executed.
+file size and truncation status. It also reports the render family, renderer,
+raw-filesystem-browsing posture, and execution posture. Markdown artifacts are
+rendered through a small escaped heading/list/paragraph view, JSON artifacts
+are pretty-printed, patch/diff artifacts get line classes for meta/add/delete/
+hunk scanning, and text/log artifacts render as inert text. Artifact content
+is never executed.
 
 ## Safe Actions
 

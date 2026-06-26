@@ -146,7 +146,11 @@ Core layers for the bootstrap:
   They also include a typed
   `Goal Artifact Explorer` that groups goal-linked Markdown,
   JSON, Patch/Diff, and Text/Log artifacts and links them through the bounded
-  inert `/artifacts` viewer without raw filesystem browsing. Every page shares
+  inert `/artifacts` viewer without raw filesystem browsing. The artifact
+  viewer now reports render family/renderer posture and renders Markdown as
+  escaped headings/lists/paragraphs, JSON as pretty-printed text, patch/diff
+  artifacts with scan-friendly line classes, and text/log artifacts as inert
+  text while keeping content execution disabled. Every page shares
   a browser operator shell with breadcrumbs, recent local items, a command
   palette, keyboard shortcuts, and a theme toggle. The workflow page can be
   scoped with a

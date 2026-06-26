@@ -4610,26 +4610,44 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert markdown.status == 200
     assert "artifact_type" in markdown.body
     assert "markdown" in markdown.body
-    assert "# Sample" in markdown.body
+    assert "artifact_render_family</dt><dd>markdown" in markdown.body
+    assert "artifact_renderer</dt><dd>markdown_safe_html" in markdown.body
+    assert "artifact_raw_filesystem_browsing</dt><dd>false" in markdown.body
+    assert "artifact_content_executed</dt><dd>false" in markdown.body
+    assert "<h2 class='artifact-markdown-heading'>Sample</h2>" in markdown.body
     json_response = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.json")
     assert json_response.status == 200
     assert "json" in json_response.body
+    assert "artifact_render_family</dt><dd>json" in json_response.body
+    assert "artifact_renderer</dt><dd>json_pretty_pre" in json_response.body
+    assert "<pre class='artifact-json'>" in json_response.body
     assert "&quot;ok&quot;: true" in json_response.body
     text_response = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.txt")
     assert text_response.status == 200
     assert "text" in text_response.body
+    assert "artifact_render_family</dt><dd>text" in text_response.body
+    assert "artifact_renderer</dt><dd>text_pre" in text_response.body
+    assert "<pre class='artifact-text'>" in text_response.body
     assert "plain text" in text_response.body
     patch_response = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.patch")
     assert patch_response.status == 200
     assert "patch" in patch_response.body
+    assert "artifact_render_family</dt><dd>patch" in patch_response.body
+    assert "artifact_renderer</dt><dd>patch_line_view" in patch_response.body
+    assert "artifact-patch-meta" in patch_response.body
     assert "--- a/demo.txt" in patch_response.body
     diff_response = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.diff")
     assert diff_response.status == 200
     assert "diff" in diff_response.body
+    assert "artifact_render_family</dt><dd>patch" in diff_response.body
+    assert "artifact_renderer</dt><dd>patch_line_view" in diff_response.body
+    assert "artifact-patch-meta" in diff_response.body
     assert "diff --git" in diff_response.body
     log_response = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.log")
     assert log_response.status == 200
     assert "log" in log_response.body
+    assert "artifact_render_family</dt><dd>text" in log_response.body
+    assert "artifact_renderer</dt><dd>text_pre" in log_response.body
     assert "demo log line" in log_response.body
 
     absolute = render_local_app_route(

@@ -1,5 +1,27 @@
 # Status
 
+## 2026-06-26 Artifact Viewer Render Modes
+
+- Upgraded `/artifacts?path=...` from a plain inert preformatted blob into a
+  type-aware artifact viewer. It now reports `artifact_render_family`,
+  `artifact_renderer`, `artifact_raw_filesystem_browsing=false`, and
+  `artifact_content_executed=false`.
+- Markdown artifacts render through escaped headings/lists/paragraphs, JSON
+  artifacts are pretty-printed, patch/diff artifacts get line classes for
+  meta/add/delete/hunk scanning, and text/log artifacts render as inert text.
+- The viewer remains bounded to repo-relative supported artifact paths and
+  still rejects absolute paths, parent traversal, symlinks resolving outside
+  the repo, and unsupported file types. It does not execute artifact content,
+  browse raw filesystem paths, call providers, fetch GitHub status, push,
+  create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_artifact_viewer_is_read_only_and_bounded or local_app_demo_scenario_populates_fixture_state"`
+    -> `2 passed, 508 deselected`
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Goal Memory Readback
 
 - Upgraded `/goals/<goal_id>` `Memory` from a thin artifact list into a
