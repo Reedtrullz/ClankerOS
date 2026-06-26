@@ -101,6 +101,9 @@ Core layers for the bootstrap:
   and CI proof boundary without contacting GitHub; a
   read-only `/ci-evidence` page for operator-supplied CI/deploy proof records
   already stored in local ClankerOS state without fetching GitHub status; a
+  read-only root dashboard `Verification Snapshot` for checked-in workflow
+  timeout, latest operator-supplied CI evidence, `/verification`, and
+  `/ci-evidence` links without contacting GitHub; a
   read-only `/actions` current-demo action surface map that links fixture state
   to the selected project, delegation, workflow, run, approvals, and inbox
   surfaces; a read-only `/dogfooding` checklist and next-action panel for the

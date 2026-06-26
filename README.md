@@ -157,6 +157,10 @@ that an in-progress GitHub run is pending proof, not CI proof, so you can wait
 on GitHub instead of rerunning the full suite locally. The page itself does
 not contact GitHub.
 
+The root dashboard includes the same proof boundary as a compact
+`Verification Snapshot`, with links to `/verification` and `/ci-evidence`, so
+you can see from the first screen whether local CI proof has been recorded.
+
 Use `/ci-evidence` after recording CI proof with `ci-deploy-evidence`. It shows
 operator-supplied GitHub Actions/deploy evidence already stored in local
 ClankerOS state and links the inert evidence artifact. It does not fetch

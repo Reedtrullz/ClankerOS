@@ -1,5 +1,27 @@
 # Status
 
+## 2026-06-26 Local App Dashboard Verification Snapshot
+
+- Upgraded the root dashboard with a read-only `Verification Snapshot` block.
+  It summarizes checked-in workflow availability, job timeout, latest
+  operator-supplied CI evidence when present, and links to `/verification` and
+  `/ci-evidence` without fetching GitHub status.
+- The first app screen now shows the same local-vs-GitHub proof boundary as
+  `/verification`: a pushed or in-progress run is not CI proof until GitHub
+  passes and the operator records evidence locally.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+    -> `1 passed, 497 deselected`
+  - `python3 -m agent_os.cli app-smoke-test` -> rendered the core local app
+    routes with status 200 and zero provider/network/external-mutation
+    counters.
+  - `git diff --check`
+- Non-claims: this is a read-only dashboard/navigation improvement only; it
+  does not execute work, approve requests, commit, push, create PRs, deploy,
+  call providers, fetch GitHub status, execute arbitrary commands, or perform
+  non-loopback network actions from the local app.
+
 ## 2026-06-26 Local App Verification Latest CI Evidence
 
 - Upgraded `/verification` with a read-only `Latest Recorded CI Evidence`

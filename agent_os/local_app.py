@@ -589,6 +589,7 @@ def _dashboard(root: Path, *, host: str, port: int) -> str:
             "<button type='submit'>refresh-dashboard-state</button>"
             "</form>",
             "</section>",
+            _dashboard_verification_snapshot(root),
             "<section><h2>Modern Workflow</h2>",
             "<p><a href='/workflow'>Open workflow stepper</a></p>",
             _workflow_list(compact=True),
@@ -609,6 +610,43 @@ def _dashboard(root: Path, *, host: str, port: int) -> str:
             _dashboard_next_action_section(next_action),
         ]
     )
+
+
+def _dashboard_verification_snapshot(root: Path) -> str:
+    workflow_path = root / ".github" / "workflows" / "tests.yml"
+    workflow_text = (
+        workflow_path.read_text(encoding="utf-8") if workflow_path.exists() else ""
+    )
+    records = _storage(root).list_recent_ci_deploy_evidence_records(limit=1)
+    lines = [
+        f"dashboard_workflow_file_status: {'available' if workflow_path.exists() else 'missing'}",
+        f"dashboard_job_timeout_minutes: {_e(_workflow_timeout_minutes(workflow_text))}",
+        "dashboard_ci_proof_boundary: completed passing GitHub Actions run plus operator-supplied local record",
+        "dashboard_github_status_fetch: none",
+        "verification_surface: <a href='/verification'>/verification</a>",
+        "ci_evidence_surface: <a href='/ci-evidence'>/ci-evidence</a>",
+    ]
+    if records:
+        record = records[0]
+        lines.extend(
+            [
+                f"dashboard_latest_ci_status: {_e(record.status)}",
+                f"dashboard_latest_ci_provider: {_e(record.provider)}",
+                f"dashboard_latest_ci_commit: {_e(record.commit_sha)}",
+                f"dashboard_ci_external_run_id: {_e(record.external_run_id)}",
+                f"dashboard_ci_url: <a href='{_e(record.external_url)}'>{_e(record.external_url)}</a>",
+                "dashboard_ci_record_source: operator_supplied",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                "dashboard_latest_ci_status: missing",
+                "dashboard_next_ci_action: wait_for_github_actions_success_then_record_ci_deploy_evidence",
+                "dashboard_ci_record_source: none",
+            ]
+        )
+    return _list_section("Verification Snapshot", lines, "/verification")
 
 
 def _workflow(

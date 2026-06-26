@@ -46,6 +46,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   that points to the highest-priority local operator surface, such as
   incidents, approvals, a reviewed coder run needing a commit request, a
   publication handoff, project state, or the demo/onboarding page.
+- `/` also includes a read-only `Verification Snapshot` that summarizes the
+  checked-in workflow timeout, latest operator-supplied CI evidence when one
+  exists, and links to `/verification` plus `/ci-evidence` without polling
+  GitHub status.
 - `/workflow` - modern handoff/worktree/commit/publication workflow stepper,
   including `coder-prep-from-handoff` as the artifact-first prep route. Add
   `?delegation_id=<id>` or `?run_id=<coder_worktree_run_id>` to show selected
@@ -171,6 +175,9 @@ progress, keep waiting on GitHub instead of rerunning the full suite locally;
 if it fails or reaches the timeout, inspect the failed job log and fix that
 specific CI issue. If no CI evidence has been recorded locally, the page shows
 a `ci-deploy-evidence` command template instead of pretending CI proof exists.
+The root dashboard mirrors this boundary as a compact `Verification Snapshot`
+with `/verification` and `/ci-evidence` links, while still avoiding GitHub
+status polling.
 
 `/ci-evidence` is the read-only companion for proof that has already been
 recorded locally with `ci-deploy-evidence`. It shows the provider, status,

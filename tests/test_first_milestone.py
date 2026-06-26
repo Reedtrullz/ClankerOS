@@ -3286,6 +3286,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "no network actions except local browser/server loopback" in root.body
     assert "Dashboard Refresh" in root.body
     assert "refresh-dashboard-state" in root.body
+    assert "Verification Snapshot" in root.body
+    assert "dashboard_latest_ci_status: success" in root.body
+    assert "dashboard_latest_ci_provider: github-actions" in root.body
+    assert "dashboard_latest_ci_commit: abc123" in root.body
+    assert "dashboard_ci_external_run_id: 123" in root.body
+    assert "dashboard_github_status_fetch: none" in root.body
+    assert "verification_surface" in root.body
+    assert "ci_evidence_surface" in root.body
 
     refresh_confirmation = render_local_app_route(
         tmp_path,
