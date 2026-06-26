@@ -1,5 +1,28 @@
 # Status
 
+## 2026-06-26 Local App Approval Follow-Up Links
+
+- Upgraded `/approvals` so pending commit approvals show the relevant run link,
+  `follow_up_action_after_approval: commit-coder-worktree`, and
+  `typed_commit_message_required: true`.
+- Pending publication approvals now show the relevant run link,
+  `follow_up_action_after_approval: coder-publication-handoff`, and the
+  explicit `push_created=false pr_created=false deploy_created=false`
+  boundary.
+- Focused red coverage first failed because `/approvals` did not render
+  `Commit Approval Follow-Up`; the approvals page now passes the fixture-backed
+  demo scenario through commit request and publication request queue states.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario` -> red before implementation, then `1 passed, 497 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario or local_app_routes_render_modern_workflow_and_health or local_app_cli_commands_and_bind_safety"` -> `3 passed, 495 deselected`
+  - `python3 -m agent_os.cli app-smoke-test` -> rendered the core local app routes with status 200 and zero provider/network/external-mutation counters.
+  - `git diff --check`
+- Non-claims: this is an approval-queue readback/navigation improvement only;
+  it does not execute work, approve requests, commit, push, create PRs, deploy,
+  call providers, fetch GitHub status, execute arbitrary commands, or perform
+  non-loopback network actions.
+
 ## 2026-06-26 Local App Health Warning Readback
 
 - Added local app warning readback to `/health` and

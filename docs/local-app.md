@@ -96,7 +96,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   operator can scan change size without opening the artifact first.
 - `/inbox` - read-only operator queue for steering reviews, approval requests,
   incidents, delegations, coder runs, commits, and publication handoffs.
-- `/approvals` - pending worktree, commit, and publication approvals.
+- `/approvals` - pending worktree, commit, and publication approvals. Commit
+  and publication rows link back to the relevant run and show the next
+  local-only follow-up action after approval.
 - `/incidents` - recent local incidents and evidence links.
 - `/artifacts?path=<relative_path>` - safe read-only artifact viewer.
 - `/health` - Python, git, storage, command, import, route, and counter health.
@@ -213,6 +215,12 @@ publication handoff when the required approval exists. The dashboard and
 rewriting only the local app status artifact. Delegation pages also expose
 implementation handoff readback and link the handoff Markdown through the safe
 artifact viewer.
+The `/approvals` page is the gate queue for pending local decisions. Pending
+commit approvals now show the relevant run link, the `commit-coder-worktree`
+follow-up, and the typed commit-message requirement. Pending publication
+approvals show the relevant run link and the `coder-publication-handoff`
+follow-up while preserving the explicit `push_created=false`,
+`pr_created=false`, and `deploy_created=false` boundary.
 Confirmation pages show the submitted action payload as visible read-only
 fields plus the safety boundary before resubmitting with `confirm=yes`, so the
 operator can review exactly what will be written before a local artifact or

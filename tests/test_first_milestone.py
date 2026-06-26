@@ -3789,6 +3789,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert approvals.status == 200
     assert commit_approval.id in approvals.body
     assert "approve-coder-commit" in approvals.body
+    assert "Commit Approval Follow-Up" in approvals.body
+    assert f"/runs/{result.coder_worktree_run_id}" in approvals.body
+    assert "follow_up_action_after_approval: commit-coder-worktree" in approvals.body
+    assert "typed_commit_message_required: true" in approvals.body
 
     commit_approval_confirmation = render_local_app_route(
         tmp_path,
@@ -3916,6 +3920,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ]
     assert len(publications) == 1
     publication = publications[0]
+    approvals_after_publication_request = render_local_app_route(tmp_path, "/approvals")
+    assert approvals_after_publication_request.status == 200
+    assert publication.id in approvals_after_publication_request.body
+    assert "Publication Approval Follow-Up" in approvals_after_publication_request.body
+    assert f"/runs/{result.coder_worktree_run_id}" in approvals_after_publication_request.body
+    assert (
+        "follow_up_action_after_approval: coder-publication-handoff"
+        in approvals_after_publication_request.body
+    )
+    assert "push_created=false pr_created=false deploy_created=false" in approvals_after_publication_request.body
 
     publication_approval_confirmation = render_local_app_route(
         tmp_path,

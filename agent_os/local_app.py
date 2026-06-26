@@ -2802,6 +2802,11 @@ def _worktree_approval_action_line(item: Any) -> str:
 def _commit_approval_action_line(item: Any) -> str:
     return (
         f"{_commit_line(item)} request={_artifact_link(item.request_artifact_path)} "
+        "<div><strong>Commit Approval Follow-Up</strong> "
+        f"<a href='/runs/{quote(item.run_id)}'>run detail</a> "
+        "follow_up_action_after_approval: commit-coder-worktree "
+        "typed_commit_message_required: true "
+        "push_created=false pr_created=false deploy_created=false</div>"
         + _input_form(
             "approve-coder-commit",
             {"approval_id": item.id, "decided_by": "operator"},
@@ -2813,6 +2818,10 @@ def _commit_approval_action_line(item: Any) -> str:
 def _publication_approval_action_line(root: Path, item: Any) -> str:
     return (
         f"{_publication_line(root, item)} request={_artifact_link(item.request_artifact_path)} "
+        "<div><strong>Publication Approval Follow-Up</strong> "
+        f"<a href='/runs/{quote(item.run_id)}'>run detail</a> "
+        "follow_up_action_after_approval: coder-publication-handoff "
+        "push_created=false pr_created=false deploy_created=false</div>"
         + _input_form(
             "approve-coder-publication",
             {"publication_id": item.id, "decided_by": "operator"},

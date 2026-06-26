@@ -125,6 +125,11 @@ Use `/actions` when you want a read-only catalog of available local app
 actions, where their forms appear, what previous artifact they require, what
 local artifact or approval they write, and the no-external-effects boundary.
 
+Use `/approvals` when you want to keep driving the gate sequence from one
+queue. Pending commit and publication approvals link back to the relevant run
+and name the next local-only follow-up action after approval, including the
+typed commit-message requirement and the manual push/PR boundary.
+
 Use `/verification` when you want the local-vs-GitHub testing split in one
 place. It reads the checked-in GitHub Actions workflow, lists the compact local
 checks to run before a push, and states that CI proof requires a completed

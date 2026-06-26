@@ -103,6 +103,8 @@ Core layers for the bootstrap:
   GitHub Actions handoff boundary without fetching GitHub status; a read-only
   operator inbox plus local approval and
   incident pages for pending worktree, commit, and publication decisions,
+  with commit/publication approval rows linking back to the relevant run and
+  naming the next local-only follow-up action after approval,
   operator-worthy queue items, incident evidence readback, a confirmed
   dashboard refresh action for rewriting the local app status artifact from
   current repo and route state, a read-only state-aware root dashboard
