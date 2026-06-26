@@ -108,8 +108,12 @@ Core layers for the bootstrap:
   `register-project` and `create-goal` forms, explicitly defaults the first
   dogfood project to `clankeros` at the current repository path, persists
   resume workspace state after confirmed browser project registration and
-  first goal creation, and moves initial project/goal setup into the browser
-  without adding provider calls or external effects. The populated `/goals`
+  first goal creation, and now refreshes the same saved workspace anchor after
+  confirmed first-run scout delegation, context-pack generation, and delegation
+  run actions so `/resume`, Home, and `/workspace` return to the newest local
+  workflow artifact without a separate manual save. It moves initial
+  project/goal setup into the browser without adding provider calls or
+  external effects. The populated `/goals`
   cockpit also exposes a confirmed
   local `Start Another Goal` form for registered projects, so daily goal
   creation does not require the CLI. The checklist reports the current step,

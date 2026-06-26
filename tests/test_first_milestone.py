@@ -4517,6 +4517,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert delegation_artifact["execution_started"] is False
     assert delegation_artifact["network_actions_taken"] == 0
     assert delegation_artifact["external_mutations_taken"] == 0
+    delegated_workspace = json.loads(workspace_json.read_text(encoding="utf-8"))
+    assert delegated_workspace["open_project"] == "first-target"
+    assert delegated_workspace["open_goal"] == created_goal_id
+    assert delegated_workspace["last_viewed_artifact"] == str(
+        Path(delegation.result_artifact_path).relative_to(tmp_path)
+    )
+    assert delegated_workspace["updated_by"] == "delegate"
     delegated_goal_page = render_local_app_route(tmp_path, f"/goals/{created_goal_id}")
     assert "recommended_action</dt><dd>Generate context pack" in delegated_goal_page.body
     assert "reason</dt><dd>delegation=" in delegated_goal_page.body
@@ -4549,6 +4556,22 @@ def test_local_app_routes_render_modern_workflow_and_health(
     )
     assert context_pack_result.status == 200
     assert "context_pack:" in context_pack_result.body
+    context_pack_md = (
+        tmp_path
+        / ".clanker"
+        / "delegations"
+        / delegation.id
+        / "context"
+        / "context_pack.md"
+    )
+    assert context_pack_md.exists()
+    context_workspace = json.loads(workspace_json.read_text(encoding="utf-8"))
+    assert context_workspace["open_project"] == "first-target"
+    assert context_workspace["open_goal"] == created_goal_id
+    assert context_workspace["last_viewed_artifact"] == str(
+        context_pack_md.relative_to(tmp_path)
+    )
+    assert context_workspace["updated_by"] == "context-pack"
     after_context_pack_goal_page = render_local_app_route(tmp_path, f"/goals/{created_goal_id}")
     assert "recommended_action</dt><dd>Run delegation" in after_context_pack_goal_page.body
     assert "run_delegation_command</dt><dd>python3 -m agent_os.cli run-delegation" in after_context_pack_goal_page.body
@@ -4782,6 +4805,14 @@ def test_local_app_runs_delegation_from_browser_action(
     assert completed_delegation is not None
     assert completed_delegation.status == "completed"
     assert completed_delegation.result_artifact_path
+    run_workspace_path = tmp_path / ".clanker" / "app" / "workspace.json"
+    run_workspace = json.loads(run_workspace_path.read_text(encoding="utf-8"))
+    assert run_workspace["open_project"] == refreshed.get_goal(goal_id).project_id
+    assert run_workspace["open_goal"] == goal_id
+    assert run_workspace["last_viewed_artifact"] == str(
+        Path(completed_delegation.result_artifact_path).relative_to(tmp_path)
+    )
+    assert run_workspace["updated_by"] == "run-delegation"
 
     goal_after_run = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert "recommended_action</dt><dd>Run coder prep" in goal_after_run.body

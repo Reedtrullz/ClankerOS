@@ -2247,6 +2247,33 @@ def _write_workspace_state(root: Path, state: dict[str, str]) -> dict[str, Any]:
     return {"workspace_path": path, "status": "saved", **payload}
 
 
+def _remember_delegation_workspace(
+    root: Path,
+    storage: Storage,
+    delegation_id: str,
+    *,
+    artifact_path: str | Path | None,
+    updated_by: str,
+) -> dict[str, Any] | None:
+    delegation = storage.get_subagent_delegation(delegation_id)
+    if delegation is None:
+        return None
+    try:
+        goal = storage.get_goal(delegation.parent_goal_id)
+    except KeyError:
+        return None
+    return _write_workspace_state(
+        root,
+        {
+            **_load_workspace_state(root),
+            "open_project": goal.project_id,
+            "open_goal": goal.id,
+            "last_viewed_artifact": _repo_relative_artifact_path(root, artifact_path),
+            "updated_by": updated_by,
+        },
+    )
+
+
 def _workspace_path(root: Path) -> Path:
     return root / ".clanker" / "app" / "workspace.json"
 
@@ -7842,6 +7869,13 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             result = _create_scout_delegation_from_form(root, storage, form)
             message = f"subagent_delegation: {result.id}"
             location = f"/delegations/{quote(result.id)}"
+            _remember_delegation_workspace(
+                root,
+                storage,
+                result.id,
+                artifact_path=result.result_artifact_path,
+                updated_by="delegate",
+            )
         elif action == "resume-goal":
             result = _resume_goal_from_form(storage, form)
             message = f"goal_resumed: {result['goal_id']}"
@@ -7883,6 +7917,13 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             result = generate_context_pack(root, storage, delegation_id)
             message = f"context_pack: {result.context_pack_id}"
             location = f"/delegations/{quote(delegation_id)}"
+            _remember_delegation_workspace(
+                root,
+                storage,
+                delegation_id,
+                artifact_path=result.markdown_path or result.json_path,
+                updated_by="context-pack",
+            )
         elif action == "run-delegation":
             delegation_id = _required(form, "delegation_id")
             run_result = run_delegation(
@@ -7899,6 +7940,15 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 else f"run_delegation_failed: {run_result.message}"
             )
             location = f"/delegations/{quote(delegation_id)}"
+            _remember_delegation_workspace(
+                root,
+                storage,
+                delegation_id,
+                artifact_path=(
+                    run_result.result_artifact_path or (run_result.evidence_dir / "summary.md")
+                ),
+                updated_by="run-delegation",
+            )
             result = {
                 "delegation_id": run_result.delegation_id,
                 "run_id": run_result.run_id,
