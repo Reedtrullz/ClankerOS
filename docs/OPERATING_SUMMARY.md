@@ -248,7 +248,10 @@ Core layers for the bootstrap:
   form action, required input, expected output artifact, and renders the safe
   confirmed local form for the active gate when one exists, plus `Manual
   Browser Checkpoints` route-marker expectations for the first visual
-  dogfooding pass.
+  dogfooding pass. The demo also seeds a generated local `local-files` skill
+  record and `SKILL.md`, so `/skills` and Goal `Skills Used` show a concrete
+  available/generated skill with usage, last-used, project, and artifact link
+  readbacks instead of an empty placeholder.
   The app reads existing SQLite state and repo artifacts, writes a local
   health/status artifact with current warning readbacks, and exposes only
   explicit local forms for safe

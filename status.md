@@ -1,5 +1,24 @@
 # Status
 
+## 2026-06-26 Demo Skill Inventory Seeding
+
+- The fixture-backed local app demo now writes a generated `local-files`
+  `SKILL.md` under `.clanker/skills/local-files/` and records a matching
+  active skill plus version hash in SQLite. This makes `/skills` and Goal
+  `Skills Used` populated with a concrete available/generated skill, usage
+  count, last-used readback, project usage, and artifact link instead of only
+  showing a task tag.
+- The demo skill is local fixture state only. It does not install external
+  skills, execute a skill, call providers, use the network, push, create PRs,
+  deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Artifact Viewer Remember Resume Anchor
 
 - Added a confirmed `Remember Artifact` workspace form to

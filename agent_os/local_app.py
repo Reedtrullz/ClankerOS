@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import html
 import json
 import sqlite3
@@ -663,6 +664,7 @@ def run_demo_app_scenario(root: Path) -> DemoScenarioResult:
         verification_plan={"type": "manual_review"},
     )
     run_id = new_id("run")
+    _write_demo_skill_record(root, storage, project.name, task_id=task_id, run_id=run_id)
     evidence_dir = root / ".clanker" / "delegations" / "pending" / "runs" / run_id / "evidence"
     delegation = storage.record_subagent_delegation(
         routing_decision_id=None,
@@ -848,6 +850,68 @@ def run_demo_app_scenario(root: Path) -> DemoScenarioResult:
         approval_id=approval.id,
         execution_approval_id=execution_approval.id,
         review_path=review_path,
+    )
+
+
+def _write_demo_skill_record(
+    root: Path,
+    storage: Storage,
+    project_id: str,
+    *,
+    task_id: str,
+    run_id: str,
+) -> None:
+    skill_path = root / ".clanker" / "skills" / "local-files" / "SKILL.md"
+    skill_path.parent.mkdir(parents=True, exist_ok=True)
+    content = "\n".join(
+        [
+            "---",
+            "name: local-files",
+            "description: Fixture-backed local file inspection skill for the ClankerOS demo.",
+            "---",
+            "",
+            "# local-files",
+            "",
+            "## When To Use",
+            "",
+            "- Inspect local project files for a bounded ClankerOS goal.",
+            "- Prepare a deterministic local-app demo handoff without provider calls.",
+            "",
+            "## Verification Steps",
+            "",
+            "- Confirm referenced files are inside the registered demo project.",
+            "- Confirm provider_calls_taken_by_clankeros remains 0.",
+            "- Confirm network_actions_taken remains 0.",
+            "",
+            "## Demo Metadata",
+            "",
+            f"- project_id: {project_id}",
+            f"- source_task_id: {task_id}",
+            f"- source_run_id: {run_id}",
+            "- status: active",
+            "- generated_for_demo: true",
+            "",
+        ]
+    )
+    skill_path.write_text(content, encoding="utf-8")
+    skill = storage.record_skill(
+        project_id=project_id,
+        name="local-files",
+        description="Fixture-backed local file inspection skill for the ClankerOS demo.",
+        path=str(skill_path),
+        status="active",
+        created_by_profile="local_app_demo",
+        source_run_id=run_id,
+        source_task_id=task_id,
+        verification_status="fixture_demo",
+    )
+    storage.record_skill_version(
+        skill_id=skill.id,
+        version=1,
+        content_hash=hashlib.sha256(content.encode("utf-8")).hexdigest(),
+        path=str(skill_path),
+        change_summary="Seed fixture-backed local-files skill for demo app surfaces.",
+        verification_status="fixture_demo",
     )
 
 

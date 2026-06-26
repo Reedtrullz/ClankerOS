@@ -5062,7 +5062,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "skills_surface: <a href='/skills'>/skills</a>" in goal.body
     assert "goal_skill_usage_source: tasks.skill_tags" in goal.body
     assert "task_skill: local-files usage_count=1 projects_using=local-app-demo" in goal.body
-    assert "matching_skill_records=0" in goal.body
+    assert "matching_skill_records=1" in goal.body
+    assert ".clanker/skills/local-files/SKILL.md" in goal.body
+    assert "status=active" in goal.body
     assert "profile_used: scout count=1" in goal.body
     assert "skill_execution_from_goal_page=false" in goal.body
     assert "Git Status" in goal.body
@@ -5127,7 +5129,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert skills.status == 200
     assert "Skills Inventory" in skills.body
     assert "Available Skills" in skills.body
+    assert "Generated Skills" in skills.body
+    assert "local-files" in skills.body
     assert "usage_count" in skills.body
+    assert "usage_count=1" in skills.body
+    assert "last_used=" in skills.body
+    assert "projects_using=local-app-demo" in skills.body
+    assert ".clanker/skills/local-files/SKILL.md" in skills.body
 
     profiles = render_local_app_route(tmp_path, "/profiles")
     assert profiles.status == 200
