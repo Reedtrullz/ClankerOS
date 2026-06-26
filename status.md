@@ -1,5 +1,34 @@
 # Status
 
+## 2026-06-26 Goal Context Pack Next Action
+
+- Updated the Goal Next Action card so a freshly created scout delegation no
+  longer leaves the operator at a vague inspection step. If the delegation has
+  no context pack, `/goals/<goal_id>` recommends `Generate context pack` and
+  renders the confirmed local `context-pack` form directly on the goal page.
+- After the context pack exists, the Goal page changes the recommendation to
+  `Run delegation from CLI`, shows the exact `python3 -m agent_os.cli
+  run-delegation <delegation_id>` handoff, and keeps
+  `browser_execution_exposed=false`.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health"`
+    -> `1 passed, 506 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety"`
+    -> `3 passed, 504 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with matched route markers and zero provider/network/external
+    mutation counters.
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with matched fixture route snippets and zero provider/network/
+    external mutation counters.
+  - `git diff --check`
+    -> passed
+- Non-claims: this moves one more safe artifact-producing step into the
+  browser. It does not run delegation adapters from the app, call providers,
+  fetch GitHub status, push, create PRs, deploy, or mutate external systems.
+
 ## 2026-06-26 Goal Operator Notes Form
 
 - Added a confirmed `save-goal-note` browser action to `/goals/<goal_id>`.

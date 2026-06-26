@@ -4391,13 +4391,38 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert delegation_artifact["network_actions_taken"] == 0
     assert delegation_artifact["external_mutations_taken"] == 0
     delegated_goal_page = render_local_app_route(tmp_path, f"/goals/{created_goal_id}")
-    assert "recommended_action</dt><dd>Run or inspect delegation" in delegated_goal_page.body
-    assert "next_action_form_available</dt><dd>false" in delegated_goal_page.body
+    assert "recommended_action</dt><dd>Generate context pack" in delegated_goal_page.body
+    assert "reason</dt><dd>delegation=" in delegated_goal_page.body
+    assert "context_pack_missing" in delegated_goal_page.body
+    assert "next_action_form_available</dt><dd>true" in delegated_goal_page.body
+    assert "Generate Context Pack" in delegated_goal_page.body
+    assert "action='/actions/context-pack'" in delegated_goal_page.body
+    context_pack_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/context-pack",
+        method="POST",
+        form={"delegation_id": [delegation.id]},
+    )
+    assert context_pack_confirmation.status == 409
+    assert "Confirm context-pack" in context_pack_confirmation.body
+    context_pack_result = render_local_app_route(
+        tmp_path,
+        "/actions/context-pack",
+        method="POST",
+        form={"delegation_id": [delegation.id], "confirm": ["yes"]},
+    )
+    assert context_pack_result.status == 200
+    assert "context_pack:" in context_pack_result.body
+    after_context_pack_goal_page = render_local_app_route(tmp_path, f"/goals/{created_goal_id}")
+    assert "recommended_action</dt><dd>Run delegation from CLI" in after_context_pack_goal_page.body
+    assert "run_delegation_command</dt><dd>python3 -m agent_os.cli run-delegation" in after_context_pack_goal_page.body
+    assert delegation.id in after_context_pack_goal_page.body
+    assert "browser_execution_exposed</dt><dd>false" in after_context_pack_goal_page.body
     home_after_delegate = render_local_app_route(tmp_path, "/")
     assert "Goal-First Home" in home_after_delegate.body
     assert "home_active_goals</dt><dd>1" in home_after_delegate.body
     assert "lead_goal_phase</dt><dd>Running" in home_after_delegate.body
-    assert "lead_goal_next_action</dt><dd>Run or inspect delegation" in home_after_delegate.body
+    assert "lead_goal_next_action</dt><dd>Run delegation from CLI" in home_after_delegate.body
     assert "Home Recent Activity" in home_after_delegate.body
     assert "Scout delegated" in home_after_delegate.body
     assert created_goal_id in home_after_delegate.body

@@ -150,9 +150,13 @@ renders confirmed local forms for `register-project` and `create-goal`, so a
 new operator can create a project and first goal without switching to CLI
 commands. From the created goal page, the Next Action card can create the
 first read-only scout delegation with a confirmed `delegate` form, writing a
-local contract artifact without starting a subagent or calling a provider. Use
-Home or `/workspace` to save and restore open project, open goal, filters,
-expanded panels, and last viewed artifact in `.clanker/app/workspace.json`.
+local contract artifact without starting a subagent or calling a provider.
+After the delegation exists, the same card can generate the local context pack
+with a confirmed `context-pack` form. When the context pack is ready, the card
+shows the exact `run-delegation` CLI handoff because browser adapter execution
+is still not exposed. Use Home or `/workspace` to save and restore open
+project, open goal, filters, expanded panels, and last viewed artifact in
+`.clanker/app/workspace.json`.
 Use the goal page note form for day-to-day operator breadcrumbs, then find the
 same note artifact again from `/memory`.
 Use `/search` for bounded global search across indexed goals, projects,

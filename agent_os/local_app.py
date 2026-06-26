@@ -2112,7 +2112,11 @@ def _goal_next_action(root: Path, state: dict[str, Any]) -> GoalNextAction:
     if completed_delegation is not None:
         return GoalNextAction("Run coder prep", f"/delegations/{quote(completed_delegation.id)}", "implementation_handoff_or_result_available")
     if state["delegations"]:
-        return GoalNextAction("Run or inspect delegation", f"/delegations/{quote(state['delegations'][0].id)}", "delegation_exists")
+        delegation = state["delegations"][0]
+        metadata = load_delegation_result_metadata(delegation)
+        if not _delegation_has_context_pack(root, delegation, metadata):
+            return GoalNextAction("Generate context pack", f"/goals/{quote(goal.id)}", f"delegation={delegation.id} context_pack_missing")
+        return GoalNextAction("Run delegation from CLI", f"/delegations/{quote(delegation.id)}", f"delegation={delegation.id} context_pack_ready_browser_execution_not_exposed")
     return GoalNextAction("Create scout delegation", f"/goals/{quote(goal.id)}", "goal_has_no_delegation_yet")
 
 
@@ -2120,6 +2124,10 @@ def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -
     form = ""
     if next_action.action == "Create scout delegation":
         form = _goal_scout_delegation_form(state)
+    elif next_action.action == "Generate context pack":
+        form = _goal_context_pack_form(state)
+    elif next_action.action == "Run delegation from CLI":
+        form = _goal_run_delegation_handoff(state)
     return (
         "<section><h2>Next Action</h2>"
         + _kv(
@@ -2169,6 +2177,67 @@ def _goal_delegation_target_task(state: dict[str, Any]) -> Any | None:
         if task.id not in delegated_task_ids:
             return task
     return None
+
+
+def _goal_context_pack_form(state: dict[str, Any]) -> str:
+    delegation = _goal_context_pack_target_delegation(state)
+    if delegation is None:
+        return "<p class='muted'>context_pack_form_status: unavailable_until_delegation_exists</p>"
+    return "".join(
+        [
+            "<h3>Generate Context Pack</h3>",
+            "<p class='muted'>Creates or refreshes the local scout context pack for this delegation. It does not run the delegation, call a provider, or use the network.</p>",
+            _form("context-pack", {"delegation_id": delegation.id}),
+        ]
+    )
+
+
+def _goal_run_delegation_handoff(state: dict[str, Any]) -> str:
+    delegation = _goal_context_pack_target_delegation(state, require_missing=False)
+    if delegation is None:
+        return ""
+    command = f"python3 -m agent_os.cli run-delegation {delegation.id}"
+    return "".join(
+        [
+            "<h3>Run Delegation Boundary</h3>",
+            "<p class='muted'>The browser app does not execute delegation adapters yet. Use this exact local command when you are ready to run the read-only delegation.</p>",
+            _kv(
+                [
+                    ("run_delegation_command", command),
+                    ("browser_execution_exposed", "false"),
+                    ("provider_calls_taken_by_clankeros", "0"),
+                    ("network_actions_taken_by_app", "0"),
+                    ("external_mutations_taken", "0"),
+                ]
+            ),
+        ]
+    )
+
+
+def _goal_context_pack_target_delegation(
+    state: dict[str, Any],
+    *,
+    require_missing: bool = True,
+) -> Any | None:
+    for delegation in state.get("delegations", []):
+        metadata = load_delegation_result_metadata(delegation)
+        has_pack = _delegation_has_context_pack(state["root"], delegation, metadata)
+        if require_missing and not has_pack:
+            return delegation
+        if not require_missing and has_pack and delegation.status != "completed":
+            return delegation
+    return None
+
+
+def _delegation_has_context_pack(
+    root: Path,
+    delegation: Any,
+    metadata: dict[str, Any],
+) -> bool:
+    if metadata.get("context_pack_md") or metadata.get("context_pack_json"):
+        return True
+    context_dir = root / ".clanker" / "delegations" / delegation.id / "context"
+    return (context_dir / "context_pack.md").exists() or (context_dir / "context_pack.json").exists()
 
 
 def _goal_overview(state: dict[str, Any]) -> str:

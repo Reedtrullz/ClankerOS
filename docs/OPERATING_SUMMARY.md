@@ -96,9 +96,13 @@ Core layers for the bootstrap:
   to the goal-scoped `operator-notes.md` artifact, plus a confirmed `delegate`
   next-action form when a goal has planned tasks but no delegation yet; the
   delegation form writes a read-only scout delegation contract only and does
-  not start a subagent. Every page shares a browser operator shell with
-  breadcrumbs, recent local items, a command palette, keyboard shortcuts, and
-  a theme toggle. The workflow page can be scoped with a
+  not start a subagent. Once a delegation exists without a context pack, the
+  same Goal Next Action card exposes a confirmed `context-pack` form; after
+  the context pack exists, it shows the exact `run-delegation` CLI handoff and
+  keeps browser adapter execution marked as not exposed. Every page shares a
+  browser operator shell with breadcrumbs, recent local items, a command
+  palette, keyboard shortcuts, and a theme toggle. The workflow page can be
+  scoped with a
   delegation or coder run id, then annotates related stepper rows with
   selected local artifact, approval, run, commit, publication, and next-action
   status, plus a read-only `Selected Workflow Continuation` block linking the

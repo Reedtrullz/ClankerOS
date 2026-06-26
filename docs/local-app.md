@@ -71,7 +71,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   not overwrite previous notes. When the goal has planned tasks but no
   delegation yet, the Next Action card exposes a confirmed `delegate` form
   that writes a read-only scout delegation contract without starting a
-  subagent.
+  subagent. After that, the same Next Action card exposes a confirmed
+  `context-pack` form while the delegation has no context pack. Once the
+  context pack exists, the card shows the exact `run-delegation` CLI handoff
+  and makes clear that browser adapter execution is not exposed yet.
 - Every app page includes a shared operator shell with breadcrumbs, recent
   local items, a command palette, a dark/light theme toggle, and keyboard
   shortcuts for home, goals, and palette search. These controls only navigate
