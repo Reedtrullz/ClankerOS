@@ -92,7 +92,9 @@ Core layers for the bootstrap:
   delegations, known artifacts, incidents, recommendations, memory, runs,
   approvals, and skills;
   `/workspace` for persistent open project/goal/filter/panel/last-artifact
-  state in `.clanker/app/workspace.json`; `/memory` for project/global/
+  state in `.clanker/app/workspace.json` plus the saved goal's current phase,
+  one next action, operator attention cue, and target surface beside the
+  editable saved-state form; `/memory` for project/global/
   generated memories, operator notes, future work, and pin actions; `/skills`
   for available/generated skill records with usage counts; and `/profiles`
   for inactive future provider-routing readback from `.clanker/profiles.yml`.

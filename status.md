@@ -1,5 +1,29 @@
 # Status
 
+## 2026-06-26 Workspace Continuation Readback
+
+- Added saved-goal continuation readbacks to `/workspace`. The page now shows
+  the saved goal's current phase, one recommended next action, reason,
+  operator attention cue, and target surface beside the editable
+  `save-workspace` form.
+- `/workspace` still writes nothing on GET. The readback is reconstructed from
+  `.clanker/app/workspace.json` and existing local goal state; it does not call
+  providers, use the network, push, create PRs, deploy, run delegations/
+  worktrees, or mutate external systems.
+- Compact local verification for this slice:
+  - Focused red test failed first because restored `/workspace` did not
+    contain `Workspace Continuation`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with `/workspace` marker matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Home Resume Continuation Readback
 
 - Added saved-goal continuation readbacks to Home's `Home Resume Workspace`

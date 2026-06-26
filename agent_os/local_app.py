@@ -1749,6 +1749,7 @@ def _workspace_page(root: Path) -> str:
             ),
             "</section>",
             _list_section("Restore Links", restore_links),
+            _list_section("Workspace Continuation", _workspace_next_action_lines(root, open_goal)),
             "<section><h2>Save Workspace</h2>",
             _input_form(
                 "save-workspace",
@@ -1766,6 +1767,30 @@ def _workspace_page(root: Path) -> str:
             _non_claim_banner(),
         ]
     )
+
+
+def _workspace_next_action_lines(root: Path, open_goal: str) -> list[str]:
+    if not open_goal:
+        return [
+            "workspace_next_action_status: no_saved_goal",
+            "workspace_next_surface: <a href='/goals'>/goals</a>",
+            "workspace_next_action_write_on_get: false",
+            "workspace_next_action_external_effects_created: false",
+        ]
+    storage = _storage(root)
+    state = _goal_state(root, storage, open_goal)
+    phase = _goal_current_phase(state)
+    next_action = _goal_next_action(root, state)
+    return [
+        f"workspace_current_phase: {_e(phase)}",
+        f"workspace_next_action: {_e(next_action.action)}",
+        f"workspace_next_reason: {_e(next_action.reason)}",
+        f"workspace_operator_attention: {_e(_goal_operator_attention(phase, next_action))}",
+        f"workspace_next_surface: <a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
+        "workspace_next_action_source: saved_goal_state",
+        "workspace_next_action_write_on_get: false",
+        "workspace_next_action_external_effects_created: false",
+    ]
 
 
 def _memory_page(root: Path) -> str:

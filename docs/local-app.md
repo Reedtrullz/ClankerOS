@@ -144,9 +144,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   known artifacts, incidents, recommendations, memory, runs, approvals, and
   skill records. It does not expose arbitrary filesystem browsing.
 - `/workspace` - persistent local workspace state for open project, open goal,
-  filters, expanded panels, and last viewed artifact. Home reads the same
-  saved state for daily resume links. The confirmed `save-workspace` form
-  writes `.clanker/app/workspace.json`.
+  filters, expanded panels, and last viewed artifact. It also shows the saved
+  goal's current phase, one next action, operator attention cue, and target
+  surface beside the editable saved-state form. Home and `/resume` read the
+  same saved state for daily resume links and continuation readbacks. The
+  confirmed `save-workspace` form writes `.clanker/app/workspace.json`; GET
+  requests write nothing.
 - `/memory` - project memories, global memories, generated memories, operator
   notes, future-work recommendations, and confirmed `pin-memory` actions.
 - `/skills` - available/generated skill records with usage count, last-used

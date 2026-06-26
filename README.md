@@ -119,7 +119,9 @@ Use `/resume` when returning to ClankerOS after a break. It reads the saved
 workspace state, shows the exact saved goal/project/artifact links, preserves
 filters and expanded panel readbacks, and shows a `Resume Next Action` section
 with the saved goal's current phase, one next action, operator attention cue,
-and target surface. It reports that it writes nothing on GET.
+and target surface. `/workspace` shows the same saved-goal continuation next
+to the editable saved-state form, so operators can inspect and update tomorrow's
+resume point in one place. Both routes report that they write nothing on GET.
 
 For the first manual browser pass, run `python3 -m agent_os.cli demo`
 or `python3 -m agent_os.cli demo-app-scenario`, open `/goals`, then `/demo`,
@@ -202,7 +204,8 @@ decisions, or one isolated local worktree commit only; they do not run
 delegations or worktrees from the browser, push, create PRs, deploy, call
 providers, or use the network. Use Home, `/resume`, or `/workspace` to
 save and restore open project, open goal, filters, expanded panels, and last
-viewed artifact in `.clanker/app/workspace.json`.
+viewed artifact in `.clanker/app/workspace.json`, with saved-goal phase and
+next-action readbacks on each return-to-work surface.
 Use the goal page note form for day-to-day operator breadcrumbs, then find the
 same note artifact again from `/memory`.
 Use `/search` for bounded global search across indexed goals, projects,
