@@ -4487,6 +4487,46 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert f".clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md" in (
         note_resume_page.body
     )
+    memory_entry = storage_after_creation.record_memory_entry(
+        memory_id="memory_resume_anchor",
+        project_id="first-target",
+        scope="project",
+        key="resume.anchor",
+        value="Pinned operator note should restore this goal workspace.",
+        source_type="operator",
+        source_id=created_goal_id,
+        confidence=0.9,
+        status="proposed",
+        created_by_profile="operator",
+        artifact_path=str(note_path),
+    )
+    memory_before_pin = render_local_app_route(tmp_path, "/memory")
+    assert "memory_resume_anchor" in memory_before_pin.body
+    assert "action='/actions/pin-memory'" in memory_before_pin.body
+    pin_result = render_local_app_route(
+        tmp_path,
+        "/actions/pin-memory",
+        method="POST",
+        form={
+            "memory_id": [memory_entry.id],
+            "note": ["Pin this note as the resume anchor."],
+            "confirm": ["yes"],
+        },
+    )
+    assert pin_result.status == 200
+    assert "memory_pinned: memory_resume_anchor" in pin_result.body
+    assert storage_after_creation.get_memory_entry(memory_entry.id).status == "active"
+    pin_workspace = json.loads(workspace_json.read_text(encoding="utf-8"))
+    assert pin_workspace["open_project"] == "first-target"
+    assert pin_workspace["open_goal"] == created_goal_id
+    assert pin_workspace["last_viewed_artifact"] == str(note_path.relative_to(tmp_path))
+    assert pin_workspace["updated_by"] == "pin-memory"
+    pin_resume_page = render_local_app_route(tmp_path, "/resume")
+    assert "resume_current_phase</dt><dd>Ready for delegation" in pin_resume_page.body
+    assert "resume_artifact" in pin_resume_page.body
+    assert f".clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md" in (
+        pin_resume_page.body
+    )
     noted_goal_page = render_local_app_route(tmp_path, f"/goals/{created_goal_id}")
     assert "operator_notes_status: available" in noted_goal_page.body
     assert f".clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md" in noted_goal_page.body

@@ -131,7 +131,11 @@ Core layers for the bootstrap:
   local worktree commit summary, publication request, publication decision,
   publication handoff, and final completion anchor, keeping resume state
   current through the manual publish boundary without app-side push, PR,
-  deploy, provider, network, or GitHub polling effects. The
+  deploy, provider, network, or GitHub polling effects. Confirmed `pin-memory`
+  promotion also refreshes the saved workspace anchor to the pinned evidence
+  artifact while preserving the current goal when it belongs to the same
+  project, so memory decisions can become tomorrow's resume surface without a
+  separate manual workspace save. The
   populated `/goals`
   cockpit also exposes a confirmed
   local `Start Another Goal` form for registered projects, so daily goal
@@ -227,7 +231,9 @@ Core layers for the bootstrap:
   goal-scoped memory entry counts, generated memory count, operator-note
   status, future-work count, latest memory summaries, and the fact that
   pinning remains available on the confirmed `/memory` surface rather than on
-  the read-only Goal page.
+  the read-only Goal page. Confirmed `/memory` pinning promotes only entries
+  with existing evidence artifacts and refreshes saved workspace state to that
+  artifact with zero provider, network, or external mutation effects.
   The Goal `Skills Used` section links to `/skills`, reuses task skill usage
   counts, names projects using each tag, links matching generated or available
   local skill records when present, and shows profile usage while keeping

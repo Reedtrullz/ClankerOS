@@ -1,5 +1,29 @@
 # Status
 
+## 2026-06-27 Memory Pin Resume Anchors
+
+- Made confirmed browser `pin-memory` promotion refresh
+  `.clanker/app/workspace.json` with the pinned memory's project and evidence
+  artifact. If the previously open goal still belongs to that same project,
+  the action preserves it, so `/resume`, Home, and `/workspace` return to the
+  pinned memory context without requiring a separate manual `save-workspace`
+  step.
+- Non-claims: this does not pin memory from read-only Goal pages, approve
+  entries without evidence artifacts, run work, push, create PRs, deploy, call
+  providers, fetch GitHub status, or mutate external systems. It only updates
+  local memory status and local workspace state after a confirmed browser
+  action.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+    -> `1 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Operator Note Resume Anchors
 
 - Made confirmed browser `resume-goal` and `save-goal-note` actions refresh

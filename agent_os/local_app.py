@@ -7957,6 +7957,30 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             )
             message = f"memory_pinned: {result.id}"
             location = "/memory"
+            workspace = _load_workspace_state(root)
+            open_project = result.project_id or workspace.get("open_project", "")
+            open_goal = workspace.get("open_goal", "").strip()
+            if open_goal and open_project:
+                try:
+                    goal = storage.get_goal(open_goal)
+                except KeyError:
+                    open_goal = ""
+                else:
+                    if goal.project_id != open_project:
+                        open_goal = ""
+            _write_workspace_state(
+                root,
+                {
+                    **workspace,
+                    "open_project": open_project,
+                    "open_goal": open_goal,
+                    "last_viewed_artifact": _repo_relative_artifact_path(
+                        root,
+                        result.artifact_path,
+                    ),
+                    "updated_by": "pin-memory",
+                },
+            )
         elif action == "context-pack":
             delegation_id = _required(form, "delegation_id")
             result = generate_context_pack(root, storage, delegation_id)
