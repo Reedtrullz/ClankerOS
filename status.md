@@ -1,5 +1,21 @@
 # Status
 
+## 2026-06-26 Local App Demo Gate Actions
+
+- Added `Demo Gate Actions` to `/demo`. The panel reads the selected fixture
+  run's current commit/publication gate, names the active local action,
+  form endpoint, required input, expected output artifact, and renders the
+  matching safe local form when the gate can be driven from the app.
+- The panel covers the fixture path from `coder-commit-request` through
+  `approve-coder-commit`, `commit-coder-worktree`,
+  `coder-publication-request`, `approve-coder-publication`,
+  `coder-publication-handoff`, and the final
+  `manual_operator_push_pr_outside_clankeros` boundary.
+- Non-claims: this exposes existing confirmed local forms only. It does not
+  auto-submit actions, bypass confirmation pages, push, create PRs, deploy,
+  call providers, fetch GitHub status, or perform non-loopback network
+  actions.
+
 ## 2026-06-26 Verification Page Fixture Smoke Readback
 
 - Updated `/verification` so the local app now names both fast app checks:

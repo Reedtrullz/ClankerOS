@@ -331,6 +331,8 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             [
                 "Demo Dogfooding Links",
                 "Demo Browser Progress",
+                "Demo Gate Actions",
+                "active_action: coder-commit-request",
                 "Manual Browser Checkpoints",
                 demo.coder_worktree_run_id,
             ],
@@ -2920,6 +2922,7 @@ def _demo_dogfooding_state(root: Path) -> str:
             _demo_next_action_panel(root, selected_run.id if selected_run else ""),
             _demo_browser_progress(root, selected_run.id if selected_run else ""),
             _demo_gate_artifacts(root, selected_run.id if selected_run else ""),
+            _demo_gate_actions(root, selected_run.id if selected_run else ""),
             _manual_browser_script(
                 {
                     "project_id": project.name,
@@ -3052,6 +3055,180 @@ def _demo_gate_artifacts(root: Path, run_id: str) -> str:
         ]
     )
     return _list_section("Demo Gate Artifacts", lines, f"/runs/{quote(run_id)}")
+
+
+def _demo_gate_actions(root: Path, run_id: str) -> str:
+    progress = _demo_progress_state(root, run_id)
+    next_step = progress["next_step"]
+    lines = [
+        f"current_gate: {_e(next_step)}",
+        "confirmation_required: true_for_local_writes",
+        "external_effects_created: false",
+        "network_actions_taken_by_app: 0",
+    ]
+    form_html = "<p class='muted'>active_form: unavailable until a demo coder run exists.</p>"
+    if not run_id:
+        lines.extend(
+            [
+                "active_action: demo-app-scenario",
+                "form_action: none",
+                "operator_surface: /demo",
+                "required_input: none",
+                "output_artifact: fixture_demo_state",
+            ]
+        )
+    elif next_step == "request_commit_for_reviewed_run":
+        lines.extend(
+            [
+                "active_action: coder-commit-request",
+                "form_action: /actions/coder-commit-request",
+                f"operator_surface: /runs/{_e(run_id)}",
+                "required_input: message",
+                "output_artifact: coder_commit_request.md",
+            ]
+        )
+        form_html = _input_form(
+            "coder-commit-request",
+            {"run_id": run_id, "requested_by": "operator"},
+            {
+                "message": "Implement bounded change from approved worktree run",
+                "note": "Demo commit request",
+            },
+        )
+    elif next_step == "approve_or_reject_commit_request":
+        pending_commit = _preferred_record(
+            [
+                item
+                for item in list_coder_worktree_commit_approvals(root, limit=50)
+                if item.run_id == run_id and item.status == "pending_operator_approval"
+            ],
+            ["pending_operator_approval"],
+        )
+        lines.extend(
+            [
+                "active_action: approve-coder-commit",
+                "form_action: /actions/approve-coder-commit",
+                "operator_surface: /approvals",
+                f"approval_id: {_e(pending_commit.id if pending_commit else 'missing')}",
+                "required_input: approval decision note",
+                "output_artifact: coder_commit_decision.md",
+            ]
+        )
+        if pending_commit is not None:
+            form_html = _form(
+                "approve-coder-commit",
+                {
+                    "approval_id": pending_commit.id,
+                    "decided_by": "operator",
+                    "note": "Approve demo commit",
+                },
+            )
+    elif next_step == "commit_approved_worktree":
+        lines.extend(
+            [
+                "active_action: commit-coder-worktree",
+                "form_action: /actions/commit-coder-worktree",
+                f"operator_surface: /runs/{_e(run_id)}",
+                "required_input: exact typed commit message",
+                "output_artifact: commit.json",
+            ]
+        )
+        form_html = _input_form(
+            "commit-coder-worktree",
+            {"run_id": run_id, "committed_by": "operator"},
+            {"message": "Implement bounded change from approved worktree run"},
+        )
+    elif next_step == "request_publication_handoff":
+        lines.extend(
+            [
+                "active_action: coder-publication-request",
+                "form_action: /actions/coder-publication-request",
+                f"operator_surface: /runs/{_e(run_id)}",
+                "required_input: remote, target_branch, note",
+                "output_artifact: publication_request.md",
+            ]
+        )
+        form_html = _input_form(
+            "coder-publication-request",
+            {
+                "run_id": run_id,
+                "requested_by": "operator",
+                "remote": "origin",
+                "target_branch": "main",
+            },
+            {"note": "Demo publication request"},
+        )
+    elif next_step == "approve_or_reject_publication_request":
+        pending_publication = _preferred_record(
+            [
+                item
+                for item in list_coder_publications(root, limit=50)
+                if item.run_id == run_id and item.status == "pending_operator_approval"
+            ],
+            ["pending_operator_approval"],
+        )
+        lines.extend(
+            [
+                "active_action: approve-coder-publication",
+                "form_action: /actions/approve-coder-publication",
+                "operator_surface: /approvals",
+                f"publication_id: {_e(pending_publication.id if pending_publication else 'missing')}",
+                "required_input: publication approval note",
+                "output_artifact: publication_decision.md",
+            ]
+        )
+        if pending_publication is not None:
+            form_html = _form(
+                "approve-coder-publication",
+                {
+                    "publication_id": pending_publication.id,
+                    "decided_by": "operator",
+                    "note": "Approve demo publication handoff",
+                },
+            )
+    elif next_step == "prepare_publication_handoff":
+        lines.extend(
+            [
+                "active_action: coder-publication-handoff",
+                "form_action: /actions/coder-publication-handoff",
+                f"operator_surface: /runs/{_e(run_id)}",
+                "required_input: approved publication request",
+                "output_artifact: publication_handoff.md + pr_body.md",
+            ]
+        )
+        form_html = _form("coder-publication-handoff", {"run_id": run_id})
+    elif next_step == "manual_operator_push_pr_outside_clankeros":
+        lines.extend(
+            [
+                "active_action: manual_operator_push_pr_outside_clankeros",
+                "form_action: none",
+                f"operator_surface: /runs/{_e(run_id)}",
+                "required_input: operator copies handoff outside ClankerOS",
+                "output_artifact: none_inside_clankeros",
+                "manual_boundary: outside_clankeros",
+                "copy_only: true",
+            ]
+        )
+        form_html = "<p class='muted'>No ClankerOS form is available for push or PR creation. Use the publication handoff commands outside the app.</p>"
+    else:
+        lines.extend(
+            [
+                f"active_action: {_e(next_step)}",
+                "form_action: none",
+                f"operator_surface: /runs/{_e(run_id)}",
+                "required_input: review current local state",
+                "output_artifact: none",
+            ]
+        )
+    return "".join(
+        [
+            "<section><h2>Demo Gate Actions</h2>",
+            "<p class='muted'>State-aware local forms for the current demo gate. Each write still goes through the normal confirmation page and existing local safety checks.</p>",
+            _ul(lines),
+            form_html,
+            "</section>",
+        ]
+    )
 
 
 def _demo_next_action_panel(root: Path, run_id: str) -> str:

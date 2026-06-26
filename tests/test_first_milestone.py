@@ -3860,6 +3860,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "publication_handoff_artifact: pending_until_publication_handoff" in demo.body
     assert "Demo Next Action" in demo.body
     assert "demo_continue_from: request_commit_for_reviewed_run" in demo.body
+    assert "Demo Gate Actions" in demo.body
+    assert "current_gate: request_commit_for_reviewed_run" in demo.body
+    assert "active_action: coder-commit-request" in demo.body
+    assert "form_action: /actions/coder-commit-request" in demo.body
+    assert "output_artifact: coder_commit_request.md" in demo.body
     assert "workflow_surface" in demo.body
     assert "run_action_surface" in demo.body
     assert "approvals_surface" in demo.body
@@ -4145,6 +4150,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert run_notice.status == 200
     assert "Action Notice" in run_notice.body
     assert f"coder_commit_request: {commit_approval.id}" in run_notice.body
+    demo_after_commit_request = render_local_app_route(tmp_path, "/demo")
+    assert demo_after_commit_request.status == 200
+    assert "current_gate: approve_or_reject_commit_request" in demo_after_commit_request.body
+    assert "active_action: approve-coder-commit" in demo_after_commit_request.body
+    assert "form_action: /actions/approve-coder-commit" in demo_after_commit_request.body
+    assert f"approval_id: {commit_approval.id}" in demo_after_commit_request.body
+    assert "output_artifact: coder_commit_decision.md" in demo_after_commit_request.body
 
     approvals = render_local_app_route(tmp_path, "/approvals")
     assert approvals.status == 200
@@ -4199,6 +4211,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in run_page_after_commit_approval.body
     )
     assert "coder-publication-handoff" not in run_page_after_commit_approval.body
+    demo_after_commit_approval = render_local_app_route(tmp_path, "/demo")
+    assert demo_after_commit_approval.status == 200
+    assert "current_gate: commit_approved_worktree" in demo_after_commit_approval.body
+    assert "active_action: commit-coder-worktree" in demo_after_commit_approval.body
+    assert "form_action: /actions/commit-coder-worktree" in demo_after_commit_approval.body
+    assert "required_input: exact typed commit message" in demo_after_commit_approval.body
 
     commit_confirmation = render_local_app_route(
         tmp_path,
@@ -4247,6 +4265,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Publication Request Action" in run_page_after_commit.body
     assert "coder-publication-request" in run_page_after_commit.body
     assert "coder-publication-handoff" not in run_page_after_commit.body
+    demo_after_commit = render_local_app_route(tmp_path, "/demo")
+    assert demo_after_commit.status == 200
+    assert "current_gate: request_publication_handoff" in demo_after_commit.body
+    assert "active_action: coder-publication-request" in demo_after_commit.body
+    assert "form_action: /actions/coder-publication-request" in demo_after_commit.body
+    assert "output_artifact: publication_request.md" in demo_after_commit.body
 
     publication_request = render_local_app_route(
         tmp_path,
@@ -4308,6 +4332,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in inbox_after_publication_request.body
     )
     assert "push_created=false pr_created=false deploy_created=false" in inbox_after_publication_request.body
+    demo_after_publication_request = render_local_app_route(tmp_path, "/demo")
+    assert demo_after_publication_request.status == 200
+    assert "current_gate: approve_or_reject_publication_request" in demo_after_publication_request.body
+    assert "active_action: approve-coder-publication" in demo_after_publication_request.body
+    assert "form_action: /actions/approve-coder-publication" in demo_after_publication_request.body
+    assert f"publication_id: {publication.id}" in demo_after_publication_request.body
+    assert "output_artifact: publication_decision.md" in demo_after_publication_request.body
 
     publication_approval_confirmation = render_local_app_route(
         tmp_path,
@@ -4341,6 +4372,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert run_page_after_publication_approval.status == 200
     assert "Publication Handoff Action" in run_page_after_publication_approval.body
     assert "coder-publication-handoff" in run_page_after_publication_approval.body
+    demo_after_publication_approval = render_local_app_route(tmp_path, "/demo")
+    assert demo_after_publication_approval.status == 200
+    assert "current_gate: prepare_publication_handoff" in demo_after_publication_approval.body
+    assert "active_action: coder-publication-handoff" in demo_after_publication_approval.body
+    assert "form_action: /actions/coder-publication-handoff" in demo_after_publication_approval.body
+    assert "output_artifact: publication_handoff.md + pr_body.md" in demo_after_publication_approval.body
 
     publication_handoff_confirmation = render_local_app_route(
         tmp_path,
@@ -4409,6 +4446,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "publication_handoff_artifact" in demo_after_handoff.body
     assert "publication_pr_body_path" in demo_after_handoff.body
     assert "demo_continue_from: manual_operator_push_pr_outside_clankeros" in demo_after_handoff.body
+    assert "current_gate: manual_operator_push_pr_outside_clankeros" in demo_after_handoff.body
+    assert "active_action: manual_operator_push_pr_outside_clankeros" in demo_after_handoff.body
+    assert "form_action: none" in demo_after_handoff.body
+    assert "copy_only: true" in demo_after_handoff.body
     assert "manual_boundary: outside_clankeros" in demo_after_handoff.body
 
 
