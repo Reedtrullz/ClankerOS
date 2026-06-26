@@ -8340,6 +8340,7 @@ def _command_palette(root: Path) -> str:
             "<dialog id='command-palette' class='command-palette' data-command-palette='true'>",
             "<form method='dialog'><button class='icon-button' type='submit'>Close</button></form>",
             "<h2>Command Palette</h2>",
+            _command_palette_continue(root),
             "<form action='/search' method='get' class='command-grid'>",
             "<input id='command-palette-search' name='q' autocomplete='off' placeholder='Search local state'>",
             "<button type='submit'>Search</button>",
@@ -8349,6 +8350,88 @@ def _command_palette(root: Path) -> str:
             "".join(rows),
             "</ul>",
             "</dialog>",
+        ]
+    )
+
+
+def _command_palette_continue(root: Path) -> str:
+    try:
+        storage = _storage(root)
+    except Exception:
+        return "".join(
+            [
+                "<section class='palette-continue' data-command-palette-continue='true'>",
+                "<h3>Continue Current Goal</h3>",
+                _kv(
+                    [
+                        ("palette_continue_status", "state_unavailable"),
+                        ("palette_continue_target", SafeHtml("<a href='/health'>/health</a>")),
+                        ("palette_continue_write_on_get", "false"),
+                        ("palette_continue_external_effects_created", "false"),
+                    ]
+                ),
+                "</section>",
+            ]
+        )
+
+    state = _load_workspace_state(root)
+    saved_goal_id = str(state.get("open_goal") or "").strip()
+    goal_state: dict[str, Any] | None = None
+    source = ""
+    if saved_goal_id:
+        candidate = _goal_state(root, storage, saved_goal_id)
+        if candidate.get("goal") is not None:
+            goal_state = candidate
+            source = "saved_goal"
+
+    if goal_state is None:
+        rows = _goal_rows(storage, limit=20)
+        active = [row for row in rows if _goal_bucket(row) == "active"]
+        lead = active[0] if active else (rows[0] if rows else None)
+        if lead is not None:
+            goal_state = _goal_state(root, storage, str(lead["id"]))
+            source = "lead_goal"
+
+    if goal_state is None or goal_state.get("goal") is None:
+        return "".join(
+            [
+                "<section class='palette-continue' data-command-palette-continue='true'>",
+                "<h3>Continue Current Goal</h3>",
+                _kv(
+                    [
+                        ("palette_continue_status", "no_goal"),
+                        ("palette_continue_target", SafeHtml("<a href='/goals'>/goals</a>")),
+                        ("palette_continue_write_on_get", "false"),
+                        ("palette_continue_external_effects_created", "false"),
+                    ]
+                ),
+                "</section>",
+            ]
+        )
+
+    goal = goal_state["goal"]
+    phase = _goal_current_phase(goal_state)
+    next_action = _goal_next_action(root, goal_state)
+    form_available = bool(_goal_next_action_form(goal_state, next_action))
+    label = _compact_label(goal.title or goal.description or goal.id, 72)
+    return "".join(
+        [
+            "<section class='palette-continue' data-command-palette-continue='true'>",
+            "<h3>Continue Current Goal</h3>",
+            _kv(
+                [
+                    ("palette_continue_status", "available"),
+                    ("palette_continue_source", source),
+                    ("palette_continue_goal", SafeHtml(f"<a href='/goals/{quote(goal.id)}'>{_e(label)}</a>")),
+                    ("palette_continue_phase", phase),
+                    ("palette_continue_next_action", next_action.action),
+                    ("palette_continue_target", SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>")),
+                    ("palette_continue_form_available", "true" if form_available else "false"),
+                    ("palette_continue_write_on_get", "false"),
+                    ("palette_continue_external_effects_created", "false"),
+                ]
+            ),
+            "</section>",
         ]
     )
 
@@ -8435,6 +8518,7 @@ def _html_page(
     .operator-side ul, .command-palette ul {{ list-style:none; padding:0; margin:0; display:grid; gap:7px; }}
     .operator-side li, .command-palette li {{ min-width:0; }}
     .operator-side a, .command-palette a {{ overflow-wrap:anywhere; }}
+    .palette-continue {{ border:1px solid var(--line); background:var(--panel); padding:10px; margin:10px 0; }}
     .breadcrumbs {{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; color:var(--muted); margin:0 0 14px; font-size:13px; }}
     .breadcrumbs a {{ color:var(--muted); }}
     .breadcrumbs span::before {{ content:"/"; margin-right:6px; color:var(--line); }}

@@ -221,8 +221,11 @@ memory entries, generated skills/usage, and inactive future provider-routing
 lanes.
 
 The app shell also includes breadcrumbs, recent local items, a command palette,
-keyboard shortcuts, and a dark/light theme toggle on every page. Those controls
-stay inside the local browser app and do not perform external effects.
+keyboard shortcuts, and a dark/light theme toggle on every page. The command
+palette includes a goal-aware `Continue Current Goal` block that shows the
+saved or lead goal's phase, one next action, and the target local surface.
+Those controls stay inside the local browser app and do not perform external
+effects.
 
 Use `/workflow?delegation_id=<id>` or `/workflow?run_id=<coder_run_id>` when
 you want the scoped operator map. The selected workflow page now includes a

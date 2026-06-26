@@ -4993,6 +4993,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_cockpit_status: populated" in dashboard.body
     assert "lead_goal_phase" in dashboard.body
     assert "remaining_work=open_tasks:1 open_incidents:0 open_recommendations:0" in dashboard.body
+    assert "data-command-palette-continue='true'" in dashboard.body
+    assert "palette_continue_status</dt><dd>available" in dashboard.body
+    assert "palette_continue_source</dt><dd>lead_goal" in dashboard.body
+    assert "palette_continue_phase</dt><dd>Ready to commit" in dashboard.body
+    assert "palette_continue_next_action</dt><dd>Create commit request" in dashboard.body
+    assert f"palette_continue_target</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in dashboard.body
+    assert "palette_continue_write_on_get</dt><dd>false" in dashboard.body
+    assert "palette_continue_external_effects_created</dt><dd>false" in dashboard.body
     assert f"/goals/{result.goal_id}" in dashboard.body
 
     goals = render_local_app_route(tmp_path, "/goals")
@@ -5014,6 +5022,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     goal = render_local_app_route(tmp_path, f"/goals/{result.goal_id}")
     assert goal.status == 200
     assert "data-command-palette='true'" in goal.body
+    assert "data-command-palette-continue='true'" in goal.body
+    assert "palette_continue_goal</dt><dd><a href='/goals/" in goal.body
+    assert "palette_continue_next_action</dt><dd>Create commit request" in goal.body
+    assert "palette_continue_form_available</dt><dd>true" in goal.body
     assert "data-recent-items='true'" in goal.body
     assert "data-breadcrumbs='true'" in goal.body
     assert "Current Phase" in goal.body

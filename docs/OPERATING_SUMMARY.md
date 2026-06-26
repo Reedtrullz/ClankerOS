@@ -194,7 +194,11 @@ Core layers for the bootstrap:
   local `save-workspace` form so the operator can remember the current artifact
   as the next-session resume anchor without writing on GET. Every page shares
   a browser operator shell with breadcrumbs, recent local items, a command
-  palette, keyboard shortcuts, and a theme toggle. The workflow page can be
+  palette, keyboard shortcuts, and a theme toggle. The command palette now
+  includes a goal-aware `Continue Current Goal` block from the saved workspace
+  goal or current lead goal, showing phase, one recommended action, target
+  surface, and zero-effect readbacks without writing on GET. The workflow page
+  can be
   scoped with a
   delegation or coder run id, then annotates related stepper rows with
   selected local artifact, approval, run, commit, publication, and next-action
