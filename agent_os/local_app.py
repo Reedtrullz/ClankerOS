@@ -3073,8 +3073,51 @@ def _manual_browser_script(state: dict[str, str] | None) -> str:
             "<p class='muted'>Use this as the first manual dogfooding pass after a pushed app change.</p>",
             _ul(rendered_steps),
             "</section>",
+            _manual_browser_checkpoints(state),
         ]
     )
+
+
+def _manual_browser_checkpoints(state: dict[str, str] | None) -> str:
+    delegation_id = (state or {}).get("delegation_id", "")
+    run_id = (state or {}).get("run_id", "")
+    project_id = (state or {}).get("project_id", "local-app-demo")
+    checkpoints = [
+        "<a href='/demo'>/demo</a> marker=Demo Scenario expected=Demo Dogfooding Links,Demo Browser Progress,Demo Gate Artifacts",
+        "<a href='/dogfooding'>/dogfooding</a> marker=Manual Dogfooding Checklist expected=Dogfooding Next Action,GitHub Actions Follow-up",
+        f"<a href='/projects/{quote(project_id)}'>/projects/{_e(project_id)}</a> marker=Project expected=Project Operator Guidance,Project Workflow Launchpad",
+        "<a href='/approvals'>/approvals</a> marker=Approvals expected=pending local decisions or empty queue",
+        "<a href='/inbox'>/inbox</a> marker=Operator Inbox expected=queue counts and next-action cues",
+        "<a href='/verification'>/verification</a> marker=Verification Handoff expected=fast/full-suite boundary and no GitHub status fetch",
+        "<a href='/health'>/health</a> marker=System Health expected=local app status artifact and zero-effect non-claims",
+    ]
+    if delegation_id:
+        checkpoints.extend(
+            [
+                f"<a href='/delegations/{quote(delegation_id)}'>/delegations/{_e(delegation_id)}</a> marker=Delegation expected=Workflow Readiness,Safe Local Actions",
+                f"<a href='/workflow?delegation_id={quote(delegation_id)}'>/workflow?delegation_id={_e(delegation_id)}</a> marker=Modern Operator Workflow expected=Selected Workflow State",
+            ]
+        )
+    else:
+        checkpoints.append("delegation_checkpoint_status: pending_until_demo_fixture_exists")
+    if run_id:
+        checkpoints.extend(
+            [
+                f"<a href='/workflow?run_id={quote(run_id)}'>/workflow?run_id={_e(run_id)}</a> marker=Modern Operator Workflow expected=Selected Workflow Continuation",
+                f"<a href='/runs/{quote(run_id)}'>/runs/{_e(run_id)}</a> marker=Run expected=Run Workflow State,Run Approval Actions,Coder Worktree Evidence",
+            ]
+        )
+    else:
+        checkpoints.append("run_checkpoint_status: pending_until_demo_fixture_exists")
+    checkpoints.extend(
+        [
+            "manual_boundary: outside_clankeros",
+            "provider_calls_taken_by_clankeros: 0",
+            "network_actions_taken_by_app: 0",
+            "external_mutations_taken: 0",
+        ]
+    )
+    return _list_section("Manual Browser Checkpoints", checkpoints)
 
 
 def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppResponse:

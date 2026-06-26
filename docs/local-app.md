@@ -121,7 +121,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   fixture state. The demo page also includes `Demo Gate Artifacts`, a
   read-only artifact map for the selected fixture run's commit request,
   commit decision, local commit, publication request, publication decision,
-  publication handoff, and PR-body artifacts as they become available.
+  publication handoff, and PR-body artifacts as they become available, plus
+  `Manual Browser Checkpoints` with route markers for the first visual pass.
 
 ## Demo Scenario
 
@@ -161,7 +162,10 @@ local commit/publication records for the selected fixture run. Together they
 show the current status for commit request, commit approval, local commit,
 publication request, publication approval, publication handoff, and the final
 manual push/PR boundary outside ClankerOS, while linking back to the relevant
-local workflow, run, approvals, and inbox surfaces.
+local workflow, run, approvals, and inbox surfaces. `Manual Browser
+Checkpoints` lists the route markers to confirm during the first visual pass,
+including demo, dogfooding, project, delegation, scoped workflow, run,
+approvals, inbox, verification, and health pages.
 
 After publication handoff preparation, return to `/runs/<coder_run_id>` to see
 `Publication Handoff Commands`: the suggested push command, draft PR command,

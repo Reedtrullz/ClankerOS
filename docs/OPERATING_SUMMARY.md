@@ -141,7 +141,9 @@ Core layers for the bootstrap:
   browser-progress checklist for commit/publication handoff status, plus a
   read-only `Demo Gate Artifacts` map for commit request, commit decision,
   local commit, publication request, publication decision, publication
-  handoff, and PR-body artifacts as those gates become available.
+  handoff, and PR-body artifacts as those gates become available, plus
+  `Manual Browser Checkpoints` route-marker expectations for the first visual
+  dogfooding pass.
   The app reads existing SQLite state and repo artifacts, writes a local
   health/status artifact with current warning readbacks, and exposes only
   explicit local forms for safe

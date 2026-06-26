@@ -3819,11 +3819,22 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert demo.status == 200
     assert "Demo Dogfooding Links" in demo.body
     assert "Manual Browser Script" in demo.body
+    assert "Manual Browser Checkpoints" in demo.body
+    assert "marker=Demo Scenario" in demo.body
+    assert "marker=Manual Dogfooding Checklist" in demo.body
+    assert "marker=Project" in demo.body
+    assert "marker=Verification Handoff" in demo.body
+    assert "marker=System Health" in demo.body
     assert f"/projects/{result.project_id}" in demo.body
     assert f"/delegations/{result.delegation_id}" in demo.body
     assert f"/workflow?delegation_id={result.delegation_id}" in demo.body
     assert f"/workflow?run_id={result.coder_worktree_run_id}" in demo.body
     assert f"/runs/{result.coder_worktree_run_id}" in demo.body
+    assert "marker=Delegation" in demo.body
+    assert "marker=Modern Operator Workflow" in demo.body
+    assert "marker=Run" in demo.body
+    assert "provider_calls_taken_by_clankeros: 0" in demo.body
+    assert "network_actions_taken_by_app: 0" in demo.body
     assert result.review_path.relative_to(tmp_path).as_posix() in demo.body
     assert "Demo Browser Progress" in demo.body
     assert "commit_request_status" in demo.body

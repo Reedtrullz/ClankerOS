@@ -1,5 +1,15 @@
 # Status
 
+## 2026-06-26 Local App Manual Browser Checkpoints
+
+- Added `Manual Browser Checkpoints` to `/demo`. The panel lists exact route
+  markers and expected page sections for the first visual dogfooding pass
+  across demo, dogfooding, project, delegation, scoped workflow, run,
+  approvals, inbox, verification, and health surfaces.
+- Non-claims: this is read-only route guidance. It does not approve, commit,
+  push, create PRs, deploy, fetch GitHub, call providers, run commands, or
+  mutate external systems.
+
 ## 2026-06-26 Local App Demo Gate Artifact Map
 
 - Added a read-only `Demo Gate Artifacts` section to `/demo`. For the selected

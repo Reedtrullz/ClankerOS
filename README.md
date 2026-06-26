@@ -107,7 +107,10 @@ publication approval, publication handoff, or manual push/PR outside
 ClankerOS. It also shows `Demo Gate Artifacts`, linking the commit request,
 commit decision, local commit artifact, publication request, publication
 decision, publication handoff, and PR-body artifact as those gates become
-available, then lets you jump directly to the relevant local surface.
+available. `Manual Browser Checkpoints` lists the exact route markers to
+confirm across `/demo`, `/dogfooding`, workflow, project, delegation, run,
+approvals, inbox, verification, and health surfaces, then lets you jump
+directly to the relevant local surface.
 
 Use `/workflow?delegation_id=<id>` or `/workflow?run_id=<coder_run_id>` when
 you want the scoped operator map. The selected workflow page now includes a
