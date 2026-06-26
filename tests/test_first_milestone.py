@@ -4413,6 +4413,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
     noted_goal_page = render_local_app_route(tmp_path, f"/goals/{created_goal_id}")
     assert "operator_notes_status: available" in noted_goal_page.body
     assert f".clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md" in noted_goal_page.body
+    assert "timeline_operator_note_artifacts</dt><dd>1" in noted_goal_page.body
+    assert "activity_log_operator_notes_included</dt><dd>true" in noted_goal_page.body
+    assert "Operator note saved." in noted_goal_page.body
+    assert noted_goal_page.body.count("Operator note saved.") >= 2
+    assert "operator_note_timeline_external_effects_created</dt><dd>false" in noted_goal_page.body
+    assert f"href='/artifacts?path=.clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md'" in noted_goal_page.body
     memory_after_note = render_local_app_route(tmp_path, "/memory")
     assert "operator_note_count</dt><dd>1" in memory_after_note.body
     assert f".clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md" in memory_after_note.body

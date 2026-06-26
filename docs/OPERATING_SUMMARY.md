@@ -98,7 +98,9 @@ Core layers for the bootstrap:
   operator attention cue, next action surface, latest activity, and zero-effect
   boundary without requiring the CLI. They also include a confirmed
   `save-goal-note` form that appends local operator resume context to the
-  goal-scoped `operator-notes.md` artifact, plus a confirmed `delegate`
+  goal-scoped `operator-notes.md` artifact; saved operator notes also become
+  linked `Operator note saved` entries in the Goal timeline and recent
+  Activity Log with zero external effects. They also include a confirmed `delegate`
   next-action form when a goal has planned tasks but no delegation yet. If a
   goal is explicitly paused, the Goal page shows a `Paused` phase and a
   confirmed `resume-goal` next-action form that only changes local goal status

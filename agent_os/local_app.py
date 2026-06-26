@@ -3037,6 +3037,7 @@ def _goal_resume_snapshot(root: Path, state: dict[str, Any]) -> str:
 
 def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
     items = _goal_timeline_items(root, state)
+    operator_note_count = sum(1 for item in items if item.get("kind") == "operator_note")
     return "".join(
         [
             "<section><h2>Timeline</h2>",
@@ -3044,6 +3045,8 @@ def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
                 [
                     ("timeline_links_enabled", "true"),
                     ("timeline_items", str(len(items))),
+                    ("timeline_operator_note_artifacts", str(operator_note_count)),
+                    ("operator_note_timeline_external_effects_created", "false"),
                 ]
             ),
             _ul([_timeline_line(item) for item in items]),
@@ -3053,9 +3056,23 @@ def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
 
 
 def _goal_activity_log(root: Path, state: dict[str, Any]) -> str:
-    return _list_section(
-        "Activity Log",
-        [_timeline_line(item) for item in _goal_timeline_items(root, state)[-12:]],
+    items = _goal_timeline_items(root, state)[-12:]
+    return "".join(
+        [
+            "<section><h2>Activity Log</h2>",
+            _kv(
+                [
+                    ("activity_log_format", "human_readable"),
+                    (
+                        "activity_log_operator_notes_included",
+                        str(any(item.get("kind") == "operator_note" for item in items)).lower(),
+                    ),
+                    ("activity_log_items", str(len(items))),
+                ]
+            ),
+            _ul([_timeline_line(item) for item in items]),
+            "</section>",
+        ]
     )
 
 
@@ -3074,6 +3091,7 @@ def _goal_timeline_items(root: Path, state: dict[str, Any]) -> list[dict[str, st
                 "at": task.created_at,
                 "message": f"Task created: {task.task_type}.",
                 "href": f"/goals/{quote(goal.id)}",
+                "kind": "task",
             }
         )
         if task.updated_at != task.created_at:
@@ -3082,8 +3100,19 @@ def _goal_timeline_items(root: Path, state: dict[str, Any]) -> list[dict[str, st
                     "at": task.updated_at,
                     "message": f"Task {task.id} status is {task.status}.",
                     "href": f"/goals/{quote(goal.id)}",
+                    "kind": "task",
                 }
             )
+    operator_notes = _goal_operator_notes_path(goal)
+    if (root / operator_notes).exists():
+        items.append(
+            {
+                "at": _artifact_time(root, operator_notes.as_posix()) or goal.updated_at,
+                "message": "Operator note saved.",
+                "href": _artifact_href(root, operator_notes),
+                "kind": "operator_note",
+            }
+        )
     for delegation in state["delegations"]:
         delegation_href = f"/delegations/{quote(delegation.id)}"
         items.append({"at": delegation.created_at, "message": f"Scout delegated: {delegation.title}.", "href": delegation_href})

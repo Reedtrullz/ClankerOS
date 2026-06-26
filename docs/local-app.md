@@ -81,7 +81,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   after saving without writing on GET. Operator Notes includes a confirmed
   `save-goal-note` form that appends local resume context to
   `.clanker/projects/<project>/goals/<goal>/operator-notes.md`; it does not
-  overwrite previous notes. The Goal Memory section links to `/memory`, shows
+  overwrite previous notes. Saved operator notes also appear as linked
+  `Operator note saved` entries in the Goal timeline and recent Activity Log
+  so daily resume context is chronological instead of side-channel only. The
+  Goal Memory section links to `/memory`, shows
   project/global memory artifacts, goal-scoped memory entry counts, generated
   memory count, operator-note status, future-work count, and the current pin
   posture; pinning stays on the confirmed `/memory` action surface. Goal

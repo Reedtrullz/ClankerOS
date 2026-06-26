@@ -1,5 +1,24 @@
 # Status
 
+## 2026-06-26 Goal Operator Notes Timeline
+
+- Saved goal operator notes now become first-class timeline and Activity Log
+  entries on `/goals/<goal_id>`. The Goal page reports the count through
+  `timeline_operator_note_artifacts`, links the `Operator note saved` event
+  to the bounded `/artifacts` viewer for `operator-notes.md`, and marks the
+  timeline readback as creating zero external effects.
+- The Activity Log now carries explicit `activity_log_format=human_readable`
+  and `activity_log_operator_notes_included` readbacks, so tomorrow's resume
+  context is chronological instead of only living in the Operator Notes and
+  Memory sections.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health"`
+    -> `2 passed, 508 deselected`
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Goal Paused Resume Action
 
 - Added a first-class paused-goal state to `/goals/<goal_id>`. Goals with
