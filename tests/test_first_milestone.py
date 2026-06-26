@@ -5028,6 +5028,25 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "palette_continue_form_available</dt><dd>true" in goal.body
     assert "data-recent-items='true'" in goal.body
     assert "data-breadcrumbs='true'" in goal.body
+    assert "Goal Section Index" in goal.body
+    assert "goal_section_index_status</dt><dd>available" in goal.body
+    assert "goal_section_count</dt><dd>" in goal.body
+    assert "goal_section_index_write_on_get</dt><dd>false" in goal.body
+    assert "goal_section_index_external_effects_created</dt><dd>false" in goal.body
+    assert "href='#goal-summary'" in goal.body
+    assert "href='#goal-current-phase'" in goal.body
+    assert "href='#goal-next-action'" in goal.body
+    assert "href='#goal-next-recommendation'" in goal.body
+    assert "href='#goal-timeline'" in goal.body
+    assert "href='#goal-artifact-explorer'" in goal.body
+    assert "href='#goal-verification-evidence'" in goal.body
+    assert "href='#goal-remaining-work'" in goal.body
+    assert "id='goal-summary'" in goal.body
+    assert "id='goal-current-phase'" in goal.body
+    assert "id='goal-timeline'" in goal.body
+    assert "id='goal-artifact-explorer'" in goal.body
+    assert "id='goal-verification-evidence'" in goal.body
+    assert "id='goal-remaining-work'" in goal.body
     assert "Current Phase" in goal.body
     assert "Ready to commit" in goal.body
     assert "current_phase_banner</dt><dd>Ready to commit" in goal.body

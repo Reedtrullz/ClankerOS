@@ -2319,7 +2319,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
     return "".join(
         [
             _goal_live_state(),
-            f"<section class='hero'><h1>Goal {_e(goal.id)}</h1>",
+            f"<section id='goal-summary' class='hero'><h1>Goal {_e(goal.id)}</h1>",
             f"<p>{_e(goal.title or goal.description)}</p>",
             _kv(
                 [
@@ -2330,6 +2330,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
                 ]
             ),
             "</section>",
+            _goal_section_index(),
             _goal_phase_banner(root, state, phase, next_action),
             _goal_next_action_card(state, next_action),
             _goal_next_recommendation_section(state, next_action),
@@ -2340,18 +2341,22 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_progress(state),
             _goal_timeline(root, state),
             _goal_activity_log(root, state),
-            _list_section("Delegations", _goal_delegation_lines(state)),
-            _list_section("Runs", _goal_run_lines(root, state)),
-            _list_section("Approvals", _goal_approval_lines(root, state)),
-            _list_section("Evidence", _goal_evidence_lines(root, state)),
-            _list_section("Artifacts", _goal_artifact_lines(root, state)),
+            _list_section("Delegations", _goal_delegation_lines(state), anchor_id="goal-delegations"),
+            _list_section("Runs", _goal_run_lines(root, state), anchor_id="goal-runs"),
+            _list_section("Approvals", _goal_approval_lines(root, state), anchor_id="goal-approvals"),
+            _list_section("Evidence", _goal_evidence_lines(root, state), anchor_id="goal-evidence"),
+            _list_section("Artifacts", _goal_artifact_lines(root, state), anchor_id="goal-artifacts"),
             _goal_artifact_explorer(root, state),
-            _list_section("Memory", _goal_memory_lines(root, state)),
-            _list_section("Skills Used", _goal_skill_lines(root, state)),
+            _list_section("Memory", _goal_memory_lines(root, state), anchor_id="goal-memory"),
+            _list_section("Skills Used", _goal_skill_lines(root, state), anchor_id="goal-skills-used"),
             _goal_git_status(root, state),
             _goal_verification_evidence(root, state),
             _goal_operator_notes_section(root, state),
-            _list_section("Remaining Work", _goal_remaining_work_lines(root, state, next_action)),
+            _list_section(
+                "Remaining Work",
+                _goal_remaining_work_lines(root, state, next_action),
+                anchor_id="goal-remaining-work",
+            ),
             _non_claim_banner(),
         ]
     )
@@ -2360,7 +2365,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
 def _goal_live_state() -> str:
     return "".join(
         [
-            "<section class='panel' data-live-refresh='goal'><h2>Goal Live State</h2>",
+            "<section id='goal-live-state' class='panel' data-live-refresh='goal'><h2>Goal Live State</h2>",
             "<p class='muted'>Keeps this goal page current while preserving local form edits.</p>",
             _kv(
                 [
@@ -2394,6 +2399,52 @@ def _goal_live_state() -> str:
 </script>""",
             "</section>",
         ]
+    )
+
+
+def _goal_section_index() -> str:
+    sections = [
+        ("Summary", "goal-summary"),
+        ("Live state", "goal-live-state"),
+        ("Current phase", "goal-current-phase"),
+        ("Next action", "goal-next-action"),
+        ("Next recommendation", "goal-next-recommendation"),
+        ("Resume snapshot", "goal-resume-snapshot"),
+        ("Overview", "goal-overview"),
+        ("Progress", "goal-progress"),
+        ("Timeline", "goal-timeline"),
+        ("Activity log", "goal-activity-log"),
+        ("Risk level", "goal-risk"),
+        ("Completion criteria", "goal-completion-criteria"),
+        ("Delegations", "goal-delegations"),
+        ("Runs", "goal-runs"),
+        ("Approvals", "goal-approvals"),
+        ("Evidence", "goal-evidence"),
+        ("Artifacts", "goal-artifacts"),
+        ("Artifact explorer", "goal-artifact-explorer"),
+        ("Memory", "goal-memory"),
+        ("Skills used", "goal-skills-used"),
+        ("Git status", "goal-git-status"),
+        ("Verification evidence", "goal-verification-evidence"),
+        ("Operator notes", "goal-operator-notes"),
+        ("Remaining work", "goal-remaining-work"),
+    ]
+    links = [
+        f"<a href='#{_e(anchor)}'>{_e(label)}</a>"
+        for label, anchor in sections
+    ]
+    return (
+        "<section id='goal-section-index'><h2>Goal Section Index</h2>"
+        + _kv(
+            [
+                ("goal_section_index_status", "available"),
+                ("goal_section_count", str(len(sections))),
+                ("goal_section_index_write_on_get", "false"),
+                ("goal_section_index_external_effects_created", "false"),
+            ]
+        )
+        + _ul(links)
+        + "</section>"
     )
 
 
@@ -2600,7 +2651,7 @@ def _goal_phase_banner(
     latest_activity = latest_item.get("message") if latest_item else "none"
     return "".join(
         [
-            "<section class='banner goal-phase-banner' aria-live='polite'><h2>Current Phase</h2>",
+            "<section id='goal-current-phase' class='banner goal-phase-banner' aria-live='polite'><h2>Current Phase</h2>",
             f"<p class='phase-callout'><strong>{_e(phase)}</strong></p>",
             _kv(
                 [
@@ -2819,7 +2870,7 @@ def _goal_next_action_form(state: dict[str, Any], next_action: GoalNextAction) -
 def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -> str:
     form = _goal_next_action_form(state, next_action)
     return (
-        "<section><h2>Next Action</h2>"
+        "<section id='goal-next-action'><h2>Next Action</h2>"
         + _kv(
             [
                 ("recommended_action", next_action.action),
@@ -2875,7 +2926,7 @@ def _goal_next_recommendation_section(
             ("next_recommendation_external_effects_created", "false"),
         ]
     return (
-        "<section><h2>Next Recommendation</h2>"
+        "<section id='goal-next-recommendation'><h2>Next Recommendation</h2>"
         "<p class='muted'>Explains why this goal is pointing at the current action.</p>"
         + _kv(rows)
         + "</section>"
@@ -3394,7 +3445,7 @@ def _delegation_has_context_pack(
 
 def _goal_overview(state: dict[str, Any]) -> str:
     goal = state["goal"]
-    return "<section><h2>Overview</h2>" + _kv(
+    return "<section id='goal-overview'><h2>Overview</h2>" + _kv(
         [
             ("intent", goal.description),
             ("original_prompt", goal.original_prompt),
@@ -3426,7 +3477,7 @@ def _goal_risk_section(state: dict[str, Any]) -> str:
             f"{_e(task.id)}: risk={_e(task.risk_level)} status={_e(task.status)} "
             f"type={_e(task.task_type)}"
         )
-    return _list_section("Goal Risk", lines)
+    return _list_section("Goal Risk", lines, anchor_id="goal-risk")
 
 
 def _goal_completion_criteria(state: dict[str, Any]) -> str:
@@ -3477,7 +3528,7 @@ def _goal_completion_criteria(state: dict[str, Any]) -> str:
         )
     if len(lines) == 3:
         lines.append("completion_criteria_status: none_available")
-    return _list_section("Goal Completion Criteria", lines)
+    return _list_section("Goal Completion Criteria", lines, anchor_id="goal-completion-criteria")
 
 
 def _goal_progress(state: dict[str, Any]) -> str:
@@ -3493,7 +3544,7 @@ def _goal_progress(state: dict[str, Any]) -> str:
         )
     )
     return (
-        "<section><h2>Progress</h2>"
+        "<section id='goal-progress'><h2>Progress</h2>"
         + progress
         + _kv(
             [
@@ -3543,7 +3594,7 @@ def _goal_resume_snapshot(root: Path, state: dict[str, Any]) -> str:
     )
     return "".join(
         [
-            "<section><h2>Goal Resume Snapshot</h2>",
+            "<section id='goal-resume-snapshot'><h2>Goal Resume Snapshot</h2>",
             "<p class='muted'>Save and restore the current goal context for the next operator session. This reads saved workspace state on page load and only writes after confirmation.</p>",
             _kv(
                 [
@@ -3597,7 +3648,7 @@ def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
     artifact_count = sum(1 for item in items if item.get("kind") == "artifact")
     return "".join(
         [
-            "<section><h2>Timeline</h2>",
+            "<section id='goal-timeline'><h2>Timeline</h2>",
             _kv(
                 [
                     ("timeline_links_enabled", "true"),
@@ -3617,7 +3668,7 @@ def _goal_activity_log(root: Path, state: dict[str, Any]) -> str:
     items = _goal_timeline_items(root, state)[-12:]
     return "".join(
         [
-            "<section><h2>Activity Log</h2>",
+            "<section id='goal-activity-log'><h2>Activity Log</h2>",
             _kv(
                 [
                     ("activity_log_format", "human_readable"),
@@ -3891,7 +3942,7 @@ def _goal_artifact_explorer(root: Path, state: dict[str, Any]) -> str:
     for record in records:
         groups[record["kind"]].append(record)
     sections = [
-        "<section><h2>Goal Artifact Explorer</h2>",
+        "<section id='goal-artifact-explorer'><h2>Goal Artifact Explorer</h2>",
         _kv(
             [
                 ("artifact_explorer_raw_filesystem_browsing", "false"),
@@ -4157,7 +4208,7 @@ def _goal_git_status(root: Path, state: dict[str, Any]) -> str:
     goal = state["goal"]
     project = _storage(root).get_registered_project(goal.project_id)
     repo = _repo_state(Path(project.root_path)) if project else _repo_state(root)
-    return "<section><h2>Git Status</h2>" + _kv(
+    return "<section id='goal-git-status'><h2>Git Status</h2>" + _kv(
         [
             ("project", goal.project_id),
             ("branch", repo["branch"]),
@@ -4195,7 +4246,12 @@ def _goal_verification_evidence(root: Path, state: dict[str, Any]) -> str:
                 "goal_ci_proof_boundary: no project-scoped local CI proof record yet",
             ]
         )
-        return _list_section("Goal Verification Evidence", lines, "/verification")
+        return _list_section(
+            "Goal Verification Evidence",
+            lines,
+            "/verification",
+            anchor_id="goal-verification-evidence",
+        )
 
     source_kind, record = latest_record
     branch_matches = record.branch_name == repo["branch"]
@@ -4223,7 +4279,12 @@ def _goal_verification_evidence(root: Path, state: dict[str, Any]) -> str:
             "goal_ci_proof_boundary: operator_supplied_project_record_only",
         ]
     )
-    return _list_section("Goal Verification Evidence", lines, "/verification")
+    return _list_section(
+        "Goal Verification Evidence",
+        lines,
+        "/verification",
+        anchor_id="goal-verification-evidence",
+    )
 
 
 def _commit_refs_match(record_commit: str, full_commit: str, short_commit: str) -> bool:
@@ -4258,7 +4319,7 @@ def _goal_operator_notes_section(root: Path, state: dict[str, Any]) -> str:
     goal = state["goal"]
     return "".join(
         [
-            "<section><h2>Operator Notes</h2>",
+            "<section id='goal-operator-notes'><h2>Operator Notes</h2>",
             "<p class='muted'>Append a goal-scoped local note for tomorrow's resume context. This writes only the operator-notes artifact.</p>",
             _ul(_goal_operator_note_lines(root, state)),
             _input_form(
@@ -9664,11 +9725,18 @@ def _workflow_list(
     return "<ol class='workflow'>" + "".join(items) + "</ol>"
 
 
-def _list_section(title: str, items: list[str], link: str | None = None) -> str:
+def _list_section(
+    title: str,
+    items: list[str],
+    link: str | None = None,
+    *,
+    anchor_id: str | None = None,
+) -> str:
     heading = f"<h2>{_e(title)}</h2>"
     if link:
         heading += f"<p><a href='{_e(link)}'>Open</a></p>"
-    return f"<section>{heading}{_ul(items)}</section>"
+    id_attr = f" id='{_e(anchor_id)}'" if anchor_id else ""
+    return f"<section{id_attr}>{heading}{_ul(items)}</section>"
 
 
 def _artifact_links(packets: list[dict[str, Any]], *, delegation_id: str | None = None) -> list[str]:

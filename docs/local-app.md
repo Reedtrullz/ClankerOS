@@ -147,6 +147,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   recommendation counts, and done/pending/waiting status for scout,
   context-pack, handoff, coder prep, worktree, review, commit, publication,
   and manual publish gates without taking any action.
+- `/goals/<goal_id>` includes `Goal Section Index`, a read-only in-page map
+  of stable anchors for summary, live state, current phase, next action, next
+  recommendation, timeline, artifacts, memory, skills, verification evidence,
+  notes, and remaining work. The index writes nothing on GET and only helps
+  the operator jump around the long Goal workbench.
 - Every app page includes a shared operator shell with breadcrumbs, recent
   local items, a command palette, a dark/light theme toggle, and keyboard
   shortcuts for home, goals, and palette search. The command palette also

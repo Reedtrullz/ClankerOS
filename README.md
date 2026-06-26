@@ -163,6 +163,9 @@ while the operator is editing a form or the tab is hidden, and stays
 local-only. The Next Recommendation section names whether the recommendation
 comes from an open task recommendation or from current phase plus local goal
 records, then points at the local target surface without writing on GET.
+The Goal Section Index near the top links to stable in-page anchors for the
+major Goal surfaces, so the browser page can be used for long sessions without
+hunting through the whole document.
 Skills Used links to `/skills`, shows task skill usage counts, projects using
 each tag, matching generated or available skill records when present, profile
 usage, and keeps skill execution out of the Goal page.

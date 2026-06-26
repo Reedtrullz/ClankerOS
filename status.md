@@ -1,5 +1,28 @@
 # Status
 
+## 2026-06-26 Goal Section Index
+
+- Added a read-only `Goal Section Index` to `/goals/<goal_id>` with stable
+  in-page anchors for summary, live state, current phase, next action, next
+  recommendation, resume snapshot, overview, progress, timeline, activity,
+  risk, completion criteria, delegations, runs, approvals, evidence,
+  artifacts, memory, skills, git status, verification evidence, operator
+  notes, and remaining work.
+- This is navigation-only local rendering on GET. It does not run work,
+  approve gates, call providers, fetch GitHub status, push, create PRs,
+  deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-26 Goal Timeline Artifact Coverage
 
 - Added generic `Artifact recorded` timeline events to `/goals/<goal_id>` from

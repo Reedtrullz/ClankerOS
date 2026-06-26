@@ -134,7 +134,10 @@ Core layers for the bootstrap:
   first-class `Goal Live State` readback and local page reload polling that
   pauses while the operator is editing a form or the tab is hidden; it does not
   fetch GitHub status, call providers, push, create PRs, deploy, or mutate
-  external systems. They also include a confirmed
+  external systems. They also include a read-only `Goal Section Index` with
+  stable in-page anchors for the major Goal surfaces, so operators can jump
+  through a long Goal workbench without leaving the page or triggering writes.
+  They also include a confirmed
   `save-goal-note` form that appends local operator resume context to the
   goal-scoped `operator-notes.md` artifact; saved operator notes also become
   linked `Operator note saved` entries in the Goal timeline and recent
