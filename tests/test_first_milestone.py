@@ -5707,6 +5707,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Profiles And Routing" in profiles.body
     assert "provider_routing_active</dt><dd>false" in profiles.body
 
+    resume_artifact = result.review_path.relative_to(tmp_path).as_posix()
     workspace = render_local_app_route(
         tmp_path,
         "/actions/save-workspace",
@@ -5716,7 +5717,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
             "open_goal": [result.goal_id],
             "filters": ["active"],
             "expanded_panels": ["timeline,evidence"],
-            "last_viewed_artifact": [".clanker/demo/demo-result.md"],
+            "last_viewed_artifact": [resume_artifact],
             "updated_by": ["operator"],
             "return_to": [f"/goals/{result.goal_id}"],
             "confirm": ["yes"],
@@ -5746,7 +5747,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"resume_goal: <a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in restored_home.body
     assert f"resume_project: <a href='/projects/{result.project_id}'>{result.project_id}</a>" in restored_home.body
     assert "resume_artifact" in restored_home.body
-    assert ".clanker/demo/demo-result.md" in restored_home.body
+    assert resume_artifact in restored_home.body
     assert "home_resume_current_phase: Ready to commit" in restored_home.body
     assert "home_resume_next_action: Create commit request" in restored_home.body
     assert f"home_resume_next_surface: <a href='/runs/{result.coder_worktree_run_id}'" in restored_home.body
@@ -5774,7 +5775,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"resume_goal: <a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in resume.body
     assert f"resume_project: <a href='/projects/{result.project_id}'>{result.project_id}</a>" in resume.body
     assert "resume_artifact" in resume.body
-    assert ".clanker/demo/demo-result.md" in resume.body
+    assert resume_artifact in resume.body
     assert "resume_filters</dt><dd>active" in resume.body
     assert "resume_expanded_panels</dt><dd>timeline,evidence" in resume.body
     assert "Resume Next Action" in resume.body
@@ -5796,7 +5797,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workspace_restore_filters</dt><dd>active" in restored_goal.body
     assert "workspace_restore_expanded_panels</dt><dd>timeline,evidence" in restored_goal.body
     assert "workspace_restore_last_artifact" in restored_goal.body
-    assert ".clanker/demo/demo-result.md" in restored_goal.body
+    assert resume_artifact in restored_goal.body
     assert "workspace_restore_write_on_get</dt><dd>false" in restored_goal.body
 
     delegation_runs = render_local_app_route(tmp_path, "/delegation-runs")
