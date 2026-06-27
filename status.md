@@ -1,5 +1,38 @@
 # Status
 
+## 2026-06-27 Artifact Command Bar
+
+- Added a read-only `Artifact Command Bar` to `/artifacts?path=...`. It shows
+  the bounded repo-relative path, artifact type, render family, renderer, file
+  size, rendered byte count, line count, truncation state, inferred
+  project/goal links for `.clanker/projects/<project>/goals/<goal>/...`
+  artifacts, workspace anchor status, one next action, target surface, reason,
+  and write-on-GET/raw-filesystem-browsing/content-execution/network/
+  external-effect boundaries before the inert artifact content.
+- The command bar points to `#remember-artifact` when the artifact is not the
+  saved resume anchor and switches to `/resume` after the operator confirms
+  the existing `save-workspace` form. Artifact pages now also have stable
+  `#artifact-content` and `#remember-artifact` anchors.
+- README, local app docs, and the operating summary now describe the artifact
+  viewer as a browser-first evidence inspection surface rather than only a
+  bounded file renderer.
+- Non-claims: this does not browse the raw filesystem, write state on GET,
+  execute artifact content, fetch GitHub status, run work, approve gates,
+  commit, push, create PRs, deploy, call providers, use the network, or mutate
+  external systems. It only reads a bounded allowed artifact file under the
+  repo root.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Verification Command Bars
 
 - Added read-only `Verification Command Bar` and `CI Evidence Command Bar`

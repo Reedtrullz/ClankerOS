@@ -508,7 +508,13 @@ raw-filesystem-browsing posture, and execution posture. Markdown artifacts are
 rendered through a small escaped heading/list/paragraph view, JSON artifacts
 are pretty-printed, patch/diff artifacts get line classes for meta/add/delete/
 hunk scanning, and text/log artifacts render as inert text. Artifact content
-is never executed.
+is never executed. A read-only `Artifact Command Bar` now appears before the
+content with the artifact path, type, renderer, size, rendered byte count, line
+count, truncation state, inferred project/goal links when the path lives under
+`.clanker/projects/<project>/goals/<goal>/`, workspace anchor status, one next
+action, and write-on-GET/raw-filesystem/content-execution/network/external-
+effect boundaries. The command bar links to `#remember-artifact` when the
+artifact is not yet the saved resume anchor and to `/resume` once it is.
 
 ## Safe Actions
 

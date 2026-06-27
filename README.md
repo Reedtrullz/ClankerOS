@@ -218,7 +218,10 @@ saving. It does not write on page load, fetch GitHub status, call providers,
 push, create PRs, deploy, or mutate external systems.
 The Goal Artifact Explorer groups goal-linked artifacts as Markdown, JSON,
 Patch, or Text and links them through the bounded `/artifacts` viewer instead
-of exposing raw filesystem browsing.
+of exposing raw filesystem browsing. Each artifact page now starts with a
+read-only `Artifact Command Bar` showing path, type, renderer, size, line
+count, truncation state, inferred project/goal context, whether it is already
+the saved resume anchor, and one next action: remember it or resume from it.
 
 Use `/goals` on a fresh checkout for first-run browser actions. The page now
 renders a state-aware First Run Guide plus confirmed local forms for

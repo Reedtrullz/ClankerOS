@@ -5164,6 +5164,32 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
 
     markdown = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.md")
     assert markdown.status == 200
+    assert "Artifact Command Bar" in markdown.body
+    assert "data-artifact-command-bar='true'" in markdown.body
+    assert "artifact_command_status</dt><dd>ready" in markdown.body
+    assert "artifact_command_path</dt><dd>docs/sample.md" in markdown.body
+    assert "artifact_command_type</dt><dd>markdown" in markdown.body
+    assert "artifact_command_render_family</dt><dd>markdown" in markdown.body
+    assert "artifact_command_renderer</dt><dd>markdown_safe_html" in markdown.body
+    assert "artifact_command_size_bytes</dt><dd>9" in markdown.body
+    assert "artifact_command_rendered_bytes</dt><dd>9" in markdown.body
+    assert "artifact_command_line_count</dt><dd>1" in markdown.body
+    assert "artifact_command_truncated</dt><dd>false" in markdown.body
+    assert "artifact_command_project</dt><dd>unknown" in markdown.body
+    assert "artifact_command_goal</dt><dd>unknown" in markdown.body
+    assert "artifact_command_context_source</dt><dd>path_unclassified" in markdown.body
+    assert "artifact_command_already_remembered</dt><dd>false" in markdown.body
+    assert "artifact_command_next_action</dt><dd>Remember artifact" in markdown.body
+    assert "artifact_command_target_surface</dt><dd><a href='#remember-artifact'>Remember Artifact</a>" in markdown.body
+    assert "artifact_command_reason</dt><dd>artifact_not_saved_as_resume_anchor" in markdown.body
+    assert "artifact_command_write_on_get</dt><dd>false" in markdown.body
+    assert "artifact_command_raw_filesystem_browsing</dt><dd>false" in markdown.body
+    assert "artifact_command_content_executed</dt><dd>false" in markdown.body
+    assert "artifact_command_network_actions_taken</dt><dd>0" in markdown.body
+    assert "artifact_command_external_effects_created</dt><dd>false" in markdown.body
+    assert "artifact_command_safety: bounded inert artifact read" in markdown.body
+    assert "id='artifact-content'" in markdown.body
+    assert "id='remember-artifact'" in markdown.body
     assert "artifact_type" in markdown.body
     assert "markdown" in markdown.body
     assert "artifact_render_family</dt><dd>markdown" in markdown.body
@@ -5214,6 +5240,11 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     workspace_after_artifact = render_local_app_route(tmp_path, "/workspace")
     assert "last_viewed_artifact</dt><dd>docs/sample.md" in workspace_after_artifact.body
     assert "operator-artifact" in workspace_after_artifact.body
+    remembered_markdown = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.md")
+    assert "artifact_command_already_remembered</dt><dd>true" in remembered_markdown.body
+    assert "artifact_command_next_action</dt><dd>Resume from artifact" in remembered_markdown.body
+    assert "artifact_command_target_surface</dt><dd><a href='/resume'>/resume</a>" in remembered_markdown.body
+    assert "artifact_command_reason</dt><dd>artifact_is_saved_workspace_anchor" in remembered_markdown.body
     json_response = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.json")
     assert json_response.status == 200
     assert "json" in json_response.body
@@ -5248,6 +5279,26 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "artifact_render_family</dt><dd>text" in log_response.body
     assert "artifact_renderer</dt><dd>text_pre" in log_response.body
     assert "demo log line" in log_response.body
+
+    goal_artifact = (
+        tmp_path
+        / ".clanker"
+        / "projects"
+        / "subject"
+        / "goals"
+        / "goal_demo"
+        / "evidence.md"
+    )
+    goal_artifact.parent.mkdir(parents=True, exist_ok=True)
+    goal_artifact.write_text("# Goal Evidence\n", encoding="utf-8")
+    goal_artifact_response = render_local_app_route(
+        tmp_path,
+        "/artifacts?path=.clanker/projects/subject/goals/goal_demo/evidence.md",
+    )
+    assert goal_artifact_response.status == 200
+    assert "artifact_command_project</dt><dd><a href='/projects/subject'>subject</a>" in goal_artifact_response.body
+    assert "artifact_command_goal</dt><dd><a href='/goals/goal_demo'>goal_demo</a>" in goal_artifact_response.body
+    assert "artifact_command_context_source</dt><dd>project_goal_path" in goal_artifact_response.body
 
     absolute = render_local_app_route(
         tmp_path,

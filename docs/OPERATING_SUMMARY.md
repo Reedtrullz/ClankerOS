@@ -114,6 +114,12 @@ Core layers for the bootstrap:
   `Search Command Bar` that summarizes result counts by category, first
   result, target link, summary, and no-write/no-network/no-raw-filesystem
   boundaries;
+  `/artifacts?path=...` includes a read-only `Artifact Command Bar` that
+  summarizes bounded artifact path, render type/family/renderer, size,
+  rendered bytes, line count, truncation state, inferred project/goal context,
+  workspace anchor status, one next action, and no-write/no-raw-filesystem/
+  no-content-execution/no-network/no-external-effect boundaries before the
+  inert content renderer and remember-artifact form;
   `/workspace` for persistent open project/goal/filter/panel/last-artifact
   state in `.clanker/app/workspace.json` plus the saved goal's current phase,
   one next action, operator attention cue, target surface, and the same

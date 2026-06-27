@@ -8429,9 +8429,24 @@ def _artifact_viewer(
     artifact_type = _artifact_type(path)
     render_family = _artifact_render_family(path)
     renderer = _artifact_renderer_name(path)
+    repo_relative = path.relative_to(root).as_posix()
+    line_count = len(text.splitlines())
+    workspace = _load_workspace_state(root)
     body = "".join(
         [
-            f"<section><h1>Artifact {_e(str(path.relative_to(root)))}</h1>",
+            _artifact_command_bar(
+                root,
+                relative_path=repo_relative,
+                artifact_type=artifact_type,
+                render_family=render_family,
+                renderer=renderer,
+                size=size,
+                rendered_bytes=len(data),
+                line_count=line_count,
+                truncated=truncated,
+                workspace=workspace,
+            ),
+            f"<section id='artifact-content'><h1>Artifact {_e(repo_relative)}</h1>",
             _kv(
                 [
                     ("artifact_type", artifact_type),
@@ -8440,6 +8455,8 @@ def _artifact_viewer(
                     ("artifact_raw_filesystem_browsing", "false"),
                     ("artifact_content_executed", "false"),
                     ("size_bytes", str(size)),
+                    ("rendered_bytes", str(len(data))),
+                    ("line_count", str(line_count)),
                     ("truncated", str(truncated).lower()),
                 ]
             ),
@@ -8452,11 +8469,120 @@ def _artifact_viewer(
     return _html_page(root, "Artifact", body, current_path=current_path)
 
 
+def _artifact_command_bar(
+    root: Path,
+    *,
+    relative_path: str,
+    artifact_type: str,
+    render_family: str,
+    renderer: str,
+    size: int,
+    rendered_bytes: int,
+    line_count: int,
+    truncated: bool,
+    workspace: dict[str, str],
+) -> str:
+    context = _artifact_context_from_path(relative_path)
+    remembered = workspace.get("last_viewed_artifact") == relative_path
+    if remembered:
+        next_action = "Resume from artifact"
+        target_href = "/resume"
+        target_label = "/resume"
+        reason = "artifact_is_saved_workspace_anchor"
+    else:
+        next_action = "Remember artifact"
+        target_href = "#remember-artifact"
+        target_label = "Remember Artifact"
+        reason = "artifact_not_saved_as_resume_anchor"
+    goal_value: str | SafeHtml = context["goal_id"]
+    if context["goal_id"] != "unknown":
+        goal_value = SafeHtml(
+            f"<a href='/goals/{quote(context['goal_id'])}'>{_e(context['goal_id'])}</a>"
+        )
+    project_value: str | SafeHtml = context["project_id"]
+    if context["project_id"] != "unknown":
+        project_value = SafeHtml(
+            f"<a href='/projects/{quote(context['project_id'])}'>{_e(context['project_id'])}</a>"
+        )
+    return "".join(
+        [
+            "<section id='artifact-command-bar' class='panel artifact-command-bar' data-artifact-command-bar='true'><h2>Artifact Command Bar</h2>",
+            _kv(
+                [
+                    ("artifact_command_status", "ready"),
+                    ("artifact_command_path", relative_path),
+                    ("artifact_command_type", artifact_type),
+                    ("artifact_command_render_family", render_family),
+                    ("artifact_command_renderer", renderer),
+                    ("artifact_command_size_bytes", str(size)),
+                    ("artifact_command_rendered_bytes", str(rendered_bytes)),
+                    ("artifact_command_line_count", str(line_count)),
+                    ("artifact_command_truncated", str(truncated).lower()),
+                    ("artifact_command_project", project_value),
+                    ("artifact_command_goal", goal_value),
+                    ("artifact_command_context_source", context["source"]),
+                    ("artifact_command_workspace_project", workspace.get("open_project", "")),
+                    ("artifact_command_workspace_goal", workspace.get("open_goal", "")),
+                    ("artifact_command_already_remembered", str(remembered).lower()),
+                    ("artifact_command_next_action", next_action),
+                    (
+                        "artifact_command_target_surface",
+                        SafeHtml(
+                            f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"
+                        ),
+                    ),
+                    ("artifact_command_reason", reason),
+                    ("artifact_command_write_on_get", "false"),
+                    ("artifact_command_raw_filesystem_browsing", "false"),
+                    ("artifact_command_content_executed", "false"),
+                    ("artifact_command_network_actions_taken", "0"),
+                    ("artifact_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"artifact_command_now: {_e(next_action)}",
+                    f"artifact_command_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"artifact_command_reason: {_e(reason)}",
+                    "artifact_command_safety: bounded inert artifact read",
+                ]
+            ),
+            "</section>",
+        ]
+    )
+
+
+def _artifact_context_from_path(relative_path: str) -> dict[str, str]:
+    parts = Path(relative_path).parts
+    for index, part in enumerate(parts):
+        if (
+            part == "projects"
+            and index + 3 < len(parts)
+            and parts[index + 2] == "goals"
+        ):
+            return {
+                "project_id": parts[index + 1],
+                "goal_id": parts[index + 3],
+                "source": "project_goal_path",
+            }
+    if len(parts) >= 3 and parts[0] == ".clanker" and parts[1] == "delegations":
+        return {
+            "project_id": "unknown",
+            "goal_id": "unknown",
+            "source": "delegation_path",
+        }
+    return {
+        "project_id": "unknown",
+        "goal_id": "unknown",
+        "source": "path_unclassified",
+    }
+
+
 def _remember_artifact_section(root: Path, relative_path: str, current_path: str) -> str:
     workspace = _load_workspace_state(root)
     return "".join(
         [
-            "<section><h2>Remember Artifact</h2>",
+            "<section id='remember-artifact'><h2>Remember Artifact</h2>",
             "<p class='muted'>Store this artifact as the local resume anchor for the next ClankerOS session. The viewer does not write on page load.</p>",
             _kv(
                 [
@@ -10882,6 +11008,9 @@ def _html_page(
     .ci-evidence-command-bar {{ border-left:4px solid var(--ok); }}
     .ci-evidence-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .ci-evidence-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .artifact-command-bar {{ border-left:4px solid var(--accent); }}
+    .artifact-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .artifact-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .workflow-map-rail {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px; }}
     .workflow-map-rail li {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; overflow-wrap:anywhere; }}
     .workflow-map-rail li[data-gate-marker="current"] {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
