@@ -222,6 +222,10 @@ records, then points at the local target surface without writing on GET.
 The Goal Section Index near the top links to stable in-page anchors for the
 major Goal surfaces, so the browser page can be used for long sessions without
 hunting through the whole document.
+Goal Approvals starts with a read-only `Goal Approval Command Bar` that
+summarizes pending and approved worktree, commit, and publication gates, points
+at `/approvals` or the next local Goal surface, and keeps approval decisions on
+confirmed local forms instead of writing on page load.
 Goal Evidence starts with a read-only `Goal Evidence Command Bar` that
 summarizes run, worktree, incident, recommendation, and typed artifact
 evidence counts, points at the latest bounded artifact or highest-priority

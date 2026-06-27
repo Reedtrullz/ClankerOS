@@ -163,6 +163,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   project/global memory artifacts, goal-scoped memory entry counts, generated
   memory count, operator-note status, future-work count, and the current pin
   posture; pinning stays on the confirmed `/memory` action surface. Goal
+  Approvals starts with a read-only `Goal Approval Command Bar` that summarizes
+  pending and approved worktree, commit, and publication gates, links the next
+  approval posture to `/approvals` or the relevant local Goal surface, and
+  records zero write/provider/network/external-effect counters before the
+  detailed approval rows. Goal
   Evidence starts with a read-only `Goal Evidence Command Bar` that summarizes
   run evidence, worktree evidence, incident evidence, recommendation evidence,
   typed artifact counts, latest artifact, one local review target, and

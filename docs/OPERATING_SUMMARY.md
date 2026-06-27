@@ -359,6 +359,11 @@ Core layers for the bootstrap:
   tracked and untracked counts, latest goal-linked `git_status.txt` artifact,
   one next local surface, and no-fetch/no-write/no-network/no-external-effect
   boundaries before the repository snapshot.
+  Goal `Approvals` starts with a read-only `Goal Approval Command Bar` that
+  summarizes pending and approved worktree, commit, and publication approval
+  gates, selects one local approval or continuation surface, and reports
+  write-on-GET/provider/network/external-effect counters before the detailed
+  approval rows.
   Goal `Evidence` starts with a read-only `Goal Evidence Command Bar` that
   summarizes run evidence, worktree evidence, incident evidence,
   recommendation evidence, typed artifact counts, latest artifact, one local

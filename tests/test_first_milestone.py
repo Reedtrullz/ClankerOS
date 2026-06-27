@@ -6032,6 +6032,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-next-action'" in goal.body
     assert "href='#goal-next-recommendation'" in goal.body
     assert "href='#goal-timeline'" in goal.body
+    assert "href='#goal-approval-command-bar'" in goal.body
     assert "href='#goal-artifact-explorer'" in goal.body
     assert "href='#goal-verification-evidence'" in goal.body
     assert "href='#goal-remaining-work'" in goal.body
@@ -6041,13 +6042,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-workflow-map'" in goal.body
     assert "id='goal-current-phase'" in goal.body
     assert "id='goal-timeline'" in goal.body
+    assert "id='goal-approval-command-bar'" in goal.body
     assert "id='goal-artifact-explorer'" in goal.body
     assert "id='goal-verification-evidence'" in goal.body
     assert "id='goal-remaining-work'" in goal.body
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>31" in goal.body
+    assert "goal_section_count</dt><dd>32" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
@@ -6224,6 +6226,34 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_activity_command_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_activity_command_external_effects_created</dt><dd>false" in goal.body
     assert "goal_activity_safety: read-only local timeline" in goal.body
+    assert "Goal Approval Command Bar" in goal.body
+    assert "data-goal-approval-command-bar='true'" in goal.body
+    assert "<a href='#goal-approval-command-bar'>Approval command</a>" in goal.body
+    assert f"goal_approval_command_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_approval_command_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_approval_command_status</dt><dd>waiting_for_operator" in goal.body
+    assert "goal_approval_command_items</dt><dd>2" in goal.body
+    assert "goal_approval_command_pending_total</dt><dd>1" in goal.body
+    assert "goal_approval_command_approved_total</dt><dd>1" in goal.body
+    assert "goal_approval_command_pending_worktree</dt><dd>1" in goal.body
+    assert "goal_approval_command_pending_commit</dt><dd>0" in goal.body
+    assert "goal_approval_command_pending_publication</dt><dd>0" in goal.body
+    assert "goal_approval_command_approved_worktree</dt><dd>1" in goal.body
+    assert "goal_approval_command_approved_commit</dt><dd>0" in goal.body
+    assert "goal_approval_command_approved_publication</dt><dd>0" in goal.body
+    assert "goal_approval_command_committed_commits</dt><dd>0" in goal.body
+    assert "goal_approval_command_ready_publications</dt><dd>0" in goal.body
+    assert "goal_approval_command_next_action</dt><dd>Approve worktree" in goal.body
+    assert "goal_approval_command_target_surface</dt><dd><a href='/approvals'>/approvals</a>" in goal.body
+    assert "goal_approval_command_reason</dt><dd>worktree gate is waiting for an operator decision" in goal.body
+    assert "goal_approval_command_source</dt><dd>goal_local_approval_records" in goal.body
+    assert "goal_approval_command_write_on_get</dt><dd>false" in goal.body
+    assert "goal_approval_command_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_approval_command_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_approval_command_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_approval_now: Approve worktree" in goal.body
+    assert "goal_approval_click: <a href='/approvals'>/approvals</a>" in goal.body
+    assert "goal_approval_safety: read-only local approval posture" in goal.body
     assert "Goal created" in goal.body
     assert "Scout delegated" in goal.body
     assert "Context pack built" in goal.body

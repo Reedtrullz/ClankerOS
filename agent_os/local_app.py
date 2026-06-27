@@ -4069,7 +4069,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_activity_log(root, state),
             _list_section("Delegations", _goal_delegation_lines(state), anchor_id="goal-delegations"),
             _list_section("Runs", _goal_run_lines(root, state), anchor_id="goal-runs"),
-            _list_section("Approvals", _goal_approval_lines(root, state), anchor_id="goal-approvals"),
+            _goal_approval_section(root, state),
             _list_section(
                 "Goal Incidents",
                 _goal_incident_lines(root, state),
@@ -4154,6 +4154,7 @@ def _goal_section_index() -> str:
         ("Completion readiness", "goal-completion-readiness"),
         ("Delegations", "goal-delegations"),
         ("Runs", "goal-runs"),
+        ("Approval command", "goal-approval-command-bar"),
         ("Approvals", "goal-approvals"),
         ("Incidents", "goal-incidents"),
         ("Evidence command", "goal-evidence-command-bar"),
@@ -6246,6 +6247,170 @@ def _goal_approval_lines(root: Path, state: dict[str, Any]) -> list[str]:
         [_approval_line(item) for item in state["worktree_approvals"]]
         + [_commit_line(item) for item in state["commit_approvals"]]
         + [_publication_line(root, item) for item in state["publications"]]
+    )
+
+
+def _goal_approval_section(root: Path, state: dict[str, Any]) -> str:
+    lines = _goal_approval_lines(root, state)
+    return _goal_approval_command_bar(state, lines) + _list_section(
+        "Approvals",
+        lines,
+        anchor_id="goal-approvals",
+    )
+
+
+def _goal_approval_command_bar(
+    state: dict[str, Any],
+    approval_lines: list[str],
+) -> str:
+    goal = state["goal"]
+    pending_worktree = _count_status(
+        state["worktree_approvals"],
+        "pending_operator_approval",
+    )
+    pending_commit = _count_status(
+        state["commit_approvals"],
+        "pending_operator_approval",
+    )
+    pending_publication = _count_status(
+        state["publications"],
+        "pending_operator_approval",
+    )
+    approved_worktree = _count_status(state["worktree_approvals"], "approved")
+    approved_commit = _count_status(state["commit_approvals"], "approved")
+    approved_publication = _count_status(state["publications"], "approved")
+    committed_commit = _count_status(state["commit_approvals"], "committed")
+    publication_ready = _count_status(state["publications"], "ready_for_operator")
+    pending_total = pending_worktree + pending_commit + pending_publication
+    approved_total = approved_worktree + approved_commit + approved_publication
+    downstream_total = committed_commit + publication_ready
+
+    next_action = "Continue Goal workflow"
+    target_href = "#goal-next-action"
+    target_label = "Next Action"
+    reason = "approval gates are not the active local blocker"
+    if pending_publication:
+        next_action = "Approve publication"
+        target_href = "/approvals"
+        target_label = "/approvals"
+        reason = "publication gate is waiting for an operator decision"
+    elif pending_commit:
+        next_action = "Approve commit"
+        target_href = "/approvals"
+        target_label = "/approvals"
+        reason = "commit gate is waiting for an operator decision"
+    elif pending_worktree:
+        next_action = "Approve worktree"
+        target_href = "/approvals"
+        target_label = "/approvals"
+        reason = "worktree gate is waiting for an operator decision"
+    elif publication_ready:
+        next_action = "Use publication handoff"
+        target_href = "#goal-completion-readiness"
+        target_label = "Completion Readiness"
+        reason = "publication handoff is ready for manual push/PR outside ClankerOS"
+    elif approved_publication:
+        publication = next(
+            (item for item in state["publications"] if item.status == "approved"),
+            None,
+        )
+        next_action = "Create publication handoff"
+        target_href = (
+            f"/runs/{quote(publication.run_id)}"
+            if publication is not None
+            else "#goal-next-action"
+        )
+        target_label = target_href if publication is not None else "Next Action"
+        reason = "publication approval is granted and needs a local handoff artifact"
+    elif committed_commit:
+        commit = next(
+            (item for item in state["commit_approvals"] if item.status == "committed"),
+            None,
+        )
+        next_action = "Create publication request"
+        target_href = (
+            f"/runs/{quote(commit.run_id)}"
+            if commit is not None
+            else "#goal-next-action"
+        )
+        target_label = target_href if commit is not None else "Next Action"
+        reason = "local worktree commit is recorded and publication can be requested"
+    elif approved_commit:
+        commit = next(
+            (item for item in state["commit_approvals"] if item.status == "approved"),
+            None,
+        )
+        next_action = "Commit approved worktree"
+        target_href = (
+            f"/runs/{quote(commit.run_id)}"
+            if commit is not None
+            else "#goal-next-action"
+        )
+        target_label = target_href if commit is not None else "Next Action"
+        reason = "commit approval is granted and awaiting the local commit action"
+    elif approved_worktree:
+        next_action = "Run approved worktree"
+        target_href = "#goal-next-action"
+        target_label = "Next Action"
+        reason = "worktree approval is granted and execution is the next bounded step"
+    elif approval_lines:
+        next_action = "Review approval history"
+        target_href = "#goal-approvals"
+        target_label = "Approvals"
+        reason = "approval records exist but no active approval gate is waiting"
+
+    if pending_total:
+        status = "waiting_for_operator"
+    elif approved_total or downstream_total:
+        status = "approved_gate_available"
+    elif approval_lines:
+        status = "history_available"
+    else:
+        status = "empty"
+
+    return "".join(
+        [
+            "<section id='goal-approval-command-bar' class='panel goal-approval-command-bar' data-goal-approval-command-bar='true'><h3>Goal Approval Command Bar</h3>",
+            "<p class='muted'>Goal-scoped approval posture before the detailed worktree, commit, and publication approval records.</p>",
+            _kv(
+                [
+                    ("goal_approval_command_goal", goal.id),
+                    ("goal_approval_command_project", goal.project_id),
+                    ("goal_approval_command_status", status),
+                    ("goal_approval_command_items", str(len(approval_lines))),
+                    ("goal_approval_command_pending_total", str(pending_total)),
+                    ("goal_approval_command_approved_total", str(approved_total)),
+                    ("goal_approval_command_pending_worktree", str(pending_worktree)),
+                    ("goal_approval_command_pending_commit", str(pending_commit)),
+                    ("goal_approval_command_pending_publication", str(pending_publication)),
+                    ("goal_approval_command_approved_worktree", str(approved_worktree)),
+                    ("goal_approval_command_approved_commit", str(approved_commit)),
+                    ("goal_approval_command_approved_publication", str(approved_publication)),
+                    ("goal_approval_command_committed_commits", str(committed_commit)),
+                    ("goal_approval_command_ready_publications", str(publication_ready)),
+                    ("goal_approval_command_next_action", next_action),
+                    (
+                        "goal_approval_command_target_surface",
+                        SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"),
+                    ),
+                    ("goal_approval_command_reason", reason),
+                    ("goal_approval_command_source", "goal_local_approval_records"),
+                    ("goal_approval_command_write_on_get", "false"),
+                    ("goal_approval_command_provider_calls_taken", "0"),
+                    ("goal_approval_command_network_actions_taken", "0"),
+                    ("goal_approval_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_approval_now: {_e(next_action)}",
+                    f"goal_approval_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"goal_approval_reason: {_e(reason)}",
+                    "goal_approval_safety: read-only local approval posture",
+                ]
+            ),
+            "</section>",
+        ]
     )
 
 
@@ -13832,6 +13997,9 @@ def _html_page(
     .goal-board-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-board-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-board-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-approval-command-bar {{ border-left:4px solid var(--warn); }}
+    .goal-approval-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-approval-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-git-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-git-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-git-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
