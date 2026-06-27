@@ -1,5 +1,39 @@
 # Status
 
+## 2026-06-27 Incident Triage Command Bar
+
+- Added a read-only `Incident Triage Command Bar` to `/incidents`. It shows
+  total/open/resolved incident counts, total/open task recommendation counts,
+  the first local triage target, project/goal/task/run context, severity or
+  source status, evidence link, and write-on-GET/resolution-on-GET/provider/
+  network/external-effect boundaries before the longer incident and
+  recommendation lists.
+- The Incidents page now has stable anchored sections for open incidents,
+  resolved incidents, and task recommendations. Open incidents take priority;
+  if there are no open incidents, the command bar points at the first open
+  recovery recommendation; otherwise it falls back to resolved/history review
+  or an empty triage state.
+- README, local app docs, and the operating summary now describe `/incidents`
+  as a daily operator triage board rather than only a flat incident list.
+- Non-claims: this does not resolve incidents, retry tasks, reset tasks,
+  replan, dispatch work, approve gates, execute work, commit, push, create
+  PRs, deploy, fetch GitHub status, use the network, call providers, write
+  state on GET, or mutate external systems. It reads local incident rows, task
+  recommendation rows, and bounded evidence links only.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "task_recommendations_surfaces_blocked_planned_task or goal_page_promotes_goal_incidents or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `3 passed, 512 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or task_recommendations_surfaces_blocked_planned_task or goal_page_promotes_goal_incidents" --tb=short`
+    -> `4 passed, 511 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Profiles Command Bar
 
 - Added a read-only `Profiles Command Bar` to `/profiles`. It shows whether

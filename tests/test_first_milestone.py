@@ -1158,6 +1158,27 @@ def test_task_recommendations_surfaces_blocked_planned_task(
     assert "blocked_planned_task_replan" in report
     assert "Does not retry, reset, replan, or dispatch tasks automatically." in report
 
+    incidents_page = render_local_app_route(tmp_path, "/incidents")
+    assert incidents_page.status == 200
+    assert "Incident Triage Command Bar" in incidents_page.body
+    assert "incident_triage_total_incidents</dt><dd>0" in incidents_page.body
+    assert "incident_triage_total_recommendations</dt><dd>1" in incidents_page.body
+    assert "incident_triage_open_recommendations</dt><dd>1" in incidents_page.body
+    assert "incident_triage_first_kind</dt><dd>recommendation" in incidents_page.body
+    assert f"incident_triage_first_id</dt><dd>{recommendation.id}" in incidents_page.body
+    assert "incident_triage_first_project</dt><dd>subject" in incidents_page.body
+    assert f"incident_triage_first_goal</dt><dd>{goal_id}" in incidents_page.body
+    assert f"incident_triage_first_task</dt><dd>{task_id}" in incidents_page.body
+    assert "incident_triage_next_action</dt><dd>Review recovery recommendation" in incidents_page.body
+    assert (
+        "incident_triage_target_surface</dt><dd><a href='#incident-recommendations'>"
+        "Task Recommendations</a>"
+    ) in incidents_page.body
+    assert "incident_triage_reason</dt><dd>needs operator scope review" in incidents_page.body
+    assert "incident_triage_write_on_get</dt><dd>false" in incidents_page.body
+    assert "incident_triage_resolution_on_get</dt><dd>false" in incidents_page.body
+    assert "incident_triage_external_effects_created</dt><dd>false" in incidents_page.body
+
     dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
     assert "### Task Recommendations" in dashboard
     assert recommendation.id in dashboard
@@ -5011,6 +5032,17 @@ def test_local_app_routes_render_modern_workflow_and_health(
     incidents = render_local_app_route(tmp_path, "/incidents")
     assert incidents.status == 200
     assert "Incidents" in incidents.body
+    assert "Incident Triage Command Bar" in incidents.body
+    assert "data-incident-command-bar='true'" in incidents.body
+    assert "incident_triage_total_incidents</dt><dd>0" in incidents.body
+    assert "incident_triage_open_incidents</dt><dd>0" in incidents.body
+    assert "incident_triage_total_recommendations</dt><dd>0" in incidents.body
+    assert "incident_triage_first_kind</dt><dd>none" in incidents.body
+    assert "incident_triage_next_action</dt><dd>No incident triage needed" in incidents.body
+    assert "incident_triage_target_surface</dt><dd><a href='/goals'>/goals</a>" in incidents.body
+    assert "incident_triage_empty: no local incident or recommendation records" in incidents.body
+    assert "incident_triage_write_on_get</dt><dd>false" in incidents.body
+    assert "incident_triage_external_effects_created</dt><dd>false" in incidents.body
     demo = render_local_app_route(tmp_path, "/demo")
     assert demo.status == 200
     assert "demo-app-scenario" in demo.body
@@ -5404,6 +5436,30 @@ def test_goal_page_promotes_goal_incidents(tmp_path: Path) -> None:
     assert "goal_incident_evidence: " in goal.body
     assert ".clanker/incidents/demo-goal-incident.json" in goal.body
     assert "goal_incidents_external_effects_created: false" in goal.body
+
+    incidents = render_local_app_route(tmp_path, "/incidents")
+    assert incidents.status == 200
+    assert "Incident Triage Command Bar" in incidents.body
+    assert "data-incident-command-bar='true'" in incidents.body
+    assert "incident_triage_total_incidents</dt><dd>1" in incidents.body
+    assert "incident_triage_open_incidents</dt><dd>1" in incidents.body
+    assert "incident_triage_first_kind</dt><dd>incident" in incidents.body
+    assert f"incident_triage_first_id</dt><dd>{incident_id}" in incidents.body
+    assert f"incident_triage_first_project</dt><dd>{result.project_id}" in incidents.body
+    assert f"incident_triage_first_goal</dt><dd>{result.goal_id}" in incidents.body
+    assert f"incident_triage_first_task</dt><dd>{result.task_id}" in incidents.body
+    assert f"incident_triage_first_run</dt><dd>{result.coder_worktree_run_id}" in incidents.body
+    assert "incident_triage_first_severity_or_source</dt><dd>high" in incidents.body
+    assert "incident_triage_next_action</dt><dd>Inspect open incident" in incidents.body
+    assert "incident_triage_target_surface</dt><dd><a href='#incident-open'>Open Incidents</a>" in incidents.body
+    assert "incident_triage_reason</dt><dd>Review blocked demo incident" in incidents.body
+    assert ".clanker/incidents/demo-goal-incident.json" in incidents.body
+    assert "id='incident-open'" in incidents.body
+    assert "id='incident-resolved'" in incidents.body
+    assert "id='incident-recommendations'" in incidents.body
+    assert "incident_triage_write_on_get</dt><dd>false" in incidents.body
+    assert "incident_triage_network_actions_taken</dt><dd>0" in incidents.body
+    assert "incident_triage_external_effects_created</dt><dd>false" in incidents.body
 
 
 def test_local_app_demo_scenario_populates_fixture_state(

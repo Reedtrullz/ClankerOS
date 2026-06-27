@@ -7411,20 +7411,159 @@ def _approval_queue_command_bar(
 
 def _incidents(root: Path) -> str:
     storage = _storage(root)
-    rows = _table_rows(
-        storage.db_path,
-        "select id, status, severity, summary, evidence_path from incidents order by created_at desc limit 50",
-    )
+    incidents = storage.list_recent_incidents(limit=50)
+    recommendations = storage.list_task_recommendations(limit=50)
+    open_incidents = [item for item in incidents if item.status == "open"]
+    resolved_incidents = [item for item in incidents if item.status != "open"]
+    open_recommendations = [item for item in recommendations if item.status == "open"]
     return "".join(
         [
             "<section><h1>Incidents</h1>",
-            _ul(
+            "<p class='muted'>Read-only triage board for local incidents and recovery recommendations. Resolution still happens through explicit operator commands, not page load.</p>",
+            "</section>",
+            _incident_triage_command_bar(
+                incidents=incidents,
+                open_incidents=open_incidents,
+                resolved_incidents=resolved_incidents,
+                recommendations=recommendations,
+                open_recommendations=open_recommendations,
+            ),
+            _list_section(
+                "Open Incidents",
+                [_incident_line(item) for item in open_incidents],
+                anchor_id="incident-open",
+            ),
+            _list_section(
+                "Resolved Incidents",
+                [_incident_line(item) for item in resolved_incidents],
+                anchor_id="incident-resolved",
+            ),
+            _list_section(
+                "Task Recommendations",
+                [_task_recommendation_line(item) for item in recommendations],
+                anchor_id="incident-recommendations",
+            ),
+            _non_claim_banner(),
+        ]
+    )
+
+
+def _incident_triage_command_bar(
+    *,
+    incidents: list[Any],
+    open_incidents: list[Any],
+    resolved_incidents: list[Any],
+    recommendations: list[Any],
+    open_recommendations: list[Any],
+) -> str:
+    first_kind = "none"
+    first_id = "none"
+    first_project = "none"
+    first_goal = "none"
+    first_task = "none"
+    first_run = "none"
+    first_severity = "none"
+    first_reason = "no local incidents or recommendations"
+    first_evidence = SafeHtml("none")
+    next_action = "No incident triage needed"
+    target_href = "/goals"
+    target_label = "/goals"
+    if open_incidents:
+        item = open_incidents[0]
+        first_kind = "incident"
+        first_id = item.id
+        first_project = item.project_id
+        first_goal = item.goal_id or "none"
+        first_task = item.task_id or "none"
+        first_run = item.run_id or "none"
+        first_severity = item.severity
+        first_reason = item.summary
+        first_evidence = SafeHtml(_artifact_link(item.evidence_path or "none"))
+        next_action = "Inspect open incident"
+        target_href = "#incident-open"
+        target_label = "Open Incidents"
+    elif open_recommendations:
+        item = open_recommendations[0]
+        first_kind = "recommendation"
+        first_id = item.id
+        first_project = item.project_id
+        first_goal = item.goal_id
+        first_task = item.task_id
+        first_run = item.run_id or "none"
+        first_severity = item.source_status
+        first_reason = item.reason
+        first_evidence = SafeHtml(_artifact_link(item.evidence_path))
+        next_action = "Review recovery recommendation"
+        target_href = "#incident-recommendations"
+        target_label = "Task Recommendations"
+    elif resolved_incidents:
+        item = resolved_incidents[0]
+        first_kind = "resolved_incident"
+        first_id = item.id
+        first_project = item.project_id
+        first_goal = item.goal_id or "none"
+        first_task = item.task_id or "none"
+        first_run = item.run_id or "none"
+        first_severity = item.severity
+        first_reason = item.summary
+        first_evidence = SafeHtml(_artifact_link(item.evidence_path or "none"))
+        next_action = "Review resolved incident history"
+        target_href = "#incident-resolved"
+        target_label = "Resolved Incidents"
+    elif recommendations:
+        item = recommendations[0]
+        first_kind = "recommendation_history"
+        first_id = item.id
+        first_project = item.project_id
+        first_goal = item.goal_id
+        first_task = item.task_id
+        first_run = item.run_id or "none"
+        first_severity = item.source_status
+        first_reason = item.reason
+        first_evidence = SafeHtml(_artifact_link(item.evidence_path))
+        next_action = "Review recommendation history"
+        target_href = "#incident-recommendations"
+        target_label = "Task Recommendations"
+    target_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    lines = [
+        f"incident_triage_now: {_e(next_action)}",
+        f"incident_triage_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+        f"incident_triage_reason: {_e(first_reason)}",
+        "incident_triage_safety: read-only local triage guidance",
+    ]
+    if not incidents and not recommendations:
+        lines.append("incident_triage_empty: no local incident or recommendation records")
+    return "".join(
+        [
+            "<section class='panel incident-command-bar' data-incident-command-bar='true'><h2>Incident Triage Command Bar</h2>",
+            "<p class='muted'>One read-only triage summary for local incidents and task recovery recommendations.</p>",
+            _kv(
                 [
-                    f"{_e(row['id'])}: status={_e(row['status'])} severity={_e(row['severity'])} "
-                    f"{_e(row['summary'])} evidence={_artifact_link(row['evidence_path'] or 'none')}"
-                    for row in rows
+                    ("incident_triage_status", "available"),
+                    ("incident_triage_total_incidents", str(len(incidents))),
+                    ("incident_triage_open_incidents", str(len(open_incidents))),
+                    ("incident_triage_resolved_incidents", str(len(resolved_incidents))),
+                    ("incident_triage_total_recommendations", str(len(recommendations))),
+                    ("incident_triage_open_recommendations", str(len(open_recommendations))),
+                    ("incident_triage_first_kind", first_kind),
+                    ("incident_triage_first_id", first_id),
+                    ("incident_triage_first_project", first_project),
+                    ("incident_triage_first_goal", first_goal),
+                    ("incident_triage_first_task", first_task),
+                    ("incident_triage_first_run", first_run),
+                    ("incident_triage_first_severity_or_source", first_severity),
+                    ("incident_triage_next_action", next_action),
+                    ("incident_triage_target_surface", target_surface),
+                    ("incident_triage_reason", first_reason),
+                    ("incident_triage_evidence", first_evidence),
+                    ("incident_triage_write_on_get", "false"),
+                    ("incident_triage_resolution_on_get", "false"),
+                    ("incident_triage_provider_calls_taken", "0"),
+                    ("incident_triage_network_actions_taken", "0"),
+                    ("incident_triage_external_effects_created", "false"),
                 ]
             ),
+            _ul(lines),
             "</section>",
         ]
     )
@@ -11373,6 +11512,9 @@ def _html_page(
     .approval-queue-command-bar {{ border-left:4px solid var(--warn); }}
     .approval-queue-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .approval-queue-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .incident-command-bar {{ border-left:4px solid var(--error); }}
+    .incident-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .incident-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .warning {{ border-color:#efc36a; color:var(--warn); }}
     .error {{ color:var(--error); font-weight:600; }}
     .muted {{ color:var(--muted); }}

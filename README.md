@@ -285,6 +285,11 @@ one local review target, and provider/model routing explicitly disabled.
 `/profiles` also shows both `.clanker/profiles.yml` names and SQLite profile
 storage rows, including labels, modes, cost tiers, write posture, adapter
 status, and `use_for` labels without enabling providers.
+Use `/incidents` as a read-only triage board for open incidents, resolved
+incident history, and task recovery recommendations. The `Incident Triage
+Command Bar` starts the page with one local review target, incident and
+recommendation counts, evidence links, and no-resolution/no-retry/no-network
+boundaries.
 
 The app shell also includes breadcrumbs, recent local items, a command palette,
 keyboard shortcuts, and a dark/light theme toggle on every page. The command
@@ -513,7 +518,8 @@ If a planned task verifier fails, ClankerOS opens a local incident and records
 an open `failed_run_task_recovery` recommendation with review, replan, and
 manual rerun guidance. If a planned task is blocked, `task-recommendations`
 records `blocked_planned_task_replan` guidance. These records are local
-operator guidance only; they do not retry or change task status by themselves.
+operator guidance only; `/incidents` does not retry, resolve, or change task
+status by itself.
 
 Run a read-only delegation through a configured local shell adapter when you
 want a replaceable specialist executor:

@@ -204,6 +204,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `Search Command Bar` summarizes result counts by category, the first result
   to open, target link, summary, and write-on-GET/network/external-effect/raw
   filesystem boundaries. It does not expose arbitrary filesystem browsing.
+- `/incidents` - read-only incident and recommendation triage. It starts with
+  an `Incident Triage Command Bar` that summarizes open/resolved incident
+  counts, open recommendation counts, the first local review target, evidence
+  link, and write-on-GET/resolution/network/external-effect boundaries before
+  anchored open incident, resolved incident, and task recommendation sections.
 - `/workspace` - persistent local workspace state for open project, open goal,
   filters, expanded panels, and last viewed artifact. It also shows the saved
   goal's current phase, one next action, operator attention cue, and target

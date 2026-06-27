@@ -114,6 +114,11 @@ Core layers for the bootstrap:
   `Search Command Bar` that summarizes result counts by category, first
   result, target link, summary, and no-write/no-network/no-raw-filesystem
   boundaries;
+  `/incidents` includes a read-only `Incident Triage Command Bar` that
+  summarizes open/resolved incident counts, open task-recommendation counts,
+  the first local incident or recovery recommendation to review, evidence
+  links, stable open/resolved/recommendation anchors, and no-write/
+  no-resolution-on-GET/no-network/no-external-effect boundaries;
   `/artifacts?path=...` includes a read-only `Artifact Command Bar` that
   summarizes bounded artifact path, render type/family/renderer, size,
   rendered bytes, line count, truncation state, inferred project/goal context,
