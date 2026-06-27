@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-27 Resume First-Run Continuation
+
+- Made `/resume` first-run-aware when no saved Goal exists, so the page now
+  continues setup instead of dead-ending at `/goals` or a saved project link.
+- Empty checkouts point the Resume command bar, operator workbench, readiness
+  panel, next-action panel, workflow map, and targets at Home's
+  `Create Project` anchor. Registered-project/no-goal workspaces still show
+  the saved project, but the primary resume action now points to Home's
+  `Create First Goal` anchor.
+- Reused the same first-run gate list as `/today`, so Resume reports current
+  gate, progress, done/pending/waiting counts, Home/Today/Goals setup
+  targets, and zero-effect counters consistently across those surfaces.
+- Updated README, local app docs, operating summary, and route assertions for
+  both empty checkout and registered-project/no-goal Resume states.
+- Non-claims: this does not create projects or goals without confirmation,
+  write workspace state on GET, run delegations, call providers, fetch GitHub,
+  poll network services, approve work, commit, push, create PRs, deploy, or
+  mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> passed, `2 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed on a temporary root, including `/resume`, with provider/network/external-mutation counters at `0`
+  - `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed on a temporary root, including fixture-backed `/resume`, with provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
 ## 2026-06-27 First-Run-Aware Shared App Shell
 
 - Updated the shared browser app shell so first-run state is treated as a real

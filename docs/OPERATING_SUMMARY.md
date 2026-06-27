@@ -138,7 +138,11 @@ Core layers for the bootstrap:
   browser-available, plus a read-only `Resume Workflow Map` sourced from the
   same Goal remaining-work gates so the saved goal's current gate, lifecycle
   progress, next surface, and zero-effect boundaries are visible before
-  leaving `/resume`, without writing on GET;
+  leaving `/resume`; before a saved Goal exists, `/resume` follows first-run
+  progress instead, so an empty checkout points to Home's `Create Project`
+  anchor and a registered-project/no-goal workspace points to Home's
+  `Create First Goal` anchor while still showing the saved project, without
+  writing on GET;
   `/` also includes a read-only `Home Live State` panel with five-second local
   page reload polling that pauses while a form is focused or the tab is hidden,
   points at the same-page first-run form before a Goal exists or the

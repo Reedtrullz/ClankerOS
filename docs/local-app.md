@@ -119,7 +119,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   Goal page when that action is browser-available, includes a read-only
   `Resume Workflow Map` with the saved goal's current gate, lifecycle
   progress, next surface, and zero-effect counters, points back to
-  `/workspace` for edits, and writes nothing on GET.
+  `/workspace` for edits, and writes nothing on GET. Before a saved Goal
+  exists, `/resume` follows first-run progress instead: an empty checkout
+  points at Home's `Create Project` anchor, a registered-project/no-goal
+  workspace points at Home's `Create First Goal` anchor while still linking
+  the saved project, and the command bar, workbench, readiness, next-action,
+  and workflow-map sections all show the same first-run gate and setup target.
 - `/` includes a confirmed `refresh-dashboard-state` action that rewrites the
   local `.clanker/app/local_app_status.json` artifact from current repository
   and route state without providers, pushes, PRs, deploys, or external

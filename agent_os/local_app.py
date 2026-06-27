@@ -151,6 +151,13 @@ WORKFLOW_STEPS = [
     ("Manual operator push/PR outside ClankerOS", "manual git/gh", "external_manual_only", "publication handoff", "outside ClankerOS"),
     ("Goal completion", "complete-goal", "local_state", "manual publication finished", "goal status=completed"),
 ]
+FIRST_RUN_WORKFLOW_STEPS = [
+    ("create_project", "Create project"),
+    ("create_first_goal", "Create first goal"),
+    ("create_first_delegation", "Create first delegation"),
+    ("generate_context_pack", "Generate context pack"),
+    ("run_first_delegation", "Run first delegation"),
+]
 ACTION_CATALOG = [
     ("refresh-dashboard-state", "low-risk", "dashboard", "yes", "yes", "current repo/app route state", ".clanker/app/local_app_status.json"),
     ("context-pack", "local artifact", "delegation detail", "yes", "yes", "delegation_id", "context_pack.json/.md"),
@@ -1612,17 +1619,10 @@ def _today_workflow_map(
     if lead_goal is None:
         progress = _first_run_progress(root, storage)
         target_href, target_label = _today_first_run_target(progress)
-        steps = [
-            ("create_project", "Create project"),
-            ("create_first_goal", "Create first goal"),
-            ("create_first_delegation", "Create first delegation"),
-            ("generate_context_pack", "Generate context pack"),
-            ("run_first_delegation", "Run first delegation"),
-        ]
         items: list[str] = []
         done = 0
         waiting = 0
-        for index, (name, label) in enumerate(steps, start=1):
+        for index, (name, label) in enumerate(FIRST_RUN_WORKFLOW_STEPS, start=1):
             status = _first_run_step_status(progress, name)
             marker = "current" if name == progress["current_step"] else status
             if status == "done":
@@ -1643,7 +1643,7 @@ def _today_workflow_map(
                 f"<strong>{_e(label)}</strong> "
                 f"today_workflow_map_step: {_e(name)} status={_e(status)} marker={_e(marker)}{next_label}</li>"
             )
-        total = len(steps)
+        total = len(FIRST_RUN_WORKFLOW_STEPS)
         current = str(progress["current_step"])
         return "".join(
             [
@@ -2035,6 +2035,42 @@ def _first_run_focus_target(
 
 def _today_first_run_target(first_run: dict[str, Any]) -> tuple[str, str]:
     return _first_run_same_page_target(first_run)
+
+
+def _resume_first_run_context(root: Path) -> dict[str, Any]:
+    storage = _storage(root)
+    progress = _first_run_progress(root, storage)
+    target = _first_run_focus_target(progress, "/resume")
+    done = 0
+    waiting = 0
+    for name, _label in FIRST_RUN_WORKFLOW_STEPS:
+        status = _first_run_step_status(progress, name)
+        if status == "done":
+            done += 1
+        elif status != "current":
+            waiting += 1
+    total = len(FIRST_RUN_WORKFLOW_STEPS)
+    return {
+        "progress": progress,
+        "target_href": target["target_href"],
+        "target_label": target["target_label"],
+        "home_href": target["home_href"],
+        "today_href": target["today_href"],
+        "goals_href": target["goals_href"],
+        "form_available": target["form_available"] == "true",
+        "done": done,
+        "waiting": waiting,
+        "pending": 0 if progress["complete"] else 1,
+        "total": total,
+        "progress_label": f"{done}/{total} gates done",
+    }
+
+
+def _resume_should_use_first_run(root: Path, open_goal: str) -> bool:
+    if open_goal:
+        return False
+    progress = _first_run_progress(root, _storage(root))
+    return not bool(progress["complete"])
 
 
 def _today_goal_queue_line(
@@ -3852,6 +3888,11 @@ def _resume_page(root: Path) -> str:
     expanded = str(state.get("expanded_panels") or "").strip()
     last_artifact = str(state.get("last_viewed_artifact") or "").strip()
     has_workspace = any([open_project, open_goal, filters, expanded, last_artifact])
+    first_run_context = (
+        _resume_first_run_context(root)
+        if _resume_should_use_first_run(root, open_goal)
+        else None
+    )
 
     targets: list[str] = []
     if open_goal:
@@ -3860,24 +3901,36 @@ def _resume_page(root: Path) -> str:
         targets.append(f"resume_project: <a href='/projects/{quote(open_project)}'>{_e(open_project)}</a>")
     if last_artifact:
         targets.append(f"resume_artifact: {_artifact_link(last_artifact)}")
-    if not targets:
+    if first_run_context is not None:
+        progress = first_run_context["progress"]
+        targets.extend(
+            [
+                "resume_status: first_run" if has_workspace else "resume_status: no_saved_workspace",
+                f"resume_first_run_action: {_e(str(progress['next_action']))}",
+                f"resume_first_run_step: {_e(str(progress['current_step']))}",
+                f"resume_first_run_surface: <a href='{_e(str(first_run_context['target_href']))}'>{_e(str(first_run_context['target_label']))}</a>",
+                f"start_goal_cockpit: <a href='{_e(str(first_run_context['goals_href']))}'>Goal setup</a>",
+                f"start_first_run: <a href='{_e(str(first_run_context['home_href']))}'>Goal-First Home</a>",
+                f"start_today: <a href='{_e(str(first_run_context['today_href']))}'>Today setup</a>",
+            ]
+        )
+    elif not targets:
         targets.extend(
             [
                 "resume_status: no_saved_workspace",
-                "start_goal_cockpit: <a href='/goals'>/goals</a>",
-                "start_first_run: <a href='/'>Goal-First Home</a>",
+                "start_goal_cockpit: <a href='/goals'>Goal cockpit</a>",
             ]
         )
 
-    next_href = "/goals"
-    next_label = "Open Goal Cockpit"
+    next_href = str(first_run_context["target_href"]) if first_run_context else "/goals"
+    next_label = str(first_run_context["target_label"]) if first_run_context else "Open Goal Cockpit"
     if open_goal:
         next_href = f"/goals/{quote(open_goal)}"
         next_label = f"Open saved goal {open_goal}"
-    elif open_project:
+    elif first_run_context is None and open_project:
         next_href = f"/projects/{quote(open_project)}"
         next_label = f"Open saved project {open_project}"
-    elif last_artifact:
+    elif first_run_context is None and last_artifact:
         next_href = f"/artifacts?path={quote(last_artifact)}"
         next_label = "Open saved artifact"
 
@@ -3946,8 +3999,28 @@ def _resume_command_bar(
     target_href = "/goals"
     target_label = "/goals"
     form_available = False
+    first_run_form_available = False
+    first_run_home_href = "/"
+    first_run_today_href = "/today"
+    first_run_goals_href = "/goals"
 
-    if open_goal:
+    if _resume_should_use_first_run(root, open_goal):
+        first_run = _resume_first_run_context(root)
+        progress_state = first_run["progress"]
+        status = "first_run"
+        phase = "First run"
+        current_gate = str(progress_state["current_step"])
+        progress = str(first_run["progress_label"])
+        next_action = str(progress_state["next_action"])
+        reason = str(progress_state["next_reason"])
+        target_href = str(first_run["target_href"])
+        target_label = str(first_run["target_label"])
+        first_run_form_available = bool(first_run["form_available"])
+        first_run_home_href = str(first_run["home_href"])
+        first_run_today_href = str(first_run["today_href"])
+        first_run_goals_href = str(first_run["goals_href"])
+
+    elif open_goal:
         storage = _storage(root)
         goal_state = _goal_state(root, storage, open_goal)
         goal = goal_state.get("goal")
@@ -3999,6 +4072,22 @@ def _resume_command_bar(
         ("resume_command_reason", reason),
         ("resume_command_next_surface", target),
         ("resume_command_action_form_available", "true" if form_available else "false"),
+        (
+            "resume_command_first_run_form_available",
+            str(first_run_form_available).lower(),
+        ),
+        (
+            "resume_command_first_run_home_target",
+            SafeHtml(f"<a href='{_e(first_run_home_href)}'>Home setup</a>"),
+        ),
+        (
+            "resume_command_first_run_today_target",
+            SafeHtml(f"<a href='{_e(first_run_today_href)}'>Today setup</a>"),
+        ),
+        (
+            "resume_command_first_run_goals_target",
+            SafeHtml(f"<a href='{_e(first_run_goals_href)}'>Goal setup</a>"),
+        ),
         ("resume_command_last_artifact", artifact_value),
         ("resume_command_progress", progress),
         ("resume_command_source", ".clanker/app/workspace.json"),
@@ -4063,8 +4152,32 @@ def _resume_operator_workbench(
     waiting_gates = 0
     total_gates = 0
     source = "saved_workspace_state"
+    first_run_form_available = False
+    first_run_home_href = "/"
+    first_run_today_href = "/today"
+    first_run_goals_href = "/goals"
 
-    if open_goal:
+    if _resume_should_use_first_run(root, open_goal):
+        first_run = _resume_first_run_context(root)
+        progress_state = first_run["progress"]
+        status = "first_run"
+        phase = "First run"
+        current_gate = str(progress_state["current_step"])
+        progress = str(first_run["progress_label"])
+        next_action = str(progress_state["next_action"])
+        reason = str(progress_state["next_reason"])
+        target_href = str(first_run["target_href"])
+        target_label = str(first_run["target_label"])
+        done_gates = int(first_run["done"])
+        pending_gates = int(first_run["pending"])
+        waiting_gates = int(first_run["waiting"])
+        total_gates = int(first_run["total"])
+        first_run_form_available = bool(first_run["form_available"])
+        first_run_home_href = str(first_run["home_href"])
+        first_run_today_href = str(first_run["today_href"])
+        first_run_goals_href = str(first_run["goals_href"])
+        source = "first_run_progress"
+    elif open_goal:
         storage = _storage(root)
         goal_state = _goal_state(root, storage, open_goal)
         goal = goal_state.get("goal")
@@ -4133,6 +4246,10 @@ def _resume_operator_workbench(
         unblock_href = "/incidents"
         unblock_label = "Review recommendations"
         unblock_reason = "open_recommendations"
+    elif status == "first_run":
+        unblock_href = target_href
+        unblock_label = target_label
+        unblock_reason = current_gate
     elif not readiness["ready"]:
         unblock_href = "/workspace#save-workspace"
         unblock_label = "Repair resume state"
@@ -4141,6 +4258,7 @@ def _resume_operator_workbench(
         unblock_href = "#resume-workflow-map"
         unblock_label = "Inspect workflow map"
         unblock_reason = "no_blockers"
+    unblock_surface_label = target_label if status == "first_run" else unblock_href
 
     project_surface: str | SafeHtml = "none"
     if open_project:
@@ -4211,8 +4329,24 @@ def _resume_operator_workbench(
                     ("resume_workbench_reason", reason),
                     ("resume_workbench_action_form_available", str(form_available).lower()),
                     (
+                        "resume_workbench_first_run_form_available",
+                        str(first_run_form_available).lower(),
+                    ),
+                    (
                         "resume_workbench_confirmation_required",
-                        str(form_available).lower(),
+                        str(form_available or first_run_form_available).lower(),
+                    ),
+                    (
+                        "resume_workbench_first_run_home_target",
+                        SafeHtml(f"<a href='{_e(first_run_home_href)}'>Home setup</a>"),
+                    ),
+                    (
+                        "resume_workbench_first_run_today_target",
+                        SafeHtml(f"<a href='{_e(first_run_today_href)}'>Today setup</a>"),
+                    ),
+                    (
+                        "resume_workbench_first_run_goals_target",
+                        SafeHtml(f"<a href='{_e(first_run_goals_href)}'>Goal setup</a>"),
                     ),
                     ("resume_workbench_pending_approvals", str(pending_approvals)),
                     ("resume_workbench_open_incidents", str(open_incidents)),
@@ -4221,7 +4355,9 @@ def _resume_operator_workbench(
                     ("resume_workbench_unblock_action", unblock_label),
                     (
                         "resume_workbench_unblock_surface",
-                        SafeHtml(f"<a href='{_e(unblock_href)}'>{_e(unblock_href)}</a>"),
+                        SafeHtml(
+                            f"<a href='{_e(unblock_href)}'>{_e(unblock_surface_label)}</a>"
+                        ),
                     ),
                     ("resume_workbench_unblock_reason", unblock_reason),
                     ("resume_workbench_last_artifact", artifact_surface),
@@ -4280,6 +4416,13 @@ def _resume_readiness_section(
     ready = bool(readiness["ready"])
     status = str(readiness["status"])
     next_surface = str(readiness["next_surface"])
+    next_label = next_surface
+    if _resume_should_use_first_run(root, open_goal):
+        first_run = _resume_first_run_context(root)
+        progress = first_run["progress"]
+        status = "first_run"
+        next_surface = str(first_run["target_href"])
+        next_label = str(first_run["target_label"])
     return "".join(
         [
             "<section id='resume-readiness'><h2>Resume Readiness</h2>",
@@ -4295,7 +4438,18 @@ def _resume_readiness_section(
                     ("resume_readiness_expanded_panels", "present" if expanded else "missing"),
                     ("resume_readiness_last_viewed_artifact", "present" if last_artifact else "missing"),
                     ("resume_readiness_last_artifact_exists", str(last_artifact_exists).lower()),
-                    ("resume_readiness_next_surface", SafeHtml(f"<a href='{_e(next_surface)}'>{_e(next_surface)}</a>")),
+                    (
+                        "resume_readiness_next_surface",
+                        SafeHtml(f"<a href='{_e(next_surface)}'>{_e(next_label)}</a>"),
+                    ),
+                    (
+                        "resume_readiness_first_run_step",
+                        str(progress["current_step"]) if status == "first_run" else "not_applicable",
+                    ),
+                    (
+                        "resume_readiness_first_run_action",
+                        str(progress["next_action"]) if status == "first_run" else "not_applicable",
+                    ),
                     ("resume_readiness_come_back_tomorrow_ready", str(ready).lower()),
                     ("resume_readiness_illustration", "[project] -> [goal] -> [filters/panels] -> [artifact] -> [next action]"),
                     ("resume_readiness_write_on_get", "false"),
@@ -4344,14 +4498,49 @@ def _workspace_resume_readiness(
 
 def _resume_next_action_section(root: Path, open_goal: str) -> str:
     if not open_goal:
-        return _list_section(
-            "Resume Next Action",
+        first_run = _resume_first_run_context(root)
+        progress = first_run["progress"]
+        return "".join(
             [
-                "resume_next_action_status: no_saved_goal",
-                "resume_next_surface: <a href='/goals'>/goals</a>",
-                "resume_next_action_form_available: false",
-                "resume_next_action_external_effects_created: false",
-            ],
+                "<section id='resume-next-action'><h2>Resume Next Action</h2>",
+                "<p class='muted'>No saved Goal exists yet, so Resume continues the first-run browser path.</p>",
+                _kv(
+                    [
+                        ("resume_next_action_status", "first_run"),
+                        ("resume_next_action_source", "first_run_progress"),
+                        ("resume_next_action_current_step", str(progress["current_step"])),
+                        ("resume_next_action", str(progress["next_action"])),
+                        ("resume_next_reason", str(progress["next_reason"])),
+                        (
+                            "resume_next_surface",
+                            SafeHtml(
+                                f"<a href='{_e(str(first_run['target_href']))}'>{_e(str(first_run['target_label']))}</a>"
+                            ),
+                        ),
+                        (
+                            "resume_next_home_target",
+                            SafeHtml(f"<a href='{_e(str(first_run['home_href']))}'>Home setup</a>"),
+                        ),
+                        (
+                            "resume_next_today_target",
+                            SafeHtml(f"<a href='{_e(str(first_run['today_href']))}'>Today setup</a>"),
+                        ),
+                        (
+                            "resume_next_goals_target",
+                            SafeHtml(f"<a href='{_e(str(first_run['goals_href']))}'>Goal setup</a>"),
+                        ),
+                        (
+                            "resume_next_action_form_available",
+                            str(bool(first_run["form_available"])).lower(),
+                        ),
+                        ("resume_next_action_write_on_get", "false"),
+                        ("resume_next_action_provider_calls_taken", "0"),
+                        ("resume_next_action_network_actions_taken", "0"),
+                        ("resume_next_action_external_effects_created", "false"),
+                    ]
+                ),
+                "</section>",
+            ]
         )
     storage = _storage(root)
     state = _goal_state(root, storage, open_goal)
@@ -4384,22 +4573,58 @@ def _resume_next_action_section(root: Path, open_goal: str) -> str:
 
 def _resume_workflow_map_section(root: Path, open_goal: str) -> str:
     if not open_goal:
+        first_run = _resume_first_run_context(root)
+        progress = first_run["progress"]
+        items: list[str] = []
+        for index, (name, label) in enumerate(FIRST_RUN_WORKFLOW_STEPS, start=1):
+            status = _first_run_step_status(progress, name)
+            marker = "current" if name == progress["current_step"] else status
+            next_label = (
+                f" next={_e(str(progress['next_action']))}"
+                if name == progress["current_step"]
+                else ""
+            )
+            items.append(
+                "<li "
+                f"data-resume-workflow-gate='{_e(name)}' "
+                f"data-gate-status='{_e(status)}' "
+                f"data-gate-marker='{_e(marker)}'>"
+                f"<span class='workflow-map-index'>{index}</span> "
+                f"<strong>{_e(label)}</strong> "
+                f"resume_workflow_map_step: {_e(name)} status={_e(status)} marker={_e(marker)}{next_label}</li>"
+            )
         return "".join(
             [
                 "<section id='resume-workflow-map' class='panel resume-workflow-map' data-resume-workflow-map='true'><h2>Resume Workflow Map</h2>",
-                "<p class='muted'>A read-only gate map appears here once a saved goal exists.</p>",
+                "<p class='muted'>No saved Goal exists yet, so this map shows the first-run path from checkout to first delegation.</p>",
                 _kv(
                     [
-                        ("resume_workflow_map_status", "no_saved_goal"),
+                        ("resume_workflow_map_status", "first_run"),
                         ("resume_workflow_map_saved_goal", "none"),
-                        ("resume_workflow_map_next_surface", SafeHtml("<a href='/goals'>/goals</a>")),
-                        ("resume_workflow_map_source", "saved_workspace_goal"),
+                        ("resume_workflow_map_current_gate", str(progress["current_step"])),
+                        ("resume_workflow_map_current_step", str(progress["current_step"])),
+                        ("resume_workflow_map_next_action", str(progress["next_action"])),
+                        (
+                            "resume_workflow_map_next_surface",
+                            SafeHtml(
+                                f"<a href='{_e(str(first_run['target_href']))}'>{_e(str(first_run['target_label']))}</a>"
+                            ),
+                        ),
+                        ("resume_workflow_map_progress", str(first_run["progress_label"])),
+                        ("resume_workflow_map_done_count", str(first_run["done"])),
+                        ("resume_workflow_map_pending_count", str(first_run["pending"])),
+                        ("resume_workflow_map_waiting_count", str(first_run["waiting"])),
+                        ("resume_workflow_map_project", str(progress["default_project"])),
+                        ("resume_workflow_map_source", "first_run_progress"),
                         ("resume_workflow_map_write_on_get", "false"),
                         ("resume_workflow_map_provider_calls_taken_by_clankeros", "0"),
                         ("resume_workflow_map_network_actions_taken", "0"),
                         ("resume_workflow_map_external_effects_created", "false"),
                     ]
                 ),
+                "<ol class='workflow-map-rail resume-workflow-map-rail'>",
+                "".join(items),
+                "</ol>",
                 "</section>",
             ]
         )

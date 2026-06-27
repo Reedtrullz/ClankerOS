@@ -4567,43 +4567,80 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert resume_empty.status == 200
     assert "Resume Command Bar" in resume_empty.body
     assert "data-resume-command-bar='true'" in resume_empty.body
-    assert "resume_command_status</dt><dd>no_saved_workspace" in resume_empty.body
+    assert "resume_command_status</dt><dd>first_run" in resume_empty.body
     assert "resume_command_ready</dt><dd>false" in resume_empty.body
-    assert "resume_command_current_phase</dt><dd>none" in resume_empty.body
-    assert "resume_command_next_action</dt><dd>Open goals" in resume_empty.body
-    assert "resume_command_next_surface</dt><dd><a href='/goals'>/goals</a>" in resume_empty.body
+    assert "resume_command_current_phase</dt><dd>First run" in resume_empty.body
+    assert "resume_command_current_gate</dt><dd>create_project" in resume_empty.body
+    assert "resume_command_next_action</dt><dd>Register ClankerOS project" in resume_empty.body
+    assert "resume_command_reason</dt><dd>no_project_registered" in resume_empty.body
+    assert (
+        "resume_command_next_surface</dt><dd><a href='/#first-run-create-project'>"
+        "Create Project</a>"
+    ) in resume_empty.body
     assert "resume_command_action_form_available</dt><dd>false" in resume_empty.body
+    assert "resume_command_first_run_form_available</dt><dd>true" in resume_empty.body
+    assert "resume_command_first_run_home_target</dt><dd><a href='/#first-run-create-project'>Home setup</a>" in resume_empty.body
+    assert (
+        "resume_command_first_run_today_target</dt><dd><a href='/today#first-run-create-project'>"
+        "Today setup</a>"
+    ) in resume_empty.body
+    assert (
+        "resume_command_first_run_goals_target</dt><dd><a href='/goals#first-run-create-project'>"
+        "Goal setup</a>"
+    ) in resume_empty.body
     assert "resume_command_write_on_get</dt><dd>false" in resume_empty.body
     assert "resume_command_external_effects_created</dt><dd>false" in resume_empty.body
     assert "Resume Operator Workbench" in resume_empty.body
     assert "data-resume-operator-workbench='true'" in resume_empty.body
     assert "data-resume-workbench-actions='true'" in resume_empty.body
-    assert "resume_workbench_status</dt><dd>no_saved_workspace" in resume_empty.body
+    assert "resume_workbench_status</dt><dd>first_run" in resume_empty.body
     assert "resume_workbench_ready</dt><dd>false" in resume_empty.body
     assert "resume_workbench_readiness_status</dt><dd>not_started" in resume_empty.body
     assert "resume_workbench_project</dt><dd>none" in resume_empty.body
     assert "resume_workbench_goal</dt><dd>none" in resume_empty.body
-    assert "resume_workbench_phase</dt><dd>none" in resume_empty.body
-    assert "resume_workbench_current_gate</dt><dd>none" in resume_empty.body
-    assert "resume_workbench_gate_progress</dt><dd>0/0 gates done" in resume_empty.body
-    assert "resume_workbench_next_action</dt><dd>Open goals" in resume_empty.body
-    assert "resume_workbench_primary_surface</dt><dd><a href='/goals'>Open goals</a>" in resume_empty.body
-    assert "resume_workbench_target_surface</dt><dd><a href='/goals'>/goals</a>" in resume_empty.body
-    assert "resume_workbench_reason</dt><dd>no_saved_goal" in resume_empty.body
+    assert "resume_workbench_phase</dt><dd>First run" in resume_empty.body
+    assert "resume_workbench_current_gate</dt><dd>create_project" in resume_empty.body
+    assert "resume_workbench_gate_progress</dt><dd>0/5 gates done" in resume_empty.body
+    assert "resume_workbench_done_gates</dt><dd>0" in resume_empty.body
+    assert "resume_workbench_pending_gates</dt><dd>1" in resume_empty.body
+    assert "resume_workbench_waiting_gates</dt><dd>4" in resume_empty.body
+    assert "resume_workbench_next_action</dt><dd>Register ClankerOS project" in resume_empty.body
+    assert (
+        "resume_workbench_primary_surface</dt><dd><a href='/#first-run-create-project'>"
+        "Register ClankerOS project</a>"
+    ) in resume_empty.body
+    assert (
+        "resume_workbench_target_surface</dt><dd><a href='/#first-run-create-project'>"
+        "Create Project</a>"
+    ) in resume_empty.body
+    assert "resume_workbench_reason</dt><dd>no_project_registered" in resume_empty.body
     assert "resume_workbench_action_form_available</dt><dd>false" in resume_empty.body
-    assert "resume_workbench_confirmation_required</dt><dd>false" in resume_empty.body
+    assert "resume_workbench_first_run_form_available</dt><dd>true" in resume_empty.body
+    assert "resume_workbench_confirmation_required</dt><dd>true" in resume_empty.body
+    assert "resume_workbench_first_run_home_target</dt><dd><a href='/#first-run-create-project'>Home setup</a>" in resume_empty.body
+    assert (
+        "resume_workbench_first_run_today_target</dt><dd><a href='/today#first-run-create-project'>"
+        "Today setup</a>"
+    ) in resume_empty.body
+    assert (
+        "resume_workbench_first_run_goals_target</dt><dd><a href='/goals#first-run-create-project'>"
+        "Goal setup</a>"
+    ) in resume_empty.body
     assert "resume_workbench_pending_approvals</dt><dd>0" in resume_empty.body
     assert "resume_workbench_open_incidents</dt><dd>0" in resume_empty.body
     assert "resume_workbench_open_recommendations</dt><dd>0" in resume_empty.body
     assert "resume_workbench_waiting_items</dt><dd>0" in resume_empty.body
-    assert "resume_workbench_unblock_action</dt><dd>Repair resume state" in resume_empty.body
-    assert "resume_workbench_unblock_surface</dt><dd><a href='/workspace#save-workspace'>/workspace#save-workspace</a>" in resume_empty.body
-    assert "resume_workbench_unblock_reason</dt><dd>workspace_not_ready" in resume_empty.body
+    assert "resume_workbench_unblock_action</dt><dd>Create Project" in resume_empty.body
+    assert (
+        "resume_workbench_unblock_surface</dt><dd><a href='/#first-run-create-project'>"
+        "Create Project</a>"
+    ) in resume_empty.body
+    assert "resume_workbench_unblock_reason</dt><dd>create_project" in resume_empty.body
     assert "resume_workbench_last_artifact</dt><dd>none" in resume_empty.body
     assert "resume_workbench_last_artifact_exists</dt><dd>false" in resume_empty.body
     assert "resume_workbench_finish_surface</dt><dd><a href='/workspace#save-workspace'>/workspace#save-workspace</a>" in resume_empty.body
     assert "resume_workbench_finish_confirmation_required</dt><dd>true" in resume_empty.body
-    assert "resume_workbench_source</dt><dd>saved_workspace_state" in resume_empty.body
+    assert "resume_workbench_source</dt><dd>first_run_progress" in resume_empty.body
     assert "resume_workbench_write_on_get</dt><dd>false" in resume_empty.body
     assert "resume_workbench_provider_calls_taken</dt><dd>0" in resume_empty.body
     assert "resume_workbench_network_actions_taken</dt><dd>0" in resume_empty.body
@@ -4611,18 +4648,55 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "resume_workbench_push_created</dt><dd>false" in resume_empty.body
     assert "resume_workbench_pr_created</dt><dd>false" in resume_empty.body
     assert "resume_workbench_deploy_created</dt><dd>false" in resume_empty.body
-    assert "resume_workbench_now: Open goals" in resume_empty.body
+    assert "resume_workbench_now: Register ClankerOS project" in resume_empty.body
+    assert (
+        "resume_workbench_click: <a href='/#first-run-create-project'>"
+        "Register ClankerOS project</a>"
+    ) in resume_empty.body
     assert "resume_workbench_finish: <a href='/workspace#save-workspace'>Finish Today</a>" in resume_empty.body
     assert "resume_workbench_safety: confirmed local actions only; no write on GET" in resume_empty.body
     assert "id='resume-readiness'" in resume_empty.body
+    assert "resume_readiness_status</dt><dd>first_run" in resume_empty.body
+    assert (
+        "resume_readiness_next_surface</dt><dd><a href='/#first-run-create-project'>"
+        "Create Project</a>"
+    ) in resume_empty.body
+    assert "resume_readiness_first_run_step</dt><dd>create_project" in resume_empty.body
+    assert "resume_readiness_first_run_action</dt><dd>Register ClankerOS project" in resume_empty.body
+    assert "Resume Next Action" in resume_empty.body
+    assert "resume_next_action_status</dt><dd>first_run" in resume_empty.body
+    assert "resume_next_action_source</dt><dd>first_run_progress" in resume_empty.body
+    assert "resume_next_action_current_step</dt><dd>create_project" in resume_empty.body
+    assert "resume_next_action</dt><dd>Register ClankerOS project" in resume_empty.body
+    assert "resume_next_reason</dt><dd>no_project_registered" in resume_empty.body
+    assert (
+        "resume_next_surface</dt><dd><a href='/#first-run-create-project'>"
+        "Create Project</a>"
+    ) in resume_empty.body
+    assert "resume_next_action_form_available</dt><dd>true" in resume_empty.body
     assert "Resume Workflow Map" in resume_empty.body
     assert "data-resume-workflow-map='true'" in resume_empty.body
-    assert "resume_workflow_map_status</dt><dd>no_saved_goal" in resume_empty.body
+    assert "resume_workflow_map_status</dt><dd>first_run" in resume_empty.body
     assert "resume_workflow_map_saved_goal</dt><dd>none" in resume_empty.body
-    assert "resume_workflow_map_next_surface</dt><dd><a href='/goals'>/goals</a>" in resume_empty.body
+    assert "resume_workflow_map_current_gate</dt><dd>create_project" in resume_empty.body
+    assert "resume_workflow_map_current_step</dt><dd>create_project" in resume_empty.body
+    assert "resume_workflow_map_next_action</dt><dd>Register ClankerOS project" in resume_empty.body
+    assert (
+        "resume_workflow_map_next_surface</dt><dd><a href='/#first-run-create-project'>"
+        "Create Project</a>"
+    ) in resume_empty.body
+    assert "resume_workflow_map_progress</dt><dd>0/5 gates done" in resume_empty.body
+    assert "resume_workflow_map_done_count</dt><dd>0" in resume_empty.body
+    assert "resume_workflow_map_pending_count</dt><dd>1" in resume_empty.body
+    assert "resume_workflow_map_waiting_count</dt><dd>4" in resume_empty.body
+    assert "resume_workflow_map_project</dt><dd>clankeros" in resume_empty.body
+    assert "resume_workflow_map_source</dt><dd>first_run_progress" in resume_empty.body
     assert "resume_workflow_map_write_on_get</dt><dd>false" in resume_empty.body
     assert "resume_workflow_map_network_actions_taken</dt><dd>0" in resume_empty.body
     assert "resume_workflow_map_external_effects_created</dt><dd>false" in resume_empty.body
+    assert "data-resume-workflow-gate='create_project'" in resume_empty.body
+    assert "resume_workflow_map_step: create_project status=current marker=current" in resume_empty.body
+    assert "resume_workflow_map_step: create_first_goal status=waiting_for_project" in resume_empty.body
     assert "data-recent-items='true'" in root.body
     assert "Recent Items Command Bar" in root.body
     assert "data-recent-items-command-bar='true'" in root.body
@@ -6242,7 +6316,56 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     register_resume = render_local_app_route(tmp_path, "/resume")
     assert "resume_workspace_available</dt><dd>true" in register_resume.body
     assert "resume_project: <a href='/projects/clankeros'>clankeros</a>" in register_resume.body
-    assert "<a href='/projects/clankeros'>Open saved project clankeros</a>" in register_resume.body
+    assert "resume_status: first_run" in register_resume.body
+    assert "resume_first_run_action: Create first goal" in register_resume.body
+    assert "resume_first_run_step: create_first_goal" in register_resume.body
+    assert (
+        "resume_first_run_surface: <a href='/#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in register_resume.body
+    assert "<a href='/#first-run-create-goal'>Create First Goal</a>" in register_resume.body
+    assert "resume_command_status</dt><dd>first_run" in register_resume.body
+    assert "resume_command_current_gate</dt><dd>create_first_goal" in register_resume.body
+    assert "resume_command_next_action</dt><dd>Create first goal" in register_resume.body
+    assert (
+        "resume_command_next_surface</dt><dd><a href='/#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in register_resume.body
+    assert "resume_command_first_run_form_available</dt><dd>true" in register_resume.body
+    assert "resume_workbench_status</dt><dd>first_run" in register_resume.body
+    assert "resume_workbench_project</dt><dd><a href='/projects/clankeros'>clankeros</a>" in register_resume.body
+    assert "resume_workbench_goal</dt><dd>none" in register_resume.body
+    assert "resume_workbench_current_gate</dt><dd>create_first_goal" in register_resume.body
+    assert "resume_workbench_gate_progress</dt><dd>1/5 gates done" in register_resume.body
+    assert "resume_workbench_done_gates</dt><dd>1" in register_resume.body
+    assert "resume_workbench_pending_gates</dt><dd>1" in register_resume.body
+    assert "resume_workbench_waiting_gates</dt><dd>3" in register_resume.body
+    assert "resume_workbench_next_action</dt><dd>Create first goal" in register_resume.body
+    assert (
+        "resume_workbench_target_surface</dt><dd><a href='/#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in register_resume.body
+    assert "resume_workbench_reason</dt><dd>no_goal_created" in register_resume.body
+    assert "resume_workbench_unblock_action</dt><dd>Create First Goal" in register_resume.body
+    assert (
+        "resume_workbench_unblock_surface</dt><dd><a href='/#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in register_resume.body
+    assert "resume_workbench_source</dt><dd>first_run_progress" in register_resume.body
+    assert "resume_readiness_status</dt><dd>first_run" in register_resume.body
+    assert "resume_readiness_open_project</dt><dd>present" in register_resume.body
+    assert "resume_readiness_open_goal</dt><dd>missing" in register_resume.body
+    assert "resume_readiness_first_run_step</dt><dd>create_first_goal" in register_resume.body
+    assert "resume_next_action_status</dt><dd>first_run" in register_resume.body
+    assert "resume_next_action_current_step</dt><dd>create_first_goal" in register_resume.body
+    assert "resume_next_action</dt><dd>Create first goal" in register_resume.body
+    assert "resume_workflow_map_current_gate</dt><dd>create_first_goal" in register_resume.body
+    assert "resume_workflow_map_progress</dt><dd>1/5 gates done" in register_resume.body
+    assert "resume_workflow_map_done_count</dt><dd>1" in register_resume.body
+    assert "resume_workflow_map_pending_count</dt><dd>1" in register_resume.body
+    assert "resume_workflow_map_waiting_count</dt><dd>3" in register_resume.body
+    assert "resume_workflow_map_step: create_project status=done marker=done" in register_resume.body
+    assert "resume_workflow_map_step: create_first_goal status=current marker=current" in register_resume.body
 
     create_goal_result = render_local_app_route(
         tmp_path,
