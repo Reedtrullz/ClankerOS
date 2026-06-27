@@ -42,7 +42,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   recommendations, open incidents, saved workspace resume links, saved-goal
   phase and next-action readbacks, a `Home Day Plan` readback for the current
   goal, phase, one next action, waiting counts, and end-of-day resume
-  readiness, a `Home Focus Queue` for next actions across active and paused
+  readiness plus a confirmed `save-workspace` Finish Today form for the lead
+  goal, a `Home Focus Queue` for next actions across active and paused
   goals, a read-only `Home Activity Command Bar` that names the latest
   human-readable event and target surface across current goals, the same
   confirmed local action form as the Goal page when the saved

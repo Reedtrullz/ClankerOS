@@ -381,9 +381,11 @@ Core layers for the bootstrap:
   readbacks, a read-only `Start Here` cockpit that condenses the lead goal or
   first-run step, one primary action, target surface, resume readiness,
   waiting counts, and CI handoff posture into a single scan-friendly panel, a
-  read-only `Home Day Plan` that names the current goal, current phase, one
-  next action, waiting counts, and end-of-day resume readiness from saved
-  workspace state, a read-only `Home Focus Queue` that lists next actions,
+  form-backed `Home Day Plan` that names the current goal, current phase, one
+  next action, waiting counts, end-of-day resume readiness from saved
+  workspace state, and a confirmed local `save-workspace` Finish Today form
+  that records the lead goal and latest artifact as tomorrow's resume point
+  after confirmation, a read-only `Home Focus Queue` that lists next actions,
   phase, target surface, progress, and waiting counts across active and paused
   goals, the same confirmed local action form as the Goal page when the saved
   goal's next action is browser-available, a `/resume` landing link, an

@@ -4150,6 +4150,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "home_day_plan_next_action</dt><dd>Register ClankerOS project" in root.body
     assert "home_day_plan_resume_ready</dt><dd>false" in root.body
     assert "home_day_plan_resume_status</dt><dd>not_started" in root.body
+    assert "home_day_plan_finish_status</dt><dd>not_ready_until_goal_exists" in root.body
+    assert "home_day_plan_finish_action</dt><dd>save-workspace" in root.body
+    assert "home_day_plan_finish_form_available</dt><dd>false" in root.body
     assert "day_plan_end_of_day_resume: not_ready_until_workspace_saved" in root.body
     assert "home_day_plan_write_on_get</dt><dd>false" in root.body
     assert "home_day_plan_external_effects_created</dt><dd>false" in root.body
@@ -5682,6 +5685,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Remember Current Goal" in dashboard.body
     assert "save-workspace" in dashboard.body
     assert "operator-home" in dashboard.body
+    assert "data-home-day-plan='true'" in dashboard.body
+    assert "home_day_plan_finish_status</dt><dd>needs_workspace_save" in dashboard.body
+    assert "home_day_plan_finish_action</dt><dd>save-workspace" in dashboard.body
+    assert "home_day_plan_finish_form_available</dt><dd>true" in dashboard.body
+    assert "home_day_plan_finish_confirmation_required</dt><dd>true" in dashboard.body
+    assert "home_day_plan_saved_goal_matches_lead</dt><dd>false" in dashboard.body
+    assert "home_day_plan_saved_project_matches_lead</dt><dd>false" in dashboard.body
+    assert "home_day_plan_finish_return_to</dt><dd><a href='/'>/</a>" in dashboard.body
+    assert "day_plan_finish: status=needs_workspace_save action=save-workspace return_to=/" in dashboard.body
+    assert "name='updated_by' value='home-day-plan'" in dashboard.body
+    assert "name='expanded_panels' value='day-plan,daily-loop,next-action,timeline,evidence,artifacts,notes'" in dashboard.body
     assert "Start Here" in dashboard.body
     assert "start_here_mode</dt><dd>goal" in dashboard.body
     assert "start_here_current_phase</dt><dd>Ready to commit" in dashboard.body
@@ -5703,6 +5717,24 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_ci_github_status_fetch</dt><dd>none" in dashboard.body
     assert "home_ci_app_network_actions_taken</dt><dd>0" in dashboard.body
     assert "home_ci_external_mutations_taken</dt><dd>0" in dashboard.body
+    home_day_plan_resume_artifact = result.review_path.relative_to(tmp_path).as_posix()
+    home_day_plan_workspace_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/save-workspace",
+        method="POST",
+        form={
+            "open_project": [result.project_id],
+            "open_goal": [result.goal_id],
+            "filters": [f"goal:{result.goal_id}"],
+            "expanded_panels": ["day-plan,daily-loop,next-action,timeline,evidence,artifacts,notes"],
+            "last_viewed_artifact": [home_day_plan_resume_artifact],
+            "updated_by": ["home-day-plan"],
+            "return_to": ["/"],
+        },
+    )
+    assert home_day_plan_workspace_confirmation.status == 409
+    assert "Confirm save-workspace" in home_day_plan_workspace_confirmation.body
+    assert "home-day-plan" in home_day_plan_workspace_confirmation.body
     assert "home_ci_snapshot_fast_smoke_validated_record_command_template: gh run view" in dashboard.body
     assert "Home Recent Activity" in dashboard.body
     assert "Execution completed" in dashboard.body
@@ -6362,6 +6394,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_day_plan_resume_ready</dt><dd>true" in restored_home.body
     assert "home_day_plan_resume_status</dt><dd>ready" in restored_home.body
     assert "home_day_plan_waiting_items" in restored_home.body
+    assert "home_day_plan_finish_status</dt><dd>ready" in restored_home.body
+    assert "home_day_plan_finish_form_available</dt><dd>true" in restored_home.body
+    assert "home_day_plan_saved_goal_matches_lead</dt><dd>true" in restored_home.body
+    assert "home_day_plan_saved_project_matches_lead</dt><dd>true" in restored_home.body
+    assert "home_day_plan_saved_artifact_matches_latest</dt><dd>true" in restored_home.body
+    assert "day_plan_finish: status=ready action=save-workspace return_to=/" in restored_home.body
+    assert "name='updated_by' value='home-day-plan'" in restored_home.body
     assert "day_plan_end_of_day_resume: ready" in restored_home.body
     assert "home_day_plan_write_on_get</dt><dd>false" in restored_home.body
     assert "home_day_plan_external_effects_created</dt><dd>false" in restored_home.body

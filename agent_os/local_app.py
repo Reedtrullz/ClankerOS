@@ -1235,6 +1235,9 @@ def _home_day_plan(root: Path, storage: Storage, lead_goal: sqlite3.Row | None) 
                 ("home_day_plan_next_action", first_run["next_action"]),
                 ("home_day_plan_next_surface", SafeHtml(f"<a href='{_e(first_run['next_surface'])}'>{_e(first_run['next_surface'])}</a>")),
                 ("home_day_plan_waiting_items", "0"),
+                ("home_day_plan_finish_status", "not_ready_until_goal_exists"),
+                ("home_day_plan_finish_action", "save-workspace"),
+                ("home_day_plan_finish_form_available", "false"),
             ]
         )
         lines.extend(
@@ -1244,11 +1247,23 @@ def _home_day_plan(root: Path, storage: Storage, lead_goal: sqlite3.Row | None) 
                 "day_plan_end_of_day_resume: not_ready_until_workspace_saved",
             ]
         )
+        finish_form = ""
     else:
         goal_id = str(lead_goal["id"])
         state = _goal_state(root, storage, goal_id)
+        goal = state["goal"]
         phase = _goal_current_phase(state)
         next_action = _goal_next_action(root, state)
+        latest_artifact = _goal_latest_artifact_path(root, state)
+        saved_goal_matches_lead = open_goal == goal_id
+        saved_project_matches_lead = open_project == str(goal.project_id)
+        saved_artifact_matches_latest = bool(latest_artifact) and last_artifact == latest_artifact
+        finish_ready = (
+            saved_goal_matches_lead
+            and saved_project_matches_lead
+            and (saved_artifact_matches_latest or not latest_artifact)
+        )
+        finish_status = "ready" if finish_ready else "needs_workspace_save"
         open_tasks = len([task for task in state["tasks"] if task.status != "completed"])
         open_incidents = len([row for row in state["incidents"] if row["status"] == "open"])
         open_recommendations = len([row for row in state["recommendations"] if row["status"] == "open"])
@@ -1272,6 +1287,21 @@ def _home_day_plan(root: Path, storage: Storage, lead_goal: sqlite3.Row | None) 
                 ("home_day_plan_open_recommendations", str(open_recommendations)),
                 ("home_day_plan_pending_approvals", str(pending_approvals)),
                 ("home_day_plan_waiting_items", str(waiting_items)),
+                ("home_day_plan_finish_status", finish_status),
+                ("home_day_plan_finish_action", "save-workspace"),
+                ("home_day_plan_finish_form_available", "true"),
+                ("home_day_plan_finish_confirmation_required", "true"),
+                ("home_day_plan_saved_goal_matches_lead", str(saved_goal_matches_lead).lower()),
+                ("home_day_plan_saved_project_matches_lead", str(saved_project_matches_lead).lower()),
+                ("home_day_plan_saved_artifact_matches_latest", str(saved_artifact_matches_latest).lower()),
+                (
+                    "home_day_plan_latest_artifact",
+                    SafeHtml(_artifact_link(latest_artifact)) if latest_artifact else "none",
+                ),
+                (
+                    "home_day_plan_finish_return_to",
+                    SafeHtml("<a href='/'>/</a>"),
+                ),
             ]
         )
         lines.extend(
@@ -1282,13 +1312,36 @@ def _home_day_plan(root: Path, storage: Storage, lead_goal: sqlite3.Row | None) 
                 f"day_plan_next_surface: <a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
                 f"day_plan_waiting: approvals={pending_approvals} incidents={open_incidents} recommendations={open_recommendations}",
                 f"day_plan_end_of_day_resume: {'ready' if readiness['ready'] else 'needs_saved_workspace'}",
+                f"day_plan_finish: status={_e(finish_status)} action=save-workspace return_to=/",
+            ]
+        )
+        finish_form = "".join(
+            [
+                "<h3>Finish Today</h3>",
+                "<p class='muted'>Save the lead goal, current day-plan filters, expanded panels, and latest artifact as tomorrow's resume point. This writes only `.clanker/app/workspace.json` after confirmation.</p>",
+                _input_form(
+                    "save-workspace",
+                    {
+                        "open_project": str(goal.project_id),
+                        "open_goal": goal_id,
+                        "return_to": "/",
+                    },
+                    {
+                        "filters": f"goal:{goal_id}",
+                        "expanded_panels": "day-plan,daily-loop,next-action,timeline,evidence,artifacts,notes",
+                        "last_viewed_artifact": latest_artifact,
+                        "updated_by": "home-day-plan",
+                    },
+                ),
             ]
         )
     return "".join(
         [
-            "<section><h2>Home Day Plan</h2>",
+            "<section class='panel home-day-plan' data-home-day-plan='true'><h2>Home Day Plan</h2>",
+            "<p class='muted'>Start, continue, unblock, and finish the lead goal from the daily Home board.</p>",
             _kv(rows),
             _ul(lines),
+            finish_form,
             "</section>",
         ]
     )

@@ -1,5 +1,35 @@
 # Status
 
+## 2026-06-27 Home Day Plan Finish
+
+- Added a confirmed `Finish Today` save surface directly to `Home Day Plan`
+  on `/`. When a lead goal exists, Home now shows whether the saved workspace
+  points at that lead goal, project, and latest artifact, then offers a
+  confirmed local `save-workspace` form with `return_to=/` and day-plan
+  filters/panels so the operator can end the day from Home instead of hunting
+  for the lower resume panel or navigating to the Goal page.
+- First-run Home keeps the finish posture visible but disables the form until
+  a goal exists. Populated Home reports `needs_workspace_save` or `ready`
+  depending on current `.clanker/app/workspace.json` state.
+- README, local app docs, and the operating summary now describe Home Day Plan
+  as a form-backed daily loop surface rather than a read-only summary only.
+- Non-claims: this does not write workspace state on GET, run work, approve
+  gates, resolve incidents, create delegations, create coder prep, commit,
+  push, create PRs, deploy, fetch GitHub status, call providers, use
+  non-loopback network actions, or mutate external systems. The finish form
+  only writes `.clanker/app/workspace.json` after explicit confirmation.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Goal Daily Loop
 
 - Added a `Goal Daily Loop` panel near the top of Goal detail pages,

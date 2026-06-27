@@ -108,7 +108,8 @@ paused, and completed goal lanes, recent activity, the operator inbox,
 recommendations, incidents, saved workspace resume links, saved-goal phase and
 next-action readbacks, a `Start Here` cockpit for the next click, resume
 posture, blockers, and CI handoff, a `Home Day Plan` that names the current goal, phase,
-one next action, waiting counts, and whether end-of-day resume is ready, the
+one next action, waiting counts, whether end-of-day resume is ready, and a
+confirmed `save-workspace` Finish Today form for the lead goal, the
 `Home Focus Queue` for next actions across active and paused goals, the
 read-only `Home Activity Command Bar` for the latest human-readable event,
 `Home Verification Handoff` for current branch/commit GitHub Actions proof
