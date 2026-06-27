@@ -125,7 +125,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   happening without opening the CLI. A read-only `Goal Command Bar` appears
   above the detailed cards with the current phase, one primary action, target
   local surface, progress, open/waiting counts, resume route, project-scoped CI
-  proof state, and write-on-GET/network/external-effect boundaries. The Goal
+  proof state, and write-on-GET/network/external-effect boundaries. A
+  `Goal Operator Workbench` follows with a human-readable do/check/unblock/
+  finish strip, including the in-page action-form target when available, the
+  source surface, current gate/progress, first unblock surface, and confirmed
+  local-action counters before the longer diagnostic sections. The Goal
   Section Index links directly to the Timeline, Activity, and Git command bars
   as well as the detailed sections, so long Goal pages remain navigable from
   their scan-first operator surfaces. Goal

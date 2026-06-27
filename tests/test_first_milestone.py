@@ -6395,6 +6395,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-summary'" in goal.body
     assert "href='#goal-current-phase'" in goal.body
     assert "href='#goal-command-bar'" in goal.body
+    assert "href='#goal-operator-workbench'" in goal.body
     assert "href='#goal-workflow-map'" in goal.body
     assert "href='#goal-next-action'" in goal.body
     assert "href='#goal-next-recommendation'" in goal.body
@@ -6420,6 +6421,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-remaining-work'" in goal.body
     assert "id='goal-summary'" in goal.body
     assert "id='goal-command-bar'" in goal.body
+    assert "id='goal-operator-workbench'" in goal.body
     assert "id='goal-daily-loop'" in goal.body
     assert "id='goal-workflow-map'" in goal.body
     assert "id='goal-current-phase'" in goal.body
@@ -6446,7 +6448,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>47" in goal.body
+    assert "goal_section_count</dt><dd>48" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
@@ -6471,6 +6473,38 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_command_waiting: approvals=1 incidents=0 recommendations=0" in goal.body
     assert "goal_command_resume: <a href='/resume'>/resume</a>" in goal.body
     assert "goal_command_ci: status=success source=direct_public_snapshot surface=<a href='/verification'>/verification</a>" in goal.body
+    assert "Goal Operator Workbench" in goal.body
+    assert "data-goal-operator-workbench='true'" in goal.body
+    assert "data-goal-workbench-actions='true'" in goal.body
+    assert "goal_workbench_status</dt><dd>action_form_ready" in goal.body
+    assert f"goal_workbench_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_workbench_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_workbench_phase</dt><dd>Ready to commit" in goal.body
+    assert "goal_workbench_current_gate</dt><dd>commit_request" in goal.body
+    assert "goal_workbench_gate_progress</dt><dd>8/15 gates done" in goal.body
+    assert "goal_workbench_pending_gates</dt><dd>1" in goal.body
+    assert "goal_workbench_waiting_gates</dt><dd>6" in goal.body
+    assert "goal_workbench_next_action</dt><dd>Create commit request" in goal.body
+    assert "goal_workbench_primary_surface</dt><dd><a href='#goal-next-action'>Use Goal action form</a>" in goal.body
+    assert f"goal_workbench_target_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
+    assert "goal_workbench_action_form_available</dt><dd>true" in goal.body
+    assert "goal_workbench_confirmation_required</dt><dd>true" in goal.body
+    assert "goal_workbench_waiting_items</dt><dd>1" in goal.body
+    assert "goal_workbench_pending_approvals</dt><dd>1" in goal.body
+    assert "goal_workbench_unblock_action</dt><dd>Review approval" in goal.body
+    assert "goal_workbench_unblock_surface</dt><dd><a href='/approvals'>Review approval</a>" in goal.body
+    assert "goal_workbench_finish_surface</dt><dd><a href='#goal-daily-loop'>Goal Daily Loop</a>" in goal.body
+    assert "goal_workbench_source</dt><dd>goal_state_next_action_and_workflow_gates" in goal.body
+    assert "goal_workbench_write_on_get</dt><dd>false" in goal.body
+    assert "goal_workbench_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_workbench_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_workbench_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_workbench_now: Act: Create commit request" in goal.body
+    assert "goal_workbench_click: <a href='#goal-next-action'>Use Goal action form</a>" in goal.body
+    assert f"goal_workbench_source_surface: <a href='/runs/{result.coder_worktree_run_id}'" in goal.body
+    assert "goal_workbench_unblock: <a href='/approvals'>Review approval</a>" in goal.body
+    assert "goal_workbench_finish: <a href='#goal-daily-loop'>Goal Daily Loop</a>" in goal.body
+    assert "goal_workbench_safety: confirmed local actions only" in goal.body
     assert "Goal Daily Loop" in goal.body
     assert "data-goal-daily-loop='true'" in goal.body
     assert f"goal_daily_loop_goal</dt><dd>{result.goal_id}" in goal.body

@@ -200,16 +200,22 @@ Another Goal` form backed by the existing `create-goal` action, so an
 operator can add the next goal for a registered project without switching to
 the CLI.
 Use `/goals/<goal_id>` as the
-goal-centered workbench: a Goal Command Bar, Goal Daily Loop, Goal Workflow Map,
-current phase, next action, next recommendation, progress, timeline, activity
-log, goal risk, completion criteria, completion readiness, evidence, delegations, runs, approvals,
+goal-centered workbench: a Goal Command Bar, Goal Operator Workbench, Goal
+Daily Loop, Goal Workflow Map, current phase, next action, next
+recommendation, progress, timeline, activity log, goal risk, completion
+criteria, completion readiness, evidence, delegations, runs, approvals,
 artifacts, a typed Goal Artifact Explorer, memory, skills used, git status,
-operator notes, a goal-scoped resume snapshot, and remaining work. The page auto-refreshes by
-local polling, pauses while the operator is editing a form or the tab is
-hidden, and stays local-only. The Goal Command Bar near the top condenses
+operator notes, a goal-scoped resume snapshot, and remaining work. The page
+auto-refreshes by local polling, pauses while the operator is editing a form or
+the tab is hidden, and stays local-only. The Goal Command Bar near the top condenses
 current phase, one primary action, target local surface, progress, waiting
 counts, resume route, latest project-scoped CI proof state, and zero-effect
 boundary so the operator can choose the next click without scrolling. Goal
+Operator Workbench follows it with a human-readable do/check/unblock/finish
+strip: it points at the in-page Goal action form when one is available, links
+the source surface and first unblock surface, names the current gate/progress,
+and exposes confirmation/write/provider/network/external-effect counters
+before the deeper diagnostic sections. Goal
 Section Index now also links directly to the Timeline, Activity, and Git
 command bars, so the long Goal page can jump to the scan-first operational
 panels instead of only the longer detail sections. Goal

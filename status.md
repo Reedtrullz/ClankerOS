@@ -1,5 +1,36 @@
 # Status
 
+## 2026-06-27 Goal Operator Workbench
+
+- Added a `Goal Operator Workbench` immediately after the Goal Command Bar on
+  `/goals/<goal_id>`.
+- The workbench turns the current Goal state into a do/check/unblock/finish
+  strip, links the in-page Goal action form when available, names the source
+  surface, current gate/progress, first unblock surface, and finish-today
+  resume save target.
+- Added machine-readable counters for form availability, confirmation posture,
+  pending approvals, open incidents/recommendations, gate progress, and
+  write/provider/network/external-effect boundaries so GitHub smoke and route
+  assertions can guard the UX surface.
+- Updated README, local app docs, and operating summary to describe the new
+  workbench as the human-first layer above the longer diagnostic panels.
+- Non-claims: this does not write workspace state on GET, run the next action
+  without confirmation, call providers, fetch GitHub status, approve requests,
+  commit, push, create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_3437e107e635`, `run_9591d493956c`, and coder
+    worktree run `run_d44218b1ab8a`
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 First Run Command Bar
 
 - Added a read-only `First Run Command Bar` to the top of the Home and

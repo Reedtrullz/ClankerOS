@@ -499,6 +499,7 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             "Current Phase",
             [
                 "Timeline",
+                "Goal Operator Workbench",
                 "Next Action",
                 "Activity Log",
                 "Memory",
@@ -4279,6 +4280,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             "</section>",
             _goal_section_index(),
             _goal_command_bar(root, state, phase, next_action),
+            _goal_operator_workbench(root, state, phase, next_action),
             _goal_daily_loop(root, state, phase, next_action),
             _goal_workflow_map(root, state, next_action),
             _goal_phase_banner(root, state, phase, next_action),
@@ -4354,6 +4356,7 @@ def _goal_section_index() -> str:
         ("Summary", "goal-summary"),
         ("Live state", "goal-live-state"),
         ("Command bar", "goal-command-bar"),
+        ("Operator workbench", "goal-operator-workbench"),
         ("Daily loop", "goal-daily-loop"),
         ("Workflow map", "goal-workflow-map"),
         ("Current phase", "goal-current-phase"),
@@ -4415,6 +4418,151 @@ def _goal_section_index() -> str:
         )
         + _ul(links)
         + "</section>"
+    )
+
+
+def _goal_operator_workbench(
+    root: Path,
+    state: dict[str, Any],
+    phase: str,
+    next_action: GoalNextAction,
+) -> str:
+    goal = state["goal"]
+    gates, counts, current_gate = _goal_workflow_gate_summary(root, state, next_action)
+    total_gates = len(gates)
+    done_gates = counts.get("done", 0)
+    pending_gates = counts.get("pending", 0)
+    waiting_gates = counts.get("waiting", 0)
+    open_incidents = sum(1 for row in state["incidents"] if row["status"] == "open")
+    open_recommendations = sum(
+        1 for row in state["recommendations"] if row["status"] == "open"
+    )
+    pending_approvals = (
+        _count_status(state["worktree_approvals"], "pending_operator_approval")
+        + _count_status(state["commit_approvals"], "pending_operator_approval")
+        + _count_status(state["publications"], "pending_operator_approval")
+    )
+    waiting_items = open_incidents + open_recommendations + pending_approvals
+    form_available = bool(_goal_next_action_form(state, next_action))
+    primary_href = "#goal-next-action" if form_available else next_action.href
+    primary_label = (
+        "Use Goal action form" if form_available else next_action.action
+    )
+    primary_surface = SafeHtml(
+        f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"
+    )
+    target_surface = SafeHtml(
+        f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
+    )
+    if open_incidents:
+        unblock_action = "Inspect incident"
+        unblock_reason = "open_incidents"
+        unblock_href = "/incidents"
+    elif pending_approvals:
+        unblock_action = "Review approval"
+        unblock_reason = "pending_approvals"
+        unblock_href = "/approvals"
+    elif open_recommendations:
+        unblock_action = "Review recommendation"
+        unblock_reason = "open_recommendations"
+        unblock_href = "/incidents"
+    else:
+        unblock_action = "Inspect remaining work"
+        unblock_reason = "no_blockers"
+        unblock_href = "#goal-remaining-work"
+    unblock_surface = SafeHtml(
+        f"<a href='{_e(unblock_href)}'>{_e(unblock_action)}</a>"
+    )
+    workbench_status = (
+        "action_form_ready"
+        if form_available
+        else "navigation_ready"
+        if next_action.href
+        else "readback_only"
+    )
+    action_cards = "".join(
+        [
+            "<div class='goal-workbench-card goal-workbench-primary'>",
+            "<h3>Do Now</h3>",
+            f"<p>{_e(_goal_operator_attention(phase, next_action))}</p>",
+            f"<a class='goal-workbench-action' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+            "</div>",
+            "<div class='goal-workbench-card'>",
+            "<h3>Check</h3>",
+            f"<p>Gate: {_e(current_gate.replace('_', ' '))}</p>",
+            f"<a class='goal-workbench-link' href='{_e(next_action.href)}'>Open source surface</a>",
+            "</div>",
+            "<div class='goal-workbench-card'>",
+            "<h3>Unblock</h3>",
+            f"<p>{_e(waiting_items)} waiting item(s)</p>",
+            f"<a class='goal-workbench-link' href='{_e(unblock_href)}'>{_e(unblock_action)}</a>",
+            "</div>",
+            "<div class='goal-workbench-card'>",
+            "<h3>Finish Today</h3>",
+            "<p>Save resume state</p>",
+            "<a class='goal-workbench-link' href='#goal-daily-loop'>Open finish form</a>",
+            "</div>",
+        ]
+    )
+    return "".join(
+        [
+            "<section id='goal-operator-workbench' class='goal-operator-workbench' data-goal-operator-workbench='true'><h2>Goal Operator Workbench</h2>",
+            "<div class='goal-workbench-grid' data-goal-workbench-actions='true'>",
+            action_cards,
+            "</div>",
+            _kv(
+                [
+                    ("goal_workbench_status", workbench_status),
+                    ("goal_workbench_goal", goal.id),
+                    ("goal_workbench_project", goal.project_id),
+                    ("goal_workbench_phase", phase),
+                    ("goal_workbench_current_gate", current_gate),
+                    (
+                        "goal_workbench_gate_progress",
+                        f"{done_gates}/{total_gates} gates done",
+                    ),
+                    ("goal_workbench_done_gates", str(done_gates)),
+                    ("goal_workbench_pending_gates", str(pending_gates)),
+                    ("goal_workbench_waiting_gates", str(waiting_gates)),
+                    ("goal_workbench_next_action", next_action.action),
+                    ("goal_workbench_primary_surface", primary_surface),
+                    ("goal_workbench_target_surface", target_surface),
+                    ("goal_workbench_reason", next_action.reason),
+                    ("goal_workbench_action_form_available", str(form_available).lower()),
+                    (
+                        "goal_workbench_confirmation_required",
+                        str(form_available).lower(),
+                    ),
+                    ("goal_workbench_waiting_items", str(waiting_items)),
+                    ("goal_workbench_pending_approvals", str(pending_approvals)),
+                    ("goal_workbench_open_incidents", str(open_incidents)),
+                    ("goal_workbench_open_recommendations", str(open_recommendations)),
+                    ("goal_workbench_unblock_action", unblock_action),
+                    ("goal_workbench_unblock_surface", unblock_surface),
+                    ("goal_workbench_unblock_reason", unblock_reason),
+                    (
+                        "goal_workbench_finish_surface",
+                        SafeHtml("<a href='#goal-daily-loop'>Goal Daily Loop</a>"),
+                    ),
+                    ("goal_workbench_source", "goal_state_next_action_and_workflow_gates"),
+                    ("goal_workbench_write_on_get", "false"),
+                    ("goal_workbench_provider_calls_taken", "0"),
+                    ("goal_workbench_network_actions_taken", "0"),
+                    ("goal_workbench_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_workbench_now: {_e(_goal_operator_attention(phase, next_action))}",
+                    f"goal_workbench_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                    f"goal_workbench_source_surface: <a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
+                    f"goal_workbench_unblock: <a href='{_e(unblock_href)}'>{_e(unblock_action)}</a>",
+                    "goal_workbench_finish: <a href='#goal-daily-loop'>Goal Daily Loop</a>",
+                    "goal_workbench_safety: confirmed local actions only",
+                ]
+            ),
+            "</section>",
+        ]
     )
 
 
@@ -16998,6 +17146,18 @@ def _html_page(
     .goal-command-bar dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:8px; }}
     .goal-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-operator-workbench {{ border:1px solid var(--line); border-left:4px solid var(--accent); background:var(--panel); padding:14px; }}
+    .goal-operator-workbench dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
+    .goal-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-operator-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .goal-workbench-card h3 {{ margin-top:0; }}
+    .goal-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .goal-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .goal-workbench-action, .goal-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-workbench-action {{ background:var(--accent); color:#fff; }}
+    .goal-workbench-link {{ background:var(--surface); color:var(--accent); }}
     .goal-overview-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-overview-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-overview-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -17165,7 +17325,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} .goal-workbench-grid {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>

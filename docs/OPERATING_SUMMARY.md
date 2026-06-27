@@ -258,7 +258,11 @@ Core layers for the bootstrap:
   read-only `Goal Command Bar` near the top that condenses phase, one primary
   action, target local surface, progress, waiting counts, `/resume`, latest
   project-scoped CI proof status, and write-on-GET/network/external-effect
-  boundaries into one operator scan. The Goal Section Index now links directly
+  boundaries into one operator scan. A `Goal Operator Workbench` follows it
+  with a human-readable do/check/unblock/finish strip, pointing at the in-page
+  Goal action form when available, the source surface, current gate/progress,
+  first unblock surface, and confirmed local-action counters before the longer
+  diagnostic sections. The Goal Section Index now links directly
   to the Timeline, Activity, and Git command bars in addition to the longer
   detail sections, making the page navigable through scan-first operator
   surfaces. Goal Overview starts with a read-only
