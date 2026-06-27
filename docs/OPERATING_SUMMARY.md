@@ -664,8 +664,13 @@ Core layers for the bootstrap:
   `ci-snapshot-evidence-from-gh-json` form that records proof from pasted
   GitHub status JSON after validating completed/success status, commit SHA,
   and branch, inferring the run id and URL from `databaseId`/`url` when the
-  operator leaves those form fields blank, while still performing no GitHub
-  polling; a
+  operator leaves those form fields blank; `/ci-evidence` now includes a
+  `CI Proof Workbench` with four
+  browser-first cards for checking a pushed run, recording fast-smoke proof,
+  recording full-suite proof, or using the manual record-after-success
+  fallback, with copy-only `gh run view` / validated recorder templates and
+  explicit fast-smoke-versus-full-suite proof boundaries, while still
+  performing no GitHub polling; a
   read-only root dashboard `Verification Snapshot` for checked-in workflow
   timeout, latest operator-supplied CI evidence, `/verification`,
   `/ci-evidence`, and current direct-snapshot handoff templates without

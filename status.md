@@ -1,5 +1,41 @@
 # Status
 
+## 2026-06-28 CI Proof Workbench
+
+- Added a first-class `CI Proof Workbench` to `/ci-evidence` after the command
+  bar so the browser shows four operator choices: check the pushed GitHub
+  Actions run, record job-scoped fast-smoke proof, record completed full-suite
+  proof, or use the manual record-after-success fallback.
+- The workbench reuses the current checkout branch/commit command context,
+  renders copy-only `gh run view` and validated recorder command templates,
+  links back to the confirmed paste form, and keeps fast-smoke proof labeled
+  as early route/CLI proof only.
+- Added workbench styling and mobile single-column behavior matching the
+  existing operator workbench surfaces.
+- Updated README, local app docs, operating summary, status focus, and
+  fixture-backed `/ci-evidence` route assertions.
+- Non-claims: the local app still does not run `gh`, fetch GitHub status,
+  poll network services, push, create PRs, deploy, call providers, or mutate
+  external systems. Local proof recording still requires pasted operator
+  evidence and confirmation.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_records_ci_snapshot_evidence_from_pasted_gh_json --tb=short`
+    -> passed, `1 passed, 514 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_records_ci_snapshot_evidence_from_pasted_gh_json or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> passed, `2 passed, 513 deselected`
+  - `python3 -m compileall -q agent_os tests`
+    -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-ci-proof-workbench-smoke app-smoke-test`
+    -> passed with `/ci-evidence` route marker matched and provider/network/
+    external-mutation counters at `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-ci-proof-workbench-demo-smoke app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched and provider/network/
+    external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
 ## 2026-06-28 Last Action Shell Strip
 
 - Added durable last-action fields to `.clanker/app/workspace.json` for

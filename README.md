@@ -667,7 +667,12 @@ template instead. A read-only `CI Evidence Command Bar` now starts the page
 with handoff/snapshot record counts, latest proof source/status/scope, current
 proof posture, one next action, and same-page targets for the paste form or
 recent evidence lists. In both states it also shows the direct `ci-snapshot-handoff`
-template for the current checkout. It does not fetch GitHub status.
+template for the current checkout. A `CI Proof Workbench` follows with four
+scannable cards: check the pushed run, record fast-smoke proof, record
+full-suite proof, or fall back to manual record-after-success. The cards and
+rows show the exact `gh run view` / validated recorder commands, link back to
+the paste form, and keep fast-smoke proof labeled as early route/CLI proof
+only. It does not fetch GitHub status.
 
 The app is local-only by default, binds to `127.0.0.1`, and refuses non-local
 binds unless `--allow-nonlocal-bind` is explicitly supplied. It does not push,
@@ -1086,7 +1091,10 @@ python3 -m agent_os.cli ci-snapshot-handoff --project clankeros --branch main --
 
 The local app mirrors this on `/`, `/verification`, and `/ci-evidence` as a
 template-only operator surface. The app never runs the `gh run view` command;
-it only shows what the operator can run outside ClankerOS after a push.
+it only shows what the operator can run outside ClankerOS after a push. On
+`/ci-evidence`, the `CI Proof Workbench` turns the same flow into four browser
+cards for checking status, recording fast-smoke proof, recording full-suite
+proof, or manually recording an already-known successful run.
 
 Prefer the validated record path after GitHub completes:
 
@@ -1109,7 +1117,8 @@ That command consumes GitHub status JSON from stdin, infers the run id and URL
 from `databaseId`/`url`, refuses pending/failed or
 wrong-commit runs, and records local proof only after the status JSON matches.
 The `/ci-evidence` page offers the same validated recorder as a confirmed
-local form for pasted `gh run view` JSON; the app still never contacts GitHub.
+local form for pasted `gh run view` JSON; the app still never contacts GitHub
+and still requires operator confirmation before writing local proof.
 
 For direct pushes, record the completed run locally with
 `python3 -m agent_os.cli ci-snapshot-evidence --project clankeros --branch main --commit <commit_sha> --provider github-actions --status success --external-run-id <run_id> --url <run_url>`.

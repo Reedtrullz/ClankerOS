@@ -733,7 +733,12 @@ snapshot record counts, the latest local proof source/status/scope, whether it
 matches the current checkout, and the one next recording or review action. The
 bar links to stable same-page targets such as `#record-ci-snapshot-json`,
 `#recent-ci-evidence`, and `#recent-direct-snapshot-ci-evidence`. The `CI
-Evidence Recording Guide` shows a handoff-specific
+Proof Workbench` then presents the operator path as four scan-first cards:
+check the pushed GitHub run outside ClankerOS, record job-scoped fast-smoke
+proof, record full-suite proof, or use the manual record-after-success
+fallback. It repeats the exact copy-only `gh run view` and validated recorder
+templates, links back to the paste form, and labels fast-smoke proof as early
+route/CLI proof only. The `CI Evidence Recording Guide` shows a handoff-specific
 `ci-deploy-evidence` command when a local GitHub handoff exists, and a direct
 `ci-snapshot-handoff`, `ci-snapshot-evidence-from-gh-json`, and manual
 `ci-snapshot-evidence` command template when the operator is recording a

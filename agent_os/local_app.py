@@ -13602,6 +13602,17 @@ def _ci_snapshot_handoff_panel(root: Path, *, anchor_id: str | None = None) -> s
 
 
 def _ci_snapshot_handoff_lines(root: Path, *, key_prefix: str = "ci_snapshot_") -> list[str]:
+    commands = _ci_snapshot_command_context(root)
+    return [
+        f"{key_prefix}handoff_command_template: {_e(commands['handoff_command'])}",
+        f"{key_prefix}status_check_command_template: {_e(commands['status_command'])}",
+        f"{key_prefix}fast_smoke_validated_record_command_template: {_e(commands['fast_smoke_record_command'])}",
+        f"{key_prefix}validated_record_command_template: {_e(commands['validated_record_command'])}",
+        f"{key_prefix}record_after_success_command_template: {_e(commands['manual_record_command'])}",
+    ]
+
+
+def _ci_snapshot_command_context(root: Path) -> dict[str, str]:
     state = _repo_state(root)
     branch = state["branch"] if state["branch"] != "unknown" else "<branch>"
     full_commit = _git(root, ["rev-parse", "HEAD"])
@@ -13637,13 +13648,17 @@ def _ci_snapshot_handoff_lines(root: Path, *, key_prefix: str = "ci_snapshot_") 
         f"--project clankeros --branch {branch} --commit {commit} "
         "--provider github-actions --status-json - --job-name 'Fast smoke verification'"
     )
-    return [
-        f"{key_prefix}handoff_command_template: {_e(handoff_command)}",
-        f"{key_prefix}status_check_command_template: {_e(status_command)}",
-        f"{key_prefix}fast_smoke_validated_record_command_template: {_e(fast_smoke_record_command)}",
-        f"{key_prefix}validated_record_command_template: {_e(validated_record_command)}",
-        f"{key_prefix}record_after_success_command_template: {_e(record_command)}",
-    ]
+    return {
+        "branch": branch,
+        "commit": commit,
+        "repo": repo,
+        "run_url": run_url,
+        "handoff_command": handoff_command,
+        "status_command": status_command,
+        "fast_smoke_record_command": fast_smoke_record_command,
+        "validated_record_command": validated_record_command,
+        "manual_record_command": record_command,
+    }
 
 
 def _latest_ci_evidence_record(
@@ -13698,6 +13713,7 @@ def _ci_evidence_page(root: Path) -> str:
             ),
             "</section>",
             _ci_evidence_command_bar(root, records, snapshot_records),
+            _ci_proof_workbench(root),
             _ci_evidence_recording_guide(root),
             _ci_snapshot_json_recording_form(root),
             _list_section("Recent CI Evidence", items, anchor_id="recent-ci-evidence"),
@@ -13716,6 +13732,100 @@ def _ci_evidence_page(root: Path) -> str:
                     "No push, PR, deploy, provider call, or external mutation is executed by this page.",
                 ],
             ),
+        ]
+    )
+
+
+def _ci_proof_workbench(root: Path) -> str:
+    state = _ci_evidence_command_state(root)
+    commands = _ci_snapshot_command_context(root)
+    status_command = commands["status_command"]
+    fast_smoke_command = commands["fast_smoke_record_command"]
+    full_suite_command = commands["validated_record_command"]
+    manual_command = commands["manual_record_command"]
+    review_href = state["latest_target"]
+    review_label = review_href
+    if not review_href.startswith("#") and not review_href.startswith("/"):
+        review_href = "/ci-evidence"
+        review_label = "/ci-evidence"
+    record_href = "#record-ci-snapshot-json"
+    cards = "".join(
+        [
+            "<div class='ci-proof-workbench-grid' data-ci-proof-workbench-cards='true'>",
+            "<article class='ci-proof-workbench-card ci-proof-workbench-primary'><h3>Check</h3>",
+            "<p>Run this outside ClankerOS to inspect the pushed workflow.</p>",
+            f"<code>{_e(status_command)}</code></article>",
+            "<article class='ci-proof-workbench-card'><h3>Record Smoke</h3>",
+            "<p>Use only when the fast smoke job passed and the full suite is still pending.</p>",
+            f"<code>{_e(fast_smoke_command)}</code><a class='ci-proof-workbench-link' href='{_e(record_href)}'>Paste JSON</a></article>",
+            "<article class='ci-proof-workbench-card'><h3>Record Full Suite</h3>",
+            "<p>Use after the completed GitHub workflow is green for this commit.</p>",
+            f"<code>{_e(full_suite_command)}</code><a class='ci-proof-workbench-link' href='{_e(record_href)}'>Paste JSON</a></article>",
+            "<article class='ci-proof-workbench-card'><h3>Manual Record</h3>",
+            "<p>Fallback for already-known successful run id and URL.</p>",
+            f"<code>{_e(manual_command)}</code></article>",
+            "</div>",
+        ]
+    )
+    return "".join(
+        [
+            "<section id='ci-proof-workbench' class='panel ci-proof-workbench' data-ci-proof-workbench='true'><h2>CI Proof Workbench</h2>",
+            "<p class='muted'>Copy the GitHub command outside ClankerOS, then paste the JSON into the confirmed local recorder.</p>",
+            cards,
+            _kv(
+                [
+                    ("ci_proof_workbench_status", state["command_status"]),
+                    ("ci_proof_workbench_current_proof", state["current_proof"]),
+                    ("ci_proof_workbench_branch", state["branch"]),
+                    ("ci_proof_workbench_current_commit", state["current_commit"]),
+                    ("ci_proof_workbench_latest_source", state["latest_source"]),
+                    ("ci_proof_workbench_latest_status", state["latest_status"]),
+                    ("ci_proof_workbench_latest_scope", state["latest_scope"]),
+                    ("ci_proof_workbench_latest_run_id", state["latest_external_run_id"]),
+                    ("ci_proof_workbench_next_action", state["next_action"]),
+                    (
+                        "ci_proof_workbench_status_command_template",
+                        SafeHtml(f"<code>{_e(status_command)}</code>"),
+                    ),
+                    (
+                        "ci_proof_workbench_fast_smoke_command_template",
+                        SafeHtml(f"<code>{_e(fast_smoke_command)}</code>"),
+                    ),
+                    (
+                        "ci_proof_workbench_full_suite_command_template",
+                        SafeHtml(f"<code>{_e(full_suite_command)}</code>"),
+                    ),
+                    (
+                        "ci_proof_workbench_manual_record_command_template",
+                        SafeHtml(f"<code>{_e(manual_command)}</code>"),
+                    ),
+                    (
+                        "ci_proof_workbench_record_surface",
+                        SafeHtml(f"<a href='{_e(record_href)}'>{_e(record_href)}</a>"),
+                    ),
+                    (
+                        "ci_proof_workbench_review_surface",
+                        SafeHtml(f"<a href='{_e(review_href)}'>{_e(review_label)}</a>"),
+                    ),
+                    ("ci_proof_workbench_fast_smoke_boundary", "early_route_cli_proof_only"),
+                    ("ci_proof_workbench_full_suite_boundary", "completed_workflow_run_success_required"),
+                    ("ci_proof_workbench_source", "current_checkout_and_operator_supplied_ci_evidence"),
+                    ("ci_proof_workbench_write_on_get", "false"),
+                    ("ci_proof_workbench_github_status_fetch", "none"),
+                    ("ci_proof_workbench_network_actions_taken", "0"),
+                    ("ci_proof_workbench_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"ci_proof_workbench_now: {_e(state['next_action'])}",
+                    f"ci_proof_workbench_check: <code>{_e(status_command)}</code>",
+                    f"ci_proof_workbench_record_fast_smoke: <code>{_e(fast_smoke_command)}</code>",
+                    f"ci_proof_workbench_record_full_suite: <code>{_e(full_suite_command)}</code>",
+                    "ci_proof_workbench_safety: copy-only GitHub command guidance; local recording still requires confirmation",
+                ]
+            ),
+            "</section>",
         ]
     )
 
@@ -22076,6 +22186,17 @@ def _html_page(
     .today-ci-handoff dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .today-ci-handoff ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .today-ci-handoff li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .ci-proof-workbench {{ border-left:4px solid var(--accent); }}
+    .ci-proof-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .ci-proof-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .ci-proof-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .ci-proof-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.2fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .ci-proof-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .ci-proof-workbench-card h3 {{ margin-top:0; }}
+    .ci-proof-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .ci-proof-workbench-card code {{ display:block; margin:0 0 10px; max-width:100%; white-space:normal; overflow-wrap:anywhere; }}
+    .ci-proof-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .ci-proof-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .today-current-action, .today-finish, .today-note, .today-pause, .goal-pause {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .today-current-action summary {{ cursor:pointer; font-weight:700; }}
     .today-current-action form, .today-finish form, .today-note form, .today-pause form, .goal-pause form {{ margin-top:10px; }}
@@ -22241,7 +22362,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>

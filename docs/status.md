@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/ci-evidence` now has a first-class `CI Proof Workbench` with four browser
+  cards for checking a pushed GitHub Actions run, recording job-scoped
+  fast-smoke proof, recording full-suite proof, or using the manual
+  record-after-success fallback, while keeping all GitHub commands copy-only
+  and all local proof writes confirmation-bound.
 - The shared operator shell now persists the latest confirmed local action in
   `.clanker/app/workspace.json` and renders a read-only `Last Action` strip on
   later pages, with the result, target notice surface, saved context, and

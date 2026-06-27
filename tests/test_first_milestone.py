@@ -2571,6 +2571,24 @@ def test_local_app_records_ci_snapshot_evidence_from_pasted_gh_json(
     assert "ci_evidence_command_next_action</dt><dd>Paste GitHub Actions JSON" in ci_evidence.body
     assert "ci_evidence_command_target_surface</dt><dd><a href='#record-ci-snapshot-json'>record ci snapshot json</a>" in ci_evidence.body
     assert "ci_evidence_command_reason</dt><dd>no_local_ci_evidence_records" in ci_evidence.body
+    assert "CI Proof Workbench" in ci_evidence.body
+    assert "data-ci-proof-workbench='true'" in ci_evidence.body
+    assert "data-ci-proof-workbench-cards='true'" in ci_evidence.body
+    assert "ci-proof-workbench-primary'><h3>Check</h3>" in ci_evidence.body
+    assert "<h3>Record Smoke</h3>" in ci_evidence.body
+    assert "<h3>Record Full Suite</h3>" in ci_evidence.body
+    assert "<h3>Manual Record</h3>" in ci_evidence.body
+    assert "Paste JSON" in ci_evidence.body
+    assert "ci_proof_workbench_status</dt><dd>no_records" in ci_evidence.body
+    assert "ci_proof_workbench_current_proof</dt><dd>missing_current_commit_proof" in ci_evidence.body
+    assert "ci_proof_workbench_next_action</dt><dd>Paste GitHub Actions JSON" in ci_evidence.body
+    assert "ci_proof_workbench_status_command_template</dt><dd><code>gh run view &lt;run_id&gt;" in ci_evidence.body
+    assert "ci_proof_workbench_fast_smoke_command_template</dt><dd><code>gh run view &lt;run_id&gt;" in ci_evidence.body
+    assert "ci_proof_workbench_full_suite_command_template</dt><dd><code>gh run view &lt;run_id&gt;" in ci_evidence.body
+    assert "ci_proof_workbench_fast_smoke_boundary</dt><dd>early_route_cli_proof_only" in ci_evidence.body
+    assert "ci_proof_workbench_full_suite_boundary</dt><dd>completed_workflow_run_success_required" in ci_evidence.body
+    assert "ci_proof_workbench_github_status_fetch</dt><dd>none" in ci_evidence.body
+    assert "ci_proof_workbench_network_actions_taken</dt><dd>0" in ci_evidence.body
     assert "Record Direct Snapshot From GitHub JSON" in ci_evidence.body
     assert "action='/actions/ci-snapshot-evidence-from-gh-json'" in ci_evidence.body
     assert "status_json" in ci_evidence.body
@@ -2636,6 +2654,11 @@ def test_local_app_records_ci_snapshot_evidence_from_pasted_gh_json(
     assert "ci_evidence_command_latest_status</dt><dd>success" in ci_evidence_after.body
     assert "ci_evidence_command_latest_scope</dt><dd>workflow_run" in ci_evidence_after.body
     assert "ci_evidence_command_latest_run_id</dt><dd>28211577106" in ci_evidence_after.body
+    assert "ci_proof_workbench_status</dt><dd>records_available_current_commit_unknown" in ci_evidence_after.body
+    assert "ci_proof_workbench_latest_scope</dt><dd>workflow_run" in ci_evidence_after.body
+    assert "ci_proof_workbench_latest_run_id</dt><dd>28211577106" in ci_evidence_after.body
+    assert "ci_proof_workbench_review_surface</dt><dd><a href='#recent-direct-snapshot-ci-evidence'>#recent-direct-snapshot-ci-evidence</a>" in ci_evidence_after.body
+    assert "ci_proof_workbench_safety: copy-only GitHub command guidance; local recording still requires confirmation" in ci_evidence_after.body
     assert "Recent Direct Snapshot CI Evidence" in ci_evidence_after.body
     assert records[0].id in ci_evidence_after.body
     assert "source=direct_public_snapshot" in ci_evidence_after.body
