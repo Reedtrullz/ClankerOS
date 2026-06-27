@@ -399,8 +399,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   target. A read-only `Workspace Workflow Map` shows the saved goal's current
   gate, lifecycle progress, next surface, and zero-effect counters. It also
   renders the same confirmed local action form as the Goal page when that
-  action is browser-available. Home and `/resume` read the same saved state
-  for daily resume links and continuation readbacks. The confirmed
+  action is browser-available. Before a saved Goal exists, the same daily
+  brief, workbench, continuation readback, restore links, and workflow map
+  follow first-run progress: empty checkouts point to Home's `Create Project`
+  anchor and registered-project/no-goal workspaces point to `Create First
+  Goal` while preserving the saved project link. Home and `/resume` read the
+  same saved state for daily resume links and continuation readbacks. The confirmed
   `save-workspace` form writes `.clanker/app/workspace.json`; GET requests
   write nothing.
 - `/memory` - project memories, global memories, generated memories, proposed

@@ -205,7 +205,10 @@ Core layers for the bootstrap:
   routing, last-artifact readback, and the confirmed save form as the finish
   target, followed by a read-only `Workspace Workflow Map` sourced from the
   same Goal remaining-work gates so the current saved gate stays visible while
-  editing resume context; `/memory` for project/global/
+  editing resume context. Before a saved Goal exists, `/workspace` follows
+  first-run progress instead: empty checkouts point those sections at Home's
+  `Create Project` anchor and registered-project/no-goal workspaces point at
+  `Create First Goal` while preserving the saved project link; `/memory` for project/global/
   generated memories, proposed memories, operator notes, future work, and pin
   actions, with a read-only `Memory Command Bar` that summarizes entry counts,
   first proposed pin or fallback resume target, one next local action, saved

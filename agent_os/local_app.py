@@ -2037,10 +2037,10 @@ def _today_first_run_target(first_run: dict[str, Any]) -> tuple[str, str]:
     return _first_run_same_page_target(first_run)
 
 
-def _resume_first_run_context(root: Path) -> dict[str, Any]:
+def _first_run_route_context(root: Path, current_path: str) -> dict[str, Any]:
     storage = _storage(root)
     progress = _first_run_progress(root, storage)
-    target = _first_run_focus_target(progress, "/resume")
+    target = _first_run_focus_target(progress, current_path)
     done = 0
     waiting = 0
     for name, _label in FIRST_RUN_WORKFLOW_STEPS:
@@ -2066,11 +2066,23 @@ def _resume_first_run_context(root: Path) -> dict[str, Any]:
     }
 
 
+def _resume_first_run_context(root: Path) -> dict[str, Any]:
+    return _first_run_route_context(root, "/resume")
+
+
+def _workspace_first_run_context(root: Path) -> dict[str, Any]:
+    return _first_run_route_context(root, "/workspace")
+
+
 def _resume_should_use_first_run(root: Path, open_goal: str) -> bool:
     if open_goal:
         return False
     progress = _first_run_progress(root, _storage(root))
     return not bool(progress["complete"])
+
+
+def _workspace_should_use_first_run(root: Path, open_goal: str) -> bool:
+    return _resume_should_use_first_run(root, open_goal)
 
 
 def _today_goal_queue_line(
@@ -4728,6 +4740,16 @@ def _workspace_page(root: Path) -> str:
         restore_links.append(f"open_goal: <a href='/goals/{quote(open_goal)}'>{_e(open_goal)}</a>")
     if last_artifact:
         restore_links.append(f"last_viewed_artifact: {_artifact_link(last_artifact)}")
+    if _workspace_should_use_first_run(root, open_goal):
+        first_run_context = _workspace_first_run_context(root)
+        progress = first_run_context["progress"]
+        restore_links.extend(
+            [
+                f"workspace_first_run_action: {_e(str(progress['next_action']))}",
+                f"workspace_first_run_step: {_e(str(progress['current_step']))}",
+                f"workspace_first_run_surface: <a href='{_e(str(first_run_context['target_href']))}'>{_e(str(first_run_context['target_label']))}</a>",
+            ]
+        )
     return "".join(
         [
             "<section><h1>Workspace State</h1>",
@@ -4787,7 +4809,33 @@ def _workspace_daily_brief(
         last_artifact=last_artifact,
     )
     required = readiness["required"]
-    if not open_goal:
+    first_run_context = (
+        _workspace_first_run_context(root)
+        if _workspace_should_use_first_run(root, open_goal)
+        else None
+    )
+    first_run_form_available = False
+    first_run_home_href = "/"
+    first_run_today_href = "/today"
+    first_run_goals_href = "/goals"
+    if first_run_context is not None:
+        progress_state = first_run_context["progress"]
+        status = "first_run"
+        phase = "First run"
+        current_gate = str(progress_state["current_step"])
+        next_action = str(progress_state["next_action"])
+        reason = str(progress_state["next_reason"])
+        target_href = str(first_run_context["target_href"])
+        target_label = str(first_run_context["target_label"])
+        progress = str(first_run_context["progress_label"])
+        waiting_items = "approvals=0 incidents=0 recommendations=0"
+        finish_status = "needs_workspace_save"
+        source = "first_run_progress"
+        first_run_form_available = bool(first_run_context["form_available"])
+        first_run_home_href = str(first_run_context["home_href"])
+        first_run_today_href = str(first_run_context["today_href"])
+        first_run_goals_href = str(first_run_context["goals_href"])
+    elif not open_goal:
         status = "no_saved_workspace" if not any(required.values()) else "no_saved_goal"
         phase = "none"
         current_gate = "none"
@@ -4863,6 +4911,22 @@ def _workspace_daily_brief(
                     ("workspace_daily_next_action", next_action),
                     ("workspace_daily_reason", reason),
                     ("workspace_daily_target_surface", target),
+                    (
+                        "workspace_daily_first_run_form_available",
+                        str(first_run_form_available).lower(),
+                    ),
+                    (
+                        "workspace_daily_first_run_home_target",
+                        SafeHtml(f"<a href='{_e(first_run_home_href)}'>Home setup</a>"),
+                    ),
+                    (
+                        "workspace_daily_first_run_today_target",
+                        SafeHtml(f"<a href='{_e(first_run_today_href)}'>Today setup</a>"),
+                    ),
+                    (
+                        "workspace_daily_first_run_goals_target",
+                        SafeHtml(f"<a href='{_e(first_run_goals_href)}'>Goal setup</a>"),
+                    ),
                     ("workspace_daily_resume_ready", "true" if readiness["ready"] else "false"),
                     ("workspace_daily_resume_status", str(readiness["status"])),
                     (
@@ -4948,8 +5012,31 @@ def _workspace_operator_workbench(
     pending_gates = 0
     waiting_gates = 0
     source = "saved_workspace_state"
+    first_run_form_available = False
+    first_run_home_href = "/"
+    first_run_today_href = "/today"
+    first_run_goals_href = "/goals"
 
-    if open_goal:
+    if _workspace_should_use_first_run(root, open_goal):
+        first_run = _workspace_first_run_context(root)
+        progress_state = first_run["progress"]
+        status = "first_run"
+        phase = "First run"
+        current_gate = str(progress_state["current_step"])
+        progress = str(first_run["progress_label"])
+        next_action = str(progress_state["next_action"])
+        reason = str(progress_state["next_reason"])
+        target_href = str(first_run["target_href"])
+        target_label = str(first_run["target_label"])
+        done_gates = int(first_run["done"])
+        pending_gates = int(first_run["pending"])
+        waiting_gates = int(first_run["waiting"])
+        first_run_form_available = bool(first_run["form_available"])
+        first_run_home_href = str(first_run["home_href"])
+        first_run_today_href = str(first_run["today_href"])
+        first_run_goals_href = str(first_run["goals_href"])
+        source = "first_run_progress"
+    elif open_goal:
         storage = _storage(root)
         goal_state = _goal_state(root, storage, open_goal)
         goal = goal_state.get("goal")
@@ -5014,6 +5101,10 @@ def _workspace_operator_workbench(
         unblock_href = "/incidents"
         unblock_label = "Review recommendations"
         unblock_reason = "open_recommendations"
+    elif status == "first_run":
+        unblock_href = target_href
+        unblock_label = target_label
+        unblock_reason = current_gate
     elif not readiness["ready"]:
         unblock_href = "#save-workspace"
         unblock_label = "Complete workspace state"
@@ -5022,6 +5113,7 @@ def _workspace_operator_workbench(
         unblock_href = "#workspace-workflow-map"
         unblock_label = "Review saved workflow"
         unblock_reason = "no_blockers"
+    unblock_surface_label = target_label if status == "first_run" else unblock_href
 
     project_surface: str | SafeHtml = "none"
     if open_project:
@@ -5092,8 +5184,24 @@ def _workspace_operator_workbench(
                     ("workspace_workbench_reason", reason),
                     ("workspace_workbench_action_form_available", str(form_available).lower()),
                     (
+                        "workspace_workbench_first_run_form_available",
+                        str(first_run_form_available).lower(),
+                    ),
+                    (
                         "workspace_workbench_confirmation_required",
-                        str(form_available).lower(),
+                        str(form_available or first_run_form_available).lower(),
+                    ),
+                    (
+                        "workspace_workbench_first_run_home_target",
+                        SafeHtml(f"<a href='{_e(first_run_home_href)}'>Home setup</a>"),
+                    ),
+                    (
+                        "workspace_workbench_first_run_today_target",
+                        SafeHtml(f"<a href='{_e(first_run_today_href)}'>Today setup</a>"),
+                    ),
+                    (
+                        "workspace_workbench_first_run_goals_target",
+                        SafeHtml(f"<a href='{_e(first_run_goals_href)}'>Goal setup</a>"),
                     ),
                     ("workspace_workbench_pending_approvals", str(pending_approvals)),
                     ("workspace_workbench_open_incidents", str(open_incidents)),
@@ -5102,7 +5210,9 @@ def _workspace_operator_workbench(
                     ("workspace_workbench_unblock_action", unblock_label),
                     (
                         "workspace_workbench_unblock_surface",
-                        SafeHtml(f"<a href='{_e(unblock_href)}'>{_e(unblock_href)}</a>"),
+                        SafeHtml(
+                            f"<a href='{_e(unblock_href)}'>{_e(unblock_surface_label)}</a>"
+                        ),
                     ),
                     ("workspace_workbench_unblock_reason", unblock_reason),
                     ("workspace_workbench_last_artifact", artifact_surface),
@@ -5142,6 +5252,25 @@ def _workspace_operator_workbench(
 
 
 def _workspace_next_action_lines(root: Path, open_goal: str) -> list[str]:
+    if _workspace_should_use_first_run(root, open_goal):
+        first_run = _workspace_first_run_context(root)
+        progress = first_run["progress"]
+        return [
+            "workspace_next_action_status: first_run",
+            "workspace_next_action_source: first_run_progress",
+            f"workspace_next_action_current_step: {_e(str(progress['current_step']))}",
+            f"workspace_next_action: {_e(str(progress['next_action']))}",
+            f"workspace_next_reason: {_e(str(progress['next_reason']))}",
+            f"workspace_next_surface: <a href='{_e(str(first_run['target_href']))}'>{_e(str(first_run['target_label']))}</a>",
+            f"workspace_next_home_target: <a href='{_e(str(first_run['home_href']))}'>Home setup</a>",
+            f"workspace_next_today_target: <a href='{_e(str(first_run['today_href']))}'>Today setup</a>",
+            f"workspace_next_goals_target: <a href='{_e(str(first_run['goals_href']))}'>Goal setup</a>",
+            f"workspace_next_action_form_available: {str(bool(first_run['form_available'])).lower()}",
+            "workspace_next_action_write_on_get: false",
+            "workspace_next_action_provider_calls_taken: 0",
+            "workspace_next_action_network_actions_taken: 0",
+            "workspace_next_action_external_effects_created: false",
+        ]
     if not open_goal:
         return [
             "workspace_next_action_status: no_saved_goal",
@@ -5169,6 +5298,63 @@ def _workspace_next_action_lines(root: Path, open_goal: str) -> list[str]:
 
 
 def _workspace_workflow_map_section(root: Path, open_goal: str) -> str:
+    if _workspace_should_use_first_run(root, open_goal):
+        first_run = _workspace_first_run_context(root)
+        progress = first_run["progress"]
+        items: list[str] = []
+        for index, (name, label) in enumerate(FIRST_RUN_WORKFLOW_STEPS, start=1):
+            status = _first_run_step_status(progress, name)
+            marker = "current" if name == progress["current_step"] else status
+            next_label = (
+                f" next={_e(str(progress['next_action']))}"
+                if name == progress["current_step"]
+                else ""
+            )
+            items.append(
+                "<li "
+                f"data-workspace-workflow-gate='{_e(name)}' "
+                f"data-gate-status='{_e(status)}' "
+                f"data-gate-marker='{_e(marker)}'>"
+                f"<span class='workflow-map-index'>{index}</span> "
+                f"<strong>{_e(label)}</strong> "
+                f"workspace_workflow_map_step: {_e(name)} status={_e(status)} marker={_e(marker)}{next_label}</li>"
+            )
+        return "".join(
+            [
+                "<section id='workspace-workflow-map' class='panel workspace-workflow-map' data-workspace-workflow-map='true'><h2>Workspace Workflow Map</h2>",
+                "<p class='muted'>No saved Goal exists yet, so the editable workspace state follows the first-run path from checkout to first delegation.</p>",
+                _kv(
+                    [
+                        ("workspace_workflow_map_status", "first_run"),
+                        ("workspace_workflow_map_saved_goal", "none"),
+                        ("workspace_workflow_map_current_gate", str(progress["current_step"])),
+                        ("workspace_workflow_map_current_step", str(progress["current_step"])),
+                        ("workspace_workflow_map_next_action", str(progress["next_action"])),
+                        (
+                            "workspace_workflow_map_next_surface",
+                            SafeHtml(
+                                f"<a href='{_e(str(first_run['target_href']))}'>{_e(str(first_run['target_label']))}</a>"
+                            ),
+                        ),
+                        ("workspace_workflow_map_progress", str(first_run["progress_label"])),
+                        ("workspace_workflow_map_done_count", str(first_run["done"])),
+                        ("workspace_workflow_map_pending_count", str(first_run["pending"])),
+                        ("workspace_workflow_map_waiting_count", str(first_run["waiting"])),
+                        ("workspace_workflow_map_project", str(progress["default_project"])),
+                        ("workspace_workflow_map_source", "first_run_progress"),
+                        ("workspace_workflow_map_save_surface", SafeHtml("<a href='#save-workspace'>#save-workspace</a>")),
+                        ("workspace_workflow_map_write_on_get", "false"),
+                        ("workspace_workflow_map_provider_calls_taken_by_clankeros", "0"),
+                        ("workspace_workflow_map_network_actions_taken", "0"),
+                        ("workspace_workflow_map_external_effects_created", "false"),
+                    ]
+                ),
+                "<ol class='workflow-map-rail workspace-workflow-map-rail'>",
+                "".join(items),
+                "</ol>",
+                "</section>",
+            ]
+        )
     if not open_goal:
         return "".join(
             [

@@ -213,7 +213,12 @@ blocker routing, last-artifact readback, and save-form target, adds a read-only
 `Workspace Workflow Map` with the saved goal's current gate and gate counts,
 and anchors the save form as `#save-workspace`, so operators can inspect,
 update, and act from tomorrow's resume point in one place when the next action
-is browser-available. Both routes report that they write nothing on GET.
+is browser-available. Before a saved Goal exists, `/workspace` now follows the
+same first-run progress as Home, Today, Goals, and `/resume`: an empty checkout
+points its daily brief, workbench, continuation readback, restore links, and
+workflow map at Home's `Create Project` anchor, while a registered-project/
+no-goal workspace points at `Create First Goal` and keeps the saved project
+visible. Both routes report that they write nothing on GET.
 
 For the first manual browser pass, run `python3 -m agent_os.cli demo`
 or `python3 -m agent_os.cli demo-app-scenario`, open `/goals`, then `/demo`,

@@ -5017,49 +5017,93 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "save-workspace" in workspace.body
     assert "Workspace Daily Brief" in workspace.body
     assert "data-workspace-daily-brief='true'" in workspace.body
-    assert "workspace_daily_status</dt><dd>no_saved_workspace" in workspace.body
+    assert "workspace_daily_status</dt><dd>first_run" in workspace.body
     assert "workspace_daily_project</dt><dd><a href='/projects'>/projects</a>" in workspace.body
     assert "workspace_daily_goal</dt><dd><a href='/goals'>/goals</a>" in workspace.body
-    assert "workspace_daily_phase</dt><dd>none" in workspace.body
-    assert "workspace_daily_next_action</dt><dd>Open goals" in workspace.body
-    assert "workspace_daily_target_surface</dt><dd><a href='/goals'>/goals</a>" in workspace.body
+    assert "workspace_daily_phase</dt><dd>First run" in workspace.body
+    assert "workspace_daily_current_gate</dt><dd>create_project" in workspace.body
+    assert "workspace_daily_next_action</dt><dd>Register ClankerOS project" in workspace.body
+    assert "workspace_daily_reason</dt><dd>no_project_registered" in workspace.body
+    assert "workspace_daily_target_surface</dt><dd><a href='/#first-run-create-project'>Create Project</a>" in workspace.body
+    assert "workspace_daily_first_run_form_available</dt><dd>true" in workspace.body
+    assert (
+        "workspace_daily_first_run_home_target</dt><dd><a href='/#first-run-create-project'>"
+        "Home setup</a>"
+    ) in workspace.body
+    assert (
+        "workspace_daily_first_run_today_target</dt><dd><a href='/today#first-run-create-project'>"
+        "Today setup</a>"
+    ) in workspace.body
+    assert (
+        "workspace_daily_first_run_goals_target</dt><dd><a href='/goals#first-run-create-project'>"
+        "Goal setup</a>"
+    ) in workspace.body
+    assert "workspace_daily_progress</dt><dd>0/5 gates done" in workspace.body
     assert "workspace_daily_resume_ready</dt><dd>false" in workspace.body
     assert "workspace_daily_finish_status</dt><dd>needs_workspace_save" in workspace.body
     assert "workspace_daily_save_surface</dt><dd><a href='#save-workspace'>#save-workspace</a>" in workspace.body
+    assert "workspace_daily_source</dt><dd>first_run_progress" in workspace.body
     assert "workspace_daily_write_on_get</dt><dd>false" in workspace.body
     assert "workspace_daily_network_actions_taken</dt><dd>0" in workspace.body
     assert "workspace_daily_external_effects_created</dt><dd>false" in workspace.body
     assert "workspace_daily_safety: read-only until confirmed save-workspace or local action form" in workspace.body
+    assert "workspace_daily_start: Register ClankerOS project" in workspace.body
+    assert "workspace_daily_continue: <a href='/#first-run-create-project'>Create Project</a>" in workspace.body
     assert "Workspace Operator Workbench" in workspace.body
     assert "data-workspace-operator-workbench='true'" in workspace.body
     assert "data-workspace-workbench-actions='true'" in workspace.body
-    assert "workspace_workbench_status</dt><dd>no_saved_workspace" in workspace.body
+    assert "workspace_workbench_status</dt><dd>first_run" in workspace.body
     assert "workspace_workbench_ready</dt><dd>false" in workspace.body
     assert "workspace_workbench_readiness_status</dt><dd>not_started" in workspace.body
     assert "workspace_workbench_project</dt><dd>none" in workspace.body
     assert "workspace_workbench_goal</dt><dd>none" in workspace.body
-    assert "workspace_workbench_phase</dt><dd>none" in workspace.body
-    assert "workspace_workbench_current_gate</dt><dd>none" in workspace.body
-    assert "workspace_workbench_gate_progress</dt><dd>0/0 gates done" in workspace.body
-    assert "workspace_workbench_next_action</dt><dd>Open goals" in workspace.body
-    assert "workspace_workbench_primary_surface</dt><dd><a href='/goals'>Open goals</a>" in workspace.body
-    assert "workspace_workbench_target_surface</dt><dd><a href='/goals'>/goals</a>" in workspace.body
-    assert "workspace_workbench_reason</dt><dd>no_saved_goal" in workspace.body
+    assert "workspace_workbench_phase</dt><dd>First run" in workspace.body
+    assert "workspace_workbench_current_gate</dt><dd>create_project" in workspace.body
+    assert "workspace_workbench_gate_progress</dt><dd>0/5 gates done" in workspace.body
+    assert "workspace_workbench_done_gates</dt><dd>0" in workspace.body
+    assert "workspace_workbench_pending_gates</dt><dd>1" in workspace.body
+    assert "workspace_workbench_waiting_gates</dt><dd>4" in workspace.body
+    assert "workspace_workbench_next_action</dt><dd>Register ClankerOS project" in workspace.body
+    assert (
+        "workspace_workbench_primary_surface</dt><dd><a href='/#first-run-create-project'>"
+        "Register ClankerOS project</a>"
+    ) in workspace.body
+    assert (
+        "workspace_workbench_target_surface</dt><dd><a href='/#first-run-create-project'>"
+        "Create Project</a>"
+    ) in workspace.body
+    assert "workspace_workbench_reason</dt><dd>no_project_registered" in workspace.body
     assert "workspace_workbench_action_form_available</dt><dd>false" in workspace.body
-    assert "workspace_workbench_confirmation_required</dt><dd>false" in workspace.body
+    assert "workspace_workbench_first_run_form_available</dt><dd>true" in workspace.body
+    assert (
+        "workspace_workbench_first_run_home_target</dt><dd><a href='/#first-run-create-project'>"
+        "Home setup</a>"
+    ) in workspace.body
+    assert (
+        "workspace_workbench_first_run_today_target</dt><dd><a href='/today#first-run-create-project'>"
+        "Today setup</a>"
+    ) in workspace.body
+    assert (
+        "workspace_workbench_first_run_goals_target</dt><dd><a href='/goals#first-run-create-project'>"
+        "Goal setup</a>"
+    ) in workspace.body
+    assert "workspace_workbench_confirmation_required</dt><dd>true" in workspace.body
     assert "workspace_workbench_pending_approvals</dt><dd>0" in workspace.body
     assert "workspace_workbench_open_incidents</dt><dd>0" in workspace.body
     assert "workspace_workbench_open_recommendations</dt><dd>0" in workspace.body
     assert "workspace_workbench_waiting_items</dt><dd>0" in workspace.body
-    assert "workspace_workbench_unblock_action</dt><dd>Complete workspace state" in workspace.body
-    assert "workspace_workbench_unblock_surface</dt><dd><a href='#save-workspace'>#save-workspace</a>" in workspace.body
-    assert "workspace_workbench_unblock_reason</dt><dd>workspace_not_ready" in workspace.body
+    assert "workspace_workbench_unblock_action</dt><dd>Create Project" in workspace.body
+    assert (
+        "workspace_workbench_unblock_surface</dt><dd><a href='/#first-run-create-project'>"
+        "Create Project</a>"
+    ) in workspace.body
+    assert "workspace_workbench_unblock_reason</dt><dd>create_project" in workspace.body
     assert "workspace_workbench_last_artifact</dt><dd>none" in workspace.body
     assert "workspace_workbench_last_artifact_exists</dt><dd>false" in workspace.body
     assert "workspace_workbench_save_surface</dt><dd><a href='#save-workspace'>#save-workspace</a>" in workspace.body
     assert "workspace_workbench_save_form_available</dt><dd>true" in workspace.body
     assert "workspace_workbench_save_confirmation_required</dt><dd>true" in workspace.body
-    assert "workspace_workbench_source</dt><dd>saved_workspace_state" in workspace.body
+    assert "workspace_workbench_source</dt><dd>first_run_progress" in workspace.body
     assert "workspace_workbench_write_on_get</dt><dd>false" in workspace.body
     assert "workspace_workbench_provider_calls_taken</dt><dd>0" in workspace.body
     assert "workspace_workbench_network_actions_taken</dt><dd>0" in workspace.body
@@ -5067,14 +5111,41 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_workbench_push_created</dt><dd>false" in workspace.body
     assert "workspace_workbench_pr_created</dt><dd>false" in workspace.body
     assert "workspace_workbench_deploy_created</dt><dd>false" in workspace.body
-    assert "workspace_workbench_now: Open goals" in workspace.body
+    assert "workspace_workbench_now: Register ClankerOS project" in workspace.body
+    assert (
+        "workspace_workbench_click: <a href='/#first-run-create-project'>"
+        "Register ClankerOS project</a>"
+    ) in workspace.body
     assert "workspace_workbench_finish: <a href='#save-workspace'>Save Workspace</a>" in workspace.body
     assert "workspace_workbench_safety: confirmed local actions only; no write on GET" in workspace.body
+    assert "workspace_first_run_action: Register ClankerOS project" in workspace.body
+    assert "workspace_first_run_step: create_project" in workspace.body
+    assert "workspace_first_run_surface: <a href='/#first-run-create-project'>Create Project</a>" in workspace.body
+    assert "workspace_next_action_status: first_run" in workspace.body
+    assert "workspace_next_action_source: first_run_progress" in workspace.body
+    assert "workspace_next_action_current_step: create_project" in workspace.body
+    assert "workspace_next_action: Register ClankerOS project" in workspace.body
+    assert "workspace_next_reason: no_project_registered" in workspace.body
+    assert "workspace_next_surface: <a href='/#first-run-create-project'>Create Project</a>" in workspace.body
+    assert "workspace_next_action_form_available: true" in workspace.body
     assert "Workspace Workflow Map" in workspace.body
     assert "data-workspace-workflow-map='true'" in workspace.body
-    assert "workspace_workflow_map_status</dt><dd>no_saved_goal" in workspace.body
+    assert "workspace_workflow_map_status</dt><dd>first_run" in workspace.body
     assert "workspace_workflow_map_saved_goal</dt><dd>none" in workspace.body
-    assert "workspace_workflow_map_next_surface</dt><dd><a href='/goals'>/goals</a>" in workspace.body
+    assert "workspace_workflow_map_current_gate</dt><dd>create_project" in workspace.body
+    assert "workspace_workflow_map_next_action</dt><dd>Register ClankerOS project" in workspace.body
+    assert (
+        "workspace_workflow_map_next_surface</dt><dd><a href='/#first-run-create-project'>"
+        "Create Project</a>"
+    ) in workspace.body
+    assert "workspace_workflow_map_progress</dt><dd>0/5 gates done" in workspace.body
+    assert "workspace_workflow_map_done_count</dt><dd>0" in workspace.body
+    assert "workspace_workflow_map_pending_count</dt><dd>1" in workspace.body
+    assert "workspace_workflow_map_waiting_count</dt><dd>4" in workspace.body
+    assert "workspace_workflow_map_project</dt><dd>clankeros" in workspace.body
+    assert "workspace_workflow_map_source</dt><dd>first_run_progress" in workspace.body
+    assert "workspace_workflow_map_step: create_project status=current marker=current" in workspace.body
+    assert "workspace_workflow_map_step: create_first_goal status=waiting_for_project" in workspace.body
     assert "workspace_workflow_map_save_surface</dt><dd><a href='#save-workspace'>#save-workspace</a>" in workspace.body
     assert "workspace_workflow_map_write_on_get</dt><dd>false" in workspace.body
     assert "workspace_workflow_map_network_actions_taken</dt><dd>0" in workspace.body
@@ -6366,6 +6437,76 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "resume_workflow_map_waiting_count</dt><dd>3" in register_resume.body
     assert "resume_workflow_map_step: create_project status=done marker=done" in register_resume.body
     assert "resume_workflow_map_step: create_first_goal status=current marker=current" in register_resume.body
+    register_workspace = render_local_app_route(tmp_path, "/workspace")
+    assert "workspace_daily_status</dt><dd>first_run" in register_workspace.body
+    assert "workspace_daily_project</dt><dd><a href='/projects/clankeros'>clankeros</a>" in register_workspace.body
+    assert "workspace_daily_goal</dt><dd><a href='/goals'>/goals</a>" in register_workspace.body
+    assert "workspace_daily_phase</dt><dd>First run" in register_workspace.body
+    assert "workspace_daily_current_gate</dt><dd>create_first_goal" in register_workspace.body
+    assert "workspace_daily_next_action</dt><dd>Create first goal" in register_workspace.body
+    assert "workspace_daily_reason</dt><dd>no_goal_created" in register_workspace.body
+    assert (
+        "workspace_daily_target_surface</dt><dd><a href='/#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in register_workspace.body
+    assert "workspace_daily_first_run_form_available</dt><dd>true" in register_workspace.body
+    assert "workspace_daily_progress</dt><dd>1/5 gates done" in register_workspace.body
+    assert "workspace_daily_source</dt><dd>first_run_progress" in register_workspace.body
+    assert "workspace_workbench_status</dt><dd>first_run" in register_workspace.body
+    assert "workspace_workbench_readiness_status</dt><dd>partial" in register_workspace.body
+    assert (
+        "workspace_workbench_project</dt><dd><a href='/projects/clankeros'>clankeros</a>"
+        in register_workspace.body
+    )
+    assert "workspace_workbench_goal</dt><dd>none" in register_workspace.body
+    assert "workspace_workbench_current_gate</dt><dd>create_first_goal" in register_workspace.body
+    assert "workspace_workbench_gate_progress</dt><dd>1/5 gates done" in register_workspace.body
+    assert "workspace_workbench_done_gates</dt><dd>1" in register_workspace.body
+    assert "workspace_workbench_pending_gates</dt><dd>1" in register_workspace.body
+    assert "workspace_workbench_waiting_gates</dt><dd>3" in register_workspace.body
+    assert "workspace_workbench_next_action</dt><dd>Create first goal" in register_workspace.body
+    assert (
+        "workspace_workbench_target_surface</dt><dd><a href='/#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in register_workspace.body
+    assert "workspace_workbench_reason</dt><dd>no_goal_created" in register_workspace.body
+    assert "workspace_workbench_first_run_form_available</dt><dd>true" in register_workspace.body
+    assert "workspace_workbench_confirmation_required</dt><dd>true" in register_workspace.body
+    assert "workspace_workbench_unblock_action</dt><dd>Create First Goal" in register_workspace.body
+    assert (
+        "workspace_workbench_unblock_surface</dt><dd><a href='/#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in register_workspace.body
+    assert "workspace_workbench_unblock_reason</dt><dd>create_first_goal" in register_workspace.body
+    assert "workspace_workbench_source</dt><dd>first_run_progress" in register_workspace.body
+    assert "workspace_first_run_action: Create first goal" in register_workspace.body
+    assert "workspace_first_run_step: create_first_goal" in register_workspace.body
+    assert (
+        "workspace_first_run_surface: <a href='/#first-run-create-goal'>Create First Goal</a>"
+        in register_workspace.body
+    )
+    assert "workspace_next_action_status: first_run" in register_workspace.body
+    assert "workspace_next_action_current_step: create_first_goal" in register_workspace.body
+    assert "workspace_next_action: Create first goal" in register_workspace.body
+    assert "workspace_next_reason: no_goal_created" in register_workspace.body
+    assert (
+        "workspace_next_surface: <a href='/#first-run-create-goal'>Create First Goal</a>"
+        in register_workspace.body
+    )
+    assert "workspace_workflow_map_status</dt><dd>first_run" in register_workspace.body
+    assert "workspace_workflow_map_current_gate</dt><dd>create_first_goal" in register_workspace.body
+    assert "workspace_workflow_map_progress</dt><dd>1/5 gates done" in register_workspace.body
+    assert "workspace_workflow_map_done_count</dt><dd>1" in register_workspace.body
+    assert "workspace_workflow_map_pending_count</dt><dd>1" in register_workspace.body
+    assert "workspace_workflow_map_waiting_count</dt><dd>3" in register_workspace.body
+    assert (
+        "workspace_workflow_map_step: create_project status=done marker=done"
+        in register_workspace.body
+    )
+    assert (
+        "workspace_workflow_map_step: create_first_goal status=current marker=current"
+        in register_workspace.body
+    )
 
     create_goal_result = render_local_app_route(
         tmp_path,
