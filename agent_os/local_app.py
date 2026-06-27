@@ -6418,41 +6418,50 @@ def _inbox(root: Path) -> str:
             "<section><h1>Operator Inbox</h1>",
             "<p class='muted'>Read-only local operator queue assembled from steering reviews, approvals, incidents, delegations, coder runs, commits, and publication handoffs.</p>",
             "</section>",
+            _inbox_command_bar(root, inbox),
             _list_section(
                 "Inbox Summary",
                 _inbox_summary_lines(root)
                 + ["network_actions_taken: 0", "external_mutations_taken: 0"],
+                anchor_id="inbox-summary",
             ),
             _list_section(
                 "Steering Reviews",
                 [_steering_review_line(item) for item in inbox["steering_reviews"]],
+                anchor_id="inbox-steering-reviews",
             ),
             _list_section(
                 "Pending Approval Requests",
                 [_operator_approval_line(item) for item in inbox["pending_approvals"]],
+                anchor_id="inbox-pending-approval-requests",
             ),
             _list_section(
                 "Open Incidents",
                 [_incident_line(item) for item in inbox["open_incidents"]],
                 "/incidents",
+                anchor_id="inbox-open-incidents",
             ),
             _list_section(
                 "Subagent Delegations",
                 [_delegation_line(item) for item in inbox["subagent_delegations"]],
+                anchor_id="inbox-subagent-delegations",
             ),
             _list_section(
                 "Delegation Runs",
                 _delegation_run_lines(root, _storage(root), limit=20),
                 "/delegation-runs",
+                anchor_id="inbox-delegation-runs",
             ),
             _list_section(
                 "Pending Worktree Approvals",
                 [_approval_line(item) for item in inbox["coder_worktree_approvals"]],
                 "/approvals",
+                anchor_id="inbox-pending-worktree-approvals",
             ),
             _list_section(
                 "Coder Worktree Runs",
                 [_coder_run_line(root, item) for item in inbox["coder_worktree_runs"]],
+                anchor_id="inbox-coder-worktree-runs",
             ),
             _list_section(
                 "Pending Commit Approvals",
@@ -6461,10 +6470,12 @@ def _inbox(root: Path) -> str:
                     for item in inbox["coder_worktree_commit_approvals"]
                 ],
                 "/approvals",
+                anchor_id="inbox-pending-commit-approvals",
             ),
             _list_section(
                 "Local Coder Commits",
                 [_commit_line(item) for item in inbox["coder_worktree_commits"]],
+                anchor_id="inbox-local-coder-commits",
             ),
             _list_section(
                 "Pending Publication Requests",
@@ -6473,12 +6484,153 @@ def _inbox(root: Path) -> str:
                     for item in inbox["coder_publication_requests"]
                 ],
                 "/approvals",
+                anchor_id="inbox-pending-publication-requests",
             ),
             _list_section(
                 "Publication Handoffs",
                 [_publication_line(root, item) for item in inbox["coder_publication_handoffs"]],
+                anchor_id="inbox-publication-handoffs",
             ),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _inbox_command_bar(root: Path, inbox: dict[str, object]) -> str:
+    steering_reviews = list(inbox["steering_reviews"])
+    pending_approvals = list(inbox["pending_approvals"])
+    open_incidents = list(inbox["open_incidents"])
+    subagent_delegations = list(inbox["subagent_delegations"])
+    coder_worktree_approvals = list(inbox["coder_worktree_approvals"])
+    coder_worktree_runs = list(inbox["coder_worktree_runs"])
+    coder_worktree_commit_approvals = list(inbox["coder_worktree_commit_approvals"])
+    coder_worktree_commits = list(inbox["coder_worktree_commits"])
+    coder_publication_requests = list(inbox["coder_publication_requests"])
+    coder_publication_handoffs = list(inbox["coder_publication_handoffs"])
+    total = int(inbox["count"])
+    first_kind = "none"
+    first_id = "none"
+    first_project = "none"
+    first_action = "No inbox items"
+    first_surface = SafeHtml("<a href='/goals'>/goals</a>")
+    first_reason = "no local operator attention items"
+    if open_incidents:
+        item = open_incidents[0]
+        first_kind = "incident"
+        first_id = item.id
+        first_project = item.project_id
+        first_action = "Inspect incident"
+        first_surface = SafeHtml("<a href='#inbox-open-incidents'>Open Incidents</a>")
+        first_reason = item.summary
+    elif steering_reviews:
+        item = steering_reviews[0]
+        first_kind = "steering_review"
+        first_id = item.id
+        first_project = item.project_id
+        first_action = "Review steering decision"
+        first_surface = SafeHtml("<a href='#inbox-steering-reviews'>Steering Reviews</a>")
+        first_reason = item.recommended_next_action
+    elif pending_approvals:
+        item = pending_approvals[0]
+        first_kind = "approval_request"
+        first_id = item.id
+        first_project = item.project_id
+        first_action = "Review approval request"
+        first_surface = SafeHtml("<a href='#inbox-pending-approval-requests'>Pending Approval Requests</a>")
+        first_reason = item.reason
+    elif coder_worktree_approvals:
+        item = coder_worktree_approvals[0]
+        first_kind = "worktree_approval"
+        first_id = item.id
+        first_project = item.project_id
+        first_action = "Approve worktree"
+        first_surface = SafeHtml("<a href='#inbox-pending-worktree-approvals'>Pending Worktree Approvals</a>")
+        first_reason = "bounded worktree plan is waiting for operator decision"
+    elif coder_worktree_commit_approvals:
+        item = coder_worktree_commit_approvals[0]
+        first_kind = "commit_approval"
+        first_id = item.id
+        first_project = item.project_id
+        first_action = "Approve commit"
+        first_surface = SafeHtml("<a href='#inbox-pending-commit-approvals'>Pending Commit Approvals</a>")
+        first_reason = "reviewed coder run is waiting for commit decision"
+    elif coder_publication_requests:
+        item = coder_publication_requests[0]
+        first_kind = "publication_request"
+        first_id = item.id
+        first_project = item.project_id
+        first_action = "Approve publication"
+        first_surface = SafeHtml("<a href='#inbox-pending-publication-requests'>Pending Publication Requests</a>")
+        first_reason = "local publication handoff is waiting for operator decision"
+    elif coder_worktree_runs:
+        item = coder_worktree_runs[0]
+        first_kind = "coder_worktree_run"
+        first_id = item.id
+        first_project = item.project_id
+        first_action = "Open run"
+        first_surface = SafeHtml("<a href='#inbox-coder-worktree-runs'>Coder Worktree Runs</a>")
+        first_reason = item.status
+    elif coder_publication_handoffs:
+        item = coder_publication_handoffs[0]
+        first_kind = "publication_handoff"
+        first_id = item.id
+        first_project = item.project_id
+        first_action = "Use publication handoff outside ClankerOS"
+        first_surface = SafeHtml("<a href='#inbox-publication-handoffs'>Publication Handoffs</a>")
+        first_reason = "manual push/PR boundary is ready"
+    elif subagent_delegations:
+        item = subagent_delegations[0]
+        first_kind = "subagent_delegation"
+        first_id = item.id
+        first_project = _task_project(_storage(root), item.parent_task_id) or "unknown"
+        first_action = "Inspect delegation"
+        first_surface = SafeHtml("<a href='#inbox-subagent-delegations'>Subagent Delegations</a>")
+        first_reason = item.status
+    elif coder_worktree_commits:
+        item = coder_worktree_commits[0]
+        first_kind = "local_coder_commit"
+        first_id = item.id
+        first_project = item.project_id
+        first_action = "Review local commit evidence"
+        first_surface = SafeHtml("<a href='#inbox-local-coder-commits'>Local Coder Commits</a>")
+        first_reason = item.status
+    lines = [
+        f"inbox_command_now: {_e(first_action)}",
+        f"inbox_command_click: {first_surface}",
+        f"inbox_command_reason: {_e(first_reason)}",
+        "inbox_command_safety: read-only queue guidance",
+    ]
+    if total == 0:
+        lines.append("inbox_command_empty: no local operator queue items")
+    return "".join(
+        [
+            "<section class='panel inbox-command-bar' data-inbox-command-bar='true'><h2>Inbox Command Bar</h2>",
+            "<p class='muted'>One read-only summary of the next operator attention item across the local queue.</p>",
+            _kv(
+                [
+                    ("inbox_command_status", "available"),
+                    ("inbox_command_total_items", str(total)),
+                    ("inbox_command_steering_reviews", str(len(steering_reviews))),
+                    ("inbox_command_pending_approvals", str(len(pending_approvals))),
+                    ("inbox_command_open_incidents", str(len(open_incidents))),
+                    ("inbox_command_worktree_approvals", str(len(coder_worktree_approvals))),
+                    ("inbox_command_commit_approvals", str(len(coder_worktree_commit_approvals))),
+                    ("inbox_command_publication_requests", str(len(coder_publication_requests))),
+                    ("inbox_command_coder_runs", str(len(coder_worktree_runs))),
+                    ("inbox_command_publication_handoffs", str(len(coder_publication_handoffs))),
+                    ("inbox_command_first_kind", first_kind),
+                    ("inbox_command_first_id", first_id),
+                    ("inbox_command_first_project", first_project),
+                    ("inbox_command_first_action", first_action),
+                    ("inbox_command_first_surface", first_surface),
+                    ("inbox_command_first_reason", first_reason),
+                    ("inbox_command_write_on_get", "false"),
+                    ("inbox_command_network_actions_taken", "0"),
+                    ("inbox_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(lines),
+            "</section>",
         ]
     )
 
@@ -10023,6 +10175,9 @@ def _html_page(
     .workflow-map-rail li {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; overflow-wrap:anywhere; }}
     .workflow-map-rail li[data-gate-marker="current"] {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
     .workflow-map-index {{ display:inline-grid; place-items:center; width:22px; height:22px; border:1px solid var(--line); border-radius:999px; margin-right:5px; font-size:12px; color:var(--muted); }}
+    .inbox-command-bar {{ border-left:4px solid var(--accent); }}
+    .inbox-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .inbox-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .approval-queue-command-bar {{ border-left:4px solid var(--warn); }}
     .approval-queue-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .approval-queue-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

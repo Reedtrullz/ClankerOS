@@ -4221,6 +4221,17 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "/goals" in root.body
     assert "app_network_actions_taken: 0" in root.body
 
+    empty_inbox = render_local_app_route(tmp_path, "/inbox")
+    assert empty_inbox.status == 200
+    assert "Inbox Command Bar" in empty_inbox.body
+    assert "data-inbox-command-bar='true'" in empty_inbox.body
+    assert "inbox_command_total_items</dt><dd>0" in empty_inbox.body
+    assert "inbox_command_first_kind</dt><dd>none" in empty_inbox.body
+    assert "inbox_command_first_action</dt><dd>No inbox items" in empty_inbox.body
+    assert "inbox_command_empty: no local operator queue items" in empty_inbox.body
+    assert "inbox_command_write_on_get</dt><dd>false" in empty_inbox.body
+    assert "inbox_command_external_effects_created</dt><dd>false" in empty_inbox.body
+
     refresh_confirmation = render_local_app_route(
         tmp_path,
         "/actions/refresh-dashboard-state",
@@ -4882,6 +4893,18 @@ def test_local_app_routes_render_modern_workflow_and_health(
     inbox = render_local_app_route(tmp_path, "/inbox")
     assert inbox.status == 200
     assert "Operator Inbox" in inbox.body
+    assert "Inbox Command Bar" in inbox.body
+    assert "data-inbox-command-bar='true'" in inbox.body
+    assert "inbox_command_total_items</dt><dd>1" in inbox.body
+    assert "inbox_command_first_kind</dt><dd>subagent_delegation" in inbox.body
+    assert f"inbox_command_first_id</dt><dd>{delegation.id}" in inbox.body
+    assert "inbox_command_first_project</dt><dd>first-target" in inbox.body
+    assert "inbox_command_first_action</dt><dd>Inspect delegation" in inbox.body
+    assert "inbox_command_first_surface</dt><dd><a href='#inbox-subagent-delegations'>Subagent Delegations</a>" in inbox.body
+    assert "inbox_command_first_reason</dt><dd>pending" in inbox.body
+    assert "inbox_command_click: <a href='#inbox-subagent-delegations'>Subagent Delegations</a>" in inbox.body
+    assert "inbox_command_write_on_get</dt><dd>false" in inbox.body
+    assert "inbox_command_external_effects_created</dt><dd>false" in inbox.body
     assert "inbox_items" in inbox.body
     assert "network_actions_taken" in inbox.body
     approvals = render_local_app_route(tmp_path, "/approvals")
@@ -6118,6 +6141,27 @@ def test_local_app_demo_scenario_populates_fixture_state(
     inbox = render_local_app_route(tmp_path, "/inbox")
     assert inbox.status == 200
     assert "Operator Inbox" in inbox.body
+    assert "Inbox Command Bar" in inbox.body
+    assert "data-inbox-command-bar='true'" in inbox.body
+    assert "inbox_command_status</dt><dd>available" in inbox.body
+    assert "inbox_command_worktree_approvals</dt><dd>1" in inbox.body
+    assert "inbox_command_commit_approvals</dt><dd>0" in inbox.body
+    assert "inbox_command_publication_requests</dt><dd>0" in inbox.body
+    assert "inbox_command_coder_runs</dt><dd>1" in inbox.body
+    assert "inbox_command_first_kind</dt><dd>worktree_approval" in inbox.body
+    assert f"inbox_command_first_id</dt><dd>{result.approval_id}" in inbox.body
+    assert "inbox_command_first_project</dt><dd>local-app-demo" in inbox.body
+    assert "inbox_command_first_action</dt><dd>Approve worktree" in inbox.body
+    assert "inbox_command_first_surface</dt><dd><a href='#inbox-pending-worktree-approvals'>Pending Worktree Approvals</a>" in inbox.body
+    assert "inbox_command_first_reason</dt><dd>bounded worktree plan is waiting for operator decision" in inbox.body
+    assert "inbox_command_write_on_get</dt><dd>false" in inbox.body
+    assert "inbox_command_network_actions_taken</dt><dd>0" in inbox.body
+    assert "inbox_command_external_effects_created</dt><dd>false" in inbox.body
+    assert "inbox_command_now: Approve worktree" in inbox.body
+    assert "inbox_command_click: <a href='#inbox-pending-worktree-approvals'>Pending Worktree Approvals</a>" in inbox.body
+    assert "inbox_command_safety: read-only queue guidance" in inbox.body
+    assert "id='inbox-pending-worktree-approvals'" in inbox.body
+    assert "id='inbox-coder-worktree-runs'" in inbox.body
     assert result.approval_id in inbox.body
     assert result.coder_worktree_run_id in inbox.body
     assert "coder_worktree_approvals: 1" in inbox.body

@@ -369,8 +369,10 @@ Core layers for the bootstrap:
   without fetching GitHub status; a read-only
   operator inbox plus local approval and
   incident pages for pending worktree, commit, and publication decisions,
-  with the inbox preserving read-only run links and next-action cues for
-  pending commit/publication rows,
+  with the inbox starting from a read-only `Inbox Command Bar` that summarizes
+  total local queue size, queue-type counts, the first attention item, target
+  section, reason, and zero-effect boundary while preserving read-only run
+  links and next-action cues for pending commit/publication rows,
   with commit/publication approval rows linking back to the relevant run and
   naming the next local-only follow-up action after approval,
   operator-worthy queue items, incident evidence readback, a confirmed

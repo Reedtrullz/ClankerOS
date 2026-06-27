@@ -1,5 +1,34 @@
 # Status
 
+## 2026-06-27 Inbox Command Bar
+
+- Added a read-only `Inbox Command Bar` to `/inbox`. It shows total local
+  queue size, queue-type counts, the first operator attention item, target
+  section, reason, and write-on-GET/network/external-effect boundaries before
+  the longer inbox lists.
+- Added stable same-page anchors for inbox queue sections so the command bar
+  can jump directly to incidents, steering reviews, approval requests,
+  worktree approvals, coder runs, commit approvals, publication requests,
+  publication handoffs, delegations, and local commits.
+- README, local app docs, and the operating summary now describe `/inbox` as
+  a browser-first attention queue rather than only a raw list of operator
+  records.
+- Non-claims: this does not approve anything, expose decision forms on
+  `/inbox`, execute work, commit, push, create PRs, deploy, call providers,
+  fetch GitHub status, use the network, or mutate external systems. It reads
+  existing local queue rows only.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Approval Queue Command Bar
 
 - Added a read-only `Approval Queue Command Bar` to `/approvals`. It shows

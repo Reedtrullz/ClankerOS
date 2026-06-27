@@ -287,8 +287,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   diffs, changed-file lists, and git-status logs appear chronologically.
 - `/inbox` - read-only operator queue for steering reviews, approval requests,
   incidents, delegations, coder runs, commits, and publication handoffs.
-  Pending commit and publication rows include run links, approval-queue links,
-  and next-action cues without exposing decision forms on the inbox page.
+  A read-only `Inbox Command Bar` summarizes total local queue size, counts by
+  queue type, the first attention item, target section, reason, and
+  write-on-GET/network/external-effect boundaries. Pending commit and
+  publication rows include run links, approval-queue links, and next-action
+  cues without exposing decision forms on the inbox page.
 - `/approvals` - pending worktree, commit, and publication approvals. A
   read-only `Approval Queue Command Bar` summarizes total pending decisions,
   pending counts by approval type, the first recommended decision, the
