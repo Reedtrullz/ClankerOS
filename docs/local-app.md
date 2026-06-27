@@ -43,7 +43,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   phase and next-action readbacks, a `Home Day Plan` readback for the current
   goal, phase, one next action, waiting counts, and end-of-day resume
   readiness, a `Home Focus Queue` for next actions across active and paused
-  goals, the same confirmed local action form as the Goal page when the saved
+  goals, a read-only `Home Activity Command Bar` that names the latest
+  human-readable event and target surface across current goals, the same
+  confirmed local action form as the Goal page when the saved
   goal's next action is browser-available, an explicit `save-workspace` form
   for the current lead goal when one exists, and first-run project/goal forms
   when no goals exist. Confirmed
@@ -129,8 +131,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `save-goal-note` form that appends local resume context to
   `.clanker/projects/<project>/goals/<goal>/operator-notes.md`; it does not
   overwrite previous notes. Saved operator notes also appear as linked
-  `Operator note saved` entries in the Goal timeline and recent Activity Log
-  so daily resume context is chronological instead of side-channel only. The
+  `Operator note saved` entries in the Goal timeline and recent Activity Log,
+  with a read-only `Goal Activity Command Bar` summarizing the latest event,
+  target surface, operator-note count, artifact count, and zero-effect
+  boundary so daily resume context is chronological instead of side-channel only. The
   Goal Memory section links to `/memory`, shows
   project/global memory artifacts, goal-scoped memory entry counts, generated
   memory count, operator-note status, future-work count, and the current pin

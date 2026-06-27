@@ -110,6 +110,7 @@ next-action readbacks, a `Start Here` cockpit for the next click, resume
 posture, blockers, and CI handoff, a `Home Day Plan` that names the current goal, phase,
 one next action, waiting counts, and whether end-of-day resume is ready, the
 `Home Focus Queue` for next actions across active and paused goals, the
+read-only `Home Activity Command Bar` for the latest human-readable event,
 `Home Verification Handoff` for current branch/commit GitHub Actions proof
 commands and the latest operator-supplied CI evidence, the
 saved-goal browser-available action form, and first-run project/goal/delegation
@@ -210,7 +211,9 @@ usage, and keeps skill execution out of the Goal page.
 Timeline entries link back to the relevant local artifact, delegation, run,
 approval queue, or goal surface, and the timeline also backfills generic
 `Artifact recorded` events from the same bounded artifact registry used by
-the Goal Artifact Explorer. Progress uses a real browser progress
+the Goal Artifact Explorer. The Activity Log now starts with a read-only
+Goal Activity Command Bar that names the latest human-readable event and
+target local surface before the longer chronological list. Progress uses a real browser progress
 bar. Operator Notes includes a confirmed `save-goal-note` form that appends
 local resume context to the goal-scoped `operator-notes.md` artifact without
 overwriting earlier notes.

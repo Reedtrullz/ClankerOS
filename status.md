@@ -1,5 +1,27 @@
 # Status
 
+## 2026-06-27 Activity Command Bars
+
+- Added read-only activity command bars to Home and Goal activity sections.
+  Home now summarizes the latest human-readable event across current goals,
+  its target local surface, operator-note count, artifact count, and safety
+  boundaries before the recent activity list. Goal pages now summarize the
+  latest event for that goal with the same target, note/artifact count, and
+  no-write/no-network/no-external-effect posture before the longer Activity
+  Log.
+- README, local app docs, and the operating summary now describe activity as a
+  scan-friendly operator surface rather than only a chronological list.
+- Non-claims: this does not write activity state, approve gates, execute work,
+  run delegations, commit, push, create PRs, deploy, fetch GitHub status, call
+  providers, use non-loopback network actions, write state on GET, or mutate
+  external systems. It reads existing local timeline items and artifact links
+  only.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+
 ## 2026-06-27 Workspace Workflow Map
 
 - Added a read-only `Workspace Workflow Map` to `/workspace`. It uses the same

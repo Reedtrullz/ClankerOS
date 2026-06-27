@@ -4179,6 +4179,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_surface: <a href='/workspace'>/workspace</a>" in root.body
     assert "Home Recent Activity" in root.body
     assert "activity_log_format</dt><dd>human_readable" in root.body
+    assert "Home Activity Command Bar" in root.body
+    assert "data-home-activity-command-bar='true'" in root.body
+    assert "home_activity_command_items</dt><dd>0" in root.body
+    assert "home_activity_command_latest_message</dt><dd>No recent activity" in root.body
+    assert "home_activity_command_latest_surface</dt><dd><a href='/goals'>/goals</a>" in root.body
+    assert "home_activity_command_source</dt><dd>goal_timeline_items" in root.body
+    assert "home_activity_command_write_on_get</dt><dd>false" in root.body
+    assert "home_activity_command_network_actions_taken</dt><dd>0" in root.body
+    assert "home_activity_command_external_effects_created</dt><dd>false" in root.body
+    assert "home_activity_safety: read-only local timeline" in root.body
     assert "Home Inbox" in root.body
     assert "home_inbox_items" in root.body
     assert "Home Recommendations" in root.body
@@ -5895,6 +5905,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"Artifact recorded: coder run {result.coder_worktree_run_id} diff." in goal.body
     assert f"Artifact recorded: coder run {result.coder_worktree_run_id} git status." in goal.body
     assert "Activity Log" in goal.body
+    assert "Goal Activity Command Bar" in goal.body
+    assert "data-goal-activity-command-bar='true'" in goal.body
+    assert f"goal_activity_command_goal</dt><dd>{result.goal_id}" in goal.body
+    assert "goal_activity_command_status</dt><dd>available" in goal.body
+    assert "goal_activity_command_items</dt><dd>" in goal.body
+    assert "goal_activity_command_latest_message</dt><dd>" in goal.body
+    assert "goal_activity_command_latest_surface</dt><dd><a href='" in goal.body
+    assert "goal_activity_command_source</dt><dd>goal_timeline_items" in goal.body
+    assert "goal_activity_command_write_on_get</dt><dd>false" in goal.body
+    assert "goal_activity_command_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_activity_command_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_activity_safety: read-only local timeline" in goal.body
     assert "Goal created" in goal.body
     assert "Scout delegated" in goal.body
     assert "Context pack built" in goal.body

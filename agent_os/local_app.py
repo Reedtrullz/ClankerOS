@@ -1596,7 +1596,54 @@ def _home_recent_activity(root: Path, storage: Storage) -> str:
                     ("recent_activity_items", str(len(items))),
                 ]
             ),
+            _home_activity_command_bar(items),
             _ul([_timeline_line(item) for item in items[:12]]),
+            "</section>",
+        ]
+    )
+
+
+def _home_activity_command_bar(items: list[dict[str, str]]) -> str:
+    latest = items[0] if items else {}
+    latest_href = latest.get("href") or "/goals"
+    latest_label = latest.get("message") or "No recent activity"
+    latest_at = _format_time(latest.get("at") or "") if latest else "none"
+    operator_notes = sum(1 for item in items if item.get("kind") == "operator_note")
+    artifacts = sum(
+        1
+        for item in items
+        if item.get("kind") == "artifact"
+        or str(item.get("href") or "").startswith("/artifacts?path=")
+    )
+    return "".join(
+        [
+            "<section class='panel home-activity-command-bar' data-home-activity-command-bar='true'><h3>Home Activity Command Bar</h3>",
+            "<p class='muted'>One read-only summary of the latest local activity across current goals.</p>",
+            _kv(
+                [
+                    ("home_activity_command_status", "available"),
+                    ("home_activity_command_items", str(len(items))),
+                    ("home_activity_command_latest_at", latest_at),
+                    ("home_activity_command_latest_message", latest_label),
+                    (
+                        "home_activity_command_latest_surface",
+                        SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>"),
+                    ),
+                    ("home_activity_command_operator_notes", str(operator_notes)),
+                    ("home_activity_command_artifacts", str(artifacts)),
+                    ("home_activity_command_source", "goal_timeline_items"),
+                    ("home_activity_command_write_on_get", "false"),
+                    ("home_activity_command_network_actions_taken", "0"),
+                    ("home_activity_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"home_activity_now: {_e(latest_label)}",
+                    f"home_activity_click: <a href='{_e(latest_href)}'>{_e(latest_href)}</a>",
+                    "home_activity_safety: read-only local timeline",
+                ]
+            ),
             "</section>",
         ]
     )
@@ -5087,7 +5134,61 @@ def _goal_activity_log(root: Path, state: dict[str, Any]) -> str:
                     ("activity_log_items", str(len(items))),
                 ]
             ),
+            _goal_activity_command_bar(state, items),
             _ul([_timeline_line(item) for item in items]),
+            "</section>",
+        ]
+    )
+
+
+def _goal_activity_command_bar(
+    state: dict[str, Any],
+    items: list[dict[str, str]],
+) -> str:
+    goal = state["goal"]
+    latest = items[-1] if items else {}
+    latest_href = latest.get("href") or f"/goals/{quote(goal.id)}"
+    latest_label = latest.get("message") or "No goal activity yet"
+    latest_at = _format_time(latest.get("at") or "") if latest else "none"
+    operator_notes = sum(1 for item in items if item.get("kind") == "operator_note")
+    artifacts = sum(
+        1
+        for item in items
+        if item.get("kind") == "artifact"
+        or str(item.get("href") or "").startswith("/artifacts?path=")
+    )
+    latest_kind = latest.get("kind") or "event"
+    return "".join(
+        [
+            "<section class='panel goal-activity-command-bar' data-goal-activity-command-bar='true'><h3>Goal Activity Command Bar</h3>",
+            "<p class='muted'>One read-only summary of the latest human-readable event for this goal.</p>",
+            _kv(
+                [
+                    ("goal_activity_command_status", "available"),
+                    ("goal_activity_command_goal", goal.id),
+                    ("goal_activity_command_items", str(len(items))),
+                    ("goal_activity_command_latest_kind", latest_kind),
+                    ("goal_activity_command_latest_at", latest_at),
+                    ("goal_activity_command_latest_message", latest_label),
+                    (
+                        "goal_activity_command_latest_surface",
+                        SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>"),
+                    ),
+                    ("goal_activity_command_operator_notes", str(operator_notes)),
+                    ("goal_activity_command_artifacts", str(artifacts)),
+                    ("goal_activity_command_source", "goal_timeline_items"),
+                    ("goal_activity_command_write_on_get", "false"),
+                    ("goal_activity_command_network_actions_taken", "0"),
+                    ("goal_activity_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_activity_now: {_e(latest_label)}",
+                    f"goal_activity_click: <a href='{_e(latest_href)}'>{_e(latest_href)}</a>",
+                    "goal_activity_safety: read-only local timeline",
+                ]
+            ),
             "</section>",
         ]
     )
