@@ -261,10 +261,11 @@ Use `/goals/<goal_id>` as the
 goal-centered workbench: the page now opens with the large Current Phase
 banner immediately after the Goal summary, then shows a sticky read-only
 Goal Jump Bar for phase, action, workflow, timeline, evidence, artifacts,
-notes, git, and remaining work before the Goal Command Bar, Goal Operator
-Workbench, Goal Daily Loop, Goal Return Brief, Goal Continuation Rail, next
-action, next recommendation, Goal Workflow Map, Goal CI Handoff, live state,
-and section index before the
+notes, git, and remaining work. Its visible `1`-`9` key badges and
+`aria-keyshortcuts` jump to those local anchors without submitting forms,
+before the Goal Command Bar, Goal Operator Workbench, Goal Daily Loop, Goal
+Return Brief, Goal Continuation Rail, next action, next recommendation, Goal
+Workflow Map, Goal CI Handoff, live state, and section index before the
 detailed progress, timeline, activity log, goal risk, completion
 criteria, completion readiness, evidence, delegations, runs, approvals,
 artifacts, a typed Goal Artifact Explorer, memory, skills used, git status,
@@ -334,9 +335,9 @@ and zero-effect boundaries before the detailed checklist. The Next Recommendatio
 section names whether the recommendation
 comes from an open task recommendation or from current phase plus local goal
 records, then points at the local target surface without writing on GET.
-The sticky Goal Jump Bar keeps the most-used in-page anchors one click away
-during long sessions, while the Goal Section Index near the top links to the
-full stable anchor map for the major Goal surfaces.
+The sticky Goal Jump Bar keeps the most-used in-page anchors one click or
+one keypress away during long sessions, while the Goal Section Index near the
+top links to the full stable anchor map for the major Goal surfaces.
 Goal Delegations starts with a read-only `Goal Delegation Command Bar` that
 summarizes scout delegation counts, context-pack readiness, implementation
 handoff readiness, coder-prep packets, worktree plans, the latest delegation

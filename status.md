@@ -1,5 +1,39 @@
 # Status
 
+## 2026-06-28 Goal Jump Shortcuts
+
+- Added visible `1`-`9` shortcut badges and `aria-keyshortcuts` to the sticky
+  read-only Goal Jump Bar so an operator can jump to phase, action, workflow,
+  timeline, evidence, artifacts, notes, git, and remaining work without using
+  the mouse or scrolling the long Goal workbench.
+- Extended the shared local keyboard handler to activate a Goal jump anchor
+  only when a matching `data-goal-jump-shortcut` exists on the current page,
+  and it still ignores input, textarea, and select focus before handling
+  navigation keys.
+- Updated README, local app docs, operating summary, status focus, and the
+  fixture-backed Goal route assertions.
+- Non-claims: this is read-only local anchor navigation. It does not write on
+  GET, submit forms, create actions, approve work, run work, call providers,
+  fetch GitHub, poll network services, commit, push, create PRs, deploy, or
+  mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 514 deselected`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-shortcut-smoke-2 app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-shortcut-demo-smoke-2 app-demo-smoke-test`
+    -> passed, fixture-backed Goal route matched expected snippets, provider/
+    network/external mutation counters remained `0`
+  - Rendered browser QA against
+    `http://127.0.0.1:8790/goals/goal_d00211404659`: found 9
+    `data-goal-jump-shortcut` links with visible `1`-`9` text and matching
+    `aria-keyshortcuts`; pressing `4` moved to
+    `#goal-timeline-command-bar`; pressing `2` moved to `#goal-next-action`;
+    console warning/error log was empty.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Goal Jump Bar
 
 - Added a sticky read-only `Goal Jump Bar` immediately after the Goal Current

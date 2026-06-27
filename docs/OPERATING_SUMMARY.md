@@ -297,10 +297,12 @@ Core layers for the bootstrap:
   Goal detail pages now place the large Current Phase banner immediately after
   the Goal summary and before a sticky read-only `Goal Jump Bar` for phase,
   action, workflow, timeline, evidence, artifacts, notes, git, and remaining
-  work. The jump bar precedes the Goal Command Bar, Goal Operator Workbench,
-  Daily Loop, Goal Return Brief, Goal Continuation Rail, Next Action, Workflow
-  Map, Goal CI Handoff, live refresh panel, and long section index, so the
-  first viewport names the current phase before
+  work. Visible `1`-`9` key badges and `aria-keyshortcuts` jump to those local
+  anchors without submitting forms. The jump bar precedes the Goal Command
+  Bar, Goal Operator Workbench, Daily Loop, Goal Return Brief, Goal
+  Continuation Rail, Next Action, Workflow Map, Goal CI Handoff, live refresh
+  panel, and long section index, so the first viewport names the current phase
+  before
   navigation and diagnostics. Goal Progress starts with a read-only `Goal Progress Command Bar` that
   summarizes task completion, workflow gate progress, current gate, waiting
   approvals/incidents/recommendations, one next local action, and no-write/
@@ -335,7 +337,7 @@ Core layers for the bootstrap:
   Goal action form when available, the source surface, current gate/progress,
   first unblock surface, and confirmed local-action counters before the longer
   diagnostic sections. The sticky Goal Jump Bar keeps the main daily anchors
-  one click away while scrolling, and the Goal Section Index now links
+  one click or keypress away while scrolling, and the Goal Section Index now links
   directly to the Timeline, Activity, and Git command bars in addition to the
   longer detail sections, making the page navigable through scan-first
   operator surfaces. Goal Overview starts with a read-only

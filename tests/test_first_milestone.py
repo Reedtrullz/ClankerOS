@@ -7851,19 +7851,27 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_jump_primary_action</dt><dd>Create commit request" in goal.body
     assert "goal_jump_current_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_jump_link_count</dt><dd>9" in goal.body
+    assert "goal_jump_shortcuts_enabled</dt><dd>true" in goal.body
+    assert "goal_jump_shortcuts</dt><dd>1-9" in goal.body
     assert "goal_jump_bar_write_on_get</dt><dd>false" in goal.body
     assert "goal_jump_bar_external_effects_created</dt><dd>false" in goal.body
-    assert "data-goal-jump-target='phase' href='#goal-current-phase'" in goal.body
-    assert "data-goal-jump-target='action' href='#goal-next-action'" in goal.body
-    assert "data-goal-jump-target='workflow' href='#goal-workflow-map'" in goal.body
-    assert "data-goal-jump-target='timeline' href='#goal-timeline-command-bar'" in goal.body
-    assert "data-goal-jump-target='evidence' href='#goal-evidence-command-bar'" in goal.body
-    assert "data-goal-jump-target='artifacts' href='#goal-artifact-command-bar'" in goal.body
-    assert "data-goal-jump-target='notes' href='#goal-operator-notes-command-bar'" in goal.body
-    assert "data-goal-jump-target='git' href='#goal-git-command-bar'" in goal.body
-    assert "data-goal-jump-target='remaining' href='#goal-remaining-work-command-bar'" in goal.body
+    assert "data-goal-jump-shortcuts='true'" in goal.body
+    assert "data-goal-jump-target='phase' href='#goal-current-phase' data-goal-jump-shortcut='1' aria-keyshortcuts='1'" in goal.body
+    assert "data-goal-jump-target='action' href='#goal-next-action' data-goal-jump-shortcut='2' aria-keyshortcuts='2'" in goal.body
+    assert "data-goal-jump-target='workflow' href='#goal-workflow-map' data-goal-jump-shortcut='3' aria-keyshortcuts='3'" in goal.body
+    assert "data-goal-jump-target='timeline' href='#goal-timeline-command-bar' data-goal-jump-shortcut='4' aria-keyshortcuts='4'" in goal.body
+    assert "data-goal-jump-target='evidence' href='#goal-evidence-command-bar' data-goal-jump-shortcut='5' aria-keyshortcuts='5'" in goal.body
+    assert "data-goal-jump-target='artifacts' href='#goal-artifact-command-bar' data-goal-jump-shortcut='6' aria-keyshortcuts='6'" in goal.body
+    assert "data-goal-jump-target='notes' href='#goal-operator-notes-command-bar' data-goal-jump-shortcut='7' aria-keyshortcuts='7'" in goal.body
+    assert "data-goal-jump-target='git' href='#goal-git-command-bar' data-goal-jump-shortcut='8' aria-keyshortcuts='8'" in goal.body
+    assert "data-goal-jump-target='remaining' href='#goal-remaining-work-command-bar' data-goal-jump-shortcut='9' aria-keyshortcuts='9'" in goal.body
+    assert "<kbd>1</kbd> <span>Phase</span>" in goal.body
+    assert "<kbd>9</kbd> <span>Remaining</span>" in goal.body
     assert "goal_jump_now: Ready to commit -> Create commit request" in goal.body
+    assert "goal_jump_shortcut: 1 phase -> #goal-current-phase" in goal.body
+    assert "goal_jump_shortcut: 9 remaining -> #goal-remaining-work-command-bar" in goal.body
     assert "goal_jump_safety: read-only local anchor navigation" in goal.body
+    assert "querySelector(\"[data-goal-jump-shortcut='\" + event.key + \"']\")" in goal.body
     assert "goal_section_index_status</dt><dd>available" in goal.body
     assert "goal_section_count</dt><dd>" in goal.body
     assert "goal_section_index_write_on_get</dt><dd>false" in goal.body

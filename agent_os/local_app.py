@@ -6738,22 +6738,28 @@ def _goal_detail(root: Path, goal_id: str) -> str:
 
 def _goal_jump_bar(phase: str, next_action: GoalNextAction) -> str:
     links = [
-        ("Phase", "phase", "goal-current-phase"),
-        ("Action", "action", "goal-next-action"),
-        ("Workflow", "workflow", "goal-workflow-map"),
-        ("Timeline", "timeline", "goal-timeline-command-bar"),
-        ("Evidence", "evidence", "goal-evidence-command-bar"),
-        ("Artifacts", "artifacts", "goal-artifact-command-bar"),
-        ("Notes", "notes", "goal-operator-notes-command-bar"),
-        ("Git", "git", "goal-git-command-bar"),
-        ("Remaining", "remaining", "goal-remaining-work-command-bar"),
+        ("1", "Phase", "phase", "goal-current-phase"),
+        ("2", "Action", "action", "goal-next-action"),
+        ("3", "Workflow", "workflow", "goal-workflow-map"),
+        ("4", "Timeline", "timeline", "goal-timeline-command-bar"),
+        ("5", "Evidence", "evidence", "goal-evidence-command-bar"),
+        ("6", "Artifacts", "artifacts", "goal-artifact-command-bar"),
+        ("7", "Notes", "notes", "goal-operator-notes-command-bar"),
+        ("8", "Git", "git", "goal-git-command-bar"),
+        ("9", "Remaining", "remaining", "goal-remaining-work-command-bar"),
     ]
     link_items = [
         (
             f"<a class='goal-jump-link' data-goal-jump-target='{_e(target)}' "
-            f"href='#{_e(anchor)}'>{_e(label)}</a>"
+            f"href='#{_e(anchor)}' data-goal-jump-shortcut='{_e(shortcut)}' "
+            f"aria-keyshortcuts='{_e(shortcut)}' title='{_e(label)} ({_e(shortcut)})'>"
+            f"<kbd>{_e(shortcut)}</kbd> <span>{_e(label)}</span></a>"
         )
-        for label, target, anchor in links
+        for shortcut, label, target, anchor in links
+    ]
+    shortcut_lines = [
+        f"goal_jump_shortcut: {_e(shortcut)} {_e(target)} -> #{_e(anchor)}"
+        for shortcut, _label, target, anchor in links
     ]
     return "".join(
         [
@@ -6765,18 +6771,21 @@ def _goal_jump_bar(phase: str, next_action: GoalNextAction) -> str:
                     ("goal_jump_current_phase", phase),
                     ("goal_jump_primary_action", next_action.action),
                     ("goal_jump_link_count", str(len(links))),
+                    ("goal_jump_shortcuts_enabled", "true"),
+                    ("goal_jump_shortcuts", "1-9"),
                     ("goal_jump_bar_write_on_get", "false"),
                     ("goal_jump_bar_external_effects_created", "false"),
                 ]
             ),
             "<nav aria-label='Goal jump targets'>",
-            "<ul class='goal-jump-links'>",
+            "<ul class='goal-jump-links' data-goal-jump-shortcuts='true'>",
             "".join(f"<li>{item}</li>" for item in link_items),
             "</ul>",
             "</nav>",
             _ul(
                 [
                     f"goal_jump_now: {phase} -> {next_action.action}",
+                    *shortcut_lines,
                     "goal_jump_safety: read-only local anchor navigation",
                 ]
             ),
@@ -22119,6 +22128,7 @@ def _html_page(
     .goal-jump-links {{ list-style:none; padding:0; margin:12px 0 0; display:flex; flex-wrap:wrap; gap:8px; }}
     .goal-jump-links li {{ min-width:0; }}
     .goal-jump-link {{ display:inline-flex; align-items:center; min-height:32px; max-width:100%; padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:var(--surface); text-decoration:none; overflow-wrap:anywhere; }}
+    .goal-jump-link kbd {{ display:inline-grid; place-items:center; min-width:22px; min-height:22px; margin-right:6px; border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; background:var(--panel); color:var(--ink); font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px; }}
     .goal-jump-link:focus, .goal-jump-link:hover {{ border-color:var(--accent); outline:0; }}
     .goal-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-command-bar dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
@@ -22509,6 +22519,14 @@ def _html_page(
       if (event.key === "s") {{ event.preventDefault(); window.location.href = "/search"; }}
       if (event.key === "y") {{ event.preventDefault(); window.location.href = "/today"; }}
       if (event.key === "t") {{ event.preventDefault(); toggleTheme(); }}
+      if (/^[1-9]$/.test(event.key)) {{
+        var goalJump = document.querySelector("[data-goal-jump-shortcut='" + event.key + "']");
+        if (goalJump) {{
+          event.preventDefault();
+          goalJump.focus();
+          goalJump.click();
+        }}
+      }}
     }});
   }})();
   </script>
