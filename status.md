@@ -1,5 +1,36 @@
 # Status
 
+## 2026-06-27 Today Day Plan Same-Page First Run
+
+- Updated the reused `Home Day Plan` on `/today` so first-run operators stay
+  inside the daily cockpit: an empty checkout points to the same-page
+  `Create Project` form, and a registered-project/no-goal checkout points to
+  the same-page `Create First Goal` form.
+- Kept the root Home behavior unchanged; its `Home Day Plan` still points
+  first-run operators to `/goals`, while `/today` opts into route-scoped
+  same-page anchors.
+- Added explicit readbacks for
+  `home_day_plan_first_run_form_available` and
+  `home_day_plan_first_run_form_surface` so tests and operators can tell when
+  the reused Day Plan has a same-page first-run form available.
+- Updated README, local app docs, and the operating summary to name the reused
+  Day Plan as part of the self-contained `/today` first-run path.
+- Non-claims: this does not write on GET, create projects or goals without
+  confirmation, add provider calls, fetch GitHub status, approve work,
+  execute runs, commit, push, create PRs, deploy, use the network, or mutate
+  external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `git diff --check`
+    -> passed
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed with `/today` route marker matched and zero provider/network/external-mutation counters
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed with fixture-backed `/today` snippets matched and zero provider/network/external-mutation counters
+
 ## 2026-06-27 Today Start Here Same-Page First Run
 
 - Updated the reused `Start Here` panel so `/today` points first-run operators

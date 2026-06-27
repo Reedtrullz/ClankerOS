@@ -4148,6 +4148,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "home_day_plan_primary_goal</dt><dd>none" in root.body
     assert "home_day_plan_current_phase</dt><dd>First run" in root.body
     assert "home_day_plan_next_action</dt><dd>Register ClankerOS project" in root.body
+    assert "home_day_plan_next_surface</dt><dd><a href='/goals'>/goals</a>" in root.body
+    assert "home_day_plan_first_run_form_available</dt><dd>false" in root.body
+    assert "home_day_plan_first_run_form_surface</dt><dd>none" in root.body
     assert "home_day_plan_resume_ready</dt><dd>false" in root.body
     assert "home_day_plan_resume_status</dt><dd>not_started" in root.body
     assert "home_day_plan_finish_status</dt><dd>not_ready_until_goal_exists" in root.body
@@ -4233,6 +4236,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "start_here_click: <a href='#first-run-create-project'>Create Project</a>" in today.body
     assert "Today Current Action" not in today.body
     assert "Home Day Plan" in today.body
+    assert (
+        "home_day_plan_next_surface</dt><dd><a href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in today.body
+    assert "home_day_plan_first_run_form_available</dt><dd>true" in today.body
+    assert (
+        "home_day_plan_first_run_form_surface</dt><dd><a href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in today.body
+    assert "day_plan_next_surface: <a href='#first-run-create-project'>Create Project</a>" in today.body
     assert "First Run Guide" in today.body
     assert "Home Verification Handoff" in root.body
     assert "home_verification_source</dt><dd>github_actions_operator_supplied_evidence" in root.body
@@ -4856,6 +4869,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "Create First Goal</a>"
     ) in registered_today.body
     assert "start_here_click: <a href='#first-run-create-goal'>Create First Goal</a>" in registered_today.body
+    assert (
+        "home_day_plan_next_surface</dt><dd><a href='#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in registered_today.body
+    assert "home_day_plan_first_run_form_available</dt><dd>true" in registered_today.body
+    assert (
+        "home_day_plan_first_run_form_surface</dt><dd><a href='#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in registered_today.body
+    assert "day_plan_next_surface: <a href='#first-run-create-goal'>Create First Goal</a>" in registered_today.body
     create_goal_result = render_local_app_route(
         tmp_path,
         "/actions/create-goal",

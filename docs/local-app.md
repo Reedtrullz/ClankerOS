@@ -71,10 +71,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   read-only `Today Goal Queue` follows with active/paused/completed counts,
   lead-goal phase and next action, switch links, lead same-page action-form
   availability, progress, and waiting counts across the day's goals. When no
-  Goal exists yet, the command center, queue, and Start Here panel link
-  directly to the same-page `Create Project` or `Create First Goal` form
-  rendered by the first-run guide instead of requiring a detour to `/goals`. It then
-  reuses the existing Start Here, Home Day Plan,
+  Goal exists yet, the command center, queue, Start Here panel, and reused
+  Home Day Plan link directly to the same-page `Create Project` or
+  `Create First Goal` form rendered by the first-run guide instead of
+  requiring a detour to `/goals`. It then reuses the existing Start Here,
+  Home Day Plan,
   Attention Brief, Focus Queue, recent activity, inbox, recommendations,
   incidents, and first-run panels without writing on GET or adding new action
   authority.

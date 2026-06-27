@@ -1121,7 +1121,7 @@ def _today_page(root: Path) -> str:
             lead_goal=lead_goal,
         ),
         _home_start_here(root, storage, lead_goal, first_run_same_page=True),
-        _home_day_plan(root, storage, lead_goal),
+        _home_day_plan(root, storage, lead_goal, first_run_same_page=True),
         _home_attention_brief(root, storage, lead_goal),
         _home_focus_queue(root, storage, active=active, paused=paused),
         _home_recent_activity(root, storage),
@@ -1781,7 +1781,13 @@ def _home_start_here(
     )
 
 
-def _home_day_plan(root: Path, storage: Storage, lead_goal: sqlite3.Row | None) -> str:
+def _home_day_plan(
+    root: Path,
+    storage: Storage,
+    lead_goal: sqlite3.Row | None,
+    *,
+    first_run_same_page: bool = False,
+) -> str:
     workspace = _load_workspace_state(root)
     open_goal = str(workspace.get("open_goal") or "").strip()
     open_project = str(workspace.get("open_project") or "").strip()
@@ -1807,13 +1813,25 @@ def _home_day_plan(root: Path, storage: Storage, lead_goal: sqlite3.Row | None) 
     ]
     lines: list[str] = []
     if lead_goal is None:
+        first_run_href = "/goals"
+        first_run_label = "/goals"
+        if first_run_same_page:
+            first_run_href, first_run_label = _today_first_run_target(first_run)
+        first_run_form_available = (
+            first_run_same_page and first_run_href.startswith("#first-run-")
+        )
+        first_run_surface = SafeHtml(
+            f"<a href='{_e(first_run_href)}'>{_e(first_run_label)}</a>"
+        )
         rows.extend(
             [
                 ("home_day_plan_status", "first_run"),
                 ("home_day_plan_primary_goal", "none"),
                 ("home_day_plan_current_phase", "First run"),
                 ("home_day_plan_next_action", first_run["next_action"]),
-                ("home_day_plan_next_surface", SafeHtml(f"<a href='{_e(first_run['next_surface'])}'>{_e(first_run['next_surface'])}</a>")),
+                ("home_day_plan_next_surface", first_run_surface),
+                ("home_day_plan_first_run_form_available", str(first_run_form_available).lower()),
+                ("home_day_plan_first_run_form_surface", first_run_surface if first_run_form_available else "none"),
                 ("home_day_plan_waiting_items", "0"),
                 ("home_day_plan_finish_status", "not_ready_until_goal_exists"),
                 ("home_day_plan_finish_action", "save-workspace"),
@@ -1823,7 +1841,7 @@ def _home_day_plan(root: Path, storage: Storage, lead_goal: sqlite3.Row | None) 
         lines.extend(
             [
                 f"day_plan_now: {_e(first_run['next_action'])}",
-                f"day_plan_next_surface: <a href='{_e(first_run['next_surface'])}'>{_e(first_run['next_surface'])}</a>",
+                f"day_plan_next_surface: <a href='{_e(first_run_href)}'>{_e(first_run_label)}</a>",
                 "day_plan_end_of_day_resume: not_ready_until_workspace_saved",
             ]
         )
