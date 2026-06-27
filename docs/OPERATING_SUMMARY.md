@@ -99,7 +99,11 @@ Core layers for the bootstrap:
   focused and reports zero provider/network/external-effect counters. A
   read-only `Today Operator Workbench` follows with do/check/unblock/finish
   cards for the current action, timeline/evidence review, first blocker, and
-  finish-today resume save target. A
+  finish-today resume save target. A read-only `Today CI Handoff` follows with
+  the latest operator-recorded GitHub Actions proof, current-checkout match
+  status, exact `gh run list` / `gh run view` commands for current CI, and
+  links to `/verification` plus `/ci-evidence` for recording proof after
+  Actions completes without app-side GitHub polling or GET writes. A
   read-only `Today Goal Queue` follows with active/paused/completed
   goal counts, lead-goal phase and next action, goal switch links,
   same-page action-form availability for the lead Goal, progress, and waiting

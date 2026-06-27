@@ -4319,6 +4319,24 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_workbench_unblock: first_run -> <a href='#first-run-create-project'>Create Project</a>" in today.body
     assert "today_workbench_finish: not_ready_until_goal_exists -> <a href='#first-run-guide'>First Run Guide</a>" in today.body
     assert "today_workbench_safety: read-only daily routing" in today.body
+    assert "Today CI Handoff" in today.body
+    assert "data-today-ci-handoff='true'" in today.body
+    assert "today_ci_handoff_status</dt><dd>available" in today.body
+    assert "today_ci_handoff_latest_source</dt><dd>publication_handoff" in today.body
+    assert "today_ci_handoff_latest_status</dt><dd>success" in today.body
+    assert "today_ci_handoff_latest_provider</dt><dd>github-actions" in today.body
+    assert "today_ci_handoff_latest_run_id</dt><dd>123" in today.body
+    assert "today_ci_handoff_target_surface</dt><dd><a href='/ci-evidence" in today.body
+    assert "today_ci_handoff_verification_surface</dt><dd><a href='/verification'>/verification</a>" in today.body
+    assert "today_ci_handoff_record_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>/ci-evidence#record-ci-snapshot-json</a>" in today.body
+    assert "today_ci_handoff_github_status_fetch</dt><dd>none" in today.body
+    assert "today_ci_handoff_app_github_polling</dt><dd>false" in today.body
+    assert "today_ci_handoff_write_on_get</dt><dd>false" in today.body
+    assert "today_ci_handoff_network_actions_taken</dt><dd>0" in today.body
+    assert "today_ci_handoff_external_effects_created</dt><dd>false" in today.body
+    assert "today_ci_handoff_github_check: gh run list" in today.body
+    assert "today_ci_handoff_status_json: gh run view" in today.body
+    assert "today_ci_handoff_safety: read-only local handoff" in today.body
     assert (
         "start_here_primary_surface</dt><dd><a href='#first-run-create-project'>"
         "Create Project</a>"
@@ -6873,6 +6891,25 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_workbench_unblock: needs_approval_review -> <a href='/approvals'>/approvals</a>" in today.body
     assert "today_workbench_finish: needs_workspace_save -> <a href='#today-finish'>Finish Today</a>" in today.body
     assert "today_workbench_safety: read-only daily routing" in today.body
+    assert "Today CI Handoff" in today.body
+    assert "data-today-ci-handoff='true'" in today.body
+    assert "today_ci_handoff_status</dt><dd>available" in today.body
+    assert "today_ci_handoff_latest_source</dt><dd>direct_public_snapshot" in today.body
+    assert "today_ci_handoff_latest_status</dt><dd>success" in today.body
+    assert "today_ci_handoff_latest_provider</dt><dd>github-actions" in today.body
+    assert "today_ci_handoff_latest_run_id</dt><dd>demo-goal-ci" in today.body
+    assert "today_ci_handoff_target_surface</dt><dd><a href='/ci-evidence" in today.body
+    assert "today_ci_handoff_verification_surface</dt><dd><a href='/verification'>/verification</a>" in today.body
+    assert "today_ci_handoff_record_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>/ci-evidence#record-ci-snapshot-json</a>" in today.body
+    assert "today_ci_handoff_github_status_fetch</dt><dd>none" in today.body
+    assert "today_ci_handoff_app_github_polling</dt><dd>false" in today.body
+    assert "today_ci_handoff_write_on_get</dt><dd>false" in today.body
+    assert "today_ci_handoff_provider_calls_taken</dt><dd>0" in today.body
+    assert "today_ci_handoff_network_actions_taken</dt><dd>0" in today.body
+    assert "today_ci_handoff_external_effects_created</dt><dd>false" in today.body
+    assert "today_ci_handoff_github_check: gh run list" in today.body
+    assert "today_ci_handoff_status_json: gh run view" in today.body
+    assert "today_ci_handoff_safety: read-only local handoff" in today.body
     assert "data-today-current-action='true'" in today.body
     assert "Run Current Action" in today.body
     assert "action='/actions/coder-commit-request'" in today.body

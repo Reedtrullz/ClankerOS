@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import html
 import json
+import shlex
 import sqlite3
 import subprocess
 import sys
@@ -508,9 +509,13 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-today-command-center='true'",
                 "data-today-command-actions='true'",
                 "data-today-operator-workbench='true'",
+                "data-today-ci-handoff='true'",
                 "data-today-goal-queue='true'",
                 "today_command_status</dt><dd>goal_ready",
                 "today_workbench_status</dt><dd>goal_ready",
+                "today_ci_handoff_status</dt><dd>missing",
+                "today_ci_handoff_latest_source</dt><dd>none",
+                "today_ci_handoff_app_github_polling</dt><dd>false",
                 "today_goal_queue_status</dt><dd>goals_ready",
                 "today_command_primary_action</dt><dd>Create commit request",
                 "today_workbench_do_action</dt><dd>Create commit request",
@@ -1124,6 +1129,7 @@ def _today_page(root: Path) -> str:
             lead_goal=lead_goal,
         ),
         _today_operator_workbench(root, storage, lead_goal),
+        _today_ci_handoff(root),
         _today_goal_queue(
             root,
             storage,
@@ -1448,6 +1454,138 @@ def _today_operator_workbench(
                     f"today_workbench_unblock: {unblock_status} -> <a href='{_e(unblock_href)}'>{_e(unblock_label)}</a>",
                     f"today_workbench_finish: {finish_status} -> <a href='{_e(finish_href)}'>{_e(finish_label)}</a>",
                     "today_workbench_safety: read-only daily routing; confirmed local forms remain on their target surfaces",
+                ]
+            ),
+            "</section>",
+        ]
+    )
+
+
+def _today_ci_handoff(root: Path) -> str:
+    state = _ci_evidence_command_state(root)
+    latest_record = _latest_ci_evidence_record(root)
+    repo = _repo_state(root)
+    repo_slug = _github_repo_slug(root)
+    target_surface = state["target_surface"]
+    target_href = (
+        f"/ci-evidence{target_surface}"
+        if target_surface.startswith("#")
+        else target_surface
+    )
+    target_label = target_href if target_href.startswith("/") else target_surface
+    record_href = "/ci-evidence#record-ci-snapshot-json"
+    latest_available = latest_record is not None
+    latest_source = state["latest_source"]
+    latest_status = state["latest_status"]
+    latest_scope = state["latest_scope"]
+    latest_commit = state["latest_commit"]
+    latest_run_id = state["latest_external_run_id"]
+    latest_provider = "none"
+    latest_url: str | SafeHtml = "none"
+    latest_evidence: str | SafeHtml = "none"
+    latest_recorded_by = "none"
+    branch_matches_current = "missing"
+    commit_matches_current = "missing"
+    matches_current = "missing"
+    if latest_record is not None:
+        _, record = latest_record
+        latest_provider = str(getattr(record, "provider", "unknown"))
+        latest_url_value = str(getattr(record, "external_url", "") or "none")
+        if latest_url_value != "none":
+            latest_url = SafeHtml(
+                f"<a href='{_e(latest_url_value)}'>{_e(latest_url_value)}</a>"
+            )
+        evidence_path = _repo_relative_artifact_path(
+            root,
+            getattr(record, "evidence_path", None),
+        )
+        latest_evidence = _artifact_link(evidence_path)
+        latest_recorded_by = str(getattr(record, "recorded_by", "unknown"))
+        branch_matches = str(getattr(record, "branch_name", "")) == state["branch"]
+        commit_matches = _commit_refs_match(
+            str(getattr(record, "commit_sha", "")),
+            state["current_commit"],
+            repo["commit"],
+        )
+        branch_matches_current = str(branch_matches).lower()
+        commit_matches_current = str(commit_matches).lower()
+        matches_current = str(branch_matches and commit_matches).lower()
+
+    branch_arg = shlex.quote(state["branch"])
+    repo_arg = shlex.quote(repo_slug)
+    gh_list_command = (
+        f"gh run list --repo {repo_arg} --branch {branch_arg} --limit 5"
+    )
+    gh_view_command = (
+        f"gh run view <run_id> --repo {repo_arg} "
+        "--json status,conclusion,headSha,headBranch,databaseId,url,jobs"
+    )
+    return "".join(
+        [
+            "<section id='today-ci-handoff' class='panel today-ci-handoff' data-today-ci-handoff='true'><h2>Today CI Handoff</h2>",
+            "<p class='muted'>Use GitHub Actions as the longer verification loop, then record operator-supplied proof back into the local evidence ledger.</p>",
+            _kv(
+                [
+                    (
+                        "today_ci_handoff_status",
+                        "available" if latest_available else "missing",
+                    ),
+                    ("today_ci_handoff_command_status", state["command_status"]),
+                    ("today_ci_handoff_branch", state["branch"]),
+                    ("today_ci_handoff_current_commit", state["current_commit"]),
+                    ("today_ci_handoff_current_proof", state["current_proof"]),
+                    ("today_ci_handoff_latest_source", latest_source),
+                    ("today_ci_handoff_latest_status", latest_status),
+                    ("today_ci_handoff_latest_scope", latest_scope),
+                    ("today_ci_handoff_latest_provider", latest_provider),
+                    ("today_ci_handoff_latest_commit", latest_commit),
+                    ("today_ci_handoff_latest_run_id", latest_run_id),
+                    ("today_ci_handoff_latest_url", latest_url),
+                    ("today_ci_handoff_latest_evidence", latest_evidence),
+                    ("today_ci_handoff_latest_recorded_by", latest_recorded_by),
+                    (
+                        "today_ci_handoff_branch_matches_current",
+                        branch_matches_current,
+                    ),
+                    (
+                        "today_ci_handoff_commit_matches_current",
+                        commit_matches_current,
+                    ),
+                    (
+                        "today_ci_handoff_matches_current_checkout",
+                        matches_current,
+                    ),
+                    ("today_ci_handoff_next_action", state["next_action"]),
+                    (
+                        "today_ci_handoff_target_surface",
+                        SafeHtml(
+                            f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"
+                        ),
+                    ),
+                    (
+                        "today_ci_handoff_verification_surface",
+                        SafeHtml("<a href='/verification'>/verification</a>"),
+                    ),
+                    (
+                        "today_ci_handoff_record_surface",
+                        SafeHtml(f"<a href='{record_href}'>{record_href}</a>"),
+                    ),
+                    ("today_ci_handoff_github_status_fetch", "none"),
+                    ("today_ci_handoff_app_github_polling", "false"),
+                    ("today_ci_handoff_write_on_get", "false"),
+                    ("today_ci_handoff_provider_calls_taken", "0"),
+                    ("today_ci_handoff_network_actions_taken", "0"),
+                    ("today_ci_handoff_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"today_ci_handoff_now: {_e(state['next_action'])}",
+                    f"today_ci_handoff_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"today_ci_handoff_github_check: {_e(gh_list_command)}",
+                    f"today_ci_handoff_status_json: {_e(gh_view_command)}",
+                    f"today_ci_handoff_record: paste GitHub Actions JSON on <a href='{record_href}'>{record_href}</a>",
+                    "today_ci_handoff_safety: read-only local handoff; app does not poll GitHub or write on GET",
                 ]
             ),
             "</section>",
@@ -19558,6 +19696,10 @@ def _html_page(
     .today-workbench-action, .today-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .today-workbench-action {{ background:var(--accent); color:#fff; }}
     .today-workbench-link {{ background:var(--surface); color:var(--accent); }}
+    .today-ci-handoff {{ border-left:4px solid var(--ok); }}
+    .today-ci-handoff dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .today-ci-handoff ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .today-ci-handoff li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .today-current-action, .today-finish, .today-note, .today-pause, .goal-pause {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .today-current-action summary {{ cursor:pointer; font-weight:700; }}
     .today-current-action form, .today-finish form, .today-note form, .today-pause form, .goal-pause form {{ margin-top:10px; }}
