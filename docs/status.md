@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal pages now expose a top-of-page `Goal CI Handoff` after the Workflow Map,
+  showing project-scoped GitHub Actions proof posture, exact `gh run list` /
+  `gh run view` command templates, and same-page proof recording targets
+  without app-side GitHub polling.
 - The Goal page `Goal Workflow Map` now includes action/surface guidance for
   every gate from scout delegation through manual publish, making the full
   workflow easier to follow from the browser without reading docs.

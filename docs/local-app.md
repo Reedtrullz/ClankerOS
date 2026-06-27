@@ -172,7 +172,7 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   Current Phase banner immediately after the Goal summary, then shows the Goal
   Command Bar, Goal Operator Workbench, Goal Daily Loop, Goal Return Brief,
   Goal Continuation Rail, next action, next recommendation, Goal Workflow Map,
-  live state, and section
+  Goal CI Handoff, live state, and section
   index before the detailed overview, goal risk, completion criteria,
   progress, chronological timeline, activity log, delegations, runs, approvals,
   evidence, artifacts, memory, skills used, git status, operator notes, a
@@ -240,7 +240,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   Remaining Work gate state into a lifecycle rail from scout delegation through
   manual publish, with the current gate, next action, gate counts, every
   gate's eventual local operator surface, and zero-effect boundary visible
-  before scrolling. Remaining Work also starts with a read-only
+  before scrolling. A read-only `Goal CI Handoff` follows it with
+  project-scoped proof status, latest operator-recorded GitHub Actions
+  evidence, exact `gh run list` / `gh run view` command templates, and a
+  same-page JSON paste target for recording proof without app-side GitHub
+  polling. Remaining Work also starts with a read-only
   `Goal Remaining Work Command Bar` that summarizes the
   current gate, done/pending/waiting gate counts, open task/incident/
   recommendation counts, pending approvals, one next local surface, and

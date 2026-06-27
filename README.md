@@ -261,8 +261,8 @@ Use `/goals/<goal_id>` as the
 goal-centered workbench: the page now opens with the large Current Phase
 banner immediately after the Goal summary, then shows the Goal Command Bar,
 Goal Operator Workbench, Goal Daily Loop, Goal Return Brief, Goal Continuation
-Rail, next action, next recommendation, Goal Workflow Map, live state, and
-section index before the
+Rail, next action, next recommendation, Goal Workflow Map, Goal CI Handoff,
+live state, and section index before the
 detailed progress, timeline, activity log, goal risk, completion
 criteria, completion readiness, evidence, delegations, runs, approvals,
 artifacts, a typed Goal Artifact Explorer, memory, skills used, git status,
@@ -320,8 +320,12 @@ blocker route, `/resume`, and finish surface. The Goal Workflow Map
 turns the same gate state used by Remaining Work into a top-level lifecycle
 rail from scout delegation through manual publish, highlighting the current
 gate, the next local action, every gate's eventual operator surface, and the
-manual publish boundary without writing on GET. Goal Remaining Work starts
-with a read-only `Goal Remaining Work Command Bar`
+manual publish boundary without writing on GET. Goal CI Handoff follows the
+workflow map near the top of the Goal page with project-scoped proof status,
+latest operator-recorded GitHub Actions evidence, exact `gh run list` /
+`gh run view` command templates, and a same-page JSON paste target for
+recording proof, while still doing no GitHub polling or external mutation on
+GET. Goal Remaining Work starts with a read-only `Goal Remaining Work Command Bar`
 that summarizes current gate, done/pending/waiting gate counts, open
 task/incident/recommendation counts, pending approvals, one next local surface,
 and zero-effect boundaries before the detailed checklist. The Next Recommendation

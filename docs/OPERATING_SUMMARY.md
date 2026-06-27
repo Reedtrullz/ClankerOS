@@ -297,8 +297,8 @@ Core layers for the bootstrap:
   Goal detail pages now place the large Current Phase banner immediately after
   the Goal summary and before the Goal Command Bar, Goal Operator Workbench,
   Daily Loop, Goal Return Brief, Goal Continuation Rail, Next Action, Workflow
-  Map, live refresh panel, and long section index, so the first viewport names
-  the current phase before
+  Map, Goal CI Handoff, live refresh panel, and long section index, so the
+  first viewport names the current phase before
   navigation and diagnostics. Goal Progress starts with a read-only `Goal Progress Command Bar` that
   summarizes task completion, workflow gate progress, current gate, waiting
   approvals/incidents/recommendations, one next local action, and no-write/
@@ -357,8 +357,12 @@ Core layers for the bootstrap:
   read-only `Goal Workflow Map` near the top that renders the same
   Remaining Work gate state as a lifecycle rail, highlighting the current
   gate, next action, done/pending/waiting counts, each gate's eventual local
-  operator surface, and zero-effect boundary before the operator reaches the
-  long timeline and artifact sections. Goal
+  operator surface, and zero-effect boundary. A read-only `Goal CI Handoff`
+  follows it with project-scoped proof status, latest operator-recorded
+  GitHub Actions evidence, exact `gh run list` / `gh run view` command
+  templates, and a same-page proof-recording target before the operator
+  reaches the long timeline and artifact sections, without app-side GitHub
+  polling or external mutations. Goal
   Remaining Work itself starts with a read-only `Goal Remaining Work Command
   Bar` that summarizes current gate, done/pending/waiting gate counts, open
   task/incident/recommendation counts, pending approvals, one next local

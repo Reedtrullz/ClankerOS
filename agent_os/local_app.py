@@ -6679,6 +6679,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_next_action_card(state, next_action),
             _goal_next_recommendation_section(state, next_action),
             _goal_workflow_map(root, state, next_action),
+            _goal_ci_handoff(root, state),
             _goal_live_state(),
             _goal_section_index(),
             _goal_resume_snapshot(root, state),
@@ -6758,6 +6759,7 @@ def _goal_section_index() -> str:
         ("Next action", "goal-next-action"),
         ("Next recommendation", "goal-next-recommendation"),
         ("Workflow map", "goal-workflow-map"),
+        ("CI handoff", "goal-ci-handoff"),
         ("Live state", "goal-live-state"),
         ("Resume snapshot", "goal-resume-snapshot"),
         ("Overview command", "goal-overview-command-bar"),
@@ -7038,6 +7040,158 @@ def _goal_workflow_map(
             "".join(items),
             "</ol>",
             _ul(gate_lines + ["workflow_map_safety: read-only full workflow action guide"]),
+            "</section>",
+        ]
+    )
+
+
+def _goal_ci_handoff(root: Path, state: dict[str, Any]) -> str:
+    goal = state["goal"]
+    storage = _storage(root)
+    project = storage.get_registered_project(goal.project_id)
+    project_root = Path(project.root_path) if project else root
+    repo = _repo_state(project_root)
+    full_commit = _git(project_root, ["rev-parse", "HEAD"]) or repo["commit"]
+    repo_slug = _github_repo_slug(project_root)
+    latest_record = _latest_ci_evidence_record(root, project_id=goal.project_id)
+
+    source_kind = "none"
+    latest_status = "missing"
+    latest_scope = "none"
+    latest_provider = "none"
+    latest_commit = "none"
+    latest_run_id = "none"
+    latest_url: str | SafeHtml = "none"
+    latest_evidence: str | SafeHtml = "none"
+    latest_recorded_by = "none"
+    branch_matches_current = "missing"
+    commit_matches_current = "missing"
+    matches_current = False
+    if latest_record is not None:
+        source_kind, record = latest_record
+        result = record.result_json if isinstance(record.result_json, dict) else {}
+        latest_status = str(record.status)
+        latest_scope = str(result.get("evidence_scope", "unknown"))
+        latest_provider = str(record.provider)
+        latest_commit = str(record.commit_sha)
+        latest_run_id = str(record.external_run_id)
+        latest_url = SafeHtml(
+            f"<a href='{_e(record.external_url)}'>{_e(record.external_url)}</a>"
+        )
+        latest_evidence = SafeHtml(
+            _artifact_link(_repo_relative_artifact_path(root, record.evidence_path))
+        )
+        latest_recorded_by = str(record.recorded_by)
+        branch_matches = record.branch_name == repo["branch"]
+        commit_matches = _commit_refs_match(record.commit_sha, full_commit, repo["commit"])
+        matches_current = branch_matches and commit_matches
+        branch_matches_current = str(branch_matches).lower()
+        commit_matches_current = str(commit_matches).lower()
+
+    if latest_record is None:
+        handoff_status = "missing"
+        next_action = "Record Goal CI proof"
+        target_href = "#record-goal-ci-proof"
+        target_label = "Record Goal CI Proof From GitHub JSON"
+        reason = "no project-scoped local CI proof record yet"
+    elif not matches_current:
+        handoff_status = "stale"
+        next_action = "Record current Goal CI proof"
+        target_href = "#record-goal-ci-proof"
+        target_label = "Record Goal CI Proof From GitHub JSON"
+        reason = "latest local proof does not match the current branch and commit"
+    elif latest_status == "success" and latest_scope == "workflow_run":
+        handoff_status = "current_success"
+        next_action = "Review recorded Goal CI proof"
+        target_href = "#goal-verification-evidence"
+        target_label = "Goal Verification Evidence"
+        reason = "current commit has operator-recorded full GitHub Actions proof"
+    elif latest_status == "success" and (
+        latest_scope == "job" or latest_scope.startswith("workflow_job:")
+    ):
+        handoff_status = "current_job_scope_only"
+        next_action = "Record full-suite Goal CI proof"
+        target_href = "#record-goal-ci-proof"
+        target_label = "Record Goal CI Proof From GitHub JSON"
+        reason = "latest proof is job-scoped early evidence only"
+    else:
+        handoff_status = "needs_attention"
+        next_action = "Inspect recorded Goal CI proof"
+        target_href = "#goal-verification-evidence"
+        target_label = "Goal Verification Evidence"
+        reason = "latest local proof is not a current full success record"
+
+    branch_arg = shlex.quote(repo["branch"] if repo["branch"] != "unknown" else "<branch>")
+    repo_arg = shlex.quote(repo_slug)
+    gh_list_command = (
+        f"gh run list --repo {repo_arg} --branch {branch_arg} --limit 5"
+    )
+    gh_view_command = (
+        f"gh run view <run_id> --repo {repo_arg} "
+        "--json status,conclusion,headSha,headBranch,databaseId,url,jobs"
+    )
+    return "".join(
+        [
+            "<section id='goal-ci-handoff' class='panel goal-ci-handoff' data-goal-ci-handoff='true'><h2>Goal CI Handoff</h2>",
+            "<p class='muted'>Use GitHub Actions for the longer verification loop, then paste the result into this Goal's local evidence ledger.</p>",
+            _kv(
+                [
+                    ("goal_ci_handoff_status", handoff_status),
+                    ("goal_ci_handoff_goal", goal.id),
+                    ("goal_ci_handoff_project", goal.project_id),
+                    ("goal_ci_handoff_branch", repo["branch"]),
+                    ("goal_ci_handoff_current_commit", full_commit),
+                    ("goal_ci_handoff_latest_source", source_kind),
+                    ("goal_ci_handoff_latest_status", latest_status),
+                    ("goal_ci_handoff_latest_scope", latest_scope),
+                    ("goal_ci_handoff_latest_provider", latest_provider),
+                    ("goal_ci_handoff_latest_commit", latest_commit),
+                    ("goal_ci_handoff_latest_run_id", latest_run_id),
+                    ("goal_ci_handoff_latest_url", latest_url),
+                    ("goal_ci_handoff_latest_evidence", latest_evidence),
+                    ("goal_ci_handoff_latest_recorded_by", latest_recorded_by),
+                    ("goal_ci_handoff_branch_matches_current", branch_matches_current),
+                    ("goal_ci_handoff_commit_matches_current", commit_matches_current),
+                    ("goal_ci_handoff_matches_current_checkout", str(matches_current).lower()),
+                    ("goal_ci_handoff_next_action", next_action),
+                    (
+                        "goal_ci_handoff_target_surface",
+                        SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"),
+                    ),
+                    (
+                        "goal_ci_handoff_record_surface",
+                        SafeHtml(
+                            "<a href='#record-goal-ci-proof'>"
+                            "Record Goal CI Proof From GitHub JSON</a>"
+                        ),
+                    ),
+                    (
+                        "goal_ci_handoff_global_record_surface",
+                        SafeHtml(
+                            "<a href='/ci-evidence#record-ci-snapshot-json'>"
+                            "/ci-evidence#record-ci-snapshot-json</a>"
+                        ),
+                    ),
+                    ("goal_ci_handoff_reason", reason),
+                    ("goal_ci_handoff_source", "project_scoped_ci_evidence_records"),
+                    ("goal_ci_handoff_github_status_fetch", "none"),
+                    ("goal_ci_handoff_app_github_polling", "false"),
+                    ("goal_ci_handoff_write_on_get", "false"),
+                    ("goal_ci_handoff_provider_calls_taken", "0"),
+                    ("goal_ci_handoff_network_actions_taken", "0"),
+                    ("goal_ci_handoff_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_ci_handoff_now: {_e(next_action)}",
+                    f"goal_ci_handoff_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"goal_ci_handoff_github_check: {_e(gh_list_command)}",
+                    f"goal_ci_handoff_status_json: {_e(gh_view_command)}",
+                    "goal_ci_handoff_boundary: fast smoke is early proof; full-suite success is the product proof",
+                    "goal_ci_handoff_safety: read-only local GitHub Actions handoff",
+                ]
+            ),
             "</section>",
         ]
     )

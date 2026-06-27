@@ -7796,6 +7796,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-next-action'" in goal.body
     assert "href='#goal-next-recommendation'" in goal.body
     assert "href='#goal-overview-command-bar'" in goal.body
+    assert "href='#goal-ci-handoff'" in goal.body
     assert "href='#goal-risk-command-bar'" in goal.body
     assert "href='#goal-criteria-command-bar'" in goal.body
     assert "href='#goal-progress-command-bar'" in goal.body
@@ -7820,6 +7821,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-operator-workbench'" in goal.body
     assert "id='goal-daily-loop'" in goal.body
     assert "id='goal-workflow-map'" in goal.body
+    assert "id='goal-ci-handoff'" in goal.body
     assert "id='goal-current-phase'" in goal.body
     assert "id='goal-overview-command-bar'" in goal.body
     assert "id='goal-risk-command-bar'" in goal.body
@@ -7844,7 +7846,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>50" in goal.body
+    assert "goal_section_count</dt><dd>51" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
@@ -8028,6 +8030,30 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-workflow-gate='manual_publish' data-gate-status='waiting' data-gate-marker='waiting' data-gate-action='Manual publish outside ClankerOS'" in goal.body
     assert "workflow_map_gate: manual_publish status=waiting marker=waiting action=Manual publish outside ClankerOS surface=outside_clankeros" in goal.body
     assert "workflow_map_safety: read-only full workflow action guide" in goal.body
+    assert goal.body.index("id='goal-workflow-map'") < goal.body.index("id='goal-ci-handoff'")
+    assert goal.body.index("id='goal-ci-handoff'") < goal.body.index("id='goal-live-state'")
+    assert "Goal CI Handoff" in goal.body
+    assert "data-goal-ci-handoff='true'" in goal.body
+    assert f"goal_ci_handoff_goal</dt><dd>{result.goal_id}" in goal.body
+    assert "goal_ci_handoff_project</dt><dd>local-app-demo" in goal.body
+    assert "goal_ci_handoff_status</dt><dd>current_success" in goal.body
+    assert "goal_ci_handoff_latest_source</dt><dd>direct_public_snapshot" in goal.body
+    assert "goal_ci_handoff_latest_status</dt><dd>success" in goal.body
+    assert "goal_ci_handoff_latest_scope</dt><dd>workflow_run" in goal.body
+    assert "goal_ci_handoff_latest_run_id</dt><dd>demo-goal-ci" in goal.body
+    assert "goal_ci_handoff_matches_current_checkout</dt><dd>true" in goal.body
+    assert "goal_ci_handoff_target_surface</dt><dd><a href='#goal-verification-evidence'>Goal Verification Evidence</a>" in goal.body
+    assert "goal_ci_handoff_record_surface</dt><dd><a href='#record-goal-ci-proof'>Record Goal CI Proof From GitHub JSON</a>" in goal.body
+    assert "goal_ci_handoff_global_record_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>/ci-evidence#record-ci-snapshot-json</a>" in goal.body
+    assert "goal_ci_handoff_github_status_fetch</dt><dd>none" in goal.body
+    assert "goal_ci_handoff_app_github_polling</dt><dd>false" in goal.body
+    assert "goal_ci_handoff_write_on_get</dt><dd>false" in goal.body
+    assert "goal_ci_handoff_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_ci_handoff_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_ci_handoff_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_ci_handoff_github_check: gh run list" in goal.body
+    assert "goal_ci_handoff_status_json: gh run view" in goal.body
+    assert "goal_ci_handoff_safety: read-only local GitHub Actions handoff" in goal.body
     assert "Current Phase" in goal.body
     assert "Ready to commit" in goal.body
     assert "current_phase_banner</dt><dd>Ready to commit" in goal.body
