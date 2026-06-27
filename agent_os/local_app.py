@@ -4067,7 +4067,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_progress(state),
             _goal_timeline(root, state),
             _goal_activity_log(root, state),
-            _list_section("Delegations", _goal_delegation_lines(state), anchor_id="goal-delegations"),
+            _goal_delegation_section(root, state),
             _goal_run_section(root, state),
             _goal_approval_section(root, state),
             _list_section(
@@ -4152,6 +4152,7 @@ def _goal_section_index() -> str:
         ("Risk level", "goal-risk"),
         ("Completion criteria", "goal-completion-criteria"),
         ("Completion readiness", "goal-completion-readiness"),
+        ("Delegation command", "goal-delegation-command-bar"),
         ("Delegations", "goal-delegations"),
         ("Run command", "goal-run-command-bar"),
         ("Runs", "goal-runs"),
@@ -6232,6 +6233,275 @@ def _goal_delegation_lines(state: dict[str, Any]) -> list[str]:
         f"<a href='/delegations/{quote(delegation.id)}'>{_e(delegation.id)}</a>: status={_e(delegation.status)} profile={_e(delegation.assigned_profile)} title={_e(delegation.title)}"
         for delegation in state["delegations"]
     ]
+
+
+def _goal_delegation_section(root: Path, state: dict[str, Any]) -> str:
+    lines = _goal_delegation_lines(state)
+    return _goal_delegation_command_bar(root, state, lines) + _list_section(
+        "Delegations",
+        lines,
+        anchor_id="goal-delegations",
+    )
+
+
+def _goal_delegation_command_bar(
+    root: Path,
+    state: dict[str, Any],
+    delegation_lines: list[str],
+) -> str:
+    goal = state["goal"]
+    delegations = list(state["delegations"])
+    pending_delegations = [item for item in delegations if item.status == "pending"]
+    running_delegations = [item for item in delegations if item.status == "running"]
+    completed_delegations = [item for item in delegations if item.status == "completed"]
+    failed_or_blocked_delegations = [
+        item for item in delegations if item.status in {"failed", "blocked"}
+    ]
+    summary_by_delegation: dict[str, dict[str, Any]] = {}
+    context_pack_ready = 0
+    implementation_handoff_ready = 0
+    for delegation in delegations:
+        metadata = load_delegation_result_metadata(delegation)
+        if _delegation_has_context_pack(root, delegation, metadata):
+            context_pack_ready += 1
+        summary = summarize_implementation_handoff(root, delegation)
+        summary_by_delegation[delegation.id] = summary
+        if str(summary["status"]) == "readable":
+            implementation_handoff_ready += 1
+
+    selected_delegation = delegations[0] if delegations else None
+    latest_delegation_id = "none"
+    latest_delegation_status = "none"
+    latest_delegation_profile = "none"
+    latest_delegation_surface: str | SafeHtml = "none"
+    latest_workflow_surface: str | SafeHtml = "none"
+    latest_context_pack_status = "none"
+    latest_handoff_status = "none"
+    next_action = "Create scout delegation"
+    target_href = "#goal-next-action"
+    target_label = "Next Action"
+    reason = "goal has no delegation yet"
+
+    if selected_delegation is not None:
+        latest_delegation_id = selected_delegation.id
+        latest_delegation_status = selected_delegation.status
+        latest_delegation_profile = selected_delegation.assigned_profile
+        latest_delegation_surface = SafeHtml(
+            f"<a href='/delegations/{quote(selected_delegation.id)}'>"
+            f"/delegations/{_e(selected_delegation.id)}</a>"
+        )
+        latest_workflow_surface = SafeHtml(
+            f"<a href='/workflow?delegation_id={quote(selected_delegation.id)}'>"
+            f"/workflow?delegation_id={_e(selected_delegation.id)}</a>"
+        )
+        metadata = load_delegation_result_metadata(selected_delegation)
+        latest_context_pack_status = (
+            "available"
+            if _delegation_has_context_pack(root, selected_delegation, metadata)
+            else "missing"
+        )
+        summary = summary_by_delegation[selected_delegation.id]
+        latest_handoff_status = (
+            "available" if str(summary["status"]) == "readable" else str(summary["status"])
+        )
+        delegation_prep = [
+            item
+            for item in state["prep_packets"]
+            if item.get("source", {}).get("delegation_id") == selected_delegation.id
+        ]
+        delegation_plans = [
+            item
+            for item in state["worktree_plans"]
+            if item.get("source", {}).get("delegation_id") == selected_delegation.id
+        ]
+        worktree_approvals = list_coder_worktree_approvals(
+            root,
+            delegation_id=selected_delegation.id,
+            limit=50,
+        )
+        worktree_runs = list_coder_worktree_runs(
+            root,
+            delegation_id=selected_delegation.id,
+            limit=50,
+        )
+        commit_approvals = list_coder_worktree_commit_approvals(
+            root,
+            delegation_id=selected_delegation.id,
+            limit=50,
+        )
+        publications = list_coder_publications(
+            root,
+            delegation_id=selected_delegation.id,
+            limit=50,
+        )
+        token = _delegation_next_action(
+            root,
+            summary=summary,
+            prep_count=len(delegation_prep),
+            plan_count=len(delegation_plans),
+            worktree_approvals=worktree_approvals,
+            worktree_runs=worktree_runs,
+            commit_approvals=commit_approvals,
+            publications=publications,
+        )
+        selected_run = worktree_runs[0] if worktree_runs else None
+        selected_commit_run_id = next(
+            (item.run_id for item in commit_approvals if getattr(item, "run_id", "")),
+            "",
+        )
+        selected_publication_run_id = next(
+            (item.run_id for item in publications if getattr(item, "run_id", "")),
+            "",
+        )
+        run_id = (
+            selected_run.id
+            if selected_run is not None
+            else selected_commit_run_id or selected_publication_run_id
+        )
+        if token == "generate_context_pack":
+            next_action = "Generate context pack"
+            target_href = "#goal-next-action"
+            reason = "selected delegation is missing a context pack"
+        elif token == "run_delegation_or_review_implementation_handoff":
+            next_action = "Run delegation"
+            target_href = "#goal-next-action"
+            reason = "implementation handoff is missing or unreadable"
+        elif token == "prepare_coder_from_handoff":
+            next_action = "Run coder prep"
+            target_href = f"/delegations/{quote(selected_delegation.id)}"
+            target_label = f"/delegations/{selected_delegation.id}"
+            reason = "implementation handoff is ready for bounded coder prep"
+        elif token == "prepare_coder_worktree_plan":
+            next_action = "Create worktree plan"
+            target_href = f"/delegations/{quote(selected_delegation.id)}"
+            target_label = f"/delegations/{selected_delegation.id}"
+            reason = "coder prep packet is ready for worktree planning"
+        elif token == "decide_pending_worktree_approval":
+            next_action = "Approve worktree"
+            target_href = "/approvals"
+            target_label = "/approvals"
+            reason = "worktree approval is waiting for an operator decision"
+        elif token == "run_approved_worktree_from_cli":
+            next_action = "Run approved worktree"
+            target_href = "#goal-next-action"
+            reason = "worktree execution is approved and needs confirmed local execution"
+        elif token == "request_commit_for_reviewed_run":
+            next_action = "Create commit request"
+            target_href = f"/runs/{quote(run_id)}" if run_id else f"/delegations/{quote(selected_delegation.id)}"
+            target_label = f"/runs/{run_id}" if run_id else f"/delegations/{selected_delegation.id}"
+            reason = "reviewed coder run is ready for a local commit request"
+        elif token == "approve_or_reject_commit_request":
+            next_action = "Approve commit"
+            target_href = "/approvals"
+            target_label = "/approvals"
+            reason = "commit approval is waiting for an operator decision"
+        elif token == "commit_approved_worktree":
+            next_action = "Commit approved worktree"
+            target_href = f"/runs/{quote(run_id)}" if run_id else f"/delegations/{quote(selected_delegation.id)}"
+            target_label = f"/runs/{run_id}" if run_id else f"/delegations/{selected_delegation.id}"
+            reason = "commit approval is granted for the selected delegation"
+        elif token == "request_publication_handoff":
+            next_action = "Create publication request"
+            target_href = f"/runs/{quote(run_id)}" if run_id else f"/delegations/{quote(selected_delegation.id)}"
+            target_label = f"/runs/{run_id}" if run_id else f"/delegations/{selected_delegation.id}"
+            reason = "local commit is recorded and publication can be requested"
+        elif token == "approve_or_reject_publication_request":
+            next_action = "Approve publication"
+            target_href = "/approvals"
+            target_label = "/approvals"
+            reason = "publication approval is waiting for an operator decision"
+        elif token == "prepare_publication_handoff":
+            next_action = "Create publication handoff"
+            target_href = f"/runs/{quote(run_id)}" if run_id else f"/delegations/{quote(selected_delegation.id)}"
+            target_label = f"/runs/{run_id}" if run_id else f"/delegations/{selected_delegation.id}"
+            reason = "publication approval is granted for the selected delegation"
+        elif token == "manual_operator_push_pr_outside_clankeros":
+            next_action = "Use publication handoff"
+            target_href = f"/runs/{quote(run_id)}" if run_id else f"/delegations/{quote(selected_delegation.id)}"
+            target_label = f"/runs/{run_id}" if run_id else f"/delegations/{selected_delegation.id}"
+            reason = "publication handoff is ready for manual push or PR outside ClankerOS"
+        else:
+            next_action = "Review delegation workflow"
+            target_href = f"/workflow?delegation_id={quote(selected_delegation.id)}"
+            target_label = f"/workflow?delegation_id={selected_delegation.id}"
+            reason = "selected delegation has workflow state to inspect"
+
+    if next_action == "Create commit request":
+        status = "ready_for_commit_request"
+    elif not delegations:
+        status = "empty"
+    elif failed_or_blocked_delegations:
+        status = "attention_required"
+    elif running_delegations:
+        status = "running"
+    elif implementation_handoff_ready:
+        status = "handoff_available"
+    elif context_pack_ready:
+        status = "context_pack_ready"
+    else:
+        status = "delegations_available"
+
+    target = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    return "".join(
+        [
+            "<section id='goal-delegation-command-bar' class='panel goal-delegation-command-bar' data-goal-delegation-command-bar='true'><h3>Goal Delegation Command Bar</h3>",
+            "<p class='muted'>Goal-scoped delegation posture before the detailed scout, context-pack, and handoff rows.</p>",
+            _kv(
+                [
+                    ("goal_delegation_command_goal", goal.id),
+                    ("goal_delegation_command_project", goal.project_id),
+                    ("goal_delegation_command_status", status),
+                    ("goal_delegation_command_items", str(len(delegation_lines))),
+                    ("goal_delegation_command_total_delegations", str(len(delegations))),
+                    ("goal_delegation_command_pending_delegations", str(len(pending_delegations))),
+                    ("goal_delegation_command_running_delegations", str(len(running_delegations))),
+                    ("goal_delegation_command_completed_delegations", str(len(completed_delegations))),
+                    (
+                        "goal_delegation_command_failed_or_blocked_delegations",
+                        str(len(failed_or_blocked_delegations)),
+                    ),
+                    ("goal_delegation_command_context_packs_ready", str(context_pack_ready)),
+                    (
+                        "goal_delegation_command_implementation_handoffs_ready",
+                        str(implementation_handoff_ready),
+                    ),
+                    ("goal_delegation_command_coder_prep_packets", str(len(state["prep_packets"]))),
+                    ("goal_delegation_command_worktree_plans", str(len(state["worktree_plans"]))),
+                    ("goal_delegation_command_latest_delegation", latest_delegation_id),
+                    ("goal_delegation_command_latest_status", latest_delegation_status),
+                    ("goal_delegation_command_latest_profile", latest_delegation_profile),
+                    ("goal_delegation_command_latest_surface", latest_delegation_surface),
+                    ("goal_delegation_command_workflow_surface", latest_workflow_surface),
+                    ("goal_delegation_command_latest_context_pack_status", latest_context_pack_status),
+                    ("goal_delegation_command_latest_handoff_status", latest_handoff_status),
+                    ("goal_delegation_command_next_action", next_action),
+                    ("goal_delegation_command_target_surface", target),
+                    ("goal_delegation_command_reason", reason),
+                    (
+                        "goal_delegation_command_source",
+                        "goal_delegations_context_and_handoff_state",
+                    ),
+                    ("goal_delegation_command_write_on_get", "false"),
+                    ("goal_delegation_command_provider_calls_taken", "0"),
+                    ("goal_delegation_command_network_actions_taken", "0"),
+                    ("goal_delegation_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_delegation_now: {_e(next_action)}",
+                    f"goal_delegation_click: {target}",
+                    (
+                        "goal_delegation_latest: "
+                        f"{_e(latest_delegation_id)} status={_e(latest_delegation_status)} "
+                        f"context={_e(latest_context_pack_status)} handoff={_e(latest_handoff_status)}"
+                    ),
+                    "goal_delegation_safety: read-only local delegation posture",
+                ]
+            ),
+            "</section>",
+        ]
+    )
 
 
 def _goal_run_lines(root: Path, state: dict[str, Any]) -> list[str]:
@@ -14192,6 +14462,9 @@ def _html_page(
     .goal-board-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-board-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-board-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-delegation-command-bar {{ border-left:4px solid var(--accent); }}
+    .goal-delegation-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-delegation-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-run-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-run-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-run-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

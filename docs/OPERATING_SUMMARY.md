@@ -359,6 +359,11 @@ Core layers for the bootstrap:
   tracked and untracked counts, latest goal-linked `git_status.txt` artifact,
   one next local surface, and no-fetch/no-write/no-network/no-external-effect
   boundaries before the repository snapshot.
+  Goal `Delegations` starts with a read-only `Goal Delegation Command Bar`
+  that summarizes scout delegation counts, context-pack readiness,
+  implementation handoff readiness, coder-prep packets, worktree plans, the
+  latest delegation workflow surface, one next local continuation, and
+  zero-effect counters before the detailed delegation rows.
   Goal `Runs` starts with a read-only `Goal Run Command Bar` that summarizes
   task and worktree run counts, reviewed and blocked run gates, changed-file
   posture, latest run evidence, one next local run action, and zero-effect

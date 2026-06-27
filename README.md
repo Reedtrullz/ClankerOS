@@ -222,6 +222,11 @@ records, then points at the local target surface without writing on GET.
 The Goal Section Index near the top links to stable in-page anchors for the
 major Goal surfaces, so the browser page can be used for long sessions without
 hunting through the whole document.
+Goal Delegations starts with a read-only `Goal Delegation Command Bar` that
+summarizes scout delegation counts, context-pack readiness, implementation
+handoff readiness, coder-prep packets, worktree plans, the latest delegation
+workflow surface, and one next local continuation before the detailed
+delegation rows.
 Goal Runs starts with a read-only `Goal Run Command Bar` that summarizes task
 and worktree run counts, review readiness, changed-file posture, the latest
 run surface, and one next local run action before the detailed run list.

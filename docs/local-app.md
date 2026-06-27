@@ -159,6 +159,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   with a read-only `Goal Activity Command Bar` summarizing the latest event,
   target surface, operator-note count, artifact count, and zero-effect
   boundary so daily resume context is chronological instead of side-channel only. The
+  Goal Delegations section starts with a read-only
+  `Goal Delegation Command Bar` that summarizes scout delegation counts,
+  context-pack readiness, implementation handoff readiness, coder-prep packets,
+  worktree plans, the latest delegation workflow surface, and one next local
+  continuation before the detailed delegation rows. The
   Goal Memory section links to `/memory`, shows
   project/global memory artifacts, goal-scoped memory entry counts, generated
   memory count, operator-note status, future-work count, and the current pin

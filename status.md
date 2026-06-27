@@ -1,5 +1,34 @@
 # Status
 
+## 2026-06-27 Goal Delegation Command Bar
+
+- Added a read-only `Goal Delegation Command Bar` to the Goal page before the
+  detailed delegation list.
+- The bar summarizes scout delegation counts, pending/running/completed/
+  failed-or-blocked posture, context-pack readiness, implementation handoff
+  readiness, coder-prep packets, worktree plans, the latest delegation and
+  workflow surfaces, one next local continuation, and zero-effect counters.
+- The Goal Section Index now links directly to the delegation command surface,
+  so operators can inspect scout/context/handoff readiness from the long Goal
+  page without parsing raw delegation rows first.
+- README, local app docs, and the operating summary now describe Goal
+  Delegations as a scan-first local workflow posture surface.
+- Non-claims: this does not write state on GET, create delegations, generate
+  context packs, run delegations, create handoffs, run coder prep, plan
+  worktrees, approve gates, run work, commit, push, create PRs, deploy, call
+  providers, use non-loopback network actions, fetch GitHub status, or mutate
+  external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_0304adb3dd7d`,
+    `run_194e70715e77`, and coder worktree run `run_5dbb01b332d6`
+
 ## 2026-06-27 Goal Run Command Bar
 
 - Added a read-only `Goal Run Command Bar` to the Goal page before the

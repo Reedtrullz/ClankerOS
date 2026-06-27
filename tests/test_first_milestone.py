@@ -6032,6 +6032,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-next-action'" in goal.body
     assert "href='#goal-next-recommendation'" in goal.body
     assert "href='#goal-timeline'" in goal.body
+    assert "href='#goal-delegation-command-bar'" in goal.body
     assert "href='#goal-run-command-bar'" in goal.body
     assert "href='#goal-approval-command-bar'" in goal.body
     assert "href='#goal-artifact-explorer'" in goal.body
@@ -6043,6 +6044,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-workflow-map'" in goal.body
     assert "id='goal-current-phase'" in goal.body
     assert "id='goal-timeline'" in goal.body
+    assert "id='goal-delegation-command-bar'" in goal.body
     assert "id='goal-run-command-bar'" in goal.body
     assert "id='goal-approval-command-bar'" in goal.body
     assert "id='goal-artifact-explorer'" in goal.body
@@ -6051,7 +6053,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>33" in goal.body
+    assert "goal_section_count</dt><dd>34" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
@@ -6228,6 +6230,41 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_activity_command_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_activity_command_external_effects_created</dt><dd>false" in goal.body
     assert "goal_activity_safety: read-only local timeline" in goal.body
+    assert "Goal Delegation Command Bar" in goal.body
+    assert "data-goal-delegation-command-bar='true'" in goal.body
+    assert "<a href='#goal-delegation-command-bar'>Delegation command</a>" in goal.body
+    assert f"goal_delegation_command_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_delegation_command_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_delegation_command_status</dt><dd>ready_for_commit_request" in goal.body
+    assert "goal_delegation_command_items</dt><dd>1" in goal.body
+    assert "goal_delegation_command_total_delegations</dt><dd>1" in goal.body
+    assert "goal_delegation_command_pending_delegations</dt><dd>0" in goal.body
+    assert "goal_delegation_command_running_delegations</dt><dd>0" in goal.body
+    assert "goal_delegation_command_completed_delegations</dt><dd>1" in goal.body
+    assert "goal_delegation_command_failed_or_blocked_delegations</dt><dd>0" in goal.body
+    assert "goal_delegation_command_context_packs_ready</dt><dd>1" in goal.body
+    assert "goal_delegation_command_implementation_handoffs_ready</dt><dd>1" in goal.body
+    assert "goal_delegation_command_coder_prep_packets</dt><dd>1" in goal.body
+    assert "goal_delegation_command_worktree_plans</dt><dd>1" in goal.body
+    assert f"goal_delegation_command_latest_delegation</dt><dd>{result.delegation_id}" in goal.body
+    assert "goal_delegation_command_latest_status</dt><dd>completed" in goal.body
+    assert "goal_delegation_command_latest_profile</dt><dd>scout" in goal.body
+    assert f"goal_delegation_command_latest_surface</dt><dd><a href='/delegations/{result.delegation_id}'" in goal.body
+    assert f"goal_delegation_command_workflow_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'" in goal.body
+    assert "goal_delegation_command_latest_context_pack_status</dt><dd>available" in goal.body
+    assert "goal_delegation_command_latest_handoff_status</dt><dd>available" in goal.body
+    assert "goal_delegation_command_next_action</dt><dd>Create commit request" in goal.body
+    assert f"goal_delegation_command_target_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>/runs/{result.coder_worktree_run_id}</a>" in goal.body
+    assert "goal_delegation_command_reason</dt><dd>reviewed coder run is ready for a local commit request" in goal.body
+    assert "goal_delegation_command_source</dt><dd>goal_delegations_context_and_handoff_state" in goal.body
+    assert "goal_delegation_command_write_on_get</dt><dd>false" in goal.body
+    assert "goal_delegation_command_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_delegation_command_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_delegation_command_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_delegation_now: Create commit request" in goal.body
+    assert f"goal_delegation_click: <a href='/runs/{result.coder_worktree_run_id}'>/runs/{result.coder_worktree_run_id}</a>" in goal.body
+    assert f"goal_delegation_latest: {result.delegation_id} status=completed context=available handoff=available" in goal.body
+    assert "goal_delegation_safety: read-only local delegation posture" in goal.body
     assert "Goal Run Command Bar" in goal.body
     assert "data-goal-run-command-bar='true'" in goal.body
     assert "<a href='#goal-run-command-bar'>Run command</a>" in goal.body
