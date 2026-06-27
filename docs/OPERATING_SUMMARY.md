@@ -89,15 +89,17 @@ Core layers for the bootstrap:
   local app now also exposes `/resume` as a
   read-only return-to-work surface over saved `.clanker/app/workspace.json`
   state, showing saved goal, project, artifact, filters, expanded panels,
-  zero-effect counters, a direct next resume link, a `Resume Readiness`
-  checklist for the saved project, goal, filters, expanded panels, last
-  artifact existence, and next local surface, and the saved goal's current
-  phase plus one recommended next action and the same confirmed local action
-  form as the Goal page when that action is browser-available, plus a
-  read-only `Resume Workflow Map` sourced from the same Goal remaining-work
-  gates so the saved goal's current gate, lifecycle progress, next surface,
-  and zero-effect boundaries are visible before leaving `/resume`, without
-  writing on GET;
+  zero-effect counters, a direct next resume link, a read-only
+  `Resume Command Bar` for readiness, current phase/gate, one next action,
+  target surface, action-form availability, last artifact, and zero-effect
+  counters, a `Resume Readiness` checklist for the saved project, goal,
+  filters, expanded panels, last artifact existence, and next local surface,
+  and the saved goal's current phase plus one recommended next action and the
+  same confirmed local action form as the Goal page when that action is
+  browser-available, plus a read-only `Resume Workflow Map` sourced from the
+  same Goal remaining-work gates so the saved goal's current gate, lifecycle
+  progress, next surface, and zero-effect boundaries are visible before
+  leaving `/resume`, without writing on GET;
   `/` also includes a read-only `Home Verification Handoff` that shows the
   current branch/commit GitHub Actions direct snapshot command templates,
   latest operator-supplied CI evidence when one exists, and zero app-side

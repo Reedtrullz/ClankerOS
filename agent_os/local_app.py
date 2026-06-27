@@ -518,6 +518,8 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             "/resume",
             "Resume Workspace",
             [
+                "Resume Command Bar",
+                "resume_command_status</dt><dd>no_saved_workspace",
                 "resume_workspace_available",
                 "resume_workspace_write_on_get",
             ],
@@ -2369,6 +2371,7 @@ def _resume_page(root: Path) -> str:
             ),
             f"<p><a href='{_e(next_href)}'>{_e(next_label)}</a></p>",
             "</section>",
+            _resume_command_bar(root, state, open_project, open_goal, filters, expanded, last_artifact),
             _resume_readiness_section(root, state, open_project, open_goal, filters, expanded, last_artifact),
             _resume_next_action_section(root, open_goal),
             _resume_workflow_map_section(root, open_goal),
@@ -2382,6 +2385,114 @@ def _resume_page(root: Path) -> str:
                 ],
             ),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _resume_command_bar(
+    root: Path,
+    state: dict[str, str],
+    open_project: str,
+    open_goal: str,
+    filters: str,
+    expanded: str,
+    last_artifact: str,
+) -> str:
+    readiness = _workspace_resume_readiness(
+        root,
+        open_project=open_project,
+        open_goal=open_goal,
+        filters=filters,
+        expanded=expanded,
+        last_artifact=last_artifact,
+    )
+    required = readiness["required"]
+    status = "no_saved_workspace" if not any(required.values()) else "partial"
+    phase = "none"
+    current_gate = "none"
+    progress = "0/0 gates done"
+    next_action = "Open goals"
+    reason = "no_saved_goal"
+    target_href = "/goals"
+    target_label = "/goals"
+    form_available = False
+
+    if open_goal:
+        storage = _storage(root)
+        goal_state = _goal_state(root, storage, open_goal)
+        goal = goal_state.get("goal")
+        if goal is None:
+            status = "missing_goal"
+            phase = "missing"
+            current_gate = "missing_goal"
+            reason = "saved_goal_missing"
+        else:
+            status = "available"
+            phase = _goal_current_phase(goal_state)
+            action = _goal_next_action(root, goal_state)
+            gates, counts, current_gate = _goal_workflow_gate_summary(root, goal_state, action)
+            progress = f"{counts.get('done', 0)}/{len(gates)} gates done"
+            next_action = action.action
+            reason = action.reason
+            target_href = action.href
+            target_label = action.href
+            form_available = bool(_goal_next_action_form(goal_state, action))
+    elif open_project:
+        status = "project_only"
+        next_action = "Open saved project"
+        reason = "saved_project_without_goal"
+        target_href = f"/projects/{quote(open_project)}"
+        target_label = f"/projects/{open_project}"
+
+    project_value: str | SafeHtml = "none"
+    if open_project:
+        project_value = SafeHtml(
+            f"<a href='/projects/{quote(open_project)}'>{_e(open_project)}</a>"
+        )
+    goal_value: str | SafeHtml = "none"
+    if open_goal:
+        goal_value = SafeHtml(f"<a href='/goals/{quote(open_goal)}'>{_e(open_goal)}</a>")
+    artifact_value: str | SafeHtml = "none"
+    if last_artifact:
+        artifact_value = SafeHtml(_artifact_link(last_artifact))
+
+    target = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    rows = [
+        ("resume_command_status", status),
+        ("resume_command_ready", "true" if readiness["ready"] else "false"),
+        ("resume_command_readiness_status", str(readiness["status"])),
+        ("resume_command_project", project_value),
+        ("resume_command_goal", goal_value),
+        ("resume_command_current_phase", phase),
+        ("resume_command_current_gate", current_gate),
+        ("resume_command_next_action", next_action),
+        ("resume_command_reason", reason),
+        ("resume_command_next_surface", target),
+        ("resume_command_action_form_available", "true" if form_available else "false"),
+        ("resume_command_last_artifact", artifact_value),
+        ("resume_command_progress", progress),
+        ("resume_command_source", ".clanker/app/workspace.json"),
+        ("resume_command_updated_at", state.get("updated_at", "never")),
+        ("resume_command_write_on_get", "false"),
+        ("resume_command_provider_calls_taken_by_clankeros", "0"),
+        ("resume_command_network_actions_taken", "0"),
+        ("resume_command_external_effects_created", "false"),
+    ]
+    lines = [
+        f"resume_command_now: {_e(next_action)}",
+        f"resume_command_continue: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+        f"resume_command_readiness: {_e(str(readiness['status']))}",
+        "resume_command_safety: read-only return-to-work summary; confirmed local writes remain in action forms",
+    ]
+    if not readiness["ready"]:
+        lines.append("resume_command_finish_today: save workspace from Home, Goal, or /workspace before stopping")
+    return "".join(
+        [
+            "<section id='resume-command-bar' class='panel resume-command-bar' data-resume-command-bar='true'><h2>Resume Command Bar</h2>",
+            "<p class='muted'>A scan-first return-to-work summary for continuing the saved local operator context.</p>",
+            _kv(rows),
+            _ul(lines),
+            "</section>",
         ]
     )
 
@@ -15832,6 +15943,9 @@ def _html_page(
     .workspace-daily-brief {{ border-left:4px solid var(--accent); }}
     .workspace-daily-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .workspace-daily-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .resume-command-bar {{ border-left:4px solid var(--accent); }}
+    .resume-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .resume-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .home-attention-brief {{ border-left:4px solid var(--warn); }}
     .home-attention-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .home-attention-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

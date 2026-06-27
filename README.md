@@ -137,16 +137,19 @@ status-recording commands.
 
 Use `/resume` when returning to ClankerOS after a break. It reads the saved
 workspace state, shows the exact saved goal/project/artifact links, preserves
-filters and expanded panel readbacks, adds a `Resume Readiness` checklist for
-the saved project, goal, filters, expanded panels, last artifact existence,
-and next local surface, and shows a `Resume Next Action` section with the
-saved goal's current phase, one next action, operator attention cue, target
-surface, and the same confirmed local action form that the Goal page would
-show when that next action is browser-available. It also includes a read-only
-`Resume Workflow Map` that mirrors the Goal page lifecycle rail, showing the
-saved goal's current gate, gate progress, next action, and no-write/no-network
-boundaries before the operator leaves `/resume`. `/workspace` shows the
-same saved-goal continuation next to the editable saved-state form, adds a
+filters and expanded panel readbacks, and starts with a read-only
+`Resume Command Bar` that summarizes readiness, phase, current gate, next
+action, target surface, action-form availability, last artifact, and
+zero-effect counters. It also adds a `Resume Readiness` checklist for the
+saved project, goal, filters, expanded panels, last artifact existence, and
+next local surface, and shows a `Resume Next Action` section with the saved
+goal's current phase, one next action, operator attention cue, target surface,
+and the same confirmed local action form that the Goal page would show when
+that next action is browser-available. It also includes a read-only `Resume
+Workflow Map` that mirrors the Goal page lifecycle rail, showing the saved
+goal's current gate, gate progress, next action, and no-write/no-network
+boundaries before the operator leaves `/resume`. `/workspace` shows the same
+saved-goal continuation next to the editable saved-state form, adds a
 read-only `Workspace Daily Brief` for morning start, continue, and finish
 cues, adds a read-only `Workspace Workflow Map` with the saved goal's current
 gate and gate counts, and anchors the save form as `#save-workspace`, so

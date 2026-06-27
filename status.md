@@ -1,5 +1,34 @@
 # Status
 
+## 2026-06-27 Resume Command Bar
+
+- Added a read-only `Resume Command Bar` at the top of `/resume`.
+- The bar summarizes saved workspace availability, resume readiness, project/
+  Goal/artifact links, current phase, current workflow gate, one next local
+  action, target surface, action-form availability, progress, and zero-effect
+  counters before the longer resume checklist.
+- Empty resume state now gives a scan-first `Open goals` target, while a saved
+  demo Goal exposes the same `Create commit request` continuation and run
+  target that the Goal page would recommend.
+- README, local app docs, and the operating summary now describe `/resume` as
+  a scan-first return-to-work surface.
+- Non-claims: this does not write state on GET, save workspace state, run work,
+  approve gates, stage files, commit, push, create PRs, deploy, call providers,
+  fetch GitHub status, use non-loopback network actions, or mutate external
+  systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed after tightening the `/resume` smoke expectation to the
+    no-saved-workspace contract; demo generated
+    `subagent_delegation_fd26c226c725`, `run_781f815ee71c`, and coder
+    worktree run `run_133098e12352`
+
 ## 2026-06-27 Demo Command Bar
 
 - Added a read-only `Demo Command Bar` at the top of `/demo`.

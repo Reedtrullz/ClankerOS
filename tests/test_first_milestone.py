@@ -4251,6 +4251,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "operator_focus_safety: read-only local navigation" in root.body
     resume_empty = render_local_app_route(tmp_path, "/resume")
     assert resume_empty.status == 200
+    assert "Resume Command Bar" in resume_empty.body
+    assert "data-resume-command-bar='true'" in resume_empty.body
+    assert "resume_command_status</dt><dd>no_saved_workspace" in resume_empty.body
+    assert "resume_command_ready</dt><dd>false" in resume_empty.body
+    assert "resume_command_current_phase</dt><dd>none" in resume_empty.body
+    assert "resume_command_next_action</dt><dd>Open goals" in resume_empty.body
+    assert "resume_command_next_surface</dt><dd><a href='/goals'>/goals</a>" in resume_empty.body
+    assert "resume_command_action_form_available</dt><dd>false" in resume_empty.body
+    assert "resume_command_write_on_get</dt><dd>false" in resume_empty.body
+    assert "resume_command_external_effects_created</dt><dd>false" in resume_empty.body
     assert "Resume Workflow Map" in resume_empty.body
     assert "data-resume-workflow-map='true'" in resume_empty.body
     assert "resume_workflow_map_status</dt><dd>no_saved_goal" in resume_empty.body
@@ -7270,6 +7280,23 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert resume.status == 200
     assert "Resume Workspace" in resume.body
     assert "resume_workspace_available</dt><dd>true" in resume.body
+    assert "Resume Command Bar" in resume.body
+    assert "data-resume-command-bar='true'" in resume.body
+    assert "resume_command_status</dt><dd>available" in resume.body
+    assert "resume_command_ready</dt><dd>true" in resume.body
+    assert "resume_command_readiness_status</dt><dd>ready" in resume.body
+    assert f"resume_command_project</dt><dd><a href='/projects/{result.project_id}'" in resume.body
+    assert f"resume_command_goal</dt><dd><a href='/goals/{result.goal_id}'" in resume.body
+    assert "resume_command_current_phase</dt><dd>Ready to commit" in resume.body
+    assert "resume_command_current_gate</dt><dd>commit_request" in resume.body
+    assert "resume_command_next_action</dt><dd>Create commit request" in resume.body
+    assert f"resume_command_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in resume.body
+    assert "resume_command_action_form_available</dt><dd>true" in resume.body
+    assert "resume_command_last_artifact</dt><dd><a href='/artifacts?path=" in resume.body
+    assert "resume_command_progress</dt><dd>8/15 gates done" in resume.body
+    assert "resume_command_write_on_get</dt><dd>false" in resume.body
+    assert "resume_command_network_actions_taken</dt><dd>0" in resume.body
+    assert "resume_command_external_effects_created</dt><dd>false" in resume.body
     assert "Resume Readiness" in resume.body
     assert "resume_readiness_status</dt><dd>ready" in resume.body
     assert "resume_readiness_open_project</dt><dd>present" in resume.body

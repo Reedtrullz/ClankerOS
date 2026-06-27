@@ -58,14 +58,16 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/resume` - read-only return-to-work surface for the saved
   `.clanker/app/workspace.json` state. It shows whether resume state exists,
   links the saved goal, project, and last artifact, preserves filters and
-  expanded panel readbacks, includes a `Resume Readiness` checklist for the
-  saved project, goal, filters, expanded panels, last artifact existence, and
-  next local surface, shows the saved goal's current phase and one next action
-  in `Resume Next Action`, renders the same confirmed local action form as the
-  Goal page when that action is browser-available, includes a read-only
-  `Resume Workflow Map` with the saved goal's current gate, lifecycle progress,
-  next surface, and zero-effect counters, points back to `/workspace` for
-  edits, and writes nothing on GET.
+  expanded panel readbacks, starts with a read-only `Resume Command Bar` for
+  readiness, current phase/gate, one next action, target surface, action-form
+  availability, last artifact, and zero-effect counters, includes a
+  `Resume Readiness` checklist for the saved project, goal, filters, expanded
+  panels, last artifact existence, and next local surface, shows the saved
+  goal's current phase and one next action in `Resume Next Action`, renders the
+  same confirmed local action form as the Goal page when that action is
+  browser-available, includes a read-only `Resume Workflow Map` with the saved
+  goal's current gate, lifecycle progress, next surface, and zero-effect
+  counters, points back to `/workspace` for edits, and writes nothing on GET.
 - `/` includes a confirmed `refresh-dashboard-state` action that rewrites the
   local `.clanker/app/local_app_status.json` artifact from current repository
   and route state without providers, pushes, PRs, deploys, or external
