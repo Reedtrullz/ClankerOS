@@ -288,11 +288,14 @@ action, run detail surface, approvals queue, inbox, dogfooding checklist, and
 the explicit `external_effects_created: false` boundary.
 
 Use `/runs/<coder_run_id>` to review the worktree evidence and gate state. The
-`Run Review Gate` panel shows whether `runs/<source_run_id>/review.md` exists
-and mentions the coder worktree run id. The app only exposes the
-`coder-commit-request` form when that gate passes. The Goal Next Action card
-can now create that local review artifact with a confirmed `review-run` form
-when the goal is waiting on review.
+read-only `Run Command Bar` starts the page with the run status, review gate,
+commit/publication state, changed-file count, diff summary, next local action,
+target surface, and no-write/no-network/no-push boundary. The `Run Review
+Gate` panel shows whether `runs/<source_run_id>/review.md` exists and mentions
+the coder worktree run id. The app only exposes the `coder-commit-request`
+form when that gate passes. The Goal Next Action card can now create that
+local review artifact with a confirmed `review-run` form when the goal is
+waiting on review.
 
 Use `/runs/<coder_run_id>` after publication handoff preparation when you want
 the display-only manual publication commands. The app shows

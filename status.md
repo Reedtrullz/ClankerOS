@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-27 Run Command Bar
+
+- Added a read-only `Run Command Bar` to coder worktree `/runs/<run_id>`
+  pages. It shows the run id, project, delegation link, worktree status,
+  review status/path, commit/publication state, changed-file count, diff
+  summary, next local action, target surface, reason, and write-on-GET/
+  network/external-effect/push/PR/deploy boundaries before the longer run
+  evidence and forms.
+- Reviewed demo runs now surface `Create commit request` as the first run
+  action and link to the existing `Run Approval Actions` section. If the
+  review artifact is missing, the same command bar switches to `Review run`
+  and links to the `Run Review Gate`, matching the backend commit-request gate
+  instead of exposing a stale action.
+- README, local app docs, and the operating summary now describe
+  `/runs/<run_id>` as a run cockpit surface rather than only an evidence and
+  form inventory.
+- Non-claims: this does not write local state, execute work, approve gates,
+  commit, push, create PRs, deploy, call providers, fetch GitHub status, use
+  the network, or mutate external systems. It reads existing local coder run,
+  review, commit approval, publication, and diff evidence state only.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Project Command Bar
 
 - Added a read-only `Project Command Bar` to `/projects/<project_id>`. It

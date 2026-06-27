@@ -306,12 +306,16 @@ Core layers for the bootstrap:
   status, plus a read-only `Selected Workflow Continuation` block linking the
   exact run, approvals, inbox, and dogfooding surfaces without creating
   external effects. Coder worktree
-  run detail pages include the same upstream and downstream workflow posture as
-  a `Run Workflow State` readback, plus a `Run Review Gate` readback that
-  mirrors the backend requirement that `runs/<source_run_id>/review.md`
-  exists and mentions the coder worktree run id before `coder-commit-request`
-  is offered; once publication handoff is ready they show copy-only suggested
-  push and draft-PR commands plus the PR body path with zero-effect counters.
+  run detail pages include a read-only `Run Command Bar` that summarizes run
+  status, review gate, commit/publication state, changed-file count, diff
+  summary, next local action, target surface, and no-write/no-network/
+  no-external-effect boundaries, the same upstream and downstream workflow
+  posture as a `Run Workflow State` readback, plus a `Run Review Gate`
+  readback that mirrors the backend requirement that
+  `runs/<source_run_id>/review.md` exists and mentions the coder worktree run
+  id before `coder-commit-request` is offered; once publication handoff is
+  ready they show copy-only suggested push and draft-PR commands plus the PR
+  body path with zero-effect counters.
   The root `/` app page is now a Goal-First Home board with active, paused,
   and completed goal lanes, recent activity, inbox counts, recommendations,
   incidents, saved workspace resume links, saved-goal phase and next-action

@@ -7711,6 +7711,7 @@ def _run_detail(root: Path, run_id: str) -> str:
                 ]
             )
         )
+        parts.append(_run_command_bar(root, coder_run))
         parts.append(_run_workflow_state(root, coder_run))
         parts.append(_run_review_gate(root, coder_run))
         parts.append(
@@ -7721,6 +7722,7 @@ def _run_detail(root: Path, run_id: str) -> str:
                     for label, path in evidence_links
                     if (root / path).exists()
                 ],
+                anchor_id="coder-worktree-evidence",
             )
         )
         parts.append(_run_action_forms(root, coder_run.id))
@@ -7854,11 +7856,166 @@ def _delegation_packet_status(packets: list[dict[str, Any]], delegation_id: str)
     ) else "missing"
 
 
+def _run_command_bar(root: Path, coder_run: Any) -> str:
+    commit_approvals = [
+        item
+        for item in list_coder_worktree_commit_approvals(root, limit=50)
+        if item.run_id == coder_run.id
+    ]
+    publications = [
+        item
+        for item in list_coder_publications(root, limit=50)
+        if item.run_id == coder_run.id
+    ]
+    review_gate = _run_review_gate_state(root, coder_run)
+    change_summary = coder_worktree_change_summary(root, coder_run)
+    next_action, target_href, target_label, reason = _run_command_next_action(
+        coder_run,
+        review_gate=review_gate,
+        commit_approvals=commit_approvals,
+        publications=publications,
+    )
+    target = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    lines = [
+        f"run_command_now: {_e(next_action)}",
+        f"run_command_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+        f"run_command_reason: {_e(reason)}",
+        "run_command_safety: read-only run guidance",
+    ]
+    return "".join(
+        [
+            "<section class='panel run-command-bar' data-run-command-bar='true'><h2>Run Command Bar</h2>",
+            "<p class='muted'>One read-only summary of the run gate, evidence posture, and next local operator action before the detailed evidence and forms.</p>",
+            _kv(
+                [
+                    ("run_command_status", "available"),
+                    ("run_command_run_id", coder_run.id),
+                    ("run_command_project", coder_run.project_id),
+                    ("run_command_delegation", SafeHtml(f"<a href='/delegations/{quote(coder_run.delegation_id)}'>{_e(coder_run.delegation_id)}</a>")),
+                    ("run_command_worktree_status", coder_run.status),
+                    ("run_command_review_status", str(review_gate["status"])),
+                    ("run_command_review_path", SafeHtml(_artifact_link(str(review_gate["review_path"]))) if review_gate["exists"] else str(review_gate["review_path"])),
+                    ("run_command_commit_request_status", _status_counts(commit_approvals)),
+                    ("run_command_publication_status", _status_counts(publications)),
+                    ("run_command_changed_files_count", change_summary["changed_files_count"]),
+                    ("run_command_diff_summary", change_summary["diff_summary"]),
+                    ("run_command_next_action", next_action),
+                    ("run_command_target_surface", target),
+                    ("run_command_reason", reason),
+                    ("run_command_write_on_get", "false"),
+                    ("run_command_network_actions_taken", "0"),
+                    ("run_command_external_effects_created", "false"),
+                    ("run_command_push_created", "false"),
+                    ("run_command_pr_created", "false"),
+                    ("run_command_deploy_created", "false"),
+                ]
+            ),
+            _ul(lines),
+            "</section>",
+        ]
+    )
+
+
+def _run_command_next_action(
+    coder_run: Any,
+    *,
+    review_gate: dict[str, Any],
+    commit_approvals: list[Any],
+    publications: list[Any],
+) -> tuple[str, str, str, str]:
+    pending_commit = next(
+        (item for item in commit_approvals if item.status == "pending_operator_approval"),
+        None,
+    )
+    approved_commit = next(
+        (item for item in commit_approvals if item.status == "approved"),
+        None,
+    )
+    committed = next(
+        (item for item in commit_approvals if item.status == "committed"),
+        None,
+    )
+    pending_publication = next(
+        (item for item in publications if item.status == "pending_operator_approval"),
+        None,
+    )
+    approved_publication = next(
+        (item for item in publications if item.status == "approved"),
+        None,
+    )
+    ready_publication = next(
+        (item for item in publications if item.status == "ready_for_operator"),
+        None,
+    )
+    if not commit_approvals:
+        if review_gate["commit_request_form_available"]:
+            return (
+                "Create commit request",
+                "#run-approval-actions",
+                "Run approval actions",
+                "reviewed coder run is ready for a local commit request",
+            )
+        return (
+            "Review run",
+            "#run-review-gate",
+            "Run Review Gate",
+            str(review_gate["blocked_reason"]),
+        )
+    if pending_commit is not None:
+        return (
+            "Review commit approval",
+            "/approvals",
+            "/approvals",
+            f"commit approval {pending_commit.id} is pending",
+        )
+    if approved_commit is not None:
+        return (
+            "Commit approved worktree",
+            "#confirmed-local-commit-action",
+            "Confirmed Local Commit Action",
+            f"commit approval {approved_commit.id} is approved",
+        )
+    if committed is not None and not publications:
+        return (
+            "Create publication request",
+            "#run-approval-actions",
+            "Run approval actions",
+            "local commit exists and needs a publication request",
+        )
+    if pending_publication is not None:
+        return (
+            "Review publication approval",
+            "/approvals",
+            "/approvals",
+            f"publication approval {pending_publication.id} is pending",
+        )
+    if approved_publication is not None:
+        return (
+            "Create publication handoff",
+            "#publication-handoff-action",
+            "Publication Handoff Action",
+            f"publication approval {approved_publication.id} is approved",
+        )
+    if ready_publication is not None:
+        return (
+            "Use publication handoff manually",
+            "#publication-handoff-commands",
+            "Publication Handoff Commands",
+            "manual push/PR boundary is ready outside ClankerOS",
+        )
+    return (
+        "Review run evidence",
+        "#coder-worktree-evidence",
+        "Coder Worktree Evidence",
+        f"run status={coder_run.status}",
+    )
+
+
 def _run_workflow_state(root: Path, coder_run: Any) -> str:
     storage = _storage(root)
     delegation = storage.get_subagent_delegation(coder_run.delegation_id)
     if delegation is None:
-        return "<section><h2>Run Workflow State</h2>" + _kv(
+        return "<section id='run-workflow-state'><h2>Run Workflow State</h2>" + _kv(
             [
                 ("selection_status", "delegation_not_found"),
                 ("delegation_id", coder_run.delegation_id),
@@ -7903,7 +8060,7 @@ def _run_workflow_state(root: Path, coder_run: Any) -> str:
     ready_publications = [
         item for item in publications if item.status == "ready_for_operator"
     ]
-    return "<section><h2>Run Workflow State</h2>" + _non_claim_banner() + _kv(
+    return "<section id='run-workflow-state'><h2>Run Workflow State</h2>" + _non_claim_banner() + _kv(
         [
             ("delegation_id", coder_run.delegation_id),
             ("run_id", coder_run.id),
@@ -7967,7 +8124,7 @@ def _run_review_gate(root: Path, coder_run: Any) -> str:
     ]
     return "".join(
         [
-            "<section><h2>Run Review Gate</h2>",
+            "<section id='run-review-gate'><h2>Run Review Gate</h2>",
             "<p class='muted'>This readback mirrors the existing commit-request backend gate before the app offers a local commit request form.</p>",
             _kv(rows),
             "</section>",
@@ -9839,7 +9996,7 @@ def _run_action_forms(root: Path, run_id: str) -> str:
         item for item in publications if item.status == "ready_for_operator"
     ]
     sections: list[str] = [
-        "<section><h2>Run Approval Actions</h2>",
+        "<section id='run-approval-actions'><h2>Run Approval Actions</h2>",
         "<p class='muted'>These forms create local approval/request artifacts only. They do not stage, commit, push, create PRs, deploy, call providers, or use the network.</p>",
     ]
     if not commit_approvals:
@@ -9907,7 +10064,7 @@ def _run_action_forms(root: Path, run_id: str) -> str:
     if approved_commit:
         sections.extend(
             [
-                "<section><h2>Confirmed Local Commit Action</h2>",
+                "<section id='confirmed-local-commit-action'><h2>Confirmed Local Commit Action</h2>",
                 "<p class='muted'>This creates one local commit only inside the isolated coder worktree after the existing commit gate re-checks review, source hashes, branch/HEAD, changed files, bounded-file validation, and verifier state. It does not push, create PRs, deploy, call providers, or use the network.</p>",
                 _input_form(
                     "commit-coder-worktree",
@@ -9920,7 +10077,7 @@ def _run_action_forms(root: Path, run_id: str) -> str:
     if approved_publication:
         sections.extend(
             [
-                "<section><h2>Publication Handoff Action</h2>",
+                "<section id='publication-handoff-action'><h2>Publication Handoff Action</h2>",
                 "<p class='muted'>This writes local publication handoff and PR-body artifacts with suggested manual commands only. It does not push, create a PR, deploy, call providers, or use the network.</p>",
                 _form("coder-publication-handoff", {"run_id": run_id}),
                 "</section>",
@@ -9951,6 +10108,7 @@ def _publication_handoff_commands_panel(root: Path, publication: Any) -> str:
             "network_actions_taken: 0",
             "external_mutations_taken: 0",
         ],
+        anchor_id="publication-handoff-commands",
     )
 
 
@@ -10479,6 +10637,9 @@ def _html_page(
     .project-command-bar {{ border-left:4px solid var(--accent); }}
     .project-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .project-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .run-command-bar {{ border-left:4px solid var(--warn); }}
+    .run-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .run-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .workflow-map-rail {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px; }}
     .workflow-map-rail li {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; overflow-wrap:anywhere; }}
     .workflow-map-rail li[data-gate-marker="current"] {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}

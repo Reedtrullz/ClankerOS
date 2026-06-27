@@ -6211,6 +6211,32 @@ def test_local_app_demo_scenario_populates_fixture_state(
 
     run_page = render_local_app_route(tmp_path, f"/runs/{result.coder_worktree_run_id}")
     assert run_page.status == 200
+    assert "Run Command Bar" in run_page.body
+    assert "data-run-command-bar='true'" in run_page.body
+    assert f"run_command_run_id</dt><dd>{result.coder_worktree_run_id}" in run_page.body
+    assert "run_command_project</dt><dd>local-app-demo" in run_page.body
+    assert f"run_command_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in run_page.body
+    assert "run_command_worktree_status</dt><dd>completed" in run_page.body
+    assert "run_command_review_status</dt><dd>reviewed" in run_page.body
+    assert "run_command_commit_request_status</dt><dd>none" in run_page.body
+    assert "run_command_publication_status</dt><dd>none" in run_page.body
+    assert "run_command_changed_files_count</dt><dd>1" in run_page.body
+    assert "run_command_diff_summary</dt><dd>files:1," in run_page.body
+    assert "run_command_next_action</dt><dd>Create commit request" in run_page.body
+    assert "run_command_target_surface</dt><dd><a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
+    assert "run_command_reason</dt><dd>reviewed coder run is ready for a local commit request" in run_page.body
+    assert "run_command_write_on_get</dt><dd>false" in run_page.body
+    assert "run_command_network_actions_taken</dt><dd>0" in run_page.body
+    assert "run_command_external_effects_created</dt><dd>false" in run_page.body
+    assert "run_command_push_created</dt><dd>false" in run_page.body
+    assert "run_command_pr_created</dt><dd>false" in run_page.body
+    assert "run_command_deploy_created</dt><dd>false" in run_page.body
+    assert "run_command_now: Create commit request" in run_page.body
+    assert "run_command_click: <a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
+    assert "id='run-workflow-state'" in run_page.body
+    assert "id='run-review-gate'" in run_page.body
+    assert "id='run-approval-actions'" in run_page.body
+    assert "id='coder-worktree-evidence'" in run_page.body
     assert "Run Workflow State" in run_page.body
     assert "Run Review Gate" in run_page.body
     assert "review_gate_status" in run_page.body
@@ -6263,6 +6289,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "review_mentions_run</dt><dd>false" in run_page_without_review.body
     assert "commit_request_form_available</dt><dd>false" in run_page_without_review.body
     assert "blocked_reason</dt><dd>review_artifact_missing" in run_page_without_review.body
+    assert "Run Command Bar" in run_page_without_review.body
+    assert "run_command_review_status</dt><dd>missing" in run_page_without_review.body
+    assert "run_command_next_action</dt><dd>Review run" in run_page_without_review.body
+    assert "run_command_target_surface</dt><dd><a href='#run-review-gate'>Run Review Gate</a>" in run_page_without_review.body
+    assert "run_command_reason</dt><dd>review_artifact_missing" in run_page_without_review.body
     assert "action='/actions/coder-commit-request'" not in run_page_without_review.body
     assert "commit_request_form_available: false review_gate_status: missing" in run_page_without_review.body
     result.review_path.write_text(review_text, encoding="utf-8")
