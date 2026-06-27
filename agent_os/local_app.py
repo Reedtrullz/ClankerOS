@@ -523,7 +523,10 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             "Resume Workspace",
             [
                 "Resume Command Bar",
+                "Resume Operator Workbench",
+                "data-resume-operator-workbench='true'",
                 "resume_command_status</dt><dd>no_saved_workspace",
+                "resume_workbench_status</dt><dd>no_saved_workspace",
                 "resume_workspace_available",
                 "resume_workspace_write_on_get",
             ],
@@ -2391,6 +2394,7 @@ def _resume_page(root: Path) -> str:
             f"<p><a href='{_e(next_href)}'>{_e(next_label)}</a></p>",
             "</section>",
             _resume_command_bar(root, state, open_project, open_goal, filters, expanded, last_artifact),
+            _resume_operator_workbench(root, state, open_project, open_goal, filters, expanded, last_artifact),
             _resume_readiness_section(root, state, open_project, open_goal, filters, expanded, last_artifact),
             _resume_next_action_section(root, open_goal),
             _resume_workflow_map_section(root, open_goal),
@@ -2516,6 +2520,238 @@ def _resume_command_bar(
     )
 
 
+def _resume_operator_workbench(
+    root: Path,
+    state: dict[str, str],
+    open_project: str,
+    open_goal: str,
+    filters: str,
+    expanded: str,
+    last_artifact: str,
+) -> str:
+    readiness = _workspace_resume_readiness(
+        root,
+        open_project=open_project,
+        open_goal=open_goal,
+        filters=filters,
+        expanded=expanded,
+        last_artifact=last_artifact,
+    )
+    required = readiness["required"]
+    status = "no_saved_workspace" if not any(required.values()) else "partial"
+    phase = "none"
+    current_gate = "none"
+    progress = "0/0 gates done"
+    next_action = "Open goals"
+    reason = "no_saved_goal"
+    target_href = "/goals"
+    target_label = "/goals"
+    form_available = False
+    pending_approvals = 0
+    open_incidents = 0
+    open_recommendations = 0
+    waiting_items = 0
+    done_gates = 0
+    pending_gates = 0
+    waiting_gates = 0
+    total_gates = 0
+    source = "saved_workspace_state"
+
+    if open_goal:
+        storage = _storage(root)
+        goal_state = _goal_state(root, storage, open_goal)
+        goal = goal_state.get("goal")
+        if goal is None:
+            status = "missing_goal"
+            phase = "missing"
+            current_gate = "missing_goal"
+            reason = "saved_goal_missing"
+            next_action = "Open goals"
+            target_href = "/goals"
+            target_label = "/goals"
+        else:
+            action = _goal_next_action(root, goal_state)
+            gates, counts, current_gate = _goal_workflow_gate_summary(
+                root, goal_state, action
+            )
+            total_gates = len(gates)
+            done_gates = counts.get("done", 0)
+            pending_gates = counts.get("pending", 0)
+            waiting_gates = counts.get("waiting", 0)
+            pending_approvals = (
+                _count_status(goal_state["worktree_approvals"], "pending_operator_approval")
+                + _count_status(goal_state["commit_approvals"], "pending_operator_approval")
+                + _count_status(goal_state["publications"], "pending_operator_approval")
+            )
+            open_incidents = sum(
+                1 for row in goal_state["incidents"] if row["status"] == "open"
+            )
+            open_recommendations = sum(
+                1 for row in goal_state["recommendations"] if row["status"] == "open"
+            )
+            waiting_items = pending_approvals + open_incidents + open_recommendations
+            phase = _goal_current_phase(goal_state)
+            next_action = action.action
+            reason = action.reason
+            target_href = action.href
+            target_label = action.href
+            form_available = bool(_goal_next_action_form(goal_state, action))
+            progress = f"{done_gates}/{total_gates} gates done"
+            status = (
+                "attention_ready"
+                if waiting_items
+                else "action_form_ready"
+                if form_available
+                else "continue_ready"
+            )
+            source = "saved_goal_state"
+    elif open_project:
+        status = "project_only"
+        next_action = "Open saved project"
+        reason = "saved_project_without_goal"
+        target_href = f"/projects/{quote(open_project)}"
+        target_label = f"/projects/{open_project}"
+
+    primary_href = "#resume-action-form" if form_available else target_href
+    primary_label = "Use resume action form" if form_available else next_action
+    if open_incidents:
+        unblock_href = "/incidents"
+        unblock_label = "Inspect incidents"
+        unblock_reason = "open_incidents"
+    elif pending_approvals:
+        unblock_href = "/approvals"
+        unblock_label = "Review approvals"
+        unblock_reason = "pending_approvals"
+    elif open_recommendations:
+        unblock_href = "/incidents"
+        unblock_label = "Review recommendations"
+        unblock_reason = "open_recommendations"
+    elif not readiness["ready"]:
+        unblock_href = "/workspace#save-workspace"
+        unblock_label = "Repair resume state"
+        unblock_reason = "workspace_not_ready"
+    else:
+        unblock_href = "#resume-workflow-map"
+        unblock_label = "Inspect workflow map"
+        unblock_reason = "no_blockers"
+
+    project_surface: str | SafeHtml = "none"
+    if open_project:
+        project_surface = SafeHtml(
+            f"<a href='/projects/{quote(open_project)}'>{_e(open_project)}</a>"
+        )
+    goal_surface: str | SafeHtml = "none"
+    if open_goal:
+        goal_surface = SafeHtml(
+            f"<a href='/goals/{quote(open_goal)}'>{_e(open_goal)}</a>"
+        )
+    artifact_surface: str | SafeHtml = "none"
+    if last_artifact:
+        artifact_surface = SafeHtml(_artifact_link(last_artifact))
+
+    cards = "".join(
+        [
+            "<div class='resume-workbench-card resume-workbench-primary'>",
+            "<h3>Do Now</h3>",
+            f"<p>{_e(next_action)}</p>",
+            f"<a class='resume-workbench-action' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+            "</div>",
+            "<div class='resume-workbench-card'>",
+            "<h3>Check</h3>",
+            f"<p>Resume: {_e(str(readiness['status']))}</p>",
+            "<a class='resume-workbench-link' href='#resume-readiness'>Open readiness</a>",
+            "</div>",
+            "<div class='resume-workbench-card'>",
+            "<h3>Unblock</h3>",
+            f"<p>{_e(waiting_items)} waiting item(s)</p>",
+            f"<a class='resume-workbench-link' href='{_e(unblock_href)}'>{_e(unblock_label)}</a>",
+            "</div>",
+            "<div class='resume-workbench-card'>",
+            "<h3>Finish Today</h3>",
+            "<p>Update tomorrow's return point</p>",
+            "<a class='resume-workbench-link' href='/workspace#save-workspace'>Open save form</a>",
+            "</div>",
+        ]
+    )
+    return "".join(
+        [
+            "<section id='resume-operator-workbench' class='panel resume-operator-workbench' data-resume-operator-workbench='true'><h2>Resume Operator Workbench</h2>",
+            "<div class='resume-workbench-grid' data-resume-workbench-actions='true'>",
+            cards,
+            "</div>",
+            _kv(
+                [
+                    ("resume_workbench_status", status),
+                    ("resume_workbench_ready", "true" if readiness["ready"] else "false"),
+                    ("resume_workbench_readiness_status", str(readiness["status"])),
+                    ("resume_workbench_project", project_surface),
+                    ("resume_workbench_goal", goal_surface),
+                    ("resume_workbench_phase", phase),
+                    ("resume_workbench_current_gate", current_gate),
+                    ("resume_workbench_gate_progress", progress),
+                    ("resume_workbench_done_gates", str(done_gates)),
+                    ("resume_workbench_pending_gates", str(pending_gates)),
+                    ("resume_workbench_waiting_gates", str(waiting_gates)),
+                    ("resume_workbench_next_action", next_action),
+                    (
+                        "resume_workbench_primary_surface",
+                        SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+                    ),
+                    (
+                        "resume_workbench_target_surface",
+                        SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"),
+                    ),
+                    ("resume_workbench_reason", reason),
+                    ("resume_workbench_action_form_available", str(form_available).lower()),
+                    (
+                        "resume_workbench_confirmation_required",
+                        str(form_available).lower(),
+                    ),
+                    ("resume_workbench_pending_approvals", str(pending_approvals)),
+                    ("resume_workbench_open_incidents", str(open_incidents)),
+                    ("resume_workbench_open_recommendations", str(open_recommendations)),
+                    ("resume_workbench_waiting_items", str(waiting_items)),
+                    ("resume_workbench_unblock_action", unblock_label),
+                    (
+                        "resume_workbench_unblock_surface",
+                        SafeHtml(f"<a href='{_e(unblock_href)}'>{_e(unblock_href)}</a>"),
+                    ),
+                    ("resume_workbench_unblock_reason", unblock_reason),
+                    ("resume_workbench_last_artifact", artifact_surface),
+                    (
+                        "resume_workbench_last_artifact_exists",
+                        "true" if readiness["last_artifact_exists"] else "false",
+                    ),
+                    (
+                        "resume_workbench_finish_surface",
+                        SafeHtml("<a href='/workspace#save-workspace'>/workspace#save-workspace</a>"),
+                    ),
+                    ("resume_workbench_finish_confirmation_required", "true"),
+                    ("resume_workbench_source", source),
+                    ("resume_workbench_write_on_get", "false"),
+                    ("resume_workbench_provider_calls_taken", "0"),
+                    ("resume_workbench_network_actions_taken", "0"),
+                    ("resume_workbench_external_effects_created", "false"),
+                    ("resume_workbench_push_created", "false"),
+                    ("resume_workbench_pr_created", "false"),
+                    ("resume_workbench_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"resume_workbench_now: {_e(next_action)}",
+                    f"resume_workbench_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                    "resume_workbench_check: <a href='#resume-readiness'>Resume Readiness</a>",
+                    f"resume_workbench_unblock: <a href='{_e(unblock_href)}'>{_e(unblock_label)}</a>",
+                    "resume_workbench_finish: <a href='/workspace#save-workspace'>Finish Today</a>",
+                    "resume_workbench_safety: confirmed local actions only; no write on GET",
+                ]
+            ),
+            "</section>",
+        ]
+    )
+
+
 def _resume_readiness_section(
     root: Path,
     state: dict[str, str],
@@ -2539,7 +2775,7 @@ def _resume_readiness_section(
     next_surface = str(readiness["next_surface"])
     return "".join(
         [
-            "<section><h2>Resume Readiness</h2>",
+            "<section id='resume-readiness'><h2>Resume Readiness</h2>",
             "<p class='muted'>Checklist for returning tomorrow to the exact saved local operator context.</p>",
             _kv(
                 [
@@ -2617,7 +2853,7 @@ def _resume_next_action_section(root: Path, open_goal: str) -> str:
     form = _goal_next_action_form(state, next_action)
     return "".join(
         [
-            "<section><h2>Resume Next Action</h2>",
+            "<section id='resume-next-action'><h2>Resume Next Action</h2>",
             "<p class='muted'>Continue from the saved goal's current local workflow state without leaving the return-to-work page.</p>",
             _kv(
                 [
@@ -2633,7 +2869,7 @@ def _resume_next_action_section(root: Path, open_goal: str) -> str:
                     ("resume_next_action_external_effects_created", "false"),
                 ]
             ),
-            f"<div class='resume-action-form'><h3>Resume Action Form</h3>{form}</div>" if form else "",
+            f"<div id='resume-action-form' class='resume-action-form'><h3>Resume Action Form</h3>{form}</div>" if form else "",
             "</section>",
         ]
     )
@@ -15491,6 +15727,7 @@ def _manual_browser_checkpoints(state: dict[str, str] | None) -> str:
     checkpoints = [
         "<a href='/demo'>/demo</a> marker=Demo Scenario expected=Demo Dogfooding Links,Demo Browser Progress,Demo Gate Artifacts",
         "<a href='/dogfooding'>/dogfooding</a> marker=Manual Dogfooding Checklist expected=Dogfooding Command Bar,Dogfooding Next Action,GitHub Actions Follow-up",
+        "<a href='/resume'>/resume</a> marker=Resume Workspace expected=Resume Operator Workbench,saved context or first-run repair cues",
         f"<a href='/projects/{quote(project_id)}'>/projects/{_e(project_id)}</a> marker=Project expected=Project Operator Guidance,Project Workflow Launchpad",
         "<a href='/approvals'>/approvals</a> marker=Approvals expected=Approval Operator Workbench,pending local decisions or empty queue",
         "<a href='/inbox'>/inbox</a> marker=Operator Inbox expected=Inbox Operator Workbench,queue counts and next-action cues",
@@ -17942,6 +18179,18 @@ def _html_page(
     .resume-command-bar {{ border-left:4px solid var(--accent); }}
     .resume-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .resume-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .resume-operator-workbench {{ border-left:4px solid var(--accent); }}
+    .resume-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .resume-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .resume-operator-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .resume-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .resume-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .resume-workbench-card h3 {{ margin-top:0; }}
+    .resume-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .resume-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .resume-workbench-action, .resume-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .resume-workbench-action {{ background:var(--accent); color:#fff; }}
+    .resume-workbench-link {{ background:var(--surface); color:var(--accent); }}
     .home-attention-brief {{ border-left:4px solid var(--warn); }}
     .home-attention-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .home-attention-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -18078,7 +18327,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} .goal-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} .goal-workbench-grid, .resume-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>

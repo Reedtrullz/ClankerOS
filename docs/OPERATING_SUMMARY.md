@@ -92,7 +92,11 @@ Core layers for the bootstrap:
   zero-effect counters, a direct next resume link, a read-only
   `Resume Command Bar` for readiness, current phase/gate, one next action,
   target surface, action-form availability, last artifact, and zero-effect
-  counters, a `Resume Readiness` checklist for the saved project, goal,
+  counters, followed by a `Resume Operator Workbench` that turns the saved
+  context into do/check/unblock/finish cards with same-page action-form
+  routing when available, readiness repair, blocker routing, last-artifact
+  readback, and the existing `/workspace#save-workspace` finish surface. It
+  also includes a `Resume Readiness` checklist for the saved project, goal,
   filters, expanded panels, last artifact existence, and next local surface,
   and the saved goal's current phase plus one recommended next action and the
   same confirmed local action form as the Goal page when that action is

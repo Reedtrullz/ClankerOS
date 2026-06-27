@@ -4296,6 +4296,46 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "resume_command_action_form_available</dt><dd>false" in resume_empty.body
     assert "resume_command_write_on_get</dt><dd>false" in resume_empty.body
     assert "resume_command_external_effects_created</dt><dd>false" in resume_empty.body
+    assert "Resume Operator Workbench" in resume_empty.body
+    assert "data-resume-operator-workbench='true'" in resume_empty.body
+    assert "data-resume-workbench-actions='true'" in resume_empty.body
+    assert "resume_workbench_status</dt><dd>no_saved_workspace" in resume_empty.body
+    assert "resume_workbench_ready</dt><dd>false" in resume_empty.body
+    assert "resume_workbench_readiness_status</dt><dd>not_started" in resume_empty.body
+    assert "resume_workbench_project</dt><dd>none" in resume_empty.body
+    assert "resume_workbench_goal</dt><dd>none" in resume_empty.body
+    assert "resume_workbench_phase</dt><dd>none" in resume_empty.body
+    assert "resume_workbench_current_gate</dt><dd>none" in resume_empty.body
+    assert "resume_workbench_gate_progress</dt><dd>0/0 gates done" in resume_empty.body
+    assert "resume_workbench_next_action</dt><dd>Open goals" in resume_empty.body
+    assert "resume_workbench_primary_surface</dt><dd><a href='/goals'>Open goals</a>" in resume_empty.body
+    assert "resume_workbench_target_surface</dt><dd><a href='/goals'>/goals</a>" in resume_empty.body
+    assert "resume_workbench_reason</dt><dd>no_saved_goal" in resume_empty.body
+    assert "resume_workbench_action_form_available</dt><dd>false" in resume_empty.body
+    assert "resume_workbench_confirmation_required</dt><dd>false" in resume_empty.body
+    assert "resume_workbench_pending_approvals</dt><dd>0" in resume_empty.body
+    assert "resume_workbench_open_incidents</dt><dd>0" in resume_empty.body
+    assert "resume_workbench_open_recommendations</dt><dd>0" in resume_empty.body
+    assert "resume_workbench_waiting_items</dt><dd>0" in resume_empty.body
+    assert "resume_workbench_unblock_action</dt><dd>Repair resume state" in resume_empty.body
+    assert "resume_workbench_unblock_surface</dt><dd><a href='/workspace#save-workspace'>/workspace#save-workspace</a>" in resume_empty.body
+    assert "resume_workbench_unblock_reason</dt><dd>workspace_not_ready" in resume_empty.body
+    assert "resume_workbench_last_artifact</dt><dd>none" in resume_empty.body
+    assert "resume_workbench_last_artifact_exists</dt><dd>false" in resume_empty.body
+    assert "resume_workbench_finish_surface</dt><dd><a href='/workspace#save-workspace'>/workspace#save-workspace</a>" in resume_empty.body
+    assert "resume_workbench_finish_confirmation_required</dt><dd>true" in resume_empty.body
+    assert "resume_workbench_source</dt><dd>saved_workspace_state" in resume_empty.body
+    assert "resume_workbench_write_on_get</dt><dd>false" in resume_empty.body
+    assert "resume_workbench_provider_calls_taken</dt><dd>0" in resume_empty.body
+    assert "resume_workbench_network_actions_taken</dt><dd>0" in resume_empty.body
+    assert "resume_workbench_external_effects_created</dt><dd>false" in resume_empty.body
+    assert "resume_workbench_push_created</dt><dd>false" in resume_empty.body
+    assert "resume_workbench_pr_created</dt><dd>false" in resume_empty.body
+    assert "resume_workbench_deploy_created</dt><dd>false" in resume_empty.body
+    assert "resume_workbench_now: Open goals" in resume_empty.body
+    assert "resume_workbench_finish: <a href='/workspace#save-workspace'>Finish Today</a>" in resume_empty.body
+    assert "resume_workbench_safety: confirmed local actions only; no write on GET" in resume_empty.body
+    assert "id='resume-readiness'" in resume_empty.body
     assert "Resume Workflow Map" in resume_empty.body
     assert "data-resume-workflow-map='true'" in resume_empty.body
     assert "resume_workflow_map_status</dt><dd>no_saved_goal" in resume_empty.body
@@ -5675,6 +5715,28 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     resume = render_local_app_route(tmp_path, "/resume")
     assert "resume_workspace_available</dt><dd>true" in resume.body
     assert f"resume_goal: <a href='/goals/{created_goal_id}'>{created_goal_id}</a>" in resume.body
+    assert "Resume Operator Workbench" in resume.body
+    assert "resume_workbench_status</dt><dd>action_form_ready" in resume.body
+    assert "resume_workbench_ready</dt><dd>false" in resume.body
+    assert "resume_workbench_readiness_status</dt><dd>partial" in resume.body
+    assert "resume_workbench_project</dt><dd><a href='/projects/clankeros'>clankeros</a>" in resume.body
+    assert f"resume_workbench_goal</dt><dd><a href='/goals/{created_goal_id}'>{created_goal_id}</a>" in resume.body
+    assert "resume_workbench_phase</dt><dd>Ready for delegation" in resume.body
+    assert "resume_workbench_next_action</dt><dd>Create scout delegation" in resume.body
+    assert "resume_workbench_primary_surface</dt><dd><a href='#resume-action-form'>Use resume action form</a>" in resume.body
+    assert f"resume_workbench_target_surface</dt><dd><a href='/goals/{created_goal_id}'>/goals/{created_goal_id}</a>" in resume.body
+    assert "resume_workbench_reason</dt><dd>goal_has_no_delegation_yet" in resume.body
+    assert "resume_workbench_action_form_available</dt><dd>true" in resume.body
+    assert "resume_workbench_confirmation_required</dt><dd>true" in resume.body
+    assert "resume_workbench_pending_approvals</dt><dd>0" in resume.body
+    assert "resume_workbench_open_incidents</dt><dd>0" in resume.body
+    assert "resume_workbench_open_recommendations</dt><dd>0" in resume.body
+    assert "resume_workbench_unblock_action</dt><dd>Repair resume state" in resume.body
+    assert "resume_workbench_source</dt><dd>saved_goal_state" in resume.body
+    assert "resume_workbench_write_on_get</dt><dd>false" in resume.body
+    assert "resume_workbench_external_effects_created</dt><dd>false" in resume.body
+    assert "id='resume-action-form'" in resume.body
+    assert "action='/actions/delegate'" in resume.body
     assert "resume_current_phase</dt><dd>Ready for delegation" in resume.body
     assert "resume_next_action</dt><dd>Create scout delegation" in resume.body
     home = render_local_app_route(tmp_path, "/")

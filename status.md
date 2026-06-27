@@ -1,5 +1,39 @@
 # Status
 
+## 2026-06-27 Resume Operator Workbench
+
+- Added a `Resume Operator Workbench` immediately after the `/resume`
+  `Resume Command Bar`.
+- The workbench turns saved workspace state into do/check/unblock/finish cards
+  with same-page resume action-form routing when available, saved Goal/project
+  and last-artifact readbacks, blocker routing, readiness repair, and the
+  existing `/workspace#save-workspace` finish surface.
+- Added empty-resume and first-run saved-Goal route assertions, plus demo
+  smoke snippets for the `/resume` marker.
+- Updated README, local app docs, and the operating summary to describe
+  `/resume` as a daily return-to-work workbench rather than only a read-only
+  workspace readback.
+- Non-claims: this does not write workspace state on GET, run a resume action
+  without confirmation, call providers, fetch GitHub status, approve requests,
+  execute coder work, commit, push, create PRs, deploy, or mutate external
+  systems. Finish Today links to the existing confirmed local workspace save
+  form.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `df -h /System/Volumes/Data`
+    -> `82Gi` available before smoke tests
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_b31ffc05888f`, `run_ed9daebfb223`, and coder
+    worktree run `run_1b098b102562`
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Inbox Operator Workbench
 
 - Added an `Inbox Operator Workbench` immediately after the `/inbox`
