@@ -1186,8 +1186,11 @@ def _today_command_center(
     action_form = ""
     finish_form = ""
     pause_form = ""
+    note_form = ""
     pause_available = "false"
+    note_available = "false"
     pause_surface: str | SafeHtml = "not_available"
+    note_surface: str | SafeHtml = "not_available"
     if lead_goal is None:
         first_run = _first_run_progress(root, storage)
         status = "first_run"
@@ -1215,10 +1218,17 @@ def _today_command_center(
         next_action = _goal_next_action(root, state)
         action_form = _goal_next_action_form(state, next_action)
         pause_form = _goal_pause_form(state)
+        note_form = _today_note_form(root, state)
         pause_available = "true" if pause_form else "false"
+        note_available = "true" if note_form else "false"
         pause_surface = (
             SafeHtml("<a href='#today-pause'>Pause Goal</a>")
             if pause_form
+            else "not_available"
+        )
+        note_surface = (
+            SafeHtml("<a href='#today-note'>Capture Note</a>")
+            if note_form
             else "not_available"
         )
         latest_artifact = _goal_latest_artifact_path(root, state)
@@ -1315,6 +1325,9 @@ def _today_command_center(
         ("today_command_finish_status", finish_status),
         ("today_command_finish_form_available", str(bool(finish_form)).lower()),
         ("today_command_finish_confirmation_required", str(bool(finish_form)).lower()),
+        ("today_command_note_form_available", note_available),
+        ("today_command_note_confirmation_required", note_available),
+        ("today_command_note_surface", note_surface),
         ("today_command_pause_form_available", pause_available),
         ("today_command_pause_confirmation_required", pause_available),
         ("today_command_pause_surface", pause_surface),
@@ -1328,6 +1341,7 @@ def _today_command_center(
         f"today_command_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
         f"today_command_attention: {attention_status} -> <a href='{_e(attention_href)}'>{_e(attention_href)}</a>",
         f"today_command_resume: readiness={_e(str(readiness['status']))} surface=<a href='/resume'>/resume</a>",
+        f"today_command_note: available={_e(note_available)} surface=<a href='#today-note'>Capture Note</a>",
         f"today_command_pause: available={_e(pause_available)} surface=<a href='#today-pause'>Pause Goal</a>",
         f"today_command_finish: status={_e(finish_status)} surface=<a href='#today-finish'>Finish Today</a>",
         "today_command_safety: read-only daily cockpit; confirmed local forms only",
@@ -1350,6 +1364,8 @@ def _today_command_center(
             f"<p>{_e(attention_action)}</p><a class='today-command-link' href='{_e(attention_href)}'>{_e(attention_href)}</a></article>",
             "<article class='today-command-card'><h3>Resume</h3>",
             "<p>Restore saved workspace context.</p><a class='today-command-link' href='/resume'>/resume</a></article>",
+            "<article class='today-command-card'><h3>Note</h3>",
+            f"<p>{'Available' if note_form else 'Not available'}</p><a class='today-command-link' href='#today-note'>Capture Note</a></article>",
             "<article class='today-command-card'><h3>Pause</h3>",
             f"<p>{'Available' if pause_form else 'Not available'}</p><a class='today-command-link' href='#today-pause'>Pause Goal</a></article>",
             "<article class='today-command-card'><h3>Finish</h3>",
@@ -1366,6 +1382,14 @@ def _today_command_center(
             _ul(lines),
             action_details,
             (
+                "<section id='today-note' class='today-note'><h3>Capture Note</h3>"
+                "<p class='muted'>Append a goal-scoped local note from the daily cockpit. Confirmation is required.</p>"
+                f"{note_form}"
+                "</section>"
+                if note_form
+                else "<section id='today-note' class='today-note'><h3>Capture Note</h3><p class='muted'>today_note_form_status: unavailable_until_goal_exists</p></section>"
+            ),
+            (
                 "<section id='today-pause' class='today-pause'><h3>Pause Goal</h3>"
                 "<p class='muted'>Pause the lead goal locally so it moves into paused lanes and can be resumed later. Confirmation is required.</p>"
                 f"{pause_form}"
@@ -1375,6 +1399,44 @@ def _today_command_center(
             ),
             finish_form,
             "</section>",
+        ]
+    )
+
+
+def _today_note_form(root: Path, state: dict[str, Any]) -> str:
+    goal = state.get("goal")
+    if goal is None:
+        return ""
+    note_path = _goal_operator_notes_path(goal)
+    note_exists = (root / note_path).exists()
+    note_artifact: str | SafeHtml = (
+        SafeHtml(_artifact_link(note_path.as_posix()))
+        if note_exists
+        else "not_started"
+    )
+    return "".join(
+        [
+            _kv(
+                [
+                    ("today_note_form_available", "true"),
+                    ("today_note_goal", goal.id),
+                    ("today_note_project", goal.project_id),
+                    (
+                        "today_note_status",
+                        "append_to_existing" if note_exists else "not_started",
+                    ),
+                    ("today_note_artifact", note_artifact),
+                    ("today_note_planned_path", note_path.as_posix()),
+                    ("today_note_confirmation_required", "true"),
+                    ("today_note_overwrites_previous_notes", "false"),
+                    ("today_note_external_effects_created", "false"),
+                ]
+            ),
+            _input_form(
+                "save-goal-note",
+                {"goal_id": goal.id, "author": "operator"},
+                {"note": "What should future me know about this goal?"},
+            ),
         ]
     )
 
@@ -18844,7 +18906,7 @@ def _html_page(
     .today-command-center dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .today-command-center ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .today-command-center li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
-    .today-command-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .today-command-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
     .today-command-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
     .today-command-card h3 {{ margin-top:0; }}
     .today-command-card p {{ margin:0 0 10px; color:var(--muted); }}
@@ -18852,9 +18914,9 @@ def _html_page(
     .today-command-action, .today-command-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .today-command-action {{ background:var(--accent); color:#fff; }}
     .today-command-link {{ background:var(--surface); color:var(--accent); }}
-    .today-current-action, .today-finish, .today-pause, .goal-pause {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
+    .today-current-action, .today-finish, .today-note, .today-pause, .goal-pause {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .today-current-action summary {{ cursor:pointer; font-weight:700; }}
-    .today-current-action form, .today-finish form, .today-pause form, .goal-pause form {{ margin-top:10px; }}
+    .today-current-action form, .today-finish form, .today-note form, .today-pause form, .goal-pause form {{ margin-top:10px; }}
     .home-attention-brief {{ border-left:4px solid var(--warn); }}
     .home-attention-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .home-attention-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

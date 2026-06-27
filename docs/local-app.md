@@ -65,7 +65,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   first-run step, shows the current phase, one primary action, target surface
   or same-page current-action form, attention routing for approvals,
   incidents, recommendations, and inbox items, resume readiness, CI proof
-  posture, a confirmed `pause-goal` form for the lead Goal, and a confirmed
+  posture, a confirmed `save-goal-note` capture form for goal-scoped operator
+  context, a confirmed `pause-goal` form for the lead Goal, and a confirmed
   `Finish Today` `save-workspace` form for tomorrow's resume point. It then
   reuses the existing Start Here, Home Day Plan,
   Attention Brief, Focus Queue, recent activity, inbox, recommendations,

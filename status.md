@@ -1,5 +1,34 @@
 # Status
 
+## 2026-06-27 Today Note Capture
+
+- Added a first-class `Capture Note` card and anchored form to `/today` for the
+  lead Goal. It reuses the existing confirmed `save-goal-note` action and
+  shows goal, project, note status, planned/existing operator-notes artifact,
+  confirmation-required, no-overwrite, and zero external-effect readbacks.
+- `/today` now distinguishes a new note target (`today_note_status=not_started`)
+  from an existing operator-notes artifact (`today_note_status=append_to_existing`)
+  so the daily command center can capture resume context without opening the
+  full Goal page.
+- Added focused route assertions for both states: fixture-backed `/today` before
+  notes exist, and `/today` after a confirmed operator note has been saved.
+- Updated README, local app docs, and the operating summary to describe Today
+  note capture as part of the daily cockpit.
+- Non-claims: this does not write on GET, overwrite existing notes, approve
+  work, execute runs, commit, push, create PRs, deploy, call providers, fetch
+  GitHub status, use the network, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `git diff --check`
+    -> passed
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed with `/today` route marker matched and zero provider/network/external-mutation counters
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed with fixture-backed `/today` snippets matched and zero provider/network/external-mutation counters
+
 ## 2026-06-27 Browser Goal Pause Action
 
 - Added a confirmed local `pause-goal` action to the browser app action catalog.

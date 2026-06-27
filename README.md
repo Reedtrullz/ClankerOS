@@ -145,7 +145,8 @@ current day instead of the full dashboard inventory. It starts with a
 `Today Command Center` that chooses the lead Goal or first-run step, shows the
 current phase, one primary action, the exact target or same-page action form,
 attention routing for approvals/incidents/recommendations/inbox, resume
-readiness, CI proof posture, a confirmed `pause-goal` form for shelving the
+readiness, CI proof posture, a confirmed `save-goal-note` capture form for
+goal-scoped operator context, a confirmed `pause-goal` form for shelving the
 lead goal into paused lanes, and a confirmed `Finish Today` workspace save
 form for tomorrow's resume point. It reuses the existing Home, Goal, inbox,
 activity, and first-run surfaces below the command center, writes nothing on

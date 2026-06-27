@@ -5067,6 +5067,28 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert f".clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md" in (
         note_resume_page.body
     )
+    today_after_note = render_local_app_route(tmp_path, "/today")
+    assert today_after_note.status == 200
+    assert "today_command_note_form_available</dt><dd>true" in today_after_note.body
+    assert "today_command_note_confirmation_required</dt><dd>true" in today_after_note.body
+    assert (
+        "today_command_note_surface</dt><dd><a href='#today-note'>Capture Note</a>"
+        in today_after_note.body
+    )
+    assert "today_command_note: available=true" in today_after_note.body
+    assert "id='today-note'" in today_after_note.body
+    assert "today_note_status</dt><dd>append_to_existing" in today_after_note.body
+    assert (
+        f"today_note_artifact</dt><dd><a href='/artifacts?path=.clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md'>"
+        in today_after_note.body
+    )
+    assert f"today_note_goal</dt><dd>{created_goal_id}" in today_after_note.body
+    assert "today_note_project</dt><dd>first-target" in today_after_note.body
+    assert "today_note_overwrites_previous_notes</dt><dd>false" in today_after_note.body
+    assert "today_note_external_effects_created</dt><dd>false" in today_after_note.body
+    assert "action='/actions/save-goal-note'" in today_after_note.body
+    assert f"name='goal_id' value='{created_goal_id}'" in today_after_note.body
+    assert "name='author' value='operator'" in today_after_note.body
     memory_entry = storage_after_creation.record_memory_entry(
         memory_id="memory_resume_anchor",
         project_id="first-target",
@@ -6582,6 +6604,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_command_ci_source</dt><dd>direct_public_snapshot" in today.body
     assert "today_command_action_form_available</dt><dd>true" in today.body
     assert "today_command_confirmation_required</dt><dd>true" in today.body
+    assert "today_command_note_form_available</dt><dd>true" in today.body
+    assert "today_command_note_confirmation_required</dt><dd>true" in today.body
+    assert "today_command_note_surface</dt><dd><a href='#today-note'>Capture Note</a>" in today.body
+    assert "today_command_note: available=true" in today.body
     assert "today_command_pause_form_available</dt><dd>true" in today.body
     assert "today_command_pause_confirmation_required</dt><dd>true" in today.body
     assert "today_command_pause_surface</dt><dd><a href='#today-pause'>Pause Goal</a>" in today.body
@@ -6600,6 +6626,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Run Current Action" in today.body
     assert "action='/actions/coder-commit-request'" in today.body
     assert f"name='run_id' value='{result.coder_worktree_run_id}'" in today.body
+    assert "id='today-note'" in today.body
+    assert "today_note_form_available</dt><dd>true" in today.body
+    assert f"today_note_goal</dt><dd>{result.goal_id}" in today.body
+    assert f"today_note_project</dt><dd>{result.project_id}" in today.body
+    assert "today_note_status</dt><dd>not_started" in today.body
+    assert "today_note_artifact</dt><dd>not_started" in today.body
+    assert f"today_note_planned_path</dt><dd>.clanker/projects/{result.project_id}/goals/{result.goal_id}/operator-notes.md" in today.body
+    assert "today_note_confirmation_required</dt><dd>true" in today.body
+    assert "today_note_overwrites_previous_notes</dt><dd>false" in today.body
+    assert "today_note_external_effects_created</dt><dd>false" in today.body
+    assert "action='/actions/save-goal-note'" in today.body
+    assert "name='author' value='operator'" in today.body
     assert "id='today-pause'" in today.body
     assert "action='/actions/pause-goal'" in today.body
     assert f"name='goal_id' value='{result.goal_id}'" in today.body

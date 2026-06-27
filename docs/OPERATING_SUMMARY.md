@@ -91,7 +91,8 @@ Core layers for the bootstrap:
   that selects the lead Goal or first-run step, names current phase, one
   primary action, target surface or same-page action form, attention routing
   for approvals/incidents/recommendations/inbox, resume readiness, CI proof
-  posture, a confirmed `pause-goal` form for shelving the lead Goal locally,
+  posture, a confirmed `save-goal-note` capture form for goal-scoped operator
+  context, a confirmed `pause-goal` form for shelving the lead Goal locally,
   and a confirmed `Finish Today` workspace save form for tomorrow's resume
   point. It then reuses the Start Here, Home Day Plan, Attention Brief,
   Focus Queue, recent activity, inbox, recommendations, incidents, and
