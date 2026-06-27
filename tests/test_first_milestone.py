@@ -6446,9 +6446,32 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert registered_workspace["open_project"] == "clankeros"
     assert registered_workspace["open_goal"] == ""
     assert registered_workspace["updated_by"] == "register-project"
+    assert registered_workspace["last_action"] == "register-project"
+    assert registered_workspace["last_action_result"] == "project_registered: clankeros"
+    assert registered_workspace["last_action_location"] == "/projects/clankeros"
+    assert registered_workspace["last_action_next_href"] == "/projects/clankeros?notice=project_registered%3A%20clankeros"
+    assert registered_workspace["last_action_status"] == "completed"
     assert registered_workspace["network_actions_taken"] == 0
     assert registered_workspace["external_mutations_taken"] == 0
     register_resume = render_local_app_route(tmp_path, "/resume")
+    assert "Last Action" in register_resume.body
+    assert "data-last-action-strip='true'" in register_resume.body
+    assert "last_action_status</dt><dd>completed" in register_resume.body
+    assert "last_action_kind</dt><dd>register-project" in register_resume.body
+    assert "last_action_result</dt><dd>project_registered: clankeros" in register_resume.body
+    assert (
+        "last_action_next_surface</dt><dd>"
+        "<a href='/projects/clankeros?notice=project_registered%3A%20clankeros'>"
+        "/projects/clankeros</a>"
+    ) in register_resume.body
+    assert "last_action_saved_project</dt><dd>clankeros" in register_resume.body
+    assert "last_action_saved_goal</dt><dd>none" in register_resume.body
+    assert "last_action_write_on_get</dt><dd>false" in register_resume.body
+    assert "last_action_provider_calls_taken</dt><dd>0" in register_resume.body
+    assert "last_action_network_actions_taken</dt><dd>0" in register_resume.body
+    assert "last_action_external_effects_created</dt><dd>false" in register_resume.body
+    assert "recent_items_last_action</dt><dd>register-project" in register_resume.body
+    assert "recent_items_last_action_result</dt><dd>project_registered: clankeros" in register_resume.body
     assert "resume_workspace_available</dt><dd>true" in register_resume.body
     assert "resume_project: <a href='/projects/clankeros'>clankeros</a>" in register_resume.body
     assert "resume_status: first_run" in register_resume.body
@@ -9914,6 +9937,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ]
     assert len(commit_approvals) == 1
     commit_approval = commit_approvals[0]
+    commit_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert commit_workspace["last_action"] == "coder-commit-request"
+    assert commit_workspace["last_action_result"] == f"coder_commit_request: {commit_approval.id}"
+    assert commit_workspace["last_action_location"] == f"/runs/{result.coder_worktree_run_id}"
+    assert (
+        commit_workspace["last_action_next_href"]
+        == f"/runs/{result.coder_worktree_run_id}?notice=coder_commit_request%3A%20{commit_approval.id}"
+    )
+    assert commit_workspace["last_action_status"] == "completed"
     run_notice = render_local_app_route(
         tmp_path,
         f"/runs/{result.coder_worktree_run_id}?notice=coder_commit_request%3A%20{commit_approval.id}",
@@ -9921,6 +9955,20 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert run_notice.status == 200
     assert "Action Notice" in run_notice.body
     assert f"coder_commit_request: {commit_approval.id}" in run_notice.body
+    assert "Last Action" in run_notice.body
+    assert "data-last-action-strip='true'" in run_notice.body
+    assert "last_action_kind</dt><dd>coder-commit-request" in run_notice.body
+    assert f"last_action_result</dt><dd>coder_commit_request: {commit_approval.id}" in run_notice.body
+    assert (
+        "last_action_next_surface</dt><dd>"
+        f"<a href='/runs/{result.coder_worktree_run_id}?notice=coder_commit_request%3A%20{commit_approval.id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+    ) in run_notice.body
+    assert f"last_action_saved_goal</dt><dd>{result.goal_id}" in run_notice.body
+    assert "last_action_write_on_get</dt><dd>false" in run_notice.body
+    assert "last_action_network_actions_taken</dt><dd>0" in run_notice.body
+    assert "last_action_external_effects_created</dt><dd>false" in run_notice.body
+    assert "recent_items_last_action</dt><dd>coder-commit-request" in run_notice.body
     demo_after_commit_request = render_local_app_route(tmp_path, "/demo")
     assert demo_after_commit_request.status == 200
     assert "current_gate: approve_or_reject_commit_request" in demo_after_commit_request.body

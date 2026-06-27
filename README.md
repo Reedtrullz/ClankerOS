@@ -487,13 +487,18 @@ boundaries.
 
 The app shell also includes a global `Operator Focus` strip, a read-only
 `Route Context` breadcrumb strip, recent local items, a command palette,
-keyboard shortcuts, and a dark/light theme toggle on every page. The route
+keyboard shortcuts, and a dark/light theme toggle on every page. After a
+confirmed local action, the shell also shows a read-only `Last Action` strip
+from `.clanker/app/workspace.json`, with the action result, target notice
+surface, saved Goal/project context, and zero-effect counters so the operator
+can recover the last handoff after navigating away. The route
 context strip shows the current route family/path, parent surface, current
 Goal/Project/run context when it can be resolved, saved workspace anchors,
 resume link, current focus target, and expandable zero-effect counters before
 the page content. The recent-items sidebar now starts with a read-only `Recent Items
 Command Bar` that names the first reopen target, counts workspace/goal/
-delegation/run shortcuts, shows saved workspace context, links `/resume`, and
+delegation/run shortcuts, shows saved workspace context and last action,
+links `/resume`, and
 keeps zero-effect counters visible. The focus strip keeps the saved or lead
 goal's phase, one primary action, target surface, progress, waiting counts,
 and resume link visible outside the Goal page, and can expand the same
@@ -683,7 +688,10 @@ confirmed next first-run form inline, such as `create-goal` after
 `Action Result Workflow Map` that shows the first-run or saved-Goal gate rail,
 current gate, next action, next local surface, progress counts, and explicit
 manual-publish boundary after the confirmed action, without writing on GET or
-adding provider, network, push, PR, or deploy authority. Following the
+adding provider, network, push, PR, or deploy authority. The workspace also
+remembers that completed local action as the shell's `Last Action` strip, so
+the next page and `/resume` can reopen the result notice without reading the
+original action result page. Following the
 next-page link renders an `Action Notice` banner on the target page so the
 operator keeps context. The dashboard and `/health`
 surface the same warning posture for non-local binds, dirty tracked files,

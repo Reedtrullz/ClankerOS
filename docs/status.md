@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The shared operator shell now persists the latest confirmed local action in
+  `.clanker/app/workspace.json` and renders a read-only `Last Action` strip on
+  later pages, with the result, target notice surface, saved context, and
+  zero-effect counters.
 - Confirmed local action result pages now include an `Action Result Workflow
   Map` after the continuation block, showing first-run or saved-Goal gate
   progress, current gate, next action, next local surface, and manual publish

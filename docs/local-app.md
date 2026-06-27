@@ -358,14 +358,18 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - Every app page includes a shared operator shell with a global
   `Operator Focus` strip, a read-only `Route Context` breadcrumb strip, recent
   local items, a command palette, a dark/light theme toggle, and keyboard
-  shortcuts for home, goals, and palette search. The route context strip shows
+  shortcuts for home, goals, and palette search. After a confirmed local
+  action, the shell renders a read-only `Last Action` strip from
+  `.clanker/app/workspace.json` with the action kind, result, target notice
+  surface, saved project/goal context, timestamp, and no-write/provider/
+  network/external-effect counters. The route context strip shows
   current route family/path, parent surface, current Goal/Project/run context
   when available, saved workspace anchors, `/resume`, focus target, and
   expandable zero-effect counters before the page body. The recent-items sidebar
   starts with a read-only `Recent Items Command Bar` that identifies one reopen
   target, counts workspace/goal/delegation/run shortcuts, shows saved project/
-  goal/artifact context, links `/resume`, and reports write/provider/network/
-  external-effect counters. The focus strip is derived from the saved
+  goal/artifact context plus the last confirmed action, links `/resume`, and
+  reports write/provider/network/external-effect counters. The focus strip is derived from the saved
   workspace goal or current lead goal and shows phase, one primary action,
   target surface, progress, waiting counts, form availability, `/resume`, and
   an expandable confirmed local action form when the current next action is
@@ -854,7 +858,10 @@ GET. The result page also renders an `Action Result Workflow Map` from the
 same refreshed state: it shows the first-run or saved-Goal gate rail, current
 gate, next action, next surface, progress counts, and explicit
 `manual_publish` boundary without creating actions, calling providers, using
-non-loopback network, pushing, creating PRs, or deploying. Following the
+non-loopback network, pushing, creating PRs, or deploying. Successful action
+results are also remembered in `.clanker/app/workspace.json` and shown by the
+global `Last Action` strip on later pages, so the operator can reopen the
+target notice or `/resume` after navigating away. Following the
 next-page link renders an `Action Notice` banner on the target GET page,
 preserving the action result context while the operator reviews the dashboard,
 run, delegation, or approval surface.

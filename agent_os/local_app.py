@@ -6288,21 +6288,7 @@ def _first_run_step_status(progress: dict[str, Any], step: str) -> str:
 
 def _load_workspace_state(root: Path) -> dict[str, str]:
     path = _workspace_path(root)
-    if not path.exists():
-        return {
-            "open_project": "",
-            "open_goal": "",
-            "filters": "",
-            "expanded_panels": "",
-            "last_viewed_artifact": "",
-            "updated_by": "operator",
-            "updated_at": "never",
-        }
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        data = {}
-    return {key: str(data.get(key, "")) for key in [
+    keys = [
         "open_project",
         "open_goal",
         "filters",
@@ -6310,7 +6296,20 @@ def _load_workspace_state(root: Path) -> dict[str, str]:
         "last_viewed_artifact",
         "updated_by",
         "updated_at",
-    ]}
+        "last_action",
+        "last_action_result",
+        "last_action_location",
+        "last_action_next_href",
+        "last_action_status",
+        "last_action_updated_at",
+    ]
+    if not path.exists():
+        return {key: "" for key in keys} | {"updated_by": "operator", "updated_at": "never"}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        data = {}
+    return {key: str(data.get(key, "")) for key in keys}
 
 
 def _write_workspace_state(root: Path, state: dict[str, str]) -> dict[str, Any]:
@@ -6324,11 +6323,40 @@ def _write_workspace_state(root: Path, state: dict[str, str]) -> dict[str, Any]:
         "last_viewed_artifact": state.get("last_viewed_artifact", "").strip(),
         "updated_by": state.get("updated_by", "operator").strip() or "operator",
         "updated_at": utc_now(),
+        "last_action": state.get("last_action", "").strip(),
+        "last_action_result": state.get("last_action_result", "").strip(),
+        "last_action_location": state.get("last_action_location", "").strip(),
+        "last_action_next_href": state.get("last_action_next_href", "").strip(),
+        "last_action_status": state.get("last_action_status", "").strip(),
+        "last_action_updated_at": state.get("last_action_updated_at", "").strip(),
         "network_actions_taken": 0,
         "external_mutations_taken": 0,
     }
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return {"workspace_path": path, "status": "saved", **payload}
+
+
+def _remember_last_action_result(
+    root: Path,
+    *,
+    action: str,
+    message: str,
+    location: str,
+) -> dict[str, Any]:
+    safe_location = _safe_local_return_path(location) or "/"
+    next_href = f"{safe_location}?notice={quote(message, safe='')}"
+    return _write_workspace_state(
+        root,
+        {
+            **_load_workspace_state(root),
+            "last_action": action,
+            "last_action_result": message,
+            "last_action_location": safe_location,
+            "last_action_next_href": next_href,
+            "last_action_status": "completed",
+            "last_action_updated_at": utc_now(),
+        },
+    )
 
 
 def _remember_delegation_workspace(
@@ -19451,6 +19479,12 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             _action_error_page(action, form, error),
             status=400,
         )
+    _remember_last_action_result(
+        root,
+        action=action,
+        message=message,
+        location=location,
+    )
     return _html_page(
         root,
         "Action Result",
@@ -20985,6 +21019,51 @@ def _recent_items_panel(root: Path) -> str:
     return body
 
 
+def _last_action_strip(root: Path) -> str:
+    state = _load_workspace_state(root)
+    action = str(state.get("last_action") or "").strip()
+    if not action:
+        return ""
+    result = str(state.get("last_action_result") or "none").strip() or "none"
+    location = _safe_local_return_path(state.get("last_action_location")) or "/resume"
+    next_href = _safe_local_return_path(state.get("last_action_next_href")) or location
+    status = str(state.get("last_action_status") or "completed").strip() or "completed"
+    open_project = str(state.get("open_project") or "").strip()
+    open_goal = str(state.get("open_goal") or "").strip()
+    updated_at = str(state.get("last_action_updated_at") or "unknown").strip() or "unknown"
+    return "".join(
+        [
+            "<section class='last-action-strip panel' data-last-action-strip='true'><h2>Last Action</h2>",
+            "<p class='muted'>The latest confirmed local action saved in the workspace.</p>",
+            _kv(
+                [
+                    ("last_action_status", status),
+                    ("last_action_kind", action),
+                    ("last_action_result", result),
+                    ("last_action_next_surface", SafeHtml(f"<a href='{_e(next_href)}'>{_e(location)}</a>")),
+                    ("last_action_saved_project", open_project or "none"),
+                    ("last_action_saved_goal", open_goal or "none"),
+                    ("last_action_updated_at", updated_at),
+                    ("last_action_source", ".clanker/app/workspace.json"),
+                    ("last_action_write_on_get", "false"),
+                    ("last_action_provider_calls_taken", "0"),
+                    ("last_action_network_actions_taken", "0"),
+                    ("last_action_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"last_action_now: Review {_e(result)}",
+                    f"last_action_click: <a href='{_e(next_href)}'>{_e(location)}</a>",
+                    "last_action_resume: <a href='/resume'>/resume</a>",
+                    "last_action_safety: read-only local action reminder",
+                ]
+            ),
+            "</section>",
+        ]
+    )
+
+
 def _recent_items_command_bar(
     root: Path,
     items: list[tuple[str, str, str]],
@@ -20995,6 +21074,9 @@ def _recent_items_command_bar(
     open_project = str(state.get("open_project") or "").strip()
     open_goal = str(state.get("open_goal") or "").strip()
     last_artifact = str(state.get("last_viewed_artifact") or "").strip()
+    last_action = str(state.get("last_action") or "").strip()
+    last_action_result = str(state.get("last_action_result") or "").strip()
+    last_action_href = _safe_local_return_path(state.get("last_action_next_href"))
     primary_label, primary_href, primary_kind = items[0]
     workspace_count = sum(1 for _, _, kind in items if kind.startswith("workspace"))
     goal_count = sum(1 for _, _, kind in items if "goal" in kind)
@@ -21026,6 +21108,16 @@ def _recent_items_command_bar(
                     ("recent_items_saved_project", open_project or "none"),
                     ("recent_items_saved_goal", open_goal or "none"),
                     ("recent_items_last_artifact", last_artifact or "none"),
+                    ("recent_items_last_action", last_action or "none"),
+                    ("recent_items_last_action_result", last_action_result or "none"),
+                    (
+                        "recent_items_last_action_surface",
+                        (
+                            SafeHtml(f"<a href='{_e(last_action_href)}'>{_e(last_action_href)}</a>")
+                            if last_action_href
+                            else "none"
+                        ),
+                    ),
                     ("recent_items_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
                     ("recent_items_write_on_get", "false"),
                     ("recent_items_provider_calls_taken", "0"),
@@ -21712,6 +21804,10 @@ def _recent_operator_links(root: Path, *, limit: int) -> list[tuple[str, str, st
     open_project = str(state.get("open_project") or "").strip()
     open_goal = str(state.get("open_goal") or "").strip()
     last_artifact = str(state.get("last_viewed_artifact") or "").strip()
+    last_action = str(state.get("last_action") or "").strip()
+    last_action_href = _safe_local_return_path(state.get("last_action_next_href"))
+    if last_action and last_action_href:
+        links.append((f"Last action: {last_action}", last_action_href, "workspace action"))
     if any([open_goal, open_project, last_artifact]):
         links.append(("Resume workspace", "/resume", "workspace"))
     if open_goal:
@@ -21766,6 +21862,7 @@ def _html_page(
     focus_context = _operator_focus_context(root, current_path)
     breadcrumbs = _breadcrumbs(root, current_path, title, focus_context)
     focus_strip = _operator_focus_strip(focus_context)
+    last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
     body = f"""<!doctype html>
 <html lang="en">
@@ -21818,6 +21915,10 @@ def _html_page(
     .operator-focus-action {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .operator-focus-action summary {{ cursor:pointer; font-weight:700; }}
     .operator-focus-action form {{ margin-top:10px; }}
+    .last-action-strip {{ border-left:4px solid var(--accent); margin:0 0 16px; }}
+    .last-action-strip dl {{ grid-template-columns:minmax(170px, 230px) 1fr; }}
+    .last-action-strip ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
+    .last-action-strip li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .action-continuation {{ border:1px solid var(--line); background:var(--panel); padding:14px; margin:16px 0; }}
     .action-continuation-action {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .action-continuation-action summary {{ cursor:pointer; font-weight:700; }}
@@ -22160,6 +22261,7 @@ def _html_page(
       <article>
         {breadcrumbs}
         {focus_strip}
+        {last_action_strip}
         {content}
       </article>
     </div>

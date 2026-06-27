@@ -1,5 +1,39 @@
 # Status
 
+## 2026-06-28 Last Action Shell Strip
+
+- Added durable last-action fields to `.clanker/app/workspace.json` for
+  completed local app actions, including action kind, result message, target
+  notice URL, completion status, and timestamp.
+- Added a global read-only `Last Action` strip to the shared operator shell so
+  pages after an action can reopen the target notice and show the saved
+  project/goal context without requiring the operator to remember the result
+  page.
+- The recent-items command bar now includes the latest confirmed action and
+  result, and the recent-items list can reopen the last action notice when one
+  exists.
+- Updated README, local app docs, operating summary, status focus, and
+  milestone assertions for first-run and fixture-backed saved-Goal action
+  result flows.
+- Non-claims: this does not write on GET, create new actions, approve work,
+  run work, call providers, fetch GitHub, poll network services, commit, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "first_run_browser_actions_persist_resume_workspace or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 513 deselected`
+  - `python3 -m compileall -q agent_os tests`
+    -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-last-action-smoke app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation
+    counters at `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-last-action-demo-smoke app-demo-smoke-test`
+    -> passed on a temporary root, including fixture-backed route snippets,
+    with provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
 ## 2026-06-28 Action Result Workflow Map
 
 - Added an `Action Result Workflow Map` to successful local app action result

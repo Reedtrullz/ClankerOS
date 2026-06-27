@@ -550,8 +550,12 @@ Core layers for the bootstrap:
   local `save-workspace` form so the operator can remember the current artifact
   as the next-session resume anchor without writing on GET. Every page shares
   a browser operator shell with a read-only `Route Context` breadcrumb strip,
-  recent local items, a command palette, keyboard shortcuts, and a theme
-  toggle. The route context strip reports current route family/path, parent
+  recent local items, a read-only `Last Action` strip after confirmed local
+  actions, a command palette, keyboard shortcuts, and a theme toggle. The last
+  action strip reads `.clanker/app/workspace.json` and exposes the latest
+  completed local action, result, notice target, saved project/goal context,
+  timestamp, and zero-effect counters without writing on GET. The route
+  context strip reports current route family/path, parent
   surface, current Goal/Project/run context when it can be resolved, saved
   workspace anchors, `/resume`, current focus target, and zero-effect
   boundaries in an expandable details block before the page body. The
@@ -742,7 +746,10 @@ Core layers for the bootstrap:
   Map` from refreshed first-run or saved-Goal state with the current gate,
   next action, next local surface, progress counts, and manual-publish
   boundary while preserving the no-write-on-GET and no-provider/no-network/
-  no-push/no-PR/no-deploy boundary. GET pages render an escaped
+  no-push/no-PR/no-deploy boundary. Successful action results are recorded as
+  last-action workspace fields so the global shell and `/resume` can reopen
+  the target notice after navigation without granting new action authority.
+  GET pages render an escaped
   `Action Notice` banner when reached through a notice link;
   action error pages render the attempted action, submitted payload, error
   details, and a no-action-completed non-claim. It does not push, create PRs,
