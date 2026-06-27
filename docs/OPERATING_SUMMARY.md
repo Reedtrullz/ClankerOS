@@ -356,8 +356,9 @@ Core layers for the bootstrap:
   Goal detail pages also include a
   read-only `Goal Workflow Map` near the top that renders the same
   Remaining Work gate state as a lifecycle rail, highlighting the current
-  gate, next action, done/pending/waiting counts, and zero-effect boundary
-  before the operator reaches the long timeline and artifact sections. Goal
+  gate, next action, done/pending/waiting counts, each gate's eventual local
+  operator surface, and zero-effect boundary before the operator reaches the
+  long timeline and artifact sections. Goal
   Remaining Work itself starts with a read-only `Goal Remaining Work Command
   Bar` that summarizes current gate, done/pending/waiting gate counts, open
   task/incident/recommendation counts, pending approvals, one next local

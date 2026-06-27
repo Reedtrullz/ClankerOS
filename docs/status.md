@@ -4,6 +4,9 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The Goal page `Goal Workflow Map` now includes action/surface guidance for
+  every gate from scout delegation through manual publish, making the full
+  workflow easier to follow from the browser without reading docs.
 - The global command palette now includes a compact Goal continuation readback
   inside `Continue Current Goal`, so Home and Goal pages can show the current
   workflow gate, next few local gates, target surfaces, and manual publish

@@ -238,9 +238,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   before the deeper diagnostics. The next
   detailed surface is a read-only `Goal Workflow Map` that turns the same
   Remaining Work gate state into a lifecycle rail from scout delegation through
-  manual publish, with the current gate, next action, gate counts, and
-  zero-effect boundary visible before scrolling. Remaining Work also starts
-  with a read-only `Goal Remaining Work Command Bar` that summarizes the
+  manual publish, with the current gate, next action, gate counts, every
+  gate's eventual local operator surface, and zero-effect boundary visible
+  before scrolling. Remaining Work also starts with a read-only
+  `Goal Remaining Work Command Bar` that summarizes the
   current gate, done/pending/waiting gate counts, open task/incident/
   recommendation counts, pending approvals, one next local surface, and
   zero-effect boundaries before the detailed checklist. The Next

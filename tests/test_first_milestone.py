@@ -8012,13 +8012,22 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workflow_map_pending_count</dt><dd>1" in goal.body
     assert "workflow_map_waiting_count</dt><dd>6" in goal.body
     assert "workflow_map_source</dt><dd>goal_remaining_work_gates" in goal.body
+    assert "workflow_map_action_surfaces</dt><dd>available" in goal.body
     assert "workflow_map_write_on_get</dt><dd>false" in goal.body
+    assert "workflow_map_provider_calls_taken</dt><dd>0" in goal.body
     assert "workflow_map_network_actions_taken</dt><dd>0" in goal.body
     assert "workflow_map_external_effects_created</dt><dd>false" in goal.body
     assert "data-workflow-gate='scout_delegation' data-gate-status='done'" in goal.body
-    assert "data-workflow-gate='commit_request' data-gate-status='pending' data-gate-marker='current'" in goal.body
-    assert "status=pending marker=current next=Create commit request" in goal.body
-    assert "data-workflow-gate='manual_publish' data-gate-status='waiting'" in goal.body
+    assert "data-workflow-gate='commit_request' data-gate-status='pending' data-gate-marker='current' data-gate-action='Create commit request'" in goal.body
+    assert "status=pending marker=current action=Create commit request surface=<a href='#goal-next-action'>Goal action form</a> next=Create commit request" in goal.body
+    assert "data-workflow-gate='commit_approval' data-gate-status='waiting' data-gate-marker='waiting' data-gate-action='Approve commit request'" in goal.body
+    assert "workflow_map_gate: commit_approval status=waiting marker=waiting action=Approve commit request surface=<a href='/approvals'>/approvals</a>" in goal.body
+    assert "workflow_map_gate: local_commit status=waiting marker=waiting action=Commit approved worktree surface=<a href='#goal-next-action'>Goal action form</a>" in goal.body
+    assert "workflow_map_gate: publication_request status=waiting marker=waiting action=Create publication request surface=<a href='#goal-next-action'>Goal action form</a>" in goal.body
+    assert "workflow_map_gate: publication_approval status=waiting marker=waiting action=Approve publication request surface=<a href='/approvals'>/approvals</a>" in goal.body
+    assert "data-workflow-gate='manual_publish' data-gate-status='waiting' data-gate-marker='waiting' data-gate-action='Manual publish outside ClankerOS'" in goal.body
+    assert "workflow_map_gate: manual_publish status=waiting marker=waiting action=Manual publish outside ClankerOS surface=outside_clankeros" in goal.body
+    assert "workflow_map_safety: read-only full workflow action guide" in goal.body
     assert "Current Phase" in goal.body
     assert "Ready to commit" in goal.body
     assert "current_phase_banner</dt><dd>Ready to commit" in goal.body

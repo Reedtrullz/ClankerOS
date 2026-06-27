@@ -1,5 +1,36 @@
 # Status
 
+## 2026-06-28 Workflow Map Action Surfaces
+
+- Extended the Goal page `Goal Workflow Map` so every workflow gate now carries
+  a local operator action and surface, turning the full lifecycle rail into a
+  browser action guide from scout delegation through manual publish instead of
+  a status-only map.
+- Current gates point to the in-page Goal action form when the action is
+  browser-available. Future approval gates point to `/approvals`, future local
+  action gates point back to the Goal action form pattern, and
+  `manual_publish` remains explicitly `outside_clankeros`.
+- Updated README, local app docs, operating summary, and fixture-backed Goal
+  route assertions for the full workflow action guide.
+- Non-claims: this does not write workspace state on GET, create actions,
+  approve work, run work, call providers, fetch GitHub, poll network services,
+  commit, push, create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> passed, `1 passed, 514 deselected`
+  - `python3 -m compileall -q agent_os tests`
+    -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-workflow-guide-smoke app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation
+    counters at `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-workflow-guide-demo-smoke app-demo-smoke-test`
+    -> passed on a temporary root, including fixture-backed route snippets,
+    with provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
 ## 2026-06-28 Command Palette Goal Continuation
 
 - Added a compact `Goal Continuation` readback inside the global command

@@ -6974,22 +6974,38 @@ def _goal_workflow_map(
     waiting = counts.get("waiting", 0)
     total = len(gates)
     items: list[str] = []
+    gate_lines: list[str] = []
+    action_form_available = bool(_goal_next_action_form(state, next_action))
+    goal = state["goal"]
     for index, (name, status) in enumerate(gates, start=1):
         label = name.replace("_", " ")
         marker = "current" if name == current_gate else status
+        action, surface = _goal_continuation_gate_action(
+            goal.id,
+            name,
+            is_current=name == current_gate,
+            next_action=next_action,
+            action_form_available=action_form_available,
+        )
         next_label = (
             f" next={_e(next_action.action)}"
             if name == current_gate and current_gate != "complete"
             else ""
         )
+        gate_lines.append(
+            f"workflow_map_gate: {_e(name)} status={_e(status)} "
+            f"marker={_e(marker)} action={_e(action)} surface={surface}"
+        )
         items.append(
             "<li "
             f"data-workflow-gate='{_e(name)}' "
             f"data-gate-status='{_e(status)}' "
-            f"data-gate-marker='{_e(marker)}'>"
+            f"data-gate-marker='{_e(marker)}' "
+            f"data-gate-action='{_e(action)}'>"
             f"<span class='workflow-map-index'>{index}</span> "
             f"<strong>{_e(label)}</strong> "
-            f"status={_e(status)} marker={_e(marker)}{next_label}</li>"
+            f"status={_e(status)} marker={_e(marker)} "
+            f"action={_e(action)} surface={surface}{next_label}</li>"
         )
     return "".join(
         [
@@ -7011,7 +7027,9 @@ def _goal_workflow_map(
                     ("workflow_map_pending_count", str(pending)),
                     ("workflow_map_waiting_count", str(waiting)),
                     ("workflow_map_source", "goal_remaining_work_gates"),
+                    ("workflow_map_action_surfaces", "available"),
                     ("workflow_map_write_on_get", "false"),
+                    ("workflow_map_provider_calls_taken", "0"),
                     ("workflow_map_network_actions_taken", "0"),
                     ("workflow_map_external_effects_created", "false"),
                 ]
@@ -7019,6 +7037,7 @@ def _goal_workflow_map(
             "<ol class='workflow-map-rail'>",
             "".join(items),
             "</ol>",
+            _ul(gate_lines + ["workflow_map_safety: read-only full workflow action guide"]),
             "</section>",
         ]
     )
