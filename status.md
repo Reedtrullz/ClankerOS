@@ -1,5 +1,34 @@
 # Status
 
+## 2026-06-27 Dogfooding Command Bar
+
+- Added a read-only `Dogfooding Command Bar` to `/dogfooding`.
+- The bar summarizes fixture status, selected project/Goal/delegation/run,
+  one recommended target surface, demo command, route-walk/CI/action/health
+  links, write-on-GET posture, and zero provider/network/external-effect/push/
+  PR/deploy counters before the longer dogfooding checklist.
+- Added stable anchors for the next-action panel, fixture refresh, browser
+  route walk, commit/publication gate walk, GitHub Actions follow-up,
+  verification handoff, and safety boundary sections.
+- Updated README, local app docs, operating summary, focused route assertions,
+  and fixture-backed demo smoke snippets to make the dogfooding surface a
+  first-class operator page instead of a checklist-only page.
+- Non-claims: this does not create fixture state from the browser, call
+  providers, fetch GitHub status, push, create PRs, deploy, approve requests,
+  execute coder runs, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_cf2048d93f2d`, `run_0c6b30c329f0`, and coder
+    worktree run `run_40bcfca17f55`
+  - `git diff --check` -> passed
+
 ## 2026-06-27 Health Command Bar
 
 - Added a `Health Command Bar` to `/health`.

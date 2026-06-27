@@ -369,7 +369,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   fixture, walking demo/workflow/project/delegation/run routes, using local
   commit and publication gates, and handing full-suite proof to GitHub Actions
   after a push without fetching GitHub status. It includes a copy-only
-  `GitHub Actions Follow-up` section with direct snapshot
+  `Dogfooding Command Bar` for fixture status, selected local demo objects,
+  the one next surface, route/CI/action/health links, and zero-effect
+  counters, plus a `GitHub Actions Follow-up` section with direct snapshot
   `ci-snapshot-handoff`, `gh run view`, and `ci-snapshot-evidence`
   record-after-success templates for the current checkout.
 - `/projects` - project workflow index with a confirmed local
@@ -625,11 +627,14 @@ available, points to `/demo`, `/workflow`, `/projects`, `/delegation-runs`,
 commit/publication gate sequence to walk from the selected `/runs/<run_id>`
 page.
 
-The page also includes `Dogfooding Next Action`, a read-only state panel that
-names the current fixture-backed next action and links the selected project,
-delegation, scoped workflow, coder run, approval queue, inbox, action catalog,
-and verification surfaces. The page reports zero app network actions, zero
-external mutations, zero provider calls, no GitHub status fetch, and the
+The page starts with `Dogfooding Command Bar`, a read-only scan surface for
+fixture status, selected project/Goal/delegation/run, one recommended target
+surface, demo command, route-walk/CI/action/health links, and zero-effect
+counters. It also includes `Dogfooding Next Action`, a read-only state panel
+that names the current fixture-backed next action and links the selected
+project, delegation, scoped workflow, coder run, approval queue, inbox, action
+catalog, and verification surfaces. The page reports zero app network actions,
+zero external mutations, zero provider calls, no GitHub status fetch, and the
 manual push/PR boundary outside ClankerOS.
 
 ## Artifact Viewer

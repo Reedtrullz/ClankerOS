@@ -477,6 +477,9 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             "/dogfooding",
             "Manual Dogfooding Checklist",
             [
+                "Dogfooding Command Bar",
+                "data-dogfooding-command-bar='true'",
+                "dogfooding_command_fixture_status</dt><dd>available",
                 "demo_fixture_status: available",
                 "next_dogfooding_action: request_commit_for_reviewed_run",
                 f"/runs/{demo.coder_worktree_run_id}",
@@ -10525,6 +10528,7 @@ def _dogfooding_page(root: Path) -> str:
             _non_claim_banner(),
             _kv(fixture_lines),
             "</section>",
+            _dogfooding_command_bar(root),
             _dogfooding_next_action_panel(root),
             _list_section(
                 "Start Or Refresh Fixture",
@@ -10534,6 +10538,7 @@ def _dogfooding_page(root: Path) -> str:
                     "Open <a href='/demo'>/demo</a> and confirm demo_fixture_status before following run-specific links.",
                     "Open <a href='/health'>/health</a> if you need a fresh `.clanker/app/local_app_status.json` readback.",
                 ],
+                anchor_id="dogfooding-start-refresh",
             ),
             _list_section(
                 "Browser Route Walk",
@@ -10545,6 +10550,7 @@ def _dogfooding_page(root: Path) -> str:
                     "<a href='/inbox'>/inbox</a> and <a href='/approvals'>/approvals</a>: local queue and approval gates.",
                     "<a href='/actions'>/actions</a>: safe action catalog and confirmation posture.",
                 ],
+                anchor_id="dogfooding-route-walk",
             ),
             _list_section(
                 "Commit And Publication Gate Walk",
@@ -10554,6 +10560,7 @@ def _dogfooding_page(root: Path) -> str:
                     "After the local commit exists, request and approve publication handoff preparation.",
                     "Stop at publication handoff: manual push and PR commands stay outside ClankerOS.",
                 ],
+                anchor_id="dogfooding-gate-walk",
             ),
             _dogfooding_ci_followup(root),
             _list_section(
@@ -10564,6 +10571,7 @@ def _dogfooding_page(root: Path) -> str:
                     "no GitHub status fetch is performed by the local app.",
                     "CI proof requires a completed passing GitHub Actions run after push.",
                 ],
+                anchor_id="dogfooding-verification-handoff",
             ),
             _list_section(
                 "Safety Boundary",
@@ -10573,6 +10581,7 @@ def _dogfooding_page(root: Path) -> str:
                     "provider_calls_taken_by_clankeros: 0",
                     "No push, PR creation, deploy, provider call, or GitHub status fetch is executed by this page.",
                 ],
+                anchor_id="dogfooding-safety-boundary",
             ),
             _demo_dogfooding_state(root),
         ]
@@ -10590,7 +10599,143 @@ def _dogfooding_ci_followup(root: Path) -> str:
             "app_network_actions_taken: 0",
             "external_mutations_taken: 0",
         ],
+        anchor_id="dogfooding-ci-followup",
     )
+
+
+def _dogfooding_command_bar(root: Path) -> str:
+    project, selected_delegation, selected_run = _demo_selected_state(root)
+    run_id = selected_run.id if selected_run else ""
+    progress = _demo_progress_state(root, run_id)
+    goal_id = progress.get("goal_id") or (
+        selected_delegation.parent_goal_id if selected_delegation else ""
+    )
+    fixture_status = "available" if project is not None else "missing"
+    next_action = (
+        progress["next_step"] if project is not None else "Run demo fixture"
+    )
+    target_surface = _dogfooding_target_surface(next_action, run_id, goal_id)
+    if project is None:
+        target_surface = SafeHtml("<a href='/demo'>/demo</a>")
+    selected_surface = target_surface
+    if run_id:
+        selected_surface = SafeHtml(
+            f"<a href='/runs/{quote(run_id)}'>/runs/{_e(run_id)}</a>"
+        )
+    elif selected_delegation is not None:
+        selected_surface = SafeHtml(
+            f"<a href='/delegations/{quote(selected_delegation.id)}'>"
+            f"/delegations/{_e(selected_delegation.id)}</a>"
+        )
+    elif project is not None:
+        selected_surface = SafeHtml(
+            f"<a href='/projects/{quote(project.name)}'>/projects/{_e(project.name)}</a>"
+        )
+
+    rows = [
+        (
+            "dogfooding_command_status",
+            "fixture_available" if project is not None else "fixture_missing",
+        ),
+        ("dogfooding_command_fixture_status", fixture_status),
+        (
+            "dogfooding_command_selected_project",
+            SafeHtml(
+                f"<a href='/projects/{quote(project.name)}'>{_e(project.name)}</a>"
+            )
+            if project is not None
+            else "none",
+        ),
+        (
+            "dogfooding_command_selected_goal",
+            SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(goal_id)}</a>")
+            if goal_id
+            else "none",
+        ),
+        (
+            "dogfooding_command_selected_delegation",
+            SafeHtml(
+                f"<a href='/delegations/{quote(selected_delegation.id)}'>"
+                f"{_e(selected_delegation.id)}</a>"
+            )
+            if selected_delegation is not None
+            else "none",
+        ),
+        (
+            "dogfooding_command_selected_run",
+            SafeHtml(f"<a href='/runs/{quote(run_id)}'>{_e(run_id)}</a>")
+            if run_id
+            else "none",
+        ),
+        ("dogfooding_command_next_action", next_action),
+        ("dogfooding_command_target_surface", target_surface),
+        ("dogfooding_command_selected_surface", selected_surface),
+        ("dogfooding_command_demo_command", "python3 -m agent_os.cli demo"),
+        (
+            "dogfooding_command_route_walk_surface",
+            SafeHtml("<a href='#dogfooding-route-walk'>Browser Route Walk</a>"),
+        ),
+        (
+            "dogfooding_command_ci_surface",
+            SafeHtml("<a href='/verification'>/verification</a>"),
+        ),
+        (
+            "dogfooding_command_actions_surface",
+            SafeHtml("<a href='/actions'>/actions</a>"),
+        ),
+        (
+            "dogfooding_command_health_surface",
+            SafeHtml("<a href='/health'>/health</a>"),
+        ),
+        ("dogfooding_command_github_status_fetch", "none"),
+        ("dogfooding_command_write_on_get", "false"),
+        ("dogfooding_command_provider_calls_taken", "0"),
+        ("dogfooding_command_network_actions_taken", "0"),
+        ("dogfooding_command_external_effects_created", "false"),
+        ("dogfooding_command_push_created", "false"),
+        ("dogfooding_command_pr_created", "false"),
+        ("dogfooding_command_deploy_created", "false"),
+    ]
+    lines = [
+        f"dogfooding_command_now: {_e(next_action)}",
+        f"dogfooding_command_click: {target_surface}",
+        "dogfooding_command_demo: python3 -m agent_os.cli demo",
+        "dogfooding_command_safety: read-only local route map; no provider, network, push, PR, deploy, or external mutation",
+    ]
+    if project is None:
+        lines.append(
+            "dogfooding_command_start: run the demo command, then refresh /dogfooding"
+        )
+    if run_id:
+        lines.append(
+            f"dogfooding_command_continue: open /runs/{_e(run_id)} or scoped workflow"
+        )
+    return "".join(
+        [
+            "<section id='dogfooding-command-bar' class='panel dogfooding-command-bar' "
+            "data-dogfooding-command-bar='true'><h2>Dogfooding Command Bar</h2>",
+            "<p class='muted'>One scan-first place to start or continue the local product walkthrough.</p>",
+            _kv(rows),
+            _ul(lines),
+            "</section>",
+        ]
+    )
+
+
+def _dogfooding_target_surface(next_action: str, run_id: str, goal_id: str) -> SafeHtml:
+    if not run_id:
+        return SafeHtml("<a href='/demo'>/demo</a>")
+    if next_action in {
+        "approve_or_reject_commit_request",
+        "approve_or_reject_publication_request",
+    }:
+        return SafeHtml("<a href='/approvals'>/approvals</a>")
+    if next_action in {
+        "manual_operator_push_pr_outside_clankeros",
+        "review_completed_goal_evidence",
+    } and goal_id:
+        return SafeHtml(f"<a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>")
+    return SafeHtml(f"<a href='/runs/{quote(run_id)}'>/runs/{_e(run_id)}</a>")
 
 
 def _dogfooding_next_action_panel(root: Path) -> str:
@@ -10609,6 +10754,7 @@ def _dogfooding_next_action_panel(root: Path) -> str:
                 "external_effects_created: false",
                 "network_actions_taken_by_app: 0",
             ],
+            anchor_id="dogfooding-next-action",
         )
 
     delegations = [
@@ -10679,7 +10825,7 @@ def _dogfooding_next_action_panel(root: Path) -> str:
     ]
     if next_action == "manual_operator_push_pr_outside_clankeros":
         lines.append("manual_boundary: outside_clankeros")
-    return _list_section("Dogfooding Next Action", lines)
+    return _list_section("Dogfooding Next Action", lines, anchor_id="dogfooding-next-action")
 
 
 def _workflow_has_push_main(workflow_text: str) -> bool:
@@ -14383,7 +14529,7 @@ def _manual_browser_checkpoints(state: dict[str, str] | None) -> str:
     project_id = (state or {}).get("project_id", "local-app-demo")
     checkpoints = [
         "<a href='/demo'>/demo</a> marker=Demo Scenario expected=Demo Dogfooding Links,Demo Browser Progress,Demo Gate Artifacts",
-        "<a href='/dogfooding'>/dogfooding</a> marker=Manual Dogfooding Checklist expected=Dogfooding Next Action,GitHub Actions Follow-up",
+        "<a href='/dogfooding'>/dogfooding</a> marker=Manual Dogfooding Checklist expected=Dogfooding Command Bar,Dogfooding Next Action,GitHub Actions Follow-up",
         f"<a href='/projects/{quote(project_id)}'>/projects/{_e(project_id)}</a> marker=Project expected=Project Operator Guidance,Project Workflow Launchpad",
         "<a href='/approvals'>/approvals</a> marker=Approvals expected=pending local decisions or empty queue",
         "<a href='/inbox'>/inbox</a> marker=Operator Inbox expected=queue counts and next-action cues",
@@ -16457,6 +16603,9 @@ def _html_page(
     .demo-command-bar {{ border-left:4px solid var(--accent); }}
     .demo-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .demo-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .dogfooding-command-bar {{ border-left:4px solid var(--accent); }}
+    .dogfooding-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .dogfooding-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .run-command-bar {{ border-left:4px solid var(--warn); }}
     .run-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .run-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
