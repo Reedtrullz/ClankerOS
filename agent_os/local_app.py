@@ -5845,6 +5845,7 @@ def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
     return "".join(
         [
             "<section id='goal-timeline'><h2>Timeline</h2>",
+            _goal_timeline_command_bar(state, items),
             _kv(
                 [
                     ("timeline_links_enabled", "true"),
@@ -5858,6 +5859,88 @@ def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
             "</section>",
         ]
     )
+
+
+def _goal_timeline_command_bar(
+    state: dict[str, Any],
+    items: list[dict[str, str]],
+) -> str:
+    goal = state["goal"]
+    latest = items[-1] if items else {}
+    latest_href = latest.get("href") or f"/goals/{quote(goal.id)}"
+    latest_message = latest.get("message") or "No goal timeline events yet"
+    latest_kind = _timeline_item_family(latest) if latest else "none"
+    latest_at = _format_time(latest.get("at") or "") if latest else "none"
+    family_counts = {
+        "artifact": 0,
+        "approval": 0,
+        "delegation": 0,
+        "operator_note": 0,
+        "run": 0,
+        "task": 0,
+    }
+    for item in items:
+        family = _timeline_item_family(item)
+        if family in family_counts:
+            family_counts[family] += 1
+    lines = [
+        f"timeline_command_now: {_e(latest_message)}",
+        f"timeline_command_click: <a href='{_e(latest_href)}'>{_e(latest_href)}</a>",
+        "timeline_command_review: scan newest event first, then use linked artifacts or approvals",
+        "timeline_command_safety: read-only local timeline",
+    ]
+    return "".join(
+        [
+            "<div class='panel goal-timeline-command-bar' data-goal-timeline-command-bar='true'><h3>Goal Timeline Command Bar</h3>",
+            "<p class='muted'>One scan-friendly summary before the full chronological event list.</p>",
+            _kv(
+                [
+                    ("timeline_command_status", "available" if items else "empty"),
+                    ("timeline_command_goal", goal.id),
+                    ("timeline_command_items", str(len(items))),
+                    ("timeline_command_latest_kind", latest_kind),
+                    ("timeline_command_latest_at", latest_at),
+                    ("timeline_command_latest_message", latest_message),
+                    (
+                        "timeline_command_latest_surface",
+                        SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>"),
+                    ),
+                    ("timeline_command_artifact_events", str(family_counts["artifact"])),
+                    ("timeline_command_approval_events", str(family_counts["approval"])),
+                    ("timeline_command_delegation_events", str(family_counts["delegation"])),
+                    ("timeline_command_run_events", str(family_counts["run"])),
+                    ("timeline_command_task_events", str(family_counts["task"])),
+                    ("timeline_command_operator_note_events", str(family_counts["operator_note"])),
+                    ("timeline_command_source", "goal_timeline_items"),
+                    ("timeline_command_write_on_get", "false"),
+                    ("timeline_command_provider_calls_taken", "0"),
+                    ("timeline_command_network_actions_taken", "0"),
+                    ("timeline_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(lines),
+            "</div>",
+        ]
+    )
+
+
+def _timeline_item_family(item: dict[str, str]) -> str:
+    kind = str(item.get("kind") or "").strip()
+    if kind:
+        return kind
+    href = str(item.get("href") or "")
+    message = str(item.get("message") or "").lower()
+    if href.startswith("/artifacts?path="):
+        return "artifact"
+    if href.startswith("/delegations/") or "delegation" in message or "scout delegated" in message:
+        return "delegation"
+    if href.startswith("/runs/") or "execution" in message or "review passed" in message:
+        return "run"
+    if href.startswith("/approvals") or "approval" in message or "approved" in message or "rejected" in message:
+        return "approval"
+    if "task" in message:
+        return "task"
+    return "event"
 
 
 def _goal_activity_log(root: Path, state: dict[str, Any]) -> str:
@@ -13534,6 +13617,9 @@ def _html_page(
     .artifact-review-brief {{ border-left:4px solid var(--ok); }}
     .artifact-review-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .artifact-review-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-timeline-command-bar {{ border-left:4px solid var(--accent); margin:0 0 12px; }}
+    .goal-timeline-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-timeline-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .workflow-map-rail {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px; }}
     .workflow-map-rail li {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; overflow-wrap:anywhere; }}
     .workflow-map-rail li[data-gate-marker="current"] {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}

@@ -6181,6 +6181,26 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "progress_bar_enabled</dt><dd>true" in goal.body
     assert "<progress" in goal.body
     assert "Timeline" in goal.body
+    assert "Goal Timeline Command Bar" in goal.body
+    assert "data-goal-timeline-command-bar='true'" in goal.body
+    assert f"timeline_command_goal</dt><dd>{result.goal_id}" in goal.body
+    assert "timeline_command_status</dt><dd>available" in goal.body
+    assert "timeline_command_items</dt><dd>" in goal.body
+    assert "timeline_command_latest_kind</dt><dd>" in goal.body
+    assert "timeline_command_latest_message</dt><dd>" in goal.body
+    assert "timeline_command_latest_surface</dt><dd><a href='" in goal.body
+    assert "timeline_command_artifact_events</dt><dd>" in goal.body
+    assert "timeline_command_approval_events</dt><dd>" in goal.body
+    assert "timeline_command_delegation_events</dt><dd>" in goal.body
+    assert "timeline_command_run_events</dt><dd>" in goal.body
+    assert "timeline_command_task_events</dt><dd>" in goal.body
+    assert "timeline_command_source</dt><dd>goal_timeline_items" in goal.body
+    assert "timeline_command_write_on_get</dt><dd>false" in goal.body
+    assert "timeline_command_provider_calls_taken</dt><dd>0" in goal.body
+    assert "timeline_command_network_actions_taken</dt><dd>0" in goal.body
+    assert "timeline_command_external_effects_created</dt><dd>false" in goal.body
+    assert "timeline_command_now:" in goal.body
+    assert "timeline_command_safety: read-only local timeline" in goal.body
     assert "timeline_links_enabled</dt><dd>true" in goal.body
     assert "timeline_artifact_records</dt><dd>" in goal.body
     assert "class='timeline-link'" in goal.body

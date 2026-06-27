@@ -106,7 +106,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   next recommendation, overview, goal risk, completion criteria, progress,
   chronological timeline, activity log, delegations, runs, approvals,
   evidence, artifacts, memory, skills used, git status, operator notes, a
-  goal-scoped resume snapshot, and remaining work. It uses local polling
+  goal-scoped resume snapshot, and remaining work. The timeline starts with a
+  read-only `Goal Timeline Command Bar` that shows total events, the latest
+  event, event-family counts, target surface, and zero-effect counters before
+  the full chronological list. It uses local polling
   refresh, pauses refresh while the
   operator is editing a form or the tab is hidden, and does not contact GitHub
   or providers. The Current Phase banner is the primary operator state readback:
@@ -354,7 +357,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   browsing. The Goal timeline backfills generic `Artifact recorded` entries
   from the same bounded artifact registry after workflow-specific timeline
   events are added, so artifacts such as context-pack JSON, handoff JSON,
-  diffs, changed-file lists, and git-status logs appear chronologically.
+  diffs, changed-file lists, and git-status logs appear chronologically. The
+  `Goal Timeline Command Bar` keeps the latest linked event and event-family
+  counts visible before that longer list.
 - `/inbox` - read-only operator queue for steering reviews, approval requests,
   incidents, delegations, coder runs, commits, and publication handoffs.
   A read-only `Inbox Command Bar` summarizes total local queue size, counts by

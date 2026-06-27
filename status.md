@@ -1,5 +1,31 @@
 # Status
 
+## 2026-06-27 Goal Timeline Command Bar
+
+- Added a read-only `Goal Timeline Command Bar` to the top of each Goal
+  timeline.
+- The bar summarizes total timeline items, the latest linked event, event
+  family counts for artifacts, approvals, delegations, runs, tasks, and
+  operator notes, the source (`goal_timeline_items`), and zero-effect counters
+  before the full chronological event list.
+- README, local app docs, and the operating summary now describe the Goal
+  timeline as a scan-friendly event surface, not only a long chronological
+  list.
+- Non-claims: this does not write state on GET, create artifacts, create
+  events, approve gates, run work, commit, push, create PRs, deploy, call
+  providers, use non-loopback network actions, fetch GitHub status, or mutate
+  external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_56fb3fe8a5bb`,
+    `run_4a4666e264f7`, and coder worktree run `run_e09b31f4b09f`
+
 ## 2026-06-27 Recent Items Command Bar
 
 - Added a read-only `Recent Items Command Bar` to the shared app sidebar on

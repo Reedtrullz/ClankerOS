@@ -233,10 +233,13 @@ usage, and keeps skill execution out of the Goal page.
 Timeline entries link back to the relevant local artifact, delegation, run,
 approval queue, or goal surface, and the timeline also backfills generic
 `Artifact recorded` events from the same bounded artifact registry used by
-the Goal Artifact Explorer. The Activity Log now starts with a read-only
-Goal Activity Command Bar that names the latest human-readable event and
-target local surface before the longer chronological list. Progress uses a real browser progress
-bar. Operator Notes includes a confirmed `save-goal-note` form that appends
+the Goal Artifact Explorer. The timeline starts with a read-only `Goal
+Timeline Command Bar` that summarizes event-family counts, the latest event,
+its target surface, and zero-effect boundaries before the full chronological
+list. The Activity Log now starts with a read-only Goal Activity Command Bar
+that names the latest human-readable event and target local surface before the
+longer chronological list. Progress uses a real browser progress bar.
+Operator Notes includes a confirmed `save-goal-note` form that appends
 local resume context to the goal-scoped `operator-notes.md` artifact without
 overwriting earlier notes.
 The Goal Resume Snapshot reads `.clanker/app/workspace.json`, shows whether
