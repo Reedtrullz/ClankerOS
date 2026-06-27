@@ -209,8 +209,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `/resume` read the same saved state for daily resume links and continuation
   readbacks. The confirmed `save-workspace` form writes
   `.clanker/app/workspace.json`; GET requests write nothing.
-- `/memory` - project memories, global memories, generated memories, operator
-  notes, future-work recommendations, and confirmed `pin-memory` actions.
+- `/memory` - project memories, global memories, generated memories, proposed
+  memories, operator notes, future-work recommendations, and confirmed
+  `pin-memory` actions. A read-only `Memory Command Bar` summarizes memory
+  counts, the first proposed memory or fallback resume target, one next local
+  action, and write-on-GET/provider/network/external-effect boundaries before
+  the longer memory lists.
 - `/skills` - available/generated skill records with usage count, last-used
   readback, and projects using them.
 - `/profiles` - inactive future provider-routing surface. It reads

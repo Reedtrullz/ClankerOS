@@ -2401,6 +2401,7 @@ def _memory_page(root: Path) -> str:
     project_memories = [entry for entry in entries if entry.scope != "global"]
     global_memories = [entry for entry in entries if entry.scope == "global"]
     generated = [entry for entry in entries if entry.source_type != "operator"]
+    proposed = [entry for entry in entries if entry.status == "proposed"]
     operator_notes = _operator_note_paths(root)
     future_work = storage.list_recent_task_recommendations(limit=20)
     return "".join(
@@ -2413,16 +2414,159 @@ def _memory_page(root: Path) -> str:
                     ("global_memory_count", str(len(global_memories))),
                     ("generated_memory_count", str(len(generated))),
                     ("operator_note_count", str(len(operator_notes))),
+                    ("future_work_count", str(len(future_work))),
                     ("pin_memory_available", "true"),
                 ]
             ),
             "</section>",
-            _list_section("Project Memories", [_memory_line(entry) for entry in project_memories]),
-            _list_section("Global Memories", [_memory_line(entry) for entry in global_memories]),
-            _list_section("Generated Memories", [_memory_line(entry) for entry in generated]),
-            _list_section("Operator Notes", [f"operator_note: {_artifact_link(path)}" for path in operator_notes]),
-            _list_section("Future Work", [_task_recommendation_line(item) for item in future_work]),
+            _memory_command_bar(
+                root,
+                entries=entries,
+                project_memories=project_memories,
+                global_memories=global_memories,
+                generated=generated,
+                proposed=proposed,
+                operator_notes=operator_notes,
+                future_work=future_work,
+            ),
+            _list_section(
+                "Proposed Memories",
+                [_memory_line(entry) for entry in proposed],
+                anchor_id="memory-proposed",
+            ),
+            _list_section(
+                "Project Memories",
+                [_memory_line(entry) for entry in project_memories],
+                anchor_id="memory-project",
+            ),
+            _list_section(
+                "Global Memories",
+                [_memory_line(entry) for entry in global_memories],
+                anchor_id="memory-global",
+            ),
+            _list_section(
+                "Generated Memories",
+                [_memory_line(entry) for entry in generated],
+                anchor_id="memory-generated",
+            ),
+            _list_section(
+                "Operator Notes",
+                [f"operator_note: {_artifact_link(path)}" for path in operator_notes],
+                anchor_id="memory-operator-notes",
+            ),
+            _list_section(
+                "Future Work",
+                [_task_recommendation_line(item) for item in future_work],
+                anchor_id="memory-future-work",
+            ),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _memory_command_bar(
+    root: Path,
+    *,
+    entries: list[Any],
+    project_memories: list[Any],
+    global_memories: list[Any],
+    generated: list[Any],
+    proposed: list[Any],
+    operator_notes: list[str],
+    future_work: list[Any],
+) -> str:
+    workspace = _load_workspace_state(root)
+    active_count = len([entry for entry in entries if entry.status == "active"])
+    archived_count = len([entry for entry in entries if entry.status == "archived"])
+    first_target = "none"
+    next_action = "Review memory bank"
+    target_href = "#memory-project"
+    target_label = "Project Memories"
+    reason = "local_memory_records_available" if entries else "no_memory_records_yet"
+    if proposed:
+        first = proposed[0]
+        first_target = first.id
+        next_action = "Pin first proposed memory"
+        target_href = "#memory-proposed"
+        target_label = "Proposed Memories"
+        reason = "proposed_memory_waiting_for_operator"
+    elif operator_notes:
+        first_target = operator_notes[0]
+        next_action = "Review operator notes"
+        target_href = "#memory-operator-notes"
+        target_label = "Operator Notes"
+        reason = "operator_note_artifacts_available"
+    elif future_work:
+        first = future_work[0]
+        first_target = getattr(first, "id", "future_work")
+        next_action = "Review future work"
+        target_href = "#memory-future-work"
+        target_label = "Future Work"
+        reason = "task_recommendations_available"
+    elif global_memories:
+        first_target = global_memories[0].id
+        target_href = "#memory-global"
+        target_label = "Global Memories"
+        reason = "global_memory_records_available"
+    elif generated:
+        first_target = generated[0].id
+        target_href = "#memory-generated"
+        target_label = "Generated Memories"
+        reason = "generated_memory_records_available"
+    elif project_memories:
+        first_target = project_memories[0].id
+    elif workspace.get("open_goal"):
+        first_target = workspace["open_goal"]
+        next_action = "Resume saved goal"
+        target_href = "/resume"
+        target_label = "/resume"
+        reason = "saved_workspace_available"
+    else:
+        next_action = "Create goal context"
+        target_href = "/goals"
+        target_label = "/goals"
+
+    target_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    return "".join(
+        [
+            "<section class='panel memory-command-bar' data-memory-command-bar='true'><h2>Memory Command Bar</h2>",
+            "<p class='muted'>One read-only summary of durable memory state and the next local memory action.</p>",
+            _kv(
+                [
+                    ("memory_command_status", "available"),
+                    ("memory_command_total_entries", str(len(entries))),
+                    ("memory_command_project_entries", str(len(project_memories))),
+                    ("memory_command_global_entries", str(len(global_memories))),
+                    ("memory_command_generated_entries", str(len(generated))),
+                    ("memory_command_proposed_entries", str(len(proposed))),
+                    ("memory_command_active_entries", str(active_count)),
+                    ("memory_command_archived_entries", str(archived_count)),
+                    ("memory_command_operator_notes", str(len(operator_notes))),
+                    ("memory_command_future_work", str(len(future_work))),
+                    ("memory_command_first_target", first_target),
+                    ("memory_command_next_action", next_action),
+                    ("memory_command_target_surface", target_surface),
+                    ("memory_command_reason", reason),
+                    ("memory_command_workspace_project", workspace.get("open_project", "")),
+                    ("memory_command_workspace_goal", workspace.get("open_goal", "")),
+                    ("memory_command_workspace_artifact", workspace.get("last_viewed_artifact", "")),
+                    ("memory_command_pin_memory_available", str(bool(proposed)).lower()),
+                    ("memory_command_write_on_get", "false"),
+                    ("memory_command_raw_filesystem_browsing", "false"),
+                    ("memory_command_provider_calls_taken", "0"),
+                    ("memory_command_network_actions_taken", "0"),
+                    ("memory_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"memory_command_now: {_e(next_action)}",
+                    f"memory_command_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"memory_command_reason: {_e(reason)}",
+                    "memory_command_safety: read-only memory guidance",
+                ]
+            ),
+            "</section>",
         ]
     )
 
@@ -11018,6 +11162,9 @@ def _html_page(
     .search-command-bar {{ border-left:4px solid var(--ok); }}
     .search-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .search-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .memory-command-bar {{ border-left:4px solid var(--ok); }}
+    .memory-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .memory-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .inbox-command-bar {{ border-left:4px solid var(--accent); }}
     .inbox-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .inbox-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

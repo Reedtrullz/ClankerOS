@@ -125,7 +125,11 @@ Core layers for the bootstrap:
   one next action, operator attention cue, target surface, and the same
   confirmed local action form as the Goal page when that action is
   browser-available beside the editable saved-state form; `/memory` for project/global/
-  generated memories, operator notes, future work, and pin actions; `/skills`
+  generated memories, proposed memories, operator notes, future work, and pin
+  actions, with a read-only `Memory Command Bar` that summarizes entry counts,
+  first proposed pin or fallback resume target, one next local action, saved
+  workspace context, and no-write/provider/network/external-effect boundaries
+  before the longer lists; `/skills`
   for available/generated skill records with usage counts; `/approvals` as a
   local decision queue with a read-only `Approval Queue Command Bar` that
   summarizes pending worktree/commit/publication counts, first recommended
@@ -275,7 +279,10 @@ Core layers for the bootstrap:
   goal-scoped memory entry counts, generated memory count, operator-note
   status, future-work count, latest memory summaries, and the fact that
   pinning remains available on the confirmed `/memory` surface rather than on
-  the read-only Goal page. Confirmed `/memory` pinning promotes only entries
+  the read-only Goal page. The `/memory` surface now starts with a read-only
+  `Memory Command Bar` so proposed-memory pins, operator-note review, future
+  work, saved workspace resume, and empty-bank starts have one visible next
+  click before the inventory. Confirmed `/memory` pinning promotes only entries
   with existing evidence artifacts and refreshes saved workspace state to that
   artifact with zero provider, network, or external mutation effects.
   The shared browser shell now exposes accessible shortcut metadata for Home,

@@ -1,5 +1,36 @@
 # Status
 
+## 2026-06-27 Memory Command Bar
+
+- Added a read-only `Memory Command Bar` to `/memory`. It shows total,
+  project, global, generated, proposed, active, archived, operator-note, and
+  future-work counts; the first proposed memory to pin or a fallback target;
+  the saved workspace project/goal/artifact context; one next local action;
+  and write-on-GET/raw-filesystem/provider/network/external-effect boundaries
+  before the longer memory inventory.
+- The Memory page now has stable anchored sections for proposed, project,
+  global, generated, operator-note, and future-work memory lists. Proposed
+  memory pinning still uses the existing confirmed `pin-memory` POST action;
+  the command bar only points the operator to the correct local section.
+- README, local app docs, and the operating summary now describe `/memory` as
+  an operator command surface rather than only a memory inventory.
+- Non-claims: this does not pin memory on GET, browse the raw filesystem,
+  approve work, execute work, commit, push, create PRs, deploy, call
+  providers, fetch GitHub status, use the network, or mutate external systems.
+  It reads existing local memory rows, operator-note artifacts, task
+  recommendations, and saved workspace state only.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Artifact Command Bar
 
 - Added a read-only `Artifact Command Bar` to `/artifacts?path=...`. It shows

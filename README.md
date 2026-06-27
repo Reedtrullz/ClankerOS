@@ -272,7 +272,10 @@ continue. The read-only `Search Command Bar` starts each search with result
 counts by category, the first result to open, its target link, and the
 no-write/no-network/no-raw-filesystem boundary. Use `/memory`, `/skills`, and
 `/profiles` for local readbacks of memory entries, generated skills/usage,
-and inactive future provider-routing lanes. `/profiles` now shows both
+and inactive future provider-routing lanes. The read-only `Memory Command Bar`
+starts `/memory` with entry counts, proposed-memory pin posture, first target,
+one next local action, saved workspace context, and no-write/provider/network/
+external-effect boundaries before the longer memory lists. `/profiles` now shows both
 `.clanker/profiles.yml` names and SQLite profile storage rows, including
 labels, modes, cost tiers, write posture, adapter status, and `use_for`
 labels without enabling providers.

@@ -4623,6 +4623,20 @@ def test_local_app_routes_render_modern_workflow_and_health(
         artifact_path=str(note_path),
     )
     memory_before_pin = render_local_app_route(tmp_path, "/memory")
+    assert "Memory Command Bar" in memory_before_pin.body
+    assert "data-memory-command-bar='true'" in memory_before_pin.body
+    assert "memory_command_total_entries</dt><dd>1" in memory_before_pin.body
+    assert "memory_command_proposed_entries</dt><dd>1" in memory_before_pin.body
+    assert "memory_command_first_target</dt><dd>memory_resume_anchor" in memory_before_pin.body
+    assert "memory_command_next_action</dt><dd>Pin first proposed memory" in memory_before_pin.body
+    assert "memory_command_target_surface</dt><dd><a href='#memory-proposed'>Proposed Memories</a>" in memory_before_pin.body
+    assert "memory_command_reason</dt><dd>proposed_memory_waiting_for_operator" in memory_before_pin.body
+    assert "memory_command_workspace_project</dt><dd>first-target" in memory_before_pin.body
+    assert f"memory_command_workspace_goal</dt><dd>{created_goal_id}" in memory_before_pin.body
+    assert "memory_command_pin_memory_available</dt><dd>true" in memory_before_pin.body
+    assert "memory_command_write_on_get</dt><dd>false" in memory_before_pin.body
+    assert "memory_command_network_actions_taken</dt><dd>0" in memory_before_pin.body
+    assert "memory_command_external_effects_created</dt><dd>false" in memory_before_pin.body
     assert "memory_resume_anchor" in memory_before_pin.body
     assert "action='/actions/pin-memory'" in memory_before_pin.body
     pin_result = render_local_app_route(
@@ -5958,6 +5972,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     memory = render_local_app_route(tmp_path, "/memory")
     assert memory.status == 200
     assert "Memory Bank" in memory.body
+    assert "Memory Command Bar" in memory.body
+    assert "data-memory-command-bar='true'" in memory.body
+    assert "memory_command_total_entries</dt><dd>0" in memory.body
+    assert "memory_command_proposed_entries</dt><dd>0" in memory.body
+    assert "memory_command_next_action</dt><dd>Create goal context" in memory.body
+    assert "memory_command_target_surface</dt><dd><a href='/goals'>/goals</a>" in memory.body
+    assert "memory_command_pin_memory_available</dt><dd>false" in memory.body
+    assert "memory_command_write_on_get</dt><dd>false" in memory.body
+    assert "memory_command_provider_calls_taken</dt><dd>0" in memory.body
+    assert "memory_command_network_actions_taken</dt><dd>0" in memory.body
+    assert "memory_command_external_effects_created</dt><dd>false" in memory.body
     assert "Project Memories" in memory.body
     assert "Generated Memories" in memory.body
     assert "Future Work" in memory.body
