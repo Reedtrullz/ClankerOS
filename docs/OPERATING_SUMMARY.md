@@ -738,7 +738,12 @@ Core layers for the bootstrap:
   one next action, target surface, and the same confirmed local action form
   when available; when no saved Goal exists, the continuation falls back to
   first-run progress and can render the next confirmation-required first-run
-  form inline; GET pages render an escaped `Action Notice` banner when reached through a notice link;
+  form inline. Confirmed result pages also render an `Action Result Workflow
+  Map` from refreshed first-run or saved-Goal state with the current gate,
+  next action, next local surface, progress counts, and manual-publish
+  boundary while preserving the no-write-on-GET and no-provider/no-network/
+  no-push/no-PR/no-deploy boundary. GET pages render an escaped
+  `Action Notice` banner when reached through a notice link;
   action error pages render the attempted action, submitted payload, error
   details, and a no-action-completed non-claim. It does not push, create PRs,
   deploy, call providers, execute arbitrary commands, or use the network

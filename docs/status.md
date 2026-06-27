@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Confirmed local action result pages now include an `Action Result Workflow
+  Map` after the continuation block, showing first-run or saved-Goal gate
+  progress, current gate, next action, next local surface, and manual publish
+  boundary without granting new action authority.
 - Goal pages now expose a top-of-page `Goal CI Handoff` after the Workflow Map,
   showing project-scoped GitHub Actions proof posture, exact `gh run list` /
   `gh run view` command templates, and same-page proof recording targets

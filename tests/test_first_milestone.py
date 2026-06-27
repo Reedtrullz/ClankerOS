@@ -6424,6 +6424,22 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "id='action-continuation-first-run-form'" in register_result.body
     assert "action='/actions/create-goal'" in register_result.body
     assert "name='project_id' value='clankeros'" in register_result.body
+    assert "Action Result Workflow Map" in register_result.body
+    assert "data-action-result-workflow-map='true'" in register_result.body
+    assert "action_result_workflow_status</dt><dd>first_run" in register_result.body
+    assert "action_result_workflow_current_gate</dt><dd>create_first_goal" in register_result.body
+    assert "action_result_workflow_next_action</dt><dd>Create first goal" in register_result.body
+    assert (
+        "action_result_workflow_next_surface</dt><dd>"
+        "<a href='#action-continuation-first-run-form'>Action continuation form</a>"
+    ) in register_result.body
+    assert "action_result_workflow_progress</dt><dd>1/5 gates done" in register_result.body
+    assert "action_result_workflow_step: create_project status=done marker=done action=Register project" in register_result.body
+    assert (
+        "action_result_workflow_step: create_first_goal status=current marker=current "
+        "action=Create first goal surface=<a href='#action-continuation-first-run-form'>Action continuation form</a>"
+    ) in register_result.body
+    assert "action_result_workflow_safety: read-only continuation map after confirmed local action" in register_result.body
     workspace_path = tmp_path / ".clanker" / "app" / "workspace.json"
     assert workspace_path.exists()
     registered_workspace = json.loads(workspace_path.read_text(encoding="utf-8"))
@@ -9864,7 +9880,29 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "action_continuation_action_form_available</dt><dd>true" in commit_request.body
     assert "action_continuation_safety_boundary</dt><dd>confirmed_local_action_only" in commit_request.body
     assert "data-action-continuation-action='true'" in commit_request.body
+    assert "id='action-continuation-current-action'" in commit_request.body
     assert "action='/actions/approve-coder-commit'" in commit_request.body
+    assert "Action Result Workflow Map" in commit_request.body
+    assert "data-action-result-workflow-map='true'" in commit_request.body
+    assert "action_result_workflow_status</dt><dd>available" in commit_request.body
+    assert "action_result_workflow_current_gate</dt><dd>commit_approval" in commit_request.body
+    assert "action_result_workflow_next_action</dt><dd>Approve commit" in commit_request.body
+    assert (
+        "action_result_workflow_next_surface</dt><dd>"
+        "<a href='#action-continuation-current-action'>Action continuation form</a>"
+    ) in commit_request.body
+    assert "action_result_workflow_progress</dt><dd>9/15 gates done" in commit_request.body
+    assert "data-action-result-workflow-gate='commit_approval' data-gate-status='pending' data-gate-marker='current' data-gate-action='Approve commit'" in commit_request.body
+    assert (
+        "action_result_workflow_gate: commit_approval status=pending marker=current "
+        "action=Approve commit surface=<a href='#action-continuation-current-action'>Action continuation form</a>"
+    ) in commit_request.body
+    assert (
+        f"action_result_workflow_gate: local_commit status=waiting marker=waiting "
+        f"action=Commit approved worktree surface=<a href='/goals/{result.goal_id}#goal-next-action'>Goal action form</a>"
+    ) in commit_request.body
+    assert "action_result_workflow_manual_boundary</dt><dd>manual_publish_outside_clankeros" in commit_request.body
+    assert "action_result_workflow_safety: read-only continuation map after confirmed local action" in commit_request.body
     commit_approvals = [
         item
         for item in list_coder_worktree_commit_approvals(

@@ -19699,6 +19699,7 @@ def _action_result_page(
             "<h2>Result Fields</h2>",
             _kv(_action_result_rows(root, result)),
             _action_result_continuation_section(root, location, message),
+            _action_result_workflow_map_section(root),
             "<p class='muted'>This page is a local readback only. Follow the next-page link after checking the payload, artifacts, and safety boundary.</p>",
             "</section>",
         ]
@@ -19799,7 +19800,7 @@ def _action_result_continuation_section(root: Path, location: str, message: str)
                 ]
             ),
             (
-                "<details class='action-continuation-action' data-action-continuation-action='true'>"
+                "<details id='action-continuation-current-action' class='action-continuation-action' data-action-continuation-action='true'>"
                 "<summary>Run Next Local Action</summary>"
                 "<p class='muted'>This reuses the current Goal page action form. Confirmation is required before any local write.</p>"
                 f"{action_form}"
@@ -19914,6 +19915,276 @@ def _action_result_first_run_continuation(
             "</section>",
         ]
     )
+
+
+def _action_result_workflow_map_section(root: Path) -> str:
+    try:
+        storage = _storage(root)
+        workspace = _load_workspace_state(root)
+    except Exception:
+        return "".join(
+            [
+                "<section class='action-result-workflow-map' data-action-result-workflow-map='true'><h2>Action Result Workflow Map</h2>",
+                _kv(
+                    [
+                        ("action_result_workflow_status", "state_unavailable"),
+                        ("action_result_workflow_write_on_get", "false"),
+                        ("action_result_workflow_external_effects_created", "false"),
+                    ]
+                ),
+                "</section>",
+            ]
+        )
+
+    goal_id = str(workspace.get("open_goal") or "").strip()
+    if not goal_id:
+        return _action_result_first_run_workflow_map(root, storage, workspace)
+
+    state = _goal_state(root, storage, goal_id)
+    goal = state.get("goal")
+    if goal is None:
+        return "".join(
+            [
+                "<section class='action-result-workflow-map' data-action-result-workflow-map='true'><h2>Action Result Workflow Map</h2>",
+                _kv(
+                    [
+                        ("action_result_workflow_status", "missing_goal"),
+                        ("action_result_workflow_saved_goal", goal_id),
+                        ("action_result_workflow_write_on_get", "false"),
+                        ("action_result_workflow_provider_calls_taken", "0"),
+                        ("action_result_workflow_network_actions_taken", "0"),
+                        ("action_result_workflow_external_effects_created", "false"),
+                    ]
+                ),
+                "</section>",
+            ]
+        )
+
+    phase = _goal_current_phase(state)
+    next_action = _goal_next_action(root, state)
+    action_form_available = bool(_goal_next_action_form(state, next_action))
+    gates, counts, current_gate = _goal_workflow_gate_summary(root, state, next_action)
+    done = counts.get("done", 0)
+    pending = counts.get("pending", 0)
+    waiting = counts.get("waiting", 0)
+    total = len(gates)
+    items: list[str] = []
+    gate_lines: list[str] = []
+    next_surface: str | SafeHtml = _goal_continuation_link(
+        next_action.href,
+        next_action.href,
+    )
+    for index, (name, status) in enumerate(gates, start=1):
+        marker = "current" if name == current_gate else status
+        is_current = name == current_gate
+        action, surface = _action_result_goal_gate_action(
+            goal.id,
+            name,
+            is_current=is_current,
+            next_action=next_action,
+            action_form_available=action_form_available,
+        )
+        if is_current:
+            next_surface = surface
+        label = name.replace("_", " ")
+        gate_lines.append(
+            f"action_result_workflow_gate: {_e(name)} status={_e(status)} "
+            f"marker={_e(marker)} action={_e(action)} surface={surface}"
+        )
+        items.append(
+            "<li "
+            f"data-action-result-workflow-gate='{_e(name)}' "
+            f"data-gate-status='{_e(status)}' "
+            f"data-gate-marker='{_e(marker)}' "
+            f"data-gate-action='{_e(action)}'>"
+            f"<span class='workflow-map-index'>{index}</span> "
+            f"<strong>{_e(label)}</strong> "
+            f"status={_e(status)} marker={_e(marker)} "
+            f"action={_e(action)} surface={surface}</li>"
+        )
+    manual_boundary = (
+        "manual_publish_outside_clankeros"
+        if any(name == "manual_publish" for name, _ in gates)
+        else "none"
+    )
+    return "".join(
+        [
+            "<section class='action-result-workflow-map panel' data-action-result-workflow-map='true'><h2>Action Result Workflow Map</h2>",
+            "<p class='muted'>Where this confirmed local action leaves the saved Goal workflow.</p>",
+            _kv(
+                [
+                    ("action_result_workflow_status", "available"),
+                    (
+                        "action_result_workflow_goal",
+                        SafeHtml(f"<a href='/goals/{quote(goal.id)}'>{_e(goal.id)}</a>"),
+                    ),
+                    ("action_result_workflow_project", goal.project_id),
+                    ("action_result_workflow_phase", phase),
+                    ("action_result_workflow_current_gate", current_gate),
+                    ("action_result_workflow_next_action", next_action.action),
+                    ("action_result_workflow_next_surface", next_surface),
+                    ("action_result_workflow_progress", f"{done}/{total} gates done"),
+                    ("action_result_workflow_done_count", str(done)),
+                    ("action_result_workflow_pending_count", str(pending)),
+                    ("action_result_workflow_waiting_count", str(waiting)),
+                    ("action_result_workflow_action_form_available", str(action_form_available).lower()),
+                    ("action_result_workflow_manual_boundary", manual_boundary),
+                    ("action_result_workflow_source", "saved_workspace_goal_after_action"),
+                    ("action_result_workflow_write_on_get", "false"),
+                    ("action_result_workflow_provider_calls_taken", "0"),
+                    ("action_result_workflow_network_actions_taken", "0"),
+                    ("action_result_workflow_external_effects_created", "false"),
+                ]
+            ),
+            "<ol class='workflow-map-rail action-result-workflow-rail'>",
+            "".join(items),
+            "</ol>",
+            _ul(
+                gate_lines
+                + ["action_result_workflow_safety: read-only continuation map after confirmed local action"]
+            ),
+            "</section>",
+        ]
+    )
+
+
+def _action_result_goal_gate_action(
+    goal_id: str,
+    gate: str,
+    *,
+    is_current: bool,
+    next_action: GoalNextAction,
+    action_form_available: bool,
+) -> tuple[str, SafeHtml | str]:
+    if is_current:
+        if action_form_available:
+            return next_action.action, _goal_continuation_link(
+                "#action-continuation-current-action",
+                "Action continuation form",
+            )
+        return next_action.action, _goal_continuation_link(
+            next_action.href,
+            next_action.href,
+        )
+    action, href, label = _GOAL_CONTINUATION_GATE_ACTIONS.get(
+        gate,
+        ("Inspect gate", f"/goals/{quote(goal_id)}", "Goal page"),
+    )
+    if href == "outside_clankeros":
+        return action, "outside_clankeros"
+    if href == "#goal-next-action":
+        href = f"/goals/{quote(goal_id)}#goal-next-action"
+        label = "Goal action form"
+    return action, _goal_continuation_link(href, label)
+
+
+def _action_result_first_run_workflow_map(
+    root: Path,
+    storage: Storage,
+    workspace: dict[str, str],
+) -> str:
+    progress = _first_run_progress(root, storage)
+    current_step = str(progress["current_step"])
+    done = 0
+    pending = 0
+    items: list[str] = []
+    step_lines: list[str] = []
+    next_surface: str | SafeHtml = "none"
+    for index, (name, label) in enumerate(FIRST_RUN_WORKFLOW_STEPS, start=1):
+        status = _first_run_step_status(progress, name)
+        marker = "current" if name == current_step else status
+        if status == "done":
+            done += 1
+        elif name == current_step:
+            pending += 1
+        action, surface = _action_result_first_run_step_action(name, label, progress)
+        if name == current_step:
+            next_surface = surface
+        step_lines.append(
+            f"action_result_workflow_step: {_e(name)} status={_e(status)} "
+            f"marker={_e(marker)} action={_e(action)} surface={surface}"
+        )
+        items.append(
+            "<li "
+            f"data-action-result-workflow-gate='{_e(name)}' "
+            f"data-gate-status='{_e(status)}' "
+            f"data-gate-marker='{_e(marker)}' "
+            f"data-gate-action='{_e(action)}'>"
+            f"<span class='workflow-map-index'>{index}</span> "
+            f"<strong>{_e(label)}</strong> "
+            f"status={_e(status)} marker={_e(marker)} "
+            f"action={_e(action)} surface={surface}</li>"
+        )
+    total = len(FIRST_RUN_WORKFLOW_STEPS)
+    waiting = max(total - done - pending, 0)
+    if next_surface == "none":
+        next_surface = SafeHtml("<a href='/goals'>/goals</a>")
+    return "".join(
+        [
+            "<section class='action-result-workflow-map panel' data-action-result-workflow-map='true'><h2>Action Result Workflow Map</h2>",
+            "<p class='muted'>Where this confirmed local action leaves first-run setup.</p>",
+            _kv(
+                [
+                    ("action_result_workflow_status", "first_run"),
+                    ("action_result_workflow_current_gate", current_step),
+                    ("action_result_workflow_next_action", str(progress["next_action"])),
+                    ("action_result_workflow_next_surface", next_surface),
+                    ("action_result_workflow_progress", f"{done}/{total} gates done"),
+                    ("action_result_workflow_done_count", str(done)),
+                    ("action_result_workflow_pending_count", str(pending)),
+                    ("action_result_workflow_waiting_count", str(waiting)),
+                    ("action_result_workflow_project", str(progress["default_project"])),
+                    ("action_result_workflow_saved_project", str(workspace.get("open_project") or "none")),
+                    ("action_result_workflow_saved_goal", str(workspace.get("open_goal") or "none") or "none"),
+                    ("action_result_workflow_source", "first_run_progress_after_action"),
+                    ("action_result_workflow_write_on_get", "false"),
+                    ("action_result_workflow_provider_calls_taken", "0"),
+                    ("action_result_workflow_network_actions_taken", "0"),
+                    ("action_result_workflow_external_effects_created", "false"),
+                ]
+            ),
+            "<ol class='workflow-map-rail action-result-workflow-rail'>",
+            "".join(items),
+            "</ol>",
+            _ul(
+                step_lines
+                + ["action_result_workflow_safety: read-only continuation map after confirmed local action"]
+            ),
+            "</section>",
+        ]
+    )
+
+
+def _action_result_first_run_step_action(
+    step: str,
+    label: str,
+    progress: dict[str, Any],
+) -> tuple[str, SafeHtml | str]:
+    goal_id = str(progress.get("goal_id") or "")
+    if step == str(progress.get("current_step") or "") and step in {
+        "create_project",
+        "create_first_goal",
+    }:
+        return label, _goal_continuation_link(
+            "#action-continuation-first-run-form",
+            "Action continuation form",
+        )
+    if step == "create_project":
+        return "Register project", _goal_continuation_link(
+            "/#first-run-create-project",
+            "Create Project",
+        )
+    if step == "create_first_goal":
+        return "Create first goal", _goal_continuation_link(
+            "/#first-run-create-goal",
+            "Create First Goal",
+        )
+    if goal_id:
+        return label, _goal_continuation_link(
+            f"/goals/{quote(goal_id)}#goal-next-action",
+            "Goal action form",
+        )
+    return label, _goal_continuation_link("/goals", "/goals")
 
 
 def _action_result_rows(root: Path, result: Any) -> list[tuple[str, str | SafeHtml]]:

@@ -850,9 +850,14 @@ action form when available, so the operator can keep moving without guessing
 which page to open next. If there is no saved Goal yet, the continuation uses
 first-run progress instead and can render the next confirmed first-run form
 inline, such as `create-goal` after `register-project`, without writing on
-GET. Following the next-page link renders an `Action
-Notice` banner on the target GET page, preserving the action result context
-while the operator reviews the dashboard, run, delegation, or approval surface.
+GET. The result page also renders an `Action Result Workflow Map` from the
+same refreshed state: it shows the first-run or saved-Goal gate rail, current
+gate, next action, next surface, progress counts, and explicit
+`manual_publish` boundary without creating actions, calling providers, using
+non-loopback network, pushing, creating PRs, or deploying. Following the
+next-page link renders an `Action Notice` banner on the target GET page,
+preserving the action result context while the operator reviews the dashboard,
+run, delegation, or approval surface.
 Failed actions render `Action Error Details` with the
 attempted action, error, submitted payload, and a clear no-action-completed
 message so operators can fix inputs without guessing what happened.

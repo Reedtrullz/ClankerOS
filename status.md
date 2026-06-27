@@ -1,5 +1,41 @@
 # Status
 
+## 2026-06-28 Action Result Workflow Map
+
+- Added an `Action Result Workflow Map` to successful local app action result
+  pages after the continuation block, so a confirmed local action now leaves
+  the operator with both the immediate next form and the surrounding workflow
+  rail.
+- The map has two modes: first-run state before a saved Goal exists, and the
+  refreshed saved-Goal workflow once a Goal is saved. It reports current gate,
+  next action, next local surface, gate progress, done/pending/waiting counts,
+  and the manual publication boundary when present.
+- The current gate points to the inline action-result continuation form when a
+  confirmed browser action is available. Future saved-Goal gates point to their
+  existing local surfaces, and `manual_publish` remains explicitly outside
+  ClankerOS.
+- Updated README, local app docs, operating summary, status focus, and
+  milestone assertions for first-run and fixture-backed saved-Goal action
+  result pages.
+- Non-claims: this does not write workspace state on GET, create new actions,
+  approve work, run work, call providers, fetch GitHub, poll network services,
+  commit, push, create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "first_run_browser_actions_persist_resume_workspace or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 513 deselected`
+  - `python3 -m compileall -q agent_os tests`
+    -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-action-result-map-smoke app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation
+    counters at `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-action-result-map-demo-smoke app-demo-smoke-test`
+    -> passed on a temporary root, including fixture-backed route snippets,
+    with provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed after docs/status updates
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
 ## 2026-06-28 Goal CI Handoff
 
 - Added a top-of-page `Goal CI Handoff` to `/goals/<goal_id>` after the Goal

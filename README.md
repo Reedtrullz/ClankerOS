@@ -679,7 +679,11 @@ refreshed saved goal, including current phase, one next action, target page,
 and the same confirmed local action form when available. Before a saved Goal
 exists, that block follows first-run progress instead and can render the
 confirmed next first-run form inline, such as `create-goal` after
-`register-project`. Following the
+`register-project`. The same result page now includes an
+`Action Result Workflow Map` that shows the first-run or saved-Goal gate rail,
+current gate, next action, next local surface, progress counts, and explicit
+manual-publish boundary after the confirmed action, without writing on GET or
+adding provider, network, push, PR, or deploy authority. Following the
 next-page link renders an `Action Notice` banner on the target page so the
 operator keeps context. The dashboard and `/health`
 surface the same warning posture for non-local binds, dirty tracked files,
