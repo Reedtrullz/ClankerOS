@@ -175,13 +175,17 @@ existing local state. The cockpit also includes a confirmed local `Start
 Another Goal` form backed by the existing `create-goal` action, so an operator
 can add the next goal for a registered project without switching to the CLI.
 Use `/goals/<goal_id>` as the
-goal-centered workbench: current phase, next action, next recommendation,
-progress, timeline, activity log, goal risk, completion criteria, evidence,
-delegations, runs, approvals, artifacts, a typed Goal Artifact Explorer,
-memory, skills used, git status, operator notes, a goal-scoped resume
-snapshot, and remaining work. The page auto-refreshes by local polling, pauses
-while the operator is editing a form or the tab is hidden, and stays
-local-only. The Next Recommendation section names whether the recommendation
+goal-centered workbench: a Goal Command Bar, current phase, next action, next
+recommendation, progress, timeline, activity log, goal risk, completion
+criteria, evidence, delegations, runs, approvals, artifacts, a typed Goal
+Artifact Explorer, memory, skills used, git status, operator notes, a
+goal-scoped resume snapshot, and remaining work. The page auto-refreshes by
+local polling, pauses while the operator is editing a form or the tab is
+hidden, and stays local-only. The Goal Command Bar near the top condenses current phase, one
+primary action, target local surface, progress, waiting counts, resume route,
+latest project-scoped CI proof state, and zero-effect boundary so the
+operator can choose the next click without scrolling. The Next Recommendation
+section names whether the recommendation
 comes from an open task recommendation or from current phase plus local goal
 records, then points at the local target surface without writing on GET.
 The Goal Section Index near the top links to stable in-page anchors for the

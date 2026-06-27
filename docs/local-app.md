@@ -102,7 +102,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   or providers. The Current Phase banner is the primary operator state readback:
   it shows the large phase label, reason, operator attention cue, next surface,
   latest activity, and zero-effect boundary so the operator knows what is
-  happening without opening the CLI. The Next Recommendation section explains
+  happening without opening the CLI. A read-only `Goal Command Bar` appears
+  above the detailed cards with the current phase, one primary action, target
+  local surface, progress, open/waiting counts, resume route, project-scoped CI
+  proof state, and write-on-GET/network/external-effect boundaries. The Next
+  Recommendation section explains
   whether the Goal is following an open task recommendation or deriving the
   action from current phase and local goal records, then names the target
   local surface and zero-effect boundary without writing on GET. Skills Used
@@ -168,7 +172,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   context-pack, handoff, coder prep, worktree, review, commit, publication,
   and manual publish gates without taking any action.
 - `/goals/<goal_id>` includes `Goal Section Index`, a read-only in-page map
-  of stable anchors for summary, live state, current phase, next action, next
+  of stable anchors for summary, live state, command bar, current phase, next
+  action, next
   recommendation, timeline, artifacts, memory, skills, verification evidence,
   notes, and remaining work. The index writes nothing on GET and only helps
   the operator jump around the long Goal workbench.

@@ -1,5 +1,31 @@
 # Status
 
+## 2026-06-27 Goal Command Bar
+
+- Added a read-only `Goal Command Bar` near the top of `/goals/<goal_id>`.
+  It condenses the current phase, one primary action, target local surface,
+  progress, open/waiting counts, `/resume`, project-scoped CI proof state,
+  and safety boundary into one scan-friendly panel before the longer Goal
+  workbench sections.
+- Updated the `Goal Section Index` so the command bar has a stable jump
+  anchor. README, local app docs, and the operating summary now document the
+  command bar as the first quick readback for daily Goal operation.
+- Non-claims: this does not write state on GET, run work, approve gates, fetch
+  GitHub status, push, create PRs, deploy, call providers, or mutate external
+  systems. It only reads existing local goal, approval, recommendation,
+  incident, workspace, and CI evidence state.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Home Start Here Cockpit
 
 - Added a read-only `Start Here` cockpit near the top of `/` so the daily

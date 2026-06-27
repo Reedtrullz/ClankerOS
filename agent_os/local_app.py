@@ -2879,6 +2879,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             ),
             "</section>",
             _goal_section_index(),
+            _goal_command_bar(root, state, phase, next_action),
             _goal_phase_banner(root, state, phase, next_action),
             _goal_next_action_card(state, next_action),
             _goal_next_recommendation_section(state, next_action),
@@ -2960,6 +2961,7 @@ def _goal_section_index() -> str:
     sections = [
         ("Summary", "goal-summary"),
         ("Live state", "goal-live-state"),
+        ("Command bar", "goal-command-bar"),
         ("Current phase", "goal-current-phase"),
         ("Next action", "goal-next-action"),
         ("Next recommendation", "goal-next-recommendation"),
@@ -3000,6 +3002,94 @@ def _goal_section_index() -> str:
         )
         + _ul(links)
         + "</section>"
+    )
+
+
+def _goal_command_bar(
+    root: Path,
+    state: dict[str, Any],
+    phase: str,
+    next_action: GoalNextAction,
+) -> str:
+    goal = state["goal"]
+    open_incidents = sum(1 for row in state["incidents"] if row["status"] == "open")
+    open_recommendations = sum(
+        1 for row in state["recommendations"] if row["status"] == "open"
+    )
+    open_tasks = sum(
+        1 for task in state["tasks"] if task.status not in {"completed", "cancelled"}
+    )
+    pending_approvals = (
+        _count_status(state["worktree_approvals"], "pending_operator_approval")
+        + _count_status(state["commit_approvals"], "pending_operator_approval")
+        + _count_status(state["publications"], "pending_operator_approval")
+    )
+    waiting_items = open_incidents + open_recommendations + pending_approvals
+    latest_ci = _latest_ci_evidence_record(root, project_id=goal.project_id)
+    ci_status = "missing"
+    ci_source = "none"
+    if latest_ci is not None:
+        ci_source, ci_record = latest_ci
+        ci_status = str(ci_record.status)
+    attention = _goal_operator_attention(phase, next_action)
+    progress = _goal_progress_label(state)
+    return "".join(
+        [
+            "<section id='goal-command-bar' class='panel goal-command-bar' data-goal-command-bar='true'><h2>Goal Command Bar</h2>",
+            "<p class='muted'>The shortest useful readback for this goal: state, click, waiting work, proof, and safety boundary.</p>",
+            _kv(
+                [
+                    ("goal_command_bar_mode", "goal"),
+                    ("goal_command_bar_goal", goal.id),
+                    ("goal_command_bar_phase", phase),
+                    ("goal_command_bar_attention", attention),
+                    ("goal_command_bar_primary_action", next_action.action),
+                    (
+                        "goal_command_bar_primary_surface",
+                        SafeHtml(
+                            f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
+                        ),
+                    ),
+                    ("goal_command_bar_reason", next_action.reason),
+                    ("goal_command_bar_progress", progress),
+                    ("goal_command_bar_open_tasks", str(open_tasks)),
+                    ("goal_command_bar_waiting_items", str(waiting_items)),
+                    ("goal_command_bar_pending_approvals", str(pending_approvals)),
+                    ("goal_command_bar_open_incidents", str(open_incidents)),
+                    ("goal_command_bar_open_recommendations", str(open_recommendations)),
+                    ("goal_command_bar_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+                    ("goal_command_bar_ci_status", ci_status),
+                    ("goal_command_bar_ci_source", ci_source),
+                    (
+                        "goal_command_bar_ci_surface",
+                        SafeHtml("<a href='/verification'>/verification</a>"),
+                    ),
+                    ("goal_command_bar_write_on_get", "false"),
+                    ("goal_command_bar_network_actions_taken", "0"),
+                    ("goal_command_bar_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_command_now: {_e(attention)}",
+                    f"goal_command_click: <a href='{_e(next_action.href)}'>{_e(next_action.action)}</a>",
+                    f"goal_command_progress: {_e(progress)}",
+                    (
+                        "goal_command_waiting: "
+                        f"approvals={pending_approvals} "
+                        f"incidents={open_incidents} "
+                        f"recommendations={open_recommendations}"
+                    ),
+                    "goal_command_resume: <a href='/resume'>/resume</a>",
+                    (
+                        "goal_command_ci: "
+                        f"status={_e(ci_status)} source={_e(ci_source)} "
+                        "surface=<a href='/verification'>/verification</a>"
+                    ),
+                ]
+            ),
+            "</section>",
+        ]
     )
 
 
@@ -9761,6 +9851,10 @@ def _html_page(
     .hero p {{ color:var(--muted); max-width:760px; }}
     .banner, .warning {{ border:1px solid var(--line); background:var(--panel); padding:12px; margin:12px 0; }}
     .panel {{ border:1px solid var(--line); background:var(--panel); padding:12px; }}
+    .goal-command-bar {{ border-left:4px solid var(--accent); }}
+    .goal-command-bar dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
+    .goal-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:8px; }}
+    .goal-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .warning {{ border-color:#efc36a; color:var(--warn); }}
     .error {{ color:var(--error); font-weight:600; }}
     .muted {{ color:var(--muted); }}

@@ -5478,6 +5478,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_section_index_external_effects_created</dt><dd>false" in goal.body
     assert "href='#goal-summary'" in goal.body
     assert "href='#goal-current-phase'" in goal.body
+    assert "href='#goal-command-bar'" in goal.body
     assert "href='#goal-next-action'" in goal.body
     assert "href='#goal-next-recommendation'" in goal.body
     assert "href='#goal-timeline'" in goal.body
@@ -5485,11 +5486,38 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-verification-evidence'" in goal.body
     assert "href='#goal-remaining-work'" in goal.body
     assert "id='goal-summary'" in goal.body
+    assert "id='goal-command-bar'" in goal.body
     assert "id='goal-current-phase'" in goal.body
     assert "id='goal-timeline'" in goal.body
     assert "id='goal-artifact-explorer'" in goal.body
     assert "id='goal-verification-evidence'" in goal.body
     assert "id='goal-remaining-work'" in goal.body
+    assert "Goal Command Bar" in goal.body
+    assert "data-goal-command-bar='true'" in goal.body
+    assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
+    assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
+    assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
+    assert f"goal_command_bar_primary_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
+    assert "goal_command_bar_reason</dt><dd>reviewed_run=" in goal.body
+    assert "goal_command_bar_progress</dt><dd>0/1 tasks completed" in goal.body
+    assert "goal_command_bar_open_tasks</dt><dd>1" in goal.body
+    assert "goal_command_bar_waiting_items</dt><dd>1" in goal.body
+    assert "goal_command_bar_pending_approvals</dt><dd>1" in goal.body
+    assert "goal_command_bar_open_incidents</dt><dd>0" in goal.body
+    assert "goal_command_bar_open_recommendations</dt><dd>0" in goal.body
+    assert "goal_command_bar_resume_surface</dt><dd><a href='/resume'>/resume</a>" in goal.body
+    assert "goal_command_bar_ci_status</dt><dd>success" in goal.body
+    assert "goal_command_bar_ci_source</dt><dd>direct_public_snapshot" in goal.body
+    assert "goal_command_bar_ci_surface</dt><dd><a href='/verification'>/verification</a>" in goal.body
+    assert "goal_command_bar_write_on_get</dt><dd>false" in goal.body
+    assert "goal_command_bar_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_command_bar_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_command_now: Act: Create commit request" in goal.body
+    assert f"goal_command_click: <a href='/runs/{result.coder_worktree_run_id}'>Create commit request</a>" in goal.body
+    assert "goal_command_progress: 0/1 tasks completed" in goal.body
+    assert "goal_command_waiting: approvals=1 incidents=0 recommendations=0" in goal.body
+    assert "goal_command_resume: <a href='/resume'>/resume</a>" in goal.body
+    assert "goal_command_ci: status=success source=direct_public_snapshot surface=<a href='/verification'>/verification</a>" in goal.body
     assert "Current Phase" in goal.body
     assert "Ready to commit" in goal.body
     assert "current_phase_banner</dt><dd>Ready to commit" in goal.body

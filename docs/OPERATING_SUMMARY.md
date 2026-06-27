@@ -168,6 +168,10 @@ Core layers for the bootstrap:
   bar and a large Current Phase banner that explains the phase reason,
   operator attention cue, next action surface, latest activity, and zero-effect
   boundary without requiring the CLI. Goal detail pages also include a
+  read-only `Goal Command Bar` near the top that condenses phase, one primary
+  action, target local surface, progress, waiting counts, `/resume`, latest
+  project-scoped CI proof status, and write-on-GET/network/external-effect
+  boundaries into one operator scan. Goal detail pages also include a
   first-class `Next Recommendation` section that identifies whether the current
   recommendation came from an open task recommendation or was derived from
   current phase and local goal records, points at the target local surface, and
@@ -176,7 +180,8 @@ Core layers for the bootstrap:
   pauses while the operator is editing a form or the tab is hidden; it does not
   fetch GitHub status, call providers, push, create PRs, deploy, or mutate
   external systems. They also include a read-only `Goal Section Index` with
-  stable in-page anchors for the major Goal surfaces, so operators can jump
+  stable in-page anchors including the command bar and the major Goal surfaces,
+  so operators can jump
   through a long Goal workbench without leaving the page or triggering writes.
   They also include a confirmed
   `save-goal-note` form that appends local operator resume context to the
