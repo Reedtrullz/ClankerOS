@@ -11424,7 +11424,131 @@ def _action_result_page(
             _kv(_submitted_form_rows(form)),
             "<h2>Result Fields</h2>",
             _kv(_action_result_rows(root, result)),
+            _action_result_continuation_section(root, location, message),
             "<p class='muted'>This page is a local readback only. Follow the next-page link after checking the payload, artifacts, and safety boundary.</p>",
+            "</section>",
+        ]
+    )
+
+
+def _action_result_continuation_section(root: Path, location: str, message: str) -> str:
+    next_href = f"{location}?notice={quote(message)}"
+    try:
+        storage = _storage(root)
+        workspace = _load_workspace_state(root)
+    except Exception:
+        return "".join(
+            [
+                "<section class='action-continuation' data-action-continuation='true'><h2>Action Continuation</h2>",
+                _kv(
+                    [
+                        ("action_continuation_status", "state_unavailable"),
+                        ("action_continuation_next_page", SafeHtml(f"<a href='{_e(next_href)}'>{_e(location)}</a>")),
+                        ("action_continuation_action_form_available", "false"),
+                        ("action_continuation_write_on_get", "false"),
+                        ("action_continuation_external_effects_created", "false"),
+                    ]
+                ),
+                "</section>",
+            ]
+        )
+
+    goal_id = str(workspace.get("open_goal") or "").strip()
+    if not goal_id:
+        return "".join(
+            [
+                "<section class='action-continuation' data-action-continuation='true'><h2>Action Continuation</h2>",
+                _kv(
+                    [
+                        ("action_continuation_status", "no_saved_goal"),
+                        ("action_continuation_next_page", SafeHtml(f"<a href='{_e(next_href)}'>{_e(location)}</a>")),
+                        ("action_continuation_action_form_available", "false"),
+                        ("action_continuation_write_on_get", "false"),
+                        ("action_continuation_provider_calls_taken", "0"),
+                        ("action_continuation_network_actions_taken", "0"),
+                        ("action_continuation_external_effects_created", "false"),
+                    ]
+                ),
+                "</section>",
+            ]
+        )
+
+    state = _goal_state(root, storage, goal_id)
+    goal = state.get("goal")
+    if goal is None:
+        return "".join(
+            [
+                "<section class='action-continuation' data-action-continuation='true'><h2>Action Continuation</h2>",
+                _kv(
+                    [
+                        ("action_continuation_status", "missing_goal"),
+                        ("action_continuation_saved_goal", goal_id),
+                        ("action_continuation_next_page", SafeHtml(f"<a href='{_e(next_href)}'>{_e(location)}</a>")),
+                        ("action_continuation_action_form_available", "false"),
+                        ("action_continuation_write_on_get", "false"),
+                        ("action_continuation_provider_calls_taken", "0"),
+                        ("action_continuation_network_actions_taken", "0"),
+                        ("action_continuation_external_effects_created", "false"),
+                    ]
+                ),
+                "</section>",
+            ]
+        )
+
+    phase = _goal_current_phase(state)
+    next_action = _goal_next_action(root, state)
+    action_form = _goal_next_action_form(state, next_action)
+    return "".join(
+        [
+            "<section class='action-continuation' data-action-continuation='true'><h2>Action Continuation</h2>",
+            "<p class='muted'>Continue from the refreshed saved goal state after this local action.</p>",
+            _kv(
+                [
+                    ("action_continuation_status", "available"),
+                    ("action_continuation_source", "saved_workspace_goal_after_action"),
+                    (
+                        "action_continuation_goal",
+                        SafeHtml(f"<a href='/goals/{quote(goal.id)}'>{_e(goal.title or goal.description or goal.id)}</a>"),
+                    ),
+                    ("action_continuation_phase", phase),
+                    ("action_continuation_next_action", next_action.action),
+                    (
+                        "action_continuation_target",
+                        SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"),
+                    ),
+                    ("action_continuation_next_page", SafeHtml(f"<a href='{_e(next_href)}'>{_e(location)}</a>")),
+                    (
+                        "action_continuation_action_form_available",
+                        "true" if action_form else "false",
+                    ),
+                    (
+                        "action_continuation_confirmation_required",
+                        "true" if action_form else "false",
+                    ),
+                    ("action_continuation_safety_boundary", "confirmed_local_action_only"),
+                    ("action_continuation_write_on_get", "false"),
+                    ("action_continuation_provider_calls_taken", "0"),
+                    ("action_continuation_network_actions_taken", "0"),
+                    ("action_continuation_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"action_continuation_now: {_e(_goal_operator_attention(phase, next_action))}",
+                    f"action_continuation_click: <a href='{_e(next_action.href)}'>{_e(next_action.action)}</a>",
+                    f"action_continuation_result_page: <a href='{_e(next_href)}'>{_e(location)}</a>",
+                    "action_continuation_safety: confirmed local actions only",
+                ]
+            ),
+            (
+                "<details class='action-continuation-action' data-action-continuation-action='true'>"
+                "<summary>Run Next Local Action</summary>"
+                "<p class='muted'>This reuses the current Goal page action form. Confirmation is required before any local write.</p>"
+                f"{action_form}"
+                "</details>"
+                if action_form
+                else ""
+            ),
             "</section>",
         ]
     )
@@ -12345,6 +12469,10 @@ def _html_page(
     .operator-focus-action {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .operator-focus-action summary {{ cursor:pointer; font-weight:700; }}
     .operator-focus-action form {{ margin-top:10px; }}
+    .action-continuation {{ border:1px solid var(--line); background:var(--panel); padding:14px; margin:16px 0; }}
+    .action-continuation-action {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
+    .action-continuation-action summary {{ cursor:pointer; font-weight:700; }}
+    .action-continuation-action form {{ margin-top:10px; }}
     section {{ border-bottom:1px solid var(--line); padding:20px 0; }}
     h1 {{ font-size:30px; line-height:1.15; margin:0 0 10px; letter-spacing:0; }}
     h2 {{ font-size:18px; margin:0 0 12px; letter-spacing:0; }}

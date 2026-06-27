@@ -589,11 +589,14 @@ fields plus the safety boundary before resubmitting with `confirm=yes`, so the
 operator can review exactly what will be written before a local artifact or
 approval action runs. Confirmed actions render `Action Result Details` with the
 attempted action, submitted payload, result fields, artifact links when paths
-are returned, a next-page link, and the safety boundary, so the operator can
-review what was written before continuing. Following that next-page link
-renders an `Action Notice` banner on the target GET page, preserving the action
-result context while the operator reviews the dashboard, run, delegation, or
-approval surface. Failed actions render `Action Error Details` with the
+are returned, a next-page link, and the safety boundary. They also render an
+`Action Continuation` block from the refreshed saved goal state, including the
+current phase, one next action, target surface, and the same confirmed local
+action form when available, so the operator can keep moving without guessing
+which page to open next. Following the next-page link renders an `Action
+Notice` banner on the target GET page, preserving the action result context
+while the operator reviews the dashboard, run, delegation, or approval surface.
+Failed actions render `Action Error Details` with the
 attempted action, error, submitted payload, and a clear no-action-completed
 message so operators can fix inputs without guessing what happened.
 

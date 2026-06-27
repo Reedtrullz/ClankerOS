@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-27 Action Result Continuation
+
+- Added an `Action Continuation` block to successful local app action result
+  pages. After a confirmed local action writes artifacts, approvals, or saved
+  workspace state, the result page now reads the refreshed saved goal and
+  shows current phase, one next action, target surface, result next-page link,
+  zero-effect counters, and the same confirmed local action form when that
+  next action is browser-available.
+- This makes result pages part of the daily browser loop instead of a
+  readback-only stop: after `delegate`, for example, the result can point
+  directly at `Generate context pack`; after `coder-commit-request`, it can
+  point directly at `Approve commit`.
+- README, local app docs, and the operating summary now describe confirmed
+  action results as continuation surfaces.
+- Non-claims: this does not add a new action engine, write state on GET,
+  auto-run follow-up work, approve gates, create delegations, create coder
+  prep, commit, push, create PRs, deploy, fetch GitHub status, call providers,
+  use non-loopback network actions, or mutate external systems. It only reads
+  saved local state after a confirmed action and renders existing confirmed
+  local forms when those forms already exist.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "first_run_browser_actions_persist_resume_workspace or goal_next_action_card_exposes_reviewed_commit_request_form" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Operator Focus Action Form
 
 - Promoted the global `Operator Focus` strip from a read-only current-goal

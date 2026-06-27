@@ -478,8 +478,10 @@ Core layers for the bootstrap:
   artifact-producing and approval-producing actions. Confirmation pages render
   the submitted action payload and safety boundary before a confirmed local
   write; confirmed action result pages render the submitted payload, local
-  result fields, artifact links, next-page link, and safety boundary; GET pages
-  render an escaped `Action Notice` banner when reached through a notice link;
+  result fields, artifact links, next-page link, safety boundary, and an
+  `Action Continuation` block from the refreshed saved goal state with phase,
+  one next action, target surface, and the same confirmed local action form
+  when available; GET pages render an escaped `Action Notice` banner when reached through a notice link;
   action error pages render the attempted action, submitted payload, error
   details, and a no-action-completed non-claim. It does not push, create PRs,
   deploy, call providers, execute arbitrary commands, or use the network

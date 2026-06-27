@@ -4791,6 +4791,15 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert delegate_result.status == 200
     assert "subagent_delegation:" in delegate_result.body
     assert "Action Result Details" in delegate_result.body
+    assert "Action Continuation" in delegate_result.body
+    assert "action_continuation_status</dt><dd>available" in delegate_result.body
+    assert "action_continuation_source</dt><dd>saved_workspace_goal_after_action" in delegate_result.body
+    assert "action_continuation_next_action</dt><dd>Generate context pack" in delegate_result.body
+    assert "action_continuation_action_form_available</dt><dd>true" in delegate_result.body
+    assert "action_continuation_confirmation_required</dt><dd>true" in delegate_result.body
+    assert "data-action-continuation-action='true'" in delegate_result.body
+    assert "Run Next Local Action" in delegate_result.body
+    assert "action='/actions/context-pack'" in delegate_result.body
     delegations = storage_after_goal.list_subagent_delegations(created_goal_id)
     assert len(delegations) == 1
     delegation = delegations[0]
@@ -6869,6 +6878,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Result Fields" in commit_request.body
     assert "approval.id" in commit_request.body
     assert f"href='/runs/{result.coder_worktree_run_id}?notice=coder_commit_request" in commit_request.body
+    assert "Action Continuation" in commit_request.body
+    assert "action_continuation_status</dt><dd>available" in commit_request.body
+    assert "action_continuation_next_action</dt><dd>Approve commit" in commit_request.body
+    assert f"action_continuation_target</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in commit_request.body
+    assert "action_continuation_action_form_available</dt><dd>true" in commit_request.body
+    assert "action_continuation_safety_boundary</dt><dd>confirmed_local_action_only" in commit_request.body
+    assert "data-action-continuation-action='true'" in commit_request.body
+    assert "action='/actions/approve-coder-commit'" in commit_request.body
     commit_approvals = [
         item
         for item in list_coder_worktree_commit_approvals(
