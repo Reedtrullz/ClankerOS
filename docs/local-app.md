@@ -359,8 +359,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   read-only `Approval Queue Command Bar` summarizes total pending decisions,
   pending counts by approval type, the first recommended decision, the
   same-page form target, the follow-up after approval, and the zero-effect
-  boundary. Commit and publication rows link back to the relevant run and show
-  the next local-only follow-up action after approval.
+  boundary. A read-only `Approval Decision Brief` expands the first decision
+  into direct delegation/workflow/run links, request and evidence artifacts,
+  the exact form anchor, the post-decision surface, and explicit
+  write/network/external-effect counters. Commit and publication rows link
+  back to the relevant run and show the next local-only follow-up action after
+  approval.
 - `/incidents` - recent local incidents and evidence links.
 - `/artifacts?path=<relative_path>` - safe read-only artifact viewer.
 - `/health` - Python, git, storage, command, import, route, and counter health.

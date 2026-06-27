@@ -8462,6 +8462,12 @@ def _approvals(root: Path) -> str:
                 commit_approvals,
                 publication_approvals,
             ),
+            _approval_decision_brief(
+                root,
+                worktree_approvals,
+                commit_approvals,
+                publication_approvals,
+            ),
             _list_section(
                 "Pending Worktree Approvals",
                 [_worktree_approval_action_line(item) for item in worktree_approvals],
@@ -8478,6 +8484,185 @@ def _approvals(root: Path) -> str:
                 anchor_id="pending-publication-approvals",
             ),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _approval_decision_brief(
+    root: Path,
+    worktree_approvals: list[Any],
+    commit_approvals: list[Any],
+    publication_approvals: list[Any],
+) -> str:
+    status = "empty"
+    kind = "none"
+    decision_id = "none"
+    project = "none"
+    action = "No pending approvals"
+    action_name = "none"
+    decision_surface = SafeHtml("<a href='/goals'>/goals</a>")
+    run_surface: str | SafeHtml = "none"
+    source_run = "none"
+    delegation_surface: str | SafeHtml = "none"
+    workflow_surface: str | SafeHtml = SafeHtml("<a href='/goals'>/goals</a>")
+    request_artifact: str | SafeHtml = "none"
+    evidence_artifact: str | SafeHtml = "none"
+    after_decision = "none"
+    after_surface: str | SafeHtml = SafeHtml("<a href='/goals'>/goals</a>")
+    typed_commit_message_required = "false"
+    changed_files = "0"
+    remote_target = "none"
+    reason = "no_pending_local_approval_decisions"
+    context_run = "none"
+    context_delegation = "none"
+
+    if worktree_approvals:
+        item = worktree_approvals[0]
+        status = "needs_worktree_decision"
+        kind = "worktree"
+        decision_id = item.id
+        project = item.project_id
+        action = "Approve worktree"
+        action_name = "approve-coder-worktree"
+        decision_surface = SafeHtml(
+            "<a href='#pending-worktree-approvals'>Pending Worktree Approvals</a>"
+        )
+        run_surface = "not_created_yet"
+        source_run = item.source_run_id or "none"
+        context_run = "not_created_yet"
+        context_delegation = item.delegation_id
+        delegation_surface = _path_link(
+            f"/delegations/{quote(item.delegation_id)}"
+        )
+        workflow_surface = _path_link(
+            f"/workflow?delegation_id={quote(item.delegation_id)}"
+        )
+        request_artifact = _artifact_link(
+            _repo_relative_artifact_path(root, item.request_artifact_path)
+        )
+        evidence_artifact = _artifact_link(
+            _repo_relative_artifact_path(root, item.source_plan_path)
+        )
+        after_decision = "run approved worktree from goal or run surface"
+        after_surface = workflow_surface
+        reason = "bounded_worktree_plan_waiting_for_operator"
+    elif commit_approvals:
+        item = commit_approvals[0]
+        status = "needs_commit_decision"
+        kind = "commit"
+        decision_id = item.id
+        project = item.project_id
+        action = "Approve commit"
+        action_name = "approve-coder-commit"
+        decision_surface = SafeHtml(
+            "<a href='#pending-commit-approvals'>Pending Commit Approvals</a>"
+        )
+        run_surface = _path_link(f"/runs/{quote(item.run_id)}")
+        source_run = item.source_run_id or "none"
+        context_run = item.run_id
+        context_delegation = item.delegation_id
+        delegation_surface = _path_link(
+            f"/delegations/{quote(item.delegation_id)}"
+        )
+        workflow_surface = _path_link(f"/workflow?run_id={quote(item.run_id)}")
+        request_artifact = _artifact_link(
+            _repo_relative_artifact_path(root, item.request_artifact_path)
+        )
+        evidence_artifact = _artifact_link(
+            _repo_relative_artifact_path(root, item.review_path)
+        )
+        after_decision = "commit approved worktree with typed message"
+        after_surface = run_surface
+        typed_commit_message_required = "true"
+        changed_files = str(len(item.changed_files))
+        reason = "reviewed_worktree_commit_waiting_for_operator"
+    elif publication_approvals:
+        item = publication_approvals[0]
+        status = "needs_publication_decision"
+        kind = "publication"
+        decision_id = item.id
+        project = item.project_id
+        action = "Approve publication"
+        action_name = "approve-coder-publication"
+        decision_surface = SafeHtml(
+            "<a href='#pending-publication-approvals'>Pending Publication Approvals</a>"
+        )
+        run_surface = _path_link(f"/runs/{quote(item.run_id)}")
+        source_run = item.source_run_id or "none"
+        context_run = item.run_id
+        context_delegation = item.delegation_id
+        delegation_surface = _path_link(
+            f"/delegations/{quote(item.delegation_id)}"
+        )
+        workflow_surface = _path_link(f"/workflow?run_id={quote(item.run_id)}")
+        request_artifact = _artifact_link(
+            _repo_relative_artifact_path(root, item.request_artifact_path)
+        )
+        evidence_artifact = _artifact_link(
+            _repo_relative_artifact_path(root, item.source_commit_artifact_path)
+        )
+        after_decision = "prepare publication handoff for manual push/PR"
+        after_surface = run_surface
+        remote_target = f"{item.remote}/{item.target_branch}"
+        reason = "committed_worktree_publication_waiting_for_operator"
+
+    lines = [
+        f"approval_decision_now: {_e(action)}",
+        f"approval_decision_click: {decision_surface}",
+        (
+            "approval_decision_context: "
+            f"project={_e(project)} run={_e(context_run)} "
+            f"delegation={_e(context_delegation)}"
+        ),
+        f"approval_decision_reason: {_e(reason)}",
+        f"approval_decision_evidence: {evidence_artifact}",
+        f"approval_decision_after: {_e(after_decision)} at {after_surface}",
+        "approval_decision_safety: confirmed local decision artifact only",
+    ]
+    if status == "empty":
+        lines.append("approval_decision_empty: no pending local approval decisions")
+
+    return "".join(
+        [
+            (
+                "<section class='panel approval-decision-brief' "
+                "data-approval-decision-brief='true' "
+                f"data-approval-decision-status='{_e(status)}'>"
+                "<h2>Approval Decision Brief</h2>"
+            ),
+            "<p class='muted'>The next local approval decision with direct inspection links and post-decision routing.</p>",
+            _kv(
+                [
+                    ("approval_decision_status", status),
+                    ("approval_decision_kind", kind),
+                    ("approval_decision_id", decision_id),
+                    ("approval_decision_project", project),
+                    ("approval_decision_action", action),
+                    ("approval_decision_action_name", action_name),
+                    ("approval_decision_surface", decision_surface),
+                    ("approval_decision_run", run_surface),
+                    ("approval_decision_source_run", source_run),
+                    ("approval_decision_delegation", delegation_surface),
+                    ("approval_decision_workflow", workflow_surface),
+                    ("approval_decision_request_artifact", request_artifact),
+                    ("approval_decision_evidence_artifact", evidence_artifact),
+                    ("approval_decision_after_decision", after_decision),
+                    ("approval_decision_after_surface", after_surface),
+                    (
+                        "approval_decision_typed_commit_message_required",
+                        typed_commit_message_required,
+                    ),
+                    ("approval_decision_changed_files", changed_files),
+                    ("approval_decision_remote_target", remote_target),
+                    ("approval_decision_write_on_get", "false"),
+                    ("approval_decision_executes_work", "false"),
+                    ("approval_decision_provider_calls_taken_by_clankeros", "0"),
+                    ("approval_decision_network_actions_taken", "0"),
+                    ("approval_decision_external_effects_created", "false"),
+                ]
+            ),
+            _ul(lines),
+            "</section>",
         ]
     )
 
@@ -13133,6 +13318,10 @@ def _html_page(
     .approval-queue-command-bar {{ border-left:4px solid var(--warn); }}
     .approval-queue-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .approval-queue-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .approval-decision-brief {{ border-left:4px solid var(--warn); }}
+    .approval-decision-brief[data-approval-decision-status="empty"] {{ border-left-color:var(--ok); }}
+    .approval-decision-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .approval-decision-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .incident-command-bar {{ border-left:4px solid var(--error); }}
     .incident-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .incident-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -14306,6 +14495,10 @@ def _artifact_link(path: str) -> SafeHtml | str:
     if not path or path == "none":
         return "none"
     return SafeHtml(f"<a href='/artifacts?path={quote(path)}'>{_e(path)}</a>")
+
+
+def _path_link(path: str) -> SafeHtml:
+    return SafeHtml(f"<a href='{_e(path)}'>{_e(path)}</a>")
 
 
 def _one(values: dict[str, list[str]], key: str) -> str | None:

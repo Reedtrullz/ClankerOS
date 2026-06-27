@@ -403,10 +403,13 @@ Use `/approvals` when you want to keep driving the gate sequence from one
 queue. The read-only `Approval Queue Command Bar` starts the page with total
 pending worktree, commit, and publication decisions, the first recommended
 decision, the same-page form target, the follow-up after approval, and the
-zero-effect boundary. Pending commit and publication approvals link back to
-the relevant run and name the next local-only follow-up action after approval,
-including the typed commit-message requirement and the manual push/PR
-boundary.
+zero-effect boundary. The read-only `Approval Decision Brief` then expands the
+first recommended decision into direct inspection links for the relevant
+delegation, workflow, run when one exists, request artifact, evidence artifact,
+form anchor, post-decision surface, and no-write/no-network/no-external-effect
+boundary. Pending commit and publication approvals link back to the relevant
+run and name the next local-only follow-up action after approval, including
+the typed commit-message requirement and the manual push/PR boundary.
 
 Use `/inbox` when you want the read-only operator queue. Pending commit and
 publication items include the same run links and next-action cues, but the

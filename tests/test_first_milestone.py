@@ -5137,6 +5137,18 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "approval_queue_empty: no pending local approval decisions" in approvals.body
     assert "approval_queue_write_on_get</dt><dd>false" in approvals.body
     assert "approval_queue_external_effects_created</dt><dd>false" in approvals.body
+    assert "Approval Decision Brief" in approvals.body
+    assert "data-approval-decision-brief='true'" in approvals.body
+    assert "data-approval-decision-status='empty'" in approvals.body
+    assert "approval_decision_status</dt><dd>empty" in approvals.body
+    assert "approval_decision_action</dt><dd>No pending approvals" in approvals.body
+    assert "approval_decision_action_name</dt><dd>none" in approvals.body
+    assert "approval_decision_surface</dt><dd><a href='/goals'>/goals</a>" in approvals.body
+    assert "approval_decision_empty: no pending local approval decisions" in approvals.body
+    assert "approval_decision_write_on_get</dt><dd>false" in approvals.body
+    assert "approval_decision_executes_work</dt><dd>false" in approvals.body
+    assert "approval_decision_network_actions_taken</dt><dd>0" in approvals.body
+    assert "approval_decision_external_effects_created</dt><dd>false" in approvals.body
     incidents = render_local_app_route(tmp_path, "/incidents")
     assert incidents.status == 200
     assert "Incidents" in incidents.body
@@ -6853,6 +6865,33 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "approval_queue_now: Approve worktree" in approvals.body
     assert "approval_queue_click: <a href='#pending-worktree-approvals'>Pending Worktree Approvals</a>" in approvals.body
     assert "approval_queue_safety: local decision artifact only" in approvals.body
+    assert "Approval Decision Brief" in approvals.body
+    assert "data-approval-decision-brief='true'" in approvals.body
+    assert "data-approval-decision-status='needs_worktree_decision'" in approvals.body
+    assert "approval_decision_status</dt><dd>needs_worktree_decision" in approvals.body
+    assert "approval_decision_kind</dt><dd>worktree" in approvals.body
+    assert f"approval_decision_id</dt><dd>{result.approval_id}" in approvals.body
+    assert "approval_decision_project</dt><dd>local-app-demo" in approvals.body
+    assert "approval_decision_action</dt><dd>Approve worktree" in approvals.body
+    assert "approval_decision_action_name</dt><dd>approve-coder-worktree" in approvals.body
+    assert "approval_decision_surface</dt><dd><a href='#pending-worktree-approvals'>Pending Worktree Approvals</a>" in approvals.body
+    assert "approval_decision_run</dt><dd>not_created_yet" in approvals.body
+    assert f"approval_decision_source_run</dt><dd>{result.run_id}" in approvals.body
+    assert f"approval_decision_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in approvals.body
+    assert f"approval_decision_workflow</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'" in approvals.body
+    assert "approval_decision_request_artifact</dt><dd><a href='/artifacts?path=" in approvals.body
+    assert "approval_decision_evidence_artifact</dt><dd><a href='/artifacts?path=" in approvals.body
+    assert "approval_decision_after_decision</dt><dd>run approved worktree from goal or run surface" in approvals.body
+    assert "approval_decision_after_surface</dt><dd><a href='/workflow?delegation_id=" in approvals.body
+    assert "approval_decision_typed_commit_message_required</dt><dd>false" in approvals.body
+    assert "approval_decision_changed_files</dt><dd>0" in approvals.body
+    assert "approval_decision_reason: bounded_worktree_plan_waiting_for_operator" in approvals.body
+    assert "approval_decision_safety: confirmed local decision artifact only" in approvals.body
+    assert "approval_decision_write_on_get</dt><dd>false" in approvals.body
+    assert "approval_decision_executes_work</dt><dd>false" in approvals.body
+    assert "approval_decision_provider_calls_taken_by_clankeros</dt><dd>0" in approvals.body
+    assert "approval_decision_network_actions_taken</dt><dd>0" in approvals.body
+    assert "approval_decision_external_effects_created</dt><dd>false" in approvals.body
     assert "id='pending-worktree-approvals'" in approvals.body
     assert "id='pending-commit-approvals'" in approvals.body
     assert "id='pending-publication-approvals'" in approvals.body
@@ -7055,6 +7094,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "approval_queue_commit_pending</dt><dd>1" in approvals.body
     assert "approval_queue_publication_pending</dt><dd>0" in approvals.body
     assert "approval_queue_first_kind</dt><dd>worktree" in approvals.body
+    assert "approval_decision_status</dt><dd>needs_worktree_decision" in approvals.body
+    assert "approval_decision_action_name</dt><dd>approve-coder-worktree" in approvals.body
     assert commit_approval.id in approvals.body
     assert "approve-coder-commit" in approvals.body
     assert "Commit Approval Follow-Up" in approvals.body

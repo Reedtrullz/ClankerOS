@@ -468,6 +468,10 @@ Core layers for the bootstrap:
   total local queue size, queue-type counts, the first attention item, target
   section, reason, and zero-effect boundary while preserving read-only run
   links and next-action cues for pending commit/publication rows,
+  with `/approvals` starting from both a queue summary and a read-only
+  `Approval Decision Brief` that links the first local decision to its
+  delegation, workflow, run when available, request artifact, evidence
+  artifact, exact form anchor, post-decision surface, and zero-effect counters,
   with commit/publication approval rows linking back to the relevant run and
   naming the next local-only follow-up action after approval,
   operator-worthy queue items, incident evidence readback, a confirmed
