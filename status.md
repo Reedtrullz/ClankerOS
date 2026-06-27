@@ -1,5 +1,33 @@
 # Status
 
+## 2026-06-27 Goal Phase First View
+
+- Reordered `/goals/<goal_id>` so the large `Current Phase` banner appears
+  immediately after the Goal summary, before the command bar, operator
+  workbench, daily loop, next action, workflow map, live refresh panel, and
+  long section index.
+- Updated the section index order to mirror the new first-viewport flow and
+  added a fixture-backed route-order assertion so the phase banner remains a
+  first-class Goal page signal.
+- Updated README, local app docs, and operating summary to describe the
+  phase-first Goal workbench order.
+- Non-claims: this does not fetch GitHub status, poll GitHub from the app, call
+  providers, approve work, execute runs, commit, push, create PRs, deploy,
+  write on GET, use non-loopback network actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `df -h /System/Volumes/Data`
+    -> `84Gi` available before work
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state"`
+    -> passed, `1 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root "$tmp" app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation counters at `0`
+  - `python3 -m agent_os.cli --root "$tmp" app-demo-smoke-test`
+    -> passed on a temporary root with fixture-backed Goal route snippets matched and provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Today Session Summary
 
 - Added a read-only `Today Session Summary` to `/today` so the daily cockpit

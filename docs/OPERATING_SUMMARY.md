@@ -284,7 +284,11 @@ Core layers for the bootstrap:
   criteria source, item count, progress, plan/contract posture, first
   acceptance item, one next local review surface, and no-write/no-provider/
   no-network/no-external-effect boundaries before the detailed criteria list.
-  Goal Progress starts with a read-only `Goal Progress Command Bar` that
+  Goal detail pages now place the large Current Phase banner immediately after
+  the Goal summary and before the Goal Command Bar, Goal Operator Workbench,
+  Daily Loop, Next Action, Workflow Map, live refresh panel, and long section
+  index, so the first viewport names the current phase before navigation and
+  diagnostics. Goal Progress starts with a read-only `Goal Progress Command Bar` that
   summarizes task completion, workflow gate progress, current gate, waiting
   approvals/incidents/recommendations, one next local action, and no-write/
   no-provider/no-network/no-external-effect boundaries before the browser

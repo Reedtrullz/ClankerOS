@@ -155,11 +155,14 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `Start Another Goal` form for registered projects, plus
   confirmed local `register-project` and `create-goal` forms for a fresh
   checkout.
-- `/goals/<goal_id>` - goal-centered workbench with current phase, next action,
-  next recommendation, overview, goal risk, completion criteria, progress,
-  chronological timeline, activity log, delegations, runs, approvals,
-  evidence, artifacts, memory, skills used, git status, operator notes, a
-  goal-scoped resume snapshot, and remaining work. The timeline starts with a
+- `/goals/<goal_id>` - goal-centered workbench that opens with the large
+  Current Phase banner immediately after the Goal summary, then shows the Goal
+  Command Bar, Goal Operator Workbench, Goal Daily Loop, next action, next
+  recommendation, Goal Workflow Map, live state, and section index before the
+  detailed overview, goal risk, completion criteria, progress, chronological
+  timeline, activity log, delegations, runs, approvals, evidence, artifacts,
+  memory, skills used, git status, operator notes, a goal-scoped resume
+  snapshot, and remaining work. The timeline starts with a
   read-only `Goal Timeline Command Bar` that shows total events, the latest
   event, event-family counts, target surface, and zero-effect counters before
   the full chronological list. It uses local polling

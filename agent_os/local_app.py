@@ -6191,7 +6191,6 @@ def _goal_detail(root: Path, goal_id: str) -> str:
     phase = _goal_current_phase(state)
     return "".join(
         [
-            _goal_live_state(),
             f"<section id='goal-summary' class='hero'><h1>Goal {_e(goal.id)}</h1>",
             f"<p>{_e(goal.title or goal.description)}</p>",
             _kv(
@@ -6203,14 +6202,15 @@ def _goal_detail(root: Path, goal_id: str) -> str:
                 ]
             ),
             "</section>",
-            _goal_section_index(),
+            _goal_phase_banner(root, state, phase, next_action),
             _goal_command_bar(root, state, phase, next_action),
             _goal_operator_workbench(root, state, phase, next_action),
             _goal_daily_loop(root, state, phase, next_action),
-            _goal_workflow_map(root, state, next_action),
-            _goal_phase_banner(root, state, phase, next_action),
             _goal_next_action_card(state, next_action),
             _goal_next_recommendation_section(state, next_action),
+            _goal_workflow_map(root, state, next_action),
+            _goal_live_state(),
+            _goal_section_index(),
             _goal_resume_snapshot(root, state),
             _goal_overview(state, phase, next_action),
             _goal_risk_section(state),
@@ -6279,14 +6279,14 @@ def _goal_live_state() -> str:
 def _goal_section_index() -> str:
     sections = [
         ("Summary", "goal-summary"),
-        ("Live state", "goal-live-state"),
+        ("Current phase", "goal-current-phase"),
         ("Command bar", "goal-command-bar"),
         ("Operator workbench", "goal-operator-workbench"),
         ("Daily loop", "goal-daily-loop"),
-        ("Workflow map", "goal-workflow-map"),
-        ("Current phase", "goal-current-phase"),
         ("Next action", "goal-next-action"),
         ("Next recommendation", "goal-next-recommendation"),
+        ("Workflow map", "goal-workflow-map"),
+        ("Live state", "goal-live-state"),
         ("Resume snapshot", "goal-resume-snapshot"),
         ("Overview command", "goal-overview-command-bar"),
         ("Overview", "goal-overview"),

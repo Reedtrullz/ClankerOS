@@ -244,9 +244,11 @@ Another Goal` form backed by the existing `create-goal` action, so an
 operator can add the next goal for a registered project without switching to
 the CLI.
 Use `/goals/<goal_id>` as the
-goal-centered workbench: a Goal Command Bar, Goal Operator Workbench, Goal
-Daily Loop, Goal Workflow Map, current phase, next action, next
-recommendation, progress, timeline, activity log, goal risk, completion
+goal-centered workbench: the page now opens with the large Current Phase
+banner immediately after the Goal summary, then shows the Goal Command Bar,
+Goal Operator Workbench, Goal Daily Loop, next action, next recommendation,
+Goal Workflow Map, live state, and section index before the detailed progress,
+timeline, activity log, goal risk, completion
 criteria, completion readiness, evidence, delegations, runs, approvals,
 artifacts, a typed Goal Artifact Explorer, memory, skills used, git status,
 operator notes, a goal-scoped resume snapshot, and remaining work. The page

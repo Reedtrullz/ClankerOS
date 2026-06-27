@@ -7149,6 +7149,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "breadcrumb_parent_surface</dt><dd><a href='/goals'>Goals</a>" in goal.body
     assert "breadcrumb_back: <a href='/goals'>Goals</a>" in goal.body
     assert "breadcrumb_safety: read-only local route context" in goal.body
+    goal_phase_position = goal.body.index("id='goal-current-phase'")
+    assert goal.body.index("id='goal-summary'") < goal_phase_position
+    assert goal_phase_position < goal.body.index("id='goal-command-bar'")
+    assert goal_phase_position < goal.body.index("id='goal-operator-workbench'")
+    assert goal_phase_position < goal.body.index("id='goal-next-action'")
+    assert goal_phase_position < goal.body.index("id='goal-section-index'")
+    assert goal.body.index("id='goal-next-action'") < goal.body.index("id='goal-workflow-map'")
+    assert goal.body.index("id='goal-workflow-map'") < goal.body.index("id='goal-live-state'")
     assert "Goal Section Index" in goal.body
     assert "goal_section_index_status</dt><dd>available" in goal.body
     assert "goal_section_count</dt><dd>" in goal.body
