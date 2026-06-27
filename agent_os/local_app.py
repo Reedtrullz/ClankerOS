@@ -1120,7 +1120,7 @@ def _today_page(root: Path) -> str:
             completed=completed,
             lead_goal=lead_goal,
         ),
-        _home_start_here(root, storage, lead_goal),
+        _home_start_here(root, storage, lead_goal, first_run_same_page=True),
         _home_day_plan(root, storage, lead_goal),
         _home_attention_brief(root, storage, lead_goal),
         _home_focus_queue(root, storage, active=active, paused=paused),
@@ -1659,7 +1659,13 @@ def _home_dashboard(
     return "".join(sections)
 
 
-def _home_start_here(root: Path, storage: Storage, lead_goal: sqlite3.Row | None) -> str:
+def _home_start_here(
+    root: Path,
+    storage: Storage,
+    lead_goal: sqlite3.Row | None,
+    *,
+    first_run_same_page: bool = False,
+) -> str:
     workspace = _load_workspace_state(root)
     open_project = str(workspace.get("open_project") or "").strip()
     open_goal = str(workspace.get("open_goal") or "").strip()
@@ -1697,6 +1703,11 @@ def _home_start_here(root: Path, storage: Storage, lead_goal: sqlite3.Row | None
     if lead_goal is None:
         first_run = _first_run_progress(root, storage)
         primary_surface = first_run["next_surface"]
+        if first_run_same_page:
+            first_run_href, first_run_label = _today_first_run_target(first_run)
+            primary_surface = SafeHtml(
+                f"<a href='{_e(first_run_href)}'>{_e(first_run_label)}</a>"
+            )
         rows.extend(
             [
                 ("start_here_mode", "first_run"),

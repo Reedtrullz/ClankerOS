@@ -4178,6 +4178,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "focus_queue_next_action: Register ClankerOS project" in root.body
     assert "focus_queue_write_on_get</dt><dd>false" in root.body
     assert "focus_queue_external_effects_created</dt><dd>false" in root.body
+    assert "start_here_primary_surface</dt><dd><a href='/goals'>/goals</a>" in root.body
+    assert "start_here_click: <a href='/goals'>/goals</a>" in root.body
     today = render_local_app_route(tmp_path, "/today")
     assert today.status == 200
     assert "Today Command Center" in today.body
@@ -4224,6 +4226,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_command_external_effects_created</dt><dd>false" in today.body
     assert "today_command_now: Register ClankerOS project" in today.body
     assert "today_command_click: <a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert (
+        "start_here_primary_surface</dt><dd><a href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in today.body
+    assert "start_here_click: <a href='#first-run-create-project'>Create Project</a>" in today.body
     assert "Today Current Action" not in today.body
     assert "Home Day Plan" in today.body
     assert "First Run Guide" in today.body
@@ -4844,6 +4851,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "today_goal_queue_next_surface: <a href='#first-run-create-goal'>"
         "Create First Goal</a>"
     ) in registered_today.body
+    assert (
+        "start_here_primary_surface</dt><dd><a href='#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in registered_today.body
+    assert "start_here_click: <a href='#first-run-create-goal'>Create First Goal</a>" in registered_today.body
     create_goal_result = render_local_app_route(
         tmp_path,
         "/actions/create-goal",

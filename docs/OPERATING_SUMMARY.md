@@ -98,10 +98,10 @@ Core layers for the bootstrap:
   goal counts, lead-goal phase and next action, goal switch links,
   same-page action-form availability for the lead Goal, progress, and waiting
   counts so the daily cockpit can switch goals without falling back to the
-  full inventory. When no Goal exists yet, `/today` points the primary
-  first-run action and queue target directly to the same-page `Create Project`
-  or `Create First Goal` form rendered by the first-run guide instead of
-  requiring a detour to `/goals`. It then reuses the Start Here, Home Day Plan, Attention Brief,
+  full inventory. When no Goal exists yet, `/today` points the command center,
+  Today Goal Queue, and Start Here targets directly to the same-page
+  `Create Project` or `Create First Goal` form rendered by the first-run guide
+  instead of requiring a detour to `/goals`. It then reuses the Start Here, Home Day Plan, Attention Brief,
   Focus Queue, recent activity, inbox, recommendations, incidents, and
   first-run panels without writing on GET or adding action authority. The
   local app also exposes `/resume` as a

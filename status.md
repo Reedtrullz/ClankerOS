@@ -1,5 +1,33 @@
 # Status
 
+## 2026-06-27 Today Start Here Same-Page First Run
+
+- Updated the reused `Start Here` panel so `/today` points first-run operators
+  to the same-page `Create Project` form, and after project registration to
+  the same-page `Create First Goal` form.
+- Kept the root Home `Start Here` behavior unchanged; Home still points first
+  run toward `/goals`, while `/today` stays self-contained for daily cockpit
+  operation.
+- Added assertions for both first-run states so the command center, Today Goal
+  Queue, and Start Here panel all agree on the same-page target on `/today`.
+- Updated README, local app docs, and the operating summary to describe the
+  route-scoped Start Here behavior.
+- Non-claims: this does not write on GET, create projects or goals without
+  confirmation, add provider calls, fetch GitHub status, approve work,
+  execute runs, commit, push, create PRs, deploy, use the network, or mutate
+  external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `git diff --check`
+    -> passed
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed with `/today` route marker matched and zero provider/network/external-mutation counters
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched and zero provider/network/external-mutation counters
+
 ## 2026-06-27 Today First-Run Same-Page Start
 
 - Updated `/today` so an empty checkout no longer sends the primary first-run
