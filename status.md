@@ -1,5 +1,38 @@
 # Status
 
+## 2026-06-28 Goal Jump Bar
+
+- Added a sticky read-only `Goal Jump Bar` immediately after the Goal Current
+  Phase banner, keeping phase, action, workflow, timeline, evidence,
+  artifacts, notes, git, and remaining work anchors one click away during long
+  Goal sessions.
+- The jump bar reports current phase, primary action, link count, write-on-GET
+  posture, and external-effect boundary, and uses stable `data-goal-jump-*`
+  markers for route tests and future browser QA.
+- Added responsive styling so the bar sticks on wider screens and becomes
+  static on narrow screens to avoid covering content under the mobile header.
+- Updated README, local app docs, operating summary, status focus, and the
+  fixture-backed Goal route assertions.
+- Non-claims: this is read-only local anchor navigation. It does not write on
+  GET, create actions, approve work, run work, call providers, fetch GitHub,
+  poll network services, commit, push, create PRs, deploy, or mutate external
+  systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 514 deselected`
+  - `python3 -m compileall -q agent_os tests`
+    -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-jump-smoke app-smoke-test`
+    -> passed with route markers matched and provider/network/
+    external-mutation counters at `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-jump-demo-smoke app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched and
+    provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
 ## 2026-06-28 Timeline Event Rows
 
 - Upgraded Goal Timeline and Activity Log entries from plain linked text into

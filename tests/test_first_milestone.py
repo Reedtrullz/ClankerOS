@@ -7844,6 +7844,26 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert goal.body.index("id='goal-next-action'") < goal.body.index("id='goal-workflow-map'")
     assert goal.body.index("id='goal-workflow-map'") < goal.body.index("id='goal-live-state'")
     assert "Goal Section Index" in goal.body
+    assert "Goal Jump Bar" in goal.body
+    assert "data-goal-jump-bar='true'" in goal.body
+    assert "goal_jump_bar_status</dt><dd>available" in goal.body
+    assert "goal_jump_bar_position</dt><dd>sticky" in goal.body
+    assert "goal_jump_primary_action</dt><dd>Create commit request" in goal.body
+    assert "goal_jump_current_phase</dt><dd>Ready to commit" in goal.body
+    assert "goal_jump_link_count</dt><dd>9" in goal.body
+    assert "goal_jump_bar_write_on_get</dt><dd>false" in goal.body
+    assert "goal_jump_bar_external_effects_created</dt><dd>false" in goal.body
+    assert "data-goal-jump-target='phase' href='#goal-current-phase'" in goal.body
+    assert "data-goal-jump-target='action' href='#goal-next-action'" in goal.body
+    assert "data-goal-jump-target='workflow' href='#goal-workflow-map'" in goal.body
+    assert "data-goal-jump-target='timeline' href='#goal-timeline-command-bar'" in goal.body
+    assert "data-goal-jump-target='evidence' href='#goal-evidence-command-bar'" in goal.body
+    assert "data-goal-jump-target='artifacts' href='#goal-artifact-command-bar'" in goal.body
+    assert "data-goal-jump-target='notes' href='#goal-operator-notes-command-bar'" in goal.body
+    assert "data-goal-jump-target='git' href='#goal-git-command-bar'" in goal.body
+    assert "data-goal-jump-target='remaining' href='#goal-remaining-work-command-bar'" in goal.body
+    assert "goal_jump_now: Ready to commit -> Create commit request" in goal.body
+    assert "goal_jump_safety: read-only local anchor navigation" in goal.body
     assert "goal_section_index_status</dt><dd>available" in goal.body
     assert "goal_section_count</dt><dd>" in goal.body
     assert "goal_section_index_write_on_get</dt><dd>false" in goal.body

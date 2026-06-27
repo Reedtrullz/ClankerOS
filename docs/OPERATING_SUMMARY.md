@@ -295,7 +295,9 @@ Core layers for the bootstrap:
   acceptance item, one next local review surface, and no-write/no-provider/
   no-network/no-external-effect boundaries before the detailed criteria list.
   Goal detail pages now place the large Current Phase banner immediately after
-  the Goal summary and before the Goal Command Bar, Goal Operator Workbench,
+  the Goal summary and before a sticky read-only `Goal Jump Bar` for phase,
+  action, workflow, timeline, evidence, artifacts, notes, git, and remaining
+  work. The jump bar precedes the Goal Command Bar, Goal Operator Workbench,
   Daily Loop, Goal Return Brief, Goal Continuation Rail, Next Action, Workflow
   Map, Goal CI Handoff, live refresh panel, and long section index, so the
   first viewport names the current phase before
@@ -332,10 +334,11 @@ Core layers for the bootstrap:
   with a human-readable do/check/unblock/finish strip, pointing at the in-page
   Goal action form when available, the source surface, current gate/progress,
   first unblock surface, and confirmed local-action counters before the longer
-  diagnostic sections. The Goal Section Index now links directly
-  to the Timeline, Activity, and Git command bars in addition to the longer
-  detail sections, making the page navigable through scan-first operator
-  surfaces. Goal Overview starts with a read-only
+  diagnostic sections. The sticky Goal Jump Bar keeps the main daily anchors
+  one click away while scrolling, and the Goal Section Index now links
+  directly to the Timeline, Activity, and Git command bars in addition to the
+  longer detail sections, making the page navigable through scan-first
+  operator surfaces. Goal Overview starts with a read-only
   `Goal Overview Command Bar` so the operator sees goal identity, status,
   phase, risk, progress, local counts, next click, and no-effect boundaries
   before the raw overview metadata. Goal detail pages also include a

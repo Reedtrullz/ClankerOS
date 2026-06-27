@@ -6699,6 +6699,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             ),
             "</section>",
             _goal_phase_banner(root, state, phase, next_action),
+            _goal_jump_bar(phase, next_action),
             _goal_command_bar(root, state, phase, next_action),
             _goal_operator_workbench(root, state, phase, next_action),
             _goal_daily_loop(root, state, phase, next_action),
@@ -6731,6 +6732,55 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_operator_notes_section(root, state),
             _goal_remaining_work_section(root, state, next_action),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _goal_jump_bar(phase: str, next_action: GoalNextAction) -> str:
+    links = [
+        ("Phase", "phase", "goal-current-phase"),
+        ("Action", "action", "goal-next-action"),
+        ("Workflow", "workflow", "goal-workflow-map"),
+        ("Timeline", "timeline", "goal-timeline-command-bar"),
+        ("Evidence", "evidence", "goal-evidence-command-bar"),
+        ("Artifacts", "artifacts", "goal-artifact-command-bar"),
+        ("Notes", "notes", "goal-operator-notes-command-bar"),
+        ("Git", "git", "goal-git-command-bar"),
+        ("Remaining", "remaining", "goal-remaining-work-command-bar"),
+    ]
+    link_items = [
+        (
+            f"<a class='goal-jump-link' data-goal-jump-target='{_e(target)}' "
+            f"href='#{_e(anchor)}'>{_e(label)}</a>"
+        )
+        for label, target, anchor in links
+    ]
+    return "".join(
+        [
+            "<section id='goal-jump-bar' class='panel goal-jump-bar' data-goal-jump-bar='true'><h2>Goal Jump Bar</h2>",
+            _kv(
+                [
+                    ("goal_jump_bar_status", "available"),
+                    ("goal_jump_bar_position", "sticky"),
+                    ("goal_jump_current_phase", phase),
+                    ("goal_jump_primary_action", next_action.action),
+                    ("goal_jump_link_count", str(len(links))),
+                    ("goal_jump_bar_write_on_get", "false"),
+                    ("goal_jump_bar_external_effects_created", "false"),
+                ]
+            ),
+            "<nav aria-label='Goal jump targets'>",
+            "<ul class='goal-jump-links'>",
+            "".join(f"<li>{item}</li>" for item in link_items),
+            "</ul>",
+            "</nav>",
+            _ul(
+                [
+                    f"goal_jump_now: {phase} -> {next_action.action}",
+                    "goal_jump_safety: read-only local anchor navigation",
+                ]
+            ),
+            "</section>",
         ]
     )
 
@@ -22064,6 +22114,12 @@ def _html_page(
     .hero p {{ color:var(--muted); max-width:760px; }}
     .banner, .warning {{ border:1px solid var(--line); background:var(--panel); padding:12px; margin:12px 0; }}
     .panel {{ border:1px solid var(--line); background:var(--panel); padding:12px; }}
+    .goal-jump-bar {{ position:sticky; top:72px; z-index:1; border-left:4px solid var(--accent); margin:0 0 12px; box-shadow:0 2px 10px rgba(15,20,25,.08); }}
+    .goal-jump-bar dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
+    .goal-jump-links {{ list-style:none; padding:0; margin:12px 0 0; display:flex; flex-wrap:wrap; gap:8px; }}
+    .goal-jump-links li {{ min-width:0; }}
+    .goal-jump-link {{ display:inline-flex; align-items:center; min-height:32px; max-width:100%; padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:var(--surface); text-decoration:none; overflow-wrap:anywhere; }}
+    .goal-jump-link:focus, .goal-jump-link:hover {{ border-color:var(--accent); outline:0; }}
     .goal-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-command-bar dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:8px; }}
@@ -22390,7 +22446,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side, .goal-jump-bar {{ position:static; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>

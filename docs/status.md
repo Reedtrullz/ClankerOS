@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal pages now include a sticky, read-only `Goal Jump Bar` immediately after
+  the Current Phase banner, keeping phase, action, workflow, timeline,
+  evidence, artifacts, notes, git, and remaining work anchors one click away
+  during long browser sessions without adding writes or action authority.
 - Goal Timeline and Activity Log rows now render as scan-first event rows with
   time, event-kind badge, clickable local message, target badge, and stable
   `data-timeline-*` markers, making artifacts, delegations, runs, approvals,
