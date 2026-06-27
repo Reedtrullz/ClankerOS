@@ -5936,16 +5936,114 @@ def _goal_skill_lines(root: Path, state: dict[str, Any]) -> list[str]:
 def _goal_git_status(root: Path, state: dict[str, Any]) -> str:
     goal = state["goal"]
     project = _storage(root).get_registered_project(goal.project_id)
-    repo = _repo_state(Path(project.root_path)) if project else _repo_state(root)
-    return "<section id='goal-git-status'><h2>Git Status</h2>" + _kv(
+    project_root = Path(project.root_path) if project else root
+    repo = _repo_state(project_root)
+    tracked_files = repo["dirty_tracked_files"]
+    untracked_files = repo["untracked_files"]
+    latest_git_status = _goal_latest_git_status_artifact(root, state)
+    posture, next_action, next_target = _goal_git_command_posture(
+        goal,
+        repo,
+        latest_git_status,
+    )
+    latest_git_status_link = (
+        SafeHtml(_artifact_link(latest_git_status)) if latest_git_status else "none"
+    )
+    return "".join(
         [
-            ("project", goal.project_id),
-            ("branch", repo["branch"]),
-            ("commit", repo["commit"]),
-            ("dirty_tracked_files", str(len(repo["dirty_tracked_files"]))),
-            ("untracked_files", ", ".join(repo["untracked_files"]) or "none"),
+            "<section id='goal-git-status'><h2>Git Status</h2>",
+            "<section class='panel goal-git-command-bar' data-goal-git-command-bar='true'><h3>Goal Git Command Bar</h3>",
+            _kv(
+                [
+                    ("goal_git_command_project", goal.project_id),
+                    ("goal_git_command_root", str(project_root)),
+                    ("goal_git_command_branch", repo["branch"]),
+                    ("goal_git_command_commit", repo["commit"]),
+                    ("goal_git_command_posture", posture),
+                    ("goal_git_command_tracked_changes", str(len(tracked_files))),
+                    ("goal_git_command_untracked_files", str(len(untracked_files))),
+                    ("goal_git_command_latest_git_status_artifact", latest_git_status_link),
+                    ("goal_git_command_next_action", next_action),
+                    ("goal_git_command_target_surface", SafeHtml(next_target)),
+                    ("goal_git_command_source", "local_git_status_no_fetch"),
+                    ("goal_git_command_write_on_get", "false"),
+                    ("goal_git_command_github_fetch", "none"),
+                    ("goal_git_command_network_actions_taken", "0"),
+                    ("goal_git_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_git_command_now: {_e(next_action)}",
+                    f"goal_git_command_click: {next_target}",
+                    "goal_git_command_safety: local git readback only",
+                ]
+            ),
+            "</section>",
+            "<h3>Repository Snapshot</h3>",
+            _kv(
+                [
+                    ("project", goal.project_id),
+                    ("branch", repo["branch"]),
+                    ("commit", repo["commit"]),
+                    ("dirty_tracked_files", str(len(tracked_files))),
+                    ("dirty_tracked_file_sample", _goal_git_file_sample(tracked_files)),
+                    ("untracked_file_count", str(len(untracked_files))),
+                    ("untracked_files", _goal_git_file_sample(untracked_files)),
+                    ("ahead_of_origin_main", str(repo["ahead_of_origin_main"]).lower()),
+                ]
+            ),
+            "</section>",
         ]
-    ) + "</section>"
+    )
+
+
+def _goal_latest_git_status_artifact(root: Path, state: dict[str, Any]) -> str:
+    for record in reversed(_goal_artifact_records(root, state)):
+        if record["label"].endswith(" git status") and record["status"] == "available":
+            return record["path"]
+    return ""
+
+
+def _goal_git_command_posture(
+    goal: Any,
+    repo: dict[str, Any],
+    latest_git_status: str,
+) -> tuple[str, str, str]:
+    if repo["branch"] == "unknown" and repo["commit"] == "unknown":
+        return (
+            "repo_unknown",
+            "Inspect registered project",
+            f"<a href='/projects/{quote(goal.project_id)}'>/projects/{_e(goal.project_id)}</a>",
+        )
+    if repo["dirty_tracked_files"]:
+        target = (
+            _artifact_link(latest_git_status)
+            if latest_git_status
+            else "<a href='#goal-artifact-explorer'>Goal Artifact Explorer</a>"
+        )
+        return ("tracked_changes_present", "Review tracked changes", target)
+    if repo["untracked_files"]:
+        target = (
+            _artifact_link(latest_git_status)
+            if latest_git_status
+            else "<a href='#goal-artifact-explorer'>Goal Artifact Explorer</a>"
+        )
+        return ("untracked_files_present", "Review untracked files", target)
+    return (
+        "clean",
+        "Check verification evidence",
+        "<a href='#goal-verification-evidence'>Goal Verification Evidence</a>",
+    )
+
+
+def _goal_git_file_sample(files: list[str], limit: int = 8) -> str:
+    if not files:
+        return "none"
+    sample = ", ".join(files[:limit])
+    if len(files) > limit:
+        sample += f" (+{len(files) - limit} more)"
+    return sample
 
 
 def _goal_verification_evidence(root: Path, state: dict[str, Any]) -> str:
@@ -12485,6 +12583,9 @@ def _html_page(
     .goal-command-bar dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:8px; }}
     .goal-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-git-command-bar {{ border-left:4px solid var(--accent); }}
+    .goal-git-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-git-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-daily-loop {{ border-left:4px solid var(--ok); }}
     .goal-daily-loop dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-daily-loop ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}

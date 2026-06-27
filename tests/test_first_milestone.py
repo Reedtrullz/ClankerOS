@@ -6069,6 +6069,25 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "profile_used: scout count=1" in goal.body
     assert "skill_execution_from_goal_page=false" in goal.body
     assert "Git Status" in goal.body
+    assert "Goal Git Command Bar" in goal.body
+    assert "data-goal-git-command-bar='true'" in goal.body
+    assert f"goal_git_command_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_git_command_posture</dt><dd>clean" in goal.body
+    assert "goal_git_command_tracked_changes</dt><dd>0" in goal.body
+    assert "goal_git_command_untracked_files</dt><dd>0" in goal.body
+    assert "goal_git_command_latest_git_status_artifact</dt><dd><a href='/artifacts?path=" in goal.body
+    assert "goal_git_command_next_action</dt><dd>Check verification evidence" in goal.body
+    assert "goal_git_command_target_surface</dt><dd><a href='#goal-verification-evidence'>Goal Verification Evidence</a>" in goal.body
+    assert "goal_git_command_source</dt><dd>local_git_status_no_fetch" in goal.body
+    assert "goal_git_command_write_on_get</dt><dd>false" in goal.body
+    assert "goal_git_command_github_fetch</dt><dd>none" in goal.body
+    assert "goal_git_command_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_git_command_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_git_command_now: Check verification evidence" in goal.body
+    assert "goal_git_command_click: <a href='#goal-verification-evidence'>Goal Verification Evidence</a>" in goal.body
+    assert "goal_git_command_safety: local git readback only" in goal.body
+    assert "dirty_tracked_file_sample</dt><dd>none" in goal.body
+    assert "untracked_file_count</dt><dd>0" in goal.body
     assert "Goal Verification Evidence" in goal.body
     assert f"goal_ci_project: {result.project_id}" in goal.body
     assert "goal_ci_latest_status: success" in goal.body

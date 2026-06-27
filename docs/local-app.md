@@ -111,6 +111,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   above the detailed cards with the current phase, one primary action, target
   local surface, progress, open/waiting counts, resume route, project-scoped CI
   proof state, and write-on-GET/network/external-effect boundaries. A
+  read-only `Goal Git Command Bar` inside Git Status summarizes the registered
+  project root, branch, commit, clean/dirty posture, tracked and untracked
+  counts, latest goal-linked `git_status.txt` artifact, and one next local
+  surface without fetching GitHub status or mutating the repo. A
   `Goal Daily Loop` follows it with start, continue, unblock, and finish cues
   sourced from the Goal, workspace, approval, incident, and recommendation
   state, including whether tomorrow's resume anchor still needs saving, plus a

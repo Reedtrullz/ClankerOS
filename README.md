@@ -192,6 +192,11 @@ hidden, and stays local-only. The Goal Command Bar near the top condenses
 current phase, one primary action, target local surface, progress, waiting
 counts, resume route, latest project-scoped CI proof state, and zero-effect
 boundary so the operator can choose the next click without scrolling. The Goal
+Git Status section now starts with a read-only `Goal Git Command Bar` that
+summarizes the registered project root, branch, commit, clean/dirty posture,
+tracked and untracked counts, latest goal-linked `git_status.txt` evidence
+when available, and one next local surface without fetching GitHub status or
+mutating the repo. The Goal
 Daily Loop turns the same local state into start/continue/unblock/finish cues:
 `/resume`, the current next action, the first approval/incident/recommendation
 surface, and a confirmed `save-workspace` form that records this goal and its

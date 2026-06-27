@@ -335,6 +335,11 @@ Core layers for the bootstrap:
   counts, names projects using each tag, links matching generated or available
   local skill records when present, and shows profile usage while keeping
   skill execution unavailable from the Goal page.
+  Goal `Git Status` starts with a read-only `Goal Git Command Bar` that
+  summarizes the registered project root, branch, commit, clean/dirty posture,
+  tracked and untracked counts, latest goal-linked `git_status.txt` artifact,
+  one next local surface, and no-fetch/no-write/no-network/no-external-effect
+  boundaries before the repository snapshot.
   Goal `Verification Evidence` links to `/verification` and `/ci-evidence`,
   filters local operator-supplied CI proof records to the current goal project,
   compares the recorded branch/commit to the current project checkout, and
