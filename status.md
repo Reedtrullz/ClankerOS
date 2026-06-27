@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-27 Run Operator Workbench
+
+- Added a `Run Operator Workbench` immediately after the run detail `Run
+  Command Bar`.
+- The workbench turns coder worktree run gate state into do/check/unblock/
+  finish cards with the current run action, review gate, approval queue,
+  parent Goal, evidence surface, and a confirmed `save-workspace` form that
+  stores the run plus review/evidence artifact as tomorrow's resume point.
+- Added route and fixture assertions for both the reviewed run state
+  (`action_form_ready`) and missing-review state (`same_page_review`) so the
+  run page does not pretend the commit request form is available before the
+  backend review gate passes.
+- Updated README, local app docs, operating summary, demo smoke snippets, and
+  manual browser checkpoints to describe `/runs/<coder_run_id>` as a
+  continuation surface rather than only an evidence page.
+- Non-claims: this does not write workspace state on GET, create a commit
+  request without confirmation, approve requests, commit, push, create PRs,
+  deploy, fetch GitHub status, call providers, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_ca2a01299d4c`, `run_2969b0d17def`, and coder
+    worktree run `run_631ca87a4097`
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Goal Operator Workbench
 
 - Added a `Goal Operator Workbench` immediately after the Goal Command Bar on

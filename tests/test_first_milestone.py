@@ -7981,6 +7981,51 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "run_command_deploy_created</dt><dd>false" in run_page.body
     assert "run_command_now: Create commit request" in run_page.body
     assert "run_command_click: <a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
+    assert "Run Operator Workbench" in run_page.body
+    assert "data-run-operator-workbench='true'" in run_page.body
+    assert "data-run-workbench-actions='true'" in run_page.body
+    assert "run_workbench_status</dt><dd>action_form_ready" in run_page.body
+    assert f"run_workbench_run_id</dt><dd>{result.coder_worktree_run_id}" in run_page.body
+    assert f"run_workbench_goal</dt><dd><a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in run_page.body
+    assert "run_workbench_project</dt><dd>local-app-demo" in run_page.body
+    assert f"run_workbench_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in run_page.body
+    assert "run_workbench_worktree_status</dt><dd>completed" in run_page.body
+    assert "run_workbench_review_status</dt><dd>reviewed" in run_page.body
+    assert "run_workbench_bounded_validation_status</dt><dd>available" in run_page.body
+    assert "run_workbench_commit_request_status</dt><dd>none" in run_page.body
+    assert "run_workbench_publication_status</dt><dd>none" in run_page.body
+    assert "run_workbench_changed_files_count</dt><dd>1" in run_page.body
+    assert "run_workbench_diff_summary</dt><dd>files:1," in run_page.body
+    assert "run_workbench_next_action</dt><dd>Create commit request" in run_page.body
+    assert "run_workbench_primary_surface</dt><dd><a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
+    assert "run_workbench_reason</dt><dd>reviewed coder run is ready for a local commit request" in run_page.body
+    assert "run_workbench_action_form_available</dt><dd>true" in run_page.body
+    assert "run_workbench_confirmation_required</dt><dd>true" in run_page.body
+    assert "run_workbench_approval_surface</dt><dd><a href='/approvals'>/approvals</a>" in run_page.body
+    assert "run_workbench_evidence_surface</dt><dd><a href='#coder-worktree-evidence'>Coder Worktree Evidence</a>" in run_page.body
+    assert f"run_workbench_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>/goals/{result.goal_id}</a>" in run_page.body
+    assert "run_workbench_finish_surface</dt><dd><a href='#run-finish-today'>Finish Today</a>" in run_page.body
+    assert "run_workbench_finish_form_available</dt><dd>true" in run_page.body
+    assert "run_workbench_finish_confirmation_required</dt><dd>true" in run_page.body
+    assert "run_workbench_source</dt><dd>coder_worktree_run_gate_state" in run_page.body
+    assert "run_workbench_write_on_get</dt><dd>false" in run_page.body
+    assert "run_workbench_provider_calls_taken</dt><dd>0" in run_page.body
+    assert "run_workbench_network_actions_taken</dt><dd>0" in run_page.body
+    assert "run_workbench_external_effects_created</dt><dd>false" in run_page.body
+    assert "run_workbench_push_created</dt><dd>false" in run_page.body
+    assert "run_workbench_pr_created</dt><dd>false" in run_page.body
+    assert "run_workbench_deploy_created</dt><dd>false" in run_page.body
+    assert "run_workbench_now: Create commit request" in run_page.body
+    assert "run_workbench_click: <a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
+    assert "run_workbench_check: <a href='#run-review-gate'>Run Review Gate</a>" in run_page.body
+    assert "run_workbench_unblock: <a href='/approvals'>/approvals</a>" in run_page.body
+    assert f"run_workbench_goal: <a href='/goals/{result.goal_id}'>/goals/{result.goal_id}</a>" in run_page.body
+    assert "run_workbench_finish: <a href='#run-finish-today'>Finish Today</a>" in run_page.body
+    assert "run_workbench_safety: confirmed local actions only" in run_page.body
+    assert "id='run-finish-today'" in run_page.body
+    assert "name='filters' value='run:" in run_page.body
+    assert "run-workbench,workflow,review,evidence,actions" in run_page.body
+    assert "name='updated_by' value='run-operator-workbench'" in run_page.body
     assert "id='run-workflow-state'" in run_page.body
     assert "id='run-review-gate'" in run_page.body
     assert "id='run-approval-actions'" in run_page.body
@@ -8042,6 +8087,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "run_command_next_action</dt><dd>Review run" in run_page_without_review.body
     assert "run_command_target_surface</dt><dd><a href='#run-review-gate'>Run Review Gate</a>" in run_page_without_review.body
     assert "run_command_reason</dt><dd>review_artifact_missing" in run_page_without_review.body
+    assert "Run Operator Workbench" in run_page_without_review.body
+    assert "run_workbench_status</dt><dd>same_page_review" in run_page_without_review.body
+    assert "run_workbench_review_status</dt><dd>missing" in run_page_without_review.body
+    assert "run_workbench_next_action</dt><dd>Review run" in run_page_without_review.body
+    assert "run_workbench_primary_surface</dt><dd><a href='#run-review-gate'>Run Review Gate</a>" in run_page_without_review.body
+    assert "run_workbench_action_form_available</dt><dd>false" in run_page_without_review.body
+    assert "run_workbench_confirmation_required</dt><dd>false" in run_page_without_review.body
     assert "action='/actions/coder-commit-request'" not in run_page_without_review.body
     assert "commit_request_form_available: false review_gate_status: missing" in run_page_without_review.body
     result.review_path.write_text(review_text, encoding="utf-8")

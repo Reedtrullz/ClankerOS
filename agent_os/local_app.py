@@ -610,6 +610,7 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             f"/runs/{quote(demo.coder_worktree_run_id)}",
             "Run",
             [
+                "Run Operator Workbench",
                 "Run Workflow State",
                 "Run Review Gate",
                 "review_gate_status</dt><dd>reviewed",
@@ -12945,6 +12946,7 @@ def _run_detail(root: Path, run_id: str) -> str:
             )
         )
         parts.append(_run_command_bar(root, coder_run))
+        parts.append(_run_operator_workbench(root, coder_run))
         parts.append(_run_workflow_state(root, coder_run))
         parts.append(_run_review_gate(root, coder_run))
         parts.append(
@@ -13144,6 +13146,173 @@ def _run_command_bar(root: Path, coder_run: Any) -> str:
                 ]
             ),
             _ul(lines),
+            "</section>",
+        ]
+    )
+
+
+def _run_operator_workbench(root: Path, coder_run: Any) -> str:
+    storage = _storage(root)
+    delegation = storage.get_subagent_delegation(coder_run.delegation_id)
+    goal_id = delegation.parent_goal_id if delegation is not None else ""
+    goal_surface: str | SafeHtml = (
+        SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(goal_id)}</a>")
+        if goal_id
+        else "none"
+    )
+    goal_href = f"/goals/{quote(goal_id)}" if goal_id else "/goals"
+    commit_approvals = [
+        item
+        for item in list_coder_worktree_commit_approvals(root, limit=50)
+        if item.run_id == coder_run.id
+    ]
+    publications = [
+        item
+        for item in list_coder_publications(root, limit=50)
+        if item.run_id == coder_run.id
+    ]
+    review_gate = _run_review_gate_state(root, coder_run)
+    change_summary = coder_worktree_change_summary(root, coder_run)
+    next_action, target_href, target_label, reason = _run_command_next_action(
+        coder_run,
+        review_gate=review_gate,
+        commit_approvals=commit_approvals,
+        publications=publications,
+    )
+    action_form_available = target_href in {
+        "#run-approval-actions",
+        "#confirmed-local-commit-action",
+        "#publication-handoff-action",
+    }
+    manual_boundary = target_href == "#publication-handoff-commands"
+    if action_form_available:
+        status = "action_form_ready"
+    elif target_href == "/approvals":
+        status = "approval_queue_ready"
+    elif manual_boundary:
+        status = "manual_boundary_ready"
+    elif target_href.startswith("#"):
+        status = "same_page_review"
+    else:
+        status = "navigation_ready"
+    primary_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    bounded_validation_path = Path(coder_run.evidence_path) / "bounded_file_validation.json"
+    bounded_status = _artifact_status(root, bounded_validation_path)
+    review_artifact = (
+        str(review_gate["review_path"])
+        if review_gate["exists"]
+        else str(Path(coder_run.evidence_path) / "run.json")
+    )
+    finish_form = _input_form(
+        "save-workspace",
+        {
+            "open_project": coder_run.project_id,
+            "open_goal": goal_id,
+            "return_to": f"/runs/{coder_run.id}",
+        },
+        {
+            "filters": f"run:{coder_run.id}",
+            "expanded_panels": "run-workbench,workflow,review,evidence,actions",
+            "last_viewed_artifact": review_artifact,
+            "updated_by": "run-operator-workbench",
+        },
+    )
+    return "".join(
+        [
+            "<section id='run-operator-workbench' class='panel run-operator-workbench' data-run-operator-workbench='true'><h2>Run Operator Workbench</h2>",
+            "<div class='run-workbench-grid' data-run-workbench-actions='true'>",
+            "<div class='run-workbench-card run-workbench-primary'>",
+            "<h3>Do Now</h3>",
+            f"<p>{_e(next_action)}</p>",
+            f"<a class='run-workbench-action' href='{_e(target_href)}'>{_e(target_label)}</a>",
+            "</div>",
+            "<div class='run-workbench-card'>",
+            "<h3>Check</h3>",
+            f"<p>Review: {_e(str(review_gate['status']))}</p>",
+            "<a class='run-workbench-link' href='#run-review-gate'>Open review gate</a>",
+            "</div>",
+            "<div class='run-workbench-card'>",
+            "<h3>Unblock</h3>",
+            f"<p>Commit: {_e(_status_counts(commit_approvals))}</p>",
+            "<a class='run-workbench-link' href='/approvals'>Open approvals</a>",
+            "</div>",
+            "<div class='run-workbench-card'>",
+            "<h3>Finish Today</h3>",
+            "<p>Save run resume state</p>",
+            "<a class='run-workbench-link' href='#run-finish-today'>Open save form</a>",
+            "</div>",
+            "</div>",
+            _kv(
+                [
+                    ("run_workbench_status", status),
+                    ("run_workbench_run_id", coder_run.id),
+                    ("run_workbench_goal", goal_surface),
+                    ("run_workbench_project", coder_run.project_id),
+                    (
+                        "run_workbench_delegation",
+                        SafeHtml(f"<a href='/delegations/{quote(coder_run.delegation_id)}'>{_e(coder_run.delegation_id)}</a>"),
+                    ),
+                    ("run_workbench_worktree_status", coder_run.status),
+                    ("run_workbench_review_status", str(review_gate["status"])),
+                    ("run_workbench_bounded_validation_status", bounded_status),
+                    ("run_workbench_commit_request_status", _status_counts(commit_approvals)),
+                    ("run_workbench_publication_status", _status_counts(publications)),
+                    ("run_workbench_changed_files_count", change_summary["changed_files_count"]),
+                    ("run_workbench_diff_summary", change_summary["diff_summary"]),
+                    ("run_workbench_next_action", next_action),
+                    ("run_workbench_primary_surface", primary_surface),
+                    ("run_workbench_reason", reason),
+                    (
+                        "run_workbench_action_form_available",
+                        str(action_form_available).lower(),
+                    ),
+                    (
+                        "run_workbench_confirmation_required",
+                        str(action_form_available).lower(),
+                    ),
+                    (
+                        "run_workbench_approval_surface",
+                        SafeHtml("<a href='/approvals'>/approvals</a>"),
+                    ),
+                    (
+                        "run_workbench_evidence_surface",
+                        SafeHtml("<a href='#coder-worktree-evidence'>Coder Worktree Evidence</a>"),
+                    ),
+                    (
+                        "run_workbench_goal_surface",
+                        SafeHtml(f"<a href='{_e(goal_href)}'>{_e(goal_href)}</a>"),
+                    ),
+                    (
+                        "run_workbench_finish_surface",
+                        SafeHtml("<a href='#run-finish-today'>Finish Today</a>"),
+                    ),
+                    ("run_workbench_finish_form_available", "true"),
+                    ("run_workbench_finish_confirmation_required", "true"),
+                    ("run_workbench_saved_artifact", SafeHtml(_artifact_link(review_artifact))),
+                    ("run_workbench_source", "coder_worktree_run_gate_state"),
+                    ("run_workbench_write_on_get", "false"),
+                    ("run_workbench_provider_calls_taken", "0"),
+                    ("run_workbench_network_actions_taken", "0"),
+                    ("run_workbench_external_effects_created", "false"),
+                    ("run_workbench_push_created", "false"),
+                    ("run_workbench_pr_created", "false"),
+                    ("run_workbench_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"run_workbench_now: {_e(next_action)}",
+                    f"run_workbench_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    "run_workbench_check: <a href='#run-review-gate'>Run Review Gate</a>",
+                    "run_workbench_unblock: <a href='/approvals'>/approvals</a>",
+                    f"run_workbench_goal: <a href='{_e(goal_href)}'>{_e(goal_href)}</a>",
+                    "run_workbench_finish: <a href='#run-finish-today'>Finish Today</a>",
+                    "run_workbench_safety: confirmed local actions only",
+                ]
+            ),
+            "<h3 id='run-finish-today'>Finish Today</h3>",
+            "<p class='muted'>Save this run, current filters, expanded panels, and review/evidence artifact as tomorrow's resume point. This writes only `.clanker/app/workspace.json` after confirmation.</p>",
+            finish_form,
             "</section>",
         ]
     )
@@ -14793,7 +14962,7 @@ def _manual_browser_checkpoints(state: dict[str, str] | None) -> str:
         checkpoints.extend(
             [
                 f"<a href='/workflow?run_id={quote(run_id)}'>/workflow?run_id={_e(run_id)}</a> marker=Modern Operator Workflow expected=Selected Workflow Continuation",
-                f"<a href='/runs/{quote(run_id)}'>/runs/{_e(run_id)}</a> marker=Run expected=Run Workflow State,Run Approval Actions,Coder Worktree Evidence",
+                f"<a href='/runs/{quote(run_id)}'>/runs/{_e(run_id)}</a> marker=Run expected=Run Operator Workbench,Run Workflow State,Run Approval Actions,Coder Worktree Evidence",
             ]
         )
     else:
@@ -17246,6 +17415,18 @@ def _html_page(
     .run-command-bar {{ border-left:4px solid var(--warn); }}
     .run-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .run-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .run-operator-workbench {{ border-left:4px solid var(--accent); }}
+    .run-operator-workbench dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
+    .run-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .run-operator-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .run-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .run-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .run-workbench-card h3 {{ margin-top:0; }}
+    .run-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .run-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .run-workbench-action, .run-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .run-workbench-action {{ background:var(--accent); color:#fff; }}
+    .run-workbench-link {{ background:var(--surface); color:var(--accent); }}
     .delegation-run-command-bar {{ border-left:4px solid var(--accent); }}
     .delegation-run-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .delegation-run-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -17325,7 +17506,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} .goal-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} .goal-workbench-grid, .run-workbench-grid {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>

@@ -488,7 +488,11 @@ Core layers for the bootstrap:
   run detail pages include a read-only `Run Command Bar` that summarizes run
   status, review gate, commit/publication state, changed-file count, diff
   summary, next local action, target surface, and no-write/no-network/
-  no-external-effect boundaries, the same upstream and downstream workflow
+  no-external-effect boundaries. A `Run Operator Workbench` follows it with
+  do/check/unblock/finish cards, same-page action anchors, review/evidence
+  links, approvals, parent Goal, and a confirmed `save-workspace` form that
+  stores the run plus review/evidence artifact as a future resume point
+  without writing on GET, followed by the same upstream and downstream workflow
   posture as a `Run Workflow State` readback, plus a `Run Review Gate`
   readback that mirrors the backend requirement that
   `runs/<source_run_id>/review.md` exists and mentions the coder worktree run

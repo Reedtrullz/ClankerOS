@@ -421,7 +421,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   read-only `Run Command Bar` that summarizes run status, review gate,
   commit/publication state, changed-file count, diff summary, next local
   action, target surface, and no-write/no-network/no-external-effect
-  boundaries before the detailed evidence and forms. It also includes a
+  boundaries before the detailed evidence and forms. A `Run Operator
+  Workbench` follows it with do/check/unblock/finish cards, same-page action
+  anchors, review/evidence links, approvals, parent Goal, and a confirmed
+  `save-workspace` form that stores the run plus review/evidence artifact as a
+  future resume point without writing on GET. It also includes a
   `Run Workflow State` block for upstream context-pack, handoff, prep, plan,
   approval/run, bounded validation, commit, publication, and next-action
   status. Once a publication handoff is ready, the page also shows display-only

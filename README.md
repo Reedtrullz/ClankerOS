@@ -437,7 +437,11 @@ the explicit `external_effects_created: false` boundary.
 Use `/runs/<coder_run_id>` to review the worktree evidence and gate state. The
 read-only `Run Command Bar` starts the page with the run status, review gate,
 commit/publication state, changed-file count, diff summary, next local action,
-target surface, and no-write/no-network/no-push boundary. The `Run Review
+target surface, and no-write/no-network/no-push boundary. A `Run Operator
+Workbench` follows it with do/check/unblock/finish cards for the same run gate,
+including same-page action anchors, review/evidence links, approvals, parent
+Goal, and a confirmed `save-workspace` form that stores the run and review or
+evidence artifact as tomorrow's resume point without writing on GET. The `Run Review
 Gate` panel shows whether `runs/<source_run_id>/review.md` exists and mentions
 the coder worktree run id. The app only exposes the `coder-commit-request`
 form when that gate passes. The Goal Next Action card can now create that
