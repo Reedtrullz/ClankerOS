@@ -459,6 +459,9 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             "/demo",
             "Demo Scenario",
             [
+                "Demo Command Bar",
+                "demo_command_fixture_status</dt><dd>available",
+                "demo_command_primary_command</dt><dd>python3 -m agent_os.cli demo",
                 "Demo Dogfooding Links",
                 "Demo Browser Progress",
                 "Demo Gate Actions",
@@ -1919,7 +1922,8 @@ def _dashboard_dogfooding_snapshot(root: Path) -> str:
             [
                 "dashboard_demo_fixture_status: missing",
                 "dashboard_next_dogfooding_action: run_demo_app_scenario",
-                "demo_command: python3 -m agent_os.cli demo-app-scenario",
+                "demo_command: python3 -m agent_os.cli demo",
+                "demo_compat_command: python3 -m agent_os.cli demo-app-scenario",
                 "dogfooding_surface: <a href='/dogfooding'>/dogfooding</a>",
                 "manual_browser_script_surface: <a href='/demo'>/demo</a>",
                 "app_network_actions_taken: 0",
@@ -9310,7 +9314,8 @@ def _current_demo_action_surfaces(root: Path) -> str:
             [
                 "demo_fixture_status: missing",
                 "next_demo_action: run_demo_app_scenario",
-                "demo_command: python3 -m agent_os.cli demo-app-scenario",
+                "demo_command: python3 -m agent_os.cli demo",
+                "demo_compat_command: python3 -m agent_os.cli demo-app-scenario",
                 "external_effects_created: false",
                 "network_actions_taken_by_app: 0",
             ],
@@ -10065,7 +10070,8 @@ def _dogfooding_page(root: Path) -> str:
             _list_section(
                 "Start Or Refresh Fixture",
                 [
-                    "Run `python3 -m agent_os.cli demo-app-scenario` to create or refresh fixture-backed local state.",
+                    "Run `python3 -m agent_os.cli demo` to create or refresh fixture-backed local state.",
+                    "`python3 -m agent_os.cli demo-app-scenario` remains available as a compatibility command.",
                     "Open <a href='/demo'>/demo</a> and confirm demo_fixture_status before following run-specific links.",
                     "Open <a href='/health'>/health</a> if you need a fresh `.clanker/app/local_app_status.json` readback.",
                 ],
@@ -10137,7 +10143,8 @@ def _dogfooding_next_action_panel(root: Path) -> str:
             [
                 "demo_fixture_status: missing",
                 "next_dogfooding_action: run_demo_app_scenario",
-                "demo_command: python3 -m agent_os.cli demo-app-scenario",
+                "demo_command: python3 -m agent_os.cli demo",
+                "demo_compat_command: python3 -m agent_os.cli demo-app-scenario",
                 "demo_surface: <a href='/demo'>/demo</a>",
                 "verification_surface: <a href='/verification'>/verification</a>",
                 "external_effects_created: false",
@@ -13028,28 +13035,21 @@ def _demo_page(root: Path) -> str:
         [
             "<section><h1>Demo Scenario</h1>",
             "<p>Use the fixture-backed demo to populate this local app without providers, pushes, PRs, deploys, or external projects.</p>",
-            "<pre>python3 -m agent_os.cli demo-app-scenario</pre>",
-            "<p>The command creates or reuses a demo project under <code>.clanker/demo/local-app-project</code>, writes context-pack and implementation-handoff fixture artifacts, prepares coder prep and worktree-plan packets, and leaves a pending worktree approval request.</p>",
+            "<pre>python3 -m agent_os.cli demo</pre>",
+            "<p>The demo alias creates or reuses a demo project under <code>.clanker/demo/local-app-project</code>, writes context-pack and implementation-handoff fixture artifacts, prepares coder prep and worktree-plan packets, and leaves a pending worktree approval request. The longer <code>demo-app-scenario</code> command remains available for compatibility.</p>",
             _non_claim_banner(),
             "</section>",
+            _demo_command_bar(root),
             _demo_dogfooding_state(root),
         ]
     )
 
 
-def _demo_dogfooding_state(root: Path) -> str:
+def _demo_selected_state(root: Path) -> tuple[Any | None, Any | None, Any | None]:
     storage = _storage(root)
     project = storage.get_registered_project("local-app-demo")
     if project is None:
-        return "".join(
-            [
-                "<section><h2>Demo Dogfooding Links</h2>",
-                "<p class='muted'>Run <code>python3 -m agent_os.cli demo-app-scenario</code> to create fixture state and unlock direct demo links.</p>",
-                "</section>",
-                _manual_browser_script(None),
-            ]
-        )
-
+        return None, None, None
     delegations = [
         delegation
         for delegation in storage.list_recent_subagent_delegations(limit=None)
@@ -13066,6 +13066,124 @@ def _demo_dogfooding_state(root: Path) -> str:
         selected_run = next((run for run in runs if run.status == "completed"), None)
         if selected_run is None and runs:
             selected_run = runs[0]
+    return project, selected_delegation, selected_run
+
+
+def _demo_command_bar(root: Path) -> str:
+    project, selected_delegation, selected_run = _demo_selected_state(root)
+    run_id = selected_run.id if selected_run else ""
+    progress = _demo_progress_state(root, run_id)
+    goal_id = progress.get("goal_id") or (
+        selected_delegation.parent_goal_id if selected_delegation else ""
+    )
+    fixture_status = "available" if project is not None else "missing"
+    next_surface = _demo_next_surface(progress["next_step"], run_id, goal_id)
+    selected_surface = next_surface
+    if run_id:
+        selected_surface = SafeHtml(
+            f"<a href='/runs/{quote(run_id)}'>/runs/{_e(run_id)}</a>"
+        )
+    elif selected_delegation is not None:
+        selected_surface = SafeHtml(
+            f"<a href='/delegations/{quote(selected_delegation.id)}'>"
+            f"/delegations/{_e(selected_delegation.id)}</a>"
+        )
+    elif project is not None:
+        selected_surface = SafeHtml(
+            f"<a href='/projects/{quote(project.name)}'>/projects/{_e(project.name)}</a>"
+        )
+
+    rows = [
+        ("demo_command_fixture_status", fixture_status),
+        ("demo_command_primary_command", "python3 -m agent_os.cli demo"),
+        ("demo_command_compat_command", "python3 -m agent_os.cli demo-app-scenario"),
+        (
+            "demo_command_project",
+            SafeHtml(
+                f"<a href='/projects/{quote(project.name)}'>{_e(project.name)}</a>"
+            )
+            if project is not None
+            else "none",
+        ),
+        (
+            "demo_command_goal",
+            SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(goal_id)}</a>")
+            if goal_id
+            else "none",
+        ),
+        (
+            "demo_command_delegation",
+            SafeHtml(
+                f"<a href='/delegations/{quote(selected_delegation.id)}'>"
+                f"{_e(selected_delegation.id)}</a>"
+            )
+            if selected_delegation is not None
+            else "none",
+        ),
+        (
+            "demo_command_run",
+            SafeHtml(f"<a href='/runs/{quote(run_id)}'>{_e(run_id)}</a>")
+            if run_id
+            else "none",
+        ),
+        ("demo_command_next_action", progress["next_step"]),
+        ("demo_command_next_surface", next_surface),
+        ("demo_command_selected_surface", selected_surface),
+        ("demo_command_write_on_get", "false"),
+        ("demo_command_provider_calls_taken", "0"),
+        ("demo_command_network_actions_taken", "0"),
+        ("demo_command_external_effects_created", "false"),
+    ]
+    lines = [
+        f"demo_command_now: {_e(progress['next_step'])}",
+        f"demo_command_fixture: {_e(fixture_status)}",
+        "demo_command_cli: python3 -m agent_os.cli demo",
+        "demo_command_safety: read-only on page load; confirmed local writes only inside gate forms",
+    ]
+    if fixture_status == "missing":
+        lines.append("demo_command_start: run the demo command, then refresh /demo")
+    if run_id:
+        lines.append(
+            f"demo_command_continue: open /runs/{_e(run_id)} or scoped workflow"
+        )
+    return "".join(
+        [
+            "<section id='demo-command-bar' class='panel demo-command-bar' data-demo-command-bar='true'><h2>Demo Command Bar</h2>",
+            "<p class='muted'>One scan-first place to start or continue the fixture-backed product walkthrough.</p>",
+            _kv(rows),
+            _ul(lines),
+            "</section>",
+        ]
+    )
+
+
+def _demo_next_surface(next_step: str, run_id: str, goal_id: str) -> SafeHtml:
+    if not run_id:
+        return SafeHtml("<a href='/demo'>/demo</a>")
+    if next_step in {
+        "approve_or_reject_commit_request",
+        "approve_or_reject_publication_request",
+    }:
+        return SafeHtml("<a href='/approvals'>/approvals</a>")
+    if next_step in {
+        "manual_operator_push_pr_outside_clankeros",
+        "review_completed_goal_evidence",
+    } and goal_id:
+        return SafeHtml(f"<a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>")
+    return SafeHtml(f"<a href='/runs/{quote(run_id)}'>/runs/{_e(run_id)}</a>")
+
+
+def _demo_dogfooding_state(root: Path) -> str:
+    project, selected_delegation, selected_run = _demo_selected_state(root)
+    if project is None:
+        return "".join(
+            [
+                "<section><h2>Demo Dogfooding Links</h2>",
+                "<p class='muted'>Run <code>python3 -m agent_os.cli demo</code> to create fixture state and unlock direct demo links. Compatibility command: <code>demo-app-scenario</code>.</p>",
+                "</section>",
+                _manual_browser_script(None),
+            ]
+        )
 
     links = [f"<a href='/projects/{quote(project.name)}'>Project: {_e(project.name)}</a>"]
     artifact_lines: list[str] = []
@@ -13501,7 +13619,8 @@ def _demo_next_action_panel(root: Path, run_id: str) -> str:
             "Demo Next Action",
             [
                 f"demo_continue_from: {_e(progress['next_step'])}",
-                "demo_command: python3 -m agent_os.cli demo-app-scenario",
+                "demo_command: python3 -m agent_os.cli demo",
+                "demo_compat_command: python3 -m agent_os.cli demo-app-scenario",
                 "external_effects_created: false",
                 "network_actions_taken_by_app: 0",
             ],
@@ -13665,7 +13784,7 @@ def _manual_browser_script(state: dict[str, str] | None) -> str:
     goal_id = (state or {}).get("goal_id", "")
     project_id = (state or {}).get("project_id", "local-app-demo")
     steps = [
-        "Run `python3 -m agent_os.cli demo-app-scenario` to refresh fixture state.",
+        "Run `python3 -m agent_os.cli demo` to refresh fixture state.",
         "Start `python3 -m agent_os.cli app` and open `http://127.0.0.1:8787/demo`.",
         f"Open `/projects/{project_id}` and confirm Project Operator Guidance shows the demo next action.",
     ]
@@ -15719,6 +15838,9 @@ def _html_page(
     .project-command-bar {{ border-left:4px solid var(--accent); }}
     .project-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .project-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .demo-command-bar {{ border-left:4px solid var(--accent); }}
+    .demo-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .demo-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .run-command-bar {{ border-left:4px solid var(--warn); }}
     .run-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .run-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

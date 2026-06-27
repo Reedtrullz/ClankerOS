@@ -5240,6 +5240,17 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "incident_triage_external_effects_created</dt><dd>false" in incidents.body
     demo = render_local_app_route(tmp_path, "/demo")
     assert demo.status == 200
+    assert "Demo Command Bar" in demo.body
+    assert "data-demo-command-bar='true'" in demo.body
+    assert "demo_command_fixture_status</dt><dd>missing" in demo.body
+    assert "demo_command_primary_command</dt><dd>python3 -m agent_os.cli demo" in demo.body
+    assert (
+        "demo_command_compat_command</dt><dd>python3 -m agent_os.cli demo-app-scenario"
+        in demo.body
+    )
+    assert "demo_command_next_surface</dt><dd><a href='/demo'>/demo</a>" in demo.body
+    assert "demo_command_write_on_get</dt><dd>false" in demo.body
+    assert "demo_command_external_effects_created</dt><dd>false" in demo.body
     assert "demo-app-scenario" in demo.body
 
 
@@ -5782,6 +5793,26 @@ def test_local_app_demo_scenario_populates_fixture_state(
 
     demo = render_local_app_route(tmp_path, "/demo")
     assert demo.status == 200
+    assert "Demo Command Bar" in demo.body
+    assert "data-demo-command-bar='true'" in demo.body
+    assert "demo_command_fixture_status</dt><dd>available" in demo.body
+    assert "demo_command_primary_command</dt><dd>python3 -m agent_os.cli demo" in demo.body
+    assert (
+        "demo_command_compat_command</dt><dd>python3 -m agent_os.cli demo-app-scenario"
+        in demo.body
+    )
+    assert f"demo_command_project</dt><dd><a href='/projects/{result.project_id}'" in demo.body
+    assert f"demo_command_goal</dt><dd><a href='/goals/{result.goal_id}'" in demo.body
+    assert f"demo_command_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in demo.body
+    assert f"demo_command_run</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in demo.body
+    assert "demo_command_next_action</dt><dd>request_commit_for_reviewed_run" in demo.body
+    assert (
+        f"demo_command_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'"
+        in demo.body
+    )
+    assert "demo_command_write_on_get</dt><dd>false" in demo.body
+    assert "demo_command_network_actions_taken</dt><dd>0" in demo.body
+    assert "demo_command_external_effects_created</dt><dd>false" in demo.body
     assert "Demo Dogfooding Links" in demo.body
     assert "Manual Browser Script" in demo.body
     assert "Manual Browser Checkpoints" in demo.body

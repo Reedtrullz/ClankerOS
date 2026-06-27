@@ -438,10 +438,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/incidents` - recent local incidents and evidence links.
 - `/artifacts?path=<relative_path>` - safe read-only artifact viewer.
 - `/health` - Python, git, storage, command, import, route, and counter health.
-- `/demo` - demo scenario instructions plus state-aware dogfooding links and a
-  read-only browser-progress checklist after `demo-app-scenario` has created
-  fixture state. The demo page also includes `Demo Gate Artifacts`, a
-  read-only artifact map for the selected fixture run's commit request,
+- `/demo` - demo scenario instructions plus a read-only `Demo Command Bar`
+  that exposes fixture status, the preferred `python3 -m agent_os.cli demo`
+  command, compatibility command, selected project/Goal/delegation/run, next
+  local surface, and zero-effect counters before the state-aware dogfooding
+  links and browser-progress checklist. The demo page also includes
+  `Demo Gate Artifacts`, a read-only artifact map for the selected fixture
+  run's commit request,
   commit decision, local commit, publication request, publication decision,
   publication handoff, and PR-body artifacts as they become available. `Demo
   Gate Actions` names the current local gate, the form action, required input,
@@ -452,14 +455,14 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 ## Demo Scenario
 
 ```bash
-python3 -m agent_os.cli demo-app-scenario
+python3 -m agent_os.cli demo
 ```
 
-Alias:
+Compatibility aliases:
 
 ```bash
 python3 -m agent_os.cli app-demo
-python3 -m agent_os.cli demo
+python3 -m agent_os.cli demo-app-scenario
 ```
 
 The demo creates fixture-backed local state under `.clanker/demo/`:

@@ -158,21 +158,24 @@ For the first manual browser pass, run `python3 -m agent_os.cli demo`
 or `python3 -m agent_os.cli demo-app-scenario`, open `/goals`, then `/demo`,
 and follow the state-aware dogfooding links
 into the demo project, selected workflow, delegation, coder worktree run,
-review artifact, approvals, and inbox. The `/demo` page also shows a
-read-only `Demo Next Action` panel and `Demo Browser Progress` checklist for
-the selected fixture run, so you can see whether the app path is waiting on
-commit request, commit approval, local commit, publication request,
-publication approval, publication handoff, or manual push/PR outside
-ClankerOS. It also shows `Demo Gate Artifacts`, linking the commit request,
-commit decision, local commit artifact, publication request, publication
-decision, publication handoff, and PR-body artifact as those gates become
-available. The `Demo Gate Actions` panel names the current gate, the local
-form action, required input, expected output artifact, and renders the safe
-confirmed local form when the current step can be driven from the app. Once
-the publication handoff is ready, the demo keeps push/PR work outside
-ClankerOS and exposes the confirmed local `complete-goal` form so the
-operator can record that manual publication finished and review completed
-Goal evidence.
+review artifact, approvals, and inbox. The `/demo` page starts with a
+read-only `Demo Command Bar` that shows whether fixture state exists, the
+preferred `demo` command, compatibility command, selected project, Goal,
+delegation, run, next local surface, and zero-effect counters before the
+longer walkthrough. It also shows a read-only `Demo Next Action` panel and
+`Demo Browser Progress` checklist for the selected fixture run, so you can see
+whether the app path is waiting on commit request, commit approval, local
+commit, publication request, publication approval, publication handoff, or
+manual push/PR outside ClankerOS. It also shows `Demo Gate Artifacts`, linking
+the commit request, commit decision, local commit artifact, publication
+request, publication decision, publication handoff, and PR-body artifact as
+those gates become available. The `Demo Gate Actions` panel names the current
+gate, the local form action, required input, expected output artifact, and
+renders the safe confirmed local form when the current step can be driven from
+the app. Once the publication handoff is ready, the demo keeps push/PR work
+outside ClankerOS and exposes the confirmed local `complete-goal` form so the
+operator can record that manual publication finished and review completed Goal
+evidence.
 `Manual Browser Checkpoints` lists the exact route markers to confirm across
 `/demo`, `/dogfooding`, workflow, project, delegation, run, approvals, inbox,
 verification, and health surfaces, then lets you jump directly to the relevant

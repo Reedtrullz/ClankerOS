@@ -1,5 +1,32 @@
 # Status
 
+## 2026-06-27 Demo Command Bar
+
+- Added a read-only `Demo Command Bar` at the top of `/demo`.
+- The bar reports fixture availability, the preferred
+  `python3 -m agent_os.cli demo` command, the compatibility
+  `demo-app-scenario` command, selected project/Goal/delegation/run links, one
+  next local surface, and zero-effect counters before the longer demo
+  walkthrough.
+- Empty demo state now points at the short `demo` command, while preserving
+  `demo-app-scenario` as a compatibility command in the browser and docs.
+- README, local app docs, and the operating summary now describe `/demo` as a
+  scan-first product walkthrough surface.
+- Non-claims: this does not write state on GET, create fixture state from the
+  browser, run work, approve gates, stage files, commit, push, create PRs,
+  deploy, call providers, fetch GitHub status, use non-loopback network
+  actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_cb8fc4b38416`,
+    `run_fd718371cc38`, and coder worktree run `run_c6038b9a4c29`
+
 ## 2026-06-27 Goal Command Navigation Anchors
 
 - Added stable Goal Section Index jump targets for the existing read-only

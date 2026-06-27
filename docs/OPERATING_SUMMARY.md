@@ -556,10 +556,13 @@ Core layers for the bootstrap:
   dashboard refresh action for rewriting the local app status artifact from
   current repo and route state, a read-only state-aware root dashboard
   recommendation that points to the next operator surface, and a state-aware
-  `/demo` launchpad that links the fixture project, selected workflow,
-  delegation, coder worktree run, review artifact, inbox, approvals, first
-  manual browser dogfooding script, a read-only next-action panel, and a
-  browser-progress checklist for commit/publication handoff status, plus a
+  `/demo` launchpad that starts with a read-only `Demo Command Bar` for
+  fixture availability, preferred demo command, compatibility command,
+  selected project/Goal/delegation/run, next local surface, and zero-effect
+  counters, then links the fixture project, selected workflow, delegation,
+  coder worktree run, review artifact, inbox, approvals, first manual browser
+  dogfooding script, a read-only next-action panel, and a browser-progress
+  checklist for commit/publication handoff status, plus a
   read-only `Demo Gate Artifacts` map for commit request, commit decision,
   local commit, publication request, publication decision, publication
   handoff, and PR-body artifacts as those gates become available, plus a
