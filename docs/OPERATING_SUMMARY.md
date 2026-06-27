@@ -252,7 +252,10 @@ Core layers for the bootstrap:
   read-only `Goal Command Bar` near the top that condenses phase, one primary
   action, target local surface, progress, waiting counts, `/resume`, latest
   project-scoped CI proof status, and write-on-GET/network/external-effect
-  boundaries into one operator scan. Goal detail pages also include a
+  boundaries into one operator scan. Goal Overview starts with a read-only
+  `Goal Overview Command Bar` so the operator sees goal identity, status,
+  phase, risk, progress, local counts, next click, and no-effect boundaries
+  before the raw overview metadata. Goal detail pages also include a
   `Goal Daily Loop` near the top that condenses start, continue,
   unblock, and finish cues from the same local Goal/workspace/approval/
   incident/recommendation state, including whether the saved workspace points

@@ -6095,6 +6095,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-workflow-map'" in goal.body
     assert "href='#goal-next-action'" in goal.body
     assert "href='#goal-next-recommendation'" in goal.body
+    assert "href='#goal-overview-command-bar'" in goal.body
     assert "href='#goal-risk-command-bar'" in goal.body
     assert "href='#goal-criteria-command-bar'" in goal.body
     assert "href='#goal-progress-command-bar'" in goal.body
@@ -6116,6 +6117,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-daily-loop'" in goal.body
     assert "id='goal-workflow-map'" in goal.body
     assert "id='goal-current-phase'" in goal.body
+    assert "id='goal-overview-command-bar'" in goal.body
     assert "id='goal-risk-command-bar'" in goal.body
     assert "id='goal-criteria-command-bar'" in goal.body
     assert "id='goal-progress-command-bar'" in goal.body
@@ -6135,7 +6137,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>43" in goal.body
+    assert "goal_section_count</dt><dd>44" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
@@ -6247,6 +6249,39 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Remember This Goal" in goal.body
     assert "save_workspace_form_available</dt><dd>true" in goal.body
     assert "workspace_auto_write_on_get</dt><dd>false" in goal.body
+    assert "Goal Overview Command Bar" in goal.body
+    assert "data-goal-overview-command-bar='true'" in goal.body
+    assert "<a href='#goal-overview-command-bar'>Overview command</a>" in goal.body
+    assert f"goal_overview_command_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_overview_command_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_overview_command_status</dt><dd>accepted" in goal.body
+    assert "goal_overview_command_title</dt><dd>Demo the ClankerOS local operator app with fixture-backed state" in goal.body
+    assert "goal_overview_command_original_prompt_status</dt><dd>present" in goal.body
+    assert "goal_overview_command_phase</dt><dd>Ready to commit" in goal.body
+    assert "goal_overview_command_risk_level</dt><dd>low" in goal.body
+    assert "goal_overview_command_progress</dt><dd>0/1 tasks completed" in goal.body
+    assert "goal_overview_command_task_count</dt><dd>1" in goal.body
+    assert "goal_overview_command_delegation_count</dt><dd>1" in goal.body
+    assert "goal_overview_command_run_count</dt><dd>1" in goal.body
+    assert "goal_overview_command_approval_count</dt><dd>2" in goal.body
+    assert "goal_overview_command_pending_approvals</dt><dd>1" in goal.body
+    assert "goal_overview_command_incident_count</dt><dd>0" in goal.body
+    assert "goal_overview_command_open_incidents</dt><dd>0" in goal.body
+    assert "goal_overview_command_open_recommendations</dt><dd>0" in goal.body
+    assert "goal_overview_command_memory_status</dt><dd>operator_notes_available" in goal.body
+    assert "goal_overview_command_next_action</dt><dd>Create commit request" in goal.body
+    assert f"goal_overview_command_target_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
+    assert "goal_overview_command_reason</dt><dd>reviewed_run=" in goal.body
+    assert "goal_overview_command_source</dt><dd>goal_record_and_local_state" in goal.body
+    assert "goal_overview_command_write_on_get</dt><dd>false" in goal.body
+    assert "goal_overview_command_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_overview_command_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_overview_command_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_overview_now: Ready to commit status=accepted" in goal.body
+    assert f"goal_overview_click: <a href='/runs/{result.coder_worktree_run_id}'>Create commit request</a>" in goal.body
+    assert "goal_overview_scope: project=local-app-demo risk=low tasks=1" in goal.body
+    assert "goal_overview_waiting: approvals=1 incidents=0 recommendations=0" in goal.body
+    assert "goal_overview_safety: read-only local goal overview" in goal.body
     assert "Goal Risk" in goal.body
     assert "Goal Risk Command Bar" in goal.body
     assert "data-goal-risk-command-bar='true'" in goal.body

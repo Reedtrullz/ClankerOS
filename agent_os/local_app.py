@@ -4060,7 +4060,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_next_action_card(state, next_action),
             _goal_next_recommendation_section(state, next_action),
             _goal_resume_snapshot(root, state),
-            _goal_overview(state),
+            _goal_overview(state, phase, next_action),
             _goal_risk_section(state),
             _goal_completion_criteria(state),
             _goal_completion_readiness(root, state, next_action),
@@ -4135,6 +4135,7 @@ def _goal_section_index() -> str:
         ("Next action", "goal-next-action"),
         ("Next recommendation", "goal-next-recommendation"),
         ("Resume snapshot", "goal-resume-snapshot"),
+        ("Overview command", "goal-overview-command-bar"),
         ("Overview", "goal-overview"),
         ("Risk command", "goal-risk-command-bar"),
         ("Progress command", "goal-progress-command-bar"),
@@ -5525,19 +5526,137 @@ def _delegation_has_context_pack(
     return (context_dir / "context_pack.md").exists() or (context_dir / "context_pack.json").exists()
 
 
-def _goal_overview(state: dict[str, Any]) -> str:
+def _goal_overview(
+    state: dict[str, Any],
+    phase: str,
+    next_action: GoalNextAction,
+) -> str:
     goal = state["goal"]
-    return "<section id='goal-overview'><h2>Overview</h2>" + _kv(
+    return (
+        _goal_overview_command_bar(state, phase, next_action)
+        + "<section id='goal-overview'><h2>Overview</h2>"
+        + _kv(
+            [
+                ("intent", goal.description),
+                ("original_prompt", goal.original_prompt),
+                ("created_at", goal.created_at),
+                ("updated_at", goal.updated_at),
+                ("completed_at", goal.completed_at or "none"),
+                ("risk_level", state["risk_level"]),
+                ("operator_notes_status", "local_artifact_if_present"),
+            ]
+        )
+        + "</section>"
+    )
+
+
+def _goal_overview_command_bar(
+    state: dict[str, Any],
+    phase: str,
+    next_action: GoalNextAction,
+) -> str:
+    goal = state["goal"]
+    tasks = state.get("tasks", [])
+    delegations = state.get("delegations", [])
+    local_runs = state.get("runs", [])
+    worktree_runs = state.get("worktree_runs", [])
+    incidents = state.get("incidents", [])
+    recommendations = state.get("recommendations", [])
+    worktree_approvals = state.get("worktree_approvals", [])
+    commit_approvals = state.get("commit_approvals", [])
+    publications = state.get("publications", [])
+    pending_approvals = (
+        _count_status(worktree_approvals, "pending_operator_approval")
+        + _count_status(commit_approvals, "pending_operator_approval")
+        + _count_status(publications, "pending_operator_approval")
+    )
+    open_incidents = sum(1 for row in incidents if row["status"] == "open")
+    open_recommendations = sum(
+        1 for row in recommendations if row["status"] == "open"
+    )
+    status = "completed" if goal.completed_at else goal.status
+    memory_status = "operator_notes_available"
+    target_surface = SafeHtml(
+        f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
+    )
+    return "".join(
         [
-            ("intent", goal.description),
-            ("original_prompt", goal.original_prompt),
-            ("created_at", goal.created_at),
-            ("updated_at", goal.updated_at),
-            ("completed_at", goal.completed_at or "none"),
-            ("risk_level", state["risk_level"]),
-            ("operator_notes_status", "local_artifact_if_present"),
+            "<section id='goal-overview-command-bar' class='panel goal-overview-command-bar' data-goal-overview-command-bar='true'><h3>Goal Overview Command Bar</h3>",
+            "<p class='muted'>One scan of the goal identity, current state, next click, and safety boundary before the detailed overview.</p>",
+            _kv(
+                [
+                    ("goal_overview_command_goal", goal.id),
+                    ("goal_overview_command_project", goal.project_id),
+                    ("goal_overview_command_status", status),
+                    ("goal_overview_command_title", goal.title or goal.description),
+                    ("goal_overview_command_intent", goal.description),
+                    (
+                        "goal_overview_command_original_prompt_status",
+                        "present" if goal.original_prompt else "missing",
+                    ),
+                    ("goal_overview_command_phase", phase),
+                    (
+                        "goal_overview_command_risk_level",
+                        state.get("risk_level") or "unknown",
+                    ),
+                    ("goal_overview_command_progress", _goal_progress_label(state)),
+                    ("goal_overview_command_created_at", goal.created_at),
+                    ("goal_overview_command_updated_at", goal.updated_at),
+                    ("goal_overview_command_completed_at", goal.completed_at or "none"),
+                    ("goal_overview_command_task_count", str(len(tasks))),
+                    ("goal_overview_command_delegation_count", str(len(delegations))),
+                    (
+                        "goal_overview_command_run_count",
+                        str(len(local_runs) + len(worktree_runs)),
+                    ),
+                    (
+                        "goal_overview_command_approval_count",
+                        str(
+                            len(worktree_approvals)
+                            + len(commit_approvals)
+                            + len(publications)
+                        ),
+                    ),
+                    ("goal_overview_command_pending_approvals", str(pending_approvals)),
+                    ("goal_overview_command_incident_count", str(len(incidents))),
+                    ("goal_overview_command_open_incidents", str(open_incidents)),
+                    (
+                        "goal_overview_command_open_recommendations",
+                        str(open_recommendations),
+                    ),
+                    ("goal_overview_command_memory_status", memory_status),
+                    ("goal_overview_command_next_action", next_action.action),
+                    ("goal_overview_command_target_surface", target_surface),
+                    ("goal_overview_command_reason", next_action.reason),
+                    ("goal_overview_command_source", "goal_record_and_local_state"),
+                    ("goal_overview_command_write_on_get", "false"),
+                    ("goal_overview_command_provider_calls_taken", "0"),
+                    ("goal_overview_command_network_actions_taken", "0"),
+                    ("goal_overview_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_overview_now: {_e(phase)} status={_e(status)}",
+                    f"goal_overview_click: <a href='{_e(next_action.href)}'>{_e(next_action.action)}</a>",
+                    (
+                        "goal_overview_scope: "
+                        f"project={_e(goal.project_id)} "
+                        f"risk={_e(state.get('risk_level') or 'unknown')} "
+                        f"tasks={len(tasks)}"
+                    ),
+                    (
+                        "goal_overview_waiting: "
+                        f"approvals={pending_approvals} "
+                        f"incidents={open_incidents} "
+                        f"recommendations={open_recommendations}"
+                    ),
+                    "goal_overview_safety: read-only local goal overview",
+                ]
+            ),
+            "</section>",
         ]
-    ) + "</section>"
+    )
 
 
 def _goal_risk_section(state: dict[str, Any]) -> str:
@@ -15527,6 +15646,9 @@ def _html_page(
     .goal-command-bar dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:8px; }}
     .goal-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-overview-command-bar {{ border-left:4px solid var(--accent); }}
+    .goal-overview-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-overview-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-board-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-board-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-board-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

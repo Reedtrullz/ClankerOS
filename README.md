@@ -199,6 +199,9 @@ hidden, and stays local-only. The Goal Command Bar near the top condenses
 current phase, one primary action, target local surface, progress, waiting
 counts, resume route, latest project-scoped CI proof state, and zero-effect
 boundary so the operator can choose the next click without scrolling. Goal
+Overview now starts with a read-only `Goal Overview Command Bar` that makes the
+goal identity, status, phase, risk, progress, task/delegation/run/approval
+counts, next click, and no-effect boundary visible before the raw metadata. Goal
 Risk now starts with a read-only `Goal Risk Command Bar` that summarizes
 risk level, task risk counts, approval-boundary posture, first task risk/status,
 one next local surface, and zero-effect counters before the detailed risk
