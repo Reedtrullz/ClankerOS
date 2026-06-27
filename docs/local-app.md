@@ -393,6 +393,14 @@ also shows the workflow job timeout, summarizes the latest operator-supplied
 CI evidence record when one exists, and labels an in-progress GitHub run as
 pending proof rather than CI proof:
 
+A read-only `Verification Command Bar` appears before the workflow inventory.
+It summarizes whether the workflow is configured, the current local checkout
+commit when available, the latest recorded CI source/status/scope, whether
+that evidence proves the current commit, the next proof action, and the target
+surface. When proof is missing, stale, job-scoped, or the checkout commit is
+unknown, the bar points to `/ci-evidence#record-ci-snapshot-json` instead of
+asking the operator to rerun the full suite locally.
+
 - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
 - focused local app pytest slices
 - `python3 -m agent_os.cli app-smoke-test`
@@ -445,7 +453,12 @@ the provider, status, external run id, external URL, commit, recorded-by field,
 and evidence artifact link for recent CI/deploy evidence records. Handoff
 records keep the GitHub handoff id; direct snapshot records are labeled
 `direct_public_snapshot` so they do not pretend to come from a publication
-handoff. The `CI Evidence Recording Guide` shows a handoff-specific
+handoff. A read-only `CI Evidence Command Bar` starts the page with handoff and
+snapshot record counts, the latest local proof source/status/scope, whether it
+matches the current checkout, and the one next recording or review action. The
+bar links to stable same-page targets such as `#record-ci-snapshot-json`,
+`#recent-ci-evidence`, and `#recent-direct-snapshot-ci-evidence`. The `CI
+Evidence Recording Guide` shows a handoff-specific
 `ci-deploy-evidence` command when a local GitHub handoff exists, and a direct
 `ci-snapshot-handoff`, `ci-snapshot-evidence-from-gh-json`, and manual
 `ci-snapshot-evidence` command template when the operator is recording a

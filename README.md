@@ -368,7 +368,11 @@ that an in-progress GitHub run is pending proof, not CI proof, so you can wait
 on GitHub instead of rerunning the full suite locally. It also shows a
 copyable `ci-snapshot-handoff` template for the current checkout so you can
 watch a direct pushed-snapshot run and then record it after success. The page
-itself does not contact GitHub.
+itself does not contact GitHub. A read-only `Verification Command Bar` now
+starts the page with workflow status, latest local CI proof, whether that proof
+matches the current checkout, and one target action, usually
+`/ci-evidence#record-ci-snapshot-json` when proof is missing, stale, or only
+job-scoped.
 
 The root dashboard includes the same proof boundary as a compact
 `Verification Snapshot`, with links to `/verification` and `/ci-evidence`, so
@@ -388,7 +392,10 @@ in local ClankerOS state and links the inert evidence artifact. It also shows
 the latest local GitHub handoff id, branch, commit, handoff evidence, and a
 handoff-specific `ci-deploy-evidence` command template when a recordable
 handoff exists. When no handoff exists, it shows a direct snapshot evidence
-template instead. In both states it also shows the direct `ci-snapshot-handoff`
+template instead. A read-only `CI Evidence Command Bar` now starts the page
+with handoff/snapshot record counts, latest proof source/status/scope, current
+proof posture, one next action, and same-page targets for the paste form or
+recent evidence lists. In both states it also shows the direct `ci-snapshot-handoff`
 template for the current checkout. It does not fetch GitHub status.
 
 The app is local-only by default, binds to `127.0.0.1`, and refuses non-local

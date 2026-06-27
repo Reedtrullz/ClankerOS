@@ -5769,6 +5769,7 @@ def _verification_page(root: Path) -> str:
         ("app_network_actions_taken", "0"),
         ("app_external_mutations_taken", "0"),
     ]
+    workflow_status = _verification_workflow_status(workflow_lines)
     workflow_step_lines = [
         "Fast smoke job: compile source/tests, route-marker app-smoke-test, fixture-backed app-demo-smoke-test, demo-app-scenario, app --help, dashboard, iterate, git diff --check",
         "Compile source and tests: python -m compileall -q agent_os tests",
@@ -5796,12 +5797,13 @@ def _verification_page(root: Path) -> str:
             "<p class='muted'>Read-only testing map for the local operator app. Use compact local checks while GitHub Actions runs the slow full suite after a pushed commit.</p>",
             _non_claim_banner(),
             "</section>",
-            "<section><h2>GitHub Actions Workflow</h2>",
+            _verification_command_bar(root, workflow_status),
+            "<section id='github-actions-workflow'><h2>GitHub Actions Workflow</h2>",
             _kv(workflow_lines),
             "</section>",
             _list_section("Workflow Configuration Summary", workflow_summary_lines),
             _list_section("GitHub Actions Steps", workflow_step_lines),
-            _ci_snapshot_handoff_panel(root),
+            _ci_snapshot_handoff_panel(root, anchor_id="verification-ci-handoff"),
             _latest_ci_evidence_panel(root),
             _list_section(
                 "Remote Run State Guidance",
@@ -5828,6 +5830,176 @@ def _verification_page(root: Path) -> str:
                     "No push, PR, deploy, provider call, or external mutation is executed by this page.",
                 ],
             ),
+        ]
+    )
+
+
+def _verification_workflow_status(workflow_lines: list[tuple[str, str]]) -> str:
+    expected = {
+        "workflow_file_status": "available",
+        "push_to_main": "configured",
+        "pull_request_to_main": "configured",
+        "workflow_dispatch": "configured",
+        "full_suite_command": "python -m pytest -q",
+        "fast_smoke_job": "configured",
+        "route_marker_app_smoke": "configured",
+        "fixture_backed_app_demo_smoke": "configured",
+        "full_suite_job": "configured",
+        "full_suite_depends_on_smoke": "configured",
+    }
+    values = {key: value for key, value in workflow_lines}
+    missing = [
+        key
+        for key, expected_value in expected.items()
+        if values.get(key) != expected_value
+    ]
+    return "configured" if not missing else "incomplete"
+
+
+def _ci_evidence_command_state(root: Path) -> dict[str, str]:
+    repo_state = _repo_state(root)
+    branch = repo_state["branch"] if repo_state["branch"] != "unknown" else "unknown"
+    full_commit = _git(root, ["rev-parse", "HEAD"])
+    current_commit = full_commit or repo_state["commit"]
+    current_commit_known = bool(current_commit and current_commit != "unknown")
+    current_commit_label = current_commit if current_commit_known else "unknown"
+    latest = _latest_ci_evidence_record(root)
+    if latest is None:
+        return {
+            "branch": branch,
+            "current_commit": current_commit_label,
+            "latest_source": "none",
+            "latest_status": "missing",
+            "latest_scope": "none",
+            "latest_commit": "none",
+            "latest_external_run_id": "none",
+            "latest_target": "#record-ci-snapshot-json",
+            "current_proof": "missing_current_commit_proof",
+            "command_status": "no_records",
+            "next_action": "Paste GitHub Actions JSON",
+            "target_surface": "#record-ci-snapshot-json",
+            "reason": "no_local_ci_evidence_records",
+        }
+
+    source_kind, record = latest
+    result = getattr(record, "result_json", {}) or {}
+    latest_scope = str(result.get("evidence_scope", "unknown"))
+    latest_status = str(getattr(record, "status", "unknown"))
+    latest_commit = str(getattr(record, "commit_sha", "unknown"))
+    if source_kind == "direct_public_snapshot":
+        latest_target = "#recent-direct-snapshot-ci-evidence"
+    else:
+        latest_target = "#recent-ci-evidence"
+
+    if not current_commit_known:
+        current_proof = "current_commit_unknown"
+        command_status = "records_available_current_commit_unknown"
+        next_action = "Confirm checkout then record CI proof"
+        target_surface = "#record-ci-snapshot-json"
+        reason = "current_checkout_commit_unknown"
+    elif latest_commit != current_commit:
+        current_proof = "stale_or_different_commit"
+        command_status = "latest_record_for_different_commit"
+        next_action = "Record current commit CI proof"
+        target_surface = "#record-ci-snapshot-json"
+        reason = "latest_record_commit_does_not_match_current_checkout"
+    elif latest_status == "success" and latest_scope == "workflow_run":
+        current_proof = "current_workflow_run_success"
+        command_status = "current_full_ci_recorded"
+        next_action = "Review latest CI evidence"
+        target_surface = latest_target
+        reason = "current_commit_has_workflow_run_success"
+    elif latest_status == "success" and latest_scope.startswith("workflow_job:"):
+        current_proof = "current_job_scope_only"
+        command_status = "current_fast_smoke_recorded"
+        next_action = "Record full-suite CI proof"
+        target_surface = "#record-ci-snapshot-json"
+        reason = "latest_record_is_job_scoped_early_proof"
+    else:
+        current_proof = "current_ci_record_not_full_success"
+        command_status = "current_ci_record_needs_review"
+        next_action = "Review and refresh CI evidence"
+        target_surface = "#record-ci-snapshot-json"
+        reason = "latest_record_is_not_full_workflow_success"
+
+    return {
+        "branch": branch,
+        "current_commit": current_commit_label,
+        "latest_source": source_kind,
+        "latest_status": latest_status,
+        "latest_scope": latest_scope,
+        "latest_commit": latest_commit,
+        "latest_external_run_id": str(getattr(record, "external_run_id", "unknown")),
+        "latest_target": latest_target,
+        "current_proof": current_proof,
+        "command_status": command_status,
+        "next_action": next_action,
+        "target_surface": target_surface,
+        "reason": reason,
+    }
+
+
+def _verification_command_bar(root: Path, workflow_status: str) -> str:
+    state = _ci_evidence_command_state(root)
+    if workflow_status != "configured":
+        command_status = "workflow_incomplete"
+        next_action = "Fix GitHub Actions workflow"
+        target_surface = "GitHub Actions Workflow"
+        target_href = "#github-actions-workflow"
+        reason = "workflow_file_missing_or_incomplete"
+    elif state["current_proof"] == "current_workflow_run_success":
+        command_status = "ci_proof_recorded"
+        next_action = "Use recorded CI evidence"
+        target_surface = "/ci-evidence"
+        target_href = "/ci-evidence"
+        reason = state["reason"]
+    else:
+        command_status = "waiting_for_github_actions_proof"
+        next_action = state["next_action"]
+        target_surface = "/ci-evidence#record-ci-snapshot-json"
+        target_href = "/ci-evidence#record-ci-snapshot-json"
+        reason = state["reason"]
+    return "".join(
+        [
+            "<section id='verification-command-bar' class='panel verification-command-bar' data-verification-command-bar='true'><h2>Verification Command Bar</h2>",
+            _kv(
+                [
+                    ("verification_command_status", command_status),
+                    ("verification_command_workflow_status", workflow_status),
+                    ("verification_command_branch", state["branch"]),
+                    ("verification_command_current_commit", state["current_commit"]),
+                    ("verification_command_current_proof", state["current_proof"]),
+                    ("verification_command_latest_ci_source", state["latest_source"]),
+                    ("verification_command_latest_ci_status", state["latest_status"]),
+                    ("verification_command_latest_ci_scope", state["latest_scope"]),
+                    ("verification_command_latest_ci_commit", state["latest_commit"]),
+                    ("verification_command_latest_ci_run_id", state["latest_external_run_id"]),
+                    ("verification_command_next_action", next_action),
+                    (
+                        "verification_command_target_surface",
+                        SafeHtml(
+                            f"<a href='{_e(target_href)}'>{_e(target_surface)}</a>"
+                        ),
+                    ),
+                    ("verification_command_reason", reason),
+                    ("verification_command_write_on_get", "false"),
+                    ("verification_command_github_status_fetch", "none"),
+                    ("verification_command_network_actions_taken", "0"),
+                    ("verification_command_external_effects_created", "false"),
+                    ("verification_command_push_created", "false"),
+                    ("verification_command_pr_created", "false"),
+                    ("verification_command_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"verification_command_now: {_e(next_action)}",
+                    f"verification_command_click: <a href='{_e(target_href)}'>{_e(target_surface)}</a>",
+                    f"verification_command_reason: {_e(reason)}",
+                    "verification_command_safety: read-only verification guidance",
+                ]
+            ),
+            "</section>",
         ]
     )
 
@@ -5884,7 +6056,7 @@ def _latest_ci_evidence_panel(root: Path) -> str:
     )
 
 
-def _ci_snapshot_handoff_panel(root: Path) -> str:
+def _ci_snapshot_handoff_panel(root: Path, *, anchor_id: str | None = None) -> str:
     return _list_section(
         "Direct Snapshot CI Handoff",
         [
@@ -5896,6 +6068,7 @@ def _ci_snapshot_handoff_panel(root: Path) -> str:
             "app_network_actions_taken: 0",
             "external_mutations_taken: 0",
         ],
+        anchor_id=anchor_id,
     )
 
 
@@ -5995,10 +6168,15 @@ def _ci_evidence_page(root: Path) -> str:
                 ]
             ),
             "</section>",
+            _ci_evidence_command_bar(root, records, snapshot_records),
             _ci_evidence_recording_guide(root),
             _ci_snapshot_json_recording_form(root),
-            _list_section("Recent CI Evidence", items),
-            _list_section("Recent Direct Snapshot CI Evidence", snapshot_items),
+            _list_section("Recent CI Evidence", items, anchor_id="recent-ci-evidence"),
+            _list_section(
+                "Recent Direct Snapshot CI Evidence",
+                snapshot_items,
+                anchor_id="recent-direct-snapshot-ci-evidence",
+            ),
             _list_section(
                 "Non-Claims",
                 [
@@ -6013,6 +6191,62 @@ def _ci_evidence_page(root: Path) -> str:
     )
 
 
+def _ci_evidence_command_bar(
+    root: Path,
+    records: list[Any],
+    snapshot_records: list[Any],
+) -> str:
+    state = _ci_evidence_command_state(root)
+    target_href = state["target_surface"]
+    target_label = target_href
+    if not target_href.startswith("/"):
+        target_label = target_href.removeprefix("#").replace("-", " ")
+    return "".join(
+        [
+            "<section id='ci-evidence-command-bar' class='panel ci-evidence-command-bar' data-ci-evidence-command-bar='true'><h2>CI Evidence Command Bar</h2>",
+            _kv(
+                [
+                    ("ci_evidence_command_status", state["command_status"]),
+                    ("ci_evidence_command_handoff_record_count", str(len(records))),
+                    ("ci_evidence_command_snapshot_record_count", str(len(snapshot_records))),
+                    ("ci_evidence_command_branch", state["branch"]),
+                    ("ci_evidence_command_current_commit", state["current_commit"]),
+                    ("ci_evidence_command_current_proof", state["current_proof"]),
+                    ("ci_evidence_command_latest_source", state["latest_source"]),
+                    ("ci_evidence_command_latest_status", state["latest_status"]),
+                    ("ci_evidence_command_latest_scope", state["latest_scope"]),
+                    ("ci_evidence_command_latest_commit", state["latest_commit"]),
+                    ("ci_evidence_command_latest_run_id", state["latest_external_run_id"]),
+                    ("ci_evidence_command_next_action", state["next_action"]),
+                    (
+                        "ci_evidence_command_target_surface",
+                        SafeHtml(
+                            f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"
+                        ),
+                    ),
+                    ("ci_evidence_command_reason", state["reason"]),
+                    ("ci_evidence_command_write_on_get", "false"),
+                    ("ci_evidence_command_github_status_fetch", "none"),
+                    ("ci_evidence_command_network_actions_taken", "0"),
+                    ("ci_evidence_command_external_effects_created", "false"),
+                    ("ci_evidence_command_push_created", "false"),
+                    ("ci_evidence_command_pr_created", "false"),
+                    ("ci_evidence_command_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"ci_evidence_command_now: {_e(state['next_action'])}",
+                    f"ci_evidence_command_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"ci_evidence_command_reason: {_e(state['reason'])}",
+                    "ci_evidence_command_safety: local proof records only",
+                ]
+            ),
+            "</section>",
+        ]
+    )
+
+
 def _ci_snapshot_json_recording_form(root: Path) -> str:
     state = _repo_state(root)
     full_commit = _git(root, ["rev-parse", "HEAD"])
@@ -6022,7 +6256,7 @@ def _ci_snapshot_json_recording_form(root: Path) -> str:
     branch = state["branch"] if state["branch"] != "unknown" else "main"
     return "".join(
         [
-            "<section><h2>Record Direct Snapshot From GitHub JSON</h2>",
+            "<section id='record-ci-snapshot-json'><h2>Record Direct Snapshot From GitHub JSON</h2>",
             "<p class='muted'>Paste JSON from the displayed <code>gh run view</code> command after GitHub Actions completes, or enter a completed job name to record scoped job proof while the full run is still in progress. The local app can infer the run id and URL from the JSON, validates the supplied JSON before writing CI evidence, and never contacts GitHub itself.</p>",
             "<form method='post' action='/actions/ci-snapshot-evidence-from-gh-json'>",
             f"<label>project <input name='project' value='clankeros'></label>",
@@ -6070,6 +6304,7 @@ def _ci_evidence_recording_guide(root: Path) -> str:
                 "direct_snapshot_boundary: use only for direct operator-authorized pushed snapshots, not publication handoffs",
                 "github_status_fetch: none",
             ],
+            anchor_id="ci-evidence-recording-guide",
         )
 
     handoff = handoffs[0]
@@ -6089,6 +6324,7 @@ def _ci_evidence_recording_guide(root: Path) -> str:
             "proof_boundary: operator_supplied_record_only",
             "github_status_fetch: none",
         ],
+        anchor_id="ci-evidence-recording-guide",
     )
 
 
@@ -10602,8 +10838,8 @@ def _html_page(
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{_e(title)} - ClankerOS Local Operator</title>
   <style>
-    :root {{ color-scheme: light; --ink:#15171a; --muted:#5d6672; --line:#d9dee5; --panel:#f7f8fa; --surface:#ffffff; --accent:#176b87; --warn:#8a4b00; --error:#9c1d24; }}
-    :root[data-theme="dark"] {{ color-scheme: dark; --ink:#eef4f8; --muted:#a6b0bd; --line:#303842; --panel:#161b22; --surface:#0f1419; --accent:#62b6cb; --warn:#f0bd59; --error:#ff8a94; }}
+    :root {{ color-scheme: light; --ink:#15171a; --muted:#5d6672; --line:#d9dee5; --panel:#f7f8fa; --surface:#ffffff; --accent:#176b87; --ok:#2e7d32; --warn:#8a4b00; --error:#9c1d24; }}
+    :root[data-theme="dark"] {{ color-scheme: dark; --ink:#eef4f8; --muted:#a6b0bd; --line:#303842; --panel:#161b22; --surface:#0f1419; --accent:#62b6cb; --ok:#7bd88f; --warn:#f0bd59; --error:#ff8a94; }}
     * {{ box-sizing: border-box; }}
     body {{ margin:0; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:var(--ink); background:var(--surface); line-height:1.45; }}
     header {{ display:flex; justify-content:space-between; align-items:center; gap:16px; padding:14px 24px; border-bottom:1px solid var(--line); background:var(--surface); position:sticky; top:0; z-index:2; }}
@@ -10640,6 +10876,12 @@ def _html_page(
     .run-command-bar {{ border-left:4px solid var(--warn); }}
     .run-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .run-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .verification-command-bar {{ border-left:4px solid var(--accent); }}
+    .verification-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .verification-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .ci-evidence-command-bar {{ border-left:4px solid var(--ok); }}
+    .ci-evidence-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .ci-evidence-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .workflow-map-rail {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px; }}
     .workflow-map-rail li {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; overflow-wrap:anywhere; }}
     .workflow-map-rail li[data-gate-marker="current"] {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}

@@ -1,5 +1,42 @@
 # Status
 
+## 2026-06-27 Verification Command Bars
+
+- Added read-only `Verification Command Bar` and `CI Evidence Command Bar`
+  surfaces to `/verification` and `/ci-evidence`. They summarize workflow
+  configuration, current checkout commit when available, latest local CI proof
+  source/status/scope, whether that proof covers the current commit, one next
+  recording or review action, target surface, reason, and write-on-GET/
+  GitHub-polling/network/external-effect/push/PR/deploy boundaries before the
+  longer workflow map, paste form, and evidence lists.
+- `/ci-evidence` now has stable same-page anchors for the recording guide,
+  GitHub JSON paste form, recent publication-handoff CI evidence, and recent
+  direct-snapshot CI evidence. The command bars link to these targets instead
+  of leaving the operator to scan the page after a push.
+- Defined the existing success accent variable used by command bars so the UI
+  renders with an explicit non-monochrome proof/status accent in light and dark
+  mode.
+- README, local app docs, and the operating summary now describe
+  `/verification` and `/ci-evidence` as proof cockpits rather than only
+  documentation-style evidence pages.
+- Non-claims: this does not fetch GitHub status, run CI, approve anything,
+  execute work, commit, push, create PRs, deploy, call providers, write state
+  on GET, or mutate external systems. It only reads checked-in workflow text,
+  local git state when available, and existing local CI evidence rows.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_records_ci_snapshot_evidence_from_pasted_gh_json or local_app_records_fast_smoke_ci_snapshot_evidence_from_pasted_gh_json" --tb=short`
+    -> `3 passed, 512 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Run Command Bar
 
 - Added a read-only `Run Command Bar` to coder worktree `/runs/<run_id>`

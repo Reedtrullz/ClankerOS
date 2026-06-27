@@ -99,6 +99,14 @@ Core layers for the bootstrap:
   current branch/commit GitHub Actions direct snapshot command templates,
   latest operator-supplied CI evidence when one exists, and zero app-side
   GitHub polling, provider, push, PR, deploy, or external-mutation effects;
+  `/verification` includes a read-only `Verification Command Bar` that
+  summarizes workflow configuration, current checkout commit when available,
+  latest local CI proof source/status/scope, current-proof posture, one next
+  proof action, target surface, and no-write/no-GitHub-polling/no-external-
+  effect boundaries before the longer testing map; `/ci-evidence` includes a
+  read-only `CI Evidence Command Bar` that summarizes handoff/snapshot record
+  counts, latest proof, current-proof posture, and same-page recording or
+  review targets before the JSON paste form and evidence lists;
   `/search` for bounded global search across indexed goals, projects,
   delegations, known artifacts, incidents, recommendations, memory, runs,
   approvals, and skills, with goal results including live local phase, one

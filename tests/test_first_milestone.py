@@ -2543,6 +2543,13 @@ def test_local_app_records_ci_snapshot_evidence_from_pasted_gh_json(
 
     ci_evidence = render_local_app_route(tmp_path, "/ci-evidence")
     assert ci_evidence.status == 200
+    assert "CI Evidence Command Bar" in ci_evidence.body
+    assert "ci_evidence_command_status</dt><dd>no_records" in ci_evidence.body
+    assert "ci_evidence_command_snapshot_record_count</dt><dd>0" in ci_evidence.body
+    assert "ci_evidence_command_latest_status</dt><dd>missing" in ci_evidence.body
+    assert "ci_evidence_command_next_action</dt><dd>Paste GitHub Actions JSON" in ci_evidence.body
+    assert "ci_evidence_command_target_surface</dt><dd><a href='#record-ci-snapshot-json'>record ci snapshot json</a>" in ci_evidence.body
+    assert "ci_evidence_command_reason</dt><dd>no_local_ci_evidence_records" in ci_evidence.body
     assert "Record Direct Snapshot From GitHub JSON" in ci_evidence.body
     assert "action='/actions/ci-snapshot-evidence-from-gh-json'" in ci_evidence.body
     assert "status_json" in ci_evidence.body
@@ -2602,6 +2609,12 @@ def test_local_app_records_ci_snapshot_evidence_from_pasted_gh_json(
 
     ci_evidence_after = render_local_app_route(tmp_path, "/ci-evidence")
     assert ci_evidence_after.status == 200
+    assert "ci_evidence_command_status</dt><dd>records_available_current_commit_unknown" in ci_evidence_after.body
+    assert "ci_evidence_command_snapshot_record_count</dt><dd>1" in ci_evidence_after.body
+    assert "ci_evidence_command_latest_source</dt><dd>direct_public_snapshot" in ci_evidence_after.body
+    assert "ci_evidence_command_latest_status</dt><dd>success" in ci_evidence_after.body
+    assert "ci_evidence_command_latest_scope</dt><dd>workflow_run" in ci_evidence_after.body
+    assert "ci_evidence_command_latest_run_id</dt><dd>28211577106" in ci_evidence_after.body
     assert "Recent Direct Snapshot CI Evidence" in ci_evidence_after.body
     assert records[0].id in ci_evidence_after.body
     assert "source=direct_public_snapshot" in ci_evidence_after.body
@@ -2668,6 +2681,8 @@ def test_local_app_records_fast_smoke_ci_snapshot_evidence_from_pasted_gh_json(
     )
 
     ci_evidence_after = render_local_app_route(tmp_path, "/ci-evidence")
+    assert "ci_evidence_command_latest_scope</dt><dd>workflow_job:Fast smoke verification" in ci_evidence_after.body
+    assert "ci_evidence_command_latest_run_id</dt><dd>28211577106" in ci_evidence_after.body
     assert "status_source=github_status_json_job" in ci_evidence_after.body
     assert "evidence_scope=workflow_job:Fast smoke verification" in ci_evidence_after.body
 
@@ -4789,6 +4804,23 @@ def test_local_app_routes_render_modern_workflow_and_health(
     verification = render_local_app_route(tmp_path, "/verification")
     assert verification.status == 200
     assert "Verification Handoff" in verification.body
+    assert "Verification Command Bar" in verification.body
+    assert "data-verification-command-bar='true'" in verification.body
+    assert "verification_command_status</dt><dd>waiting_for_github_actions_proof" in verification.body
+    assert "verification_command_workflow_status</dt><dd>configured" in verification.body
+    assert "verification_command_current_proof</dt><dd>current_commit_unknown" in verification.body
+    assert "verification_command_latest_ci_source</dt><dd>publication_handoff" in verification.body
+    assert "verification_command_latest_ci_status</dt><dd>success" in verification.body
+    assert "verification_command_latest_ci_commit</dt><dd>abc123" in verification.body
+    assert "verification_command_latest_ci_run_id</dt><dd>123" in verification.body
+    assert "verification_command_next_action</dt><dd>Confirm checkout then record CI proof" in verification.body
+    assert "verification_command_target_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>/ci-evidence#record-ci-snapshot-json</a>" in verification.body
+    assert "verification_command_reason</dt><dd>current_checkout_commit_unknown" in verification.body
+    assert "verification_command_write_on_get</dt><dd>false" in verification.body
+    assert "verification_command_github_status_fetch</dt><dd>none" in verification.body
+    assert "verification_command_network_actions_taken</dt><dd>0" in verification.body
+    assert "verification_command_external_effects_created</dt><dd>false" in verification.body
+    assert "verification_command_safety: read-only verification guidance" in verification.body
     assert "GitHub Actions Workflow" in verification.body
     assert ".github/workflows/tests.yml" in verification.body
     assert "push_to_main: configured" in verification.body
@@ -4832,7 +4864,27 @@ def test_local_app_routes_render_modern_workflow_and_health(
     ci_evidence = render_local_app_route(tmp_path, "/ci-evidence")
     assert ci_evidence.status == 200
     assert "CI Evidence Records" in ci_evidence.body
+    assert "CI Evidence Command Bar" in ci_evidence.body
+    assert "data-ci-evidence-command-bar='true'" in ci_evidence.body
+    assert "ci_evidence_command_status</dt><dd>records_available_current_commit_unknown" in ci_evidence.body
+    assert "ci_evidence_command_handoff_record_count</dt><dd>1" in ci_evidence.body
+    assert "ci_evidence_command_snapshot_record_count</dt><dd>0" in ci_evidence.body
+    assert "ci_evidence_command_current_proof</dt><dd>current_commit_unknown" in ci_evidence.body
+    assert "ci_evidence_command_latest_source</dt><dd>publication_handoff" in ci_evidence.body
+    assert "ci_evidence_command_latest_status</dt><dd>success" in ci_evidence.body
+    assert "ci_evidence_command_latest_commit</dt><dd>abc123" in ci_evidence.body
+    assert "ci_evidence_command_latest_run_id</dt><dd>123" in ci_evidence.body
+    assert "ci_evidence_command_next_action</dt><dd>Confirm checkout then record CI proof" in ci_evidence.body
+    assert "ci_evidence_command_target_surface</dt><dd><a href='#record-ci-snapshot-json'>record ci snapshot json</a>" in ci_evidence.body
+    assert "ci_evidence_command_reason</dt><dd>current_checkout_commit_unknown" in ci_evidence.body
+    assert "ci_evidence_command_github_status_fetch</dt><dd>none" in ci_evidence.body
+    assert "ci_evidence_command_write_on_get</dt><dd>false" in ci_evidence.body
+    assert "ci_evidence_command_safety: local proof records only" in ci_evidence.body
     assert "CI Evidence Recording Guide" in ci_evidence.body
+    assert "id='ci-evidence-recording-guide'" in ci_evidence.body
+    assert "id='record-ci-snapshot-json'" in ci_evidence.body
+    assert "id='recent-ci-evidence'" in ci_evidence.body
+    assert "id='recent-direct-snapshot-ci-evidence'" in ci_evidence.body
     assert f"latest_recordable_handoff_id: {handoff.id}" in ci_evidence.body
     assert "handoff_commit: abc123" in ci_evidence.body
     assert "record_when: GitHub Actions run has completed" in ci_evidence.body
