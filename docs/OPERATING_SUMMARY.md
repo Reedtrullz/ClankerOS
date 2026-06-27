@@ -363,7 +363,11 @@ Core layers for the bootstrap:
   one primary action, target local surface, progress, waiting counts, form
   availability, `/resume`, an expandable confirmed local action form when the
   current next action is browser-available, and no-write/no-provider/
-  no-network/no-external-effect boundaries visible outside the Goal page.
+  no-network/no-external-effect boundaries visible outside the Goal page. When
+  no Goal exists yet, the shared shell now treats that as first-run progress:
+  Home, Today, and Goals point `Route Context`, `Operator Focus`, and the
+  command palette at their same-page `Create Project` or `Create First Goal`
+  anchors, while other pages link back to Home/Today/Goals first-run anchors.
   They also include a read-only `Goal Operator Notes Command Bar` before the
   confirmed `save-goal-note` form. The command bar reports whether the
   goal-scoped `operator-notes.md` artifact exists, timestamped entry count,
@@ -536,7 +540,10 @@ Core layers for the bootstrap:
   palette include the same goal-aware current-action readback from the saved
   workspace goal or current lead goal, showing phase, one recommended action,
   target surface, zero-effect readbacks, and the same confirmed local action
-  form as the Goal page when the current next action is browser-available.
+  form as the Goal page when the current next action is browser-available. In
+  first-run states, those shared surfaces point at the concrete setup form for
+  the current route when possible, or at the Home/Today/Goals first-run anchors
+  when the current page does not render the guide.
   They still write nothing on GET and only submit existing local forms after
   explicit confirmation. The workflow page
   can be

@@ -474,6 +474,11 @@ keeps zero-effect counters visible. The focus strip keeps the saved or lead
 goal's phase, one primary action, target surface, progress, waiting counts,
 and resume link visible outside the Goal page, and can expand the same
 confirmed local action form when the current next action is browser-available.
+Before any Goal exists, the same shared shell follows first-run progress
+instead: Home, Today, and Goals point the route context, command palette, and
+Operator Focus at their same-page `Create Project` or `Create First Goal`
+forms, while other pages link back to those Home/Today/Goals first-run
+anchors.
 The command palette also opens with a route-aware `Current Page` block that
 names the current path, parent surface, resolved Goal/Project/run context,
 focus target, and `/resume` link before the same goal-aware

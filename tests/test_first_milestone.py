@@ -4495,26 +4495,74 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "palette_route_family</dt><dd>dashboard" in root.body
     assert "palette_route_current_path</dt><dd><a href='/'>/</a>" in root.body
     assert "palette_route_parent_surface</dt><dd><a href='/'>Dashboard</a>" in root.body
-    assert "palette_route_focus_status</dt><dd>no_goal" in root.body
-    assert "palette_route_focus_target</dt><dd><a href='/goals'>/goals</a>" in root.body
+    assert "palette_route_focus_status</dt><dd>first_run" in root.body
+    assert (
+        "palette_route_focus_target</dt><dd><a href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
     assert "palette_route_resume_surface</dt><dd><a href='/resume'>/resume</a>" in root.body
     assert "palette_route_write_on_get</dt><dd>false" in root.body
     assert "palette_route_provider_calls_taken</dt><dd>0" in root.body
     assert "palette_route_network_actions_taken</dt><dd>0" in root.body
     assert "palette_route_external_effects_created</dt><dd>false" in root.body
     assert "palette_route_safety: read-only local navigation" in root.body
-    assert "palette_continue_action_form_available</dt><dd>false" in root.body
+    assert "palette_continue_status</dt><dd>first_run" in root.body
+    assert "palette_continue_source</dt><dd>first_run_progress" in root.body
+    assert "palette_continue_current_step</dt><dd>create_project" in root.body
+    assert "palette_continue_next_action</dt><dd>Register ClankerOS project" in root.body
+    assert (
+        "palette_continue_target</dt><dd><a href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
+    assert "palette_continue_reason</dt><dd>no_project_registered" in root.body
+    assert "palette_continue_project</dt><dd>clankeros" in root.body
+    assert "palette_continue_home_target</dt><dd><a href='/#first-run-create-project'>Home setup</a>" in root.body
+    assert (
+        "palette_continue_today_target</dt><dd><a href='/today#first-run-create-project'>"
+        "Today setup</a>"
+    ) in root.body
+    assert (
+        "palette_continue_goals_target</dt><dd><a href='/goals#first-run-create-project'>"
+        "Goal setup</a>"
+    ) in root.body
+    assert "palette_continue_action_form_available</dt><dd>true" in root.body
+    assert "palette_continue_first_run_form_available</dt><dd>true" in root.body
+    assert "palette_continue_confirmation_required</dt><dd>true" in root.body
+    assert "palette_continue_safety_boundary</dt><dd>confirmed_local_action_only" in root.body
+    assert "palette_continue_write_on_get</dt><dd>false" in root.body
+    assert "palette_continue_provider_calls_taken</dt><dd>0" in root.body
+    assert "palette_continue_network_actions_taken</dt><dd>0" in root.body
+    assert "palette_continue_external_effects_created</dt><dd>false" in root.body
     assert "Operator Focus" in root.body
     assert "data-operator-focus-strip='true'" in root.body
-    assert "operator_focus_status</dt><dd>no_goal" in root.body
-    assert "operator_focus_primary_action</dt><dd>Open goals" in root.body
-    assert "operator_focus_target</dt><dd><a href='/goals'>/goals</a>" in root.body
-    assert "operator_focus_action_form_available</dt><dd>false" in root.body
+    assert "operator_focus_status</dt><dd>first_run" in root.body
+    assert "operator_focus_source</dt><dd>first_run_progress" in root.body
+    assert "operator_focus_current_step</dt><dd>create_project" in root.body
+    assert "operator_focus_primary_action</dt><dd>Register ClankerOS project" in root.body
+    assert (
+        "operator_focus_target</dt><dd><a href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
+    assert "operator_focus_reason</dt><dd>no_project_registered" in root.body
+    assert "operator_focus_project</dt><dd>clankeros" in root.body
+    assert "operator_focus_home_target</dt><dd><a href='/#first-run-create-project'>Home setup</a>" in root.body
+    assert (
+        "operator_focus_today_target</dt><dd><a href='/today#first-run-create-project'>"
+        "Today setup</a>"
+    ) in root.body
+    assert (
+        "operator_focus_goals_target</dt><dd><a href='/goals#first-run-create-project'>"
+        "Goal setup</a>"
+    ) in root.body
+    assert "operator_focus_action_form_available</dt><dd>true" in root.body
+    assert "operator_focus_first_run_form_available</dt><dd>true" in root.body
+    assert "operator_focus_confirmation_required</dt><dd>true" in root.body
+    assert "operator_focus_safety_boundary</dt><dd>confirmed_local_action_only" in root.body
     assert "operator_focus_write_on_get</dt><dd>false" in root.body
     assert "operator_focus_provider_calls_taken</dt><dd>0" in root.body
     assert "operator_focus_network_actions_taken</dt><dd>0" in root.body
     assert "operator_focus_external_effects_created</dt><dd>false" in root.body
-    assert "operator_focus_safety: read-only local navigation" in root.body
+    assert "operator_focus_safety: read-only local first-run routing" in root.body
     resume_empty = render_local_app_route(tmp_path, "/resume")
     assert resume_empty.status == 200
     assert "Resume Command Bar" in resume_empty.body
@@ -4605,8 +4653,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "breadcrumb_parent_surface</dt><dd><a href='/'>Dashboard</a>" in root.body
     assert "breadcrumb_current_goal</dt><dd>none" in root.body
     assert "breadcrumb_current_project</dt><dd>none" in root.body
-    assert "breadcrumb_focus_status</dt><dd>no_goal" in root.body
-    assert "breadcrumb_focus_target</dt><dd><a href='/goals'>/goals</a>" in root.body
+    assert "breadcrumb_focus_status</dt><dd>first_run" in root.body
+    assert (
+        "breadcrumb_focus_target</dt><dd><a href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
     assert "breadcrumb_resume_surface</dt><dd><a href='/resume'>/resume</a>" in root.body
     assert "breadcrumb_write_on_get</dt><dd>false" in root.body
     assert "breadcrumb_provider_calls_taken</dt><dd>0" in root.body
@@ -4681,6 +4732,35 @@ def test_local_app_routes_render_modern_workflow_and_health(
 
     empty_inbox = render_local_app_route(tmp_path, "/inbox")
     assert empty_inbox.status == 200
+    assert "breadcrumb_focus_status</dt><dd>first_run" in empty_inbox.body
+    assert (
+        "breadcrumb_focus_target</dt><dd><a href='/#first-run-create-project'>"
+        "Create Project</a>"
+    ) in empty_inbox.body
+    assert "palette_route_focus_status</dt><dd>first_run" in empty_inbox.body
+    assert (
+        "palette_route_focus_target</dt><dd><a href='/#first-run-create-project'>"
+        "Create Project</a>"
+    ) in empty_inbox.body
+    assert "palette_continue_status</dt><dd>first_run" in empty_inbox.body
+    assert (
+        "palette_continue_target</dt><dd><a href='/#first-run-create-project'>"
+        "Create Project</a>"
+    ) in empty_inbox.body
+    assert "operator_focus_status</dt><dd>first_run" in empty_inbox.body
+    assert (
+        "operator_focus_target</dt><dd><a href='/#first-run-create-project'>"
+        "Create Project</a>"
+    ) in empty_inbox.body
+    assert "operator_focus_home_target</dt><dd><a href='/#first-run-create-project'>Home setup</a>" in empty_inbox.body
+    assert (
+        "operator_focus_today_target</dt><dd><a href='/today#first-run-create-project'>"
+        "Today setup</a>"
+    ) in empty_inbox.body
+    assert (
+        "operator_focus_goals_target</dt><dd><a href='/goals#first-run-create-project'>"
+        "Goal setup</a>"
+    ) in empty_inbox.body
     assert "Inbox Command Bar" in empty_inbox.body
     assert "data-inbox-command-bar='true'" in empty_inbox.body
     assert "inbox_command_total_items</dt><dd>0" in empty_inbox.body
@@ -5037,6 +5117,33 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "focus_queue_next_surface: <a href='#first-run-create-goal'>Create First Goal</a>" in registered_home.body
     assert "focus_queue_next_action: Create first goal" in registered_home.body
     assert "focus_queue_first_run_form_available: true" in registered_home.body
+    assert "breadcrumb_focus_status</dt><dd>first_run" in registered_home.body
+    assert (
+        "breadcrumb_focus_target</dt><dd><a href='#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in registered_home.body
+    assert "palette_route_focus_status</dt><dd>first_run" in registered_home.body
+    assert (
+        "palette_route_focus_target</dt><dd><a href='#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in registered_home.body
+    assert "palette_continue_status</dt><dd>first_run" in registered_home.body
+    assert "palette_continue_current_step</dt><dd>create_first_goal" in registered_home.body
+    assert "palette_continue_next_action</dt><dd>Create first goal" in registered_home.body
+    assert (
+        "palette_continue_target</dt><dd><a href='#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in registered_home.body
+    assert "palette_continue_action_form_available</dt><dd>true" in registered_home.body
+    assert "operator_focus_status</dt><dd>first_run" in registered_home.body
+    assert "operator_focus_current_step</dt><dd>create_first_goal" in registered_home.body
+    assert "operator_focus_primary_action</dt><dd>Create first goal" in registered_home.body
+    assert (
+        "operator_focus_target</dt><dd><a href='#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in registered_home.body
+    assert "operator_focus_action_form_available</dt><dd>true" in registered_home.body
+    assert "operator_focus_first_run_form_available</dt><dd>true" in registered_home.body
     registered_today = render_local_app_route(tmp_path, "/today")
     assert registered_today.status == 200
     assert "today_command_status</dt><dd>first_run" in registered_today.body

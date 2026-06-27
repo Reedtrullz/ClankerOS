@@ -1,5 +1,40 @@
 # Status
 
+## 2026-06-27 First-Run-Aware Shared App Shell
+
+- Updated the shared browser app shell so first-run state is treated as a real
+  operator workflow instead of a generic `no_goal` condition.
+- `Route Context`, the command palette, and the global `Operator Focus` strip
+  now read first-run progress when no Goal exists. On Home, Today, and Goals
+  they target the same-page `Create Project` or `Create First Goal` form; on
+  pages that do not render the first-run guide, they link back to the
+  Home/Today/Goals first-run anchors.
+- Kept the existing safety boundary: the shared shell remains read-only on
+  GET, exposes only confirmed local action targets, and does not create a
+  project, goal, delegation, approval, run, commit, push, PR, deploy, provider
+  call, or network action by itself.
+- Updated README, local app docs, operating summary, and route tests for both
+  empty first-run state and registered-project/no-goal state.
+- Non-claims: this does not fetch GitHub status, poll GitHub from the app, call
+  providers, approve work, execute runs, commit, push, create PRs, deploy,
+  create projects or goals without confirmation, write on GET, use non-loopback
+  network actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `df -h /System/Volumes/Data`
+    -> `83Gi` available before work
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> passed, `2 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation counters at `0`
+  - `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed on a temporary root with fixture-backed route snippets matched and provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
 ## 2026-06-27 First-Run Action Result Continuation
 
 - Updated successful local app action result pages so a first-run operator can

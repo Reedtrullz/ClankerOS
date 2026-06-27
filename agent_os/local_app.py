@@ -2006,6 +2006,33 @@ def _first_run_same_page_target(first_run: dict[str, Any]) -> tuple[str, str]:
     return surface, surface
 
 
+def _first_run_focus_target(
+    first_run: dict[str, Any],
+    current_path: str,
+) -> dict[str, str]:
+    href, label = _first_run_same_page_target(first_run)
+    path = urlparse(current_path or "/").path or "/"
+    page_has_first_run_panel = path in {"/", "/today", "/goals"}
+    if href.startswith("#"):
+        target_href = href if page_has_first_run_panel else f"/{href}"
+        return {
+            "target_href": target_href,
+            "target_label": label,
+            "home_href": f"/{href}",
+            "today_href": f"/today{href}",
+            "goals_href": f"/goals{href}",
+            "form_available": "true",
+        }
+    return {
+        "target_href": href,
+        "target_label": label,
+        "home_href": href,
+        "today_href": "/today",
+        "goals_href": "/goals",
+        "form_available": "false",
+    }
+
+
 def _today_first_run_target(first_run: dict[str, Any]) -> tuple[str, str]:
     return _first_run_same_page_target(first_run)
 
@@ -19125,9 +19152,11 @@ def _breadcrumbs(
     current_href = current_path or path or "/"
     focus_status = str(focus_context.get("status", "state_unavailable"))
     focus_target = str(focus_context.get("target_href") or "/health")
+    focus_target_label = str(focus_context.get("target_label") or focus_target)
     if focus_status == "available":
         next_action = focus_context["next_action"]
         focus_target = str(next_action.href)
+        focus_target_label = focus_target
 
     rendered = []
     for index, (label, href) in enumerate(crumbs):
@@ -19186,7 +19215,7 @@ def _breadcrumbs(
         ("breadcrumb_focus_status", focus_status),
         (
             "breadcrumb_focus_target",
-            SafeHtml(f"<a href='{_e(focus_target)}'>{_e(focus_target)}</a>"),
+            SafeHtml(f"<a href='{_e(focus_target)}'>{_e(focus_target_label)}</a>"),
         ),
         ("breadcrumb_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
         ("breadcrumb_write_on_get", "false"),
@@ -19220,7 +19249,7 @@ def _breadcrumbs(
         ("route_phase", current_phase),
         (
             "route_focus",
-            SafeHtml(f"<a href='{_e(focus_target)}'>{_e(focus_target)}</a>"),
+            SafeHtml(f"<a href='{_e(focus_target)}'>{_e(focus_target_label)}</a>"),
         ),
         ("route_resume", SafeHtml("<a href='/resume'>/resume</a>")),
     ]
@@ -19412,7 +19441,7 @@ def _recent_items_command_bar(
     )
 
 
-def _operator_focus_context(root: Path) -> dict[str, Any]:
+def _operator_focus_context(root: Path, current_path: str = "/") -> dict[str, Any]:
     try:
         storage = _storage(root)
     except Exception:
@@ -19441,10 +19470,21 @@ def _operator_focus_context(root: Path) -> dict[str, Any]:
             source = "lead_goal"
 
     if goal_state is None or goal_state.get("goal") is None:
+        progress = _first_run_progress(root, storage)
+        target = _first_run_focus_target(progress, current_path)
         return {
-            "status": "no_goal",
-            "target_href": "/goals",
-            "target_label": "/goals",
+            "status": "first_run",
+            "source": "first_run_progress",
+            "current_step": str(progress["current_step"]),
+            "next_action": str(progress["next_action"]),
+            "next_reason": str(progress["next_reason"]),
+            "default_project": str(progress["default_project"]),
+            "target_href": target["target_href"],
+            "target_label": target["target_label"],
+            "home_href": target["home_href"],
+            "today_href": target["today_href"],
+            "goals_href": target["goals_href"],
+            "form_available": target["form_available"] == "true",
         }
 
     goal = goal_state["goal"]
@@ -19488,6 +19528,65 @@ def _operator_focus_context(root: Path) -> dict[str, Any]:
 
 def _operator_focus_strip(context: dict[str, Any]) -> str:
     status = str(context.get("status", "state_unavailable"))
+    if status == "first_run":
+        href = str(context.get("target_href") or "/goals")
+        label = str(context.get("target_label") or href)
+        action = str(context.get("next_action") or "Continue first run")
+        form_available = bool(context.get("form_available"))
+        return "".join(
+            [
+                "<section class='operator-focus-strip' data-operator-focus-strip='true'><h2>Operator Focus</h2>",
+                _kv(
+                    [
+                        ("operator_focus_status", "first_run"),
+                        ("operator_focus_source", str(context.get("source") or "first_run_progress")),
+                        ("operator_focus_current_step", str(context.get("current_step") or "unknown")),
+                        ("operator_focus_primary_action", action),
+                        (
+                            "operator_focus_target",
+                            SafeHtml(f"<a href='{_e(href)}'>{_e(label)}</a>"),
+                        ),
+                        ("operator_focus_reason", str(context.get("next_reason") or "first_run")),
+                        ("operator_focus_project", str(context.get("default_project") or "clankeros")),
+                        (
+                            "operator_focus_home_target",
+                            SafeHtml(
+                                f"<a href='{_e(str(context.get('home_href') or '/'))}'>Home setup</a>"
+                            ),
+                        ),
+                        (
+                            "operator_focus_today_target",
+                            SafeHtml(
+                                f"<a href='{_e(str(context.get('today_href') or '/today'))}'>Today setup</a>"
+                            ),
+                        ),
+                        (
+                            "operator_focus_goals_target",
+                            SafeHtml(
+                                f"<a href='{_e(str(context.get('goals_href') or '/goals'))}'>Goal setup</a>"
+                            ),
+                        ),
+                        ("operator_focus_action_form_available", str(form_available).lower()),
+                        ("operator_focus_first_run_form_available", str(form_available).lower()),
+                        ("operator_focus_confirmation_required", str(form_available).lower()),
+                        ("operator_focus_safety_boundary", "confirmed_local_action_only"),
+                        ("operator_focus_write_on_get", "false"),
+                        ("operator_focus_provider_calls_taken", "0"),
+                        ("operator_focus_network_actions_taken", "0"),
+                        ("operator_focus_external_effects_created", "false"),
+                    ]
+                ),
+                _ul(
+                    [
+                        f"operator_focus_now: {_e(action)}",
+                        f"operator_focus_click: <a href='{_e(href)}'>{_e(label)}</a>",
+                        f"operator_focus_first_run: step={_e(str(context.get('current_step') or 'unknown'))}",
+                        "operator_focus_safety: read-only local first-run routing",
+                    ]
+                ),
+                "</section>",
+            ]
+        )
     if status != "available":
         href = str(context.get("target_href") or "/health")
         label = str(context.get("target_label") or href)
@@ -19696,8 +19795,10 @@ def _command_palette_route_context(
     current_href = current_path or path or "/"
     focus_status = str(focus_context.get("status", "state_unavailable"))
     focus_target = str(focus_context.get("target_href") or "/health")
+    focus_target_label = str(focus_context.get("target_label") or focus_target)
     if focus_status == "available":
         focus_target = str(focus_context["next_action"].href)
+        focus_target_label = focus_target
 
     rows: list[tuple[str, str | SafeHtml]] = [
         ("palette_route_status", "available"),
@@ -19740,7 +19841,7 @@ def _command_palette_route_context(
         ("palette_route_focus_status", focus_status),
         (
             "palette_route_focus_target",
-            SafeHtml(f"<a href='{_e(focus_target)}'>{_e(focus_target)}</a>"),
+            SafeHtml(f"<a href='{_e(focus_target)}'>{_e(focus_target_label)}</a>"),
         ),
         ("palette_route_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
         ("palette_route_write_on_get", "false"),
@@ -19786,6 +19887,58 @@ def _command_palette_continue(focus_context: dict[str, Any]) -> str:
                         ("palette_continue_target", SafeHtml("<a href='/health'>/health</a>")),
                         ("palette_continue_action_form_available", "false"),
                         ("palette_continue_write_on_get", "false"),
+                        ("palette_continue_external_effects_created", "false"),
+                    ]
+                ),
+                "</section>",
+            ]
+        )
+
+    if status == "first_run":
+        href = str(focus_context.get("target_href") or "/goals")
+        label = str(focus_context.get("target_label") or href)
+        form_available = bool(focus_context.get("form_available"))
+        return "".join(
+            [
+                "<section class='palette-continue' data-command-palette-continue='true'>",
+                "<h3>Continue Current Goal</h3>",
+                _kv(
+                    [
+                        ("palette_continue_status", "first_run"),
+                        ("palette_continue_source", str(focus_context.get("source") or "first_run_progress")),
+                        ("palette_continue_current_step", str(focus_context.get("current_step") or "unknown")),
+                        ("palette_continue_next_action", str(focus_context.get("next_action") or "Continue first run")),
+                        (
+                            "palette_continue_target",
+                            SafeHtml(f"<a href='{_e(href)}'>{_e(label)}</a>"),
+                        ),
+                        ("palette_continue_reason", str(focus_context.get("next_reason") or "first_run")),
+                        ("palette_continue_project", str(focus_context.get("default_project") or "clankeros")),
+                        (
+                            "palette_continue_home_target",
+                            SafeHtml(
+                                f"<a href='{_e(str(focus_context.get('home_href') or '/'))}'>Home setup</a>"
+                            ),
+                        ),
+                        (
+                            "palette_continue_today_target",
+                            SafeHtml(
+                                f"<a href='{_e(str(focus_context.get('today_href') or '/today'))}'>Today setup</a>"
+                            ),
+                        ),
+                        (
+                            "palette_continue_goals_target",
+                            SafeHtml(
+                                f"<a href='{_e(str(focus_context.get('goals_href') or '/goals'))}'>Goal setup</a>"
+                            ),
+                        ),
+                        ("palette_continue_action_form_available", str(form_available).lower()),
+                        ("palette_continue_first_run_form_available", str(form_available).lower()),
+                        ("palette_continue_confirmation_required", str(form_available).lower()),
+                        ("palette_continue_safety_boundary", "confirmed_local_action_only"),
+                        ("palette_continue_write_on_get", "false"),
+                        ("palette_continue_provider_calls_taken", "0"),
+                        ("palette_continue_network_actions_taken", "0"),
                         ("palette_continue_external_effects_created", "false"),
                     ]
                 ),
@@ -19919,7 +20072,7 @@ def _html_page(
     current_path = current_path or "/"
     nav = _nav_links(current_path)
     recent_panel = _recent_items_panel(root)
-    focus_context = _operator_focus_context(root)
+    focus_context = _operator_focus_context(root, current_path)
     breadcrumbs = _breadcrumbs(root, current_path, title, focus_context)
     focus_strip = _operator_focus_strip(focus_context)
     palette = _command_palette(root, focus_context, current_path, title)

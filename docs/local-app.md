@@ -351,7 +351,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   workspace goal or current lead goal and shows phase, one primary action,
   target surface, progress, waiting counts, form availability, `/resume`, and
   an expandable confirmed local action form when the current next action is
-  browser-available before the page body. The command palette starts with a
+  browser-available before the page body. When no Goal exists yet, the shared
+  shell treats that as first-run progress, so Home, Today, and Goals point the
+  route context, command palette, and Operator Focus at their same-page
+  `Create Project` or `Create First Goal` forms, and other pages link back to
+  the Home/Today/Goals first-run anchors. The command palette starts with a
   route-aware `Current Page` block that mirrors the current path, parent
   surface, resolved Goal/Project/run context, focus target, `/resume`, and
   zero-effect readbacks before the same goal-aware `Continue Current Goal`
