@@ -4428,6 +4428,21 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert workspace.status == 200
     assert "Workspace State" in workspace.body
     assert "save-workspace" in workspace.body
+    assert "Workspace Daily Brief" in workspace.body
+    assert "data-workspace-daily-brief='true'" in workspace.body
+    assert "workspace_daily_status</dt><dd>no_saved_workspace" in workspace.body
+    assert "workspace_daily_project</dt><dd><a href='/projects'>/projects</a>" in workspace.body
+    assert "workspace_daily_goal</dt><dd><a href='/goals'>/goals</a>" in workspace.body
+    assert "workspace_daily_phase</dt><dd>none" in workspace.body
+    assert "workspace_daily_next_action</dt><dd>Open goals" in workspace.body
+    assert "workspace_daily_target_surface</dt><dd><a href='/goals'>/goals</a>" in workspace.body
+    assert "workspace_daily_resume_ready</dt><dd>false" in workspace.body
+    assert "workspace_daily_finish_status</dt><dd>needs_workspace_save" in workspace.body
+    assert "workspace_daily_save_surface</dt><dd><a href='#save-workspace'>#save-workspace</a>" in workspace.body
+    assert "workspace_daily_write_on_get</dt><dd>false" in workspace.body
+    assert "workspace_daily_network_actions_taken</dt><dd>0" in workspace.body
+    assert "workspace_daily_external_effects_created</dt><dd>false" in workspace.body
+    assert "workspace_daily_safety: read-only until confirmed save-workspace or local action form" in workspace.body
     assert "Workspace Workflow Map" in workspace.body
     assert "data-workspace-workflow-map='true'" in workspace.body
     assert "workspace_workflow_map_status</dt><dd>no_saved_goal" in workspace.body
@@ -6409,6 +6424,27 @@ def test_local_app_demo_scenario_populates_fixture_state(
     restored_workspace = render_local_app_route(tmp_path, "/workspace")
     assert result.project_id in restored_workspace.body
     assert result.goal_id in restored_workspace.body
+    assert "Workspace Daily Brief" in restored_workspace.body
+    assert "data-workspace-daily-brief='true'" in restored_workspace.body
+    assert "workspace_daily_status</dt><dd>available" in restored_workspace.body
+    assert f"workspace_daily_project</dt><dd><a href='/projects/{result.project_id}'" in restored_workspace.body
+    assert f"workspace_daily_goal</dt><dd><a href='/goals/{result.goal_id}'" in restored_workspace.body
+    assert "workspace_daily_phase</dt><dd>Ready to commit" in restored_workspace.body
+    assert "workspace_daily_current_gate</dt><dd>commit_request" in restored_workspace.body
+    assert "workspace_daily_next_action</dt><dd>Create commit request" in restored_workspace.body
+    assert f"workspace_daily_target_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in restored_workspace.body
+    assert "workspace_daily_resume_ready</dt><dd>true" in restored_workspace.body
+    assert "workspace_daily_resume_status</dt><dd>ready" in restored_workspace.body
+    assert "workspace_daily_last_artifact_exists</dt><dd>true" in restored_workspace.body
+    assert "workspace_daily_progress</dt><dd>8/15 gates done" in restored_workspace.body
+    assert "workspace_daily_waiting_items</dt><dd>approvals=1 incidents=0 recommendations=0" in restored_workspace.body
+    assert "workspace_daily_finish_status</dt><dd>ready" in restored_workspace.body
+    assert "workspace_daily_source</dt><dd>saved_workspace_goal" in restored_workspace.body
+    assert "workspace_daily_write_on_get</dt><dd>false" in restored_workspace.body
+    assert "workspace_daily_network_actions_taken</dt><dd>0" in restored_workspace.body
+    assert "workspace_daily_external_effects_created</dt><dd>false" in restored_workspace.body
+    assert "workspace_daily_start: Create commit request" in restored_workspace.body
+    assert "workspace_daily_finish: status=ready save=<a href='#save-workspace'>#save-workspace</a>" in restored_workspace.body
     assert "Workspace Continuation" in restored_workspace.body
     assert "workspace_current_phase: Ready to commit" in restored_workspace.body
     assert "workspace_next_action: Create commit request" in restored_workspace.body

@@ -139,6 +139,9 @@ Core layers for the bootstrap:
   one next action, operator attention cue, target surface, and the same
   confirmed local action form as the Goal page when that action is
   browser-available beside the editable saved-state form, plus a read-only
+  `Workspace Daily Brief` that summarizes the saved project, goal, artifact,
+  next local action, current gate, resume readiness, and finish-today save
+  status before any editable fields. It also includes a read-only
   `Workspace Workflow Map` sourced from the same Goal remaining-work gates so
   the current saved gate stays visible while editing resume context; `/memory` for project/global/
   generated memories, proposed memories, operator notes, future work, and pin

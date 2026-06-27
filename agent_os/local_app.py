@@ -2530,6 +2530,7 @@ def _workspace_page(root: Path) -> str:
                 ]
             ),
             "</section>",
+            _workspace_daily_brief(root, state, open_project, open_goal, last_artifact),
             _list_section("Restore Links", restore_links),
             _list_section("Workspace Continuation", _workspace_next_action_lines(root, open_goal)),
             _workspace_workflow_map_section(root, open_goal),
@@ -2549,6 +2550,150 @@ def _workspace_page(root: Path) -> str:
             ),
             "</section>",
             _non_claim_banner(),
+        ]
+    )
+
+
+def _workspace_daily_brief(
+    root: Path,
+    state: dict[str, str],
+    open_project: str,
+    open_goal: str,
+    last_artifact: str,
+) -> str:
+    filters = state.get("filters", "")
+    expanded = state.get("expanded_panels", "")
+    readiness = _workspace_resume_readiness(
+        root,
+        open_project=open_project,
+        open_goal=open_goal,
+        filters=filters,
+        expanded=expanded,
+        last_artifact=last_artifact,
+    )
+    required = readiness["required"]
+    if not open_goal:
+        status = "no_saved_workspace" if not any(required.values()) else "no_saved_goal"
+        phase = "none"
+        current_gate = "none"
+        next_action = "Open goals"
+        reason = "no_saved_goal"
+        target_href = "/goals"
+        target_label = "/goals"
+        progress = "0/0 gates done"
+        waiting_items = "approvals=0 incidents=0 recommendations=0"
+        finish_status = "needs_workspace_save"
+        source = "saved_workspace_state"
+    else:
+        storage = _storage(root)
+        goal_state = _goal_state(root, storage, open_goal)
+        goal = goal_state.get("goal")
+        if goal is None:
+            status = "missing_goal"
+            phase = "missing"
+            current_gate = "missing_goal"
+            next_action = "Open goals"
+            reason = "saved_goal_missing"
+            target_href = "/goals"
+            target_label = "/goals"
+            progress = "0/0 gates done"
+            waiting_items = "approvals=0 incidents=0 recommendations=0"
+            finish_status = "repair_saved_workspace"
+            source = "saved_workspace_state"
+        else:
+            status = "available"
+            phase = _goal_current_phase(goal_state)
+            action = _goal_next_action(root, goal_state)
+            gates, counts, current_gate = _goal_workflow_gate_summary(root, goal_state, action)
+            next_action = action.action
+            reason = action.reason
+            target_href = action.href
+            target_label = action.href
+            progress = f"{counts.get('done', 0)}/{len(gates)} gates done"
+            pending_approvals = (
+                _count_status(goal_state["worktree_approvals"], "pending_operator_approval")
+                + _count_status(goal_state["commit_approvals"], "pending_operator_approval")
+                + _count_status(goal_state["publications"], "pending_operator_approval")
+            )
+            waiting_items = (
+                f"approvals={pending_approvals} "
+                f"incidents={sum(1 for row in goal_state['incidents'] if row['status'] == 'open')} "
+                f"recommendations={sum(1 for row in goal_state['recommendations'] if row['status'] == 'open')}"
+            )
+            finish_status = "ready" if readiness["ready"] else "needs_workspace_save"
+            source = "saved_workspace_goal"
+    target = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    save_target = SafeHtml("<a href='#save-workspace'>#save-workspace</a>")
+    project_target = (
+        SafeHtml(f"<a href='/projects/{quote(open_project)}'>{_e(open_project)}</a>")
+        if open_project
+        else SafeHtml("<a href='/projects'>/projects</a>")
+    )
+    goal_target = (
+        SafeHtml(f"<a href='/goals/{quote(open_goal)}'>{_e(open_goal)}</a>")
+        if open_goal
+        else SafeHtml("<a href='/goals'>/goals</a>")
+    )
+    return "".join(
+        [
+            "<section id='workspace-daily-brief' class='panel workspace-daily-brief' data-workspace-daily-brief='true'><h2>Workspace Daily Brief</h2>",
+            "<p class='muted'>A read-only morning and end-of-day checklist for the saved local workspace.</p>",
+            _kv(
+                [
+                    ("workspace_daily_status", status),
+                    ("workspace_daily_project", project_target),
+                    ("workspace_daily_goal", goal_target),
+                    ("workspace_daily_phase", phase),
+                    ("workspace_daily_current_gate", current_gate),
+                    ("workspace_daily_next_action", next_action),
+                    ("workspace_daily_reason", reason),
+                    ("workspace_daily_target_surface", target),
+                    ("workspace_daily_resume_ready", "true" if readiness["ready"] else "false"),
+                    ("workspace_daily_resume_status", str(readiness["status"])),
+                    (
+                        "workspace_daily_open_project_saved",
+                        "true" if required["open_project"] else "false",
+                    ),
+                    (
+                        "workspace_daily_open_goal_saved",
+                        "true" if required["open_goal"] else "false",
+                    ),
+                    (
+                        "workspace_daily_filters_saved",
+                        "true" if required["filters"] else "false",
+                    ),
+                    (
+                        "workspace_daily_expanded_panels_saved",
+                        "true" if required["expanded_panels"] else "false",
+                    ),
+                    (
+                        "workspace_daily_last_artifact_saved",
+                        "true" if required["last_viewed_artifact"] else "false",
+                    ),
+                    (
+                        "workspace_daily_last_artifact_exists",
+                        "true" if readiness["last_artifact_exists"] else "false",
+                    ),
+                    ("workspace_daily_progress", progress),
+                    ("workspace_daily_waiting_items", waiting_items),
+                    ("workspace_daily_finish_status", finish_status),
+                    ("workspace_daily_save_surface", save_target),
+                    ("workspace_daily_source", source),
+                    ("workspace_daily_write_on_get", "false"),
+                    ("workspace_daily_provider_calls_taken_by_clankeros", "0"),
+                    ("workspace_daily_network_actions_taken", "0"),
+                    ("workspace_daily_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"workspace_daily_start: {_e(next_action)}",
+                    f"workspace_daily_continue: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"workspace_daily_finish: status={_e(finish_status)} save=<a href='#save-workspace'>#save-workspace</a>",
+                    "workspace_daily_safety: read-only until confirmed save-workspace or local action form",
+                ]
+            ),
+            "</section>",
         ]
     )
 
@@ -12716,6 +12861,9 @@ def _html_page(
     .goal-daily-loop dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-daily-loop ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-daily-loop li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .workspace-daily-brief {{ border-left:4px solid var(--accent); }}
+    .workspace-daily-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .workspace-daily-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .project-command-bar {{ border-left:4px solid var(--accent); }}
     .project-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .project-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

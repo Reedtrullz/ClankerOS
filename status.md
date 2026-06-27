@@ -1,5 +1,33 @@
 # Status
 
+## 2026-06-27 Workspace Daily Brief
+
+- Added a read-only `Workspace Daily Brief` near the top of `/workspace`.
+  It summarizes the saved project, saved goal, last artifact, current phase,
+  current gate, one next local action, resume readiness, waiting items, and
+  finish-today save posture before the editable workspace form.
+- Empty workspaces now point at `/goals` with an explicit
+  `no_saved_workspace` status, while saved demo workspaces show the current
+  gate and next action from the saved Goal state.
+- README, local app docs, and the operating summary now describe `/workspace`
+  as a morning/end-of-day checklist surface, not just an editable state file.
+- Non-claims: this does not write state on GET, run actions automatically,
+  approve gates, fetch GitHub status, push, create PRs, deploy, call
+  providers, use non-loopback network actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff -- docs/runtime-capability-matrix.md`
+    -> no diff after restoring the checked-in runtime baseline
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Goal Completion Readiness
 
 - Added a read-only `Goal Completion Readiness` section to each Goal page.

@@ -145,11 +145,12 @@ show when that next action is browser-available. It also includes a read-only
 saved goal's current gate, gate progress, next action, and no-write/no-network
 boundaries before the operator leaves `/resume`. `/workspace` shows the
 same saved-goal continuation next to the editable saved-state form, adds a
-read-only `Workspace Workflow Map` with the saved goal's current gate and gate
-counts, and anchors the save form as `#save-workspace`, so operators can
-inspect, update, and act from tomorrow's resume point in one place when the
-next action is browser-available. Both routes report that they write nothing
-on GET.
+read-only `Workspace Daily Brief` for morning start, continue, and finish
+cues, adds a read-only `Workspace Workflow Map` with the saved goal's current
+gate and gate counts, and anchors the save form as `#save-workspace`, so
+operators can inspect, update, and act from tomorrow's resume point in one
+place when the next action is browser-available. Both routes report that they
+write nothing on GET.
 
 For the first manual browser pass, run `python3 -m agent_os.cli demo`
 or `python3 -m agent_os.cli demo-app-scenario`, open `/goals`, then `/demo`,
