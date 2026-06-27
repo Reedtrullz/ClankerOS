@@ -118,8 +118,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   happening without opening the CLI. A read-only `Goal Command Bar` appears
   above the detailed cards with the current phase, one primary action, target
   local surface, progress, open/waiting counts, resume route, project-scoped CI
-  proof state, and write-on-GET/network/external-effect boundaries. `Goal
-  Completion Readiness` follows the local gate, approval, incident, and
+  proof state, and write-on-GET/network/external-effect boundaries. Goal Risk
+  starts with a read-only `Goal Risk Command Bar` that summarizes risk
+  level, task risk counts, approval-boundary posture, first task risk/status,
+  one next local surface, and zero-effect counters before the detailed risk list.
+  `Goal Completion Readiness` follows the local gate, approval, incident, and
   publication-handoff state to say whether the goal is completed, blocked,
   waiting for operator approval, still missing evidence, or safe to complete
   after manual publication. It links the next local surface and only renders

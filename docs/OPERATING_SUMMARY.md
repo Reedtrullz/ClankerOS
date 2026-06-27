@@ -218,9 +218,13 @@ Core layers for the bootstrap:
   counts for open tasks, incidents, and recommendations. Goal detail pages now
   expose first-class Goal Risk and Goal Completion Criteria sections sourced
   from task risk metadata, sprint contracts, plan steps, or task verification
-  plans, plus clickable timeline entries with operator-facing lifecycle
-  language for approval requested/granted, execution completed, review passed,
-  commit approved, and publication approved states. The timeline also
+  plans. Goal Risk starts with a read-only `Goal Risk Command Bar` that
+  summarizes risk level, task risk counts, approval-boundary posture, first
+  task risk/status, one next local surface, and no-write/no-provider/no-network/
+  no-external-effect boundaries before the detailed risk list. Goal pages also
+  include clickable timeline entries with operator-facing lifecycle language
+  for approval requested/granted, execution completed, review passed, commit
+  approved, and publication approved states. The timeline also
   backfills generic artifact events from the same bounded Goal Artifact
   Explorer registry, deduping workflow-specific artifact links so produced
   context packs, handoffs, diffs, changed-file lists, and text logs stay

@@ -1,5 +1,32 @@
 # Status
 
+## 2026-06-27 Goal Risk Command Bar
+
+- Added a read-only `Goal Risk Command Bar` to the Goal page before the
+  detailed Goal Risk task list.
+- The bar summarizes goal risk level, low/medium/high/unknown task-risk
+  counts, approval-boundary posture, first task risk/status, risk-note
+  presence, one next local surface, and zero-effect counters.
+- The Goal Section Index now links directly to the risk command surface, so
+  operators can check whether approval review is needed before parsing the
+  detailed task-risk lines.
+- README, local app docs, and the operating summary now describe Goal Risk as
+  a scan-first local safety posture surface.
+- Non-claims: this does not write state on GET, approve gates, run work,
+  create artifacts, append notes, call providers, use non-loopback network
+  actions, fetch GitHub status, push, create PRs, deploy, or mutate external
+  systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_a0fc98caaa8d`,
+    `run_a5b89fb47e10`, and coder worktree run `run_1a979a65d3be`
+
 ## 2026-06-27 Goal Remaining Work Command Bar
 
 - Added a read-only `Goal Remaining Work Command Bar` to the Goal page before

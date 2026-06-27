@@ -4619,6 +4619,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_auto_write_on_get</dt><dd>false" in first_goal_page.body
     assert "return_to" in first_goal_page.body
     assert "Goal Risk" in first_goal_page.body
+    assert "Goal Risk Command Bar" in first_goal_page.body
+    assert "data-goal-risk-command-bar='true'" in first_goal_page.body
+    assert "goal_risk_command_posture</dt><dd>low_risk" in first_goal_page.body
     assert "goal_risk_level: low" in first_goal_page.body
     assert "risk_counts: low=3" in first_goal_page.body
     assert "Goal Completion Criteria" in first_goal_page.body
@@ -6056,6 +6059,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-workflow-map'" in goal.body
     assert "href='#goal-next-action'" in goal.body
     assert "href='#goal-next-recommendation'" in goal.body
+    assert "href='#goal-risk-command-bar'" in goal.body
     assert "href='#goal-timeline'" in goal.body
     assert "href='#goal-delegation-command-bar'" in goal.body
     assert "href='#goal-run-command-bar'" in goal.body
@@ -6073,6 +6077,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-daily-loop'" in goal.body
     assert "id='goal-workflow-map'" in goal.body
     assert "id='goal-current-phase'" in goal.body
+    assert "id='goal-risk-command-bar'" in goal.body
     assert "id='goal-timeline'" in goal.body
     assert "id='goal-delegation-command-bar'" in goal.body
     assert "id='goal-run-command-bar'" in goal.body
@@ -6088,7 +6093,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>39" in goal.body
+    assert "goal_section_count</dt><dd>40" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
@@ -6201,6 +6206,33 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "save_workspace_form_available</dt><dd>true" in goal.body
     assert "workspace_auto_write_on_get</dt><dd>false" in goal.body
     assert "Goal Risk" in goal.body
+    assert "Goal Risk Command Bar" in goal.body
+    assert "data-goal-risk-command-bar='true'" in goal.body
+    assert "<a href='#goal-risk-command-bar'>Risk command</a>" in goal.body
+    assert f"goal_risk_command_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_risk_command_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_risk_command_level</dt><dd>low" in goal.body
+    assert "goal_risk_command_posture</dt><dd>low_risk" in goal.body
+    assert "goal_risk_command_counts</dt><dd>low=1" in goal.body
+    assert "goal_risk_command_tasks</dt><dd>1" in goal.body
+    assert "goal_risk_command_high_risk_tasks</dt><dd>0" in goal.body
+    assert "goal_risk_command_unknown_risk_tasks</dt><dd>0" in goal.body
+    assert "goal_risk_command_medium_risk_tasks</dt><dd>0" in goal.body
+    assert f"goal_risk_command_first_task</dt><dd>{result.task_id} risk=low" in goal.body
+    assert "goal_risk_command_risk_notes_status</dt><dd>none" in goal.body
+    assert "goal_risk_command_approval_boundary</dt><dd>high_or_unknown_risk_requires_operator_approval_before_dispatch" in goal.body
+    assert "goal_risk_command_next_action</dt><dd>Continue workflow" in goal.body
+    assert "goal_risk_command_target_surface</dt><dd><a href='#goal-next-action'>Goal Next Action</a>" in goal.body
+    assert "goal_risk_command_reason</dt><dd>low_risk_tasks" in goal.body
+    assert "goal_risk_command_source</dt><dd>task_risk_metadata_and_sprint_contract" in goal.body
+    assert "goal_risk_command_write_on_get</dt><dd>false" in goal.body
+    assert "goal_risk_command_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_risk_command_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_risk_command_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_risk_now: low_risk level=low" in goal.body
+    assert "goal_risk_click: <a href='#goal-next-action'>Goal Next Action</a>" in goal.body
+    assert "goal_risk_counts: low=1" in goal.body
+    assert "goal_risk_safety: review-only local risk posture" in goal.body
     assert "goal_risk_level: low" in goal.body
     assert "risk_counts: low=1" in goal.body
     assert "Goal Completion Criteria" in goal.body

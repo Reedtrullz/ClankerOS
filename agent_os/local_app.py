@@ -4141,6 +4141,7 @@ def _goal_section_index() -> str:
         ("Next recommendation", "goal-next-recommendation"),
         ("Resume snapshot", "goal-resume-snapshot"),
         ("Overview", "goal-overview"),
+        ("Risk command", "goal-risk-command-bar"),
         ("Progress", "goal-progress"),
         ("Timeline", "goal-timeline"),
         ("Activity log", "goal-activity-log"),
@@ -5560,7 +5561,97 @@ def _goal_risk_section(state: dict[str, Any]) -> str:
             f"{_e(task.id)}: risk={_e(task.risk_level)} status={_e(task.status)} "
             f"type={_e(task.task_type)}"
         )
-    return _list_section("Goal Risk", lines, anchor_id="goal-risk")
+    return _goal_risk_command_bar(state, counts, contract) + _list_section(
+        "Goal Risk",
+        lines,
+        anchor_id="goal-risk",
+    )
+
+
+def _goal_risk_command_bar(
+    state: dict[str, Any],
+    counts: dict[str, int],
+    contract: Any | None,
+) -> str:
+    goal = state["goal"]
+    tasks = state.get("tasks", [])
+    high_count = counts.get("high", 0)
+    unknown_count = counts.get("unknown", 0)
+    medium_count = counts.get("medium", 0)
+    risk_notes = getattr(contract, "risk_notes", "") if contract is not None else ""
+    first_task = tasks[0] if tasks else None
+    if not tasks:
+        posture = "no_tasks"
+        next_action = "Create scoped tasks"
+        target_surface = SafeHtml("<a href='#goal-next-action'>Goal Next Action</a>")
+        reason = "no_goal_tasks"
+    elif high_count or unknown_count:
+        posture = "approval_required_before_dispatch"
+        next_action = "Review approval boundary"
+        target_surface = SafeHtml("<a href='/approvals'>/approvals</a>")
+        reason = "high_or_unknown_risk_tasks"
+    elif medium_count:
+        posture = "review_recommended"
+        next_action = "Review completion readiness"
+        target_surface = SafeHtml(
+            "<a href='#goal-completion-readiness'>Goal Completion Readiness</a>"
+        )
+        reason = "medium_risk_tasks"
+    else:
+        posture = "low_risk"
+        next_action = "Continue workflow"
+        target_surface = SafeHtml("<a href='#goal-next-action'>Goal Next Action</a>")
+        reason = "low_risk_tasks"
+    first_task_label = (
+        f"{first_task.id} risk={first_task.risk_level} status={first_task.status}"
+        if first_task is not None
+        else "none"
+    )
+    return "".join(
+        [
+            "<section id='goal-risk-command-bar' class='panel goal-risk-command-bar' data-goal-risk-command-bar='true'><h3>Goal Risk Command Bar</h3>",
+            "<p class='muted'>Risk posture before the detailed task-risk readback.</p>",
+            _kv(
+                [
+                    ("goal_risk_command_goal", goal.id),
+                    ("goal_risk_command_project", goal.project_id),
+                    ("goal_risk_command_level", state.get("risk_level") or "unknown"),
+                    ("goal_risk_command_posture", posture),
+                    ("goal_risk_command_counts", _risk_counts_label(counts)),
+                    ("goal_risk_command_tasks", str(len(tasks))),
+                    ("goal_risk_command_high_risk_tasks", str(high_count)),
+                    ("goal_risk_command_unknown_risk_tasks", str(unknown_count)),
+                    ("goal_risk_command_medium_risk_tasks", str(medium_count)),
+                    ("goal_risk_command_first_task", first_task_label),
+                    (
+                        "goal_risk_command_risk_notes_status",
+                        "present" if risk_notes else "none",
+                    ),
+                    (
+                        "goal_risk_command_approval_boundary",
+                        "high_or_unknown_risk_requires_operator_approval_before_dispatch",
+                    ),
+                    ("goal_risk_command_next_action", next_action),
+                    ("goal_risk_command_target_surface", target_surface),
+                    ("goal_risk_command_reason", reason),
+                    ("goal_risk_command_source", "task_risk_metadata_and_sprint_contract"),
+                    ("goal_risk_command_write_on_get", "false"),
+                    ("goal_risk_command_provider_calls_taken", "0"),
+                    ("goal_risk_command_network_actions_taken", "0"),
+                    ("goal_risk_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_risk_now: {_e(posture)} level={_e(state.get('risk_level') or 'unknown')}",
+                    f"goal_risk_click: {target_surface}",
+                    f"goal_risk_counts: {_e(_risk_counts_label(counts))}",
+                    "goal_risk_safety: review-only local risk posture",
+                ]
+            ),
+            "</section>",
+        ]
+    )
 
 
 def _goal_completion_criteria(state: dict[str, Any]) -> str:
@@ -15107,6 +15198,9 @@ def _html_page(
     .goal-board-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-board-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-board-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-risk-command-bar {{ border-left:4px solid var(--warn); }}
+    .goal-risk-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-risk-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-delegation-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-delegation-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-delegation-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
