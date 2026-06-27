@@ -181,13 +181,15 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   recommendation, timeline, artifacts, memory, skills, verification evidence,
   notes, and remaining work. The index writes nothing on GET and only helps
   the operator jump around the long Goal workbench.
-- Every app page includes a shared operator shell with breadcrumbs, recent
-  local items, a command palette, a dark/light theme toggle, and keyboard
-  shortcuts for home, goals, and palette search. The command palette also
-  includes a goal-aware `Continue Current Goal` block derived from the saved
-  workspace goal or the current lead goal, showing phase, one next action, and
-  the target local surface. These controls only navigate local routes or
-  submit existing local forms.
+- Every app page includes a shared operator shell with a global
+  `Operator Focus` strip, breadcrumbs, recent local items, a command palette,
+  a dark/light theme toggle, and keyboard shortcuts for home, goals, and
+  palette search. The focus strip is derived from the saved workspace goal or
+  current lead goal and shows phase, one primary action, target surface,
+  progress, waiting counts, form availability, and `/resume` before the page
+  body. The command palette includes the same goal-aware `Continue Current
+  Goal` block. These controls only navigate local routes or submit existing
+  local forms.
 - `/profiles` reads both `.clanker/profiles.yml` and SQLite profile rows. It
   shows configured profile names, storage-backed profile labels, modes, cost
   tiers, model placeholders, write posture, adapter status, and `use_for`

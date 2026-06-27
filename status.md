@@ -1,5 +1,34 @@
 # Status
 
+## 2026-06-27 Operator Focus Strip
+
+- Added a shared read-only `Operator Focus` strip to the local app shell. It
+  appears on every page before the page body and resolves the saved workspace
+  goal first, then the current lead goal, so the operator can see the current
+  phase, one primary action, target local surface, progress, waiting counts,
+  form availability, and `/resume` without returning to `/goals`.
+- The command palette now reuses the same focus resolution as the global strip,
+  keeping `Continue Current Goal` and the always-visible focus readback aligned
+  instead of calculating two subtly different goal contexts.
+- README, local app docs, and the operating summary now describe the focus
+  strip as part of the shared operator shell.
+- Non-claims: this does not approve gates, execute work, run delegations,
+  create coder prep, commit, push, create PRs, deploy, fetch GitHub status,
+  call providers, use non-loopback network actions, write state on GET, or
+  mutate external systems. It reads saved workspace state, local goal state,
+  local approval/evidence rows, and local artifact indexes only.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Delegation Run Command Bar
 
 - Added a read-only `Delegation Run Command Bar` to `/delegation-runs`. It

@@ -4209,6 +4209,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "register-project" in root.body
     assert "create-goal" in root.body
     assert "data-command-palette='true'" in root.body
+    assert "Operator Focus" in root.body
+    assert "data-operator-focus-strip='true'" in root.body
+    assert "operator_focus_status</dt><dd>no_goal" in root.body
+    assert "operator_focus_primary_action</dt><dd>Open goals" in root.body
+    assert "operator_focus_target</dt><dd><a href='/goals'>/goals</a>" in root.body
+    assert "operator_focus_write_on_get</dt><dd>false" in root.body
+    assert "operator_focus_provider_calls_taken</dt><dd>0" in root.body
+    assert "operator_focus_network_actions_taken</dt><dd>0" in root.body
+    assert "operator_focus_external_effects_created</dt><dd>false" in root.body
+    assert "operator_focus_safety: read-only local navigation" in root.body
     assert "data-recent-items='true'" in root.body
     assert "data-breadcrumbs='true'" in root.body
     assert "id=\"theme-toggle\"" in root.body
@@ -5696,6 +5706,28 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"palette_continue_target</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in dashboard.body
     assert "palette_continue_write_on_get</dt><dd>false" in dashboard.body
     assert "palette_continue_external_effects_created</dt><dd>false" in dashboard.body
+    assert "Operator Focus" in dashboard.body
+    assert "data-operator-focus-strip='true'" in dashboard.body
+    assert "operator_focus_status</dt><dd>available" in dashboard.body
+    assert "operator_focus_source</dt><dd>lead_goal" in dashboard.body
+    assert f"operator_focus_goal</dt><dd><a href='/goals/{result.goal_id}'" in dashboard.body
+    assert f"operator_focus_project</dt><dd><a href='/projects/{result.project_id}'" in dashboard.body
+    assert "operator_focus_phase</dt><dd>Ready to commit" in dashboard.body
+    assert "operator_focus_attention</dt><dd>Act: Create commit request" in dashboard.body
+    assert "operator_focus_primary_action</dt><dd>Create commit request" in dashboard.body
+    assert f"operator_focus_target</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in dashboard.body
+    assert "operator_focus_progress</dt><dd>0/1 tasks completed" in dashboard.body
+    assert "operator_focus_open_tasks</dt><dd>1" in dashboard.body
+    assert "operator_focus_waiting_items</dt><dd>1" in dashboard.body
+    assert "operator_focus_pending_approvals</dt><dd>1" in dashboard.body
+    assert "operator_focus_form_available</dt><dd>true" in dashboard.body
+    assert "operator_focus_resume_surface</dt><dd><a href='/resume'>/resume</a>" in dashboard.body
+    assert "operator_focus_write_on_get</dt><dd>false" in dashboard.body
+    assert "operator_focus_provider_calls_taken</dt><dd>0" in dashboard.body
+    assert "operator_focus_network_actions_taken</dt><dd>0" in dashboard.body
+    assert "operator_focus_external_effects_created</dt><dd>false" in dashboard.body
+    assert "operator_focus_now: Act: Create commit request" in dashboard.body
+    assert "operator_focus_waiting: approvals=1 incidents=0 recommendations=0" in dashboard.body
     assert f"/goals/{result.goal_id}" in dashboard.body
 
     goals = render_local_app_route(tmp_path, "/goals")
@@ -6201,6 +6233,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Home Resume Action Form" in restored_home.body
     assert "action='/actions/coder-commit-request'" in restored_home.body
     assert f"name='run_id' value='{result.coder_worktree_run_id}'" in restored_home.body
+    assert "operator_focus_source</dt><dd>saved_goal" in restored_home.body
+    assert "operator_focus_phase</dt><dd>Ready to commit" in restored_home.body
+    assert "operator_focus_primary_action</dt><dd>Create commit request" in restored_home.body
     resume = render_local_app_route(tmp_path, "/resume")
     assert resume.status == 200
     assert "Resume Workspace" in resume.body

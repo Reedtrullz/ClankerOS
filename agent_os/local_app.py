@@ -11399,7 +11399,181 @@ def _recent_items_panel(root: Path) -> str:
     return body
 
 
-def _command_palette(root: Path) -> str:
+def _operator_focus_context(root: Path) -> dict[str, Any]:
+    try:
+        storage = _storage(root)
+    except Exception:
+        return {
+            "status": "state_unavailable",
+            "target_href": "/health",
+            "target_label": "/health",
+        }
+
+    state = _load_workspace_state(root)
+    saved_goal_id = str(state.get("open_goal") or "").strip()
+    goal_state: dict[str, Any] | None = None
+    source = ""
+    if saved_goal_id:
+        candidate = _goal_state(root, storage, saved_goal_id)
+        if candidate.get("goal") is not None:
+            goal_state = candidate
+            source = "saved_goal"
+
+    if goal_state is None:
+        rows = _goal_rows(storage, limit=20)
+        active = [row for row in rows if _goal_bucket(row) == "active"]
+        lead = active[0] if active else (rows[0] if rows else None)
+        if lead is not None:
+            goal_state = _goal_state(root, storage, str(lead["id"]))
+            source = "lead_goal"
+
+    if goal_state is None or goal_state.get("goal") is None:
+        return {
+            "status": "no_goal",
+            "target_href": "/goals",
+            "target_label": "/goals",
+        }
+
+    goal = goal_state["goal"]
+    phase = _goal_current_phase(goal_state)
+    next_action = _goal_next_action(root, goal_state)
+    form_available = bool(_goal_next_action_form(goal_state, next_action))
+    open_incidents = sum(1 for row in goal_state["incidents"] if row["status"] == "open")
+    open_recommendations = sum(
+        1 for row in goal_state["recommendations"] if row["status"] == "open"
+    )
+    open_tasks = sum(
+        1
+        for task in goal_state["tasks"]
+        if task.status not in {"completed", "cancelled"}
+    )
+    pending_approvals = (
+        _count_status(goal_state["worktree_approvals"], "pending_operator_approval")
+        + _count_status(goal_state["commit_approvals"], "pending_operator_approval")
+        + _count_status(goal_state["publications"], "pending_operator_approval")
+    )
+    return {
+        "status": "available",
+        "source": source,
+        "goal_state": goal_state,
+        "goal": goal,
+        "goal_label": _compact_label(goal.title or goal.description or goal.id, 72),
+        "phase": phase,
+        "next_action": next_action,
+        "form_available": form_available,
+        "attention": _goal_operator_attention(phase, next_action),
+        "progress": _goal_progress_label(goal_state),
+        "open_tasks": open_tasks,
+        "pending_approvals": pending_approvals,
+        "open_incidents": open_incidents,
+        "open_recommendations": open_recommendations,
+        "waiting_items": open_incidents + open_recommendations + pending_approvals,
+    }
+
+
+def _operator_focus_strip(context: dict[str, Any]) -> str:
+    status = str(context.get("status", "state_unavailable"))
+    if status != "available":
+        href = str(context.get("target_href") or "/health")
+        label = str(context.get("target_label") or href)
+        action = "Open goals" if status == "no_goal" else "Open health"
+        return "".join(
+            [
+                "<section class='operator-focus-strip' data-operator-focus-strip='true'><h2>Operator Focus</h2>",
+                _kv(
+                    [
+                        ("operator_focus_status", status),
+                        ("operator_focus_primary_action", action),
+                        (
+                            "operator_focus_target",
+                            SafeHtml(f"<a href='{_e(href)}'>{_e(label)}</a>"),
+                        ),
+                        ("operator_focus_write_on_get", "false"),
+                        ("operator_focus_provider_calls_taken", "0"),
+                        ("operator_focus_network_actions_taken", "0"),
+                        ("operator_focus_external_effects_created", "false"),
+                    ]
+                ),
+                _ul(
+                    [
+                        f"operator_focus_now: {_e(action)}",
+                        f"operator_focus_click: <a href='{_e(href)}'>{_e(label)}</a>",
+                        "operator_focus_safety: read-only local navigation",
+                    ]
+                ),
+                "</section>",
+            ]
+        )
+
+    goal = context["goal"]
+    next_action = context["next_action"]
+    return "".join(
+        [
+            "<section class='operator-focus-strip' data-operator-focus-strip='true'><h2>Operator Focus</h2>",
+            _kv(
+                [
+                    ("operator_focus_status", "available"),
+                    ("operator_focus_source", str(context["source"])),
+                    (
+                        "operator_focus_goal",
+                        SafeHtml(
+                            f"<a href='/goals/{quote(goal.id)}'>{_e(context['goal_label'])}</a>"
+                        ),
+                    ),
+                    (
+                        "operator_focus_project",
+                        SafeHtml(
+                            f"<a href='/projects/{quote(goal.project_id)}'>{_e(goal.project_id)}</a>"
+                        ),
+                    ),
+                    ("operator_focus_phase", str(context["phase"])),
+                    ("operator_focus_attention", str(context["attention"])),
+                    ("operator_focus_primary_action", next_action.action),
+                    (
+                        "operator_focus_target",
+                        SafeHtml(
+                            f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
+                        ),
+                    ),
+                    ("operator_focus_reason", next_action.reason),
+                    ("operator_focus_progress", str(context["progress"])),
+                    ("operator_focus_open_tasks", str(context["open_tasks"])),
+                    ("operator_focus_waiting_items", str(context["waiting_items"])),
+                    ("operator_focus_pending_approvals", str(context["pending_approvals"])),
+                    ("operator_focus_open_incidents", str(context["open_incidents"])),
+                    ("operator_focus_open_recommendations", str(context["open_recommendations"])),
+                    (
+                        "operator_focus_form_available",
+                        "true" if context["form_available"] else "false",
+                    ),
+                    ("operator_focus_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+                    ("operator_focus_write_on_get", "false"),
+                    ("operator_focus_provider_calls_taken", "0"),
+                    ("operator_focus_network_actions_taken", "0"),
+                    ("operator_focus_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"operator_focus_now: {_e(context['attention'])}",
+                    f"operator_focus_click: <a href='{_e(next_action.href)}'>{_e(next_action.action)}</a>",
+                    f"operator_focus_progress: {_e(context['progress'])}",
+                    (
+                        "operator_focus_waiting: "
+                        f"approvals={_e(context['pending_approvals'])} "
+                        f"incidents={_e(context['open_incidents'])} "
+                        f"recommendations={_e(context['open_recommendations'])}"
+                    ),
+                    "operator_focus_resume: <a href='/resume'>/resume</a>",
+                    "operator_focus_safety: read-only local navigation",
+                ]
+            ),
+            "</section>",
+        ]
+    )
+
+
+def _command_palette(root: Path, focus_context: dict[str, Any]) -> str:
     commands = [(label, href, "route") for label, href in NAV_ITEMS]
     commands.extend(_recent_operator_links(root, limit=6))
     seen: set[str] = set()
@@ -11418,7 +11592,7 @@ def _command_palette(root: Path) -> str:
             "<dialog id='command-palette' class='command-palette' data-command-palette='true'>",
             "<form method='dialog'><button class='icon-button' type='submit'>Close</button></form>",
             "<h2>Command Palette</h2>",
-            _command_palette_continue(root),
+            _command_palette_continue(focus_context),
             "<form action='/search' method='get' class='command-grid'>",
             "<input id='command-palette-search' name='q' autocomplete='off' placeholder='Search local state'>",
             "<button type='submit'>Search</button>",
@@ -11442,10 +11616,9 @@ def _shortcut_help_list() -> str:
     return "<ul class='shortcut-list' data-shortcut-help='true'>" + "".join(rows) + "</ul>"
 
 
-def _command_palette_continue(root: Path) -> str:
-    try:
-        storage = _storage(root)
-    except Exception:
+def _command_palette_continue(focus_context: dict[str, Any]) -> str:
+    status = str(focus_context.get("status", "state_unavailable"))
+    if status == "state_unavailable":
         return "".join(
             [
                 "<section class='palette-continue' data-command-palette-continue='true'>",
@@ -11462,25 +11635,7 @@ def _command_palette_continue(root: Path) -> str:
             ]
         )
 
-    state = _load_workspace_state(root)
-    saved_goal_id = str(state.get("open_goal") or "").strip()
-    goal_state: dict[str, Any] | None = None
-    source = ""
-    if saved_goal_id:
-        candidate = _goal_state(root, storage, saved_goal_id)
-        if candidate.get("goal") is not None:
-            goal_state = candidate
-            source = "saved_goal"
-
-    if goal_state is None:
-        rows = _goal_rows(storage, limit=20)
-        active = [row for row in rows if _goal_bucket(row) == "active"]
-        lead = active[0] if active else (rows[0] if rows else None)
-        if lead is not None:
-            goal_state = _goal_state(root, storage, str(lead["id"]))
-            source = "lead_goal"
-
-    if goal_state is None or goal_state.get("goal") is None:
+    if status == "no_goal":
         return "".join(
             [
                 "<section class='palette-continue' data-command-palette-continue='true'>",
@@ -11497,11 +11652,8 @@ def _command_palette_continue(root: Path) -> str:
             ]
         )
 
-    goal = goal_state["goal"]
-    phase = _goal_current_phase(goal_state)
-    next_action = _goal_next_action(root, goal_state)
-    form_available = bool(_goal_next_action_form(goal_state, next_action))
-    label = _compact_label(goal.title or goal.description or goal.id, 72)
+    goal = focus_context["goal"]
+    next_action = focus_context["next_action"]
     return "".join(
         [
             "<section class='palette-continue' data-command-palette-continue='true'>",
@@ -11509,12 +11661,20 @@ def _command_palette_continue(root: Path) -> str:
             _kv(
                 [
                     ("palette_continue_status", "available"),
-                    ("palette_continue_source", source),
-                    ("palette_continue_goal", SafeHtml(f"<a href='/goals/{quote(goal.id)}'>{_e(label)}</a>")),
-                    ("palette_continue_phase", phase),
+                    ("palette_continue_source", str(focus_context["source"])),
+                    (
+                        "palette_continue_goal",
+                        SafeHtml(
+                            f"<a href='/goals/{quote(goal.id)}'>{_e(focus_context['goal_label'])}</a>"
+                        ),
+                    ),
+                    ("palette_continue_phase", str(focus_context["phase"])),
                     ("palette_continue_next_action", next_action.action),
                     ("palette_continue_target", SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>")),
-                    ("palette_continue_form_available", "true" if form_available else "false"),
+                    (
+                        "palette_continue_form_available",
+                        "true" if focus_context["form_available"] else "false",
+                    ),
                     ("palette_continue_write_on_get", "false"),
                     ("palette_continue_external_effects_created", "false"),
                 ]
@@ -11582,7 +11742,9 @@ def _html_page(
     nav = _nav_links(current_path)
     breadcrumbs = _breadcrumbs(current_path, title)
     recent_panel = _recent_items_panel(root)
-    palette = _command_palette(root)
+    focus_context = _operator_focus_context(root)
+    focus_strip = _operator_focus_strip(focus_context)
+    palette = _command_palette(root, focus_context)
     body = f"""<!doctype html>
 <html lang="en">
 <head>
@@ -11610,6 +11772,10 @@ def _html_page(
     .breadcrumbs {{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; color:var(--muted); margin:0 0 14px; font-size:13px; }}
     .breadcrumbs a {{ color:var(--muted); }}
     .breadcrumbs span::before {{ content:"/"; margin-right:6px; color:var(--line); }}
+    .operator-focus-strip {{ border:1px solid var(--line); border-left:4px solid var(--accent); background:var(--panel); padding:12px; margin:0 0 16px; }}
+    .operator-focus-strip dl {{ grid-template-columns:minmax(170px, 230px) 1fr; }}
+    .operator-focus-strip ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
+    .operator-focus-strip li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     section {{ border-bottom:1px solid var(--line); padding:20px 0; }}
     h1 {{ font-size:30px; line-height:1.15; margin:0 0 10px; letter-spacing:0; }}
     h2 {{ font-size:18px; margin:0 0 12px; letter-spacing:0; }}
@@ -11704,6 +11870,7 @@ def _html_page(
       {recent_panel}
       <article>
         {breadcrumbs}
+        {focus_strip}
         {content}
       </article>
     </div>

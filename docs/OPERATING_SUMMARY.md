@@ -235,6 +235,11 @@ Core layers for the bootstrap:
   major Goal surfaces,
   so operators can jump
   through a long Goal workbench without leaving the page or triggering writes.
+  Every app page also includes a shared read-only `Operator Focus` strip that
+  derives from the saved workspace goal or current lead goal and keeps phase,
+  one primary action, target local surface, progress, waiting counts, form
+  availability, `/resume`, and no-write/no-provider/no-network/no-external-
+  effect boundaries visible outside the Goal page.
   They also include a confirmed
   `save-goal-note` form that appends local operator resume context to the
   goal-scoped `operator-notes.md` artifact; saved operator notes also become

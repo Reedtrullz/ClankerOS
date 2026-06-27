@@ -291,12 +291,13 @@ Command Bar` starts the page with one local review target, incident and
 recommendation counts, evidence links, and no-resolution/no-retry/no-network
 boundaries.
 
-The app shell also includes breadcrumbs, recent local items, a command palette,
-keyboard shortcuts, and a dark/light theme toggle on every page. The command
-palette includes a goal-aware `Continue Current Goal` block that shows the
-saved or lead goal's phase, one next action, and the target local surface.
-Those controls stay inside the local browser app and do not perform external
-effects.
+The app shell also includes a global `Operator Focus` strip, breadcrumbs,
+recent local items, a command palette, keyboard shortcuts, and a dark/light
+theme toggle on every page. The focus strip keeps the saved or lead goal's
+phase, one primary action, target surface, progress, waiting counts, and
+resume link visible outside the Goal page. The command palette includes the
+same goal-aware `Continue Current Goal` block. Those controls stay inside the
+local browser app and do not perform external effects.
 
 Use `/workflow?delegation_id=<id>` or `/workflow?run_id=<coder_run_id>` when
 you want the scoped operator map. The selected workflow page now includes a
