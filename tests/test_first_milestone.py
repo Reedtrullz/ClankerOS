@@ -4219,6 +4219,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "operator_focus_network_actions_taken</dt><dd>0" in root.body
     assert "operator_focus_external_effects_created</dt><dd>false" in root.body
     assert "operator_focus_safety: read-only local navigation" in root.body
+    resume_empty = render_local_app_route(tmp_path, "/resume")
+    assert resume_empty.status == 200
+    assert "Resume Workflow Map" in resume_empty.body
+    assert "data-resume-workflow-map='true'" in resume_empty.body
+    assert "resume_workflow_map_status</dt><dd>no_saved_goal" in resume_empty.body
+    assert "resume_workflow_map_saved_goal</dt><dd>none" in resume_empty.body
+    assert "resume_workflow_map_next_surface</dt><dd><a href='/goals'>/goals</a>" in resume_empty.body
+    assert "resume_workflow_map_write_on_get</dt><dd>false" in resume_empty.body
+    assert "resume_workflow_map_network_actions_taken</dt><dd>0" in resume_empty.body
+    assert "resume_workflow_map_external_effects_created</dt><dd>false" in resume_empty.body
     assert "data-recent-items='true'" in root.body
     assert "data-breadcrumbs='true'" in root.body
     assert "id=\"theme-toggle\"" in root.body
@@ -6267,6 +6277,25 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Resume Action Form" in resume.body
     assert "action='/actions/coder-commit-request'" in resume.body
     assert f"name='run_id' value='{result.coder_worktree_run_id}'" in resume.body
+    assert "Resume Workflow Map" in resume.body
+    assert "data-resume-workflow-map='true'" in resume.body
+    assert "resume_workflow_map_status</dt><dd>available" in resume.body
+    assert f"resume_workflow_map_saved_goal</dt><dd>{result.goal_id}" in resume.body
+    assert "resume_workflow_map_current_phase</dt><dd>Ready to commit" in resume.body
+    assert "resume_workflow_map_current_gate</dt><dd>commit_request" in resume.body
+    assert "resume_workflow_map_next_action</dt><dd>Create commit request" in resume.body
+    assert f"resume_workflow_map_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in resume.body
+    assert "resume_workflow_map_progress</dt><dd>8/15 gates done" in resume.body
+    assert "resume_workflow_map_done_count</dt><dd>8" in resume.body
+    assert "resume_workflow_map_pending_count</dt><dd>1" in resume.body
+    assert "resume_workflow_map_waiting_count</dt><dd>6" in resume.body
+    assert "resume_workflow_map_source</dt><dd>goal_remaining_work_gates" in resume.body
+    assert f"resume_workflow_map_goal_surface</dt><dd><a href='/goals/{result.goal_id}'" in resume.body
+    assert "resume_workflow_map_step: commit_request status=pending marker=current next=Create commit request" in resume.body
+    assert "data-resume-workflow-gate='manual_publish' data-gate-status='waiting'" in resume.body
+    assert "resume_workflow_map_write_on_get</dt><dd>false" in resume.body
+    assert "resume_workflow_map_network_actions_taken</dt><dd>0" in resume.body
+    assert "resume_workflow_map_external_effects_created</dt><dd>false" in resume.body
     assert "resume_workspace_write_on_get</dt><dd>false" in resume.body
     assert "resume_external_effects_created</dt><dd>false" in resume.body
     restored_goal = render_local_app_route(tmp_path, f"/goals/{result.goal_id}")

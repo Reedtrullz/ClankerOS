@@ -1,5 +1,35 @@
 # Status
 
+## 2026-06-27 Resume Workflow Map
+
+- Added a read-only `Resume Workflow Map` to `/resume`. It uses the same
+  Goal remaining-work gate source as the Goal page workflow rail, so the saved
+  goal's current phase, current gate, next action, next local surface, gate
+  progress, and done/pending/waiting counts are visible before the operator
+  leaves the return-to-work page.
+- Empty or stale resume states now have explicit map states:
+  `no_saved_goal` and `missing_goal`, each pointing back to `/goals` while
+  preserving no-write/no-provider/no-network/no-external-effect counters.
+- README, local app docs, and the operating summary now describe `/resume` as
+  a return-to-work cockpit with readiness, one next action, and the lifecycle
+  gate map.
+- Non-claims: this does not approve gates, execute work, run delegations,
+  create coder prep, create worktrees, commit, push, create PRs, deploy, fetch
+  GitHub status, call providers, use non-loopback network actions, write state
+  on GET, or mutate external systems. It reads saved workspace state, local
+  goal state, local workflow gate state, and local action metadata only.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Operator Focus Strip
 
 - Added a shared read-only `Operator Focus` strip to the local app shell. It

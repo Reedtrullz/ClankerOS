@@ -2155,6 +2155,7 @@ def _resume_page(root: Path) -> str:
             "</section>",
             _resume_readiness_section(root, state, open_project, open_goal, filters, expanded, last_artifact),
             _resume_next_action_section(root, open_goal),
+            _resume_workflow_map_section(root, open_goal),
             _list_section("Resume Targets", targets),
             _list_section(
                 "Manage Resume State",
@@ -2287,6 +2288,115 @@ def _resume_next_action_section(root: Path, open_goal: str) -> str:
                 ]
             ),
             f"<div class='resume-action-form'><h3>Resume Action Form</h3>{form}</div>" if form else "",
+            "</section>",
+        ]
+    )
+
+
+def _resume_workflow_map_section(root: Path, open_goal: str) -> str:
+    if not open_goal:
+        return "".join(
+            [
+                "<section id='resume-workflow-map' class='panel resume-workflow-map' data-resume-workflow-map='true'><h2>Resume Workflow Map</h2>",
+                "<p class='muted'>A read-only gate map appears here once a saved goal exists.</p>",
+                _kv(
+                    [
+                        ("resume_workflow_map_status", "no_saved_goal"),
+                        ("resume_workflow_map_saved_goal", "none"),
+                        ("resume_workflow_map_next_surface", SafeHtml("<a href='/goals'>/goals</a>")),
+                        ("resume_workflow_map_source", "saved_workspace_goal"),
+                        ("resume_workflow_map_write_on_get", "false"),
+                        ("resume_workflow_map_provider_calls_taken_by_clankeros", "0"),
+                        ("resume_workflow_map_network_actions_taken", "0"),
+                        ("resume_workflow_map_external_effects_created", "false"),
+                    ]
+                ),
+                "</section>",
+            ]
+        )
+    storage = _storage(root)
+    state = _goal_state(root, storage, open_goal)
+    goal = state.get("goal")
+    if goal is None:
+        return "".join(
+            [
+                "<section id='resume-workflow-map' class='panel resume-workflow-map' data-resume-workflow-map='true'><h2>Resume Workflow Map</h2>",
+                "<p class='muted'>The saved workspace points at a goal that is no longer available locally.</p>",
+                _kv(
+                    [
+                        ("resume_workflow_map_status", "missing_goal"),
+                        ("resume_workflow_map_saved_goal", open_goal),
+                        ("resume_workflow_map_next_surface", SafeHtml("<a href='/goals'>/goals</a>")),
+                        ("resume_workflow_map_source", "saved_workspace_goal"),
+                        ("resume_workflow_map_write_on_get", "false"),
+                        ("resume_workflow_map_provider_calls_taken_by_clankeros", "0"),
+                        ("resume_workflow_map_network_actions_taken", "0"),
+                        ("resume_workflow_map_external_effects_created", "false"),
+                    ]
+                ),
+                "</section>",
+            ]
+        )
+    phase = _goal_current_phase(state)
+    next_action = _goal_next_action(root, state)
+    gates, counts, current_gate = _goal_workflow_gate_summary(root, state, next_action)
+    done = counts.get("done", 0)
+    pending = counts.get("pending", 0)
+    waiting = counts.get("waiting", 0)
+    total = len(gates)
+    items: list[str] = []
+    for index, (name, status) in enumerate(gates, start=1):
+        label = name.replace("_", " ")
+        marker = "current" if name == current_gate else status
+        next_label = (
+            f" next={_e(next_action.action)}"
+            if name == current_gate and current_gate != "complete"
+            else ""
+        )
+        items.append(
+            "<li "
+            f"data-resume-workflow-gate='{_e(name)}' "
+            f"data-gate-status='{_e(status)}' "
+            f"data-gate-marker='{_e(marker)}'>"
+            f"<span class='workflow-map-index'>{index}</span> "
+            f"<strong>{_e(label)}</strong> "
+            f"resume_workflow_map_step: {_e(name)} status={_e(status)} marker={_e(marker)}{next_label}</li>"
+        )
+    return "".join(
+        [
+            "<section id='resume-workflow-map' class='panel resume-workflow-map' data-resume-workflow-map='true'><h2>Resume Workflow Map</h2>",
+            "<p class='muted'>The saved goal's local workflow gates, shown here so returning to work does not require opening the full Goal page first.</p>",
+            _kv(
+                [
+                    ("resume_workflow_map_status", "available"),
+                    ("resume_workflow_map_saved_goal", open_goal),
+                    ("resume_workflow_map_current_phase", phase),
+                    ("resume_workflow_map_current_gate", current_gate),
+                    ("resume_workflow_map_next_action", next_action.action),
+                    (
+                        "resume_workflow_map_next_surface",
+                        SafeHtml(
+                            f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
+                        ),
+                    ),
+                    ("resume_workflow_map_progress", f"{done}/{total} gates done"),
+                    ("resume_workflow_map_done_count", str(done)),
+                    ("resume_workflow_map_pending_count", str(pending)),
+                    ("resume_workflow_map_waiting_count", str(waiting)),
+                    ("resume_workflow_map_source", "goal_remaining_work_gates"),
+                    (
+                        "resume_workflow_map_goal_surface",
+                        SafeHtml(f"<a href='/goals/{quote(open_goal)}'>/goals/{_e(open_goal)}</a>"),
+                    ),
+                    ("resume_workflow_map_write_on_get", "false"),
+                    ("resume_workflow_map_provider_calls_taken_by_clankeros", "0"),
+                    ("resume_workflow_map_network_actions_taken", "0"),
+                    ("resume_workflow_map_external_effects_created", "false"),
+                ]
+            ),
+            "<ol class='workflow-map-rail resume-workflow-map-rail'>",
+            "".join(items),
+            "</ol>",
             "</section>",
         ]
     )
@@ -3432,28 +3542,7 @@ def _goal_workflow_map(
     state: dict[str, Any],
     next_action: GoalNextAction,
 ) -> str:
-    gate_lines = _goal_remaining_work_gate_lines(root, state, next_action)
-    gates: list[tuple[str, str]] = []
-    for line in gate_lines:
-        if not line.startswith("remaining_work_gate: "):
-            continue
-        parts = line.removeprefix("remaining_work_gate: ").split()
-        if not parts:
-            continue
-        name = parts[0]
-        status = "unknown"
-        for part in parts[1:]:
-            if part.startswith("status="):
-                status = part.removeprefix("status=")
-                break
-        gates.append((name, status))
-    counts: dict[str, int] = {}
-    for _, status in gates:
-        counts[status] = counts.get(status, 0) + 1
-    current_gate = next(
-        (name for name, status in gates if status == "pending"),
-        next((name for name, status in gates if status == "waiting"), "complete"),
-    )
+    gates, counts, current_gate = _goal_workflow_gate_summary(root, state, next_action)
     done = counts.get("done", 0)
     pending = counts.get("pending", 0)
     waiting = counts.get("waiting", 0)
@@ -3507,6 +3596,36 @@ def _goal_workflow_map(
             "</section>",
         ]
     )
+
+
+def _goal_workflow_gate_summary(
+    root: Path,
+    state: dict[str, Any],
+    next_action: GoalNextAction,
+) -> tuple[list[tuple[str, str]], dict[str, int], str]:
+    gate_lines = _goal_remaining_work_gate_lines(root, state, next_action)
+    gates: list[tuple[str, str]] = []
+    for line in gate_lines:
+        if not line.startswith("remaining_work_gate: "):
+            continue
+        parts = line.removeprefix("remaining_work_gate: ").split()
+        if not parts:
+            continue
+        name = parts[0]
+        status = "unknown"
+        for part in parts[1:]:
+            if part.startswith("status="):
+                status = part.removeprefix("status=")
+                break
+        gates.append((name, status))
+    counts: dict[str, int] = {}
+    for _, status in gates:
+        counts[status] = counts.get(status, 0) + 1
+    current_gate = next(
+        (name for name, status in gates if status == "pending"),
+        next((name for name, status in gates if status == "waiting"), "complete"),
+    )
+    return gates, counts, current_gate
 
 
 def _goal_command_bar(
