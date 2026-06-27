@@ -4290,6 +4290,24 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "recent_items_now: Open Goal cockpit" in root.body
     assert "recent_items_safety: read-only local navigation" in root.body
     assert "data-breadcrumbs='true'" in root.body
+    assert "data-route-context='true'" in root.body
+    assert "Route Context" in root.body
+    assert "breadcrumb_status</dt><dd>current_route" in root.body
+    assert "breadcrumb_family</dt><dd>dashboard" in root.body
+    assert "breadcrumb_title</dt><dd>Dashboard" in root.body
+    assert "breadcrumb_current_path</dt><dd><a href='/'>/</a>" in root.body
+    assert "breadcrumb_parent_surface</dt><dd><a href='/'>Dashboard</a>" in root.body
+    assert "breadcrumb_current_goal</dt><dd>none" in root.body
+    assert "breadcrumb_current_project</dt><dd>none" in root.body
+    assert "breadcrumb_focus_status</dt><dd>no_goal" in root.body
+    assert "breadcrumb_focus_target</dt><dd><a href='/goals'>/goals</a>" in root.body
+    assert "breadcrumb_resume_surface</dt><dd><a href='/resume'>/resume</a>" in root.body
+    assert "breadcrumb_write_on_get</dt><dd>false" in root.body
+    assert "breadcrumb_provider_calls_taken</dt><dd>0" in root.body
+    assert "breadcrumb_network_actions_taken</dt><dd>0" in root.body
+    assert "breadcrumb_external_effects_created</dt><dd>false" in root.body
+    assert "breadcrumb_back: <a href='/'>Dashboard</a>" in root.body
+    assert "breadcrumb_safety: read-only local route context" in root.body
     assert "id=\"theme-toggle\"" in root.body
     assert "data-shortcut=\"/\"" in root.body
     assert "data-keyboard-shortcuts=\"true\"" in root.body
@@ -6278,6 +6296,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "recent_items_now: Open Demo the ClankerOS local operator app with fixture-backed state" in goal.body
     assert "recent_items_resume: <a href='/resume'>/resume</a>" in goal.body
     assert "data-breadcrumbs='true'" in goal.body
+    assert "data-route-context='true'" in goal.body
+    assert "breadcrumb_family</dt><dd>goal" in goal.body
+    assert f"breadcrumb_current_goal</dt><dd><a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in goal.body
+    assert f"breadcrumb_current_project</dt><dd><a href='/projects/{result.project_id}'>{result.project_id}</a>" in goal.body
+    assert "breadcrumb_phase</dt><dd>Ready to commit" in goal.body
+    assert "breadcrumb_focus_status</dt><dd>available" in goal.body
+    assert f"breadcrumb_focus_target</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>/runs/{result.coder_worktree_run_id}</a>" in goal.body
+    assert "breadcrumb_parent_surface</dt><dd><a href='/goals'>Goals</a>" in goal.body
+    assert "breadcrumb_back: <a href='/goals'>Goals</a>" in goal.body
+    assert "breadcrumb_safety: read-only local route context" in goal.body
     assert "Goal Section Index" in goal.body
     assert "goal_section_index_status</dt><dd>available" in goal.body
     assert "goal_section_count</dt><dd>" in goal.body
@@ -7809,6 +7837,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
 
     run_page = render_local_app_route(tmp_path, f"/runs/{result.coder_worktree_run_id}")
     assert run_page.status == 200
+    assert "data-route-context='true'" in run_page.body
+    assert "breadcrumb_family</dt><dd>run" in run_page.body
+    assert f"breadcrumb_current_goal</dt><dd><a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in run_page.body
+    assert f"breadcrumb_current_project</dt><dd><a href='/projects/{result.project_id}'>{result.project_id}</a>" in run_page.body
+    assert f"breadcrumb_current_item</dt><dd>{result.coder_worktree_run_id}" in run_page.body
+    assert "breadcrumb_phase</dt><dd>Ready to commit" in run_page.body
+    assert "breadcrumb_parent_surface</dt><dd><a href='/delegation-runs'>Delegation Runs</a>" in run_page.body
     assert "Run Command Bar" in run_page.body
     assert "data-run-command-bar='true'" in run_page.body
     assert f"run_command_run_id</dt><dd>{result.coder_worktree_run_id}" in run_page.body

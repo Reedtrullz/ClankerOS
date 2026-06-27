@@ -268,16 +268,19 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   notes, and remaining work. The index writes nothing on GET and only helps
   the operator jump around the long Goal workbench.
 - Every app page includes a shared operator shell with a global
-  `Operator Focus` strip, breadcrumbs, recent local items, a command palette,
-  a dark/light theme toggle, and keyboard shortcuts for home, goals, and
-  palette search. The recent-items sidebar starts with a read-only
-  `Recent Items Command Bar` that identifies one reopen target, counts
-  workspace/goal/delegation/run shortcuts, shows saved project/goal/artifact
-  context, links `/resume`, and reports write/provider/network/external-effect
-  counters. The focus strip is derived from the saved workspace goal or
-  current lead goal and shows phase, one primary action, target surface,
-  progress, waiting counts, form availability, `/resume`, and an expandable
-  confirmed local action form when the current next action is
+  `Operator Focus` strip, a read-only `Route Context` breadcrumb strip, recent
+  local items, a command palette, a dark/light theme toggle, and keyboard
+  shortcuts for home, goals, and palette search. The route context strip shows
+  current route family/path, parent surface, current Goal/Project/run context
+  when available, saved workspace anchors, `/resume`, focus target, and
+  expandable zero-effect counters before the page body. The recent-items sidebar
+  starts with a read-only `Recent Items Command Bar` that identifies one reopen
+  target, counts workspace/goal/delegation/run shortcuts, shows saved project/
+  goal/artifact context, links `/resume`, and reports write/provider/network/
+  external-effect counters. The focus strip is derived from the saved
+  workspace goal or current lead goal and shows phase, one primary action,
+  target surface, progress, waiting counts, form availability, `/resume`, and
+  an expandable confirmed local action form when the current next action is
   browser-available before the page body. The command palette includes the
   same goal-aware `Continue Current Goal` block and the same confirmed local
   action form from the Goal page. These controls only navigate local routes or

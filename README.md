@@ -395,19 +395,23 @@ Command Bar` starts the page with one local review target, incident and
 recommendation counts, evidence links, and no-resolution/no-retry/no-network
 boundaries.
 
-The app shell also includes a global `Operator Focus` strip, breadcrumbs,
-recent local items, a command palette, keyboard shortcuts, and a dark/light
-theme toggle on every page. The recent-items sidebar now starts with a
-read-only `Recent Items Command Bar` that names the first reopen target,
-counts workspace/goal/delegation/run shortcuts, shows saved workspace context,
-links `/resume`, and keeps zero-effect counters visible. The focus strip keeps
-the saved or lead goal's phase, one primary action, target surface, progress,
-waiting counts, and resume link visible outside the Goal page, and can expand
-the same confirmed local action form when the current next action is
-browser-available. The command palette includes the same goal-aware `Continue
-Current Goal` block and the same confirmed local action form so the operator
-can continue without leaving the palette. Those controls stay inside the local
-browser app and do not perform external effects.
+The app shell also includes a global `Operator Focus` strip, a read-only
+`Route Context` breadcrumb strip, recent local items, a command palette,
+keyboard shortcuts, and a dark/light theme toggle on every page. The route
+context strip shows the current route family/path, parent surface, current
+Goal/Project/run context when it can be resolved, saved workspace anchors,
+resume link, current focus target, and expandable zero-effect counters before
+the page content. The recent-items sidebar now starts with a read-only `Recent Items
+Command Bar` that names the first reopen target, counts workspace/goal/
+delegation/run shortcuts, shows saved workspace context, links `/resume`, and
+keeps zero-effect counters visible. The focus strip keeps the saved or lead
+goal's phase, one primary action, target surface, progress, waiting counts,
+and resume link visible outside the Goal page, and can expand the same
+confirmed local action form when the current next action is browser-available.
+The command palette includes the same goal-aware `Continue Current Goal` block
+and the same confirmed local action form so the operator can continue without
+leaving the palette. Those controls stay inside the local browser app and do
+not perform external effects.
 
 Use `/workflow?delegation_id=<id>` or `/workflow?run_id=<coder_run_id>` when
 you want the scoped operator map. The selected workflow page now includes a

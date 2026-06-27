@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-27 Route Context Breadcrumb Strip
+
+- Upgraded the shared app breadcrumbs into a read-only `Route Context` strip
+  on every local app page.
+- The strip now reports route family/path, parent surface, current
+  Goal/Project/run context when available, current phase for Goal/run routes,
+  saved workspace project/Goal/artifact anchors, `/resume`, the current focus
+  target, write-on-GET posture, and zero provider/network/external-effect
+  counters in a compact summary plus expandable details block before page
+  content.
+- Added route-context assertions for empty dashboard state, fixture-backed
+  Goal pages, and deep coder run pages so long operator flows keep their
+  orientation and backtracking targets.
+- Updated README, local app docs, and the operating summary to describe the
+  shared route context surface alongside Operator Focus, recent items, command
+  palette, shortcuts, and theme controls.
+- Non-claims: this does not write workspace state, navigate automatically, run
+  work, approve requests, create fixture state, call providers, fetch GitHub
+  status, push, create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_90ef8b3ddb0b`, `run_b1ff7069384b`, and coder
+    worktree run `run_b41357ecd72f`
+  - `git diff --check` -> passed
+
 ## 2026-06-27 Dogfooding Command Bar
 
 - Added a read-only `Dogfooding Command Bar` to `/dogfooding`.

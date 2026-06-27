@@ -15974,32 +15974,273 @@ def _is_current_nav(path: str, href: str) -> bool:
     return path == href or path.startswith(href + "/")
 
 
-def _breadcrumbs(current_path: str, title: str) -> str:
+def _breadcrumbs(
+    root: Path,
+    current_path: str,
+    title: str,
+    focus_context: dict[str, Any],
+) -> str:
     path = urlparse(current_path or "/").path or "/"
     crumbs: list[tuple[str, str | None]] = [("Dashboard", "/")]
+    family = _breadcrumb_family(path)
+    current_goal = ""
+    current_project = ""
+    current_phase = "none"
+    current_item = ""
+    parent_href = "/"
+    parent_label = "Dashboard"
+    state = _load_workspace_state(root)
+    saved_project = str(state.get("open_project") or "").strip()
+    saved_goal = str(state.get("open_goal") or "").strip()
+    saved_artifact = str(state.get("last_viewed_artifact") or "").strip()
+
     if path == "/":
         crumbs = [("Dashboard", None)]
     elif path.startswith("/goals/"):
-        crumbs.extend([("Goals", "/goals"), (path.removeprefix("/goals/"), None)])
+        current_goal = unquote(path.removeprefix("/goals/"))
+        parent_href = "/goals"
+        parent_label = "Goals"
+        crumbs.extend([("Goals", "/goals"), (current_goal, None)])
     elif path.startswith("/projects/"):
-        crumbs.extend([("Projects", "/projects"), (path.removeprefix("/projects/"), None)])
+        current_project = unquote(path.removeprefix("/projects/"))
+        parent_href = "/projects"
+        parent_label = "Projects"
+        crumbs.extend([("Projects", "/projects"), (current_project, None)])
     elif path.startswith("/delegations/"):
-        crumbs.extend([("Delegations", "/delegation-runs"), (path.removeprefix("/delegations/"), None)])
+        current_item = unquote(path.removeprefix("/delegations/"))
+        parent_href = "/delegation-runs"
+        parent_label = "Delegation Runs"
+        crumbs.extend([("Delegations", "/delegation-runs"), (current_item, None)])
     elif path.startswith("/runs/"):
-        crumbs.extend([("Runs", "/delegation-runs"), (path.removeprefix("/runs/"), None)])
+        current_item = unquote(path.removeprefix("/runs/"))
+        parent_href = "/delegation-runs"
+        parent_label = "Delegation Runs"
+        crumbs.extend([("Runs", "/delegation-runs"), (current_item, None)])
     elif path == "/artifacts":
+        current_item = _one(parse_qs(urlparse(current_path or "").query), "path") or ""
+        parent_href = "/workspace"
+        parent_label = "Workspace"
         crumbs.append(("Artifact", None))
     else:
         label = next((label for label, href in NAV_ITEMS if href == path), title)
+        parent_href = _breadcrumb_parent_href(path)
+        parent_label = _breadcrumb_parent_label(parent_href)
         crumbs.append((label, None))
+
+    current_goal, current_project, current_phase = _breadcrumb_local_context(
+        root,
+        family=family,
+        current_goal=current_goal,
+        current_project=current_project,
+        current_item=current_item,
+    )
+    current_href = current_path or path or "/"
+    focus_status = str(focus_context.get("status", "state_unavailable"))
+    focus_target = str(focus_context.get("target_href") or "/health")
+    if focus_status == "available":
+        next_action = focus_context["next_action"]
+        focus_target = str(next_action.href)
+
     rendered = []
     for index, (label, href) in enumerate(crumbs):
         text = _compact_label(unquote(label), 48)
         if href and index < len(crumbs) - 1:
-            rendered.append(f"<a href='{_e(href)}'>{_e(text)}</a>")
+            rendered.append(f"<li><a href='{_e(href)}'>{_e(text)}</a></li>")
         else:
-            rendered.append(f"<span>{_e(text)}</span>" if index else f"<strong>{_e(text)}</strong>")
-    return "<nav class='breadcrumbs' aria-label='Breadcrumbs' data-breadcrumbs='true'>" + "".join(rendered) + "</nav>"
+            current_attr = " aria-current='page'" if index == len(crumbs) - 1 else ""
+            rendered.append(f"<li{current_attr}><span>{_e(text)}</span></li>")
+
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("breadcrumb_status", "current_route"),
+        ("breadcrumb_family", family),
+        ("breadcrumb_title", title),
+        (
+            "breadcrumb_current_path",
+            SafeHtml(f"<a href='{_e(current_href)}'>{_e(current_href)}</a>"),
+        ),
+        (
+            "breadcrumb_parent_surface",
+            SafeHtml(f"<a href='{_e(parent_href)}'>{_e(parent_label)}</a>"),
+        ),
+        (
+            "breadcrumb_current_goal",
+            SafeHtml(f"<a href='/goals/{quote(current_goal)}'>{_e(current_goal)}</a>")
+            if current_goal
+            else "none",
+        ),
+        (
+            "breadcrumb_current_project",
+            SafeHtml(f"<a href='/projects/{quote(current_project)}'>{_e(current_project)}</a>")
+            if current_project
+            else "none",
+        ),
+        (
+            "breadcrumb_current_item",
+            _compact_label(current_item, 96) if current_item else "none",
+        ),
+        ("breadcrumb_phase", current_phase),
+        (
+            "breadcrumb_saved_goal",
+            SafeHtml(f"<a href='/goals/{quote(saved_goal)}'>{_e(saved_goal)}</a>")
+            if saved_goal
+            else "none",
+        ),
+        (
+            "breadcrumb_saved_project",
+            SafeHtml(f"<a href='/projects/{quote(saved_project)}'>{_e(saved_project)}</a>")
+            if saved_project
+            else "none",
+        ),
+        (
+            "breadcrumb_saved_artifact",
+            SafeHtml(_artifact_link(saved_artifact)) if saved_artifact else "none",
+        ),
+        ("breadcrumb_focus_status", focus_status),
+        (
+            "breadcrumb_focus_target",
+            SafeHtml(f"<a href='{_e(focus_target)}'>{_e(focus_target)}</a>"),
+        ),
+        ("breadcrumb_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+        ("breadcrumb_write_on_get", "false"),
+        ("breadcrumb_provider_calls_taken", "0"),
+        ("breadcrumb_network_actions_taken", "0"),
+        ("breadcrumb_external_effects_created", "false"),
+    ]
+    lines = [
+        f"breadcrumb_now: {_e(title)}",
+        f"breadcrumb_back: <a href='{_e(parent_href)}'>{_e(parent_label)}</a>",
+        f"breadcrumb_resume: <a href='/resume'>/resume</a>",
+        "breadcrumb_safety: read-only local route context",
+    ]
+    summary_rows = [
+        (
+            "route_parent",
+            SafeHtml(f"<a href='{_e(parent_href)}'>{_e(parent_label)}</a>"),
+        ),
+        (
+            "route_goal",
+            SafeHtml(f"<a href='/goals/{quote(current_goal)}'>{_e(current_goal)}</a>")
+            if current_goal
+            else "none",
+        ),
+        (
+            "route_project",
+            SafeHtml(f"<a href='/projects/{quote(current_project)}'>{_e(current_project)}</a>")
+            if current_project
+            else "none",
+        ),
+        ("route_phase", current_phase),
+        (
+            "route_focus",
+            SafeHtml(f"<a href='{_e(focus_target)}'>{_e(focus_target)}</a>"),
+        ),
+        ("route_resume", SafeHtml("<a href='/resume'>/resume</a>")),
+    ]
+    return "".join(
+        [
+            "<section class='panel route-context-strip' data-breadcrumbs='true' data-route-context='true'>",
+            "<h2>Route Context</h2>",
+            "<nav class='breadcrumbs' aria-label='Breadcrumbs'><ol>",
+            "".join(rendered),
+            "</ol></nav>",
+            _kv(summary_rows),
+            "<details class='route-context-details' data-route-context-details='true'>",
+            "<summary>Route Details</summary>",
+            _kv(rows),
+            _ul(lines),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _breadcrumb_family(path: str) -> str:
+    if path == "/":
+        return "dashboard"
+    if path == "/goals":
+        return "goals"
+    if path.startswith("/goals/"):
+        return "goal"
+    if path == "/projects":
+        return "projects"
+    if path.startswith("/projects/"):
+        return "project"
+    if path.startswith("/delegations/"):
+        return "delegation"
+    if path.startswith("/runs/"):
+        return "run"
+    if path == "/artifacts":
+        return "artifact"
+    for label, href in NAV_ITEMS:
+        if href == path:
+            return label.lower().replace(" ", "_")
+    return "unknown"
+
+
+def _breadcrumb_parent_href(path: str) -> str:
+    if path in {"/", "/goals", "/projects"}:
+        return "/"
+    if path in {"/workflow", "/delegation-runs", "/actions", "/approvals", "/inbox"}:
+        return "/goals"
+    if path in {"/verification", "/ci-evidence", "/dogfooding", "/demo", "/health"}:
+        return "/"
+    if path in {"/memory", "/skills", "/profiles", "/workspace", "/resume", "/search"}:
+        return "/"
+    return "/"
+
+
+def _breadcrumb_parent_label(href: str) -> str:
+    if href == "/":
+        return "Dashboard"
+    return next((label for label, item_href in NAV_ITEMS if item_href == href), href)
+
+
+def _breadcrumb_local_context(
+    root: Path,
+    *,
+    family: str,
+    current_goal: str,
+    current_project: str,
+    current_item: str,
+) -> tuple[str, str, str]:
+    try:
+        storage = _storage(root)
+    except Exception:
+        return current_goal, current_project, "none"
+
+    if family == "goal" and current_goal:
+        try:
+            goal = storage.get_goal(current_goal)
+            state = _goal_state(root, storage, current_goal)
+            return current_goal, goal.project_id, _goal_current_phase(state)
+        except Exception:
+            return current_goal, current_project, "unknown"
+
+    if family == "project" and current_project:
+        return current_goal, current_project, "none"
+
+    if family == "delegation" and current_item:
+        try:
+            delegation = storage.get_subagent_delegation(current_item)
+            if delegation is not None:
+                project = _task_project(storage, delegation.parent_task_id)
+                return delegation.parent_goal_id, project, "delegation"
+        except Exception:
+            return current_goal, current_project, "unknown"
+
+    if family == "run" and current_item:
+        try:
+            coder_run = get_coder_worktree_run(storage, current_item)
+            if coder_run is not None:
+                delegation = storage.get_subagent_delegation(coder_run.delegation_id)
+                if delegation is not None:
+                    project = _task_project(storage, delegation.parent_task_id)
+                    state = _goal_state(root, storage, delegation.parent_goal_id)
+                    return delegation.parent_goal_id, project, _goal_current_phase(state)
+        except Exception:
+            return current_goal, current_project, "unknown"
+
+    return current_goal, current_project, "none"
 
 
 def _recent_items_panel(root: Path) -> str:
@@ -16467,9 +16708,9 @@ def _html_page(
 ) -> LocalAppResponse:
     current_path = current_path or "/"
     nav = _nav_links(current_path)
-    breadcrumbs = _breadcrumbs(current_path, title)
     recent_panel = _recent_items_panel(root)
     focus_context = _operator_focus_context(root)
+    breadcrumbs = _breadcrumbs(root, current_path, title, focus_context)
     focus_strip = _operator_focus_strip(focus_context)
     palette = _command_palette(root, focus_context)
     body = f"""<!doctype html>
@@ -16501,9 +16742,17 @@ def _html_page(
     .recent-items-command-bar ul {{ margin-top:8px; }}
     .recent-items-command-bar li {{ border:1px solid var(--line); background:var(--panel); padding:6px 7px; overflow-wrap:anywhere; }}
     .palette-continue {{ border:1px solid var(--line); background:var(--panel); padding:10px; margin:10px 0; }}
-    .breadcrumbs {{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; color:var(--muted); margin:0 0 14px; font-size:13px; }}
+    .route-context-strip {{ border-left:4px solid var(--accent); margin:0 0 16px; }}
+    .route-context-strip h2 {{ font-size:15px; }}
+    .route-context-strip dl {{ grid-template-columns:minmax(170px, 230px) 1fr; }}
+    .route-context-strip ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
+    .route-context-strip li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .route-context-details {{ margin-top:10px; }}
+    .route-context-details summary {{ cursor:pointer; font-weight:700; }}
+    .breadcrumbs ol {{ list-style:none; display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:0; margin:0 0 12px; color:var(--muted); font-size:13px; }}
+    .breadcrumbs li {{ border:0; background:transparent; padding:0; }}
+    .breadcrumbs li + li::before {{ content:"/"; margin-right:6px; color:var(--line); }}
     .breadcrumbs a {{ color:var(--muted); }}
-    .breadcrumbs span::before {{ content:"/"; margin-right:6px; color:var(--line); }}
     .operator-focus-strip {{ border:1px solid var(--line); border-left:4px solid var(--accent); background:var(--panel); padding:12px; margin:0 0 16px; }}
     .operator-focus-strip dl {{ grid-template-columns:minmax(170px, 230px) 1fr; }}
     .operator-focus-strip ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
