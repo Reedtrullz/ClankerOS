@@ -390,9 +390,12 @@ Core layers for the bootstrap:
   Resume, Goals, Search, palette, and theme controls, and the palette can be
   closed with Escape even while the search input is focused; the shortcut layer
   remains local-only and creates no server writes. The command palette also
-  includes a visible keyboard-shortcut help block generated from the same
-  shortcut map, so operators can discover the local navigation shortcuts from
-  inside the app instead of reading external docs.
+  starts with a route-aware `Current Page` block that mirrors the current
+  path, parent surface, resolved Goal/Project/run context, focus target,
+  `/resume`, and zero-effect readbacks before the visible keyboard-shortcut
+  help block generated from the same shortcut map, so operators can discover
+  both where they are and the local navigation shortcuts from inside the app
+  instead of reading external docs.
   The Goal `Skills Used` section starts with a read-only `Goal Skills Command
   Bar` that summarizes task skill tags, matching generated or available local
   skill records, usage and project counts, delegation profile usage, one
@@ -461,13 +464,16 @@ Core layers for the bootstrap:
   that names one reopen target, counts
   workspace/goal/delegation/run shortcuts, shows saved workspace
   project/goal/artifact context, links `/resume`, and reports zero-effect
-  boundaries before the longer recent-link list. The shared focus strip and
-  command palette now include the same goal-aware current-action readback from
-  the saved workspace goal or current lead goal, showing phase, one
-  recommended action, target surface, zero-effect readbacks, and the same
-  confirmed local action form as the Goal page when the current next action is
-  browser-available. They still write nothing on GET and only submit existing
-  local forms after explicit confirmation. The workflow page
+  boundaries before the longer recent-link list. The command palette now also
+  starts with the same current-page route context, parent link, resolved
+  Goal/Project/run context, focus target, `/resume`, and zero-effect readbacks
+  inside the keyboard-driven surface. The shared focus strip and command
+  palette include the same goal-aware current-action readback from the saved
+  workspace goal or current lead goal, showing phase, one recommended action,
+  target surface, zero-effect readbacks, and the same confirmed local action
+  form as the Goal page when the current next action is browser-available.
+  They still write nothing on GET and only submit existing local forms after
+  explicit confirmation. The workflow page
   can be
   scoped with a
   delegation or coder run id, then annotates related stepper rows with

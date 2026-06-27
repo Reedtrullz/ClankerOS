@@ -408,10 +408,11 @@ keeps zero-effect counters visible. The focus strip keeps the saved or lead
 goal's phase, one primary action, target surface, progress, waiting counts,
 and resume link visible outside the Goal page, and can expand the same
 confirmed local action form when the current next action is browser-available.
-The command palette includes the same goal-aware `Continue Current Goal` block
-and the same confirmed local action form so the operator can continue without
-leaving the palette. Those controls stay inside the local browser app and do
-not perform external effects.
+The command palette also opens with a route-aware `Current Page` block that
+names the current path, parent surface, resolved Goal/Project/run context,
+focus target, and `/resume` link before the same goal-aware
+`Continue Current Goal` block and confirmed local action form. Those controls
+stay inside the local browser app and do not perform external effects.
 
 Use `/workflow?delegation_id=<id>` or `/workflow?run_id=<coder_run_id>` when
 you want the scoped operator map. The selected workflow page now includes a

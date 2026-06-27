@@ -1,5 +1,36 @@
 # Status
 
+## 2026-06-27 Command Palette Route Context
+
+- Added a read-only `Current Page` route-context block to the shared command
+  palette on every local app page.
+- The palette now names the current route family/path, parent surface,
+  resolved Goal/Project/run context when available, current phase, saved
+  workspace project/Goal anchors, current focus target, `/resume`, and
+  write/provider/network/external-effect counters before the goal continuation
+  action and link drawer.
+- Added route-context assertions for first-run Home and a fixture-backed Goal
+  page so the keyboard palette stays useful in both empty and populated
+  operator states.
+- Updated README, local app docs, and the operating summary to describe `/` as
+  a route-aware operator command surface instead of only a generic search/link
+  drawer.
+- Non-claims: this does not write workspace state on GET, navigate
+  automatically, run work, approve requests, create delegations, create coder
+  prep, commit, push, create PRs, deploy, fetch GitHub status, call providers,
+  use non-loopback network actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_d3fda9485379`, `run_57aadbccd130`, and coder
+    worktree run `run_417fe07d72e4`
+
 ## 2026-06-27 Route Context Breadcrumb Strip
 
 - Upgraded the shared app breadcrumbs into a read-only `Route Context` strip

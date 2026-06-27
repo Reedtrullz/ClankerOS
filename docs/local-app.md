@@ -281,10 +281,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   workspace goal or current lead goal and shows phase, one primary action,
   target surface, progress, waiting counts, form availability, `/resume`, and
   an expandable confirmed local action form when the current next action is
-  browser-available before the page body. The command palette includes the
-  same goal-aware `Continue Current Goal` block and the same confirmed local
-  action form from the Goal page. These controls only navigate local routes or
-  submit existing local forms after confirmation.
+  browser-available before the page body. The command palette starts with a
+  route-aware `Current Page` block that mirrors the current path, parent
+  surface, resolved Goal/Project/run context, focus target, `/resume`, and
+  zero-effect readbacks before the same goal-aware `Continue Current Goal`
+  block and confirmed local action form from the Goal page. These controls
+  only navigate local routes or submit existing local forms after confirmation.
 - `/profiles` reads both `.clanker/profiles.yml` and SQLite profile rows. It
   shows configured profile names, storage-backed profile labels, modes, cost
   tiers, model placeholders, write posture, adapter status, and `use_for`

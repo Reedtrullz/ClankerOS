@@ -4237,6 +4237,18 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "register-project" in root.body
     assert "create-goal" in root.body
     assert "data-command-palette='true'" in root.body
+    assert "data-command-palette-route-context='true'" in root.body
+    assert "palette_route_family</dt><dd>dashboard" in root.body
+    assert "palette_route_current_path</dt><dd><a href='/'>/</a>" in root.body
+    assert "palette_route_parent_surface</dt><dd><a href='/'>Dashboard</a>" in root.body
+    assert "palette_route_focus_status</dt><dd>no_goal" in root.body
+    assert "palette_route_focus_target</dt><dd><a href='/goals'>/goals</a>" in root.body
+    assert "palette_route_resume_surface</dt><dd><a href='/resume'>/resume</a>" in root.body
+    assert "palette_route_write_on_get</dt><dd>false" in root.body
+    assert "palette_route_provider_calls_taken</dt><dd>0" in root.body
+    assert "palette_route_network_actions_taken</dt><dd>0" in root.body
+    assert "palette_route_external_effects_created</dt><dd>false" in root.body
+    assert "palette_route_safety: read-only local navigation" in root.body
     assert "palette_continue_action_form_available</dt><dd>false" in root.body
     assert "Operator Focus" in root.body
     assert "data-operator-focus-strip='true'" in root.body
@@ -6267,6 +6279,23 @@ def test_local_app_demo_scenario_populates_fixture_state(
     goal = render_local_app_route(tmp_path, f"/goals/{result.goal_id}")
     assert goal.status == 200
     assert "data-command-palette='true'" in goal.body
+    assert "data-command-palette-route-context='true'" in goal.body
+    assert "palette_route_family</dt><dd>goal" in goal.body
+    assert (
+        f"palette_route_current_path</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"/goals/{result.goal_id}</a>"
+    ) in goal.body
+    assert "palette_route_parent_surface</dt><dd><a href='/goals'>Goals</a>" in goal.body
+    assert (
+        f"palette_route_current_goal</dt><dd><a href='/goals/{result.goal_id}'>"
+    ) in goal.body
+    assert "palette_route_current_project</dt><dd><a href='/projects/local-app-demo'>" in goal.body
+    assert "palette_route_phase</dt><dd>Ready to commit" in goal.body
+    assert "palette_route_focus_status</dt><dd>available" in goal.body
+    assert (
+        f"palette_route_focus_target</dt><dd><a href='/runs/{result.coder_worktree_run_id}'"
+    ) in goal.body
+    assert "palette_route_write_on_get</dt><dd>false" in goal.body
     assert "data-command-palette-continue='true'" in goal.body
     assert "palette_continue_goal</dt><dd><a href='/goals/" in goal.body
     assert "palette_continue_next_action</dt><dd>Create commit request" in goal.body

@@ -16520,7 +16520,12 @@ def _operator_focus_strip(context: dict[str, Any]) -> str:
     )
 
 
-def _command_palette(root: Path, focus_context: dict[str, Any]) -> str:
+def _command_palette(
+    root: Path,
+    focus_context: dict[str, Any],
+    current_path: str,
+    title: str,
+) -> str:
     commands = [(label, href, "route") for label, href in NAV_ITEMS]
     commands.extend(_recent_operator_links(root, limit=6))
     seen: set[str] = set()
@@ -16539,6 +16544,7 @@ def _command_palette(root: Path, focus_context: dict[str, Any]) -> str:
             "<dialog id='command-palette' class='command-palette' data-command-palette='true'>",
             "<form method='dialog'><button class='icon-button' type='submit'>Close</button></form>",
             "<h2>Command Palette</h2>",
+            _command_palette_route_context(root, focus_context, current_path, title),
             _command_palette_continue(focus_context),
             "<form action='/search' method='get' class='command-grid'>",
             "<input id='command-palette-search' name='q' autocomplete='off' placeholder='Search local state'>",
@@ -16551,6 +16557,122 @@ def _command_palette(root: Path, focus_context: dict[str, Any]) -> str:
             "".join(rows),
             "</ul>",
             "</dialog>",
+        ]
+    )
+
+
+def _command_palette_route_context(
+    root: Path,
+    focus_context: dict[str, Any],
+    current_path: str,
+    title: str,
+) -> str:
+    parsed = urlparse(current_path or "/")
+    path = parsed.path or "/"
+    family = _breadcrumb_family(path)
+    current_goal = ""
+    current_project = ""
+    current_item = ""
+    if path.startswith("/goals/"):
+        current_goal = unquote(path.removeprefix("/goals/"))
+    elif path.startswith("/projects/"):
+        current_project = unquote(path.removeprefix("/projects/"))
+    elif path.startswith("/delegations/"):
+        current_item = unquote(path.removeprefix("/delegations/"))
+    elif path.startswith("/runs/"):
+        current_item = unquote(path.removeprefix("/runs/"))
+    elif path == "/artifacts":
+        current_item = _one(parse_qs(parsed.query), "path") or ""
+
+    current_goal, current_project, current_phase = _breadcrumb_local_context(
+        root,
+        family=family,
+        current_goal=current_goal,
+        current_project=current_project,
+        current_item=current_item,
+    )
+    parent_href = _breadcrumb_parent_href(path)
+    if path.startswith("/goals/"):
+        parent_href = "/goals"
+    elif path.startswith("/projects/"):
+        parent_href = "/projects"
+    elif path.startswith("/delegations/") or path.startswith("/runs/"):
+        parent_href = "/delegation-runs"
+    elif path == "/artifacts":
+        parent_href = "/workspace"
+    parent_label = _breadcrumb_parent_label(parent_href)
+
+    state = _load_workspace_state(root)
+    saved_goal = str(state.get("open_goal") or "").strip()
+    saved_project = str(state.get("open_project") or "").strip()
+    current_href = current_path or path or "/"
+    focus_status = str(focus_context.get("status", "state_unavailable"))
+    focus_target = str(focus_context.get("target_href") or "/health")
+    if focus_status == "available":
+        focus_target = str(focus_context["next_action"].href)
+
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("palette_route_status", "available"),
+        ("palette_route_family", family),
+        ("palette_route_title", title),
+        (
+            "palette_route_current_path",
+            SafeHtml(f"<a href='{_e(current_href)}'>{_e(current_href)}</a>"),
+        ),
+        (
+            "palette_route_parent_surface",
+            SafeHtml(f"<a href='{_e(parent_href)}'>{_e(parent_label)}</a>"),
+        ),
+        (
+            "palette_route_current_goal",
+            SafeHtml(f"<a href='/goals/{quote(current_goal)}'>{_e(current_goal)}</a>")
+            if current_goal
+            else "none",
+        ),
+        (
+            "palette_route_current_project",
+            SafeHtml(f"<a href='/projects/{quote(current_project)}'>{_e(current_project)}</a>")
+            if current_project
+            else "none",
+        ),
+        ("palette_route_current_item", _compact_label(current_item, 96) if current_item else "none"),
+        ("palette_route_phase", current_phase),
+        (
+            "palette_route_saved_goal",
+            SafeHtml(f"<a href='/goals/{quote(saved_goal)}'>{_e(saved_goal)}</a>")
+            if saved_goal
+            else "none",
+        ),
+        (
+            "palette_route_saved_project",
+            SafeHtml(f"<a href='/projects/{quote(saved_project)}'>{_e(saved_project)}</a>")
+            if saved_project
+            else "none",
+        ),
+        ("palette_route_focus_status", focus_status),
+        (
+            "palette_route_focus_target",
+            SafeHtml(f"<a href='{_e(focus_target)}'>{_e(focus_target)}</a>"),
+        ),
+        ("palette_route_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+        ("palette_route_write_on_get", "false"),
+        ("palette_route_provider_calls_taken", "0"),
+        ("palette_route_network_actions_taken", "0"),
+        ("palette_route_external_effects_created", "false"),
+    ]
+    lines = [
+        f"palette_route_now: {_e(title)}",
+        f"palette_route_parent: <a href='{_e(parent_href)}'>{_e(parent_label)}</a>",
+        "palette_route_resume: <a href='/resume'>/resume</a>",
+        "palette_route_safety: read-only local navigation",
+    ]
+    return "".join(
+        [
+            "<section class='palette-route-context' data-command-palette-route-context='true'>",
+            "<h3>Current Page</h3>",
+            _kv(rows),
+            _ul(lines),
+            "</section>",
         ]
     )
 
@@ -16712,7 +16834,7 @@ def _html_page(
     focus_context = _operator_focus_context(root)
     breadcrumbs = _breadcrumbs(root, current_path, title, focus_context)
     focus_strip = _operator_focus_strip(focus_context)
-    palette = _command_palette(root, focus_context)
+    palette = _command_palette(root, focus_context, current_path, title)
     body = f"""<!doctype html>
 <html lang="en">
 <head>
@@ -16741,7 +16863,11 @@ def _html_page(
     .recent-items-command-bar dl {{ grid-template-columns:1fr; gap:4px; }}
     .recent-items-command-bar ul {{ margin-top:8px; }}
     .recent-items-command-bar li {{ border:1px solid var(--line); background:var(--panel); padding:6px 7px; overflow-wrap:anywhere; }}
-    .palette-continue {{ border:1px solid var(--line); background:var(--panel); padding:10px; margin:10px 0; }}
+    .palette-route-context, .palette-continue {{ border:1px solid var(--line); background:var(--panel); padding:10px; margin:10px 0; }}
+    .palette-route-context h3, .palette-continue h3 {{ margin-top:0; }}
+    .palette-route-context dl {{ grid-template-columns:minmax(160px, 210px) 1fr; }}
+    .palette-route-context ul {{ list-style:none; padding:0; margin:10px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
+    .palette-route-context li {{ min-width:0; padding:7px 9px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .route-context-strip {{ border-left:4px solid var(--accent); margin:0 0 16px; }}
     .route-context-strip h2 {{ font-size:15px; }}
     .route-context-strip dl {{ grid-template-columns:minmax(170px, 230px) 1fr; }}
