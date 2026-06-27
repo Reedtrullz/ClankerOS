@@ -6881,7 +6881,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Action Continuation" in commit_request.body
     assert "action_continuation_status</dt><dd>available" in commit_request.body
     assert "action_continuation_next_action</dt><dd>Approve commit" in commit_request.body
-    assert f"action_continuation_target</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in commit_request.body
+    assert "action_continuation_target</dt><dd><a href='/approvals'>/approvals</a>" in commit_request.body
+    assert (
+        f"action_continuation_next_page</dt><dd><a href='/runs/{result.coder_worktree_run_id}"
+        in commit_request.body
+    )
     assert "action_continuation_action_form_available</dt><dd>true" in commit_request.body
     assert "action_continuation_safety_boundary</dt><dd>confirmed_local_action_only" in commit_request.body
     assert "data-action-continuation-action='true'" in commit_request.body

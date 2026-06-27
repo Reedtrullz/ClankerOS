@@ -31,6 +31,21 @@
     -> passed with expected snippets matched and zero provider/network/external-mutation counters
   - `git diff --check`
     -> passed
+- GitHub CI follow-up:
+  - Run `28279087021` for commit
+    `83b00059ab972fe64d815507e04538233632e3bb` failed in
+    `Fast smoke verification` on
+    `test_local_app_demo_scenario_populates_fixture_state` because the new
+    demo assertion expected the continuation target to be the run page.
+  - The rendered product contract is more specific: after
+    `coder-commit-request`, `Approve commit` targets `/approvals`, while
+    `action_continuation_next_page` points back to the run result page with
+    the notice query preserved.
+  - Local CI-matching follow-up verification:
+    `/opt/homebrew/bin/python3 -m compileall -q agent_os tests`
+    -> passed;
+    `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "github_actions_workflow_runs_automatic_verification or github_actions_smoke_uses_temp_root_and_expected_order or ci_snapshot_evidence_from_gh_json_validates_successful_matching_run or ci_snapshot_evidence_from_gh_json_records_completed_job_while_run_in_progress or ci_snapshot_evidence_from_gh_json_rejects_pending_or_wrong_commit or local_app_records_ci_snapshot_evidence_from_pasted_gh_json or local_app_records_fast_smoke_ci_snapshot_evidence_from_pasted_gh_json or local_app_rejects_pending_ci_snapshot_status_json_without_record or ci_snapshot_handoff_prints_watch_and_record_commands_without_writes or local_app_routes_render_modern_workflow_and_health or local_app_runs_delegation_from_browser_action or goal_runs_approved_worktree_from_browser_action or local_app_artifact_viewer_is_read_only_and_bounded or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety" --tb=short`
+    -> `15 passed, 500 deselected`.
 
 ## 2026-06-27 Operator Focus Action Form
 
