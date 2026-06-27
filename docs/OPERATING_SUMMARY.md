@@ -269,13 +269,17 @@ Core layers for the bootstrap:
   availability, `/resume`, an expandable confirmed local action form when the
   current next action is browser-available, and no-write/no-provider/
   no-network/no-external-effect boundaries visible outside the Goal page.
-  They also include a confirmed
-  `save-goal-note` form that appends local operator resume context to the
-  goal-scoped `operator-notes.md` artifact; saved operator notes also become
-  linked `Operator note saved` entries in the Goal timeline and recent
-  Activity Log with zero external effects, and the confirmed note action now
-  refreshes saved workspace state to the operator-notes artifact so `/resume`,
-  Home, and `/workspace` return to the note context without a separate manual
+  They also include a read-only `Goal Operator Notes Command Bar` before the
+  confirmed `save-goal-note` form. The command bar reports whether the
+  goal-scoped `operator-notes.md` artifact exists, timestamped entry count,
+  artifact size, workspace resume-anchor posture, one review or capture target,
+  and no-write/no-provider/no-network/no-external-effect boundaries. The
+  confirmed note form appends local operator resume context to the artifact;
+  saved operator notes also become linked `Operator note saved` entries in the
+  Goal timeline and recent Activity Log with zero external effects, and the
+  confirmed note action now refreshes saved workspace state to the
+  operator-notes artifact so `/resume`, Home, and `/workspace` return to the
+  note context without a separate manual
   save. They also include a confirmed `delegate`
   next-action form when a goal has planned tasks but no delegation yet. If a
   goal is explicitly paused, the Goal page shows a `Paused` phase and a

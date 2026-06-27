@@ -151,8 +151,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   latest goal artifact as the resume anchor, renders saved filters, expanded
   panels, and last-viewed artifact as `Goal Workspace Restore State`, and
   exposes a confirmed `save-workspace` form that returns to the same goal page
-  after saving without writing on GET. Operator Notes includes a confirmed
-  `save-goal-note` form that appends local resume context to
+  after saving without writing on GET. Operator Notes starts with a read-only
+  `Goal Operator Notes Command Bar` that reports whether the note artifact
+  exists, timestamped entry count, size, workspace resume-anchor posture, one
+  review or capture target, and zero-effect boundaries before the confirmed
+  `save-goal-note` form. The form appends local resume context to
   `.clanker/projects/<project>/goals/<goal>/operator-notes.md`; it does not
   overwrite previous notes. Saved operator notes also appear as linked
   `Operator note saved` entries in the Goal timeline and recent Activity Log,

@@ -4818,6 +4818,31 @@ def test_local_app_routes_render_modern_workflow_and_health(
         pin_resume_page.body
     )
     noted_goal_page = render_local_app_route(tmp_path, f"/goals/{created_goal_id}")
+    assert "Goal Operator Notes Command Bar" in noted_goal_page.body
+    assert "data-goal-operator-notes-command-bar='true'" in noted_goal_page.body
+    assert f"goal_operator_notes_command_goal</dt><dd>{created_goal_id}" in noted_goal_page.body
+    assert "goal_operator_notes_command_project</dt><dd>first-target" in noted_goal_page.body
+    assert "goal_operator_notes_command_status</dt><dd>available" in noted_goal_page.body
+    assert "goal_operator_notes_command_entry_count</dt><dd>1" in noted_goal_page.body
+    assert "goal_operator_notes_command_note_size_bytes</dt><dd>" in noted_goal_page.body
+    assert "goal_operator_notes_command_note_updated_at</dt><dd>" in noted_goal_page.body
+    assert f"goal_operator_notes_command_note_artifact</dt><dd><a href='/artifacts?path=.clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md'>.clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md</a>" in noted_goal_page.body
+    assert f"goal_operator_notes_command_planned_path</dt><dd>.clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md" in noted_goal_page.body
+    assert f"goal_operator_notes_command_first_target</dt><dd>.clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md" in noted_goal_page.body
+    assert "goal_operator_notes_command_next_action</dt><dd>Review operator notes" in noted_goal_page.body
+    assert f"goal_operator_notes_command_target_surface</dt><dd><a href='/artifacts?path=.clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md'>operator-notes.md</a>" in noted_goal_page.body
+    assert "goal_operator_notes_command_form_surface</dt><dd><a href='#goal-operator-note-form'>Goal Operator Note Form</a>" in noted_goal_page.body
+    assert "goal_operator_notes_command_reason</dt><dd>goal_operator_notes_artifact_available" in noted_goal_page.body
+    assert "goal_operator_notes_command_workspace_goal_matches_current</dt><dd>true" in noted_goal_page.body
+    assert "goal_operator_notes_command_workspace_artifact_is_operator_notes</dt><dd>true" in noted_goal_page.body
+    assert "goal_operator_notes_command_form_available</dt><dd>true" in noted_goal_page.body
+    assert "goal_operator_notes_command_confirmation_required</dt><dd>true" in noted_goal_page.body
+    assert "goal_operator_notes_command_overwrites_previous_notes</dt><dd>false" in noted_goal_page.body
+    assert "goal_operator_notes_command_write_on_get</dt><dd>false" in noted_goal_page.body
+    assert "goal_operator_notes_command_external_effects_created</dt><dd>false" in noted_goal_page.body
+    assert "goal_operator_notes_now: Review operator notes" in noted_goal_page.body
+    assert f"goal_operator_notes_click: <a href='/artifacts?path=.clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md'>operator-notes.md</a>" in noted_goal_page.body
+    assert "goal_operator_notes_reason: goal_operator_notes_artifact_available" in noted_goal_page.body
     assert "operator_notes_status: available" in noted_goal_page.body
     assert f".clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md" in noted_goal_page.body
     assert "timeline_operator_note_artifacts</dt><dd>1" in noted_goal_page.body
@@ -6040,6 +6065,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-memory-command-bar'" in goal.body
     assert "href='#goal-skills-command-bar'" in goal.body
     assert "href='#goal-verification-evidence'" in goal.body
+    assert "href='#goal-operator-notes-command-bar'" in goal.body
     assert "href='#goal-remaining-work'" in goal.body
     assert "id='goal-summary'" in goal.body
     assert "id='goal-command-bar'" in goal.body
@@ -6055,11 +6081,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-memory-command-bar'" in goal.body
     assert "id='goal-skills-command-bar'" in goal.body
     assert "id='goal-verification-evidence'" in goal.body
+    assert "id='goal-operator-notes-command-bar'" in goal.body
     assert "id='goal-remaining-work'" in goal.body
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>37" in goal.body
+    assert "goal_section_count</dt><dd>38" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
@@ -6662,6 +6689,37 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_ci_latest_external_run_id: 282999001" in goal_after_ci.body
     assert "goal_ci_matches_current_checkout: true" in goal_after_ci.body
     assert "Operator Notes" in goal.body
+    assert "Goal Operator Notes Command Bar" in goal.body
+    assert "data-goal-operator-notes-command-bar='true'" in goal.body
+    assert "<a href='#goal-operator-notes-command-bar'>Operator notes command</a>" in goal.body
+    assert f"goal_operator_notes_command_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_operator_notes_command_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_operator_notes_command_status</dt><dd>not_started" in goal.body
+    assert "goal_operator_notes_command_entry_count</dt><dd>0" in goal.body
+    assert "goal_operator_notes_command_note_size_bytes</dt><dd>0" in goal.body
+    assert "goal_operator_notes_command_note_updated_at</dt><dd>none" in goal.body
+    assert "goal_operator_notes_command_note_artifact</dt><dd>not_started" in goal.body
+    assert f"goal_operator_notes_command_planned_path</dt><dd>.clanker/projects/{result.project_id}/goals/{result.goal_id}/operator-notes.md" in goal.body
+    assert "goal_operator_notes_command_first_target</dt><dd>none" in goal.body
+    assert "goal_operator_notes_command_next_action</dt><dd>Capture operator note" in goal.body
+    assert "goal_operator_notes_command_target_surface</dt><dd><a href='#goal-operator-note-form'>Goal Operator Note Form</a>" in goal.body
+    assert "goal_operator_notes_command_form_surface</dt><dd><a href='#goal-operator-note-form'>Goal Operator Note Form</a>" in goal.body
+    assert "goal_operator_notes_command_reason</dt><dd>goal_operator_notes_not_started" in goal.body
+    assert "goal_operator_notes_command_workspace_goal_matches_current</dt><dd>false" in goal.body
+    assert "goal_operator_notes_command_workspace_artifact_is_operator_notes</dt><dd>false" in goal.body
+    assert "goal_operator_notes_command_source</dt><dd>goal_operator_notes_artifact" in goal.body
+    assert "goal_operator_notes_command_form_available</dt><dd>true" in goal.body
+    assert "goal_operator_notes_command_confirmation_required</dt><dd>true" in goal.body
+    assert "goal_operator_notes_command_overwrites_previous_notes</dt><dd>false" in goal.body
+    assert "goal_operator_notes_command_write_on_get</dt><dd>false" in goal.body
+    assert "goal_operator_notes_command_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_operator_notes_command_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_operator_notes_command_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_operator_notes_now: Capture operator note" in goal.body
+    assert "goal_operator_notes_click: <a href='#goal-operator-note-form'>Goal Operator Note Form</a>" in goal.body
+    assert "goal_operator_notes_reason: goal_operator_notes_not_started" in goal.body
+    assert "goal_operator_notes_safety: confirmed local append only" in goal.body
+    assert "id='goal-operator-note-form'" in goal.body
     assert "save-goal-note" in goal.body
     assert "note_append_form_available: true" in goal.body
     assert "Remaining Work" in goal.body

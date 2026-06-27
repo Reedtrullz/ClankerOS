@@ -265,8 +265,11 @@ its target surface, and zero-effect boundaries before the full chronological
 list. The Activity Log now starts with a read-only Goal Activity Command Bar
 that names the latest human-readable event and target local surface before the
 longer chronological list. Progress uses a real browser progress bar.
-Operator Notes includes a confirmed `save-goal-note` form that appends
-local resume context to the goal-scoped `operator-notes.md` artifact without
+Operator Notes starts with a read-only `Goal Operator Notes Command Bar` that
+shows whether the note artifact exists, timestamped entry count, artifact size,
+workspace resume-anchor posture, one review or capture target, and zero-effect
+boundaries before the confirmed `save-goal-note` form. The form appends local
+resume context to the goal-scoped `operator-notes.md` artifact without
 overwriting earlier notes.
 The Goal Resume Snapshot reads `.clanker/app/workspace.json`, shows whether
 the saved workspace already points at the current goal, suggests the latest

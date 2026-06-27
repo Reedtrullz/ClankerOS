@@ -4170,6 +4170,7 @@ def _goal_section_index() -> str:
         ("Git status", "goal-git-status"),
         ("Verification command", "goal-verification-command-bar"),
         ("Verification evidence", "goal-verification-evidence"),
+        ("Operator notes command", "goal-operator-notes-command-bar"),
         ("Operator notes", "goal-operator-notes"),
         ("Remaining work", "goal-remaining-work"),
     ]
@@ -8172,11 +8173,100 @@ def _goal_operator_notes_section(root: Path, state: dict[str, Any]) -> str:
         [
             "<section id='goal-operator-notes'><h2>Operator Notes</h2>",
             "<p class='muted'>Append a goal-scoped local note for tomorrow's resume context. This writes only the operator-notes artifact.</p>",
+            _goal_operator_notes_command_bar(root, state),
             _ul(_goal_operator_note_lines(root, state)),
+            "<div id='goal-operator-note-form'>",
             _input_form(
                 "save-goal-note",
                 {"goal_id": goal.id, "author": "operator"},
                 {"note": "What should future me know about this goal?"},
+            ),
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _goal_operator_notes_command_bar(root: Path, state: dict[str, Any]) -> str:
+    goal = state["goal"]
+    note_path = _goal_operator_notes_path(goal)
+    absolute_path = root / note_path
+    note_exists = absolute_path.exists()
+    note_text = absolute_path.read_text(encoding="utf-8") if note_exists else ""
+    entry_count = sum(1 for line in note_text.splitlines() if line.startswith("## "))
+    note_size = absolute_path.stat().st_size if note_exists else 0
+    updated_at = _artifact_time(root, note_path.as_posix()) if note_exists else None
+    workspace = _load_workspace_state(root)
+    saved_goal = str(workspace.get("open_goal") or "").strip()
+    saved_artifact = _repo_relative_artifact_path(
+        root,
+        workspace.get("last_viewed_artifact") or "",
+    )
+    note_artifact = (
+        _artifact_link(note_path.as_posix())
+        if note_exists
+        else "not_started"
+    )
+    if note_exists:
+        status = "available"
+        next_action = "Review operator notes"
+        target_href = _artifact_href(root, note_path)
+        target_label = "operator-notes.md"
+        reason = "goal_operator_notes_artifact_available"
+        first_target = note_path.as_posix()
+    else:
+        status = "not_started"
+        next_action = "Capture operator note"
+        target_href = "#goal-operator-note-form"
+        target_label = "Goal Operator Note Form"
+        reason = "goal_operator_notes_not_started"
+        first_target = "none"
+    target_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    form_surface = SafeHtml("<a href='#goal-operator-note-form'>Goal Operator Note Form</a>")
+    return "".join(
+        [
+            "<section id='goal-operator-notes-command-bar' class='panel goal-operator-notes-command-bar' data-goal-operator-notes-command-bar='true'><h3>Goal Operator Notes Command Bar</h3>",
+            "<p class='muted'>Goal-scoped note posture before the append form.</p>",
+            _kv(
+                [
+                    ("goal_operator_notes_command_goal", goal.id),
+                    ("goal_operator_notes_command_project", goal.project_id),
+                    ("goal_operator_notes_command_status", status),
+                    ("goal_operator_notes_command_entry_count", str(entry_count)),
+                    ("goal_operator_notes_command_note_size_bytes", str(note_size)),
+                    ("goal_operator_notes_command_note_updated_at", updated_at or "none"),
+                    ("goal_operator_notes_command_note_artifact", note_artifact),
+                    ("goal_operator_notes_command_planned_path", note_path.as_posix()),
+                    ("goal_operator_notes_command_first_target", first_target),
+                    ("goal_operator_notes_command_next_action", next_action),
+                    ("goal_operator_notes_command_target_surface", target_surface),
+                    ("goal_operator_notes_command_form_surface", form_surface),
+                    ("goal_operator_notes_command_reason", reason),
+                    (
+                        "goal_operator_notes_command_workspace_goal_matches_current",
+                        str(saved_goal == goal.id).lower(),
+                    ),
+                    (
+                        "goal_operator_notes_command_workspace_artifact_is_operator_notes",
+                        str(saved_artifact == note_path.as_posix()).lower(),
+                    ),
+                    ("goal_operator_notes_command_source", "goal_operator_notes_artifact"),
+                    ("goal_operator_notes_command_form_available", "true"),
+                    ("goal_operator_notes_command_confirmation_required", "true"),
+                    ("goal_operator_notes_command_overwrites_previous_notes", "false"),
+                    ("goal_operator_notes_command_write_on_get", "false"),
+                    ("goal_operator_notes_command_provider_calls_taken", "0"),
+                    ("goal_operator_notes_command_network_actions_taken", "0"),
+                    ("goal_operator_notes_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_operator_notes_now: {_e(next_action)}",
+                    f"goal_operator_notes_click: {target_surface}",
+                    f"goal_operator_notes_reason: {_e(reason)}",
+                    "goal_operator_notes_safety: confirmed local append only",
+                ]
             ),
             "</section>",
         ]
@@ -14947,6 +15037,9 @@ def _html_page(
     .goal-verification-command-bar {{ border-left:4px solid var(--ok); }}
     .goal-verification-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-verification-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-operator-notes-command-bar {{ border-left:4px solid var(--accent); }}
+    .goal-operator-notes-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-operator-notes-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-completion-readiness {{ border-left:4px solid var(--ok); }}
     .goal-completion-readiness ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-completion-readiness li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
