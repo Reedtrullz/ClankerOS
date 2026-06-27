@@ -1076,6 +1076,7 @@ def _home_dashboard(
         "</section>",
         _home_start_here(root, storage, lead_goal),
         _home_day_plan(root, storage, lead_goal),
+        _home_attention_brief(root, storage, lead_goal),
         _home_focus_queue(root, storage, active=active, paused=paused),
         _home_verification_handoff(root),
         _home_goal_board(root, storage, active=active, paused=paused, completed=completed),
@@ -1342,6 +1343,117 @@ def _home_day_plan(root: Path, storage: Storage, lead_goal: sqlite3.Row | None) 
             _kv(rows),
             _ul(lines),
             finish_form,
+            "</section>",
+        ]
+    )
+
+
+def _home_attention_brief(root: Path, storage: Storage, lead_goal: sqlite3.Row | None) -> str:
+    inbox = collect_inbox_items(root)
+    pending_approvals = (
+        len(inbox["pending_approvals"])
+        + len(inbox["coder_worktree_approvals"])
+        + len(inbox["coder_worktree_commit_approvals"])
+        + len(inbox["coder_publication_requests"])
+    )
+    open_incidents = len(inbox["open_incidents"])
+    open_recommendations = len(storage.list_recent_task_recommendations(limit=20))
+    inbox_items = int(inbox["count"])
+    review_items = pending_approvals + open_incidents + open_recommendations
+    ci_record = _latest_ci_evidence_record(root)
+    if ci_record is None:
+        ci_source = "none"
+        ci_status = "missing"
+    else:
+        ci_source, record = ci_record
+        ci_status = str(record.status)
+    lead_goal_value: str | SafeHtml = "none"
+    if lead_goal is not None:
+        lead_goal_id = str(lead_goal["id"])
+        lead_label = str(lead_goal["title"] or lead_goal["description"] or lead_goal_id)
+        lead_goal_value = SafeHtml(
+            f"<a href='/goals/{quote(lead_goal_id)}'>{_e(_compact_label(lead_label, 72))}</a>"
+        )
+
+    if open_incidents:
+        status = "needs_incident_review"
+        primary_action = "Review incidents"
+        primary_href = "/incidents"
+        reason = "open_incidents"
+    elif pending_approvals:
+        status = "needs_approval_review"
+        primary_action = "Review approvals"
+        primary_href = "/approvals"
+        reason = "pending_approvals"
+    elif open_recommendations:
+        status = "needs_recommendation_review"
+        primary_action = "Review recommendations"
+        primary_href = "/incidents"
+        reason = "open_recommendations"
+    elif inbox_items:
+        status = "needs_inbox_review"
+        primary_action = "Review inbox"
+        primary_href = "/inbox"
+        reason = "inbox_items"
+    elif lead_goal is None:
+        status = "first_run"
+        primary_action = "Register ClankerOS project"
+        primary_href = "/goals"
+        reason = "no_goal_available"
+    elif ci_status != "success":
+        status = "needs_ci_proof"
+        primary_action = "Review verification handoff"
+        primary_href = "/verification"
+        reason = "ci_proof_not_success"
+    elif lead_goal is not None:
+        state = _goal_state(root, storage, str(lead_goal["id"]))
+        next_action = _goal_next_action(root, state)
+        status = "clear_to_continue_goal"
+        primary_action = next_action.action
+        primary_href = next_action.href
+        reason = "no_attention_blockers"
+
+    return "".join(
+        [
+            "<section class='panel home-attention-brief' data-home-attention-brief='true'><h2>Home Attention Brief</h2>",
+            "<p class='muted'>A read-only triage pass for approvals, incidents, recommendations, inbox, and proof before deeper goal work.</p>",
+            _kv(
+                [
+                    ("home_attention_status", status),
+                    ("home_attention_primary_action", primary_action),
+                    (
+                        "home_attention_primary_surface",
+                        SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_href)}</a>"),
+                    ),
+                    ("home_attention_reason", reason),
+                    ("home_attention_lead_goal", lead_goal_value),
+                    ("home_attention_review_items", str(review_items)),
+                    ("home_attention_inbox_items", str(inbox_items)),
+                    ("home_attention_pending_approvals", str(pending_approvals)),
+                    ("home_attention_open_incidents", str(open_incidents)),
+                    ("home_attention_open_recommendations", str(open_recommendations)),
+                    ("home_attention_ci_status", ci_status),
+                    ("home_attention_ci_source", ci_source),
+                    ("home_attention_ci_surface", SafeHtml("<a href='/verification'>/verification</a>")),
+                    ("home_attention_inbox_surface", SafeHtml("<a href='/inbox'>/inbox</a>")),
+                    ("home_attention_approval_surface", SafeHtml("<a href='/approvals'>/approvals</a>")),
+                    ("home_attention_incident_surface", SafeHtml("<a href='/incidents'>/incidents</a>")),
+                    ("home_attention_write_on_get", "false"),
+                    ("home_attention_github_status_fetch", "none"),
+                    ("home_attention_provider_calls_taken_by_clankeros", "0"),
+                    ("home_attention_network_actions_taken", "0"),
+                    ("home_attention_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"home_attention_now: {_e(primary_action)}",
+                    f"home_attention_click: <a href='{_e(primary_href)}'>{_e(primary_href)}</a>",
+                    f"home_attention_review: approvals={pending_approvals} incidents={open_incidents} recommendations={open_recommendations} inbox={inbox_items}",
+                    f"home_attention_ci: status={_e(ci_status)} source={_e(ci_source)} surface=<a href='/verification'>/verification</a>",
+                    "home_attention_safety: read-only local triage; confirmed actions remain on target surfaces",
+                ]
+            ),
             "</section>",
         ]
     )
@@ -12975,6 +13087,9 @@ def _html_page(
     .workspace-daily-brief {{ border-left:4px solid var(--accent); }}
     .workspace-daily-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .workspace-daily-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .home-attention-brief {{ border-left:4px solid var(--warn); }}
+    .home-attention-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .home-attention-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .project-command-bar {{ border-left:4px solid var(--accent); }}
     .project-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .project-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

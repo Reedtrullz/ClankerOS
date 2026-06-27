@@ -4156,6 +4156,21 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "day_plan_end_of_day_resume: not_ready_until_workspace_saved" in root.body
     assert "home_day_plan_write_on_get</dt><dd>false" in root.body
     assert "home_day_plan_external_effects_created</dt><dd>false" in root.body
+    assert "Home Attention Brief" in root.body
+    assert "data-home-attention-brief='true'" in root.body
+    assert "home_attention_status</dt><dd>first_run" in root.body
+    assert "home_attention_primary_action</dt><dd>Register ClankerOS project" in root.body
+    assert "home_attention_primary_surface</dt><dd><a href='/goals'>/goals</a>" in root.body
+    assert "home_attention_reason</dt><dd>no_goal_available" in root.body
+    assert "home_attention_review_items</dt><dd>0" in root.body
+    assert "home_attention_inbox_items</dt><dd>0" in root.body
+    assert "home_attention_ci_status</dt><dd>success" in root.body
+    assert "home_attention_ci_source</dt><dd>publication_handoff" in root.body
+    assert "home_attention_github_status_fetch</dt><dd>none" in root.body
+    assert "home_attention_write_on_get</dt><dd>false" in root.body
+    assert "home_attention_network_actions_taken</dt><dd>0" in root.body
+    assert "home_attention_external_effects_created</dt><dd>false" in root.body
+    assert "home_attention_safety: read-only local triage; confirmed actions remain on target surfaces" in root.body
     assert "Home Focus Queue" in root.body
     assert "focus_queue_source</dt><dd>goal_state_next_actions" in root.body
     assert "focus_queue_items</dt><dd>0" in root.body
@@ -5750,6 +5765,23 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "day_plan_finish: status=needs_workspace_save action=save-workspace return_to=/" in dashboard.body
     assert "name='updated_by' value='home-day-plan'" in dashboard.body
     assert "name='expanded_panels' value='day-plan,daily-loop,next-action,timeline,evidence,artifacts,notes'" in dashboard.body
+    assert "Home Attention Brief" in dashboard.body
+    assert "data-home-attention-brief='true'" in dashboard.body
+    assert "home_attention_status</dt><dd>needs_approval_review" in dashboard.body
+    assert "home_attention_primary_action</dt><dd>Review approvals" in dashboard.body
+    assert "home_attention_primary_surface</dt><dd><a href='/approvals'>/approvals</a>" in dashboard.body
+    assert "home_attention_reason</dt><dd>pending_approvals" in dashboard.body
+    assert "home_attention_pending_approvals</dt><dd>1" in dashboard.body
+    assert "home_attention_open_incidents</dt><dd>0" in dashboard.body
+    assert "home_attention_open_recommendations</dt><dd>0" in dashboard.body
+    assert "home_attention_ci_status</dt><dd>success" in dashboard.body
+    assert "home_attention_ci_source</dt><dd>direct_public_snapshot" in dashboard.body
+    assert "home_attention_click: <a href='/approvals'>/approvals</a>" in dashboard.body
+    assert "home_attention_review: approvals=1 incidents=0 recommendations=0" in dashboard.body
+    assert "home_attention_write_on_get</dt><dd>false" in dashboard.body
+    assert "home_attention_github_status_fetch</dt><dd>none" in dashboard.body
+    assert "home_attention_network_actions_taken</dt><dd>0" in dashboard.body
+    assert "home_attention_external_effects_created</dt><dd>false" in dashboard.body
     assert "Start Here" in dashboard.body
     assert "start_here_mode</dt><dd>goal" in dashboard.body
     assert "start_here_current_phase</dt><dd>Ready to commit" in dashboard.body
@@ -6529,6 +6561,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "day_plan_end_of_day_resume: ready" in restored_home.body
     assert "home_day_plan_write_on_get</dt><dd>false" in restored_home.body
     assert "home_day_plan_external_effects_created</dt><dd>false" in restored_home.body
+    assert "Home Attention Brief" in restored_home.body
+    assert "home_attention_status</dt><dd>needs_approval_review" in restored_home.body
+    assert "home_attention_primary_surface</dt><dd><a href='/approvals'>/approvals</a>" in restored_home.body
+    assert "home_attention_ci_status</dt><dd>success" in restored_home.body
     assert "Home Focus Queue" in restored_home.body
     assert "focus_queue_source</dt><dd>goal_state_next_actions" in restored_home.body
     assert "focus_queue_item: <a href='/goals/" in restored_home.body

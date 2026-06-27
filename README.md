@@ -110,6 +110,8 @@ next-action readbacks, a `Start Here` cockpit for the next click, resume
 posture, blockers, and CI handoff, a `Home Day Plan` that names the current goal, phase,
 one next action, waiting counts, whether end-of-day resume is ready, and a
 confirmed `save-workspace` Finish Today form for the lead goal, the
+read-only `Home Attention Brief` for approvals, incidents, recommendations,
+inbox load, and proof posture before deeper goal work, the
 `Home Focus Queue` for next actions across active and paused goals, the
 read-only `Home Activity Command Bar` for the latest human-readable event,
 `Home Verification Handoff` for current branch/commit GitHub Actions proof

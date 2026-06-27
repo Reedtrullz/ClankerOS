@@ -1,5 +1,30 @@
 # Status
 
+## 2026-06-27 Home Attention Brief
+
+- Added a read-only `Home Attention Brief` near the top of `/`.
+  It prioritizes existing local incidents, pending approvals, open
+  recommendations, inbox load, first-run setup when no goal exists, missing CI
+  proof for established goal work, and then the lead goal.
+- The brief links to existing operator surfaces (`/incidents`, `/approvals`,
+  `/inbox`, `/verification`, `/goals`, or the lead goal's next surface)
+  instead of adding a second action engine.
+- README, local app docs, and the operating summary now describe Home as a
+  daily triage board, not just separate goal/inbox/proof sections.
+- Non-claims: this does not write state on GET, fetch GitHub status, approve
+  gates, resolve incidents, pin memories, run work, push, create PRs, deploy,
+  call providers, use non-loopback network actions, or mutate external
+  systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+
 ## 2026-06-27 Artifact Review Brief
 
 - Added a read-only `Artifact Review Brief` to `/artifacts?path=...` between
