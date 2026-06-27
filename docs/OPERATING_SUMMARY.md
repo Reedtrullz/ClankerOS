@@ -306,6 +306,12 @@ Core layers for the bootstrap:
   renders saved filters, expanded panels, and last-viewed artifact as
   `Goal Workspace Restore State`, and exposes a confirmed `save-workspace`
   form that returns to the same goal page after saving without writing on GET.
+  Goal `Completion Readiness` summarizes the same workflow gates, local
+  blockers, approvals, and publication handoff state used elsewhere on the Goal
+  page into one finish posture. It identifies the current blocker or next safe
+  action, links the relevant local surface, reports no-write, no-network, and
+  no-external-effect boundaries, and only exposes the confirmed `complete-goal`
+  form after the manual publish handoff is ready.
   Goal `Incidents` now links to `/incidents`, shows open/resolved/total
   incident counts, and lists goal-owned incident status, severity, run, task,
   summary, and evidence artifact links without taking action.

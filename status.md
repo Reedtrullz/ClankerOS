@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-27 Goal Completion Readiness
+
+- Added a read-only `Goal Completion Readiness` section to each Goal page.
+  It combines workflow gate progress, open local blockers, pending approvals,
+  publication handoff readiness, and completion criteria into one explicit
+  finish posture.
+- The section names whether the Goal is completed, blocked by incidents,
+  waiting for operator approval, ready for manual completion, still moving
+  through workflow gates, or missing evidence review. It also links the next
+  local surface and keeps the write/network/external-effect counters visible.
+- The confirmed `complete-goal` form is now surfaced inside Completion
+  Readiness only after the manual publish handoff is ready, so the browser UI
+  makes the safe finish path visible without implying automatic publishing.
+- README, local app docs, and the operating summary now describe Completion
+  Readiness as the operator-facing answer to "can I finish this goal now?".
+- Non-claims: this does not fetch GitHub status, push, create PRs, deploy,
+  approve gates automatically, call providers, use non-loopback network
+  actions, write state on GET, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or goal_next_action_card_exposes_commit_publication_gate_forms" --tb=short`
+    -> `3 passed, 512 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff -- docs/runtime-capability-matrix.md`
+    -> no diff after restoring the checked-in runtime baseline
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Goal Git Command Bar
 
 - Added a read-only `Goal Git Command Bar` at the top of the Goal page

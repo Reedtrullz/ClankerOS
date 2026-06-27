@@ -5873,7 +5873,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>28" in goal.body
+    assert "goal_section_count</dt><dd>29" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
@@ -5991,6 +5991,19 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Completion Criteria" in goal.body
     assert "completion_criteria_source: task_verification_plan" in goal.body
     assert "completion_progress: 0/1 tasks completed" in goal.body
+    assert "Goal Completion Readiness" in goal.body
+    assert "data-goal-completion-readiness='true'" in goal.body
+    assert "completion_readiness_status</dt><dd>waiting_for_operator_approval" in goal.body
+    assert "completion_readiness_current_gate</dt><dd>commit_request" in goal.body
+    assert "completion_readiness_gate_progress</dt><dd>8/15 gates done" in goal.body
+    assert "completion_readiness_complete_goal_form_available</dt><dd>false" in goal.body
+    assert "completion_readiness_next_action</dt><dd>Review approval" in goal.body
+    assert "completion_readiness_target_surface</dt><dd><a href='/approvals'>/approvals</a>" in goal.body
+    assert "completion_readiness_source</dt><dd>goal_workflow_gates_and_local_status" in goal.body
+    assert "completion_readiness_write_on_get</dt><dd>false" in goal.body
+    assert "completion_readiness_network_actions_taken</dt><dd>0" in goal.body
+    assert "completion_readiness_external_effects_created</dt><dd>false" in goal.body
+    assert "completion_readiness_safety: confirmed local completion only after manual publish" in goal.body
     assert "progress_bar_enabled</dt><dd>true" in goal.body
     assert "<progress" in goal.body
     assert "Timeline" in goal.body
@@ -7857,6 +7870,15 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "Publication Handoff Commands" in manual_publish_goal.body
     assert "manual_boundary: outside_clankeros" in manual_publish_goal.body
     assert "copy_only: true" in manual_publish_goal.body
+    assert "Goal Completion Readiness" in manual_publish_goal.body
+    assert "completion_readiness_status</dt><dd>ready_for_manual_completion" in manual_publish_goal.body
+    assert "completion_readiness_reason</dt><dd>publication_handoff_ready_manual_publish_boundary" in manual_publish_goal.body
+    assert "completion_readiness_current_gate</dt><dd>manual_publish" in manual_publish_goal.body
+    assert "completion_readiness_publication_handoff_ready</dt><dd>true" in manual_publish_goal.body
+    assert "completion_readiness_complete_goal_form_available</dt><dd>true" in manual_publish_goal.body
+    assert "completion_readiness_next_action</dt><dd>Complete goal after manual publish" in manual_publish_goal.body
+    assert "completion_readiness_target_surface</dt><dd><a href='#goal-completion-readiness'>Goal Completion Readiness</a>" in manual_publish_goal.body
+    assert "data-completion-readiness-action='true'" in manual_publish_goal.body
     assert "Complete Goal" in manual_publish_goal.body
     assert "action='/actions/complete-goal'" in manual_publish_goal.body
     assert f"name='goal_id' value='{goal_id}'" in manual_publish_goal.body
@@ -7900,6 +7922,8 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "current_phase</dt><dd>Completed" in completed_goal.body
     assert "phase_reason</dt><dd>goal is marked completed" in completed_goal.body
     assert "recommended_action</dt><dd>Review completed goal evidence" in completed_goal.body
+    assert "completion_readiness_status</dt><dd>completed" in completed_goal.body
+    assert "completion_readiness_next_action</dt><dd>Review completed goal evidence" in completed_goal.body
 
     goals_after_completion = render_local_app_route(tmp_path, "/goals")
     assert goals_after_completion.status == 200

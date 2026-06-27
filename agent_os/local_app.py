@@ -3632,6 +3632,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_overview(state),
             _goal_risk_section(state),
             _goal_completion_criteria(state),
+            _goal_completion_readiness(root, state, next_action),
             _goal_progress(state),
             _goal_timeline(root, state),
             _goal_activity_log(root, state),
@@ -3719,6 +3720,7 @@ def _goal_section_index() -> str:
         ("Activity log", "goal-activity-log"),
         ("Risk level", "goal-risk"),
         ("Completion criteria", "goal-completion-criteria"),
+        ("Completion readiness", "goal-completion-readiness"),
         ("Delegations", "goal-delegations"),
         ("Runs", "goal-runs"),
         ("Approvals", "goal-approvals"),
@@ -5174,6 +5176,124 @@ def _goal_completion_criteria(state: dict[str, Any]) -> str:
     if len(lines) == 3:
         lines.append("completion_criteria_status: none_available")
     return _list_section("Goal Completion Criteria", lines, anchor_id="goal-completion-criteria")
+
+
+def _goal_completion_readiness(
+    root: Path,
+    state: dict[str, Any],
+    next_action: GoalNextAction,
+) -> str:
+    goal = state["goal"]
+    gates, counts, current_gate = _goal_workflow_gate_summary(root, state, next_action)
+    open_tasks = sum(1 for task in state["tasks"] if task.status not in {"completed", "cancelled"})
+    open_incidents = sum(1 for row in state["incidents"] if row["status"] == "open")
+    open_recommendations = sum(
+        1 for row in state["recommendations"] if row["status"] == "open"
+    )
+    pending_approvals = (
+        _count_status(state["worktree_approvals"], "pending_operator_approval")
+        + _count_status(state["commit_approvals"], "pending_operator_approval")
+        + _count_status(state["publications"], "pending_operator_approval")
+    )
+    publication = _goal_ready_publication(state)
+    total_gates = len(gates)
+    done_gates = counts.get("done", 0)
+    ready_for_completion = goal.status != "completed" and publication is not None
+
+    if goal.status == "completed":
+        readiness_status = "completed"
+        readiness_action = "Review completed goal evidence"
+        readiness_target = f"<a href='/goals/{quote(goal.id)}'>/goals/{_e(goal.id)}</a>"
+        reason = "goal_status_completed"
+    elif open_incidents:
+        readiness_status = "blocked_by_incidents"
+        readiness_action = "Inspect incident"
+        readiness_target = "<a href='/incidents'>/incidents</a>"
+        reason = "open_incidents"
+    elif pending_approvals:
+        readiness_status = "waiting_for_operator_approval"
+        readiness_action = "Review approval"
+        readiness_target = "<a href='/approvals'>/approvals</a>"
+        reason = "pending_approvals"
+    elif ready_for_completion:
+        readiness_status = "ready_for_manual_completion"
+        readiness_action = "Complete goal after manual publish"
+        readiness_target = "<a href='#goal-completion-readiness'>Goal Completion Readiness</a>"
+        reason = "publication_handoff_ready_manual_publish_boundary"
+    elif open_tasks or counts.get("pending", 0) or counts.get("waiting", 0):
+        readiness_status = "workflow_incomplete"
+        readiness_action = next_action.action
+        readiness_target = f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
+        reason = f"current_gate={current_gate}"
+    else:
+        readiness_status = "needs_evidence_review"
+        readiness_action = "Review timeline and evidence"
+        readiness_target = "<a href='#goal-timeline'>Timeline</a>"
+        reason = "no_open_rows_but_completion_not_recorded"
+
+    sections = [
+        "<section id='goal-completion-readiness' class='panel goal-completion-readiness' data-goal-completion-readiness='true'><h2>Goal Completion Readiness</h2>",
+        "<p class='muted'>Shows whether this Goal can be locally completed yet, based on the current workflow gates, approvals, incidents, and manual publication boundary.</p>",
+        _kv(
+            [
+                ("completion_readiness_status", readiness_status),
+                ("completion_readiness_reason", reason),
+                ("completion_readiness_goal", goal.id),
+                ("completion_readiness_current_gate", current_gate),
+                ("completion_readiness_gate_progress", f"{done_gates}/{total_gates} gates done"),
+                ("completion_readiness_done_gates", str(done_gates)),
+                ("completion_readiness_pending_gates", str(counts.get("pending", 0))),
+                ("completion_readiness_waiting_gates", str(counts.get("waiting", 0))),
+                ("completion_readiness_open_tasks", str(open_tasks)),
+                ("completion_readiness_open_incidents", str(open_incidents)),
+                ("completion_readiness_open_recommendations", str(open_recommendations)),
+                ("completion_readiness_pending_approvals", str(pending_approvals)),
+                (
+                    "completion_readiness_publication_handoff_ready",
+                    "true" if publication is not None else "false",
+                ),
+                (
+                    "completion_readiness_complete_goal_form_available",
+                    "true" if ready_for_completion else "false",
+                ),
+                (
+                    "completion_readiness_next_action",
+                    readiness_action,
+                ),
+                ("completion_readiness_target_surface", SafeHtml(readiness_target)),
+                ("completion_readiness_source", "goal_workflow_gates_and_local_status"),
+                ("completion_readiness_write_on_get", "false"),
+                ("completion_readiness_network_actions_taken", "0"),
+                ("completion_readiness_external_effects_created", "false"),
+            ]
+        ),
+        _ul(
+            [
+                f"completion_readiness_now: {_e(readiness_action)}",
+                f"completion_readiness_click: {readiness_target}",
+                "completion_readiness_safety: confirmed local completion only after manual publish",
+            ]
+        ),
+    ]
+    if ready_for_completion:
+        sections.extend(
+            [
+                "<details class='completion-readiness-action' data-completion-readiness-action='true'>",
+                "<summary>Complete Goal</summary>",
+                "<p class='muted'>Use this only after manual push/PR work has already happened outside ClankerOS. Confirmation is required and the action records local goal status only.</p>",
+                _input_form(
+                    "complete-goal",
+                    {"goal_id": goal.id},
+                    {
+                        "completed_by": "operator",
+                        "note": "Manual publication finished outside ClankerOS.",
+                    },
+                ),
+                "</details>",
+            ]
+        )
+    sections.append("</section>")
+    return "".join(sections)
 
 
 def _goal_progress(state: dict[str, Any]) -> str:
@@ -12586,6 +12706,12 @@ def _html_page(
     .goal-git-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-git-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-git-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-completion-readiness {{ border-left:4px solid var(--ok); }}
+    .goal-completion-readiness ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-completion-readiness li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .completion-readiness-action {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
+    .completion-readiness-action summary {{ cursor:pointer; font-weight:700; }}
+    .completion-readiness-action form {{ margin-top:10px; }}
     .goal-daily-loop {{ border-left:4px solid var(--ok); }}
     .goal-daily-loop dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-daily-loop ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}

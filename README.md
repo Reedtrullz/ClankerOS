@@ -184,14 +184,19 @@ can add the next goal for a registered project without switching to the CLI.
 Use `/goals/<goal_id>` as the
 goal-centered workbench: a Goal Command Bar, Goal Daily Loop, Goal Workflow Map,
 current phase, next action, next recommendation, progress, timeline, activity
-log, goal risk, completion criteria, evidence, delegations, runs, approvals,
+log, goal risk, completion criteria, completion readiness, evidence, delegations, runs, approvals,
 artifacts, a typed Goal Artifact Explorer, memory, skills used, git status,
 operator notes, a goal-scoped resume snapshot, and remaining work. The page auto-refreshes by
 local polling, pauses while the operator is editing a form or the tab is
 hidden, and stays local-only. The Goal Command Bar near the top condenses
 current phase, one primary action, target local surface, progress, waiting
 counts, resume route, latest project-scoped CI proof state, and zero-effect
-boundary so the operator can choose the next click without scrolling. The Goal
+boundary so the operator can choose the next click without scrolling. Goal
+Completion Readiness turns the same local gate, approval, incident, and
+publication-handoff state into one explicit finish posture. It names the
+current blocker or next safe action, links the relevant local surface, and only
+offers the confirmed `complete-goal` form after the manual publish handoff is
+ready. The Goal
 Git Status section now starts with a read-only `Goal Git Command Bar` that
 summarizes the registered project root, branch, commit, clean/dirty posture,
 tracked and untracked counts, latest goal-linked `git_status.txt` evidence
