@@ -4076,7 +4076,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
                 "/incidents",
                 anchor_id="goal-incidents",
             ),
-            _list_section("Evidence", _goal_evidence_lines(root, state), anchor_id="goal-evidence"),
+            _goal_evidence_section(root, state),
             _list_section("Artifacts", _goal_artifact_lines(root, state), anchor_id="goal-artifacts"),
             _goal_artifact_explorer(root, state),
             _list_section("Memory", _goal_memory_lines(root, state), anchor_id="goal-memory"),
@@ -4156,6 +4156,7 @@ def _goal_section_index() -> str:
         ("Runs", "goal-runs"),
         ("Approvals", "goal-approvals"),
         ("Incidents", "goal-incidents"),
+        ("Evidence command", "goal-evidence-command-bar"),
         ("Evidence", "goal-evidence"),
         ("Artifacts", "goal-artifacts"),
         ("Artifact explorer", "goal-artifact-explorer"),
@@ -6291,6 +6292,116 @@ def _goal_evidence_lines(root: Path, state: dict[str, Any]) -> list[str]:
     for run in state["worktree_runs"]:
         lines.append(f"{_e(run.id)} evidence: {_artifact_link(run.evidence_path)}")
     return lines
+
+
+def _goal_evidence_section(root: Path, state: dict[str, Any]) -> str:
+    lines = _goal_evidence_lines(root, state)
+    return _goal_evidence_command_bar(root, state, lines) + _list_section(
+        "Evidence",
+        lines,
+        anchor_id="goal-evidence",
+    )
+
+
+def _goal_evidence_command_bar(
+    root: Path,
+    state: dict[str, Any],
+    evidence_lines: list[str],
+) -> str:
+    goal = state["goal"]
+    artifact_records = _goal_artifact_records(root, state)
+    artifact_counts = {kind: 0 for kind in ["markdown", "json", "patch", "text"]}
+    for record in artifact_records:
+        artifact_counts[record["kind"]] += 1
+
+    run_evidence_items = sum(
+        1
+        for row in state["runs"]
+        for key in ["activity_path", "summary_path", "events_path"]
+        if row[key]
+    )
+    worktree_evidence_items = len(state["worktree_runs"])
+    incident_evidence_items = len(state["incidents"])
+    recommendation_evidence_items = len(state["recommendations"])
+    latest_record = artifact_records[-1] if artifact_records else None
+    if incident_evidence_items:
+        next_action = "Review incident evidence"
+        target_href = "#goal-incidents"
+        target_label = "Goal Incidents"
+        reason = "open or historical incident evidence is attached to this goal"
+    elif recommendation_evidence_items:
+        next_action = "Review recommendation evidence"
+        target_href = "/incidents"
+        target_label = "/incidents"
+        reason = "task recommendations have local evidence attached"
+    elif latest_record is not None:
+        next_action = "Open latest Goal artifact"
+        target_href = f"/artifacts?path={quote(latest_record['path'])}"
+        target_label = latest_record["label"]
+        reason = "goal artifacts are available in the bounded artifact viewer"
+    elif evidence_lines:
+        next_action = "Review evidence list"
+        target_href = "#goal-evidence"
+        target_label = "Evidence"
+        reason = "run evidence records are available"
+    else:
+        next_action = "Create evidence through the next Goal action"
+        target_href = "#goal-next-action"
+        target_label = "Next Action"
+        reason = "no local evidence records are attached yet"
+
+    status = "available" if evidence_lines or artifact_records else "empty"
+    latest_label = latest_record["label"] if latest_record is not None else "none"
+    latest_surface = (
+        _artifact_link(latest_record["path"])
+        if latest_record is not None
+        else "none"
+    )
+    return "".join(
+        [
+            "<section id='goal-evidence-command-bar' class='panel goal-evidence-command-bar' data-goal-evidence-command-bar='true'><h3>Goal Evidence Command Bar</h3>",
+            "<p class='muted'>Goal-scoped evidence posture before the detailed evidence list and typed artifact explorer.</p>",
+            _kv(
+                [
+                    ("goal_evidence_command_goal", goal.id),
+                    ("goal_evidence_command_project", goal.project_id),
+                    ("goal_evidence_command_status", status),
+                    ("goal_evidence_command_items", str(len(evidence_lines))),
+                    ("goal_evidence_command_artifact_records", str(len(artifact_records))),
+                    ("goal_evidence_command_run_evidence_items", str(run_evidence_items)),
+                    ("goal_evidence_command_worktree_evidence_items", str(worktree_evidence_items)),
+                    ("goal_evidence_command_incident_evidence_items", str(incident_evidence_items)),
+                    ("goal_evidence_command_recommendation_evidence_items", str(recommendation_evidence_items)),
+                    ("goal_evidence_command_markdown_artifacts", str(artifact_counts["markdown"])),
+                    ("goal_evidence_command_json_artifacts", str(artifact_counts["json"])),
+                    ("goal_evidence_command_patch_artifacts", str(artifact_counts["patch"])),
+                    ("goal_evidence_command_text_artifacts", str(artifact_counts["text"])),
+                    ("goal_evidence_command_latest_artifact", latest_label),
+                    ("goal_evidence_command_latest_surface", SafeHtml(str(latest_surface))),
+                    ("goal_evidence_command_next_action", next_action),
+                    (
+                        "goal_evidence_command_target_surface",
+                        SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"),
+                    ),
+                    ("goal_evidence_command_reason", reason),
+                    ("goal_evidence_command_source", "goal_evidence_lines_and_artifact_registry"),
+                    ("goal_evidence_command_write_on_get", "false"),
+                    ("goal_evidence_command_provider_calls_taken", "0"),
+                    ("goal_evidence_command_network_actions_taken", "0"),
+                    ("goal_evidence_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_evidence_now: {_e(next_action)}",
+                    f"goal_evidence_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"goal_evidence_reason: {_e(reason)}",
+                    "goal_evidence_safety: read-only local evidence inventory",
+                ]
+            ),
+            "</section>",
+        ]
+    )
 
 
 def _goal_artifact_lines(root: Path, state: dict[str, Any]) -> list[str]:
@@ -13724,6 +13835,9 @@ def _html_page(
     .goal-git-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-git-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-git-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-evidence-command-bar {{ border-left:4px solid var(--ok); }}
+    .goal-evidence-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-evidence-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-verification-command-bar {{ border-left:4px solid var(--ok); }}
     .goal-verification-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-verification-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

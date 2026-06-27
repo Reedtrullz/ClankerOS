@@ -222,6 +222,11 @@ records, then points at the local target surface without writing on GET.
 The Goal Section Index near the top links to stable in-page anchors for the
 major Goal surfaces, so the browser page can be used for long sessions without
 hunting through the whole document.
+Goal Evidence starts with a read-only `Goal Evidence Command Bar` that
+summarizes run, worktree, incident, recommendation, and typed artifact
+evidence counts, points at the latest bounded artifact or highest-priority
+local evidence surface, and keeps provider/network/external-effect counters at
+zero before the detailed evidence list.
 Goal Verification Evidence starts with a read-only `Goal Verification Command
 Bar` that shows whether project-scoped proof is missing, stale, job-scoped
 early proof, or current full workflow success. It links to `/verification` and

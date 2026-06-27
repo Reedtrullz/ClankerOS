@@ -163,6 +163,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   project/global memory artifacts, goal-scoped memory entry counts, generated
   memory count, operator-note status, future-work count, and the current pin
   posture; pinning stays on the confirmed `/memory` action surface. Goal
+  Evidence starts with a read-only `Goal Evidence Command Bar` that summarizes
+  run evidence, worktree evidence, incident evidence, recommendation evidence,
+  typed artifact counts, latest artifact, one local review target, and
+  zero-effect boundaries before the detailed evidence list. Goal
   Verification Evidence starts with a read-only `Goal Verification Command
   Bar`, links to `/verification` and `/ci-evidence`, filters
   operator-supplied CI records to the current goal project, compares the

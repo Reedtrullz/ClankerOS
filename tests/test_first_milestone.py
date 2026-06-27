@@ -6047,7 +6047,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>30" in goal.body
+    assert "goal_section_count</dt><dd>31" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
@@ -6235,6 +6235,31 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Execution completed" in goal.body
     assert "Review passed" in goal.body
     assert "Evidence" in goal.body
+    assert "Goal Evidence Command Bar" in goal.body
+    assert "data-goal-evidence-command-bar='true'" in goal.body
+    assert "<a href='#goal-evidence-command-bar'>Evidence command</a>" in goal.body
+    assert f"goal_evidence_command_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_evidence_command_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_evidence_command_status</dt><dd>available" in goal.body
+    assert "goal_evidence_command_items</dt><dd>" in goal.body
+    assert "goal_evidence_command_artifact_records</dt><dd>" in goal.body
+    assert "goal_evidence_command_run_evidence_items</dt><dd>" in goal.body
+    assert "goal_evidence_command_worktree_evidence_items</dt><dd>1" in goal.body
+    assert "goal_evidence_command_incident_evidence_items</dt><dd>0" in goal.body
+    assert "goal_evidence_command_recommendation_evidence_items</dt><dd>0" in goal.body
+    assert "goal_evidence_command_markdown_artifacts</dt><dd>" in goal.body
+    assert "goal_evidence_command_json_artifacts</dt><dd>" in goal.body
+    assert "goal_evidence_command_patch_artifacts</dt><dd>" in goal.body
+    assert "goal_evidence_command_text_artifacts</dt><dd>" in goal.body
+    assert "goal_evidence_command_latest_surface</dt><dd><a href='/artifacts?path=" in goal.body
+    assert "goal_evidence_command_next_action</dt><dd>Open latest Goal artifact" in goal.body
+    assert "goal_evidence_command_target_surface</dt><dd><a href='/artifacts?path=" in goal.body
+    assert "goal_evidence_command_source</dt><dd>goal_evidence_lines_and_artifact_registry" in goal.body
+    assert "goal_evidence_command_write_on_get</dt><dd>false" in goal.body
+    assert "goal_evidence_command_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_evidence_command_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_evidence_command_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_evidence_safety: read-only local evidence inventory" in goal.body
     assert "Artifacts" in goal.body
     assert "Goal Artifact Explorer" in goal.body
     assert "artifact_explorer_raw_filesystem_browsing</dt><dd>false" in goal.body

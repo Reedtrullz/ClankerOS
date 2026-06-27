@@ -359,6 +359,11 @@ Core layers for the bootstrap:
   tracked and untracked counts, latest goal-linked `git_status.txt` artifact,
   one next local surface, and no-fetch/no-write/no-network/no-external-effect
   boundaries before the repository snapshot.
+  Goal `Evidence` starts with a read-only `Goal Evidence Command Bar` that
+  summarizes run evidence, worktree evidence, incident evidence,
+  recommendation evidence, typed artifact counts, latest artifact, one local
+  review target, and zero-effect boundaries before the detailed evidence list
+  and typed artifact explorer.
   Goal `Verification Evidence` starts with a read-only
   `Goal Verification Command Bar` that summarizes project-scoped proof status,
   latest source/status/scope, branch and commit freshness, one proof action,

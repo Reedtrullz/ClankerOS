@@ -1,5 +1,32 @@
 # Status
 
+## 2026-06-27 Goal Evidence Command Bar
+
+- Added a read-only `Goal Evidence Command Bar` to the top of each Goal's
+  Evidence section.
+- The bar summarizes detailed evidence-line count, typed artifact record
+  count, run evidence, worktree evidence, incident evidence, recommendation
+  evidence, Markdown/JSON/Patch/Text artifact counts, the latest artifact
+  surface, one next local review action, and zero-effect counters before the
+  detailed evidence list.
+- The Goal Section Index now links directly to the Evidence command surface,
+  making long Goal pages easier to scan during daily operation.
+- README, local app docs, and the operating summary now describe Goal Evidence
+  as a scan-first local proof/evidence posture surface.
+- Non-claims: this does not write state on GET, generate evidence, run work,
+  approve gates, fetch GitHub status, commit, push, create PRs, deploy, call
+  providers, use non-loopback network actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_5de6ec711bd8`,
+    `run_2394957f0a82`, and coder worktree run `run_e1297a496c60`
+
 ## 2026-06-27 Goal Verification Command Bar
 
 - Added a read-only `Goal Verification Command Bar` to the top of each Goal's
