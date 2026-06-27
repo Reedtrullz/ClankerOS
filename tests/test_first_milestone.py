@@ -5802,6 +5802,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-remaining-work'" in goal.body
     assert "id='goal-summary'" in goal.body
     assert "id='goal-command-bar'" in goal.body
+    assert "id='goal-daily-loop'" in goal.body
     assert "id='goal-workflow-map'" in goal.body
     assert "id='goal-current-phase'" in goal.body
     assert "id='goal-timeline'" in goal.body
@@ -5810,6 +5811,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-remaining-work'" in goal.body
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
+    assert "href='#goal-daily-loop'" in goal.body
+    assert "goal_section_count</dt><dd>28" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
@@ -5834,6 +5837,35 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_command_waiting: approvals=1 incidents=0 recommendations=0" in goal.body
     assert "goal_command_resume: <a href='/resume'>/resume</a>" in goal.body
     assert "goal_command_ci: status=success source=direct_public_snapshot surface=<a href='/verification'>/verification</a>" in goal.body
+    assert "Goal Daily Loop" in goal.body
+    assert "data-goal-daily-loop='true'" in goal.body
+    assert f"goal_daily_loop_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_daily_loop_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_daily_loop_phase</dt><dd>Ready to commit" in goal.body
+    assert "goal_daily_loop_start_surface</dt><dd><a href='/resume'>/resume</a>" in goal.body
+    assert "goal_daily_loop_next_action</dt><dd>Create commit request" in goal.body
+    assert f"goal_daily_loop_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
+    assert "goal_daily_loop_next_form_available</dt><dd>true" in goal.body
+    assert "goal_daily_loop_waiting_items</dt><dd>1" in goal.body
+    assert "goal_daily_loop_pending_approvals</dt><dd>1" in goal.body
+    assert "goal_daily_loop_open_incidents</dt><dd>0" in goal.body
+    assert "goal_daily_loop_open_recommendations</dt><dd>0" in goal.body
+    assert "goal_daily_loop_unblock_action</dt><dd>Review approval" in goal.body
+    assert "goal_daily_loop_unblock_surface</dt><dd><a href='/approvals'>/approvals</a>" in goal.body
+    assert "goal_daily_loop_unblock_reason</dt><dd>pending_approvals" in goal.body
+    assert "goal_daily_loop_finish_status</dt><dd>needs_workspace_save" in goal.body
+    assert "goal_daily_loop_finish_surface</dt><dd><a href='#goal-resume-snapshot'>Goal Resume Snapshot</a>" in goal.body
+    assert "goal_daily_loop_saved_goal_matches_current</dt><dd>false" in goal.body
+    assert "goal_daily_loop_saved_project_matches_current</dt><dd>false" in goal.body
+    assert "goal_daily_loop_source</dt><dd>goal_state_and_workspace" in goal.body
+    assert "goal_daily_loop_write_on_get</dt><dd>false" in goal.body
+    assert "goal_daily_loop_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_daily_loop_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_daily_loop_step: start status=needs_saved_goal surface=<a href='/resume'>/resume</a>" in goal.body
+    assert f"goal_daily_loop_step: continue action=Create commit request surface=<a href='/runs/{result.coder_worktree_run_id}'" in goal.body
+    assert "goal_daily_loop_step: unblock action=Review approval surface=<a href='/approvals'>/approvals</a> waiting=1" in goal.body
+    assert "goal_daily_loop_step: finish status=needs_workspace_save surface=<a href='#goal-resume-snapshot'>Goal Resume Snapshot</a>" in goal.body
+    assert "goal_daily_loop_safety: read-only local day plan" in goal.body
     assert "Goal Workflow Map" in goal.body
     assert "data-goal-workflow-map='true'" in goal.body
     assert "workflow_map_status</dt><dd>available" in goal.body

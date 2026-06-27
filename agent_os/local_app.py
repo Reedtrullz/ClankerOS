@@ -3570,6 +3570,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             "</section>",
             _goal_section_index(),
             _goal_command_bar(root, state, phase, next_action),
+            _goal_daily_loop(root, state, phase, next_action),
             _goal_workflow_map(root, state, next_action),
             _goal_phase_banner(root, state, phase, next_action),
             _goal_next_action_card(state, next_action),
@@ -3653,6 +3654,7 @@ def _goal_section_index() -> str:
         ("Summary", "goal-summary"),
         ("Live state", "goal-live-state"),
         ("Command bar", "goal-command-bar"),
+        ("Daily loop", "goal-daily-loop"),
         ("Workflow map", "goal-workflow-map"),
         ("Current phase", "goal-current-phase"),
         ("Next action", "goal-next-action"),
@@ -3869,6 +3871,117 @@ def _goal_command_bar(
                         f"status={_e(ci_status)} source={_e(ci_source)} "
                         "surface=<a href='/verification'>/verification</a>"
                     ),
+                ]
+            ),
+            "</section>",
+        ]
+    )
+
+
+def _goal_daily_loop(
+    root: Path,
+    state: dict[str, Any],
+    phase: str,
+    next_action: GoalNextAction,
+) -> str:
+    goal = state["goal"]
+    workspace = _load_workspace_state(root)
+    saved_goal = str(workspace.get("open_goal") or "").strip()
+    saved_project = str(workspace.get("open_project") or "").strip()
+    saved_artifact = str(workspace.get("last_viewed_artifact") or "").strip()
+    latest_artifact = _goal_latest_artifact_path(root, state)
+    workspace_matches_goal = saved_goal == goal.id
+    workspace_matches_project = saved_project == goal.project_id
+    artifact_matches_latest = (
+        bool(latest_artifact)
+        and saved_artifact == latest_artifact
+    )
+    resume_ready = (
+        workspace_matches_goal
+        and workspace_matches_project
+        and (artifact_matches_latest or not latest_artifact)
+    )
+    open_incidents = sum(1 for row in state["incidents"] if row["status"] == "open")
+    open_recommendations = sum(
+        1 for row in state["recommendations"] if row["status"] == "open"
+    )
+    pending_approvals = (
+        _count_status(state["worktree_approvals"], "pending_operator_approval")
+        + _count_status(state["commit_approvals"], "pending_operator_approval")
+        + _count_status(state["publications"], "pending_operator_approval")
+    )
+    waiting_items = open_incidents + open_recommendations + pending_approvals
+    form_available = bool(_goal_next_action_form(state, next_action))
+    if open_incidents:
+        unblock_surface = SafeHtml("<a href='/incidents'>/incidents</a>")
+        unblock_action = "Inspect incident"
+        unblock_reason = "open_incidents"
+    elif pending_approvals:
+        unblock_surface = SafeHtml("<a href='/approvals'>/approvals</a>")
+        unblock_action = "Review approval"
+        unblock_reason = "pending_approvals"
+    elif open_recommendations:
+        unblock_surface = SafeHtml("<a href='/incidents'>/incidents</a>")
+        unblock_action = "Review recommendation"
+        unblock_reason = "open_recommendations"
+    else:
+        unblock_surface = SafeHtml("<a href='#goal-remaining-work'>Remaining Work</a>")
+        unblock_action = "Inspect remaining work"
+        unblock_reason = "no_blockers"
+    finish_status = "ready" if resume_ready else "needs_workspace_save"
+    latest_artifact_value: str | SafeHtml = (
+        SafeHtml(_artifact_link(latest_artifact)) if latest_artifact else "none"
+    )
+    saved_artifact_value: str | SafeHtml = (
+        SafeHtml(_artifact_link(saved_artifact)) if saved_artifact else "none"
+    )
+    return "".join(
+        [
+            "<section id='goal-daily-loop' class='panel goal-daily-loop' data-goal-daily-loop='true'><h2>Goal Daily Loop</h2>",
+            "<p class='muted'>Start, continue, unblock, and finish this goal from local browser state.</p>",
+            _kv(
+                [
+                    ("goal_daily_loop_status", "available"),
+                    ("goal_daily_loop_goal", goal.id),
+                    ("goal_daily_loop_project", goal.project_id),
+                    ("goal_daily_loop_phase", phase),
+                    ("goal_daily_loop_start_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+                    ("goal_daily_loop_next_action", next_action.action),
+                    (
+                        "goal_daily_loop_next_surface",
+                        SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"),
+                    ),
+                    ("goal_daily_loop_next_form_available", str(form_available).lower()),
+                    ("goal_daily_loop_waiting_items", str(waiting_items)),
+                    ("goal_daily_loop_pending_approvals", str(pending_approvals)),
+                    ("goal_daily_loop_open_incidents", str(open_incidents)),
+                    ("goal_daily_loop_open_recommendations", str(open_recommendations)),
+                    ("goal_daily_loop_unblock_action", unblock_action),
+                    ("goal_daily_loop_unblock_surface", unblock_surface),
+                    ("goal_daily_loop_unblock_reason", unblock_reason),
+                    ("goal_daily_loop_finish_status", finish_status),
+                    (
+                        "goal_daily_loop_finish_surface",
+                        SafeHtml("<a href='#goal-resume-snapshot'>Goal Resume Snapshot</a>"),
+                    ),
+                    ("goal_daily_loop_saved_goal_matches_current", str(workspace_matches_goal).lower()),
+                    ("goal_daily_loop_saved_project_matches_current", str(workspace_matches_project).lower()),
+                    ("goal_daily_loop_saved_artifact_matches_latest", str(artifact_matches_latest).lower()),
+                    ("goal_daily_loop_latest_artifact", latest_artifact_value),
+                    ("goal_daily_loop_saved_artifact", saved_artifact_value),
+                    ("goal_daily_loop_source", "goal_state_and_workspace"),
+                    ("goal_daily_loop_write_on_get", "false"),
+                    ("goal_daily_loop_network_actions_taken", "0"),
+                    ("goal_daily_loop_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_daily_loop_step: start status={'ready' if workspace_matches_goal else 'needs_saved_goal'} surface=<a href='/resume'>/resume</a>",
+                    f"goal_daily_loop_step: continue action={_e(next_action.action)} surface=<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
+                    f"goal_daily_loop_step: unblock action={_e(unblock_action)} surface={unblock_surface} waiting={waiting_items}",
+                    f"goal_daily_loop_step: finish status={_e(finish_status)} surface=<a href='#goal-resume-snapshot'>Goal Resume Snapshot</a>",
+                    "goal_daily_loop_safety: read-only local day plan",
                 ]
             ),
             "</section>",
@@ -12121,6 +12234,10 @@ def _html_page(
     .goal-command-bar dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:8px; }}
     .goal-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-daily-loop {{ border-left:4px solid var(--ok); }}
+    .goal-daily-loop dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
+    .goal-daily-loop ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-daily-loop li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .project-command-bar {{ border-left:4px solid var(--accent); }}
     .project-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .project-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

@@ -181,16 +181,19 @@ existing local state. The cockpit also includes a confirmed local `Start
 Another Goal` form backed by the existing `create-goal` action, so an operator
 can add the next goal for a registered project without switching to the CLI.
 Use `/goals/<goal_id>` as the
-goal-centered workbench: a Goal Command Bar, Goal Workflow Map, current phase,
-next action, next recommendation, progress, timeline, activity log, goal risk,
-completion criteria, evidence, delegations, runs, approvals, artifacts, a
-typed Goal Artifact Explorer, memory, skills used, git status, operator notes,
-a goal-scoped resume snapshot, and remaining work. The page auto-refreshes by
+goal-centered workbench: a Goal Command Bar, Goal Daily Loop, Goal Workflow Map,
+current phase, next action, next recommendation, progress, timeline, activity
+log, goal risk, completion criteria, evidence, delegations, runs, approvals,
+artifacts, a typed Goal Artifact Explorer, memory, skills used, git status,
+operator notes, a goal-scoped resume snapshot, and remaining work. The page auto-refreshes by
 local polling, pauses while the operator is editing a form or the tab is
 hidden, and stays local-only. The Goal Command Bar near the top condenses
 current phase, one primary action, target local surface, progress, waiting
 counts, resume route, latest project-scoped CI proof state, and zero-effect
-boundary so the operator can choose the next click without scrolling. The Goal Workflow Map
+boundary so the operator can choose the next click without scrolling. The Goal
+Daily Loop turns the same local state into start/continue/unblock/finish cues:
+`/resume`, the current next action, the first approval/incident/recommendation
+surface, and the Goal Resume Snapshot save point for tomorrow. The Goal Workflow Map
 turns the same gate state used by Remaining Work into a top-level lifecycle
 rail from scout delegation through manual publish, highlighting the current
 gate and the next local action without writing on GET. The Next Recommendation

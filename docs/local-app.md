@@ -109,7 +109,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   happening without opening the CLI. A read-only `Goal Command Bar` appears
   above the detailed cards with the current phase, one primary action, target
   local surface, progress, open/waiting counts, resume route, project-scoped CI
-  proof state, and write-on-GET/network/external-effect boundaries. The next
+  proof state, and write-on-GET/network/external-effect boundaries. A read-only
+  `Goal Daily Loop` follows it with start, continue, unblock, and finish cues
+  sourced from the Goal, workspace, approval, incident, and recommendation
+  state, including whether tomorrow's resume anchor still needs saving. The next
   detailed surface is a read-only `Goal Workflow Map` that turns the same
   Remaining Work gate state into a lifecycle rail from scout delegation through
   manual publish, with the current gate, next action, gate counts, and
