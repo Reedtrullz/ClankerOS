@@ -141,7 +141,8 @@ Core layers for the bootstrap:
   leaving `/resume`, without writing on GET;
   `/` also includes a read-only `Home Live State` panel with five-second local
   page reload polling that pauses while a form is focused or the tab is hidden,
-  points at the same-page Home Resume Action Form when the saved goal has a
+  points at the same-page first-run form before a Goal exists or the
+  same-page Home Resume Action Form when the saved goal has a
   browser-available next action, and reports zero provider/network/external
   effect counters;
   `/` also includes a read-only `Home Verification Handoff` that shows the
@@ -578,7 +579,10 @@ Core layers for the bootstrap:
   goal's next action is browser-available, a `/resume` landing link, an
   explicit `save-workspace` form for the current lead goal when one exists,
   and a state-aware first-run project/goal/delegation guide until the first
-  delegation is completed. The first-run guide starts with a read-only
+  delegation is completed. In first-run states, Home Live State, Start Here,
+  Home Day Plan, Home Attention Brief, and Home Focus Queue target the
+  same-page `Create Project` or `Create First Goal` form instead of requiring
+  a `/goals` detour. The first-run guide starts with a read-only
   `First Run Command Bar` that names the current first-run step, one next
   action, target surface, form surface, Goal/delegation context, confirmation
   posture, and zero-effect counters; after a Goal exists, it can render the

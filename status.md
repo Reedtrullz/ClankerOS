@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-27 Home First-Run Same-Page Actions
+
+- Updated the root `/` Goal-First Home board so first-run operators no longer
+  have to detour to `/goals` for the first local setup step.
+- Home Live State, Start Here, Home Day Plan, Home Attention Brief, and Home
+  Focus Queue now point at the same-page `Create Project` form before a
+  project exists, and the same-page `Create First Goal` form after a project
+  is registered but no Goal exists yet.
+- Kept the existing confirmation boundary: these Home surfaces remain
+  read-only on GET and only route the operator to the existing confirmed
+  `register-project` or `create-goal` forms.
+- Updated README, local app docs, operating summary, and fixture-backed route
+  assertions for both empty first-run and registered-project/no-goal states.
+- Non-claims: this does not fetch GitHub status, poll GitHub from the app, call
+  providers, approve work, execute runs, commit, push, create PRs, deploy,
+  write on GET, use non-loopback network actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `df -h /System/Volumes/Data`
+    -> `84Gi` available before work
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> passed, `2 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root "$tmp" app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation counters at `0`
+  - `python3 -m agent_os.cli --root "$tmp" app-demo-smoke-test`
+    -> passed on a temporary root with fixture-backed route snippets matched and provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
 ## 2026-06-27 Goal Phase First View
 
 - Reordered `/goals/<goal_id>` so the large `Current Phase` banner appears

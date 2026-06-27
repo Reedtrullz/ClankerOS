@@ -1994,7 +1994,7 @@ def _today_goal_queue(
     )
 
 
-def _today_first_run_target(first_run: dict[str, Any]) -> tuple[str, str]:
+def _first_run_same_page_target(first_run: dict[str, Any]) -> tuple[str, str]:
     current_step = str(first_run.get("current_step") or "")
     if current_step == "create_project":
         return "#first-run-create-project", "Create Project"
@@ -2004,6 +2004,10 @@ def _today_first_run_target(first_run: dict[str, Any]) -> tuple[str, str]:
     if current_step in {"create_first_delegation", "generate_context_pack", "run_first_delegation"}:
         return "#first-run-command-action", "Run First-Run Action"
     return surface, surface
+
+
+def _today_first_run_target(first_run: dict[str, Any]) -> tuple[str, str]:
+    return _first_run_same_page_target(first_run)
 
 
 def _today_goal_queue_line(
@@ -2417,8 +2421,8 @@ def _home_dashboard(
             completed=completed,
             lead_goal=lead_goal,
         ),
-        _home_start_here(root, storage, lead_goal),
-        _home_day_plan(root, storage, lead_goal),
+        _home_start_here(root, storage, lead_goal, first_run_same_page=True),
+        _home_day_plan(root, storage, lead_goal, first_run_same_page=True),
         _home_attention_brief(root, storage, lead_goal),
         _home_focus_queue(root, storage, active=active, paused=paused),
         _home_verification_handoff(root),
@@ -2447,14 +2451,16 @@ def _home_live_state(
     saved_goal = str(workspace.get("open_goal") or "").strip()
     if lead_goal is None:
         first_run = _first_run_progress(root, storage)
+        first_run_href, first_run_label = _first_run_same_page_target(first_run)
         status = "first_run"
         lead_surface: str | SafeHtml = "none"
         phase = "First run"
         next_action = str(first_run["next_action"])
-        target_href = "/goals"
-        target_label = "/goals"
+        target_href = first_run_href
+        target_label = first_run_label
         action_form_available = "false"
         same_page_form_available = "false"
+        first_run_form_available = str(first_run_href.startswith("#first-run-")).lower()
         waiting_items = "0"
     else:
         goal_id = str(lead_goal["id"])
@@ -2473,6 +2479,7 @@ def _home_live_state(
         target_label = "Home Resume Action Form" if same_page_form else action.href
         action_form_available = str(form_available).lower()
         same_page_form_available = str(same_page_form).lower()
+        first_run_form_available = "false"
         open_incidents = len([item for item in state["incidents"] if item["status"] == "open"])
         open_recommendations = len(
             [item for item in state["recommendations"] if item["status"] == "open"]
@@ -2502,6 +2509,7 @@ def _home_live_state(
                     ("home_live_refresh_target_surface", target_surface),
                     ("home_live_refresh_action_form_available", action_form_available),
                     ("home_live_refresh_same_page_form_available", same_page_form_available),
+                    ("home_live_refresh_first_run_form_available", first_run_form_available),
                     ("home_live_refresh_active_goals", str(len(active))),
                     ("home_live_refresh_paused_goals", str(len(paused))),
                     ("home_live_refresh_completed_goals", str(len(completed))),
@@ -2862,31 +2870,39 @@ def _home_attention_brief(root: Path, storage: Storage, lead_goal: sqlite3.Row |
         status = "needs_incident_review"
         primary_action = "Review incidents"
         primary_href = "/incidents"
+        primary_label = "/incidents"
         reason = "open_incidents"
     elif pending_approvals:
         status = "needs_approval_review"
         primary_action = "Review approvals"
         primary_href = "/approvals"
+        primary_label = "/approvals"
         reason = "pending_approvals"
     elif open_recommendations:
         status = "needs_recommendation_review"
         primary_action = "Review recommendations"
         primary_href = "/incidents"
+        primary_label = "/incidents"
         reason = "open_recommendations"
     elif inbox_items:
         status = "needs_inbox_review"
         primary_action = "Review inbox"
         primary_href = "/inbox"
+        primary_label = "/inbox"
         reason = "inbox_items"
     elif lead_goal is None:
+        first_run = _first_run_progress(root, storage)
+        first_run_href, first_run_label = _first_run_same_page_target(first_run)
         status = "first_run"
-        primary_action = "Register ClankerOS project"
-        primary_href = "/goals"
-        reason = "no_goal_available"
+        primary_action = str(first_run["next_action"])
+        primary_href = first_run_href
+        primary_label = first_run_label
+        reason = str(first_run["current_step"])
     elif ci_status != "success":
         status = "needs_ci_proof"
         primary_action = "Review verification handoff"
         primary_href = "/verification"
+        primary_label = "/verification"
         reason = "ci_proof_not_success"
     elif lead_goal is not None:
         state = _goal_state(root, storage, str(lead_goal["id"]))
@@ -2894,6 +2910,7 @@ def _home_attention_brief(root: Path, storage: Storage, lead_goal: sqlite3.Row |
         status = "clear_to_continue_goal"
         primary_action = next_action.action
         primary_href = next_action.href
+        primary_label = next_action.href
         reason = "no_attention_blockers"
 
     return "".join(
@@ -2906,9 +2923,13 @@ def _home_attention_brief(root: Path, storage: Storage, lead_goal: sqlite3.Row |
                     ("home_attention_primary_action", primary_action),
                     (
                         "home_attention_primary_surface",
-                        SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_href)}</a>"),
+                        SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
                     ),
                     ("home_attention_reason", reason),
+                    (
+                        "home_attention_first_run_form_available",
+                        "true" if lead_goal is None and primary_href.startswith("#first-run-") else "false",
+                    ),
                     ("home_attention_lead_goal", lead_goal_value),
                     ("home_attention_review_items", str(review_items)),
                     ("home_attention_inbox_items", str(inbox_items)),
@@ -2931,7 +2952,7 @@ def _home_attention_brief(root: Path, storage: Storage, lead_goal: sqlite3.Row |
             _ul(
                 [
                     f"home_attention_now: {_e(primary_action)}",
-                    f"home_attention_click: <a href='{_e(primary_href)}'>{_e(primary_href)}</a>",
+                    f"home_attention_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
                     f"home_attention_review: approvals={pending_approvals} incidents={open_incidents} recommendations={open_recommendations} inbox={inbox_items}",
                     f"home_attention_ci: status={_e(ci_status)} source={_e(ci_source)} surface=<a href='/verification'>/verification</a>",
                     "home_attention_safety: read-only local triage; confirmed actions remain on target surfaces",
@@ -2952,10 +2973,13 @@ def _home_focus_queue(
     rows = active + paused
     lines = [_home_focus_queue_line(root, storage, row) for row in rows[:8]]
     if not lines:
+        first_run = _first_run_progress(root, storage)
+        first_run_href, first_run_label = _first_run_same_page_target(first_run)
         lines = [
             "focus_queue_status: first_run_ready",
-            "focus_queue_next_surface: <a href='/goals'>/goals</a>",
-            "focus_queue_next_action: Register ClankerOS project",
+            f"focus_queue_next_surface: <a href='{_e(first_run_href)}'>{_e(first_run_label)}</a>",
+            f"focus_queue_next_action: {_e(str(first_run['next_action']))}",
+            f"focus_queue_first_run_form_available: {str(first_run_href.startswith('#first-run-')).lower()}",
         ]
     return "".join(
         [

@@ -121,7 +121,9 @@ commands and the latest operator-supplied CI evidence, the
 saved-goal browser-available action form, and first-run project/goal/delegation
 guidance when the checkout has not completed
 its first delegation. The First Run Guide is
-state-aware: it shows the current step across create project, create first
+state-aware, and Home's live state, Start Here, Day Plan, Attention Brief, and
+Focus Queue point directly to the same-page `Create Project` or `Create First
+Goal` forms when no Goal exists yet. It shows the current step across create project, create first
 goal, create first delegation, prepare context, and the confirmed local
 `run-delegation` action with a copyable CLI fallback. It now starts with a
 read-only `First Run Command Bar` that names the next first-run action, target

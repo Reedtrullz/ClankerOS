@@ -4140,9 +4140,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "home_live_refresh_lead_goal</dt><dd>none" in root.body
     assert "home_live_refresh_phase</dt><dd>First run" in root.body
     assert "home_live_refresh_next_action</dt><dd>Register ClankerOS project" in root.body
-    assert "home_live_refresh_target_surface</dt><dd><a href='/goals'>/goals</a>" in root.body
+    assert (
+        "home_live_refresh_target_surface</dt><dd><a href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
     assert "home_live_refresh_action_form_available</dt><dd>false" in root.body
     assert "home_live_refresh_same_page_form_available</dt><dd>false" in root.body
+    assert "home_live_refresh_first_run_form_available</dt><dd>true" in root.body
     assert "home_live_refresh_active_goals</dt><dd>0" in root.body
     assert "home_live_refresh_paused_goals</dt><dd>0" in root.body
     assert "home_live_refresh_completed_goals</dt><dd>0" in root.body
@@ -4154,7 +4158,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "home_live_refresh_network_actions_taken</dt><dd>0" in root.body
     assert "home_live_refresh_external_effects_created</dt><dd>false" in root.body
     assert "home_live_refresh_now: Register ClankerOS project" in root.body
-    assert "home_live_refresh_target: <a href='/goals'>/goals</a>" in root.body
+    assert "home_live_refresh_target: <a href='#first-run-create-project'>Create Project</a>" in root.body
     assert "home_live_refresh_safety: local browser loopback reload only" in root.body
     assert "document.hidden" in root.body
     assert "window.location.reload()" in root.body
@@ -4164,7 +4168,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "start_here_primary_goal</dt><dd>none" in root.body
     assert "start_here_current_phase</dt><dd>First run" in root.body
     assert "start_here_primary_action</dt><dd>Register ClankerOS project" in root.body
-    assert "start_here_primary_surface</dt><dd><a href='/goals'>/goals</a>" in root.body
+    assert "start_here_primary_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in root.body
     assert "start_here_reason</dt><dd>no_project_registered" in root.body
     assert "start_here_resume_ready</dt><dd>false" in root.body
     assert "start_here_ci_status</dt><dd>success" in root.body
@@ -4172,15 +4176,15 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "start_here_write_on_get</dt><dd>false" in root.body
     assert "start_here_external_effects_created</dt><dd>false" in root.body
     assert "start_here_network_actions_taken</dt><dd>0" in root.body
-    assert "start_here_click: <a href='/goals'>/goals</a>" in root.body
+    assert "start_here_click: <a href='#first-run-create-project'>Create Project</a>" in root.body
     assert "Home Day Plan" in root.body
     assert "home_day_plan_status</dt><dd>first_run" in root.body
     assert "home_day_plan_primary_goal</dt><dd>none" in root.body
     assert "home_day_plan_current_phase</dt><dd>First run" in root.body
     assert "home_day_plan_next_action</dt><dd>Register ClankerOS project" in root.body
-    assert "home_day_plan_next_surface</dt><dd><a href='/goals'>/goals</a>" in root.body
-    assert "home_day_plan_first_run_form_available</dt><dd>false" in root.body
-    assert "home_day_plan_first_run_form_surface</dt><dd>none" in root.body
+    assert "home_day_plan_next_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in root.body
+    assert "home_day_plan_first_run_form_available</dt><dd>true" in root.body
+    assert "home_day_plan_first_run_form_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in root.body
     assert "home_day_plan_resume_ready</dt><dd>false" in root.body
     assert "home_day_plan_resume_status</dt><dd>not_started" in root.body
     assert "home_day_plan_finish_status</dt><dd>not_ready_until_goal_exists" in root.body
@@ -4193,8 +4197,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-home-attention-brief='true'" in root.body
     assert "home_attention_status</dt><dd>first_run" in root.body
     assert "home_attention_primary_action</dt><dd>Register ClankerOS project" in root.body
-    assert "home_attention_primary_surface</dt><dd><a href='/goals'>/goals</a>" in root.body
-    assert "home_attention_reason</dt><dd>no_goal_available" in root.body
+    assert "home_attention_primary_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in root.body
+    assert "home_attention_reason</dt><dd>create_project" in root.body
+    assert "home_attention_first_run_form_available</dt><dd>true" in root.body
     assert "home_attention_review_items</dt><dd>0" in root.body
     assert "home_attention_inbox_items</dt><dd>0" in root.body
     assert "home_attention_ci_status</dt><dd>success" in root.body
@@ -4208,11 +4213,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "focus_queue_source</dt><dd>goal_state_next_actions" in root.body
     assert "focus_queue_items</dt><dd>0" in root.body
     assert "focus_queue_status: first_run_ready" in root.body
+    assert "focus_queue_next_surface: <a href='#first-run-create-project'>Create Project</a>" in root.body
     assert "focus_queue_next_action: Register ClankerOS project" in root.body
+    assert "focus_queue_first_run_form_available: true" in root.body
     assert "focus_queue_write_on_get</dt><dd>false" in root.body
     assert "focus_queue_external_effects_created</dt><dd>false" in root.body
-    assert "start_here_primary_surface</dt><dd><a href='/goals'>/goals</a>" in root.body
-    assert "start_here_click: <a href='/goals'>/goals</a>" in root.body
+    assert "start_here_primary_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in root.body
+    assert "start_here_click: <a href='#first-run-create-project'>Create Project</a>" in root.body
     today = render_local_app_route(tmp_path, "/today")
     assert today.status == 200
     assert "Today Command Center" in today.body
@@ -4998,6 +5005,38 @@ def test_local_app_routes_render_modern_workflow_and_health(
     ) in registered_goals.body
     assert "first_run_command_action_form_available</dt><dd>true" in registered_goals.body
     assert "first_run_command_inline_action_form_available</dt><dd>false" in registered_goals.body
+    registered_home = render_local_app_route(tmp_path, "/")
+    assert registered_home.status == 200
+    assert "home_live_refresh_next_action</dt><dd>Create first goal" in registered_home.body
+    assert (
+        "home_live_refresh_target_surface</dt><dd><a href='#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in registered_home.body
+    assert "home_live_refresh_first_run_form_available</dt><dd>true" in registered_home.body
+    assert (
+        "start_here_primary_surface</dt><dd><a href='#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in registered_home.body
+    assert "start_here_click: <a href='#first-run-create-goal'>Create First Goal</a>" in registered_home.body
+    assert (
+        "home_day_plan_next_surface</dt><dd><a href='#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in registered_home.body
+    assert "home_day_plan_first_run_form_available</dt><dd>true" in registered_home.body
+    assert (
+        "home_day_plan_first_run_form_surface</dt><dd><a href='#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in registered_home.body
+    assert "home_attention_primary_action</dt><dd>Create first goal" in registered_home.body
+    assert (
+        "home_attention_primary_surface</dt><dd><a href='#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in registered_home.body
+    assert "home_attention_reason</dt><dd>create_first_goal" in registered_home.body
+    assert "home_attention_first_run_form_available</dt><dd>true" in registered_home.body
+    assert "focus_queue_next_surface: <a href='#first-run-create-goal'>Create First Goal</a>" in registered_home.body
+    assert "focus_queue_next_action: Create first goal" in registered_home.body
+    assert "focus_queue_first_run_form_available: true" in registered_home.body
     registered_today = render_local_app_route(tmp_path, "/today")
     assert registered_today.status == 200
     assert "today_command_status</dt><dd>first_run" in registered_today.body

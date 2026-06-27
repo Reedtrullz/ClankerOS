@@ -53,7 +53,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   confirmed local action form as the Goal page when the saved
   goal's next action is browser-available, an explicit `save-workspace` form
   for the current lead goal when one exists, and first-run project/goal forms
-  when no goals exist. The `First Run Guide` starts with a read-only
+  when no goals exist. Home's live state, Start Here, Day Plan, Attention
+  Brief, and Focus Queue point directly to the same-page `Create Project` or
+  `Create First Goal` form in first-run states instead of detouring to
+  `/goals`. The `First Run Guide` starts with a read-only
   `First Run Command Bar` that names the next first-run action, target
   surface, form surface, Goal/delegation context, and zero-effect counters; once
   a Goal exists, it can render the same confirmed local next-action form inline
@@ -125,11 +128,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/` also includes a read-only `Start Here` cockpit near the top of Home that
   condenses the lead goal or first-run step, one primary action, target
   surface, resume readiness, waiting counts, and CI handoff posture into a
-  single scan-friendly panel without writing on GET.
+  single scan-friendly panel without writing on GET; in first-run states the
+  target is the same-page `Create Project` or `Create First Goal` form.
 - `/` also includes a read-only `Home Live State` panel that keeps the root
   goal board current with five-second local page reload polling, pauses while
-  editing or hidden, points at the same-page Home Resume Action Form when a
-  saved goal has a browser-available next action, and reports zero-effect
+  editing or hidden, points at the same-page first-run form before a Goal
+  exists or the same-page Home Resume Action Form when a saved goal has a
+  browser-available next action, and reports zero-effect
   counters.
 - `/` also includes a read-only `Home Verification Handoff` that brings the
   GitHub Actions handoff onto the daily Home board: current branch/commit,
