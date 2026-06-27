@@ -40,10 +40,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/` - Goal-First Home dashboard. It starts with active, paused, and
   completed goal lanes, recent activity, the operator inbox, open
   recommendations, open incidents, saved workspace resume links, saved-goal
-  phase and next-action readbacks, the same confirmed local action form as the
-  Goal page when the saved goal's next action is browser-available, an explicit
-  `save-workspace` form for the current lead goal when one exists, and
-  first-run project/goal forms when no goals exist. Confirmed
+  phase and next-action readbacks, a `Home Day Plan` readback for the current
+  goal, phase, one next action, waiting counts, and end-of-day resume
+  readiness, the same confirmed local action form as the Goal page when the
+  saved goal's next action is browser-available, an explicit `save-workspace`
+  form for the current lead goal when one exists, and first-run project/goal
+  forms when no goals exist. Confirmed
   `register-project` and `create-goal` browser actions also update
   `.clanker/app/workspace.json`, so `/resume` can restore the new project or
   goal without a separate manual save step.

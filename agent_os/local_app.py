@@ -1074,6 +1074,7 @@ def _home_dashboard(
         _kv(lead_lines),
         _non_claim_banner(),
         "</section>",
+        _home_day_plan(root, storage, lead_goal),
         _home_goal_board(root, storage, active=active, paused=paused, completed=completed),
         _home_resume_workspace(root, lead_goal),
         _home_recent_activity(root, storage),
@@ -1084,6 +1085,99 @@ def _home_dashboard(
     if not _first_run_progress(root, storage)["complete"]:
         sections.append(_first_run_panel(root, storage))
     return "".join(sections)
+
+
+def _home_day_plan(root: Path, storage: Storage, lead_goal: sqlite3.Row | None) -> str:
+    workspace = _load_workspace_state(root)
+    open_goal = str(workspace.get("open_goal") or "").strip()
+    open_project = str(workspace.get("open_project") or "").strip()
+    filters = str(workspace.get("filters") or "").strip()
+    expanded = str(workspace.get("expanded_panels") or "").strip()
+    last_artifact = str(workspace.get("last_viewed_artifact") or "").strip()
+    readiness = _workspace_resume_readiness(
+        root,
+        open_project=open_project,
+        open_goal=open_goal,
+        filters=filters,
+        expanded=expanded,
+        last_artifact=last_artifact,
+    )
+    first_run = _first_run_progress(root, storage)
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("home_day_plan_source", "goal_state_and_workspace"),
+        ("home_day_plan_resume_ready", str(readiness["ready"]).lower()),
+        ("home_day_plan_resume_status", str(readiness["status"])),
+        ("home_day_plan_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+        ("home_day_plan_write_on_get", "false"),
+        ("home_day_plan_external_effects_created", "false"),
+    ]
+    lines: list[str] = []
+    if lead_goal is None:
+        rows.extend(
+            [
+                ("home_day_plan_status", "first_run"),
+                ("home_day_plan_primary_goal", "none"),
+                ("home_day_plan_current_phase", "First run"),
+                ("home_day_plan_next_action", first_run["next_action"]),
+                ("home_day_plan_next_surface", SafeHtml(f"<a href='{_e(first_run['next_surface'])}'>{_e(first_run['next_surface'])}</a>")),
+                ("home_day_plan_waiting_items", "0"),
+            ]
+        )
+        lines.extend(
+            [
+                f"day_plan_now: {_e(first_run['next_action'])}",
+                f"day_plan_next_surface: <a href='{_e(first_run['next_surface'])}'>{_e(first_run['next_surface'])}</a>",
+                "day_plan_end_of_day_resume: not_ready_until_workspace_saved",
+            ]
+        )
+    else:
+        goal_id = str(lead_goal["id"])
+        state = _goal_state(root, storage, goal_id)
+        phase = _goal_current_phase(state)
+        next_action = _goal_next_action(root, state)
+        open_tasks = len([task for task in state["tasks"] if task.status != "completed"])
+        open_incidents = len([row for row in state["incidents"] if row["status"] == "open"])
+        open_recommendations = len([row for row in state["recommendations"] if row["status"] == "open"])
+        pending_approvals = (
+            _count_status(state["worktree_approvals"], "pending_operator_approval")
+            + _count_status(state["commit_approvals"], "pending_operator_approval")
+            + _count_status(state["publications"], "pending_operator_approval")
+        )
+        waiting_items = open_incidents + open_recommendations + pending_approvals
+        rows.extend(
+            [
+                ("home_day_plan_status", "goal_ready"),
+                ("home_day_plan_primary_goal", SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(lead_goal['title'] or lead_goal['description'] or goal_id)}</a>")),
+                ("home_day_plan_current_phase", phase),
+                ("home_day_plan_next_action", next_action.action),
+                ("home_day_plan_next_surface", SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>")),
+                ("home_day_plan_operator_attention", _goal_operator_attention(phase, next_action)),
+                ("home_day_plan_progress", _goal_progress_label(state)),
+                ("home_day_plan_open_tasks", str(open_tasks)),
+                ("home_day_plan_open_incidents", str(open_incidents)),
+                ("home_day_plan_open_recommendations", str(open_recommendations)),
+                ("home_day_plan_pending_approvals", str(pending_approvals)),
+                ("home_day_plan_waiting_items", str(waiting_items)),
+            ]
+        )
+        lines.extend(
+            [
+                f"day_plan_now: {_e(next_action.action)}",
+                f"day_plan_current_phase: {_e(phase)}",
+                f"day_plan_goal_surface: <a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>",
+                f"day_plan_next_surface: <a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
+                f"day_plan_waiting: approvals={pending_approvals} incidents={open_incidents} recommendations={open_recommendations}",
+                f"day_plan_end_of_day_resume: {'ready' if readiness['ready'] else 'needs_saved_workspace'}",
+            ]
+        )
+    return "".join(
+        [
+            "<section><h2>Home Day Plan</h2>",
+            _kv(rows),
+            _ul(lines),
+            "</section>",
+        ]
+    )
 
 
 def _home_goal_board(
@@ -1758,23 +1852,18 @@ def _resume_readiness_section(
     expanded: str,
     last_artifact: str,
 ) -> str:
-    last_artifact_exists = False
-    if last_artifact:
-        try:
-            last_artifact_exists = resolve_artifact_path(root, last_artifact).exists()
-        except ValueError:
-            last_artifact_exists = False
-    required = {
-        "open_project": bool(open_project),
-        "open_goal": bool(open_goal),
-        "filters": bool(filters),
-        "expanded_panels": bool(expanded),
-        "last_viewed_artifact": bool(last_artifact),
-        "last_artifact_exists": last_artifact_exists,
-    }
-    ready = all(required.values())
-    status = "ready" if ready else ("partial" if any(required.values()) else "not_started")
-    next_surface = f"/goals/{quote(open_goal)}" if open_goal else (f"/projects/{quote(open_project)}" if open_project else "/goals")
+    readiness = _workspace_resume_readiness(
+        root,
+        open_project=open_project,
+        open_goal=open_goal,
+        filters=filters,
+        expanded=expanded,
+        last_artifact=last_artifact,
+    )
+    last_artifact_exists = bool(readiness["last_artifact_exists"])
+    ready = bool(readiness["ready"])
+    status = str(readiness["status"])
+    next_surface = str(readiness["next_surface"])
     return "".join(
         [
             "<section><h2>Resume Readiness</h2>",
@@ -1800,6 +1889,41 @@ def _resume_readiness_section(
             "</section>",
         ]
     )
+
+
+def _workspace_resume_readiness(
+    root: Path,
+    *,
+    open_project: str,
+    open_goal: str,
+    filters: str,
+    expanded: str,
+    last_artifact: str,
+) -> dict[str, object]:
+    last_artifact_exists = False
+    if last_artifact:
+        try:
+            last_artifact_exists = resolve_artifact_path(root, last_artifact).exists()
+        except ValueError:
+            last_artifact_exists = False
+    required = {
+        "open_project": bool(open_project),
+        "open_goal": bool(open_goal),
+        "filters": bool(filters),
+        "expanded_panels": bool(expanded),
+        "last_viewed_artifact": bool(last_artifact),
+        "last_artifact_exists": last_artifact_exists,
+    }
+    ready = all(required.values())
+    status = "ready" if ready else ("partial" if any(required.values()) else "not_started")
+    next_surface = f"/goals/{quote(open_goal)}" if open_goal else (f"/projects/{quote(open_project)}" if open_project else "/goals")
+    return {
+        "required": required,
+        "ready": ready,
+        "status": status,
+        "next_surface": next_surface,
+        "last_artifact_exists": last_artifact_exists,
+    }
 
 
 def _resume_next_action_section(root: Path, open_goal: str) -> str:

@@ -4075,6 +4075,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "home_active_goals</dt><dd>0" in root.body
     assert "home_paused_goals</dt><dd>0" in root.body
     assert "home_completed_goals</dt><dd>0" in root.body
+    assert "Home Day Plan" in root.body
+    assert "home_day_plan_status</dt><dd>first_run" in root.body
+    assert "home_day_plan_primary_goal</dt><dd>none" in root.body
+    assert "home_day_plan_current_phase</dt><dd>First run" in root.body
+    assert "home_day_plan_next_action</dt><dd>Register ClankerOS project" in root.body
+    assert "home_day_plan_resume_ready</dt><dd>false" in root.body
+    assert "home_day_plan_resume_status</dt><dd>not_started" in root.body
+    assert "day_plan_end_of_day_resume: not_ready_until_workspace_saved" in root.body
+    assert "home_day_plan_write_on_get</dt><dd>false" in root.body
+    assert "home_day_plan_external_effects_created</dt><dd>false" in root.body
     assert "Home Goal Board" in root.body
     assert "Home Resume Workspace" in root.body
     assert "workspace_status: no_saved_workspace" in root.body
@@ -5748,6 +5758,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"resume_project: <a href='/projects/{result.project_id}'>{result.project_id}</a>" in restored_home.body
     assert "resume_artifact" in restored_home.body
     assert resume_artifact in restored_home.body
+    assert "Home Day Plan" in restored_home.body
+    assert "home_day_plan_status</dt><dd>goal_ready" in restored_home.body
+    assert "home_day_plan_current_phase</dt><dd>Ready to commit" in restored_home.body
+    assert "home_day_plan_next_action</dt><dd>Create commit request" in restored_home.body
+    assert "home_day_plan_resume_ready</dt><dd>true" in restored_home.body
+    assert "home_day_plan_resume_status</dt><dd>ready" in restored_home.body
+    assert "home_day_plan_waiting_items" in restored_home.body
+    assert "day_plan_end_of_day_resume: ready" in restored_home.body
+    assert "home_day_plan_write_on_get</dt><dd>false" in restored_home.body
+    assert "home_day_plan_external_effects_created</dt><dd>false" in restored_home.body
     assert "home_resume_current_phase: Ready to commit" in restored_home.body
     assert "home_resume_next_action: Create commit request" in restored_home.body
     assert f"home_resume_next_surface: <a href='/runs/{result.coder_worktree_run_id}'" in restored_home.body

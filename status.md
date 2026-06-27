@@ -1,5 +1,24 @@
 # Status
 
+## 2026-06-27 Home Day Plan
+
+- Added a read-only `Home Day Plan` section to `/` that derives the current
+  day plan from existing goal state and saved workspace state. It shows the
+  lead goal, current phase, one next action, next local surface, progress,
+  waiting counts for approvals/incidents/recommendations, and whether the
+  saved workspace is ready for an end-of-day leave-and-return resume.
+- Non-claims: this does not write workspace state on GET, run work, approve
+  gates, activate providers, push, create PRs, deploy, fetch GitHub status, or
+  mutate external systems. It only reads existing local goal/workspace state
+  and reuses the same bounded artifact existence check as `/resume`.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Resume Readiness Checklist
 
 - Added a read-only `Resume Readiness` section to `/resume` that checks the
