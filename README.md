@@ -153,7 +153,10 @@ lead goal into paused lanes, and a confirmed `Finish Today` workspace save
 form for tomorrow's resume point. A read-only `Today Live State` panel follows
 with five-second local page reload polling that pauses while the tab is hidden
 or a form field is focused, so the all-day cockpit can reflect changing local
-goal state without adding action authority. It also includes a `Today Goal Queue` that
+goal state without adding action authority. A read-only
+`Today Operator Workbench` follows with four obvious moves for the day: do the
+current action, check timeline/evidence, clear the first blocker, and save the
+resume point. It also includes a `Today Goal Queue` that
 lists active, paused, and completed goals with phase, next action, switch
 links, same-page action availability for the lead goal, progress, and waiting
 counts so daily goal switching does not require opening the full `/goals`

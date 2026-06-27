@@ -72,7 +72,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `Finish Today` `save-workspace` form for tomorrow's resume point. A
   read-only `Today Live State` panel follows with five-second local page reload
   polling that pauses when the tab is hidden or a form field is focused and
-  reports zero provider/network/external-effect counters. A
+  reports zero provider/network/external-effect counters. A read-only
+  `Today Operator Workbench` follows with do/check/unblock/finish cards for
+  the current action, timeline/evidence review, first blocker, and
+  finish-today resume save target. A
   read-only `Today Goal Queue` follows with active/paused/completed counts,
   lead-goal phase and next action, switch links, lead same-page action-form
   availability, progress, and waiting counts across the day's goals. When no

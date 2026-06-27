@@ -97,6 +97,9 @@ Core layers for the bootstrap:
   point. A read-only `Today Live State` panel follows with five-second local
   page reload polling that pauses when the tab is hidden or a form field is
   focused and reports zero provider/network/external-effect counters. A
+  read-only `Today Operator Workbench` follows with do/check/unblock/finish
+  cards for the current action, timeline/evidence review, first blocker, and
+  finish-today resume save target. A
   read-only `Today Goal Queue` follows with active/paused/completed
   goal counts, lead-goal phase and next action, goal switch links,
   same-page action-form availability for the lead Goal, progress, and waiting

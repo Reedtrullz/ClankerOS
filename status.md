@@ -1,5 +1,36 @@
 # Status
 
+## 2026-06-27 Today Operator Workbench
+
+- Added a read-only `Today Operator Workbench` to `/today` so the daily
+  cockpit turns local state into four obvious operator moves: do the current
+  action, check timeline/evidence, clear the first blocker, and save the
+  finish-today resume point.
+- First-run `/today` points the workbench at the same-page Create Project or
+  First Run Guide targets; fixture-backed active-goal `/today` points Do at
+  the same-page `Today Current Action`, Check at the Goal timeline, Unblock at
+  approvals/incidents/recommendations/inbox as appropriate, and Finish at the
+  existing confirmed `Finish Today` form.
+- Fixed the advertised `y` keyboard shortcut so it actually opens `/today`
+  from the global key handler.
+- Updated README, local app docs, and the operating summary so `/today` is
+  documented as a practical workbench, not only a command-center readback.
+- Non-claims: this does not fetch GitHub status, call providers, approve work,
+  execute runs, commit, push, create PRs, deploy, create projects or goals
+  without confirmation, write on GET, use non-loopback network actions, or
+  mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `git diff --check`
+    -> passed
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed with fixture-backed `/today` workbench snippets matched and zero provider/network/external-mutation counters
+
 ## 2026-06-27 Home Live State Refresh
 
 - Added a read-only `Home Live State` panel to the root `/` Goal-First Home

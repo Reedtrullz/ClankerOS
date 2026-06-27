@@ -4286,6 +4286,39 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_live_refresh_safety: local browser loopback reload only" in today.body
     assert "document.hidden" in today.body
     assert "window.location.reload()" in today.body
+    assert "Today Operator Workbench" in today.body
+    assert "data-today-operator-workbench='true'" in today.body
+    assert "today_workbench_status</dt><dd>first_run" in today.body
+    assert "today_workbench_source</dt><dd>goal_state_workspace_attention" in today.body
+    assert "today_workbench_goal</dt><dd>none" in today.body
+    assert "today_workbench_project</dt><dd>none" in today.body
+    assert "today_workbench_phase</dt><dd>First run" in today.body
+    assert "today_workbench_do_action</dt><dd>Register ClankerOS project" in today.body
+    assert "today_workbench_do_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_workbench_do_reason</dt><dd>no_project_registered" in today.body
+    assert "today_workbench_check_action</dt><dd>Review first-run guide" in today.body
+    assert "today_workbench_check_surface</dt><dd><a href='#first-run-guide'>First Run Guide</a>" in today.body
+    assert "today_workbench_latest_artifact</dt><dd>none" in today.body
+    assert "today_workbench_unblock_status</dt><dd>first_run" in today.body
+    assert "today_workbench_unblock_action</dt><dd>Register ClankerOS project" in today.body
+    assert "today_workbench_unblock_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_workbench_finish_status</dt><dd>not_ready_until_goal_exists" in today.body
+    assert "today_workbench_finish_surface</dt><dd><a href='#first-run-guide'>First Run Guide</a>" in today.body
+    assert "today_workbench_action_form_available</dt><dd>false" in today.body
+    assert "today_workbench_first_run_form_available</dt><dd>true" in today.body
+    assert "today_workbench_note_form_available</dt><dd>false" in today.body
+    assert "today_workbench_pause_form_available</dt><dd>false" in today.body
+    assert "today_workbench_progress</dt><dd>first_run_step=create_project" in today.body
+    assert "today_workbench_waiting_items</dt><dd>0" in today.body
+    assert "today_workbench_write_on_get</dt><dd>false" in today.body
+    assert "today_workbench_provider_calls_taken</dt><dd>0" in today.body
+    assert "today_workbench_network_actions_taken</dt><dd>0" in today.body
+    assert "today_workbench_external_effects_created</dt><dd>false" in today.body
+    assert "today_workbench_do: <a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_workbench_check: <a href='#first-run-guide'>First Run Guide</a>" in today.body
+    assert "today_workbench_unblock: first_run -> <a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_workbench_finish: not_ready_until_goal_exists -> <a href='#first-run-guide'>First Run Guide</a>" in today.body
+    assert "today_workbench_safety: read-only daily routing" in today.body
     assert (
         "start_here_primary_surface</dt><dd><a href='#first-run-create-project'>"
         "Create Project</a>"
@@ -4530,6 +4563,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert 'if (event.key === "Escape") { closePalette(); return; }' in root.body
     assert 'if (event.key === "r") { event.preventDefault(); window.location.href = "/resume"; }' in root.body
     assert 'if (event.key === "s") { event.preventDefault(); window.location.href = "/search"; }' in root.body
+    assert 'if (event.key === "y") { event.preventDefault(); window.location.href = "/today"; }' in root.body
     assert 'if (event.key === "t") { event.preventDefault(); toggleTheme(); }' in root.body
     assert "implementation-handoff" in root.body
     assert "Recent Implementation Handoffs" in root.body
@@ -6798,6 +6832,47 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_live_refresh_external_effects_created</dt><dd>false" in today.body
     assert "today_live_refresh_now: Create commit request" in today.body
     assert "today_live_refresh_target: <a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "Today Operator Workbench" in today.body
+    assert "data-today-operator-workbench='true'" in today.body
+    assert "today_workbench_status</dt><dd>goal_ready" in today.body
+    assert f"today_workbench_goal</dt><dd><a href='/goals/{result.goal_id}'" in today.body
+    assert f"today_workbench_project</dt><dd><a href='/projects/{result.project_id}'" in today.body
+    assert "today_workbench_phase</dt><dd>Ready to commit" in today.body
+    assert "today_workbench_do_action</dt><dd>Create commit request" in today.body
+    assert "today_workbench_do_surface</dt><dd><a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "today_workbench_do_reason</dt><dd>reviewed_run=" in today.body
+    assert "today_workbench_check_action</dt><dd>Review timeline and evidence" in today.body
+    assert (
+        f"today_workbench_check_surface</dt><dd><a href='/goals/{result.goal_id}#goal-timeline'>"
+        "Goal Timeline</a>"
+        in today.body
+    )
+    assert "today_workbench_latest_artifact</dt><dd><a href='/artifacts?path=" in today.body
+    assert "today_workbench_unblock_status</dt><dd>needs_approval_review" in today.body
+    assert "today_workbench_unblock_action</dt><dd>Review approvals" in today.body
+    assert "today_workbench_unblock_surface</dt><dd><a href='/approvals'>/approvals</a>" in today.body
+    assert "today_workbench_finish_status</dt><dd>needs_workspace_save" in today.body
+    assert "today_workbench_finish_surface</dt><dd><a href='#today-finish'>Finish Today</a>" in today.body
+    assert "today_workbench_action_form_available</dt><dd>true" in today.body
+    assert "today_workbench_first_run_form_available</dt><dd>false" in today.body
+    assert "today_workbench_note_form_available</dt><dd>true" in today.body
+    assert "today_workbench_pause_form_available</dt><dd>true" in today.body
+    assert "today_workbench_progress</dt><dd>0/1 tasks completed" in today.body
+    assert "today_workbench_waiting_items</dt><dd>1" in today.body
+    assert "today_workbench_pending_approvals</dt><dd>1" in today.body
+    assert "today_workbench_write_on_get</dt><dd>false" in today.body
+    assert "today_workbench_provider_calls_taken</dt><dd>0" in today.body
+    assert "today_workbench_network_actions_taken</dt><dd>0" in today.body
+    assert "today_workbench_external_effects_created</dt><dd>false" in today.body
+    assert "today_workbench_do: <a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert (
+        f"today_workbench_check: <a href='/goals/{result.goal_id}#goal-timeline'>"
+        "Goal Timeline</a>"
+        in today.body
+    )
+    assert "today_workbench_unblock: needs_approval_review -> <a href='/approvals'>/approvals</a>" in today.body
+    assert "today_workbench_finish: needs_workspace_save -> <a href='#today-finish'>Finish Today</a>" in today.body
+    assert "today_workbench_safety: read-only daily routing" in today.body
     assert "data-today-current-action='true'" in today.body
     assert "Run Current Action" in today.body
     assert "action='/actions/coder-commit-request'" in today.body
