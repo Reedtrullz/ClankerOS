@@ -510,7 +510,12 @@ Core layers for the bootstrap:
   goal's next action is browser-available, a `/resume` landing link, an
   explicit `save-workspace` form for the current lead goal when one exists,
   and a state-aware first-run project/goal/delegation guide until the first
-  delegation is completed.
+  delegation is completed. The first-run guide starts with a read-only
+  `First Run Command Bar` that names the current first-run step, one next
+  action, target surface, form surface, Goal/delegation context, confirmation
+  posture, and zero-effect counters; after a Goal exists, it can render the
+  same confirmed local next-action form inline for scout delegation,
+  context-pack generation, and first delegation execution.
   Coder worktree run rows in review,
   dashboard, and the local app include changed-file counts and compact diff
   summaries read from existing evidence. The app also includes a read-only

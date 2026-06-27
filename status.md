@@ -1,5 +1,40 @@
 # Status
 
+## 2026-06-27 First Run Command Bar
+
+- Added a read-only `First Run Command Bar` to the top of the Home and
+  `/goals` `First Run Guide`.
+- The bar names the current first-run step, one next action, target surface,
+  form surface, Goal/delegation context, confirmation posture, `/resume`, and
+  write/provider/network/external-effect counters before the detailed guided
+  path and fallback forms.
+- Once a Goal exists, the bar reuses the existing Goal next-action form inline,
+  so the operator can create the scout delegation, generate the context pack,
+  or run the first delegation directly from the guide with the same confirmed
+  local-action boundary as the Goal page.
+- Added route assertions for empty checkout, post-project registration,
+  post-goal creation, post-delegation context-pack generation, and
+  post-context-pack run-delegation states.
+- Updated README, local app docs, and the operating summary to describe the
+  first-run guide as a command surface rather than only a checklist/readback.
+- Non-claims: this does not write workspace state on GET, run first-run actions
+  without confirmation, call providers, use non-loopback network actions,
+  approve requests, create commits, push, create PRs, deploy, fetch GitHub
+  status, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_a8b578136b5f`, `run_5e981a10e697`, and coder
+    worktree run `run_17b14cf8eaa6`
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Command Palette Route Context
 
 - Added a read-only `Current Page` route-context block to the shared command

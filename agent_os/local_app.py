@@ -3612,6 +3612,99 @@ def _profile_names(lines: list[str]) -> list[str]:
     return names
 
 
+def _first_run_command_bar(root: Path, storage: Storage, progress: dict[str, Any]) -> str:
+    goal_id = str(progress.get("goal_id") or "")
+    delegation_id = str(progress.get("delegation_id") or "")
+    current_step = str(progress["current_step"])
+    action_form = ""
+    form_available = False
+    inline_form_available = False
+    confirmation_required = False
+    form_surface: str | SafeHtml = "none"
+    if current_step == "create_project":
+        form_available = True
+        confirmation_required = True
+        form_surface = SafeHtml("<a href='#first-run-create-project'>Create Project</a>")
+    elif current_step == "create_first_goal":
+        form_available = True
+        confirmation_required = True
+        form_surface = SafeHtml("<a href='#first-run-create-goal'>Create First Goal</a>")
+    elif goal_id:
+        try:
+            goal_state = _goal_state(root, storage, goal_id)
+            next_action = _goal_next_action(root, goal_state)
+            goal_form = _goal_next_action_form(goal_state, next_action)
+        except Exception:
+            goal_form = ""
+        if goal_form:
+            form_available = True
+            inline_form_available = True
+            confirmation_required = True
+            form_surface = SafeHtml("<a href='#first-run-command-action'>Inline first-run action</a>")
+            action_form = "".join(
+                [
+                    "<details id='first-run-command-action' class='first-run-command-action' data-first-run-command-action='true' open>",
+                    "<summary>Run First-Run Action</summary>",
+                    "<p class='muted'>Run the current first-run step from this guide. Confirmation is still required before any local write or local execution.</p>",
+                    goal_form,
+                    "</details>",
+                ]
+            )
+        else:
+            form_surface = progress["next_surface"]
+
+    goal_surface: str | SafeHtml = (
+        SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(goal_id)}</a>") if goal_id else "none"
+    )
+    delegation_surface: str | SafeHtml = (
+        SafeHtml(f"<a href='/delegations/{quote(delegation_id)}'>{_e(delegation_id)}</a>")
+        if delegation_id
+        else "none"
+    )
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("first_run_command_status", "complete" if progress["complete"] else "available"),
+        ("first_run_command_current_step", current_step),
+        ("first_run_command_next_action", progress["next_action"]),
+        ("first_run_command_reason", progress["next_reason"]),
+        ("first_run_command_target_surface", progress["next_surface"]),
+        ("first_run_command_form_surface", form_surface),
+        ("first_run_command_action_form_available", str(form_available).lower()),
+        (
+            "first_run_command_inline_action_form_available",
+            str(inline_form_available).lower(),
+        ),
+        ("first_run_command_confirmation_required", str(confirmation_required).lower()),
+        ("first_run_command_project", progress["default_project"]),
+        ("first_run_command_goal", goal_surface),
+        ("first_run_command_delegation", delegation_surface),
+        ("first_run_command_context_pack_ready", str(progress["context_pack_ready"]).lower()),
+        (
+            "first_run_command_delegation_completed",
+            str(progress["delegation_completed"]).lower(),
+        ),
+        ("first_run_command_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+        ("first_run_command_write_on_get", "false"),
+        ("first_run_command_provider_calls_taken", "0"),
+        ("first_run_command_network_actions_taken", "0"),
+        ("first_run_command_external_effects_created", "false"),
+    ]
+    lines = [
+        f"first_run_command_now: {_e(progress['next_action'])}",
+        f"first_run_command_click: {progress['next_surface']}",
+        f"first_run_command_form: {form_surface}",
+        "first_run_command_safety: confirmed local action only; no provider, network, push, PR, or deploy effects",
+    ]
+    return "".join(
+        [
+            "<section class='panel first-run-command-bar' data-first-run-command-bar='true'><h3>First Run Command Bar</h3>",
+            _kv(rows),
+            _ul(lines),
+            action_form,
+            "</section>",
+        ]
+    )
+
+
 def _first_run_panel(root: Path, storage: Storage) -> str:
     progress = _first_run_progress(root, storage)
     default_project = progress["default_project"]
@@ -3619,6 +3712,7 @@ def _first_run_panel(root: Path, storage: Storage) -> str:
         [
             "<section id='first-run-guide'><h2>First Run Guide</h2>",
             "<p class='muted'>A state-aware path for a new operator to create local ClankerOS state and reach the first delegation handoff without reading docs.</p>",
+            _first_run_command_bar(root, storage, progress),
             _kv(
                 [
                     (
@@ -3661,7 +3755,7 @@ def _first_run_panel(root: Path, storage: Storage) -> str:
                     "<code>python3 -m agent_os.cli demo</code>: populate deterministic local demo data.",
                 ]
             ),
-            "<h3>Create Project</h3>",
+            "<h3 id='first-run-create-project'>Create Project</h3>",
             _input_form(
                 "register-project",
                 {},
@@ -3672,7 +3766,7 @@ def _first_run_panel(root: Path, storage: Storage) -> str:
                     "allowed_write_roots": str(root),
                 },
             ),
-            "<h3>Create First Goal</h3>",
+            "<h3 id='first-run-create-goal'>Create First Goal</h3>",
             _input_form(
                 "create-goal",
                 {},
@@ -3751,6 +3845,8 @@ def _first_run_progress(root: Path, storage: Storage) -> dict[str, Any]:
         "project_registered": project_registered,
         "goal_created": goal_created,
         "delegation_created": delegation_created,
+        "goal_id": goal_id,
+        "delegation_id": delegation.id if delegation is not None else "",
         "dogfood_project": "clankeros",
         "project_path": str(root),
         "context_pack_ready": context_pack_ready,
@@ -16975,6 +17071,12 @@ def _html_page(
     .project-command-bar {{ border-left:4px solid var(--accent); }}
     .project-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .project-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .first-run-command-bar {{ border-left:4px solid var(--accent); margin:12px 0; }}
+    .first-run-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .first-run-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .first-run-command-action {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
+    .first-run-command-action summary {{ cursor:pointer; font-weight:700; }}
+    .first-run-command-action form {{ margin-top:10px; }}
     .demo-command-bar {{ border-left:4px solid var(--accent); }}
     .demo-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .demo-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

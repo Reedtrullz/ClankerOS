@@ -4214,6 +4214,29 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Home Incidents" in root.body
     assert "home_incidents_status: none_open" in root.body
     assert "First Run Guide" in root.body
+    assert "First Run Command Bar" in root.body
+    assert "data-first-run-command-bar='true'" in root.body
+    assert "first_run_command_status</dt><dd>available" in root.body
+    assert "first_run_command_current_step</dt><dd>create_project" in root.body
+    assert "first_run_command_next_action</dt><dd>Register ClankerOS project" in root.body
+    assert "first_run_command_target_surface</dt><dd><a href='/goals'>/goals</a>" in root.body
+    assert (
+        "first_run_command_form_surface</dt><dd><a href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
+    assert "first_run_command_action_form_available</dt><dd>true" in root.body
+    assert "first_run_command_inline_action_form_available</dt><dd>false" in root.body
+    assert "first_run_command_confirmation_required</dt><dd>true" in root.body
+    assert "first_run_command_project</dt><dd>clankeros" in root.body
+    assert "first_run_command_goal</dt><dd>none" in root.body
+    assert "first_run_command_delegation</dt><dd>none" in root.body
+    assert "first_run_command_context_pack_ready</dt><dd>false" in root.body
+    assert "first_run_command_resume_surface</dt><dd><a href='/resume'>/resume</a>" in root.body
+    assert "first_run_command_write_on_get</dt><dd>false" in root.body
+    assert "first_run_command_provider_calls_taken</dt><dd>0" in root.body
+    assert "first_run_command_network_actions_taken</dt><dd>0" in root.body
+    assert "first_run_command_external_effects_created</dt><dd>false" in root.body
+    assert "first_run_command_safety: confirmed local action only" in root.body
     assert (
         "first_run_guided_path</dt><dd>Create project -&gt; Create first goal -&gt; "
         "Create first delegation -&gt; Generate context pack -&gt; Run first delegation"
@@ -4641,6 +4664,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_step: create_project status=done" in registered_goals.body
     assert "first_run_step: create_first_goal status=current" in registered_goals.body
     assert "first_run_step: generate_context_pack status=waiting_for_goal" in registered_goals.body
+    assert "first_run_command_current_step</dt><dd>create_first_goal" in registered_goals.body
+    assert "first_run_command_next_action</dt><dd>Create first goal" in registered_goals.body
+    assert (
+        "first_run_command_form_surface</dt><dd><a href='#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in registered_goals.body
+    assert "first_run_command_action_form_available</dt><dd>true" in registered_goals.body
+    assert "first_run_command_inline_action_form_available</dt><dd>false" in registered_goals.body
     create_goal_result = render_local_app_route(
         tmp_path,
         "/actions/create-goal",
@@ -4711,6 +4742,15 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_step: create_first_goal status=done" in goals_after_first_goal.body
     assert "first_run_step: create_first_delegation status=current" in goals_after_first_goal.body
     assert "first_run_step: generate_context_pack status=waiting_for_delegation" in goals_after_first_goal.body
+    assert "first_run_command_current_step</dt><dd>create_first_delegation" in goals_after_first_goal.body
+    assert "first_run_command_next_action</dt><dd>Open goal to create scout delegation" in goals_after_first_goal.body
+    assert (
+        "first_run_command_inline_action_form_available</dt><dd>true"
+        in goals_after_first_goal.body
+    )
+    assert "data-first-run-command-action='true'" in goals_after_first_goal.body
+    assert "Run First-Run Action" in goals_after_first_goal.body
+    assert "action='/actions/delegate'" in goals_after_first_goal.body
     assert f"/goals/{created_goal_id}" in goals_after_first_goal.body
     storage_after_creation = Storage(tmp_path / ".agent" / "state.db")
     storage_after_creation.set_goal_status(created_goal_id, "paused")
@@ -4999,6 +5039,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_step: generate_context_pack status=current" in goals_after_delegation.body
     assert "first_run_step: run_first_delegation status=waiting_for_context_pack" in goals_after_delegation.body
     assert f"first_run_context_pack_action</dt><dd>/actions/context-pack delegation_id={delegation.id}" in goals_after_delegation.body
+    assert "first_run_command_current_step</dt><dd>generate_context_pack" in goals_after_delegation.body
+    assert "first_run_command_next_action</dt><dd>Generate context pack" in goals_after_delegation.body
+    assert "first_run_command_delegation</dt><dd><a href='/delegations/" in goals_after_delegation.body
+    assert "first_run_command_inline_action_form_available</dt><dd>true" in goals_after_delegation.body
+    assert "data-first-run-command-action='true'" in goals_after_delegation.body
+    assert "action='/actions/context-pack'" in goals_after_delegation.body
     context_pack_confirmation = render_local_app_route(
         tmp_path,
         "/actions/context-pack",
@@ -5055,6 +5101,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_run_delegation_command</dt><dd>python3 -m agent_os.cli run-delegation" in home_after_delegate.body
     assert "first_run_run_delegation_action</dt><dd>/actions/run-delegation delegation_id=" in home_after_delegate.body
     assert "first_run_browser_execution_exposed</dt><dd>confirmed_local_only" in home_after_delegate.body
+    assert "first_run_command_current_step</dt><dd>run_first_delegation" in home_after_delegate.body
+    assert "first_run_command_next_action</dt><dd>Run delegation" in home_after_delegate.body
+    assert "first_run_command_context_pack_ready</dt><dd>true" in home_after_delegate.body
+    assert "first_run_command_inline_action_form_available</dt><dd>true" in home_after_delegate.body
+    assert "data-first-run-command-action='true'" in home_after_delegate.body
+    assert "action='/actions/run-delegation'" in home_after_delegate.body
     assert created_goal_id in home_after_delegate.body
     created_goals = render_local_app_route(tmp_path, "/goals")
     assert "first-target" in created_goals.body

@@ -51,7 +51,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   confirmed local action form as the Goal page when the saved
   goal's next action is browser-available, an explicit `save-workspace` form
   for the current lead goal when one exists, and first-run project/goal forms
-  when no goals exist. Confirmed
+  when no goals exist. The `First Run Guide` starts with a read-only
+  `First Run Command Bar` that names the next first-run action, target
+  surface, form surface, Goal/delegation context, and zero-effect counters; once
+  a Goal exists, it can render the same confirmed local next-action form inline
+  for the scout delegation, context-pack, and first delegation run gates.
+  Confirmed
   `register-project` and `create-goal` browser actions also update
   `.clanker/app/workspace.json`, so `/resume` can restore the new project or
   goal without a separate manual save step.
