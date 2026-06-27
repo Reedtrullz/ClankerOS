@@ -193,7 +193,8 @@ counts, resume route, latest project-scoped CI proof state, and zero-effect
 boundary so the operator can choose the next click without scrolling. The Goal
 Daily Loop turns the same local state into start/continue/unblock/finish cues:
 `/resume`, the current next action, the first approval/incident/recommendation
-surface, and the Goal Resume Snapshot save point for tomorrow. The Goal Workflow Map
+surface, and a confirmed `save-workspace` form that records this goal and its
+latest artifact as tomorrow's resume point without writing on GET. The Goal Workflow Map
 turns the same gate state used by Remaining Work into a top-level lifecycle
 rail from scout delegation through manual publish, highlighting the current
 gate and the next local action without writing on GET. The Next Recommendation

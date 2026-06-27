@@ -3935,10 +3935,24 @@ def _goal_daily_loop(
     saved_artifact_value: str | SafeHtml = (
         SafeHtml(_artifact_link(saved_artifact)) if saved_artifact else "none"
     )
+    finish_form = _input_form(
+        "save-workspace",
+        {
+            "open_project": goal.project_id,
+            "open_goal": goal.id,
+            "return_to": f"/goals/{goal.id}",
+        },
+        {
+            "filters": f"goal:{goal.id}",
+            "expanded_panels": "daily-loop,next-action,timeline,evidence,artifacts,notes",
+            "last_viewed_artifact": latest_artifact,
+            "updated_by": "goal-daily-loop",
+        },
+    )
     return "".join(
         [
             "<section id='goal-daily-loop' class='panel goal-daily-loop' data-goal-daily-loop='true'><h2>Goal Daily Loop</h2>",
-            "<p class='muted'>Start, continue, unblock, and finish this goal from local browser state.</p>",
+            "<p class='muted'>Start, continue, unblock, and finish this goal from local browser state with a confirmed local resume save.</p>",
             _kv(
                 [
                     ("goal_daily_loop_status", "available"),
@@ -3960,9 +3974,16 @@ def _goal_daily_loop(
                     ("goal_daily_loop_unblock_surface", unblock_surface),
                     ("goal_daily_loop_unblock_reason", unblock_reason),
                     ("goal_daily_loop_finish_status", finish_status),
+                    ("goal_daily_loop_finish_action", "save-workspace"),
+                    ("goal_daily_loop_finish_form_available", "true"),
+                    ("goal_daily_loop_finish_confirmation_required", "true"),
                     (
                         "goal_daily_loop_finish_surface",
                         SafeHtml("<a href='#goal-resume-snapshot'>Goal Resume Snapshot</a>"),
+                    ),
+                    (
+                        "goal_daily_loop_finish_return_to",
+                        SafeHtml(f"<a href='/goals/{quote(goal.id)}'>/goals/{_e(goal.id)}</a>"),
                     ),
                     ("goal_daily_loop_saved_goal_matches_current", str(workspace_matches_goal).lower()),
                     ("goal_daily_loop_saved_project_matches_current", str(workspace_matches_project).lower()),
@@ -3981,9 +4002,12 @@ def _goal_daily_loop(
                     f"goal_daily_loop_step: continue action={_e(next_action.action)} surface=<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
                     f"goal_daily_loop_step: unblock action={_e(unblock_action)} surface={unblock_surface} waiting={waiting_items}",
                     f"goal_daily_loop_step: finish status={_e(finish_status)} surface=<a href='#goal-resume-snapshot'>Goal Resume Snapshot</a>",
-                    "goal_daily_loop_safety: read-only local day plan",
+                    "goal_daily_loop_safety: confirmed local workspace save only",
                 ]
             ),
+            "<h3>Finish Today</h3>",
+            "<p class='muted'>Save this goal, current filters, expanded panels, and latest artifact as tomorrow's resume point. This writes only `.clanker/app/workspace.json` after confirmation.</p>",
+            finish_form,
             "</section>",
         ]
     )

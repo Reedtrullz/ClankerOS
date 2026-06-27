@@ -5854,7 +5854,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_daily_loop_unblock_surface</dt><dd><a href='/approvals'>/approvals</a>" in goal.body
     assert "goal_daily_loop_unblock_reason</dt><dd>pending_approvals" in goal.body
     assert "goal_daily_loop_finish_status</dt><dd>needs_workspace_save" in goal.body
+    assert "goal_daily_loop_finish_action</dt><dd>save-workspace" in goal.body
+    assert "goal_daily_loop_finish_form_available</dt><dd>true" in goal.body
+    assert "goal_daily_loop_finish_confirmation_required</dt><dd>true" in goal.body
     assert "goal_daily_loop_finish_surface</dt><dd><a href='#goal-resume-snapshot'>Goal Resume Snapshot</a>" in goal.body
+    assert f"goal_daily_loop_finish_return_to</dt><dd><a href='/goals/{result.goal_id}'" in goal.body
     assert "goal_daily_loop_saved_goal_matches_current</dt><dd>false" in goal.body
     assert "goal_daily_loop_saved_project_matches_current</dt><dd>false" in goal.body
     assert "goal_daily_loop_source</dt><dd>goal_state_and_workspace" in goal.body
@@ -5865,7 +5869,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"goal_daily_loop_step: continue action=Create commit request surface=<a href='/runs/{result.coder_worktree_run_id}'" in goal.body
     assert "goal_daily_loop_step: unblock action=Review approval surface=<a href='/approvals'>/approvals</a> waiting=1" in goal.body
     assert "goal_daily_loop_step: finish status=needs_workspace_save surface=<a href='#goal-resume-snapshot'>Goal Resume Snapshot</a>" in goal.body
-    assert "goal_daily_loop_safety: read-only local day plan" in goal.body
+    assert "goal_daily_loop_safety: confirmed local workspace save only" in goal.body
+    assert "Finish Today" in goal.body
+    assert "name='updated_by' value='goal-daily-loop'" in goal.body
+    assert "daily-loop,next-action,timeline,evidence,artifacts,notes" in goal.body
     assert "Goal Workflow Map" in goal.body
     assert "data-goal-workflow-map='true'" in goal.body
     assert "workflow_map_status</dt><dd>available" in goal.body
@@ -6243,6 +6250,51 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "provider_routing_active</dt><dd>false" in profiles.body
 
     resume_artifact = result.review_path.relative_to(tmp_path).as_posix()
+    daily_loop_workspace_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/save-workspace",
+        method="POST",
+        form={
+            "open_project": [result.project_id],
+            "open_goal": [result.goal_id],
+            "filters": [f"goal:{result.goal_id}"],
+            "expanded_panels": ["daily-loop,next-action,timeline,evidence,artifacts,notes"],
+            "last_viewed_artifact": [resume_artifact],
+            "updated_by": ["goal-daily-loop"],
+            "return_to": [f"/goals/{result.goal_id}"],
+        },
+    )
+    assert daily_loop_workspace_confirmation.status == 409
+    assert "Confirm save-workspace" in daily_loop_workspace_confirmation.body
+    assert "goal-daily-loop" in daily_loop_workspace_confirmation.body
+    daily_loop_workspace = render_local_app_route(
+        tmp_path,
+        "/actions/save-workspace",
+        method="POST",
+        form={
+            "open_project": [result.project_id],
+            "open_goal": [result.goal_id],
+            "filters": [f"goal:{result.goal_id}"],
+            "expanded_panels": ["daily-loop,next-action,timeline,evidence,artifacts,notes"],
+            "last_viewed_artifact": [resume_artifact],
+            "updated_by": ["goal-daily-loop"],
+            "return_to": [f"/goals/{result.goal_id}"],
+            "confirm": ["yes"],
+        },
+    )
+    assert daily_loop_workspace.status == 200
+    assert "workspace_saved" in daily_loop_workspace.body
+    assert f"href='/goals/{result.goal_id}?notice=workspace_saved" in daily_loop_workspace.body
+    daily_loop_workspace_json = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert daily_loop_workspace_json["open_project"] == result.project_id
+    assert daily_loop_workspace_json["open_goal"] == result.goal_id
+    assert daily_loop_workspace_json["filters"] == f"goal:{result.goal_id}"
+    assert daily_loop_workspace_json["expanded_panels"] == "daily-loop,next-action,timeline,evidence,artifacts,notes"
+    assert daily_loop_workspace_json["last_viewed_artifact"] == resume_artifact
+    assert daily_loop_workspace_json["updated_by"] == "goal-daily-loop"
+
     workspace = render_local_app_route(
         tmp_path,
         "/actions/save-workspace",

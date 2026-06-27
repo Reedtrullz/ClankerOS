@@ -2,7 +2,7 @@
 
 ## 2026-06-27 Goal Daily Loop
 
-- Added a read-only `Goal Daily Loop` panel near the top of Goal detail pages,
+- Added a `Goal Daily Loop` panel near the top of Goal detail pages,
   immediately after the Goal Command Bar. It summarizes the start surface
   (`/resume`), the current next action, first unblock surface for approvals,
   incidents, or recommendations, and the finish/save surface for tomorrow's
@@ -10,14 +10,16 @@
 - The panel reads the current Goal, saved workspace state, latest goal
   artifact, approval counts, incident counts, and recommendation counts to
   tell the operator whether the saved workspace points at the current goal and
-  latest artifact before ending a session.
+  latest artifact before ending a session. It now includes a confirmed local
+  `save-workspace` form that writes only `.clanker/app/workspace.json` after
+  confirmation and returns to the same Goal page.
 - README, local app docs, and the operating summary now describe the Goal page
   as a daily loop surface rather than only a long workbench of sections.
-- Non-claims: this does not save workspace state, approve gates, resolve
-  incidents, execute work, run delegations, create coder prep, commit, push,
-  create PRs, deploy, fetch GitHub status, call providers, use non-loopback
-  network actions, write state on GET, or mutate external systems. It reads
-  existing local Goal and workspace records only.
+- Non-claims: this does not save workspace state on GET, approve gates,
+  resolve incidents, execute work, run delegations, create coder prep, commit,
+  push, create PRs, deploy, fetch GitHub status, call providers, use
+  non-loopback network actions, or mutate external systems. The finish form
+  only writes local workspace state after explicit confirmation.
 - Compact local verification for this slice:
   - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
     -> passed

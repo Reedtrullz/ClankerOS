@@ -226,10 +226,12 @@ Core layers for the bootstrap:
   action, target local surface, progress, waiting counts, `/resume`, latest
   project-scoped CI proof status, and write-on-GET/network/external-effect
   boundaries into one operator scan. Goal detail pages also include a
-  read-only `Goal Daily Loop` near the top that condenses start, continue,
+  `Goal Daily Loop` near the top that condenses start, continue,
   unblock, and finish cues from the same local Goal/workspace/approval/
   incident/recommendation state, including whether the saved workspace points
-  at the current goal and latest artifact before the operator ends the day.
+  at the current goal and latest artifact before the operator ends the day,
+  and exposes a confirmed local `save-workspace` form that writes only
+  `.clanker/app/workspace.json` after confirmation.
   Goal detail pages also include a
   read-only `Goal Workflow Map` near the top that renders the same
   Remaining Work gate state as a lifecycle rail, highlighting the current
