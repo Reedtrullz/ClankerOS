@@ -179,7 +179,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   goal-scoped resume snapshot, and remaining work. The timeline starts with a
   read-only `Goal Timeline Command Bar` that shows total events, the latest
   event, event-family counts, target surface, and zero-effect counters before
-  the full chronological list. It uses local polling
+  the full chronological list. Each timeline and Activity Log event renders
+  with a time, event-kind badge, clickable local message, and target badge so
+  artifacts, delegations, runs, approvals, and goal events are easier to scan
+  without reading raw logs. It uses local polling
   refresh, pauses refresh while the
   operator is editing a form or the tab is hidden, and does not contact GitHub
   or providers. The Current Phase banner is the primary operator state readback:

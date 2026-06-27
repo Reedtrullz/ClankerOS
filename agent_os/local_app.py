@@ -9918,12 +9918,35 @@ def _gate_decision_timeline_message(gate: str, status: str, item_id: str) -> str
 
 
 def _timeline_line(item: dict[str, str]) -> str:
+    kind = _timeline_item_family(item)
+    target = _timeline_target_label(item)
     timestamp = f"<time>{_e(_format_time(item.get('at') or ''))}</time>"
     message = _e(item.get("message") or "")
     href = item.get("href") or ""
+    prefix = (
+        "<span class='timeline-event' data-timeline-event='true' "
+        f"data-timeline-kind='{_e(kind)}'>"
+        f"{timestamp} <span class='timeline-kind'>{_e(kind)}</span> "
+    )
+    suffix = f" <span class='timeline-target'>{_e(target)}</span></span>"
     if href:
-        return f"{timestamp} <a class='timeline-link' href='{_e(href)}'>{message}</a>"
-    return f"{timestamp} {message}"
+        return f"{prefix}<a class='timeline-link' href='{_e(href)}'>{message}</a>{suffix}"
+    return f"{prefix}<span class='timeline-message'>{message}</span>{suffix}"
+
+
+def _timeline_target_label(item: dict[str, str]) -> str:
+    href = str(item.get("href") or "")
+    if href.startswith("/artifacts?path="):
+        return "artifact"
+    if href.startswith("/delegations/"):
+        return "delegation"
+    if href.startswith("/runs/"):
+        return "run"
+    if href.startswith("/approvals"):
+        return "approval"
+    if href.startswith("/goals/"):
+        return "goal"
+    return "local"
 
 
 def _format_time(value: str) -> str:
@@ -22289,6 +22312,11 @@ def _html_page(
     .goal-timeline-command-bar {{ border-left:4px solid var(--accent); margin:0 0 12px; }}
     .goal-timeline-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-timeline-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .timeline-event {{ display:grid; grid-template-columns:auto auto minmax(0, 1fr) auto; gap:8px; align-items:start; }}
+    .timeline-event time {{ color:var(--muted); font-variant-numeric:tabular-nums; }}
+    .timeline-kind, .timeline-target {{ display:inline-flex; min-height:22px; align-items:center; padding:2px 7px; border:1px solid var(--line); border-radius:999px; color:var(--muted); background:var(--panel); font-size:12px; line-height:1.2; white-space:nowrap; }}
+    .timeline-link, .timeline-message {{ min-width:0; overflow-wrap:anywhere; }}
+    .timeline-target {{ justify-self:end; }}
     .workflow-map-rail {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px; }}
     .workflow-map-rail li {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; overflow-wrap:anywhere; }}
     .workflow-map-rail li[data-gate-marker="current"] {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
@@ -22362,7 +22390,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>

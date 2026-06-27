@@ -311,11 +311,14 @@ Core layers for the bootstrap:
   backfills generic artifact events from the same bounded Goal Artifact
   Explorer registry, deduping workflow-specific artifact links so produced
   context packs, handoffs, diffs, changed-file lists, and text logs stay
-  chronological. The Goal timeline starts with a read-only `Goal Timeline
-  Command Bar` that summarizes total events, the latest linked event,
-  event-family counts for artifacts, approvals, delegations, runs, tasks, and
-  operator notes, and zero-effect boundaries before the full chronological
-  list. Goal pages include a browser-native progress
+  chronological. Timeline and Activity Log rows render as scan-first events
+  with time, event-kind badge, clickable local message, and target badge, so
+  artifacts, delegations, runs, approvals, tasks, and goal events are easier
+  to distinguish at a glance. The Goal timeline starts with a read-only
+  `Goal Timeline Command Bar` that summarizes total events, the latest linked
+  event, event-family counts for artifacts, approvals, delegations, runs,
+  tasks, and operator notes, and zero-effect boundaries before the full
+  chronological list. Goal pages include a browser-native progress
   bar and a large Current Phase banner that explains the phase reason,
   operator attention cue, next action surface, latest activity, and zero-effect
   boundary without requiring the CLI. Home and Goal activity sections now also

@@ -374,12 +374,13 @@ project counts, delegation profile usage, one `/skills` or `/profiles` review
 target, and no-execution/no-install/no-network boundaries before the detailed
 skill readback.
 Timeline entries link back to the relevant local artifact, delegation, run,
-approval queue, or goal surface, and the timeline also backfills generic
-`Artifact recorded` events from the same bounded artifact registry used by
-the Goal Artifact Explorer. The timeline starts with a read-only `Goal
-Timeline Command Bar` that summarizes event-family counts, the latest event,
-its target surface, and zero-effect boundaries before the full chronological
-list. The Activity Log now starts with a read-only Goal Activity Command Bar
+approval queue, or goal surface, and render as scan-first event rows with
+time, event-kind badge, clickable message, and target badge. The timeline also
+backfills generic `Artifact recorded` events from the same bounded artifact
+registry used by the Goal Artifact Explorer. The timeline starts with a
+read-only `Goal Timeline Command Bar` that summarizes event-family counts, the
+latest event, its target surface, and zero-effect boundaries before the full
+chronological list. The Activity Log now starts with a read-only Goal Activity Command Bar
 that names the latest human-readable event and target local surface before the
 longer chronological list. Progress starts with a read-only Goal Progress
 Command Bar, then uses a real browser progress bar.

@@ -1,5 +1,38 @@
 # Status
 
+## 2026-06-28 Timeline Event Rows
+
+- Upgraded Goal Timeline and Activity Log entries from plain linked text into
+  scan-first event rows with a timestamp, event-kind badge, clickable local
+  message, target badge, and stable `data-timeline-event` /
+  `data-timeline-kind` markers.
+- The new rows reuse existing Goal timeline data and target local artifacts,
+  delegations, runs, approvals, goals, or local surfaces without adding new
+  writes or action authority.
+- Added responsive timeline styling so event rows collapse cleanly on narrow
+  screens while preserving readable badges and long local artifact links.
+- Updated README, local app docs, operating summary, status focus, and the
+  fixture-backed Goal route assertions.
+- Non-claims: this is read-only browser rendering only. It does not write on
+  GET, create actions, approve work, run work, call providers, fetch GitHub,
+  poll network services, commit, push, create PRs, deploy, or mutate external
+  systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 514 deselected`
+  - `python3 -m compileall -q agent_os tests`
+    -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-timeline-event-smoke app-smoke-test`
+    -> passed with `/goals`, `/artifacts`, and core route markers matched and
+    provider/network/external-mutation counters at `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-timeline-event-demo-smoke app-demo-smoke-test`
+    -> passed with fixture-backed Goal route snippets matched and
+    provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
 ## 2026-06-28 CI Proof Workbench
 
 - Added a first-class `CI Proof Workbench` to `/ci-evidence` after the command

@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal Timeline and Activity Log rows now render as scan-first event rows with
+  time, event-kind badge, clickable local message, target badge, and stable
+  `data-timeline-*` markers, making artifacts, delegations, runs, approvals,
+  tasks, and goal events easier to distinguish without opening the CLI.
 - `/ci-evidence` now has a first-class `CI Proof Workbench` with four browser
   cards for checking a pushed GitHub Actions run, recording job-scoped
   fast-smoke proof, recording full-suite proof, or using the manual
