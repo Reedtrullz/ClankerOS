@@ -5646,9 +5646,39 @@ def test_goal_page_promotes_goal_incidents(tmp_path: Path) -> None:
 
     assert goal.status == 200
     assert "Goal Incidents" in goal.body
+    assert "Goal Incident Command Bar" in goal.body
+    assert "data-goal-incident-command-bar='true'" in goal.body
+    assert "href='#goal-incident-command-bar'" in goal.body
     assert "href='#goal-incidents'" in goal.body
+    assert "id='goal-incident-command-bar'" in goal.body
     assert "id='goal-incidents'" in goal.body
     assert "recommended_action</dt><dd>Inspect incident" in goal.body
+    assert f"goal_incident_command_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_incident_command_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_incident_command_status</dt><dd>open_incidents" in goal.body
+    assert "goal_incident_command_open_count</dt><dd>1" in goal.body
+    assert "goal_incident_command_resolved_count</dt><dd>0" in goal.body
+    assert "goal_incident_command_total_count</dt><dd>1" in goal.body
+    assert "goal_incident_command_open_recommendations</dt><dd>0" in goal.body
+    assert f"goal_incident_command_first_id</dt><dd>{incident_id}" in goal.body
+    assert "goal_incident_command_first_status</dt><dd>open" in goal.body
+    assert "goal_incident_command_first_severity</dt><dd>high" in goal.body
+    assert f"goal_incident_command_first_run</dt><dd>{result.coder_worktree_run_id}" in goal.body
+    assert f"goal_incident_command_first_task</dt><dd>{result.task_id}" in goal.body
+    assert "goal_incident_command_first_summary</dt><dd>Review blocked demo incident" in goal.body
+    assert "goal_incident_command_first_evidence</dt><dd><a href='/artifacts?path=.clanker/incidents/demo-goal-incident.json'>" in goal.body
+    assert "goal_incident_command_next_action</dt><dd>Inspect incident" in goal.body
+    assert "goal_incident_command_target_surface</dt><dd><a href='/incidents#incident-open'>Open Incidents</a>" in goal.body
+    assert "goal_incident_command_reason</dt><dd>open_goal_incident" in goal.body
+    assert "goal_incident_command_source</dt><dd>goal_incidents_and_recommendations" in goal.body
+    assert "goal_incident_command_write_on_get</dt><dd>false" in goal.body
+    assert "goal_incident_command_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_incident_command_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_incident_command_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_incident_now: open_incidents open=1 resolved=0" in goal.body
+    assert "goal_incident_click: <a href='/incidents#incident-open'>Open Incidents</a>" in goal.body
+    assert f"goal_incident_first: {incident_id} severity=high" in goal.body
+    assert "goal_incident_safety: read-only local incident posture" in goal.body
     assert "goal_incident_open_count: 1" in goal.body
     assert "goal_incident_resolved_count: 0" in goal.body
     assert (
@@ -6072,6 +6102,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-delegation-command-bar'" in goal.body
     assert "href='#goal-run-command-bar'" in goal.body
     assert "href='#goal-approval-command-bar'" in goal.body
+    assert "href='#goal-incident-command-bar'" in goal.body
     assert "href='#goal-artifact-command-bar'" in goal.body
     assert "href='#goal-artifact-explorer'" in goal.body
     assert "href='#goal-memory-command-bar'" in goal.body
@@ -6092,6 +6123,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-delegation-command-bar'" in goal.body
     assert "id='goal-run-command-bar'" in goal.body
     assert "id='goal-approval-command-bar'" in goal.body
+    assert "id='goal-incident-command-bar'" in goal.body
     assert "id='goal-artifact-command-bar'" in goal.body
     assert "id='goal-artifact-explorer'" in goal.body
     assert "id='goal-memory-command-bar'" in goal.body
@@ -6103,7 +6135,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>42" in goal.body
+    assert "goal_section_count</dt><dd>43" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body

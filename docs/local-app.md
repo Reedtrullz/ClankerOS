@@ -197,7 +197,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   pending and approved worktree, commit, and publication gates, links the next
   approval posture to `/approvals` or the relevant local Goal surface, and
   records zero write/provider/network/external-effect counters before the
-  detailed approval rows. Goal
+  detailed approval rows. Goal Incidents starts with a read-only
+  `Goal Incident Command Bar` that summarizes open/resolved incidents, open
+  recommendations, the first incident's severity, run, task, evidence, one
+  triage surface, and zero-effect counters before the detailed incident rows.
+  Goal
   Evidence starts with a read-only `Goal Evidence Command Bar` that summarizes
   run evidence, worktree evidence, incident evidence, recommendation evidence,
   typed artifact counts, latest artifact, one local review target, and

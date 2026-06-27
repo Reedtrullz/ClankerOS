@@ -1,5 +1,32 @@
 # Status
 
+## 2026-06-27 Goal Incident Command Bar
+
+- Added a read-only `Goal Incident Command Bar` to the Goal page before the
+  detailed Goal Incidents list.
+- The bar summarizes open/resolved incidents, open recovery recommendations,
+  the first incident's severity, run, task, evidence, one triage surface, and
+  zero-effect counters.
+- The Goal Section Index now links directly to the incident command surface,
+  so operators can tell whether a Goal needs incident attention before parsing
+  the detailed incident rows.
+- README, local app docs, and the operating summary now describe Goal
+  Incidents as a scan-first local triage posture surface.
+- Non-claims: this does not write state on GET, resolve incidents, retry work,
+  approve gates, run work, create artifacts, append notes, call providers, use
+  non-loopback network actions, fetch GitHub status, push, create PRs, deploy,
+  or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "goal_page_promotes_goal_incidents or local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `3 passed, 512 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_32e59d465bea`,
+    `run_fb03728ef9c7`, and coder worktree run `run_8f718dad0906`
+
 ## 2026-06-27 Goal Progress Command Bar
 
 - Added a read-only `Goal Progress Command Bar` to the Goal page before the

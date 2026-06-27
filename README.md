@@ -249,6 +249,10 @@ Goal Approvals starts with a read-only `Goal Approval Command Bar` that
 summarizes pending and approved worktree, commit, and publication gates, points
 at `/approvals` or the next local Goal surface, and keeps approval decisions on
 confirmed local forms instead of writing on page load.
+Goal Incidents starts with a read-only `Goal Incident Command Bar` that
+summarizes open/resolved incidents, open recommendations, the first incident's
+severity, run, task, evidence, one triage surface, and zero-effect boundaries
+before the detailed incident list.
 Goal Evidence starts with a read-only `Goal Evidence Command Bar` that
 summarizes run, worktree, incident, recommendation, and typed artifact
 evidence counts, points at the latest bounded artifact or highest-priority

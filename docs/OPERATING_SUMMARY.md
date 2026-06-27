@@ -348,9 +348,13 @@ Core layers for the bootstrap:
   action, links the relevant local surface, reports no-write, no-network, and
   no-external-effect boundaries, and only exposes the confirmed `complete-goal`
   form after the manual publish handoff is ready.
-  Goal `Incidents` now links to `/incidents`, shows open/resolved/total
-  incident counts, and lists goal-owned incident status, severity, run, task,
-  summary, and evidence artifact links without taking action.
+  Goal `Incidents` now starts with a read-only `Goal Incident Command Bar`
+  that summarizes open/resolved incidents, open recommendations, the first
+  incident's severity, run, task, evidence, one triage surface, and no-write/
+  no-provider/no-network/no-external-effect boundaries, then links to
+  `/incidents`, shows open/resolved/total incident counts, and lists goal-owned
+  incident status, severity, run, task, summary, and evidence artifact links
+  without taking action.
   Goal `Remaining Work` now starts with a read-only `Goal Remaining Work
   Command Bar` and then renders a gate-aware checklist from local state,
   showing the next action, current gate, open task/incident/recommendation

@@ -4070,12 +4070,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_delegation_section(root, state),
             _goal_run_section(root, state),
             _goal_approval_section(root, state),
-            _list_section(
-                "Goal Incidents",
-                _goal_incident_lines(root, state),
-                "/incidents",
-                anchor_id="goal-incidents",
-            ),
+            _goal_incident_section(root, state),
             _goal_evidence_section(root, state),
             _goal_artifact_section(root, state),
             _goal_memory_section(root, state),
@@ -4156,6 +4151,7 @@ def _goal_section_index() -> str:
         ("Runs", "goal-runs"),
         ("Approval command", "goal-approval-command-bar"),
         ("Approvals", "goal-approvals"),
+        ("Incident command", "goal-incident-command-bar"),
         ("Incidents", "goal-incidents"),
         ("Evidence command", "goal-evidence-command-bar"),
         ("Evidence", "goal-evidence"),
@@ -7189,6 +7185,116 @@ def _goal_approval_command_bar(
                     f"goal_approval_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
                     f"goal_approval_reason: {_e(reason)}",
                     "goal_approval_safety: read-only local approval posture",
+                ]
+            ),
+            "</section>",
+        ]
+    )
+
+
+def _goal_incident_section(root: Path, state: dict[str, Any]) -> str:
+    return _goal_incident_command_bar(root, state) + _list_section(
+        "Goal Incidents",
+        _goal_incident_lines(root, state),
+        "/incidents",
+        anchor_id="goal-incidents",
+    )
+
+
+def _goal_incident_command_bar(root: Path, state: dict[str, Any]) -> str:
+    goal = state["goal"]
+    incidents = state["incidents"]
+    open_incidents = [row for row in incidents if row["status"] == "open"]
+    resolved_incidents = [row for row in incidents if row["status"] == "resolved"]
+    open_recommendations = [
+        row for row in state["recommendations"] if row["status"] == "open"
+    ]
+    first_incident = (
+        open_incidents[0]
+        if open_incidents
+        else (resolved_incidents[0] if resolved_incidents else None)
+    )
+    first_evidence: str | SafeHtml = "none"
+    first_id = "none"
+    first_status = "none"
+    first_severity = "none"
+    first_run = "none"
+    first_task = "none"
+    first_summary = "none"
+    if first_incident is not None:
+        first_id = str(first_incident["id"])
+        first_status = str(first_incident["status"])
+        first_severity = str(first_incident["severity"])
+        first_run = str(first_incident["run_id"] or "none")
+        first_task = str(first_incident["task_id"] or "none")
+        first_summary = str(first_incident["summary"])
+        evidence_path = str(first_incident["evidence_path"] or "none")
+        first_evidence = SafeHtml(
+            _artifact_link(_repo_relative_artifact_path(root, evidence_path))
+        )
+    if open_incidents:
+        status = "open_incidents"
+        next_action = "Inspect incident"
+        target_surface = SafeHtml("<a href='/incidents#incident-open'>Open Incidents</a>")
+        reason = "open_goal_incident"
+    elif open_recommendations:
+        status = "recommendations_open"
+        next_action = "Review recovery recommendation"
+        target_surface = SafeHtml(
+            "<a href='/incidents#incident-recommendations'>Task Recommendations</a>"
+        )
+        reason = "open_goal_recommendations"
+    elif resolved_incidents:
+        status = "resolved_history"
+        next_action = "Review resolved incidents"
+        target_surface = SafeHtml(
+            "<a href='/incidents#incident-resolved'>Resolved Incidents</a>"
+        )
+        reason = "resolved_goal_incidents"
+    else:
+        status = "clear"
+        next_action = "Continue workflow"
+        target_surface = SafeHtml("<a href='#goal-next-action'>Goal Next Action</a>")
+        reason = "no_goal_incidents"
+    return "".join(
+        [
+            "<section id='goal-incident-command-bar' class='panel goal-incident-command-bar' data-goal-incident-command-bar='true'><h3>Goal Incident Command Bar</h3>",
+            "<p class='muted'>Incident posture before the detailed goal incident list.</p>",
+            _kv(
+                [
+                    ("goal_incident_command_goal", goal.id),
+                    ("goal_incident_command_project", goal.project_id),
+                    ("goal_incident_command_status", status),
+                    ("goal_incident_command_open_count", str(len(open_incidents))),
+                    ("goal_incident_command_resolved_count", str(len(resolved_incidents))),
+                    ("goal_incident_command_total_count", str(len(incidents))),
+                    (
+                        "goal_incident_command_open_recommendations",
+                        str(len(open_recommendations)),
+                    ),
+                    ("goal_incident_command_first_id", first_id),
+                    ("goal_incident_command_first_status", first_status),
+                    ("goal_incident_command_first_severity", first_severity),
+                    ("goal_incident_command_first_run", first_run),
+                    ("goal_incident_command_first_task", first_task),
+                    ("goal_incident_command_first_summary", first_summary),
+                    ("goal_incident_command_first_evidence", first_evidence),
+                    ("goal_incident_command_next_action", next_action),
+                    ("goal_incident_command_target_surface", target_surface),
+                    ("goal_incident_command_reason", reason),
+                    ("goal_incident_command_source", "goal_incidents_and_recommendations"),
+                    ("goal_incident_command_write_on_get", "false"),
+                    ("goal_incident_command_provider_calls_taken", "0"),
+                    ("goal_incident_command_network_actions_taken", "0"),
+                    ("goal_incident_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_incident_now: {_e(status)} open={len(open_incidents)} resolved={len(resolved_incidents)}",
+                    f"goal_incident_click: {target_surface}",
+                    f"goal_incident_first: {_e(first_id)} severity={_e(first_severity)}",
+                    "goal_incident_safety: read-only local incident posture",
                 ]
             ),
             "</section>",
@@ -15442,6 +15548,9 @@ def _html_page(
     .goal-approval-command-bar {{ border-left:4px solid var(--warn); }}
     .goal-approval-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-approval-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-incident-command-bar {{ border-left:4px solid var(--warn); }}
+    .goal-incident-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-incident-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-git-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-git-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-git-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
