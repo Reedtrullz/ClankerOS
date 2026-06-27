@@ -73,8 +73,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   read-only `Today Live State` panel follows with five-second local page reload
   polling that pauses when the tab is hidden or a form field is focused and
   reports zero provider/network/external-effect counters. A read-only
-  `Today Operator Workbench` follows with do/check/unblock/finish cards for
-  the current action, timeline/evidence review, first blocker, and
+  `Today Session Summary` follows with the current goal or first-run step,
+  current gate, next surface, latest activity, latest artifact, workspace
+  resume posture, and recorded CI proof in a single return-to-work brief. A
+  read-only `Today Operator Workbench` follows with do/check/unblock/finish
+  cards for the current action, timeline/evidence review, first blocker, and
   finish-today resume save target. A read-only `Today Workflow Map` follows
   with the first-run gate rail when no Goal exists, or the lead Goal's local
   lifecycle gates, current gate, next action, same-page action target, and gate

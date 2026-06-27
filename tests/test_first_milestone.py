@@ -4286,6 +4286,33 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_live_refresh_safety: local browser loopback reload only" in today.body
     assert "document.hidden" in today.body
     assert "window.location.reload()" in today.body
+    assert "Today Session Summary" in today.body
+    assert "data-today-session-summary='true'" in today.body
+    assert "today_session_status</dt><dd>first_run" in today.body
+    assert "today_session_goal</dt><dd>none" in today.body
+    assert "today_session_project</dt><dd>clankeros" in today.body
+    assert "today_session_phase</dt><dd>First run" in today.body
+    assert "today_session_current_gate</dt><dd>create_project" in today.body
+    assert "today_session_next_action</dt><dd>Register ClankerOS project" in today.body
+    assert "today_session_next_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_session_action_form_available</dt><dd>true" in today.body
+    assert "today_session_latest_activity_kind</dt><dd>first_run" in today.body
+    assert "today_session_latest_activity_at</dt><dd>none" in today.body
+    assert "today_session_latest_activity_message</dt><dd>Register ClankerOS project" in today.body
+    assert "today_session_latest_activity_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_session_latest_artifact</dt><dd>none" in today.body
+    assert "today_session_workspace_status</dt><dd>not_started" in today.body
+    assert "today_session_resume_ready</dt><dd>false" in today.body
+    assert "today_session_ci_status</dt><dd>success" in today.body
+    assert "today_session_ci_source</dt><dd>publication_handoff" in today.body
+    assert "today_session_source</dt><dd>first_run_progress" in today.body
+    assert "today_session_write_on_get</dt><dd>false" in today.body
+    assert "today_session_provider_calls_taken</dt><dd>0" in today.body
+    assert "today_session_network_actions_taken</dt><dd>0" in today.body
+    assert "today_session_external_effects_created</dt><dd>false" in today.body
+    assert "today_session_now: Register ClankerOS project" in today.body
+    assert "today_session_click: <a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_session_safety: read-only local summary" in today.body
     assert "Today Operator Workbench" in today.body
     assert "data-today-operator-workbench='true'" in today.body
     assert "today_workbench_status</dt><dd>first_run" in today.body
@@ -6870,6 +6897,35 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_live_refresh_external_effects_created</dt><dd>false" in today.body
     assert "today_live_refresh_now: Create commit request" in today.body
     assert "today_live_refresh_target: <a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "Today Session Summary" in today.body
+    assert "data-today-session-summary='true'" in today.body
+    assert "today_session_status</dt><dd>available" in today.body
+    assert f"today_session_goal</dt><dd><a href='/goals/{result.goal_id}'" in today.body
+    assert f"today_session_project</dt><dd><a href='/projects/{result.project_id}'" in today.body
+    assert "today_session_phase</dt><dd>Ready to commit" in today.body
+    assert "today_session_current_gate</dt><dd>commit_request" in today.body
+    assert "today_session_next_action</dt><dd>Create commit request" in today.body
+    assert "today_session_next_surface</dt><dd><a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "today_session_action_form_available</dt><dd>true" in today.body
+    assert "today_session_latest_activity_kind</dt><dd>" in today.body
+    assert "today_session_latest_activity_at</dt><dd>" in today.body
+    assert "today_session_latest_activity_message</dt><dd>" in today.body
+    assert "today_session_latest_activity_surface</dt><dd><a href=" in today.body
+    assert "today_session_latest_artifact</dt><dd><a href='/artifacts?path=" in today.body
+    assert "today_session_workspace_status</dt><dd>not_started" in today.body
+    assert "today_session_resume_ready</dt><dd>false" in today.body
+    assert "today_session_ci_status</dt><dd>success" in today.body
+    assert "today_session_ci_source</dt><dd>direct_public_snapshot" in today.body
+    assert "today_session_ci_run_id</dt><dd>demo-goal-ci" in today.body
+    assert "today_session_source</dt><dd>lead_goal_session_state" in today.body
+    assert "today_session_write_on_get</dt><dd>false" in today.body
+    assert "today_session_provider_calls_taken</dt><dd>0" in today.body
+    assert "today_session_network_actions_taken</dt><dd>0" in today.body
+    assert "today_session_external_effects_created</dt><dd>false" in today.body
+    assert "today_session_now: Create commit request" in today.body
+    assert "today_session_click: <a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "today_session_ci: direct_public_snapshot/success" in today.body
+    assert "today_session_safety: read-only local summary" in today.body
     assert "Today Operator Workbench" in today.body
     assert "data-today-operator-workbench='true'" in today.body
     assert "today_workbench_status</dt><dd>goal_ready" in today.body

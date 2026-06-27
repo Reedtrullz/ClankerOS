@@ -508,11 +508,15 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             [
                 "data-today-command-center='true'",
                 "data-today-command-actions='true'",
+                "data-today-session-summary='true'",
                 "data-today-operator-workbench='true'",
                 "data-today-workflow-map='true'",
                 "data-today-ci-handoff='true'",
                 "data-today-goal-queue='true'",
                 "today_command_status</dt><dd>goal_ready",
+                "today_session_status</dt><dd>available",
+                "today_session_current_gate</dt><dd>commit_request",
+                "today_session_next_action</dt><dd>Create commit request",
                 "today_workbench_status</dt><dd>goal_ready",
                 "today_workflow_map_status</dt><dd>available",
                 "today_workflow_map_current_gate</dt><dd>commit_request",
@@ -1131,6 +1135,7 @@ def _today_page(root: Path) -> str:
             completed=completed,
             lead_goal=lead_goal,
         ),
+        _today_session_summary(root, storage, lead_goal),
         _today_operator_workbench(root, storage, lead_goal),
         _today_workflow_map(root, storage, lead_goal),
         _today_ci_handoff(root),
@@ -1258,6 +1263,140 @@ def _today_live_state(
   window.setTimeout(tick, intervalMs);
 })();
 </script>""",
+            "</section>",
+        ]
+    )
+
+
+def _today_session_summary(
+    root: Path,
+    storage: Storage,
+    lead_goal: sqlite3.Row | None,
+) -> str:
+    workspace = _load_workspace_state(root)
+    open_project = str(workspace.get("open_project") or "").strip()
+    open_goal = str(workspace.get("open_goal") or "").strip()
+    filters = str(workspace.get("filters") or "").strip()
+    expanded = str(workspace.get("expanded_panels") or "").strip()
+    last_artifact = str(workspace.get("last_viewed_artifact") or "").strip()
+    resume = _workspace_resume_readiness(
+        root,
+        open_project=open_project,
+        open_goal=open_goal,
+        filters=filters,
+        expanded=expanded,
+        last_artifact=last_artifact,
+    )
+    ci_state = _ci_evidence_command_state(root)
+
+    if lead_goal is None:
+        progress = _first_run_progress(root, storage)
+        target_href, target_label = _today_first_run_target(progress)
+        goal_value: str | SafeHtml = "none"
+        project_value: str | SafeHtml = str(progress["default_project"])
+        phase = "First run"
+        current_gate = str(progress["current_step"])
+        next_action = str(progress["next_action"])
+        latest_message = str(progress["next_action"])
+        latest_kind = "first_run"
+        latest_at = "none"
+        latest_href = target_href
+        latest_label = target_label
+        latest_artifact = "none"
+        status = "first_run"
+        form_available = str(target_href.startswith("#first-run-")).lower()
+        source = "first_run_progress"
+    else:
+        goal_id = str(lead_goal["id"])
+        state = _goal_state(root, storage, goal_id)
+        goal = state["goal"]
+        label = str(lead_goal["title"] or lead_goal["description"] or goal_id)
+        phase = _goal_current_phase(state)
+        next_action_state = _goal_next_action(root, state)
+        form_is_available = bool(_goal_next_action_form(state, next_action_state))
+        target_href = "#today-current-action" if form_is_available else next_action_state.href
+        target_label = "Today Current Action" if form_is_available else next_action_state.href
+        _, _, current_gate = _goal_workflow_gate_summary(
+            root,
+            state,
+            next_action_state,
+        )
+        timeline = _goal_timeline_items(root, state)
+        latest = timeline[-1] if timeline else {}
+        latest_href = latest.get("href") or f"/goals/{quote(goal_id)}"
+        latest_label = latest_href
+        latest_message = latest.get("message") or "No goal activity yet"
+        latest_kind = latest.get("kind") or "event"
+        latest_at = _format_time(latest.get("at") or "") if latest else "none"
+        latest_artifact = _goal_latest_artifact_path(root, state) or "none"
+        goal_value = SafeHtml(
+            f"<a href='/goals/{quote(goal_id)}'>{_e(_compact_label(label, 72))}</a>"
+        )
+        project_value = SafeHtml(
+            f"<a href='/projects/{quote(goal.project_id)}'>{_e(goal.project_id)}</a>"
+        )
+        next_action = next_action_state.action
+        status = "available"
+        form_available = str(form_is_available).lower()
+        source = "lead_goal_session_state"
+
+    target_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    latest_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_label)}</a>")
+    resume_surface = SafeHtml(
+        f"<a href='{_e(str(resume['next_surface']))}'>{_e(str(resume['next_surface']))}</a>"
+    )
+    latest_artifact_value = _artifact_link(latest_artifact)
+    latest_artifact_matches_workspace = (
+        "true" if latest_artifact != "none" and last_artifact == latest_artifact else "false"
+    )
+    return "".join(
+        [
+            "<section id='today-session-summary' class='panel today-session-summary' data-today-session-summary='true'><h2>Today Session Summary</h2>",
+            "<p class='muted'>One read-only return-to-work brief for the current browser session.</p>",
+            _kv(
+                [
+                    ("today_session_status", status),
+                    ("today_session_goal", goal_value),
+                    ("today_session_project", project_value),
+                    ("today_session_phase", phase),
+                    ("today_session_current_gate", current_gate),
+                    ("today_session_next_action", next_action),
+                    ("today_session_next_surface", target_surface),
+                    ("today_session_action_form_available", form_available),
+                    ("today_session_latest_activity_kind", latest_kind),
+                    ("today_session_latest_activity_at", latest_at),
+                    ("today_session_latest_activity_message", latest_message),
+                    ("today_session_latest_activity_surface", latest_surface),
+                    ("today_session_latest_artifact", latest_artifact_value),
+                    ("today_session_workspace_status", str(resume["status"])),
+                    ("today_session_resume_ready", str(resume["ready"]).lower()),
+                    ("today_session_resume_surface", resume_surface),
+                    (
+                        "today_session_workspace_artifact_matches_latest",
+                        latest_artifact_matches_workspace,
+                    ),
+                    ("today_session_workspace_updated_at", workspace.get("updated_at", "never")),
+                    ("today_session_ci_status", ci_state["latest_status"]),
+                    ("today_session_ci_source", ci_state["latest_source"]),
+                    ("today_session_ci_current_proof", ci_state["current_proof"]),
+                    ("today_session_ci_run_id", ci_state["latest_external_run_id"]),
+                    ("today_session_source", source),
+                    ("today_session_write_on_get", "false"),
+                    ("today_session_provider_calls_taken", "0"),
+                    ("today_session_network_actions_taken", "0"),
+                    ("today_session_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"today_session_now: {_e(next_action)}",
+                    f"today_session_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"today_session_latest: {_e(latest_message)}",
+                    f"today_session_resume: {_e(str(resume['status']))} -> <a href='{_e(str(resume['next_surface']))}'>{_e(str(resume['next_surface']))}</a>",
+                    f"today_session_ci: {_e(ci_state['latest_source'])}/{_e(ci_state['latest_status'])} proof={_e(ci_state['current_proof'])}",
+                    "today_session_safety: read-only local summary; confirmed actions remain on target surfaces",
+                ]
+            ),
             "</section>",
         ]
     )
@@ -19854,6 +19993,10 @@ def _html_page(
     .today-command-action, .today-command-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .today-command-action {{ background:var(--accent); color:#fff; }}
     .today-command-link {{ background:var(--surface); color:var(--accent); }}
+    .today-session-summary {{ border-left:4px solid var(--ok); }}
+    .today-session-summary dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .today-session-summary ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .today-session-summary li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .today-operator-workbench {{ border-left:4px solid var(--accent); }}
     .today-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .today-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}

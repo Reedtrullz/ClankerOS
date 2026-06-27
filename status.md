@@ -1,5 +1,38 @@
 # Status
 
+## 2026-06-27 Today Session Summary
+
+- Added a read-only `Today Session Summary` to `/today` so the daily cockpit
+  now has a compact return-to-work brief between live refresh and the operator
+  workbench.
+- The first-run summary reports current step/gate, same-page next surface,
+  workspace resume status, recorded CI posture, latest activity, source, and
+  zero-effect counters; the active-goal summary reports goal/project links,
+  current phase/gate, same-page current action, latest activity, latest
+  artifact, workspace resume status, recorded CI posture, source, and
+  zero-effect counters.
+- Updated the demo smoke expectations, first-run route test, fixture-backed
+  `/today` route test, README, local app docs, and operating summary.
+- Non-claims: this does not fetch GitHub status, poll GitHub from the app, call
+  providers, approve work, execute runs, commit, push, create PRs, deploy,
+  create projects or goals without confirmation, write on GET, use non-loopback
+  network actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `df -h /System/Volumes/Data`
+    -> `84Gi` available before the compact verification loop
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state"`
+    -> passed, `2 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root "$tmp" app-smoke-test`
+    -> passed on a temporary root, including `/today`, with provider/network/external-mutation counters at `0`
+  - `python3 -m agent_os.cli --root "$tmp" app-demo-smoke-test`
+    -> passed on a temporary root with fixture-backed `/today` expected snippets matched and provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
 ## 2026-06-27 Today Workflow Map
 
 - Added a read-only `Today Workflow Map` to `/today` so the daily cockpit now

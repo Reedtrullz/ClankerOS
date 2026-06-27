@@ -154,9 +154,12 @@ form for tomorrow's resume point. A read-only `Today Live State` panel follows
 with five-second local page reload polling that pauses while the tab is hidden
 or a form field is focused, so the all-day cockpit can reflect changing local
 goal state without adding action authority. A read-only
-`Today Operator Workbench` follows with four obvious moves for the day: do the
-current action, check timeline/evidence, clear the first blocker, and save the
-resume point. A read-only `Today Workflow Map` follows with the whole first-run
+`Today Session Summary` then gives a return-to-work brief with current goal or
+first-run step, current gate, next surface, latest activity, latest artifact,
+workspace resume posture, and recorded CI proof in one scan-friendly block.
+A read-only `Today Operator Workbench` follows with four obvious moves for the
+day: do the current action, check timeline/evidence, clear the first blocker,
+and save the resume point. A read-only `Today Workflow Map` follows with the whole first-run
 path when no Goal exists, or the lead Goal's lifecycle gates when one does,
 including current gate, next action, same-page action target, and gate counts.
 A read-only `Today CI Handoff` follows so the daily cockpit shows the latest
