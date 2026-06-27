@@ -275,7 +275,11 @@ no-write/no-network/no-raw-filesystem boundary. Use `/memory`, `/skills`, and
 and inactive future provider-routing lanes. The read-only `Memory Command Bar`
 starts `/memory` with entry counts, proposed-memory pin posture, first target,
 one next local action, saved workspace context, and no-write/provider/network/
-external-effect boundaries before the longer memory lists. `/profiles` now shows both
+external-effect boundaries before the longer memory lists. The read-only
+`Skills Command Bar` starts `/skills` with skill record counts, generated-skill
+posture, usage/project counts, the first generated or available skill artifact,
+one local review target, and no execution/install/provider/network effects.
+`/profiles` now shows both
 `.clanker/profiles.yml` names and SQLite profile storage rows, including
 labels, modes, cost tiers, write posture, adapter status, and `use_for`
 labels without enabling providers.

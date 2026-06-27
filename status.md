@@ -1,5 +1,34 @@
 # Status
 
+## 2026-06-27 Skills Command Bar
+
+- Added a read-only `Skills Command Bar` to `/skills`. It shows total,
+  active, proposed, archived, generated, used-skill, and project-usage counts;
+  the first generated or available skill target; its bounded artifact link;
+  one next local review action; and write-on-GET/raw-filesystem/provider/
+  network/external-effect boundaries before the longer skill inventory.
+- The Skills page now has stable anchored sections for available and
+  generated skills. It still reads usage and artifact signals only; it does
+  not install, execute, approve, archive, call providers, or use the network.
+- README, local app docs, and the operating summary now describe `/skills` as
+  an operator command surface rather than only a generated-skill inventory.
+- Non-claims: this does not execute skills, install skills, approve generated
+  skills, archive skills, browse the raw filesystem, run work, commit, push,
+  create PRs, deploy, call providers, fetch GitHub status, use the network, or
+  mutate external systems. It reads local skill rows, task skill tags, saved
+  skill artifact paths, and bounded artifact links only.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Memory Command Bar
 
 - Added a read-only `Memory Command Bar` to `/memory`. It shows total,

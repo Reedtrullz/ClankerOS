@@ -5991,6 +5991,28 @@ def test_local_app_demo_scenario_populates_fixture_state(
     skills = render_local_app_route(tmp_path, "/skills")
     assert skills.status == 200
     assert "Skills Inventory" in skills.body
+    assert "Skills Command Bar" in skills.body
+    assert "data-skills-command-bar='true'" in skills.body
+    assert "skills_command_total_records</dt><dd>1" in skills.body
+    assert "skills_command_active_records</dt><dd>1" in skills.body
+    assert "skills_command_generated_records</dt><dd>1" in skills.body
+    assert "skills_command_used_skill_names</dt><dd>1" in skills.body
+    assert "skills_command_projects_using_skills</dt><dd>1" in skills.body
+    assert "skills_command_first_target</dt><dd>local-files" in skills.body
+    assert (
+        "skills_command_first_artifact</dt><dd><a href='/artifacts?path=.clanker/skills/local-files/SKILL.md'>"
+        ".clanker/skills/local-files/SKILL.md</a>"
+        in skills.body
+    )
+    assert "skills_command_next_action</dt><dd>Review generated skill" in skills.body
+    assert "skills_command_target_surface</dt><dd><a href='#skills-generated'>Generated Skills</a>" in skills.body
+    assert "skills_command_reason</dt><dd>generated_skill_record_available" in skills.body
+    assert "skills_command_execution_available</dt><dd>false" in skills.body
+    assert "skills_command_install_available</dt><dd>false" in skills.body
+    assert "skills_command_write_on_get</dt><dd>false" in skills.body
+    assert "skills_command_provider_calls_taken</dt><dd>0" in skills.body
+    assert "skills_command_network_actions_taken</dt><dd>0" in skills.body
+    assert "skills_command_external_effects_created</dt><dd>false" in skills.body
     assert "Available Skills" in skills.body
     assert "Generated Skills" in skills.body
     assert "local-files" in skills.body

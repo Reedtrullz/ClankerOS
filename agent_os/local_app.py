@@ -2610,9 +2610,110 @@ def _skills_page(root: Path) -> str:
                 ]
             ),
             "</section>",
-            _list_section("Available Skills", available_lines or ["none_recorded_yet usage_count=0 last_used=none projects_using=none"]),
-            _list_section("Generated Skills", generated_lines or ["none_recorded_yet usage_count=0 last_used=none projects_using=none"]),
+            _skills_command_bar(root, skills=skills, usage=usage),
+            _list_section(
+                "Available Skills",
+                available_lines or ["none_recorded_yet usage_count=0 last_used=none projects_using=none"],
+                anchor_id="skills-available",
+            ),
+            _list_section(
+                "Generated Skills",
+                generated_lines or ["none_recorded_yet usage_count=0 last_used=none projects_using=none"],
+                anchor_id="skills-generated",
+            ),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _skills_command_bar(
+    root: Path,
+    *,
+    skills: list[Any],
+    usage: dict[str, dict[str, Any]],
+) -> str:
+    generated = [skill for skill in skills if skill.source_run_id]
+    active = [skill for skill in skills if skill.status == "active"]
+    proposed = [skill for skill in skills if skill.status == "proposed"]
+    archived = [skill for skill in skills if skill.status == "archived"]
+    used_names = {name for name, data in usage.items() if int(data.get("count", 0)) > 0}
+    projects = {
+        str(project)
+        for data in usage.values()
+        for project in data.get("projects", set())
+        if project
+    }
+    projects.update(str(skill.project_id) for skill in skills if skill.project_id)
+    first_skill = (
+        generated[0]
+        if generated
+        else (active[0] if active else (proposed[0] if proposed else (skills[0] if skills else None)))
+    )
+    first_target = "none"
+    next_action = "Create goal context"
+    target_href = "/goals"
+    target_label = "/goals"
+    reason = "no_skill_records_yet"
+    if first_skill is not None:
+        first_target = first_skill.name
+        if first_skill.source_run_id:
+            next_action = "Review generated skill"
+            target_href = "#skills-generated"
+            target_label = "Generated Skills"
+            reason = "generated_skill_record_available"
+        elif first_skill.status == "proposed":
+            next_action = "Review proposed skill"
+            target_href = "#skills-available"
+            target_label = "Available Skills"
+            reason = "proposed_skill_waiting_for_operator"
+        else:
+            next_action = "Review available skill"
+            target_href = "#skills-available"
+            target_label = "Available Skills"
+            reason = "available_skill_record_available"
+    first_artifact: str | SafeHtml = "none"
+    if first_skill is not None and first_skill.path:
+        first_artifact = _artifact_link(_repo_relative_artifact_path(root, first_skill.path))
+    return "".join(
+        [
+            "<section class='panel skills-command-bar' data-skills-command-bar='true'><h2>Skills Command Bar</h2>",
+            "<p class='muted'>One read-only summary of skill availability, generated records, usage, and the next local review target.</p>",
+            _kv(
+                [
+                    ("skills_command_status", "available"),
+                    ("skills_command_total_records", str(len(skills))),
+                    ("skills_command_active_records", str(len(active))),
+                    ("skills_command_proposed_records", str(len(proposed))),
+                    ("skills_command_archived_records", str(len(archived))),
+                    ("skills_command_generated_records", str(len(generated))),
+                    ("skills_command_used_skill_names", str(len(used_names))),
+                    ("skills_command_projects_using_skills", str(len(projects))),
+                    ("skills_command_first_target", first_target),
+                    ("skills_command_first_artifact", first_artifact),
+                    ("skills_command_next_action", next_action),
+                    (
+                        "skills_command_target_surface",
+                        SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"),
+                    ),
+                    ("skills_command_reason", reason),
+                    ("skills_command_execution_available", "false"),
+                    ("skills_command_install_available", "false"),
+                    ("skills_command_write_on_get", "false"),
+                    ("skills_command_raw_filesystem_browsing", "false"),
+                    ("skills_command_provider_calls_taken", "0"),
+                    ("skills_command_network_actions_taken", "0"),
+                    ("skills_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"skills_command_now: {_e(next_action)}",
+                    f"skills_command_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"skills_command_reason: {_e(reason)}",
+                    "skills_command_safety: read-only skill guidance",
+                ]
+            ),
+            "</section>",
         ]
     )
 
@@ -11165,6 +11266,9 @@ def _html_page(
     .memory-command-bar {{ border-left:4px solid var(--ok); }}
     .memory-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .memory-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .skills-command-bar {{ border-left:4px solid var(--accent); }}
+    .skills-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .skills-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .inbox-command-bar {{ border-left:4px solid var(--accent); }}
     .inbox-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .inbox-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

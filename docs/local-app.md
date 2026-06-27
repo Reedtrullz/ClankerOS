@@ -216,7 +216,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   action, and write-on-GET/provider/network/external-effect boundaries before
   the longer memory lists.
 - `/skills` - available/generated skill records with usage count, last-used
-  readback, and projects using them.
+  readback, and projects using them. A read-only `Skills Command Bar`
+  summarizes total, active, proposed, archived, generated, used-skill, and
+  project-usage counts, points at the first generated or available skill
+  artifact, and keeps skill execution/install/provider/network effects
+  disabled.
 - `/profiles` - inactive future provider-routing surface. It reads
   `.clanker/profiles.yml` when present and keeps provider calls at zero.
 - `/workflow` - modern handoff/worktree/commit/publication workflow stepper,

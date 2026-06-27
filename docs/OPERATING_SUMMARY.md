@@ -130,7 +130,11 @@ Core layers for the bootstrap:
   first proposed pin or fallback resume target, one next local action, saved
   workspace context, and no-write/provider/network/external-effect boundaries
   before the longer lists; `/skills`
-  for available/generated skill records with usage counts; `/approvals` as a
+  for available/generated skill records with usage counts and a read-only
+  `Skills Command Bar` that summarizes record, generated, usage, and
+  project-usage counts, points at the first generated or available skill
+  artifact, names one local review target, and keeps execution/install/
+  provider/network effects disabled; `/approvals` as a
   local decision queue with a read-only `Approval Queue Command Bar` that
   summarizes pending worktree/commit/publication counts, first recommended
   decision, target section, after-decision guidance, and zero-effect boundary;
