@@ -1,5 +1,35 @@
 # Status
 
+## 2026-06-27 Today Goal Queue
+
+- Added a read-only `Today Goal Queue` immediately after the `/today`
+  command center so the daily cockpit can switch across active, paused, and
+  completed goals without opening the full `/goals` inventory.
+- The queue reports total/active/paused/completed counts, the lead goal,
+  lead bucket, phase, next action, lead surface, same-page action-form
+  availability, first switch target, per-goal phase, next action surface,
+  progress, waiting counts, approval/incident/recommendation counts, and
+  zero-effect counters.
+- Added first-run and fixture-backed `/today` assertions plus demo smoke
+  route snippets so the queue is guarded in both empty and realistic local
+  operator states.
+- Updated README, local app docs, and the operating summary to describe the
+  queue as part of the daily cockpit.
+- Non-claims: this does not write on GET, add new action authority, approve
+  work, execute runs, commit, push, create PRs, deploy, call providers, fetch
+  GitHub status, use the network, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `git diff --check`
+    -> passed
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed with `/today` route marker matched and zero provider/network/external-mutation counters
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed with fixture-backed `/today` snippets matched and zero provider/network/external-mutation counters
+
 ## 2026-06-27 Today Note Capture
 
 - Added a first-class `Capture Note` card and anchored form to `/today` for the

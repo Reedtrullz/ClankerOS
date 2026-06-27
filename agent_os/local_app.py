@@ -507,7 +507,9 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             [
                 "data-today-command-center='true'",
                 "data-today-command-actions='true'",
+                "data-today-goal-queue='true'",
                 "today_command_status</dt><dd>goal_ready",
+                "today_goal_queue_status</dt><dd>goals_ready",
                 "today_command_primary_action</dt><dd>Create commit request",
                 "today_command_attention_status</dt><dd>needs_approval_review",
                 "today_command_finish_form_available</dt><dd>true",
@@ -1110,6 +1112,14 @@ def _today_page(root: Path) -> str:
         ),
         "</section>",
         _today_command_center(root, storage, lead_goal),
+        _today_goal_queue(
+            root,
+            storage,
+            active=active,
+            paused=paused,
+            completed=completed,
+            lead_goal=lead_goal,
+        ),
         _home_start_here(root, storage, lead_goal),
         _home_day_plan(root, storage, lead_goal),
         _home_attention_brief(root, storage, lead_goal),
@@ -1123,6 +1133,131 @@ def _today_page(root: Path) -> str:
         sections.append(_first_run_panel(root, storage))
     sections.append(_non_claim_banner())
     return "".join(sections)
+
+
+def _today_goal_queue(
+    root: Path,
+    storage: Storage,
+    *,
+    active: list[sqlite3.Row],
+    paused: list[sqlite3.Row],
+    completed: list[sqlite3.Row],
+    lead_goal: sqlite3.Row | None,
+) -> str:
+    rows = active + paused + completed
+    lead_goal_id = str(lead_goal["id"]) if lead_goal is not None else ""
+    lead_label: str | SafeHtml = "none"
+    lead_bucket = "none"
+    lead_phase = "none"
+    lead_next_action = "none"
+    lead_surface: str | SafeHtml = SafeHtml("<a href='/goals'>/goals</a>")
+    lead_action_form_available = "false"
+    if lead_goal is not None:
+        lead_state = _goal_state(root, storage, lead_goal_id)
+        action = _goal_next_action(root, lead_state)
+        label = str(lead_goal["title"] or lead_goal["description"] or lead_goal_id)
+        lead_label = SafeHtml(
+            f"<a href='/goals/{quote(lead_goal_id)}'>{_e(_compact_label(label, 72))}</a>"
+        )
+        lead_bucket = _goal_bucket(lead_goal)
+        lead_phase = _goal_current_phase(lead_state)
+        lead_next_action = action.action
+        lead_surface = SafeHtml(
+            f"<a href='/goals/{quote(lead_goal_id)}'>/goals/{_e(lead_goal_id)}</a>"
+        )
+        lead_action_form_available = str(
+            bool(_goal_next_action_form(lead_state, action))
+        ).lower()
+
+    if rows:
+        item_lines = [
+            _today_goal_queue_line(root, storage, row, lead_goal_id=lead_goal_id)
+            for row in rows[:12]
+        ]
+        overflow = len(rows) - len(item_lines)
+        if overflow > 0:
+            item_lines.append(
+                f"today_goal_queue_overflow: {overflow} more goals available on <a href='/goals'>/goals</a>"
+            )
+        status = "goals_ready"
+        first_surface: str | SafeHtml = SafeHtml(
+            f"<a href='/goals/{quote(str(rows[0]['id']))}'>/goals/{_e(str(rows[0]['id']))}</a>"
+        )
+    else:
+        item_lines = [
+            "today_goal_queue_empty: first_run_ready",
+            "today_goal_queue_next_action: Register ClankerOS project",
+            "today_goal_queue_next_surface: <a href='/goals'>/goals</a>",
+        ]
+        status = "first_run"
+        first_surface = SafeHtml("<a href='/goals'>/goals</a>")
+
+    return "".join(
+        [
+            "<section id='today-goal-queue' class='panel today-goal-queue' data-today-goal-queue='true'><h2>Today Goal Queue</h2>",
+            "<p class='muted'>Switch goals, scan paused work, and keep completed goals visible without leaving the daily cockpit.</p>",
+            _kv(
+                [
+                    ("today_goal_queue_status", status),
+                    ("today_goal_queue_source", "goal_state_buckets_next_actions"),
+                    ("today_goal_queue_total_goals", str(len(rows))),
+                    ("today_goal_queue_active_goals", str(len(active))),
+                    ("today_goal_queue_paused_goals", str(len(paused))),
+                    ("today_goal_queue_completed_goals", str(len(completed))),
+                    ("today_goal_queue_lead_goal", lead_label),
+                    ("today_goal_queue_lead_bucket", lead_bucket),
+                    ("today_goal_queue_lead_phase", lead_phase),
+                    ("today_goal_queue_lead_next_action", lead_next_action),
+                    ("today_goal_queue_lead_surface", lead_surface),
+                    ("today_goal_queue_lead_action_form_available", lead_action_form_available),
+                    ("today_goal_queue_first_switch_surface", first_surface),
+                    ("today_goal_queue_write_on_get", "false"),
+                    ("today_goal_queue_provider_calls_taken", "0"),
+                    ("today_goal_queue_network_actions_taken", "0"),
+                    ("today_goal_queue_external_effects_created", "false"),
+                ]
+            ),
+            _ul(item_lines),
+            "</section>",
+        ]
+    )
+
+
+def _today_goal_queue_line(
+    root: Path,
+    storage: Storage,
+    row: sqlite3.Row,
+    *,
+    lead_goal_id: str,
+) -> str:
+    goal_id = str(row["id"])
+    state = _goal_state(root, storage, goal_id)
+    phase = _goal_current_phase(state)
+    next_action = _goal_next_action(root, state)
+    form_available = bool(_goal_next_action_form(state, next_action))
+    open_incidents = len([item for item in state["incidents"] if item["status"] == "open"])
+    open_recommendations = len(
+        [item for item in state["recommendations"] if item["status"] == "open"]
+    )
+    pending_approvals = (
+        _count_status(state["worktree_approvals"], "pending_operator_approval")
+        + _count_status(state["commit_approvals"], "pending_operator_approval")
+        + _count_status(state["publications"], "pending_operator_approval")
+    )
+    waiting_items = open_incidents + open_recommendations + pending_approvals
+    label = str(row["title"] or row["description"] or goal_id)
+    bucket = _goal_bucket(row)
+    is_lead = goal_id == lead_goal_id
+    action_href = "#today-current-action" if is_lead and form_available else next_action.href
+    action_label = "Today Current Action" if is_lead and form_available else next_action.href
+    return (
+        f"today_goal_queue_item: <a href='/goals/{quote(goal_id)}'>{_e(_compact_label(label, 56))}</a> "
+        f"bucket={_e(bucket)} lead={str(is_lead).lower()} phase={_e(phase)} "
+        f"next_action={_e(next_action.action)} action_surface=<a href='{_e(action_href)}'>{_e(action_label)}</a> "
+        f"progress={_e(_goal_progress_label(state))} waiting={waiting_items} "
+        f"approvals={pending_approvals} incidents={open_incidents} recommendations={open_recommendations} "
+        f"form_available={str(form_available).lower()}"
+    )
 
 
 def _today_command_center(

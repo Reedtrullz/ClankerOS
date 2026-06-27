@@ -4183,6 +4183,20 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Today Command Center" in today.body
     assert "data-today-command-center='true'" in today.body
     assert "data-today-command-actions='true'" in today.body
+    assert "Today Goal Queue" in today.body
+    assert "data-today-goal-queue='true'" in today.body
+    assert "today_goal_queue_status</dt><dd>first_run" in today.body
+    assert "today_goal_queue_total_goals</dt><dd>0" in today.body
+    assert "today_goal_queue_active_goals</dt><dd>0" in today.body
+    assert "today_goal_queue_paused_goals</dt><dd>0" in today.body
+    assert "today_goal_queue_completed_goals</dt><dd>0" in today.body
+    assert "today_goal_queue_lead_goal</dt><dd>none" in today.body
+    assert "today_goal_queue_first_switch_surface</dt><dd><a href='/goals'>/goals</a>" in today.body
+    assert "today_goal_queue_empty: first_run_ready" in today.body
+    assert "today_goal_queue_next_action: Register ClankerOS project" in today.body
+    assert "today_goal_queue_write_on_get</dt><dd>false" in today.body
+    assert "today_goal_queue_network_actions_taken</dt><dd>0" in today.body
+    assert "today_goal_queue_external_effects_created</dt><dd>false" in today.body
     assert "today_goal_first</dt><dd>true" in today.body
     assert "today_active_goals</dt><dd>0" in today.body
     assert "today_command_status</dt><dd>first_run" in today.body
@@ -6578,6 +6592,28 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Today Command Center" in today.body
     assert "data-today-command-center='true'" in today.body
     assert "data-today-command-actions='true'" in today.body
+    assert "Today Goal Queue" in today.body
+    assert "data-today-goal-queue='true'" in today.body
+    assert "today_goal_queue_status</dt><dd>goals_ready" in today.body
+    assert "today_goal_queue_total_goals</dt><dd>1" in today.body
+    assert "today_goal_queue_active_goals</dt><dd>1" in today.body
+    assert "today_goal_queue_paused_goals</dt><dd>0" in today.body
+    assert "today_goal_queue_completed_goals</dt><dd>0" in today.body
+    assert f"today_goal_queue_lead_goal</dt><dd><a href='/goals/{result.goal_id}'" in today.body
+    assert "today_goal_queue_lead_bucket</dt><dd>active" in today.body
+    assert "today_goal_queue_lead_phase</dt><dd>Ready to commit" in today.body
+    assert "today_goal_queue_lead_next_action</dt><dd>Create commit request" in today.body
+    assert f"today_goal_queue_lead_surface</dt><dd><a href='/goals/{result.goal_id}'>" in today.body
+    assert "today_goal_queue_lead_action_form_available</dt><dd>true" in today.body
+    assert f"today_goal_queue_first_switch_surface</dt><dd><a href='/goals/{result.goal_id}'>" in today.body
+    assert "today_goal_queue_item: <a href='/goals/" in today.body
+    assert "bucket=active lead=true phase=Ready to commit" in today.body
+    assert "next_action=Create commit request action_surface=<a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "progress=0/1 tasks completed waiting=1 approvals=1 incidents=0 recommendations=0 form_available=true" in today.body
+    assert "today_goal_queue_write_on_get</dt><dd>false" in today.body
+    assert "today_goal_queue_provider_calls_taken</dt><dd>0" in today.body
+    assert "today_goal_queue_network_actions_taken</dt><dd>0" in today.body
+    assert "today_goal_queue_external_effects_created</dt><dd>false" in today.body
     assert "today_goal_first</dt><dd>true" in today.body
     assert "today_active_goals</dt><dd>1" in today.body
     assert "today_command_status</dt><dd>goal_ready" in today.body

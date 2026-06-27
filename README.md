@@ -148,7 +148,11 @@ attention routing for approvals/incidents/recommendations/inbox, resume
 readiness, CI proof posture, a confirmed `save-goal-note` capture form for
 goal-scoped operator context, a confirmed `pause-goal` form for shelving the
 lead goal into paused lanes, and a confirmed `Finish Today` workspace save
-form for tomorrow's resume point. It reuses the existing Home, Goal, inbox,
+form for tomorrow's resume point. It also includes a `Today Goal Queue` that
+lists active, paused, and completed goals with phase, next action, switch
+links, same-page action availability for the lead goal, progress, and waiting
+counts so daily goal switching does not require opening the full `/goals`
+inventory. It reuses the existing Home, Goal, inbox,
 activity, and first-run surfaces below the command center, writes nothing on
 GET, and only exposes confirmed local forms already available elsewhere in the
 app.

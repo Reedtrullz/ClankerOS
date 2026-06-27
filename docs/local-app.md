@@ -67,7 +67,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   incidents, recommendations, and inbox items, resume readiness, CI proof
   posture, a confirmed `save-goal-note` capture form for goal-scoped operator
   context, a confirmed `pause-goal` form for the lead Goal, and a confirmed
-  `Finish Today` `save-workspace` form for tomorrow's resume point. It then
+  `Finish Today` `save-workspace` form for tomorrow's resume point. A
+  read-only `Today Goal Queue` follows with active/paused/completed counts,
+  lead-goal phase and next action, switch links, lead same-page action-form
+  availability, progress, and waiting counts across the day's goals. It then
   reuses the existing Start Here, Home Day Plan,
   Attention Brief, Focus Queue, recent activity, inbox, recommendations,
   incidents, and first-run panels without writing on GET or adding new action

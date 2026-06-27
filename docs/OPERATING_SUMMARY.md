@@ -94,7 +94,11 @@ Core layers for the bootstrap:
   posture, a confirmed `save-goal-note` capture form for goal-scoped operator
   context, a confirmed `pause-goal` form for shelving the lead Goal locally,
   and a confirmed `Finish Today` workspace save form for tomorrow's resume
-  point. It then reuses the Start Here, Home Day Plan, Attention Brief,
+  point. A read-only `Today Goal Queue` follows with active/paused/completed
+  goal counts, lead-goal phase and next action, goal switch links,
+  same-page action-form availability for the lead Goal, progress, and waiting
+  counts so the daily cockpit can switch goals without falling back to the
+  full inventory. It then reuses the Start Here, Home Day Plan, Attention Brief,
   Focus Queue, recent activity, inbox, recommendations, incidents, and
   first-run panels without writing on GET or adding action authority. The
   local app also exposes `/resume` as a
