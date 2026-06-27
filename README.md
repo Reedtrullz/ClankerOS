@@ -310,12 +310,12 @@ The app shell also includes a global `Operator Focus` strip, breadcrumbs,
 recent local items, a command palette, keyboard shortcuts, and a dark/light
 theme toggle on every page. The focus strip keeps the saved or lead goal's
 phase, one primary action, target surface, progress, waiting counts, and
-resume link visible outside the Goal page. The command palette includes the
-same goal-aware `Continue Current Goal` block and, when the current next
-action is browser-available, the same confirmed local action form from the
-Goal page so the operator can continue without leaving the palette. Those
-controls stay inside the local browser app and do not perform external
-effects.
+resume link visible outside the Goal page, and can expand the same confirmed
+local action form when the current next action is browser-available. The
+command palette includes the same goal-aware `Continue Current Goal` block and
+the same confirmed local action form so the operator can continue without
+leaving the palette. Those controls stay inside the local browser app and do
+not perform external effects.
 
 Use `/workflow?delegation_id=<id>` or `/workflow?run_id=<coder_run_id>` when
 you want the scoped operator map. The selected workflow page now includes a

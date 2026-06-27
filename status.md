@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-27 Operator Focus Action Form
+
+- Promoted the global `Operator Focus` strip from a read-only current-goal
+  readback into a compact continuation surface. When the saved or lead goal's
+  next action is browser-available, the strip now exposes an expandable
+  `Run Current Action` disclosure with the same confirmed local action form as
+  the Goal page.
+- The command palette and focus strip now share the same precomputed
+  next-action form from focus context, so their form availability and safety
+  readbacks stay aligned across Home, Goal, Resume, Workspace, and other app
+  pages.
+- README, local app docs, and the operating summary now describe the shared
+  shell as an always-visible daily-use continuation surface rather than a
+  navigation/readback layer only.
+- Non-claims: this does not add a new action engine, write state on GET, run
+  work automatically, approve gates, create delegations, create coder prep,
+  commit, push, create PRs, deploy, fetch GitHub status, call providers, use
+  non-loopback network actions, or mutate external systems. It only renders
+  existing confirmed local forms when those forms already exist for the
+  current next action.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Command Palette Action Form
 
 - Promoted the shared command palette from a read-only `Continue Current Goal`

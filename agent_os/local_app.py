@@ -11960,7 +11960,8 @@ def _operator_focus_context(root: Path) -> dict[str, Any]:
     goal = goal_state["goal"]
     phase = _goal_current_phase(goal_state)
     next_action = _goal_next_action(root, goal_state)
-    form_available = bool(_goal_next_action_form(goal_state, next_action))
+    action_form = _goal_next_action_form(goal_state, next_action)
+    form_available = bool(action_form)
     open_incidents = sum(1 for row in goal_state["incidents"] if row["status"] == "open")
     open_recommendations = sum(
         1 for row in goal_state["recommendations"] if row["status"] == "open"
@@ -11983,6 +11984,7 @@ def _operator_focus_context(root: Path) -> dict[str, Any]:
         "goal_label": _compact_label(goal.title or goal.description or goal.id, 72),
         "phase": phase,
         "next_action": next_action,
+        "action_form": action_form,
         "form_available": form_available,
         "attention": _goal_operator_attention(phase, next_action),
         "progress": _goal_progress_label(goal_state),
@@ -12011,6 +12013,7 @@ def _operator_focus_strip(context: dict[str, Any]) -> str:
                             "operator_focus_target",
                             SafeHtml(f"<a href='{_e(href)}'>{_e(label)}</a>"),
                         ),
+                        ("operator_focus_action_form_available", "false"),
                         ("operator_focus_write_on_get", "false"),
                         ("operator_focus_provider_calls_taken", "0"),
                         ("operator_focus_network_actions_taken", "0"),
@@ -12030,6 +12033,7 @@ def _operator_focus_strip(context: dict[str, Any]) -> str:
 
     goal = context["goal"]
     next_action = context["next_action"]
+    action_form = str(context.get("action_form") or "")
     return "".join(
         [
             "<section class='operator-focus-strip' data-operator-focus-strip='true'><h2>Operator Focus</h2>",
@@ -12069,6 +12073,15 @@ def _operator_focus_strip(context: dict[str, Any]) -> str:
                         "operator_focus_form_available",
                         "true" if context["form_available"] else "false",
                     ),
+                    (
+                        "operator_focus_action_form_available",
+                        "true" if action_form else "false",
+                    ),
+                    (
+                        "operator_focus_confirmation_required",
+                        "true" if action_form else "false",
+                    ),
+                    ("operator_focus_safety_boundary", "confirmed_local_action_only"),
                     ("operator_focus_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
                     ("operator_focus_write_on_get", "false"),
                     ("operator_focus_provider_calls_taken", "0"),
@@ -12090,6 +12103,15 @@ def _operator_focus_strip(context: dict[str, Any]) -> str:
                     "operator_focus_resume: <a href='/resume'>/resume</a>",
                     "operator_focus_safety: read-only local navigation",
                 ]
+            ),
+            (
+                "<details class='operator-focus-action' data-operator-focus-action='true'>"
+                "<summary>Run Current Action</summary>"
+                "<p class='muted'>Use the current goal's browser-available local next action from this page. Confirmation is required before any local write.</p>"
+                f"{action_form}"
+                "</details>"
+                if action_form
+                else ""
             ),
             "</section>",
         ]
@@ -12179,7 +12201,7 @@ def _command_palette_continue(focus_context: dict[str, Any]) -> str:
 
     goal = focus_context["goal"]
     next_action = focus_context["next_action"]
-    action_form = _goal_next_action_form(focus_context["goal_state"], next_action)
+    action_form = str(focus_context.get("action_form") or "")
     return "".join(
         [
             "<section class='palette-continue' data-command-palette-continue='true'>",
@@ -12320,6 +12342,9 @@ def _html_page(
     .operator-focus-strip dl {{ grid-template-columns:minmax(170px, 230px) 1fr; }}
     .operator-focus-strip ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
     .operator-focus-strip li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .operator-focus-action {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
+    .operator-focus-action summary {{ cursor:pointer; font-weight:700; }}
+    .operator-focus-action form {{ margin-top:10px; }}
     section {{ border-bottom:1px solid var(--line); padding:20px 0; }}
     h1 {{ font-size:30px; line-height:1.15; margin:0 0 10px; letter-spacing:0; }}
     h2 {{ font-size:18px; margin:0 0 12px; letter-spacing:0; }}

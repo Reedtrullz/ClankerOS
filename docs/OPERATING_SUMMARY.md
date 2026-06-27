@@ -253,8 +253,9 @@ Core layers for the bootstrap:
   Every app page also includes a shared read-only `Operator Focus` strip that
   derives from the saved workspace goal or current lead goal and keeps phase,
   one primary action, target local surface, progress, waiting counts, form
-  availability, `/resume`, and no-write/no-provider/no-network/no-external-
-  effect boundaries visible outside the Goal page.
+  availability, `/resume`, an expandable confirmed local action form when the
+  current next action is browser-available, and no-write/no-provider/
+  no-network/no-external-effect boundaries visible outside the Goal page.
   They also include a confirmed
   `save-goal-note` form that appends local operator resume context to the
   goal-scoped `operator-notes.md` artifact; saved operator notes also become
@@ -354,13 +355,13 @@ Core layers for the bootstrap:
   local `save-workspace` form so the operator can remember the current artifact
   as the next-session resume anchor without writing on GET. Every page shares
   a browser operator shell with breadcrumbs, recent local items, a command
-  palette, keyboard shortcuts, and a theme toggle. The command palette now
-  includes a goal-aware `Continue Current Goal` block from the saved workspace
-  goal or current lead goal, showing phase, one recommended action, target
-  surface, zero-effect readbacks, and the same confirmed local action form as
-  the Goal page when the current next action is browser-available. It still
-  writes nothing on GET and only submits existing local forms after explicit
-  confirmation. The workflow page
+  palette, keyboard shortcuts, and a theme toggle. The shared focus strip and
+  command palette now include the same goal-aware current-action readback from
+  the saved workspace goal or current lead goal, showing phase, one
+  recommended action, target surface, zero-effect readbacks, and the same
+  confirmed local action form as the Goal page when the current next action is
+  browser-available. They still write nothing on GET and only submit existing
+  local forms after explicit confirmation. The workflow page
   can be
   scoped with a
   delegation or coder run id, then annotates related stepper rows with

@@ -4228,6 +4228,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "operator_focus_status</dt><dd>no_goal" in root.body
     assert "operator_focus_primary_action</dt><dd>Open goals" in root.body
     assert "operator_focus_target</dt><dd><a href='/goals'>/goals</a>" in root.body
+    assert "operator_focus_action_form_available</dt><dd>false" in root.body
     assert "operator_focus_write_on_get</dt><dd>false" in root.body
     assert "operator_focus_provider_calls_taken</dt><dd>0" in root.body
     assert "operator_focus_network_actions_taken</dt><dd>0" in root.body
@@ -5792,6 +5793,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "operator_focus_waiting_items</dt><dd>1" in dashboard.body
     assert "operator_focus_pending_approvals</dt><dd>1" in dashboard.body
     assert "operator_focus_form_available</dt><dd>true" in dashboard.body
+    assert "operator_focus_action_form_available</dt><dd>true" in dashboard.body
+    assert "operator_focus_confirmation_required</dt><dd>true" in dashboard.body
+    assert "operator_focus_safety_boundary</dt><dd>confirmed_local_action_only" in dashboard.body
     assert "operator_focus_resume_surface</dt><dd><a href='/resume'>/resume</a>" in dashboard.body
     assert "operator_focus_write_on_get</dt><dd>false" in dashboard.body
     assert "operator_focus_provider_calls_taken</dt><dd>0" in dashboard.body
@@ -5799,6 +5803,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "operator_focus_external_effects_created</dt><dd>false" in dashboard.body
     assert "operator_focus_now: Act: Create commit request" in dashboard.body
     assert "operator_focus_waiting: approvals=1 incidents=0 recommendations=0" in dashboard.body
+    assert "data-operator-focus-action='true'" in dashboard.body
+    assert "Run Current Action" in dashboard.body
     assert f"/goals/{result.goal_id}" in dashboard.body
 
     goals = render_local_app_route(tmp_path, "/goals")
@@ -5827,6 +5833,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "palette_continue_action_form_available</dt><dd>true" in goal.body
     assert "palette_continue_confirmation_required</dt><dd>true" in goal.body
     assert "Continue Action Form" in goal.body
+    assert "operator_focus_action_form_available</dt><dd>true" in goal.body
+    assert "data-operator-focus-action='true'" in goal.body
     assert "data-recent-items='true'" in goal.body
     assert "data-breadcrumbs='true'" in goal.body
     assert "Goal Section Index" in goal.body
