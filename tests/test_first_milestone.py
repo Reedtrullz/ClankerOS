@@ -5344,6 +5344,20 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "artifact_command_network_actions_taken</dt><dd>0" in markdown.body
     assert "artifact_command_external_effects_created</dt><dd>false" in markdown.body
     assert "artifact_command_safety: bounded inert artifact read" in markdown.body
+    assert "Artifact Review Brief" in markdown.body
+    assert "data-artifact-review-brief='true'" in markdown.body
+    assert "artifact_review_status</dt><dd>unclassified" in markdown.body
+    assert "artifact_review_path</dt><dd>docs/sample.md" in markdown.body
+    assert "artifact_review_context_source</dt><dd>path_unclassified" in markdown.body
+    assert "artifact_review_type</dt><dd>markdown" in markdown.body
+    assert "artifact_review_primary_action</dt><dd>Remember artifact" in markdown.body
+    assert "artifact_review_primary_surface</dt><dd><a href='#remember-artifact'>Remember Artifact</a>" in markdown.body
+    assert "artifact_review_secondary_surface</dt><dd><a href='/workspace'>/workspace</a>" in markdown.body
+    assert "artifact_review_write_on_get</dt><dd>false" in markdown.body
+    assert "artifact_review_content_executed</dt><dd>false" in markdown.body
+    assert "artifact_review_network_actions_taken</dt><dd>0" in markdown.body
+    assert "artifact_review_external_effects_created</dt><dd>false" in markdown.body
+    assert "artifact_review_safety: bounded inert read-only review" in markdown.body
     assert "id='artifact-content'" in markdown.body
     assert "id='remember-artifact'" in markdown.body
     assert "artifact_type" in markdown.body
@@ -5401,6 +5415,11 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "artifact_command_next_action</dt><dd>Resume from artifact" in remembered_markdown.body
     assert "artifact_command_target_surface</dt><dd><a href='/resume'>/resume</a>" in remembered_markdown.body
     assert "artifact_command_reason</dt><dd>artifact_is_saved_workspace_anchor" in remembered_markdown.body
+    assert "artifact_review_status</dt><dd>saved_resume_anchor" in remembered_markdown.body
+    assert "artifact_review_already_remembered</dt><dd>true" in remembered_markdown.body
+    assert "artifact_review_primary_action</dt><dd>Resume from artifact" in remembered_markdown.body
+    assert "artifact_review_primary_surface</dt><dd><a href='/resume'>/resume</a>" in remembered_markdown.body
+    assert "artifact_review_secondary_surface</dt><dd><a href='/workspace'>/workspace</a>" in remembered_markdown.body
     json_response = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.json")
     assert json_response.status == 200
     assert "json" in json_response.body
@@ -5455,6 +5474,15 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "artifact_command_project</dt><dd><a href='/projects/subject'>subject</a>" in goal_artifact_response.body
     assert "artifact_command_goal</dt><dd><a href='/goals/goal_demo'>goal_demo</a>" in goal_artifact_response.body
     assert "artifact_command_context_source</dt><dd>project_goal_path" in goal_artifact_response.body
+    assert "Artifact Review Brief" in goal_artifact_response.body
+    assert "artifact_review_status</dt><dd>goal_scoped" in goal_artifact_response.body
+    assert "artifact_review_project</dt><dd><a href='/projects/subject'>subject</a>" in goal_artifact_response.body
+    assert "artifact_review_goal</dt><dd><a href='/goals/goal_demo'>goal_demo</a>" in goal_artifact_response.body
+    assert "artifact_review_context_source</dt><dd>project_goal_path" in goal_artifact_response.body
+    assert "artifact_review_primary_action</dt><dd>Return to goal" in goal_artifact_response.body
+    assert "artifact_review_primary_surface</dt><dd><a href='/goals/goal_demo'>/goals/goal_demo</a>" in goal_artifact_response.body
+    assert "artifact_review_secondary_surface</dt><dd><a href='/projects/subject'>/projects/subject</a>" in goal_artifact_response.body
+    assert "artifact_review_reason</dt><dd>artifact_path_identifies_goal_context" in goal_artifact_response.body
 
     absolute = render_local_app_route(
         tmp_path,

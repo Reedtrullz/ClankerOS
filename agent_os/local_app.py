@@ -9958,6 +9958,15 @@ def _artifact_viewer(
                 truncated=truncated,
                 workspace=workspace,
             ),
+            _artifact_review_brief(
+                relative_path=repo_relative,
+                artifact_type=artifact_type,
+                render_family=render_family,
+                renderer=renderer,
+                line_count=line_count,
+                truncated=truncated,
+                workspace=workspace,
+            ),
             f"<section id='artifact-content'><h1>Artifact {_e(repo_relative)}</h1>",
             _kv(
                 [
@@ -9979,6 +9988,108 @@ def _artifact_viewer(
         ]
     )
     return _html_page(root, "Artifact", body, current_path=current_path)
+
+
+def _artifact_review_brief(
+    *,
+    relative_path: str,
+    artifact_type: str,
+    render_family: str,
+    renderer: str,
+    line_count: int,
+    truncated: bool,
+    workspace: dict[str, str],
+) -> str:
+    context = _artifact_context_from_path(relative_path)
+    project_id = context["project_id"]
+    goal_id = context["goal_id"]
+    remembered = workspace.get("last_viewed_artifact") == relative_path
+    if goal_id != "unknown":
+        review_status = "goal_scoped"
+        primary_action = "Return to goal"
+        primary_href = f"/goals/{quote(goal_id)}"
+        primary_label = f"/goals/{goal_id}"
+        secondary_href = f"/projects/{quote(project_id)}"
+        secondary_label = f"/projects/{project_id}"
+        reason = "artifact_path_identifies_goal_context"
+    elif remembered:
+        review_status = "saved_resume_anchor"
+        primary_action = "Resume from artifact"
+        primary_href = "/resume"
+        primary_label = "/resume"
+        secondary_href = "/workspace"
+        secondary_label = "/workspace"
+        reason = "artifact_saved_as_workspace_anchor"
+    elif context["source"] == "delegation_path":
+        review_status = "delegation_scoped"
+        primary_action = "Review delegation runs"
+        primary_href = "/delegation-runs"
+        primary_label = "/delegation-runs"
+        secondary_href = "#remember-artifact"
+        secondary_label = "Remember Artifact"
+        reason = "artifact_path_identifies_delegation_context"
+    else:
+        review_status = "unclassified"
+        primary_action = "Remember artifact"
+        primary_href = "#remember-artifact"
+        primary_label = "Remember Artifact"
+        secondary_href = "/workspace"
+        secondary_label = "/workspace"
+        reason = "artifact_path_unclassified"
+    project_value: str | SafeHtml = project_id
+    if project_id != "unknown":
+        project_value = SafeHtml(f"<a href='/projects/{quote(project_id)}'>{_e(project_id)}</a>")
+    goal_value: str | SafeHtml = goal_id
+    if goal_id != "unknown":
+        goal_value = SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(goal_id)}</a>")
+    return "".join(
+        [
+            "<section id='artifact-review-brief' class='panel artifact-review-brief' data-artifact-review-brief='true'><h2>Artifact Review Brief</h2>",
+            "<p class='muted'>A read-only review card that connects this bounded artifact back to the local operator workflow before the inert content view.</p>",
+            _kv(
+                [
+                    ("artifact_review_status", review_status),
+                    ("artifact_review_path", relative_path),
+                    ("artifact_review_project", project_value),
+                    ("artifact_review_goal", goal_value),
+                    ("artifact_review_context_source", context["source"]),
+                    ("artifact_review_type", artifact_type),
+                    ("artifact_review_render_family", render_family),
+                    ("artifact_review_renderer", renderer),
+                    ("artifact_review_line_count", str(line_count)),
+                    ("artifact_review_truncated", str(truncated).lower()),
+                    ("artifact_review_saved_workspace_project", workspace.get("open_project", "")),
+                    ("artifact_review_saved_workspace_goal", workspace.get("open_goal", "")),
+                    ("artifact_review_already_remembered", str(remembered).lower()),
+                    ("artifact_review_primary_action", primary_action),
+                    (
+                        "artifact_review_primary_surface",
+                        SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+                    ),
+                    (
+                        "artifact_review_secondary_surface",
+                        SafeHtml(f"<a href='{_e(secondary_href)}'>{_e(secondary_label)}</a>"),
+                    ),
+                    ("artifact_review_reason", reason),
+                    ("artifact_review_write_on_get", "false"),
+                    ("artifact_review_raw_filesystem_browsing", "false"),
+                    ("artifact_review_content_executed", "false"),
+                    ("artifact_review_provider_calls_taken_by_clankeros", "0"),
+                    ("artifact_review_network_actions_taken", "0"),
+                    ("artifact_review_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"artifact_review_now: {_e(primary_action)}",
+                    f"artifact_review_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                    f"artifact_review_reason: {_e(reason)}",
+                    "artifact_review_safety: bounded inert read-only review",
+                ]
+            ),
+            "</section>",
+        ]
+    )
 
 
 def _artifact_command_bar(
@@ -12882,6 +12993,9 @@ def _html_page(
     .artifact-command-bar {{ border-left:4px solid var(--accent); }}
     .artifact-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .artifact-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .artifact-review-brief {{ border-left:4px solid var(--ok); }}
+    .artifact-review-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .artifact-review-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .workflow-map-rail {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px; }}
     .workflow-map-rail li {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; overflow-wrap:anywhere; }}
     .workflow-map-rail li[data-gate-marker="current"] {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}

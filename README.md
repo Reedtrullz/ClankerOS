@@ -246,6 +246,10 @@ of exposing raw filesystem browsing. Each artifact page now starts with a
 read-only `Artifact Command Bar` showing path, type, renderer, size, line
 count, truncation state, inferred project/goal context, whether it is already
 the saved resume anchor, and one next action: remember it or resume from it.
+Each artifact page also includes an `Artifact Review Brief` that links
+goal-scoped artifacts back to their Goal and Project, or points unclassified
+artifacts toward the remember/resume workspace path before the inert content
+view.
 
 Use `/goals` on a fresh checkout for first-run browser actions. The page now
 renders a state-aware First Run Guide plus confirmed local forms for

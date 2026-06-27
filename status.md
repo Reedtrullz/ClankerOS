@@ -1,5 +1,29 @@
 # Status
 
+## 2026-06-27 Artifact Review Brief
+
+- Added a read-only `Artifact Review Brief` to `/artifacts?path=...` between
+  the artifact command bar and inert content renderer.
+- The brief identifies goal-scoped, delegation-scoped, saved-resume-anchor,
+  and unclassified artifacts. Goal-scoped artifacts link back to their Goal
+  and Project; unclassified artifacts point toward the remember/resume
+  workspace path.
+- README, local app docs, and the operating summary now describe artifact
+  pages as workflow review surfaces rather than bounded file previews only.
+- Non-claims: this does not write state on GET, execute artifact content,
+  browse arbitrary filesystem paths, approve gates, fetch GitHub status, push,
+  create PRs, deploy, call providers, use non-loopback network actions, or
+  mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_artifact_viewer_is_read_only_and_bounded" --tb=short`
+    -> `1 passed, 514 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+
 ## 2026-06-27 Workspace Daily Brief
 
 - Added a read-only `Workspace Daily Brief` near the top of `/workspace`.

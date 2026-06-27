@@ -566,6 +566,11 @@ count, truncation state, inferred project/goal links when the path lives under
 action, and write-on-GET/raw-filesystem/content-execution/network/external-
 effect boundaries. The command bar links to `#remember-artifact` when the
 artifact is not yet the saved resume anchor and to `/resume` once it is.
+An `Artifact Review Brief` follows the command bar and summarizes whether the
+artifact is goal-scoped, delegation-scoped, saved as the resume anchor, or
+unclassified. It links goal-scoped artifacts back to the Goal and Project and
+points unclassified artifacts toward the remember/resume workspace path before
+the inert content renderer.
 
 ## Safe Actions
 

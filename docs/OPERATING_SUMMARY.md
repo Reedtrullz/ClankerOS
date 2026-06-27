@@ -133,7 +133,10 @@ Core layers for the bootstrap:
   rendered bytes, line count, truncation state, inferred project/goal context,
   workspace anchor status, one next action, and no-write/no-raw-filesystem/
   no-content-execution/no-network/no-external-effect boundaries before the
-  inert content renderer and remember-artifact form;
+  inert content renderer and remember-artifact form. It also includes a
+  read-only `Artifact Review Brief` that links goal-scoped artifacts back to
+  their Goal and Project, identifies saved resume anchors, and points
+  unclassified artifacts toward the remember/resume workspace path;
   `/workspace` for persistent open project/goal/filter/panel/last-artifact
   state in `.clanker/app/workspace.json` plus the saved goal's current phase,
   one next action, operator attention cue, target surface, and the same
