@@ -1,5 +1,39 @@
 # Status
 
+## 2026-06-27 First-Run Action Result Continuation
+
+- Updated successful local app action result pages so a first-run operator can
+  keep moving even before a saved Goal exists.
+- When `register-project` completes and `.clanker/app/workspace.json` has a
+  saved project but no saved Goal, `Action Result Details` now renders an
+  `Action Continuation` block from first-run progress, links Home and Today
+  fallback targets, and shows the existing confirmation-required
+  `create-goal` form inline.
+- Kept the existing safety boundary: the result page is read-only on GET, the
+  inline form still routes through the normal confirmation page, and no
+  follow-up work runs automatically.
+- Updated README, local app docs, operating summary, and first-run browser
+  action assertions.
+- Non-claims: this does not fetch GitHub status, poll GitHub from the app, call
+  providers, approve work, execute runs, commit, push, create PRs, deploy,
+  create projects or goals without confirmation, write on GET, use non-loopback
+  network actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `df -h /System/Volumes/Data`
+    -> `84Gi` available before work
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> passed, `2 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root "$tmp" app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation counters at `0`
+  - `python3 -m agent_os.cli --root "$tmp" app-demo-smoke-test`
+    -> passed on a temporary root with fixture-backed route snippets matched and provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
 ## 2026-06-27 Home First-Run Same-Page Actions
 
 - Updated the root `/` Goal-First Home board so first-run operators no longer

@@ -64,7 +64,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   Confirmed
   `register-project` and `create-goal` browser actions also update
   `.clanker/app/workspace.json`, so `/resume` can restore the new project or
-  goal without a separate manual save step.
+  goal without a separate manual save step. After `register-project`, the
+  local `Action Result Details` page also reads first-run progress and renders
+  an inline confirmed `create-goal` continuation, plus Home and Today fallback
+  links, so the operator can continue before a saved Goal exists.
 - `/today` - daily command center for the current operating day. It starts
   with a read-only `Today Command Center` that selects the lead Goal or
   first-run step, shows the current phase, one primary action, target surface
@@ -805,7 +808,10 @@ are returned, a next-page link, and the safety boundary. They also render an
 `Action Continuation` block from the refreshed saved goal state, including the
 current phase, one next action, target surface, and the same confirmed local
 action form when available, so the operator can keep moving without guessing
-which page to open next. Following the next-page link renders an `Action
+which page to open next. If there is no saved Goal yet, the continuation uses
+first-run progress instead and can render the next confirmed first-run form
+inline, such as `create-goal` after `register-project`, without writing on
+GET. Following the next-page link renders an `Action
 Notice` banner on the target GET page, preserving the action result context
 while the operator reviews the dashboard, run, delegation, or approval surface.
 Failed actions render `Action Error Details` with the

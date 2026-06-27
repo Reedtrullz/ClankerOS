@@ -587,7 +587,11 @@ Core layers for the bootstrap:
   action, target surface, form surface, Goal/delegation context, confirmation
   posture, and zero-effect counters; after a Goal exists, it can render the
   same confirmed local next-action form inline for scout delegation,
-  context-pack generation, and first delegation execution.
+  context-pack generation, and first delegation execution. After a confirmed
+  `register-project` action, `Action Result Details` can also continue the
+  first-run browser path before a saved Goal exists by rendering the
+  confirmation-required `create-goal` form inline plus Home and Today fallback
+  targets, without writing on GET.
   Coder worktree run rows in review,
   dashboard, and the local app include changed-file counts and compact diff
   summaries read from existing evidence. The app also includes a read-only
@@ -694,7 +698,9 @@ Core layers for the bootstrap:
   result fields, artifact links, next-page link, safety boundary, and an
   `Action Continuation` block from the refreshed saved goal state with phase,
   one next action, target surface, and the same confirmed local action form
-  when available; GET pages render an escaped `Action Notice` banner when reached through a notice link;
+  when available; when no saved Goal exists, the continuation falls back to
+  first-run progress and can render the next confirmation-required first-run
+  form inline; GET pages render an escaped `Action Notice` banner when reached through a notice link;
   action error pages render the attempted action, submitted payload, error
   details, and a no-action-completed non-claim. It does not push, create PRs,
   deploy, call providers, execute arbitrary commands, or use the network

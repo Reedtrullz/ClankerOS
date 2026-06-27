@@ -18375,23 +18375,7 @@ def _action_result_continuation_section(root: Path, location: str, message: str)
 
     goal_id = str(workspace.get("open_goal") or "").strip()
     if not goal_id:
-        return "".join(
-            [
-                "<section class='action-continuation' data-action-continuation='true'><h2>Action Continuation</h2>",
-                _kv(
-                    [
-                        ("action_continuation_status", "no_saved_goal"),
-                        ("action_continuation_next_page", SafeHtml(f"<a href='{_e(next_href)}'>{_e(location)}</a>")),
-                        ("action_continuation_action_form_available", "false"),
-                        ("action_continuation_write_on_get", "false"),
-                        ("action_continuation_provider_calls_taken", "0"),
-                        ("action_continuation_network_actions_taken", "0"),
-                        ("action_continuation_external_effects_created", "false"),
-                    ]
-                ),
-                "</section>",
-            ]
-        )
+        return _action_result_first_run_continuation(root, storage, workspace, next_href, location)
 
     state = _goal_state(root, storage, goal_id)
     goal = state.get("goal")
@@ -18469,6 +18453,110 @@ def _action_result_continuation_section(root: Path, location: str, message: str)
                 if action_form
                 else ""
             ),
+            "</section>",
+        ]
+    )
+
+
+def _action_result_first_run_continuation(
+    root: Path,
+    storage: Storage,
+    workspace: dict[str, str],
+    next_href: str,
+    location: str,
+) -> str:
+    progress = _first_run_progress(root, storage)
+    first_run_href, first_run_label = _first_run_same_page_target(progress)
+    home_href = f"/{first_run_href}" if first_run_href.startswith("#") else first_run_href
+    today_href = f"/today{first_run_href}" if first_run_href.startswith("#") else "/today"
+    current_step = str(progress["current_step"])
+    form = ""
+    form_title = first_run_label
+    if current_step == "create_project":
+        form = _input_form(
+            "register-project",
+            {},
+            {
+                "name": str(progress["default_project"]),
+                "path": str(root),
+                "test_command": "python3 -m pytest -q",
+                "allowed_write_roots": str(root),
+            },
+        )
+    elif current_step == "create_first_goal":
+        form = _input_form(
+            "create-goal",
+            {},
+            {
+                "project_id": str(progress["default_project"]),
+                "prompt": "Make ClankerOS easier to operate from the browser.",
+                "created_by_profile": "planner",
+            },
+        )
+    form_available = bool(form)
+    target_href = "#action-continuation-first-run-form" if form_available else home_href
+    target_label = form_title if form_available else first_run_label
+    form_section = ""
+    if form_available:
+        form_section = "".join(
+            [
+                "<h3 id='action-continuation-first-run-form'>",
+                _e(form_title),
+                "</h3>",
+                "<p class='muted'>Continue the first-run browser path from this result page. Confirmation is still required before any local write.</p>",
+                form,
+            ]
+        )
+    return "".join(
+        [
+            "<section class='action-continuation' data-action-continuation='true'><h2>Action Continuation</h2>",
+            "<p class='muted'>Continue the first-run path after this local action without returning to the CLI.</p>",
+            _kv(
+                [
+                    ("action_continuation_status", "first_run_ready"),
+                    ("action_continuation_source", "first_run_progress_after_action"),
+                    ("action_continuation_current_step", current_step),
+                    ("action_continuation_next_action", str(progress["next_action"])),
+                    (
+                        "action_continuation_target",
+                        SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"),
+                    ),
+                    (
+                        "action_continuation_home_target",
+                        SafeHtml(f"<a href='{_e(home_href)}'>{_e(first_run_label)}</a>"),
+                    ),
+                    (
+                        "action_continuation_today_target",
+                        SafeHtml(f"<a href='{_e(today_href)}'>/today</a>"),
+                    ),
+                    (
+                        "action_continuation_next_page",
+                        SafeHtml(f"<a href='{_e(next_href)}'>{_e(location)}</a>"),
+                    ),
+                    ("action_continuation_project", str(progress["default_project"])),
+                    (
+                        "action_continuation_saved_project",
+                        str(workspace.get("open_project") or "none"),
+                    ),
+                    ("action_continuation_saved_goal", "none"),
+                    ("action_continuation_action_form_available", str(form_available).lower()),
+                    ("action_continuation_confirmation_required", str(form_available).lower()),
+                    ("action_continuation_safety_boundary", "confirmed_local_action_only"),
+                    ("action_continuation_write_on_get", "false"),
+                    ("action_continuation_provider_calls_taken", "0"),
+                    ("action_continuation_network_actions_taken", "0"),
+                    ("action_continuation_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"action_continuation_now: {_e(str(progress['next_action']))}",
+                    f"action_continuation_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"action_continuation_home: <a href='{_e(home_href)}'>{_e(first_run_label)}</a>",
+                    "action_continuation_safety: confirmed local first-run action only",
+                ]
+            ),
+            form_section,
             "</section>",
         ]
     )

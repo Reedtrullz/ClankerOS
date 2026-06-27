@@ -6098,6 +6098,32 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     )
 
     assert register_result.status == 200
+    assert "Action Continuation" in register_result.body
+    assert "action_continuation_status</dt><dd>first_run_ready" in register_result.body
+    assert "action_continuation_source</dt><dd>first_run_progress_after_action" in register_result.body
+    assert "action_continuation_current_step</dt><dd>create_first_goal" in register_result.body
+    assert "action_continuation_next_action</dt><dd>Create first goal" in register_result.body
+    assert (
+        "action_continuation_target</dt><dd><a href='#action-continuation-first-run-form'>"
+        "Create First Goal</a>"
+    ) in register_result.body
+    assert (
+        "action_continuation_home_target</dt><dd><a href='/#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in register_result.body
+    assert "action_continuation_today_target</dt><dd><a href='/today#first-run-create-goal'>/today</a>" in register_result.body
+    assert "action_continuation_project</dt><dd>clankeros" in register_result.body
+    assert "action_continuation_saved_project</dt><dd>clankeros" in register_result.body
+    assert "action_continuation_saved_goal</dt><dd>none" in register_result.body
+    assert "action_continuation_action_form_available</dt><dd>true" in register_result.body
+    assert "action_continuation_confirmation_required</dt><dd>true" in register_result.body
+    assert "action_continuation_write_on_get</dt><dd>false" in register_result.body
+    assert "action_continuation_provider_calls_taken</dt><dd>0" in register_result.body
+    assert "action_continuation_network_actions_taken</dt><dd>0" in register_result.body
+    assert "action_continuation_external_effects_created</dt><dd>false" in register_result.body
+    assert "id='action-continuation-first-run-form'" in register_result.body
+    assert "action='/actions/create-goal'" in register_result.body
+    assert "name='project_id' value='clankeros'" in register_result.body
     workspace_path = tmp_path / ".clanker" / "app" / "workspace.json"
     assert workspace_path.exists()
     registered_workspace = json.loads(workspace_path.read_text(encoding="utf-8"))

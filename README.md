@@ -393,7 +393,10 @@ renders a state-aware First Run Guide plus confirmed local forms for
 and first goal without switching to CLI commands. The guide tracks whether
 the project, goal, first delegation, and context pack exist, then points to
 the current surface, the confirmed local `run-delegation` action, or its exact
-CLI fallback command. From the created goal
+CLI fallback command. After a confirmed `register-project` action, the
+`Action Result Details` page also renders a first-run continuation with an
+inline confirmed `create-goal` form plus Home and Today fallback links, so the
+operator can keep moving before a saved Goal exists. From the created goal
 page, the Next Action card can create the first read-only scout delegation
 with a confirmed `delegate` form, writing a local contract artifact without
 starting a subagent or calling a provider. After the delegation exists, the
@@ -635,7 +638,10 @@ return an `Action Result Details` page with the payload, result fields,
 artifact links, next-page link, and safety boundary. Successful results also
 show an `Action Continuation` block from the
 refreshed saved goal, including current phase, one next action, target page,
-and the same confirmed local action form when available. Following the
+and the same confirmed local action form when available. Before a saved Goal
+exists, that block follows first-run progress instead and can render the
+confirmed next first-run form inline, such as `create-goal` after
+`register-project`. Following the
 next-page link renders an `Action Notice` banner on the target page so the
 operator keeps context. The dashboard and `/health`
 surface the same warning posture for non-local binds, dirty tracked files,
