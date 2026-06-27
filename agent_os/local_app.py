@@ -4083,11 +4083,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_git_status(root, state),
             _goal_verification_evidence(root, state),
             _goal_operator_notes_section(root, state),
-            _list_section(
-                "Remaining Work",
-                _goal_remaining_work_lines(root, state, next_action),
-                anchor_id="goal-remaining-work",
-            ),
+            _goal_remaining_work_section(root, state, next_action),
             _non_claim_banner(),
         ]
     )
@@ -4172,6 +4168,7 @@ def _goal_section_index() -> str:
         ("Verification evidence", "goal-verification-evidence"),
         ("Operator notes command", "goal-operator-notes-command-bar"),
         ("Operator notes", "goal-operator-notes"),
+        ("Remaining work command", "goal-remaining-work-command-bar"),
         ("Remaining work", "goal-remaining-work"),
     ]
     links = [
@@ -8279,6 +8276,106 @@ def _goal_operator_notes_path(goal: Any) -> Path:
 
 def _goal_file_path(project_id: str, goal_id: str, filename: str) -> Path:
     return Path(".clanker") / "projects" / project_id / "goals" / goal_id / filename
+
+
+def _goal_remaining_work_section(
+    root: Path,
+    state: dict[str, Any],
+    next_action: GoalNextAction,
+) -> str:
+    lines = _goal_remaining_work_lines(root, state, next_action)
+    return _goal_remaining_work_command_bar(root, state, next_action, lines) + _list_section(
+        "Remaining Work",
+        lines,
+        anchor_id="goal-remaining-work",
+    )
+
+
+def _goal_remaining_work_command_bar(
+    root: Path,
+    state: dict[str, Any],
+    next_action: GoalNextAction,
+    remaining_lines: list[str],
+) -> str:
+    goal = state["goal"]
+    gates, counts, current_gate = _goal_workflow_gate_summary(root, state, next_action)
+    total_gates = len(gates)
+    done_gates = counts.get("done", 0)
+    pending_gates = counts.get("pending", 0)
+    waiting_gates = counts.get("waiting", 0)
+    open_tasks = [task for task in state["tasks"] if task.status != "completed"]
+    open_incidents = [row for row in state["incidents"] if row["status"] == "open"]
+    open_recommendations = [
+        row for row in state["recommendations"] if row["status"] == "open"
+    ]
+    pending_approvals = (
+        _count_status(state["worktree_approvals"], "pending_operator_approval")
+        + _count_status(state["commit_approvals"], "pending_operator_approval")
+        + _count_status(state["publications"], "pending_operator_approval")
+    )
+    first_open_task = open_tasks[0].id if open_tasks else "none"
+    if goal.status == "completed":
+        status = "completed"
+        reason = "goal_status_completed"
+    elif open_incidents:
+        status = "blocked_by_incidents"
+        reason = "open_incidents"
+    elif pending_gates:
+        status = "pending_gate"
+        reason = f"current_gate={current_gate}"
+    elif pending_approvals:
+        status = "waiting_for_operator_approval"
+        reason = "pending_approvals"
+    elif waiting_gates:
+        status = "waiting_for_upstream_gate"
+        reason = f"current_gate={current_gate}"
+    else:
+        status = "ready_for_completion_review"
+        reason = "no_pending_or_waiting_gates"
+    target_surface = SafeHtml(
+        f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
+    )
+    return "".join(
+        [
+            "<section id='goal-remaining-work-command-bar' class='panel goal-remaining-work-command-bar' data-goal-remaining-work-command-bar='true'><h3>Goal Remaining Work Command Bar</h3>",
+            "<p class='muted'>Gate and queue posture before the detailed remaining-work checklist.</p>",
+            _kv(
+                [
+                    ("goal_remaining_work_command_goal", goal.id),
+                    ("goal_remaining_work_command_project", goal.project_id),
+                    ("goal_remaining_work_command_status", status),
+                    ("goal_remaining_work_command_items", str(len(remaining_lines))),
+                    ("goal_remaining_work_command_current_gate", current_gate),
+                    ("goal_remaining_work_command_gate_progress", f"{done_gates}/{total_gates} gates done"),
+                    ("goal_remaining_work_command_done_gates", str(done_gates)),
+                    ("goal_remaining_work_command_pending_gates", str(pending_gates)),
+                    ("goal_remaining_work_command_waiting_gates", str(waiting_gates)),
+                    ("goal_remaining_work_command_open_tasks", str(len(open_tasks))),
+                    ("goal_remaining_work_command_first_open_task", first_open_task),
+                    ("goal_remaining_work_command_open_incidents", str(len(open_incidents))),
+                    ("goal_remaining_work_command_open_recommendations", str(len(open_recommendations))),
+                    ("goal_remaining_work_command_pending_approvals", str(pending_approvals)),
+                    ("goal_remaining_work_command_next_action", next_action.action),
+                    ("goal_remaining_work_command_target_surface", target_surface),
+                    ("goal_remaining_work_command_reason", reason),
+                    ("goal_remaining_work_command_source", "goal_remaining_work_gates"),
+                    ("goal_remaining_work_command_write_on_get", "false"),
+                    ("goal_remaining_work_command_provider_calls_taken", "0"),
+                    ("goal_remaining_work_command_network_actions_taken", "0"),
+                    ("goal_remaining_work_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_remaining_work_now: {_e(next_action.action)}",
+                    f"goal_remaining_work_click: {target_surface}",
+                    f"goal_remaining_work_gate: {_e(current_gate)} status={_e(status)}",
+                    "goal_remaining_work_safety: read-only local gate posture",
+                ]
+            ),
+            "</section>",
+        ]
+    )
 
 
 def _goal_remaining_work_lines(
@@ -15040,6 +15137,9 @@ def _html_page(
     .goal-operator-notes-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-operator-notes-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-operator-notes-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-remaining-work-command-bar {{ border-left:4px solid var(--warn); }}
+    .goal-remaining-work-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-remaining-work-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-completion-readiness {{ border-left:4px solid var(--ok); }}
     .goal-completion-readiness ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-completion-readiness li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

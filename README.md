@@ -215,7 +215,11 @@ surface, and a confirmed `save-workspace` form that records this goal and its
 latest artifact as tomorrow's resume point without writing on GET. The Goal Workflow Map
 turns the same gate state used by Remaining Work into a top-level lifecycle
 rail from scout delegation through manual publish, highlighting the current
-gate and the next local action without writing on GET. The Next Recommendation
+gate and the next local action without writing on GET. Goal Remaining Work
+starts with a read-only `Goal Remaining Work Command Bar`
+that summarizes current gate, done/pending/waiting gate counts, open
+task/incident/recommendation counts, pending approvals, one next local surface,
+and zero-effect boundaries before the detailed checklist. The Next Recommendation
 section names whether the recommendation
 comes from an open task recommendation or from current phase plus local goal
 records, then points at the local target surface without writing on GET.

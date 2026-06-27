@@ -137,7 +137,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   detailed surface is a read-only `Goal Workflow Map` that turns the same
   Remaining Work gate state into a lifecycle rail from scout delegation through
   manual publish, with the current gate, next action, gate counts, and
-  zero-effect boundary visible before scrolling. The Next
+  zero-effect boundary visible before scrolling. Remaining Work also starts
+  with a read-only `Goal Remaining Work Command Bar` that summarizes the
+  current gate, done/pending/waiting gate counts, open task/incident/
+  recommendation counts, pending approvals, one next local surface, and
+  zero-effect boundaries before the detailed checklist. The Next
   Recommendation section explains
   whether the Goal is following an open task recommendation or deriving the
   action from current phase and local goal records, then names the target
@@ -227,11 +231,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   artifacts, approval rows, approval decisions, one isolated local worktree
   commit, or local goal status only; they do not run delegations or worktrees
   from the browser, push, create PRs, deploy, call providers, or perform external
-  mutations. Remaining Work is a gate-aware checklist sourced from local goal
-  state: it shows the current recommended action, open task/incident/
-  recommendation counts, and done/pending/waiting status for scout,
-  context-pack, handoff, coder prep, worktree, review, commit, publication,
-  and manual publish gates without taking any action.
+  mutations. Remaining Work starts with a read-only `Goal Remaining Work
+  Command Bar` and then a gate-aware checklist sourced from local goal state:
+  it shows the current recommended action, current gate, open task/incident/
+  recommendation counts, pending approvals, and done/pending/waiting status
+  for scout, context-pack, handoff, coder prep, worktree, review, commit,
+  publication, and manual publish gates without taking any action.
 - `/goals/<goal_id>` includes `Goal Section Index`, a read-only in-page map
   of stable anchors for summary, live state, command bar, workflow map,
   current phase, next action, next

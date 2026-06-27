@@ -1,5 +1,32 @@
 # Status
 
+## 2026-06-27 Goal Remaining Work Command Bar
+
+- Added a read-only `Goal Remaining Work Command Bar` to the Goal page before
+  the detailed Remaining Work checklist.
+- The bar summarizes current gate, done/pending/waiting gate counts, open
+  task, incident, recommendation, and approval posture, first open task, one
+  next local surface, and zero-effect counters.
+- The Goal Section Index now links directly to the remaining-work command
+  surface, so operators can see what is left and where to go next before
+  parsing the full gate checklist.
+- README, local app docs, and the operating summary now describe Goal
+  Remaining Work as a scan-first local gate posture surface.
+- Non-claims: this does not write state on GET, run work, approve gates,
+  create artifacts, append notes, call providers, use non-loopback network
+  actions, fetch GitHub status, push, create PRs, deploy, or mutate external
+  systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_3e898cf121a5`,
+    `run_1a0f53abf479`, and coder worktree run `run_0d217a02d599`
+
 ## 2026-06-27 Goal Operator Notes Command Bar
 
 - Added a read-only `Goal Operator Notes Command Bar` to the Goal page before

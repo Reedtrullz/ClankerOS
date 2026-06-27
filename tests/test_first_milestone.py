@@ -6066,6 +6066,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-skills-command-bar'" in goal.body
     assert "href='#goal-verification-evidence'" in goal.body
     assert "href='#goal-operator-notes-command-bar'" in goal.body
+    assert "href='#goal-remaining-work-command-bar'" in goal.body
     assert "href='#goal-remaining-work'" in goal.body
     assert "id='goal-summary'" in goal.body
     assert "id='goal-command-bar'" in goal.body
@@ -6082,11 +6083,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-skills-command-bar'" in goal.body
     assert "id='goal-verification-evidence'" in goal.body
     assert "id='goal-operator-notes-command-bar'" in goal.body
+    assert "id='goal-remaining-work-command-bar'" in goal.body
     assert "id='goal-remaining-work'" in goal.body
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>38" in goal.body
+    assert "goal_section_count</dt><dd>39" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
@@ -6722,6 +6724,35 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-operator-note-form'" in goal.body
     assert "save-goal-note" in goal.body
     assert "note_append_form_available: true" in goal.body
+    assert "Goal Remaining Work Command Bar" in goal.body
+    assert "data-goal-remaining-work-command-bar='true'" in goal.body
+    assert "<a href='#goal-remaining-work-command-bar'>Remaining work command</a>" in goal.body
+    assert f"goal_remaining_work_command_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_remaining_work_command_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_remaining_work_command_status</dt><dd>pending_gate" in goal.body
+    assert "goal_remaining_work_command_items</dt><dd>24" in goal.body
+    assert "goal_remaining_work_command_current_gate</dt><dd>commit_request" in goal.body
+    assert "goal_remaining_work_command_gate_progress</dt><dd>8/15 gates done" in goal.body
+    assert "goal_remaining_work_command_done_gates</dt><dd>8" in goal.body
+    assert "goal_remaining_work_command_pending_gates</dt><dd>1" in goal.body
+    assert "goal_remaining_work_command_waiting_gates</dt><dd>6" in goal.body
+    assert "goal_remaining_work_command_open_tasks</dt><dd>1" in goal.body
+    assert "goal_remaining_work_command_first_open_task</dt><dd>" in goal.body
+    assert "goal_remaining_work_command_open_incidents</dt><dd>0" in goal.body
+    assert "goal_remaining_work_command_open_recommendations</dt><dd>0" in goal.body
+    assert "goal_remaining_work_command_pending_approvals</dt><dd>1" in goal.body
+    assert "goal_remaining_work_command_next_action</dt><dd>Create commit request" in goal.body
+    assert f"goal_remaining_work_command_target_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
+    assert "goal_remaining_work_command_reason</dt><dd>current_gate=commit_request" in goal.body
+    assert "goal_remaining_work_command_source</dt><dd>goal_remaining_work_gates" in goal.body
+    assert "goal_remaining_work_command_write_on_get</dt><dd>false" in goal.body
+    assert "goal_remaining_work_command_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_remaining_work_command_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_remaining_work_command_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_remaining_work_now: Create commit request" in goal.body
+    assert f"goal_remaining_work_click: <a href='/runs/{result.coder_worktree_run_id}'" in goal.body
+    assert "goal_remaining_work_gate: commit_request status=pending_gate" in goal.body
+    assert "goal_remaining_work_safety: read-only local gate posture" in goal.body
     assert "Remaining Work" in goal.body
     assert "remaining_work_source: goal_state_workflow_gates" in goal.body
     assert "remaining_work_next_action: Create commit request" in goal.body
