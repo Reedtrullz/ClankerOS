@@ -1,5 +1,33 @@
 # Status
 
+## 2026-06-27 Goal Skills Command Bar
+
+- Added a read-only `Goal Skills Command Bar` to the Goal page before the
+  detailed Skills Used readback.
+- The bar summarizes task skill tags, matching generated or available local
+  skill records, active/proposed/generated counts, usage and project counts,
+  delegation profile usage, the first local skill artifact, one next review
+  target, and zero-effect counters.
+- The Goal Section Index now links directly to the skills command surface, so
+  operators can see which capabilities a Goal is using without parsing the
+  detailed skill list first.
+- README, local app docs, and the operating summary now describe Goal Skills
+  as a scan-first local skill posture surface.
+- Non-claims: this does not write state on GET, execute skills, install
+  skills, read raw filesystem paths, call providers, use non-loopback network
+  actions, fetch GitHub status, push, create PRs, deploy, or mutate external
+  systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_728d4eebd404`,
+    `run_e5382d8c2639`, and coder worktree run `run_db3e77db42e6`
+
 ## 2026-06-27 Goal Memory Command Bar
 
 - Added a read-only `Goal Memory Command Bar` to the Goal page before the

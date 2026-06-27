@@ -6038,6 +6038,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-artifact-command-bar'" in goal.body
     assert "href='#goal-artifact-explorer'" in goal.body
     assert "href='#goal-memory-command-bar'" in goal.body
+    assert "href='#goal-skills-command-bar'" in goal.body
     assert "href='#goal-verification-evidence'" in goal.body
     assert "href='#goal-remaining-work'" in goal.body
     assert "id='goal-summary'" in goal.body
@@ -6052,12 +6053,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-artifact-command-bar'" in goal.body
     assert "id='goal-artifact-explorer'" in goal.body
     assert "id='goal-memory-command-bar'" in goal.body
+    assert "id='goal-skills-command-bar'" in goal.body
     assert "id='goal-verification-evidence'" in goal.body
     assert "id='goal-remaining-work'" in goal.body
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>36" in goal.body
+    assert "goal_section_count</dt><dd>37" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
@@ -6471,6 +6473,40 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "pin_memory_from_goal_page=false" in goal.body
     assert "goal_memory_external_effects_created=false" in goal.body
     assert "pin_memory_action: planned_local_only" not in goal.body
+    assert "Goal Skills Command Bar" in goal.body
+    assert "data-goal-skills-command-bar='true'" in goal.body
+    assert "<a href='#goal-skills-command-bar'>Skills command</a>" in goal.body
+    assert f"goal_skills_command_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_skills_command_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_skills_command_status</dt><dd>skill_records_available" in goal.body
+    assert "goal_skills_command_items</dt><dd>5" in goal.body
+    assert "goal_skills_command_task_skill_tags</dt><dd>1" in goal.body
+    assert "goal_skills_command_task_skill_names</dt><dd>local-files" in goal.body
+    assert "goal_skills_command_matching_records</dt><dd>1" in goal.body
+    assert "goal_skills_command_generated_records</dt><dd>1" in goal.body
+    assert "goal_skills_command_active_records</dt><dd>1" in goal.body
+    assert "goal_skills_command_proposed_records</dt><dd>0" in goal.body
+    assert "goal_skills_command_total_usage_count</dt><dd>1" in goal.body
+    assert "goal_skills_command_projects_using</dt><dd>local-app-demo" in goal.body
+    assert "goal_skills_command_profiles_used</dt><dd>1" in goal.body
+    assert "goal_skills_command_profile_usage</dt><dd>scout=1" in goal.body
+    assert "goal_skills_command_first_target</dt><dd>local-files" in goal.body
+    assert "goal_skills_command_first_artifact</dt><dd><a href='/artifacts?path=.clanker/skills/local-files/SKILL.md'>.clanker/skills/local-files/SKILL.md</a>" in goal.body
+    assert "goal_skills_command_next_action</dt><dd>Review generated goal skill" in goal.body
+    assert "goal_skills_command_target_surface</dt><dd><a href='/skills#skills-generated'>/skills#skills-generated</a>" in goal.body
+    assert "goal_skills_command_reason</dt><dd>generated_goal_skill_record_available" in goal.body
+    assert "goal_skills_command_source</dt><dd>goal_task_skill_tags_and_skill_records" in goal.body
+    assert "goal_skills_command_execution_available</dt><dd>false" in goal.body
+    assert "goal_skills_command_install_available</dt><dd>false" in goal.body
+    assert "goal_skills_command_write_on_get</dt><dd>false" in goal.body
+    assert "goal_skills_command_raw_filesystem_browsing</dt><dd>false" in goal.body
+    assert "goal_skills_command_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_skills_command_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_skills_command_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_skills_now: Review generated goal skill" in goal.body
+    assert "goal_skills_click: <a href='/skills#skills-generated'>/skills#skills-generated</a>" in goal.body
+    assert "goal_skills_reason: generated_goal_skill_record_available" in goal.body
+    assert "goal_skills_safety: read-only local skill posture" in goal.body
     assert "Skills Used" in goal.body
     assert "skills_surface: <a href='/skills'>/skills</a>" in goal.body
     assert "goal_skill_usage_source: tasks.skill_tags" in goal.body

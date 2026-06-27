@@ -251,9 +251,11 @@ Goal Memory starts with a read-only `Goal Memory Command Bar` that summarizes
 project/global memory artifacts, project/active/proposed/global/generated entry
 counts, operator-note state, future-work count, pinning posture, one next local
 memory action, and zero-effect boundaries before the detailed memory readback.
-Skills Used links to `/skills`, shows task skill usage counts, projects using
-each tag, matching generated or available skill records when present, profile
-usage, and keeps skill execution out of the Goal page.
+Skills Used starts with a read-only `Goal Skills Command Bar` that summarizes
+task skill tags, matching generated or available skill records, usage and
+project counts, delegation profile usage, one `/skills` or `/profiles` review
+target, and no-execution/no-install/no-network boundaries before the detailed
+skill readback.
 Timeline entries link back to the relevant local artifact, delegation, run,
 approval queue, or goal surface, and the timeline also backfills generic
 `Artifact recorded` events from the same bounded artifact registry used by

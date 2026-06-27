@@ -4079,7 +4079,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_evidence_section(root, state),
             _goal_artifact_section(root, state),
             _goal_memory_section(root, state),
-            _list_section("Skills Used", _goal_skill_lines(root, state), anchor_id="goal-skills-used"),
+            _goal_skill_section(root, state),
             _goal_git_status(root, state),
             _goal_verification_evidence(root, state),
             _goal_operator_notes_section(root, state),
@@ -4165,6 +4165,7 @@ def _goal_section_index() -> str:
         ("Artifact explorer", "goal-artifact-explorer"),
         ("Memory command", "goal-memory-command-bar"),
         ("Memory", "goal-memory"),
+        ("Skills command", "goal-skills-command-bar"),
         ("Skills used", "goal-skills-used"),
         ("Git status", "goal-git-status"),
         ("Verification command", "goal-verification-command-bar"),
@@ -7563,6 +7564,165 @@ def _goal_memory_entry_summary(entry: Any | None) -> str:
         f"{_e(entry.id)} status={_e(entry.status)} "
         f"scope={_e(entry.scope)} key={_e(entry.key)} "
         f"artifact={_artifact_link(entry.artifact_path)}"
+    )
+
+
+def _goal_skill_section(root: Path, state: dict[str, Any]) -> str:
+    lines = _goal_skill_lines(root, state)
+    return _goal_skill_command_bar(root, state, lines) + _list_section(
+        "Skills Used",
+        lines,
+        anchor_id="goal-skills-used",
+    )
+
+
+def _goal_skill_command_bar(
+    root: Path,
+    state: dict[str, Any],
+    skill_lines: list[str],
+) -> str:
+    storage = _storage(root)
+    goal = state["goal"]
+    usage = _skill_usage(storage)
+    skills = storage.list_skills(limit=200)
+    skill_tags = list(dict.fromkeys(str(tag) for tag in state.get("skill_tags", [])))
+    matching_skills = [
+        skill
+        for skill in skills
+        if skill.name in set(skill_tags)
+        and skill.project_id in {None, "", goal.project_id}
+    ]
+    generated_skills = [skill for skill in matching_skills if skill.source_run_id]
+    active_skills = [skill for skill in matching_skills if skill.status == "active"]
+    proposed_skills = [skill for skill in matching_skills if skill.status == "proposed"]
+    profile_counts: dict[str, int] = {}
+    for delegation in state.get("delegations", []):
+        profile_counts[delegation.assigned_profile] = (
+            profile_counts.get(delegation.assigned_profile, 0) + 1
+        )
+    profile_usage = (
+        ", ".join(
+            f"{profile}={count}" for profile, count in sorted(profile_counts.items())
+        )
+        if profile_counts
+        else "none"
+    )
+    projects_using: set[str] = set()
+    total_usage_count = 0
+    for tag in skill_tags:
+        data = usage.get(tag, {"count": 0, "projects": set()})
+        total_usage_count += int(data.get("count", 0))
+        projects_using.update(
+            str(project) for project in data.get("projects", set()) if project
+        )
+    if not projects_using and skill_tags:
+        projects_using.add(goal.project_id)
+    project_label = ", ".join(sorted(projects_using)) if projects_using else "none"
+
+    first_skill = (
+        proposed_skills[0]
+        if proposed_skills
+        else (
+            generated_skills[0]
+            if generated_skills
+            else (
+                active_skills[0]
+                if active_skills
+                else (matching_skills[0] if matching_skills else None)
+            )
+        )
+    )
+    first_target = "none"
+    first_artifact: str | SafeHtml = "none"
+    next_action = "Review skills inventory"
+    target_href = "/skills"
+    target_label = "/skills"
+    reason = "no_goal_skill_usage_recorded"
+    if first_skill is not None:
+        first_target = first_skill.name
+        first_artifact = _artifact_link(_repo_relative_artifact_path(root, first_skill.path))
+        if first_skill.status == "proposed":
+            next_action = "Review proposed goal skill"
+            target_href = "/skills#skills-available"
+            target_label = "/skills#skills-available"
+            reason = "proposed_goal_skill_waiting_for_operator"
+        elif first_skill.source_run_id:
+            next_action = "Review generated goal skill"
+            target_href = "/skills#skills-generated"
+            target_label = "/skills#skills-generated"
+            reason = "generated_goal_skill_record_available"
+        else:
+            next_action = "Review available goal skill"
+            target_href = "/skills#skills-available"
+            target_label = "/skills#skills-available"
+            reason = "available_goal_skill_record_available"
+    elif skill_tags:
+        first_target = skill_tags[0]
+        next_action = "Review task skill usage"
+        target_href = "/skills"
+        target_label = "/skills"
+        reason = "task_skill_tag_without_matching_skill_record"
+    elif profile_counts:
+        first_target = sorted(profile_counts)[0]
+        next_action = "Review profile usage"
+        target_href = "/profiles"
+        target_label = "/profiles"
+        reason = "delegation_profile_usage_available"
+
+    if proposed_skills:
+        status = "proposed_skill_pending"
+    elif matching_skills:
+        status = "skill_records_available"
+    elif skill_tags or profile_counts:
+        status = "usage_without_skill_record"
+    else:
+        status = "empty"
+    target_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    return "".join(
+        [
+            "<section id='goal-skills-command-bar' class='panel goal-skills-command-bar' data-goal-skills-command-bar='true'><h3>Goal Skills Command Bar</h3>",
+            "<p class='muted'>Goal-scoped skill posture before the detailed skill usage readback.</p>",
+            _kv(
+                [
+                    ("goal_skills_command_goal", goal.id),
+                    ("goal_skills_command_project", goal.project_id),
+                    ("goal_skills_command_status", status),
+                    ("goal_skills_command_items", str(len(skill_lines))),
+                    ("goal_skills_command_task_skill_tags", str(len(skill_tags))),
+                    ("goal_skills_command_task_skill_names", ", ".join(skill_tags) if skill_tags else "none"),
+                    ("goal_skills_command_matching_records", str(len(matching_skills))),
+                    ("goal_skills_command_generated_records", str(len(generated_skills))),
+                    ("goal_skills_command_active_records", str(len(active_skills))),
+                    ("goal_skills_command_proposed_records", str(len(proposed_skills))),
+                    ("goal_skills_command_total_usage_count", str(total_usage_count)),
+                    ("goal_skills_command_projects_using", project_label),
+                    ("goal_skills_command_profiles_used", str(len(profile_counts))),
+                    ("goal_skills_command_profile_usage", profile_usage),
+                    ("goal_skills_command_first_target", first_target),
+                    ("goal_skills_command_first_artifact", first_artifact),
+                    ("goal_skills_command_next_action", next_action),
+                    ("goal_skills_command_target_surface", target_surface),
+                    ("goal_skills_command_reason", reason),
+                    ("goal_skills_command_source", "goal_task_skill_tags_and_skill_records"),
+                    ("goal_skills_command_execution_available", "false"),
+                    ("goal_skills_command_install_available", "false"),
+                    ("goal_skills_command_write_on_get", "false"),
+                    ("goal_skills_command_raw_filesystem_browsing", "false"),
+                    ("goal_skills_command_provider_calls_taken", "0"),
+                    ("goal_skills_command_network_actions_taken", "0"),
+                    ("goal_skills_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_skills_now: {_e(next_action)}",
+                    f"goal_skills_click: {target_surface}",
+                    f"goal_skills_reason: {_e(reason)}",
+                    "goal_skills_safety: read-only local skill posture",
+                ]
+            ),
+            "</section>",
+        ]
     )
 
 
@@ -14781,6 +14941,9 @@ def _html_page(
     .goal-memory-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-memory-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-memory-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-skills-command-bar {{ border-left:4px solid var(--accent); }}
+    .goal-skills-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-skills-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-verification-command-bar {{ border-left:4px solid var(--ok); }}
     .goal-verification-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-verification-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

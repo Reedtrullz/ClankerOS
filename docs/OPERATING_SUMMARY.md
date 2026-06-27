@@ -353,10 +353,11 @@ Core layers for the bootstrap:
   includes a visible keyboard-shortcut help block generated from the same
   shortcut map, so operators can discover the local navigation shortcuts from
   inside the app instead of reading external docs.
-  The Goal `Skills Used` section links to `/skills`, reuses task skill usage
-  counts, names projects using each tag, links matching generated or available
-  local skill records when present, and shows profile usage while keeping
-  skill execution unavailable from the Goal page.
+  The Goal `Skills Used` section starts with a read-only `Goal Skills Command
+  Bar` that summarizes task skill tags, matching generated or available local
+  skill records, usage and project counts, delegation profile usage, one
+  `/skills` or `/profiles` review target, and no-execution/no-install/
+  no-network boundaries before the detailed skill readback.
   Goal `Git Status` starts with a read-only `Goal Git Command Bar` that
   summarizes the registered project root, branch, commit, clean/dirty posture,
   tracked and untracked counts, latest goal-linked `git_status.txt` artifact,

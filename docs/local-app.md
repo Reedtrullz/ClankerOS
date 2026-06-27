@@ -142,11 +142,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   whether the Goal is following an open task recommendation or deriving the
   action from current phase and local goal records, then names the target
   local surface and zero-effect boundary without writing on GET. Skills Used
-  links to `/skills`, shows
-  task skill usage counts,
-  projects using each tag, matching generated or available skill records when
-  present, and profile usage while keeping skill execution out of the Goal
-  page. Goal Resume Snapshot reads `.clanker/app/workspace.json`, shows
+  starts with a read-only `Goal Skills Command Bar` that summarizes task skill
+  tags, matching generated or available skill records, usage and project
+  counts, delegation profile usage, one `/skills` or `/profiles` review
+  target, and no-execution/no-install/no-network boundaries before the
+  detailed skill readback. Goal Resume Snapshot reads `.clanker/app/workspace.json`, shows
   whether the saved workspace already points at the current goal, suggests the
   latest goal artifact as the resume anchor, renders saved filters, expanded
   panels, and last-viewed artifact as `Goal Workspace Restore State`, and
