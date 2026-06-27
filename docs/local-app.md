@@ -216,10 +216,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/workspace` - persistent local workspace state for open project, open goal,
   filters, expanded panels, and last viewed artifact. It also shows the saved
   goal's current phase, one next action, operator attention cue, and target
-  surface beside the editable saved-state form, plus the same confirmed local
-  action form as the Goal page when that action is browser-available. Home and
-  `/resume` read the same saved state for daily resume links and continuation
-  readbacks. The confirmed `save-workspace` form writes
+  surface beside the editable saved-state form, plus a read-only
+  `Workspace Workflow Map` with the saved goal's current gate, lifecycle
+  progress, next surface, and zero-effect counters. It also renders the same
+  confirmed local action form as the Goal page when that action is
+  browser-available. Home and `/resume` read the same saved state for daily
+  resume links and continuation readbacks. The confirmed `save-workspace` form writes
   `.clanker/app/workspace.json`; GET requests write nothing.
 - `/memory` - project memories, global memories, generated memories, proposed
   memories, operator notes, future-work recommendations, and confirmed

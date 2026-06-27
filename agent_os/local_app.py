@@ -2432,8 +2432,9 @@ def _workspace_page(root: Path) -> str:
             "</section>",
             _list_section("Restore Links", restore_links),
             _list_section("Workspace Continuation", _workspace_next_action_lines(root, open_goal)),
+            _workspace_workflow_map_section(root, open_goal),
             _workspace_action_form_section(root, open_goal),
-            "<section><h2>Save Workspace</h2>",
+            "<section id='save-workspace'><h2>Save Workspace</h2>",
             _input_form(
                 "save-workspace",
                 {},
@@ -2477,6 +2478,118 @@ def _workspace_next_action_lines(root: Path, open_goal: str) -> list[str]:
         "workspace_next_action_write_on_get: false",
         "workspace_next_action_external_effects_created: false",
     ]
+
+
+def _workspace_workflow_map_section(root: Path, open_goal: str) -> str:
+    if not open_goal:
+        return "".join(
+            [
+                "<section id='workspace-workflow-map' class='panel workspace-workflow-map' data-workspace-workflow-map='true'><h2>Workspace Workflow Map</h2>",
+                "<p class='muted'>A read-only workflow map appears here once workspace state has a saved goal.</p>",
+                _kv(
+                    [
+                        ("workspace_workflow_map_status", "no_saved_goal"),
+                        ("workspace_workflow_map_saved_goal", "none"),
+                        ("workspace_workflow_map_next_surface", SafeHtml("<a href='/goals'>/goals</a>")),
+                        ("workspace_workflow_map_save_surface", SafeHtml("<a href='#save-workspace'>#save-workspace</a>")),
+                        ("workspace_workflow_map_source", "workspace_saved_goal"),
+                        ("workspace_workflow_map_write_on_get", "false"),
+                        ("workspace_workflow_map_provider_calls_taken_by_clankeros", "0"),
+                        ("workspace_workflow_map_network_actions_taken", "0"),
+                        ("workspace_workflow_map_external_effects_created", "false"),
+                    ]
+                ),
+                "</section>",
+            ]
+        )
+    storage = _storage(root)
+    state = _goal_state(root, storage, open_goal)
+    goal = state.get("goal")
+    if goal is None:
+        return "".join(
+            [
+                "<section id='workspace-workflow-map' class='panel workspace-workflow-map' data-workspace-workflow-map='true'><h2>Workspace Workflow Map</h2>",
+                "<p class='muted'>The saved workspace points at a goal that is no longer available locally.</p>",
+                _kv(
+                    [
+                        ("workspace_workflow_map_status", "missing_goal"),
+                        ("workspace_workflow_map_saved_goal", open_goal),
+                        ("workspace_workflow_map_next_surface", SafeHtml("<a href='/goals'>/goals</a>")),
+                        ("workspace_workflow_map_save_surface", SafeHtml("<a href='#save-workspace'>#save-workspace</a>")),
+                        ("workspace_workflow_map_source", "workspace_saved_goal"),
+                        ("workspace_workflow_map_write_on_get", "false"),
+                        ("workspace_workflow_map_provider_calls_taken_by_clankeros", "0"),
+                        ("workspace_workflow_map_network_actions_taken", "0"),
+                        ("workspace_workflow_map_external_effects_created", "false"),
+                    ]
+                ),
+                "</section>",
+            ]
+        )
+    phase = _goal_current_phase(state)
+    next_action = _goal_next_action(root, state)
+    gates, counts, current_gate = _goal_workflow_gate_summary(root, state, next_action)
+    done = counts.get("done", 0)
+    pending = counts.get("pending", 0)
+    waiting = counts.get("waiting", 0)
+    total = len(gates)
+    items: list[str] = []
+    for index, (name, status) in enumerate(gates, start=1):
+        label = name.replace("_", " ")
+        marker = "current" if name == current_gate else status
+        next_label = (
+            f" next={_e(next_action.action)}"
+            if name == current_gate and current_gate != "complete"
+            else ""
+        )
+        items.append(
+            "<li "
+            f"data-workspace-workflow-gate='{_e(name)}' "
+            f"data-gate-status='{_e(status)}' "
+            f"data-gate-marker='{_e(marker)}'>"
+            f"<span class='workflow-map-index'>{index}</span> "
+            f"<strong>{_e(label)}</strong> "
+            f"workspace_workflow_map_step: {_e(name)} status={_e(status)} marker={_e(marker)}{next_label}</li>"
+        )
+    return "".join(
+        [
+            "<section id='workspace-workflow-map' class='panel workspace-workflow-map' data-workspace-workflow-map='true'><h2>Workspace Workflow Map</h2>",
+            "<p class='muted'>The editable workspace state's saved goal workflow gates, shown beside the save form so the operator can adjust context without losing the current gate.</p>",
+            _kv(
+                [
+                    ("workspace_workflow_map_status", "available"),
+                    ("workspace_workflow_map_saved_goal", open_goal),
+                    ("workspace_workflow_map_current_phase", phase),
+                    ("workspace_workflow_map_current_gate", current_gate),
+                    ("workspace_workflow_map_next_action", next_action.action),
+                    (
+                        "workspace_workflow_map_next_surface",
+                        SafeHtml(
+                            f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
+                        ),
+                    ),
+                    ("workspace_workflow_map_progress", f"{done}/{total} gates done"),
+                    ("workspace_workflow_map_done_count", str(done)),
+                    ("workspace_workflow_map_pending_count", str(pending)),
+                    ("workspace_workflow_map_waiting_count", str(waiting)),
+                    ("workspace_workflow_map_source", "goal_remaining_work_gates"),
+                    (
+                        "workspace_workflow_map_goal_surface",
+                        SafeHtml(f"<a href='/goals/{quote(open_goal)}'>/goals/{_e(open_goal)}</a>"),
+                    ),
+                    ("workspace_workflow_map_save_surface", SafeHtml("<a href='#save-workspace'>#save-workspace</a>")),
+                    ("workspace_workflow_map_write_on_get", "false"),
+                    ("workspace_workflow_map_provider_calls_taken_by_clankeros", "0"),
+                    ("workspace_workflow_map_network_actions_taken", "0"),
+                    ("workspace_workflow_map_external_effects_created", "false"),
+                ]
+            ),
+            "<ol class='workflow-map-rail workspace-workflow-map-rail'>",
+            "".join(items),
+            "</ol>",
+            "</section>",
+        ]
+    )
 
 
 def _workspace_action_form_section(root: Path, open_goal: str) -> str:

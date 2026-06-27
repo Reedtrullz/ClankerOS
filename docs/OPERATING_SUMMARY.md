@@ -138,7 +138,9 @@ Core layers for the bootstrap:
   state in `.clanker/app/workspace.json` plus the saved goal's current phase,
   one next action, operator attention cue, target surface, and the same
   confirmed local action form as the Goal page when that action is
-  browser-available beside the editable saved-state form; `/memory` for project/global/
+  browser-available beside the editable saved-state form, plus a read-only
+  `Workspace Workflow Map` sourced from the same Goal remaining-work gates so
+  the current saved gate stays visible while editing resume context; `/memory` for project/global/
   generated memories, proposed memories, operator notes, future work, and pin
   actions, with a read-only `Memory Command Bar` that summarizes entry counts,
   first proposed pin or fallback resume target, one next local action, saved

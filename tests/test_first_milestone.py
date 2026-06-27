@@ -4413,6 +4413,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert workspace.status == 200
     assert "Workspace State" in workspace.body
     assert "save-workspace" in workspace.body
+    assert "Workspace Workflow Map" in workspace.body
+    assert "data-workspace-workflow-map='true'" in workspace.body
+    assert "workspace_workflow_map_status</dt><dd>no_saved_goal" in workspace.body
+    assert "workspace_workflow_map_saved_goal</dt><dd>none" in workspace.body
+    assert "workspace_workflow_map_next_surface</dt><dd><a href='/goals'>/goals</a>" in workspace.body
+    assert "workspace_workflow_map_save_surface</dt><dd><a href='#save-workspace'>#save-workspace</a>" in workspace.body
+    assert "workspace_workflow_map_write_on_get</dt><dd>false" in workspace.body
+    assert "workspace_workflow_map_network_actions_taken</dt><dd>0" in workspace.body
+    assert "workspace_workflow_map_external_effects_created</dt><dd>false" in workspace.body
+    assert "id='save-workspace'" in workspace.body
     workspace_result = render_local_app_route(
         tmp_path,
         "/actions/save-workspace",
@@ -6213,6 +6223,26 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "action='/actions/coder-commit-request'" in restored_workspace.body
     assert f"name='run_id' value='{result.coder_worktree_run_id}'" in restored_workspace.body
     assert "workspace_next_action_write_on_get: false" in restored_workspace.body
+    assert "Workspace Workflow Map" in restored_workspace.body
+    assert "data-workspace-workflow-map='true'" in restored_workspace.body
+    assert "workspace_workflow_map_status</dt><dd>available" in restored_workspace.body
+    assert f"workspace_workflow_map_saved_goal</dt><dd>{result.goal_id}" in restored_workspace.body
+    assert "workspace_workflow_map_current_phase</dt><dd>Ready to commit" in restored_workspace.body
+    assert "workspace_workflow_map_current_gate</dt><dd>commit_request" in restored_workspace.body
+    assert "workspace_workflow_map_next_action</dt><dd>Create commit request" in restored_workspace.body
+    assert f"workspace_workflow_map_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in restored_workspace.body
+    assert "workspace_workflow_map_progress</dt><dd>8/15 gates done" in restored_workspace.body
+    assert "workspace_workflow_map_done_count</dt><dd>8" in restored_workspace.body
+    assert "workspace_workflow_map_pending_count</dt><dd>1" in restored_workspace.body
+    assert "workspace_workflow_map_waiting_count</dt><dd>6" in restored_workspace.body
+    assert "workspace_workflow_map_source</dt><dd>goal_remaining_work_gates" in restored_workspace.body
+    assert f"workspace_workflow_map_goal_surface</dt><dd><a href='/goals/{result.goal_id}'" in restored_workspace.body
+    assert "workspace_workflow_map_save_surface</dt><dd><a href='#save-workspace'>#save-workspace</a>" in restored_workspace.body
+    assert "workspace_workflow_map_step: commit_request status=pending marker=current next=Create commit request" in restored_workspace.body
+    assert "data-workspace-workflow-gate='manual_publish' data-gate-status='waiting'" in restored_workspace.body
+    assert "workspace_workflow_map_write_on_get</dt><dd>false" in restored_workspace.body
+    assert "workspace_workflow_map_network_actions_taken</dt><dd>0" in restored_workspace.body
+    assert "workspace_workflow_map_external_effects_created</dt><dd>false" in restored_workspace.body
     restored_home = render_local_app_route(tmp_path, "/")
     assert "Home Resume Workspace" in restored_home.body
     assert f"resume_goal: <a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in restored_home.body
