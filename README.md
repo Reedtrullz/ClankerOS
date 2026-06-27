@@ -575,7 +575,11 @@ The page starts with an `Action Catalog Command Bar` that summarizes total
 actions, navigation actions, mutating actions, confirmation-required actions,
 local execution/git/approval/artifact posture, first safe action, target
 anchors, and zero provider/network/external-effect counters before the longer
-catalog.
+catalog. It also includes an `Action Operator Workbench` that reads the same
+first-run or lead-Goal focus as the rest of the app, names the current safe
+local action, links the owning surface where the confirmed form already lives,
+routes blockers to inbox/approvals/incidents, and exposes a confirmed
+`save-workspace` finish form for returning to action context later.
 When the fixture exists, `/actions` also shows `Current Demo Action Surfaces`
 with links to the selected project, delegation, workflow, run, approvals, and
 inbox surfaces.

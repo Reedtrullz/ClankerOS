@@ -693,6 +693,9 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             "/actions",
             "Safe Action Catalog",
             [
+                "Action Operator Workbench",
+                "data-action-operator-workbench='true'",
+                "action_workbench_action_name</dt><dd>coder-commit-request",
                 "Current Demo Action Surfaces",
                 "next_demo_action: request_commit_for_reviewed_run",
                 "external_effects=none",
@@ -12397,6 +12400,243 @@ def _action_catalog_command_bar() -> str:
     )
 
 
+def _action_name_for_goal_action(action: str) -> str:
+    return {
+        "Create scout delegation": "delegate",
+        "Resume paused goal": "resume-goal",
+        "Generate context pack": "context-pack",
+        "Run delegation": "run-delegation",
+        "Run coder prep": "coder-prep",
+        "Create worktree plan": "coder-worktree-plan",
+        "Request worktree approval": "coder-worktree-approval",
+        "Approve worktree": "approve-coder-worktree",
+        "Run approved worktree": "run-coder-worktree",
+        "Open review": "review-run",
+        "Create commit request": "coder-commit-request",
+        "Approve commit": "approve-coder-commit",
+        "Commit approved worktree": "commit-coder-worktree",
+        "Create publication request": "coder-publication-request",
+        "Approve publication": "approve-coder-publication",
+        "Create publication handoff": "coder-publication-handoff",
+        "Manual publish outside ClankerOS": "manual_operator_push_pr_outside_clankeros",
+        "Complete goal": "complete-goal",
+    }.get(action, "none")
+
+
+def _action_name_for_first_run_step(step: str) -> str:
+    return {
+        "create_project": "register-project",
+        "create_first_goal": "create-goal",
+        "create_first_delegation": "delegate",
+        "generate_context_pack": "context-pack",
+        "run_first_delegation": "run-delegation",
+    }.get(step, "none")
+
+
+def _action_operator_workbench(root: Path) -> str:
+    focus = _operator_focus_context(root, "/actions")
+    inbox = collect_inbox_items(root)
+    inbox_items = int(inbox["count"])
+    pending_approvals = (
+        len(inbox["pending_approvals"])
+        + len(inbox["coder_worktree_approvals"])
+        + len(inbox["coder_worktree_commit_approvals"])
+        + len(inbox["coder_publication_requests"])
+    )
+    open_incidents = len(inbox["open_incidents"])
+    open_recommendations = len(_storage(root).list_recent_task_recommendations(limit=20))
+
+    status = str(focus.get("status", "state_unavailable"))
+    source = str(focus.get("source") or "operator_focus_context")
+    project_value: str | SafeHtml = "none"
+    goal_value: str | SafeHtml = "none"
+    phase = "none"
+    next_action = "Open health"
+    action_name = "inspect-health"
+    primary_href = "/health"
+    primary_label = "/health"
+    owning_href = primary_href
+    owning_label = primary_label
+    reason = "state_unavailable"
+    form_available = False
+    first_run_step = "none"
+    finish_project = ""
+    finish_goal = ""
+    finish_artifact = ""
+    waiting_items = pending_approvals + open_incidents + open_recommendations
+
+    if status == "first_run":
+        first_run_step = str(focus.get("current_step") or "unknown")
+        next_action = str(focus.get("next_action") or "Continue first run")
+        action_name = _action_name_for_first_run_step(first_run_step)
+        primary_href = str(focus.get("target_href") or "/")
+        primary_label = str(focus.get("target_label") or primary_href)
+        owning_href = primary_href
+        owning_label = primary_label
+        reason = str(focus.get("next_reason") or "first_run")
+        project_id = str(focus.get("default_project") or "clankeros")
+        project_value = project_id
+        phase = "First run"
+        form_available = bool(focus.get("form_available"))
+        finish_project = project_id
+        waiting_items = pending_approvals + open_incidents + open_recommendations
+    elif status == "available":
+        goal = focus["goal"]
+        action = focus["next_action"]
+        next_action = action.action
+        action_name = _action_name_for_goal_action(next_action)
+        primary_href = action.href
+        primary_label = action.href
+        owning_href = action.href
+        owning_label = action.href
+        reason = action.reason
+        phase = str(focus.get("phase") or "unknown")
+        form_available = bool(focus.get("form_available"))
+        project_value = SafeHtml(
+            f"<a href='/projects/{quote(goal.project_id)}'>{_e(goal.project_id)}</a>"
+        )
+        goal_value = SafeHtml(
+            f"<a href='/goals/{quote(goal.id)}'>{_e(focus.get('goal_label') or goal.id)}</a>"
+        )
+        finish_project = goal.project_id
+        finish_goal = goal.id
+        finish_artifact = f".clanker/projects/{goal.project_id}/goals/{goal.id}/GOAL.md"
+        waiting_items = int(focus.get("waiting_items") or waiting_items)
+        pending_approvals = int(focus.get("pending_approvals") or pending_approvals)
+        open_incidents = int(focus.get("open_incidents") or open_incidents)
+        open_recommendations = int(focus.get("open_recommendations") or open_recommendations)
+
+    if open_incidents or open_recommendations:
+        unblock_href = "/incidents"
+        unblock_label = "/incidents"
+        unblock_reason = "incident_or_recommendation_attention"
+    elif pending_approvals:
+        unblock_href = "/approvals"
+        unblock_label = "/approvals"
+        unblock_reason = "pending_approvals"
+    elif inbox_items:
+        unblock_href = "/inbox"
+        unblock_label = "/inbox"
+        unblock_reason = "inbox_items"
+    elif status == "first_run":
+        unblock_href = primary_href
+        unblock_label = primary_label
+        unblock_reason = "first_run_current_action"
+    else:
+        unblock_href = "#action-catalog-workflow-actions"
+        unblock_label = "Local Artifact And Approval Actions"
+        unblock_reason = "no_blockers"
+
+    finish_form = _input_form(
+        "save-workspace",
+        {
+            "open_project": finish_project,
+            "open_goal": finish_goal,
+            "return_to": "/actions",
+        },
+        {
+            "filters": "actions,current",
+            "expanded_panels": "actions,operator-workbench,catalog,boundary",
+            "last_viewed_artifact": finish_artifact,
+            "updated_by": "action-operator-workbench",
+        },
+    )
+    return "".join(
+        [
+            "<section id='action-operator-workbench' class='panel action-operator-workbench' data-action-operator-workbench='true'><h2>Action Operator Workbench</h2>",
+            "<p class='muted'>Turns the safe action inventory into one current local action, its owning surface, blocker routing, and a resume save point.</p>",
+            "<div class='action-workbench-grid' data-action-workbench-actions='true'>",
+            "<div class='action-workbench-card action-workbench-primary'><h3>Use Now</h3>",
+            f"<p>{_e(next_action)}</p><a class='action-workbench-action' href='{_e(primary_href)}'>{_e(primary_label)}</a></div>",
+            "<div class='action-workbench-card'><h3>Owning Surface</h3>",
+            f"<p>{_e(action_name)}</p><a class='action-workbench-link' href='{_e(owning_href)}'>{_e(owning_label)}</a></div>",
+            "<div class='action-workbench-card'><h3>Unblock</h3>",
+            f"<p>{waiting_items} waiting item(s)</p><a class='action-workbench-link' href='{_e(unblock_href)}'>{_e(unblock_label)}</a></div>",
+            "<div class='action-workbench-card'><h3>Finish Today</h3>",
+            "<p>Save action context</p><a class='action-workbench-link' href='#action-finish-today'>Open save form</a></div>",
+            "</div>",
+            _kv(
+                [
+                    ("action_workbench_status", status),
+                    ("action_workbench_source", source),
+                    ("action_workbench_project", project_value),
+                    ("action_workbench_goal", goal_value),
+                    ("action_workbench_phase", phase),
+                    ("action_workbench_first_run_step", first_run_step),
+                    ("action_workbench_next_action", next_action),
+                    ("action_workbench_action_name", action_name),
+                    (
+                        "action_workbench_primary_surface",
+                        SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+                    ),
+                    (
+                        "action_workbench_owning_surface",
+                        SafeHtml(f"<a href='{_e(owning_href)}'>{_e(owning_label)}</a>"),
+                    ),
+                    ("action_workbench_reason", reason),
+                    ("action_workbench_action_form_available", str(form_available).lower()),
+                    ("action_workbench_confirmation_required", str(form_available).lower()),
+                    ("action_workbench_waiting_items", str(waiting_items)),
+                    ("action_workbench_pending_approvals", str(pending_approvals)),
+                    ("action_workbench_open_incidents", str(open_incidents)),
+                    ("action_workbench_open_recommendations", str(open_recommendations)),
+                    ("action_workbench_inbox_items", str(inbox_items)),
+                    (
+                        "action_workbench_unblock_surface",
+                        SafeHtml(f"<a href='{_e(unblock_href)}'>{_e(unblock_label)}</a>"),
+                    ),
+                    ("action_workbench_unblock_reason", unblock_reason),
+                    (
+                        "action_workbench_finish_surface",
+                        SafeHtml("<a href='#action-finish-today'>Finish Today</a>"),
+                    ),
+                    ("action_workbench_finish_form_available", "true"),
+                    ("action_workbench_finish_confirmation_required", "true"),
+                    ("action_workbench_saved_project", finish_project or "none"),
+                    ("action_workbench_saved_goal", finish_goal or "none"),
+                    (
+                        "action_workbench_saved_artifact",
+                        SafeHtml(_artifact_link(finish_artifact)) if finish_artifact else "none",
+                    ),
+                    ("action_workbench_write_on_get", "false"),
+                    ("action_workbench_provider_calls_taken", "0"),
+                    ("action_workbench_network_actions_taken", "0"),
+                    ("action_workbench_external_effects_created", "false"),
+                    ("action_workbench_push_created", "false"),
+                    ("action_workbench_pr_created", "false"),
+                    ("action_workbench_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"action_workbench_now: {_e(next_action)}",
+                    f"action_workbench_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                    f"action_workbench_owner: <a href='{_e(owning_href)}'>{_e(owning_label)}</a>",
+                    f"action_workbench_unblock: <a href='{_e(unblock_href)}'>{_e(unblock_label)}</a>",
+                    "action_workbench_finish: <a href='#action-finish-today'>Finish Today</a>",
+                    "action_workbench_safety: read-only action routing; confirmed forms stay on owning surfaces",
+                ]
+            ),
+            "<section id='action-finish-today' class='action-finish-today'><h3>Action Finish Today</h3>",
+            _kv(
+                [
+                    ("action_finish_status", "available"),
+                    ("action_finish_action", "save-workspace"),
+                    ("action_finish_project", finish_project or "none"),
+                    ("action_finish_goal", finish_goal or "none"),
+                    ("action_finish_artifact", finish_artifact or "none"),
+                    ("action_finish_confirmation_required", "true"),
+                    ("action_finish_write_on_get", "false"),
+                    ("action_finish_external_effects_created", "false"),
+                ]
+            ),
+            finish_form,
+            "</section>",
+            "</section>",
+        ]
+    )
+
+
 def _actions_page(root: Path) -> str:
     return "".join(
         [
@@ -12405,6 +12645,7 @@ def _actions_page(root: Path) -> str:
             _non_claim_banner(),
             "</section>",
             _action_catalog_command_bar(),
+            _action_operator_workbench(root),
             _list_section(
                 "Navigation Actions",
                 [
@@ -20980,6 +21221,19 @@ def _html_page(
     .action-catalog-command-bar {{ border-left:4px solid var(--accent); }}
     .action-catalog-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .action-catalog-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .action-operator-workbench {{ border-left:4px solid var(--accent); }}
+    .action-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .action-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .action-operator-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .action-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .action-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .action-workbench-card h3 {{ margin-top:0; }}
+    .action-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .action-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .action-workbench-action, .action-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .action-workbench-action {{ background:var(--accent); color:#fff; }}
+    .action-workbench-link {{ background:var(--surface); color:var(--accent); }}
+    .action-finish-today {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .action-confirmation-command-bar {{ border-left:4px solid var(--warn); }}
     .action-confirmation-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .action-confirmation-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -21074,7 +21328,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>

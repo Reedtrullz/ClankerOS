@@ -619,7 +619,11 @@ Core layers for the bootstrap:
   readback; a read-only `/actions` catalog with an `Action Catalog Command
   Bar` for safe local action counts, first action, target anchors, local
   execution/git/approval/artifact posture, confirmation posture, form
-  locations, output artifacts, and external-effect boundaries; a read-only
+  locations, output artifacts, and external-effect boundaries, plus an
+  `Action Operator Workbench` that reads first-run or lead-Goal focus, names
+  the current local action, links the owning surface for the confirmed form,
+  routes blockers, and provides a confirmed project/Goal resume save point
+  without adding action authority to the catalog page; a read-only
   `/verification` handoff for the checked-in GitHub
   Actions workflow, separate fast-smoke and full-suite job readbacks,
   configured job timeout, latest operator-supplied CI evidence summary,

@@ -441,8 +441,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   confirmation requirements, local mutation posture, and external-effect
   boundary. A read-only `Action Catalog Command Bar` starts the page with
   action counts by posture, first safe local action, target anchors, and zero
-  provider/network/external-effect counters before the longer inventory. It
-  also includes the confirmed dashboard status refresh form.
+  provider/network/external-effect counters before the longer inventory. An
+  `Action Operator Workbench` follows, deriving the current action from
+  first-run or lead-Goal focus, linking the owning surface where the confirmed
+  form lives, routing blockers to inbox/approvals/incidents, and providing a
+  confirmed `save-workspace` finish form. It also includes the confirmed
+  dashboard status refresh form.
 - `/verification` - read-only verification handoff showing the checked-in
   GitHub Actions workflow posture, compact local checks, remote full-suite
   boundary, and explicit CI non-claims without contacting GitHub.
@@ -785,8 +789,12 @@ required, and the no-external-effects boundary. The page now starts with an
 `Action Catalog Command Bar` that summarizes total actions, navigation actions,
 mutating actions, confirmation-required actions, local execution/git/approval/
 artifact posture, the first safe local action, section anchors, and zero
-provider/network/external-effect counters. The app exposes these actions
-through explicit forms, including context pack generation, coder prep, coder
+provider/network/external-effect counters. It then renders an
+`Action Operator Workbench` that turns current first-run or lead-Goal state into
+one local action, the owning Goal/run/approval surface, blocker routing, and a
+confirmed `save-workspace` finish point without submitting actions from the
+catalog page itself. The app exposes these actions through explicit forms,
+including context pack generation, coder prep, coder
 prep from `implementation_handoff.md`, coder-worktree plan, worktree approval
 request, commit request, publication request, approval decisions, and
 publication handoff when the required approval exists. The dashboard and

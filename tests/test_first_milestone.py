@@ -5877,6 +5877,54 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "action_catalog_click: <a href='#action-catalog-workflow-actions'>Local Artifact And Approval Actions</a>" in actions.body
     assert "action_catalog_confirm: every local mutation requires confirm=yes" in actions.body
     assert "action_catalog_safety: read-only action catalog; confirmed forms remain on owning surfaces" in actions.body
+    assert "Action Operator Workbench" in actions.body
+    assert "data-action-operator-workbench='true'" in actions.body
+    assert "data-action-workbench-actions='true'" in actions.body
+    assert "action_workbench_status</dt><dd>available" in actions.body
+    assert "action_workbench_source</dt><dd>saved_goal" in actions.body
+    assert "action_workbench_project</dt><dd><a href='/projects/first-target'>first-target</a>" in actions.body
+    assert f"action_workbench_goal</dt><dd><a href='/goals/{created_goal_id}'" in actions.body
+    assert "action_workbench_phase</dt><dd>Running" in actions.body
+    assert "action_workbench_first_run_step</dt><dd>none" in actions.body
+    assert "action_workbench_next_action</dt><dd>Run delegation" in actions.body
+    assert "action_workbench_action_name</dt><dd>run-delegation" in actions.body
+    assert f"action_workbench_primary_surface</dt><dd><a href='/goals/{created_goal_id}'" in actions.body
+    assert f"action_workbench_owning_surface</dt><dd><a href='/goals/{created_goal_id}'" in actions.body
+    assert f"action_workbench_reason</dt><dd>delegation={delegation.id} context_pack_ready_confirmed_browser_action" in actions.body
+    assert "action_workbench_action_form_available</dt><dd>true" in actions.body
+    assert "action_workbench_confirmation_required</dt><dd>true" in actions.body
+    assert "action_workbench_waiting_items</dt><dd>0" in actions.body
+    assert "action_workbench_pending_approvals</dt><dd>0" in actions.body
+    assert "action_workbench_open_incidents</dt><dd>0" in actions.body
+    assert "action_workbench_open_recommendations</dt><dd>0" in actions.body
+    assert "action_workbench_inbox_items</dt><dd>1" in actions.body
+    assert "action_workbench_unblock_surface</dt><dd><a href='/inbox'>/inbox</a>" in actions.body
+    assert "action_workbench_unblock_reason</dt><dd>inbox_items" in actions.body
+    assert "action_workbench_finish_surface</dt><dd><a href='#action-finish-today'>Finish Today</a>" in actions.body
+    assert "action_workbench_finish_form_available</dt><dd>true" in actions.body
+    assert "action_workbench_finish_confirmation_required</dt><dd>true" in actions.body
+    assert "action_workbench_saved_project</dt><dd>first-target" in actions.body
+    assert f"action_workbench_saved_goal</dt><dd>{created_goal_id}" in actions.body
+    assert f".clanker/projects/first-target/goals/{created_goal_id}/GOAL.md" in actions.body
+    assert "action_workbench_write_on_get</dt><dd>false" in actions.body
+    assert "action_workbench_provider_calls_taken</dt><dd>0" in actions.body
+    assert "action_workbench_network_actions_taken</dt><dd>0" in actions.body
+    assert "action_workbench_external_effects_created</dt><dd>false" in actions.body
+    assert "action_workbench_push_created</dt><dd>false" in actions.body
+    assert "action_workbench_pr_created</dt><dd>false" in actions.body
+    assert "action_workbench_deploy_created</dt><dd>false" in actions.body
+    assert "action_workbench_now: Run delegation" in actions.body
+    assert f"action_workbench_click: <a href='/goals/{created_goal_id}'>/goals/{created_goal_id}</a>" in actions.body
+    assert f"action_workbench_owner: <a href='/goals/{created_goal_id}'>/goals/{created_goal_id}</a>" in actions.body
+    assert "action_workbench_unblock: <a href='/inbox'>/inbox</a>" in actions.body
+    assert "action_workbench_finish: <a href='#action-finish-today'>Finish Today</a>" in actions.body
+    assert "action_workbench_safety: read-only action routing; confirmed forms stay on owning surfaces" in actions.body
+    assert "action_finish_status</dt><dd>available" in actions.body
+    assert "action_finish_action</dt><dd>save-workspace" in actions.body
+    assert "action_finish_project</dt><dd>first-target" in actions.body
+    assert f"action_finish_goal</dt><dd>{created_goal_id}" in actions.body
+    assert "action_finish_confirmation_required</dt><dd>true" in actions.body
+    assert "name='updated_by' value='action-operator-workbench'" in actions.body
     assert "id='action-catalog-navigation-actions'" in actions.body
     assert "id='action-catalog-dashboard-action'" in actions.body
     assert "id='action-catalog-demo-surfaces'" in actions.body
@@ -7104,6 +7152,45 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert actions_with_demo.status == 200
     assert "Action Catalog Command Bar" in actions_with_demo.body
     assert "data-action-catalog-command-bar='true'" in actions_with_demo.body
+    assert "Action Operator Workbench" in actions_with_demo.body
+    assert "data-action-operator-workbench='true'" in actions_with_demo.body
+    assert "data-action-workbench-actions='true'" in actions_with_demo.body
+    assert "action_workbench_status</dt><dd>available" in actions_with_demo.body
+    assert "action_workbench_source</dt><dd>lead_goal" in actions_with_demo.body
+    assert "action_workbench_project</dt><dd><a href='/projects/local-app-demo'>local-app-demo</a>" in actions_with_demo.body
+    assert f"action_workbench_goal</dt><dd><a href='/goals/{result.goal_id}'" in actions_with_demo.body
+    assert "action_workbench_phase</dt><dd>Ready to commit" in actions_with_demo.body
+    assert "action_workbench_next_action</dt><dd>Create commit request" in actions_with_demo.body
+    assert "action_workbench_action_name</dt><dd>coder-commit-request" in actions_with_demo.body
+    assert f"action_workbench_primary_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in actions_with_demo.body
+    assert f"action_workbench_owning_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in actions_with_demo.body
+    assert f"action_workbench_reason</dt><dd>reviewed_run={result.coder_worktree_run_id}" in actions_with_demo.body
+    assert "action_workbench_action_form_available</dt><dd>true" in actions_with_demo.body
+    assert "action_workbench_confirmation_required</dt><dd>true" in actions_with_demo.body
+    assert "action_workbench_waiting_items</dt><dd>1" in actions_with_demo.body
+    assert "action_workbench_pending_approvals</dt><dd>1" in actions_with_demo.body
+    assert "action_workbench_open_incidents</dt><dd>0" in actions_with_demo.body
+    assert "action_workbench_open_recommendations</dt><dd>0" in actions_with_demo.body
+    assert "action_workbench_inbox_items</dt><dd>3" in actions_with_demo.body
+    assert "action_workbench_unblock_surface</dt><dd><a href='/approvals'>/approvals</a>" in actions_with_demo.body
+    assert "action_workbench_unblock_reason</dt><dd>pending_approvals" in actions_with_demo.body
+    assert "action_workbench_finish_surface</dt><dd><a href='#action-finish-today'>Finish Today</a>" in actions_with_demo.body
+    assert "action_workbench_saved_project</dt><dd>local-app-demo" in actions_with_demo.body
+    assert f"action_workbench_saved_goal</dt><dd>{result.goal_id}" in actions_with_demo.body
+    assert f".clanker/projects/local-app-demo/goals/{result.goal_id}/GOAL.md" in actions_with_demo.body
+    assert "action_workbench_write_on_get</dt><dd>false" in actions_with_demo.body
+    assert "action_workbench_provider_calls_taken</dt><dd>0" in actions_with_demo.body
+    assert "action_workbench_network_actions_taken</dt><dd>0" in actions_with_demo.body
+    assert "action_workbench_external_effects_created</dt><dd>false" in actions_with_demo.body
+    assert "action_workbench_now: Create commit request" in actions_with_demo.body
+    assert (
+        f"action_workbench_click: <a href='/runs/{result.coder_worktree_run_id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+    ) in actions_with_demo.body
+    assert "action_workbench_unblock: <a href='/approvals'>/approvals</a>" in actions_with_demo.body
+    assert "action_workbench_safety: read-only action routing; confirmed forms stay on owning surfaces" in actions_with_demo.body
+    assert "action_finish_action</dt><dd>save-workspace" in actions_with_demo.body
+    assert "name='updated_by' value='action-operator-workbench'" in actions_with_demo.body
     assert "Current Demo Action Surfaces" in actions_with_demo.body
     assert "demo_fixture_status: available" in actions_with_demo.body
     assert "next_demo_action: request_commit_for_reviewed_run" in actions_with_demo.body
