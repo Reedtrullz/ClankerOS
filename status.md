@@ -1,5 +1,28 @@
 # Status
 
+## 2026-06-27 Home Start Here Cockpit
+
+- Added a read-only `Start Here` cockpit near the top of `/` so the daily
+  Home board answers the operator's first question: what should I click now?
+  It condenses first-run or lead-goal state, current phase, one primary
+  action, target surface, resume readiness, waiting counts, and CI handoff
+  posture into one scan-friendly panel.
+- Non-claims: this does not write state on GET, run work, approve gates, fetch
+  GitHub status, push, create PRs, deploy, call providers, or mutate external
+  systems. It only reads existing local goal/workspace/CI evidence state and
+  links to existing local surfaces.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Home Verification Handoff
 
 - Added a read-only `Home Verification Handoff` section to `/` that brings

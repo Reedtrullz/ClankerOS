@@ -4075,6 +4075,21 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "home_active_goals</dt><dd>0" in root.body
     assert "home_paused_goals</dt><dd>0" in root.body
     assert "home_completed_goals</dt><dd>0" in root.body
+    assert "Start Here" in root.body
+    assert "data-home-start-here='true'" in root.body
+    assert "start_here_mode</dt><dd>first_run" in root.body
+    assert "start_here_primary_goal</dt><dd>none" in root.body
+    assert "start_here_current_phase</dt><dd>First run" in root.body
+    assert "start_here_primary_action</dt><dd>Register ClankerOS project" in root.body
+    assert "start_here_primary_surface</dt><dd><a href='/goals'>/goals</a>" in root.body
+    assert "start_here_reason</dt><dd>no_project_registered" in root.body
+    assert "start_here_resume_ready</dt><dd>false" in root.body
+    assert "start_here_ci_status</dt><dd>success" in root.body
+    assert "start_here_ci_source</dt><dd>publication_handoff" in root.body
+    assert "start_here_write_on_get</dt><dd>false" in root.body
+    assert "start_here_external_effects_created</dt><dd>false" in root.body
+    assert "start_here_network_actions_taken</dt><dd>0" in root.body
+    assert "start_here_click: <a href='/goals'>/goals</a>" in root.body
     assert "Home Day Plan" in root.body
     assert "home_day_plan_status</dt><dd>first_run" in root.body
     assert "home_day_plan_primary_goal</dt><dd>none" in root.body
@@ -5375,6 +5390,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Remember Current Goal" in dashboard.body
     assert "save-workspace" in dashboard.body
     assert "operator-home" in dashboard.body
+    assert "Start Here" in dashboard.body
+    assert "start_here_mode</dt><dd>goal" in dashboard.body
+    assert "start_here_current_phase</dt><dd>Ready to commit" in dashboard.body
+    assert "start_here_primary_action</dt><dd>Create commit request" in dashboard.body
+    assert f"start_here_primary_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in dashboard.body
+    assert "start_here_progress</dt><dd>" in dashboard.body
+    assert "start_here_ci_status</dt><dd>success" in dashboard.body
+    assert "start_here_ci_source</dt><dd>direct_public_snapshot" in dashboard.body
+    assert "start_here_click: <a href='/runs/" in dashboard.body
+    assert "start_here_resume: readiness=not_started surface=<a href='/resume'>/resume</a>" in dashboard.body
     assert "Home Verification Handoff" in dashboard.body
     assert "home_verification_surface</dt><dd><a href='/verification'>/verification</a>" in dashboard.body
     assert "home_ci_evidence_surface</dt><dd><a href='/ci-evidence'>/ci-evidence</a>" in dashboard.body

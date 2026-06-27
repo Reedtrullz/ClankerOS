@@ -1074,6 +1074,7 @@ def _home_dashboard(
         _kv(lead_lines),
         _non_claim_banner(),
         "</section>",
+        _home_start_here(root, storage, lead_goal),
         _home_day_plan(root, storage, lead_goal),
         _home_focus_queue(root, storage, active=active, paused=paused),
         _home_verification_handoff(root),
@@ -1087,6 +1088,117 @@ def _home_dashboard(
     if not _first_run_progress(root, storage)["complete"]:
         sections.append(_first_run_panel(root, storage))
     return "".join(sections)
+
+
+def _home_start_here(root: Path, storage: Storage, lead_goal: sqlite3.Row | None) -> str:
+    workspace = _load_workspace_state(root)
+    open_project = str(workspace.get("open_project") or "").strip()
+    open_goal = str(workspace.get("open_goal") or "").strip()
+    filters = str(workspace.get("filters") or "").strip()
+    expanded = str(workspace.get("expanded_panels") or "").strip()
+    last_artifact = str(workspace.get("last_viewed_artifact") or "").strip()
+    readiness = _workspace_resume_readiness(
+        root,
+        open_project=open_project,
+        open_goal=open_goal,
+        filters=filters,
+        expanded=expanded,
+        last_artifact=last_artifact,
+    )
+    ci_record = _latest_ci_evidence_record(root)
+    if ci_record is None:
+        ci_status = "missing"
+        ci_source = "none"
+    else:
+        ci_source, record = ci_record
+        ci_status = str(record.status)
+
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("start_here_resume_status", str(readiness["status"])),
+        ("start_here_resume_ready", str(readiness["ready"]).lower()),
+        ("start_here_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+        ("start_here_ci_status", ci_status),
+        ("start_here_ci_source", ci_source),
+        ("start_here_ci_surface", SafeHtml("<a href='/verification'>/verification</a>")),
+        ("start_here_write_on_get", "false"),
+        ("start_here_external_effects_created", "false"),
+        ("start_here_network_actions_taken", "0"),
+    ]
+    lines: list[str] = []
+    if lead_goal is None:
+        first_run = _first_run_progress(root, storage)
+        primary_surface = first_run["next_surface"]
+        rows.extend(
+            [
+                ("start_here_mode", "first_run"),
+                ("start_here_primary_goal", "none"),
+                ("start_here_current_phase", "First run"),
+                ("start_here_primary_action", first_run["next_action"]),
+                ("start_here_primary_surface", primary_surface),
+                ("start_here_reason", first_run["next_reason"]),
+                ("start_here_progress", f"first_run_step={first_run['current_step']}"),
+                ("start_here_waiting_items", "0"),
+            ]
+        )
+        lines.extend(
+            [
+                f"start_here_now: {_e(first_run['next_action'])}",
+                f"start_here_click: {primary_surface}",
+                "start_here_attention: create the first local project and goal from the browser",
+                f"start_here_resume: readiness={_e(str(readiness['status']))} surface=<a href='/resume'>/resume</a>",
+                f"start_here_ci: status={_e(ci_status)} source={_e(ci_source)} surface=<a href='/verification'>/verification</a>",
+            ]
+        )
+    else:
+        goal_id = str(lead_goal["id"])
+        state = _goal_state(root, storage, goal_id)
+        phase = _goal_current_phase(state)
+        next_action = _goal_next_action(root, state)
+        open_incidents = len([item for item in state["incidents"] if item["status"] == "open"])
+        open_recommendations = len(
+            [item for item in state["recommendations"] if item["status"] == "open"]
+        )
+        pending_approvals = (
+            _count_status(state["worktree_approvals"], "pending_operator_approval")
+            + _count_status(state["commit_approvals"], "pending_operator_approval")
+            + _count_status(state["publications"], "pending_operator_approval")
+        )
+        waiting_items = open_incidents + open_recommendations + pending_approvals
+        label = str(lead_goal["title"] or lead_goal["description"] or goal_id)
+        rows.extend(
+            [
+                ("start_here_mode", "goal"),
+                ("start_here_primary_goal", SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(label)}</a>")),
+                ("start_here_current_phase", phase),
+                ("start_here_primary_action", next_action.action),
+                ("start_here_primary_surface", SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>")),
+                ("start_here_reason", next_action.reason),
+                ("start_here_progress", _goal_progress_label(state)),
+                ("start_here_waiting_items", str(waiting_items)),
+                ("start_here_pending_approvals", str(pending_approvals)),
+                ("start_here_open_incidents", str(open_incidents)),
+                ("start_here_open_recommendations", str(open_recommendations)),
+            ]
+        )
+        lines.extend(
+            [
+                f"start_here_now: {_e(next_action.action)}",
+                f"start_here_click: <a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
+                f"start_here_attention: {_e(_goal_operator_attention(phase, next_action))}",
+                f"start_here_resume: readiness={_e(str(readiness['status']))} surface=<a href='/resume'>/resume</a>",
+                f"start_here_waiting: approvals={pending_approvals} incidents={open_incidents} recommendations={open_recommendations}",
+                f"start_here_ci: status={_e(ci_status)} source={_e(ci_source)} surface=<a href='/verification'>/verification</a>",
+            ]
+        )
+    return "".join(
+        [
+            "<section class='panel home-start-here' data-home-start-here='true'><h2>Start Here</h2>",
+            "<p class='muted'>One scan-friendly readback for the next click, resume posture, blockers, and CI handoff.</p>",
+            _kv(rows),
+            _ul(lines),
+            "</section>",
+        ]
+    )
 
 
 def _home_day_plan(root: Path, storage: Storage, lead_goal: sqlite3.Row | None) -> str:

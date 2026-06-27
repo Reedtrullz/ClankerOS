@@ -294,13 +294,16 @@ Core layers for the bootstrap:
   The root `/` app page is now a Goal-First Home board with active, paused,
   and completed goal lanes, recent activity, inbox counts, recommendations,
   incidents, saved workspace resume links, saved-goal phase and next-action
-  readbacks, a read-only `Home Day Plan` that names the current goal, current
-  phase, one next action, waiting counts, and end-of-day resume readiness from
-  saved workspace state, a read-only `Home Focus Queue` that lists next
-  actions, phase, target surface, progress, and waiting counts across active
-  and paused goals, the same confirmed local action form as the Goal page when
-  the saved goal's next action is browser-available, a `/resume` landing link,
-  an explicit `save-workspace` form for the current lead goal when one exists,
+  readbacks, a read-only `Start Here` cockpit that condenses the lead goal or
+  first-run step, one primary action, target surface, resume readiness,
+  waiting counts, and CI handoff posture into a single scan-friendly panel, a
+  read-only `Home Day Plan` that names the current goal, current phase, one
+  next action, waiting counts, and end-of-day resume readiness from saved
+  workspace state, a read-only `Home Focus Queue` that lists next actions,
+  phase, target surface, progress, and waiting counts across active and paused
+  goals, the same confirmed local action form as the Goal page when the saved
+  goal's next action is browser-available, a `/resume` landing link, an
+  explicit `save-workspace` form for the current lead goal when one exists,
   and a state-aware first-run project/goal/delegation guide until the first
   delegation is completed.
   Coder worktree run rows in review,
