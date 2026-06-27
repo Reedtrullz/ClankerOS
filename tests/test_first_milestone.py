@@ -5422,6 +5422,25 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "approval_queue_empty: no pending local approval decisions" in approvals.body
     assert "approval_queue_write_on_get</dt><dd>false" in approvals.body
     assert "approval_queue_external_effects_created</dt><dd>false" in approvals.body
+    assert "Approval Operator Workbench" in approvals.body
+    assert "data-approval-operator-workbench='true'" in approvals.body
+    assert "data-approval-workbench-actions='true'" in approvals.body
+    assert "approval_workbench_status</dt><dd>empty_queue" in approvals.body
+    assert "approval_workbench_total_pending</dt><dd>0" in approvals.body
+    assert "approval_workbench_first_kind</dt><dd>none" in approvals.body
+    assert "approval_workbench_first_goal</dt><dd>none" in approvals.body
+    assert "approval_workbench_goal_surface</dt><dd><a href='/goals'>/goals</a>" in approvals.body
+    assert "approval_workbench_next_action</dt><dd>No pending approvals" in approvals.body
+    assert "approval_workbench_primary_surface</dt><dd><a href='/goals'>/goals</a>" in approvals.body
+    assert "approval_workbench_action_form_available</dt><dd>false" in approvals.body
+    assert "approval_workbench_confirmation_required</dt><dd>false" in approvals.body
+    assert "approval_workbench_finish_form_available</dt><dd>true" in approvals.body
+    assert "approval_workbench_write_on_get</dt><dd>false" in approvals.body
+    assert "approval_workbench_approves_on_get</dt><dd>false" in approvals.body
+    assert "approval_workbench_executes_work_on_get</dt><dd>false" in approvals.body
+    assert "approval_workbench_empty: no pending local approval decisions" in approvals.body
+    assert "id='approval-finish-today'" in approvals.body
+    assert "name='updated_by' value='approval-operator-workbench'" in approvals.body
     assert "Approval Decision Brief" in approvals.body
     assert "data-approval-decision-brief='true'" in approvals.body
     assert "data-approval-decision-status='empty'" in approvals.body
@@ -7886,6 +7905,56 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "approval_queue_now: Approve worktree" in approvals.body
     assert "approval_queue_click: <a href='#pending-worktree-approvals'>Pending Worktree Approvals</a>" in approvals.body
     assert "approval_queue_safety: local decision artifact only" in approvals.body
+    assert "Approval Operator Workbench" in approvals.body
+    assert "data-approval-operator-workbench='true'" in approvals.body
+    assert "data-approval-workbench-actions='true'" in approvals.body
+    assert "approval_workbench_status</dt><dd>decision_form_ready" in approvals.body
+    assert "approval_workbench_total_pending</dt><dd>1" in approvals.body
+    assert "approval_workbench_worktree_pending</dt><dd>1" in approvals.body
+    assert "approval_workbench_commit_pending</dt><dd>0" in approvals.body
+    assert "approval_workbench_publication_pending</dt><dd>0" in approvals.body
+    assert "approval_workbench_first_kind</dt><dd>worktree" in approvals.body
+    assert f"approval_workbench_first_id</dt><dd>{result.approval_id}" in approvals.body
+    assert "approval_workbench_first_project</dt><dd>local-app-demo" in approvals.body
+    assert f"approval_workbench_first_goal</dt><dd>{result.goal_id}" in approvals.body
+    assert f"approval_workbench_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in approvals.body
+    assert f"approval_workbench_first_delegation</dt><dd>{result.delegation_id}" in approvals.body
+    assert "approval_workbench_first_run</dt><dd>not_created_yet" in approvals.body
+    assert f"approval_workbench_first_source_run</dt><dd>{result.run_id}" in approvals.body
+    assert "approval_workbench_next_action</dt><dd>Approve worktree" in approvals.body
+    assert "approval_workbench_action_name</dt><dd>approve-coder-worktree" in approvals.body
+    assert "approval_workbench_primary_surface</dt><dd><a href='#pending-worktree-approvals'>Pending Worktree Approvals</a>" in approvals.body
+    assert f"approval_workbench_inspection_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'>Workflow</a>" in approvals.body
+    assert "approval_workbench_request_artifact</dt><dd><a href='/artifacts?path=" in approvals.body
+    assert "approval_workbench_evidence_artifact</dt><dd><a href='/artifacts?path=" in approvals.body
+    assert "approval_workbench_after_decision</dt><dd>run approved worktree from goal or run surface" in approvals.body
+    assert "approval_workbench_reason</dt><dd>bounded_worktree_plan_waiting_for_operator" in approvals.body
+    assert "approval_workbench_typed_commit_message_required</dt><dd>false" in approvals.body
+    assert "approval_workbench_remote_target</dt><dd>none" in approvals.body
+    assert "approval_workbench_action_form_available</dt><dd>true" in approvals.body
+    assert "approval_workbench_confirmation_required</dt><dd>true" in approvals.body
+    assert "approval_workbench_finish_form_available</dt><dd>true" in approvals.body
+    assert "approval_workbench_source</dt><dd>approval_queue_gate_state" in approvals.body
+    assert "approval_workbench_write_on_get</dt><dd>false" in approvals.body
+    assert "approval_workbench_approves_on_get</dt><dd>false" in approvals.body
+    assert "approval_workbench_executes_work_on_get</dt><dd>false" in approvals.body
+    assert "approval_workbench_provider_calls_taken</dt><dd>0" in approvals.body
+    assert "approval_workbench_network_actions_taken</dt><dd>0" in approvals.body
+    assert "approval_workbench_external_effects_created</dt><dd>false" in approvals.body
+    assert "approval_workbench_push_created</dt><dd>false" in approvals.body
+    assert "approval_workbench_pr_created</dt><dd>false" in approvals.body
+    assert "approval_workbench_deploy_created</dt><dd>false" in approvals.body
+    assert "approval_workbench_now: Approve worktree" in approvals.body
+    assert "approval_workbench_click: <a href='#pending-worktree-approvals'>Pending Worktree Approvals</a>" in approvals.body
+    assert f"approval_workbench_inspect: <a href='/workflow?delegation_id={result.delegation_id}'>Workflow</a>" in approvals.body
+    assert f"approval_workbench_goal: <a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in approvals.body
+    assert "approval_workbench_after: run approved worktree from goal or run surface" in approvals.body
+    assert "approval_workbench_finish: <a href='#approval-finish-today'>Finish Today</a>" in approvals.body
+    assert "approval_workbench_safety: confirmed local decision artifact only" in approvals.body
+    assert "id='approval-finish-today'" in approvals.body
+    assert "name='filters' value='approval:worktree:" in approvals.body
+    assert "approval-workbench,decision,worktree,commit,publication" in approvals.body
+    assert "name='updated_by' value='approval-operator-workbench'" in approvals.body
     assert "Approval Decision Brief" in approvals.body
     assert "data-approval-decision-brief='true'" in approvals.body
     assert "data-approval-decision-status='needs_worktree_decision'" in approvals.body
@@ -8174,6 +8243,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "approval_queue_commit_pending</dt><dd>1" in approvals.body
     assert "approval_queue_publication_pending</dt><dd>0" in approvals.body
     assert "approval_queue_first_kind</dt><dd>worktree" in approvals.body
+    assert "approval_workbench_total_pending</dt><dd>2" in approvals.body
+    assert "approval_workbench_worktree_pending</dt><dd>1" in approvals.body
+    assert "approval_workbench_commit_pending</dt><dd>1" in approvals.body
+    assert "approval_workbench_publication_pending</dt><dd>0" in approvals.body
+    assert "approval_workbench_first_kind</dt><dd>worktree" in approvals.body
+    assert "approval_workbench_next_action</dt><dd>Approve worktree" in approvals.body
     assert "approval_decision_status</dt><dd>needs_worktree_decision" in approvals.body
     assert "approval_decision_action_name</dt><dd>approve-coder-worktree" in approvals.body
     assert commit_approval.id in approvals.body

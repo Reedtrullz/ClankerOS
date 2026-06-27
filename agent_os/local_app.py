@@ -623,6 +623,7 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             "/approvals",
             "Approvals",
             [
+                "Approval Operator Workbench",
                 demo.approval_id,
                 "approve-coder-worktree",
                 "Pending Worktree Approvals",
@@ -11651,6 +11652,12 @@ def _approvals(root: Path) -> str:
                 commit_approvals,
                 publication_approvals,
             ),
+            _approval_operator_workbench(
+                root,
+                worktree_approvals,
+                commit_approvals,
+                publication_approvals,
+            ),
             _approval_decision_brief(
                 root,
                 worktree_approvals,
@@ -11673,6 +11680,214 @@ def _approvals(root: Path) -> str:
                 anchor_id="pending-publication-approvals",
             ),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _approval_operator_workbench(
+    root: Path,
+    worktree_approvals: list[Any],
+    commit_approvals: list[Any],
+    publication_approvals: list[Any],
+) -> str:
+    storage = _storage(root)
+    total = len(worktree_approvals) + len(commit_approvals) + len(publication_approvals)
+    status = "empty_queue"
+    first_kind = "none"
+    first_id = "none"
+    first_project = "none"
+    first_goal = "none"
+    first_delegation = "none"
+    first_run = "none"
+    first_source_run = "none"
+    action = "No pending approvals"
+    action_name = "none"
+    target_href = "/goals"
+    target_label = "/goals"
+    inspect_href = "/goals"
+    inspect_label = "/goals"
+    after_decision = "none"
+    reason = "no_pending_local_approval_decisions"
+    request_artifact_path = "none"
+    evidence_artifact_path = "none"
+    typed_commit_message_required = "false"
+    remote_target = "none"
+
+    if worktree_approvals:
+        item = worktree_approvals[0]
+        status = "decision_form_ready"
+        first_kind = "worktree"
+        first_id = item.id
+        first_project = item.project_id
+        first_delegation = item.delegation_id
+        first_run = "not_created_yet"
+        first_source_run = item.source_run_id or "none"
+        action = "Approve worktree"
+        action_name = "approve-coder-worktree"
+        target_href = "#pending-worktree-approvals"
+        target_label = "Pending Worktree Approvals"
+        inspect_href = f"/workflow?delegation_id={quote(item.delegation_id)}"
+        inspect_label = "Workflow"
+        after_decision = "run approved worktree from goal or run surface"
+        reason = "bounded_worktree_plan_waiting_for_operator"
+        request_artifact_path = _repo_relative_artifact_path(root, item.request_artifact_path)
+        evidence_artifact_path = _repo_relative_artifact_path(root, item.source_plan_path)
+    elif commit_approvals:
+        item = commit_approvals[0]
+        status = "decision_form_ready"
+        first_kind = "commit"
+        first_id = item.id
+        first_project = item.project_id
+        first_delegation = item.delegation_id
+        first_run = item.run_id
+        first_source_run = item.source_run_id or "none"
+        action = "Approve commit"
+        action_name = "approve-coder-commit"
+        target_href = "#pending-commit-approvals"
+        target_label = "Pending Commit Approvals"
+        inspect_href = f"/runs/{quote(item.run_id)}"
+        inspect_label = "Run Detail"
+        after_decision = "commit approved worktree with typed message"
+        reason = "reviewed_worktree_commit_waiting_for_operator"
+        request_artifact_path = _repo_relative_artifact_path(root, item.request_artifact_path)
+        evidence_artifact_path = _repo_relative_artifact_path(root, item.review_path)
+        typed_commit_message_required = "true"
+    elif publication_approvals:
+        item = publication_approvals[0]
+        status = "decision_form_ready"
+        first_kind = "publication"
+        first_id = item.id
+        first_project = item.project_id
+        first_delegation = item.delegation_id
+        first_run = item.run_id
+        first_source_run = item.source_run_id or "none"
+        action = "Approve publication"
+        action_name = "approve-coder-publication"
+        target_href = "#pending-publication-approvals"
+        target_label = "Pending Publication Approvals"
+        inspect_href = f"/runs/{quote(item.run_id)}"
+        inspect_label = "Run Detail"
+        after_decision = "prepare publication handoff for manual push/PR"
+        reason = "committed_worktree_publication_waiting_for_operator"
+        request_artifact_path = _repo_relative_artifact_path(root, item.request_artifact_path)
+        evidence_artifact_path = _repo_relative_artifact_path(root, item.source_commit_artifact_path)
+        remote_target = f"{item.remote}/{item.target_branch}"
+
+    if first_delegation != "none":
+        delegation = storage.get_subagent_delegation(first_delegation)
+        if delegation is not None and delegation.parent_goal_id:
+            first_goal = delegation.parent_goal_id
+
+    form_available = total > 0
+    goal_href = f"/goals/{quote(first_goal)}" if first_goal != "none" else "/goals"
+    goal_label = first_goal if first_goal != "none" else "/goals"
+    goal_surface = SafeHtml(f"<a href='{_e(goal_href)}'>{_e(goal_label)}</a>")
+    target_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    inspect_surface = SafeHtml(f"<a href='{_e(inspect_href)}'>{_e(inspect_label)}</a>")
+    request_artifact = SafeHtml(_artifact_link(request_artifact_path))
+    evidence_artifact = SafeHtml(_artifact_link(evidence_artifact_path))
+    finish_form = _input_form(
+        "save-workspace",
+        {
+            "open_project": "" if first_project == "none" else first_project,
+            "open_goal": "" if first_goal == "none" else first_goal,
+            "return_to": "/approvals",
+        },
+        {
+            "filters": f"approval:{first_kind}:{first_id}",
+            "expanded_panels": "approval-workbench,decision,worktree,commit,publication",
+            "last_viewed_artifact": request_artifact_path,
+            "updated_by": "approval-operator-workbench",
+        },
+    )
+    lines = [
+        f"approval_workbench_now: {_e(action)}",
+        f"approval_workbench_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+        f"approval_workbench_inspect: <a href='{_e(inspect_href)}'>{_e(inspect_label)}</a>",
+        f"approval_workbench_goal: <a href='{_e(goal_href)}'>{_e(goal_label)}</a>",
+        f"approval_workbench_after: {_e(after_decision)}",
+        "approval_workbench_finish: <a href='#approval-finish-today'>Finish Today</a>",
+        "approval_workbench_safety: confirmed local decision artifact only",
+    ]
+    if total == 0:
+        lines.append("approval_workbench_empty: no pending local approval decisions")
+    return "".join(
+        [
+            (
+                "<section id='approval-operator-workbench' "
+                "class='panel approval-operator-workbench' "
+                "data-approval-operator-workbench='true'>"
+                "<h2>Approval Operator Workbench</h2>"
+            ),
+            "<div class='approval-workbench-grid' data-approval-workbench-actions='true'>",
+            "<div class='approval-workbench-card approval-workbench-primary'>",
+            "<h3>Do Now</h3>",
+            f"<p>{_e(action)}</p>",
+            f"<a class='approval-workbench-action' href='{_e(target_href)}'>{_e(target_label)}</a>",
+            "</div>",
+            "<div class='approval-workbench-card'>",
+            "<h3>Inspect</h3>",
+            f"<p>{_e(reason)}</p>",
+            f"<a class='approval-workbench-link' href='{_e(inspect_href)}'>{_e(inspect_label)}</a>",
+            "</div>",
+            "<div class='approval-workbench-card'>",
+            "<h3>Goal</h3>",
+            f"<p>{_e(first_goal)}</p>",
+            f"<a class='approval-workbench-link' href='{_e(goal_href)}'>{_e(goal_label)}</a>",
+            "</div>",
+            "<div class='approval-workbench-card'>",
+            "<h3>Finish Today</h3>",
+            "<p>Save approval resume state</p>",
+            "<a class='approval-workbench-link' href='#approval-finish-today'>Open save form</a>",
+            "</div>",
+            "</div>",
+            _kv(
+                [
+                    ("approval_workbench_status", status),
+                    ("approval_workbench_total_pending", str(total)),
+                    ("approval_workbench_worktree_pending", str(len(worktree_approvals))),
+                    ("approval_workbench_commit_pending", str(len(commit_approvals))),
+                    ("approval_workbench_publication_pending", str(len(publication_approvals))),
+                    ("approval_workbench_first_kind", first_kind),
+                    ("approval_workbench_first_id", first_id),
+                    ("approval_workbench_first_project", first_project),
+                    ("approval_workbench_first_goal", first_goal),
+                    ("approval_workbench_goal_surface", goal_surface),
+                    ("approval_workbench_first_delegation", first_delegation),
+                    ("approval_workbench_first_run", first_run),
+                    ("approval_workbench_first_source_run", first_source_run),
+                    ("approval_workbench_next_action", action),
+                    ("approval_workbench_action_name", action_name),
+                    ("approval_workbench_primary_surface", target_surface),
+                    ("approval_workbench_inspection_surface", inspect_surface),
+                    ("approval_workbench_request_artifact", request_artifact),
+                    ("approval_workbench_evidence_artifact", evidence_artifact),
+                    ("approval_workbench_after_decision", after_decision),
+                    ("approval_workbench_reason", reason),
+                    ("approval_workbench_typed_commit_message_required", typed_commit_message_required),
+                    ("approval_workbench_remote_target", remote_target),
+                    ("approval_workbench_action_form_available", str(form_available).lower()),
+                    ("approval_workbench_confirmation_required", str(form_available).lower()),
+                    ("approval_workbench_finish_form_available", "true"),
+                    ("approval_workbench_finish_confirmation_required", "true"),
+                    ("approval_workbench_saved_artifact", request_artifact),
+                    ("approval_workbench_source", "approval_queue_gate_state"),
+                    ("approval_workbench_write_on_get", "false"),
+                    ("approval_workbench_approves_on_get", "false"),
+                    ("approval_workbench_executes_work_on_get", "false"),
+                    ("approval_workbench_provider_calls_taken", "0"),
+                    ("approval_workbench_network_actions_taken", "0"),
+                    ("approval_workbench_external_effects_created", "false"),
+                    ("approval_workbench_push_created", "false"),
+                    ("approval_workbench_pr_created", "false"),
+                    ("approval_workbench_deploy_created", "false"),
+                ]
+            ),
+            _ul(lines),
+            "<h3 id='approval-finish-today'>Finish Today</h3>",
+            "<p class='muted'>Save this approval queue, expanded panels, and request artifact as tomorrow's resume point. This writes only `.clanker/app/workspace.json` after confirmation.</p>",
+            finish_form,
+            "</section>",
         ]
     )
 
@@ -14944,7 +15159,7 @@ def _manual_browser_checkpoints(state: dict[str, str] | None) -> str:
         "<a href='/demo'>/demo</a> marker=Demo Scenario expected=Demo Dogfooding Links,Demo Browser Progress,Demo Gate Artifacts",
         "<a href='/dogfooding'>/dogfooding</a> marker=Manual Dogfooding Checklist expected=Dogfooding Command Bar,Dogfooding Next Action,GitHub Actions Follow-up",
         f"<a href='/projects/{quote(project_id)}'>/projects/{_e(project_id)}</a> marker=Project expected=Project Operator Guidance,Project Workflow Launchpad",
-        "<a href='/approvals'>/approvals</a> marker=Approvals expected=pending local decisions or empty queue",
+        "<a href='/approvals'>/approvals</a> marker=Approvals expected=Approval Operator Workbench,pending local decisions or empty queue",
         "<a href='/inbox'>/inbox</a> marker=Operator Inbox expected=queue counts and next-action cues",
         "<a href='/verification'>/verification</a> marker=Verification Handoff expected=fast/full-suite boundary and no GitHub status fetch",
         "<a href='/health'>/health</a> marker=System Health expected=local app status artifact and zero-effect non-claims",
@@ -17483,6 +17698,18 @@ def _html_page(
     .approval-decision-brief[data-approval-decision-status="empty"] {{ border-left-color:var(--ok); }}
     .approval-decision-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .approval-decision-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .approval-operator-workbench {{ border-left:4px solid var(--accent); }}
+    .approval-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .approval-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .approval-operator-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .approval-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .approval-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .approval-workbench-card h3 {{ margin-top:0; }}
+    .approval-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .approval-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .approval-workbench-action, .approval-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .approval-workbench-action {{ background:var(--accent); color:#fff; }}
+    .approval-workbench-link {{ background:var(--surface); color:var(--accent); }}
     .incident-command-bar {{ border-left:4px solid var(--error); }}
     .incident-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .incident-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -17506,7 +17733,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} .goal-workbench-grid, .run-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} .goal-workbench-grid, .run-workbench-grid, .approval-workbench-grid {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>

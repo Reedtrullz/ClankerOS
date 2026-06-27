@@ -1,5 +1,39 @@
 # Status
 
+## 2026-06-27 Approval Operator Workbench
+
+- Added an `Approval Operator Workbench` immediately after the `/approvals`
+  `Approval Queue Command Bar`.
+- The workbench turns the first pending local approval decision into
+  do/inspect/Goal/finish cards with the parent Goal when known, request and
+  evidence artifacts, typed-commit/remote context, same-page decision-form
+  anchor, confirmation posture, and a confirmed `save-workspace` form that can
+  store the approval queue as tomorrow's resume point.
+- Added empty-queue and fixture-backed route assertions for the workbench, plus
+  demo smoke coverage for the `/approvals` marker.
+- Updated README, local app docs, and the operating summary to describe
+  `/approvals` as a continuation/workbench surface rather than only a queue of
+  forms.
+- Non-claims: this does not approve anything on GET, execute work, commit,
+  push, create PRs, deploy, fetch GitHub status, call providers, use the
+  network, or mutate external systems. Existing confirmed approval forms remain
+  the only local decision path.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `df -h /System/Volumes/Data`
+    -> `82Gi` available before smoke tests
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_03eebfa18313`, `run_54adf2f7e735`, and coder
+    worktree run `run_3818ccd71603`
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Run Operator Workbench
 
 - Added a `Run Operator Workbench` immediately after the run detail `Run

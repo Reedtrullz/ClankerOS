@@ -165,7 +165,11 @@ Core layers for the bootstrap:
   provider/network effects disabled; `/approvals` as a
   local decision queue with a read-only `Approval Queue Command Bar` that
   summarizes pending worktree/commit/publication counts, first recommended
-  decision, target section, after-decision guidance, and zero-effect boundary;
+  decision, target section, after-decision guidance, and zero-effect boundary,
+  followed by an `Approval Operator Workbench` with do/inspect/Goal/finish
+  cards, parent Goal routing, request/evidence artifacts, confirmation
+  posture, and a confirmed `save-workspace` form that stores the queue as a
+  future resume point without writing on GET;
   and `/profiles`
   for inactive future provider-routing readback from `.clanker/profiles.yml`
   and SQLite profile storage rows, including profile labels, modes, cost
