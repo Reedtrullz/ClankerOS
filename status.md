@@ -1,5 +1,35 @@
 # Status
 
+## 2026-06-27 Health Command Bar
+
+- Added a `Health Command Bar` to `/health`.
+- The bar summarizes local health readiness, warning count, bind scope,
+  branch/commit, dirty/untracked posture, storage and workflow-import
+  readiness, total indexed records, registered command count, the refreshed
+  local status artifact, explicit `status_artifact_write_on_get=true`, one
+  next local surface, and zero provider/network/external-effect counters before
+  the detailed diagnostics.
+- Split `/health` into scan-first command, warning, diagnostics, counts, key
+  commands, and workflow-import sections with stable anchors.
+- Updated README, local app docs, and the operating summary to describe
+  `/health` as a trust/readiness surface and to make its local status-artifact
+  write explicit.
+- Non-claims: this does not call providers, fetch GitHub status, push, create
+  PRs, deploy, run workflow actions, approve requests, execute coder runs, or
+  mutate external systems. `/health` still intentionally writes only the local
+  `.clanker/app/local_app_status.json` status artifact.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_79626d6290bc`, `run_bac16f00207c`, and coder
+    worktree run `run_3b001fef722c`
+
 ## 2026-06-27 Action Catalog Command Bar
 
 - Added a read-only `Action Catalog Command Bar` to `/actions`.

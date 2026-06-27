@@ -645,6 +645,9 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             "/health",
             "System Health",
             [
+                "Health Command Bar",
+                "data-health-command-bar='true'",
+                "health_command_status_artifact_write_on_get</dt><dd>true",
                 "storage_initializes",
                 "no provider calls",
                 "no external mutation",
@@ -13459,10 +13462,24 @@ def _health(root: Path, *, host: str, port: int) -> str:
     state = _repo_state(root)
     warnings = _warning_items(state, host)
     imports = _workflow_import_status()
+    status_relative = str(status_path.relative_to(root))
     return "".join(
         [
             "<section><h1>System Health</h1>",
-            _warnings(warnings),
+            "<p class='muted'>Local app readiness, status-artifact writeback, workflow imports, and safety counters.</p>",
+            "</section>",
+            _health_command_bar(
+                root,
+                status_relative=status_relative,
+                counts=counts,
+                state=state,
+                warnings=warnings,
+                imports=imports,
+                host=host,
+                port=port,
+            ),
+            _warnings(warnings, anchor_id="health-warnings"),
+            "<section id='health-diagnostics'><h2>Diagnostics</h2>",
             _kv(
                 [
                     ("python", sys.version.split()[0]),
@@ -13473,14 +13490,93 @@ def _health(root: Path, *, host: str, port: int) -> str:
                     ("untracked_files", ", ".join(state["untracked_files"]) or "none"),
                     ("sqlite_database", str(storage.db_path)),
                     ("storage_initializes", "true"),
-                    ("status_artifact", str(status_path.relative_to(root))),
+                    ("status_artifact", status_relative),
                     ("bind", f"{host}:{port}"),
                 ]
             ),
-            _list_section("Counts", [f"{key}: {value}" for key, value in counts.items()]),
-            _list_section("Key Commands Registered", _key_commands()),
-            _list_section("Workflow Imports", [f"{key}: {value}" for key, value in imports.items()]),
             _non_claim_banner(),
+            "</section>",
+            _list_section(
+                "Counts",
+                [f"{key}: {value}" for key, value in counts.items()],
+                anchor_id="health-counts",
+            ),
+            _list_section(
+                "Key Commands Registered",
+                _key_commands(),
+                anchor_id="health-key-commands",
+            ),
+            _list_section(
+                "Workflow Imports",
+                [f"{key}: {value}" for key, value in imports.items()],
+                anchor_id="health-workflow-imports",
+            ),
+        ]
+    )
+
+
+def _health_command_bar(
+    root: Path,
+    *,
+    status_relative: str,
+    counts: dict[str, int],
+    state: dict[str, Any],
+    warnings: list[str],
+    imports: dict[str, str],
+    host: str,
+    port: int,
+) -> str:
+    warning_count = len(warnings)
+    import_status = "ok" if all(value == "ok" for value in imports.values()) else "attention"
+    command_status = "warnings" if warning_count else "ready"
+    next_action = "Review warnings" if warning_count else "Open resume"
+    target_href = "#health-warnings" if warning_count else "/resume"
+    target_label = "Warnings" if warning_count else "/resume"
+    reason = "health_warnings_present" if warning_count else "local_health_ready"
+    bind_scope = "local" if host in LOCAL_HOSTS else "nonlocal_warning"
+    total_records = sum(counts.values())
+    return "".join(
+        [
+            "<section id='health-command-bar' class='panel health-command-bar' data-health-command-bar='true'><h2>Health Command Bar</h2>",
+            _kv(
+                [
+                    ("health_command_status", command_status),
+                    ("health_command_warning_count", str(warning_count)),
+                    ("health_command_bind", f"{host}:{port}"),
+                    ("health_command_bind_scope", bind_scope),
+                    ("health_command_branch", state["branch"]),
+                    ("health_command_commit", state["commit"]),
+                    ("health_command_worktree_dirty", str(bool(state["dirty_tracked_files"])).lower()),
+                    ("health_command_untracked_file_count", str(len(state["untracked_files"]))),
+                    ("health_command_storage_status", "initialized"),
+                    ("health_command_total_records", str(total_records)),
+                    ("health_command_registered_commands", str(len(_key_commands()))),
+                    ("health_command_import_status", import_status),
+                    ("health_command_status_artifact", _artifact_link(status_relative)),
+                    ("health_command_status_artifact_write_on_get", "true"),
+                    ("health_command_next_action", next_action),
+                    (
+                        "health_command_target_surface",
+                        SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"),
+                    ),
+                    ("health_command_reason", reason),
+                    ("health_command_github_status_fetch", "none"),
+                    ("health_command_provider_calls_taken", "0"),
+                    ("health_command_network_actions_taken", "0"),
+                    ("health_command_external_effects_created", "false"),
+                    ("health_command_push_created", "false"),
+                    ("health_command_pr_created", "false"),
+                    ("health_command_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"health_command_now: {_e(next_action)}",
+                    f"health_command_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"health_command_status_artifact: {_artifact_link(status_relative)}",
+                    "health_command_safety: local status artifact write only; no provider, network, push, PR, deploy, or external mutation",
+                ]
+            ),
             "</section>",
         ]
     )
@@ -16382,6 +16478,9 @@ def _html_page(
     .ci-evidence-command-bar {{ border-left:4px solid var(--ok); }}
     .ci-evidence-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .ci-evidence-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .health-command-bar {{ border-left:4px solid var(--ok); }}
+    .health-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .health-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .artifact-command-bar {{ border-left:4px solid var(--accent); }}
     .artifact-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .artifact-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -17580,10 +17679,11 @@ def _non_claim_banner() -> str:
     ) + ".</div>"
 
 
-def _warnings(warnings: list[str]) -> str:
+def _warnings(warnings: list[str], *, anchor_id: str | None = None) -> str:
     if not warnings:
         return ""
-    return "<section class='warning'><h2>Warnings</h2>" + _ul([_e(item) for item in warnings]) + "</section>"
+    id_attr = f" id='{_e(anchor_id)}'" if anchor_id else ""
+    return f"<section{id_attr} class='warning'><h2>Warnings</h2>" + _ul([_e(item) for item in warnings]) + "</section>"
 
 
 def _artifact_link(path: str) -> SafeHtml | str:

@@ -5203,6 +5203,34 @@ def test_local_app_routes_render_modern_workflow_and_health(
     health = render_local_app_route(tmp_path, "/health")
     assert health.status == 200
     assert "System Health" in health.body
+    assert "Health Command Bar" in health.body
+    assert "data-health-command-bar='true'" in health.body
+    assert "health_command_status</dt><dd>ready" in health.body
+    assert "health_command_warning_count</dt><dd>0" in health.body
+    assert "health_command_bind</dt><dd>127.0.0.1:8787" in health.body
+    assert "health_command_bind_scope</dt><dd>local" in health.body
+    assert "health_command_storage_status</dt><dd>initialized" in health.body
+    assert "health_command_registered_commands</dt><dd>17" in health.body
+    assert "health_command_import_status</dt><dd>ok" in health.body
+    assert "health_command_status_artifact</dt><dd><a href='/artifacts?path=.clanker/app/local_app_status.json'>.clanker/app/local_app_status.json</a>" in health.body
+    assert "health_command_status_artifact_write_on_get</dt><dd>true" in health.body
+    assert "health_command_next_action</dt><dd>Open resume" in health.body
+    assert "health_command_target_surface</dt><dd><a href='/resume'>/resume</a>" in health.body
+    assert "health_command_reason</dt><dd>local_health_ready" in health.body
+    assert "health_command_github_status_fetch</dt><dd>none" in health.body
+    assert "health_command_provider_calls_taken</dt><dd>0" in health.body
+    assert "health_command_network_actions_taken</dt><dd>0" in health.body
+    assert "health_command_external_effects_created</dt><dd>false" in health.body
+    assert "health_command_push_created</dt><dd>false" in health.body
+    assert "health_command_pr_created</dt><dd>false" in health.body
+    assert "health_command_deploy_created</dt><dd>false" in health.body
+    assert "health_command_now: Open resume" in health.body
+    assert "health_command_click: <a href='/resume'>/resume</a>" in health.body
+    assert "health_command_safety: local status artifact write only" in health.body
+    assert "id='health-diagnostics'" in health.body
+    assert "id='health-counts'" in health.body
+    assert "id='health-key-commands'" in health.body
+    assert "id='health-workflow-imports'" in health.body
     assert "storage_initializes" in health.body
     assert "app" in health.body
     assert "approve-coder-publication" in health.body
@@ -5215,6 +5243,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert nonlocal_health.status == 200
     assert "Warnings" in nonlocal_health.body
     assert "App is bound to a non-localhost interface." in nonlocal_health.body
+    assert "health_command_status</dt><dd>warnings" in nonlocal_health.body
+    assert "health_command_warning_count</dt><dd>1" in nonlocal_health.body
+    assert "health_command_bind</dt><dd>0.0.0.0:8787" in nonlocal_health.body
+    assert "health_command_bind_scope</dt><dd>nonlocal_warning" in nonlocal_health.body
+    assert "health_command_next_action</dt><dd>Review warnings" in nonlocal_health.body
+    assert "health_command_target_surface</dt><dd><a href='#health-warnings'>Warnings</a>" in nonlocal_health.body
+    assert "health_command_reason</dt><dd>health_warnings_present" in nonlocal_health.body
+    assert "id='health-warnings'" in nonlocal_health.body
     nonlocal_status = json.loads(
         (tmp_path / ".clanker" / "app" / "local_app_status.json").read_text(encoding="utf-8")
     )
