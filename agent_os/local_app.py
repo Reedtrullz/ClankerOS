@@ -4064,7 +4064,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_risk_section(state),
             _goal_completion_criteria(state),
             _goal_completion_readiness(root, state, next_action),
-            _goal_progress(state),
+            _goal_progress(root, state, next_action),
             _goal_timeline(root, state),
             _goal_activity_log(root, state),
             _goal_delegation_section(root, state),
@@ -4142,6 +4142,7 @@ def _goal_section_index() -> str:
         ("Resume snapshot", "goal-resume-snapshot"),
         ("Overview", "goal-overview"),
         ("Risk command", "goal-risk-command-bar"),
+        ("Progress command", "goal-progress-command-bar"),
         ("Progress", "goal-progress"),
         ("Timeline", "goal-timeline"),
         ("Activity log", "goal-activity-log"),
@@ -5954,7 +5955,11 @@ def _goal_completion_readiness(
     return "".join(sections)
 
 
-def _goal_progress(state: dict[str, Any]) -> str:
+def _goal_progress(
+    root: Path,
+    state: dict[str, Any],
+    next_action: GoalNextAction,
+) -> str:
     tasks = state["tasks"]
     completed_tasks = [task for task in tasks if task.status == "completed"]
     blocked_tasks = [task for task in tasks if task.status in {"blocked", "failed"}]
@@ -5967,7 +5972,8 @@ def _goal_progress(state: dict[str, Any]) -> str:
         )
     )
     return (
-        "<section id='goal-progress'><h2>Progress</h2>"
+        _goal_progress_command_bar(root, state, next_action, completed, total, len(blocked_tasks))
+        + "<section id='goal-progress'><h2>Progress</h2>"
         + progress
         + _kv(
             [
@@ -5982,6 +5988,95 @@ def _goal_progress(state: dict[str, Any]) -> str:
             ]
         )
         + "</section>"
+    )
+
+
+def _goal_progress_command_bar(
+    root: Path,
+    state: dict[str, Any],
+    next_action: GoalNextAction,
+    completed: int,
+    total: int,
+    blocked_count: int,
+) -> str:
+    goal = state["goal"]
+    gates, counts, current_gate = _goal_workflow_gate_summary(root, state, next_action)
+    done_gates = counts.get("done", 0)
+    pending_gates = counts.get("pending", 0)
+    waiting_gates = counts.get("waiting", 0)
+    total_gates = len(gates)
+    open_incidents = sum(1 for row in state["incidents"] if row["status"] == "open")
+    open_recommendations = sum(
+        1 for row in state["recommendations"] if row["status"] == "open"
+    )
+    pending_approvals = (
+        _count_status(state["worktree_approvals"], "pending_operator_approval")
+        + _count_status(state["commit_approvals"], "pending_operator_approval")
+        + _count_status(state["publications"], "pending_operator_approval")
+    )
+    waiting_items = open_incidents + open_recommendations + pending_approvals
+    if total == 0:
+        progress_status = "no_tasks"
+    elif blocked_count:
+        progress_status = "blocked_or_failed_tasks"
+    elif completed == total:
+        progress_status = "tasks_complete"
+    else:
+        progress_status = "in_progress"
+    percent = "0"
+    if total:
+        percent = str(int((completed / total) * 100))
+    return "".join(
+        [
+            "<section id='goal-progress-command-bar' class='panel goal-progress-command-bar' data-goal-progress-command-bar='true'><h3>Goal Progress Command Bar</h3>",
+            "<p class='muted'>Progress posture before the task progress bar and counts.</p>",
+            _kv(
+                [
+                    ("goal_progress_command_goal", goal.id),
+                    ("goal_progress_command_project", goal.project_id),
+                    ("goal_progress_command_status", progress_status),
+                    ("goal_progress_command_task_progress", _goal_progress_label(state)),
+                    ("goal_progress_command_task_percent", f"{percent}%"),
+                    ("goal_progress_command_completed_tasks", str(completed)),
+                    ("goal_progress_command_total_tasks", str(total)),
+                    ("goal_progress_command_blocked_or_failed_tasks", str(blocked_count)),
+                    (
+                        "goal_progress_command_workflow_progress",
+                        f"{done_gates}/{total_gates} gates done",
+                    ),
+                    ("goal_progress_command_current_gate", current_gate),
+                    ("goal_progress_command_done_gates", str(done_gates)),
+                    ("goal_progress_command_pending_gates", str(pending_gates)),
+                    ("goal_progress_command_waiting_gates", str(waiting_gates)),
+                    ("goal_progress_command_waiting_items", str(waiting_items)),
+                    ("goal_progress_command_pending_approvals", str(pending_approvals)),
+                    ("goal_progress_command_open_incidents", str(open_incidents)),
+                    ("goal_progress_command_open_recommendations", str(open_recommendations)),
+                    ("goal_progress_command_next_action", next_action.action),
+                    (
+                        "goal_progress_command_target_surface",
+                        SafeHtml(
+                            f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
+                        ),
+                    ),
+                    ("goal_progress_command_reason", next_action.reason),
+                    ("goal_progress_command_source", "goal_tasks_and_remaining_work_gates"),
+                    ("goal_progress_command_write_on_get", "false"),
+                    ("goal_progress_command_provider_calls_taken", "0"),
+                    ("goal_progress_command_network_actions_taken", "0"),
+                    ("goal_progress_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_progress_now: {_e(progress_status)} task_progress={_e(_goal_progress_label(state))}",
+                    f"goal_progress_click: <a href='{_e(next_action.href)}'>{_e(next_action.action)}</a>",
+                    f"goal_progress_gate: {_e(current_gate)} {done_gates}/{total_gates} gates done",
+                    "goal_progress_safety: read-only local progress posture",
+                ]
+            ),
+            "</section>",
+        ]
     )
 
 
@@ -15335,6 +15430,9 @@ def _html_page(
     .goal-criteria-command-bar {{ border-left:4px solid var(--ok); }}
     .goal-criteria-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-criteria-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-progress-command-bar {{ border-left:4px solid var(--ok); }}
+    .goal-progress-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-progress-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-delegation-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-delegation-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-delegation-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

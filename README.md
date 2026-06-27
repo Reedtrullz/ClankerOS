@@ -205,7 +205,11 @@ one next local surface, and zero-effect counters before the detailed risk
 list. Goal Completion Criteria now starts with a read-only `Goal Criteria
 Command Bar` that summarizes criteria source, item count, progress,
 plan/contract posture, first acceptance item, one next local review surface,
-and zero-effect counters before the detailed criteria list. Goal
+and zero-effect counters before the detailed criteria list. Goal Progress now
+starts with a read-only `Goal Progress Command Bar` that summarizes task
+completion, workflow gate progress, current gate, waiting approvals/incidents/
+recommendations, one next local action, and zero-effect counters before the
+browser progress bar. Goal
 Completion Readiness turns the same local gate, approval, incident, and
 publication-handoff state into one explicit finish posture. It names the
 current blocker or next safe action, links the relevant local surface, and only
@@ -275,7 +279,8 @@ Timeline Command Bar` that summarizes event-family counts, the latest event,
 its target surface, and zero-effect boundaries before the full chronological
 list. The Activity Log now starts with a read-only Goal Activity Command Bar
 that names the latest human-readable event and target local surface before the
-longer chronological list. Progress uses a real browser progress bar.
+longer chronological list. Progress starts with a read-only Goal Progress
+Command Bar, then uses a real browser progress bar.
 Operator Notes starts with a read-only `Goal Operator Notes Command Bar` that
 shows whether the note artifact exists, timestamped entry count, artifact size,
 workspace resume-anchor posture, one review or capture target, and zero-effect

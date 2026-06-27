@@ -6067,6 +6067,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-next-recommendation'" in goal.body
     assert "href='#goal-risk-command-bar'" in goal.body
     assert "href='#goal-criteria-command-bar'" in goal.body
+    assert "href='#goal-progress-command-bar'" in goal.body
     assert "href='#goal-timeline'" in goal.body
     assert "href='#goal-delegation-command-bar'" in goal.body
     assert "href='#goal-run-command-bar'" in goal.body
@@ -6086,6 +6087,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-current-phase'" in goal.body
     assert "id='goal-risk-command-bar'" in goal.body
     assert "id='goal-criteria-command-bar'" in goal.body
+    assert "id='goal-progress-command-bar'" in goal.body
     assert "id='goal-timeline'" in goal.body
     assert "id='goal-delegation-command-bar'" in goal.body
     assert "id='goal-run-command-bar'" in goal.body
@@ -6101,7 +6103,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>41" in goal.body
+    assert "goal_section_count</dt><dd>42" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
@@ -6288,6 +6290,38 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "completion_readiness_network_actions_taken</dt><dd>0" in goal.body
     assert "completion_readiness_external_effects_created</dt><dd>false" in goal.body
     assert "completion_readiness_safety: confirmed local completion only after manual publish" in goal.body
+    assert "Goal Progress Command Bar" in goal.body
+    assert "data-goal-progress-command-bar='true'" in goal.body
+    assert "<a href='#goal-progress-command-bar'>Progress command</a>" in goal.body
+    assert f"goal_progress_command_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_progress_command_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_progress_command_status</dt><dd>in_progress" in goal.body
+    assert "goal_progress_command_task_progress</dt><dd>0/1 tasks completed" in goal.body
+    assert "goal_progress_command_task_percent</dt><dd>0%" in goal.body
+    assert "goal_progress_command_completed_tasks</dt><dd>0" in goal.body
+    assert "goal_progress_command_total_tasks</dt><dd>1" in goal.body
+    assert "goal_progress_command_blocked_or_failed_tasks</dt><dd>0" in goal.body
+    assert "goal_progress_command_workflow_progress</dt><dd>8/15 gates done" in goal.body
+    assert "goal_progress_command_current_gate</dt><dd>commit_request" in goal.body
+    assert "goal_progress_command_done_gates</dt><dd>8" in goal.body
+    assert "goal_progress_command_pending_gates</dt><dd>1" in goal.body
+    assert "goal_progress_command_waiting_gates</dt><dd>6" in goal.body
+    assert "goal_progress_command_waiting_items</dt><dd>1" in goal.body
+    assert "goal_progress_command_pending_approvals</dt><dd>1" in goal.body
+    assert "goal_progress_command_open_incidents</dt><dd>0" in goal.body
+    assert "goal_progress_command_open_recommendations</dt><dd>0" in goal.body
+    assert "goal_progress_command_next_action</dt><dd>Create commit request" in goal.body
+    assert f"goal_progress_command_target_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
+    assert "goal_progress_command_reason</dt><dd>reviewed_run=" in goal.body
+    assert "goal_progress_command_source</dt><dd>goal_tasks_and_remaining_work_gates" in goal.body
+    assert "goal_progress_command_write_on_get</dt><dd>false" in goal.body
+    assert "goal_progress_command_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_progress_command_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_progress_command_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_progress_now: in_progress task_progress=0/1 tasks completed" in goal.body
+    assert f"goal_progress_click: <a href='/runs/{result.coder_worktree_run_id}'>Create commit request</a>" in goal.body
+    assert "goal_progress_gate: commit_request 8/15 gates done" in goal.body
+    assert "goal_progress_safety: read-only local progress posture" in goal.body
     assert "progress_bar_enabled</dt><dd>true" in goal.body
     assert "<progress" in goal.body
     assert "Timeline" in goal.body

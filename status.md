@@ -1,5 +1,32 @@
 # Status
 
+## 2026-06-27 Goal Progress Command Bar
+
+- Added a read-only `Goal Progress Command Bar` to the Goal page before the
+  browser progress bar and detailed task counts.
+- The bar summarizes task completion, percent complete, workflow gate
+  progress, current gate, waiting approval/incident/recommendation posture,
+  one next local action, and zero-effect counters.
+- The Goal Section Index now links directly to the progress command surface,
+  so operators can see whether a Goal is moving, blocked, waiting, or complete
+  before parsing the task progress rows.
+- README, local app docs, and the operating summary now describe Goal Progress
+  as a scan-first local progress posture surface.
+- Non-claims: this does not write state on GET, complete tasks, mark goals
+  complete, approve gates, run work, create artifacts, append notes, call
+  providers, use non-loopback network actions, fetch GitHub status, push,
+  create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_c37c9d41a5f5`,
+    `run_0686c70906fb`, and coder worktree run `run_159303ee241f`
+
 ## 2026-06-27 Goal Criteria Command Bar
 
 - Added a read-only `Goal Criteria Command Bar` to the Goal page before the

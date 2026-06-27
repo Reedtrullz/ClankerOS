@@ -125,7 +125,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   Goal Completion Criteria starts with a read-only `Goal Criteria Command Bar`
   that summarizes criteria source, item count, progress, plan/contract
   posture, first acceptance item, one next local review surface, and
-  zero-effect counters before the detailed criteria list.
+  zero-effect counters before the detailed criteria list. Goal Progress starts
+  with a read-only `Goal Progress Command Bar` that summarizes task completion,
+  workflow gate progress, current gate, waiting approvals/incidents/
+  recommendations, one next local action, and zero-effect counters before the
+  browser progress bar and detailed counts.
   `Goal Completion Readiness` follows the local gate, approval, incident, and
   publication-handoff state to say whether the goal is completed, blocked,
   waiting for operator approval, still missing evidence, or safe to complete
