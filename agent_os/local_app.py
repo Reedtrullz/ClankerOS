@@ -173,6 +173,7 @@ ACTION_CATALOG = [
     ("register-project", "local state", "first run / projects", "yes", "yes", "local git repo path plus default test command", "registered project row and projects/<project>/project.md"),
     ("create-goal", "local state", "first run / goals", "yes", "yes", "registered project and goal prompt", "goal row, plan, tasks, and goal artifacts"),
     ("delegate", "local state", "goal next action", "yes", "yes", "planned goal task and read-only scout profile", "subagent delegation contract JSON"),
+    ("pause-goal", "local state", "goal detail", "yes", "yes", "non-paused incomplete local goal", "goal status=paused"),
     ("resume-goal", "local state", "goal detail", "yes", "yes", "goal status=paused", "goal status=active"),
     ("save-goal-note", "local artifact", "goal detail", "yes", "yes", "goal id plus operator note text", ".clanker/projects/<project>/goals/<goal>/operator-notes.md"),
     ("save-workspace", "local state", "workspace", "yes", "yes", "open project/goal, filters, panels, last artifact", ".clanker/app/workspace.json"),
@@ -1184,6 +1185,9 @@ def _today_command_center(
 
     action_form = ""
     finish_form = ""
+    pause_form = ""
+    pause_available = "false"
+    pause_surface: str | SafeHtml = "not_available"
     if lead_goal is None:
         first_run = _first_run_progress(root, storage)
         status = "first_run"
@@ -1210,6 +1214,13 @@ def _today_command_center(
         goal = state["goal"]
         next_action = _goal_next_action(root, state)
         action_form = _goal_next_action_form(state, next_action)
+        pause_form = _goal_pause_form(state)
+        pause_available = "true" if pause_form else "false"
+        pause_surface = (
+            SafeHtml("<a href='#today-pause'>Pause Goal</a>")
+            if pause_form
+            else "not_available"
+        )
         latest_artifact = _goal_latest_artifact_path(root, state)
         status = "goal_ready"
         label = str(lead_goal["title"] or lead_goal["description"] or goal_id)
@@ -1304,6 +1315,9 @@ def _today_command_center(
         ("today_command_finish_status", finish_status),
         ("today_command_finish_form_available", str(bool(finish_form)).lower()),
         ("today_command_finish_confirmation_required", str(bool(finish_form)).lower()),
+        ("today_command_pause_form_available", pause_available),
+        ("today_command_pause_confirmation_required", pause_available),
+        ("today_command_pause_surface", pause_surface),
         ("today_command_write_on_get", "false"),
         ("today_command_provider_calls_taken", "0"),
         ("today_command_network_actions_taken", "0"),
@@ -1314,6 +1328,7 @@ def _today_command_center(
         f"today_command_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
         f"today_command_attention: {attention_status} -> <a href='{_e(attention_href)}'>{_e(attention_href)}</a>",
         f"today_command_resume: readiness={_e(str(readiness['status']))} surface=<a href='/resume'>/resume</a>",
+        f"today_command_pause: available={_e(pause_available)} surface=<a href='#today-pause'>Pause Goal</a>",
         f"today_command_finish: status={_e(finish_status)} surface=<a href='#today-finish'>Finish Today</a>",
         "today_command_safety: read-only daily cockpit; confirmed local forms only",
     ]
@@ -1335,6 +1350,8 @@ def _today_command_center(
             f"<p>{_e(attention_action)}</p><a class='today-command-link' href='{_e(attention_href)}'>{_e(attention_href)}</a></article>",
             "<article class='today-command-card'><h3>Resume</h3>",
             "<p>Restore saved workspace context.</p><a class='today-command-link' href='/resume'>/resume</a></article>",
+            "<article class='today-command-card'><h3>Pause</h3>",
+            f"<p>{'Available' if pause_form else 'Not available'}</p><a class='today-command-link' href='#today-pause'>Pause Goal</a></article>",
             "<article class='today-command-card'><h3>Finish</h3>",
             f"<p>{_e(finish_status)}</p><a class='today-command-link' href='#today-finish'>Finish Today</a></article>",
             "</div>",
@@ -1348,6 +1365,14 @@ def _today_command_center(
             _kv(rows),
             _ul(lines),
             action_details,
+            (
+                "<section id='today-pause' class='today-pause'><h3>Pause Goal</h3>"
+                "<p class='muted'>Pause the lead goal locally so it moves into paused lanes and can be resumed later. Confirmation is required.</p>"
+                f"{pause_form}"
+                "</section>"
+                if pause_form
+                else "<section id='today-pause' class='today-pause'><h3>Pause Goal</h3><p class='muted'>pause_goal_form_status: unavailable_for_current_goal_state</p></section>"
+            ),
             finish_form,
             "</section>",
         ]
@@ -5575,6 +5600,8 @@ def _goal_daily_loop(
             "updated_by": "goal-daily-loop",
         },
     )
+    pause_form = _goal_pause_form(state)
+    pause_available = "true" if pause_form else "false"
     return "".join(
         [
             "<section id='goal-daily-loop' class='panel goal-daily-loop' data-goal-daily-loop='true'><h2>Goal Daily Loop</h2>",
@@ -5603,6 +5630,15 @@ def _goal_daily_loop(
                     ("goal_daily_loop_finish_action", "save-workspace"),
                     ("goal_daily_loop_finish_form_available", "true"),
                     ("goal_daily_loop_finish_confirmation_required", "true"),
+                    ("goal_daily_loop_pause_action", "pause-goal"),
+                    ("goal_daily_loop_pause_form_available", pause_available),
+                    ("goal_daily_loop_pause_confirmation_required", pause_available),
+                    (
+                        "goal_daily_loop_pause_surface",
+                        SafeHtml("<a href='#goal-pause'>Pause Goal</a>")
+                        if pause_form
+                        else "not_available",
+                    ),
                     (
                         "goal_daily_loop_finish_surface",
                         SafeHtml("<a href='#goal-resume-snapshot'>Goal Resume Snapshot</a>"),
@@ -5627,9 +5663,18 @@ def _goal_daily_loop(
                     f"goal_daily_loop_step: start status={'ready' if workspace_matches_goal else 'needs_saved_goal'} surface=<a href='/resume'>/resume</a>",
                     f"goal_daily_loop_step: continue action={_e(next_action.action)} surface=<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
                     f"goal_daily_loop_step: unblock action={_e(unblock_action)} surface={unblock_surface} waiting={waiting_items}",
+                    f"goal_daily_loop_step: pause available={pause_available} surface=<a href='#goal-pause'>Pause Goal</a>",
                     f"goal_daily_loop_step: finish status={_e(finish_status)} surface=<a href='#goal-resume-snapshot'>Goal Resume Snapshot</a>",
-                    "goal_daily_loop_safety: confirmed local workspace save only",
+                    "goal_daily_loop_safety: confirmed local pause or workspace save only",
                 ]
+            ),
+            (
+                "<section id='goal-pause' class='goal-pause'><h3>Pause Goal</h3>"
+                "<p class='muted'>Pause this Goal locally when you want to shelve it for later. It remains visible in paused lanes and can be resumed from the Goal page.</p>"
+                f"{pause_form}"
+                "</section>"
+                if pause_form
+                else "<section id='goal-pause' class='goal-pause'><h3>Pause Goal</h3><p class='muted'>pause_goal_form_status: unavailable_for_current_goal_state</p></section>"
             ),
             "<h3>Finish Today</h3>",
             "<p class='muted'>Save this goal, current filters, expanded panels, and latest artifact as tomorrow's resume point. This writes only `.clanker/app/workspace.json` after confirmation.</p>",
@@ -6148,6 +6193,34 @@ def _goal_resume_form(state: dict[str, Any]) -> str:
                 {
                     "resumed_by": "operator",
                     "note": "Resume paused goal from local app.",
+                },
+            ),
+        ]
+    )
+
+
+def _goal_pause_form(state: dict[str, Any]) -> str:
+    goal = state.get("goal")
+    if goal is None or goal.status in {"paused", "completed"}:
+        return ""
+    return "".join(
+        [
+            "<p class='muted'>Sets this local goal status to paused so it moves into paused lanes and can be resumed later. It does not approve work, run delegations or worktrees, call providers, use the network, push, create a PR, deploy, or mutate external systems.</p>",
+            _kv(
+                [
+                    ("pause_goal_form_available", "true"),
+                    ("pause_goal_current_status", goal.status),
+                    ("pause_goal_new_status", "paused"),
+                    ("pause_goal_confirmation_required", "true"),
+                    ("pause_goal_external_effects_created", "false"),
+                ]
+            ),
+            _input_form(
+                "pause-goal",
+                {"goal_id": goal.id},
+                {
+                    "paused_by": "operator",
+                    "note": "Pause goal from local app.",
                 },
             ),
         ]
@@ -16361,6 +16434,23 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 artifact_path=result.result_artifact_path,
                 updated_by="delegate",
             )
+        elif action == "pause-goal":
+            result = _pause_goal_from_form(storage, form)
+            message = f"goal_paused: {result['goal_id']}"
+            location = f"/goals/{quote(result['goal_id'])}"
+            _write_workspace_state(
+                root,
+                {
+                    **_load_workspace_state(root),
+                    "open_project": result["project_id"],
+                    "open_goal": result["goal_id"],
+                    "last_viewed_artifact": _repo_relative_artifact_path(
+                        root,
+                        _goal_file_path(result["project_id"], result["goal_id"], "GOAL.md"),
+                    ),
+                    "updated_by": "pause-goal",
+                },
+            )
         elif action == "resume-goal":
             result = _resume_goal_from_form(storage, form)
             message = f"goal_resumed: {result['goal_id']}"
@@ -16906,6 +16996,34 @@ def _resume_goal_from_form(
         "previous_status": goal.status,
         "new_status": "active",
         "resumed_by": resumed_by,
+        "note": note or "none",
+        "approvals_created": 0,
+        "work_started": "false",
+        "network_actions_taken": 0,
+        "external_mutations_taken": 0,
+    }
+
+
+def _pause_goal_from_form(
+    storage: Storage,
+    form: dict[str, list[str]],
+) -> dict[str, Any]:
+    goal_id = _required(form, "goal_id")
+    goal = storage.get_goal(goal_id)
+    if goal.status == "paused":
+        raise ValueError("pause-goal only supports non-paused incomplete goals")
+    if goal.status == "completed":
+        raise ValueError("pause-goal only supports non-paused incomplete goals")
+    paused_by = (_one(form, "paused_by") or "operator").strip() or "operator"
+    note = (_one(form, "note") or "").strip()
+    storage.set_goal_status(goal.id, "paused")
+    return {
+        "status": "goal_paused",
+        "goal_id": goal.id,
+        "project_id": goal.project_id,
+        "previous_status": goal.status,
+        "new_status": "paused",
+        "paused_by": paused_by,
         "note": note or "none",
         "approvals_created": 0,
         "work_started": "false",
@@ -18734,9 +18852,9 @@ def _html_page(
     .today-command-action, .today-command-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .today-command-action {{ background:var(--accent); color:#fff; }}
     .today-command-link {{ background:var(--surface); color:var(--accent); }}
-    .today-current-action, .today-finish {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
+    .today-current-action, .today-finish, .today-pause, .goal-pause {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .today-current-action summary {{ cursor:pointer; font-weight:700; }}
-    .today-current-action form, .today-finish form {{ margin-top:10px; }}
+    .today-current-action form, .today-finish form, .today-pause form, .goal-pause form {{ margin-top:10px; }}
     .home-attention-brief {{ border-left:4px solid var(--warn); }}
     .home-attention-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .home-attention-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

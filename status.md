@@ -1,5 +1,35 @@
 # Status
 
+## 2026-06-27 Browser Goal Pause Action
+
+- Added a confirmed local `pause-goal` action to the browser app action catalog.
+  It accepts non-paused incomplete goals, records the previous status, sets
+  local goal status to `paused`, and refreshes `.clanker/app/workspace.json` to
+  the Goal artifact so `/resume` and the dashboard stay anchored.
+- Exposed the action from the Goal Daily Loop and `/today` command center,
+  including availability, confirmation-required, pause target, and zero
+  network/external-effect readbacks. Paused and completed goals show the pause
+  form as unavailable.
+- Added route/action tests for the confirmation page, confirmed local result,
+  workspace refresh, double-pause rejection, paused-page unavailable state, and
+  fixture-backed `/today`/Goal Daily Loop surfaces.
+- Updated README, local app docs, and the operating summary so operators can
+  discover pause/resume from the daily product path.
+- Non-claims: this does not write on GET, approve work, start delegations or
+  coder worktrees, commit, push, create PRs, deploy, call providers, fetch
+  GitHub status, use the network, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `git diff --check`
+    -> passed
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched and zero provider/network/external-mutation counters
+
 ## 2026-06-27 Today Command Center
 
 - Added `/today` as a first-class daily command-center route for spending the

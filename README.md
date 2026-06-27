@@ -145,7 +145,8 @@ current day instead of the full dashboard inventory. It starts with a
 `Today Command Center` that chooses the lead Goal or first-run step, shows the
 current phase, one primary action, the exact target or same-page action form,
 attention routing for approvals/incidents/recommendations/inbox, resume
-readiness, CI proof posture, and a confirmed `Finish Today` workspace save
+readiness, CI proof posture, a confirmed `pause-goal` form for shelving the
+lead goal into paused lanes, and a confirmed `Finish Today` workspace save
 form for tomorrow's resume point. It reuses the existing Home, Goal, inbox,
 activity, and first-run surfaces below the command center, writes nothing on
 GET, and only exposes confirmed local forms already available elsewhere in the
@@ -232,7 +233,10 @@ Operator Workbench follows it with a human-readable do/check/unblock/finish
 strip: it points at the in-page Goal action form when one is available, links
 the source surface and first unblock surface, names the current gate/progress,
 and exposes confirmation/write/provider/network/external-effect counters
-before the deeper diagnostic sections. Goal
+before the deeper diagnostic sections. Goal Daily Loop includes a confirmed
+local `pause-goal` form for any non-paused incomplete goal, moving it into
+paused lanes without approving work, running providers, using the network, or
+mutating external systems. Goal
 Section Index now also links directly to the Timeline, Activity, and Git
 command bars, so the long Goal page can jump to the scan-first operational
 panels instead of only the longer detail sections. Goal

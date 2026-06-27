@@ -4866,6 +4866,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "goal_ci_github_status_fetch: none" in first_goal_page.body
     assert "note_append_form_available: true" in first_goal_page.body
     assert "save-goal-note" in first_goal_page.body
+    assert "goal_daily_loop_pause_action</dt><dd>pause-goal" in first_goal_page.body
+    assert "goal_daily_loop_pause_form_available</dt><dd>true" in first_goal_page.body
+    assert "goal_daily_loop_pause_confirmation_required</dt><dd>true" in first_goal_page.body
+    assert "goal_daily_loop_step: pause available=true" in first_goal_page.body
+    assert "Pause Goal" in first_goal_page.body
+    assert "pause_goal_form_available</dt><dd>true" in first_goal_page.body
+    assert "pause_goal_current_status</dt><dd>accepted" in first_goal_page.body
+    assert "pause_goal_new_status</dt><dd>paused" in first_goal_page.body
+    assert "pause_goal_external_effects_created</dt><dd>false" in first_goal_page.body
+    assert "action='/actions/pause-goal'" in first_goal_page.body
     goals_after_first_goal = render_local_app_route(tmp_path, "/goals")
     assert "first_run_current_step</dt><dd>create_first_delegation" in goals_after_first_goal.body
     assert "first_run_goal_created</dt><dd>true" in goals_after_first_goal.body
@@ -4885,8 +4895,58 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Run First-Run Action" in goals_after_first_goal.body
     assert "action='/actions/delegate'" in goals_after_first_goal.body
     assert f"/goals/{created_goal_id}" in goals_after_first_goal.body
+    pause_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/pause-goal",
+        method="POST",
+        form={
+            "goal_id": [created_goal_id],
+            "paused_by": ["operator"],
+            "note": ["Pause this cockpit goal."],
+        },
+    )
+    assert pause_confirmation.status == 409
+    assert "Confirm pause-goal" in pause_confirmation.body
+    assert "Action Confirmation Command Bar" in pause_confirmation.body
+    assert "action_confirmation_action</dt><dd>pause-goal" in pause_confirmation.body
+    pause_result = render_local_app_route(
+        tmp_path,
+        "/actions/pause-goal",
+        method="POST",
+        form={
+            "goal_id": [created_goal_id],
+            "paused_by": ["operator"],
+            "note": ["Pause this cockpit goal."],
+            "confirm": ["yes"],
+        },
+    )
+    assert pause_result.status == 200
+    assert "goal_paused:" in pause_result.body
+    assert "previous_status</dt><dd>accepted" in pause_result.body
+    assert "new_status</dt><dd>paused" in pause_result.body
+    assert "paused_by</dt><dd>operator" in pause_result.body
+    assert "network_actions_taken</dt><dd>0" in pause_result.body
+    assert "external_mutations_taken</dt><dd>0" in pause_result.body
     storage_after_creation = Storage(tmp_path / ".agent" / "state.db")
-    storage_after_creation.set_goal_status(created_goal_id, "paused")
+    assert storage_after_creation.get_goal(created_goal_id).status == "paused"
+    paused_workspace = json.loads(workspace_json.read_text(encoding="utf-8"))
+    assert paused_workspace["open_project"] == "first-target"
+    assert paused_workspace["open_goal"] == created_goal_id
+    assert paused_workspace["last_viewed_artifact"] == (
+        f".clanker/projects/first-target/goals/{created_goal_id}/GOAL.md"
+    )
+    assert paused_workspace["updated_by"] == "pause-goal"
+    pause_again = render_local_app_route(
+        tmp_path,
+        "/actions/pause-goal",
+        method="POST",
+        form={
+            "goal_id": [created_goal_id],
+            "confirm": ["yes"],
+        },
+    )
+    assert pause_again.status == 400
+    assert "pause-goal only supports non-paused incomplete goals" in pause_again.body
     paused_goal_page = render_local_app_route(tmp_path, f"/goals/{created_goal_id}")
     assert "status</dt><dd>paused" in paused_goal_page.body
     assert "current_phase</dt><dd>Paused" in paused_goal_page.body
@@ -4898,6 +4958,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "resume_goal_form_available</dt><dd>true" in paused_goal_page.body
     assert "resume_goal_external_effects_created</dt><dd>false" in paused_goal_page.body
     assert "action='/actions/resume-goal'" in paused_goal_page.body
+    assert "goal_daily_loop_pause_form_available</dt><dd>false" in paused_goal_page.body
     resume_confirmation = render_local_app_route(
         tmp_path,
         "/actions/resume-goal",
@@ -5252,10 +5313,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Action Catalog Command Bar" in actions.body
     assert "data-action-catalog-command-bar='true'" in actions.body
     assert "action_catalog_status</dt><dd>available" in actions.body
-    assert "action_catalog_total_actions</dt><dd>26" in actions.body
+    assert "action_catalog_total_actions</dt><dd>27" in actions.body
     assert "action_catalog_navigation_actions</dt><dd>8" in actions.body
-    assert "action_catalog_mutating_actions</dt><dd>25" in actions.body
-    assert "action_catalog_confirmation_required</dt><dd>25" in actions.body
+    assert "action_catalog_mutating_actions</dt><dd>26" in actions.body
+    assert "action_catalog_confirmation_required</dt><dd>26" in actions.body
     assert "action_catalog_local_execution_actions</dt><dd>2" in actions.body
     assert "action_catalog_local_git_actions</dt><dd>1" in actions.body
     assert "action_catalog_approval_actions</dt><dd>6" in actions.body
@@ -6521,6 +6582,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_command_ci_source</dt><dd>direct_public_snapshot" in today.body
     assert "today_command_action_form_available</dt><dd>true" in today.body
     assert "today_command_confirmation_required</dt><dd>true" in today.body
+    assert "today_command_pause_form_available</dt><dd>true" in today.body
+    assert "today_command_pause_confirmation_required</dt><dd>true" in today.body
+    assert "today_command_pause_surface</dt><dd><a href='#today-pause'>Pause Goal</a>" in today.body
+    assert "today_command_pause: available=true" in today.body
     assert "today_command_finish_status</dt><dd>needs_workspace_save" in today.body
     assert "today_command_finish_form_available</dt><dd>true" in today.body
     assert "today_command_finish_confirmation_required</dt><dd>true" in today.body
@@ -6535,6 +6600,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Run Current Action" in today.body
     assert "action='/actions/coder-commit-request'" in today.body
     assert f"name='run_id' value='{result.coder_worktree_run_id}'" in today.body
+    assert "id='today-pause'" in today.body
+    assert "action='/actions/pause-goal'" in today.body
+    assert f"name='goal_id' value='{result.goal_id}'" in today.body
+    assert "name='paused_by' value='operator'" in today.body
     assert "id='today-finish'" in today.body
     assert "name='return_to' value='/today'" in today.body
     assert "name='updated_by' value='today-command-center'" in today.body
@@ -6798,6 +6867,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_daily_loop_finish_action</dt><dd>save-workspace" in goal.body
     assert "goal_daily_loop_finish_form_available</dt><dd>true" in goal.body
     assert "goal_daily_loop_finish_confirmation_required</dt><dd>true" in goal.body
+    assert "goal_daily_loop_pause_action</dt><dd>pause-goal" in goal.body
+    assert "goal_daily_loop_pause_form_available</dt><dd>true" in goal.body
+    assert "goal_daily_loop_pause_confirmation_required</dt><dd>true" in goal.body
+    assert "goal_daily_loop_pause_surface</dt><dd><a href='#goal-pause'>Pause Goal</a>" in goal.body
     assert "goal_daily_loop_finish_surface</dt><dd><a href='#goal-resume-snapshot'>Goal Resume Snapshot</a>" in goal.body
     assert f"goal_daily_loop_finish_return_to</dt><dd><a href='/goals/{result.goal_id}'" in goal.body
     assert "goal_daily_loop_saved_goal_matches_current</dt><dd>false" in goal.body
@@ -6809,8 +6882,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_daily_loop_step: start status=needs_saved_goal surface=<a href='/resume'>/resume</a>" in goal.body
     assert f"goal_daily_loop_step: continue action=Create commit request surface=<a href='/runs/{result.coder_worktree_run_id}'" in goal.body
     assert "goal_daily_loop_step: unblock action=Review approval surface=<a href='/approvals'>/approvals</a> waiting=1" in goal.body
+    assert "goal_daily_loop_step: pause available=true surface=<a href='#goal-pause'>Pause Goal</a>" in goal.body
     assert "goal_daily_loop_step: finish status=needs_workspace_save surface=<a href='#goal-resume-snapshot'>Goal Resume Snapshot</a>" in goal.body
-    assert "goal_daily_loop_safety: confirmed local workspace save only" in goal.body
+    assert "goal_daily_loop_safety: confirmed local pause or workspace save only" in goal.body
+    assert "id='goal-pause'" in goal.body
+    assert "action='/actions/pause-goal'" in goal.body
+    assert f"name='goal_id' value='{result.goal_id}'" in goal.body
     assert "Finish Today" in goal.body
     assert "name='updated_by' value='goal-daily-loop'" in goal.body
     assert "daily-loop,next-action,timeline,evidence,artifacts,notes" in goal.body

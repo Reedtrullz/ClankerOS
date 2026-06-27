@@ -65,8 +65,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   first-run step, shows the current phase, one primary action, target surface
   or same-page current-action form, attention routing for approvals,
   incidents, recommendations, and inbox items, resume readiness, CI proof
-  posture, and a confirmed `Finish Today` `save-workspace` form for tomorrow's
-  resume point. It then reuses the existing Start Here, Home Day Plan,
+  posture, a confirmed `pause-goal` form for the lead Goal, and a confirmed
+  `Finish Today` `save-workspace` form for tomorrow's resume point. It then
+  reuses the existing Start Here, Home Day Plan,
   Attention Brief, Focus Queue, recent activity, inbox, recommendations,
   incidents, and first-run panels without writing on GET or adding new action
   authority.
@@ -174,8 +175,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `Goal Daily Loop` follows it with start, continue, unblock, and finish cues
   sourced from the Goal, workspace, approval, incident, and recommendation
   state, including whether tomorrow's resume anchor still needs saving, plus a
+  confirmed local `pause-goal` form for non-paused incomplete goals and a
   confirmed local `save-workspace` form that writes only
-  `.clanker/app/workspace.json` after confirmation. The next
+  `.clanker/app/workspace.json` after confirmation. The pause action only
+  changes local goal status to `paused`; it does not approve work, run work,
+  call providers, use the network, push, create PRs, deploy, or mutate external
+  systems. The next
   detailed surface is a read-only `Goal Workflow Map` that turns the same
   Remaining Work gate state into a lifecycle rail from scout delegation through
   manual publish, with the current gate, next action, gate counts, and

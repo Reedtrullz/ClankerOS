@@ -91,8 +91,9 @@ Core layers for the bootstrap:
   that selects the lead Goal or first-run step, names current phase, one
   primary action, target surface or same-page action form, attention routing
   for approvals/incidents/recommendations/inbox, resume readiness, CI proof
-  posture, and a confirmed `Finish Today` workspace save form for tomorrow's
-  resume point. It then reuses the Start Here, Home Day Plan, Attention Brief,
+  posture, a confirmed `pause-goal` form for shelving the lead Goal locally,
+  and a confirmed `Finish Today` workspace save form for tomorrow's resume
+  point. It then reuses the Start Here, Home Day Plan, Attention Brief,
   Focus Queue, recent activity, inbox, recommendations, incidents, and
   first-run panels without writing on GET or adding action authority. The
   local app also exposes `/resume` as a
@@ -294,8 +295,11 @@ Core layers for the bootstrap:
   unblock, and finish cues from the same local Goal/workspace/approval/
   incident/recommendation state, including whether the saved workspace points
   at the current goal and latest artifact before the operator ends the day,
-  and exposes a confirmed local `save-workspace` form that writes only
-  `.clanker/app/workspace.json` after confirmation.
+  and exposes confirmed local `pause-goal` and `save-workspace` forms. The
+  pause action is local status movement only: it accepts non-paused incomplete
+  goals, sets status to `paused`, refreshes saved workspace context to the Goal
+  artifact, and does not approve work, run work, call providers, use the
+  network, push, create PRs, deploy, or mutate external systems.
   Goal detail pages also include a
   read-only `Goal Workflow Map` near the top that renders the same
   Remaining Work gate state as a lifecycle rail, highlighting the current
@@ -338,12 +342,13 @@ Core layers for the bootstrap:
   note context without a separate manual
   save. They also include a confirmed `delegate`
   next-action form when a goal has planned tasks but no delegation yet. If a
-  goal is explicitly paused, the Goal page shows a `Paused` phase and a
-  confirmed `resume-goal` next-action form that only changes local goal status
-  from `paused` to `active`; it does not resume blocked tasks, approve gates,
-  run work, push, create PRs, deploy, call providers, use the network, or
-  mutate external systems, and confirmed resume refreshes saved workspace
-  state to the resumed goal artifact. The
+  goal needs to be shelved, the Goal Daily Loop and `/today` expose confirmed
+  `pause-goal`; if a goal is explicitly paused, the Goal page shows a `Paused`
+  phase and a confirmed `resume-goal` next-action form that only changes local
+  goal status from `paused` to `active`; neither action resumes blocked tasks,
+  approves gates, runs work, pushes, creates PRs, deploys, calls providers, uses
+  the network, or mutates external systems, and confirmed pause/resume refreshes
+  saved workspace state to the relevant Goal artifact. The
   delegation form writes a read-only scout delegation contract only and does
   not start a subagent. Once a delegation exists without a context pack, the
   same Goal Next Action card exposes a confirmed `context-pack` form; after
