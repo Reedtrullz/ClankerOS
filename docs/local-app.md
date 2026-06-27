@@ -170,12 +170,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   checkout.
 - `/goals/<goal_id>` - goal-centered workbench that opens with the large
   Current Phase banner immediately after the Goal summary, then shows the Goal
-  Command Bar, Goal Operator Workbench, Goal Daily Loop, next action, next
-  recommendation, Goal Workflow Map, live state, and section index before the
-  detailed overview, goal risk, completion criteria, progress, chronological
-  timeline, activity log, delegations, runs, approvals, evidence, artifacts,
-  memory, skills used, git status, operator notes, a goal-scoped resume
-  snapshot, and remaining work. The timeline starts with a
+  Command Bar, Goal Operator Workbench, Goal Daily Loop, Goal Return Brief,
+  next action, next recommendation, Goal Workflow Map, live state, and section
+  index before the detailed overview, goal risk, completion criteria,
+  progress, chronological timeline, activity log, delegations, runs, approvals,
+  evidence, artifacts, memory, skills used, git status, operator notes, a
+  goal-scoped resume snapshot, and remaining work. The timeline starts with a
   read-only `Goal Timeline Command Bar` that shows total events, the latest
   event, event-family counts, target surface, and zero-effect counters before
   the full chronological list. It uses local polling
@@ -227,7 +227,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `.clanker/app/workspace.json` after confirmation. The pause action only
   changes local goal status to `paused`; it does not approve work, run work,
   call providers, use the network, push, create PRs, deploy, or mutate external
-  systems. The next
+  systems. A read-only `Goal Return Brief` follows the daily loop and gathers
+  the current gate, next local action, resume readiness, latest activity,
+  latest artifact, CI proof posture, blocker route, `/resume`, and finish
+  surface into one return-to-work snapshot without writing on GET. The next
   detailed surface is a read-only `Goal Workflow Map` that turns the same
   Remaining Work gate state into a lifecycle rail from scout delegation through
   manual publish, with the current gate, next action, gate counts, and

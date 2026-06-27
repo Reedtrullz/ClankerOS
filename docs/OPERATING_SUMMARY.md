@@ -296,9 +296,9 @@ Core layers for the bootstrap:
   no-network/no-external-effect boundaries before the detailed criteria list.
   Goal detail pages now place the large Current Phase banner immediately after
   the Goal summary and before the Goal Command Bar, Goal Operator Workbench,
-  Daily Loop, Next Action, Workflow Map, live refresh panel, and long section
-  index, so the first viewport names the current phase before navigation and
-  diagnostics. Goal Progress starts with a read-only `Goal Progress Command Bar` that
+  Daily Loop, Goal Return Brief, Next Action, Workflow Map, live refresh panel,
+  and long section index, so the first viewport names the current phase before
+  navigation and diagnostics. Goal Progress starts with a read-only `Goal Progress Command Bar` that
   summarizes task completion, workflow gate progress, current gate, waiting
   approvals/incidents/recommendations, one next local action, and no-write/
   no-provider/no-network/no-external-effect boundaries before the browser
@@ -344,6 +344,10 @@ Core layers for the bootstrap:
   goals, sets status to `paused`, refreshes saved workspace context to the Goal
   artifact, and does not approve work, run work, call providers, use the
   network, push, create PRs, deploy, or mutate external systems.
+  A read-only `Goal Return Brief` follows the daily loop near the top of the
+  Goal page and condenses current gate, next action, resume readiness, latest
+  activity, latest artifact, CI proof posture, blocker routing, `/resume`, and
+  finish surface into one return-to-work snapshot without writing on GET.
   Goal detail pages also include a
   read-only `Goal Workflow Map` near the top that renders the same
   Remaining Work gate state as a lifecycle rail, highlighting the current

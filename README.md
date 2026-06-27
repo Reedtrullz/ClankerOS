@@ -260,9 +260,9 @@ the CLI.
 Use `/goals/<goal_id>` as the
 goal-centered workbench: the page now opens with the large Current Phase
 banner immediately after the Goal summary, then shows the Goal Command Bar,
-Goal Operator Workbench, Goal Daily Loop, next action, next recommendation,
-Goal Workflow Map, live state, and section index before the detailed progress,
-timeline, activity log, goal risk, completion
+Goal Operator Workbench, Goal Daily Loop, Goal Return Brief, next action, next
+recommendation, Goal Workflow Map, live state, and section index before the
+detailed progress, timeline, activity log, goal risk, completion
 criteria, completion readiness, evidence, delegations, runs, approvals,
 artifacts, a typed Goal Artifact Explorer, memory, skills used, git status,
 operator notes, a goal-scoped resume snapshot, and remaining work. The page
@@ -309,7 +309,10 @@ mutating the repo. The Goal
 Daily Loop turns the same local state into start/continue/unblock/finish cues:
 `/resume`, the current next action, the first approval/incident/recommendation
 surface, and a confirmed `save-workspace` form that records this goal and its
-latest artifact as tomorrow's resume point without writing on GET. The Goal Workflow Map
+latest artifact as tomorrow's resume point without writing on GET. Goal Return
+Brief follows it with a read-only return-to-work snapshot: current gate, next
+action, resume readiness, latest activity, latest artifact, CI proof posture,
+blocker route, `/resume`, and finish surface. The Goal Workflow Map
 turns the same gate state used by Remaining Work into a top-level lifecycle
 rail from scout delegation through manual publish, highlighting the current
 gate and the next local action without writing on GET. Goal Remaining Work

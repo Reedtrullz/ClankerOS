@@ -544,6 +544,9 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             [
                 "Timeline",
                 "Goal Operator Workbench",
+                "Goal Return Brief",
+                "data-goal-return-brief='true'",
+                "goal_return_current_gate</dt><dd>commit_request",
                 "Next Action",
                 "Activity Log",
                 "Memory",
@@ -6671,6 +6674,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_command_bar(root, state, phase, next_action),
             _goal_operator_workbench(root, state, phase, next_action),
             _goal_daily_loop(root, state, phase, next_action),
+            _goal_return_brief(root, state, phase, next_action),
             _goal_next_action_card(state, next_action),
             _goal_next_recommendation_section(state, next_action),
             _goal_workflow_map(root, state, next_action),
@@ -6748,6 +6752,7 @@ def _goal_section_index() -> str:
         ("Command bar", "goal-command-bar"),
         ("Operator workbench", "goal-operator-workbench"),
         ("Daily loop", "goal-daily-loop"),
+        ("Return brief", "goal-return-brief"),
         ("Next action", "goal-next-action"),
         ("Next recommendation", "goal-next-recommendation"),
         ("Workflow map", "goal-workflow-map"),
@@ -7285,6 +7290,120 @@ def _goal_daily_loop(
             "<h3>Finish Today</h3>",
             "<p class='muted'>Save this goal, current filters, expanded panels, and latest artifact as tomorrow's resume point. This writes only `.clanker/app/workspace.json` after confirmation.</p>",
             finish_form,
+            "</section>",
+        ]
+    )
+
+
+def _goal_return_brief(
+    root: Path,
+    state: dict[str, Any],
+    phase: str,
+    next_action: GoalNextAction,
+) -> str:
+    goal = state["goal"]
+    workspace = _load_workspace_state(root)
+    saved_project = str(workspace.get("open_project") or "").strip()
+    saved_goal = str(workspace.get("open_goal") or "").strip()
+    saved_artifact = str(workspace.get("last_viewed_artifact") or "").strip()
+    readiness = _workspace_resume_readiness(
+        root,
+        open_project=saved_project,
+        open_goal=saved_goal,
+        filters=str(workspace.get("filters") or "").strip(),
+        expanded=str(workspace.get("expanded_panels") or "").strip(),
+        last_artifact=saved_artifact,
+    )
+    latest_item = _goal_latest_timeline_item(root, state)
+    latest_message = latest_item.get("message", "none") if latest_item else "none"
+    latest_surface = latest_item.get("href", "#goal-timeline") if latest_item else "#goal-timeline"
+    latest_surface_value = SafeHtml(
+        f"<a href='{_e(latest_surface)}'>{_e(latest_surface)}</a>"
+    )
+    latest_artifact = _goal_latest_artifact_path(root, state)
+    latest_artifact_value: str | SafeHtml = (
+        SafeHtml(_artifact_link(latest_artifact)) if latest_artifact else "none"
+    )
+    gates, counts, current_gate = _goal_workflow_gate_summary(root, state, next_action)
+    pending_approvals = (
+        _count_status(state["worktree_approvals"], "pending_operator_approval")
+        + _count_status(state["commit_approvals"], "pending_operator_approval")
+        + _count_status(state["publications"], "pending_operator_approval")
+    )
+    open_incidents = sum(1 for row in state["incidents"] if row["status"] == "open")
+    open_recommendations = sum(
+        1 for row in state["recommendations"] if row["status"] == "open"
+    )
+    if open_incidents:
+        blocker_status = "open_incidents"
+        blocker_surface = SafeHtml("<a href='/incidents'>/incidents</a>")
+    elif pending_approvals:
+        blocker_status = "pending_approvals"
+        blocker_surface = SafeHtml("<a href='/approvals'>/approvals</a>")
+    elif open_recommendations:
+        blocker_status = "open_recommendations"
+        blocker_surface = SafeHtml("<a href='/incidents'>/incidents</a>")
+    else:
+        blocker_status = "none"
+        blocker_surface = SafeHtml("<a href='#goal-remaining-work'>Goal Remaining Work</a>")
+    ci_state = _ci_evidence_command_state(root)
+    action_form_available = bool(_goal_next_action_form(state, next_action))
+    workspace_matches_goal = saved_goal == goal.id
+    workspace_matches_project = saved_project == goal.project_id
+    done = counts.get("done", 0)
+    total = len(gates)
+    return "".join(
+        [
+            "<section id='goal-return-brief' class='panel goal-return-brief' data-goal-return-brief='true'><h2>Goal Return Brief</h2>",
+            "<p class='muted'>A top-of-page resume brief for the current Goal: where to continue, what changed last, what proof exists, and what blocks the next move.</p>",
+            _kv(
+                [
+                    ("goal_return_status", "ready" if readiness["ready"] else "needs_workspace_save"),
+                    ("goal_return_goal", goal.id),
+                    ("goal_return_project", goal.project_id),
+                    ("goal_return_phase", phase),
+                    ("goal_return_current_gate", current_gate),
+                    ("goal_return_gate_progress", f"{done}/{total} gates done"),
+                    ("goal_return_next_action", next_action.action),
+                    (
+                        "goal_return_next_surface",
+                        SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"),
+                    ),
+                    ("goal_return_action_form_available", str(action_form_available).lower()),
+                    ("goal_return_resume_ready", str(readiness["ready"]).lower()),
+                    ("goal_return_workspace_status", str(readiness["status"])),
+                    ("goal_return_saved_goal_matches_current", str(workspace_matches_goal).lower()),
+                    ("goal_return_saved_project_matches_current", str(workspace_matches_project).lower()),
+                    ("goal_return_saved_artifact", SafeHtml(_artifact_link(saved_artifact)) if saved_artifact else "none"),
+                    ("goal_return_latest_activity_message", latest_message),
+                    ("goal_return_latest_activity_surface", latest_surface_value),
+                    ("goal_return_latest_artifact", latest_artifact_value),
+                    ("goal_return_ci_status", ci_state["latest_status"]),
+                    ("goal_return_ci_source", ci_state["latest_source"]),
+                    ("goal_return_ci_current_proof", ci_state["current_proof"]),
+                    ("goal_return_ci_surface", SafeHtml("<a href='/verification'>/verification</a>")),
+                    ("goal_return_blocker_status", blocker_status),
+                    ("goal_return_blocker_surface", blocker_surface),
+                    ("goal_return_finish_surface", SafeHtml("<a href='#goal-daily-loop'>Goal Daily Loop</a>")),
+                    ("goal_return_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+                    ("goal_return_source", "goal_workspace_timeline_ci_and_gate_state"),
+                    ("goal_return_write_on_get", "false"),
+                    ("goal_return_provider_calls_taken", "0"),
+                    ("goal_return_network_actions_taken", "0"),
+                    ("goal_return_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_return_now: {_e(next_action.action)}",
+                    f"goal_return_continue: <a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
+                    f"goal_return_latest: {_e(latest_message)}",
+                    f"goal_return_artifact: {_artifact_link(latest_artifact) if latest_artifact else 'none'}",
+                    f"goal_return_unblock: {_e(blocker_status)} -> {blocker_surface}",
+                    "goal_return_finish: <a href='#goal-daily-loop'>Goal Daily Loop</a>",
+                    "goal_return_safety: read-only return-to-work brief",
+                ]
+            ),
             "</section>",
         ]
     )
@@ -21099,6 +21218,10 @@ def _html_page(
     .goal-daily-loop dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-daily-loop ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-daily-loop li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-return-brief {{ border-left:4px solid var(--accent); }}
+    .goal-return-brief dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .goal-return-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-return-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .workspace-daily-brief {{ border-left:4px solid var(--accent); }}
     .workspace-daily-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .workspace-daily-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

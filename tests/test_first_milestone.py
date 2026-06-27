@@ -7765,6 +7765,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-current-phase'" in goal.body
     assert "href='#goal-command-bar'" in goal.body
     assert "href='#goal-operator-workbench'" in goal.body
+    assert "href='#goal-return-brief'" in goal.body
     assert "href='#goal-workflow-map'" in goal.body
     assert "href='#goal-next-action'" in goal.body
     assert "href='#goal-next-recommendation'" in goal.body
@@ -7817,7 +7818,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>48" in goal.body
+    assert "goal_section_count</dt><dd>49" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
@@ -7918,6 +7919,36 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Finish Today" in goal.body
     assert "name='updated_by' value='goal-daily-loop'" in goal.body
     assert "daily-loop,next-action,timeline,evidence,artifacts,notes" in goal.body
+    assert "Goal Return Brief" in goal.body
+    assert "data-goal-return-brief='true'" in goal.body
+    assert goal.body.index("id='goal-daily-loop'") < goal.body.index("id='goal-return-brief'")
+    assert goal.body.index("id='goal-return-brief'") < goal.body.index("id='goal-next-action'")
+    assert f"goal_return_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_return_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_return_phase</dt><dd>Ready to commit" in goal.body
+    assert "goal_return_current_gate</dt><dd>commit_request" in goal.body
+    assert "goal_return_next_action</dt><dd>Create commit request" in goal.body
+    assert f"goal_return_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
+    assert "goal_return_action_form_available</dt><dd>true" in goal.body
+    assert "goal_return_resume_ready</dt><dd>false" in goal.body
+    assert "goal_return_workspace_status</dt><dd>not_started" in goal.body
+    assert "goal_return_saved_goal_matches_current</dt><dd>false" in goal.body
+    assert "goal_return_latest_activity_message</dt><dd>" in goal.body
+    assert "goal_return_latest_activity_surface</dt><dd><a href='" in goal.body
+    assert "goal_return_latest_artifact</dt><dd><a href='/artifacts?path=" in goal.body
+    assert "goal_return_ci_status</dt><dd>success" in goal.body
+    assert "goal_return_ci_source</dt><dd>direct_public_snapshot" in goal.body
+    assert "goal_return_blocker_status</dt><dd>pending_approvals" in goal.body
+    assert "goal_return_blocker_surface</dt><dd><a href='/approvals'>/approvals</a>" in goal.body
+    assert "goal_return_finish_surface</dt><dd><a href='#goal-daily-loop'>Goal Daily Loop</a>" in goal.body
+    assert "goal_return_resume_surface</dt><dd><a href='/resume'>/resume</a>" in goal.body
+    assert "goal_return_write_on_get</dt><dd>false" in goal.body
+    assert "goal_return_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_return_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_return_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_return_now: Create commit request" in goal.body
+    assert "goal_return_unblock: pending_approvals -> <a href='/approvals'>/approvals</a>" in goal.body
+    assert "goal_return_safety: read-only return-to-work brief" in goal.body
     assert "Goal Workflow Map" in goal.body
     assert "data-goal-workflow-map='true'" in goal.body
     assert "workflow_map_status</dt><dd>available" in goal.body

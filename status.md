@@ -1,5 +1,39 @@
 # Status
 
+## 2026-06-27 Goal Return Brief
+
+- Added a top-of-page `Goal Return Brief` to `/goals/<goal_id>` after the
+  Goal Daily Loop and before the Next Action card, so the Goal page itself now
+  answers "where was I, what changed last, what proof exists, and what blocks
+  the next move?" without sending the operator to lower diagnostic sections.
+- The brief reuses existing local Goal, workspace, timeline, artifact,
+  workflow-gate, blocker, and CI evidence state. It reports current gate, next
+  local action, action-form availability, resume readiness, saved-workspace
+  match posture, latest activity, latest artifact, CI proof posture, blocker
+  route, `/resume`, and finish surface, and it is linked from the Goal Section
+  Index.
+- Updated README, local app docs, operating summary, CSS, and fixture-backed
+  Goal route assertions for the new scan-first return-to-work panel.
+- Non-claims: this does not write workspace state on GET, create actions,
+  approve work, run work, call providers, fetch GitHub, poll network services,
+  commit, push, create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation
+    counters at `0`
+  - `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed on a temporary root, including fixture-backed
+    `/goals/<goal_id>` snippets, with provider/network/external-mutation
+    counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
 ## 2026-06-27 Action Operator Workbench
 
 - Added a first-class `Action Operator Workbench` to `/actions` so the safe
