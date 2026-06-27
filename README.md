@@ -279,10 +279,12 @@ external-effect boundaries before the longer memory lists. The read-only
 `Skills Command Bar` starts `/skills` with skill record counts, generated-skill
 posture, usage/project counts, the first generated or available skill artifact,
 one local review target, and no execution/install/provider/network effects.
-`/profiles` now shows both
-`.clanker/profiles.yml` names and SQLite profile storage rows, including
-labels, modes, cost tiers, write posture, adapter status, and `use_for`
-labels without enabling providers.
+The read-only `Profiles Command Bar` starts `/profiles` with configured and
+storage profile counts, future-lane readiness, adapter/write/use-for posture,
+one local review target, and provider/model routing explicitly disabled.
+`/profiles` also shows both `.clanker/profiles.yml` names and SQLite profile
+storage rows, including labels, modes, cost tiers, write posture, adapter
+status, and `use_for` labels without enabling providers.
 
 The app shell also includes breadcrumbs, recent local items, a command palette,
 keyboard shortcuts, and a dark/light theme toggle on every page. The command

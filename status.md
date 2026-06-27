@@ -1,5 +1,39 @@
 # Status
 
+## 2026-06-27 Profiles Command Bar
+
+- Added a read-only `Profiles Command Bar` to `/profiles`. It shows whether
+  `.clanker/profiles.yml` exists, configured/storage/enabled/disabled profile
+  counts, future profile lanes, adapter-configured count, write-allowed
+  profile count, `use_for` label count, the first local profile review target,
+  and provider/model-routing/write-on-GET/network/external-effect boundaries
+  before the longer inactive routing inventory.
+- The Profiles page now has stable anchored sections for configured profiles,
+  storage profiles, and future profile lanes. It still reads local config and
+  storage state only; it does not route models, call providers, use the
+  network, or mutate external systems.
+- README, local app docs, and the operating summary now describe `/profiles`
+  as a provider-routing readiness cockpit while preserving
+  `provider_routing_active=false`.
+- Non-claims: this does not enable provider routing, select models, call
+  providers, install adapters, execute work, commit, push, create PRs, deploy,
+  fetch GitHub status, use the network, write state on GET, or mutate external
+  systems. It reads `.clanker/profiles.yml`, SQLite profile rows, and static
+  future-lane labels only.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "profiles_route_reads_storage_profiles_without_enabling_providers or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Skills Command Bar
 
 - Added a read-only `Skills Command Bar` to `/skills`. It shows total,

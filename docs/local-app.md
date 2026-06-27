@@ -192,7 +192,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   shows configured profile names, storage-backed profile labels, modes, cost
   tiers, model placeholders, write posture, adapter status, and `use_for`
   labels while keeping `provider_routing_active=false` and
-  `provider_calls_taken=0`.
+  `provider_calls_taken=0`. A read-only `Profiles Command Bar` summarizes
+  configured, storage, enabled, disabled, future-lane, adapter, write-posture,
+  and `use_for` counts, points at the first storage/configured/future profile
+  review target, and keeps provider/model routing disabled.
 - `/search` - bounded global search over indexed goals, projects, delegations,
   known artifacts, incidents, recommendations, memory, runs, approvals, and
   skill records. Goal results include live local phase, one next action, and
@@ -222,7 +225,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   artifact, and keeps skill execution/install/provider/network effects
   disabled.
 - `/profiles` - inactive future provider-routing surface. It reads
-  `.clanker/profiles.yml` when present and keeps provider calls at zero.
+  `.clanker/profiles.yml` when present, starts with a read-only
+  `Profiles Command Bar`, and keeps provider calls and model routing at zero.
 - `/workflow` - modern handoff/worktree/commit/publication workflow stepper,
   including `coder-prep-from-handoff` as the artifact-first prep route. Add
   `?delegation_id=<id>` or `?run_id=<coder_worktree_run_id>` to show selected

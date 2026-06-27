@@ -142,7 +142,10 @@ Core layers for the bootstrap:
   for inactive future provider-routing readback from `.clanker/profiles.yml`
   and SQLite profile storage rows, including profile labels, modes, cost
   tiers, model placeholders, write posture, adapter status, and `use_for`
-  labels while keeping provider routing disabled.
+  labels plus a read-only `Profiles Command Bar` that summarizes configured,
+  storage, enabled, disabled, future-lane, adapter, write-posture, and
+  use-for counts, names one local review target, and keeps provider/model
+  routing disabled.
   The `/goals` and Home first-run panel now exposes a state-aware
   Create project -> Create first goal -> Create first delegation -> Generate
   context pack -> Run first delegation checklist plus confirmed local

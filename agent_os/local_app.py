@@ -2770,14 +2770,109 @@ def _profiles_page(root: Path) -> str:
                 ]
             ),
             "</section>",
-            _list_section("Configured Profiles", [_profile_config_line(name) for name in configured_profiles]),
+            _profiles_command_bar(
+                configured_profiles=configured_profiles,
+                storage_profiles=storage_profiles,
+                future_lanes=prepared,
+                profile_path_exists=profile_path.exists(),
+            ),
+            _list_section(
+                "Configured Profiles",
+                [_profile_config_line(name) for name in configured_profiles],
+                anchor_id="profiles-configured",
+            ),
             _list_section(
                 "Storage Profiles",
                 [_storage_profile_line(profile) for profile in storage_profiles]
                 or ["none_recorded_yet provider_routing_active=false provider_calls_taken=0"],
+                anchor_id="profiles-storage",
             ),
-            _list_section("Future Profile Lanes", prepared),
+            _list_section("Future Profile Lanes", prepared, anchor_id="profiles-future"),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _profiles_command_bar(
+    *,
+    configured_profiles: list[str],
+    storage_profiles: list[Any],
+    future_lanes: list[str],
+    profile_path_exists: bool,
+) -> str:
+    enabled_profiles = [profile for profile in storage_profiles if profile.enabled]
+    disabled_profiles = [profile for profile in storage_profiles if not profile.enabled]
+    adapter_configured = [
+        profile for profile in storage_profiles if profile.adapter_config_json
+    ]
+    write_allowed = [
+        profile
+        for profile in storage_profiles
+        if str(profile.permissions_json.get("write", "deny")) not in {"deny", "false", "0"}
+    ]
+    use_for_values = {
+        str(item)
+        for profile in storage_profiles
+        for item in profile.use_for_json
+        if item
+    }
+    first_target = "Planning"
+    next_action = "Review future profile lanes"
+    target_href = "#profiles-future"
+    target_label = "Future Profile Lanes"
+    reason = "future_profile_lanes_prepared"
+    if storage_profiles:
+        first_target = storage_profiles[0].name
+        next_action = "Review storage profile"
+        target_href = "#profiles-storage"
+        target_label = "Storage Profiles"
+        reason = "storage_profile_records_available"
+    elif configured_profiles:
+        first_target = configured_profiles[0]
+        next_action = "Review configured profile"
+        target_href = "#profiles-configured"
+        target_label = "Configured Profiles"
+        reason = "configured_profiles_file_available"
+    return "".join(
+        [
+            "<section class='panel profiles-command-bar' data-profiles-command-bar='true'><h2>Profiles Command Bar</h2>",
+            "<p class='muted'>One read-only summary of inactive provider-routing preparation and the next local profile review target.</p>",
+            _kv(
+                [
+                    ("profiles_command_status", "available"),
+                    ("profiles_command_profiles_file", "present" if profile_path_exists else "missing"),
+                    ("profiles_command_configured_profiles", str(len(configured_profiles))),
+                    ("profiles_command_storage_profiles", str(len(storage_profiles))),
+                    ("profiles_command_enabled_profiles", str(len(enabled_profiles))),
+                    ("profiles_command_disabled_profiles", str(len(disabled_profiles))),
+                    ("profiles_command_future_lanes", str(len(future_lanes))),
+                    ("profiles_command_adapter_configured", str(len(adapter_configured))),
+                    ("profiles_command_write_allowed_profiles", str(len(write_allowed))),
+                    ("profiles_command_use_for_labels", str(len(use_for_values))),
+                    ("profiles_command_first_target", first_target),
+                    ("profiles_command_next_action", next_action),
+                    (
+                        "profiles_command_target_surface",
+                        SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"),
+                    ),
+                    ("profiles_command_reason", reason),
+                    ("profiles_command_provider_routing_active", "false"),
+                    ("profiles_command_provider_calls_taken", "0"),
+                    ("profiles_command_model_routing_enabled", "false"),
+                    ("profiles_command_write_on_get", "false"),
+                    ("profiles_command_network_actions_taken", "0"),
+                    ("profiles_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"profiles_command_now: {_e(next_action)}",
+                    f"profiles_command_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"profiles_command_reason: {_e(reason)}",
+                    "profiles_command_safety: read-only inactive provider-routing guidance",
+                ]
+            ),
+            "</section>",
         ]
     )
 
@@ -11269,6 +11364,9 @@ def _html_page(
     .skills-command-bar {{ border-left:4px solid var(--accent); }}
     .skills-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .skills-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .profiles-command-bar {{ border-left:4px solid var(--warn); }}
+    .profiles-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .profiles-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .inbox-command-bar {{ border-left:4px solid var(--accent); }}
     .inbox-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .inbox-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
