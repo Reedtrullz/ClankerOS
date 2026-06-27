@@ -509,10 +509,13 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-today-command-center='true'",
                 "data-today-command-actions='true'",
                 "data-today-operator-workbench='true'",
+                "data-today-workflow-map='true'",
                 "data-today-ci-handoff='true'",
                 "data-today-goal-queue='true'",
                 "today_command_status</dt><dd>goal_ready",
                 "today_workbench_status</dt><dd>goal_ready",
+                "today_workflow_map_status</dt><dd>available",
+                "today_workflow_map_current_gate</dt><dd>commit_request",
                 "today_ci_handoff_status</dt><dd>missing",
                 "today_ci_handoff_latest_source</dt><dd>none",
                 "today_ci_handoff_app_github_polling</dt><dd>false",
@@ -1129,6 +1132,7 @@ def _today_page(root: Path) -> str:
             lead_goal=lead_goal,
         ),
         _today_operator_workbench(root, storage, lead_goal),
+        _today_workflow_map(root, storage, lead_goal),
         _today_ci_handoff(root),
         _today_goal_queue(
             root,
@@ -1456,6 +1460,172 @@ def _today_operator_workbench(
                     "today_workbench_safety: read-only daily routing; confirmed local forms remain on their target surfaces",
                 ]
             ),
+            "</section>",
+        ]
+    )
+
+
+def _today_workflow_map(
+    root: Path,
+    storage: Storage,
+    lead_goal: sqlite3.Row | None,
+) -> str:
+    if lead_goal is None:
+        progress = _first_run_progress(root, storage)
+        target_href, target_label = _today_first_run_target(progress)
+        steps = [
+            ("create_project", "Create project"),
+            ("create_first_goal", "Create first goal"),
+            ("create_first_delegation", "Create first delegation"),
+            ("generate_context_pack", "Generate context pack"),
+            ("run_first_delegation", "Run first delegation"),
+        ]
+        items: list[str] = []
+        done = 0
+        waiting = 0
+        for index, (name, label) in enumerate(steps, start=1):
+            status = _first_run_step_status(progress, name)
+            marker = "current" if name == progress["current_step"] else status
+            if status == "done":
+                done += 1
+            elif status != "current":
+                waiting += 1
+            next_label = (
+                f" next={_e(str(progress['next_action']))}"
+                if name == progress["current_step"]
+                else ""
+            )
+            items.append(
+                "<li "
+                f"data-today-workflow-gate='{_e(name)}' "
+                f"data-gate-status='{_e(status)}' "
+                f"data-gate-marker='{_e(marker)}'>"
+                f"<span class='workflow-map-index'>{index}</span> "
+                f"<strong>{_e(label)}</strong> "
+                f"today_workflow_map_step: {_e(name)} status={_e(status)} marker={_e(marker)}{next_label}</li>"
+            )
+        total = len(steps)
+        current = str(progress["current_step"])
+        return "".join(
+            [
+                "<section id='today-workflow-map' class='panel today-workflow-map' data-today-workflow-map='true'><h2>Today Workflow Map</h2>",
+                "<p class='muted'>The first-run path for turning an empty checkout into an active Goal without leaving the daily cockpit.</p>",
+                _kv(
+                    [
+                        ("today_workflow_map_status", "first_run"),
+                        ("today_workflow_map_current_gate", current),
+                        ("today_workflow_map_current_step", current),
+                        ("today_workflow_map_next_action", str(progress["next_action"])),
+                        (
+                            "today_workflow_map_next_surface",
+                            SafeHtml(
+                                f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"
+                            ),
+                        ),
+                        ("today_workflow_map_progress", f"{done}/{total} gates done"),
+                        ("today_workflow_map_done_count", str(done)),
+                        ("today_workflow_map_pending_count", "1"),
+                        ("today_workflow_map_waiting_count", str(waiting)),
+                        ("today_workflow_map_goal", "none"),
+                        ("today_workflow_map_project", str(progress["default_project"])),
+                        ("today_workflow_map_source", "first_run_progress"),
+                        ("today_workflow_map_write_on_get", "false"),
+                        ("today_workflow_map_provider_calls_taken", "0"),
+                        ("today_workflow_map_network_actions_taken", "0"),
+                        ("today_workflow_map_external_effects_created", "false"),
+                    ]
+                ),
+                "<ol class='workflow-map-rail today-workflow-map-rail'>",
+                "".join(items),
+                "</ol>",
+                "</section>",
+            ]
+        )
+
+    goal_id = str(lead_goal["id"])
+    state = _goal_state(root, storage, goal_id)
+    goal = state["goal"]
+    phase = _goal_current_phase(state)
+    next_action = _goal_next_action(root, state)
+    action_form_available = bool(_goal_next_action_form(state, next_action))
+    target_href = "#today-current-action" if action_form_available else next_action.href
+    target_label = "Today Current Action" if action_form_available else next_action.href
+    gates, counts, current_gate = _goal_workflow_gate_summary(root, state, next_action)
+    done = counts.get("done", 0)
+    pending = counts.get("pending", 0)
+    waiting = counts.get("waiting", 0)
+    total = len(gates)
+    items = []
+    for index, (name, status) in enumerate(gates, start=1):
+        label = name.replace("_", " ")
+        marker = "current" if name == current_gate else status
+        next_label = (
+            f" next={_e(next_action.action)}"
+            if name == current_gate and current_gate != "complete"
+            else ""
+        )
+        items.append(
+            "<li "
+            f"data-today-workflow-gate='{_e(name)}' "
+            f"data-gate-status='{_e(status)}' "
+            f"data-gate-marker='{_e(marker)}'>"
+            f"<span class='workflow-map-index'>{index}</span> "
+            f"<strong>{_e(label)}</strong> "
+            f"today_workflow_map_step: {_e(name)} status={_e(status)} marker={_e(marker)}{next_label}</li>"
+        )
+    label = str(lead_goal["title"] or lead_goal["description"] or goal_id)
+    return "".join(
+        [
+            "<section id='today-workflow-map' class='panel today-workflow-map' data-today-workflow-map='true'><h2>Today Workflow Map</h2>",
+            "<p class='muted'>The lead Goal's local workflow gates, kept on the daily cockpit so the operator can see the whole path without opening the Goal page.</p>",
+            _kv(
+                [
+                    ("today_workflow_map_status", "available"),
+                    (
+                        "today_workflow_map_goal",
+                        SafeHtml(
+                            f"<a href='/goals/{quote(goal_id)}'>{_e(_compact_label(label, 72))}</a>"
+                        ),
+                    ),
+                    (
+                        "today_workflow_map_project",
+                        SafeHtml(
+                            f"<a href='/projects/{quote(goal.project_id)}'>{_e(goal.project_id)}</a>"
+                        ),
+                    ),
+                    ("today_workflow_map_current_phase", phase),
+                    ("today_workflow_map_current_gate", current_gate),
+                    ("today_workflow_map_next_action", next_action.action),
+                    (
+                        "today_workflow_map_next_surface",
+                        SafeHtml(
+                            f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"
+                        ),
+                    ),
+                    (
+                        "today_workflow_map_goal_surface",
+                        SafeHtml(
+                            f"<a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>"
+                        ),
+                    ),
+                    (
+                        "today_workflow_map_action_form_available",
+                        str(action_form_available).lower(),
+                    ),
+                    ("today_workflow_map_progress", f"{done}/{total} gates done"),
+                    ("today_workflow_map_done_count", str(done)),
+                    ("today_workflow_map_pending_count", str(pending)),
+                    ("today_workflow_map_waiting_count", str(waiting)),
+                    ("today_workflow_map_source", "goal_remaining_work_gates"),
+                    ("today_workflow_map_write_on_get", "false"),
+                    ("today_workflow_map_provider_calls_taken", "0"),
+                    ("today_workflow_map_network_actions_taken", "0"),
+                    ("today_workflow_map_external_effects_created", "false"),
+                ]
+            ),
+            "<ol class='workflow-map-rail today-workflow-map-rail'>",
+            "".join(items),
+            "</ol>",
             "</section>",
         ]
     )
@@ -19696,6 +19866,8 @@ def _html_page(
     .today-workbench-action, .today-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .today-workbench-action {{ background:var(--accent); color:#fff; }}
     .today-workbench-link {{ background:var(--surface); color:var(--accent); }}
+    .today-workflow-map {{ border-left:4px solid var(--warn); }}
+    .today-workflow-map dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .today-ci-handoff {{ border-left:4px solid var(--ok); }}
     .today-ci-handoff dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .today-ci-handoff ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}

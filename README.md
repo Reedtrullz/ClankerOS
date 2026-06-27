@@ -156,21 +156,24 @@ or a form field is focused, so the all-day cockpit can reflect changing local
 goal state without adding action authority. A read-only
 `Today Operator Workbench` follows with four obvious moves for the day: do the
 current action, check timeline/evidence, clear the first blocker, and save the
-resume point. A read-only `Today CI Handoff` follows so the daily cockpit shows
-the latest operator-recorded GitHub Actions proof, whether it matches the
-current checkout, the exact `gh run list` / `gh run view` commands to inspect
-current CI, and links to `/verification` and `/ci-evidence` for recording proof
-after Actions completes; the app still does not poll GitHub or write on GET.
-It also includes a `Today Goal Queue` that lists active, paused, and completed
-goals with phase, next action, switch links, same-page action availability for
-the lead goal, progress, and waiting counts so daily goal switching does not
-require opening the full `/goals` inventory. In an empty checkout, `/today` now
-points the command center, Today Goal Queue, Start Here, and reused Home Day
-Plan targets directly to the same-page `Create Project` or `Create First Goal`
-form instead of sending the operator to another inventory page. It reuses the
-existing Home, Goal, inbox, activity, and first-run surfaces below the command
-center, writes nothing on GET, and only exposes confirmed local forms already
-available elsewhere in the app.
+resume point. A read-only `Today Workflow Map` follows with the whole first-run
+path when no Goal exists, or the lead Goal's lifecycle gates when one does,
+including current gate, next action, same-page action target, and gate counts.
+A read-only `Today CI Handoff` follows so the daily cockpit shows the latest
+operator-recorded GitHub Actions proof, whether it matches the current checkout,
+the exact `gh run list` / `gh run view` commands to inspect current CI, and
+links to `/verification` and `/ci-evidence` for recording proof after Actions
+completes; the app still does not poll GitHub or write on GET. It also includes
+a `Today Goal Queue` that lists active, paused, and completed goals with phase,
+next action, switch links, same-page action availability for the lead goal,
+progress, and waiting counts so daily goal switching does not require opening
+the full `/goals` inventory. In an empty checkout, `/today` now points the
+command center, Today Goal Queue, Start Here, and reused Home Day Plan targets
+directly to the same-page `Create Project` or `Create First Goal` form instead
+of sending the operator to another inventory page. It reuses the existing Home,
+Goal, inbox, activity, and first-run surfaces below the command center, writes
+nothing on GET, and only exposes confirmed local forms already available
+elsewhere in the app.
 
 Use `/resume` when returning to ClankerOS after a break. It reads the saved
 workspace state, shows the exact saved goal/project/artifact links, preserves

@@ -4319,6 +4319,26 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_workbench_unblock: first_run -> <a href='#first-run-create-project'>Create Project</a>" in today.body
     assert "today_workbench_finish: not_ready_until_goal_exists -> <a href='#first-run-guide'>First Run Guide</a>" in today.body
     assert "today_workbench_safety: read-only daily routing" in today.body
+    assert "Today Workflow Map" in today.body
+    assert "data-today-workflow-map='true'" in today.body
+    assert "today_workflow_map_status</dt><dd>first_run" in today.body
+    assert "today_workflow_map_current_gate</dt><dd>create_project" in today.body
+    assert "today_workflow_map_current_step</dt><dd>create_project" in today.body
+    assert "today_workflow_map_next_action</dt><dd>Register ClankerOS project" in today.body
+    assert "today_workflow_map_next_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_workflow_map_progress</dt><dd>0/5 gates done" in today.body
+    assert "today_workflow_map_done_count</dt><dd>0" in today.body
+    assert "today_workflow_map_pending_count</dt><dd>1" in today.body
+    assert "today_workflow_map_waiting_count</dt><dd>4" in today.body
+    assert "today_workflow_map_goal</dt><dd>none" in today.body
+    assert "today_workflow_map_project</dt><dd>clankeros" in today.body
+    assert "today_workflow_map_source</dt><dd>first_run_progress" in today.body
+    assert "today_workflow_map_write_on_get</dt><dd>false" in today.body
+    assert "today_workflow_map_network_actions_taken</dt><dd>0" in today.body
+    assert "today_workflow_map_external_effects_created</dt><dd>false" in today.body
+    assert "data-today-workflow-gate='create_project'" in today.body
+    assert "today_workflow_map_step: create_project status=current marker=current" in today.body
+    assert "today_workflow_map_step: create_first_goal status=waiting_for_project" in today.body
     assert "Today CI Handoff" in today.body
     assert "data-today-ci-handoff='true'" in today.body
     assert "today_ci_handoff_status</dt><dd>available" in today.body
@@ -6891,6 +6911,24 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_workbench_unblock: needs_approval_review -> <a href='/approvals'>/approvals</a>" in today.body
     assert "today_workbench_finish: needs_workspace_save -> <a href='#today-finish'>Finish Today</a>" in today.body
     assert "today_workbench_safety: read-only daily routing" in today.body
+    assert "Today Workflow Map" in today.body
+    assert "data-today-workflow-map='true'" in today.body
+    assert "today_workflow_map_status</dt><dd>available" in today.body
+    assert f"today_workflow_map_goal</dt><dd><a href='/goals/{result.goal_id}'" in today.body
+    assert f"today_workflow_map_project</dt><dd><a href='/projects/{result.project_id}'" in today.body
+    assert "today_workflow_map_current_phase</dt><dd>Ready to commit" in today.body
+    assert "today_workflow_map_current_gate</dt><dd>commit_request" in today.body
+    assert "today_workflow_map_next_action</dt><dd>Create commit request" in today.body
+    assert "today_workflow_map_next_surface</dt><dd><a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert f"today_workflow_map_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>" in today.body
+    assert "today_workflow_map_action_form_available</dt><dd>true" in today.body
+    assert "today_workflow_map_source</dt><dd>goal_remaining_work_gates" in today.body
+    assert "today_workflow_map_write_on_get</dt><dd>false" in today.body
+    assert "today_workflow_map_provider_calls_taken</dt><dd>0" in today.body
+    assert "today_workflow_map_network_actions_taken</dt><dd>0" in today.body
+    assert "today_workflow_map_external_effects_created</dt><dd>false" in today.body
+    assert "data-today-workflow-gate='commit_request'" in today.body
+    assert "today_workflow_map_step: commit_request status=pending marker=current" in today.body
     assert "Today CI Handoff" in today.body
     assert "data-today-ci-handoff='true'" in today.body
     assert "today_ci_handoff_status</dt><dd>available" in today.body

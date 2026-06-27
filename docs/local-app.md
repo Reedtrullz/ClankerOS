@@ -75,10 +75,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   reports zero provider/network/external-effect counters. A read-only
   `Today Operator Workbench` follows with do/check/unblock/finish cards for
   the current action, timeline/evidence review, first blocker, and
-  finish-today resume save target. A read-only `Today CI Handoff` follows with
-  the latest operator-recorded GitHub Actions proof, current-checkout match
-  status, exact `gh run list` / `gh run view` commands for current CI, and
-  links to `/verification` plus `/ci-evidence` for recording proof once Actions
+  finish-today resume save target. A read-only `Today Workflow Map` follows
+  with the first-run gate rail when no Goal exists, or the lead Goal's local
+  lifecycle gates, current gate, next action, same-page action target, and gate
+  counts once a Goal exists. A read-only `Today CI Handoff` follows with the
+  latest operator-recorded GitHub Actions proof, current-checkout match status,
+  exact `gh run list` / `gh run view` commands for current CI, and links to
+  `/verification` plus `/ci-evidence` for recording proof once Actions
   completes; it reports that the app does not poll GitHub or write on GET. A
   read-only `Today Goal Queue` follows with active/paused/completed counts,
   lead-goal phase and next action, switch links, lead same-page action-form

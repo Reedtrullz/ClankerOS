@@ -1,5 +1,35 @@
 # Status
 
+## 2026-06-27 Today Workflow Map
+
+- Added a read-only `Today Workflow Map` to `/today` so the daily cockpit now
+  shows the full first-run path before a Goal exists, and the lead Goal's
+  local lifecycle gate rail once a Goal exists.
+- The first-run map reports current step/gate, same-page next surface,
+  five-gate progress, source, and zero-effect counters; the active-goal map
+  reuses the existing Goal remaining-work gate model and reports current
+  phase, current gate, next action, same-page action target, goal/project
+  links, gate counts, source, and zero-effect counters.
+- Updated the demo smoke expectations, first-run route test, fixture-backed
+  `/today` route test, README, local app docs, and operating summary.
+- Non-claims: this does not fetch GitHub status, poll GitHub from the app, call
+  providers, approve work, execute runs, commit, push, create PRs, deploy,
+  create projects or goals without confirmation, write on GET, use non-loopback
+  network actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `df -h /System/Volumes/Data`
+    -> `84Gi` available before the compact verification loop
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `git diff --check`
+    -> passed
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed with `/today` route marker matched and zero provider/network/external-mutation counters
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed with fixture-backed `/today` workflow-map snippets matched and zero provider/network/external-mutation counters
+
 ## 2026-06-27 Today CI Handoff
 
 - Added a read-only `Today CI Handoff` to `/today` so the daily cockpit now
