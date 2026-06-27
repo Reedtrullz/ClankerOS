@@ -1,5 +1,33 @@
 # Status
 
+## 2026-06-27 Recent Items Command Bar
+
+- Added a read-only `Recent Items Command Bar` to the shared app sidebar on
+  every page.
+- The bar turns the sidebar into a resume-oriented decision surface by showing
+  the first reopen target, counts for workspace/goal/delegation/run shortcuts,
+  saved project/goal/artifact context, `/resume`, and zero-effect counters
+  before the longer recent-link list.
+- Fresh empty state points at the Goal cockpit with explicit `first_run`
+  status. Fixture-backed populated state points at the lead Goal when no saved
+  workspace exists.
+- README, local app docs, and the operating summary now describe recent items
+  as part of the all-day browser shell and next-session resume path.
+- Non-claims: this does not write state on GET, save workspace automatically,
+  create goals, approve gates, run work, commit, push, create PRs, deploy,
+  call providers, use non-loopback network actions, fetch GitHub status, or
+  mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_0951f7af920a`,
+    `run_267d736c886f`, and coder worktree run `run_44882af73400`
+
 ## 2026-06-27 Goal Board Command Bar
 
 - Added a read-only `Goal Board Command Bar` to `/goals`.

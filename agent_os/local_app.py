@@ -12968,6 +12968,7 @@ def _breadcrumbs(current_path: str, title: str) -> str:
 
 def _recent_items_panel(root: Path) -> str:
     items = _recent_operator_links(root, limit=8)
+    used_defaults = not items
     if not items:
         items = [
             ("Goal cockpit", "/goals", "first-run"),
@@ -12982,6 +12983,7 @@ def _recent_items_panel(root: Path) -> str:
         [
             "<aside class='operator-side' data-recent-items='true'>",
             "<h2>Recent Items</h2>",
+            _recent_items_command_bar(root, items, used_defaults=used_defaults),
             "<ul>",
             "".join(rows),
             "</ul>",
@@ -12989,6 +12991,60 @@ def _recent_items_panel(root: Path) -> str:
         ]
     )
     return body
+
+
+def _recent_items_command_bar(
+    root: Path,
+    items: list[tuple[str, str, str]],
+    *,
+    used_defaults: bool,
+) -> str:
+    state = _load_workspace_state(root)
+    open_project = str(state.get("open_project") or "").strip()
+    open_goal = str(state.get("open_goal") or "").strip()
+    last_artifact = str(state.get("last_viewed_artifact") or "").strip()
+    primary_label, primary_href, primary_kind = items[0]
+    workspace_count = sum(1 for _, _, kind in items if kind.startswith("workspace"))
+    goal_count = sum(1 for _, _, kind in items if "goal" in kind)
+    delegation_count = sum(1 for _, _, kind in items if kind == "delegation")
+    run_count = sum(1 for _, _, kind in items if kind == "run")
+    lines = [
+        f"recent_items_now: Open {_e(primary_label)}",
+        f"recent_items_click: <a href='{_e(primary_href)}'>{_e(primary_href)}</a>",
+        "recent_items_resume: <a href='/resume'>/resume</a>",
+        "recent_items_safety: read-only local navigation",
+    ]
+    return "".join(
+        [
+            "<section class='recent-items-command-bar' data-recent-items-command-bar='true'><h3>Recent Items Command Bar</h3>",
+            _kv(
+                [
+                    ("recent_items_status", "first_run" if used_defaults else "available"),
+                    ("recent_items_total", str(len(items))),
+                    ("recent_items_workspace_items", str(workspace_count)),
+                    ("recent_items_goal_items", str(goal_count)),
+                    ("recent_items_delegation_items", str(delegation_count)),
+                    ("recent_items_run_items", str(run_count)),
+                    ("recent_items_primary_label", primary_label),
+                    ("recent_items_primary_kind", primary_kind),
+                    (
+                        "recent_items_primary_surface",
+                        SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_href)}</a>"),
+                    ),
+                    ("recent_items_saved_project", open_project or "none"),
+                    ("recent_items_saved_goal", open_goal or "none"),
+                    ("recent_items_last_artifact", last_artifact or "none"),
+                    ("recent_items_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+                    ("recent_items_write_on_get", "false"),
+                    ("recent_items_provider_calls_taken", "0"),
+                    ("recent_items_network_actions_taken", "0"),
+                    ("recent_items_external_effects_created", "false"),
+                ]
+            ),
+            _ul(lines),
+            "</section>",
+        ]
+    )
 
 
 def _operator_focus_context(root: Path) -> dict[str, Any]:
@@ -13403,6 +13459,11 @@ def _html_page(
     .operator-side ul, .command-palette ul {{ list-style:none; padding:0; margin:0; display:grid; gap:7px; }}
     .operator-side li, .command-palette li {{ min-width:0; }}
     .operator-side a, .command-palette a {{ overflow-wrap:anywhere; }}
+    .recent-items-command-bar {{ border:1px solid var(--line); border-left:4px solid var(--accent); background:var(--surface); padding:9px; margin:10px 0; }}
+    .recent-items-command-bar h3 {{ margin-top:0; }}
+    .recent-items-command-bar dl {{ grid-template-columns:1fr; gap:4px; }}
+    .recent-items-command-bar ul {{ margin-top:8px; }}
+    .recent-items-command-bar li {{ border:1px solid var(--line); background:var(--panel); padding:6px 7px; overflow-wrap:anywhere; }}
     .palette-continue {{ border:1px solid var(--line); background:var(--panel); padding:10px; margin:10px 0; }}
     .breadcrumbs {{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; color:var(--muted); margin:0 0 14px; font-size:13px; }}
     .breadcrumbs a {{ color:var(--muted); }}

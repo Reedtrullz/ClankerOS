@@ -4260,6 +4260,25 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "resume_workflow_map_network_actions_taken</dt><dd>0" in resume_empty.body
     assert "resume_workflow_map_external_effects_created</dt><dd>false" in resume_empty.body
     assert "data-recent-items='true'" in root.body
+    assert "Recent Items Command Bar" in root.body
+    assert "data-recent-items-command-bar='true'" in root.body
+    assert "recent_items_status</dt><dd>first_run" in root.body
+    assert "recent_items_total</dt><dd>3" in root.body
+    assert "recent_items_workspace_items</dt><dd>0" in root.body
+    assert "recent_items_goal_items</dt><dd>0" in root.body
+    assert "recent_items_primary_label</dt><dd>Goal cockpit" in root.body
+    assert "recent_items_primary_kind</dt><dd>first-run" in root.body
+    assert "recent_items_primary_surface</dt><dd><a href='/goals'>/goals</a>" in root.body
+    assert "recent_items_saved_project</dt><dd>none" in root.body
+    assert "recent_items_saved_goal</dt><dd>none" in root.body
+    assert "recent_items_last_artifact</dt><dd>none" in root.body
+    assert "recent_items_resume_surface</dt><dd><a href='/resume'>/resume</a>" in root.body
+    assert "recent_items_write_on_get</dt><dd>false" in root.body
+    assert "recent_items_provider_calls_taken</dt><dd>0" in root.body
+    assert "recent_items_network_actions_taken</dt><dd>0" in root.body
+    assert "recent_items_external_effects_created</dt><dd>false" in root.body
+    assert "recent_items_now: Open Goal cockpit" in root.body
+    assert "recent_items_safety: read-only local navigation" in root.body
     assert "data-breadcrumbs='true'" in root.body
     assert "id=\"theme-toggle\"" in root.body
     assert "data-shortcut=\"/\"" in root.body
@@ -5982,6 +6001,24 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "operator_focus_action_form_available</dt><dd>true" in goal.body
     assert "data-operator-focus-action='true'" in goal.body
     assert "data-recent-items='true'" in goal.body
+    assert "Recent Items Command Bar" in goal.body
+    assert "data-recent-items-command-bar='true'" in goal.body
+    assert "recent_items_status</dt><dd>available" in goal.body
+    assert "recent_items_total</dt><dd>3" in goal.body
+    assert "recent_items_workspace_items</dt><dd>0" in goal.body
+    assert "recent_items_goal_items</dt><dd>1" in goal.body
+    assert "recent_items_delegation_items</dt><dd>1" in goal.body
+    assert "recent_items_run_items</dt><dd>1" in goal.body
+    assert "recent_items_primary_label</dt><dd>Demo the ClankerOS local operator app with fixture-backed state" in goal.body
+    assert "recent_items_primary_kind</dt><dd>goal" in goal.body
+    assert f"recent_items_primary_surface</dt><dd><a href='/goals/{result.goal_id}'" in goal.body
+    assert "recent_items_saved_project</dt><dd>none" in goal.body
+    assert "recent_items_saved_goal</dt><dd>none" in goal.body
+    assert "recent_items_write_on_get</dt><dd>false" in goal.body
+    assert "recent_items_network_actions_taken</dt><dd>0" in goal.body
+    assert "recent_items_external_effects_created</dt><dd>false" in goal.body
+    assert "recent_items_now: Open Demo the ClankerOS local operator app with fixture-backed state" in goal.body
+    assert "recent_items_resume: <a href='/resume'>/resume</a>" in goal.body
     assert "data-breadcrumbs='true'" in goal.body
     assert "Goal Section Index" in goal.body
     assert "goal_section_index_status</dt><dd>available" in goal.body

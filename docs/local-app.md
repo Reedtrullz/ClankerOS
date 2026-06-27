@@ -211,7 +211,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - Every app page includes a shared operator shell with a global
   `Operator Focus` strip, breadcrumbs, recent local items, a command palette,
   a dark/light theme toggle, and keyboard shortcuts for home, goals, and
-  palette search. The focus strip is derived from the saved workspace goal or
+  palette search. The recent-items sidebar starts with a read-only
+  `Recent Items Command Bar` that identifies one reopen target, counts
+  workspace/goal/delegation/run shortcuts, shows saved project/goal/artifact
+  context, links `/resume`, and reports write/provider/network/external-effect
+  counters. The focus strip is derived from the saved workspace goal or
   current lead goal and shows phase, one primary action, target surface,
   progress, waiting counts, form availability, `/resume`, and an expandable
   confirmed local action form when the current next action is

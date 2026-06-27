@@ -375,8 +375,12 @@ Core layers for the bootstrap:
   local `save-workspace` form so the operator can remember the current artifact
   as the next-session resume anchor without writing on GET. Every page shares
   a browser operator shell with breadcrumbs, recent local items, a command
-  palette, keyboard shortcuts, and a theme toggle. The shared focus strip and
-  command palette now include the same goal-aware current-action readback from
+  palette, keyboard shortcuts, and a theme toggle. The recent-items sidebar now
+  starts with a read-only `Recent Items Command Bar` that names one reopen
+  target, counts workspace/goal/delegation/run shortcuts, shows saved
+  workspace project/goal/artifact context, links `/resume`, and reports
+  zero-effect boundaries before the longer recent-link list. The shared focus
+  strip and command palette now include the same goal-aware current-action readback from
   the saved workspace goal or current lead goal, showing phase, one
   recommended action, target surface, zero-effect readbacks, and the same
   confirmed local action form as the Goal page when the current next action is
