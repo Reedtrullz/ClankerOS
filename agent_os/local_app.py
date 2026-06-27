@@ -4077,8 +4077,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
                 anchor_id="goal-incidents",
             ),
             _goal_evidence_section(root, state),
-            _list_section("Artifacts", _goal_artifact_lines(root, state), anchor_id="goal-artifacts"),
-            _goal_artifact_explorer(root, state),
+            _goal_artifact_section(root, state),
             _list_section("Memory", _goal_memory_lines(root, state), anchor_id="goal-memory"),
             _list_section("Skills Used", _goal_skill_lines(root, state), anchor_id="goal-skills-used"),
             _goal_git_status(root, state),
@@ -4161,6 +4160,7 @@ def _goal_section_index() -> str:
         ("Incidents", "goal-incidents"),
         ("Evidence command", "goal-evidence-command-bar"),
         ("Evidence", "goal-evidence"),
+        ("Artifact command", "goal-artifact-command-bar"),
         ("Artifacts", "goal-artifacts"),
         ("Artifact explorer", "goal-artifact-explorer"),
         ("Memory", "goal-memory"),
@@ -7041,8 +7041,139 @@ def _goal_artifact_lines(root: Path, state: dict[str, Any]) -> list[str]:
     ]
 
 
-def _goal_artifact_explorer(root: Path, state: dict[str, Any]) -> str:
+def _goal_artifact_section(root: Path, state: dict[str, Any]) -> str:
     records = _goal_artifact_records(root, state)
+    lines = [
+        f"{_e(record['label'])}: {_artifact_link(record['path'])}"
+        for record in records
+    ]
+    return _goal_artifact_command_bar(root, state, records, lines) + _list_section(
+        "Artifacts",
+        lines,
+        anchor_id="goal-artifacts",
+    ) + _goal_artifact_explorer(root, state, records=records)
+
+
+def _goal_artifact_command_bar(
+    root: Path,
+    state: dict[str, Any],
+    records: list[dict[str, str]],
+    artifact_lines: list[str],
+) -> str:
+    goal = state["goal"]
+    counts = {kind: 0 for kind in ["markdown", "json", "patch", "text"]}
+    sources: dict[str, int] = {}
+    available = 0
+    missing = 0
+    for record in records:
+        counts[record["kind"]] = counts.get(record["kind"], 0) + 1
+        sources[record["source"]] = sources.get(record["source"], 0) + 1
+        if record["status"] == "available":
+            available += 1
+        else:
+            missing += 1
+    latest_path = _goal_latest_artifact_path(root, state)
+    latest_record = next(
+        (record for record in records if record["path"] == latest_path),
+        None,
+    )
+    if latest_record is None:
+        latest_record = next(
+            (record for record in reversed(records) if record["status"] == "available"),
+            records[-1] if records else None,
+        )
+    latest_label = latest_record["label"] if latest_record is not None else "none"
+    latest_kind = latest_record["kind"] if latest_record is not None else "none"
+    latest_source = latest_record["source"] if latest_record is not None else "none"
+    latest_status = latest_record["status"] if latest_record is not None else "none"
+    latest_surface = (
+        _artifact_link(latest_record["path"])
+        if latest_record is not None
+        else "none"
+    )
+    source_summary = (
+        ", ".join(f"{source}:{count}" for source, count in sorted(sources.items()))
+        if sources
+        else "none"
+    )
+    if latest_record is not None and latest_record["status"] == "available":
+        next_action = "Open latest artifact"
+        target_href = _artifact_href(root, latest_record["path"])
+        target_label = latest_record["label"]
+        reason = "latest available goal artifact is ready for bounded review"
+    elif records:
+        next_action = "Review artifact inventory"
+        target_href = "#goal-artifact-explorer"
+        target_label = "Goal Artifact Explorer"
+        reason = "goal artifact records exist but no available latest artifact was found"
+    else:
+        next_action = "Create artifact through next Goal action"
+        target_href = "#goal-next-action"
+        target_label = "Next Action"
+        reason = "goal has no bounded artifact records yet"
+    status = "available" if available else "empty"
+    if available and missing:
+        status = "partial"
+    target = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    return "".join(
+        [
+            "<section id='goal-artifact-command-bar' class='panel goal-artifact-command-bar' data-goal-artifact-command-bar='true'><h3>Goal Artifact Command Bar</h3>",
+            "<p class='muted'>Goal-scoped artifact posture before the detailed artifact list and typed explorer.</p>",
+            _kv(
+                [
+                    ("goal_artifact_command_goal", goal.id),
+                    ("goal_artifact_command_project", goal.project_id),
+                    ("goal_artifact_command_status", status),
+                    ("goal_artifact_command_items", str(len(artifact_lines))),
+                    ("goal_artifact_command_records", str(len(records))),
+                    ("goal_artifact_command_available_records", str(available)),
+                    ("goal_artifact_command_missing_records", str(missing)),
+                    ("goal_artifact_command_markdown_artifacts", str(counts["markdown"])),
+                    ("goal_artifact_command_json_artifacts", str(counts["json"])),
+                    ("goal_artifact_command_patch_artifacts", str(counts["patch"])),
+                    ("goal_artifact_command_text_artifacts", str(counts["text"])),
+                    ("goal_artifact_command_sources", source_summary),
+                    ("goal_artifact_command_latest_artifact", latest_label),
+                    ("goal_artifact_command_latest_kind", latest_kind),
+                    ("goal_artifact_command_latest_source", latest_source),
+                    ("goal_artifact_command_latest_status", latest_status),
+                    ("goal_artifact_command_latest_surface", SafeHtml(str(latest_surface))),
+                    ("goal_artifact_command_next_action", next_action),
+                    ("goal_artifact_command_target_surface", target),
+                    ("goal_artifact_command_reason", reason),
+                    ("goal_artifact_command_source", "goal_artifact_registry"),
+                    ("goal_artifact_command_raw_filesystem_browsing", "false"),
+                    ("goal_artifact_command_write_on_get", "false"),
+                    ("goal_artifact_command_provider_calls_taken", "0"),
+                    ("goal_artifact_command_network_actions_taken", "0"),
+                    ("goal_artifact_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_artifact_now: {_e(next_action)}",
+                    f"goal_artifact_click: {target}",
+                    (
+                        "goal_artifact_latest: "
+                        f"{_e(latest_label)} kind={_e(latest_kind)} "
+                        f"source={_e(latest_source)} status={_e(latest_status)}"
+                    ),
+                    "goal_artifact_safety: read-only bounded artifact inventory",
+                ]
+            ),
+            "</section>",
+        ]
+    )
+
+
+def _goal_artifact_explorer(
+    root: Path,
+    state: dict[str, Any],
+    *,
+    records: list[dict[str, str]] | None = None,
+) -> str:
+    if records is None:
+        records = _goal_artifact_records(root, state)
     groups = {kind: [] for kind in ["markdown", "json", "patch", "text"]}
     for record in records:
         groups[record["kind"]].append(record)
@@ -14477,6 +14608,9 @@ def _html_page(
     .goal-evidence-command-bar {{ border-left:4px solid var(--ok); }}
     .goal-evidence-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-evidence-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-artifact-command-bar {{ border-left:4px solid var(--ok); }}
+    .goal-artifact-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-artifact-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-verification-command-bar {{ border-left:4px solid var(--ok); }}
     .goal-verification-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-verification-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

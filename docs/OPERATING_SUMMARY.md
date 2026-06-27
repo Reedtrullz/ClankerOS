@@ -395,7 +395,12 @@ Core layers for the bootstrap:
   They also include a typed
   `Goal Artifact Explorer` that groups goal-linked Markdown,
   JSON, Patch/Diff, and Text/Log artifacts and links them through the bounded
-  inert `/artifacts` viewer without raw filesystem browsing. The artifact
+  inert `/artifacts` viewer without raw filesystem browsing. Goal `Artifacts`
+  starts with a read-only `Goal Artifact Command Bar` that summarizes artifact
+  record counts, available/missing posture, render-family counts,
+  source-family counts, the latest artifact, one bounded review click, and
+  zero-effect counters before the detailed artifact list and typed explorer.
+  The artifact
   viewer now reports render family/renderer posture and renders Markdown as
   escaped headings/lists/paragraphs, JSON as pretty-printed text, patch/diff
   artifacts with scan-friendly line classes, and text/log artifacts as inert

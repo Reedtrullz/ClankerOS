@@ -6035,6 +6035,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-delegation-command-bar'" in goal.body
     assert "href='#goal-run-command-bar'" in goal.body
     assert "href='#goal-approval-command-bar'" in goal.body
+    assert "href='#goal-artifact-command-bar'" in goal.body
     assert "href='#goal-artifact-explorer'" in goal.body
     assert "href='#goal-verification-evidence'" in goal.body
     assert "href='#goal-remaining-work'" in goal.body
@@ -6047,13 +6048,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-delegation-command-bar'" in goal.body
     assert "id='goal-run-command-bar'" in goal.body
     assert "id='goal-approval-command-bar'" in goal.body
+    assert "id='goal-artifact-command-bar'" in goal.body
     assert "id='goal-artifact-explorer'" in goal.body
     assert "id='goal-verification-evidence'" in goal.body
     assert "id='goal-remaining-work'" in goal.body
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>34" in goal.body
+    assert "goal_section_count</dt><dd>35" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
@@ -6366,6 +6368,40 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_evidence_command_external_effects_created</dt><dd>false" in goal.body
     assert "goal_evidence_safety: read-only local evidence inventory" in goal.body
     assert "Artifacts" in goal.body
+    assert "Goal Artifact Command Bar" in goal.body
+    assert "data-goal-artifact-command-bar='true'" in goal.body
+    assert "<a href='#goal-artifact-command-bar'>Artifact command</a>" in goal.body
+    assert f"goal_artifact_command_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_artifact_command_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_artifact_command_status</dt><dd>available" in goal.body
+    assert "goal_artifact_command_items</dt><dd>21" in goal.body
+    assert "goal_artifact_command_records</dt><dd>21" in goal.body
+    assert "goal_artifact_command_available_records</dt><dd>21" in goal.body
+    assert "goal_artifact_command_missing_records</dt><dd>0" in goal.body
+    assert "goal_artifact_command_markdown_artifacts</dt><dd>5" in goal.body
+    assert "goal_artifact_command_json_artifacts</dt><dd>10" in goal.body
+    assert "goal_artifact_command_patch_artifacts</dt><dd>1" in goal.body
+    assert "goal_artifact_command_text_artifacts</dt><dd>5" in goal.body
+    assert "goal_artifact_command_sources</dt><dd>coder_prep:3, coder_run:10, delegation:1, delegation_metadata:4, worktree_plan:3" in goal.body
+    assert f"goal_artifact_command_latest_artifact</dt><dd>coder run {result.coder_worktree_run_id} review" in goal.body
+    assert "goal_artifact_command_latest_kind</dt><dd>markdown" in goal.body
+    assert "goal_artifact_command_latest_source</dt><dd>coder_run" in goal.body
+    assert "goal_artifact_command_latest_status</dt><dd>available" in goal.body
+    assert "goal_artifact_command_latest_surface</dt><dd><a href='/artifacts?path=runs/" in goal.body
+    assert "review.md" in goal.body
+    assert "goal_artifact_command_next_action</dt><dd>Open latest artifact" in goal.body
+    assert f"goal_artifact_command_target_surface</dt><dd><a href='/artifacts?path=runs/" in goal.body
+    assert f"coder run {result.coder_worktree_run_id} review</a>" in goal.body
+    assert "goal_artifact_command_reason</dt><dd>latest available goal artifact is ready for bounded review" in goal.body
+    assert "goal_artifact_command_source</dt><dd>goal_artifact_registry" in goal.body
+    assert "goal_artifact_command_raw_filesystem_browsing</dt><dd>false" in goal.body
+    assert "goal_artifact_command_write_on_get</dt><dd>false" in goal.body
+    assert "goal_artifact_command_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_artifact_command_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_artifact_command_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_artifact_now: Open latest artifact" in goal.body
+    assert f"goal_artifact_latest: coder run {result.coder_worktree_run_id} review kind=markdown source=coder_run status=available" in goal.body
+    assert "goal_artifact_safety: read-only bounded artifact inventory" in goal.body
     assert "Goal Artifact Explorer" in goal.body
     assert "artifact_explorer_raw_filesystem_browsing</dt><dd>false" in goal.body
     assert "artifact_render_types</dt><dd>Markdown, JSON, Patch, Text" in goal.body

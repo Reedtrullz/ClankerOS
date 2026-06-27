@@ -1,5 +1,33 @@
 # Status
 
+## 2026-06-27 Goal Artifact Command Bar
+
+- Added a read-only `Goal Artifact Command Bar` to the Goal page before the
+  detailed artifact list and typed artifact explorer.
+- The bar summarizes goal artifact records, available/missing posture,
+  Markdown/JSON/Patch/Text render-family counts, source-family counts, latest
+  artifact metadata, one bounded artifact review click, raw-filesystem
+  browsing posture, and zero-effect counters.
+- The Goal Section Index now links directly to the artifact command surface,
+  so operators can choose the newest useful artifact without parsing the full
+  artifact inventory first.
+- README, local app docs, and the operating summary now describe Goal
+  Artifacts as a scan-first local artifact posture surface.
+- Non-claims: this does not write state on GET, create artifacts, inspect raw
+  filesystem paths, generate evidence, run work, approve gates, commit, push,
+  create PRs, deploy, call providers, use non-loopback network actions, fetch
+  GitHub status, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_8cc570f3231b`,
+    `run_d76f0be41d35`, and coder worktree run `run_d10e7e6d6bda`
+
 ## 2026-06-27 Goal Delegation Command Bar
 
 - Added a read-only `Goal Delegation Command Bar` to the Goal page before the
