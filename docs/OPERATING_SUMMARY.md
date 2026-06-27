@@ -221,7 +221,12 @@ Core layers for the bootstrap:
   plans. Goal Risk starts with a read-only `Goal Risk Command Bar` that
   summarizes risk level, task risk counts, approval-boundary posture, first
   task risk/status, one next local surface, and no-write/no-provider/no-network/
-  no-external-effect boundaries before the detailed risk list. Goal pages also
+  no-external-effect boundaries before the detailed risk list. Goal Completion
+  Criteria starts with a read-only `Goal Criteria Command Bar` that summarizes
+  criteria source, item count, progress, plan/contract posture, first
+  acceptance item, one next local review surface, and no-write/no-provider/
+  no-network/no-external-effect boundaries before the detailed criteria list.
+  Goal pages also
   include clickable timeline entries with operator-facing lifecycle language
   for approval requested/granted, execution completed, review passed, commit
   approved, and publication approved states. The timeline also

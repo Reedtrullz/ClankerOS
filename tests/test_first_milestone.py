@@ -4625,6 +4625,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "goal_risk_level: low" in first_goal_page.body
     assert "risk_counts: low=3" in first_goal_page.body
     assert "Goal Completion Criteria" in first_goal_page.body
+    assert "Goal Criteria Command Bar" in first_goal_page.body
+    assert "data-goal-criteria-command-bar='true'" in first_goal_page.body
+    assert "goal_criteria_command_source</dt><dd>plan_steps" in first_goal_page.body
+    assert "goal_criteria_command_count</dt><dd>3" in first_goal_page.body
+    assert "goal_criteria_command_progress</dt><dd>0/3 plan steps completed" in first_goal_page.body
+    assert "goal_criteria_command_status</dt><dd>criteria_in_progress" in first_goal_page.body
     assert "completion_criteria_source: plan_steps" in first_goal_page.body
     assert "completion_criteria_count: 3" in first_goal_page.body
     assert "Scope, non-goals, and verifier are explicit." in first_goal_page.body
@@ -6060,6 +6066,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-next-action'" in goal.body
     assert "href='#goal-next-recommendation'" in goal.body
     assert "href='#goal-risk-command-bar'" in goal.body
+    assert "href='#goal-criteria-command-bar'" in goal.body
     assert "href='#goal-timeline'" in goal.body
     assert "href='#goal-delegation-command-bar'" in goal.body
     assert "href='#goal-run-command-bar'" in goal.body
@@ -6078,6 +6085,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-workflow-map'" in goal.body
     assert "id='goal-current-phase'" in goal.body
     assert "id='goal-risk-command-bar'" in goal.body
+    assert "id='goal-criteria-command-bar'" in goal.body
     assert "id='goal-timeline'" in goal.body
     assert "id='goal-delegation-command-bar'" in goal.body
     assert "id='goal-run-command-bar'" in goal.body
@@ -6093,7 +6101,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>40" in goal.body
+    assert "goal_section_count</dt><dd>41" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
@@ -6236,6 +6244,35 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_risk_level: low" in goal.body
     assert "risk_counts: low=1" in goal.body
     assert "Goal Completion Criteria" in goal.body
+    assert "Goal Criteria Command Bar" in goal.body
+    assert "data-goal-criteria-command-bar='true'" in goal.body
+    assert "<a href='#goal-criteria-command-bar'>Criteria command</a>" in goal.body
+    assert f"goal_criteria_command_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_criteria_command_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_criteria_command_status</dt><dd>criteria_in_progress" in goal.body
+    assert "goal_criteria_command_source</dt><dd>task_verification_plan" in goal.body
+    assert "goal_criteria_command_count</dt><dd>1" in goal.body
+    assert "goal_criteria_command_progress</dt><dd>0/1 tasks completed" in goal.body
+    assert "goal_criteria_command_plan_steps</dt><dd>0" in goal.body
+    assert "goal_criteria_command_completed_steps</dt><dd>0" in goal.body
+    assert "goal_criteria_command_tasks</dt><dd>1" in goal.body
+    assert "goal_criteria_command_completed_tasks</dt><dd>0" in goal.body
+    assert "goal_criteria_command_contract_items</dt><dd>0" in goal.body
+    assert "goal_criteria_command_task_items</dt><dd>1" in goal.body
+    assert "goal_criteria_command_latest_plan</dt><dd>none" in goal.body
+    assert "goal_criteria_command_sprint_contract</dt><dd>none" in goal.body
+    assert f"goal_criteria_command_first_item</dt><dd>task {result.task_id}: Inspect demo files and prepare a bounded app handoff." in goal.body
+    assert "goal_criteria_command_next_action</dt><dd>Review completion readiness" in goal.body
+    assert "goal_criteria_command_target_surface</dt><dd><a href='#goal-completion-readiness'>Goal Completion Readiness</a>" in goal.body
+    assert "goal_criteria_command_reason</dt><dd>source=task_verification_plan" in goal.body
+    assert "goal_criteria_command_write_on_get</dt><dd>false" in goal.body
+    assert "goal_criteria_command_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_criteria_command_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_criteria_command_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_criteria_now: criteria_in_progress source=task_verification_plan count=1" in goal.body
+    assert "goal_criteria_click: <a href='#goal-completion-readiness'>Goal Completion Readiness</a>" in goal.body
+    assert "goal_criteria_progress: 0/1 tasks completed" in goal.body
+    assert "goal_criteria_safety: read-only local completion criteria" in goal.body
     assert "completion_criteria_source: task_verification_plan" in goal.body
     assert "completion_progress: 0/1 tasks completed" in goal.body
     assert "Goal Completion Readiness" in goal.body

@@ -4146,6 +4146,7 @@ def _goal_section_index() -> str:
         ("Timeline", "goal-timeline"),
         ("Activity log", "goal-activity-log"),
         ("Risk level", "goal-risk"),
+        ("Criteria command", "goal-criteria-command-bar"),
         ("Completion criteria", "goal-completion-criteria"),
         ("Completion readiness", "goal-completion-readiness"),
         ("Delegation command", "goal-delegation-command-bar"),
@@ -5655,6 +5656,7 @@ def _goal_risk_command_bar(
 
 
 def _goal_completion_criteria(state: dict[str, Any]) -> str:
+    goal = state["goal"]
     plan = state.get("latest_plan")
     contract = state.get("sprint_contract")
     steps = state.get("plan_steps", [])
@@ -5702,7 +5704,136 @@ def _goal_completion_criteria(state: dict[str, Any]) -> str:
         )
     if len(lines) == 3:
         lines.append("completion_criteria_status: none_available")
-    return _list_section("Goal Completion Criteria", lines, anchor_id="goal-completion-criteria")
+    return _goal_criteria_command_bar(
+        goal=goal,
+        source=source,
+        criteria_count=criteria_count,
+        progress=progress,
+        plan=plan,
+        contract=contract,
+        steps=steps,
+        tasks=tasks,
+        contract_items=contract_items,
+        task_items=task_items,
+    ) + _list_section(
+        "Goal Completion Criteria",
+        lines,
+        anchor_id="goal-completion-criteria",
+    )
+
+
+def _goal_criteria_command_bar(
+    *,
+    goal: Any,
+    source: str,
+    criteria_count: int,
+    progress: str,
+    plan: Any | None,
+    contract: Any | None,
+    steps: list[Any],
+    tasks: list[Any],
+    contract_items: list[str],
+    task_items: list[dict[str, str]],
+) -> str:
+    completed_steps = sum(1 for step in steps if step.status == "completed")
+    completed_tasks = sum(1 for task in tasks if task.status == "completed")
+    if source == "none":
+        status = "missing_criteria"
+        next_action = "Create completion criteria"
+        target_surface = SafeHtml("<a href='#goal-next-action'>Goal Next Action</a>")
+        reason = "no_plan_contract_or_task_acceptance"
+        first_item = "none"
+    elif steps and completed_steps == len(steps):
+        status = "criteria_complete"
+        next_action = "Review completion readiness"
+        target_surface = SafeHtml(
+            "<a href='#goal-completion-readiness'>Goal Completion Readiness</a>"
+        )
+        reason = "all_plan_steps_completed"
+        first_item = f"step {steps[0].order_index}: {steps[0].title}" if steps else "none"
+    elif tasks and completed_tasks == len(tasks):
+        status = "criteria_complete"
+        next_action = "Review completion readiness"
+        target_surface = SafeHtml(
+            "<a href='#goal-completion-readiness'>Goal Completion Readiness</a>"
+        )
+        reason = "all_tasks_completed"
+        first_item = _goal_first_criteria_item(steps, contract_items, task_items)
+    else:
+        status = "criteria_in_progress"
+        next_action = "Review completion readiness"
+        target_surface = SafeHtml(
+            "<a href='#goal-completion-readiness'>Goal Completion Readiness</a>"
+        )
+        reason = f"source={source}"
+        first_item = _goal_first_criteria_item(steps, contract_items, task_items)
+    return "".join(
+        [
+            "<section id='goal-criteria-command-bar' class='panel goal-criteria-command-bar' data-goal-criteria-command-bar='true'><h3>Goal Criteria Command Bar</h3>",
+            "<p class='muted'>Completion criteria posture before the detailed acceptance checklist.</p>",
+            _kv(
+                [
+                    ("goal_criteria_command_goal", goal.id),
+                    ("goal_criteria_command_project", goal.project_id),
+                    ("goal_criteria_command_status", status),
+                    ("goal_criteria_command_source", source),
+                    ("goal_criteria_command_count", str(criteria_count)),
+                    ("goal_criteria_command_progress", progress),
+                    ("goal_criteria_command_plan_steps", str(len(steps))),
+                    ("goal_criteria_command_completed_steps", str(completed_steps)),
+                    ("goal_criteria_command_tasks", str(len(tasks))),
+                    ("goal_criteria_command_completed_tasks", str(completed_tasks)),
+                    (
+                        "goal_criteria_command_contract_items",
+                        str(len(contract_items)),
+                    ),
+                    (
+                        "goal_criteria_command_task_items",
+                        str(len(task_items)),
+                    ),
+                    (
+                        "goal_criteria_command_latest_plan",
+                        SafeHtml(_artifact_link(plan.artifact_path)) if plan is not None else "none",
+                    ),
+                    (
+                        "goal_criteria_command_sprint_contract",
+                        SafeHtml(_artifact_link(contract.artifact_path)) if contract is not None else "none",
+                    ),
+                    ("goal_criteria_command_first_item", first_item),
+                    ("goal_criteria_command_next_action", next_action),
+                    ("goal_criteria_command_target_surface", target_surface),
+                    ("goal_criteria_command_reason", reason),
+                    ("goal_criteria_command_write_on_get", "false"),
+                    ("goal_criteria_command_provider_calls_taken", "0"),
+                    ("goal_criteria_command_network_actions_taken", "0"),
+                    ("goal_criteria_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_criteria_now: {_e(status)} source={_e(source)} count={criteria_count}",
+                    f"goal_criteria_click: {target_surface}",
+                    f"goal_criteria_progress: {_e(progress)}",
+                    "goal_criteria_safety: read-only local completion criteria",
+                ]
+            ),
+            "</section>",
+        ]
+    )
+
+
+def _goal_first_criteria_item(
+    steps: list[Any],
+    contract_items: list[str],
+    task_items: list[dict[str, str]],
+) -> str:
+    if contract_items:
+        return contract_items[0]
+    if steps:
+        return f"step {steps[0].order_index}: {steps[0].title}"
+    if task_items:
+        return f"task {task_items[0]['task_id']}: {task_items[0]['acceptance']}"
+    return "none"
 
 
 def _goal_completion_readiness(
@@ -15201,6 +15332,9 @@ def _html_page(
     .goal-risk-command-bar {{ border-left:4px solid var(--warn); }}
     .goal-risk-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-risk-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-criteria-command-bar {{ border-left:4px solid var(--ok); }}
+    .goal-criteria-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-criteria-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-delegation-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-delegation-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-delegation-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

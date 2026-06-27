@@ -1,5 +1,32 @@
 # Status
 
+## 2026-06-27 Goal Criteria Command Bar
+
+- Added a read-only `Goal Criteria Command Bar` to the Goal page before the
+  detailed Goal Completion Criteria list.
+- The bar summarizes completion criteria source, item count, progress,
+  plan/contract posture, plan step/task completion counts, first acceptance
+  item, one next local review surface, and zero-effect counters.
+- The Goal Section Index now links directly to the criteria command surface,
+  so operators can see what proves the Goal complete before parsing the full
+  criteria list.
+- README, local app docs, and the operating summary now describe Goal
+  Completion Criteria as a scan-first local acceptance posture surface.
+- Non-claims: this does not write state on GET, mark goals complete, approve
+  gates, run work, create artifacts, append notes, call providers, use
+  non-loopback network actions, fetch GitHub status, push, create PRs, deploy,
+  or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_0ce0928d54ec`,
+    `run_55227272557a`, and coder worktree run `run_ebce34d8ff9f`
+
 ## 2026-06-27 Goal Risk Command Bar
 
 - Added a read-only `Goal Risk Command Bar` to the Goal page before the

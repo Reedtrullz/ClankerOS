@@ -202,7 +202,10 @@ boundary so the operator can choose the next click without scrolling. Goal
 Risk now starts with a read-only `Goal Risk Command Bar` that summarizes
 risk level, task risk counts, approval-boundary posture, first task risk/status,
 one next local surface, and zero-effect counters before the detailed risk
-list. Goal
+list. Goal Completion Criteria now starts with a read-only `Goal Criteria
+Command Bar` that summarizes criteria source, item count, progress,
+plan/contract posture, first acceptance item, one next local review surface,
+and zero-effect counters before the detailed criteria list. Goal
 Completion Readiness turns the same local gate, approval, incident, and
 publication-handoff state into one explicit finish posture. It names the
 current blocker or next safe action, links the relevant local surface, and only
