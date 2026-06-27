@@ -4191,9 +4191,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_goal_queue_paused_goals</dt><dd>0" in today.body
     assert "today_goal_queue_completed_goals</dt><dd>0" in today.body
     assert "today_goal_queue_lead_goal</dt><dd>none" in today.body
-    assert "today_goal_queue_first_switch_surface</dt><dd><a href='/goals'>/goals</a>" in today.body
+    assert "today_goal_queue_first_switch_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
     assert "today_goal_queue_empty: first_run_ready" in today.body
     assert "today_goal_queue_next_action: Register ClankerOS project" in today.body
+    assert "today_goal_queue_next_surface: <a href='#first-run-create-project'>Create Project</a>" in today.body
     assert "today_goal_queue_write_on_get</dt><dd>false" in today.body
     assert "today_goal_queue_network_actions_taken</dt><dd>0" in today.body
     assert "today_goal_queue_external_effects_created</dt><dd>false" in today.body
@@ -4203,8 +4204,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_command_goal</dt><dd>none" in today.body
     assert "today_command_phase</dt><dd>First run" in today.body
     assert "today_command_primary_action</dt><dd>Register ClankerOS project" in today.body
-    assert "today_command_primary_surface</dt><dd><a href='/goals'>/goals</a>" in today.body
-    assert "today_command_target_surface</dt><dd><a href='/goals'>/goals</a>" in today.body
+    assert "today_command_primary_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_command_target_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
     assert "today_command_reason</dt><dd>no_project_registered" in today.body
     assert "today_command_progress</dt><dd>first_run_step=create_project" in today.body
     assert "today_command_resume_ready</dt><dd>false" in today.body
@@ -4214,13 +4215,15 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_command_ci_status</dt><dd>success" in today.body
     assert "today_command_ci_source</dt><dd>publication_handoff" in today.body
     assert "today_command_action_form_available</dt><dd>false" in today.body
+    assert "today_command_first_run_form_available</dt><dd>true" in today.body
+    assert "today_command_first_run_form_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
     assert "today_command_finish_status</dt><dd>not_ready_until_goal_exists" in today.body
     assert "today_command_finish_form_available</dt><dd>false" in today.body
     assert "today_command_write_on_get</dt><dd>false" in today.body
     assert "today_command_network_actions_taken</dt><dd>0" in today.body
     assert "today_command_external_effects_created</dt><dd>false" in today.body
     assert "today_command_now: Register ClankerOS project" in today.body
-    assert "today_command_click: <a href='/goals'>/goals</a>" in today.body
+    assert "today_command_click: <a href='#first-run-create-project'>Create Project</a>" in today.body
     assert "Today Current Action" not in today.body
     assert "Home Day Plan" in today.body
     assert "First Run Guide" in today.body
@@ -4819,6 +4822,28 @@ def test_local_app_routes_render_modern_workflow_and_health(
     ) in registered_goals.body
     assert "first_run_command_action_form_available</dt><dd>true" in registered_goals.body
     assert "first_run_command_inline_action_form_available</dt><dd>false" in registered_goals.body
+    registered_today = render_local_app_route(tmp_path, "/today")
+    assert registered_today.status == 200
+    assert "today_command_status</dt><dd>first_run" in registered_today.body
+    assert "today_command_primary_action</dt><dd>Create first goal" in registered_today.body
+    assert (
+        "today_command_primary_surface</dt><dd><a href='#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in registered_today.body
+    assert (
+        "today_command_first_run_form_surface</dt><dd><a href='#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in registered_today.body
+    assert "today_command_first_run_form_available</dt><dd>true" in registered_today.body
+    assert (
+        "today_goal_queue_first_switch_surface</dt><dd><a href='#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in registered_today.body
+    assert "today_goal_queue_next_action: Create first goal" in registered_today.body
+    assert (
+        "today_goal_queue_next_surface: <a href='#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in registered_today.body
     create_goal_result = render_local_app_route(
         tmp_path,
         "/actions/create-goal",

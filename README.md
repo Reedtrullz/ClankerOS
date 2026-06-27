@@ -152,7 +152,9 @@ form for tomorrow's resume point. It also includes a `Today Goal Queue` that
 lists active, paused, and completed goals with phase, next action, switch
 links, same-page action availability for the lead goal, progress, and waiting
 counts so daily goal switching does not require opening the full `/goals`
-inventory. It reuses the existing Home, Goal, inbox,
+inventory. In an empty checkout, `/today` now points its primary first-run
+action directly to the same-page `Create Project` or `Create First Goal`
+form instead of sending the operator to another inventory page. It reuses the existing Home, Goal, inbox,
 activity, and first-run surfaces below the command center, writes nothing on
 GET, and only exposes confirmed local forms already available elsewhere in the
 app.

@@ -1184,13 +1184,17 @@ def _today_goal_queue(
             f"<a href='/goals/{quote(str(rows[0]['id']))}'>/goals/{_e(str(rows[0]['id']))}</a>"
         )
     else:
+        first_run = _first_run_progress(root, storage)
+        first_run_href, first_run_label = _today_first_run_target(first_run)
         item_lines = [
             "today_goal_queue_empty: first_run_ready",
-            "today_goal_queue_next_action: Register ClankerOS project",
-            "today_goal_queue_next_surface: <a href='/goals'>/goals</a>",
+            f"today_goal_queue_next_action: {_e(str(first_run['next_action']))}",
+            f"today_goal_queue_next_surface: <a href='{_e(first_run_href)}'>{_e(first_run_label)}</a>",
         ]
         status = "first_run"
-        first_surface = SafeHtml("<a href='/goals'>/goals</a>")
+        first_surface = SafeHtml(
+            f"<a href='{_e(first_run_href)}'>{_e(first_run_label)}</a>"
+        )
 
     return "".join(
         [
@@ -1221,6 +1225,18 @@ def _today_goal_queue(
             "</section>",
         ]
     )
+
+
+def _today_first_run_target(first_run: dict[str, Any]) -> tuple[str, str]:
+    current_step = str(first_run.get("current_step") or "")
+    if current_step == "create_project":
+        return "#first-run-create-project", "Create Project"
+    if current_step == "create_first_goal":
+        return "#first-run-create-goal", "Create First Goal"
+    surface = str(first_run.get("next_surface") or "/goals")
+    if current_step in {"create_first_delegation", "generate_context_pack", "run_first_delegation"}:
+        return "#first-run-command-action", "Run First-Run Action"
+    return surface, surface
 
 
 def _today_goal_queue_line(
@@ -1326,22 +1342,32 @@ def _today_command_center(
     note_available = "false"
     pause_surface: str | SafeHtml = "not_available"
     note_surface: str | SafeHtml = "not_available"
+    first_run_form_available = "false"
+    first_run_form_surface: str | SafeHtml = "not_applicable"
     if lead_goal is None:
         first_run = _first_run_progress(root, storage)
+        first_run_href, first_run_label = _today_first_run_target(first_run)
         status = "first_run"
         goal_surface: str | SafeHtml = "none"
         project_surface: str | SafeHtml = "none"
         phase = "First run"
         primary_action = str(first_run["next_action"])
         first_goal_id = str(first_run.get("goal_id") or "")
-        primary_href = f"/goals/{quote(first_goal_id)}" if first_goal_id else "/goals"
+        primary_href = first_run_href or (
+            f"/goals/{quote(first_goal_id)}" if first_goal_id else "/goals"
+        )
+        primary_label = first_run_label or primary_href
         primary_reason = str(first_run["next_reason"])
         progress = f"first_run_step={first_run['current_step']}"
         finish_status = "not_ready_until_goal_exists"
         open_tasks = 0
         waiting_items = pending_approvals + open_incidents + open_recommendations
         target_href = primary_href
-        target_label = primary_href
+        target_label = primary_label
+        first_run_form_available = "true" if primary_href.startswith("#first-run-") else "false"
+        first_run_form_surface = SafeHtml(
+            f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"
+        )
         if attention_status == "clear":
             attention_status = "first_run"
             attention_action = primary_action
@@ -1378,6 +1404,7 @@ def _today_command_center(
         phase = _goal_current_phase(state)
         primary_action = next_action.action
         primary_href = next_action.href
+        primary_label = primary_href
         primary_reason = next_action.reason
         progress = _goal_progress_label(state)
         open_tasks = len([task for task in state["tasks"] if task.status != "completed"])
@@ -1426,7 +1453,7 @@ def _today_command_center(
         )
 
     target_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
-    primary_surface = SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_href)}</a>")
+    primary_surface = SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>")
     attention_surface = SafeHtml(f"<a href='{_e(attention_href)}'>{_e(attention_href)}</a>")
     rows: list[tuple[str, str | SafeHtml]] = [
         ("today_command_status", status),
@@ -1460,6 +1487,8 @@ def _today_command_center(
         ("today_command_finish_status", finish_status),
         ("today_command_finish_form_available", str(bool(finish_form)).lower()),
         ("today_command_finish_confirmation_required", str(bool(finish_form)).lower()),
+        ("today_command_first_run_form_available", first_run_form_available),
+        ("today_command_first_run_form_surface", first_run_form_surface),
         ("today_command_note_form_available", note_available),
         ("today_command_note_confirmation_required", note_available),
         ("today_command_note_surface", note_surface),
