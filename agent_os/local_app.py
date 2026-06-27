@@ -1076,6 +1076,7 @@ def _home_dashboard(
         "</section>",
         _home_day_plan(root, storage, lead_goal),
         _home_focus_queue(root, storage, active=active, paused=paused),
+        _home_verification_handoff(root),
         _home_goal_board(root, storage, active=active, paused=paused, completed=completed),
         _home_resume_workspace(root, lead_goal),
         _home_recent_activity(root, storage),
@@ -1237,6 +1238,79 @@ def _home_focus_queue_line(root: Path, storage: Storage, row: sqlite3.Row) -> st
         f"surface=<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a> "
         f"progress={_e(_goal_progress_label(state))} waiting={waiting_items} "
         f"approvals={pending_approvals} incidents={open_incidents} recommendations={open_recommendations}"
+    )
+
+
+def _home_verification_handoff(root: Path) -> str:
+    repo = _repo_state(root)
+    full_commit = _git(root, ["rev-parse", "HEAD"]) or repo["commit"]
+    latest_record = _latest_ci_evidence_record(root)
+    lines: list[tuple[str, str | SafeHtml]] = [
+        ("home_verification_source", "github_actions_operator_supplied_evidence"),
+        ("home_verification_surface", SafeHtml("<a href='/verification'>/verification</a>")),
+        ("home_ci_evidence_surface", SafeHtml("<a href='/ci-evidence'>/ci-evidence</a>")),
+        ("home_ci_current_branch", repo["branch"]),
+        ("home_ci_current_commit", full_commit),
+        ("home_ci_github_status_fetch", "none"),
+        ("home_ci_app_network_actions_taken", "0"),
+        ("home_ci_external_mutations_taken", "0"),
+        ("home_ci_write_on_get", "false"),
+    ]
+    if latest_record is None:
+        lines.extend(
+            [
+                ("home_latest_ci_status", "missing"),
+                ("home_latest_ci_record_source", "none"),
+                (
+                    "home_ci_next_action",
+                    "wait_for_github_actions_success_then_record_ci_snapshot_or_deploy_evidence",
+                ),
+            ]
+        )
+    else:
+        source_kind, record = latest_record
+        result = record.result_json if isinstance(record.result_json, dict) else {}
+        branch_matches = record.branch_name == repo["branch"]
+        commit_matches = _commit_refs_match(record.commit_sha, full_commit, repo["commit"])
+        lines.extend(
+            [
+                ("home_latest_ci_source", source_kind),
+                ("home_latest_ci_status", record.status),
+                ("home_latest_ci_provider", record.provider),
+                ("home_latest_ci_branch", record.branch_name),
+                ("home_latest_ci_commit", record.commit_sha),
+                ("home_latest_ci_external_run_id", record.external_run_id),
+                (
+                    "home_latest_ci_url",
+                    SafeHtml(f"<a href='{_e(record.external_url)}'>{_e(record.external_url)}</a>"),
+                ),
+                ("home_latest_ci_record_source", "operator_supplied"),
+                ("home_latest_ci_branch_matches_current", str(branch_matches).lower()),
+                ("home_latest_ci_commit_matches_current", str(commit_matches).lower()),
+                (
+                    "home_latest_ci_matches_current_checkout",
+                    str(branch_matches and commit_matches).lower(),
+                ),
+                ("home_latest_ci_network_actions_taken", str(result.get("network_actions_taken", "unknown"))),
+                (
+                    "home_latest_ci_external_mutations_taken",
+                    str(result.get("external_mutations_taken", "unknown")),
+                ),
+            ]
+        )
+    handoff_lines = [
+        *_ci_snapshot_handoff_lines(root, key_prefix="home_ci_snapshot_"),
+        "home_ci_proof_boundary: completed passing GitHub Actions run plus operator-supplied local record",
+        "home_ci_fast_smoke_boundary: Fast smoke verification is early route/CLI proof only",
+        "home_ci_full_suite_location: GitHub Actions",
+    ]
+    return "".join(
+        [
+            "<section><h2>Home Verification Handoff</h2>",
+            _kv(lines),
+            _ul(handoff_lines),
+            "</section>",
+        ]
     )
 
 

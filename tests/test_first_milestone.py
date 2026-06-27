@@ -4092,6 +4092,19 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "focus_queue_next_action: Register ClankerOS project" in root.body
     assert "focus_queue_write_on_get</dt><dd>false" in root.body
     assert "focus_queue_external_effects_created</dt><dd>false" in root.body
+    assert "Home Verification Handoff" in root.body
+    assert "home_verification_source</dt><dd>github_actions_operator_supplied_evidence" in root.body
+    assert "home_latest_ci_source</dt><dd>publication_handoff" in root.body
+    assert "home_latest_ci_status</dt><dd>success" in root.body
+    assert "home_latest_ci_provider</dt><dd>github-actions" in root.body
+    assert "home_latest_ci_external_run_id</dt><dd>123" in root.body
+    assert "home_ci_github_status_fetch</dt><dd>none" in root.body
+    assert "home_ci_app_network_actions_taken</dt><dd>0" in root.body
+    assert "home_ci_external_mutations_taken</dt><dd>0" in root.body
+    assert "home_ci_write_on_get</dt><dd>false" in root.body
+    assert "home_ci_snapshot_status_check_command_template: gh run view" in root.body
+    assert "home_ci_snapshot_validated_record_command_template: gh run view" in root.body
+    assert "home_ci_full_suite_location: GitHub Actions" in root.body
     assert "Home Goal Board" in root.body
     assert "Home Resume Workspace" in root.body
     assert "workspace_status: no_saved_workspace" in root.body
@@ -5362,6 +5375,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Remember Current Goal" in dashboard.body
     assert "save-workspace" in dashboard.body
     assert "operator-home" in dashboard.body
+    assert "Home Verification Handoff" in dashboard.body
+    assert "home_verification_surface</dt><dd><a href='/verification'>/verification</a>" in dashboard.body
+    assert "home_ci_evidence_surface</dt><dd><a href='/ci-evidence'>/ci-evidence</a>" in dashboard.body
+    assert "home_latest_ci_source</dt><dd>direct_public_snapshot" in dashboard.body
+    assert "home_latest_ci_status</dt><dd>success" in dashboard.body
+    assert "home_latest_ci_provider</dt><dd>github-actions" in dashboard.body
+    assert "home_latest_ci_external_run_id</dt><dd>demo-goal-ci" in dashboard.body
+    assert "home_latest_ci_record_source</dt><dd>operator_supplied" in dashboard.body
+    assert "home_ci_github_status_fetch</dt><dd>none" in dashboard.body
+    assert "home_ci_app_network_actions_taken</dt><dd>0" in dashboard.body
+    assert "home_ci_external_mutations_taken</dt><dd>0" in dashboard.body
+    assert "home_ci_snapshot_fast_smoke_validated_record_command_template: gh run view" in dashboard.body
     assert "Home Recent Activity" in dashboard.body
     assert "Execution completed" in dashboard.body
     assert "Home Inbox" in dashboard.body

@@ -92,6 +92,10 @@ Core layers for the bootstrap:
   phase plus one recommended next action and the same confirmed local action
   form as the Goal page when that action is browser-available, without writing
   on GET;
+  `/` also includes a read-only `Home Verification Handoff` that shows the
+  current branch/commit GitHub Actions direct snapshot command templates,
+  latest operator-supplied CI evidence when one exists, and zero app-side
+  GitHub polling, provider, push, PR, deploy, or external-mutation effects;
   `/search` for bounded global search across indexed goals, projects,
   delegations, known artifacts, incidents, recommendations, memory, runs,
   approvals, and skills, with goal results including live local phase, one

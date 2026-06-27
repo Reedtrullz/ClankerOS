@@ -67,6 +67,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   that points to the highest-priority local operator surface, such as
   incidents, approvals, a reviewed coder run needing a commit request, a
   publication handoff, project state, or the demo/onboarding page.
+- `/` also includes a read-only `Home Verification Handoff` that brings the
+  GitHub Actions handoff onto the daily Home board: current branch/commit,
+  direct snapshot command templates, latest operator-supplied CI evidence
+  when one exists, and zero app-side GitHub polling, provider, push, PR,
+  deploy, or external-mutation effects.
 - `/` also includes a read-only `Verification Snapshot` that summarizes the
   checked-in workflow timeout, latest operator-supplied CI evidence when one
   exists, and links to `/verification` plus `/ci-evidence` without polling
