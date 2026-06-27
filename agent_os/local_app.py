@@ -4078,7 +4078,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             ),
             _goal_evidence_section(root, state),
             _goal_artifact_section(root, state),
-            _list_section("Memory", _goal_memory_lines(root, state), anchor_id="goal-memory"),
+            _goal_memory_section(root, state),
             _list_section("Skills Used", _goal_skill_lines(root, state), anchor_id="goal-skills-used"),
             _goal_git_status(root, state),
             _goal_verification_evidence(root, state),
@@ -4163,6 +4163,7 @@ def _goal_section_index() -> str:
         ("Artifact command", "goal-artifact-command-bar"),
         ("Artifacts", "goal-artifacts"),
         ("Artifact explorer", "goal-artifact-explorer"),
+        ("Memory command", "goal-memory-command-bar"),
         ("Memory", "goal-memory"),
         ("Skills used", "goal-skills-used"),
         ("Git status", "goal-git-status"),
@@ -7387,6 +7388,172 @@ def _goal_memory_lines(root: Path, state: dict[str, Any]) -> list[str]:
         "pin_memory_from_goal_page=false",
         "goal_memory_external_effects_created=false",
     ]
+
+
+def _goal_memory_section(root: Path, state: dict[str, Any]) -> str:
+    lines = _goal_memory_lines(root, state)
+    return _goal_memory_command_bar(root, state, lines) + _list_section(
+        "Memory",
+        lines,
+        anchor_id="goal-memory",
+    )
+
+
+def _goal_memory_command_bar(
+    root: Path,
+    state: dict[str, Any],
+    memory_lines: list[str],
+) -> str:
+    storage = _storage(root)
+    goal = state["goal"]
+    project_memory = Path("projects") / goal.project_id / "knowledge.md"
+    global_memory = Path("knowledge.md")
+    operator_notes = _goal_operator_notes_path(goal)
+    project_entries = storage.list_memory_entries(project_id=goal.project_id, limit=100)
+    global_entries = [
+        entry for entry in storage.list_memory_entries(limit=100) if entry.scope == "global"
+    ]
+    generated_entries = [
+        entry for entry in project_entries if entry.source_type != "operator"
+    ]
+    active_entries = [entry for entry in project_entries if entry.status == "active"]
+    proposed_entries = [entry for entry in project_entries if entry.status == "proposed"]
+    future_work = [row for row in state["recommendations"] if row["status"] == "open"]
+    operator_note_status = "available" if (root / operator_notes).exists() else "not_started"
+    latest_project_entry = project_entries[0] if project_entries else None
+    latest_generated = generated_entries[0] if generated_entries else None
+    project_memory_status = "available" if (root / project_memory).exists() else "missing"
+    global_memory_status = "available" if (root / global_memory).exists() else "missing"
+    project_memory_surface = (
+        _artifact_link(project_memory.as_posix())
+        if project_memory_status == "available"
+        else "missing"
+    )
+    global_memory_surface = (
+        _artifact_link(global_memory.as_posix())
+        if global_memory_status == "available"
+        else "missing"
+    )
+    operator_notes_surface = (
+        _artifact_link(operator_notes.as_posix())
+        if operator_note_status == "available"
+        else SafeHtml("<a href='#goal-operator-notes'>Goal Operator Notes</a>")
+    )
+    first_target = "none"
+    next_action = "Capture operator note"
+    target_href = "#goal-operator-notes"
+    target_label = "Goal Operator Notes"
+    reason = "goal_memory_empty_and_operator_note_not_started"
+    if proposed_entries:
+        first_target = proposed_entries[0].id
+        next_action = "Review proposed memory"
+        target_href = "/memory#memory-proposed"
+        target_label = "/memory#memory-proposed"
+        reason = "proposed_goal_memory_waiting_for_operator"
+    elif active_entries:
+        first_target = active_entries[0].id
+        next_action = "Review active goal memory"
+        target_href = "/memory#memory-project"
+        target_label = "/memory#memory-project"
+        reason = "active_goal_memory_available"
+    elif operator_note_status == "available":
+        first_target = operator_notes.as_posix()
+        next_action = "Review operator notes"
+        target_href = _artifact_href(root, operator_notes)
+        target_label = "operator-notes.md"
+        reason = "goal_operator_notes_available"
+    elif future_work:
+        first_target = str(future_work[0]["id"])
+        next_action = "Review future work"
+        target_href = "/memory#memory-future-work"
+        target_label = "/memory#memory-future-work"
+        reason = "open_goal_recommendations_available"
+    elif generated_entries:
+        first_target = generated_entries[0].id
+        next_action = "Review generated memory"
+        target_href = "/memory#memory-generated"
+        target_label = "/memory#memory-generated"
+        reason = "generated_goal_memory_available"
+    elif project_entries:
+        first_target = project_entries[0].id
+        next_action = "Review project memory"
+        target_href = "/memory#memory-project"
+        target_label = "/memory#memory-project"
+        reason = "project_memory_records_available"
+    elif global_entries:
+        first_target = global_entries[0].id
+        next_action = "Review global memory"
+        target_href = "/memory#memory-global"
+        target_label = "/memory#memory-global"
+        reason = "global_memory_records_available"
+
+    if proposed_entries:
+        status = "proposed_memory_pending"
+    elif active_entries or project_entries or generated_entries or global_entries:
+        status = "memory_available"
+    elif operator_note_status == "available":
+        status = "operator_notes_available"
+    elif future_work:
+        status = "future_work_available"
+    else:
+        status = "empty"
+
+    target_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    return "".join(
+        [
+            "<section id='goal-memory-command-bar' class='panel goal-memory-command-bar' data-goal-memory-command-bar='true'><h3>Goal Memory Command Bar</h3>",
+            "<p class='muted'>Goal-scoped memory posture before the detailed memory readback.</p>",
+            _kv(
+                [
+                    ("goal_memory_command_goal", goal.id),
+                    ("goal_memory_command_project", goal.project_id),
+                    ("goal_memory_command_status", status),
+                    ("goal_memory_command_items", str(len(memory_lines))),
+                    ("goal_memory_command_project_entries", str(len(project_entries))),
+                    ("goal_memory_command_active_entries", str(len(active_entries))),
+                    ("goal_memory_command_proposed_entries", str(len(proposed_entries))),
+                    ("goal_memory_command_global_entries", str(len(global_entries))),
+                    ("goal_memory_command_generated_entries", str(len(generated_entries))),
+                    ("goal_memory_command_future_work", str(len(future_work))),
+                    ("goal_memory_command_operator_notes_status", operator_note_status),
+                    ("goal_memory_command_operator_notes_surface", SafeHtml(str(operator_notes_surface))),
+                    ("goal_memory_command_project_memory_status", project_memory_status),
+                    ("goal_memory_command_project_memory", SafeHtml(str(project_memory_surface))),
+                    ("goal_memory_command_global_memory_status", global_memory_status),
+                    ("goal_memory_command_global_memory", SafeHtml(str(global_memory_surface))),
+                    (
+                        "goal_memory_command_latest_project_memory",
+                        _goal_memory_entry_summary(latest_project_entry),
+                    ),
+                    (
+                        "goal_memory_command_latest_generated_memory",
+                        _goal_memory_entry_summary(latest_generated),
+                    ),
+                    ("goal_memory_command_first_target", first_target),
+                    ("goal_memory_command_next_action", next_action),
+                    ("goal_memory_command_target_surface", target_surface),
+                    ("goal_memory_command_reason", reason),
+                    ("goal_memory_command_pin_memory_available", str(bool(proposed_entries)).lower()),
+                    ("goal_memory_command_pin_surface", SafeHtml("<a href='/memory'>/memory</a>")),
+                    ("goal_memory_command_source", "goal_memory_records_and_operator_notes"),
+                    ("goal_memory_command_write_on_get", "false"),
+                    ("goal_memory_command_raw_filesystem_browsing", "false"),
+                    ("goal_memory_command_provider_calls_taken", "0"),
+                    ("goal_memory_command_network_actions_taken", "0"),
+                    ("goal_memory_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_memory_now: {_e(next_action)}",
+                    f"goal_memory_click: {target_surface}",
+                    f"goal_memory_reason: {_e(reason)}",
+                    "goal_memory_safety: read-only local memory posture",
+                ]
+            ),
+            "</section>",
+        ]
+    )
 
 
 def _goal_memory_entry_summary(entry: Any | None) -> str:
@@ -14611,6 +14778,9 @@ def _html_page(
     .goal-artifact-command-bar {{ border-left:4px solid var(--ok); }}
     .goal-artifact-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-artifact-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-memory-command-bar {{ border-left:4px solid var(--accent); }}
+    .goal-memory-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-memory-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-verification-command-bar {{ border-left:4px solid var(--ok); }}
     .goal-verification-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-verification-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

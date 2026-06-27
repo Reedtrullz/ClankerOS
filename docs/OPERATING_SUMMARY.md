@@ -337,7 +337,10 @@ Core layers for the bootstrap:
   goal-scoped memory entry counts, generated memory count, operator-note
   status, future-work count, latest memory summaries, and the fact that
   pinning remains available on the confirmed `/memory` surface rather than on
-  the read-only Goal page. The `/memory` surface now starts with a read-only
+  the read-only Goal page. It starts with a read-only `Goal Memory Command Bar`
+  that summarizes memory entry counts, memory artifact posture, operator-note
+  state, future-work count, one next local memory action, and zero-effect
+  counters before the detailed memory readback. The `/memory` surface now starts with a read-only
   `Memory Command Bar` so proposed-memory pins, operator-note review, future
   work, saved workspace resume, and empty-bank starts have one visible next
   click before the inventory. Confirmed `/memory` pinning promotes only entries

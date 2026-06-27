@@ -247,6 +247,10 @@ the current checkout, and includes a confirmed Goal-scoped form for pasted
 GitHub Actions JSON. The form infers run identity from `databaseId`/`url`,
 validates the supplied JSON, and records local CI proof without app-side
 GitHub polling.
+Goal Memory starts with a read-only `Goal Memory Command Bar` that summarizes
+project/global memory artifacts, project/active/proposed/global/generated entry
+counts, operator-note state, future-work count, pinning posture, one next local
+memory action, and zero-effect boundaries before the detailed memory readback.
 Skills Used links to `/skills`, shows task skill usage counts, projects using
 each tag, matching generated or available skill records when present, profile
 usage, and keeps skill execution out of the Goal page.

@@ -167,7 +167,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   Goal Memory section links to `/memory`, shows
   project/global memory artifacts, goal-scoped memory entry counts, generated
   memory count, operator-note status, future-work count, and the current pin
-  posture; pinning stays on the confirmed `/memory` action surface. Goal
+  posture; it starts with a read-only `Goal Memory Command Bar` that chooses
+  one next local memory action and reports zero-effect boundaries before the
+  detailed readback. Pinning stays on the confirmed `/memory` action surface.
+  Goal
   Runs starts with a read-only `Goal Run Command Bar` that summarizes task and
   worktree run counts, reviewed/blocked run gates, changed-file posture, the
   latest run surface, one next local run action, and zero-effect boundaries

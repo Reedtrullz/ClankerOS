@@ -6037,6 +6037,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-approval-command-bar'" in goal.body
     assert "href='#goal-artifact-command-bar'" in goal.body
     assert "href='#goal-artifact-explorer'" in goal.body
+    assert "href='#goal-memory-command-bar'" in goal.body
     assert "href='#goal-verification-evidence'" in goal.body
     assert "href='#goal-remaining-work'" in goal.body
     assert "id='goal-summary'" in goal.body
@@ -6050,12 +6051,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-approval-command-bar'" in goal.body
     assert "id='goal-artifact-command-bar'" in goal.body
     assert "id='goal-artifact-explorer'" in goal.body
+    assert "id='goal-memory-command-bar'" in goal.body
     assert "id='goal-verification-evidence'" in goal.body
     assert "id='goal-remaining-work'" in goal.body
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>35" in goal.body
+    assert "goal_section_count</dt><dd>36" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
@@ -6420,6 +6422,43 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "artifact_type=patch" in goal.body
     assert "artifact_type=text" in goal.body
     assert "Memory" in goal.body
+    assert "Goal Memory Command Bar" in goal.body
+    assert "data-goal-memory-command-bar='true'" in goal.body
+    assert "<a href='#goal-memory-command-bar'>Memory command</a>" in goal.body
+    assert f"goal_memory_command_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_memory_command_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_memory_command_status</dt><dd>empty" in goal.body
+    assert "goal_memory_command_items</dt><dd>17" in goal.body
+    assert "goal_memory_command_project_entries</dt><dd>0" in goal.body
+    assert "goal_memory_command_active_entries</dt><dd>0" in goal.body
+    assert "goal_memory_command_proposed_entries</dt><dd>0" in goal.body
+    assert "goal_memory_command_global_entries</dt><dd>0" in goal.body
+    assert "goal_memory_command_generated_entries</dt><dd>0" in goal.body
+    assert "goal_memory_command_future_work</dt><dd>0" in goal.body
+    assert "goal_memory_command_operator_notes_status</dt><dd>not_started" in goal.body
+    assert "goal_memory_command_operator_notes_surface</dt><dd><a href='#goal-operator-notes'>Goal Operator Notes</a>" in goal.body
+    assert "goal_memory_command_project_memory_status</dt><dd>missing" in goal.body
+    assert "goal_memory_command_project_memory</dt><dd>missing" in goal.body
+    assert "goal_memory_command_global_memory_status</dt><dd>available" in goal.body
+    assert "goal_memory_command_global_memory</dt><dd><a href='/artifacts?path=knowledge.md'>knowledge.md</a>" in goal.body
+    assert "goal_memory_command_latest_project_memory</dt><dd>none" in goal.body
+    assert "goal_memory_command_latest_generated_memory</dt><dd>none" in goal.body
+    assert "goal_memory_command_first_target</dt><dd>none" in goal.body
+    assert "goal_memory_command_next_action</dt><dd>Capture operator note" in goal.body
+    assert "goal_memory_command_target_surface</dt><dd><a href='#goal-operator-notes'>Goal Operator Notes</a>" in goal.body
+    assert "goal_memory_command_reason</dt><dd>goal_memory_empty_and_operator_note_not_started" in goal.body
+    assert "goal_memory_command_pin_memory_available</dt><dd>false" in goal.body
+    assert "goal_memory_command_pin_surface</dt><dd><a href='/memory'>/memory</a>" in goal.body
+    assert "goal_memory_command_source</dt><dd>goal_memory_records_and_operator_notes" in goal.body
+    assert "goal_memory_command_write_on_get</dt><dd>false" in goal.body
+    assert "goal_memory_command_raw_filesystem_browsing</dt><dd>false" in goal.body
+    assert "goal_memory_command_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_memory_command_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_memory_command_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_memory_now: Capture operator note" in goal.body
+    assert "goal_memory_click: <a href='#goal-operator-notes'>Goal Operator Notes</a>" in goal.body
+    assert "goal_memory_reason: goal_memory_empty_and_operator_note_not_started" in goal.body
+    assert "goal_memory_safety: read-only local memory posture" in goal.body
     assert "memory_surface: <a href='/memory'>/memory</a>" in goal.body
     assert f"goal_memory_project_id: {result.project_id}" in goal.body
     assert "operator_notes_status: not_started" in goal.body

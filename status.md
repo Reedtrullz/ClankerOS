@@ -1,5 +1,33 @@
 # Status
 
+## 2026-06-27 Goal Memory Command Bar
+
+- Added a read-only `Goal Memory Command Bar` to the Goal page before the
+  detailed memory readback.
+- The bar summarizes project/global memory artifacts, project/active/proposed/
+  global/generated entry counts, operator-note state, future-work count, latest
+  memory summaries, pinning posture, one next local memory action, and
+  zero-effect counters.
+- The Goal Section Index now links directly to the memory command surface, so
+  operators can see whether to capture notes, review memory, or open `/memory`
+  without parsing the full memory list first.
+- README, local app docs, and the operating summary now describe Goal Memory
+  as a scan-first local memory posture surface.
+- Non-claims: this does not write state on GET, pin memory from the Goal page,
+  append operator notes, create artifacts, read raw filesystem paths, call
+  providers, use non-loopback network actions, fetch GitHub status, push,
+  create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_5570ddead574`,
+    `run_5e1004481ef8`, and coder worktree run `run_527cb36a8c35`
+
 ## 2026-06-27 Goal Artifact Command Bar
 
 - Added a read-only `Goal Artifact Command Bar` to the Goal page before the
