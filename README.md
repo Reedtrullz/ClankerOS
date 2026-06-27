@@ -199,6 +199,9 @@ hidden, and stays local-only. The Goal Command Bar near the top condenses
 current phase, one primary action, target local surface, progress, waiting
 counts, resume route, latest project-scoped CI proof state, and zero-effect
 boundary so the operator can choose the next click without scrolling. Goal
+Section Index now also links directly to the Timeline, Activity, and Git
+command bars, so the long Goal page can jump to the scan-first operational
+panels instead of only the longer detail sections. Goal
 Overview now starts with a read-only `Goal Overview Command Bar` that makes the
 goal identity, status, phase, risk, progress, task/delegation/run/approval
 counts, next click, and no-effect boundary visible before the raw metadata. Goal

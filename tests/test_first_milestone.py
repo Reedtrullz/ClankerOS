@@ -6099,7 +6099,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-risk-command-bar'" in goal.body
     assert "href='#goal-criteria-command-bar'" in goal.body
     assert "href='#goal-progress-command-bar'" in goal.body
+    assert "href='#goal-timeline-command-bar'" in goal.body
     assert "href='#goal-timeline'" in goal.body
+    assert "href='#goal-activity-command-bar'" in goal.body
     assert "href='#goal-delegation-command-bar'" in goal.body
     assert "href='#goal-run-command-bar'" in goal.body
     assert "href='#goal-approval-command-bar'" in goal.body
@@ -6108,6 +6110,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-artifact-explorer'" in goal.body
     assert "href='#goal-memory-command-bar'" in goal.body
     assert "href='#goal-skills-command-bar'" in goal.body
+    assert "href='#goal-git-command-bar'" in goal.body
     assert "href='#goal-verification-evidence'" in goal.body
     assert "href='#goal-operator-notes-command-bar'" in goal.body
     assert "href='#goal-remaining-work-command-bar'" in goal.body
@@ -6121,7 +6124,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-risk-command-bar'" in goal.body
     assert "id='goal-criteria-command-bar'" in goal.body
     assert "id='goal-progress-command-bar'" in goal.body
+    assert "id='goal-timeline-command-bar'" in goal.body
     assert "id='goal-timeline'" in goal.body
+    assert "id='goal-activity-command-bar'" in goal.body
     assert "id='goal-delegation-command-bar'" in goal.body
     assert "id='goal-run-command-bar'" in goal.body
     assert "id='goal-approval-command-bar'" in goal.body
@@ -6130,6 +6135,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-artifact-explorer'" in goal.body
     assert "id='goal-memory-command-bar'" in goal.body
     assert "id='goal-skills-command-bar'" in goal.body
+    assert "id='goal-git-command-bar'" in goal.body
     assert "id='goal-verification-evidence'" in goal.body
     assert "id='goal-operator-notes-command-bar'" in goal.body
     assert "id='goal-remaining-work-command-bar'" in goal.body
@@ -6137,7 +6143,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>44" in goal.body
+    assert "goal_section_count</dt><dd>47" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
@@ -6394,6 +6400,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Timeline" in goal.body
     assert "Goal Timeline Command Bar" in goal.body
     assert "data-goal-timeline-command-bar='true'" in goal.body
+    assert "<a href='#goal-timeline-command-bar'>Timeline command</a>" in goal.body
     assert f"timeline_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert "timeline_command_status</dt><dd>available" in goal.body
     assert "timeline_command_items</dt><dd>" in goal.body
@@ -6425,6 +6432,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Activity Log" in goal.body
     assert "Goal Activity Command Bar" in goal.body
     assert "data-goal-activity-command-bar='true'" in goal.body
+    assert "<a href='#goal-activity-command-bar'>Activity command</a>" in goal.body
     assert f"goal_activity_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert "goal_activity_command_status</dt><dd>available" in goal.body
     assert "goal_activity_command_items</dt><dd>" in goal.body
@@ -6718,6 +6726,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Git Status" in goal.body
     assert "Goal Git Command Bar" in goal.body
     assert "data-goal-git-command-bar='true'" in goal.body
+    assert "<a href='#goal-git-command-bar'>Git command</a>" in goal.body
     assert f"goal_git_command_project</dt><dd>{result.project_id}" in goal.body
     assert "goal_git_command_posture</dt><dd>clean" in goal.body
     assert "goal_git_command_tracked_changes</dt><dd>0" in goal.body

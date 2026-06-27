@@ -4140,7 +4140,9 @@ def _goal_section_index() -> str:
         ("Risk command", "goal-risk-command-bar"),
         ("Progress command", "goal-progress-command-bar"),
         ("Progress", "goal-progress"),
+        ("Timeline command", "goal-timeline-command-bar"),
         ("Timeline", "goal-timeline"),
+        ("Activity command", "goal-activity-command-bar"),
         ("Activity log", "goal-activity-log"),
         ("Risk level", "goal-risk"),
         ("Criteria command", "goal-criteria-command-bar"),
@@ -4163,6 +4165,7 @@ def _goal_section_index() -> str:
         ("Memory", "goal-memory"),
         ("Skills command", "goal-skills-command-bar"),
         ("Skills used", "goal-skills-used"),
+        ("Git command", "goal-git-command-bar"),
         ("Git status", "goal-git-status"),
         ("Verification command", "goal-verification-command-bar"),
         ("Verification evidence", "goal-verification-evidence"),
@@ -6328,7 +6331,7 @@ def _goal_timeline_command_bar(
     ]
     return "".join(
         [
-            "<div class='panel goal-timeline-command-bar' data-goal-timeline-command-bar='true'><h3>Goal Timeline Command Bar</h3>",
+            "<div id='goal-timeline-command-bar' class='panel goal-timeline-command-bar' data-goal-timeline-command-bar='true'><h3>Goal Timeline Command Bar</h3>",
             "<p class='muted'>One scan-friendly summary before the full chronological event list.</p>",
             _kv(
                 [
@@ -6421,7 +6424,7 @@ def _goal_activity_command_bar(
     latest_kind = latest.get("kind") or "event"
     return "".join(
         [
-            "<section class='panel goal-activity-command-bar' data-goal-activity-command-bar='true'><h3>Goal Activity Command Bar</h3>",
+            "<section id='goal-activity-command-bar' class='panel goal-activity-command-bar' data-goal-activity-command-bar='true'><h3>Goal Activity Command Bar</h3>",
             "<p class='muted'>One read-only summary of the latest human-readable event for this goal.</p>",
             _kv(
                 [
@@ -8326,7 +8329,7 @@ def _goal_git_status(root: Path, state: dict[str, Any]) -> str:
     return "".join(
         [
             "<section id='goal-git-status'><h2>Git Status</h2>",
-            "<section class='panel goal-git-command-bar' data-goal-git-command-bar='true'><h3>Goal Git Command Bar</h3>",
+            "<section id='goal-git-command-bar' class='panel goal-git-command-bar' data-goal-git-command-bar='true'><h3>Goal Git Command Bar</h3>",
             _kv(
                 [
                     ("goal_git_command_project", goal.project_id),

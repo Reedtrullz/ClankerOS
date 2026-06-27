@@ -1,5 +1,31 @@
 # Status
 
+## 2026-06-27 Goal Command Navigation Anchors
+
+- Added stable Goal Section Index jump targets for the existing read-only
+  `Goal Timeline Command Bar`, `Goal Activity Command Bar`, and
+  `Goal Git Command Bar`.
+- The Timeline, Activity, and Git command bars now have explicit DOM anchors,
+  so operators can jump to the scan-first panels on long Goal pages instead of
+  landing only on the longer detail sections.
+- README, local app docs, and the operating summary now describe the Goal
+  Section Index as a navigation surface for command bars as well as detailed
+  sections.
+- Non-claims: this does not write state on GET, create events, run work,
+  approve gates, fetch GitHub status, stage files, commit, push, create PRs,
+  deploy, call providers, use non-loopback network actions, or mutate external
+  systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_7dc8fdbc39f4`,
+    `run_fc246d01b1ff`, and coder worktree run `run_563418785cca`
+
 ## 2026-06-27 Goal Overview Command Bar
 
 - Added a read-only `Goal Overview Command Bar` before the raw Goal Overview
