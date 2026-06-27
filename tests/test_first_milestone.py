@@ -5479,6 +5479,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-summary'" in goal.body
     assert "href='#goal-current-phase'" in goal.body
     assert "href='#goal-command-bar'" in goal.body
+    assert "href='#goal-workflow-map'" in goal.body
     assert "href='#goal-next-action'" in goal.body
     assert "href='#goal-next-recommendation'" in goal.body
     assert "href='#goal-timeline'" in goal.body
@@ -5487,6 +5488,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-remaining-work'" in goal.body
     assert "id='goal-summary'" in goal.body
     assert "id='goal-command-bar'" in goal.body
+    assert "id='goal-workflow-map'" in goal.body
     assert "id='goal-current-phase'" in goal.body
     assert "id='goal-timeline'" in goal.body
     assert "id='goal-artifact-explorer'" in goal.body
@@ -5518,6 +5520,24 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_command_waiting: approvals=1 incidents=0 recommendations=0" in goal.body
     assert "goal_command_resume: <a href='/resume'>/resume</a>" in goal.body
     assert "goal_command_ci: status=success source=direct_public_snapshot surface=<a href='/verification'>/verification</a>" in goal.body
+    assert "Goal Workflow Map" in goal.body
+    assert "data-goal-workflow-map='true'" in goal.body
+    assert "workflow_map_status</dt><dd>available" in goal.body
+    assert "workflow_map_current_gate</dt><dd>commit_request" in goal.body
+    assert "workflow_map_next_action</dt><dd>Create commit request" in goal.body
+    assert f"workflow_map_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
+    assert "workflow_map_progress</dt><dd>8/15 gates done" in goal.body
+    assert "workflow_map_done_count</dt><dd>8" in goal.body
+    assert "workflow_map_pending_count</dt><dd>1" in goal.body
+    assert "workflow_map_waiting_count</dt><dd>6" in goal.body
+    assert "workflow_map_source</dt><dd>goal_remaining_work_gates" in goal.body
+    assert "workflow_map_write_on_get</dt><dd>false" in goal.body
+    assert "workflow_map_network_actions_taken</dt><dd>0" in goal.body
+    assert "workflow_map_external_effects_created</dt><dd>false" in goal.body
+    assert "data-workflow-gate='scout_delegation' data-gate-status='done'" in goal.body
+    assert "data-workflow-gate='commit_request' data-gate-status='pending' data-gate-marker='current'" in goal.body
+    assert "status=pending marker=current next=Create commit request" in goal.body
+    assert "data-workflow-gate='manual_publish' data-gate-status='waiting'" in goal.body
     assert "Current Phase" in goal.body
     assert "Ready to commit" in goal.body
     assert "current_phase_banner</dt><dd>Ready to commit" in goal.body

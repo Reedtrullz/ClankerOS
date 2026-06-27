@@ -172,6 +172,11 @@ Core layers for the bootstrap:
   action, target local surface, progress, waiting counts, `/resume`, latest
   project-scoped CI proof status, and write-on-GET/network/external-effect
   boundaries into one operator scan. Goal detail pages also include a
+  read-only `Goal Workflow Map` near the top that renders the same
+  Remaining Work gate state as a lifecycle rail, highlighting the current
+  gate, next action, done/pending/waiting counts, and zero-effect boundary
+  before the operator reaches the long timeline and artifact sections. Goal
+  detail pages also include a
   first-class `Next Recommendation` section that identifies whether the current
   recommendation came from an open task recommendation or was derived from
   current phase and local goal records, points at the target local surface, and
@@ -180,7 +185,8 @@ Core layers for the bootstrap:
   pauses while the operator is editing a form or the tab is hidden; it does not
   fetch GitHub status, call providers, push, create PRs, deploy, or mutate
   external systems. They also include a read-only `Goal Section Index` with
-  stable in-page anchors including the command bar and the major Goal surfaces,
+  stable in-page anchors including the command bar, workflow map, and the
+  major Goal surfaces,
   so operators can jump
   through a long Goal workbench without leaving the page or triggering writes.
   They also include a confirmed

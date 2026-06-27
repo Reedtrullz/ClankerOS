@@ -1,5 +1,31 @@
 # Status
 
+## 2026-06-27 Goal Workflow Map
+
+- Added a read-only `Goal Workflow Map` near the top of `/goals/<goal_id>`.
+  It turns the same gate state used by Remaining Work into a lifecycle rail
+  from scout delegation through manual publish, highlights the current gate,
+  links the next local action, and shows done/pending/waiting counts before
+  the longer timeline and artifact sections.
+- Updated the `Goal Section Index`, README, local app docs, and operating
+  summary so the workflow map is a first-class operator surface, not just a
+  lower-page checklist.
+- Non-claims: this does not write state on GET, run work, approve gates, fetch
+  GitHub status, push, create PRs, deploy, call providers, or mutate external
+  systems. It only reads existing local goal workflow gate state and reuses
+  the same next-action target.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Goal Command Bar
 
 - Added a read-only `Goal Command Bar` near the top of `/goals/<goal_id>`.

@@ -2880,6 +2880,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             "</section>",
             _goal_section_index(),
             _goal_command_bar(root, state, phase, next_action),
+            _goal_workflow_map(root, state, next_action),
             _goal_phase_banner(root, state, phase, next_action),
             _goal_next_action_card(state, next_action),
             _goal_next_recommendation_section(state, next_action),
@@ -2962,6 +2963,7 @@ def _goal_section_index() -> str:
         ("Summary", "goal-summary"),
         ("Live state", "goal-live-state"),
         ("Command bar", "goal-command-bar"),
+        ("Workflow map", "goal-workflow-map"),
         ("Current phase", "goal-current-phase"),
         ("Next action", "goal-next-action"),
         ("Next recommendation", "goal-next-recommendation"),
@@ -3002,6 +3004,88 @@ def _goal_section_index() -> str:
         )
         + _ul(links)
         + "</section>"
+    )
+
+
+def _goal_workflow_map(
+    root: Path,
+    state: dict[str, Any],
+    next_action: GoalNextAction,
+) -> str:
+    gate_lines = _goal_remaining_work_gate_lines(root, state, next_action)
+    gates: list[tuple[str, str]] = []
+    for line in gate_lines:
+        if not line.startswith("remaining_work_gate: "):
+            continue
+        parts = line.removeprefix("remaining_work_gate: ").split()
+        if not parts:
+            continue
+        name = parts[0]
+        status = "unknown"
+        for part in parts[1:]:
+            if part.startswith("status="):
+                status = part.removeprefix("status=")
+                break
+        gates.append((name, status))
+    counts: dict[str, int] = {}
+    for _, status in gates:
+        counts[status] = counts.get(status, 0) + 1
+    current_gate = next(
+        (name for name, status in gates if status == "pending"),
+        next((name for name, status in gates if status == "waiting"), "complete"),
+    )
+    done = counts.get("done", 0)
+    pending = counts.get("pending", 0)
+    waiting = counts.get("waiting", 0)
+    total = len(gates)
+    items: list[str] = []
+    for index, (name, status) in enumerate(gates, start=1):
+        label = name.replace("_", " ")
+        marker = "current" if name == current_gate else status
+        next_label = (
+            f" next={_e(next_action.action)}"
+            if name == current_gate and current_gate != "complete"
+            else ""
+        )
+        items.append(
+            "<li "
+            f"data-workflow-gate='{_e(name)}' "
+            f"data-gate-status='{_e(status)}' "
+            f"data-gate-marker='{_e(marker)}'>"
+            f"<span class='workflow-map-index'>{index}</span> "
+            f"<strong>{_e(label)}</strong> "
+            f"status={_e(status)} marker={_e(marker)}{next_label}</li>"
+        )
+    return "".join(
+        [
+            "<section id='goal-workflow-map' class='panel goal-workflow-map' data-goal-workflow-map='true'><h2>Goal Workflow Map</h2>",
+            "<p class='muted'>A top-level lifecycle rail for the Goal, from scout delegation through manual publish.</p>",
+            _kv(
+                [
+                    ("workflow_map_status", "available"),
+                    ("workflow_map_current_gate", current_gate),
+                    ("workflow_map_next_action", next_action.action),
+                    (
+                        "workflow_map_next_surface",
+                        SafeHtml(
+                            f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
+                        ),
+                    ),
+                    ("workflow_map_progress", f"{done}/{total} gates done"),
+                    ("workflow_map_done_count", str(done)),
+                    ("workflow_map_pending_count", str(pending)),
+                    ("workflow_map_waiting_count", str(waiting)),
+                    ("workflow_map_source", "goal_remaining_work_gates"),
+                    ("workflow_map_write_on_get", "false"),
+                    ("workflow_map_network_actions_taken", "0"),
+                    ("workflow_map_external_effects_created", "false"),
+                ]
+            ),
+            "<ol class='workflow-map-rail'>",
+            "".join(items),
+            "</ol>",
+            "</section>",
+        ]
     )
 
 
@@ -9855,6 +9939,10 @@ def _html_page(
     .goal-command-bar dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:8px; }}
     .goal-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .workflow-map-rail {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px; }}
+    .workflow-map-rail li {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; overflow-wrap:anywhere; }}
+    .workflow-map-rail li[data-gate-marker="current"] {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .workflow-map-index {{ display:inline-grid; place-items:center; width:22px; height:22px; border:1px solid var(--line); border-radius:999px; margin-right:5px; font-size:12px; color:var(--muted); }}
     .warning {{ border-color:#efc36a; color:var(--warn); }}
     .error {{ color:var(--error); font-weight:600; }}
     .muted {{ color:var(--muted); }}
