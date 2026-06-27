@@ -282,10 +282,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   recommendations, next recommended operator action, and a project workflow
   launchpad that links the project to selected delegation/run workflow views,
   the safe action catalog, dogfooding checklist, and verification handoff.
-- `/delegation-runs` - read-only delegation execution run index with evidence
-  directories, result artifacts, context-pack and implementation-handoff links,
-  zero-effect counters, retry signals, and next recommended local operator
-  actions.
+- `/delegation-runs` - read-only delegation execution run index with a
+  `Delegation Run Command Bar`, evidence directories, result artifacts,
+  context-pack and implementation-handoff links, zero-effect counters, retry
+  signals, and next recommended local operator actions. The command bar counts
+  completed/pending runs, incidents, retry candidates, context packs, and
+  implementation handoffs, then links the first local attention target to the
+  run, delegation, and scoped workflow surfaces.
 - `/delegations/<delegation_id>` - delegation, handoff, prep, worktree, commit,
   and publication state, including a compact workflow-readiness summary and
   next recommended operator action.
@@ -597,10 +600,13 @@ source hashes, branch/HEAD, changed files, bounded-file validation, and
 verifier state.
 
 The `/delegation-runs`, `/inbox`, `/approvals`, and `/incidents` pages are
-local operator surfaces. The delegation run index and inbox are read-only and
-mirror operator-worthy queue and execution evidence without starting work,
-approving requests, retrying tasks, committing, pushing, creating PRs,
-deploying, calling providers, or using external network actions.
+local operator surfaces. The delegation run index now starts with a read-only
+command bar and anchored attention, coder-prep-ready, and recent-run sections
+so the operator can choose the next delegation/run surface without scanning the
+full history. The delegation run index and inbox are read-only and mirror
+operator-worthy queue and execution evidence without starting work, approving
+requests, retrying tasks, committing, pushing, creating PRs, deploying,
+calling providers, or using external network actions.
 
 Worktree execution remains CLI-first outside the fixture-backed demo setup.
 Push and PR creation are never executed by the app.

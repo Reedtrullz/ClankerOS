@@ -119,6 +119,12 @@ Core layers for the bootstrap:
   the first local incident or recovery recommendation to review, evidence
   links, stable open/resolved/recommendation anchors, and no-write/
   no-resolution-on-GET/no-network/no-external-effect boundaries;
+  `/delegation-runs` includes a read-only `Delegation Run Command Bar` that
+  summarizes completed/pending delegation runs, incidents, retry candidates,
+  context-pack and implementation-handoff readiness, the first local
+  delegation/run/workflow surface to inspect, stable attention/coder-prep/
+  recent-run anchors, and no-write/no-provider/no-network/no-external-effect
+  boundaries before the longer execution evidence index;
   `/artifacts?path=...` includes a read-only `Artifact Command Bar` that
   summarizes bounded artifact path, render type/family/renderer, size,
   rendered bytes, line count, truncation state, inferred project/goal context,

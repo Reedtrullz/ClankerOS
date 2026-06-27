@@ -7053,16 +7053,163 @@ def _project_index_line(root: Path, storage: Storage, project: Any) -> str:
 
 def _delegation_runs(root: Path) -> str:
     storage = _storage(root)
+    records = _delegation_run_records(root, storage, limit=50)
     return "".join(
         [
             "<section><h1>Delegation Run Index</h1>",
             "<p class='muted'>Read-only index of scout/delegation execution runs, evidence paths, context packs, handoffs, zero-effect counters, retry signals, and next local operator actions.</p>",
             "</section>",
+            _delegation_run_command_bar(root, records),
+            _list_section(
+                "Delegation Runs Needing Attention",
+                [
+                    _delegation_run_line(root, storage, delegation, project_id=project)
+                    for delegation, project, metadata in records
+                    if delegation.status != "completed" or metadata.get("incident_id")
+                ],
+                anchor_id="delegation-runs-attention",
+            ),
+            _list_section(
+                "Ready For Coder Prep",
+                [
+                    _delegation_run_line(root, storage, delegation, project_id=project)
+                    for delegation, project, metadata in records
+                    if delegation.status == "completed"
+                    and (
+                        metadata.get("implementation_handoff_md")
+                        or metadata.get("implementation_handoff_json")
+                    )
+                ],
+                anchor_id="delegation-runs-ready-for-coder-prep",
+            ),
             _list_section(
                 "Recent Delegation Runs",
-                _delegation_run_lines(root, storage, limit=50),
+                [
+                    _delegation_run_line(root, storage, delegation, project_id=project)
+                    for delegation, project, _metadata in records
+                ],
+                anchor_id="delegation-runs-recent",
             ),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _delegation_run_command_bar(
+    root: Path,
+    records: list[tuple[Any, str, dict[str, Any]]],
+) -> str:
+    completed = [record for record in records if record[0].status == "completed"]
+    pending = [record for record in records if record[0].status != "completed"]
+    incidents = [record for record in records if record[2].get("incident_id")]
+    retry_candidates = [
+        record
+        for record in records
+        if record[0].status != "completed" or record[2].get("incident_id")
+    ]
+    context_pack_ready = [
+        record
+        for record in records
+        if record[2].get("context_pack_md") or record[2].get("context_pack_json")
+    ]
+    handoff_ready = [
+        record
+        for record in records
+        if record[2].get("implementation_handoff_md")
+        or record[2].get("implementation_handoff_json")
+    ]
+    first_record = (
+        incidents[0]
+        if incidents
+        else pending[0]
+        if pending
+        else handoff_ready[0]
+        if handoff_ready
+        else records[0]
+        if records
+        else None
+    )
+    first_id = "none"
+    first_project = "none"
+    first_run = "none"
+    first_status = "none"
+    first_profile = "none"
+    first_category = "none"
+    first_action = "No delegation runs"
+    first_reason = "no delegation run records"
+    first_target = SafeHtml("<a href='/goals'>/goals</a>")
+    first_workflow = SafeHtml("<a href='/workflow'>/workflow</a>")
+    first_result = SafeHtml("none")
+    if first_record is not None:
+        delegation, project, metadata = first_record
+        run_id = metadata.get("execution_run_id") or metadata.get("run_id") or "none"
+        first_id = delegation.id
+        first_project = project
+        first_run = str(run_id)
+        first_status = delegation.status
+        first_profile = delegation.assigned_profile
+        first_category = delegation.category
+        first_action = _delegation_run_next_action(delegation, metadata)
+        first_workflow = SafeHtml(
+            f"<a href='/workflow?delegation_id={quote(delegation.id)}'>/workflow?delegation_id={_e(delegation.id)}</a>"
+        )
+        if run_id != "none":
+            first_target = SafeHtml(f"<a href='/runs/{quote(str(run_id))}'>/runs/{_e(str(run_id))}</a>")
+        else:
+            first_target = SafeHtml(f"<a href='/delegations/{quote(delegation.id)}'>/delegations/{_e(delegation.id)}</a>")
+        first_result = SafeHtml(_artifact_link(_repo_relative_artifact_path(root, delegation.result_artifact_path)))
+        if metadata.get("incident_id"):
+            first_reason = f"incident={metadata.get('incident_id')}"
+        elif delegation.status != "completed":
+            first_reason = f"delegation_status={delegation.status}"
+        elif metadata.get("implementation_handoff_md") or metadata.get("implementation_handoff_json"):
+            first_reason = "implementation_handoff_available"
+        elif run_id != "none":
+            first_reason = "execution_run_available"
+        else:
+            first_reason = "delegation_result_available"
+    lines = [
+        f"delegation_run_command_now: {_e(first_action)}",
+        f"delegation_run_command_click: {first_target}",
+        f"delegation_run_command_workflow: {first_workflow}",
+        f"delegation_run_command_reason: {_e(first_reason)}",
+        "delegation_run_command_safety: read-only local delegation guidance",
+    ]
+    if not records:
+        lines.append("delegation_run_command_empty: no local delegation runs")
+    return "".join(
+        [
+            "<section class='panel delegation-run-command-bar' data-delegation-run-command-bar='true'><h2>Delegation Run Command Bar</h2>",
+            "<p class='muted'>One read-only delegation/run summary for scout evidence, handoff readiness, and retry attention.</p>",
+            _kv(
+                [
+                    ("delegation_run_command_status", "available"),
+                    ("delegation_run_command_total", str(len(records))),
+                    ("delegation_run_command_completed", str(len(completed))),
+                    ("delegation_run_command_pending", str(len(pending))),
+                    ("delegation_run_command_incidents", str(len(incidents))),
+                    ("delegation_run_command_retry_candidates", str(len(retry_candidates))),
+                    ("delegation_run_command_context_packs", str(len(context_pack_ready))),
+                    ("delegation_run_command_implementation_handoffs", str(len(handoff_ready))),
+                    ("delegation_run_command_first_delegation", first_id),
+                    ("delegation_run_command_first_run", first_run),
+                    ("delegation_run_command_first_project", first_project),
+                    ("delegation_run_command_first_status", first_status),
+                    ("delegation_run_command_first_profile", first_profile),
+                    ("delegation_run_command_first_category", first_category),
+                    ("delegation_run_command_next_action", first_action),
+                    ("delegation_run_command_target_surface", first_target),
+                    ("delegation_run_command_workflow_surface", first_workflow),
+                    ("delegation_run_command_reason", first_reason),
+                    ("delegation_run_command_result_artifact", first_result),
+                    ("delegation_run_command_write_on_get", "false"),
+                    ("delegation_run_command_provider_calls_taken", "0"),
+                    ("delegation_run_command_network_actions_taken", "0"),
+                    ("delegation_run_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(lines),
+            "</section>",
         ]
     )
 
@@ -11481,6 +11628,9 @@ def _html_page(
     .run-command-bar {{ border-left:4px solid var(--warn); }}
     .run-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .run-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .delegation-run-command-bar {{ border-left:4px solid var(--accent); }}
+    .delegation-run-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .delegation-run-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .verification-command-bar {{ border-left:4px solid var(--accent); }}
     .verification-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .verification-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -11741,18 +11891,37 @@ def _delegation_run_lines(
     project_id: str | None = None,
     limit: int = 10,
 ) -> list[str]:
-    lines: list[str] = []
+    return [
+        _delegation_run_line(root, storage, delegation, project_id=project)
+        for delegation, project, _metadata in _delegation_run_records(
+            root,
+            storage,
+            project_id=project_id,
+            limit=limit,
+        )
+    ]
+
+
+def _delegation_run_records(
+    root: Path,
+    storage: Storage,
+    *,
+    project_id: str | None = None,
+    limit: int = 10,
+) -> list[tuple[Any, str, dict[str, Any]]]:
+    records: list[tuple[Any, str, dict[str, Any]]] = []
     for delegation in storage.list_recent_subagent_delegations(limit=None):
+        metadata = load_delegation_result_metadata(delegation)
         project = str(
-            load_delegation_result_metadata(delegation).get("target_project_id")
+            metadata.get("target_project_id")
             or _task_project(storage, delegation.parent_task_id)
         )
         if project_id and project != project_id:
             continue
-        lines.append(_delegation_run_line(root, storage, delegation, project_id=project))
-        if len(lines) >= limit:
+        records.append((delegation, project, metadata))
+        if len(records) >= limit:
             break
-    return lines
+    return records
 
 
 def _delegation_run_line(

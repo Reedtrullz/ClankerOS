@@ -5003,6 +5003,30 @@ def test_local_app_routes_render_modern_workflow_and_health(
 
     projects = render_local_app_route(tmp_path, "/projects")
     assert projects.status == 200
+    delegation_runs = render_local_app_route(tmp_path, "/delegation-runs")
+    assert delegation_runs.status == 200
+    assert "Delegation Run Index" in delegation_runs.body
+    assert "Delegation Run Command Bar" in delegation_runs.body
+    assert "data-delegation-run-command-bar='true'" in delegation_runs.body
+    assert "delegation_run_command_total</dt><dd>1" in delegation_runs.body
+    assert "delegation_run_command_completed</dt><dd>0" in delegation_runs.body
+    assert "delegation_run_command_pending</dt><dd>1" in delegation_runs.body
+    assert "delegation_run_command_retry_candidates</dt><dd>1" in delegation_runs.body
+    assert "delegation_run_command_context_packs</dt><dd>0" in delegation_runs.body
+    assert "delegation_run_command_implementation_handoffs</dt><dd>0" in delegation_runs.body
+    assert f"delegation_run_command_first_delegation</dt><dd>{delegation.id}" in delegation_runs.body
+    assert "delegation_run_command_first_run</dt><dd>none" in delegation_runs.body
+    assert "delegation_run_command_first_project</dt><dd>first-target" in delegation_runs.body
+    assert "delegation_run_command_first_status</dt><dd>pending" in delegation_runs.body
+    assert "delegation_run_command_next_action</dt><dd>run_delegation" in delegation_runs.body
+    assert f"delegation_run_command_target_surface</dt><dd><a href='/delegations/{delegation.id}'" in delegation_runs.body
+    assert f"delegation_run_command_workflow_surface</dt><dd><a href='/workflow?delegation_id={delegation.id}'" in delegation_runs.body
+    assert "delegation_run_command_reason</dt><dd>delegation_status=pending" in delegation_runs.body
+    assert "id='delegation-runs-attention'" in delegation_runs.body
+    assert "id='delegation-runs-ready-for-coder-prep'" in delegation_runs.body
+    assert "id='delegation-runs-recent'" in delegation_runs.body
+    assert "delegation_run_command_write_on_get</dt><dd>false" in delegation_runs.body
+    assert "delegation_run_command_external_effects_created</dt><dd>false" in delegation_runs.body
     inbox = render_local_app_route(tmp_path, "/inbox")
     assert inbox.status == 200
     assert "Operator Inbox" in inbox.body
@@ -6224,6 +6248,28 @@ def test_local_app_demo_scenario_populates_fixture_state(
     delegation_runs = render_local_app_route(tmp_path, "/delegation-runs")
     assert delegation_runs.status == 200
     assert "Delegation Run Index" in delegation_runs.body
+    assert "Delegation Run Command Bar" in delegation_runs.body
+    assert "data-delegation-run-command-bar='true'" in delegation_runs.body
+    assert "delegation_run_command_total</dt><dd>1" in delegation_runs.body
+    assert "delegation_run_command_completed</dt><dd>1" in delegation_runs.body
+    assert "delegation_run_command_pending</dt><dd>0" in delegation_runs.body
+    assert "delegation_run_command_retry_candidates</dt><dd>0" in delegation_runs.body
+    assert "delegation_run_command_context_packs</dt><dd>1" in delegation_runs.body
+    assert "delegation_run_command_implementation_handoffs</dt><dd>1" in delegation_runs.body
+    assert f"delegation_run_command_first_delegation</dt><dd>{result.delegation_id}" in delegation_runs.body
+    assert f"delegation_run_command_first_run</dt><dd>{result.run_id}" in delegation_runs.body
+    assert f"delegation_run_command_first_project</dt><dd>{result.project_id}" in delegation_runs.body
+    assert "delegation_run_command_first_status</dt><dd>completed" in delegation_runs.body
+    assert "delegation_run_command_next_action</dt><dd>prepare_coder_from_handoff" in delegation_runs.body
+    assert f"delegation_run_command_target_surface</dt><dd><a href='/runs/{result.run_id}'" in delegation_runs.body
+    assert f"delegation_run_command_workflow_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'" in delegation_runs.body
+    assert "delegation_run_command_reason</dt><dd>implementation_handoff_available" in delegation_runs.body
+    assert "delegation_run_command_provider_calls_taken</dt><dd>0" in delegation_runs.body
+    assert "delegation_run_command_network_actions_taken</dt><dd>0" in delegation_runs.body
+    assert "delegation_run_command_external_effects_created</dt><dd>false" in delegation_runs.body
+    assert "id='delegation-runs-attention'" in delegation_runs.body
+    assert "id='delegation-runs-ready-for-coder-prep'" in delegation_runs.body
+    assert "id='delegation-runs-recent'" in delegation_runs.body
     assert result.delegation_id in delegation_runs.body
     assert result.run_id in delegation_runs.body
     assert f"/runs/{result.run_id}" in delegation_runs.body

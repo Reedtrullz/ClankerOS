@@ -1,5 +1,43 @@
 # Status
 
+## 2026-06-27 Delegation Run Command Bar
+
+- Added a read-only `Delegation Run Command Bar` to `/delegation-runs`. It
+  shows total/completed/pending delegation-run counts, incident and retry
+  candidate counts, context-pack and implementation-handoff readiness, the
+  first local delegation/run/workflow surface to inspect, the result artifact,
+  and write-on-GET/provider/network/external-effect boundaries before the
+  longer execution evidence index.
+- The delegation run index now has stable anchored sections for delegation
+  runs needing attention, completed runs ready for coder prep, and recent
+  delegation runs. Incident-linked runs take priority, then pending runs, then
+  completed runs with implementation handoffs, so the page behaves more like a
+  daily operator queue.
+- README, local app docs, and the operating summary now describe
+  `/delegation-runs` as a command-bar-backed operator surface for scout
+  evidence, handoff readiness, and retry attention.
+- Non-claims: this does not start or retry delegations, generate context
+  packs, prepare coder runs, approve gates, execute work, commit, push, create
+  PRs, deploy, fetch GitHub status, use the network, call providers, write
+  state on GET, or mutate external systems. It reads local delegation rows,
+  bounded result metadata, and artifact links only.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+- Local testing note: the default `/Library/Frameworks/Python.framework/Versions/3.10/bin/python3`
+  is currently blocked by macOS code-signing policy while importing stdlib
+  dynamic modules such as `unicodedata` and `_posixsubprocess`, so the compact
+  local verification above used healthy Homebrew Python. GitHub Actions remains
+  the intended full-suite verifier after push.
+
 ## 2026-06-27 Incident Triage Command Bar
 
 - Added a read-only `Incident Triage Command Bar` to `/incidents`. It shows
