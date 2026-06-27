@@ -359,9 +359,14 @@ Core layers for the bootstrap:
   tracked and untracked counts, latest goal-linked `git_status.txt` artifact,
   one next local surface, and no-fetch/no-write/no-network/no-external-effect
   boundaries before the repository snapshot.
-  Goal `Verification Evidence` links to `/verification` and `/ci-evidence`,
-  filters local operator-supplied CI proof records to the current goal project,
-  compares the recorded branch/commit to the current project checkout, and
+  Goal `Verification Evidence` starts with a read-only
+  `Goal Verification Command Bar` that summarizes project-scoped proof status,
+  latest source/status/scope, branch and commit freshness, one proof action,
+  target surface, and zero-fetch/zero-effect boundaries before the detailed
+  proof lines. It links to `/verification` and `/ci-evidence`, filters local
+  operator-supplied CI proof records to the current goal project, compares the
+  recorded branch/commit to the current project checkout, distinguishes
+  missing, stale, job-scoped early proof, and current full workflow proof, and
   reports missing or stale proof without fetching GitHub status. It also
   exposes a confirmed Goal-scoped `ci-snapshot-evidence-from-gh-json` form
   that accepts pasted GitHub Actions JSON, infers run identity from

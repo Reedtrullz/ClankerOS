@@ -163,10 +163,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   project/global memory artifacts, goal-scoped memory entry counts, generated
   memory count, operator-note status, future-work count, and the current pin
   posture; pinning stays on the confirmed `/memory` action surface. Goal
-  Verification Evidence links to `/verification` and `/ci-evidence`, filters
+  Verification Evidence starts with a read-only `Goal Verification Command
+  Bar`, links to `/verification` and `/ci-evidence`, filters
   operator-supplied CI records to the current goal project, compares the
-  recorded branch/commit to the current project checkout, and reports
-  `github_status_fetch: none` so missing or stale project proof stays visible.
+  recorded branch/commit to the current project checkout, distinguishes
+  missing, stale, job-scoped early proof, and current full workflow proof, and
+  reports `github_status_fetch: none` so missing or stale project proof stays
+  visible.
   If a goal is explicitly paused, the Current Phase banner shows `Paused` and
   the Next Action card exposes a confirmed `resume-goal` form. That action
   only changes local goal status from `paused` to `active`; it does not resume

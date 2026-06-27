@@ -4162,6 +4162,7 @@ def _goal_section_index() -> str:
         ("Memory", "goal-memory"),
         ("Skills used", "goal-skills-used"),
         ("Git status", "goal-git-status"),
+        ("Verification command", "goal-verification-command-bar"),
         ("Verification evidence", "goal-verification-evidence"),
         ("Operator notes", "goal-operator-notes"),
         ("Remaining work", "goal-remaining-work"),
@@ -6707,12 +6708,26 @@ def _goal_verification_evidence(root: Path, state: dict[str, Any]) -> str:
                 "goal_ci_proof_boundary: no project-scoped local CI proof record yet",
             ]
         )
-        return _list_section(
-            "Goal Verification Evidence",
-            lines,
-            "/verification",
-            anchor_id="goal-verification-evidence",
-        ) + _goal_ci_json_recording_form(goal.id, goal.project_id, repo, full_commit)
+        return (
+            _goal_verification_command_bar(
+                root=root,
+                goal=goal,
+                repo=repo,
+                full_commit=full_commit,
+                source_kind="none",
+                record=None,
+                branch_matches=False,
+                commit_matches=False,
+                matches_current=False,
+            )
+            + _list_section(
+                "Goal Verification Evidence",
+                lines,
+                "/verification",
+                anchor_id="goal-verification-evidence",
+            )
+            + _goal_ci_json_recording_form(goal.id, goal.project_id, repo, full_commit)
+        )
 
     source_kind, record = latest_record
     branch_matches = record.branch_name == repo["branch"]
@@ -6740,12 +6755,141 @@ def _goal_verification_evidence(root: Path, state: dict[str, Any]) -> str:
             "goal_ci_proof_boundary: operator_supplied_project_record_only",
         ]
     )
-    return _list_section(
-        "Goal Verification Evidence",
-        lines,
-        "/verification",
-        anchor_id="goal-verification-evidence",
-    ) + _goal_ci_json_recording_form(goal.id, goal.project_id, repo, full_commit)
+    return (
+        _goal_verification_command_bar(
+            root=root,
+            goal=goal,
+            repo=repo,
+            full_commit=full_commit,
+            source_kind=source_kind,
+            record=record,
+            branch_matches=branch_matches,
+            commit_matches=commit_matches,
+            matches_current=matches_current,
+        )
+        + _list_section(
+            "Goal Verification Evidence",
+            lines,
+            "/verification",
+            anchor_id="goal-verification-evidence",
+        )
+        + _goal_ci_json_recording_form(goal.id, goal.project_id, repo, full_commit)
+    )
+
+
+def _goal_verification_command_bar(
+    *,
+    root: Path,
+    goal: Any,
+    repo: dict[str, Any],
+    full_commit: str,
+    source_kind: str,
+    record: Any | None,
+    branch_matches: bool,
+    commit_matches: bool,
+    matches_current: bool,
+) -> str:
+    result_json = getattr(record, "result_json", {}) if record is not None else {}
+    result = result_json if isinstance(result_json, dict) else {}
+    evidence_scope = str(result.get("evidence_scope", "none"))
+    status_source = str(result.get("status_source", "none"))
+    latest_status = str(record.status) if record is not None else "missing"
+    latest_run_id = str(record.external_run_id) if record is not None else "none"
+    latest_url = str(record.external_url) if record is not None else ""
+    latest_commit = str(record.commit_sha) if record is not None else "none"
+    evidence_path = (
+        _artifact_link(_repo_relative_artifact_path(root, record.evidence_path))
+        if record is not None
+        else "none"
+    )
+    if record is None:
+        proof_status = "missing"
+        next_action = "Record Goal CI proof"
+        reason = "no project-scoped local CI proof record yet"
+        target_href = "#record-goal-ci-proof"
+        target_label = "Record Goal CI Proof From GitHub JSON"
+    elif not matches_current:
+        proof_status = "stale"
+        next_action = "Record current Goal CI proof"
+        reason = "latest local proof does not match the current branch and commit"
+        target_href = "#record-goal-ci-proof"
+        target_label = "Record Goal CI Proof From GitHub JSON"
+    elif evidence_scope == "job":
+        proof_status = "early_job_proof"
+        next_action = "Wait for full-suite proof or record full workflow success"
+        reason = "job-scoped evidence is useful but not full-suite proof"
+        target_href = "/verification"
+        target_label = "/verification"
+    elif latest_status == "success":
+        proof_status = "current_success"
+        next_action = "Review recorded proof"
+        reason = "latest operator-supplied proof matches the current checkout"
+        target_href = "/ci-evidence"
+        target_label = "/ci-evidence"
+    else:
+        proof_status = "needs_attention"
+        next_action = "Inspect recorded CI evidence"
+        reason = "latest operator-supplied proof is not a success record"
+        target_href = "/ci-evidence"
+        target_label = "/ci-evidence"
+
+    return "".join(
+        [
+            "<section id='goal-verification-command-bar' class='panel goal-verification-command-bar' data-goal-verification-command-bar='true'><h3>Goal Verification Command Bar</h3>",
+            "<p class='muted'>Goal-scoped proof posture before the detailed evidence and recording form.</p>",
+            _kv(
+                [
+                    ("goal_verification_command_goal", goal.id),
+                    ("goal_verification_command_project", goal.project_id),
+                    ("goal_verification_command_status", proof_status),
+                    ("goal_verification_command_latest_status", latest_status),
+                    ("goal_verification_command_latest_source", source_kind),
+                    ("goal_verification_command_latest_status_source", status_source),
+                    ("goal_verification_command_latest_evidence_scope", evidence_scope),
+                    ("goal_verification_command_branch", repo["branch"]),
+                    ("goal_verification_command_current_commit", full_commit),
+                    ("goal_verification_command_latest_commit", latest_commit),
+                    ("goal_verification_command_branch_matches_current", str(branch_matches).lower()),
+                    ("goal_verification_command_commit_matches_current", str(commit_matches).lower()),
+                    ("goal_verification_command_matches_current_checkout", str(matches_current).lower()),
+                    ("goal_verification_command_latest_run_id", latest_run_id),
+                    (
+                        "goal_verification_command_latest_url",
+                        SafeHtml(
+                            f"<a href='{_e(latest_url)}'>{_e(latest_url)}</a>"
+                            if latest_url
+                            else "none"
+                        ),
+                    ),
+                    (
+                        "goal_verification_command_latest_evidence",
+                        SafeHtml(evidence_path),
+                    ),
+                    ("goal_verification_command_next_action", next_action),
+                    (
+                        "goal_verification_command_target_surface",
+                        SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"),
+                    ),
+                    ("goal_verification_command_reason", reason),
+                    ("goal_verification_command_source", "project_scoped_ci_evidence_records"),
+                    ("goal_verification_command_write_on_get", "false"),
+                    ("goal_verification_command_github_status_fetch", "none"),
+                    ("goal_verification_command_provider_calls_taken", "0"),
+                    ("goal_verification_command_network_actions_taken", "0"),
+                    ("goal_verification_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_verification_now: {_e(next_action)}",
+                    f"goal_verification_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"goal_verification_reason: {_e(reason)}",
+                    "goal_verification_safety: local operator-supplied proof only",
+                ]
+            ),
+            "</section>",
+        ]
+    )
 
 
 def _goal_ci_json_recording_form(
@@ -6758,7 +6902,7 @@ def _goal_ci_json_recording_form(
     commit = full_commit if full_commit != "unknown" else repo["commit"]
     return "".join(
         [
-            "<section><h2>Record Goal CI Proof From GitHub JSON</h2>",
+            "<section id='record-goal-ci-proof'><h2>Record Goal CI Proof From GitHub JSON</h2>",
             "<p class='muted'>Paste <code>gh run view</code> JSON after GitHub Actions completes. This validates the supplied JSON and writes a local project-scoped CI evidence record; it does not contact GitHub.</p>",
             "<form method='post' action='/actions/ci-snapshot-evidence-from-gh-json'>",
             f"<input type='hidden' name='project' value='{_e(project_id)}'>",
@@ -13580,6 +13724,9 @@ def _html_page(
     .goal-git-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-git-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-git-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-verification-command-bar {{ border-left:4px solid var(--ok); }}
+    .goal-verification-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-verification-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-completion-readiness {{ border-left:4px solid var(--ok); }}
     .goal-completion-readiness ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-completion-readiness li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

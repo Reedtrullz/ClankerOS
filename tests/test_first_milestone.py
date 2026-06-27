@@ -6047,7 +6047,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>29" in goal.body
+    assert "goal_section_count</dt><dd>30" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
@@ -6296,6 +6296,31 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "dirty_tracked_file_sample</dt><dd>none" in goal.body
     assert "untracked_file_count</dt><dd>0" in goal.body
     assert "Goal Verification Evidence" in goal.body
+    assert "Goal Verification Command Bar" in goal.body
+    assert "data-goal-verification-command-bar='true'" in goal.body
+    assert "<a href='#goal-verification-command-bar'>Verification command</a>" in goal.body
+    assert f"goal_verification_command_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_verification_command_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_verification_command_status</dt><dd>current_success" in goal.body
+    assert "goal_verification_command_latest_status</dt><dd>success" in goal.body
+    assert "goal_verification_command_latest_source</dt><dd>direct_public_snapshot" in goal.body
+    assert "goal_verification_command_latest_status_source</dt><dd>github_status_json" in goal.body
+    assert "goal_verification_command_latest_evidence_scope</dt><dd>workflow_run" in goal.body
+    assert "goal_verification_command_branch_matches_current</dt><dd>true" in goal.body
+    assert "goal_verification_command_commit_matches_current</dt><dd>true" in goal.body
+    assert "goal_verification_command_matches_current_checkout</dt><dd>true" in goal.body
+    assert "goal_verification_command_latest_run_id</dt><dd>demo-goal-ci" in goal.body
+    assert "goal_verification_command_latest_evidence</dt><dd><a href='/artifacts?path=" in goal.body
+    assert "goal_verification_command_next_action</dt><dd>Review recorded proof" in goal.body
+    assert "goal_verification_command_target_surface</dt><dd><a href='/ci-evidence'>/ci-evidence</a>" in goal.body
+    assert "goal_verification_command_source</dt><dd>project_scoped_ci_evidence_records" in goal.body
+    assert "goal_verification_command_write_on_get</dt><dd>false" in goal.body
+    assert "goal_verification_command_github_status_fetch</dt><dd>none" in goal.body
+    assert "goal_verification_command_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_verification_command_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_verification_command_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_verification_now: Review recorded proof" in goal.body
+    assert "goal_verification_safety: local operator-supplied proof only" in goal.body
     assert f"goal_ci_project: {result.project_id}" in goal.body
     assert "goal_ci_latest_status: success" in goal.body
     assert "goal_ci_latest_source: direct_public_snapshot" in goal.body
