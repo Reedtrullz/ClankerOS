@@ -1,5 +1,34 @@
 # Status
 
+## 2026-06-27 Goal Run Command Bar
+
+- Added a read-only `Goal Run Command Bar` to the Goal page before the
+  detailed run list.
+- The bar summarizes task-run and worktree-run counts, completed/running/
+  failed worktree run posture, reviewed and review-blocked runs, verification
+  failures, changed-file posture, outside-allowed-file posture, the latest run
+  surface, latest diff evidence, one next local run action, and zero-effect
+  counters.
+- The Goal Section Index now links directly to the run command surface, so a
+  long Goal page exposes run/review posture without requiring the operator to
+  parse dense run rows first.
+- README, local app docs, and the operating summary now describe Goal Runs as
+  a scan-first local run posture surface.
+- Non-claims: this does not write state on GET, run work, review runs, create
+  commit requests, approve gates, commit, push, create PRs, deploy, call
+  providers, use non-loopback network actions, fetch GitHub status, or mutate
+  external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_673422e6e1f3`,
+    `run_77b351f5244a`, and coder worktree run `run_0ae46dfd41e8`
+
 ## 2026-06-27 Goal Approval Command Bar
 
 - Added a read-only `Goal Approval Command Bar` to the Goal page before the

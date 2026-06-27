@@ -4068,7 +4068,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_timeline(root, state),
             _goal_activity_log(root, state),
             _list_section("Delegations", _goal_delegation_lines(state), anchor_id="goal-delegations"),
-            _list_section("Runs", _goal_run_lines(root, state), anchor_id="goal-runs"),
+            _goal_run_section(root, state),
             _goal_approval_section(root, state),
             _list_section(
                 "Goal Incidents",
@@ -4153,6 +4153,7 @@ def _goal_section_index() -> str:
         ("Completion criteria", "goal-completion-criteria"),
         ("Completion readiness", "goal-completion-readiness"),
         ("Delegations", "goal-delegations"),
+        ("Run command", "goal-run-command-bar"),
         ("Runs", "goal-runs"),
         ("Approval command", "goal-approval-command-bar"),
         ("Approvals", "goal-approvals"),
@@ -6240,6 +6241,200 @@ def _goal_run_lines(root: Path, state: dict[str, Any]) -> list[str]:
     ]
     lines.extend(_coder_run_line(root, run) for run in state["worktree_runs"])
     return lines
+
+
+def _goal_run_section(root: Path, state: dict[str, Any]) -> str:
+    lines = _goal_run_lines(root, state)
+    return _goal_run_command_bar(root, state, lines) + _list_section(
+        "Runs",
+        lines,
+        anchor_id="goal-runs",
+    )
+
+
+def _goal_run_command_bar(
+    root: Path,
+    state: dict[str, Any],
+    run_lines: list[str],
+) -> str:
+    goal = state["goal"]
+    task_runs = list(state["runs"])
+    worktree_runs = list(state["worktree_runs"])
+    completed_worktree_runs = [
+        run for run in worktree_runs if run.status == "completed"
+    ]
+    running_worktree_runs = [
+        run for run in worktree_runs if run.status == "running"
+    ]
+    failed_worktree_runs = [
+        run for run in worktree_runs if run.status == "failed"
+    ]
+    review_states = [
+        _run_review_gate_state(root, run)
+        for run in worktree_runs
+    ]
+    reviewed_runs = [
+        run
+        for run, review in zip(worktree_runs, review_states, strict=False)
+        if review["commit_request_form_available"]
+    ]
+    review_blocked_runs = [
+        run
+        for run, review in zip(worktree_runs, review_states, strict=False)
+        if run.status == "completed" and not review["commit_request_form_available"]
+    ]
+    changed_files_count = sum(len(run.changed_files) for run in worktree_runs)
+    outside_allowed_files = sum(len(run.outside_allowed_files) for run in worktree_runs)
+    verification_failed_runs = [
+        run
+        for run in worktree_runs
+        if run.verification_exit_code is not None and run.verification_exit_code != 0
+    ]
+    selected_run = worktree_runs[0] if worktree_runs else None
+    selected_task_run = task_runs[0] if task_runs and selected_run is None else None
+
+    latest_run_id = "none"
+    latest_run_status = "none"
+    latest_run_surface: str | SafeHtml = "none"
+    latest_review_status = "none"
+    latest_changed_files_count = "0"
+    latest_diff_summary = "none"
+    latest_diff_surface: str | SafeHtml = "none"
+    next_action = "Create run through the next Goal action"
+    target_href = "#goal-next-action"
+    target_label = "Next Action"
+    reason = "no local run records are attached to this goal"
+
+    if selected_run is not None:
+        latest_run_id = selected_run.id
+        latest_run_status = selected_run.status
+        latest_run_surface = SafeHtml(
+            f"<a href='/runs/{quote(selected_run.id)}'>/runs/{_e(selected_run.id)}</a>"
+        )
+        review_gate = _run_review_gate_state(root, selected_run)
+        latest_review_status = str(review_gate["status"])
+        change_summary = coder_worktree_change_summary(root, selected_run)
+        latest_changed_files_count = change_summary["changed_files_count"]
+        latest_diff_summary = change_summary["diff_summary"]
+        latest_diff_surface = _artifact_link(
+            str(Path(selected_run.evidence_path) / "diff.patch")
+        )
+        commit_approvals = [
+            item
+            for item in state["commit_approvals"]
+            if item.run_id == selected_run.id
+        ]
+        publications = [
+            item
+            for item in state["publications"]
+            if item.run_id == selected_run.id
+        ]
+        next_action, raw_target_href, target_label, reason = _run_command_next_action(
+            selected_run,
+            review_gate=review_gate,
+            commit_approvals=commit_approvals,
+            publications=publications,
+        )
+        target_href = (
+            f"/runs/{quote(selected_run.id)}{raw_target_href}"
+            if raw_target_href.startswith("#")
+            else raw_target_href
+        )
+    elif selected_task_run is not None:
+        latest_run_id = str(selected_task_run["id"])
+        latest_run_status = str(selected_task_run["status"])
+        latest_run_surface = SafeHtml(
+            f"<a href='/runs/{quote(latest_run_id)}'>/runs/{_e(latest_run_id)}</a>"
+        )
+        next_action = "Review task run evidence"
+        target_href = f"/runs/{quote(latest_run_id)}"
+        target_label = f"/runs/{latest_run_id}"
+        reason = "task run evidence is available for this goal"
+
+    if selected_run is not None and next_action == "Create commit request":
+        status = "ready_for_commit_request"
+    elif (
+        selected_run is not None
+        and selected_run.status == "completed"
+        and latest_review_status != "reviewed"
+    ):
+        status = "needs_review"
+    elif selected_run is not None:
+        status = "worktree_runs_available"
+    elif task_runs:
+        status = "task_runs_available"
+    elif run_lines:
+        status = "history_available"
+    else:
+        status = "empty"
+
+    target = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    return "".join(
+        [
+            "<section id='goal-run-command-bar' class='panel goal-run-command-bar' data-goal-run-command-bar='true'><h3>Goal Run Command Bar</h3>",
+            "<p class='muted'>Goal-scoped run posture before the detailed task and worktree run list.</p>",
+            _kv(
+                [
+                    ("goal_run_command_goal", goal.id),
+                    ("goal_run_command_project", goal.project_id),
+                    ("goal_run_command_status", status),
+                    ("goal_run_command_items", str(len(run_lines))),
+                    ("goal_run_command_task_runs", str(len(task_runs))),
+                    ("goal_run_command_worktree_runs", str(len(worktree_runs))),
+                    (
+                        "goal_run_command_completed_worktree_runs",
+                        str(len(completed_worktree_runs)),
+                    ),
+                    (
+                        "goal_run_command_running_worktree_runs",
+                        str(len(running_worktree_runs)),
+                    ),
+                    (
+                        "goal_run_command_failed_worktree_runs",
+                        str(len(failed_worktree_runs)),
+                    ),
+                    ("goal_run_command_reviewed_runs", str(len(reviewed_runs))),
+                    (
+                        "goal_run_command_review_blocked_runs",
+                        str(len(review_blocked_runs)),
+                    ),
+                    (
+                        "goal_run_command_verification_failed_runs",
+                        str(len(verification_failed_runs)),
+                    ),
+                    ("goal_run_command_changed_files_count", str(changed_files_count)),
+                    ("goal_run_command_outside_allowed_files", str(outside_allowed_files)),
+                    ("goal_run_command_latest_run", latest_run_id),
+                    ("goal_run_command_latest_status", latest_run_status),
+                    ("goal_run_command_latest_surface", latest_run_surface),
+                    ("goal_run_command_latest_review_status", latest_review_status),
+                    (
+                        "goal_run_command_latest_changed_files_count",
+                        latest_changed_files_count,
+                    ),
+                    ("goal_run_command_latest_diff_summary", latest_diff_summary),
+                    ("goal_run_command_latest_diff", SafeHtml(str(latest_diff_surface))),
+                    ("goal_run_command_next_action", next_action),
+                    ("goal_run_command_target_surface", target),
+                    ("goal_run_command_reason", reason),
+                    ("goal_run_command_source", "goal_runs_and_coder_worktree_runs"),
+                    ("goal_run_command_write_on_get", "false"),
+                    ("goal_run_command_provider_calls_taken", "0"),
+                    ("goal_run_command_network_actions_taken", "0"),
+                    ("goal_run_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_run_now: {_e(next_action)}",
+                    f"goal_run_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"goal_run_latest: {_e(latest_run_id)} status={_e(latest_run_status)} review={_e(latest_review_status)}",
+                    "goal_run_safety: read-only local run posture",
+                ]
+            ),
+            "</section>",
+        ]
+    )
 
 
 def _goal_approval_lines(root: Path, state: dict[str, Any]) -> list[str]:
@@ -13997,6 +14192,9 @@ def _html_page(
     .goal-board-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-board-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-board-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-run-command-bar {{ border-left:4px solid var(--accent); }}
+    .goal-run-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-run-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-approval-command-bar {{ border-left:4px solid var(--warn); }}
     .goal-approval-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-approval-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

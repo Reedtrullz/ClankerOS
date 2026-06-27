@@ -6032,6 +6032,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-next-action'" in goal.body
     assert "href='#goal-next-recommendation'" in goal.body
     assert "href='#goal-timeline'" in goal.body
+    assert "href='#goal-run-command-bar'" in goal.body
     assert "href='#goal-approval-command-bar'" in goal.body
     assert "href='#goal-artifact-explorer'" in goal.body
     assert "href='#goal-verification-evidence'" in goal.body
@@ -6042,6 +6043,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-workflow-map'" in goal.body
     assert "id='goal-current-phase'" in goal.body
     assert "id='goal-timeline'" in goal.body
+    assert "id='goal-run-command-bar'" in goal.body
     assert "id='goal-approval-command-bar'" in goal.body
     assert "id='goal-artifact-explorer'" in goal.body
     assert "id='goal-verification-evidence'" in goal.body
@@ -6049,7 +6051,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>32" in goal.body
+    assert "goal_section_count</dt><dd>33" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
@@ -6226,6 +6228,42 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_activity_command_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_activity_command_external_effects_created</dt><dd>false" in goal.body
     assert "goal_activity_safety: read-only local timeline" in goal.body
+    assert "Goal Run Command Bar" in goal.body
+    assert "data-goal-run-command-bar='true'" in goal.body
+    assert "<a href='#goal-run-command-bar'>Run command</a>" in goal.body
+    assert f"goal_run_command_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_run_command_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_run_command_status</dt><dd>ready_for_commit_request" in goal.body
+    assert "goal_run_command_items</dt><dd>1" in goal.body
+    assert "goal_run_command_task_runs</dt><dd>0" in goal.body
+    assert "goal_run_command_worktree_runs</dt><dd>1" in goal.body
+    assert "goal_run_command_completed_worktree_runs</dt><dd>1" in goal.body
+    assert "goal_run_command_running_worktree_runs</dt><dd>0" in goal.body
+    assert "goal_run_command_failed_worktree_runs</dt><dd>0" in goal.body
+    assert "goal_run_command_reviewed_runs</dt><dd>1" in goal.body
+    assert "goal_run_command_review_blocked_runs</dt><dd>0" in goal.body
+    assert "goal_run_command_verification_failed_runs</dt><dd>0" in goal.body
+    assert "goal_run_command_changed_files_count</dt><dd>1" in goal.body
+    assert "goal_run_command_outside_allowed_files</dt><dd>0" in goal.body
+    assert f"goal_run_command_latest_run</dt><dd>{result.coder_worktree_run_id}" in goal.body
+    assert "goal_run_command_latest_status</dt><dd>completed" in goal.body
+    assert f"goal_run_command_latest_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
+    assert "goal_run_command_latest_review_status</dt><dd>reviewed" in goal.body
+    assert "goal_run_command_latest_changed_files_count</dt><dd>1" in goal.body
+    assert "goal_run_command_latest_diff_summary</dt><dd>files:1,added:1,deleted:0" in goal.body
+    assert "goal_run_command_latest_diff</dt><dd><a href='/artifacts?path=" in goal.body
+    assert "goal_run_command_next_action</dt><dd>Create commit request" in goal.body
+    assert f"goal_run_command_target_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}#run-approval-actions'>Run approval actions</a>" in goal.body
+    assert "goal_run_command_reason</dt><dd>reviewed coder run is ready for a local commit request" in goal.body
+    assert "goal_run_command_source</dt><dd>goal_runs_and_coder_worktree_runs" in goal.body
+    assert "goal_run_command_write_on_get</dt><dd>false" in goal.body
+    assert "goal_run_command_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_run_command_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_run_command_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_run_now: Create commit request" in goal.body
+    assert f"goal_run_click: <a href='/runs/{result.coder_worktree_run_id}#run-approval-actions'>Run approval actions</a>" in goal.body
+    assert f"goal_run_latest: {result.coder_worktree_run_id} status=completed review=reviewed" in goal.body
+    assert "goal_run_safety: read-only local run posture" in goal.body
     assert "Goal Approval Command Bar" in goal.body
     assert "data-goal-approval-command-bar='true'" in goal.body
     assert "<a href='#goal-approval-command-bar'>Approval command</a>" in goal.body
