@@ -106,7 +106,11 @@ Core layers for the bootstrap:
   confirmed local action form as the Goal page when that action is
   browser-available beside the editable saved-state form; `/memory` for project/global/
   generated memories, operator notes, future work, and pin actions; `/skills`
-  for available/generated skill records with usage counts; and `/profiles`
+  for available/generated skill records with usage counts; `/approvals` as a
+  local decision queue with a read-only `Approval Queue Command Bar` that
+  summarizes pending worktree/commit/publication counts, first recommended
+  decision, target section, after-decision guidance, and zero-effect boundary;
+  and `/profiles`
   for inactive future provider-routing readback from `.clanker/profiles.yml`
   and SQLite profile storage rows, including profile labels, modes, cost
   tiers, model placeholders, write posture, adapter status, and `use_for`

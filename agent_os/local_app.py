@@ -6504,19 +6504,99 @@ def _approvals(root: Path) -> str:
             "<section><h1>Approvals</h1>",
             "<p class='muted'>Approval forms write local decision artifacts only. They do not execute work, commit, push, create PRs, deploy, call providers, or use the network.</p>",
             "</section>",
+            _approval_queue_command_bar(
+                worktree_approvals,
+                commit_approvals,
+                publication_approvals,
+            ),
             _list_section(
                 "Pending Worktree Approvals",
                 [_worktree_approval_action_line(item) for item in worktree_approvals],
+                anchor_id="pending-worktree-approvals",
             ),
             _list_section(
                 "Pending Commit Approvals",
                 [_commit_approval_action_line(item) for item in commit_approvals],
+                anchor_id="pending-commit-approvals",
             ),
             _list_section(
                 "Pending Publication Approvals",
                 [_publication_approval_action_line(root, item) for item in publication_approvals],
+                anchor_id="pending-publication-approvals",
             ),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _approval_queue_command_bar(
+    worktree_approvals: list[Any],
+    commit_approvals: list[Any],
+    publication_approvals: list[Any],
+) -> str:
+    total = len(worktree_approvals) + len(commit_approvals) + len(publication_approvals)
+    first_kind = "none"
+    first_id = "none"
+    first_project = "none"
+    first_action = "No pending approvals"
+    first_surface = SafeHtml("<a href='/goals'>/goals</a>")
+    after_decision = "none"
+    if worktree_approvals:
+        item = worktree_approvals[0]
+        first_kind = "worktree"
+        first_id = item.id
+        first_project = item.project_id
+        first_action = "Approve worktree"
+        first_surface = SafeHtml("<a href='#pending-worktree-approvals'>Pending Worktree Approvals</a>")
+        after_decision = "run approved worktree from goal or run surface"
+    elif commit_approvals:
+        item = commit_approvals[0]
+        first_kind = "commit"
+        first_id = item.id
+        first_project = item.project_id
+        first_action = "Approve commit"
+        first_surface = SafeHtml("<a href='#pending-commit-approvals'>Pending Commit Approvals</a>")
+        after_decision = "commit approved worktree with typed message"
+    elif publication_approvals:
+        item = publication_approvals[0]
+        first_kind = "publication"
+        first_id = item.id
+        first_project = item.project_id
+        first_action = "Approve publication"
+        first_surface = SafeHtml("<a href='#pending-publication-approvals'>Pending Publication Approvals</a>")
+        after_decision = "prepare publication handoff for manual push/PR"
+    lines = [
+        f"approval_queue_now: {_e(first_action)}",
+        f"approval_queue_click: {first_surface}",
+        f"approval_queue_after_decision: {_e(after_decision)}",
+        "approval_queue_safety: local decision artifact only",
+    ]
+    if total == 0:
+        lines.append("approval_queue_empty: no pending local approval decisions")
+    return "".join(
+        [
+            "<section class='panel approval-queue-command-bar' data-approval-queue-command-bar='true'><h2>Approval Queue Command Bar</h2>",
+            "<p class='muted'>One read-only summary of the local decisions waiting for the operator.</p>",
+            _kv(
+                [
+                    ("approval_queue_status", "available"),
+                    ("approval_queue_total_pending", str(total)),
+                    ("approval_queue_worktree_pending", str(len(worktree_approvals))),
+                    ("approval_queue_commit_pending", str(len(commit_approvals))),
+                    ("approval_queue_publication_pending", str(len(publication_approvals))),
+                    ("approval_queue_first_kind", first_kind),
+                    ("approval_queue_first_id", first_id),
+                    ("approval_queue_first_project", first_project),
+                    ("approval_queue_first_action", first_action),
+                    ("approval_queue_first_surface", first_surface),
+                    ("approval_queue_after_decision", after_decision),
+                    ("approval_queue_write_on_get", "false"),
+                    ("approval_queue_network_actions_taken", "0"),
+                    ("approval_queue_external_effects_created", "false"),
+                ]
+            ),
+            _ul(lines),
+            "</section>",
         ]
     )
 
@@ -9943,6 +10023,9 @@ def _html_page(
     .workflow-map-rail li {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; overflow-wrap:anywhere; }}
     .workflow-map-rail li[data-gate-marker="current"] {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
     .workflow-map-index {{ display:inline-grid; place-items:center; width:22px; height:22px; border:1px solid var(--line); border-radius:999px; margin-right:5px; font-size:12px; color:var(--muted); }}
+    .approval-queue-command-bar {{ border-left:4px solid var(--warn); }}
+    .approval-queue-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .approval-queue-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .warning {{ border-color:#efc36a; color:var(--warn); }}
     .error {{ color:var(--error); font-weight:600; }}
     .muted {{ color:var(--muted); }}

@@ -289,9 +289,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   incidents, delegations, coder runs, commits, and publication handoffs.
   Pending commit and publication rows include run links, approval-queue links,
   and next-action cues without exposing decision forms on the inbox page.
-- `/approvals` - pending worktree, commit, and publication approvals. Commit
-  and publication rows link back to the relevant run and show the next
-  local-only follow-up action after approval.
+- `/approvals` - pending worktree, commit, and publication approvals. A
+  read-only `Approval Queue Command Bar` summarizes total pending decisions,
+  pending counts by approval type, the first recommended decision, the
+  same-page form target, the follow-up after approval, and the zero-effect
+  boundary. Commit and publication rows link back to the relevant run and show
+  the next local-only follow-up action after approval.
 - `/incidents` - recent local incidents and evidence links.
 - `/artifacts?path=<relative_path>` - safe read-only artifact viewer.
 - `/health` - Python, git, storage, command, import, route, and counter health.
@@ -504,7 +507,10 @@ commit approvals now show the relevant run link, the `commit-coder-worktree`
 follow-up, and the typed commit-message requirement. Pending publication
 approvals show the relevant run link and the `coder-publication-handoff`
 follow-up while preserving the explicit `push_created=false`,
-`pr_created=false`, and `deploy_created=false` boundary.
+`pr_created=false`, and `deploy_created=false` boundary. The page starts with
+`Approval Queue Command Bar`, a read-only summary of total pending decisions,
+the first queue action, target section, after-decision guidance, and the
+write-on-GET/network/external-effect boundary.
 The `/inbox` page keeps the same commit/publication continuation cues in a
 read-only queue form: it links to the run and approval queue and names the next
 action after approval, but it does not render the approval decision forms.
