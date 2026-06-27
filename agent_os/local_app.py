@@ -6675,6 +6675,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_operator_workbench(root, state, phase, next_action),
             _goal_daily_loop(root, state, phase, next_action),
             _goal_return_brief(root, state, phase, next_action),
+            _goal_continuation_rail(root, state, phase, next_action),
             _goal_next_action_card(state, next_action),
             _goal_next_recommendation_section(state, next_action),
             _goal_workflow_map(root, state, next_action),
@@ -6753,6 +6754,7 @@ def _goal_section_index() -> str:
         ("Operator workbench", "goal-operator-workbench"),
         ("Daily loop", "goal-daily-loop"),
         ("Return brief", "goal-return-brief"),
+        ("Continuation rail", "goal-continuation-rail"),
         ("Next action", "goal-next-action"),
         ("Next recommendation", "goal-next-recommendation"),
         ("Workflow map", "goal-workflow-map"),
@@ -7407,6 +7409,156 @@ def _goal_return_brief(
             "</section>",
         ]
     )
+
+
+def _goal_continuation_rail(
+    root: Path,
+    state: dict[str, Any],
+    phase: str,
+    next_action: GoalNextAction,
+) -> str:
+    goal = state["goal"]
+    gates, _, current_gate = _goal_workflow_gate_summary(root, state, next_action)
+    total = len(gates)
+    current_index = next(
+        (index for index, (name, _) in enumerate(gates) if name == current_gate),
+        0,
+    )
+    upcoming = gates[current_index : current_index + 5]
+    current_position = current_index + 1 if gates else 0
+    action_form_available = bool(_goal_next_action_form(state, next_action))
+    step_rows: list[str] = []
+    step_lines: list[str] = []
+    step_values: list[tuple[str, str | SafeHtml]] = []
+    for offset, (name, status) in enumerate(upcoming, start=1):
+        is_current = name == current_gate
+        marker = "current" if is_current else status
+        action, surface = _goal_continuation_gate_action(
+            goal.id,
+            name,
+            is_current=is_current,
+            next_action=next_action,
+            action_form_available=action_form_available,
+        )
+        label = name.replace("_", " ")
+        step_rows.append(
+            "<li "
+            f"data-continuation-gate='{_e(name)}' "
+            f"data-continuation-status='{_e(status)}' "
+            f"data-continuation-marker='{_e(marker)}'>"
+            f"<span class='workflow-map-index'>{offset}</span> "
+            f"<strong>{_e(label)}</strong> "
+            f"status={_e(status)} marker={_e(marker)} "
+            f"action={_e(action)} surface={surface}</li>"
+        )
+        step_lines.append(
+            f"goal_continuation_step: {offset} gate={_e(name)} "
+            f"status={_e(status)} marker={_e(marker)} "
+            f"action={_e(action)} surface={surface}"
+        )
+        step_values.append((action, surface))
+    next_gate = upcoming[1][0] if len(upcoming) > 1 else "complete"
+    next_action_label = step_values[1][0] if len(step_values) > 1 else "none"
+    next_surface = step_values[1][1] if len(step_values) > 1 else "none"
+    now_action = step_values[0][0] if step_values else next_action.action
+    now_surface = (
+        step_values[0][1]
+        if step_values
+        else _goal_continuation_link(next_action.href, next_action.href)
+    )
+    manual_boundary = (
+        "manual_publish_outside_clankeros"
+        if any(name == "manual_publish" for name, _ in gates)
+        else "none"
+    )
+    return "".join(
+        [
+            "<section id='goal-continuation-rail' class='panel goal-continuation-rail' data-goal-continuation-rail='true'><h2>Goal Continuation Rail</h2>",
+            "<p class='muted'>A compact operator path from the current click through the next local gates and the final manual boundary.</p>",
+            _kv(
+                [
+                    ("goal_continuation_status", "available" if gates else "empty"),
+                    ("goal_continuation_goal", goal.id),
+                    ("goal_continuation_project", goal.project_id),
+                    ("goal_continuation_phase", phase),
+                    ("goal_continuation_current_gate", current_gate),
+                    ("goal_continuation_current_position", f"{current_position}/{total}"),
+                    ("goal_continuation_step_count", str(len(upcoming))),
+                    ("goal_continuation_now_action", now_action),
+                    ("goal_continuation_now_surface", now_surface),
+                    ("goal_continuation_next_gate", next_gate),
+                    ("goal_continuation_next_action", next_action_label),
+                    ("goal_continuation_next_surface", next_surface),
+                    ("goal_continuation_manual_boundary", manual_boundary),
+                    ("goal_continuation_source", "goal_workflow_gates_and_next_action"),
+                    ("goal_continuation_write_on_get", "false"),
+                    ("goal_continuation_provider_calls_taken", "0"),
+                    ("goal_continuation_network_actions_taken", "0"),
+                    ("goal_continuation_external_effects_created", "false"),
+                ]
+            ),
+            "<ol class='workflow-map-rail goal-continuation-steps'>",
+            "".join(step_rows),
+            "</ol>",
+            _ul(
+                step_lines
+                + [
+                    "goal_continuation_safety: local browser guidance only; publication remains manual"
+                ]
+            ),
+            "</section>",
+        ]
+    )
+
+
+def _goal_continuation_gate_action(
+    goal_id: str,
+    gate: str,
+    *,
+    is_current: bool,
+    next_action: GoalNextAction,
+    action_form_available: bool,
+) -> tuple[str, SafeHtml | str]:
+    if is_current:
+        if action_form_available:
+            return next_action.action, _goal_continuation_link(
+                "#goal-next-action",
+                "Goal action form",
+            )
+        return next_action.action, _goal_continuation_link(
+            next_action.href,
+            next_action.href,
+        )
+    action, href, label = _GOAL_CONTINUATION_GATE_ACTIONS.get(
+        gate,
+        ("Inspect gate", f"/goals/{quote(goal_id)}", "Goal page"),
+    )
+    if href == "outside_clankeros":
+        return action, "outside_clankeros"
+    return action, _goal_continuation_link(href, label)
+
+
+def _goal_continuation_link(href: str, label: str) -> SafeHtml:
+    return SafeHtml(f"<a href='{_e(href)}'>{_e(label)}</a>")
+
+
+_GOAL_CONTINUATION_GATE_ACTIONS: dict[str, tuple[str, str, str]] = {
+    "scout_delegation": ("Create scout delegation", "#goal-next-action", "Goal action form"),
+    "context_pack": ("Generate context pack", "#goal-next-action", "Goal action form"),
+    "implementation_handoff": ("Run delegation", "#goal-next-action", "Goal action form"),
+    "coder_prep": ("Run coder prep", "#goal-next-action", "Goal action form"),
+    "worktree_plan": ("Create worktree plan", "#goal-next-action", "Goal action form"),
+    "worktree_approval": ("Request worktree approval", "#goal-next-action", "Goal action form"),
+    "worktree_run": ("Run approved worktree", "#goal-next-action", "Goal action form"),
+    "review": ("Open review", "#goal-next-action", "Goal action form"),
+    "commit_request": ("Create commit request", "#goal-next-action", "Goal action form"),
+    "commit_approval": ("Approve commit request", "/approvals", "/approvals"),
+    "local_commit": ("Commit approved worktree", "#goal-next-action", "Goal action form"),
+    "publication_request": ("Create publication request", "#goal-next-action", "Goal action form"),
+    "publication_approval": ("Approve publication request", "/approvals", "/approvals"),
+    "publication_handoff": ("Create publication handoff", "#goal-next-action", "Goal action form"),
+    "manual_publish": ("Manual publish outside ClankerOS", "outside_clankeros", "outside_clankeros"),
+}
 
 
 def _goal_rows(storage: Storage, *, limit: int) -> list[sqlite3.Row]:

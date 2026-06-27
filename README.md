@@ -260,8 +260,9 @@ the CLI.
 Use `/goals/<goal_id>` as the
 goal-centered workbench: the page now opens with the large Current Phase
 banner immediately after the Goal summary, then shows the Goal Command Bar,
-Goal Operator Workbench, Goal Daily Loop, Goal Return Brief, next action, next
-recommendation, Goal Workflow Map, live state, and section index before the
+Goal Operator Workbench, Goal Daily Loop, Goal Return Brief, Goal Continuation
+Rail, next action, next recommendation, Goal Workflow Map, live state, and
+section index before the
 detailed progress, timeline, activity log, goal risk, completion
 criteria, completion readiness, evidence, delegations, runs, approvals,
 artifacts, a typed Goal Artifact Explorer, memory, skills used, git status,
@@ -278,7 +279,10 @@ and exposes confirmation/write/provider/network/external-effect counters
 before the deeper diagnostic sections. Goal Daily Loop includes a confirmed
 local `pause-goal` form for any non-paused incomplete goal, moving it into
 paused lanes without approving work, running providers, using the network, or
-mutating external systems. Goal
+mutating external systems. The read-only `Goal Continuation Rail` follows the
+return brief and turns the current gate plus the next few local gates into a
+short path of operator actions and surfaces, while keeping the eventual manual
+publish boundary explicit. Goal
 Section Index now also links directly to the Timeline, Activity, and Git
 command bars, so the long Goal page can jump to the scan-first operational
 panels instead of only the longer detail sections. Goal

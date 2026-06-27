@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal pages now expose a read-only `Goal Continuation Rail` between the
+  Return Brief and Next Action card, showing the current gate, the next few
+  local gate actions, their operator surfaces, and the manual publish boundary
+  without creating actions or external effects.
 - The local app demo now exercises a reviewed, bounded coder worktree run and
   app-confirmed local commit/publication request path. The app can create the
   local isolated commit only after an approved commit request and typed

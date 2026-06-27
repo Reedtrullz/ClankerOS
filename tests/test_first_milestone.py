@@ -7766,6 +7766,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-command-bar'" in goal.body
     assert "href='#goal-operator-workbench'" in goal.body
     assert "href='#goal-return-brief'" in goal.body
+    assert "href='#goal-continuation-rail'" in goal.body
     assert "href='#goal-workflow-map'" in goal.body
     assert "href='#goal-next-action'" in goal.body
     assert "href='#goal-next-recommendation'" in goal.body
@@ -7818,7 +7819,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>49" in goal.body
+    assert "goal_section_count</dt><dd>50" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
@@ -7949,6 +7950,32 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_return_now: Create commit request" in goal.body
     assert "goal_return_unblock: pending_approvals -> <a href='/approvals'>/approvals</a>" in goal.body
     assert "goal_return_safety: read-only return-to-work brief" in goal.body
+    assert "Goal Continuation Rail" in goal.body
+    assert "data-goal-continuation-rail='true'" in goal.body
+    assert goal.body.index("id='goal-return-brief'") < goal.body.index("id='goal-continuation-rail'")
+    assert goal.body.index("id='goal-continuation-rail'") < goal.body.index("id='goal-next-action'")
+    assert "goal_continuation_status</dt><dd>available" in goal.body
+    assert f"goal_continuation_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_continuation_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_continuation_current_gate</dt><dd>commit_request" in goal.body
+    assert "goal_continuation_current_position</dt><dd>9/15" in goal.body
+    assert "goal_continuation_step_count</dt><dd>5" in goal.body
+    assert "goal_continuation_now_action</dt><dd>Create commit request" in goal.body
+    assert "goal_continuation_now_surface</dt><dd><a href='#goal-next-action'>Goal action form</a>" in goal.body
+    assert "goal_continuation_next_gate</dt><dd>commit_approval" in goal.body
+    assert "goal_continuation_next_action</dt><dd>Approve commit request" in goal.body
+    assert "goal_continuation_next_surface</dt><dd><a href='/approvals'>/approvals</a>" in goal.body
+    assert "goal_continuation_manual_boundary</dt><dd>manual_publish_outside_clankeros" in goal.body
+    assert "goal_continuation_source</dt><dd>goal_workflow_gates_and_next_action" in goal.body
+    assert "goal_continuation_write_on_get</dt><dd>false" in goal.body
+    assert "goal_continuation_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_continuation_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_continuation_external_effects_created</dt><dd>false" in goal.body
+    assert "data-continuation-gate='commit_request' data-continuation-status='pending' data-continuation-marker='current'" in goal.body
+    assert "goal_continuation_step: 1 gate=commit_request status=pending marker=current action=Create commit request" in goal.body
+    assert "goal_continuation_step: 2 gate=commit_approval status=waiting marker=waiting action=Approve commit request" in goal.body
+    assert "goal_continuation_step: 5 gate=publication_approval status=waiting marker=waiting action=Approve publication request" in goal.body
+    assert "goal_continuation_safety: local browser guidance only; publication remains manual" in goal.body
     assert "Goal Workflow Map" in goal.body
     assert "data-goal-workflow-map='true'" in goal.body
     assert "workflow_map_status</dt><dd>available" in goal.body

@@ -296,8 +296,9 @@ Core layers for the bootstrap:
   no-network/no-external-effect boundaries before the detailed criteria list.
   Goal detail pages now place the large Current Phase banner immediately after
   the Goal summary and before the Goal Command Bar, Goal Operator Workbench,
-  Daily Loop, Goal Return Brief, Next Action, Workflow Map, live refresh panel,
-  and long section index, so the first viewport names the current phase before
+  Daily Loop, Goal Return Brief, Goal Continuation Rail, Next Action, Workflow
+  Map, live refresh panel, and long section index, so the first viewport names
+  the current phase before
   navigation and diagnostics. Goal Progress starts with a read-only `Goal Progress Command Bar` that
   summarizes task completion, workflow gate progress, current gate, waiting
   approvals/incidents/recommendations, one next local action, and no-write/
@@ -348,6 +349,10 @@ Core layers for the bootstrap:
   Goal page and condenses current gate, next action, resume readiness, latest
   activity, latest artifact, CI proof posture, blocker routing, `/resume`, and
   finish surface into one return-to-work snapshot without writing on GET.
+  A read-only `Goal Continuation Rail` follows it with the current gate, the
+  next few local workflow gates, their operator surfaces, and the final manual
+  publish boundary preserved as outside ClankerOS, so the Goal page can be
+  followed without jumping straight to longer diagnostics.
   Goal detail pages also include a
   read-only `Goal Workflow Map` near the top that renders the same
   Remaining Work gate state as a lifecycle rail, highlighting the current

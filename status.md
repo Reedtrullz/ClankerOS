@@ -1,5 +1,39 @@
 # Status
 
+## 2026-06-28 Goal Continuation Rail
+
+- Added a first-class `Goal Continuation Rail` to `/goals/<goal_id>` after the
+  Goal Return Brief and before the Next Action card, so the Goal page now shows
+  the current gate plus the next few local gates as a short operator path
+  instead of forcing the operator to infer the sequence from the full workflow
+  map.
+- The rail is derived from existing Goal remaining-work gates and the current
+  next-action state. It reports current position, next local action surface,
+  upcoming approval/commit/publication gates, a link to the in-page Goal action
+  form when the current gate is browser-available, and the final manual publish
+  boundary as outside ClankerOS.
+- Updated README, local app docs, operating summary, section-index assertions,
+  and fixture-backed Goal route expectations for the new continuation surface.
+- Non-claims: this does not write workspace state on GET, create actions,
+  approve work, run work, call providers, fetch GitHub, poll network services,
+  commit, push, create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> passed, `1 passed, 514 deselected`
+  - `python3 -m compileall -q agent_os tests`
+    -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-ux-smoke app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation
+    counters at `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-ux-demo-smoke app-demo-smoke-test`
+    -> passed on a temporary root, including fixture-backed
+    `/goals/<goal_id>` snippets, with provider/network/external-mutation
+    counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
 ## 2026-06-27 Goal Return Brief
 
 - Added a top-of-page `Goal Return Brief` to `/goals/<goal_id>` after the
