@@ -6875,6 +6875,12 @@ def _project_detail(root: Path, project_id: str) -> str:
         for delegation in storage.list_recent_subagent_delegations(limit=None)
         if _task_project(storage, delegation.parent_task_id) == project_id
     ][:20]
+    operator_state = _project_operator_state(
+        root,
+        storage,
+        project_id=project_id,
+        task_rows=task_rows,
+    )
     return "".join(
         [
             f"<section><h1>Project {_e(project.name)}</h1>",
@@ -6888,6 +6894,15 @@ def _project_detail(root: Path, project_id: str) -> str:
                 ]
             ),
             "</section>",
+            _project_command_bar(
+                root,
+                project_id=project_id,
+                repo=repo,
+                goal_rows=goal_rows,
+                task_rows=task_rows,
+                delegations=delegations,
+                operator_state=operator_state,
+            ),
             _project_goal_creation_panel(project_id, goal_rows),
             _list_section(
                 "Project Goals",
@@ -6921,6 +6936,7 @@ def _project_detail(root: Path, project_id: str) -> str:
                 storage,
                 project_id=project_id,
                 task_rows=task_rows,
+                operator_state=operator_state,
             ),
             _project_workflow_launchpad(
                 root,
@@ -6948,10 +6964,218 @@ def _project_detail(root: Path, project_id: str) -> str:
     )
 
 
+def _project_command_bar(
+    root: Path,
+    *,
+    project_id: str,
+    repo: dict[str, Any],
+    goal_rows: list[sqlite3.Row],
+    task_rows: list[sqlite3.Row],
+    delegations: list[Any],
+    operator_state: dict[str, Any],
+) -> str:
+    active_goals = [row for row in goal_rows if _goal_bucket(row) == "active"]
+    paused_goals = [row for row in goal_rows if _goal_bucket(row) == "paused"]
+    completed_goals = [row for row in goal_rows if _goal_bucket(row) == "completed"]
+    next_action = _project_next_action(
+        root,
+        open_incidents=operator_state["open_incidents"],
+        recommendations=operator_state["recommendations"],
+        worktree_approvals=operator_state["worktree_approvals"],
+        worktree_runs=operator_state["worktree_runs"],
+        commit_approvals=operator_state["commit_approvals"],
+        publications=operator_state["publications"],
+    )
+    target_href, target_label, reason = _project_next_action_target(
+        root,
+        project_id,
+        next_action=next_action,
+        goal_rows=goal_rows,
+        delegations=delegations,
+        operator_state=operator_state,
+    )
+    pending_approvals = (
+        _count_status(operator_state["worktree_approvals"], "pending_operator_approval")
+        + _count_status(operator_state["commit_approvals"], "pending_operator_approval")
+        + _count_status(operator_state["publications"], "pending_operator_approval")
+    )
+    ready_publications = _count_status(operator_state["publications"], "ready_for_operator")
+    open_incidents = len(operator_state["open_incidents"])
+    open_recommendations = len(operator_state["recommendations"])
+    lead_goal = active_goals[0] if active_goals else (paused_goals[0] if paused_goals else (goal_rows[0] if goal_rows else None))
+    lead_goal_value: str | SafeHtml = "none"
+    if lead_goal is not None:
+        lead_goal_id = str(lead_goal["id"])
+        lead_goal_label = str(lead_goal["title"] or lead_goal["description"] or lead_goal_id)
+        lead_goal_value = SafeHtml(
+            f"<a href='/goals/{quote(lead_goal_id)}'>{_e(_compact_label(lead_goal_label, 72))}</a>"
+        )
+    lines = [
+        f"project_command_now: {_e(next_action)}",
+        f"project_command_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+        f"project_command_reason: {_e(reason)}",
+        "project_command_safety: read-only project guidance",
+    ]
+    if not goal_rows:
+        lines.append("project_command_empty: create the first goal for this project")
+    return "".join(
+        [
+            "<section class='panel project-command-bar' data-project-command-bar='true'><h2>Project Command Bar</h2>",
+            "<p class='muted'>One read-only project summary for the next local operator action before the longer project inventory.</p>",
+            _kv(
+                [
+                    ("project_command_status", "available"),
+                    ("project_command_project", project_id),
+                    ("project_command_branch", repo["branch"]),
+                    ("project_command_commit", repo["commit"]),
+                    ("project_command_active_goals", str(len(active_goals))),
+                    ("project_command_paused_goals", str(len(paused_goals))),
+                    ("project_command_completed_goals", str(len(completed_goals))),
+                    ("project_command_tasks", str(len(task_rows))),
+                    ("project_command_delegations", str(len(delegations))),
+                    ("project_command_coder_runs", str(len(operator_state["worktree_runs"]))),
+                    ("project_command_pending_approvals", str(pending_approvals)),
+                    ("project_command_open_incidents", str(open_incidents)),
+                    ("project_command_open_recommendations", str(open_recommendations)),
+                    ("project_command_publication_handoffs", str(ready_publications)),
+                    ("project_command_lead_goal", lead_goal_value),
+                    ("project_command_next_action", next_action),
+                    ("project_command_target_surface", SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")),
+                    ("project_command_reason", reason),
+                    ("project_command_write_on_get", "false"),
+                    ("project_command_network_actions_taken", "0"),
+                    ("project_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(lines),
+            "</section>",
+        ]
+    )
+
+
+def _project_next_action_target(
+    root: Path,
+    project_id: str,
+    *,
+    next_action: str,
+    goal_rows: list[sqlite3.Row],
+    delegations: list[Any],
+    operator_state: dict[str, Any],
+) -> tuple[str, str, str]:
+    if operator_state["open_incidents"]:
+        incident = operator_state["open_incidents"][0]
+        return "/incidents", "/incidents", str(incident["summary"])
+    if operator_state["recommendations"]:
+        recommendation = operator_state["recommendations"][0]
+        return "/incidents", "/incidents", str(recommendation.reason)
+    ready_publication = next(
+        (item for item in operator_state["publications"] if item.status == "ready_for_operator"),
+        None,
+    )
+    if ready_publication is not None:
+        return (
+            f"/runs/{quote(ready_publication.run_id)}",
+            f"/runs/{ready_publication.run_id}",
+            "manual publication handoff is ready outside ClankerOS",
+        )
+    approved_publication = next(
+        (item for item in operator_state["publications"] if item.status == "approved"),
+        None,
+    )
+    if approved_publication is not None:
+        return (
+            f"/runs/{quote(approved_publication.run_id)}",
+            f"/runs/{approved_publication.run_id}",
+            "approved publication needs a local handoff packet",
+        )
+    pending_publication = next(
+        (item for item in operator_state["publications"] if item.status == "pending_operator_approval"),
+        None,
+    )
+    if pending_publication is not None:
+        return "/approvals", "/approvals", f"publication approval {pending_publication.id} is pending"
+    committed = next(
+        (item for item in operator_state["commit_approvals"] if item.status == "committed"),
+        None,
+    )
+    if committed is not None and not operator_state["publications"]:
+        return (
+            f"/runs/{quote(committed.run_id)}",
+            f"/runs/{committed.run_id}",
+            "local commit exists and needs a publication request",
+        )
+    approved_commit = next(
+        (item for item in operator_state["commit_approvals"] if item.status == "approved"),
+        None,
+    )
+    if approved_commit is not None:
+        return (
+            f"/runs/{quote(approved_commit.run_id)}",
+            f"/runs/{approved_commit.run_id}",
+            "commit approval is ready for local worktree commit",
+        )
+    pending_commit = next(
+        (item for item in operator_state["commit_approvals"] if item.status == "pending_operator_approval"),
+        None,
+    )
+    if pending_commit is not None:
+        return "/approvals", "/approvals", f"commit approval {pending_commit.id} is pending"
+    reviewed_run = next(
+        (
+            item
+            for item in operator_state["worktree_runs"]
+            if item.status == "completed"
+            and _run_review_gate_state(root, item)["commit_request_form_available"]
+        ),
+        None,
+    )
+    if reviewed_run is not None:
+        return (
+            f"/runs/{quote(reviewed_run.id)}",
+            f"/runs/{reviewed_run.id}",
+            "reviewed coder run can request commit approval",
+        )
+    pending_worktree = next(
+        (item for item in operator_state["worktree_approvals"] if item.status == "pending_operator_approval"),
+        None,
+    )
+    if pending_worktree is not None:
+        return "/approvals", "/approvals", f"worktree approval {pending_worktree.id} is pending"
+    approved_worktree = next(
+        (item for item in operator_state["worktree_approvals"] if item.status == "approved"),
+        None,
+    )
+    if approved_worktree is not None and not operator_state["worktree_runs"]:
+        return (
+            f"/workflow?delegation_id={quote(approved_worktree.delegation_id)}",
+            f"/workflow?delegation_id={approved_worktree.delegation_id}",
+            "approved worktree is waiting for confirmed execution",
+        )
+    if delegations:
+        delegation = delegations[0]
+        return (
+            f"/delegations/{quote(delegation.id)}",
+            f"/delegations/{delegation.id}",
+            "project has delegation evidence to review",
+        )
+    if goal_rows:
+        goal_id = str(goal_rows[0]["id"])
+        return (
+            f"/goals/{quote(goal_id)}",
+            f"/goals/{goal_id}",
+            f"{next_action} for latest project goal",
+        )
+    return (
+        f"/projects/{quote(project_id)}#start-goal-for-this-project",
+        "Start Goal For This Project",
+        "no project goals exist yet",
+    )
+
+
 def _project_goal_creation_panel(project_id: str, goal_rows: list[sqlite3.Row]) -> str:
     return "".join(
         [
-            "<section><h2>Start Goal For This Project</h2>",
+            "<section id='start-goal-for-this-project'><h2>Start Goal For This Project</h2>",
             "<p class='muted'>Create the next local goal for this registered project without leaving the project page.</p>",
             _kv(
                 [
@@ -6983,8 +7207,9 @@ def _project_operator_guidance(
     *,
     project_id: str,
     task_rows: list[sqlite3.Row],
+    operator_state: dict[str, Any] | None = None,
 ) -> str:
-    state = _project_operator_state(
+    state = operator_state or _project_operator_state(
         root,
         storage,
         project_id=project_id,
@@ -10251,6 +10476,9 @@ def _html_page(
     .goal-command-bar dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:8px; }}
     .goal-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .project-command-bar {{ border-left:4px solid var(--accent); }}
+    .project-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .project-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .workflow-map-rail {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px; }}
     .workflow-map-rail li {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; overflow-wrap:anywhere; }}
     .workflow-map-rail li[data-gate-marker="current"] {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}

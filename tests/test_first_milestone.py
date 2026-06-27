@@ -6037,6 +6037,20 @@ def test_local_app_demo_scenario_populates_fixture_state(
     project = render_local_app_route(tmp_path, "/projects/local-app-demo")
     assert project.status == 200
     assert "local-app-demo" in project.body
+    assert "Project Command Bar" in project.body
+    assert "project_command_status</dt><dd>available" in project.body
+    assert "project_command_project</dt><dd>local-app-demo" in project.body
+    assert "project_command_active_goals</dt><dd>1" in project.body
+    assert "project_command_tasks</dt><dd>1" in project.body
+    assert "project_command_delegations</dt><dd>1" in project.body
+    assert "project_command_coder_runs</dt><dd>1" in project.body
+    assert "project_command_next_action</dt><dd>request_commit_for_reviewed_run" in project.body
+    assert f"project_command_target_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in project.body
+    assert "project_command_reason</dt><dd>reviewed coder run can request commit approval" in project.body
+    assert "project_command_write_on_get</dt><dd>false" in project.body
+    assert "project_command_network_actions_taken</dt><dd>0" in project.body
+    assert "project_command_external_effects_created</dt><dd>false" in project.body
+    assert "project_command_now: request_commit_for_reviewed_run" in project.body
     assert "Project Goals" in project.body
     assert result.goal_id in project.body
     assert f"href='/goals/{result.goal_id}'" in project.body

@@ -324,7 +324,10 @@ action, so daily project onboarding does not require switching back to the
 CLI.
 
 Use `/projects/<project_id>` as the project-level launchpad. It shows goals,
-tasks, delegations, artifacts, project guidance, a confirmed local
+tasks, delegations, artifacts, project guidance, and a read-only
+`Project Command Bar` that summarizes branch/commit, goal and queue counts,
+the next project action, the target local surface, and no-write/no-network
+boundaries before the longer inventory. It also includes a confirmed local
 project-scoped `create-goal` form, goal rows that link directly to
 `/goals/<goal_id>` with phase, next action, and task progress, scoped workflow
 links for delegations and coder runs, and links back to safe actions,

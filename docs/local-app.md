@@ -254,10 +254,14 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   branch/commit, goal/task/delegation counts, next recommended local operator
   action, project detail links, and selected delegation/run workflow
   shortcuts.
-- `/projects/<project_id>` - project detail with first-class project goals, a
-  confirmed local `Start Goal For This Project` form, goal rows that link
-  directly to `/goals/<goal_id>` with phase, next action, and task progress,
-  goal-linked tasks, linked artifacts, project-scoped incidents/
+- `/projects/<project_id>` - project detail with first-class project goals and
+  a read-only `Project Command Bar` that summarizes branch/commit, active/
+  paused/completed goal counts, task/delegation/run counts, pending queue
+  counts, the next project action, the target local surface, and no-write/
+  no-network/no-external-effect boundaries before the longer inventory. It
+  also includes a confirmed local `Start Goal For This Project` form, goal
+  rows that link directly to `/goals/<goal_id>` with phase, next action, and
+  task progress, goal-linked tasks, linked artifacts, project-scoped incidents/
   recommendations, next recommended operator action, and a project workflow
   launchpad that links the project to selected delegation/run workflow views,
   the safe action catalog, dogfooding checklist, and verification handoff.

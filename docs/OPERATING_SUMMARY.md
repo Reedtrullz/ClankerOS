@@ -75,9 +75,12 @@ Core layers for the bootstrap:
   a confirmed local `Register Local Project` form, local repo posture, default
   test command, goal/task/delegation counts, next recommended operator action,
   and selected delegation/run workflow links. Project detail pages separate
-  project goals from goal-linked project tasks, include a confirmed local
-  `Start Goal For This Project` form, and include a project workflow
-  launchpad with scoped delegation/run workflow links, safe actions,
+  project goals from goal-linked project tasks, include a read-only
+  `Project Command Bar` that summarizes branch/commit, goal and queue counts,
+  next project action, target local surface, and no-write/no-network/
+  no-external-effect boundaries before the longer inventory, include a
+  confirmed local `Start Goal For This Project` form, and include a project
+  workflow launchpad with scoped delegation/run workflow links, safe actions,
   dogfooding, and verification
   links so the operator can start from the product path rather than infer
   goals from task rows. Project goal rows link directly to

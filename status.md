@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-27 Project Command Bar
+
+- Added a read-only `Project Command Bar` to `/projects/<project_id>`. It
+  shows the project branch/commit, active/paused/completed goal counts,
+  task/delegation/run counts, pending approval and publication handoff counts,
+  open incident/recommendation counts, the lead goal, the next project action,
+  the target local surface, reason, and write-on-GET/network/external-effect
+  boundaries before the longer project inventory.
+- Fixture-backed project pages now expose `request_commit_for_reviewed_run` as
+  the project-level first action and link directly to the reviewed coder run,
+  so the operator does not have to scan goals, tasks, delegations, and runs to
+  find the next project click.
+- README, local app docs, and the operating summary now describe
+  `/projects/<project_id>` as a project cockpit surface instead of only a
+  project inventory.
+- Non-claims: this does not write local state, execute work, approve gates,
+  commit, push, create PRs, deploy, call providers, fetch GitHub status, use
+  the network, or mutate external systems. It reads existing local project,
+  goal, delegation, run, approval, publication, incident, and recommendation
+  state only.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Search Command Bar
 
 - Added a read-only `Search Command Bar` to `/search`. It shows the current
