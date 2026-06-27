@@ -1,5 +1,43 @@
 # Status
 
+## 2026-06-27 Project Operator Workbench
+
+- Added a first-class `Project Operator Workbench` to
+  `/projects/<project_id>` so a project page now starts with Do Now, Goal,
+  Unblock, and Finish Today cards instead of only a longer inventory.
+- The workbench derives the lead goal, queue counts, waiting items, next local
+  action, primary surface, unblock surface, and resume target from local
+  project operator state. Registered-project/no-goal pages now point directly
+  at `Start Goal For This Project` with `start_project_goal`.
+- Added a confirmed local `save-workspace` form under `Project Finish Today`
+  so the operator can save the project and lead goal as the next resume point
+  from the browser without editing files by hand.
+- Updated README, local app docs, operating summary, and route assertions for
+  both fixture-backed project work and registered-project/no-goal project
+  states.
+- Non-claims: this does not create projects or goals without confirmation,
+  write workspace state on GET, run delegations, call providers, fetch GitHub,
+  poll network services, approve work, commit, push, create PRs, deploy, or
+  mutate external systems.
+- Compact local verification for this slice:
+  - `df -h /System/Volumes/Data`
+    -> `83Gi` available before smoke verification
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> passed, `2 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation
+    counters at `0`
+  - `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed on a temporary root, including fixture-backed
+    `/projects/local-app-demo`, with provider/network/external-mutation
+    counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
 ## 2026-06-27 Workspace First-Run Continuation
 
 - Made `/workspace` first-run-aware when no saved Goal exists, so the page now

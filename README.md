@@ -559,8 +559,11 @@ Use `/projects/<project_id>` as the project-level launchpad. It shows goals,
 tasks, delegations, artifacts, project guidance, and a read-only
 `Project Command Bar` that summarizes branch/commit, goal and queue counts,
 the next project action, the target local surface, and no-write/no-network
-boundaries before the longer inventory. It also includes a confirmed local
-project-scoped `create-goal` form, goal rows that link directly to
+boundaries before the longer inventory. The page also starts with a
+`Project Operator Workbench` with Do Now, Goal, Unblock, and Finish Today
+cards, including a confirmed `save-workspace` form so a project can become the
+next resume point without leaving the browser. It also includes a confirmed
+local project-scoped `create-goal` form, goal rows that link directly to
 `/goals/<goal_id>` with phase, next action, and task progress, scoped workflow
 links for delegations and coder runs, and links back to safe actions,
 dogfooding, and verification without executing external effects.

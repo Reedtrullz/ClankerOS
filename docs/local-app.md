@@ -475,9 +475,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   paused/completed goal counts, task/delegation/run counts, pending queue
   counts, the next project action, the target local surface, and no-write/
   no-network/no-external-effect boundaries before the longer inventory. It
-  also includes a confirmed local `Start Goal For This Project` form, goal
-  rows that link directly to `/goals/<goal_id>` with phase, next action, and
-  task progress, goal-linked tasks, linked artifacts, project-scoped incidents/
+  also includes a `Project Operator Workbench` with Do Now, Goal, Unblock, and
+  Finish Today cards, plus a confirmed `save-workspace` form that can make the
+  project detail page the next resume point. The rest of the page includes a
+  confirmed local `Start Goal For This Project` form, goal rows that link
+  directly to `/goals/<goal_id>` with phase, next action, and task progress,
+  goal-linked tasks, linked artifacts, project-scoped incidents/
   recommendations, next recommended operator action, and a project workflow
   launchpad that links the project to selected delegation/run workflow views,
   the safe action catalog, dogfooding checklist, and verification handoff.

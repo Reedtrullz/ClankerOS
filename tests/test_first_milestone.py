@@ -6508,6 +6508,82 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
         in register_workspace.body
     )
 
+    register_project = render_local_app_route(tmp_path, "/projects/clankeros")
+    assert register_project.status == 200
+    assert "Project Operator Workbench" in register_project.body
+    assert "data-project-operator-workbench='true'" in register_project.body
+    assert "data-project-workbench-actions='true'" in register_project.body
+    assert "project_workbench_status</dt><dd>needs_goal" in register_project.body
+    assert "project_workbench_project</dt><dd>clankeros" in register_project.body
+    assert "project_workbench_lead_goal</dt><dd>none" in register_project.body
+    assert "project_workbench_active_goals</dt><dd>0" in register_project.body
+    assert "project_workbench_paused_goals</dt><dd>0" in register_project.body
+    assert "project_workbench_completed_goals</dt><dd>0" in register_project.body
+    assert "project_workbench_tasks</dt><dd>0" in register_project.body
+    assert "project_workbench_delegations</dt><dd>0" in register_project.body
+    assert "project_workbench_coder_runs</dt><dd>0" in register_project.body
+    assert "project_workbench_pending_approvals</dt><dd>0" in register_project.body
+    assert "project_workbench_open_incidents</dt><dd>0" in register_project.body
+    assert "project_workbench_open_recommendations</dt><dd>0" in register_project.body
+    assert "project_workbench_waiting_items</dt><dd>0" in register_project.body
+    assert "project_workbench_next_action</dt><dd>start_project_goal" in register_project.body
+    assert (
+        "project_workbench_primary_surface</dt><dd>"
+        "<a href='/projects/clankeros#start-goal-for-this-project'>"
+        "Start Goal For This Project</a>"
+    ) in register_project.body
+    assert "project_workbench_reason</dt><dd>no project goals exist yet" in register_project.body
+    assert (
+        "project_workbench_unblock_surface</dt><dd>"
+        "<a href='/projects/clankeros#start-goal-for-this-project'>Start Goal</a>"
+    ) in register_project.body
+    assert "project_workbench_unblock_reason</dt><dd>no_project_goals" in register_project.body
+    assert (
+        "project_workbench_goal_surface</dt><dd>"
+        "<a href='/projects/clankeros#start-goal-for-this-project'>Start Goal</a>"
+    ) in register_project.body
+    assert (
+        "project_workbench_finish_surface</dt><dd>"
+        "<a href='#project-finish-today'>Finish Today</a>"
+    ) in register_project.body
+    assert "project_workbench_finish_form_available</dt><dd>true" in register_project.body
+    assert "project_workbench_finish_confirmation_required</dt><dd>true" in register_project.body
+    assert "project_workbench_saved_project</dt><dd>clankeros" in register_project.body
+    assert "project_workbench_saved_goal</dt><dd>none" in register_project.body
+    assert "project_workbench_saved_artifact</dt><dd>none" in register_project.body
+    assert "project_workbench_source</dt><dd>project_operator_state" in register_project.body
+    assert "project_workbench_write_on_get</dt><dd>false" in register_project.body
+    assert "project_workbench_provider_calls_taken</dt><dd>0" in register_project.body
+    assert "project_workbench_network_actions_taken</dt><dd>0" in register_project.body
+    assert "project_workbench_external_effects_created</dt><dd>false" in register_project.body
+    assert "project_workbench_push_created</dt><dd>false" in register_project.body
+    assert "project_workbench_pr_created</dt><dd>false" in register_project.body
+    assert "project_workbench_deploy_created</dt><dd>false" in register_project.body
+    assert "project_workbench_now: start_project_goal" in register_project.body
+    assert (
+        "project_workbench_click: <a href='/projects/clankeros#start-goal-for-this-project'>"
+        "Start Goal For This Project</a>"
+    ) in register_project.body
+    assert (
+        "project_workbench_goal: <a href='/projects/clankeros#start-goal-for-this-project'>"
+        "Start Goal</a>"
+    ) in register_project.body
+    assert (
+        "project_workbench_unblock: <a href='/projects/clankeros#start-goal-for-this-project'>"
+        "Start Goal</a>"
+    ) in register_project.body
+    assert "project_workbench_finish: <a href='#project-finish-today'>Finish Today</a>" in register_project.body
+    assert "project_finish_status</dt><dd>available" in register_project.body
+    assert "project_finish_action</dt><dd>save-workspace" in register_project.body
+    assert "project_finish_project</dt><dd>clankeros" in register_project.body
+    assert "project_finish_goal</dt><dd>none" in register_project.body
+    assert "project_finish_artifact</dt><dd>none" in register_project.body
+    assert "project_finish_confirmation_required</dt><dd>true" in register_project.body
+    assert "action='/actions/save-workspace'" in register_project.body
+    assert "name='open_project' value='clankeros'" in register_project.body
+    assert "name='open_goal' value=''" in register_project.body
+    assert "name='updated_by' value='project-operator-workbench'" in register_project.body
+
     create_goal_result = render_local_app_route(
         tmp_path,
         "/actions/create-goal",
@@ -9030,6 +9106,62 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "project_command_network_actions_taken</dt><dd>0" in project.body
     assert "project_command_external_effects_created</dt><dd>false" in project.body
     assert "project_command_now: request_commit_for_reviewed_run" in project.body
+    assert "Project Operator Workbench" in project.body
+    assert "data-project-operator-workbench='true'" in project.body
+    assert "data-project-workbench-actions='true'" in project.body
+    assert "project_workbench_status</dt><dd>attention_ready" in project.body
+    assert "project_workbench_project</dt><dd>local-app-demo" in project.body
+    assert f"project_workbench_lead_goal</dt><dd><a href='/goals/{result.goal_id}'" in project.body
+    assert "project_workbench_active_goals</dt><dd>1" in project.body
+    assert "project_workbench_paused_goals</dt><dd>0" in project.body
+    assert "project_workbench_completed_goals</dt><dd>0" in project.body
+    assert "project_workbench_tasks</dt><dd>1" in project.body
+    assert "project_workbench_delegations</dt><dd>1" in project.body
+    assert "project_workbench_coder_runs</dt><dd>1" in project.body
+    assert "project_workbench_pending_approvals</dt><dd>1" in project.body
+    assert "project_workbench_open_incidents</dt><dd>0" in project.body
+    assert "project_workbench_open_recommendations</dt><dd>0" in project.body
+    assert "project_workbench_publication_handoffs</dt><dd>0" in project.body
+    assert "project_workbench_waiting_items</dt><dd>1" in project.body
+    assert "project_workbench_next_action</dt><dd>request_commit_for_reviewed_run" in project.body
+    assert f"project_workbench_primary_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in project.body
+    assert "project_workbench_reason</dt><dd>reviewed coder run can request commit approval" in project.body
+    assert "project_workbench_unblock_surface</dt><dd><a href='/approvals'>Review approvals</a>" in project.body
+    assert "project_workbench_unblock_reason</dt><dd>pending_project_approvals" in project.body
+    assert f"project_workbench_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>Open lead goal</a>" in project.body
+    assert "project_workbench_finish_surface</dt><dd><a href='#project-finish-today'>Finish Today</a>" in project.body
+    assert "project_workbench_finish_form_available</dt><dd>true" in project.body
+    assert "project_workbench_finish_confirmation_required</dt><dd>true" in project.body
+    assert "project_workbench_saved_project</dt><dd>local-app-demo" in project.body
+    assert f"project_workbench_saved_goal</dt><dd>{result.goal_id}" in project.body
+    assert "project_workbench_saved_artifact</dt><dd><a href='/artifacts?path=" in project.body
+    assert "GOAL.md" in project.body
+    assert "project_workbench_source</dt><dd>project_operator_state" in project.body
+    assert "project_workbench_write_on_get</dt><dd>false" in project.body
+    assert "project_workbench_provider_calls_taken</dt><dd>0" in project.body
+    assert "project_workbench_network_actions_taken</dt><dd>0" in project.body
+    assert "project_workbench_external_effects_created</dt><dd>false" in project.body
+    assert "project_workbench_push_created</dt><dd>false" in project.body
+    assert "project_workbench_pr_created</dt><dd>false" in project.body
+    assert "project_workbench_deploy_created</dt><dd>false" in project.body
+    assert "project_workbench_now: request_commit_for_reviewed_run" in project.body
+    assert (
+        f"project_workbench_click: <a href='/runs/{result.coder_worktree_run_id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+    ) in project.body
+    assert f"project_workbench_goal: <a href='/goals/{result.goal_id}'>Open lead goal</a>" in project.body
+    assert "project_workbench_unblock: <a href='/approvals'>Review approvals</a>" in project.body
+    assert "project_workbench_finish: <a href='#project-finish-today'>Finish Today</a>" in project.body
+    assert "project_workbench_safety: confirmed local actions only; no write on GET" in project.body
+    assert "project_finish_status</dt><dd>available" in project.body
+    assert "project_finish_action</dt><dd>save-workspace" in project.body
+    assert "project_finish_project</dt><dd>local-app-demo" in project.body
+    assert f"project_finish_goal</dt><dd>{result.goal_id}" in project.body
+    assert "project_finish_confirmation_required</dt><dd>true" in project.body
+    assert "action='/actions/save-workspace'" in project.body
+    assert "name='open_project' value='local-app-demo'" in project.body
+    assert f"name='open_goal' value='{result.goal_id}'" in project.body
+    assert "name='updated_by' value='project-operator-workbench'" in project.body
     assert "Project Goals" in project.body
     assert result.goal_id in project.body
     assert f"href='/goals/{result.goal_id}'" in project.body

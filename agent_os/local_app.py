@@ -15116,6 +15116,15 @@ def _project_detail(root: Path, project_id: str) -> str:
                 delegations=delegations,
                 operator_state=operator_state,
             ),
+            _project_operator_workbench(
+                root,
+                project_id=project_id,
+                repo=repo,
+                goal_rows=goal_rows,
+                task_rows=task_rows,
+                delegations=delegations,
+                operator_state=operator_state,
+            ),
             _project_goal_creation_panel(project_id, goal_rows),
             _list_section(
                 "Project Goals",
@@ -15177,6 +15186,226 @@ def _project_detail(root: Path, project_id: str) -> str:
     )
 
 
+def _project_operator_workbench(
+    root: Path,
+    *,
+    project_id: str,
+    repo: dict[str, Any],
+    goal_rows: list[sqlite3.Row],
+    task_rows: list[sqlite3.Row],
+    delegations: list[Any],
+    operator_state: dict[str, Any],
+) -> str:
+    active_goals = [row for row in goal_rows if _goal_bucket(row) == "active"]
+    paused_goals = [row for row in goal_rows if _goal_bucket(row) == "paused"]
+    completed_goals = [row for row in goal_rows if _goal_bucket(row) == "completed"]
+    lead_goal = (
+        active_goals[0]
+        if active_goals
+        else (paused_goals[0] if paused_goals else (goal_rows[0] if goal_rows else None))
+    )
+    next_action = _project_next_action(
+        root,
+        open_incidents=operator_state["open_incidents"],
+        recommendations=operator_state["recommendations"],
+        worktree_approvals=operator_state["worktree_approvals"],
+        worktree_runs=operator_state["worktree_runs"],
+        commit_approvals=operator_state["commit_approvals"],
+        publications=operator_state["publications"],
+    )
+    if not goal_rows:
+        next_action = "start_project_goal"
+    target_href, target_label, reason = _project_next_action_target(
+        root,
+        project_id,
+        next_action=next_action,
+        goal_rows=goal_rows,
+        delegations=delegations,
+        operator_state=operator_state,
+    )
+    pending_approvals = (
+        _count_status(operator_state["worktree_approvals"], "pending_operator_approval")
+        + _count_status(operator_state["commit_approvals"], "pending_operator_approval")
+        + _count_status(operator_state["publications"], "pending_operator_approval")
+    )
+    open_incidents = len(operator_state["open_incidents"])
+    open_recommendations = len(operator_state["recommendations"])
+    ready_publications = _count_status(operator_state["publications"], "ready_for_operator")
+    waiting_items = pending_approvals + open_incidents + open_recommendations
+    if not goal_rows:
+        status = "needs_goal"
+    elif waiting_items:
+        status = "attention_ready"
+    elif next_action == "review_project_state":
+        status = "project_ready"
+    else:
+        status = "action_ready"
+
+    lead_goal_id = str(lead_goal["id"]) if lead_goal is not None else ""
+    lead_goal_label = (
+        str(lead_goal["title"] or lead_goal["description"] or lead_goal_id)
+        if lead_goal is not None
+        else "none"
+    )
+    lead_goal_href = (
+        f"/goals/{quote(lead_goal_id)}"
+        if lead_goal_id
+        else f"/projects/{quote(project_id)}#start-goal-for-this-project"
+    )
+    lead_goal_surface: str | SafeHtml = (
+        SafeHtml(f"<a href='{_e(lead_goal_href)}'>{_e(_compact_label(lead_goal_label, 72))}</a>")
+        if lead_goal_id
+        else "none"
+    )
+    lead_goal_action_label = "Open lead goal" if lead_goal_id else "Start Goal"
+
+    if open_incidents or open_recommendations:
+        unblock_href = "/incidents"
+        unblock_label = "Review incidents"
+        unblock_reason = "project_attention"
+    elif pending_approvals:
+        unblock_href = "/approvals"
+        unblock_label = "Review approvals"
+        unblock_reason = "pending_project_approvals"
+    elif lead_goal_id:
+        unblock_href = lead_goal_href
+        unblock_label = "Review goal"
+        unblock_reason = "no_project_blockers"
+    else:
+        unblock_href = f"/projects/{quote(project_id)}#start-goal-for-this-project"
+        unblock_label = "Start Goal"
+        unblock_reason = "no_project_goals"
+
+    artifact_path = (
+        f".clanker/projects/{project_id}/goals/{lead_goal_id}/GOAL.md"
+        if lead_goal_id
+        else ""
+    )
+    finish_form = _input_form(
+        "save-workspace",
+        {
+            "open_project": project_id,
+            "open_goal": lead_goal_id,
+            "return_to": f"/projects/{project_id}",
+        },
+        {
+            "filters": f"project:{project_id}",
+            "expanded_panels": "project-workbench,goals,workflow,approvals",
+            "last_viewed_artifact": artifact_path,
+            "updated_by": "project-operator-workbench",
+        },
+    )
+    return "".join(
+        [
+            "<section id='project-operator-workbench' class='panel project-operator-workbench' data-project-operator-workbench='true'><h2>Project Operator Workbench</h2>",
+            "<p class='muted'>Project-level daily moves: do the next project action, open the lead Goal, clear blockers, and save this project as the resume point.</p>",
+            "<div class='project-workbench-grid' data-project-workbench-actions='true'>",
+            "<div class='project-workbench-card project-workbench-primary'>",
+            "<h3>Do Now</h3>",
+            f"<p>{_e(next_action)}</p>",
+            f"<a class='project-workbench-action' href='{_e(target_href)}'>{_e(target_label)}</a>",
+            "</div>",
+            "<div class='project-workbench-card'>",
+            "<h3>Goal</h3>",
+            f"<p>{_e(_compact_label(lead_goal_label, 80))}</p>",
+            f"<a class='project-workbench-link' href='{_e(lead_goal_href)}'>{_e(lead_goal_action_label)}</a>",
+            "</div>",
+            "<div class='project-workbench-card'>",
+            "<h3>Unblock</h3>",
+            f"<p>{waiting_items} waiting item(s)</p>",
+            f"<a class='project-workbench-link' href='{_e(unblock_href)}'>{_e(unblock_label)}</a>",
+            "</div>",
+            "<div class='project-workbench-card'>",
+            "<h3>Finish Today</h3>",
+            "<p>Save project resume state</p>",
+            "<a class='project-workbench-link' href='#project-finish-today'>Open save form</a>",
+            "</div>",
+            "</div>",
+            _kv(
+                [
+                    ("project_workbench_status", status),
+                    ("project_workbench_project", project_id),
+                    ("project_workbench_branch", repo["branch"]),
+                    ("project_workbench_commit", repo["commit"]),
+                    ("project_workbench_lead_goal", lead_goal_surface),
+                    ("project_workbench_active_goals", str(len(active_goals))),
+                    ("project_workbench_paused_goals", str(len(paused_goals))),
+                    ("project_workbench_completed_goals", str(len(completed_goals))),
+                    ("project_workbench_tasks", str(len(task_rows))),
+                    ("project_workbench_delegations", str(len(delegations))),
+                    ("project_workbench_coder_runs", str(len(operator_state["worktree_runs"]))),
+                    ("project_workbench_pending_approvals", str(pending_approvals)),
+                    ("project_workbench_open_incidents", str(open_incidents)),
+                    ("project_workbench_open_recommendations", str(open_recommendations)),
+                    ("project_workbench_publication_handoffs", str(ready_publications)),
+                    ("project_workbench_waiting_items", str(waiting_items)),
+                    ("project_workbench_next_action", next_action),
+                    (
+                        "project_workbench_primary_surface",
+                        SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"),
+                    ),
+                    ("project_workbench_reason", reason),
+                    (
+                        "project_workbench_unblock_surface",
+                        SafeHtml(f"<a href='{_e(unblock_href)}'>{_e(unblock_label)}</a>"),
+                    ),
+                    ("project_workbench_unblock_reason", unblock_reason),
+                    (
+                        "project_workbench_goal_surface",
+                        SafeHtml(f"<a href='{_e(lead_goal_href)}'>{_e(lead_goal_action_label)}</a>"),
+                    ),
+                    (
+                        "project_workbench_finish_surface",
+                        SafeHtml("<a href='#project-finish-today'>Finish Today</a>"),
+                    ),
+                    ("project_workbench_finish_form_available", "true"),
+                    ("project_workbench_finish_confirmation_required", "true"),
+                    ("project_workbench_saved_project", project_id),
+                    ("project_workbench_saved_goal", lead_goal_id or "none"),
+                    (
+                        "project_workbench_saved_artifact",
+                        SafeHtml(_artifact_link(artifact_path)) if artifact_path else "none",
+                    ),
+                    ("project_workbench_source", "project_operator_state"),
+                    ("project_workbench_write_on_get", "false"),
+                    ("project_workbench_provider_calls_taken", "0"),
+                    ("project_workbench_network_actions_taken", "0"),
+                    ("project_workbench_external_effects_created", "false"),
+                    ("project_workbench_push_created", "false"),
+                    ("project_workbench_pr_created", "false"),
+                    ("project_workbench_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"project_workbench_now: {_e(next_action)}",
+                    f"project_workbench_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"project_workbench_goal: <a href='{_e(lead_goal_href)}'>{_e(lead_goal_action_label)}</a>",
+                    f"project_workbench_unblock: <a href='{_e(unblock_href)}'>{_e(unblock_label)}</a>",
+                    "project_workbench_finish: <a href='#project-finish-today'>Finish Today</a>",
+                    "project_workbench_safety: confirmed local actions only; no write on GET",
+                ]
+            ),
+            "<section id='project-finish-today' class='project-finish-today'><h3>Project Finish Today</h3>",
+            _kv(
+                [
+                    ("project_finish_status", "available"),
+                    ("project_finish_action", "save-workspace"),
+                    ("project_finish_project", project_id),
+                    ("project_finish_goal", lead_goal_id or "none"),
+                    ("project_finish_artifact", artifact_path or "none"),
+                    ("project_finish_confirmation_required", "true"),
+                    ("project_finish_write_on_get", "false"),
+                    ("project_finish_external_effects_created", "false"),
+                ]
+            ),
+            finish_form,
+            "</section>",
+            "</section>",
+        ]
+    )
+
+
 def _project_command_bar(
     root: Path,
     *,
@@ -15199,6 +15428,8 @@ def _project_command_bar(
         commit_approvals=operator_state["commit_approvals"],
         publications=operator_state["publications"],
     )
+    if not goal_rows:
+        next_action = "start_project_goal"
     target_href, target_label, reason = _project_next_action_target(
         root,
         project_id,
@@ -20700,6 +20931,19 @@ def _html_page(
     .project-command-bar {{ border-left:4px solid var(--accent); }}
     .project-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .project-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .project-operator-workbench {{ border-left:4px solid var(--accent); }}
+    .project-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .project-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .project-operator-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .project-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .project-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .project-workbench-card h3 {{ margin-top:0; }}
+    .project-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .project-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .project-workbench-action, .project-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .project-workbench-action {{ background:var(--accent); color:#fff; }}
+    .project-workbench-link {{ background:var(--surface); color:var(--accent); }}
+    .project-finish-today {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .first-run-command-bar {{ border-left:4px solid var(--accent); margin:12px 0; }}
     .first-run-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .first-run-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -20830,7 +21074,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>

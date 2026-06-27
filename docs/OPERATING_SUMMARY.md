@@ -78,12 +78,14 @@ Core layers for the bootstrap:
   project goals from goal-linked project tasks, include a read-only
   `Project Command Bar` that summarizes branch/commit, goal and queue counts,
   next project action, target local surface, and no-write/no-network/
-  no-external-effect boundaries before the longer inventory, include a
-  confirmed local `Start Goal For This Project` form, and include a project
+  no-external-effect boundaries before the longer inventory, and now include a
+  `Project Operator Workbench` with Do Now, Goal, Unblock, and Finish Today
+  cards plus a confirmed `save-workspace` form for project-level resume. They
+  include a confirmed local `Start Goal For This Project` form and a project
   workflow launchpad with scoped delegation/run workflow links, safe actions,
-  dogfooding, and verification
-  links so the operator can start from the product path rather than infer
-  goals from task rows. Project goal rows link directly to
+  dogfooding, and verification links so the operator can start from the
+  product path rather than infer goals from task rows. Project goal rows link
+  directly to
   `/goals/<goal_id>` and show phase, next action, and task progress so the
   project page can launch the same goal-centered workbench as `/goals`. The
   local app now also exposes `/today` as a daily command center for the
