@@ -203,7 +203,10 @@ Core layers for the bootstrap:
   project, so memory decisions can become tomorrow's resume surface without a
   separate manual workspace save. The
   populated `/goals`
-  cockpit also exposes a confirmed
+  cockpit starts with a read-only `Goal Board Command Bar` that prioritizes
+  the saved or active Goal, phase, one next action, target local surface,
+  waiting counts, resume route, action availability, and zero-effect counters
+  before the active/paused/completed lanes. It also exposes a confirmed
   local `Start Another Goal` form for registered projects, so daily goal
   creation does not require the CLI. The checklist reports the current step,
   one `first_run_next_action` with a reason, project/goal/delegation/

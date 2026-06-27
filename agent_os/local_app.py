@@ -3488,7 +3488,7 @@ def _first_run_panel(root: Path, storage: Storage) -> str:
     default_project = progress["default_project"]
     return "".join(
         [
-            "<section><h2>First Run Guide</h2>",
+            "<section id='first-run-guide'><h2>First Run Guide</h2>",
             "<p class='muted'>A state-aware path for a new operator to create local ClankerOS state and reach the first delegation handoff without reading docs.</p>",
             _kv(
                 [
@@ -3781,6 +3781,14 @@ def _goals(root: Path) -> str:
                 "<section><h1>Goal Cockpit</h1>",
                 "<p class='muted'>Everything in ClankerOS revolves around a Goal. No goals exist yet in this local state.</p>",
                 "</section>",
+                _goal_board_command_bar(
+                    root,
+                    storage,
+                    rows=rows,
+                    active=[],
+                    paused=[],
+                    completed=[],
+                ),
                 _first_run_panel(root, storage),
                 _non_claim_banner(),
             ]
@@ -3802,6 +3810,14 @@ def _goals(root: Path) -> str:
                 ]
             ),
             "</section>",
+            _goal_board_command_bar(
+                root,
+                storage,
+                rows=rows,
+                active=active,
+                paused=paused,
+                completed=completed,
+            ),
             _goal_creation_panel(storage, rows),
             _list_section("Active Goals", [_goal_index_line(root, storage, row) for row in active]),
             _list_section("Paused Goals", [_goal_index_line(root, storage, row) for row in paused]),
@@ -3828,7 +3844,7 @@ def _goal_creation_panel(storage: Storage, rows: list[sqlite3.Row]) -> str:
     default_project = lead_project if lead_project in project_names else project_names[0]
     return "".join(
         [
-            "<section><h2>Start Another Goal</h2>",
+            "<section id='goal-start-another'><h2>Start Another Goal</h2>",
             "<p class='muted'>Create the next local goal from the cockpit without switching to the CLI.</p>",
             _kv(
                 [
@@ -3854,6 +3870,164 @@ def _goal_creation_panel(storage: Storage, rows: list[sqlite3.Row]) -> str:
             "</section>",
         ]
     )
+
+
+def _goal_board_command_bar(
+    root: Path,
+    storage: Storage,
+    *,
+    rows: list[sqlite3.Row],
+    active: list[sqlite3.Row],
+    paused: list[sqlite3.Row],
+    completed: list[sqlite3.Row],
+) -> str:
+    selected_row, source = _goal_board_selected_row(root, rows, active, paused, completed)
+    if selected_row is None:
+        first_run = _first_run_progress(root, storage)
+        lines = [
+            f"goal_board_now: {_e(first_run['next_action'])}",
+            f"goal_board_click: {first_run['next_surface']}",
+            (
+                "goal_board_first_run: "
+                f"step={_e(first_run['current_step'])} "
+                f"reason={_e(first_run['next_reason'])}"
+            ),
+            "goal_board_safety: read-only board guidance; confirmed forms remain below",
+        ]
+        return "".join(
+            [
+                "<section class='panel goal-board-command-bar' data-goal-board-command-bar='true'><h2>Goal Board Command Bar</h2>",
+                "<p class='muted'>One board-level pointer for a fresh or empty Goal cockpit.</p>",
+                _kv(
+                    [
+                        ("goal_board_status", "first_run"),
+                        ("goal_board_total_goals", "0"),
+                        ("goal_board_active_goals", "0"),
+                        ("goal_board_paused_goals", "0"),
+                        ("goal_board_completed_goals", "0"),
+                        ("goal_board_priority_source", "first_run"),
+                        ("goal_board_primary_goal", "none"),
+                        ("goal_board_primary_project", first_run["default_project"]),
+                        ("goal_board_primary_phase", "First run"),
+                        ("goal_board_primary_action", first_run["next_action"]),
+                        ("goal_board_primary_surface", first_run["next_surface"]),
+                        ("goal_board_primary_reason", first_run["next_reason"]),
+                        ("goal_board_first_run_step", first_run["current_step"]),
+                        ("goal_board_action_form_available", "true"),
+                        ("goal_board_action_form_surface", SafeHtml("<a href='#first-run-guide'>First Run Guide</a>")),
+                        ("goal_board_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+                        ("goal_board_write_on_get", "false"),
+                        ("goal_board_provider_calls_taken_by_clankeros", "0"),
+                        ("goal_board_network_actions_taken", "0"),
+                        ("goal_board_external_effects_created", "false"),
+                    ]
+                ),
+                _ul(lines),
+                "</section>",
+            ]
+        )
+
+    goal_id = str(selected_row["id"])
+    state = _goal_state(root, storage, goal_id)
+    goal = state["goal"]
+    phase = _goal_current_phase(state)
+    next_action = _goal_next_action(root, state)
+    action_form = _goal_next_action_form(state, next_action)
+    open_incidents = sum(1 for row in state["incidents"] if row["status"] == "open")
+    open_recommendations = sum(
+        1 for row in state["recommendations"] if row["status"] == "open"
+    )
+    open_tasks = sum(
+        1
+        for task in state["tasks"]
+        if task.status not in {"completed", "cancelled"}
+    )
+    pending_approvals = (
+        _count_status(state["worktree_approvals"], "pending_operator_approval")
+        + _count_status(state["commit_approvals"], "pending_operator_approval")
+        + _count_status(state["publications"], "pending_operator_approval")
+    )
+    waiting_items = open_incidents + open_recommendations + pending_approvals
+    label = _compact_label(goal.title or goal.description or goal.id, 72)
+    goal_surface = SafeHtml(f"<a href='/goals/{quote(goal.id)}'>{_e(label)}</a>")
+    project_surface = SafeHtml(
+        f"<a href='/projects/{quote(goal.project_id)}'>{_e(goal.project_id)}</a>"
+    )
+    next_surface = SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>")
+    lines = [
+        f"goal_board_now: {_e(next_action.action)}",
+        f"goal_board_click: <a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
+        f"goal_board_open: <a href='/goals/{quote(goal.id)}'>{_e(goal.id)}</a>",
+        (
+            "goal_board_waiting: "
+            f"approvals={pending_approvals} incidents={open_incidents} "
+            f"recommendations={open_recommendations}"
+        ),
+        f"goal_board_progress: {_e(_goal_progress_label(state))}",
+        "goal_board_safety: read-only local board guidance",
+    ]
+    return "".join(
+        [
+            "<section class='panel goal-board-command-bar' data-goal-board-command-bar='true'><h2>Goal Board Command Bar</h2>",
+            "<p class='muted'>One board-level recommendation before the active, paused, and completed lanes.</p>",
+            _kv(
+                [
+                    ("goal_board_status", "available"),
+                    ("goal_board_total_goals", str(len(rows))),
+                    ("goal_board_active_goals", str(len(active))),
+                    ("goal_board_paused_goals", str(len(paused))),
+                    ("goal_board_completed_goals", str(len(completed))),
+                    ("goal_board_priority_source", source),
+                    ("goal_board_primary_goal", goal_surface),
+                    ("goal_board_primary_project", project_surface),
+                    ("goal_board_primary_phase", phase),
+                    ("goal_board_primary_action", next_action.action),
+                    ("goal_board_primary_surface", next_surface),
+                    ("goal_board_primary_reason", next_action.reason),
+                    ("goal_board_progress", _goal_progress_label(state)),
+                    ("goal_board_open_tasks", str(open_tasks)),
+                    ("goal_board_waiting_items", str(waiting_items)),
+                    ("goal_board_pending_approvals", str(pending_approvals)),
+                    ("goal_board_open_incidents", str(open_incidents)),
+                    ("goal_board_open_recommendations", str(open_recommendations)),
+                    ("goal_board_action_form_available", str(bool(action_form)).lower()),
+                    ("goal_board_action_form_surface", next_surface),
+                    ("goal_board_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+                    (
+                        "goal_board_create_goal_surface",
+                        SafeHtml("<a href='#goal-start-another'>Start Another Goal</a>"),
+                    ),
+                    ("goal_board_write_on_get", "false"),
+                    ("goal_board_provider_calls_taken_by_clankeros", "0"),
+                    ("goal_board_network_actions_taken", "0"),
+                    ("goal_board_external_effects_created", "false"),
+                ]
+            ),
+            _ul(lines),
+            "</section>",
+        ]
+    )
+
+
+def _goal_board_selected_row(
+    root: Path,
+    rows: list[sqlite3.Row],
+    active: list[sqlite3.Row],
+    paused: list[sqlite3.Row],
+    completed: list[sqlite3.Row],
+) -> tuple[sqlite3.Row | None, str]:
+    saved_goal = str(_load_workspace_state(root).get("open_goal") or "").strip()
+    if saved_goal:
+        for row in rows:
+            if str(row["id"]) == saved_goal:
+                return row, "saved_goal"
+    if active:
+        return active[0], "active_goal"
+    if paused:
+        return paused[0], "paused_goal"
+    if completed:
+        return completed[0], "completed_goal"
+    return None, "first_run"
 
 
 def _goal_detail(root: Path, goal_id: str) -> str:
@@ -13256,6 +13430,9 @@ def _html_page(
     .goal-command-bar dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:8px; }}
     .goal-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-board-command-bar {{ border-left:4px solid var(--accent); }}
+    .goal-board-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-board-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-git-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-git-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-git-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

@@ -181,9 +181,13 @@ local surface.
 Use `/goals` as the daily cockpit. It separates active, paused, and completed
 goals, links each goal to its detail page, and shows phase, next action, and
 task progress plus open task, incident, and recommendation counts from
-existing local state. The cockpit also includes a confirmed local `Start
-Another Goal` form backed by the existing `create-goal` action, so an operator
-can add the next goal for a registered project without switching to the CLI.
+existing local state. A read-only `Goal Board Command Bar` starts the page
+with total goal counts, the prioritized saved or active Goal, its current
+phase, one next action, the target surface, waiting counts, resume link, and
+zero-effect counters. The cockpit also includes a confirmed local `Start
+Another Goal` form backed by the existing `create-goal` action, so an
+operator can add the next goal for a registered project without switching to
+the CLI.
 Use `/goals/<goal_id>` as the
 goal-centered workbench: a Goal Command Bar, Goal Daily Loop, Goal Workflow Map,
 current phase, next action, next recommendation, progress, timeline, activity

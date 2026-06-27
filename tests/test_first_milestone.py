@@ -4416,6 +4416,28 @@ def test_local_app_routes_render_modern_workflow_and_health(
     goals = render_local_app_route(tmp_path, "/goals")
     assert goals.status == 200
     assert "Goal Cockpit" in goals.body
+    assert "Goal Board Command Bar" in goals.body
+    assert "data-goal-board-command-bar='true'" in goals.body
+    assert "goal_board_status</dt><dd>first_run" in goals.body
+    assert "goal_board_total_goals</dt><dd>0" in goals.body
+    assert "goal_board_active_goals</dt><dd>0" in goals.body
+    assert "goal_board_priority_source</dt><dd>first_run" in goals.body
+    assert "goal_board_primary_goal</dt><dd>none" in goals.body
+    assert "goal_board_primary_project</dt><dd>clankeros" in goals.body
+    assert "goal_board_primary_phase</dt><dd>First run" in goals.body
+    assert "goal_board_primary_action</dt><dd>Register ClankerOS project" in goals.body
+    assert "goal_board_primary_surface</dt><dd><a href='/goals'>/goals</a>" in goals.body
+    assert "goal_board_primary_reason</dt><dd>no_project_registered" in goals.body
+    assert "goal_board_first_run_step</dt><dd>create_project" in goals.body
+    assert "goal_board_action_form_available</dt><dd>true" in goals.body
+    assert "goal_board_action_form_surface</dt><dd><a href='#first-run-guide'>First Run Guide</a>" in goals.body
+    assert "goal_board_resume_surface</dt><dd><a href='/resume'>/resume</a>" in goals.body
+    assert "goal_board_write_on_get</dt><dd>false" in goals.body
+    assert "goal_board_network_actions_taken</dt><dd>0" in goals.body
+    assert "goal_board_external_effects_created</dt><dd>false" in goals.body
+    assert "goal_board_now: Register ClankerOS project" in goals.body
+    assert "goal_board_first_run: step=create_project reason=no_project_registered" in goals.body
+    assert "id='first-run-guide'" in goals.body
     assert "First Run Guide" in goals.body
     assert "first_run_current_step</dt><dd>create_project" in goals.body
     assert "first_run_step: create_project status=current" in goals.body
@@ -5908,6 +5930,34 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Cockpit" in goals.body
     assert "Active Goals" in goals.body
     assert "goal_first_navigation" in goals.body
+    assert "Goal Board Command Bar" in goals.body
+    assert "data-goal-board-command-bar='true'" in goals.body
+    assert "goal_board_status</dt><dd>available" in goals.body
+    assert "goal_board_total_goals</dt><dd>1" in goals.body
+    assert "goal_board_active_goals</dt><dd>1" in goals.body
+    assert "goal_board_paused_goals</dt><dd>0" in goals.body
+    assert "goal_board_completed_goals</dt><dd>0" in goals.body
+    assert "goal_board_priority_source</dt><dd>active_goal" in goals.body
+    assert f"goal_board_primary_goal</dt><dd><a href='/goals/{result.goal_id}'" in goals.body
+    assert "goal_board_primary_project</dt><dd><a href='/projects/local-app-demo'" in goals.body
+    assert "goal_board_primary_phase</dt><dd>Ready to commit" in goals.body
+    assert "goal_board_primary_action</dt><dd>Create commit request" in goals.body
+    assert f"goal_board_primary_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goals.body
+    assert "goal_board_primary_reason</dt><dd>reviewed_run=" in goals.body
+    assert "goal_board_progress</dt><dd>0/1 tasks completed" in goals.body
+    assert "goal_board_open_tasks</dt><dd>1" in goals.body
+    assert "goal_board_waiting_items</dt><dd>1" in goals.body
+    assert "goal_board_pending_approvals</dt><dd>1" in goals.body
+    assert "goal_board_open_incidents</dt><dd>0" in goals.body
+    assert "goal_board_open_recommendations</dt><dd>0" in goals.body
+    assert "goal_board_action_form_available</dt><dd>true" in goals.body
+    assert "goal_board_create_goal_surface</dt><dd><a href='#goal-start-another'>Start Another Goal</a>" in goals.body
+    assert "goal_board_write_on_get</dt><dd>false" in goals.body
+    assert "goal_board_network_actions_taken</dt><dd>0" in goals.body
+    assert "goal_board_external_effects_created</dt><dd>false" in goals.body
+    assert "goal_board_now: Create commit request" in goals.body
+    assert "goal_board_waiting: approvals=1 incidents=0 recommendations=0" in goals.body
+    assert "id='goal-start-another'" in goals.body
     assert "Start Another Goal" in goals.body
     assert "goal_creation_form_available</dt><dd>true" in goals.body
     assert "goal_creation_project_count</dt><dd>1" in goals.body
