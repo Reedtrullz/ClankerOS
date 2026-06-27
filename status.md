@@ -1,5 +1,40 @@
 # Status
 
+## 2026-06-27 Today Command Center
+
+- Added `/today` as a first-class daily command-center route for spending the
+  day inside the browser app without starting from the full dashboard
+  inventory.
+- The route starts with a read-only `Today Command Center` that selects the
+  lead Goal or first-run step, names the current phase, one primary action,
+  target surface or same-page current-action form, attention routing for
+  approvals/incidents/recommendations/inbox, resume readiness, CI proof
+  posture, and a confirmed `Finish Today` workspace save form for tomorrow's
+  resume point.
+- Reused existing Home/Goal primitives below the command center: Start Here,
+  Home Day Plan, Attention Brief, Focus Queue, recent activity, inbox,
+  recommendations, incidents, and first-run guidance.
+- Added `/today` to navigation, keyboard shortcuts (`y`), the local app status
+  route list, app smoke route markers, fixture-backed demo smoke snippets,
+  README, local app docs, and the operating summary.
+- Non-claims: this does not write on GET, add provider calls, fetch GitHub
+  status, approve requests, execute coder work, commit, push, create PRs,
+  deploy, or mutate external systems. Same-page forms are existing confirmed
+  local actions only.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `git diff --check`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with `/today` marker matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed `/today` snippets matched; demo generated
+    `subagent_delegation_84f0503309f9`, `run_c2a2abf75589`, and coder
+    worktree run `run_7c0415f92cbc`
+
 ## 2026-06-27 Workspace Operator Workbench
 
 - Added a `Workspace Operator Workbench` immediately after the `/workspace`

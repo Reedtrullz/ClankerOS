@@ -140,6 +140,17 @@ watch `Fast smoke verification`, and let `Full pytest suite` finish in Actions.
 See [GitHub Testing](docs/github-testing.md) for the exact proof boundaries and
 status-recording commands.
 
+Use `/today` as the daily command center when you want one page for the
+current day instead of the full dashboard inventory. It starts with a
+`Today Command Center` that chooses the lead Goal or first-run step, shows the
+current phase, one primary action, the exact target or same-page action form,
+attention routing for approvals/incidents/recommendations/inbox, resume
+readiness, CI proof posture, and a confirmed `Finish Today` workspace save
+form for tomorrow's resume point. It reuses the existing Home, Goal, inbox,
+activity, and first-run surfaces below the command center, writes nothing on
+GET, and only exposes confirmed local forms already available elsewhere in the
+app.
+
 Use `/resume` when returning to ClankerOS after a break. It reads the saved
 workspace state, shows the exact saved goal/project/artifact links, preserves
 filters and expanded panel readbacks, and starts with a read-only

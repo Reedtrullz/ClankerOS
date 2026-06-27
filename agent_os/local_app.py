@@ -91,6 +91,7 @@ NO_EXTERNAL_EFFECT_CLAIMS = [
 ]
 NAV_ITEMS = [
     ("Dashboard", "/"),
+    ("Today", "/today"),
     ("Resume", "/resume"),
     ("Goals", "/goals"),
     ("Search", "/search"),
@@ -113,6 +114,7 @@ NAV_ITEMS = [
 ]
 ROUTE_KEYBOARD_SHORTCUTS = {
     "/": "h",
+    "/today": "y",
     "/resume": "r",
     "/goals": "g",
     "/search": "s",
@@ -121,6 +123,7 @@ GLOBAL_KEYBOARD_SHORTCUTS = {
     "/": "Open command palette",
     "Escape": "Close command palette",
     "h": "Open home",
+    "y": "Open today",
     "g": "Open goals",
     "r": "Open resume",
     "s": "Open search",
@@ -303,6 +306,8 @@ def render_local_app_route(
             return _handle_post(root, path, form or {})
         if path == "/":
             return page("Dashboard", _dashboard(root, host=host, port=port))
+        if path == "/today":
+            return page("Today", _today_page(root))
         if path == "/goals":
             return page("Goals", _goals(root))
         if path == "/resume":
@@ -390,6 +395,7 @@ def run_local_app_smoke_test(root: Path) -> dict[str, Any]:
     outside_link.symlink_to(outside_artifact)
     routes = [
         ("/", "ClankerOS Local Operator"),
+        ("/today", "Today Command Center"),
         ("/resume", "Resume Workspace"),
         ("/goals", "Goal Cockpit"),
         ("/search", "Global Search"),
@@ -492,6 +498,19 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "Active Goals",
                 "goal_first_navigation",
                 f"/goals/{demo.goal_id}",
+            ],
+        ),
+        (
+            "/today",
+            "Today Command Center",
+            [
+                "data-today-command-center='true'",
+                "data-today-command-actions='true'",
+                "today_command_status</dt><dd>goal_ready",
+                "today_command_primary_action</dt><dd>Create commit request",
+                "today_command_attention_status</dt><dd>needs_approval_review",
+                "today_command_finish_form_available</dt><dd>true",
+                f"/runs/{demo.coder_worktree_run_id}",
             ],
         ),
         (
@@ -995,7 +1014,7 @@ def write_local_app_status(root: Path, *, host: str, port: int) -> Path:
         "dirty_tracked_files": state["dirty_tracked_files"],
         "untracked_files": state["untracked_files"],
         "warnings": warnings,
-        "routes_available": ["/", "/goals", "/goals/<id>", "/search", "/workspace", "/memory", "/skills", "/profiles", "/workflow", "/actions", "/verification", "/ci-evidence", "/dogfooding", "/projects", "/delegation-runs", "/delegations/<id>", "/runs/<id>", "/inbox", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
+        "routes_available": ["/", "/today", "/goals", "/goals/<id>", "/search", "/workspace", "/memory", "/skills", "/profiles", "/workflow", "/actions", "/verification", "/ci-evidence", "/dogfooding", "/projects", "/delegation-runs", "/delegations/<id>", "/runs/<id>", "/inbox", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
         "supported_workflow_stages": [step[0] for step in WORKFLOW_STEPS],
         "non_claims": NO_EXTERNAL_EFFECT_CLAIMS,
         "known_gaps": [
@@ -1062,6 +1081,275 @@ def _dashboard(root: Path, *, host: str, port: int) -> str:
             _list_section("Pending Approvals", rows["approvals"], "/approvals"),
             _list_section("Incidents / Recommendations", rows["incidents"], "/incidents"),
             _dashboard_next_action_section(next_action),
+        ]
+    )
+
+
+def _today_page(root: Path) -> str:
+    storage = _storage(root)
+    rows = _goal_rows(storage, limit=100)
+    active = [row for row in rows if _goal_bucket(row) == "active"]
+    paused = [row for row in rows if _goal_bucket(row) == "paused"]
+    completed = [row for row in rows if _goal_bucket(row) == "completed"]
+    lead_goal = active[0] if active else (paused[0] if paused else (completed[0] if completed else None))
+    sections = [
+        "<section class='hero'><h1>Today</h1>",
+        "<p>Daily command center for the current goal, attention queue, resume state, and finish-today handoff.</p>",
+        _kv(
+            [
+                ("today_goal_first", "true"),
+                ("today_active_goals", str(len(active))),
+                ("today_paused_goals", str(len(paused))),
+                ("today_completed_goals", str(len(completed))),
+                ("today_write_on_get", "false"),
+                ("today_provider_calls_taken", "0"),
+                ("today_network_actions_taken", "0"),
+                ("today_external_effects_created", "false"),
+            ]
+        ),
+        "</section>",
+        _today_command_center(root, storage, lead_goal),
+        _home_start_here(root, storage, lead_goal),
+        _home_day_plan(root, storage, lead_goal),
+        _home_attention_brief(root, storage, lead_goal),
+        _home_focus_queue(root, storage, active=active, paused=paused),
+        _home_recent_activity(root, storage),
+        _home_inbox(root),
+        _home_recommendations(storage),
+        _home_incidents(storage),
+    ]
+    if not _first_run_progress(root, storage)["complete"]:
+        sections.append(_first_run_panel(root, storage))
+    sections.append(_non_claim_banner())
+    return "".join(sections)
+
+
+def _today_command_center(
+    root: Path,
+    storage: Storage,
+    lead_goal: sqlite3.Row | None,
+) -> str:
+    workspace = _load_workspace_state(root)
+    open_project = str(workspace.get("open_project") or "").strip()
+    open_goal = str(workspace.get("open_goal") or "").strip()
+    filters = str(workspace.get("filters") or "").strip()
+    expanded = str(workspace.get("expanded_panels") or "").strip()
+    last_artifact = str(workspace.get("last_viewed_artifact") or "").strip()
+    readiness = _workspace_resume_readiness(
+        root,
+        open_project=open_project,
+        open_goal=open_goal,
+        filters=filters,
+        expanded=expanded,
+        last_artifact=last_artifact,
+    )
+    inbox = collect_inbox_items(root)
+    pending_approvals = (
+        len(inbox["pending_approvals"])
+        + len(inbox["coder_worktree_approvals"])
+        + len(inbox["coder_worktree_commit_approvals"])
+        + len(inbox["coder_publication_requests"])
+    )
+    open_incidents = len(inbox["open_incidents"])
+    open_recommendations = len(storage.list_recent_task_recommendations(limit=20))
+    inbox_items = int(inbox["count"])
+    ci_record = _latest_ci_evidence_record(root)
+    if ci_record is None:
+        ci_source = "none"
+        ci_status = "missing"
+    else:
+        ci_source, record = ci_record
+        ci_status = str(record.status)
+
+    if open_incidents:
+        attention_status = "needs_incident_review"
+        attention_action = "Review incidents"
+        attention_href = "/incidents"
+    elif pending_approvals:
+        attention_status = "needs_approval_review"
+        attention_action = "Review approvals"
+        attention_href = "/approvals"
+    elif open_recommendations:
+        attention_status = "needs_recommendation_review"
+        attention_action = "Review recommendations"
+        attention_href = "/incidents"
+    elif inbox_items:
+        attention_status = "needs_inbox_review"
+        attention_action = "Review inbox"
+        attention_href = "/inbox"
+    else:
+        attention_status = "clear"
+        attention_action = "Continue goal"
+        attention_href = "/goals"
+
+    action_form = ""
+    finish_form = ""
+    if lead_goal is None:
+        first_run = _first_run_progress(root, storage)
+        status = "first_run"
+        goal_surface: str | SafeHtml = "none"
+        project_surface: str | SafeHtml = "none"
+        phase = "First run"
+        primary_action = str(first_run["next_action"])
+        first_goal_id = str(first_run.get("goal_id") or "")
+        primary_href = f"/goals/{quote(first_goal_id)}" if first_goal_id else "/goals"
+        primary_reason = str(first_run["next_reason"])
+        progress = f"first_run_step={first_run['current_step']}"
+        finish_status = "not_ready_until_goal_exists"
+        open_tasks = 0
+        waiting_items = pending_approvals + open_incidents + open_recommendations
+        target_href = primary_href
+        target_label = primary_href
+        if attention_status == "clear":
+            attention_status = "first_run"
+            attention_action = primary_action
+            attention_href = primary_href
+    else:
+        goal_id = str(lead_goal["id"])
+        state = _goal_state(root, storage, goal_id)
+        goal = state["goal"]
+        next_action = _goal_next_action(root, state)
+        action_form = _goal_next_action_form(state, next_action)
+        latest_artifact = _goal_latest_artifact_path(root, state)
+        status = "goal_ready"
+        label = str(lead_goal["title"] or lead_goal["description"] or goal_id)
+        goal_surface = SafeHtml(
+            f"<a href='/goals/{quote(goal_id)}'>{_e(_compact_label(label, 72))}</a>"
+        )
+        project_surface = SafeHtml(
+            f"<a href='/projects/{quote(goal.project_id)}'>{_e(goal.project_id)}</a>"
+        )
+        phase = _goal_current_phase(state)
+        primary_action = next_action.action
+        primary_href = next_action.href
+        primary_reason = next_action.reason
+        progress = _goal_progress_label(state)
+        open_tasks = len([task for task in state["tasks"] if task.status != "completed"])
+        goal_open_incidents = len([item for item in state["incidents"] if item["status"] == "open"])
+        goal_open_recommendations = len(
+            [item for item in state["recommendations"] if item["status"] == "open"]
+        )
+        goal_pending_approvals = (
+            _count_status(state["worktree_approvals"], "pending_operator_approval")
+            + _count_status(state["commit_approvals"], "pending_operator_approval")
+            + _count_status(state["publications"], "pending_operator_approval")
+        )
+        waiting_items = goal_open_incidents + goal_open_recommendations + goal_pending_approvals
+        target_href = "#today-current-action" if action_form else primary_href
+        target_label = "Today Current Action" if action_form else primary_href
+        saved_goal_matches_lead = open_goal == goal_id
+        saved_project_matches_lead = open_project == str(goal.project_id)
+        saved_artifact_matches_latest = bool(latest_artifact) and last_artifact == latest_artifact
+        finish_status = (
+            "ready"
+            if saved_goal_matches_lead
+            and saved_project_matches_lead
+            and (saved_artifact_matches_latest or not latest_artifact)
+            else "needs_workspace_save"
+        )
+        finish_form = "".join(
+            [
+                "<section id='today-finish' class='today-finish'><h3>Finish Today</h3>",
+                "<p class='muted'>Save today's lead goal, filters, expanded panels, and latest artifact as tomorrow's resume point. This writes only `.clanker/app/workspace.json` after confirmation.</p>",
+                _input_form(
+                    "save-workspace",
+                    {
+                        "open_project": str(goal.project_id),
+                        "open_goal": goal_id,
+                        "return_to": "/today",
+                    },
+                    {
+                        "filters": f"goal:{goal_id}",
+                        "expanded_panels": "today,day-plan,daily-loop,next-action,timeline,evidence,artifacts,notes",
+                        "last_viewed_artifact": latest_artifact or "",
+                        "updated_by": "today-command-center",
+                    },
+                ),
+                "</section>",
+            ]
+        )
+
+    target_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    primary_surface = SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_href)}</a>")
+    attention_surface = SafeHtml(f"<a href='{_e(attention_href)}'>{_e(attention_href)}</a>")
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("today_command_status", status),
+        ("today_command_source", "goal_state_workspace_attention_ci"),
+        ("today_command_goal", goal_surface),
+        ("today_command_project", project_surface),
+        ("today_command_phase", phase),
+        ("today_command_primary_action", primary_action),
+        ("today_command_primary_surface", primary_surface),
+        ("today_command_target_surface", target_surface),
+        ("today_command_reason", primary_reason),
+        ("today_command_progress", progress),
+        ("today_command_open_tasks", str(open_tasks)),
+        ("today_command_waiting_items", str(waiting_items)),
+        ("today_command_pending_approvals", str(pending_approvals)),
+        ("today_command_open_incidents", str(open_incidents)),
+        ("today_command_open_recommendations", str(open_recommendations)),
+        ("today_command_inbox_items", str(inbox_items)),
+        ("today_command_attention_status", attention_status),
+        ("today_command_attention_action", attention_action),
+        ("today_command_attention_surface", attention_surface),
+        ("today_command_resume_ready", str(readiness["ready"]).lower()),
+        ("today_command_resume_status", str(readiness["status"])),
+        ("today_command_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+        ("today_command_workspace_surface", SafeHtml("<a href='/workspace'>/workspace</a>")),
+        ("today_command_ci_status", ci_status),
+        ("today_command_ci_source", ci_source),
+        ("today_command_ci_surface", SafeHtml("<a href='/verification'>/verification</a>")),
+        ("today_command_action_form_available", str(bool(action_form)).lower()),
+        ("today_command_confirmation_required", str(bool(action_form)).lower()),
+        ("today_command_finish_status", finish_status),
+        ("today_command_finish_form_available", str(bool(finish_form)).lower()),
+        ("today_command_finish_confirmation_required", str(bool(finish_form)).lower()),
+        ("today_command_write_on_get", "false"),
+        ("today_command_provider_calls_taken", "0"),
+        ("today_command_network_actions_taken", "0"),
+        ("today_command_external_effects_created", "false"),
+    ]
+    lines = [
+        f"today_command_now: {_e(primary_action)}",
+        f"today_command_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+        f"today_command_attention: {attention_status} -> <a href='{_e(attention_href)}'>{_e(attention_href)}</a>",
+        f"today_command_resume: readiness={_e(str(readiness['status']))} surface=<a href='/resume'>/resume</a>",
+        f"today_command_finish: status={_e(finish_status)} surface=<a href='#today-finish'>Finish Today</a>",
+        "today_command_safety: read-only daily cockpit; confirmed local forms only",
+    ]
+    action_details = (
+        "<details id='today-current-action' class='today-current-action' data-today-current-action='true'>"
+        "<summary>Run Current Action</summary>"
+        "<p class='muted'>Use the current goal's browser-available next action here. Confirmation is required before any local write.</p>"
+        f"{action_form}"
+        "</details>"
+        if action_form
+        else ""
+    )
+    cards = "".join(
+        [
+            "<div class='today-command-grid' data-today-command-actions='true'>",
+            "<article class='today-command-card today-command-primary'><h3>Do Now</h3>",
+            f"<p>{_e(primary_action)}</p><a class='today-command-action' href='{_e(target_href)}'>{_e(target_label)}</a></article>",
+            "<article class='today-command-card'><h3>Attention</h3>",
+            f"<p>{_e(attention_action)}</p><a class='today-command-link' href='{_e(attention_href)}'>{_e(attention_href)}</a></article>",
+            "<article class='today-command-card'><h3>Resume</h3>",
+            "<p>Restore saved workspace context.</p><a class='today-command-link' href='/resume'>/resume</a></article>",
+            "<article class='today-command-card'><h3>Finish</h3>",
+            f"<p>{_e(finish_status)}</p><a class='today-command-link' href='#today-finish'>Finish Today</a></article>",
+            "</div>",
+        ]
+    )
+    return "".join(
+        [
+            "<section id='today-command-center' class='panel today-command-center' data-today-command-center='true'><h2>Today Command Center</h2>",
+            "<p class='muted'>One daily cockpit for the lead goal, operator attention, saved resume state, and end-of-day handoff.</p>",
+            cards,
+            _kv(rows),
+            _ul(lines),
+            action_details,
+            finish_form,
+            "</section>",
         ]
     )
 
@@ -18434,6 +18722,21 @@ def _html_page(
     .resume-workbench-action, .resume-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .resume-workbench-action {{ background:var(--accent); color:#fff; }}
     .resume-workbench-link {{ background:var(--surface); color:var(--accent); }}
+    .today-command-center {{ border-left:4px solid var(--accent); }}
+    .today-command-center dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .today-command-center ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .today-command-center li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .today-command-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .today-command-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .today-command-card h3 {{ margin-top:0; }}
+    .today-command-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .today-command-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .today-command-action, .today-command-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .today-command-action {{ background:var(--accent); color:#fff; }}
+    .today-command-link {{ background:var(--surface); color:var(--accent); }}
+    .today-current-action, .today-finish {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
+    .today-current-action summary {{ cursor:pointer; font-weight:700; }}
+    .today-current-action form, .today-finish form {{ margin-top:10px; }}
     .home-attention-brief {{ border-left:4px solid var(--warn); }}
     .home-attention-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .home-attention-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -18570,7 +18873,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>
@@ -18578,7 +18881,7 @@ def _html_page(
     <strong>ClankerOS Local Operator</strong>
     <nav>{nav}</nav>
     <div class="header-actions" data-keyboard-shortcuts="true">
-      <span class="sr-only" id="keyboard-shortcuts-help">Keyboard shortcuts: slash opens command palette; Escape closes it; h opens home; g opens goals; r opens resume; s opens search; t toggles theme.</span>
+      <span class="sr-only" id="keyboard-shortcuts-help">Keyboard shortcuts: slash opens command palette; Escape closes it; h opens home; y opens today; g opens goals; r opens resume; s opens search; t toggles theme.</span>
       <button class="icon-button" id="palette-open" type="button" data-shortcut="/" aria-keyshortcuts="/" aria-describedby="keyboard-shortcuts-help" title="Open command palette (/)">Palette</button>
       <button class="icon-button" id="theme-toggle" type="button" data-shortcut="t" aria-keyshortcuts="t" aria-describedby="keyboard-shortcuts-help" title="Toggle theme (t)">Theme</button>
     </div>

@@ -60,6 +60,16 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `register-project` and `create-goal` browser actions also update
   `.clanker/app/workspace.json`, so `/resume` can restore the new project or
   goal without a separate manual save step.
+- `/today` - daily command center for the current operating day. It starts
+  with a read-only `Today Command Center` that selects the lead Goal or
+  first-run step, shows the current phase, one primary action, target surface
+  or same-page current-action form, attention routing for approvals,
+  incidents, recommendations, and inbox items, resume readiness, CI proof
+  posture, and a confirmed `Finish Today` `save-workspace` form for tomorrow's
+  resume point. It then reuses the existing Start Here, Home Day Plan,
+  Attention Brief, Focus Queue, recent activity, inbox, recommendations,
+  incidents, and first-run panels without writing on GET or adding new action
+  authority.
 - `/resume` - read-only return-to-work surface for the saved
   `.clanker/app/workspace.json` state. It shows whether resume state exists,
   links the saved goal, project, and last artifact, preserves filters and

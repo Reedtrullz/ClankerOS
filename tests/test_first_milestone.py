@@ -4178,6 +4178,38 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "focus_queue_next_action: Register ClankerOS project" in root.body
     assert "focus_queue_write_on_get</dt><dd>false" in root.body
     assert "focus_queue_external_effects_created</dt><dd>false" in root.body
+    today = render_local_app_route(tmp_path, "/today")
+    assert today.status == 200
+    assert "Today Command Center" in today.body
+    assert "data-today-command-center='true'" in today.body
+    assert "data-today-command-actions='true'" in today.body
+    assert "today_goal_first</dt><dd>true" in today.body
+    assert "today_active_goals</dt><dd>0" in today.body
+    assert "today_command_status</dt><dd>first_run" in today.body
+    assert "today_command_goal</dt><dd>none" in today.body
+    assert "today_command_phase</dt><dd>First run" in today.body
+    assert "today_command_primary_action</dt><dd>Register ClankerOS project" in today.body
+    assert "today_command_primary_surface</dt><dd><a href='/goals'>/goals</a>" in today.body
+    assert "today_command_target_surface</dt><dd><a href='/goals'>/goals</a>" in today.body
+    assert "today_command_reason</dt><dd>no_project_registered" in today.body
+    assert "today_command_progress</dt><dd>first_run_step=create_project" in today.body
+    assert "today_command_resume_ready</dt><dd>false" in today.body
+    assert "today_command_resume_status</dt><dd>not_started" in today.body
+    assert "today_command_attention_status</dt><dd>first_run" in today.body
+    assert "today_command_attention_action</dt><dd>Register ClankerOS project" in today.body
+    assert "today_command_ci_status</dt><dd>success" in today.body
+    assert "today_command_ci_source</dt><dd>publication_handoff" in today.body
+    assert "today_command_action_form_available</dt><dd>false" in today.body
+    assert "today_command_finish_status</dt><dd>not_ready_until_goal_exists" in today.body
+    assert "today_command_finish_form_available</dt><dd>false" in today.body
+    assert "today_command_write_on_get</dt><dd>false" in today.body
+    assert "today_command_network_actions_taken</dt><dd>0" in today.body
+    assert "today_command_external_effects_created</dt><dd>false" in today.body
+    assert "today_command_now: Register ClankerOS project" in today.body
+    assert "today_command_click: <a href='/goals'>/goals</a>" in today.body
+    assert "Today Current Action" not in today.body
+    assert "Home Day Plan" in today.body
+    assert "First Run Guide" in today.body
     assert "Home Verification Handoff" in root.body
     assert "home_verification_source</dt><dd>github_actions_operator_supplied_evidence" in root.body
     assert "home_latest_ci_source</dt><dd>publication_handoff" in root.body
@@ -4389,6 +4421,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "aria-keyshortcuts=\"/\"" in root.body
     assert "aria-keyshortcuts=\"t\"" in root.body
     assert "aria-keyshortcuts='h'" in root.body
+    assert "aria-keyshortcuts='y'" in root.body
     assert "aria-keyshortcuts='g'" in root.body
     assert "aria-keyshortcuts='r'" in root.body
     assert "aria-keyshortcuts='s'" in root.body
@@ -4521,6 +4554,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert refreshed_status["host"] == "127.0.0.1"
     assert refreshed_status["port"] == 8787
     assert "no push" in refreshed_status["non_claims"]
+    assert "/today" in refreshed_status["routes_available"]
     assert "/actions" in refreshed_status["routes_available"]
     assert "/verification" in refreshed_status["routes_available"]
     assert "/ci-evidence" in refreshed_status["routes_available"]
@@ -6455,6 +6489,73 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-operator-focus-action='true'" in dashboard.body
     assert "Run Current Action" in dashboard.body
     assert f"/goals/{result.goal_id}" in dashboard.body
+
+    today = render_local_app_route(tmp_path, "/today")
+    assert today.status == 200
+    assert "Today Command Center" in today.body
+    assert "data-today-command-center='true'" in today.body
+    assert "data-today-command-actions='true'" in today.body
+    assert "today_goal_first</dt><dd>true" in today.body
+    assert "today_active_goals</dt><dd>1" in today.body
+    assert "today_command_status</dt><dd>goal_ready" in today.body
+    assert f"today_command_goal</dt><dd><a href='/goals/{result.goal_id}'" in today.body
+    assert f"today_command_project</dt><dd><a href='/projects/{result.project_id}'" in today.body
+    assert "today_command_phase</dt><dd>Ready to commit" in today.body
+    assert "today_command_primary_action</dt><dd>Create commit request" in today.body
+    assert (
+        f"today_command_primary_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'"
+        in today.body
+    )
+    assert "today_command_target_surface</dt><dd><a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "today_command_reason</dt><dd>reviewed_run=" in today.body
+    assert "today_command_progress</dt><dd>0/1 tasks completed" in today.body
+    assert "today_command_open_tasks</dt><dd>1" in today.body
+    assert "today_command_waiting_items</dt><dd>1" in today.body
+    assert "today_command_pending_approvals</dt><dd>1" in today.body
+    assert "today_command_attention_status</dt><dd>needs_approval_review" in today.body
+    assert "today_command_attention_action</dt><dd>Review approvals" in today.body
+    assert "today_command_attention_surface</dt><dd><a href='/approvals'>/approvals</a>" in today.body
+    assert "today_command_resume_ready</dt><dd>false" in today.body
+    assert "today_command_resume_status</dt><dd>not_started" in today.body
+    assert "today_command_ci_status</dt><dd>success" in today.body
+    assert "today_command_ci_source</dt><dd>direct_public_snapshot" in today.body
+    assert "today_command_action_form_available</dt><dd>true" in today.body
+    assert "today_command_confirmation_required</dt><dd>true" in today.body
+    assert "today_command_finish_status</dt><dd>needs_workspace_save" in today.body
+    assert "today_command_finish_form_available</dt><dd>true" in today.body
+    assert "today_command_finish_confirmation_required</dt><dd>true" in today.body
+    assert "today_command_write_on_get</dt><dd>false" in today.body
+    assert "today_command_provider_calls_taken</dt><dd>0" in today.body
+    assert "today_command_network_actions_taken</dt><dd>0" in today.body
+    assert "today_command_external_effects_created</dt><dd>false" in today.body
+    assert "today_command_now: Create commit request" in today.body
+    assert "today_command_click: <a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "today_command_attention: needs_approval_review -> <a href='/approvals'>/approvals</a>" in today.body
+    assert "data-today-current-action='true'" in today.body
+    assert "Run Current Action" in today.body
+    assert "action='/actions/coder-commit-request'" in today.body
+    assert f"name='run_id' value='{result.coder_worktree_run_id}'" in today.body
+    assert "id='today-finish'" in today.body
+    assert "name='return_to' value='/today'" in today.body
+    assert "name='updated_by' value='today-command-center'" in today.body
+    assert "name='expanded_panels' value='today,day-plan,daily-loop,next-action,timeline,evidence,artifacts,notes'" in today.body
+    today_workspace_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/save-workspace",
+        method="POST",
+        form={
+            "open_project": [result.project_id],
+            "open_goal": [result.goal_id],
+            "filters": [f"goal:{result.goal_id}"],
+            "expanded_panels": ["today,day-plan,daily-loop,next-action,timeline,evidence,artifacts,notes"],
+            "last_viewed_artifact": [result.review_path.relative_to(tmp_path).as_posix()],
+            "updated_by": ["today-command-center"],
+            "return_to": ["/today"],
+        },
+    )
+    assert today_workspace_confirmation.status == 409
+    assert "Confirm save-workspace" in today_workspace_confirmation.body
+    assert "today-command-center" in today_workspace_confirmation.body
 
     goals = render_local_app_route(tmp_path, "/goals")
     assert goals.status == 200

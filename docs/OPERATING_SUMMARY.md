@@ -86,7 +86,16 @@ Core layers for the bootstrap:
   goals from task rows. Project goal rows link directly to
   `/goals/<goal_id>` and show phase, next action, and task progress so the
   project page can launch the same goal-centered workbench as `/goals`. The
-  local app now also exposes `/resume` as a
+  local app now also exposes `/today` as a daily command center for the
+  current operating day, starting with a read-only `Today Command Center`
+  that selects the lead Goal or first-run step, names current phase, one
+  primary action, target surface or same-page action form, attention routing
+  for approvals/incidents/recommendations/inbox, resume readiness, CI proof
+  posture, and a confirmed `Finish Today` workspace save form for tomorrow's
+  resume point. It then reuses the Start Here, Home Day Plan, Attention Brief,
+  Focus Queue, recent activity, inbox, recommendations, incidents, and
+  first-run panels without writing on GET or adding action authority. The
+  local app also exposes `/resume` as a
   read-only return-to-work surface over saved `.clanker/app/workspace.json`
   state, showing saved goal, project, artifact, filters, expanded panels,
   zero-effect counters, a direct next resume link, a read-only
