@@ -12150,6 +12150,7 @@ def _command_palette_continue(focus_context: dict[str, Any]) -> str:
                     [
                         ("palette_continue_status", "state_unavailable"),
                         ("palette_continue_target", SafeHtml("<a href='/health'>/health</a>")),
+                        ("palette_continue_action_form_available", "false"),
                         ("palette_continue_write_on_get", "false"),
                         ("palette_continue_external_effects_created", "false"),
                     ]
@@ -12167,6 +12168,7 @@ def _command_palette_continue(focus_context: dict[str, Any]) -> str:
                     [
                         ("palette_continue_status", "no_goal"),
                         ("palette_continue_target", SafeHtml("<a href='/goals'>/goals</a>")),
+                        ("palette_continue_action_form_available", "false"),
                         ("palette_continue_write_on_get", "false"),
                         ("palette_continue_external_effects_created", "false"),
                     ]
@@ -12177,6 +12179,7 @@ def _command_palette_continue(focus_context: dict[str, Any]) -> str:
 
     goal = focus_context["goal"]
     next_action = focus_context["next_action"]
+    action_form = _goal_next_action_form(focus_context["goal_state"], next_action)
     return "".join(
         [
             "<section class='palette-continue' data-command-palette-continue='true'>",
@@ -12198,9 +12201,27 @@ def _command_palette_continue(focus_context: dict[str, Any]) -> str:
                         "palette_continue_form_available",
                         "true" if focus_context["form_available"] else "false",
                     ),
+                    (
+                        "palette_continue_action_form_available",
+                        "true" if action_form else "false",
+                    ),
+                    (
+                        "palette_continue_confirmation_required",
+                        "true" if action_form else "false",
+                    ),
+                    ("palette_continue_safety_boundary", "confirmed_local_action_only"),
                     ("palette_continue_write_on_get", "false"),
+                    ("palette_continue_provider_calls_taken", "0"),
+                    ("palette_continue_network_actions_taken", "0"),
                     ("palette_continue_external_effects_created", "false"),
                 ]
+            ),
+            (
+                "<h4>Continue Action Form</h4>"
+                "<p class='muted'>Run the current goal's browser-available local next action without leaving the palette. Confirmation is still required before any local write.</p>"
+                f"{action_form}"
+                if action_form
+                else ""
             ),
             "</section>",
         ]

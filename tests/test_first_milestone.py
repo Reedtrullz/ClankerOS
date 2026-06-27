@@ -4222,6 +4222,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "register-project" in root.body
     assert "create-goal" in root.body
     assert "data-command-palette='true'" in root.body
+    assert "palette_continue_action_form_available</dt><dd>false" in root.body
     assert "Operator Focus" in root.body
     assert "data-operator-focus-strip='true'" in root.body
     assert "operator_focus_status</dt><dd>no_goal" in root.body
@@ -5766,8 +5767,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "palette_continue_phase</dt><dd>Ready to commit" in dashboard.body
     assert "palette_continue_next_action</dt><dd>Create commit request" in dashboard.body
     assert f"palette_continue_target</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in dashboard.body
+    assert "palette_continue_action_form_available</dt><dd>true" in dashboard.body
+    assert "palette_continue_confirmation_required</dt><dd>true" in dashboard.body
+    assert "palette_continue_safety_boundary</dt><dd>confirmed_local_action_only" in dashboard.body
     assert "palette_continue_write_on_get</dt><dd>false" in dashboard.body
+    assert "palette_continue_provider_calls_taken</dt><dd>0" in dashboard.body
+    assert "palette_continue_network_actions_taken</dt><dd>0" in dashboard.body
     assert "palette_continue_external_effects_created</dt><dd>false" in dashboard.body
+    assert "Continue Action Form" in dashboard.body
+    assert "action='/actions/coder-commit-request'" in dashboard.body
+    assert f"name='run_id' value='{result.coder_worktree_run_id}'" in dashboard.body
     assert "Operator Focus" in dashboard.body
     assert "data-operator-focus-strip='true'" in dashboard.body
     assert "operator_focus_status</dt><dd>available" in dashboard.body
@@ -5815,6 +5824,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "palette_continue_goal</dt><dd><a href='/goals/" in goal.body
     assert "palette_continue_next_action</dt><dd>Create commit request" in goal.body
     assert "palette_continue_form_available</dt><dd>true" in goal.body
+    assert "palette_continue_action_form_available</dt><dd>true" in goal.body
+    assert "palette_continue_confirmation_required</dt><dd>true" in goal.body
+    assert "Continue Action Form" in goal.body
     assert "data-recent-items='true'" in goal.body
     assert "data-breadcrumbs='true'" in goal.body
     assert "Goal Section Index" in goal.body

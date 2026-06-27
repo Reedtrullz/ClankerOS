@@ -357,7 +357,10 @@ Core layers for the bootstrap:
   palette, keyboard shortcuts, and a theme toggle. The command palette now
   includes a goal-aware `Continue Current Goal` block from the saved workspace
   goal or current lead goal, showing phase, one recommended action, target
-  surface, and zero-effect readbacks without writing on GET. The workflow page
+  surface, zero-effect readbacks, and the same confirmed local action form as
+  the Goal page when the current next action is browser-available. It still
+  writes nothing on GET and only submits existing local forms after explicit
+  confirmation. The workflow page
   can be
   scoped with a
   delegation or coder run id, then annotates related stepper rows with

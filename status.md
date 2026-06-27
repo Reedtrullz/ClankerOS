@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-27 Command Palette Action Form
+
+- Promoted the shared command palette from a read-only `Continue Current Goal`
+  readback into a small operator action surface. When the saved or lead goal's
+  next action is browser-available, the palette now renders the same confirmed
+  local action form as the Goal page so the operator can run the current
+  browser-safe next action without leaving the palette.
+- Empty and unavailable states explicitly report
+  `palette_continue_action_form_available=false`; populated states report the
+  confirmation boundary, provider/network zero counters, and
+  `confirmed_local_action_only` safety posture before exposing the form.
+- README, local app docs, and the operating summary now document the palette
+  as a daily-use continuation surface while preserving the same local-only
+  safety boundary.
+- Non-claims: this does not add a new action engine, write state on GET, run
+  work automatically, approve gates, create delegations, create coder prep,
+  commit, push, create PRs, deploy, fetch GitHub status, call providers, use
+  non-loopback network actions, or mutate external systems. It only reuses
+  existing confirmed local forms when those forms already exist for the
+  current next action.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Home Day Plan Finish
 
 - Added a confirmed `Finish Today` save surface directly to `Home Day Plan`
