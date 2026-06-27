@@ -508,9 +508,11 @@ Core layers for the bootstrap:
   and next local operator actions; `/runs/<run_id>` now also recognizes
   delegation execution run ids and renders scout evidence, result artifacts,
   context-pack and handoff status, zero-effect counters, and next-action
-  readback; a read-only `/actions` catalog for safe local action requirements,
-  form locations, output artifacts, confirmation posture, and external-effect
-  boundaries; a read-only `/verification` handoff for the checked-in GitHub
+  readback; a read-only `/actions` catalog with an `Action Catalog Command
+  Bar` for safe local action counts, first action, target anchors, local
+  execution/git/approval/artifact posture, confirmation posture, form
+  locations, output artifacts, and external-effect boundaries; a read-only
+  `/verification` handoff for the checked-in GitHub
   Actions workflow, separate fast-smoke and full-suite job readbacks,
   configured job timeout, latest operator-supplied CI evidence summary,
   compact local checks, in-progress run non-proof guidance, and CI proof

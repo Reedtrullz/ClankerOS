@@ -5034,6 +5034,35 @@ def test_local_app_routes_render_modern_workflow_and_health(
     actions = render_local_app_route(tmp_path, "/actions")
     assert actions.status == 200
     assert "Safe Action Catalog" in actions.body
+    assert "Action Catalog Command Bar" in actions.body
+    assert "data-action-catalog-command-bar='true'" in actions.body
+    assert "action_catalog_status</dt><dd>available" in actions.body
+    assert "action_catalog_total_actions</dt><dd>26" in actions.body
+    assert "action_catalog_navigation_actions</dt><dd>8" in actions.body
+    assert "action_catalog_mutating_actions</dt><dd>25" in actions.body
+    assert "action_catalog_confirmation_required</dt><dd>25" in actions.body
+    assert "action_catalog_local_execution_actions</dt><dd>2" in actions.body
+    assert "action_catalog_local_git_actions</dt><dd>1" in actions.body
+    assert "action_catalog_approval_actions</dt><dd>6" in actions.body
+    assert "action_catalog_artifact_or_evidence_actions</dt><dd>8" in actions.body
+    assert "action_catalog_readback_actions</dt><dd>1" in actions.body
+    assert "action_catalog_first_action</dt><dd>refresh-dashboard-state" in actions.body
+    assert "action_catalog_first_surface</dt><dd><a href='#action-catalog-dashboard-action'>Dashboard Action</a>" in actions.body
+    assert "action_catalog_workflow_surface</dt><dd><a href='#action-catalog-workflow-actions'>Local Artifact And Approval Actions</a>" in actions.body
+    assert "action_catalog_boundary_surface</dt><dd><a href='#action-catalog-execution-boundary'>Execution Boundary</a>" in actions.body
+    assert "action_catalog_write_on_get</dt><dd>false" in actions.body
+    assert "action_catalog_provider_calls_taken</dt><dd>0" in actions.body
+    assert "action_catalog_network_actions_taken</dt><dd>0" in actions.body
+    assert "action_catalog_external_effects_created</dt><dd>false" in actions.body
+    assert "action_catalog_now: Review safe local action posture" in actions.body
+    assert "action_catalog_click: <a href='#action-catalog-workflow-actions'>Local Artifact And Approval Actions</a>" in actions.body
+    assert "action_catalog_confirm: every local mutation requires confirm=yes" in actions.body
+    assert "action_catalog_safety: read-only action catalog; confirmed forms remain on owning surfaces" in actions.body
+    assert "id='action-catalog-navigation-actions'" in actions.body
+    assert "id='action-catalog-dashboard-action'" in actions.body
+    assert "id='action-catalog-demo-surfaces'" in actions.body
+    assert "id='action-catalog-workflow-actions'" in actions.body
+    assert "id='action-catalog-execution-boundary'" in actions.body
     assert "refresh-dashboard-state" in actions.body
     assert "delegate" in actions.body
     assert "save-goal-note" in actions.body
@@ -5892,6 +5921,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
 
     actions_with_demo = render_local_app_route(tmp_path, "/actions")
     assert actions_with_demo.status == 200
+    assert "Action Catalog Command Bar" in actions_with_demo.body
+    assert "data-action-catalog-command-bar='true'" in actions_with_demo.body
     assert "Current Demo Action Surfaces" in actions_with_demo.body
     assert "demo_fixture_status: available" in actions_with_demo.body
     assert "next_demo_action: request_commit_for_reviewed_run" in actions_with_demo.body

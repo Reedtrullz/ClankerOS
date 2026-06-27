@@ -9650,6 +9650,68 @@ def _workflow_stage_for_action(next_action: str) -> str:
     return stages.get(next_action, "Workflow state")
 
 
+def _action_catalog_command_bar() -> str:
+    total_actions = len(ACTION_CATALOG)
+    mutating_actions = sum(1 for item in ACTION_CATALOG if item[3] == "yes")
+    confirmation_required = sum(1 for item in ACTION_CATALOG if item[4] == "yes")
+    local_execution_actions = sum(
+        1 for item in ACTION_CATALOG if "execution" in item[1]
+    )
+    local_git_actions = sum(1 for item in ACTION_CATALOG if "git" in item[1])
+    approval_actions = sum(1 for item in ACTION_CATALOG if "approval" in item[1])
+    artifact_or_evidence_actions = sum(
+        1 for item in ACTION_CATALOG if "artifact" in item[1] or "evidence" in item[1]
+    )
+    readback_actions = sum(1 for item in ACTION_CATALOG if item[1] == "readback")
+    rows = [
+        ("action_catalog_status", "available"),
+        ("action_catalog_total_actions", str(total_actions)),
+        ("action_catalog_navigation_actions", "8"),
+        ("action_catalog_mutating_actions", str(mutating_actions)),
+        ("action_catalog_confirmation_required", str(confirmation_required)),
+        ("action_catalog_local_execution_actions", str(local_execution_actions)),
+        ("action_catalog_local_git_actions", str(local_git_actions)),
+        ("action_catalog_approval_actions", str(approval_actions)),
+        (
+            "action_catalog_artifact_or_evidence_actions",
+            str(artifact_or_evidence_actions),
+        ),
+        ("action_catalog_readback_actions", str(readback_actions)),
+        ("action_catalog_first_action", "refresh-dashboard-state"),
+        (
+            "action_catalog_first_surface",
+            SafeHtml("<a href='#action-catalog-dashboard-action'>Dashboard Action</a>"),
+        ),
+        (
+            "action_catalog_workflow_surface",
+            SafeHtml(
+                "<a href='#action-catalog-workflow-actions'>Local Artifact And Approval Actions</a>"
+            ),
+        ),
+        (
+            "action_catalog_boundary_surface",
+            SafeHtml("<a href='#action-catalog-execution-boundary'>Execution Boundary</a>"),
+        ),
+        ("action_catalog_write_on_get", "false"),
+        ("action_catalog_provider_calls_taken", "0"),
+        ("action_catalog_network_actions_taken", "0"),
+        ("action_catalog_external_effects_created", "false"),
+    ]
+    lines = [
+        "action_catalog_now: Review safe local action posture",
+        "action_catalog_click: <a href='#action-catalog-workflow-actions'>Local Artifact And Approval Actions</a>",
+        "action_catalog_confirm: every local mutation requires confirm=yes",
+        "action_catalog_safety: read-only action catalog; confirmed forms remain on owning surfaces",
+    ]
+    return (
+        "<section id='action-catalog-command-bar' class='panel action-catalog-command-bar' "
+        "data-action-catalog-command-bar='true'><h2>Action Catalog Command Bar</h2>"
+        + _kv(rows)
+        + _ul(lines)
+        + "</section>"
+    )
+
+
 def _actions_page(root: Path) -> str:
     return "".join(
         [
@@ -9657,6 +9719,7 @@ def _actions_page(root: Path) -> str:
             "<p class='muted'>Read-only map of local app actions, where their forms appear, what they require, and what local artifact or decision they produce.</p>",
             _non_claim_banner(),
             "</section>",
+            _action_catalog_command_bar(),
             _list_section(
                 "Navigation Actions",
                 [
@@ -9669,8 +9732,9 @@ def _actions_page(root: Path) -> str:
                     "<a href='/incidents'>view incidents</a>: inspect local incident evidence",
                     "<a href='/health'>view health</a>: inspect local status and write status artifact",
                 ],
+                anchor_id="action-catalog-navigation-actions",
             ),
-            "<section><h2>Dashboard Action</h2>",
+            "<section id='action-catalog-dashboard-action'><h2>Dashboard Action</h2>",
             "<p class='muted'>This confirmed action rewrites only the local app status artifact from current state.</p>",
             "<form method='post' action='/actions/refresh-dashboard-state'>"
             "<input type='hidden' name='requested_by' value='operator'>"
@@ -9681,6 +9745,7 @@ def _actions_page(root: Path) -> str:
             _list_section(
                 "Local Artifact And Approval Actions",
                 [_action_catalog_line(item) for item in ACTION_CATALOG],
+                anchor_id="action-catalog-workflow-actions",
             ),
             _list_section(
                 "Execution Boundary",
@@ -9688,6 +9753,7 @@ def _actions_page(root: Path) -> str:
                     "run-coder-worktree: confirmed goal action only after approved worktree request and safe local command validation; not a general arbitrary-command surface",
                     "manual_operator_push_pr_outside_clankeros: outside ClankerOS; app displays suggested commands only after publication handoff",
                 ],
+                anchor_id="action-catalog-execution-boundary",
             ),
         ]
     )
@@ -9707,6 +9773,7 @@ def _current_demo_action_surfaces(root: Path) -> str:
                 "external_effects_created: false",
                 "network_actions_taken_by_app: 0",
             ],
+            anchor_id="action-catalog-demo-surfaces",
         )
 
     delegations = [
@@ -9775,6 +9842,7 @@ def _current_demo_action_surfaces(root: Path) -> str:
             "external_effects_created: false",
             "network_actions_taken_by_app: 0",
         ],
+        anchor_id="action-catalog-demo-surfaces",
     )
 
 
@@ -16302,6 +16370,9 @@ def _html_page(
     .workflow-command-bar {{ border-left:4px solid var(--accent); }}
     .workflow-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .workflow-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .action-catalog-command-bar {{ border-left:4px solid var(--accent); }}
+    .action-catalog-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .action-catalog-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .action-confirmation-command-bar {{ border-left:4px solid var(--warn); }}
     .action-confirmation-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .action-confirmation-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

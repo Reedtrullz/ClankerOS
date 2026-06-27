@@ -473,6 +473,11 @@ dogfooding, and verification without executing external effects.
 Use `/actions` when you want a read-only catalog of available local app
 actions, where their forms appear, what previous artifact they require, what
 local artifact or approval they write, and the no-external-effects boundary.
+The page starts with an `Action Catalog Command Bar` that summarizes total
+actions, navigation actions, mutating actions, confirmation-required actions,
+local execution/git/approval/artifact posture, first safe action, target
+anchors, and zero provider/network/external-effect counters before the longer
+catalog.
 When the fixture exists, `/actions` also shows `Current Demo Action Surfaces`
 with links to the selected project, delegation, workflow, run, approvals, and
 inbox surfaces.

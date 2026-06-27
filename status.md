@@ -1,5 +1,32 @@
 # Status
 
+## 2026-06-27 Action Catalog Command Bar
+
+- Added a read-only `Action Catalog Command Bar` to `/actions`.
+- The bar summarizes total, navigation, mutating, confirmation-required,
+  local-execution, local-git, approval, artifact/evidence, and readback action
+  counts, plus first safe action, target anchors, and zero provider/network/
+  external-effect counters before the longer safe action catalog.
+- Added stable anchors for navigation actions, dashboard refresh, current demo
+  action surfaces, local artifact/approval actions, and the execution boundary.
+- Updated README, local app docs, and the operating summary to describe
+  `/actions` as a scan-first operator surface rather than only an inventory.
+- Non-claims: this does not add new actions, bypass confirmations, write on
+  GET, run work, approve requests, create commits, push, create PRs, deploy,
+  call providers, fetch GitHub status, perform non-loopback network actions, or
+  mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_4c89e1433fa4`, `run_0820ce238543`, and coder
+    worktree run `run_e561c833b82c`
+
 ## 2026-06-27 Action Confirmation Command Bar
 
 - Added a read-only `Action Confirmation Command Bar` to every local app

@@ -348,7 +348,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/actions` - read-only safe action catalog showing local app actions, where
   their forms appear, required previous artifacts, output artifacts,
   confirmation requirements, local mutation posture, and external-effect
-  boundary. It also includes the confirmed dashboard status refresh form.
+  boundary. A read-only `Action Catalog Command Bar` starts the page with
+  action counts by posture, first safe local action, target anchors, and zero
+  provider/network/external-effect counters before the longer inventory. It
+  also includes the confirmed dashboard status refresh form.
 - `/verification` - read-only verification handoff showing the checked-in
   GitHub Actions workflow posture, compact local checks, remote full-suite
   boundary, and explicit CI non-claims without contacting GitHub.
@@ -663,7 +666,11 @@ the inert content renderer.
 The `/actions` page is the first-stop safe action catalog. It maps low-risk and
 local artifact-producing actions to the page where each form appears, the
 required previous artifact, the output artifact, whether confirmation is
-required, and the no-external-effects boundary. The app exposes these actions
+required, and the no-external-effects boundary. The page now starts with an
+`Action Catalog Command Bar` that summarizes total actions, navigation actions,
+mutating actions, confirmation-required actions, local execution/git/approval/
+artifact posture, the first safe local action, section anchors, and zero
+provider/network/external-effect counters. The app exposes these actions
 through explicit forms, including context pack generation, coder prep, coder
 prep from `implementation_handoff.md`, coder-worktree plan, worktree approval
 request, commit request, publication request, approval decisions, and
