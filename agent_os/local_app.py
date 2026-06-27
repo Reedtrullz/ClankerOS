@@ -633,6 +633,8 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             "/inbox",
             "Operator Inbox",
             [
+                "Inbox Operator Workbench",
+                "data-inbox-operator-workbench='true'",
                 "Pending Worktree Approvals",
                 "Coder Worktree Runs",
                 demo.coder_worktree_run_id,
@@ -11410,6 +11412,7 @@ def _inbox(root: Path) -> str:
             "<p class='muted'>Read-only local operator queue assembled from steering reviews, approvals, incidents, delegations, coder runs, commits, and publication handoffs.</p>",
             "</section>",
             _inbox_command_bar(root, inbox),
+            _inbox_operator_workbench(root, inbox),
             _list_section(
                 "Inbox Summary",
                 _inbox_summary_lines(root)
@@ -11621,6 +11624,336 @@ def _inbox_command_bar(root: Path, inbox: dict[str, object]) -> str:
                 ]
             ),
             _ul(lines),
+            "</section>",
+        ]
+    )
+
+
+def _inbox_operator_workbench(root: Path, inbox: dict[str, object]) -> str:
+    storage = _storage(root)
+    steering_reviews = list(inbox["steering_reviews"])
+    pending_approvals = list(inbox["pending_approvals"])
+    open_incidents = list(inbox["open_incidents"])
+    subagent_delegations = list(inbox["subagent_delegations"])
+    coder_worktree_approvals = list(inbox["coder_worktree_approvals"])
+    coder_worktree_runs = list(inbox["coder_worktree_runs"])
+    coder_worktree_commit_approvals = list(inbox["coder_worktree_commit_approvals"])
+    coder_worktree_commits = list(inbox["coder_worktree_commits"])
+    coder_publication_requests = list(inbox["coder_publication_requests"])
+    coder_publication_handoffs = list(inbox["coder_publication_handoffs"])
+    total = int(inbox["count"])
+    status = "empty_queue"
+    first_kind = "none"
+    first_id = "none"
+    first_project = "none"
+    first_goal = "none"
+    first_delegation = "none"
+    first_run = "none"
+    next_action = "No inbox items"
+    action_name = "none"
+    primary_href = "/goals"
+    primary_label = "/goals"
+    inspect_href = "/goals"
+    inspect_label = "/goals"
+    reason = "no local operator attention items"
+    evidence_path = "none"
+    after_action = "none"
+    decision_surface = "/goals"
+
+    if open_incidents:
+        item = open_incidents[0]
+        status = "attention_ready"
+        first_kind = "incident"
+        first_id = item.id
+        first_project = item.project_id
+        first_goal = item.goal_id or "none"
+        first_run = item.run_id or "none"
+        next_action = "Inspect incident"
+        action_name = "inspect-incident"
+        primary_href = "#inbox-open-incidents"
+        primary_label = "Open Incidents"
+        inspect_href = "/incidents"
+        inspect_label = "Incidents"
+        reason = item.summary
+        evidence_path = item.evidence_path or "none"
+        after_action = "resolve incident or replan from Goal surface"
+        decision_surface = "/incidents"
+    elif steering_reviews:
+        item = steering_reviews[0]
+        status = "attention_ready"
+        first_kind = "steering_review"
+        first_id = item.id
+        first_project = item.project_id
+        first_goal = item.goal_id
+        first_run = item.run_id or "none"
+        next_action = "Review steering decision"
+        action_name = "review-steering"
+        primary_href = "#inbox-steering-reviews"
+        primary_label = "Steering Reviews"
+        inspect_href = f"/goals/{quote(item.goal_id)}"
+        inspect_label = "Goal"
+        reason = item.recommended_next_action
+        evidence_path = item.report_path
+        after_action = "continue from Goal next action"
+        decision_surface = f"/goals/{quote(item.goal_id)}"
+    elif pending_approvals:
+        item = pending_approvals[0]
+        status = "attention_ready"
+        first_kind = "approval_request"
+        first_id = item.id
+        first_project = item.project_id
+        first_goal = item.goal_id
+        first_run = item.run_id or "none"
+        next_action = "Review approval request"
+        action_name = "review-approval-request"
+        primary_href = "#inbox-pending-approval-requests"
+        primary_label = "Pending Approval Requests"
+        inspect_href = f"/goals/{quote(item.goal_id)}"
+        inspect_label = "Goal"
+        reason = item.reason
+        after_action = "decide approval from CLI-backed local gate"
+        decision_surface = f"/goals/{quote(item.goal_id)}"
+    elif coder_worktree_approvals:
+        item = coder_worktree_approvals[0]
+        status = "attention_ready"
+        first_kind = "worktree_approval"
+        first_id = item.id
+        first_project = item.project_id
+        first_delegation = item.delegation_id
+        first_run = "not_created_yet"
+        next_action = "Approve worktree"
+        action_name = "approve-coder-worktree"
+        primary_href = "#inbox-pending-worktree-approvals"
+        primary_label = "Pending Worktree Approvals"
+        inspect_href = f"/workflow?delegation_id={quote(item.delegation_id)}"
+        inspect_label = "Workflow"
+        reason = "bounded_worktree_plan_waiting_for_operator"
+        evidence_path = _repo_relative_artifact_path(root, item.source_plan_path)
+        after_action = "run approved worktree from Goal or workflow surface"
+        decision_surface = "/approvals"
+    elif coder_worktree_commit_approvals:
+        item = coder_worktree_commit_approvals[0]
+        status = "attention_ready"
+        first_kind = "commit_approval"
+        first_id = item.id
+        first_project = item.project_id
+        first_delegation = item.delegation_id
+        first_run = item.run_id
+        next_action = "Approve commit"
+        action_name = "approve-coder-commit"
+        primary_href = "#inbox-pending-commit-approvals"
+        primary_label = "Pending Commit Approvals"
+        inspect_href = f"/runs/{quote(item.run_id)}"
+        inspect_label = "Run Detail"
+        reason = "reviewed_worktree_commit_waiting_for_operator"
+        evidence_path = _repo_relative_artifact_path(root, item.review_path)
+        after_action = "commit approved worktree with typed message"
+        decision_surface = "/approvals"
+    elif coder_publication_requests:
+        item = coder_publication_requests[0]
+        status = "attention_ready"
+        first_kind = "publication_request"
+        first_id = item.id
+        first_project = item.project_id
+        first_delegation = item.delegation_id
+        first_run = item.run_id
+        next_action = "Approve publication"
+        action_name = "approve-coder-publication"
+        primary_href = "#inbox-pending-publication-requests"
+        primary_label = "Pending Publication Requests"
+        inspect_href = f"/runs/{quote(item.run_id)}"
+        inspect_label = "Run Detail"
+        reason = "committed_worktree_publication_waiting_for_operator"
+        evidence_path = _repo_relative_artifact_path(root, item.request_artifact_path)
+        after_action = "prepare publication handoff for manual push/PR"
+        decision_surface = "/approvals"
+    elif coder_worktree_runs:
+        item = coder_worktree_runs[0]
+        status = "attention_ready"
+        first_kind = "coder_worktree_run"
+        first_id = item.id
+        first_project = item.project_id
+        first_delegation = item.delegation_id
+        first_run = item.id
+        next_action = "Open run"
+        action_name = "open-run"
+        primary_href = "#inbox-coder-worktree-runs"
+        primary_label = "Coder Worktree Runs"
+        inspect_href = f"/runs/{quote(item.id)}"
+        inspect_label = "Run Detail"
+        reason = item.status
+        evidence_path = str(Path(item.evidence_path) / "summary.md")
+        after_action = "continue run gate from run surface"
+        decision_surface = f"/runs/{quote(item.id)}"
+    elif coder_publication_handoffs:
+        item = coder_publication_handoffs[0]
+        status = "attention_ready"
+        first_kind = "publication_handoff"
+        first_id = item.id
+        first_project = item.project_id
+        first_delegation = item.delegation_id
+        first_run = item.run_id
+        next_action = "Use publication handoff outside ClankerOS"
+        action_name = "manual-publication-handoff"
+        primary_href = "#inbox-publication-handoffs"
+        primary_label = "Publication Handoffs"
+        inspect_href = f"/runs/{quote(item.run_id)}"
+        inspect_label = "Run Detail"
+        reason = "manual_push_pr_boundary_ready"
+        evidence_path = item.handoff_artifact_path
+        after_action = "manual push/PR outside ClankerOS"
+        decision_surface = f"/runs/{quote(item.run_id)}"
+    elif subagent_delegations:
+        item = subagent_delegations[0]
+        status = "attention_ready"
+        first_kind = "subagent_delegation"
+        first_id = item.id
+        first_project = _task_project(storage, item.parent_task_id) or "unknown"
+        first_goal = item.parent_goal_id
+        first_delegation = item.id
+        next_action = "Inspect delegation"
+        action_name = "inspect-delegation"
+        primary_href = "#inbox-subagent-delegations"
+        primary_label = "Subagent Delegations"
+        inspect_href = f"/delegations/{quote(item.id)}"
+        inspect_label = "Delegation"
+        reason = item.status
+        evidence_path = item.result_artifact_path or "none"
+        after_action = "continue delegation workflow"
+        decision_surface = f"/workflow?delegation_id={quote(item.id)}"
+    elif coder_worktree_commits:
+        item = coder_worktree_commits[0]
+        status = "attention_ready"
+        first_kind = "local_coder_commit"
+        first_id = item.id
+        first_project = item.project_id
+        first_delegation = item.delegation_id
+        first_run = item.run_id
+        next_action = "Review local commit evidence"
+        action_name = "review-local-commit"
+        primary_href = "#inbox-local-coder-commits"
+        primary_label = "Local Coder Commits"
+        inspect_href = f"/runs/{quote(item.run_id)}"
+        inspect_label = "Run Detail"
+        reason = item.status
+        evidence_path = item.commit_artifact_path
+        after_action = "request publication handoff from run surface"
+        decision_surface = f"/runs/{quote(item.run_id)}"
+
+    if first_goal == "none" and first_delegation != "none":
+        delegation = storage.get_subagent_delegation(first_delegation)
+        if delegation is not None and delegation.parent_goal_id:
+            first_goal = delegation.parent_goal_id
+    goal_href = f"/goals/{quote(first_goal)}" if first_goal != "none" else "/goals"
+    goal_label = first_goal if first_goal != "none" else "/goals"
+    primary_surface = SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>")
+    inspect_surface = SafeHtml(f"<a href='{_e(inspect_href)}'>{_e(inspect_label)}</a>")
+    goal_surface = SafeHtml(f"<a href='{_e(goal_href)}'>{_e(goal_label)}</a>")
+    decision_surface_link = SafeHtml(f"<a href='{_e(decision_surface)}'>{_e(decision_surface)}</a>")
+    evidence_artifact = SafeHtml(_artifact_link(evidence_path))
+    finish_form = _input_form(
+        "save-workspace",
+        {
+            "open_project": "" if first_project == "none" else first_project,
+            "open_goal": "" if first_goal == "none" else first_goal,
+            "return_to": "/inbox",
+        },
+        {
+            "filters": f"inbox:{first_kind}:{first_id}",
+            "expanded_panels": "inbox-workbench,summary,approvals,runs,incidents",
+            "last_viewed_artifact": evidence_path,
+            "updated_by": "inbox-operator-workbench",
+        },
+    )
+    lines = [
+        f"inbox_workbench_now: {_e(next_action)}",
+        f"inbox_workbench_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+        f"inbox_workbench_inspect: <a href='{_e(inspect_href)}'>{_e(inspect_label)}</a>",
+        f"inbox_workbench_goal: <a href='{_e(goal_href)}'>{_e(goal_label)}</a>",
+        f"inbox_workbench_after: {_e(after_action)}",
+        "inbox_workbench_finish: <a href='#inbox-finish-today'>Finish Today</a>",
+        "inbox_workbench_safety: read-only queue guidance; confirmed local actions elsewhere",
+    ]
+    if total == 0:
+        lines.append("inbox_workbench_empty: no local operator queue items")
+    return "".join(
+        [
+            (
+                "<section id='inbox-operator-workbench' "
+                "class='panel inbox-operator-workbench' "
+                "data-inbox-operator-workbench='true'>"
+                "<h2>Inbox Operator Workbench</h2>"
+            ),
+            "<div class='inbox-workbench-grid' data-inbox-workbench-actions='true'>",
+            "<div class='inbox-workbench-card inbox-workbench-primary'>",
+            "<h3>Do Now</h3>",
+            f"<p>{_e(next_action)}</p>",
+            f"<a class='inbox-workbench-action' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+            "</div>",
+            "<div class='inbox-workbench-card'>",
+            "<h3>Inspect</h3>",
+            f"<p>{_e(reason)}</p>",
+            f"<a class='inbox-workbench-link' href='{_e(inspect_href)}'>{_e(inspect_label)}</a>",
+            "</div>",
+            "<div class='inbox-workbench-card'>",
+            "<h3>Goal</h3>",
+            f"<p>{_e(first_goal)}</p>",
+            f"<a class='inbox-workbench-link' href='{_e(goal_href)}'>{_e(goal_label)}</a>",
+            "</div>",
+            "<div class='inbox-workbench-card'>",
+            "<h3>Finish Today</h3>",
+            "<p>Save inbox resume state</p>",
+            "<a class='inbox-workbench-link' href='#inbox-finish-today'>Open save form</a>",
+            "</div>",
+            "</div>",
+            _kv(
+                [
+                    ("inbox_workbench_status", status),
+                    ("inbox_workbench_total_items", str(total)),
+                    ("inbox_workbench_steering_reviews", str(len(steering_reviews))),
+                    ("inbox_workbench_pending_approvals", str(len(pending_approvals))),
+                    ("inbox_workbench_open_incidents", str(len(open_incidents))),
+                    ("inbox_workbench_worktree_approvals", str(len(coder_worktree_approvals))),
+                    ("inbox_workbench_commit_approvals", str(len(coder_worktree_commit_approvals))),
+                    ("inbox_workbench_publication_requests", str(len(coder_publication_requests))),
+                    ("inbox_workbench_coder_runs", str(len(coder_worktree_runs))),
+                    ("inbox_workbench_publication_handoffs", str(len(coder_publication_handoffs))),
+                    ("inbox_workbench_first_kind", first_kind),
+                    ("inbox_workbench_first_id", first_id),
+                    ("inbox_workbench_first_project", first_project),
+                    ("inbox_workbench_first_goal", first_goal),
+                    ("inbox_workbench_goal_surface", goal_surface),
+                    ("inbox_workbench_first_delegation", first_delegation),
+                    ("inbox_workbench_first_run", first_run),
+                    ("inbox_workbench_next_action", next_action),
+                    ("inbox_workbench_action_name", action_name),
+                    ("inbox_workbench_primary_surface", primary_surface),
+                    ("inbox_workbench_inspection_surface", inspect_surface),
+                    ("inbox_workbench_decision_surface", decision_surface_link),
+                    ("inbox_workbench_reason", reason),
+                    ("inbox_workbench_evidence_artifact", evidence_artifact),
+                    ("inbox_workbench_after_action", after_action),
+                    ("inbox_workbench_action_form_available", "false"),
+                    ("inbox_workbench_confirmation_required", "false"),
+                    ("inbox_workbench_finish_form_available", "true"),
+                    ("inbox_workbench_finish_confirmation_required", "true"),
+                    ("inbox_workbench_saved_artifact", evidence_artifact),
+                    ("inbox_workbench_source", "operator_inbox_queue_state"),
+                    ("inbox_workbench_write_on_get", "false"),
+                    ("inbox_workbench_approves_on_get", "false"),
+                    ("inbox_workbench_executes_work_on_get", "false"),
+                    ("inbox_workbench_provider_calls_taken", "0"),
+                    ("inbox_workbench_network_actions_taken", "0"),
+                    ("inbox_workbench_external_effects_created", "false"),
+                    ("inbox_workbench_push_created", "false"),
+                    ("inbox_workbench_pr_created", "false"),
+                    ("inbox_workbench_deploy_created", "false"),
+                ]
+            ),
+            _ul(lines),
+            "<h3 id='inbox-finish-today'>Finish Today</h3>",
+            "<p class='muted'>Save this inbox queue, expanded panels, and selected evidence artifact as tomorrow's resume point. This writes only `.clanker/app/workspace.json` after confirmation.</p>",
+            finish_form,
             "</section>",
         ]
     )
@@ -15160,7 +15493,7 @@ def _manual_browser_checkpoints(state: dict[str, str] | None) -> str:
         "<a href='/dogfooding'>/dogfooding</a> marker=Manual Dogfooding Checklist expected=Dogfooding Command Bar,Dogfooding Next Action,GitHub Actions Follow-up",
         f"<a href='/projects/{quote(project_id)}'>/projects/{_e(project_id)}</a> marker=Project expected=Project Operator Guidance,Project Workflow Launchpad",
         "<a href='/approvals'>/approvals</a> marker=Approvals expected=Approval Operator Workbench,pending local decisions or empty queue",
-        "<a href='/inbox'>/inbox</a> marker=Operator Inbox expected=queue counts and next-action cues",
+        "<a href='/inbox'>/inbox</a> marker=Operator Inbox expected=Inbox Operator Workbench,queue counts and next-action cues",
         "<a href='/verification'>/verification</a> marker=Verification Handoff expected=fast/full-suite boundary and no GitHub status fetch",
         "<a href='/health'>/health</a> marker=System Health expected=local app status artifact and zero-effect non-claims",
     ]
@@ -17691,6 +18024,18 @@ def _html_page(
     .inbox-command-bar {{ border-left:4px solid var(--accent); }}
     .inbox-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .inbox-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .inbox-operator-workbench {{ border-left:4px solid var(--accent); }}
+    .inbox-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .inbox-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .inbox-operator-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .inbox-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .inbox-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .inbox-workbench-card h3 {{ margin-top:0; }}
+    .inbox-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .inbox-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .inbox-workbench-action, .inbox-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .inbox-workbench-action {{ background:var(--accent); color:#fff; }}
+    .inbox-workbench-link {{ background:var(--surface); color:var(--accent); }}
     .approval-queue-command-bar {{ border-left:4px solid var(--warn); }}
     .approval-queue-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .approval-queue-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -17733,7 +18078,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} .goal-workbench-grid, .run-workbench-grid, .approval-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side {{ position:static; }} dl {{ grid-template-columns:1fr; }} .goal-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>

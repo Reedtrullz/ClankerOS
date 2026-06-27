@@ -526,7 +526,11 @@ publication items include the same run links and next-action cues, but the
 actual decision forms stay on `/approvals` and the state-aware run detail
 pages. The read-only `Inbox Command Bar` starts the page with the total local
 queue size, counts by queue type, the first attention item, its target section,
-and the no-write/no-network boundary.
+and the no-write/no-network boundary. The `Inbox Operator Workbench` follows
+it with do/inspect/Goal/finish cards for the first attention item, resolving
+Goal, delegation, run, evidence, and continuation surfaces when available, and
+includes a confirmed `save-workspace` form so the queue can become tomorrow's
+resume point without writing on GET.
 
 Use `/verification` when you want the local-vs-GitHub testing split in one
 place. It reads the checked-in GitHub Actions workflow, lists the compact local

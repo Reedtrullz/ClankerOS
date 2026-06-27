@@ -586,8 +586,12 @@ Core layers for the bootstrap:
   incident pages for pending worktree, commit, and publication decisions,
   with the inbox starting from a read-only `Inbox Command Bar` that summarizes
   total local queue size, queue-type counts, the first attention item, target
-  section, reason, and zero-effect boundary while preserving read-only run
-  links and next-action cues for pending commit/publication rows,
+  section, reason, and zero-effect boundary, followed by an
+  `Inbox Operator Workbench` with do/inspect/Goal/finish cards, Goal/
+  delegation/run/evidence routing, a continuation surface, and a confirmed
+  `save-workspace` form that stores the queue as a future resume point
+  without writing on GET while preserving read-only run links and next-action
+  cues for pending commit/publication rows,
   with `/approvals` starting from both a queue summary and a read-only
   `Approval Decision Brief` that links the first local decision to its
   delegation, workflow, run when available, request artifact, evidence

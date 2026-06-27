@@ -4416,6 +4416,25 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "inbox_command_empty: no local operator queue items" in empty_inbox.body
     assert "inbox_command_write_on_get</dt><dd>false" in empty_inbox.body
     assert "inbox_command_external_effects_created</dt><dd>false" in empty_inbox.body
+    assert "Inbox Operator Workbench" in empty_inbox.body
+    assert "data-inbox-operator-workbench='true'" in empty_inbox.body
+    assert "data-inbox-workbench-actions='true'" in empty_inbox.body
+    assert "inbox_workbench_status</dt><dd>empty_queue" in empty_inbox.body
+    assert "inbox_workbench_total_items</dt><dd>0" in empty_inbox.body
+    assert "inbox_workbench_first_kind</dt><dd>none" in empty_inbox.body
+    assert "inbox_workbench_first_goal</dt><dd>none" in empty_inbox.body
+    assert "inbox_workbench_goal_surface</dt><dd><a href='/goals'>/goals</a>" in empty_inbox.body
+    assert "inbox_workbench_next_action</dt><dd>No inbox items" in empty_inbox.body
+    assert "inbox_workbench_primary_surface</dt><dd><a href='/goals'>/goals</a>" in empty_inbox.body
+    assert "inbox_workbench_action_form_available</dt><dd>false" in empty_inbox.body
+    assert "inbox_workbench_confirmation_required</dt><dd>false" in empty_inbox.body
+    assert "inbox_workbench_finish_form_available</dt><dd>true" in empty_inbox.body
+    assert "inbox_workbench_write_on_get</dt><dd>false" in empty_inbox.body
+    assert "inbox_workbench_approves_on_get</dt><dd>false" in empty_inbox.body
+    assert "inbox_workbench_executes_work_on_get</dt><dd>false" in empty_inbox.body
+    assert "inbox_workbench_empty: no local operator queue items" in empty_inbox.body
+    assert "id='inbox-finish-today'" in empty_inbox.body
+    assert "name='updated_by' value='inbox-operator-workbench'" in empty_inbox.body
 
     refresh_confirmation = render_local_app_route(
         tmp_path,
@@ -5411,6 +5430,38 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "inbox_command_click: <a href='#inbox-subagent-delegations'>Subagent Delegations</a>" in inbox.body
     assert "inbox_command_write_on_get</dt><dd>false" in inbox.body
     assert "inbox_command_external_effects_created</dt><dd>false" in inbox.body
+    assert "Inbox Operator Workbench" in inbox.body
+    assert "data-inbox-operator-workbench='true'" in inbox.body
+    assert "data-inbox-workbench-actions='true'" in inbox.body
+    assert "inbox_workbench_status</dt><dd>attention_ready" in inbox.body
+    assert "inbox_workbench_total_items</dt><dd>1" in inbox.body
+    assert "inbox_workbench_first_kind</dt><dd>subagent_delegation" in inbox.body
+    assert f"inbox_workbench_first_id</dt><dd>{delegation.id}" in inbox.body
+    assert "inbox_workbench_first_project</dt><dd>first-target" in inbox.body
+    assert f"inbox_workbench_first_goal</dt><dd>{created_goal_id}" in inbox.body
+    assert f"inbox_workbench_goal_surface</dt><dd><a href='/goals/{created_goal_id}'>{created_goal_id}</a>" in inbox.body
+    assert f"inbox_workbench_first_delegation</dt><dd>{delegation.id}" in inbox.body
+    assert "inbox_workbench_first_run</dt><dd>none" in inbox.body
+    assert "inbox_workbench_next_action</dt><dd>Inspect delegation" in inbox.body
+    assert "inbox_workbench_action_name</dt><dd>inspect-delegation" in inbox.body
+    assert "inbox_workbench_primary_surface</dt><dd><a href='#inbox-subagent-delegations'>Subagent Delegations</a>" in inbox.body
+    assert f"inbox_workbench_inspection_surface</dt><dd><a href='/delegations/{delegation.id}'>Delegation</a>" in inbox.body
+    assert f"inbox_workbench_decision_surface</dt><dd><a href='/workflow?delegation_id={delegation.id}'>/workflow?delegation_id={delegation.id}</a>" in inbox.body
+    assert "inbox_workbench_reason</dt><dd>pending" in inbox.body
+    assert "inbox_workbench_after_action</dt><dd>continue delegation workflow" in inbox.body
+    assert "inbox_workbench_action_form_available</dt><dd>false" in inbox.body
+    assert "inbox_workbench_write_on_get</dt><dd>false" in inbox.body
+    assert "inbox_workbench_approves_on_get</dt><dd>false" in inbox.body
+    assert "inbox_workbench_executes_work_on_get</dt><dd>false" in inbox.body
+    assert "inbox_workbench_now: Inspect delegation" in inbox.body
+    assert "inbox_workbench_click: <a href='#inbox-subagent-delegations'>Subagent Delegations</a>" in inbox.body
+    assert f"inbox_workbench_inspect: <a href='/delegations/{delegation.id}'>Delegation</a>" in inbox.body
+    assert f"inbox_workbench_goal: <a href='/goals/{created_goal_id}'>{created_goal_id}</a>" in inbox.body
+    assert "inbox_workbench_finish: <a href='#inbox-finish-today'>Finish Today</a>" in inbox.body
+    assert "id='inbox-finish-today'" in inbox.body
+    assert "name='filters' value='inbox:subagent_delegation:" in inbox.body
+    assert "inbox-workbench,summary,approvals,runs,incidents" in inbox.body
+    assert "name='updated_by' value='inbox-operator-workbench'" in inbox.body
     assert "inbox_items" in inbox.body
     assert "network_actions_taken" in inbox.body
     approvals = render_local_app_route(tmp_path, "/approvals")
@@ -8010,6 +8061,52 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "inbox_command_now: Approve worktree" in inbox.body
     assert "inbox_command_click: <a href='#inbox-pending-worktree-approvals'>Pending Worktree Approvals</a>" in inbox.body
     assert "inbox_command_safety: read-only queue guidance" in inbox.body
+    assert "Inbox Operator Workbench" in inbox.body
+    assert "data-inbox-operator-workbench='true'" in inbox.body
+    assert "data-inbox-workbench-actions='true'" in inbox.body
+    assert "inbox_workbench_status</dt><dd>attention_ready" in inbox.body
+    assert "inbox_workbench_worktree_approvals</dt><dd>1" in inbox.body
+    assert "inbox_workbench_commit_approvals</dt><dd>0" in inbox.body
+    assert "inbox_workbench_publication_requests</dt><dd>0" in inbox.body
+    assert "inbox_workbench_coder_runs</dt><dd>1" in inbox.body
+    assert "inbox_workbench_first_kind</dt><dd>worktree_approval" in inbox.body
+    assert f"inbox_workbench_first_id</dt><dd>{result.approval_id}" in inbox.body
+    assert "inbox_workbench_first_project</dt><dd>local-app-demo" in inbox.body
+    assert f"inbox_workbench_first_goal</dt><dd>{result.goal_id}" in inbox.body
+    assert f"inbox_workbench_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in inbox.body
+    assert f"inbox_workbench_first_delegation</dt><dd>{result.delegation_id}" in inbox.body
+    assert "inbox_workbench_first_run</dt><dd>not_created_yet" in inbox.body
+    assert "inbox_workbench_next_action</dt><dd>Approve worktree" in inbox.body
+    assert "inbox_workbench_action_name</dt><dd>approve-coder-worktree" in inbox.body
+    assert "inbox_workbench_primary_surface</dt><dd><a href='#inbox-pending-worktree-approvals'>Pending Worktree Approvals</a>" in inbox.body
+    assert f"inbox_workbench_inspection_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'>Workflow</a>" in inbox.body
+    assert "inbox_workbench_decision_surface</dt><dd><a href='/approvals'>/approvals</a>" in inbox.body
+    assert "inbox_workbench_reason</dt><dd>bounded_worktree_plan_waiting_for_operator" in inbox.body
+    assert "inbox_workbench_evidence_artifact</dt><dd><a href='/artifacts?path=" in inbox.body
+    assert "inbox_workbench_after_action</dt><dd>run approved worktree from Goal or workflow surface" in inbox.body
+    assert "inbox_workbench_action_form_available</dt><dd>false" in inbox.body
+    assert "inbox_workbench_confirmation_required</dt><dd>false" in inbox.body
+    assert "inbox_workbench_finish_form_available</dt><dd>true" in inbox.body
+    assert "inbox_workbench_source</dt><dd>operator_inbox_queue_state" in inbox.body
+    assert "inbox_workbench_write_on_get</dt><dd>false" in inbox.body
+    assert "inbox_workbench_approves_on_get</dt><dd>false" in inbox.body
+    assert "inbox_workbench_executes_work_on_get</dt><dd>false" in inbox.body
+    assert "inbox_workbench_provider_calls_taken</dt><dd>0" in inbox.body
+    assert "inbox_workbench_network_actions_taken</dt><dd>0" in inbox.body
+    assert "inbox_workbench_external_effects_created</dt><dd>false" in inbox.body
+    assert "inbox_workbench_push_created</dt><dd>false" in inbox.body
+    assert "inbox_workbench_pr_created</dt><dd>false" in inbox.body
+    assert "inbox_workbench_deploy_created</dt><dd>false" in inbox.body
+    assert "inbox_workbench_now: Approve worktree" in inbox.body
+    assert "inbox_workbench_click: <a href='#inbox-pending-worktree-approvals'>Pending Worktree Approvals</a>" in inbox.body
+    assert f"inbox_workbench_inspect: <a href='/workflow?delegation_id={result.delegation_id}'>Workflow</a>" in inbox.body
+    assert f"inbox_workbench_goal: <a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in inbox.body
+    assert "inbox_workbench_finish: <a href='#inbox-finish-today'>Finish Today</a>" in inbox.body
+    assert "inbox_workbench_safety: read-only queue guidance; confirmed local actions elsewhere" in inbox.body
+    assert "id='inbox-finish-today'" in inbox.body
+    assert "name='filters' value='inbox:worktree_approval:" in inbox.body
+    assert "inbox-workbench,summary,approvals,runs,incidents" in inbox.body
+    assert "name='updated_by' value='inbox-operator-workbench'" in inbox.body
     assert "id='inbox-pending-worktree-approvals'" in inbox.body
     assert "id='inbox-coder-worktree-runs'" in inbox.body
     assert result.approval_id in inbox.body

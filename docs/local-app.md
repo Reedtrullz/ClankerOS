@@ -452,7 +452,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   incidents, delegations, coder runs, commits, and publication handoffs.
   A read-only `Inbox Command Bar` summarizes total local queue size, counts by
   queue type, the first attention item, target section, reason, and
-  write-on-GET/network/external-effect boundaries. Pending commit and
+  write-on-GET/network/external-effect boundaries. An `Inbox Operator
+  Workbench` follows it with do/inspect/Goal/finish cards for the first
+  attention item, Goal/delegation/run/evidence routing when available, a
+  continuation surface, and a confirmed `save-workspace` form that can store
+  the queue as a resume point without writing on GET. Pending commit and
   publication rows include run links, approval-queue links, and next-action
   cues without exposing decision forms on the inbox page.
 - `/approvals` - pending worktree, commit, and publication approvals. A

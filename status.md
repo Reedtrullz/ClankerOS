@@ -1,5 +1,38 @@
 # Status
 
+## 2026-06-27 Inbox Operator Workbench
+
+- Added an `Inbox Operator Workbench` immediately after the `/inbox`
+  `Inbox Command Bar`.
+- The workbench turns the first local operator attention item into
+  do/inspect/Goal/finish cards with queue counts, Goal/delegation/run routing
+  when available, evidence artifact links, a continuation surface, no-form-on-
+  inbox posture, and a confirmed `save-workspace` form that can store the
+  inbox queue as tomorrow's resume point.
+- Added empty-inbox, first-run pending-delegation, and fixture-backed pending
+  worktree-approval route assertions, plus demo smoke coverage for the
+  `/inbox` marker.
+- Updated README, local app docs, and the operating summary to describe
+  `/inbox` as a daily operator workbench rather than only a read-only queue.
+- Non-claims: this does not expose decision forms on `/inbox`, approve
+  anything on GET, execute work, commit, push, create PRs, deploy, fetch
+  GitHub status, call providers, use the network, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `df -h /System/Volumes/Data`
+    -> `82Gi` available before smoke tests
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_9d13acd35845`, `run_f58ff05b8ade`, and coder
+    worktree run `run_0b14dfe28729`
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Approval Operator Workbench
 
 - Added an `Approval Operator Workbench` immediately after the `/approvals`
