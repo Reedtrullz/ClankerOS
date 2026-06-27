@@ -1,5 +1,33 @@
 # Status
 
+## 2026-06-27 Search Command Bar
+
+- Added a read-only `Search Command Bar` to `/search`. It shows the current
+  query, total results, result counts by category, the first result to open,
+  target link, summary, and write-on-GET/network/external-effect/raw-filesystem
+  boundaries before the longer result list.
+- Empty search now has an explicit first action to enter a query. Populated
+  searches now expose a first-click target, so action or phase searches can
+  return directly to the relevant Goal without scanning every result row.
+- README, local app docs, and the operating summary now describe `/search` as
+  a browser-first command surface over indexed local state rather than only a
+  raw results page.
+- Non-claims: this does not write local state, browse the raw filesystem,
+  execute work, approve gates, commit, push, create PRs, deploy, call
+  providers, fetch GitHub status, use the network, or mutate external systems.
+  It reads existing indexed local rows and bounded artifact content only.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Inbox Command Bar
 
 - Added a read-only `Inbox Command Bar` to `/inbox`. It shows total local

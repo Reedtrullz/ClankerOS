@@ -99,7 +99,10 @@ Core layers for the bootstrap:
   `/search` for bounded global search across indexed goals, projects,
   delegations, known artifacts, incidents, recommendations, memory, runs,
   approvals, and skills, with goal results including live local phase, one
-  recommended next action, and remaining-work counts;
+  recommended next action, and remaining-work counts, plus a read-only
+  `Search Command Bar` that summarizes result counts by category, first
+  result, target link, summary, and no-write/no-network/no-raw-filesystem
+  boundaries;
   `/workspace` for persistent open project/goal/filter/panel/last-artifact
   state in `.clanker/app/workspace.json` plus the saved goal's current phase,
   one next action, operator attention cue, target surface, and the same

@@ -4325,6 +4325,15 @@ def test_local_app_routes_render_modern_workflow_and_health(
     search = render_local_app_route(tmp_path, "/search")
     assert search.status == 200
     assert "Global Search" in search.body
+    assert "Search Command Bar" in search.body
+    assert "data-search-command-bar='true'" in search.body
+    assert "search_command_query</dt><dd>none" in search.body
+    assert "search_command_total_results</dt><dd>0" in search.body
+    assert "search_command_first_action</dt><dd>Type a search query" in search.body
+    assert "search_command_first_surface</dt><dd><a href='#search-form'>Search form</a>" in search.body
+    assert "search_command_empty: enter a query to search local indexed state" in search.body
+    assert "search_command_write_on_get</dt><dd>false" in search.body
+    assert "search_command_external_effects_created</dt><dd>false" in search.body
     assert "raw_filesystem_browsing</dt><dd>false" in search.body
 
     workspace = render_local_app_route(tmp_path, "/workspace")
@@ -5809,6 +5818,20 @@ def test_local_app_demo_scenario_populates_fixture_state(
     search = render_local_app_route(tmp_path, "/search?q=fixture-backed")
     assert search.status == 200
     assert "Global Search" in search.body
+    assert "Search Command Bar" in search.body
+    assert "data-search-command-bar='true'" in search.body
+    assert "search_command_query</dt><dd>fixture-backed" in search.body
+    assert "search_command_goal_results</dt><dd>" in search.body
+    assert "search_command_artifact_results</dt><dd>" in search.body
+    assert "search_command_first_action</dt><dd>Open first result" in search.body
+    assert "search_command_first_kind</dt><dd>goal" in search.body
+    assert f"search_command_first_href</dt><dd>/goals/{result.goal_id}" in search.body
+    assert "search_command_first_surface</dt><dd><a href='/goals/" in search.body
+    assert "search_command_write_on_get</dt><dd>false" in search.body
+    assert "search_command_network_actions_taken</dt><dd>0" in search.body
+    assert "search_command_external_effects_created</dt><dd>false" in search.body
+    assert "search_command_raw_filesystem_browsing</dt><dd>false" in search.body
+    assert "search_command_click: <a href='/goals/" in search.body
     assert "goal" in search.body
     assert result.goal_id in search.body
     assert "artifact" in search.body
@@ -5816,6 +5839,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     search_next_action = render_local_app_route(tmp_path, "/search?q=Create%20commit%20request")
     assert search_next_action.status == 200
     assert "Global Search" in search_next_action.body
+    assert "Search Command Bar" in search_next_action.body
+    assert "search_command_first_action</dt><dd>Open first result" in search_next_action.body
+    assert "search_command_first_kind</dt><dd>goal" in search_next_action.body
     assert result.goal_id in search_next_action.body
     assert "phase=Ready to commit" in search_next_action.body
     assert "next_action=Create commit request" in search_next_action.body

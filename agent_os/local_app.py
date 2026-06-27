@@ -1828,7 +1828,12 @@ def _search_page(root: Path, *, query: str) -> str:
                 ]
             ),
             "</section>",
-            _list_section("Search Results", [_search_result_line(item) for item in results]),
+            _search_command_bar(term, results),
+            _list_section(
+                "Search Results",
+                [_search_result_line(item) for item in results],
+                anchor_id="search-results",
+            ),
             _non_claim_banner(),
         ]
     )
@@ -1836,10 +1841,85 @@ def _search_page(root: Path, *, query: str) -> str:
 
 def _search_form(term: str) -> str:
     return (
-        "<form method='get' action='/search'>"
+        "<form id='search-form' method='get' action='/search'>"
         f"<label>q <input name='q' value='{_e(term)}'></label>"
         "<button type='submit'>search</button>"
         "</form>"
+    )
+
+
+def _search_command_bar(term: str, results: list[dict[str, str]]) -> str:
+    counts: dict[str, int] = {}
+    for item in results:
+        category = item.get("category", "unknown")
+        counts[category] = counts.get(category, 0) + 1
+    first_kind = "none"
+    first_title = "none"
+    first_href = "none"
+    first_summary = "none"
+    first_action = "Type a search query" if not term else "No local results"
+    first_surface = SafeHtml("<a href='#search-form'>Search form</a>")
+    if results:
+        first = results[0]
+        first_kind = first["category"]
+        first_title = first["title"]
+        first_href = first["href"]
+        first_summary = first["summary"]
+        first_action = "Open first result"
+        first_surface = SafeHtml(
+            f"<a href='{_e(first_href)}'>{_e(first_title)}</a>"
+        )
+    lines = [
+        f"search_command_now: {_e(first_action)}",
+        f"search_command_click: {first_surface}",
+        f"search_command_reason: {_e(first_summary if results else (term or 'no query entered'))}",
+        "search_command_safety: read-only indexed local search",
+    ]
+    if not term:
+        lines.append("search_command_empty: enter a query to search local indexed state")
+    elif not results:
+        lines.append("search_command_empty: no matching local indexed records")
+    category_keys = [
+        "goal",
+        "project",
+        "task",
+        "delegation",
+        "run",
+        "approval",
+        "incident",
+        "recommendation",
+        "memory",
+        "skill",
+        "artifact",
+    ]
+    return "".join(
+        [
+            "<section class='panel search-command-bar' data-search-command-bar='true'><h2>Search Command Bar</h2>",
+            "<p class='muted'>One read-only summary of the current local search and the first result to open.</p>",
+            _kv(
+                [
+                    ("search_command_status", "available"),
+                    ("search_command_query", term or "none"),
+                    ("search_command_total_results", str(len(results))),
+                    *[
+                        (f"search_command_{category}_results", str(counts.get(category, 0)))
+                        for category in category_keys
+                    ],
+                    ("search_command_first_kind", first_kind),
+                    ("search_command_first_title", first_title),
+                    ("search_command_first_href", first_href),
+                    ("search_command_first_action", first_action),
+                    ("search_command_first_surface", first_surface),
+                    ("search_command_first_summary", first_summary),
+                    ("search_command_write_on_get", "false"),
+                    ("search_command_network_actions_taken", "0"),
+                    ("search_command_external_effects_created", "false"),
+                    ("search_command_raw_filesystem_browsing", "false"),
+                ]
+            ),
+            _ul(lines),
+            "</section>",
+        ]
     )
 
 
@@ -10175,6 +10255,9 @@ def _html_page(
     .workflow-map-rail li {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; overflow-wrap:anywhere; }}
     .workflow-map-rail li[data-gate-marker="current"] {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
     .workflow-map-index {{ display:inline-grid; place-items:center; width:22px; height:22px; border:1px solid var(--line); border-radius:999px; margin-right:5px; font-size:12px; color:var(--muted); }}
+    .search-command-bar {{ border-left:4px solid var(--ok); }}
+    .search-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .search-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .inbox-command-bar {{ border-left:4px solid var(--accent); }}
     .inbox-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .inbox-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
