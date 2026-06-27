@@ -587,8 +587,10 @@ Core layers for the bootstrap:
   health/status artifact with current warning readbacks, and exposes only
   explicit local forms for safe
   artifact-producing and approval-producing actions. Confirmation pages render
-  the submitted action payload and safety boundary before a confirmed local
-  write; confirmed action result pages render the submitted payload, local
+  a read-only `Action Confirmation Command Bar`, submitted action payload, and
+  safety boundary before a confirmed local write, local approval decision, or
+  bounded local execution; confirmed action result pages render the submitted
+  payload, local
   result fields, artifact links, next-page link, safety boundary, and an
   `Action Continuation` block from the refreshed saved goal state with phase,
   one next action, target surface, and the same confirmed local action form

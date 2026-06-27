@@ -4372,6 +4372,17 @@ def test_local_app_routes_render_modern_workflow_and_health(
     )
     assert refresh_confirmation.status == 409
     assert "Confirm refresh-dashboard-state" in refresh_confirmation.body
+    assert "Action Confirmation Command Bar" in refresh_confirmation.body
+    assert "data-action-confirmation-command-bar='true'" in refresh_confirmation.body
+    assert "action_confirmation_status</dt><dd>awaiting_operator_confirm" in refresh_confirmation.body
+    assert "action_confirmation_action</dt><dd>refresh-dashboard-state" in refresh_confirmation.body
+    assert "action_confirmation_category</dt><dd>low-risk" in refresh_confirmation.body
+    assert "action_confirmation_output_artifact</dt><dd>.clanker/app/local_app_status.json" in refresh_confirmation.body
+    assert "action_confirmation_action_completed</dt><dd>false" in refresh_confirmation.body
+    assert "action_confirmation_write_before_confirm</dt><dd>false" in refresh_confirmation.body
+    assert "action_confirmation_network_actions_taken</dt><dd>0" in refresh_confirmation.body
+    assert "action_confirmation_external_effects_created</dt><dd>false" in refresh_confirmation.body
+    assert "action_confirmation_safety: confirmation required before any local write" in refresh_confirmation.body
     assert "Action Payload" in refresh_confirmation.body
     assert "requested_by" in refresh_confirmation.body
     assert "operator" in refresh_confirmation.body
@@ -8405,6 +8416,20 @@ def test_goal_runs_approved_worktree_from_browser_action(
     )
     assert confirmation.status == 409
     assert "Confirm run-coder-worktree" in confirmation.body
+    assert "Action Confirmation Command Bar" in confirmation.body
+    assert "data-action-confirmation-command-bar='true'" in confirmation.body
+    assert "action_confirmation_action</dt><dd>run-coder-worktree" in confirmation.body
+    assert "action_confirmation_category</dt><dd>bounded local execution" in confirmation.body
+    assert "action_confirmation_required_input</dt><dd>approved worktree request plus safe local command" in confirmation.body
+    assert "action_confirmation_output_artifact</dt><dd>coder_worktree evidence packet" in confirmation.body
+    assert "action_confirmation_executes_local_command_after_confirm</dt><dd>true" in confirmation.body
+    assert "action_confirmation_action_completed</dt><dd>false" in confirmation.body
+    assert "action_confirmation_provider_calls_taken</dt><dd>0" in confirmation.body
+    assert "action_confirmation_network_actions_taken</dt><dd>0" in confirmation.body
+    assert "action_confirmation_external_effects_created</dt><dd>false" in confirmation.body
+    assert "action_confirmation_push_created</dt><dd>false" in confirmation.body
+    assert "action_confirmation_pr_created</dt><dd>false" in confirmation.body
+    assert "action_confirmation_deploy_created</dt><dd>false" in confirmation.body
     assert "python3 scripts/change_allowed.py" in confirmation.body
     assert "Safety boundary" in confirmation.body
 

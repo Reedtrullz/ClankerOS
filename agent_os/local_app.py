@@ -984,7 +984,7 @@ def write_local_app_status(root: Path, *, host: str, port: int) -> Path:
         "non_claims": NO_EXTERNAL_EFFECT_CLAIMS,
         "known_gaps": [
             "No authentication for localhost MVP.",
-            "Worktree execution remains CLI-first except for fixture-backed demo setup.",
+            "No general arbitrary worktree execution surface; run-coder-worktree still requires an approved plan, confirmation, and safe local command validation.",
             "Local commit action requires an approved commit request, typed matching message, and explicit confirmation.",
             "Publication push and PR creation are displayed as manual commands only.",
         ],
@@ -15545,9 +15545,70 @@ def _confirm_form(action: str, form: dict[str, list[str]]) -> str:
             f"<section><h1>Confirm {_e(action)}</h1>",
             "<p>This action writes local ClankerOS artifacts only. It does not push, create PRs, deploy, call providers, or execute external mutations.</p>",
             _non_claim_banner(),
+            _action_confirmation_command_bar(action, form),
             "<h2>Action Payload</h2>",
             _kv(_submitted_form_rows(form)),
             f"<form method='post' action='/actions/{_e(action)}'>{''.join(inputs)}<button type='submit'>Confirm local action</button></form>",
+            "</section>",
+        ]
+    )
+
+
+def _action_confirmation_command_bar(action: str, form: dict[str, list[str]]) -> str:
+    entry = next((item for item in ACTION_CATALOG if item[0] == action), None)
+    if entry is None:
+        category = "unknown"
+        surface = "unknown"
+        mutates = "unknown"
+        confirmation = "yes"
+        requires = "unknown"
+        output = "unknown"
+    else:
+        _name, category, surface, mutates, confirmation, requires, output = entry
+    submitted_fields = sum(
+        len(values)
+        for key, values in form.items()
+        if key != "confirm"
+    )
+    executes_local_command = (
+        "true"
+        if action in {"run-delegation", "run-coder-worktree", "commit-coder-worktree"}
+        or "execution" in category
+        or "git" in category
+        else "false"
+    )
+    lines = [
+        f"action_confirmation_now: Review {_e(action)} payload",
+        f"action_confirmation_after_confirm: {_e(output)}",
+        "action_confirmation_safety: confirmation required before any local write",
+    ]
+    return "".join(
+        [
+            "<section class='panel action-confirmation-command-bar' data-action-confirmation-command-bar='true'><h2>Action Confirmation Command Bar</h2>",
+            "<p class='muted'>Read-only preflight for the local action waiting on explicit operator confirmation.</p>",
+            _kv(
+                [
+                    ("action_confirmation_status", "awaiting_operator_confirm"),
+                    ("action_confirmation_action", action),
+                    ("action_confirmation_category", category),
+                    ("action_confirmation_surface", surface),
+                    ("action_confirmation_submitted_fields", str(submitted_fields)),
+                    ("action_confirmation_required_input", requires),
+                    ("action_confirmation_output_artifact", output),
+                    ("action_confirmation_mutates_local_state_after_confirm", mutates),
+                    ("action_confirmation_requires_confirmation", confirmation),
+                    ("action_confirmation_executes_local_command_after_confirm", executes_local_command),
+                    ("action_confirmation_action_completed", "false"),
+                    ("action_confirmation_write_before_confirm", "false"),
+                    ("action_confirmation_provider_calls_taken", "0"),
+                    ("action_confirmation_network_actions_taken", "0"),
+                    ("action_confirmation_external_effects_created", "false"),
+                    ("action_confirmation_push_created", "false"),
+                    ("action_confirmation_pr_created", "false"),
+                    ("action_confirmation_deploy_created", "false"),
+                ]
+            ),
+            _ul(lines),
             "</section>",
         ]
     )
@@ -16241,6 +16302,9 @@ def _html_page(
     .workflow-command-bar {{ border-left:4px solid var(--accent); }}
     .workflow-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .workflow-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .action-confirmation-command-bar {{ border-left:4px solid var(--warn); }}
+    .action-confirmation-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .action-confirmation-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .verification-command-bar {{ border-left:4px solid var(--accent); }}
     .verification-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .verification-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

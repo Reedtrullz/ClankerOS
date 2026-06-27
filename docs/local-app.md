@@ -232,15 +232,16 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   that writes a read-only scout delegation contract without starting a
   subagent. After that, the same Next Action card exposes a confirmed
   `context-pack` form while the delegation has no context pack. Once the
-  context pack exists, the card shows the exact `run-delegation` CLI handoff
-  and makes clear that browser adapter execution is not exposed yet. After a
-  delegation completes, the card exposes confirmed `coder-prep`,
+  context pack exists, the card shows a confirmed `run-delegation` browser
+  action plus the exact CLI fallback command. After a delegation completes,
+  the card exposes confirmed `coder-prep`,
   `coder-worktree-plan`, and `coder-worktree-approval` forms at the matching
   workflow phases. It also exposes confirmed `approve-coder-worktree` and
-  then a copy-only `run-coder-worktree` handoff once the worktree request is
-  approved. The handoff names the approved plan, allowed-file preview,
-  verifier, expected evidence path, and return route while keeping browser-side
-  worktree execution unexposed. The Goal card exposes `review-run` when the
+  then a confirmed `run-coder-worktree` action once the worktree request is
+  approved. The action names the approved plan, allowed-file preview,
+  verifier, expected evidence path, return route, and safe-command validator
+  before running one operator-provided local command after confirmation. The
+  Goal card exposes `review-run` when the
   completed coder worktree run is blocked on the review gate, then
   `coder-commit-request` once the review exists and mentions the coder run.
   Once a commit request exists, the same Goal card can drive
@@ -689,8 +690,13 @@ read-only queue form: it links to the run and approval queue and names the next
 action after approval, but it does not render the approval decision forms.
 Confirmation pages show the submitted action payload as visible read-only
 fields plus the safety boundary before resubmitting with `confirm=yes`, so the
-operator can review exactly what will be written before a local artifact or
-approval action runs. Confirmed actions render `Action Result Details` with the
+operator can review exactly what will be written before a local artifact,
+approval, or bounded execution action runs. They start with a read-only
+`Action Confirmation Command Bar` that summarizes the action category, source
+surface, required input, output artifact, whether confirmation will mutate
+local state or execute a safe local command, and the no-provider/no-network/
+no-push/no-PR/no-deploy boundary. Confirmed actions render
+`Action Result Details` with the
 attempted action, submitted payload, result fields, artifact links when paths
 are returned, a next-page link, and the safety boundary. They also render an
 `Action Continuation` block from the refreshed saved goal state, including the
@@ -732,8 +738,9 @@ operator-worthy queue and execution evidence without starting work, approving
 requests, retrying tasks, committing, pushing, creating PRs, deploying,
 calling providers, or using external network actions.
 
-Worktree execution remains CLI-first outside the fixture-backed demo setup.
-Push and PR creation are never executed by the app.
+Worktree execution is exposed only as the confirmed `run-coder-worktree`
+Goal action after an approved plan and safe-command validation. Push and PR
+creation are never executed by the app.
 
 ## Health Artifact
 

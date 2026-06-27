@@ -1,5 +1,32 @@
 # Status
 
+## 2026-06-27 Action Confirmation Command Bar
+
+- Added a read-only `Action Confirmation Command Bar` to every local app
+  confirmation page before `confirm=yes`.
+- The bar summarizes action category, source surface, submitted field count,
+  required input, output artifact, local mutation/execution posture, and
+  no-provider/no-network/no-push/no-PR/no-deploy counters before any local
+  action is completed.
+- Updated README, local app docs, and the operating summary to describe
+  confirmation pages as first-class preflight surfaces; removed stale wording
+  that said worktree execution was CLI-first outside the demo.
+- Non-claims: this does not change action authorization, bypass confirmation,
+  loosen safe-command validation, run work on page load, approve requests,
+  push, create PRs, deploy, call providers, fetch GitHub status, or perform
+  non-loopback network actions.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or goal_runs_approved_worktree_from_browser_action" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_2c68c54c0572`, `run_01e599a1b83a`, and coder
+    worktree run `run_d0a9d2941000`
+
 ## 2026-06-27 Workflow Command Bar
 
 - Added a read-only `Workflow Command Bar` at the top of `/workflow`.
