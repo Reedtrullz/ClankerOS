@@ -4085,6 +4085,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "day_plan_end_of_day_resume: not_ready_until_workspace_saved" in root.body
     assert "home_day_plan_write_on_get</dt><dd>false" in root.body
     assert "home_day_plan_external_effects_created</dt><dd>false" in root.body
+    assert "Home Focus Queue" in root.body
+    assert "focus_queue_source</dt><dd>goal_state_next_actions" in root.body
+    assert "focus_queue_items</dt><dd>0" in root.body
+    assert "focus_queue_status: first_run_ready" in root.body
+    assert "focus_queue_next_action: Register ClankerOS project" in root.body
+    assert "focus_queue_write_on_get</dt><dd>false" in root.body
+    assert "focus_queue_external_effects_created</dt><dd>false" in root.body
     assert "Home Goal Board" in root.body
     assert "Home Resume Workspace" in root.body
     assert "workspace_status: no_saved_workspace" in root.body
@@ -5768,6 +5775,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "day_plan_end_of_day_resume: ready" in restored_home.body
     assert "home_day_plan_write_on_get</dt><dd>false" in restored_home.body
     assert "home_day_plan_external_effects_created</dt><dd>false" in restored_home.body
+    assert "Home Focus Queue" in restored_home.body
+    assert "focus_queue_source</dt><dd>goal_state_next_actions" in restored_home.body
+    assert "focus_queue_item: <a href='/goals/" in restored_home.body
+    assert "phase=Ready to commit next_action=Create commit request" in restored_home.body
+    assert "focus_queue_write_on_get</dt><dd>false" in restored_home.body
+    assert "focus_queue_external_effects_created</dt><dd>false" in restored_home.body
     assert "home_resume_current_phase: Ready to commit" in restored_home.body
     assert "home_resume_next_action: Create commit request" in restored_home.body
     assert f"home_resume_next_surface: <a href='/runs/{result.coder_worktree_run_id}'" in restored_home.body

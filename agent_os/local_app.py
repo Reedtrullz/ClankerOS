@@ -1075,6 +1075,7 @@ def _home_dashboard(
         _non_claim_banner(),
         "</section>",
         _home_day_plan(root, storage, lead_goal),
+        _home_focus_queue(root, storage, active=active, paused=paused),
         _home_goal_board(root, storage, active=active, paused=paused, completed=completed),
         _home_resume_workspace(root, lead_goal),
         _home_recent_activity(root, storage),
@@ -1177,6 +1178,65 @@ def _home_day_plan(root: Path, storage: Storage, lead_goal: sqlite3.Row | None) 
             _ul(lines),
             "</section>",
         ]
+    )
+
+
+def _home_focus_queue(
+    root: Path,
+    storage: Storage,
+    *,
+    active: list[sqlite3.Row],
+    paused: list[sqlite3.Row],
+) -> str:
+    rows = active + paused
+    lines = [_home_focus_queue_line(root, storage, row) for row in rows[:8]]
+    if not lines:
+        lines = [
+            "focus_queue_status: first_run_ready",
+            "focus_queue_next_surface: <a href='/goals'>/goals</a>",
+            "focus_queue_next_action: Register ClankerOS project",
+        ]
+    return "".join(
+        [
+            "<section><h2>Home Focus Queue</h2>",
+            _kv(
+                [
+                    ("focus_queue_source", "goal_state_next_actions"),
+                    ("focus_queue_items", str(len(active) + len(paused))),
+                    ("focus_queue_active_goals", str(len(active))),
+                    ("focus_queue_paused_goals", str(len(paused))),
+                    ("focus_queue_write_on_get", "false"),
+                    ("focus_queue_external_effects_created", "false"),
+                ]
+            ),
+            _ul(lines),
+            "</section>",
+        ]
+    )
+
+
+def _home_focus_queue_line(root: Path, storage: Storage, row: sqlite3.Row) -> str:
+    goal_id = str(row["id"])
+    state = _goal_state(root, storage, goal_id)
+    phase = _goal_current_phase(state)
+    next_action = _goal_next_action(root, state)
+    open_incidents = len([item for item in state["incidents"] if item["status"] == "open"])
+    open_recommendations = len(
+        [item for item in state["recommendations"] if item["status"] == "open"]
+    )
+    pending_approvals = (
+        _count_status(state["worktree_approvals"], "pending_operator_approval")
+        + _count_status(state["commit_approvals"], "pending_operator_approval")
+        + _count_status(state["publications"], "pending_operator_approval")
+    )
+    waiting_items = open_incidents + open_recommendations + pending_approvals
+    label = str(row["title"] or row["description"] or goal_id)
+    return (
+        f"focus_queue_item: <a href='/goals/{quote(goal_id)}'>{_e(_compact_label(label, 56))}</a> "
+        f"phase={_e(phase)} next_action={_e(next_action.action)} "
+        f"surface=<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a> "
+        f"progress={_e(_goal_progress_label(state))} waiting={waiting_items} "
+        f"approvals={pending_approvals} incidents={open_incidents} recommendations={open_recommendations}"
     )
 
 

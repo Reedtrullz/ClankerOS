@@ -108,6 +108,7 @@ paused, and completed goal lanes, recent activity, the operator inbox,
 recommendations, incidents, saved workspace resume links, saved-goal phase and
 next-action readbacks, a `Home Day Plan` that names the current goal, phase,
 one next action, waiting counts, and whether end-of-day resume is ready, the
+`Home Focus Queue` for next actions across active and paused goals, the
 saved-goal browser-available action form, and first-run project/goal/delegation
 guidance when the checkout has not completed
 its first delegation. The First Run Guide is

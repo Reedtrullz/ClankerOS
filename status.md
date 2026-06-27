@@ -1,5 +1,27 @@
 # Status
 
+## 2026-06-27 Home Focus Queue
+
+- Added a read-only `Home Focus Queue` section to `/` that lists active and
+  paused goals with each goal's phase, one next action, target local surface,
+  progress, and waiting counts for approvals/incidents/recommendations. A
+  fresh checkout shows a first-run queue item pointing to `/goals`.
+- Non-claims: this does not write local state on GET, run work, approve gates,
+  activate providers, push, create PRs, deploy, fetch GitHub status, or mutate
+  external systems. It only reads existing local goal state and reuses the
+  same next-action engine as Goal pages.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Home Day Plan
 
 - Added a read-only `Home Day Plan` section to `/` that derives the current
