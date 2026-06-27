@@ -130,6 +130,10 @@ Core layers for the bootstrap:
   delegation/run/workflow surface to inspect, stable attention/coder-prep/
   recent-run anchors, and no-write/no-provider/no-network/no-external-effect
   boundaries before the longer execution evidence index;
+  `/workflow` includes a read-only `Workflow Command Bar` that summarizes the
+  selected delegation or coder run, parent Goal, project, current workflow
+  stage, next local action, target surface, reason, and zero-effect counters
+  before the detailed selected-state map and continuation links;
   `/artifacts?path=...` includes a read-only `Artifact Command Bar` that
   summarizes bounded artifact path, render type/family/renderer, size,
   rendered bytes, line count, truncation state, inferred project/goal context,

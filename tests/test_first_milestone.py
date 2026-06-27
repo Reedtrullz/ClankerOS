@@ -4433,6 +4433,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
 
     workflow = render_local_app_route(tmp_path, "/workflow")
     assert workflow.status == 200
+    assert "Workflow Command Bar" in workflow.body
+    assert "data-workflow-command-bar='true'" in workflow.body
+    assert "workflow_command_status</dt><dd>no_selection" in workflow.body
+    assert "workflow_command_scope</dt><dd>all" in workflow.body
+    assert "workflow_command_next_action</dt><dd>Select delegation or run" in workflow.body
+    assert "workflow_command_next_surface</dt><dd><a href='/delegation-runs'>/delegation-runs</a>" in workflow.body
+    assert "workflow_command_write_on_get</dt><dd>false" in workflow.body
+    assert "workflow_command_network_actions_taken</dt><dd>0" in workflow.body
+    assert "workflow_command_external_effects_created</dt><dd>false" in workflow.body
+    assert "workflow_command_safety: read-only workflow guidance" in workflow.body
     for label in [
         "Goal / task",
         "Implementation handoff",
@@ -7501,6 +7511,21 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"/workflow?delegation_id={result.delegation_id}",
     )
     assert workflow_for_delegation.status == 200
+    assert "Workflow Command Bar" in workflow_for_delegation.body
+    assert "data-workflow-command-bar='true'" in workflow_for_delegation.body
+    assert "workflow_command_status</dt><dd>delegation_selected" in workflow_for_delegation.body
+    assert "workflow_command_scope</dt><dd>delegation" in workflow_for_delegation.body
+    assert f"workflow_command_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in workflow_for_delegation.body
+    assert f"workflow_command_run</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_delegation.body
+    assert f"workflow_command_goal</dt><dd><a href='/goals/{result.goal_id}'" in workflow_for_delegation.body
+    assert "workflow_command_current_stage</dt><dd>Commit request" in workflow_for_delegation.body
+    assert "workflow_command_next_action</dt><dd>request_commit_for_reviewed_run" in workflow_for_delegation.body
+    assert f"workflow_command_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_delegation.body
+    assert "workflow_command_write_on_get</dt><dd>false" in workflow_for_delegation.body
+    assert "workflow_command_network_actions_taken</dt><dd>0" in workflow_for_delegation.body
+    assert "workflow_command_external_effects_created</dt><dd>false" in workflow_for_delegation.body
+    assert "workflow_command_now: request_commit_for_reviewed_run" in workflow_for_delegation.body
+    assert "workflow_command_safety: read-only workflow guidance" in workflow_for_delegation.body
     assert "Selected Workflow State" in workflow_for_delegation.body
     assert result.delegation_id in workflow_for_delegation.body
     assert "context_pack_status" in workflow_for_delegation.body
@@ -7533,6 +7558,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"/workflow?run_id={result.coder_worktree_run_id}",
     )
     assert workflow_for_run.status == 200
+    assert "Workflow Command Bar" in workflow_for_run.body
+    assert "data-workflow-command-bar='true'" in workflow_for_run.body
+    assert "workflow_command_status</dt><dd>run_selected" in workflow_for_run.body
+    assert "workflow_command_scope</dt><dd>run" in workflow_for_run.body
+    assert f"workflow_command_run</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_run.body
+    assert f"workflow_command_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in workflow_for_run.body
+    assert "workflow_command_next_action</dt><dd>request_commit_for_reviewed_run" in workflow_for_run.body
+    assert f"workflow_command_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_run.body
+    assert "workflow_command_write_on_get</dt><dd>false" in workflow_for_run.body
+    assert "workflow_command_network_actions_taken</dt><dd>0" in workflow_for_run.body
+    assert "workflow_command_external_effects_created</dt><dd>false" in workflow_for_run.body
     assert result.coder_worktree_run_id in workflow_for_run.body
     assert "selected_run_id" in workflow_for_run.body
     assert "Selected Workflow Continuation" in workflow_for_run.body

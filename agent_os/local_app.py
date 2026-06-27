@@ -580,6 +580,10 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             f"/workflow?delegation_id={quote(demo.delegation_id)}",
             "Modern Operator Workflow",
             [
+                "Workflow Command Bar",
+                "data-workflow-command-bar='true'",
+                "workflow_command_status</dt><dd>delegation_selected",
+                "workflow_command_next_action</dt><dd>request_commit_for_reviewed_run",
                 "Selected Workflow State",
                 "selected_status",
                 "request_commit_for_reviewed_run",
@@ -589,6 +593,10 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             f"/workflow?run_id={quote(demo.coder_worktree_run_id)}",
             "Modern Operator Workflow",
             [
+                "Workflow Command Bar",
+                "data-workflow-command-bar='true'",
+                "workflow_command_status</dt><dd>run_selected",
+                "workflow_command_next_action</dt><dd>request_commit_for_reviewed_run",
                 "Selected Workflow Continuation",
                 "run_action_surface",
                 "external_effects_created: false",
@@ -9361,6 +9369,7 @@ def _workflow(
         [
             "<section><h1>Modern Operator Workflow</h1>",
             _non_claim_banner(),
+            _workflow_command_bar(root, delegation_id=delegation_id, run_id=run_id),
             _selected_workflow_state(root, delegation_id=delegation_id, run_id=run_id),
             _selected_workflow_continuation(
                 root,
@@ -9371,6 +9380,274 @@ def _workflow(
             "</section>",
         ]
     )
+
+
+def _workflow_command_bar(
+    root: Path,
+    *,
+    delegation_id: str | None = None,
+    run_id: str | None = None,
+) -> str:
+    if not delegation_id and not run_id:
+        return _workflow_command_bar_shell(
+            status="no_selection",
+            scope="all",
+            delegation="none",
+            run="none",
+            goal="none",
+            project="none",
+            current_stage="overview",
+            next_action="Select delegation or run",
+            target_surface=SafeHtml("<a href='/delegation-runs'>/delegation-runs</a>"),
+            lines=[
+                "workflow_command_now: Select delegation or run",
+                "workflow_command_click: <a href='/delegation-runs'>/delegation-runs</a>",
+                "workflow_command_safety: read-only workflow guidance",
+            ],
+        )
+
+    storage = _storage(root)
+    selected_run = get_coder_worktree_run(storage, run_id) if run_id else None
+    if run_id and selected_run is None:
+        return _workflow_command_bar_shell(
+            status="run_not_found",
+            scope="run",
+            delegation="unknown",
+            run=run_id,
+            goal="unknown",
+            project="unknown",
+            current_stage="select_run",
+            next_action="Open delegation runs",
+            target_surface=SafeHtml("<a href='/delegation-runs'>/delegation-runs</a>"),
+            lines=[
+                "workflow_command_now: Open delegation runs",
+                "workflow_command_click: <a href='/delegation-runs'>/delegation-runs</a>",
+                "workflow_command_safety: read-only workflow guidance",
+            ],
+        )
+
+    if selected_run is not None:
+        delegation_id = selected_run.delegation_id
+
+    delegation = storage.get_subagent_delegation(delegation_id or "")
+    if delegation_id and delegation is None:
+        return _workflow_command_bar_shell(
+            status="delegation_not_found",
+            scope="delegation",
+            delegation=delegation_id,
+            run=run_id or "none",
+            goal="unknown",
+            project="unknown",
+            current_stage="select_delegation",
+            next_action="Open delegation runs",
+            target_surface=SafeHtml("<a href='/delegation-runs'>/delegation-runs</a>"),
+            lines=[
+                "workflow_command_now: Open delegation runs",
+                "workflow_command_click: <a href='/delegation-runs'>/delegation-runs</a>",
+                "workflow_command_safety: read-only workflow guidance",
+            ],
+        )
+
+    summary = summarize_implementation_handoff(root, delegation)
+    prep_packets = [
+        item
+        for item in list_coder_prep_packets(root)
+        if item.get("source", {}).get("delegation_id") == delegation.id
+    ]
+    plan_packets = [
+        item
+        for item in list_coder_worktree_plan_packets(root)
+        if item.get("source", {}).get("delegation_id") == delegation.id
+    ]
+    worktree_approvals = list_coder_worktree_approvals(
+        root,
+        delegation_id=delegation.id,
+        limit=50,
+    )
+    worktree_runs = list_coder_worktree_runs(root, delegation_id=delegation.id, limit=50)
+    commit_approvals = list_coder_worktree_commit_approvals(
+        root,
+        delegation_id=delegation.id,
+        limit=50,
+    )
+    publications = list_coder_publications(root, delegation_id=delegation.id, limit=50)
+    if selected_run is None:
+        selected_run = _workflow_command_selected_run(
+            root,
+            worktree_runs=worktree_runs,
+            commit_approvals=commit_approvals,
+            publications=publications,
+        )
+    next_action = _delegation_next_action(
+        root,
+        summary=summary,
+        prep_count=len(prep_packets),
+        plan_count=len(plan_packets),
+        worktree_approvals=worktree_approvals,
+        worktree_runs=worktree_runs,
+        commit_approvals=commit_approvals,
+        publications=publications,
+    )
+    target_href, target_label, reason = _workflow_command_target(
+        next_action,
+        delegation=delegation,
+        run=selected_run,
+    )
+    scope = "run" if run_id else "delegation"
+    status = "run_selected" if run_id else "delegation_selected"
+    project = (
+        selected_run.project_id
+        if selected_run is not None
+        else _task_project(storage, delegation.parent_task_id)
+    )
+    stage = _workflow_stage_for_action(next_action)
+    goal_link = SafeHtml(f"<a href='/goals/{quote(delegation.parent_goal_id)}'>{_e(delegation.parent_goal_id)}</a>")
+    delegation_link = SafeHtml(f"<a href='/delegations/{quote(delegation.id)}'>{_e(delegation.id)}</a>")
+    run_value: str | SafeHtml = "none"
+    if selected_run is not None:
+        run_value = SafeHtml(f"<a href='/runs/{quote(selected_run.id)}'>{_e(selected_run.id)}</a>")
+    target_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    return _workflow_command_bar_shell(
+        status=status,
+        scope=scope,
+        delegation=delegation_link,
+        run=run_value,
+        goal=goal_link,
+        project=project,
+        current_stage=stage,
+        next_action=next_action,
+        target_surface=target_surface,
+        reason=reason,
+        lines=[
+            f"workflow_command_now: {_e(next_action)}",
+            f"workflow_command_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+            f"workflow_command_stage: {_e(stage)}",
+            "workflow_command_safety: read-only workflow guidance",
+        ],
+    )
+
+
+def _workflow_command_bar_shell(
+    *,
+    status: str,
+    scope: str,
+    delegation: str | SafeHtml,
+    run: str | SafeHtml,
+    goal: str | SafeHtml,
+    project: str,
+    current_stage: str,
+    next_action: str,
+    target_surface: SafeHtml,
+    lines: list[str],
+    reason: str = "select a workflow scope to continue",
+) -> str:
+    return "".join(
+        [
+            "<section id='workflow-command-bar' class='panel workflow-command-bar' data-workflow-command-bar='true'><h2>Workflow Command Bar</h2>",
+            "<p class='muted'>One read-only workflow summary for the selected delegation or run before the detailed evidence map.</p>",
+            _kv(
+                [
+                    ("workflow_command_status", status),
+                    ("workflow_command_scope", scope),
+                    ("workflow_command_delegation", delegation),
+                    ("workflow_command_run", run),
+                    ("workflow_command_goal", goal),
+                    ("workflow_command_project", project),
+                    ("workflow_command_current_stage", current_stage),
+                    ("workflow_command_next_action", next_action),
+                    ("workflow_command_next_surface", target_surface),
+                    ("workflow_command_reason", reason),
+                    ("workflow_command_write_on_get", "false"),
+                    ("workflow_command_network_actions_taken", "0"),
+                    ("workflow_command_external_effects_created", "false"),
+                ]
+            ),
+            _ul(lines),
+            "</section>",
+        ]
+    )
+
+
+def _workflow_command_selected_run(
+    root: Path,
+    *,
+    worktree_runs: list[Any],
+    commit_approvals: list[Any],
+    publications: list[Any],
+) -> Any | None:
+    for item in commit_approvals:
+        run = next((candidate for candidate in worktree_runs if candidate.id == item.run_id), None)
+        if run is not None:
+            return run
+    for item in publications:
+        run = next((candidate for candidate in worktree_runs if candidate.id == item.run_id), None)
+        if run is not None:
+            return run
+    for run in worktree_runs:
+        if (root / "runs" / run.source_run_id / "review.md").exists():
+            return run
+    if len(worktree_runs) == 1:
+        return worktree_runs[0]
+    return worktree_runs[0] if worktree_runs else None
+
+
+def _workflow_command_target(
+    next_action: str,
+    *,
+    delegation: Any,
+    run: Any | None,
+) -> tuple[str, str, str]:
+    run_href = f"/runs/{quote(run.id)}" if run is not None else "/delegation-runs"
+    run_label = f"/runs/{run.id}" if run is not None else "/delegation-runs"
+    delegation_href = f"/delegations/{quote(delegation.id)}"
+    delegation_label = f"/delegations/{delegation.id}"
+    goal_href = f"/goals/{quote(delegation.parent_goal_id)}"
+    goal_label = f"/goals/{delegation.parent_goal_id}"
+    if next_action == "generate_context_pack":
+        return goal_href, goal_label, "context pack is missing"
+    if next_action in {
+        "run_delegation_or_review_implementation_handoff",
+        "prepare_coder_from_handoff",
+        "prepare_coder_worktree_plan",
+        "review_delegation_state",
+    }:
+        return delegation_href, delegation_label, "delegation artifact or prep state needs attention"
+    if next_action in {
+        "decide_pending_worktree_approval",
+        "approve_or_reject_commit_request",
+        "approve_or_reject_publication_request",
+    }:
+        return "/approvals", "/approvals", "operator approval is pending"
+    if next_action in {
+        "run_approved_worktree_from_cli",
+        "request_commit_for_reviewed_run",
+        "commit_approved_worktree",
+        "request_publication_handoff",
+        "prepare_publication_handoff",
+        "manual_operator_push_pr_outside_clankeros",
+    }:
+        return run_href, run_label, "coder run is the next local surface"
+    return delegation_href, delegation_label, "review selected workflow state"
+
+
+def _workflow_stage_for_action(next_action: str) -> str:
+    stages = {
+        "generate_context_pack": "Context pack",
+        "run_delegation_or_review_implementation_handoff": "Implementation handoff",
+        "prepare_coder_from_handoff": "Coder prep",
+        "prepare_coder_worktree_plan": "Coder worktree plan",
+        "decide_pending_worktree_approval": "Worktree approval",
+        "run_approved_worktree_from_cli": "Approved worktree execution",
+        "request_commit_for_reviewed_run": "Commit request",
+        "approve_or_reject_commit_request": "Commit approval",
+        "commit_approved_worktree": "Local commit",
+        "request_publication_handoff": "Publication request",
+        "approve_or_reject_publication_request": "Publication approval",
+        "prepare_publication_handoff": "Publication handoff",
+        "manual_operator_push_pr_outside_clankeros": "Manual operator push/PR outside ClankerOS",
+        "review_delegation_state": "Workflow state",
+    }
+    return stages.get(next_action, "Workflow state")
 
 
 def _actions_page(root: Path) -> str:
@@ -15961,6 +16238,9 @@ def _html_page(
     .delegation-run-command-bar {{ border-left:4px solid var(--accent); }}
     .delegation-run-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .delegation-run-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .workflow-command-bar {{ border-left:4px solid var(--accent); }}
+    .workflow-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .workflow-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .verification-command-bar {{ border-left:4px solid var(--accent); }}
     .verification-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .verification-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

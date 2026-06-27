@@ -411,6 +411,9 @@ browser app and do not perform external effects.
 
 Use `/workflow?delegation_id=<id>` or `/workflow?run_id=<coder_run_id>` when
 you want the scoped operator map. The selected workflow page now includes a
+read-only `Workflow Command Bar` that summarizes the selected delegation or
+run, parent Goal, project, current stage, next local action, target surface,
+reason, and zero-effect counters before the detailed stepper. It also includes a
 read-only `Selected Workflow Continuation` block with the exact next local
 action, run detail surface, approvals queue, inbox, dogfooding checklist, and
 the explicit `external_effects_created: false` boundary.
