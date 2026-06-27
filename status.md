@@ -1,5 +1,38 @@
 # Status
 
+## 2026-06-27 Workspace Operator Workbench
+
+- Added a `Workspace Operator Workbench` immediately after the `/workspace`
+  `Workspace Daily Brief`.
+- The workbench turns editable saved workspace state into do/check/unblock/
+  finish cards with same-page action-form routing when available, saved
+  Goal/project and last-artifact readbacks, blocker routing, resume-readiness
+  repair, and the existing confirmed `#save-workspace` finish surface.
+- Added empty-workspace and fixture-backed saved-Goal route assertions, plus
+  demo smoke snippets for the `/workspace` marker.
+- Updated README, local app docs, and the operating summary to describe
+  `/workspace` as a daily saved-state workbench rather than only a state form.
+- Non-claims: this does not write workspace state on GET, run a workspace
+  action without confirmation, call providers, fetch GitHub status, approve
+  requests, execute coder work, commit, push, create PRs, deploy, or mutate
+  external systems. The finish card points to the existing confirmed local
+  workspace save form.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `df -h /System/Volumes/Data`
+    -> `82Gi` available before smoke tests
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_67237f80a03e`, `run_b3ca42b73274`, and coder
+    worktree run `run_984cf8447f78`
+  - `git diff --check`
+    -> passed
+
 ## 2026-06-27 Resume Operator Workbench
 
 - Added a `Resume Operator Workbench` immediately after the `/resume`

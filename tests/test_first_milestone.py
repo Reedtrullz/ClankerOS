@@ -4642,6 +4642,46 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_daily_network_actions_taken</dt><dd>0" in workspace.body
     assert "workspace_daily_external_effects_created</dt><dd>false" in workspace.body
     assert "workspace_daily_safety: read-only until confirmed save-workspace or local action form" in workspace.body
+    assert "Workspace Operator Workbench" in workspace.body
+    assert "data-workspace-operator-workbench='true'" in workspace.body
+    assert "data-workspace-workbench-actions='true'" in workspace.body
+    assert "workspace_workbench_status</dt><dd>no_saved_workspace" in workspace.body
+    assert "workspace_workbench_ready</dt><dd>false" in workspace.body
+    assert "workspace_workbench_readiness_status</dt><dd>not_started" in workspace.body
+    assert "workspace_workbench_project</dt><dd>none" in workspace.body
+    assert "workspace_workbench_goal</dt><dd>none" in workspace.body
+    assert "workspace_workbench_phase</dt><dd>none" in workspace.body
+    assert "workspace_workbench_current_gate</dt><dd>none" in workspace.body
+    assert "workspace_workbench_gate_progress</dt><dd>0/0 gates done" in workspace.body
+    assert "workspace_workbench_next_action</dt><dd>Open goals" in workspace.body
+    assert "workspace_workbench_primary_surface</dt><dd><a href='/goals'>Open goals</a>" in workspace.body
+    assert "workspace_workbench_target_surface</dt><dd><a href='/goals'>/goals</a>" in workspace.body
+    assert "workspace_workbench_reason</dt><dd>no_saved_goal" in workspace.body
+    assert "workspace_workbench_action_form_available</dt><dd>false" in workspace.body
+    assert "workspace_workbench_confirmation_required</dt><dd>false" in workspace.body
+    assert "workspace_workbench_pending_approvals</dt><dd>0" in workspace.body
+    assert "workspace_workbench_open_incidents</dt><dd>0" in workspace.body
+    assert "workspace_workbench_open_recommendations</dt><dd>0" in workspace.body
+    assert "workspace_workbench_waiting_items</dt><dd>0" in workspace.body
+    assert "workspace_workbench_unblock_action</dt><dd>Complete workspace state" in workspace.body
+    assert "workspace_workbench_unblock_surface</dt><dd><a href='#save-workspace'>#save-workspace</a>" in workspace.body
+    assert "workspace_workbench_unblock_reason</dt><dd>workspace_not_ready" in workspace.body
+    assert "workspace_workbench_last_artifact</dt><dd>none" in workspace.body
+    assert "workspace_workbench_last_artifact_exists</dt><dd>false" in workspace.body
+    assert "workspace_workbench_save_surface</dt><dd><a href='#save-workspace'>#save-workspace</a>" in workspace.body
+    assert "workspace_workbench_save_form_available</dt><dd>true" in workspace.body
+    assert "workspace_workbench_save_confirmation_required</dt><dd>true" in workspace.body
+    assert "workspace_workbench_source</dt><dd>saved_workspace_state" in workspace.body
+    assert "workspace_workbench_write_on_get</dt><dd>false" in workspace.body
+    assert "workspace_workbench_provider_calls_taken</dt><dd>0" in workspace.body
+    assert "workspace_workbench_network_actions_taken</dt><dd>0" in workspace.body
+    assert "workspace_workbench_external_effects_created</dt><dd>false" in workspace.body
+    assert "workspace_workbench_push_created</dt><dd>false" in workspace.body
+    assert "workspace_workbench_pr_created</dt><dd>false" in workspace.body
+    assert "workspace_workbench_deploy_created</dt><dd>false" in workspace.body
+    assert "workspace_workbench_now: Open goals" in workspace.body
+    assert "workspace_workbench_finish: <a href='#save-workspace'>Save Workspace</a>" in workspace.body
+    assert "workspace_workbench_safety: confirmed local actions only; no write on GET" in workspace.body
     assert "Workspace Workflow Map" in workspace.body
     assert "data-workspace-workflow-map='true'" in workspace.body
     assert "workspace_workflow_map_status</dt><dd>no_saved_goal" in workspace.body
@@ -7627,6 +7667,48 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workspace_daily_external_effects_created</dt><dd>false" in restored_workspace.body
     assert "workspace_daily_start: Create commit request" in restored_workspace.body
     assert "workspace_daily_finish: status=ready save=<a href='#save-workspace'>#save-workspace</a>" in restored_workspace.body
+    assert "Workspace Operator Workbench" in restored_workspace.body
+    assert "data-workspace-operator-workbench='true'" in restored_workspace.body
+    assert "workspace_workbench_status</dt><dd>attention_ready" in restored_workspace.body
+    assert "workspace_workbench_ready</dt><dd>true" in restored_workspace.body
+    assert "workspace_workbench_readiness_status</dt><dd>ready" in restored_workspace.body
+    assert f"workspace_workbench_project</dt><dd><a href='/projects/{result.project_id}'" in restored_workspace.body
+    assert f"workspace_workbench_goal</dt><dd><a href='/goals/{result.goal_id}'" in restored_workspace.body
+    assert "workspace_workbench_phase</dt><dd>Ready to commit" in restored_workspace.body
+    assert "workspace_workbench_current_gate</dt><dd>commit_request" in restored_workspace.body
+    assert "workspace_workbench_gate_progress</dt><dd>8/15 gates done" in restored_workspace.body
+    assert "workspace_workbench_done_gates</dt><dd>8" in restored_workspace.body
+    assert "workspace_workbench_pending_gates</dt><dd>1" in restored_workspace.body
+    assert "workspace_workbench_waiting_gates</dt><dd>6" in restored_workspace.body
+    assert "workspace_workbench_next_action</dt><dd>Create commit request" in restored_workspace.body
+    assert "workspace_workbench_primary_surface</dt><dd><a href='#workspace-action-form'>Use workspace action form</a>" in restored_workspace.body
+    assert f"workspace_workbench_target_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in restored_workspace.body
+    assert f"workspace_workbench_reason</dt><dd>reviewed_run={result.coder_worktree_run_id}" in restored_workspace.body
+    assert "workspace_workbench_action_form_available</dt><dd>true" in restored_workspace.body
+    assert "workspace_workbench_confirmation_required</dt><dd>true" in restored_workspace.body
+    assert "workspace_workbench_pending_approvals</dt><dd>1" in restored_workspace.body
+    assert "workspace_workbench_open_incidents</dt><dd>0" in restored_workspace.body
+    assert "workspace_workbench_open_recommendations</dt><dd>0" in restored_workspace.body
+    assert "workspace_workbench_waiting_items</dt><dd>1" in restored_workspace.body
+    assert "workspace_workbench_unblock_action</dt><dd>Review approvals" in restored_workspace.body
+    assert "workspace_workbench_unblock_surface</dt><dd><a href='/approvals'>/approvals</a>" in restored_workspace.body
+    assert "workspace_workbench_unblock_reason</dt><dd>pending_approvals" in restored_workspace.body
+    assert "workspace_workbench_last_artifact" in restored_workspace.body
+    assert resume_artifact in restored_workspace.body
+    assert "workspace_workbench_last_artifact_exists</dt><dd>true" in restored_workspace.body
+    assert "workspace_workbench_save_surface</dt><dd><a href='#save-workspace'>#save-workspace</a>" in restored_workspace.body
+    assert "workspace_workbench_save_form_available</dt><dd>true" in restored_workspace.body
+    assert "workspace_workbench_save_confirmation_required</dt><dd>true" in restored_workspace.body
+    assert "workspace_workbench_source</dt><dd>workspace_saved_goal" in restored_workspace.body
+    assert "workspace_workbench_write_on_get</dt><dd>false" in restored_workspace.body
+    assert "workspace_workbench_external_effects_created</dt><dd>false" in restored_workspace.body
+    assert "workspace_workbench_push_created</dt><dd>false" in restored_workspace.body
+    assert "workspace_workbench_pr_created</dt><dd>false" in restored_workspace.body
+    assert "workspace_workbench_deploy_created</dt><dd>false" in restored_workspace.body
+    assert "workspace_workbench_now: Create commit request" in restored_workspace.body
+    assert "workspace_workbench_click: <a href='#workspace-action-form'>Use workspace action form</a>" in restored_workspace.body
+    assert "workspace_workbench_unblock: <a href='/approvals'>Review approvals</a>" in restored_workspace.body
+    assert "workspace_workbench_finish: <a href='#save-workspace'>Save Workspace</a>" in restored_workspace.body
     assert "Workspace Continuation" in restored_workspace.body
     assert "workspace_current_phase: Ready to commit" in restored_workspace.body
     assert "workspace_next_action: Create commit request" in restored_workspace.body
@@ -7637,6 +7719,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workspace_operator_attention: Act: Create commit request" in restored_workspace.body
     assert "workspace_next_action_form_available: true" in restored_workspace.body
     assert "Workspace Action Form" in restored_workspace.body
+    assert "id='workspace-action-form'" in restored_workspace.body
     assert "action='/actions/coder-commit-request'" in restored_workspace.body
     assert f"name='run_id' value='{result.coder_worktree_run_id}'" in restored_workspace.body
     assert "workspace_next_action_write_on_get: false" in restored_workspace.body

@@ -327,7 +327,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   surface beside the editable saved-state form, plus a read-only
   `Workspace Daily Brief` that turns the saved project, goal, artifact,
   next action, current gate, and finish readiness into morning and end-of-day
-  cues. A read-only `Workspace Workflow Map` shows the saved goal's current
+  cues. A `Workspace Operator Workbench` then turns the editable saved context
+  into do/check/unblock/finish cards with same-page action-form routing,
+  blocker routing, last-artifact readback, and the confirmed `save-workspace`
+  target. A read-only `Workspace Workflow Map` shows the saved goal's current
   gate, lifecycle progress, next surface, and zero-effect counters. It also
   renders the same confirmed local action form as the Goal page when that
   action is browser-available. Home and `/resume` read the same saved state

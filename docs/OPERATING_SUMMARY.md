@@ -154,9 +154,13 @@ Core layers for the bootstrap:
   browser-available beside the editable saved-state form, plus a read-only
   `Workspace Daily Brief` that summarizes the saved project, goal, artifact,
   next local action, current gate, resume readiness, and finish-today save
-  status before any editable fields. It also includes a read-only
-  `Workspace Workflow Map` sourced from the same Goal remaining-work gates so
-  the current saved gate stays visible while editing resume context; `/memory` for project/global/
+  status before any editable fields. It also includes a `Workspace Operator
+  Workbench` that turns the saved state into do/check/unblock/finish cards
+  with same-page action-form routing when available, readiness and blocker
+  routing, last-artifact readback, and the confirmed save form as the finish
+  target, followed by a read-only `Workspace Workflow Map` sourced from the
+  same Goal remaining-work gates so the current saved gate stays visible while
+  editing resume context; `/memory` for project/global/
   generated memories, proposed memories, operator notes, future work, and pin
   actions, with a read-only `Memory Command Bar` that summarizes entry counts,
   first proposed pin or fallback resume target, one next local action, saved
