@@ -21121,6 +21121,7 @@ def _command_palette_continue(focus_context: dict[str, Any]) -> str:
     goal = focus_context["goal"]
     next_action = focus_context["next_action"]
     action_form = str(focus_context.get("action_form") or "")
+    palette_goal_continuation = _command_palette_goal_continuation(focus_context)
     return "".join(
         [
             "<section class='palette-continue' data-command-palette-continue='true'>",
@@ -21157,12 +21158,104 @@ def _command_palette_continue(focus_context: dict[str, Any]) -> str:
                     ("palette_continue_external_effects_created", "false"),
                 ]
             ),
+            palette_goal_continuation,
             (
+                "<section id='command-palette-continue-form' class='palette-continue-form'>"
                 "<h4>Continue Action Form</h4>"
                 "<p class='muted'>Run the current goal's browser-available local next action without leaving the palette. Confirmation is still required before any local write.</p>"
                 f"{action_form}"
+                "</section>"
                 if action_form
                 else ""
+            ),
+            "</section>",
+        ]
+    )
+
+
+def _command_palette_goal_continuation(focus_context: dict[str, Any]) -> str:
+    state = focus_context.get("goal_state")
+    next_action = focus_context.get("next_action")
+    goal = focus_context.get("goal")
+    if not isinstance(state, dict) or not isinstance(next_action, GoalNextAction) or goal is None:
+        return ""
+    root = state.get("root")
+    if not isinstance(root, Path):
+        return ""
+    gates, _, current_gate = _goal_workflow_gate_summary(root, state, next_action)
+    total = len(gates)
+    current_index = next(
+        (index for index, (name, _) in enumerate(gates) if name == current_gate),
+        0,
+    )
+    upcoming = gates[current_index : current_index + 3]
+    current_position = current_index + 1 if gates else 0
+    action_form_available = bool(focus_context.get("action_form"))
+    step_lines: list[str] = []
+    step_values: list[tuple[str, str | SafeHtml]] = []
+    for offset, (name, status) in enumerate(upcoming, start=1):
+        is_current = name == current_gate
+        marker = "current" if is_current else status
+        if is_current and action_form_available:
+            action = next_action.action
+            surface: str | SafeHtml = _goal_continuation_link(
+                "#command-palette-continue-form",
+                "Palette action form",
+            )
+        else:
+            action, surface = _goal_continuation_gate_action(
+                goal.id,
+                name,
+                is_current=is_current,
+                next_action=next_action,
+                action_form_available=False,
+            )
+        step_lines.append(
+            f"palette_goal_continuation_step: {offset} gate={_e(name)} "
+            f"status={_e(status)} marker={_e(marker)} "
+            f"action={_e(action)} surface={surface}"
+        )
+        step_values.append((action, surface))
+    now_action = step_values[0][0] if step_values else next_action.action
+    now_surface = (
+        step_values[0][1]
+        if step_values
+        else _goal_continuation_link(next_action.href, next_action.href)
+    )
+    next_gate = upcoming[1][0] if len(upcoming) > 1 else "complete"
+    next_action_label = step_values[1][0] if len(step_values) > 1 else "none"
+    next_surface = step_values[1][1] if len(step_values) > 1 else "none"
+    manual_boundary = (
+        "manual_publish_outside_clankeros"
+        if any(name == "manual_publish" for name, _ in gates)
+        else "none"
+    )
+    return "".join(
+        [
+            "<section class='palette-goal-continuation' data-command-palette-goal-continuation='true'>",
+            "<h4>Goal Continuation</h4>",
+            _kv(
+                [
+                    ("palette_goal_continuation_status", "available" if gates else "empty"),
+                    ("palette_goal_continuation_current_gate", current_gate),
+                    ("palette_goal_continuation_current_position", f"{current_position}/{total}"),
+                    ("palette_goal_continuation_step_count", str(len(upcoming))),
+                    ("palette_goal_continuation_now_action", now_action),
+                    ("palette_goal_continuation_now_surface", now_surface),
+                    ("palette_goal_continuation_next_gate", next_gate),
+                    ("palette_goal_continuation_next_action", next_action_label),
+                    ("palette_goal_continuation_next_surface", next_surface),
+                    ("palette_goal_continuation_manual_boundary", manual_boundary),
+                    ("palette_goal_continuation_source", "goal_workflow_gates_and_next_action"),
+                    ("palette_goal_continuation_write_on_get", "false"),
+                    ("palette_goal_continuation_provider_calls_taken", "0"),
+                    ("palette_goal_continuation_network_actions_taken", "0"),
+                    ("palette_goal_continuation_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                step_lines
+                + ["palette_goal_continuation_safety: read-only command palette guidance"]
             ),
             "</section>",
         ]

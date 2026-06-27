@@ -7370,7 +7370,26 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "palette_continue_provider_calls_taken</dt><dd>0" in dashboard.body
     assert "palette_continue_network_actions_taken</dt><dd>0" in dashboard.body
     assert "palette_continue_external_effects_created</dt><dd>false" in dashboard.body
+    assert "data-command-palette-goal-continuation='true'" in dashboard.body
+    assert "palette_goal_continuation_status</dt><dd>available" in dashboard.body
+    assert "palette_goal_continuation_current_gate</dt><dd>commit_request" in dashboard.body
+    assert "palette_goal_continuation_current_position</dt><dd>9/15" in dashboard.body
+    assert "palette_goal_continuation_step_count</dt><dd>3" in dashboard.body
+    assert "palette_goal_continuation_now_action</dt><dd>Create commit request" in dashboard.body
+    assert "palette_goal_continuation_now_surface</dt><dd><a href='#command-palette-continue-form'>Palette action form</a>" in dashboard.body
+    assert "palette_goal_continuation_next_gate</dt><dd>commit_approval" in dashboard.body
+    assert "palette_goal_continuation_next_action</dt><dd>Approve commit request" in dashboard.body
+    assert "palette_goal_continuation_next_surface</dt><dd><a href='/approvals'>/approvals</a>" in dashboard.body
+    assert "palette_goal_continuation_manual_boundary</dt><dd>manual_publish_outside_clankeros" in dashboard.body
+    assert "palette_goal_continuation_write_on_get</dt><dd>false" in dashboard.body
+    assert "palette_goal_continuation_provider_calls_taken</dt><dd>0" in dashboard.body
+    assert "palette_goal_continuation_network_actions_taken</dt><dd>0" in dashboard.body
+    assert "palette_goal_continuation_external_effects_created</dt><dd>false" in dashboard.body
+    assert "palette_goal_continuation_step: 1 gate=commit_request status=pending marker=current action=Create commit request" in dashboard.body
+    assert "palette_goal_continuation_step: 2 gate=commit_approval status=waiting marker=waiting action=Approve commit request" in dashboard.body
+    assert "palette_goal_continuation_safety: read-only command palette guidance" in dashboard.body
     assert "Continue Action Form" in dashboard.body
+    assert "id='command-palette-continue-form'" in dashboard.body
     assert "action='/actions/coder-commit-request'" in dashboard.body
     assert f"name='run_id' value='{result.coder_worktree_run_id}'" in dashboard.body
     assert "Operator Focus" in dashboard.body
@@ -7715,7 +7734,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "palette_continue_form_available</dt><dd>true" in goal.body
     assert "palette_continue_action_form_available</dt><dd>true" in goal.body
     assert "palette_continue_confirmation_required</dt><dd>true" in goal.body
+    assert "data-command-palette-goal-continuation='true'" in goal.body
+    assert "palette_goal_continuation_current_gate</dt><dd>commit_request" in goal.body
+    assert "palette_goal_continuation_now_surface</dt><dd><a href='#command-palette-continue-form'>Palette action form</a>" in goal.body
+    assert "palette_goal_continuation_next_gate</dt><dd>commit_approval" in goal.body
+    assert "palette_goal_continuation_step: 3 gate=local_commit status=waiting marker=waiting action=Commit approved worktree" in goal.body
     assert "Continue Action Form" in goal.body
+    assert "id='command-palette-continue-form'" in goal.body
     assert "operator_focus_action_form_available</dt><dd>true" in goal.body
     assert "data-operator-focus-action='true'" in goal.body
     assert "data-recent-items='true'" in goal.body

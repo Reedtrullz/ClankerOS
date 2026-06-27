@@ -1,5 +1,38 @@
 # Status
 
+## 2026-06-28 Command Palette Goal Continuation
+
+- Added a compact `Goal Continuation` readback inside the global command
+  palette's `Continue Current Goal` block, so the operator can hit `/` from
+  Home or a Goal page and see the current gate, next local gates, target
+  surfaces, and manual publish boundary without navigating back to the full
+  Goal page.
+- The palette continuation reuses the existing saved/lead Goal focus context,
+  Goal remaining-work gates, and next-action form. When the current action is
+  browser-available, the current gate points to the in-palette confirmed local
+  action form; later gates point to their existing local surfaces such as
+  `/approvals` or the Goal action card.
+- Updated README, local app docs, operating summary, and fixture-backed command
+  palette assertions for the new global continuation surface.
+- Non-claims: this does not write workspace state on GET, create actions,
+  approve work, run work, call providers, fetch GitHub, poll network services,
+  commit, push, create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> passed, `1 passed, 514 deselected`
+  - `python3 -m compileall -q agent_os tests`
+    -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-palette-smoke app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation
+    counters at `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-palette-demo-smoke app-demo-smoke-test`
+    -> passed on a temporary root, including fixture-backed route snippets,
+    with provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
 ## 2026-06-28 Goal Continuation Rail
 
 - Added a first-class `Goal Continuation Rail` to `/goals/<goal_id>` after the

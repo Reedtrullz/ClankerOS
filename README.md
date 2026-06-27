@@ -501,8 +501,10 @@ anchors.
 The command palette also opens with a route-aware `Current Page` block that
 names the current path, parent surface, resolved Goal/Project/run context,
 focus target, and `/resume` link before the same goal-aware
-`Continue Current Goal` block and confirmed local action form. Those controls
-stay inside the local browser app and do not perform external effects.
+`Continue Current Goal` block, a compact Goal continuation readback for the
+current gate plus the next few local gates, and the confirmed local action
+form. Those controls stay inside the local browser app and do not perform
+external effects.
 
 Use `/workflow?delegation_id=<id>` or `/workflow?run_id=<coder_run_id>` when
 you want the scoped operator map. The selected workflow page now includes a

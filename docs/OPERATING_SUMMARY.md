@@ -482,7 +482,10 @@ Core layers for the bootstrap:
   `/resume`, and zero-effect readbacks before the visible keyboard-shortcut
   help block generated from the same shortcut map, so operators can discover
   both where they are and the local navigation shortcuts from inside the app
-  instead of reading external docs.
+  instead of reading external docs. When a saved or lead Goal exists, the
+  command palette also includes a compact Goal continuation readback for the
+  current workflow gate, the next few local gates, their target surfaces, and
+  the manual publish boundary without writing on GET.
   The Goal `Skills Used` section starts with a read-only `Goal Skills Command
   Bar` that summarizes task skill tags, matching generated or available local
   skill records, usage and project counts, delegation profile usage, one
@@ -557,8 +560,9 @@ Core layers for the bootstrap:
   inside the keyboard-driven surface. The shared focus strip and command
   palette include the same goal-aware current-action readback from the saved
   workspace goal or current lead goal, showing phase, one recommended action,
-  target surface, zero-effect readbacks, and the same confirmed local action
-  form as the Goal page when the current next action is browser-available. In
+  target surface, a compact current-gate continuation readback, zero-effect
+  readbacks, and the same confirmed local action form as the Goal page when
+  the current next action is browser-available. In
   first-run states, those shared surfaces point at the concrete setup form for
   the current route when possible, or at the Home/Today/Goals first-run anchors
   when the current page does not render the guide.

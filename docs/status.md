@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The global command palette now includes a compact Goal continuation readback
+  inside `Continue Current Goal`, so Home and Goal pages can show the current
+  workflow gate, next few local gates, target surfaces, and manual publish
+  boundary without leaving the palette.
 - Goal pages now expose a read-only `Goal Continuation Rail` between the
   Return Brief and Next Action card, showing the current gate, the next few
   local gate actions, their operator surfaces, and the manual publish boundary
