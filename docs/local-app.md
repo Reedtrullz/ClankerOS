@@ -43,7 +43,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   phase and next-action readbacks, a `Home Day Plan` readback for the current
   goal, phase, one next action, waiting counts, and end-of-day resume
   readiness plus a confirmed `save-workspace` Finish Today form for the lead
-  goal, a read-only `Home Attention Brief` that prioritizes approvals,
+  goal, a read-only `Home Live State` panel with five-second local page reload
+  polling that pauses while a form is focused or the tab is hidden and reports
+  zero provider/network/external-effect counters, a read-only `Home Attention Brief` that prioritizes approvals,
   incidents, recommendations, inbox review, and CI proof posture before deeper
   goal work, a `Home Focus Queue` for next actions across active and paused
   goals, a read-only `Home Activity Command Bar` that names the latest
@@ -111,6 +113,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   condenses the lead goal or first-run step, one primary action, target
   surface, resume readiness, waiting counts, and CI handoff posture into a
   single scan-friendly panel without writing on GET.
+- `/` also includes a read-only `Home Live State` panel that keeps the root
+  goal board current with five-second local page reload polling, pauses while
+  editing or hidden, points at the same-page Home Resume Action Form when a
+  saved goal has a browser-available next action, and reports zero-effect
+  counters.
 - `/` also includes a read-only `Home Verification Handoff` that brings the
   GitHub Actions handoff onto the daily Home board: current branch/commit,
   direct snapshot command templates, latest operator-supplied CI evidence

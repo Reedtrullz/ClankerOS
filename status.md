@@ -1,5 +1,35 @@
 # Status
 
+## 2026-06-27 Home Live State Refresh
+
+- Added a read-only `Home Live State` panel to the root `/` Goal-First Home
+  board so the default operator surface now auto-refreshes local goal posture.
+- The panel reports refresh enabled, five-second interval, local page reload
+  mode, pause-while-editing, pause-while-hidden, first-run or lead-goal status,
+  phase, next action, target surface, action-form availability, goal counts,
+  waiting items, saved-goal state, local loopback scope, and zero-effect
+  counters.
+- Empty first-run Home still points live refresh at `/goals`; fixture-backed
+  saved-goal Home points it at the same-page `Home Resume Action Form` when the
+  next action is browser-available.
+- Updated README, local app docs, and the operating summary so `/` is
+  documented as a live goal board, not only a static dashboard.
+- Non-claims: this does not fetch GitHub status, call providers, approve work,
+  execute runs, commit, push, create PRs, deploy, create projects or goals
+  without confirmation, write on GET, use non-loopback network actions, or
+  mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `git diff --check`
+    -> passed
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed with `/` and `/today` route markers matched and zero provider/network/external-mutation counters
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched and zero provider/network/external-mutation counters
+
 ## 2026-06-27 Today Live State Refresh
 
 - Added a read-only `Today Live State` panel to `/today` so the daily cockpit

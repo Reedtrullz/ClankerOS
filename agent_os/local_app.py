@@ -1756,6 +1756,14 @@ def _home_dashboard(
         _kv(lead_lines),
         _non_claim_banner(),
         "</section>",
+        _home_live_state(
+            root,
+            storage,
+            active=active,
+            paused=paused,
+            completed=completed,
+            lead_goal=lead_goal,
+        ),
         _home_start_here(root, storage, lead_goal),
         _home_day_plan(root, storage, lead_goal),
         _home_attention_brief(root, storage, lead_goal),
@@ -1771,6 +1779,117 @@ def _home_dashboard(
     if not _first_run_progress(root, storage)["complete"]:
         sections.append(_first_run_panel(root, storage))
     return "".join(sections)
+
+
+def _home_live_state(
+    root: Path,
+    storage: Storage,
+    *,
+    active: list[sqlite3.Row],
+    paused: list[sqlite3.Row],
+    completed: list[sqlite3.Row],
+    lead_goal: sqlite3.Row | None,
+) -> str:
+    workspace = _load_workspace_state(root)
+    saved_goal = str(workspace.get("open_goal") or "").strip()
+    if lead_goal is None:
+        first_run = _first_run_progress(root, storage)
+        status = "first_run"
+        lead_surface: str | SafeHtml = "none"
+        phase = "First run"
+        next_action = str(first_run["next_action"])
+        target_href = "/goals"
+        target_label = "/goals"
+        action_form_available = "false"
+        same_page_form_available = "false"
+        waiting_items = "0"
+    else:
+        goal_id = str(lead_goal["id"])
+        state = _goal_state(root, storage, goal_id)
+        action = _goal_next_action(root, state)
+        form_available = bool(_goal_next_action_form(state, action))
+        same_page_form = form_available and saved_goal == goal_id
+        label = str(lead_goal["title"] or lead_goal["description"] or goal_id)
+        status = "goal_ready"
+        lead_surface = SafeHtml(
+            f"<a href='/goals/{quote(goal_id)}'>{_e(_compact_label(label, 72))}</a>"
+        )
+        phase = _goal_current_phase(state)
+        next_action = action.action
+        target_href = "#home-resume-action-form" if same_page_form else action.href
+        target_label = "Home Resume Action Form" if same_page_form else action.href
+        action_form_available = str(form_available).lower()
+        same_page_form_available = str(same_page_form).lower()
+        open_incidents = len([item for item in state["incidents"] if item["status"] == "open"])
+        open_recommendations = len(
+            [item for item in state["recommendations"] if item["status"] == "open"]
+        )
+        pending_approvals = (
+            _count_status(state["worktree_approvals"], "pending_operator_approval")
+            + _count_status(state["commit_approvals"], "pending_operator_approval")
+            + _count_status(state["publications"], "pending_operator_approval")
+        )
+        waiting_items = str(open_incidents + open_recommendations + pending_approvals)
+    target_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    return "".join(
+        [
+            "<section id='home-live-state' class='panel home-live-state' data-live-refresh='home'><h2>Home Live State</h2>",
+            "<p class='muted'>Keeps the root goal board current while preserving local form edits.</p>",
+            _kv(
+                [
+                    ("home_live_refresh_enabled", "true"),
+                    ("home_live_refresh_interval_seconds", "5"),
+                    ("home_live_refresh_mode", "local_page_reload"),
+                    ("home_live_refresh_pause_when_editing", "true"),
+                    ("home_live_refresh_pause_when_hidden", "true"),
+                    ("home_live_refresh_status", status),
+                    ("home_live_refresh_lead_goal", lead_surface),
+                    ("home_live_refresh_phase", phase),
+                    ("home_live_refresh_next_action", next_action),
+                    ("home_live_refresh_target_surface", target_surface),
+                    ("home_live_refresh_action_form_available", action_form_available),
+                    ("home_live_refresh_same_page_form_available", same_page_form_available),
+                    ("home_live_refresh_active_goals", str(len(active))),
+                    ("home_live_refresh_paused_goals", str(len(paused))),
+                    ("home_live_refresh_completed_goals", str(len(completed))),
+                    ("home_live_refresh_waiting_items", waiting_items),
+                    ("home_live_refresh_saved_goal", saved_goal or "none"),
+                    ("home_live_refresh_network_scope", "local_browser_loopback_only"),
+                    ("home_live_refresh_write_on_get", "false"),
+                    ("home_live_refresh_provider_calls_taken", "0"),
+                    ("home_live_refresh_network_actions_taken", "0"),
+                    ("home_live_refresh_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"home_live_refresh_now: {_e(next_action)}",
+                    f"home_live_refresh_target: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    "home_live_refresh_safety: local browser loopback reload only; pauses while editing or hidden",
+                ]
+            ),
+            """
+<script data-live-refresh-script='home'>
+(function() {
+  var intervalMs = 5000;
+  function refreshPaused() {
+    var active = document.activeElement;
+    var tag = active && active.tagName ? active.tagName.toLowerCase() : "";
+    return document.hidden || tag === "input" || tag === "textarea" || tag === "select" || Boolean(active && active.isContentEditable);
+  }
+  function tick() {
+    if (!refreshPaused()) {
+      window.location.reload();
+      return;
+    }
+    window.setTimeout(tick, intervalMs);
+  }
+  window.setTimeout(tick, intervalMs);
+})();
+</script>""",
+            "</section>",
+        ]
+    )
 
 
 def _home_start_here(
@@ -2447,7 +2566,7 @@ def _home_resume_action_form_section(root: Path, open_goal: str) -> str:
         return ""
     return "".join(
         [
-            "<h3>Home Resume Action Form</h3>",
+            "<h3 id='home-resume-action-form'>Home Resume Action Form</h3>",
             "<p class='muted'>Run the saved goal's browser-available local next action from Home.</p>",
             _kv(
                 [

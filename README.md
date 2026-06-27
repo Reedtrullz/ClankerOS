@@ -106,7 +106,9 @@ python3 -m agent_os.cli app
 The root `/` page is the Goal-First Home board. It starts with active,
 paused, and completed goal lanes, recent activity, the operator inbox,
 recommendations, incidents, saved workspace resume links, saved-goal phase and
-next-action readbacks, a `Start Here` cockpit for the next click, resume
+next-action readbacks, a read-only `Home Live State` panel with five-second
+local page reload polling that pauses while a form is focused or the tab is
+hidden, a `Start Here` cockpit for the next click, resume
 posture, blockers, and CI handoff, a `Home Day Plan` that names the current goal, phase,
 one next action, waiting counts, whether end-of-day resume is ready, and a
 confirmed `save-workspace` Finish Today form for the lead goal, the

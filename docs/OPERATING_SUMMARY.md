@@ -126,6 +126,11 @@ Core layers for the bootstrap:
   same Goal remaining-work gates so the saved goal's current gate, lifecycle
   progress, next surface, and zero-effect boundaries are visible before
   leaving `/resume`, without writing on GET;
+  `/` also includes a read-only `Home Live State` panel with five-second local
+  page reload polling that pauses while a form is focused or the tab is hidden,
+  points at the same-page Home Resume Action Form when the saved goal has a
+  browser-available next action, and reports zero provider/network/external
+  effect counters;
   `/` also includes a read-only `Home Verification Handoff` that shows the
   current branch/commit GitHub Actions direct snapshot command templates,
   latest operator-supplied CI evidence when one exists, and zero app-side

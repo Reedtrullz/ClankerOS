@@ -4128,6 +4128,36 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "home_active_goals</dt><dd>0" in root.body
     assert "home_paused_goals</dt><dd>0" in root.body
     assert "home_completed_goals</dt><dd>0" in root.body
+    assert "Home Live State" in root.body
+    assert "data-live-refresh='home'" in root.body
+    assert "data-live-refresh-script='home'" in root.body
+    assert "home_live_refresh_enabled</dt><dd>true" in root.body
+    assert "home_live_refresh_interval_seconds</dt><dd>5" in root.body
+    assert "home_live_refresh_mode</dt><dd>local_page_reload" in root.body
+    assert "home_live_refresh_pause_when_editing</dt><dd>true" in root.body
+    assert "home_live_refresh_pause_when_hidden</dt><dd>true" in root.body
+    assert "home_live_refresh_status</dt><dd>first_run" in root.body
+    assert "home_live_refresh_lead_goal</dt><dd>none" in root.body
+    assert "home_live_refresh_phase</dt><dd>First run" in root.body
+    assert "home_live_refresh_next_action</dt><dd>Register ClankerOS project" in root.body
+    assert "home_live_refresh_target_surface</dt><dd><a href='/goals'>/goals</a>" in root.body
+    assert "home_live_refresh_action_form_available</dt><dd>false" in root.body
+    assert "home_live_refresh_same_page_form_available</dt><dd>false" in root.body
+    assert "home_live_refresh_active_goals</dt><dd>0" in root.body
+    assert "home_live_refresh_paused_goals</dt><dd>0" in root.body
+    assert "home_live_refresh_completed_goals</dt><dd>0" in root.body
+    assert "home_live_refresh_waiting_items</dt><dd>0" in root.body
+    assert "home_live_refresh_saved_goal</dt><dd>none" in root.body
+    assert "home_live_refresh_network_scope</dt><dd>local_browser_loopback_only" in root.body
+    assert "home_live_refresh_write_on_get</dt><dd>false" in root.body
+    assert "home_live_refresh_provider_calls_taken</dt><dd>0" in root.body
+    assert "home_live_refresh_network_actions_taken</dt><dd>0" in root.body
+    assert "home_live_refresh_external_effects_created</dt><dd>false" in root.body
+    assert "home_live_refresh_now: Register ClankerOS project" in root.body
+    assert "home_live_refresh_target: <a href='/goals'>/goals</a>" in root.body
+    assert "home_live_refresh_safety: local browser loopback reload only" in root.body
+    assert "document.hidden" in root.body
+    assert "window.location.reload()" in root.body
     assert "Start Here" in root.body
     assert "data-home-start-here='true'" in root.body
     assert "start_here_mode</dt><dd>first_run" in root.body
@@ -8106,6 +8136,39 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workspace_workflow_map_network_actions_taken</dt><dd>0" in restored_workspace.body
     assert "workspace_workflow_map_external_effects_created</dt><dd>false" in restored_workspace.body
     restored_home = render_local_app_route(tmp_path, "/")
+    assert "Home Live State" in restored_home.body
+    assert "data-live-refresh='home'" in restored_home.body
+    assert "data-live-refresh-script='home'" in restored_home.body
+    assert "home_live_refresh_status</dt><dd>goal_ready" in restored_home.body
+    assert (
+        f"home_live_refresh_lead_goal</dt><dd><a href='/goals/{result.goal_id}'"
+        in restored_home.body
+    )
+    assert "home_live_refresh_phase</dt><dd>Ready to commit" in restored_home.body
+    assert "home_live_refresh_next_action</dt><dd>Create commit request" in restored_home.body
+    assert (
+        "home_live_refresh_target_surface</dt><dd><a href='#home-resume-action-form'>"
+        "Home Resume Action Form</a>"
+        in restored_home.body
+    )
+    assert "home_live_refresh_action_form_available</dt><dd>true" in restored_home.body
+    assert "home_live_refresh_same_page_form_available</dt><dd>true" in restored_home.body
+    assert "home_live_refresh_active_goals</dt><dd>1" in restored_home.body
+    assert "home_live_refresh_paused_goals</dt><dd>0" in restored_home.body
+    assert "home_live_refresh_completed_goals</dt><dd>0" in restored_home.body
+    assert "home_live_refresh_waiting_items</dt><dd>1" in restored_home.body
+    assert f"home_live_refresh_saved_goal</dt><dd>{result.goal_id}" in restored_home.body
+    assert "home_live_refresh_network_scope</dt><dd>local_browser_loopback_only" in restored_home.body
+    assert "home_live_refresh_write_on_get</dt><dd>false" in restored_home.body
+    assert "home_live_refresh_provider_calls_taken</dt><dd>0" in restored_home.body
+    assert "home_live_refresh_network_actions_taken</dt><dd>0" in restored_home.body
+    assert "home_live_refresh_external_effects_created</dt><dd>false" in restored_home.body
+    assert "home_live_refresh_now: Create commit request" in restored_home.body
+    assert (
+        "home_live_refresh_target: <a href='#home-resume-action-form'>"
+        "Home Resume Action Form</a>"
+        in restored_home.body
+    )
     assert "Home Resume Workspace" in restored_home.body
     assert f"resume_goal: <a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in restored_home.body
     assert f"resume_project: <a href='/projects/{result.project_id}'>{result.project_id}</a>" in restored_home.body
@@ -8144,6 +8207,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_resume_operator_attention: Act: Create commit request" in restored_home.body
     assert "home_resume_next_action_form_available: true" in restored_home.body
     assert "Home Resume Action Form" in restored_home.body
+    assert "id='home-resume-action-form'" in restored_home.body
     assert "action='/actions/coder-commit-request'" in restored_home.body
     assert f"name='run_id' value='{result.coder_worktree_run_id}'" in restored_home.body
     assert "operator_focus_source</dt><dd>saved_goal" in restored_home.body
