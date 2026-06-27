@@ -4229,6 +4229,33 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_command_external_effects_created</dt><dd>false" in today.body
     assert "today_command_now: Register ClankerOS project" in today.body
     assert "today_command_click: <a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "Today Live State" in today.body
+    assert "data-live-refresh='today'" in today.body
+    assert "data-live-refresh-script='today'" in today.body
+    assert "today_live_refresh_enabled</dt><dd>true" in today.body
+    assert "today_live_refresh_interval_seconds</dt><dd>5" in today.body
+    assert "today_live_refresh_mode</dt><dd>local_page_reload" in today.body
+    assert "today_live_refresh_pause_when_editing</dt><dd>true" in today.body
+    assert "today_live_refresh_pause_when_hidden</dt><dd>true" in today.body
+    assert "today_live_refresh_status</dt><dd>first_run" in today.body
+    assert "today_live_refresh_lead_goal</dt><dd>none" in today.body
+    assert "today_live_refresh_phase</dt><dd>First run" in today.body
+    assert "today_live_refresh_next_action</dt><dd>Register ClankerOS project" in today.body
+    assert (
+        "today_live_refresh_target_surface</dt><dd><a href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in today.body
+    assert "today_live_refresh_action_form_available</dt><dd>false" in today.body
+    assert "today_live_refresh_first_run_form_available</dt><dd>true" in today.body
+    assert "today_live_refresh_active_goals</dt><dd>0" in today.body
+    assert "today_live_refresh_write_on_get</dt><dd>false" in today.body
+    assert "today_live_refresh_network_actions_taken</dt><dd>0" in today.body
+    assert "today_live_refresh_external_effects_created</dt><dd>false" in today.body
+    assert "today_live_refresh_now: Register ClankerOS project" in today.body
+    assert "today_live_refresh_target: <a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_live_refresh_safety: local browser loopback reload only" in today.body
+    assert "document.hidden" in today.body
+    assert "window.location.reload()" in today.body
     assert (
         "start_here_primary_surface</dt><dd><a href='#first-run-create-project'>"
         "Create Project</a>"
@@ -6718,6 +6745,29 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_command_now: Create commit request" in today.body
     assert "today_command_click: <a href='#today-current-action'>Today Current Action</a>" in today.body
     assert "today_command_attention: needs_approval_review -> <a href='/approvals'>/approvals</a>" in today.body
+    assert "Today Live State" in today.body
+    assert "data-live-refresh='today'" in today.body
+    assert "data-live-refresh-script='today'" in today.body
+    assert "today_live_refresh_enabled</dt><dd>true" in today.body
+    assert "today_live_refresh_interval_seconds</dt><dd>5" in today.body
+    assert "today_live_refresh_status</dt><dd>goal_ready" in today.body
+    assert f"today_live_refresh_lead_goal</dt><dd><a href='/goals/{result.goal_id}'" in today.body
+    assert "today_live_refresh_phase</dt><dd>Ready to commit" in today.body
+    assert "today_live_refresh_next_action</dt><dd>Create commit request" in today.body
+    assert "today_live_refresh_target_surface</dt><dd><a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "today_live_refresh_action_form_available</dt><dd>true" in today.body
+    assert "today_live_refresh_first_run_form_available</dt><dd>false" in today.body
+    assert "today_live_refresh_active_goals</dt><dd>1" in today.body
+    assert "today_live_refresh_paused_goals</dt><dd>0" in today.body
+    assert "today_live_refresh_completed_goals</dt><dd>0" in today.body
+    assert "today_live_refresh_waiting_items</dt><dd>1" in today.body
+    assert "today_live_refresh_network_scope</dt><dd>local_browser_loopback_only" in today.body
+    assert "today_live_refresh_write_on_get</dt><dd>false" in today.body
+    assert "today_live_refresh_provider_calls_taken</dt><dd>0" in today.body
+    assert "today_live_refresh_network_actions_taken</dt><dd>0" in today.body
+    assert "today_live_refresh_external_effects_created</dt><dd>false" in today.body
+    assert "today_live_refresh_now: Create commit request" in today.body
+    assert "today_live_refresh_target: <a href='#today-current-action'>Today Current Action</a>" in today.body
     assert "data-today-current-action='true'" in today.body
     assert "Run Current Action" in today.body
     assert "action='/actions/coder-commit-request'" in today.body

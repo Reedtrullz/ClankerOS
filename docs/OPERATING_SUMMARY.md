@@ -94,7 +94,10 @@ Core layers for the bootstrap:
   posture, a confirmed `save-goal-note` capture form for goal-scoped operator
   context, a confirmed `pause-goal` form for shelving the lead Goal locally,
   and a confirmed `Finish Today` workspace save form for tomorrow's resume
-  point. A read-only `Today Goal Queue` follows with active/paused/completed
+  point. A read-only `Today Live State` panel follows with five-second local
+  page reload polling that pauses when the tab is hidden or a form field is
+  focused and reports zero provider/network/external-effect counters. A
+  read-only `Today Goal Queue` follows with active/paused/completed
   goal counts, lead-goal phase and next action, goal switch links,
   same-page action-form availability for the lead Goal, progress, and waiting
   counts so the daily cockpit can switch goals without falling back to the

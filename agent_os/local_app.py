@@ -1112,6 +1112,14 @@ def _today_page(root: Path) -> str:
         ),
         "</section>",
         _today_command_center(root, storage, lead_goal),
+        _today_live_state(
+            root,
+            storage,
+            active=active,
+            paused=paused,
+            completed=completed,
+            lead_goal=lead_goal,
+        ),
         _today_goal_queue(
             root,
             storage,
@@ -1133,6 +1141,112 @@ def _today_page(root: Path) -> str:
         sections.append(_first_run_panel(root, storage))
     sections.append(_non_claim_banner())
     return "".join(sections)
+
+
+def _today_live_state(
+    root: Path,
+    storage: Storage,
+    *,
+    active: list[sqlite3.Row],
+    paused: list[sqlite3.Row],
+    completed: list[sqlite3.Row],
+    lead_goal: sqlite3.Row | None,
+) -> str:
+    if lead_goal is None:
+        first_run = _first_run_progress(root, storage)
+        target_href, target_label = _today_first_run_target(first_run)
+        status = "first_run"
+        lead_surface: str | SafeHtml = "none"
+        phase = "First run"
+        next_action = str(first_run["next_action"])
+        action_form_available = "false"
+        first_run_form_available = str(target_href.startswith("#first-run-")).lower()
+        waiting_items = "0"
+    else:
+        goal_id = str(lead_goal["id"])
+        state = _goal_state(root, storage, goal_id)
+        action = _goal_next_action(root, state)
+        form_available = bool(_goal_next_action_form(state, action))
+        label = str(lead_goal["title"] or lead_goal["description"] or goal_id)
+        status = "goal_ready"
+        lead_surface = SafeHtml(
+            f"<a href='/goals/{quote(goal_id)}'>{_e(_compact_label(label, 72))}</a>"
+        )
+        phase = _goal_current_phase(state)
+        next_action = action.action
+        target_href = "#today-current-action" if form_available else action.href
+        target_label = "Today Current Action" if form_available else action.href
+        action_form_available = str(form_available).lower()
+        first_run_form_available = "false"
+        open_incidents = len([item for item in state["incidents"] if item["status"] == "open"])
+        open_recommendations = len(
+            [item for item in state["recommendations"] if item["status"] == "open"]
+        )
+        pending_approvals = (
+            _count_status(state["worktree_approvals"], "pending_operator_approval")
+            + _count_status(state["commit_approvals"], "pending_operator_approval")
+            + _count_status(state["publications"], "pending_operator_approval")
+        )
+        waiting_items = str(open_incidents + open_recommendations + pending_approvals)
+    target_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    return "".join(
+        [
+            "<section id='today-live-state' class='panel today-live-state' data-live-refresh='today'><h2>Today Live State</h2>",
+            "<p class='muted'>Keeps the daily cockpit current while preserving local form edits.</p>",
+            _kv(
+                [
+                    ("today_live_refresh_enabled", "true"),
+                    ("today_live_refresh_interval_seconds", "5"),
+                    ("today_live_refresh_mode", "local_page_reload"),
+                    ("today_live_refresh_pause_when_editing", "true"),
+                    ("today_live_refresh_pause_when_hidden", "true"),
+                    ("today_live_refresh_status", status),
+                    ("today_live_refresh_lead_goal", lead_surface),
+                    ("today_live_refresh_phase", phase),
+                    ("today_live_refresh_next_action", next_action),
+                    ("today_live_refresh_target_surface", target_surface),
+                    ("today_live_refresh_action_form_available", action_form_available),
+                    ("today_live_refresh_first_run_form_available", first_run_form_available),
+                    ("today_live_refresh_active_goals", str(len(active))),
+                    ("today_live_refresh_paused_goals", str(len(paused))),
+                    ("today_live_refresh_completed_goals", str(len(completed))),
+                    ("today_live_refresh_waiting_items", waiting_items),
+                    ("today_live_refresh_network_scope", "local_browser_loopback_only"),
+                    ("today_live_refresh_write_on_get", "false"),
+                    ("today_live_refresh_provider_calls_taken", "0"),
+                    ("today_live_refresh_network_actions_taken", "0"),
+                    ("today_live_refresh_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"today_live_refresh_now: {_e(next_action)}",
+                    f"today_live_refresh_target: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    "today_live_refresh_safety: local browser loopback reload only; pauses while editing or hidden",
+                ]
+            ),
+            """
+<script data-live-refresh-script='today'>
+(function() {
+  var intervalMs = 5000;
+  function refreshPaused() {
+    var active = document.activeElement;
+    var tag = active && active.tagName ? active.tagName.toLowerCase() : "";
+    return document.hidden || tag === "input" || tag === "textarea" || tag === "select" || Boolean(active && active.isContentEditable);
+  }
+  function tick() {
+    if (!refreshPaused()) {
+      window.location.reload();
+      return;
+    }
+    window.setTimeout(tick, intervalMs);
+  }
+  window.setTimeout(tick, intervalMs);
+})();
+</script>""",
+            "</section>",
+        ]
+    )
 
 
 def _today_goal_queue(
