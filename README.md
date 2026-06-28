@@ -620,10 +620,14 @@ read-only and does not fetch GitHub status.
 Use `/delegation-runs` when you want a compact read-only index of scout
 execution evidence, context packs, implementation handoffs, zero-effect
 counters, retry signals, and next local operator actions before handing work to
-coder prep. The page starts with a `Delegation Run Command Bar` that counts
-completed/pending runs, incidents, retry candidates, context packs, and
-implementation handoffs, then points at the first local delegation, run, or
-workflow surface to inspect next.
+coder prep. The page is action-first: it opens with a visible `Delegation Run
+Operator Workbench` before shared route/focus diagnostics and command
+readback, with cards for the next delegation/run action, scoped workflow,
+handoffs ready for coder prep, and `/resume`. The `Delegation Run Command Bar`
+still counts completed/pending runs, incidents, retry candidates, context
+packs, and implementation handoffs, then points at the first local delegation,
+run, or workflow surface to inspect next, but detailed evidence stays
+collapsed by default.
 
 Use `/projects` as the project workflow index. It shows each registered
 project's root, default test command, current branch/commit, goal/task/

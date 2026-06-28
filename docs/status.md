@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/delegation-runs` is now action-first: it opens with the `Delegation Run
+  Operator Workbench` before shared route/focus diagnostics or command
+  readback, shows visible Now, Workflow, Coder Prep, and Resume cards, and
+  keeps delegation-run workbench and command evidence collapsed by default
+  while preserving selected delegation/run, project, status, profile/category,
+  context-pack/handoff counts, retry/incidents, result artifact, and
+  zero-effect proof in the DOM.
 - `/workflow` is now action-first: it opens with the `Workflow Operator
   Workbench` before shared route/focus diagnostics or command readback, shows
   visible Now, State, Queue, and Resume cards, and keeps workflow command and

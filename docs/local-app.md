@@ -559,13 +559,14 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   recommendations, next recommended operator action, and a project workflow
   launchpad that links the project to selected delegation/run workflow views,
   the safe action catalog, dogfooding checklist, and verification handoff.
-- `/delegation-runs` - read-only delegation execution run index with a
-  `Delegation Run Command Bar`, evidence directories, result artifacts,
-  context-pack and implementation-handoff links, zero-effect counters, retry
-  signals, and next recommended local operator actions. The command bar counts
-  completed/pending runs, incidents, retry candidates, context packs, and
-  implementation handoffs, then links the first local attention target to the
-  run, delegation, and scoped workflow surfaces.
+- `/delegation-runs` - read-only delegation execution run index with a visible
+  `Delegation Run Operator Workbench` before shared route/focus diagnostics or
+  command readback. The workbench shows the next delegation/run action, scoped
+  workflow, handoffs ready for coder prep, and `/resume`; workbench and command
+  evidence stay collapsed by default while preserving evidence directories,
+  result artifacts, context-pack and implementation-handoff links, zero-effect
+  counters, retry signals, completed/pending counts, incidents, retry
+  candidates, and the first local attention target in the DOM.
 - `/delegations/<delegation_id>` - delegation, handoff, prep, worktree, commit,
   and publication state, including a compact workflow-readiness summary and
   next recommended operator action.

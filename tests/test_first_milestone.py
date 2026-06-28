@@ -6467,6 +6467,40 @@ def test_local_app_routes_render_modern_workflow_and_health(
     delegation_runs = render_local_app_route(tmp_path, "/delegation-runs")
     assert delegation_runs.status == 200
     assert "Delegation Run Index" in delegation_runs.body
+    assert "Delegation Run Operator Workbench" in delegation_runs.body
+    assert "data-delegation-run-operator-workbench='true'" in delegation_runs.body
+    assert "data-delegation-run-workbench-actions='true'" in delegation_runs.body
+    assert "data-delegation-run-workbench-primary='true'" in delegation_runs.body
+    assert "data-delegation-run-workbench-evidence='true'" in delegation_runs.body
+    assert "data-delegation-run-command-evidence='true'" in delegation_runs.body
+    assert delegation_runs.body.index("data-delegation-run-operator-workbench='true'") < delegation_runs.body.index(
+        "data-delegation-run-command-bar='true'"
+    )
+    assert delegation_runs.body.index("data-delegation-run-operator-workbench='true'") < delegation_runs.body.index(
+        "data-route-context='true'"
+    )
+    assert "delegation_run_workbench_status</dt><dd>delegation_pending" in delegation_runs.body
+    assert "delegation_run_workbench_total</dt><dd>1" in delegation_runs.body
+    assert "delegation_run_workbench_completed</dt><dd>0" in delegation_runs.body
+    assert "delegation_run_workbench_pending</dt><dd>1" in delegation_runs.body
+    assert "delegation_run_workbench_retry_candidates</dt><dd>1" in delegation_runs.body
+    assert "delegation_run_workbench_context_packs</dt><dd>0" in delegation_runs.body
+    assert "delegation_run_workbench_implementation_handoffs</dt><dd>0" in delegation_runs.body
+    assert f"delegation_run_workbench_first_delegation</dt><dd>{delegation.id}" in delegation_runs.body
+    assert "delegation_run_workbench_first_run</dt><dd>none" in delegation_runs.body
+    assert "delegation_run_workbench_first_project</dt><dd>first-target" in delegation_runs.body
+    assert "delegation_run_workbench_first_status</dt><dd>pending" in delegation_runs.body
+    assert "delegation_run_workbench_next_action</dt><dd>run_delegation" in delegation_runs.body
+    assert "delegation_run_workbench_action_label</dt><dd>Run delegation" in delegation_runs.body
+    assert f"delegation_run_workbench_primary_surface</dt><dd><a href='/delegations/{delegation.id}'" in delegation_runs.body
+    assert f"delegation_run_workbench_workflow_surface</dt><dd><a href='/workflow?delegation_id={delegation.id}'" in delegation_runs.body
+    assert "delegation_run_workbench_reason</dt><dd>delegation_status=pending" in delegation_runs.body
+    assert "delegation_run_workbench_coder_prep_surface</dt><dd><a href='#delegation-runs-ready-for-coder-prep'>Ready For Coder Prep</a>" in delegation_runs.body
+    assert "delegation_run_workbench_resume_surface</dt><dd><a href='/resume'>/resume</a>" in delegation_runs.body
+    assert "delegation_run_workbench_write_on_get</dt><dd>false" in delegation_runs.body
+    assert "delegation_run_workbench_provider_calls_taken</dt><dd>0" in delegation_runs.body
+    assert "delegation_run_workbench_network_actions_taken</dt><dd>0" in delegation_runs.body
+    assert "delegation_run_workbench_external_effects_created</dt><dd>false" in delegation_runs.body
     assert "Delegation Run Command Bar" in delegation_runs.body
     assert "data-delegation-run-command-bar='true'" in delegation_runs.body
     assert "delegation_run_command_total</dt><dd>1" in delegation_runs.body
@@ -10070,6 +10104,41 @@ def test_local_app_demo_scenario_populates_fixture_state(
     delegation_runs = render_local_app_route(tmp_path, "/delegation-runs")
     assert delegation_runs.status == 200
     assert "Delegation Run Index" in delegation_runs.body
+    assert "Delegation Run Operator Workbench" in delegation_runs.body
+    assert "data-delegation-run-operator-workbench='true'" in delegation_runs.body
+    assert "data-delegation-run-workbench-actions='true'" in delegation_runs.body
+    assert "data-delegation-run-workbench-primary='true'" in delegation_runs.body
+    assert "data-delegation-run-workbench-evidence='true'" in delegation_runs.body
+    assert "data-delegation-run-command-evidence='true'" in delegation_runs.body
+    assert delegation_runs.body.index("data-delegation-run-operator-workbench='true'") < delegation_runs.body.index(
+        "data-delegation-run-command-bar='true'"
+    )
+    assert delegation_runs.body.index("data-delegation-run-operator-workbench='true'") < delegation_runs.body.index(
+        "data-route-context='true'"
+    )
+    assert "delegation_run_workbench_status</dt><dd>handoff_ready" in delegation_runs.body
+    assert "delegation_run_workbench_total</dt><dd>1" in delegation_runs.body
+    assert "delegation_run_workbench_completed</dt><dd>1" in delegation_runs.body
+    assert "delegation_run_workbench_pending</dt><dd>0" in delegation_runs.body
+    assert "delegation_run_workbench_retry_candidates</dt><dd>0" in delegation_runs.body
+    assert "delegation_run_workbench_context_packs</dt><dd>1" in delegation_runs.body
+    assert "delegation_run_workbench_implementation_handoffs</dt><dd>1" in delegation_runs.body
+    assert f"delegation_run_workbench_first_delegation</dt><dd>{result.delegation_id}" in delegation_runs.body
+    assert f"delegation_run_workbench_first_run</dt><dd>{result.run_id}" in delegation_runs.body
+    assert f"delegation_run_workbench_first_project</dt><dd>{result.project_id}" in delegation_runs.body
+    assert "delegation_run_workbench_first_status</dt><dd>completed" in delegation_runs.body
+    assert "delegation_run_workbench_next_action</dt><dd>prepare_coder_from_handoff" in delegation_runs.body
+    assert "delegation_run_workbench_action_label</dt><dd>Prepare coder from handoff" in delegation_runs.body
+    assert f"delegation_run_workbench_primary_surface</dt><dd><a href='/runs/{result.run_id}'" in delegation_runs.body
+    assert f"delegation_run_workbench_workflow_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'" in delegation_runs.body
+    assert "delegation_run_workbench_reason</dt><dd>implementation_handoff_available" in delegation_runs.body
+    assert "delegation_run_workbench_result_artifact</dt><dd><a href='/artifacts?path=" in delegation_runs.body
+    assert "delegation_run_workbench_coder_prep_surface</dt><dd><a href='#delegation-runs-ready-for-coder-prep'>Ready For Coder Prep</a>" in delegation_runs.body
+    assert "delegation_run_workbench_resume_surface</dt><dd><a href='/resume'>/resume</a>" in delegation_runs.body
+    assert "delegation_run_workbench_write_on_get</dt><dd>false" in delegation_runs.body
+    assert "delegation_run_workbench_provider_calls_taken</dt><dd>0" in delegation_runs.body
+    assert "delegation_run_workbench_network_actions_taken</dt><dd>0" in delegation_runs.body
+    assert "delegation_run_workbench_external_effects_created</dt><dd>false" in delegation_runs.body
     assert "Delegation Run Command Bar" in delegation_runs.body
     assert "data-delegation-run-command-bar='true'" in delegation_runs.body
     assert "delegation_run_command_total</dt><dd>1" in delegation_runs.body

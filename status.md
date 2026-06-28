@@ -1,5 +1,51 @@
 # Status
 
+## 2026-06-28 Delegation Runs Action-First Operator Surface
+
+- Made `/delegation-runs` usable as an operator workbench by rendering the
+  `Delegation Run Operator Workbench` before shared Route Context, Operator
+  Focus, Last Action, and delegation-run command diagnostics.
+- Added four visible cards for the current delegation/run action, scoped
+  workflow, handoffs ready for coder prep, and resume context, with a stable
+  `data-delegation-run-workbench-primary` marker for the primary action.
+- Humanized visible action labels such as `Prepare coder from handoff` while
+  retaining raw `next_action` tokens in collapsed evidence for deterministic
+  review and tests.
+- Kept delegation-run workbench evidence and command evidence collapsed by
+  default while preserving selected delegation/run, project, status,
+  profile/category, context-pack and handoff counts, retry/incidents, result
+  artifact, and zero-effect readbacks in the DOM.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, run delegations without confirmation, create coder prep, approve work,
+  execute work, stage files, commit, push, create PRs, deploy, call providers,
+  fetch GitHub from ClankerOS, poll network services, mutate external systems
+  from ClankerOS, or expose arbitrary raw filesystem browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-delegation-runs-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-delegation-runs-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/delegation-runs` snippets matched,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8816/delegation-runs`: desktop `1280x900` rendered four
+    Delegation Run Operator Workbench cards before Route Context and the
+    Delegation Run Command Bar, showed the primary action as
+    `Prepare coder from handoff`, retained raw next-action evidence, kept
+    workbench/command evidence collapsed, had no horizontal overflow, no
+    framework overlay, and empty browser warning/error logs.
+  - Interaction proof: clicking the marked primary action changed the URL to
+    `/runs/run_293a6a2c66ed` and rendered Delegation Run Evidence plus
+    Delegation Run Workflow State.
+  - Mobile Browser QA at `390x844` rendered four delegation-run workbench cards
+    in one column, kept delegation-run evidence collapsed, showed no horizontal
+    overflow, and had empty browser warning/error logs.
+  - `git diff --check` -> passed.
+
 ## 2026-06-28 Workflow Action-First Operator Surface
 
 - Made `/workflow` usable as an operator workbench by rendering the

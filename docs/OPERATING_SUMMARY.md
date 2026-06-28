@@ -183,12 +183,16 @@ Core layers for the bootstrap:
   the first local incident or recovery recommendation to review, evidence
   links, stable open/resolved/recommendation anchors, and no-write/
   no-resolution-on-GET/no-network/no-external-effect boundaries;
-  `/delegation-runs` includes a read-only `Delegation Run Command Bar` that
-  summarizes completed/pending delegation runs, incidents, retry candidates,
-  context-pack and implementation-handoff readiness, the first local
-  delegation/run/workflow surface to inspect, stable attention/coder-prep/
-  recent-run anchors, and no-write/no-provider/no-network/no-external-effect
-  boundaries before the longer execution evidence index;
+  `/delegation-runs` is action-first and includes a visible `Delegation Run
+  Operator Workbench` before shared route/focus diagnostics or command
+  readback, with cards for the next delegation/run action, scoped workflow,
+  handoffs ready for coder prep, and `/resume`. Workbench and command evidence
+  stay collapsed by default while preserving completed/pending delegation run
+  counts, incidents, retry candidates, context-pack and
+  implementation-handoff readiness, the first local delegation/run/workflow
+  surface to inspect, stable attention/coder-prep/recent-run anchors, and
+  no-write/no-provider/no-network/no-external-effect boundaries before the
+  longer execution evidence index;
   `/workflow` includes a read-only `Workflow Command Bar` that summarizes the
   selected delegation or coder run, parent Goal, project, current workflow
   stage, next local action, target surface, reason, and zero-effect counters

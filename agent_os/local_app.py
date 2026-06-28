@@ -516,6 +516,22 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             ],
         ),
         (
+            "/delegation-runs",
+            "Delegation Run Index",
+            [
+                "Delegation Run Operator Workbench",
+                "data-delegation-run-operator-workbench='true'",
+                "data-delegation-run-workbench-primary='true'",
+                "data-delegation-run-workbench-evidence='true'",
+                "data-delegation-run-command-evidence='true'",
+                "delegation_run_workbench_status</dt><dd>handoff_ready",
+                "delegation_run_workbench_next_action</dt><dd>prepare_coder_from_handoff",
+                "delegation_run_workbench_action_label</dt><dd>Prepare coder from handoff",
+                demo.delegation_id,
+                demo.run_id,
+            ],
+        ),
+        (
             "/goals",
             "Goal Cockpit",
             [
@@ -16134,6 +16150,7 @@ def _delegation_runs(root: Path) -> str:
             "<section><h1>Delegation Run Index</h1>",
             "<p class='muted'>Read-only index of scout/delegation execution runs, evidence paths, context packs, handoffs, zero-effect counters, retry signals, and next local operator actions.</p>",
             "</section>",
+            _delegation_run_operator_workbench(root, records),
             _delegation_run_command_bar(root, records),
             _list_section(
                 "Delegation Runs Needing Attention",
@@ -16166,6 +16183,209 @@ def _delegation_runs(root: Path) -> str:
                 anchor_id="delegation-runs-recent",
             ),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _delegation_run_focus_context(
+    root: Path,
+    records: list[tuple[Any, str, dict[str, Any]]],
+) -> dict[str, Any]:
+    completed = [record for record in records if record[0].status == "completed"]
+    pending = [record for record in records if record[0].status != "completed"]
+    incidents = [record for record in records if record[2].get("incident_id")]
+    retry_candidates = [
+        record
+        for record in records
+        if record[0].status != "completed" or record[2].get("incident_id")
+    ]
+    context_pack_ready = [
+        record
+        for record in records
+        if record[2].get("context_pack_md") or record[2].get("context_pack_json")
+    ]
+    handoff_ready = [
+        record
+        for record in records
+        if record[2].get("implementation_handoff_md")
+        or record[2].get("implementation_handoff_json")
+    ]
+    first_record = (
+        incidents[0]
+        if incidents
+        else pending[0]
+        if pending
+        else handoff_ready[0]
+        if handoff_ready
+        else records[0]
+        if records
+        else None
+    )
+    context: dict[str, Any] = {
+        "status": "empty",
+        "total": str(len(records)),
+        "completed": str(len(completed)),
+        "pending": str(len(pending)),
+        "incidents": str(len(incidents)),
+        "retry_candidates": str(len(retry_candidates)),
+        "context_packs": str(len(context_pack_ready)),
+        "implementation_handoffs": str(len(handoff_ready)),
+        "first_delegation": "none",
+        "first_run": "none",
+        "first_project": "none",
+        "first_status": "none",
+        "first_profile": "none",
+        "first_category": "none",
+        "next_action": "Select delegation",
+        "action_label": "Select delegation",
+        "primary_summary": "Choose a delegation run to inspect scout evidence or continue into coder prep.",
+        "primary_href": "/goals",
+        "primary_label": "/goals",
+        "workflow_href": "/workflow",
+        "workflow_label": "/workflow",
+        "reason": "no delegation run records",
+        "result_artifact": SafeHtml("none"),
+    }
+    if first_record is None:
+        return context
+
+    delegation, project, metadata = first_record
+    run_id = metadata.get("execution_run_id") or metadata.get("run_id") or "none"
+    next_action = _delegation_run_next_action(delegation, metadata)
+    status = "run_available"
+    if metadata.get("incident_id"):
+        status = "needs_attention"
+    elif delegation.status != "completed":
+        status = "delegation_pending"
+    elif metadata.get("implementation_handoff_md") or metadata.get("implementation_handoff_json"):
+        status = "handoff_ready"
+    elif run_id != "none":
+        status = "execution_run_ready"
+
+    primary_href = (
+        f"/runs/{quote(str(run_id))}"
+        if run_id != "none"
+        else f"/delegations/{quote(delegation.id)}"
+    )
+    primary_label = f"/runs/{run_id}" if run_id != "none" else f"/delegations/{delegation.id}"
+    if metadata.get("incident_id"):
+        reason = f"incident={metadata.get('incident_id')}"
+    elif delegation.status != "completed":
+        reason = f"delegation_status={delegation.status}"
+    elif metadata.get("implementation_handoff_md") or metadata.get("implementation_handoff_json"):
+        reason = "implementation_handoff_available"
+    elif run_id != "none":
+        reason = "execution_run_available"
+    else:
+        reason = "delegation_result_available"
+
+    return {
+        **context,
+        "status": status,
+        "first_delegation": delegation.id,
+        "first_run": str(run_id),
+        "first_project": project,
+        "first_status": delegation.status,
+        "first_profile": delegation.assigned_profile,
+        "first_category": delegation.category,
+        "next_action": next_action,
+        "action_label": _delegation_run_action_label(next_action),
+        "primary_summary": f"{_delegation_run_action_label(next_action)} is the next local step for {delegation.id}.",
+        "primary_href": primary_href,
+        "primary_label": primary_label,
+        "workflow_href": f"/workflow?delegation_id={quote(delegation.id)}",
+        "workflow_label": "Workflow",
+        "reason": reason,
+        "result_artifact": SafeHtml(
+            _artifact_link(_repo_relative_artifact_path(root, delegation.result_artifact_path))
+        ),
+    }
+
+
+def _delegation_run_operator_workbench(
+    root: Path,
+    records: list[tuple[Any, str, dict[str, Any]]],
+) -> str:
+    context = _delegation_run_focus_context(root, records)
+    primary_href = str(context["primary_href"])
+    primary_label = str(context["primary_label"])
+    workflow_href = str(context["workflow_href"])
+    workflow_label = str(context["workflow_label"])
+    action_label = str(context["action_label"])
+    rows = [
+        ("delegation_run_workbench_status", str(context["status"])),
+        ("delegation_run_workbench_total", str(context["total"])),
+        ("delegation_run_workbench_completed", str(context["completed"])),
+        ("delegation_run_workbench_pending", str(context["pending"])),
+        ("delegation_run_workbench_incidents", str(context["incidents"])),
+        ("delegation_run_workbench_retry_candidates", str(context["retry_candidates"])),
+        ("delegation_run_workbench_context_packs", str(context["context_packs"])),
+        ("delegation_run_workbench_implementation_handoffs", str(context["implementation_handoffs"])),
+        ("delegation_run_workbench_first_delegation", str(context["first_delegation"])),
+        ("delegation_run_workbench_first_run", str(context["first_run"])),
+        ("delegation_run_workbench_first_project", str(context["first_project"])),
+        ("delegation_run_workbench_first_status", str(context["first_status"])),
+        ("delegation_run_workbench_first_profile", str(context["first_profile"])),
+        ("delegation_run_workbench_first_category", str(context["first_category"])),
+        ("delegation_run_workbench_next_action", str(context["next_action"])),
+        ("delegation_run_workbench_action_label", action_label),
+        (
+            "delegation_run_workbench_primary_surface",
+            SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+        ),
+        (
+            "delegation_run_workbench_workflow_surface",
+            SafeHtml(f"<a href='{_e(workflow_href)}'>{_e(workflow_label)}</a>"),
+        ),
+        ("delegation_run_workbench_reason", str(context["reason"])),
+        ("delegation_run_workbench_result_artifact", context["result_artifact"]),
+        (
+            "delegation_run_workbench_attention_surface",
+            SafeHtml("<a href='#delegation-runs-attention'>Needs Attention</a>"),
+        ),
+        (
+            "delegation_run_workbench_coder_prep_surface",
+            SafeHtml("<a href='#delegation-runs-ready-for-coder-prep'>Ready For Coder Prep</a>"),
+        ),
+        (
+            "delegation_run_workbench_recent_surface",
+            SafeHtml("<a href='#delegation-runs-recent'>Recent Delegation Runs</a>"),
+        ),
+        ("delegation_run_workbench_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+        ("delegation_run_workbench_write_on_get", "false"),
+        ("delegation_run_workbench_provider_calls_taken", "0"),
+        ("delegation_run_workbench_network_actions_taken", "0"),
+        ("delegation_run_workbench_external_effects_created", "false"),
+    ]
+    lines = [
+        f"delegation_run_workbench_now: <a href='{_e(primary_href)}'>{_e(action_label)}</a>",
+        f"delegation_run_workbench_workflow: <a href='{_e(workflow_href)}'>{_e(workflow_label)}</a>",
+        "delegation_run_workbench_prepare: <a href='#delegation-runs-ready-for-coder-prep'>Ready For Coder Prep</a>",
+        "delegation_run_workbench_attention: <a href='#delegation-runs-attention'>Needs Attention</a>",
+        "delegation_run_workbench_resume: <a href='/resume'>/resume</a>",
+        "delegation_run_workbench_safety: read-only delegation routing; confirmed actions remain on owning surfaces",
+    ]
+    if not records:
+        lines.append("delegation_run_workbench_empty: no local delegation runs")
+    return "".join(
+        [
+            "<section class='panel delegation-run-operator-workbench' data-delegation-run-operator-workbench='true'><h2>Delegation Run Operator Workbench</h2>",
+            "<p class='muted'>Continue scout evidence, context packs, handoffs, and coder-prep readiness from one visible operator surface.</p>",
+            "<div class='delegation-run-workbench-grid' data-delegation-run-workbench-actions='true'>",
+            "<article class='delegation-run-workbench-card delegation-run-workbench-primary'><h3>Now</h3>",
+            f"<p>{_e(str(context['primary_summary']))}</p><a class='delegation-run-workbench-action' data-delegation-run-workbench-primary='true' href='{_e(primary_href)}'>{_e(action_label)}</a></article>",
+            "<article class='delegation-run-workbench-card'><h3>Workflow</h3>",
+            f"<p>Open the selected delegation's workflow map.</p><a class='delegation-run-workbench-link' href='{_e(workflow_href)}'>{_e(workflow_label)}</a></article>",
+            "<article class='delegation-run-workbench-card'><h3>Coder Prep</h3>",
+            "<p>Review handoffs ready for bounded coder preparation.</p><a class='delegation-run-workbench-link' href='#delegation-runs-ready-for-coder-prep'>Ready For Coder Prep</a></article>",
+            "<article class='delegation-run-workbench-card'><h3>Resume</h3>",
+            "<p>Return through saved Goal or artifact context.</p><a class='delegation-run-workbench-link' href='/resume'>/resume</a></article>",
+            "</div>",
+            "<details class='delegation-run-workbench-evidence' data-delegation-run-workbench-evidence='true'><summary>Delegation run workbench evidence</summary>",
+            _kv(rows),
+            _ul(lines),
+            "</details>",
+            "</section>",
         ]
     )
 
@@ -16256,6 +16476,7 @@ def _delegation_run_command_bar(
         [
             "<section class='panel delegation-run-command-bar' data-delegation-run-command-bar='true'><h2>Delegation Run Command Bar</h2>",
             "<p class='muted'>One read-only delegation/run summary for scout evidence, handoff readiness, and retry attention.</p>",
+            "<details class='delegation-run-command-evidence' data-delegation-run-command-evidence='true'><summary>Delegation run command evidence</summary>",
             _kv(
                 [
                     ("delegation_run_command_status", "available"),
@@ -16284,6 +16505,7 @@ def _delegation_run_command_bar(
                 ]
             ),
             _ul(lines),
+            "</details>",
             "</section>",
         ]
     )
@@ -24369,7 +24591,7 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
-    content_first_paths = {"/", "/actions", "/inbox", "/memory", "/profiles", "/resume", "/search", "/skills", "/today", "/workflow", "/workspace"}
+    content_first_paths = {"/", "/actions", "/delegation-runs", "/inbox", "/memory", "/profiles", "/resume", "/search", "/skills", "/today", "/workflow", "/workspace"}
     if current_route_path in content_first_paths:
         article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
     else:
@@ -24789,6 +25011,21 @@ def _html_page(
     .run-gate-map li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .run-gate-rail li[data-run-gate-marker="current"] {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
     .run-gate-rail li[data-run-gate-status="blocked"], .run-gate-rail li[data-run-gate-status="attention"] {{ border-color:var(--warn); box-shadow:inset 3px 0 0 var(--warn); }}
+    .delegation-run-operator-workbench {{ border-left:4px solid var(--accent); }}
+    .delegation-run-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .delegation-run-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .delegation-run-operator-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .delegation-run-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .delegation-run-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .delegation-run-workbench-card h3 {{ margin-top:0; }}
+    .delegation-run-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .delegation-run-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .delegation-run-workbench-action, .delegation-run-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .delegation-run-workbench-action {{ background:var(--accent); color:#fff; }}
+    .delegation-run-workbench-link {{ background:var(--surface); color:var(--accent); }}
+    .delegation-run-workbench-evidence, .delegation-run-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .delegation-run-workbench-evidence summary, .delegation-run-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .delegation-run-workbench-evidence:not([open]) > :not(summary), .delegation-run-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .delegation-run-command-bar {{ border-left:4px solid var(--accent); }}
     .delegation-run-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .delegation-run-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -24987,7 +25224,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
@@ -25318,6 +25555,17 @@ def _delegation_run_next_action(delegation: Any, metadata: dict[str, Any]) -> st
     if metadata.get("execution_run_id") or metadata.get("run_id"):
         return "create_implementation_handoff"
     return "review_delegation_result"
+
+
+def _delegation_run_action_label(next_action: str) -> str:
+    labels = {
+        "inspect_delegation_run_incident": "Inspect delegation incident",
+        "run_delegation": "Run delegation",
+        "prepare_coder_from_handoff": "Prepare coder from handoff",
+        "create_implementation_handoff": "Create implementation handoff",
+        "review_delegation_result": "Review delegation result",
+    }
+    return labels.get(next_action, next_action.replace("_", " ").capitalize())
 
 
 def _repo_relative_artifact_path(root: Path, path: str | Path | None) -> str:
