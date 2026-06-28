@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/actions` is now content-first and action-first: the page opens on the safe
+  action header and `Action Operator Workbench` before shared route/focus
+  diagnostics or catalog readback, while action safety, workbench evidence, and
+  catalog evidence stay collapsed by default. The catalog still exposes visible
+  Catalog, Forms, Approvals, and Boundary cards plus all prior zero-effect
+  counters in the DOM.
 - `/` now leads with the Home operating surface before shared route/focus
   diagnostics. Its `Home Operator Board` is visible in the first desktop and
   mobile viewports, shows Do Now, Attention, Resume, and Proof cards for the

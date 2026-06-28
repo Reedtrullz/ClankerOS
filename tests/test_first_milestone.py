@@ -6041,8 +6041,26 @@ def test_local_app_routes_render_modern_workflow_and_health(
     actions = render_local_app_route(tmp_path, "/actions")
     assert actions.status == 200
     assert "Safe Action Catalog" in actions.body
+    assert "data-action-safety-details='true'" in actions.body
+    assert "Action Operator Workbench" in actions.body
+    assert "data-action-operator-workbench='true'" in actions.body
+    assert "data-action-workbench-actions='true'" in actions.body
+    assert "data-action-workbench-primary='true'" in actions.body
+    assert "data-action-workbench-evidence='true'" in actions.body
     assert "Action Catalog Command Bar" in actions.body
     assert "data-action-catalog-command-bar='true'" in actions.body
+    assert "data-action-catalog-actions='true'" in actions.body
+    assert "data-action-catalog-primary='true'" in actions.body
+    assert "data-action-catalog-evidence='true'" in actions.body
+    assert actions.body.index("data-action-operator-workbench='true'") < actions.body.index(
+        "data-action-catalog-command-bar='true'"
+    )
+    assert actions.body.index("data-action-operator-workbench='true'") < actions.body.index(
+        "data-route-context='true'"
+    )
+    assert actions.body.index("data-action-operator-workbench='true'") < actions.body.index(
+        "data-operator-focus-strip='true'"
+    )
     assert "action_catalog_status</dt><dd>available" in actions.body
     assert "action_catalog_total_actions</dt><dd>27" in actions.body
     assert "action_catalog_navigation_actions</dt><dd>8" in actions.body
@@ -6065,9 +6083,6 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "action_catalog_click: <a href='#action-catalog-workflow-actions'>Local Artifact And Approval Actions</a>" in actions.body
     assert "action_catalog_confirm: every local mutation requires confirm=yes" in actions.body
     assert "action_catalog_safety: read-only action catalog; confirmed forms remain on owning surfaces" in actions.body
-    assert "Action Operator Workbench" in actions.body
-    assert "data-action-operator-workbench='true'" in actions.body
-    assert "data-action-workbench-actions='true'" in actions.body
     assert "action_workbench_status</dt><dd>available" in actions.body
     assert "action_workbench_source</dt><dd>saved_goal" in actions.body
     assert "action_workbench_project</dt><dd><a href='/projects/first-target'>first-target</a>" in actions.body
@@ -7377,11 +7392,21 @@ def test_local_app_demo_scenario_populates_fixture_state(
 
     actions_with_demo = render_local_app_route(tmp_path, "/actions")
     assert actions_with_demo.status == 200
-    assert "Action Catalog Command Bar" in actions_with_demo.body
-    assert "data-action-catalog-command-bar='true'" in actions_with_demo.body
     assert "Action Operator Workbench" in actions_with_demo.body
     assert "data-action-operator-workbench='true'" in actions_with_demo.body
     assert "data-action-workbench-actions='true'" in actions_with_demo.body
+    assert "data-action-workbench-primary='true'" in actions_with_demo.body
+    assert "data-action-workbench-evidence='true'" in actions_with_demo.body
+    assert "Action Catalog Command Bar" in actions_with_demo.body
+    assert "data-action-catalog-command-bar='true'" in actions_with_demo.body
+    assert "data-action-catalog-actions='true'" in actions_with_demo.body
+    assert "data-action-catalog-evidence='true'" in actions_with_demo.body
+    assert actions_with_demo.body.index("data-action-operator-workbench='true'") < actions_with_demo.body.index(
+        "data-action-catalog-command-bar='true'"
+    )
+    assert actions_with_demo.body.index("data-action-operator-workbench='true'") < actions_with_demo.body.index(
+        "data-route-context='true'"
+    )
     assert "action_workbench_status</dt><dd>available" in actions_with_demo.body
     assert "action_workbench_source</dt><dd>lead_goal" in actions_with_demo.body
     assert "action_workbench_project</dt><dd><a href='/projects/local-app-demo'>local-app-demo</a>" in actions_with_demo.body

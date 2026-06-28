@@ -13653,11 +13653,41 @@ def _action_catalog_command_bar() -> str:
         "action_catalog_confirm: every local mutation requires confirm=yes",
         "action_catalog_safety: read-only action catalog; confirmed forms remain on owning surfaces",
     ]
+    cards = "".join(
+        [
+            "<article class='action-catalog-card action-catalog-primary'>",
+            "<h3>Catalog</h3>",
+            f"<p>{total_actions} local actions</p>",
+            "<a class='action-catalog-action' data-action-catalog-primary='true' href='#action-catalog-workflow-actions'>Browse actions</a>",
+            "</article>",
+            "<article class='action-catalog-card'>",
+            "<h3>Forms</h3>",
+            f"<p>{confirmation_required} require confirmation</p>",
+            "<a class='action-catalog-link' href='#action-catalog-dashboard-action'>First form</a>",
+            "</article>",
+            "<article class='action-catalog-card'>",
+            "<h3>Approvals</h3>",
+            f"<p>{approval_actions} approval actions</p>",
+            "<a class='action-catalog-link' href='/approvals'>/approvals</a>",
+            "</article>",
+            "<article class='action-catalog-card'>",
+            "<h3>Boundary</h3>",
+            "<p>No external mutation</p>",
+            "<a class='action-catalog-link' href='#action-catalog-execution-boundary'>Boundary</a>",
+            "</article>",
+        ]
+    )
     return (
         "<section id='action-catalog-command-bar' class='panel action-catalog-command-bar' "
         "data-action-catalog-command-bar='true'><h2>Action Catalog Command Bar</h2>"
+        "<p class='muted'>Readable map of browser-available local actions and their confirmation boundary.</p>"
+        "<div class='action-catalog-grid' data-action-catalog-actions='true'>"
+        + cards
+        + "</div>"
+        "<details class='action-catalog-evidence' data-action-catalog-evidence='true'><summary>Catalog evidence</summary>"
         + _kv(rows)
         + _ul(lines)
+        + "</details>"
         + "</section>"
     )
 
@@ -13808,15 +13838,16 @@ def _action_operator_workbench(root: Path) -> str:
             "<section id='action-operator-workbench' class='panel action-operator-workbench' data-action-operator-workbench='true'><h2>Action Operator Workbench</h2>",
             "<p class='muted'>Turns the safe action inventory into one current local action, its owning surface, blocker routing, and a resume save point.</p>",
             "<div class='action-workbench-grid' data-action-workbench-actions='true'>",
-            "<div class='action-workbench-card action-workbench-primary'><h3>Use Now</h3>",
-            f"<p>{_e(next_action)}</p><a class='action-workbench-action' href='{_e(primary_href)}'>{_e(primary_label)}</a></div>",
-            "<div class='action-workbench-card'><h3>Owning Surface</h3>",
-            f"<p>{_e(action_name)}</p><a class='action-workbench-link' href='{_e(owning_href)}'>{_e(owning_label)}</a></div>",
-            "<div class='action-workbench-card'><h3>Unblock</h3>",
-            f"<p>{waiting_items} waiting item(s)</p><a class='action-workbench-link' href='{_e(unblock_href)}'>{_e(unblock_label)}</a></div>",
-            "<div class='action-workbench-card'><h3>Finish Today</h3>",
-            "<p>Save action context</p><a class='action-workbench-link' href='#action-finish-today'>Open save form</a></div>",
+            "<article class='action-workbench-card action-workbench-primary'><h3>Use Now</h3>",
+            f"<p>{_e(next_action)}</p><a class='action-workbench-action' data-action-workbench-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a></article>",
+            "<article class='action-workbench-card'><h3>Owning Surface</h3>",
+            f"<p>{_e(action_name)}</p><a class='action-workbench-link' href='{_e(owning_href)}'>{_e(owning_label)}</a></article>",
+            "<article class='action-workbench-card'><h3>Unblock</h3>",
+            f"<p>{waiting_items} waiting item(s)</p><a class='action-workbench-link' href='{_e(unblock_href)}'>{_e(unblock_label)}</a></article>",
+            "<article class='action-workbench-card'><h3>Finish Today</h3>",
+            "<p>Save action context</p><a class='action-workbench-link' href='#action-finish-today'>Open save form</a></article>",
             "</div>",
+            "<details class='action-workbench-evidence' data-action-workbench-evidence='true'><summary>Workbench evidence</summary>",
             _kv(
                 [
                     ("action_workbench_status", status),
@@ -13879,6 +13910,7 @@ def _action_operator_workbench(root: Path) -> str:
                     "action_workbench_safety: read-only action routing; confirmed forms stay on owning surfaces",
                 ]
             ),
+            "</details>",
             "<section id='action-finish-today' class='action-finish-today'><h3>Action Finish Today</h3>",
             _kv(
                 [
@@ -13902,12 +13934,14 @@ def _action_operator_workbench(root: Path) -> str:
 def _actions_page(root: Path) -> str:
     return "".join(
         [
-            "<section><h1>Safe Action Catalog</h1>",
+            "<section class='hero'><h1>Safe Action Catalog</h1>",
             "<p class='muted'>Read-only map of local app actions, where their forms appear, what they require, and what local artifact or decision they produce.</p>",
+            "<details class='action-safety-details' data-action-safety-details='true'><summary>Safety boundary</summary>",
             _non_claim_banner(),
+            "</details>",
             "</section>",
-            _action_catalog_command_bar(),
             _action_operator_workbench(root),
+            _action_catalog_command_bar(),
             _list_section(
                 "Navigation Actions",
                 [
@@ -23522,7 +23556,8 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
-    if current_path == "/":
+    content_first_paths = {"/", "/actions"}
+    if current_path in content_first_paths:
         article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
     else:
         article_body = f"{breadcrumbs}{focus_strip}{last_action_strip}{content}"
@@ -23920,8 +23955,19 @@ def _html_page(
     .workflow-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .workflow-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .action-catalog-command-bar {{ border-left:4px solid var(--accent); }}
+    .action-safety-details, .action-catalog-evidence, .action-workbench-evidence {{ margin-top:10px; }}
+    .action-safety-details summary, .action-catalog-evidence summary, .action-workbench-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .action-safety-details:not([open]) > :not(summary), .action-catalog-evidence:not([open]) > :not(summary), .action-workbench-evidence:not([open]) > :not(summary) {{ display:none; }}
     .action-catalog-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .action-catalog-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .action-catalog-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .action-catalog-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .action-catalog-card h3 {{ margin-top:0; }}
+    .action-catalog-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .action-catalog-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .action-catalog-action, .action-catalog-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .action-catalog-action {{ background:var(--accent); color:#fff; }}
+    .action-catalog-link {{ background:var(--surface); color:var(--accent); }}
     .action-operator-workbench {{ border-left:4px solid var(--accent); }}
     .action-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .action-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
@@ -24036,7 +24082,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

@@ -490,13 +490,15 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/actions` - read-only safe action catalog showing local app actions, where
   their forms appear, required previous artifacts, output artifacts,
   confirmation requirements, local mutation posture, and external-effect
-  boundary. A read-only `Action Catalog Command Bar` starts the page with
-  action counts by posture, first safe local action, target anchors, and zero
-  provider/network/external-effect counters before the longer inventory. An
-  `Action Operator Workbench` follows, deriving the current action from
-  first-run or lead-Goal focus, linking the owning surface where the confirmed
-  form lives, routing blockers to inbox/approvals/incidents, and providing a
-  confirmed `save-workspace` finish form. It also includes the confirmed
+  boundary. It opens with the safe action header and an `Action Operator
+  Workbench` before shared route/focus diagnostics, deriving the current action
+  from first-run or lead-Goal focus, linking the owning surface where the
+  confirmed form lives, routing blockers to inbox/approvals/incidents, and
+  providing a confirmed `save-workspace` finish form. A read-only
+  `Action Catalog Command Bar` follows with visible Catalog, Forms, Approvals,
+  and Boundary cards, while action counts, posture readbacks, and zero
+  provider/network/external-effect counters remain in collapsed evidence. It
+  also includes the confirmed
   dashboard status refresh form.
 - `/verification` - read-only verification handoff showing the checked-in
   GitHub Actions workflow posture, compact local checks, remote full-suite
@@ -846,15 +848,15 @@ the inert content renderer.
 The `/actions` page is the first-stop safe action catalog. It maps low-risk and
 local artifact-producing actions to the page where each form appears, the
 required previous artifact, the output artifact, whether confirmation is
-required, and the no-external-effects boundary. The page now starts with an
-`Action Catalog Command Bar` that summarizes total actions, navigation actions,
-mutating actions, confirmation-required actions, local execution/git/approval/
-artifact posture, the first safe local action, section anchors, and zero
-provider/network/external-effect counters. It then renders an
-`Action Operator Workbench` that turns current first-run or lead-Goal state into
-one local action, the owning Goal/run/approval surface, blocker routing, and a
-confirmed `save-workspace` finish point without submitting actions from the
-catalog page itself. The app exposes these actions through explicit forms,
+required, and the no-external-effects boundary. The page starts with the safe
+action header and `Action Operator Workbench` before shared route/focus
+diagnostics, turning current first-run or lead-Goal state into one local
+action, the owning Goal/run/approval surface, blocker routing, and a confirmed
+`save-workspace` finish point without submitting actions from the catalog page
+itself. The `Action Catalog Command Bar` follows with compact
+Catalog, Forms, Approvals, and Boundary cards; detailed action counts,
+section anchors, local execution/git/approval/artifact posture, and zero
+provider/network/external-effect counters stay in collapsed evidence. The app exposes these actions through explicit forms,
 including context pack generation, coder prep, coder
 prep from `implementation_handoff.md`, coder-worktree plan, worktree approval
 request, commit request, publication request, approval decisions, and

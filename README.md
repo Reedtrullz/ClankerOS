@@ -624,15 +624,16 @@ dogfooding, and verification without executing external effects.
 Use `/actions` when you want a read-only catalog of available local app
 actions, where their forms appear, what previous artifact they require, what
 local artifact or approval they write, and the no-external-effects boundary.
-The page starts with an `Action Catalog Command Bar` that summarizes total
-actions, navigation actions, mutating actions, confirmation-required actions,
-local execution/git/approval/artifact posture, first safe action, target
-anchors, and zero provider/network/external-effect counters before the longer
-catalog. It also includes an `Action Operator Workbench` that reads the same
+The page now opens with the safe action header and an `Action Operator
+Workbench` before shared route/focus diagnostics, so the first viewport is the
+current usable action rather than readback. The workbench reads the same
 first-run or lead-Goal focus as the rest of the app, names the current safe
 local action, links the owning surface where the confirmed form already lives,
 routes blockers to inbox/approvals/incidents, and exposes a confirmed
-`save-workspace` finish form for returning to action context later.
+`save-workspace` finish form for returning to action context later. The
+`Action Catalog Command Bar` follows with visible Catalog, Forms, Approvals,
+and Boundary cards, while detailed posture counters and zero-effect readbacks
+stay available inside collapsed evidence.
 When the fixture exists, `/actions` also shows `Current Demo Action Surfaces`
 with links to the selected project, delegation, workflow, run, approvals, and
 inbox surfaces.

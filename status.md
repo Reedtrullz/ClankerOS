@@ -1,5 +1,45 @@
 # Status
 
+## 2026-06-28 Action-First Actions Page
+
+- Made `/actions` usable as a direct operator surface by rendering the safe
+  action header and `Action Operator Workbench` before shared route/focus
+  diagnostics and before the catalog readback.
+- Converted workbench cards to semantic action cards with a stable
+  `data-action-workbench-primary` marker, while keeping safety, workbench
+  evidence, and catalog evidence collapsed by default.
+- The catalog still exposes visible Catalog, Forms, Approvals, and Boundary
+  cards, and all prior zero-effect catalog/workbench counters remain in the
+  DOM for review and CI assertions.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is read-only routing and layout. It does not write on GET,
+  create action authority, approve work, run work, call providers, fetch
+  GitHub from ClankerOS, poll network services, commit, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-actions-content-first-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-actions-content-first-demo app-demo-smoke-test`
+    -> passed, fixture-backed routes matched expected snippets,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8804/actions`: desktop `1280x900` rendered the
+    `Action Operator Workbench` at `y=304`, before Route Context and Operator
+    Focus, with four workbench cards, four catalog cards, collapsed safety and
+    evidence details, no horizontal overflow, and no console warnings/errors.
+  - Mobile Browser QA at `390x844` rendered the main article before the Recent
+    Items sidebar, stacked workbench/catalog cards in one column, kept card
+    widths inside the viewport, and showed no horizontal overflow or console
+    warnings/errors.
+  - Interaction proof: clicking the marked workbench primary link opened
+    `/runs/run_b8e1f3b68cbc`, rendered the run page with `Run Gate Map` and
+    `Run Operator Workbench`, and kept console warnings/errors at `0`.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Home Operator Board
 
 - Made `/` more usable as the default operator surface by adding a

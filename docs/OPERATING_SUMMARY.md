@@ -682,14 +682,17 @@ Core layers for the bootstrap:
   and next local operator actions; `/runs/<run_id>` now also recognizes
   delegation execution run ids and renders scout evidence, result artifacts,
   context-pack and handoff status, zero-effect counters, and next-action
-  readback; a read-only `/actions` catalog with an `Action Catalog Command
-  Bar` for safe local action counts, first action, target anchors, local
+  readback; a read-only content-first `/actions` catalog that opens with the
+  safe action header and `Action Operator Workbench` before shared route/focus
+  diagnostics, reading first-run or lead-Goal focus, naming the current local
+  action, linking the owning surface for the confirmed form, routing blockers,
+  and providing a confirmed project/Goal resume save point without adding
+  action authority to the catalog page, followed by an
+  `Action Catalog Command Bar` with visible Catalog, Forms, Approvals, and
+  Boundary cards while safe local action counts, target anchors, local
   execution/git/approval/artifact posture, confirmation posture, form
-  locations, output artifacts, and external-effect boundaries, plus an
-  `Action Operator Workbench` that reads first-run or lead-Goal focus, names
-  the current local action, links the owning surface for the confirmed form,
-  routes blockers, and provides a confirmed project/Goal resume save point
-  without adding action authority to the catalog page; a read-only
+  locations, output artifacts, and external-effect boundaries stay available
+  in collapsed evidence; a read-only
   `/verification` handoff for the checked-in GitHub
   Actions workflow, separate fast-smoke and full-suite job readbacks,
   configured job timeout, latest operator-supplied CI evidence summary,
