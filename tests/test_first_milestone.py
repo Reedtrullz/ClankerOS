@@ -9999,6 +9999,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "note_append_form_available: true" in goal.body
     assert "Goal Remaining Work Command Bar" in goal.body
     assert "data-goal-remaining-work-command-bar='true'" in goal.body
+    assert "data-goal-remaining-work-actions='true'" in goal.body
+    assert "data-goal-remaining-work-now='true'" in goal.body
+    assert "data-goal-remaining-work-progress='true'" in goal.body
+    assert "data-goal-remaining-work-waiting='true'" in goal.body
+    assert "data-goal-remaining-work-open='true'" in goal.body
+    assert "data-goal-remaining-work-finish='true'" in goal.body
+    assert "data-goal-remaining-work-evidence='true'" in goal.body
+    assert "Goal remaining work evidence" in goal.body
     assert "<a href='#goal-remaining-work-command-bar'>Remaining work command</a>" in goal.body
     assert f"goal_remaining_work_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_remaining_work_command_project</dt><dd>{result.project_id}" in goal.body
@@ -10015,18 +10023,28 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_remaining_work_command_open_recommendations</dt><dd>0" in goal.body
     assert "goal_remaining_work_command_pending_approvals</dt><dd>1" in goal.body
     assert "goal_remaining_work_command_next_action</dt><dd>Create commit request" in goal.body
+    assert "goal_remaining_work_command_primary_surface</dt><dd><a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_remaining_work_command_action_form_available</dt><dd>true" in goal.body
     assert f"goal_remaining_work_command_target_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
     assert "goal_remaining_work_command_reason</dt><dd>current_gate=commit_request" in goal.body
     assert "goal_remaining_work_command_source</dt><dd>goal_remaining_work_gates" in goal.body
+    assert "goal_remaining_work_command_waiting_items</dt><dd>1" in goal.body
+    assert f"goal_remaining_work_command_waiting_surface</dt><dd><a href='/approvals?goal_id={result.goal_id}'>Review approvals</a>" in goal.body
+    assert "goal_remaining_work_command_completion_surface</dt><dd><a href='#goal-completion-readiness'>Completion readiness</a>" in goal.body
     assert "goal_remaining_work_command_write_on_get</dt><dd>false" in goal.body
     assert "goal_remaining_work_command_provider_calls_taken</dt><dd>0" in goal.body
     assert "goal_remaining_work_command_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_remaining_work_command_external_effects_created</dt><dd>false" in goal.body
     assert "goal_remaining_work_now: Create commit request" in goal.body
+    assert "goal_remaining_work_primary: <a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
     assert f"goal_remaining_work_click: <a href='/runs/{result.coder_worktree_run_id}'" in goal.body
     assert "goal_remaining_work_gate: commit_request status=pending_gate" in goal.body
+    assert "goal_remaining_work_waiting: approvals=1 incidents=0 recommendations=0" in goal.body
     assert "goal_remaining_work_safety: read-only local gate posture" in goal.body
     assert "Remaining Work" in goal.body
+    assert "data-goal-remaining-work-checklist='true'" in goal.body
+    assert "data-goal-remaining-work-list='true'" in goal.body
+    assert "Remaining work checklist (24)" in goal.body
     assert "remaining_work_source: goal_state_workflow_gates" in goal.body
     assert "remaining_work_next_action: Create commit request" in goal.body
     assert "remaining_work_open_tasks: 1" in goal.body

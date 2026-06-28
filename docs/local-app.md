@@ -297,11 +297,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   polling remains disabled. Goal Live State now opens with visible Now, Phase,
   Refresh, Pause Rules, and Safety cards, including a local `Refresh now`
   control, while detailed refresh posture stays collapsed and the five-second
-  reload loop still pauses during edits or hidden tabs. Remaining Work also starts with a read-only
-  `Goal Remaining Work Command Bar` that summarizes the
-  current gate, done/pending/waiting gate counts, open task/incident/
-  recommendation counts, pending approvals, one next local surface, and
-  zero-effect boundaries before the detailed checklist. The Next
+  reload loop still pauses during edits or hidden tabs. Remaining Work now
+  opens with visible Now, Gate Progress, Waiting, Open Work, and Finish cards;
+  detailed command proof and the full remaining-work checklist stay collapsed
+  while preserving the current gate, done/pending/waiting gate counts, open
+  task/incident/recommendation counts, pending approvals, one next local
+  surface, and zero-effect boundaries. The Next
   Recommendation section explains
   whether the Goal is following an open task recommendation or deriving the
   action from current phase and local goal records, then names the target
@@ -396,12 +397,14 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   artifacts, approval rows, approval decisions, one isolated local worktree
   commit, or local goal status only; they do not run delegations or worktrees
   from the browser, push, create PRs, deploy, call providers, or perform external
-  mutations. Remaining Work starts with a read-only `Goal Remaining Work
-  Command Bar` and then a gate-aware checklist sourced from local goal state:
-  it shows the current recommended action, current gate, open task/incident/
-  recommendation counts, pending approvals, and done/pending/waiting status
-  for scout, context-pack, handoff, coder prep, worktree, review, commit,
-  publication, and manual publish gates without taking any action.
+  mutations. Remaining Work opens with visible Now, Gate Progress, Waiting,
+  Open Work, and Finish cards, then keeps command proof and the gate-aware
+  checklist collapsed by default. The hidden checklist remains sourced from
+  local goal state and preserves the current recommended action, current gate,
+  open task/incident/recommendation counts, pending approvals, and
+  done/pending/waiting status for scout, context-pack, handoff, coder prep,
+  worktree, review, commit, publication, and manual publish gates without
+  taking any action.
 - `/goals/<goal_id>` includes `Goal Section Index`, a read-only in-page map
   of stable anchors for summary, live state, command bar, workflow map,
   current phase, next action, next

@@ -1,5 +1,22 @@
 # Status
 
+## 2026-06-28 Goal Remaining Work Action Cards
+
+- Made `/goals/<goal_id>#goal-remaining-work-command-bar` action-first by
+  adding visible Now, Gate Progress, Waiting, Open Work, and Finish cards near
+  the end of the Goal page.
+- Kept current gate, gate counts, waiting item counts, target surfaces,
+  action-form availability, completion-readiness routing, and zero-effect
+  counters in collapsed `Goal remaining work evidence`.
+- Moved the long gate-aware remaining-work checklist into a collapsed
+  `Remaining work checklist` disclosure while preserving all existing
+  `remaining_work_*` lines in the DOM.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused route assertions.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, approve work, execute work, create commits, push, create PRs, deploy,
+  fetch GitHub status, call providers, or mutate external systems.
+
 ## 2026-06-28 Goal Live State Action Cards
 
 - Made `/goals/<goal_id>#goal-live-state` action-first by adding visible Now,

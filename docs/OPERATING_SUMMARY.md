@@ -436,11 +436,12 @@ Core layers for the bootstrap:
   before the operator reaches the long timeline and artifact sections. The
   detailed ledger remains collapsed, and the app still does no GitHub polling
   or external mutations on GET. Goal
-  Remaining Work itself starts with a read-only `Goal Remaining Work Command
-  Bar` that summarizes current gate, done/pending/waiting gate counts, open
-  task/incident/recommendation counts, pending approvals, one next local
-  surface, and no-write/no-provider/no-network/no-external-effect boundaries
-  before the detailed checklist. Goal
+  Remaining Work itself opens with visible Now, Gate Progress, Waiting, Open
+  Work, and Finish cards, while the command proof and full remaining-work
+  checklist stay collapsed by default. It preserves current gate,
+  done/pending/waiting gate counts, open task/incident/recommendation counts,
+  pending approvals, one next local surface, and no-write/no-provider/
+  no-network/no-external-effect boundaries in the DOM. Goal
   detail pages also include a
   first-class `Next Recommendation` section that identifies whether the current
   recommendation came from an open task recommendation or was derived from
@@ -542,12 +543,14 @@ Core layers for the bootstrap:
   `/incidents`, shows open/resolved/total incident counts, and lists goal-owned
   incident status, severity, run, task, summary, and evidence artifact links
   without taking action.
-  Goal `Remaining Work` now starts with a read-only `Goal Remaining Work
-  Command Bar` and then renders a gate-aware checklist from local state,
-  showing the next action, current gate, open task/incident/recommendation
-  counts, pending approvals, and done/pending/waiting status for scout,
-  context-pack, implementation handoff, coder prep, worktree, review, commit,
-  publication, and manual publish gates without taking action.
+  Goal `Remaining Work` now opens with visible Now, Gate Progress, Waiting,
+  Open Work, and Finish cards, then keeps command proof and the gate-aware
+  checklist collapsed by default. The hidden checklist remains sourced from
+  local state and preserves the next action, current gate, open
+  task/incident/recommendation counts, pending approvals, and
+  done/pending/waiting status for scout, context-pack, implementation handoff,
+  coder prep, worktree, review, commit, publication, and manual publish gates
+  without taking action.
   Goal `Memory` now links to `/memory`, shows project/global memory artifacts,
   goal-scoped memory entry counts, generated memory count, operator-note
   status, future-work count, latest memory summaries, and the fact that

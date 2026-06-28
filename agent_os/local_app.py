@@ -651,6 +651,14 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-goal-live-pause='true'",
                 "data-goal-live-safety='true'",
                 "data-goal-live-evidence='true'",
+                "data-goal-remaining-work-actions='true'",
+                "data-goal-remaining-work-now='true'",
+                "data-goal-remaining-work-progress='true'",
+                "data-goal-remaining-work-waiting='true'",
+                "data-goal-remaining-work-open='true'",
+                "data-goal-remaining-work-finish='true'",
+                "data-goal-remaining-work-evidence='true'",
+                "data-goal-remaining-work-list='true'",
                 "Next Action",
                 "Activity Log",
                 "Memory",
@@ -13987,10 +13995,16 @@ def _goal_remaining_work_section(
     next_action: GoalNextAction,
 ) -> str:
     lines = _goal_remaining_work_lines(root, state, next_action)
-    return _goal_remaining_work_command_bar(root, state, next_action, lines) + _list_section(
-        "Remaining Work",
-        lines,
-        anchor_id="goal-remaining-work",
+    return _goal_remaining_work_command_bar(root, state, next_action, lines) + "".join(
+        [
+            "<section id='goal-remaining-work' class='goal-remaining-work-checklist' data-goal-remaining-work-checklist='true'>",
+            "<h2>Remaining Work</h2>",
+            "<details class='goal-remaining-work-list' data-goal-remaining-work-list='true'>",
+            f"<summary>Remaining work checklist ({len(lines)})</summary>",
+            _ul(lines),
+            "</details>",
+            "</section>",
+        ]
     )
 
 
@@ -14035,13 +14049,75 @@ def _goal_remaining_work_command_bar(
     else:
         status = "ready_for_completion_review"
         reason = "no_pending_or_waiting_gates"
+    form_available = bool(_goal_next_action_form(state, next_action))
+    primary_href = "#goal-next-action-form" if form_available else next_action.href
+    primary_label = "Use Goal action form" if form_available else "Open next surface"
+    waiting_total = len(open_incidents) + len(open_recommendations) + pending_approvals
+    if pending_approvals:
+        waiting_href = f"/approvals?goal_id={quote(goal.id)}"
+        waiting_label = "Review approvals"
+    elif open_incidents:
+        waiting_href = "/incidents"
+        waiting_label = "Inspect incidents"
+    elif open_recommendations:
+        waiting_href = "/incidents"
+        waiting_label = "Review recommendations"
+    else:
+        waiting_href = "#goal-remaining-work"
+        waiting_label = "Review gates"
+    finish_label = (
+        "Completion readiness"
+        if status == "ready_for_completion_review"
+        else "Review finish posture"
+    )
     target_surface = SafeHtml(
         f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
+    )
+    primary_surface = SafeHtml(
+        f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"
+    )
+    action_cards = "".join(
+        [
+            "<div class='goal-remaining-work-card goal-remaining-work-primary' data-goal-remaining-work-now='true'>",
+            "<h3>Now</h3>",
+            f"<strong>{_e(next_action.action)}</strong>",
+            f"<p>{_e(current_gate)} gate is {_e(status.replace('_', ' '))}.</p>",
+            f"<a class='goal-remaining-work-action' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+            "</div>",
+            "<div class='goal-remaining-work-card' data-goal-remaining-work-progress='true'>",
+            "<h3>Gate Progress</h3>",
+            f"<strong>{done_gates}/{total_gates} done</strong>",
+            f"<p>{pending_gates} pending; {waiting_gates} waiting.</p>",
+            "<a class='goal-remaining-work-link' href='#goal-workflow-map'>Workflow map</a>",
+            "</div>",
+            "<div class='goal-remaining-work-card' data-goal-remaining-work-waiting='true'>",
+            "<h3>Waiting</h3>",
+            f"<strong>{waiting_total} item(s)</strong>",
+            f"<p>{pending_approvals} approvals; {len(open_incidents)} incidents; {len(open_recommendations)} recommendations.</p>",
+            f"<a class='goal-remaining-work-link' href='{_e(waiting_href)}'>{_e(waiting_label)}</a>",
+            "</div>",
+            "<div class='goal-remaining-work-card' data-goal-remaining-work-open='true'>",
+            "<h3>Open Work</h3>",
+            f"<strong>{len(open_tasks)} task(s)</strong>",
+            f"<p>First open task: {_e(first_open_task)}.</p>",
+            "<a class='goal-remaining-work-link' href='#goal-remaining-work'>Checklist</a>",
+            "</div>",
+            "<div class='goal-remaining-work-card' data-goal-remaining-work-finish='true'>",
+            "<h3>Finish</h3>",
+            f"<strong>{_e(finish_label)}</strong>",
+            "<p>Confirm the manual publish boundary before completion.</p>",
+            "<a class='goal-remaining-work-link' href='#goal-completion-readiness'>Completion readiness</a>",
+            "</div>",
+        ]
     )
     return "".join(
         [
             "<section id='goal-remaining-work-command-bar' class='panel goal-remaining-work-command-bar' data-goal-remaining-work-command-bar='true'><h3>Goal Remaining Work Command Bar</h3>",
             "<p class='muted'>Gate and queue posture before the detailed remaining-work checklist.</p>",
+            "<div class='goal-remaining-work-grid' data-goal-remaining-work-actions='true'>",
+            action_cards,
+            "</div>",
+            "<details class='goal-remaining-work-evidence' data-goal-remaining-work-evidence='true'><summary>Goal remaining work evidence</summary>",
             _kv(
                 [
                     ("goal_remaining_work_command_goal", goal.id),
@@ -14059,9 +14135,17 @@ def _goal_remaining_work_command_bar(
                     ("goal_remaining_work_command_open_recommendations", str(len(open_recommendations))),
                     ("goal_remaining_work_command_pending_approvals", str(pending_approvals)),
                     ("goal_remaining_work_command_next_action", next_action.action),
+                    ("goal_remaining_work_command_primary_surface", primary_surface),
+                    ("goal_remaining_work_command_action_form_available", str(form_available).lower()),
                     ("goal_remaining_work_command_target_surface", target_surface),
                     ("goal_remaining_work_command_reason", reason),
                     ("goal_remaining_work_command_source", "goal_remaining_work_gates"),
+                    ("goal_remaining_work_command_waiting_items", str(waiting_total)),
+                    ("goal_remaining_work_command_waiting_surface", SafeHtml(f"<a href='{_e(waiting_href)}'>{_e(waiting_label)}</a>")),
+                    (
+                        "goal_remaining_work_command_completion_surface",
+                        SafeHtml("<a href='#goal-completion-readiness'>Completion readiness</a>"),
+                    ),
                     ("goal_remaining_work_command_write_on_get", "false"),
                     ("goal_remaining_work_command_provider_calls_taken", "0"),
                     ("goal_remaining_work_command_network_actions_taken", "0"),
@@ -14071,11 +14155,14 @@ def _goal_remaining_work_command_bar(
             _ul(
                 [
                     f"goal_remaining_work_now: {_e(next_action.action)}",
+                    f"goal_remaining_work_primary: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
                     f"goal_remaining_work_click: {target_surface}",
                     f"goal_remaining_work_gate: {_e(current_gate)} status={_e(status)}",
+                    f"goal_remaining_work_waiting: approvals={pending_approvals} incidents={len(open_incidents)} recommendations={len(open_recommendations)}",
                     "goal_remaining_work_safety: read-only local gate posture",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -26421,6 +26508,18 @@ def _html_page(
     .goal-remaining-work-command-bar {{ border-left:4px solid var(--warn); }}
     .goal-remaining-work-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-remaining-work-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-remaining-work-command-bar dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .goal-remaining-work-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-remaining-work-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .goal-remaining-work-card h3 {{ margin-top:0; }}
+    .goal-remaining-work-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .goal-remaining-work-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .goal-remaining-work-action, .goal-remaining-work-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-remaining-work-action {{ background:var(--accent); color:#fff; }}
+    .goal-remaining-work-link {{ background:var(--surface); color:var(--accent); }}
+    .goal-remaining-work-evidence, .goal-remaining-work-list {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-remaining-work-evidence summary, .goal-remaining-work-list summary {{ cursor:pointer; font-weight:700; }}
+    .goal-remaining-work-evidence:not([open]) > :not(summary), .goal-remaining-work-list:not([open]) > :not(summary) {{ display:none; }}
     .goal-completion-readiness {{ border-left:4px solid var(--ok); }}
     .goal-completion-readiness ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-completion-readiness li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -26470,7 +26569,7 @@ def _html_page(
     .goal-continuation-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-continuation-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-continuation-evidence:not([open]) > :not(summary) {{ display:none; }}
-    .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-remaining-work {{ scroll-margin-top:128px; }}
+    .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:128px; }}
     .goal-workflow-map {{ border-left:4px solid var(--accent); }}
     .goal-workflow-map dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .goal-workflow-map-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
@@ -27024,7 +27123,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-remaining-work {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

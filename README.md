@@ -377,10 +377,11 @@ and still does no GitHub polling or external mutation on GET. Goal Live State
 now opens with visible Now, Phase, Refresh, Pause Rules, and Safety cards,
 including a local `Refresh now` control, while detailed refresh posture stays
 collapsed and the five-second loop still pauses during edits or hidden tabs.
-Goal Remaining Work starts with a read-only `Goal Remaining Work Command Bar`
-that summarizes current gate, done/pending/waiting gate counts, open
-task/incident/recommendation counts, pending approvals, one next local surface,
-and zero-effect boundaries before the detailed checklist. The Next Recommendation
+Goal Remaining Work now opens with visible Now, Gate Progress, Waiting, Open
+Work, and Finish cards; detailed command proof and the full remaining-work
+checklist stay collapsed while preserving current gate, done/pending/waiting
+gate counts, open task/incident/recommendation counts, pending approvals, one
+next local surface, and zero-effect boundaries. The Next Recommendation
 section names whether the recommendation
 comes from an open task recommendation or from current phase plus local goal
 records, then points at the local target surface without writing on GET.
