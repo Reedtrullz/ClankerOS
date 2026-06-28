@@ -396,21 +396,26 @@ readable at the point of decision and keeps the confirmed form ahead of
 diagnostic evidence, while the Goal Section Index near the top links to the
 full stable anchor map for the major Goal surfaces.
 Goal Delegations starts with a read-only `Goal Delegation Command Bar` that
+opens with visible Now, Latest, Workflow, Handoff, and Safety cards. It still
 summarizes scout delegation counts, context-pack readiness, implementation
 handoff readiness, coder-prep packets, worktree plans, the latest delegation
-workflow surface, and one next local continuation before the detailed
-delegation rows.
+workflow surface, and one next local continuation, while command evidence and
+detailed delegation rows stay collapsed.
 Goal Runs starts with a read-only `Goal Run Command Bar` that summarizes task
 and worktree run counts, review readiness, changed-file posture, the latest
-run surface, and one next local run action before the detailed run list.
+run surface, and one next local run action as visible Now, Latest Run, Review,
+Changes, and Safety cards before collapsed command evidence and detailed run
+rows.
 Goal Approvals starts with a read-only `Goal Approval Command Bar` that
 summarizes pending and approved worktree, commit, and publication gates, points
-at `/approvals` or the next local Goal surface, and keeps approval decisions on
+at `/approvals` or the next local Goal surface as visible Now, Pending,
+Approved, Downstream, and Safety cards, and keeps approval decisions on
 confirmed local forms instead of writing on page load.
 Goal Incidents starts with a read-only `Goal Incident Command Bar` that
-summarizes open/resolved incidents, open recommendations, the first incident's
-severity, run, task, evidence, one triage surface, and zero-effect boundaries
-before the detailed incident list.
+opens with visible Now, Open, First, Recovery, and Safety cards while
+preserving open/resolved incidents, recommendations, first incident evidence,
+one triage surface, and zero-effect boundaries inside collapsed command
+evidence before the detailed incident rows.
 Goal Evidence starts with a read-only `Goal Evidence Command Bar` that
 opens with visible Now, Latest, Inventory, Attention, and Safety cards. It
 summarizes run, worktree, incident, recommendation, and typed artifact evidence

@@ -651,6 +651,38 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-goal-live-pause='true'",
                 "data-goal-live-safety='true'",
                 "data-goal-live-evidence='true'",
+                "data-goal-delegation-actions='true'",
+                "data-goal-delegation-now='true'",
+                "data-goal-delegation-latest='true'",
+                "data-goal-delegation-workflow='true'",
+                "data-goal-delegation-handoff='true'",
+                "data-goal-delegation-safety='true'",
+                "data-goal-delegation-evidence='true'",
+                "data-goal-delegation-list='true'",
+                "data-goal-run-actions='true'",
+                "data-goal-run-now='true'",
+                "data-goal-run-latest='true'",
+                "data-goal-run-review='true'",
+                "data-goal-run-changes='true'",
+                "data-goal-run-safety='true'",
+                "data-goal-run-evidence='true'",
+                "data-goal-run-list='true'",
+                "data-goal-approval-actions='true'",
+                "data-goal-approval-now='true'",
+                "data-goal-approval-pending='true'",
+                "data-goal-approval-approved='true'",
+                "data-goal-approval-downstream='true'",
+                "data-goal-approval-safety='true'",
+                "data-goal-approval-evidence='true'",
+                "data-goal-approval-list='true'",
+                "data-goal-incident-actions='true'",
+                "data-goal-incident-now='true'",
+                "data-goal-incident-open='true'",
+                "data-goal-incident-first='true'",
+                "data-goal-incident-recovery='true'",
+                "data-goal-incident-safety='true'",
+                "data-goal-incident-evidence='true'",
+                "data-goal-incident-list='true'",
                 "data-goal-evidence-actions='true'",
                 "data-goal-evidence-now='true'",
                 "data-goal-evidence-latest='true'",
@@ -11880,10 +11912,13 @@ def _goal_delegation_lines(state: dict[str, Any]) -> list[str]:
 
 def _goal_delegation_section(root: Path, state: dict[str, Any]) -> str:
     lines = _goal_delegation_lines(state)
-    return _goal_delegation_command_bar(root, state, lines) + _list_section(
+    return _goal_delegation_command_bar(root, state, lines) + _collapsible_list_section(
         "Delegations",
         lines,
         anchor_id="goal-delegations",
+        details_class="goal-delegation-list",
+        data_attr="goal-delegation-list",
+        summary=f"Detailed delegation rows ({len(lines)})",
     )
 
 
@@ -12085,10 +12120,61 @@ def _goal_delegation_command_bar(
         status = "delegations_available"
 
     target = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    latest_delegation_href = (
+        f"/delegations/{quote(latest_delegation_id)}"
+        if latest_delegation_id != "none"
+        else "#goal-next-action"
+    )
+    workflow_href = (
+        f"/workflow?delegation_id={quote(latest_delegation_id)}"
+        if latest_delegation_id != "none"
+        else "/workflow"
+    )
+    latest_delegation_label = (
+        "Open delegation" if latest_delegation_id != "none" else "Next Action"
+    )
+    delegation_cards = "".join(
+        [
+            "<div class='goal-delegation-card goal-delegation-primary' data-goal-delegation-now='true'>",
+            "<h3>Now</h3>",
+            f"<strong>{_e(next_action)}</strong>",
+            f"<p>{_e(reason)}</p>",
+            f"<a class='goal-delegation-action' data-goal-delegation-primary='true' href='{_e(target_href)}'>Open</a>",
+            "</div>",
+            "<div class='goal-delegation-card' data-goal-delegation-latest='true'>",
+            "<h3>Latest</h3>",
+            f"<strong>{_e(latest_delegation_id)}</strong>",
+            f"<p>{_e(latest_delegation_status)} via {_e(latest_delegation_profile)}.</p>",
+            f"<a class='goal-delegation-link' href='{_e(latest_delegation_href)}'>{_e(latest_delegation_label)}</a>",
+            "</div>",
+            "<div class='goal-delegation-card' data-goal-delegation-workflow='true'>",
+            "<h3>Workflow</h3>",
+            f"<strong>{len(delegations)} delegation(s)</strong>",
+            f"<p>{len(running_delegations)} running; {len(failed_or_blocked_delegations)} blocked/failed.</p>",
+            f"<a class='goal-delegation-link' href='{_e(workflow_href)}'>Workflow</a>",
+            "</div>",
+            "<div class='goal-delegation-card' data-goal-delegation-handoff='true'>",
+            "<h3>Handoff</h3>",
+            f"<strong>{context_pack_ready} context / {implementation_handoff_ready} handoff</strong>",
+            f"<p>{len(state['prep_packets'])} prep packet(s); {len(state['worktree_plans'])} worktree plan(s).</p>",
+            "<a class='goal-delegation-link' href='#goal-artifact-command-bar'>Artifacts</a>",
+            "</div>",
+            "<div class='goal-delegation-card' data-goal-delegation-safety='true'>",
+            "<h3>Safety</h3>",
+            "<strong>read-only posture</strong>",
+            "<p>No delegation execution, providers, network actions, or writes on GET.</p>",
+            "<a class='goal-delegation-link' href='#goal-delegations'>Detailed rows</a>",
+            "</div>",
+        ]
+    )
     return "".join(
         [
             "<section id='goal-delegation-command-bar' class='panel goal-delegation-command-bar' data-goal-delegation-command-bar='true'><h3>Goal Delegation Command Bar</h3>",
             "<p class='muted'>Goal-scoped delegation posture before the detailed scout, context-pack, and handoff rows.</p>",
+            "<div class='goal-delegation-grid' data-goal-delegation-actions='true'>",
+            delegation_cards,
+            "</div>",
+            "<details class='goal-delegation-command-evidence' data-goal-delegation-evidence='true'><summary>Goal delegation command evidence</summary>",
             _kv(
                 [
                     ("goal_delegation_command_goal", goal.id),
@@ -12142,6 +12228,7 @@ def _goal_delegation_command_bar(
                     "goal_delegation_safety: read-only local delegation posture",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -12158,10 +12245,13 @@ def _goal_run_lines(root: Path, state: dict[str, Any]) -> list[str]:
 
 def _goal_run_section(root: Path, state: dict[str, Any]) -> str:
     lines = _goal_run_lines(root, state)
-    return _goal_run_command_bar(root, state, lines) + _list_section(
+    return _goal_run_command_bar(root, state, lines) + _collapsible_list_section(
         "Runs",
         lines,
         anchor_id="goal-runs",
+        details_class="goal-run-list",
+        data_attr="goal-run-list",
+        summary=f"Detailed run rows ({len(lines)})",
     )
 
 
@@ -12282,10 +12372,59 @@ def _goal_run_command_bar(
         status = "empty"
 
     target = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    latest_run_href = (
+        f"/runs/{quote(latest_run_id)}"
+        if latest_run_id != "none"
+        else "#goal-next-action"
+    )
+    latest_run_label = "Open run" if latest_run_id != "none" else "Next Action"
+    latest_diff_href = (
+        _artifact_href(root, str(Path(selected_run.evidence_path) / "diff.patch"))
+        if selected_run is not None
+        else "#goal-evidence-command-bar"
+    )
+    run_cards = "".join(
+        [
+            "<div class='goal-run-card goal-run-primary' data-goal-run-now='true'>",
+            "<h3>Now</h3>",
+            f"<strong>{_e(next_action)}</strong>",
+            f"<p>{_e(reason)}</p>",
+            f"<a class='goal-run-action' data-goal-run-primary='true' href='{_e(target_href)}'>Open</a>",
+            "</div>",
+            "<div class='goal-run-card' data-goal-run-latest='true'>",
+            "<h3>Latest Run</h3>",
+            f"<strong>{_e(latest_run_id)}</strong>",
+            f"<p>{_e(latest_run_status)}; review {_e(latest_review_status)}.</p>",
+            f"<a class='goal-run-link' href='{_e(latest_run_href)}'>{_e(latest_run_label)}</a>",
+            "</div>",
+            "<div class='goal-run-card' data-goal-run-review='true'>",
+            "<h3>Review</h3>",
+            f"<strong>{len(reviewed_runs)} ready / {len(review_blocked_runs)} blocked</strong>",
+            f"<p>{len(verification_failed_runs)} verification failure(s).</p>",
+            f"<a class='goal-run-link' href='{_e(target_href)}'>Review target</a>",
+            "</div>",
+            "<div class='goal-run-card' data-goal-run-changes='true'>",
+            "<h3>Changes</h3>",
+            f"<strong>{changed_files_count} changed</strong>",
+            f"<p>{outside_allowed_files} outside allowed files.</p>",
+            f"<a class='goal-run-link' href='{_e(latest_diff_href)}'>Diff</a>",
+            "</div>",
+            "<div class='goal-run-card' data-goal-run-safety='true'>",
+            "<h3>Safety</h3>",
+            "<strong>read-only posture</strong>",
+            "<p>No run execution, providers, network actions, or writes on GET.</p>",
+            "<a class='goal-run-link' href='#goal-runs'>Detailed rows</a>",
+            "</div>",
+        ]
+    )
     return "".join(
         [
             "<section id='goal-run-command-bar' class='panel goal-run-command-bar' data-goal-run-command-bar='true'><h3>Goal Run Command Bar</h3>",
             "<p class='muted'>Goal-scoped run posture before the detailed task and worktree run list.</p>",
+            "<div class='goal-run-grid' data-goal-run-actions='true'>",
+            run_cards,
+            "</div>",
+            "<details class='goal-run-command-evidence' data-goal-run-evidence='true'><summary>Goal run command evidence</summary>",
             _kv(
                 [
                     ("goal_run_command_goal", goal.id),
@@ -12345,6 +12484,7 @@ def _goal_run_command_bar(
                     "goal_run_safety: read-only local run posture",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -12360,10 +12500,13 @@ def _goal_approval_lines(root: Path, state: dict[str, Any]) -> list[str]:
 
 def _goal_approval_section(root: Path, state: dict[str, Any]) -> str:
     lines = _goal_approval_lines(root, state)
-    return _goal_approval_command_bar(state, lines) + _list_section(
+    return _goal_approval_command_bar(state, lines) + _collapsible_list_section(
         "Approvals",
         lines,
         anchor_id="goal-approvals",
+        details_class="goal-approval-list",
+        data_attr="goal-approval-list",
+        summary=f"Detailed approval rows ({len(lines)})",
     )
 
 
@@ -12476,10 +12619,48 @@ def _goal_approval_command_bar(
     else:
         status = "empty"
 
+    approval_cards = "".join(
+        [
+            "<div class='goal-approval-card goal-approval-primary' data-goal-approval-now='true'>",
+            "<h3>Now</h3>",
+            f"<strong>{_e(next_action)}</strong>",
+            f"<p>{_e(reason)}</p>",
+            f"<a class='goal-approval-action' data-goal-approval-primary='true' href='{_e(target_href)}'>Open</a>",
+            "</div>",
+            "<div class='goal-approval-card' data-goal-approval-pending='true'>",
+            "<h3>Pending</h3>",
+            f"<strong>{pending_total} waiting</strong>",
+            f"<p>{pending_worktree} worktree; {pending_commit} commit; {pending_publication} publication.</p>",
+            "<a class='goal-approval-link' href='/approvals'>Approvals</a>",
+            "</div>",
+            "<div class='goal-approval-card' data-goal-approval-approved='true'>",
+            "<h3>Approved</h3>",
+            f"<strong>{approved_total} approved</strong>",
+            f"<p>{approved_worktree} worktree; {approved_commit} commit; {approved_publication} publication.</p>",
+            "<a class='goal-approval-link' href='#goal-approvals'>Detailed rows</a>",
+            "</div>",
+            "<div class='goal-approval-card' data-goal-approval-downstream='true'>",
+            "<h3>Downstream</h3>",
+            f"<strong>{downstream_total} ready</strong>",
+            f"<p>{committed_commit} committed; {publication_ready} publication handoff-ready.</p>",
+            "<a class='goal-approval-link' href='#goal-completion-readiness'>Completion readiness</a>",
+            "</div>",
+            "<div class='goal-approval-card' data-goal-approval-safety='true'>",
+            "<h3>Safety</h3>",
+            "<strong>confirmed forms only</strong>",
+            "<p>This Goal surface reads local approval posture and does not decide approvals on GET.</p>",
+            "<a class='goal-approval-link' href='#goal-approval-command-bar'>Proof</a>",
+            "</div>",
+        ]
+    )
     return "".join(
         [
             "<section id='goal-approval-command-bar' class='panel goal-approval-command-bar' data-goal-approval-command-bar='true'><h3>Goal Approval Command Bar</h3>",
             "<p class='muted'>Goal-scoped approval posture before the detailed worktree, commit, and publication approval records.</p>",
+            "<div class='goal-approval-grid' data-goal-approval-actions='true'>",
+            approval_cards,
+            "</div>",
+            "<details class='goal-approval-command-evidence' data-goal-approval-evidence='true'><summary>Goal approval command evidence</summary>",
             _kv(
                 [
                     ("goal_approval_command_goal", goal.id),
@@ -12517,21 +12698,29 @@ def _goal_approval_command_bar(
                     "goal_approval_safety: read-only local approval posture",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
 
 
 def _goal_incident_section(root: Path, state: dict[str, Any]) -> str:
-    return _goal_incident_command_bar(root, state) + _list_section(
+    lines = _goal_incident_lines(root, state)
+    return _goal_incident_command_bar(root, state, lines) + _collapsible_list_section(
         "Goal Incidents",
-        _goal_incident_lines(root, state),
-        "/incidents",
+        lines,
         anchor_id="goal-incidents",
+        details_class="goal-incident-list",
+        data_attr="goal-incident-list",
+        summary=f"Detailed incident rows ({len(lines)})",
     )
 
 
-def _goal_incident_command_bar(root: Path, state: dict[str, Any]) -> str:
+def _goal_incident_command_bar(
+    root: Path,
+    state: dict[str, Any],
+    incident_lines: list[str],
+) -> str:
     goal = state["goal"]
     incidents = state["incidents"]
     open_incidents = [row for row in incidents if row["status"] == "open"]
@@ -12565,11 +12754,15 @@ def _goal_incident_command_bar(root: Path, state: dict[str, Any]) -> str:
     if open_incidents:
         status = "open_incidents"
         next_action = "Inspect incident"
+        target_href = "/incidents#incident-open"
+        target_label = "Open Incidents"
         target_surface = SafeHtml("<a href='/incidents#incident-open'>Open Incidents</a>")
         reason = "open_goal_incident"
     elif open_recommendations:
         status = "recommendations_open"
         next_action = "Review recovery recommendation"
+        target_href = "/incidents#incident-recommendations"
+        target_label = "Task Recommendations"
         target_surface = SafeHtml(
             "<a href='/incidents#incident-recommendations'>Task Recommendations</a>"
         )
@@ -12577,6 +12770,8 @@ def _goal_incident_command_bar(root: Path, state: dict[str, Any]) -> str:
     elif resolved_incidents:
         status = "resolved_history"
         next_action = "Review resolved incidents"
+        target_href = "/incidents#incident-resolved"
+        target_label = "Resolved Incidents"
         target_surface = SafeHtml(
             "<a href='/incidents#incident-resolved'>Resolved Incidents</a>"
         )
@@ -12584,12 +12779,52 @@ def _goal_incident_command_bar(root: Path, state: dict[str, Any]) -> str:
     else:
         status = "clear"
         next_action = "Continue workflow"
+        target_href = "#goal-next-action"
+        target_label = "Goal Next Action"
         target_surface = SafeHtml("<a href='#goal-next-action'>Goal Next Action</a>")
         reason = "no_goal_incidents"
+    incident_cards = "".join(
+        [
+            "<div class='goal-incident-card goal-incident-primary' data-goal-incident-now='true'>",
+            "<h3>Now</h3>",
+            f"<strong>{_e(next_action)}</strong>",
+            f"<p>{_e(reason)}</p>",
+            f"<a class='goal-incident-action' data-goal-incident-primary='true' href='{_e(target_href)}'>Open</a>",
+            "</div>",
+            "<div class='goal-incident-card' data-goal-incident-open='true'>",
+            "<h3>Open</h3>",
+            f"<strong>{len(open_incidents)} incident(s)</strong>",
+            f"<p>{len(open_recommendations)} recovery recommendation(s).</p>",
+            "<a class='goal-incident-link' href='/incidents#incident-open'>Open incidents</a>",
+            "</div>",
+            "<div class='goal-incident-card' data-goal-incident-first='true'>",
+            "<h3>First</h3>",
+            f"<strong>{_e(first_id)}</strong>",
+            f"<p>{_e(first_severity)}; {_e(first_summary)}</p>",
+            f"<a class='goal-incident-link' href='{_e(target_href)}'>{_e(target_label)}</a>",
+            "</div>",
+            "<div class='goal-incident-card' data-goal-incident-recovery='true'>",
+            "<h3>Recovery</h3>",
+            f"<strong>{len(resolved_incidents)} resolved</strong>",
+            f"<p>{len(incident_lines)} detailed incident row(s).</p>",
+            "<a class='goal-incident-link' href='#goal-incidents'>Detailed rows</a>",
+            "</div>",
+            "<div class='goal-incident-card' data-goal-incident-safety='true'>",
+            "<h3>Safety</h3>",
+            "<strong>read-only triage</strong>",
+            "<p>No resolution, retry, providers, network actions, or writes on GET.</p>",
+            "<a class='goal-incident-link' href='#goal-remaining-work-command-bar'>Remaining work</a>",
+            "</div>",
+        ]
+    )
     return "".join(
         [
             "<section id='goal-incident-command-bar' class='panel goal-incident-command-bar' data-goal-incident-command-bar='true'><h3>Goal Incident Command Bar</h3>",
             "<p class='muted'>Incident posture before the detailed goal incident list.</p>",
+            "<div class='goal-incident-grid' data-goal-incident-actions='true'>",
+            incident_cards,
+            "</div>",
+            "<details class='goal-incident-command-evidence' data-goal-incident-evidence='true'><summary>Goal incident command evidence</summary>",
             _kv(
                 [
                     ("goal_incident_command_goal", goal.id),
@@ -12627,6 +12862,7 @@ def _goal_incident_command_bar(root: Path, state: dict[str, Any]) -> str:
                     "goal_incident_safety: read-only local incident posture",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -26786,6 +27022,18 @@ def _html_page(
     .goal-delegation-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-delegation-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-delegation-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-delegation-command-bar dl, .goal-run-command-bar dl, .goal-approval-command-bar dl, .goal-incident-command-bar dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-delegation-card, .goal-run-card, .goal-approval-card, .goal-incident-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .goal-delegation-card h3, .goal-run-card h3, .goal-approval-card h3, .goal-incident-card h3 {{ margin-top:0; }}
+    .goal-delegation-card p, .goal-run-card p, .goal-approval-card p, .goal-incident-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .goal-delegation-primary, .goal-run-primary, .goal-approval-primary, .goal-incident-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .goal-delegation-action, .goal-delegation-link, .goal-run-action, .goal-run-link, .goal-approval-action, .goal-approval-link, .goal-incident-action, .goal-incident-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-delegation-action, .goal-run-action, .goal-approval-action, .goal-incident-action {{ background:var(--accent); color:#fff; }}
+    .goal-delegation-link, .goal-run-link, .goal-approval-link, .goal-incident-link {{ background:var(--surface); color:var(--accent); }}
+    .goal-delegation-command-evidence, .goal-run-command-evidence, .goal-approval-command-evidence, .goal-incident-command-evidence, .goal-delegation-list, .goal-run-list, .goal-approval-list, .goal-incident-list {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-delegation-command-evidence summary, .goal-run-command-evidence summary, .goal-approval-command-evidence summary, .goal-incident-command-evidence summary, .goal-delegation-list summary, .goal-run-list summary, .goal-approval-list summary, .goal-incident-list summary {{ cursor:pointer; font-weight:700; }}
+    .goal-delegation-command-evidence:not([open]) > :not(summary), .goal-run-command-evidence:not([open]) > :not(summary), .goal-approval-command-evidence:not([open]) > :not(summary), .goal-incident-command-evidence:not([open]) > :not(summary), .goal-delegation-list:not([open]) > :not(summary), .goal-run-list:not([open]) > :not(summary), .goal-approval-list:not([open]) > :not(summary), .goal-incident-list:not([open]) > :not(summary) {{ display:none; }}
     .goal-run-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-run-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-run-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -26941,7 +27189,7 @@ def _html_page(
     .goal-continuation-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-continuation-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-continuation-evidence:not([open]) > :not(summary) {{ display:none; }}
-    .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:128px; }}
+    .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:128px; }}
     .goal-workflow-map {{ border-left:4px solid var(--accent); }}
     .goal-workflow-map dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .goal-workflow-map-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
@@ -27495,7 +27743,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

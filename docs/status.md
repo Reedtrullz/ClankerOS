@@ -19,7 +19,12 @@ Latest status focus:
   exposes Now, Phase, Refresh, Pause Rules, and Safety cards before its
   detailed refresh evidence. Goal Remaining Work now exposes Now, Gate
   Progress, Waiting, Open Work, and Finish cards before collapsed command
-  evidence and the collapsed gate checklist. Goal Evidence now exposes Now,
+  evidence and the collapsed gate checklist. Goal Delegations now exposes Now,
+  Latest, Workflow, Handoff, and Safety cards; Goal Runs now exposes Now,
+  Latest Run, Review, Changes, and Safety cards; Goal Approvals now exposes
+  Now, Pending, Approved, Downstream, and Safety cards; Goal Incidents now
+  exposes Now, Open, First, Recovery, and Safety cards, all before collapsed
+  command evidence and collapsed detailed rows. Goal Evidence now exposes Now,
   Latest, Inventory, Attention, and Safety cards before collapsed command
   evidence and the collapsed detailed evidence list; Goal Artifacts now exposes
   Open, Latest, Types, Inventory, and Safety cards before collapsed command
@@ -31,13 +36,15 @@ Latest status focus:
   exposes Now, Branch, Changes, Proof, and Safety cards before collapsed
   command evidence and repository snapshot. Jump, command, workbench,
   daily-loop, return-brief, continuation, workflow-map, CI handoff, live-state,
-  evidence, artifacts, memory, skills, git, remaining-work, and full
+  delegations, runs, approvals, incidents, evidence, artifacts, memory, skills,
+  git, remaining-work, and full
   section-index evidence are
   collapsed by default while preserving phase, next action, current gate,
   project-scoped CI proof posture, full anchor map, daily resume-save state,
   latest activity/artifact, blocker routing, workflow gate surfaces, manual
-  publish boundary, local reload posture, evidence/artifact/memory/skills/git
-  posture, remaining gate posture, and zero-effect counters in the DOM.
+  publish boundary, local reload posture, delegation/run/approval/incident/
+  evidence/artifact/memory/skills/git posture, remaining gate posture, and
+  zero-effect counters in the DOM.
 - `/goals` is now content-first and board-first instead of shared-diagnostic or
   command-readback-first: the `Goal Board Workbench` opens the page before
   Route Context, Operator Focus, and the `Goal Board Command Bar`, with visible

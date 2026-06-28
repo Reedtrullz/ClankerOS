@@ -592,19 +592,27 @@ Core layers for the bootstrap:
   boundaries as visible Now, Branch, Changes, Proof, and Safety cards before
   collapsed command evidence and the repository snapshot.
   Goal `Delegations` starts with a read-only `Goal Delegation Command Bar`
-  that summarizes scout delegation counts, context-pack readiness,
+  that opens with visible Now, Latest, Workflow, Handoff, and Safety cards,
+  while command evidence keeps scout delegation counts, context-pack readiness,
   implementation handoff readiness, coder-prep packets, worktree plans, the
   latest delegation workflow surface, one next local continuation, and
-  zero-effect counters before the detailed delegation rows.
+  zero-effect counters collapsed before the detailed delegation rows.
   Goal `Runs` starts with a read-only `Goal Run Command Bar` that summarizes
   task and worktree run counts, reviewed and blocked run gates, changed-file
   posture, latest run evidence, one next local run action, and zero-effect
-  counters before the detailed run rows.
+  counters as visible Now, Latest Run, Review, Changes, and Safety cards
+  before collapsed command evidence and the detailed run rows.
   Goal `Approvals` starts with a read-only `Goal Approval Command Bar` that
   summarizes pending and approved worktree, commit, and publication approval
-  gates, selects one local approval or continuation surface, and reports
-  write-on-GET/provider/network/external-effect counters before the detailed
-  approval rows.
+  gates, selects one local approval or continuation surface as visible Now,
+  Pending, Approved, Downstream, and Safety cards, and reports write-on-GET/
+  provider/network/external-effect counters inside collapsed command evidence
+  before the detailed approval rows.
+  Goal `Incidents` starts with a read-only `Goal Incident Command Bar` that
+  opens with visible Now, Open, First, Recovery, and Safety cards while keeping
+  incident/recommendation counts, first incident evidence, one triage surface,
+  and zero-effect counters in collapsed command evidence before the detailed
+  incident rows.
   Goal `Evidence` starts with a read-only `Goal Evidence Command Bar` that
   summarizes run evidence, worktree evidence, incident evidence,
   recommendation evidence, typed artifact counts, latest artifact, one local

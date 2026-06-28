@@ -331,10 +331,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   target surface, operator-note count, artifact count, and zero-effect
   boundary so daily resume context is chronological instead of side-channel only. The
   Goal Delegations section starts with a read-only
-  `Goal Delegation Command Bar` that summarizes scout delegation counts,
-  context-pack readiness, implementation handoff readiness, coder-prep packets,
-  worktree plans, the latest delegation workflow surface, and one next local
-  continuation before the detailed delegation rows. The
+  `Goal Delegation Command Bar` that opens with visible Now, Latest, Workflow,
+  Handoff, and Safety cards, while command evidence keeps scout delegation
+  counts, context-pack readiness, implementation handoff readiness, coder-prep
+  packets, worktree plans, the latest delegation workflow surface, one next
+  local continuation, and zero-effect counters collapsed before the detailed
+  delegation rows. The
   Goal Memory section links to `/memory`, shows
   project/global memory artifacts, goal-scoped memory entry counts, generated
   memory count, operator-note status, future-work count, and the current pin
@@ -346,16 +348,20 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   Goal
   Runs starts with a read-only `Goal Run Command Bar` that summarizes task and
   worktree run counts, reviewed/blocked run gates, changed-file posture, the
-  latest run surface, one next local run action, and zero-effect boundaries
-  before the detailed run rows. Goal
+  latest run surface, one next local run action, and zero-effect boundaries as
+  visible Now, Latest Run, Review, Changes, and Safety cards before collapsed
+  command evidence and detailed run rows. Goal
   Approvals starts with a read-only `Goal Approval Command Bar` that summarizes
   pending and approved worktree, commit, and publication gates, links the next
-  approval posture to `/approvals` or the relevant local Goal surface, and
-  records zero write/provider/network/external-effect counters before the
-  detailed approval rows. Goal Incidents starts with a read-only
-  `Goal Incident Command Bar` that summarizes open/resolved incidents, open
-  recommendations, the first incident's severity, run, task, evidence, one
-  triage surface, and zero-effect counters before the detailed incident rows.
+  approval posture to `/approvals` or the relevant local Goal surface as
+  visible Now, Pending, Approved, Downstream, and Safety cards, and records
+  zero write/provider/network/external-effect counters in collapsed command
+  evidence before the detailed approval rows. Goal Incidents starts with a
+  read-only `Goal Incident Command Bar` that opens with visible Now, Open,
+  First, Recovery, and Safety cards while preserving open/resolved incidents,
+  open recommendations, the first incident's severity, run, task, evidence,
+  one triage surface, and zero-effect counters in collapsed command evidence
+  before the detailed incident rows.
   Goal
   Evidence starts with a read-only `Goal Evidence Command Bar` that summarizes
   run evidence, worktree evidence, incident evidence, recommendation evidence,

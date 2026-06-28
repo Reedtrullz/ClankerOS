@@ -9539,6 +9539,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_activity_safety: read-only local timeline" in goal.body
     assert "Goal Delegation Command Bar" in goal.body
     assert "data-goal-delegation-command-bar='true'" in goal.body
+    assert "data-goal-delegation-actions='true'" in goal.body
+    assert "data-goal-delegation-now='true'" in goal.body
+    assert "data-goal-delegation-primary='true'" in goal.body
+    assert "data-goal-delegation-latest='true'" in goal.body
+    assert "data-goal-delegation-workflow='true'" in goal.body
+    assert "data-goal-delegation-handoff='true'" in goal.body
+    assert "data-goal-delegation-safety='true'" in goal.body
+    assert "data-goal-delegation-evidence='true'" in goal.body
+    assert "data-goal-delegation-list='true'" in goal.body
+    assert "Goal delegation command evidence" in goal.body
+    assert "Detailed delegation rows (1)" in goal.body
     assert "<a href='#goal-delegation-command-bar'>Delegation command</a>" in goal.body
     assert f"goal_delegation_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_delegation_command_project</dt><dd>{result.project_id}" in goal.body
@@ -9574,6 +9585,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_delegation_safety: read-only local delegation posture" in goal.body
     assert "Goal Run Command Bar" in goal.body
     assert "data-goal-run-command-bar='true'" in goal.body
+    assert "data-goal-run-actions='true'" in goal.body
+    assert "data-goal-run-now='true'" in goal.body
+    assert "data-goal-run-primary='true'" in goal.body
+    assert "data-goal-run-latest='true'" in goal.body
+    assert "data-goal-run-review='true'" in goal.body
+    assert "data-goal-run-changes='true'" in goal.body
+    assert "data-goal-run-safety='true'" in goal.body
+    assert "data-goal-run-evidence='true'" in goal.body
+    assert "data-goal-run-list='true'" in goal.body
+    assert "Goal run command evidence" in goal.body
+    assert "Detailed run rows (1)" in goal.body
     assert "<a href='#goal-run-command-bar'>Run command</a>" in goal.body
     assert f"goal_run_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_run_command_project</dt><dd>{result.project_id}" in goal.body
@@ -9610,6 +9632,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_run_safety: read-only local run posture" in goal.body
     assert "Goal Approval Command Bar" in goal.body
     assert "data-goal-approval-command-bar='true'" in goal.body
+    assert "data-goal-approval-actions='true'" in goal.body
+    assert "data-goal-approval-now='true'" in goal.body
+    assert "data-goal-approval-primary='true'" in goal.body
+    assert "data-goal-approval-pending='true'" in goal.body
+    assert "data-goal-approval-approved='true'" in goal.body
+    assert "data-goal-approval-downstream='true'" in goal.body
+    assert "data-goal-approval-safety='true'" in goal.body
+    assert "data-goal-approval-evidence='true'" in goal.body
+    assert "data-goal-approval-list='true'" in goal.body
+    assert "Goal approval command evidence" in goal.body
+    assert "Detailed approval rows (2)" in goal.body
     assert "<a href='#goal-approval-command-bar'>Approval command</a>" in goal.body
     assert f"goal_approval_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_approval_command_project</dt><dd>{result.project_id}" in goal.body
@@ -9636,6 +9669,24 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_approval_now: Approve worktree" in goal.body
     assert "goal_approval_click: <a href='/approvals'>/approvals</a>" in goal.body
     assert "goal_approval_safety: read-only local approval posture" in goal.body
+    assert "Goal Incident Command Bar" in goal.body
+    assert "data-goal-incident-command-bar='true'" in goal.body
+    assert "data-goal-incident-actions='true'" in goal.body
+    assert "data-goal-incident-now='true'" in goal.body
+    assert "data-goal-incident-primary='true'" in goal.body
+    assert "data-goal-incident-open='true'" in goal.body
+    assert "data-goal-incident-first='true'" in goal.body
+    assert "data-goal-incident-recovery='true'" in goal.body
+    assert "data-goal-incident-safety='true'" in goal.body
+    assert "data-goal-incident-evidence='true'" in goal.body
+    assert "data-goal-incident-list='true'" in goal.body
+    assert "Goal incident command evidence" in goal.body
+    assert "Detailed incident rows (7)" in goal.body
+    assert "goal_incident_command_status</dt><dd>clear" in goal.body
+    assert "goal_incident_command_open_count</dt><dd>0" in goal.body
+    assert "goal_incident_command_total_count</dt><dd>0" in goal.body
+    assert "goal_incident_command_next_action</dt><dd>Continue workflow" in goal.body
+    assert "goal_incident_command_target_surface</dt><dd><a href='#goal-next-action'>Goal Next Action</a>" in goal.body
     assert "Goal created" in goal.body
     assert "Scout delegated" in goal.body
     assert "Context pack built" in goal.body
