@@ -3651,18 +3651,40 @@ def _home_attention_brief(root: Path, storage: Storage, lead_goal: sqlite3.Row |
         primary_label = next_action.href
         reason = "no_attention_blockers"
 
+    now_surface = SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>")
+    inbox_surface = SafeHtml("<a href='/inbox'>/inbox</a>")
+    approval_surface = SafeHtml("<a href='/approvals'>/approvals</a>")
+    incident_surface = SafeHtml("<a href='/incidents'>/incidents</a>")
+    recommendation_surface = SafeHtml("<a href='/incidents'>/incidents</a>")
+    proof_surface = SafeHtml("<a href='/verification'>/verification</a>")
+    inbox_label = "item" if inbox_items == 1 else "items"
+    approval_label = "approval" if pending_approvals == 1 else "approvals"
+    incident_label = "incident" if open_incidents == 1 else "incidents"
+    recommendation_label = "recommendation" if open_recommendations == 1 else "recommendations"
+
     return "".join(
         [
             "<section class='panel home-attention-brief' data-home-attention-brief='true'><h2>Home Attention Brief</h2>",
             "<p class='muted'>A read-only triage pass for approvals, incidents, recommendations, inbox, and proof before deeper goal work.</p>",
+            "<div class='home-attention-grid' data-home-attention-actions='true'>",
+            "<article class='home-attention-card home-attention-primary' data-home-attention-now='true'><h3>Now</h3>",
+            f"<p>{_e(primary_action)}</p><a class='home-attention-action' data-home-attention-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a></article>",
+            "<article class='home-attention-card' data-home-attention-inbox='true'><h3>Inbox</h3>",
+            f"<p>{inbox_items} {_e(inbox_label)}</p><a class='home-attention-link' href='/inbox'>/inbox</a></article>",
+            "<article class='home-attention-card' data-home-attention-approvals='true'><h3>Approvals</h3>",
+            f"<p>{pending_approvals} {_e(approval_label)}</p><a class='home-attention-link' href='/approvals'>/approvals</a></article>",
+            "<article class='home-attention-card' data-home-attention-incidents='true'><h3>Incidents</h3>",
+            f"<p>{open_incidents} {_e(incident_label)}</p><a class='home-attention-link' href='/incidents'>/incidents</a></article>",
+            "<article class='home-attention-card' data-home-attention-recommendations='true'><h3>Recommendations</h3>",
+            f"<p>{open_recommendations} {_e(recommendation_label)}</p><a class='home-attention-link' href='/incidents'>/incidents</a></article>",
+            "<article class='home-attention-card' data-home-attention-proof='true'><h3>Proof</h3>",
+            f"<p>{_e(ci_status)}</p><a class='home-attention-link' href='/verification'>/verification</a></article>",
+            "</div>",
             _kv(
                 [
                     ("home_attention_status", status),
                     ("home_attention_primary_action", primary_action),
-                    (
-                        "home_attention_primary_surface",
-                        SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
-                    ),
+                    ("home_attention_primary_surface", now_surface),
                     ("home_attention_reason", reason),
                     (
                         "home_attention_first_run_form_available",
@@ -3674,12 +3696,20 @@ def _home_attention_brief(root: Path, storage: Storage, lead_goal: sqlite3.Row |
                     ("home_attention_pending_approvals", str(pending_approvals)),
                     ("home_attention_open_incidents", str(open_incidents)),
                     ("home_attention_open_recommendations", str(open_recommendations)),
+                    ("home_attention_cards_available", "true"),
+                    ("home_attention_card_count", "6"),
+                    ("home_attention_now_surface", now_surface),
+                    ("home_attention_inbox_card_surface", inbox_surface),
+                    ("home_attention_approval_card_surface", approval_surface),
+                    ("home_attention_incident_card_surface", incident_surface),
+                    ("home_attention_recommendation_card_surface", recommendation_surface),
+                    ("home_attention_proof_card_surface", proof_surface),
                     ("home_attention_ci_status", ci_status),
                     ("home_attention_ci_source", ci_source),
-                    ("home_attention_ci_surface", SafeHtml("<a href='/verification'>/verification</a>")),
-                    ("home_attention_inbox_surface", SafeHtml("<a href='/inbox'>/inbox</a>")),
-                    ("home_attention_approval_surface", SafeHtml("<a href='/approvals'>/approvals</a>")),
-                    ("home_attention_incident_surface", SafeHtml("<a href='/incidents'>/incidents</a>")),
+                    ("home_attention_ci_surface", proof_surface),
+                    ("home_attention_inbox_surface", inbox_surface),
+                    ("home_attention_approval_surface", approval_surface),
+                    ("home_attention_incident_surface", incident_surface),
                     ("home_attention_write_on_get", "false"),
                     ("home_attention_github_status_fetch", "none"),
                     ("home_attention_provider_calls_taken_by_clankeros", "0"),
@@ -31008,6 +31038,14 @@ def _html_page(
     .home-activity-action {{ background:var(--accent); color:#fff; }}
     .home-activity-link {{ background:var(--surface); color:var(--accent); }}
     .home-attention-brief {{ border-left:4px solid var(--warn); }}
+    .home-attention-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(5, minmax(150px, 1fr)); gap:10px; margin:12px 0; }}
+    .home-attention-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
+    .home-attention-card h3 {{ margin-top:0; }}
+    .home-attention-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .home-attention-primary {{ border-color:var(--warn); box-shadow:inset 3px 0 0 var(--warn); }}
+    .home-attention-action, .home-attention-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .home-attention-action {{ background:var(--accent); color:#fff; }}
+    .home-attention-link {{ background:var(--surface); color:var(--accent); }}
     .home-attention-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .home-attention-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .project-index-workbench {{ border-left:4px solid var(--accent); }}
@@ -31550,6 +31588,7 @@ def _html_page(
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
     @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-session-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ .home-attention-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

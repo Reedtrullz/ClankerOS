@@ -4410,6 +4410,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "home_day_plan_external_effects_created</dt><dd>false" in root.body
     assert "Home Attention Brief" in root.body
     assert "data-home-attention-brief='true'" in root.body
+    assert "data-home-attention-actions='true'" in root.body
+    assert "data-home-attention-now='true'" in root.body
+    assert "data-home-attention-inbox='true'" in root.body
+    assert "data-home-attention-approvals='true'" in root.body
+    assert "data-home-attention-incidents='true'" in root.body
+    assert "data-home-attention-recommendations='true'" in root.body
+    assert "data-home-attention-proof='true'" in root.body
+    assert "data-home-attention-primary='true' href='#first-run-create-project'>Create Project</a>" in root.body
     assert "home_attention_status</dt><dd>first_run" in root.body
     assert "home_attention_primary_action</dt><dd>Register ClankerOS project" in root.body
     assert "home_attention_primary_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in root.body
@@ -4417,6 +4425,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "home_attention_first_run_form_available</dt><dd>true" in root.body
     assert "home_attention_review_items</dt><dd>0" in root.body
     assert "home_attention_inbox_items</dt><dd>0" in root.body
+    assert "home_attention_cards_available</dt><dd>true" in root.body
+    assert "home_attention_card_count</dt><dd>6" in root.body
+    assert "home_attention_now_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in root.body
+    assert "home_attention_inbox_card_surface</dt><dd><a href='/inbox'>/inbox</a>" in root.body
+    assert "home_attention_approval_card_surface</dt><dd><a href='/approvals'>/approvals</a>" in root.body
+    assert "home_attention_incident_card_surface</dt><dd><a href='/incidents'>/incidents</a>" in root.body
+    assert "home_attention_recommendation_card_surface</dt><dd><a href='/incidents'>/incidents</a>" in root.body
+    assert "home_attention_proof_card_surface</dt><dd><a href='/verification'>/verification</a>" in root.body
     assert "home_attention_ci_status</dt><dd>success" in root.body
     assert "home_attention_ci_source</dt><dd>publication_handoff" in root.body
     assert "home_attention_github_status_fetch</dt><dd>none" in root.body
@@ -8892,6 +8908,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "name='expanded_panels' value='day-plan,daily-loop,next-action,timeline,evidence,artifacts,notes'" in dashboard.body
     assert "Home Attention Brief" in dashboard.body
     assert "data-home-attention-brief='true'" in dashboard.body
+    assert "data-home-attention-actions='true'" in dashboard.body
+    assert "data-home-attention-now='true'" in dashboard.body
+    assert "data-home-attention-inbox='true'" in dashboard.body
+    assert "data-home-attention-approvals='true'" in dashboard.body
+    assert "data-home-attention-incidents='true'" in dashboard.body
+    assert "data-home-attention-recommendations='true'" in dashboard.body
+    assert "data-home-attention-proof='true'" in dashboard.body
+    assert "data-home-attention-primary='true' href='/approvals'>/approvals</a>" in dashboard.body
     assert "home_attention_status</dt><dd>needs_approval_review" in dashboard.body
     assert "home_attention_primary_action</dt><dd>Review approvals" in dashboard.body
     assert "home_attention_primary_surface</dt><dd><a href='/approvals'>/approvals</a>" in dashboard.body
@@ -8899,6 +8923,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_attention_pending_approvals</dt><dd>1" in dashboard.body
     assert "home_attention_open_incidents</dt><dd>0" in dashboard.body
     assert "home_attention_open_recommendations</dt><dd>0" in dashboard.body
+    assert "home_attention_cards_available</dt><dd>true" in dashboard.body
+    assert "home_attention_card_count</dt><dd>6" in dashboard.body
+    assert "home_attention_now_surface</dt><dd><a href='/approvals'>/approvals</a>" in dashboard.body
+    assert "home_attention_inbox_card_surface</dt><dd><a href='/inbox'>/inbox</a>" in dashboard.body
+    assert "home_attention_approval_card_surface</dt><dd><a href='/approvals'>/approvals</a>" in dashboard.body
+    assert "home_attention_incident_card_surface</dt><dd><a href='/incidents'>/incidents</a>" in dashboard.body
+    assert "home_attention_recommendation_card_surface</dt><dd><a href='/incidents'>/incidents</a>" in dashboard.body
+    assert "home_attention_proof_card_surface</dt><dd><a href='/verification'>/verification</a>" in dashboard.body
     assert "home_attention_ci_status</dt><dd>success" in dashboard.body
     assert "home_attention_ci_source</dt><dd>direct_public_snapshot" in dashboard.body
     assert "home_attention_click: <a href='/approvals'>/approvals</a>" in dashboard.body

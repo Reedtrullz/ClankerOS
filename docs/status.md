@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Home Attention Brief now opens with visible Now, Inbox, Approvals,
+  Incidents, Recommendations, and Proof cards before the evidence readback.
+  The cards reuse existing local surfaces (`/inbox`, `/approvals`,
+  `/incidents`, `/verification`, or the first-run/goal next action), keep the
+  read-only/no-provider/no-network/no-external-effect GET boundary, and expose
+  card availability/count/surface evidence in the DOM.
 - Home Recent Activity now opens with visible Latest, Goals, Artifacts, and
   Notes cards before the chronological list. Empty checkouts use real local
   fallback surfaces (`/goals`, `/search?q=artifact`, `/memory`), while

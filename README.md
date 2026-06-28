@@ -118,8 +118,8 @@ while a form is focused or the tab is hidden, a `Start Here` cockpit for the
 next click, resume posture, blockers, and CI handoff, a `Home Day Plan` that names the current goal, phase,
 one next action, waiting counts, whether end-of-day resume is ready, and a
 confirmed `save-workspace` Finish Today form for the lead goal, the
-read-only `Home Attention Brief` for approvals, incidents, recommendations,
-inbox load, and proof posture before deeper goal work, the
+read-only `Home Attention Brief` with visible Now, Inbox, Approvals,
+Incidents, Recommendations, and Proof cards before deeper goal work, the
 `Home Focus Queue` for next actions across active and paused goals, the
 read-only `Home Activity Command Bar` with visible Latest, Goals, Artifacts,
 and Notes cards for recent human-readable activity,

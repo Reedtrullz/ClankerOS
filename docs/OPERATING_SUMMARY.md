@@ -812,9 +812,10 @@ Core layers for the bootstrap:
   next action, waiting counts, end-of-day resume readiness from saved
   workspace state, and a confirmed local `save-workspace` Finish Today form
   that records the lead goal and latest artifact as tomorrow's resume point
-  after confirmation, a read-only `Home Attention Brief` that prioritizes
-  existing approvals, incidents, recommendations, inbox load, and local CI
-  proof posture before deeper goal work without fetching GitHub status, a
+  after confirmation, a read-only `Home Attention Brief` with visible Now,
+  Inbox, Approvals, Incidents, Recommendations, and Proof cards for existing
+  approvals, incidents, recommendations, inbox load, and local CI proof posture
+  before deeper goal work without fetching GitHub status, a
   read-only `Home Focus Queue` that lists next actions,
   phase, target surface, progress, and waiting counts across active and paused
   goals, the same confirmed local action form as the Goal page when the saved
