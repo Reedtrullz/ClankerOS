@@ -195,8 +195,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   forms while jump evidence stays collapsed by default, then an in-flow
   `Goal Action Dock` keeps the current action, gate, CI proof target, and
   resume route near the top of the workbench while jumping directly to the
-  existing confirmed Goal action form when one is available. The dock appears
-  before the Goal
+  existing confirmed Goal action form when one is available. A read-only
+  `Goal Progress Meter` follows with task and workflow progress bars, waiting
+  operator work, latest proof state, and the next confirmed browser action. The
+  dock and meter appear before the Goal
   Command Bar, Goal Operator Workbench, Goal Daily Loop, Goal Return Brief,
   Goal Continuation Rail, next action, next recommendation, Goal Workflow Map,
   Goal CI Handoff, live state, and collapsed section index before the detailed overview, goal risk, completion criteria,

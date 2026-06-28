@@ -392,7 +392,10 @@ Core layers for the bootstrap:
   follows the jump bar and keeps the current action, workflow gate, CI proof
   target, and `/resume` route visible near the top of the workbench while
   jumping directly to the existing confirmed Goal action form when one is
-  available instead of duplicating action authority. It precedes the Goal
+  available instead of duplicating action authority. A read-only `Goal Progress
+  Meter` follows with task and workflow progress bars, waiting operator work,
+  latest proof posture, and the next confirmed browser action. The dock and
+  meter precede the Goal
   Command Bar, Goal Operator Workbench, Daily Loop, Goal Return Brief, Goal
   Continuation Rail, Next Action, Workflow Map, Goal CI Handoff, live refresh
   panel, and collapsed full section index, so the first

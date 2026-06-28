@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/goals/<goal_id>` now places a read-only `Goal Progress Meter` immediately
+  after the Goal Action Dock and before deeper command surfaces. It shows task
+  completion and workflow-gate progress bars, waiting operator items, latest CI
+  proof posture, and the next confirmed browser action while preserving
+  no-write/no-provider/no-network/no-external-effect evidence.
 - `/actions` now follows the Action Operator Workbench with a visible
   read-only `Action Workflow Map` for Setup, Scout, Context, Prep, Approval,
   Execute, Commit, Publish, and Proof. The map marks the current stage from

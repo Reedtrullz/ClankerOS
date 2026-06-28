@@ -1,5 +1,33 @@
 # Status
 
+## 2026-06-29 Goal Progress Meter UX
+
+- Added a visible read-only `Goal Progress Meter` to `/goals/<goal_id>` after
+  the Goal Action Dock and before the Goal Command Bar.
+- The meter turns the immediate goal posture into five cards: Tasks, Workflow,
+  Waiting, Proof, and Next.
+- It uses native browser progress bars for completed tasks and workflow gates,
+  links to the existing detailed Goal progress/workflow/proof surfaces, and
+  routes the primary next action to the existing confirmed Goal action form when
+  that form is available.
+- Collapsed meter evidence records task progress, workflow-gate progress,
+  waiting approvals/incidents/recommendations, latest project-scoped CI proof
+  status/source, next action surface, card count, and zero-effect counters.
+- Updated README, local app docs, operating summary, current status focus,
+  app-demo smoke markers, responsive mobile layout, scroll-margin behavior, and
+  fixture-backed Goal route assertions.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `python3 -m compileall -q agent_os tests`, focused
+  `tests/test_first_milestone.py` route/demo coverage
+  (`2 passed, 514 deselected in 56.56s`), bounded `app-smoke-test`, bounded
+  `app-demo-smoke-test`, `git diff --check`, and a temp-root Playwright CLI
+  rendered snapshot of `/goals/<goal_id>` confirming the Action Dock, Goal
+  Progress Meter cards/progress bars, and Goal Command Bar order.
+- Non-claims: no screenshot artifact kept for this slice, no write on GET, no
+  approval or execution on GET, no app-side GitHub polling, no provider calls,
+  no external mutation, no PR creation, and no deploy from ClankerOS itself.
+
 ## 2026-06-29 Goal Session Digest UX
 
 - Added a visible read-only `Goal Session Digest` to `/goals/<goal_id>` after

@@ -10264,8 +10264,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert goal.body.index("id='goal-summary'") < goal_phase_position
     assert goal_phase_position < goal.body.index("id='goal-action-dock'")
     assert goal.body.index("id='goal-jump-bar'") < goal.body.index("id='goal-action-dock'")
-    assert goal.body.index("id='goal-action-dock'") < goal.body.index("id='goal-command-bar'")
+    assert goal.body.index("id='goal-action-dock'") < goal.body.index("id='goal-progress-meter'")
+    assert goal.body.index("id='goal-progress-meter'") < goal.body.index("id='goal-command-bar'")
     assert goal_phase_position < goal.body.index("id='goal-command-bar'")
+    assert goal_phase_position < goal.body.index("id='goal-progress-meter'")
     assert goal_phase_position < goal.body.index("id='goal-operator-workbench'")
     assert goal_phase_position < goal.body.index("id='goal-next-action'")
     assert goal_phase_position < goal.body.index("id='goal-section-index'")
@@ -10332,6 +10334,55 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_action_dock_click: <a href='#goal-next-action-form'>Open action form</a>" in goal.body
     assert "goal_action_dock_gate: commit_request" in goal.body
     assert "goal_action_dock_safety: reuses existing confirmed Goal action form" in goal.body
+    assert "Goal Progress Meter" in goal.body
+    assert "id='goal-progress-meter'" in goal.body
+    assert "data-goal-progress-meter='true'" in goal.body
+    assert "data-goal-progress-meter-bars='true'" in goal.body
+    assert "data-goal-progress-meter-task-bar='true'" in goal.body
+    assert "data-goal-progress-meter-gate-bar='true'" in goal.body
+    assert "data-goal-progress-meter-waiting='true'" in goal.body
+    assert "data-goal-progress-meter-proof='true'" in goal.body
+    assert "data-goal-progress-meter-action='true'" in goal.body
+    assert "data-goal-progress-meter-evidence='true'" in goal.body
+    assert "goal_progress_meter_status</dt><dd>waiting_on_operator" in goal.body
+    assert f"goal_progress_meter_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_progress_meter_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_progress_meter_phase</dt><dd>Ready to commit" in goal.body
+    assert "goal_progress_meter_current_gate</dt><dd>commit_request" in goal.body
+    assert "goal_progress_meter_task_progress</dt><dd>0/1" in goal.body
+    assert "goal_progress_meter_task_percent</dt><dd>0%" in goal.body
+    assert "goal_progress_meter_completed_tasks</dt><dd>0" in goal.body
+    assert "goal_progress_meter_total_tasks</dt><dd>1" in goal.body
+    assert "goal_progress_meter_open_tasks</dt><dd>1" in goal.body
+    assert "goal_progress_meter_blocked_or_failed_tasks</dt><dd>0" in goal.body
+    assert "goal_progress_meter_gate_progress</dt><dd>8/15" in goal.body
+    assert "goal_progress_meter_gate_percent</dt><dd>53%" in goal.body
+    assert "goal_progress_meter_done_gates</dt><dd>8" in goal.body
+    assert "goal_progress_meter_pending_gates</dt><dd>1" in goal.body
+    assert "goal_progress_meter_waiting_gates</dt><dd>6" in goal.body
+    assert "goal_progress_meter_waiting_items</dt><dd>1" in goal.body
+    assert "goal_progress_meter_pending_approvals</dt><dd>1" in goal.body
+    assert "goal_progress_meter_open_incidents</dt><dd>0" in goal.body
+    assert "goal_progress_meter_open_recommendations</dt><dd>0" in goal.body
+    assert "goal_progress_meter_next_action</dt><dd>Create commit request" in goal.body
+    assert "goal_progress_meter_action_form_available</dt><dd>true" in goal.body
+    assert "goal_progress_meter_action_surface</dt><dd><a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_progress_meter_ci_status</dt><dd>success" in goal.body
+    assert "goal_progress_meter_ci_source</dt><dd>direct_public_snapshot" in goal.body
+    assert "goal_progress_meter_card_count</dt><dd>5" in goal.body
+    assert "goal_progress_meter_source</dt><dd>goal_tasks_workflow_gates_waiting_queues_and_ci_evidence" in goal.body
+    assert "goal_progress_meter_write_on_get</dt><dd>false" in goal.body
+    assert "goal_progress_meter_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_progress_meter_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_progress_meter_external_effects_created</dt><dd>false" in goal.body
+    assert "<progress value='0' max='1' aria-label='Goal task completion' data-goal-progress-meter-task-bar='true'>" in goal.body
+    assert "<progress value='8' max='15' aria-label='Goal workflow gate completion' data-goal-progress-meter-gate-bar='true'>" in goal.body
+    assert "goal_progress_meter_tasks: 0/1 percent=0" in goal.body
+    assert "goal_progress_meter_gates: 8/15 current=commit_request percent=53" in goal.body
+    assert "goal_progress_meter_waiting: approvals=1 incidents=0 recommendations=0" in goal.body
+    assert "goal_progress_meter_proof: status=success source=direct_public_snapshot" in goal.body
+    assert "goal_progress_meter_next: <a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_progress_meter_safety: read-only visual progress; confirmed forms own writes" in goal.body
     assert "goal_section_index_status</dt><dd>available" in goal.body
     assert "goal_section_count</dt><dd>" in goal.body
     assert "data-goal-section-index-actions='true'" in goal.body
@@ -10359,6 +10410,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-summary'" in goal.body
     assert "href='#goal-current-phase'" in goal.body
     assert "href='#goal-action-dock'" in goal.body
+    assert "href='#goal-progress-meter'" in goal.body
     assert "href='#goal-command-bar'" in goal.body
     assert "href='#goal-operator-workbench'" in goal.body
     assert "href='#goal-return-brief'" in goal.body
@@ -10419,7 +10471,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>53" in goal.body
+    assert "goal_section_count</dt><dd>54" in goal.body
     assert "data-goal-section-index-evidence='true'" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "data-goal-command-strip='true'" in goal.body

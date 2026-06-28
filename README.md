@@ -306,8 +306,10 @@ notes, git, and remaining work. Its visible `1`-`9` key badges and
 while jump-state evidence stays collapsed by default,
 then an in-flow `Goal Action Dock` keeps the current action, gate, CI proof
 target, and resume route near the top of the workbench while jumping directly
-to the existing confirmed Goal action form when one is available. The dock
-precedes the Goal Command Bar, Goal
+to the existing confirmed Goal action form when one is available. A read-only
+`Goal Progress Meter` follows with task and workflow progress bars, waiting
+operator work, latest proof state, and the next confirmed browser action before
+deeper command evidence. The dock and meter precede the Goal Command Bar, Goal
 Operator Workbench, Goal Daily Loop, Goal Return Brief, Goal Session Digest,
 Goal Continuation Rail,
 next action, next recommendation, Goal Workflow Map, Goal CI Handoff, live
