@@ -283,11 +283,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   exact surfaces, the manual publish boundary, and zero-effect counters stay
   in collapsed continuation evidence, so the Goal page can be followed as a
   short continuation path before the deeper diagnostics. The next
-  detailed surface is a read-only `Goal Workflow Map` that turns the same
-  Remaining Work gate state into a lifecycle rail from scout delegation through
-  manual publish, with the current gate, next action, gate counts, every
-  gate's eventual local operator surface, and zero-effect boundary visible
-  before scrolling. A read-only `Goal CI Handoff` follows it with
+  detailed surface is a read-only `Goal Workflow Map` that opens with visible
+  Now, Progress, Approvals, Publish Boundary, and Finish Today cards. Those
+  cards point at the existing Goal action form, Remaining Work, goal-scoped
+  approvals, CI handoff, and Finish Today save form, while the full lifecycle
+  rail, every gate's eventual local operator surface, and zero-effect boundary
+  stay available in collapsed workflow evidence. A read-only `Goal CI Handoff`
+  follows it with
   project-scoped proof status, latest operator-recorded GitHub Actions
   evidence, exact `gh run list` / `gh run view` command templates, and a
   same-page JSON paste target for recording proof without app-side GitHub

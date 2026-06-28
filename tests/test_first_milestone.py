@@ -9200,14 +9200,34 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_continuation_safety: local browser guidance only; publication remains manual" in goal.body
     assert "Goal Workflow Map" in goal.body
     assert "data-goal-workflow-map='true'" in goal.body
+    assert "data-goal-workflow-map-actions='true'" in goal.body
+    assert "data-goal-workflow-map-primary='true'" in goal.body
+    assert "data-goal-workflow-map-progress='true'" in goal.body
+    assert "data-goal-workflow-map-approval='true'" in goal.body
+    assert "data-goal-workflow-map-publish='true'" in goal.body
+    assert "data-goal-workflow-map-finish='true'" in goal.body
+    assert "data-goal-workflow-map-evidence='true'" in goal.body
+    assert "data-goal-workflow-map-primary='true' href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert f"data-goal-workflow-map-approval='true' href='/approvals?goal_id={result.goal_id}'" in goal.body
+    assert "data-goal-workflow-map-publish='true' href='#goal-ci-handoff'>Review CI handoff</a>" in goal.body
+    assert "data-goal-workflow-map-finish='true' data-open-details='true' href='#goal-finish-today'" in goal.body
     assert "workflow_map_status</dt><dd>available" in goal.body
+    assert f"workflow_map_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"workflow_map_project</dt><dd>{result.project_id}" in goal.body
     assert "workflow_map_current_gate</dt><dd>commit_request" in goal.body
+    assert "workflow_map_current_position</dt><dd>9/15" in goal.body
     assert "workflow_map_next_action</dt><dd>Create commit request" in goal.body
     assert f"workflow_map_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
     assert "workflow_map_progress</dt><dd>8/15 gates done" in goal.body
     assert "workflow_map_done_count</dt><dd>8" in goal.body
     assert "workflow_map_pending_count</dt><dd>1" in goal.body
     assert "workflow_map_waiting_count</dt><dd>6" in goal.body
+    assert "workflow_map_primary_surface</dt><dd><a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert f"workflow_map_approval_surface</dt><dd><a href='/approvals?goal_id={result.goal_id}'>Review goal approvals</a>" in goal.body
+    assert "workflow_map_publish_surface</dt><dd><a href='#goal-ci-handoff'>Review CI handoff</a>" in goal.body
+    assert "workflow_map_finish_surface</dt><dd><a href='#goal-finish-today'>Finish Today</a>" in goal.body
+    assert "workflow_map_manual_boundary</dt><dd>manual_publish_outside_clankeros" in goal.body
+    assert "workflow_map_action_form_available</dt><dd>true" in goal.body
     assert "workflow_map_source</dt><dd>goal_remaining_work_gates" in goal.body
     assert "workflow_map_action_surfaces</dt><dd>available" in goal.body
     assert "workflow_map_write_on_get</dt><dd>false" in goal.body

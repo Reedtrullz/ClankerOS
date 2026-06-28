@@ -12,8 +12,10 @@ Latest status focus:
   and Finish Today cards with direct hash-opened pause/save details. Goal
   Return Brief now follows with visible Continue, Latest, Blocker, Finish, and
   Resume cards, and Goal Continuation Rail now exposes Now, Next Gate, Then,
-  Publish Boundary, and Finish Today cards. Jump, command, workbench,
-  daily-loop, return-brief, continuation, and full section-index evidence are
+  Publish Boundary, and Finish Today cards. Goal Workflow Map now exposes Now,
+  Progress, Approvals, Publish Boundary, and Finish Today cards before its
+  detailed lifecycle rail. Jump, command, workbench,
+  daily-loop, return-brief, continuation, workflow-map, and full section-index evidence are
   collapsed by default while preserving phase, next action, current gate,
   project-scoped CI proof posture, full anchor map, daily resume-save state,
   latest activity/artifact, blocker routing, workflow gate surfaces, manual

@@ -422,10 +422,13 @@ Core layers for the bootstrap:
   in collapsed continuation evidence so the Goal page can be followed without
   jumping straight to longer diagnostics.
   Goal detail pages also include a
-  read-only `Goal Workflow Map` near the top that renders the same
-  Remaining Work gate state as a lifecycle rail, highlighting the current
-  gate, next action, done/pending/waiting counts, each gate's eventual local
-  operator surface, and zero-effect boundary. A read-only `Goal CI Handoff`
+  read-only `Goal Workflow Map` near the top that opens with Now, Progress,
+  Approvals, Publish Boundary, and Finish Today cards sourced from the same
+  Remaining Work gate state. It points at the existing Goal action form,
+  Remaining Work, goal-scoped approvals, CI handoff, and Finish Today save
+  form, while the detailed lifecycle rail, each gate's eventual local operator
+  surface, manual publish boundary, and zero-effect counters stay in collapsed
+  workflow evidence. A read-only `Goal CI Handoff`
   follows it with project-scoped proof status, latest operator-recorded
   GitHub Actions evidence, exact `gh run list` / `gh run view` command
   templates, and a same-page proof-recording target before the operator

@@ -1,5 +1,57 @@
 # Status
 
+## 2026-06-28 Goal Workflow Map Action Cards
+
+- Made `/goals/<goal_id>#goal-workflow-map` action-first by adding visible
+  Now, Progress, Approvals, Publish Boundary, and Finish Today cards after the
+  Goal Continuation Rail and Next Action section.
+- Kept the current action wired to the existing in-page Goal action form when
+  available, Progress wired to Remaining Work, Approvals wired to the
+  goal-scoped approval queue, Publish Boundary wired to Goal CI Handoff, and
+  Finish Today wired to the existing hash-opened `#goal-finish-today`
+  `save-workspace` form.
+- Moved the detailed lifecycle rail and `workflow_map_*` readbacks into
+  collapsed `Goal workflow evidence` while preserving goal/project, current
+  gate, position, gate counts, waiting counts, surfaces, manual publish
+  boundary, per-gate action guidance, and zero-effect counters in the DOM.
+- Added scroll-margin handling for the Workflow Map, CI Handoff, and Remaining
+  Work anchors so sticky-header hash navigation lands on readable headings on
+  desktop and mobile.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused route assertions.
+- Non-claims: this is local browser routing and layout. `/goals/<goal_id>` does
+  not write on GET, approve work, execute work, create commits, push, create
+  PRs, deploy, call providers, fetch GitHub, mutate external systems, or expose
+  arbitrary raw filesystem browsing. Existing confirmed forms still own writes.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, route markers matched, artifact rejection checks matched,
+    provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including new Goal Workflow Map
+    action/evidence handles, provider calls 0, network actions 0, external
+    mutations 0
+  - Browser QA against
+    `http://127.0.0.1:8831/goals/goal_13ed39833e1d`: desktop `1280x900`
+    rendered five Workflow Map cards, kept workflow evidence closed, reported
+    no warning/error logs, had no horizontal overflow, and kept
+    `#goal-workflow-map` clear of the sticky header after the scroll-margin
+    adjustment.
+  - Browser interaction QA: clicking the new Now card opened
+    `#goal-next-action-form` with the existing Goal action form; clicking the
+    new Finish Today card opened `#goal-finish-today`, revealed the existing
+    `save-workspace` form, kept `updated_by=goal-daily-loop`, and had no
+    horizontal overflow.
+  - Browser QA mobile `390x844`: a fresh anchored load stacked five Workflow
+    Map cards one column, kept workflow evidence closed, kept the heading clear
+    of the sticky header, had no horizontal overflow, and reported no
+    warning/error logs.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Goal Continuation Rail Action Cards
 
 - Made `/goals/<goal_id>#goal-continuation-rail` action-first by adding

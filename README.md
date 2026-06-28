@@ -361,11 +361,13 @@ surface, and a confirmed `save-workspace` form that records this goal and its
 latest artifact as tomorrow's resume point without writing on GET. Goal Return
 Brief follows it with a read-only return-to-work snapshot: current gate, next
 action, resume readiness, latest activity, latest artifact, CI proof posture,
-blocker route, `/resume`, and finish surface. The Goal Workflow Map
-turns the same gate state used by Remaining Work into a top-level lifecycle
-rail from scout delegation through manual publish, highlighting the current
-gate, the next local action, every gate's eventual operator surface, and the
-manual publish boundary without writing on GET. Goal CI Handoff follows the
+blocker route, `/resume`, and finish surface. The Goal Workflow Map now opens
+with visible Now, Progress, Approvals, Publish Boundary, and Finish Today cards
+that point at the existing Goal action form, Remaining Work, goal-scoped
+approvals, CI handoff, and Finish Today save form. The detailed lifecycle rail
+from scout delegation through manual publish, every gate's eventual operator
+surface, the manual publish boundary, and zero-effect counters remain in
+collapsed workflow evidence without writing on GET. Goal CI Handoff follows the
 workflow map near the top of the Goal page with project-scoped proof status,
 latest operator-recorded GitHub Actions evidence, exact `gh run list` /
 `gh run view` command templates, and a same-page JSON paste target for
