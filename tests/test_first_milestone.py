@@ -5499,8 +5499,15 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workflow-journey='true'" in workflow.body
     assert "data-workflow-journey-actions='true'" in workflow.body
     assert "data-workflow-journey-evidence='true'" in workflow.body
+    assert "Workflow Finish Today" in workflow.body
+    assert "data-workflow-finish-today='true'" in workflow.body
+    assert "data-workflow-finish-actions='true'" in workflow.body
+    assert "data-workflow-finish-evidence='true'" in workflow.body
+    assert "data-workflow-save-details='true'" in workflow.body
     assert "data-workflow-command-evidence='true'" in workflow.body
     assert workflow.body.index("data-workflow-operator-workbench") < workflow.body.index("data-workflow-journey")
+    assert workflow.body.index("data-workflow-journey") < workflow.body.index("data-workflow-finish-today")
+    assert workflow.body.index("data-workflow-finish-today") < workflow.body.index("data-workflow-command-bar")
     assert workflow.body.index("data-workflow-journey") < workflow.body.index("data-workflow-command-bar")
     assert workflow.body.index("data-workflow-operator-workbench") < workflow.body.index("data-workflow-command-bar")
     assert workflow.body.index("data-workflow-operator-workbench") < workflow.body.index("data-route-context")
@@ -5510,6 +5517,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workflow_workbench_action_label</dt><dd>Select delegation or run" in workflow.body
     assert "workflow_workbench_next_surface</dt><dd><a href='/delegation-runs'>/delegation-runs</a>" in workflow.body
     assert "workflow_workbench_state_surface</dt><dd><a href='#workflow-stepper'>Workflow Stepper</a>" in workflow.body
+    assert "workflow_workbench_finish_surface</dt><dd><a href='#workflow-finish-today'>Finish Today</a>" in workflow.body
+    assert "workflow_workbench_saved_resume_surface</dt><dd><a href='/workflow'>/workflow</a>" in workflow.body
     assert "workflow_workbench_selected_step_count</dt><dd>0" in workflow.body
     assert "workflow_workbench_write_on_get</dt><dd>false" in workflow.body
     assert "workflow_workbench_provider_calls_taken</dt><dd>0" in workflow.body
@@ -5535,6 +5544,22 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workflow-journey-stage='select_scope' data-stage-status='current'" in workflow.body
     assert "workflow_journey_stage: select_scope status=current" in workflow.body
     assert "workflow_journey_safety: read-only workflow orientation" in workflow.body
+    assert "workflow_finish_status</dt><dd>no_selection" in workflow.body
+    assert "workflow_finish_scope</dt><dd>all" in workflow.body
+    assert "workflow_finish_project</dt><dd>none" in workflow.body
+    assert "workflow_finish_resume_surface</dt><dd><a href='/workflow'>/workflow</a>" in workflow.body
+    assert "workflow_finish_filters</dt><dd>workflow:all" in workflow.body
+    assert "workflow_finish_action</dt><dd>save-workspace" in workflow.body
+    assert "workflow_finish_confirmation_required</dt><dd>true" in workflow.body
+    assert "workflow_finish_form_available</dt><dd>true" in workflow.body
+    assert "workflow_finish_write_on_get</dt><dd>false" in workflow.body
+    assert "workflow_finish_provider_calls_taken</dt><dd>0" in workflow.body
+    assert "workflow_finish_network_actions_taken</dt><dd>0" in workflow.body
+    assert "workflow_finish_external_effects_created</dt><dd>false" in workflow.body
+    assert "workflow_finish_save: action=save-workspace resume_surface=<a href='/workflow'>/workflow</a>" in workflow.body
+    assert "workflow_finish_safety: confirmed local workspace save only" in workflow.body
+    assert "action='/actions/save-workspace'" in workflow.body
+    assert "name='resume_surface' value='/workflow'" in workflow.body
     assert "Workflow Command Bar" in workflow.body
     assert "data-workflow-command-bar='true'" in workflow.body
     assert "workflow_command_status</dt><dd>no_selection" in workflow.body
@@ -12104,8 +12129,15 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-workflow-journey='true'" in workflow_for_delegation.body
     assert "data-workflow-journey-actions='true'" in workflow_for_delegation.body
     assert "data-workflow-journey-evidence='true'" in workflow_for_delegation.body
+    assert "Workflow Finish Today" in workflow_for_delegation.body
+    assert "data-workflow-finish-today='true'" in workflow_for_delegation.body
+    assert "data-workflow-finish-actions='true'" in workflow_for_delegation.body
+    assert "data-workflow-finish-evidence='true'" in workflow_for_delegation.body
+    assert "data-workflow-save-details='true'" in workflow_for_delegation.body
     assert "data-workflow-command-evidence='true'" in workflow_for_delegation.body
     assert workflow_for_delegation.body.index("data-workflow-operator-workbench") < workflow_for_delegation.body.index("data-workflow-journey")
+    assert workflow_for_delegation.body.index("data-workflow-journey") < workflow_for_delegation.body.index("data-workflow-finish-today")
+    assert workflow_for_delegation.body.index("data-workflow-finish-today") < workflow_for_delegation.body.index("data-workflow-command-bar")
     assert workflow_for_delegation.body.index("data-workflow-journey") < workflow_for_delegation.body.index("data-workflow-command-bar")
     assert workflow_for_delegation.body.index("data-workflow-operator-workbench") < workflow_for_delegation.body.index("data-workflow-command-bar")
     assert workflow_for_delegation.body.index("data-workflow-operator-workbench") < workflow_for_delegation.body.index("data-route-context")
@@ -12121,6 +12153,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workflow_workbench_state_surface</dt><dd><a href='#workflow-stepper'>Workflow Stepper</a>" in workflow_for_delegation.body
     assert "workflow_workbench_queue_surface</dt><dd><a href='/approvals'>/approvals</a>" in workflow_for_delegation.body
     assert "workflow_workbench_resume_surface</dt><dd><a href='/resume'>/resume</a>" in workflow_for_delegation.body
+    assert "workflow_workbench_finish_surface</dt><dd><a href='#workflow-finish-today'>Finish Today</a>" in workflow_for_delegation.body
+    assert f"workflow_workbench_saved_resume_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'" in workflow_for_delegation.body
     assert "workflow_workbench_selected_step_count</dt><dd>17" in workflow_for_delegation.body
     assert "workflow_workbench_write_on_get</dt><dd>false" in workflow_for_delegation.body
     assert "workflow_workbench_provider_calls_taken</dt><dd>0" in workflow_for_delegation.body
@@ -12149,6 +12183,30 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-workflow-journey-stage='commit' data-stage-status='current'" in workflow_for_delegation.body
     assert "data-workflow-journey-stage='publish' data-stage-status='waiting'" in workflow_for_delegation.body
     assert "workflow_journey_stage: commit status=current" in workflow_for_delegation.body
+    assert "workflow_finish_status</dt><dd>scoped_workflow" in workflow_for_delegation.body
+    assert "workflow_finish_scope</dt><dd>delegation" in workflow_for_delegation.body
+    assert f"workflow_finish_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in workflow_for_delegation.body
+    assert f"workflow_finish_run</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_delegation.body
+    assert f"workflow_finish_goal</dt><dd><a href='/goals/{result.goal_id}'" in workflow_for_delegation.body
+    assert f"workflow_finish_project</dt><dd>{result.project_id}" in workflow_for_delegation.body
+    assert "workflow_finish_current_stage</dt><dd>Commit request" in workflow_for_delegation.body
+    assert "workflow_finish_next_action</dt><dd>request_commit_for_reviewed_run" in workflow_for_delegation.body
+    assert f"workflow_finish_resume_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'" in workflow_for_delegation.body
+    assert f"workflow_finish_open_project</dt><dd>{result.project_id}" in workflow_for_delegation.body
+    assert f"workflow_finish_open_goal</dt><dd>{result.goal_id}" in workflow_for_delegation.body
+    assert f"workflow_finish_filters</dt><dd>workflow:delegation,goal:{result.goal_id}" in workflow_for_delegation.body
+    assert "workflow_finish_expanded_panels</dt><dd>workflow-journey,workflow-command,selected-state,continuation" in workflow_for_delegation.body
+    assert "workflow_finish_last_artifact</dt><dd><a href='/artifacts?path=" in workflow_for_delegation.body
+    assert "workflow_finish_action</dt><dd>save-workspace" in workflow_for_delegation.body
+    assert "workflow_finish_confirmation_required</dt><dd>true" in workflow_for_delegation.body
+    assert "workflow_finish_form_available</dt><dd>true" in workflow_for_delegation.body
+    assert "workflow_finish_write_on_get</dt><dd>false" in workflow_for_delegation.body
+    assert "workflow_finish_provider_calls_taken</dt><dd>0" in workflow_for_delegation.body
+    assert "workflow_finish_network_actions_taken</dt><dd>0" in workflow_for_delegation.body
+    assert "workflow_finish_external_effects_created</dt><dd>false" in workflow_for_delegation.body
+    assert f"workflow_finish_save: action=save-workspace resume_surface=<a href='/workflow?delegation_id={result.delegation_id}'" in workflow_for_delegation.body
+    assert "workflow_finish_safety: confirmed local workspace save only" in workflow_for_delegation.body
+    assert f"name='resume_surface' value='/workflow?delegation_id={result.delegation_id}'" in workflow_for_delegation.body
     assert "Workflow Command Bar" in workflow_for_delegation.body
     assert "data-workflow-command-bar='true'" in workflow_for_delegation.body
     assert "workflow_command_status</dt><dd>delegation_selected" in workflow_for_delegation.body
@@ -12202,8 +12260,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-workflow-workbench-evidence='true'" in workflow_for_run.body
     assert "data-workflow-journey='true'" in workflow_for_run.body
     assert "data-workflow-journey-evidence='true'" in workflow_for_run.body
+    assert "data-workflow-finish-today='true'" in workflow_for_run.body
+    assert "data-workflow-finish-evidence='true'" in workflow_for_run.body
     assert "data-workflow-command-evidence='true'" in workflow_for_run.body
     assert workflow_for_run.body.index("data-workflow-operator-workbench") < workflow_for_run.body.index("data-workflow-journey")
+    assert workflow_for_run.body.index("data-workflow-journey") < workflow_for_run.body.index("data-workflow-finish-today")
+    assert workflow_for_run.body.index("data-workflow-finish-today") < workflow_for_run.body.index("data-workflow-command-bar")
     assert workflow_for_run.body.index("data-workflow-journey") < workflow_for_run.body.index("data-workflow-command-bar")
     assert workflow_for_run.body.index("data-workflow-operator-workbench") < workflow_for_run.body.index("data-workflow-command-bar")
     assert workflow_for_run.body.index("data-workflow-operator-workbench") < workflow_for_run.body.index("data-route-context")
@@ -12228,6 +12290,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workflow_journey_selected_step_count</dt><dd>17" in workflow_for_run.body
     assert "data-workflow-journey-stage='commit' data-stage-status='current'" in workflow_for_run.body
     assert "workflow_journey_stage: commit status=current" in workflow_for_run.body
+    assert "workflow_finish_status</dt><dd>scoped_workflow" in workflow_for_run.body
+    assert "workflow_finish_scope</dt><dd>run" in workflow_for_run.body
+    assert f"workflow_finish_resume_surface</dt><dd><a href='/workflow?run_id={result.coder_worktree_run_id}'" in workflow_for_run.body
+    assert f"workflow_finish_open_project</dt><dd>{result.project_id}" in workflow_for_run.body
+    assert f"workflow_finish_open_goal</dt><dd>{result.goal_id}" in workflow_for_run.body
+    assert f"workflow_finish_filters</dt><dd>workflow:run,goal:{result.goal_id}" in workflow_for_run.body
+    assert f"name='resume_surface' value='/workflow?run_id={result.coder_worktree_run_id}'" in workflow_for_run.body
     assert "Workflow Command Bar" in workflow_for_run.body
     assert "data-workflow-command-bar='true'" in workflow_for_run.body
     assert "workflow_command_status</dt><dd>run_selected" in workflow_for_run.body

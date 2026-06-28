@@ -1,5 +1,47 @@
 # Status
 
+## 2026-06-28 Workflow Finish Today UX
+
+- Added a visible read-only `Workflow Finish Today` section to `/workflow`
+  after the `Workflow Journey` and before the `Workflow Command Bar`.
+- The section shows Current, Save, Resume, and Safety cards for the selected
+  workflow scope.
+- The included confirmed `save-workspace` form stores the exact workflow
+  route as `resume_surface`, so `/resume` can reopen
+  `/workflow`, `/workflow?delegation_id=<id>`, or
+  `/workflow?run_id=<coder_run_id>` instead of losing the operator in a
+  generic route.
+- Scoped delegation/run workflow pages prefill project, Goal, filters,
+  expanded workflow panels, latest workflow artifact, and
+  `updated_by=workflow-finish-today`.
+- Empty `/workflow` can still save the workflow chooser as a local resume
+  surface, with blank project/Goal fields and `workflow:all` filters.
+- Finish evidence stays collapsed and records selected delegation/run, parent
+  Goal, project, current stage, next action, exact resume surface, form
+  availability, confirmation requirement, and zero-effect boundaries.
+- Existing confirmed local forms remain the only write paths; the finish
+  handoff does not write on GET, call providers, poll GitHub, push, deploy,
+  create PRs, or create external effects.
+- Updated README, operating summary, local status focus, and focused workflow
+  route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 53.74s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed, all local app route markers matched, provider/network/external
+    counters stayed at `0`
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed, demo workflow/delegation/run/resume route markers matched,
+    provider/network/external counters stayed at `0`
+  - `git diff --check` -> passed
+- GitHub Actions proof is expected after pushing this slice; remote status will
+  be tracked by the branch run rather than by a longer local suite.
+- Non-claims until remote proof: no browser QA for this slice, no app-side
+  GitHub polling, no approval decision, no execution, no PR, and no deploy from
+  ClankerOS itself.
+
 ## 2026-06-28 Workflow Journey UX
 
 - Added a visible read-only `Workflow Journey` section to `/workflow` between
