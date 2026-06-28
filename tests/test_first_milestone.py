@@ -4679,6 +4679,24 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "First Run Guide" in root.body
     assert "First Run Command Bar" in root.body
     assert "data-first-run-command-bar='true'" in root.body
+    assert "First Run Progress" in root.body
+    assert "data-first-run-progress-strip='true'" in root.body
+    assert "data-first-run-progress-grid='true'" in root.body
+    assert "data-first-run-progress-bar='true'" in root.body
+    assert root.body.count("data-first-run-progress-card='true'") == 5
+    assert "data-first-run-step='create_project' data-first-run-step-status='current'" in root.body
+    assert "data-first-run-step='create_first_goal' data-first-run-step-status='waiting_for_project'" in root.body
+    assert "data-first-run-step='create_first_delegation' data-first-run-step-status='waiting_for_goal'" in root.body
+    assert "first_run_progress_status</dt><dd>in_progress" in root.body
+    assert "first_run_progress_current_step</dt><dd>create_project" in root.body
+    assert "first_run_progress_next_action</dt><dd>Register ClankerOS project" in root.body
+    assert "first_run_progress_done_count</dt><dd>0" in root.body
+    assert "first_run_progress_current_count</dt><dd>1" in root.body
+    assert "first_run_progress_waiting_count</dt><dd>4" in root.body
+    assert "first_run_progress_total_steps</dt><dd>5" in root.body
+    assert "first_run_progress_write_on_get</dt><dd>false" in root.body
+    assert "first_run_progress_external_effects_created</dt><dd>false" in root.body
+    assert "first_run_progress_step: create_project status=current action=Register ClankerOS project" in root.body
     assert "first_run_command_status</dt><dd>available" in root.body
     assert "first_run_command_current_step</dt><dd>create_project" in root.body
     assert "first_run_command_next_action</dt><dd>Register ClankerOS project" in root.body
@@ -7586,6 +7604,15 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "resume_workflow_map_waiting_count</dt><dd>3" in register_resume.body
     assert "resume_workflow_map_step: create_project status=done marker=done" in register_resume.body
     assert "resume_workflow_map_step: create_first_goal status=current marker=current" in register_resume.body
+    register_home = render_local_app_route(tmp_path, "/")
+    assert "data-first-run-progress-strip='true'" in register_home.body
+    assert "data-first-run-step='create_project' data-first-run-step-status='done'" in register_home.body
+    assert "data-first-run-step='create_first_goal' data-first-run-step-status='current'" in register_home.body
+    assert "first_run_progress_current_step</dt><dd>create_first_goal" in register_home.body
+    assert "first_run_progress_done_count</dt><dd>1" in register_home.body
+    assert "first_run_progress_current_count</dt><dd>1" in register_home.body
+    assert "first_run_progress_waiting_count</dt><dd>3" in register_home.body
+    assert "first_run_progress_next_action</dt><dd>Create first goal" in register_home.body
     register_workspace = render_local_app_route(tmp_path, "/workspace")
     assert "workspace_daily_status</dt><dd>first_run" in register_workspace.body
     assert "workspace_daily_project</dt><dd><a href='/projects/clankeros'>clankeros</a>" in register_workspace.body

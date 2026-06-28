@@ -7679,6 +7679,102 @@ def _profile_names(lines: list[str]) -> list[str]:
     return names
 
 
+_FIRST_RUN_STEPS: tuple[tuple[str, str, str], ...] = (
+    ("create_project", "Project", "Register ClankerOS project"),
+    ("create_first_goal", "Goal", "Create first goal"),
+    ("create_first_delegation", "Delegation", "Create scout delegation"),
+    ("generate_context_pack", "Context", "Generate context pack"),
+    ("run_first_delegation", "Run", "Run first delegation"),
+)
+
+
+def _first_run_step_href(progress: dict[str, Any], step: str) -> str:
+    goal_id = str(progress.get("goal_id") or "")
+    if step == "create_project":
+        return "#first-run-create-project"
+    if step == "create_first_goal":
+        return "#first-run-create-goal"
+    if goal_id:
+        return f"/goals/{quote(goal_id)}"
+    return "#first-run-guide"
+
+
+def _first_run_progress_strip(progress: dict[str, Any]) -> str:
+    statuses = {
+        step: _first_run_step_status(progress, step)
+        for step, _label, _action in _FIRST_RUN_STEPS
+    }
+    done_count = sum(1 for status in statuses.values() if status == "done")
+    current_count = sum(1 for status in statuses.values() if status == "current")
+    waiting_count = len(_FIRST_RUN_STEPS) - done_count - current_count
+    current_step = str(progress["current_step"])
+    cards: list[str] = []
+    lines: list[str] = []
+    for index, (step, label, action) in enumerate(_FIRST_RUN_STEPS, start=1):
+        status = statuses[step]
+        href = _first_run_step_href(progress, step)
+        card_classes = ["first-run-progress-card", f"first-run-progress-{status}"]
+        if step == current_step:
+            card_classes.append("first-run-progress-current")
+        link_label = action if step == current_step else ("Open" if status == "done" else "Waiting")
+        lines.append(f"first_run_progress_step: {step} status={status} action={action}")
+        cards.append(
+            "".join(
+                [
+                    (
+                        f"<article class='{' '.join(card_classes)}' "
+                        f"data-first-run-progress-card='true' data-first-run-step='{_e(step)}' "
+                        f"data-first-run-step-status='{_e(status)}'>"
+                    ),
+                    f"<p class='first-run-progress-index'>{index}</p>",
+                    f"<h3>{_e(label)}</h3>",
+                    f"<p>{_e(action)}</p>",
+                    f"<p class='first-run-progress-status'>{_e(status.replace('_', ' '))}</p>",
+                    (
+                        f"<a class='first-run-progress-action' href='{_e(href)}'>"
+                        f"{_e(link_label)}</a>"
+                    ),
+                    "</article>",
+                ]
+            )
+        )
+
+    return "".join(
+        [
+            "<section class='panel first-run-progress-strip' data-first-run-progress-strip='true'><h3>First Run Progress</h3>",
+            "<p class='muted'>The shortest browser path from an empty checkout to the first completed delegation.</p>",
+            "<div class='first-run-progress-bar-row'>",
+            f"<progress max='{len(_FIRST_RUN_STEPS)}' value='{done_count}' data-first-run-progress-bar='true'></progress>",
+            f"<span>{done_count}/{len(_FIRST_RUN_STEPS)} complete</span>",
+            "</div>",
+            "<div class='first-run-progress-grid' data-first-run-progress-grid='true'>",
+            "".join(cards),
+            "</div>",
+            "<details class='first-run-progress-evidence' data-first-run-progress-evidence='true'>",
+            "<summary>First run progress evidence</summary>",
+            _kv(
+                [
+                    ("first_run_progress_status", "complete" if progress["complete"] else "in_progress"),
+                    ("first_run_progress_current_step", current_step),
+                    ("first_run_progress_next_action", progress["next_action"]),
+                    ("first_run_progress_next_reason", progress["next_reason"]),
+                    ("first_run_progress_done_count", str(done_count)),
+                    ("first_run_progress_current_count", str(current_count)),
+                    ("first_run_progress_waiting_count", str(waiting_count)),
+                    ("first_run_progress_total_steps", str(len(_FIRST_RUN_STEPS))),
+                    ("first_run_progress_write_on_get", "false"),
+                    ("first_run_progress_provider_calls_taken", "0"),
+                    ("first_run_progress_network_actions_taken", "0"),
+                    ("first_run_progress_external_effects_created", "false"),
+                ]
+            ),
+            _ul(lines + ["first_run_progress_safety: read-only first-run state; confirmed forms remain below"]),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
 def _first_run_command_bar(root: Path, storage: Storage, progress: dict[str, Any]) -> str:
     goal_id = str(progress.get("goal_id") or "")
     delegation_id = str(progress.get("delegation_id") or "")
@@ -7780,6 +7876,7 @@ def _first_run_panel(root: Path, storage: Storage) -> str:
             "<section id='first-run-guide'><h2>First Run Guide</h2>",
             "<p class='muted'>A state-aware path for a new operator to create local ClankerOS state and reach the first delegation handoff without reading docs.</p>",
             _first_run_command_bar(root, storage, progress),
+            _first_run_progress_strip(progress),
             _kv(
                 [
                     (
@@ -30481,6 +30578,22 @@ def _html_page(
     .first-run-command-action {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .first-run-command-action summary {{ cursor:pointer; font-weight:700; }}
     .first-run-command-action form {{ margin-top:10px; }}
+    .first-run-progress-strip {{ border-left:4px solid var(--accent); }}
+    .first-run-progress-bar-row {{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:10px 0 12px; color:var(--muted); }}
+    .first-run-progress-bar-row progress {{ flex:1 1 220px; min-width:160px; height:14px; accent-color:var(--accent); }}
+    .first-run-progress-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:10px; margin:12px 0; }}
+    .first-run-progress-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .first-run-progress-card h3 {{ margin:0 0 6px; }}
+    .first-run-progress-card p {{ margin:0 0 8px; color:var(--muted); overflow-wrap:anywhere; }}
+    .first-run-progress-index {{ display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; border:1px solid var(--line); color:var(--text) !important; }}
+    .first-run-progress-status {{ font-weight:700; color:var(--text) !important; }}
+    .first-run-progress-current {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .first-run-progress-done {{ opacity:.9; }}
+    .first-run-progress-action {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .first-run-progress-current .first-run-progress-action {{ background:var(--accent); color:#fff; }}
+    .first-run-progress-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .first-run-progress-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .first-run-progress-evidence:not([open]) > :not(summary) {{ display:none; }}
     .demo-operator-workbench {{ border-left:4px solid var(--accent); }}
     .demo-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .demo-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}

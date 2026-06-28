@@ -296,7 +296,8 @@ Core layers for the bootstrap:
   use-for, provider, model-routing, and zero-effect readbacks in the DOM.
   The `/goals` and Home first-run panel now exposes a state-aware
   Create project -> Create first goal -> Create first delegation -> Generate
-  context pack -> Run first delegation checklist plus confirmed local
+  context pack -> Run first delegation checklist, visible five-card progress
+  strip, and confirmed local
   `register-project` and `create-goal` forms, explicitly defaults the first
   dogfood project to `clankeros` at the current repository path, persists
   resume workspace state plus exact `resume_surface` routes after confirmed
@@ -804,9 +805,13 @@ Core layers for the bootstrap:
   a `/goals` detour. The first-run guide starts with a read-only
   `First Run Command Bar` that names the current first-run step, one next
   action, target surface, form surface, Goal/delegation context, confirmation
-  posture, and zero-effect counters; after a Goal exists, it can render the
-  same confirmed local next-action form inline for scout delegation,
-  context-pack generation, and first delegation execution. After a confirmed
+  posture, and zero-effect counters. It then shows a read-only
+  `First Run Progress` strip with a progress bar and five step cards for
+  Project, Goal, Delegation, Context, and Run, keeping detailed status evidence
+  collapsed and preserving no-write/provider/network/external-effect
+  counters; after a Goal exists, it can render the same confirmed local
+  next-action form inline for scout delegation, context-pack generation, and
+  first delegation execution. After a confirmed
   `register-project` action, `Action Result Details` can also continue the
   first-run browser path before a saved Goal exists by rendering the
   confirmation-required `create-goal` form inline plus Home and Today fallback

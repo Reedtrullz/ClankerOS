@@ -1,5 +1,38 @@
 # Status
 
+## 2026-06-28 First Run Progress Strip UX
+
+- Added a visible read-only `First Run Progress` strip to the First Run Guide.
+- The strip renders a progress bar plus five step cards for Project, Goal,
+  Delegation, Context, and Run, using the existing `_first_run_progress`
+  source instead of a new state model.
+- Empty checkouts now show step 1 as current, with one current step and four
+  waiting steps; after confirmed project registration, the strip advances to
+  `create_first_goal` with one done/current split.
+- Detailed progress evidence stays collapsed and records current step, next
+  action, reason, done/current/waiting counts, total steps, and zero-effect
+  boundaries.
+- Existing confirmed `register-project`, `create-goal`, and inline first-run
+  action forms remain the only write paths; the strip does not write on GET.
+- Updated README, operating summary, local status focus, and focused first-run
+  route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> passed, `2 passed, 514 deselected in 31.75s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `git diff --check` -> passed
+- Full pytest/browser regression proof is intentionally left to GitHub Actions
+  for this GitHub-first testing loop.
+- Non-claims until remote proof: no browser QA for this slice, no write on GET,
+  no provider call, no app-side GitHub polling, no approval decision, no
+  execution, no commit, no push, no PR, and no deploy from ClankerOS itself.
+
 ## 2026-06-28 Exact Workspace Resume Surface UX
 
 - Promoted `resume_surface` to a first-class saved workspace field in
