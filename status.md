@@ -1,5 +1,45 @@
 # Status
 
+## 2026-06-28 Home Operator Board
+
+- Made `/` more usable as the default operator surface by adding a
+  read-only `Home Operator Board` with visible Do Now, Attention, Resume, and
+  Proof cards for the lead Goal or first-run step.
+- Home now renders its own operating content before the shared route/focus
+  diagnostics, keeps Home state and board evidence collapsed by default, and
+  keeps the recent-items sidebar after the main article on narrow screens.
+- The board routes browser-available actions to the existing confirmed forms:
+  saved matching Goals use `#home-resume-action-form`, unsaved lead Goals use
+  `/goals/<goal_id>#goal-next-action-form`, approval attention uses
+  `/approvals?goal_id=<goal_id>`, unfinished resume state uses
+  `#home-finish-today`, and proof review uses the existing CI evidence
+  surfaces.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is read-only routing and layout. It does not write on GET,
+  create action authority, approve work, run work, call providers, fetch
+  GitHub from ClankerOS, poll network services, commit, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-home-board-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-home-board-demo app-demo-smoke-test`
+    -> passed, fixture-backed routes matched expected snippets,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8803/`: desktop `1280x900` rendered the board at
+    `boardTop=284`, before Route Context, with four cards, collapsed Home
+    state and board evidence, no overflow, and no console warnings/errors;
+    clicking the Resume card changed the URL to `#home-finish-today` and put
+    Finish Today at the top of the viewport.
+  - Mobile Browser QA at `390x844` rendered the board at `boardTop=431` in
+    the first viewport, stacked four cards in one column, kept card widths
+    within the viewport, kept the main article at order `1` and the recent
+    sidebar at order `2`, and showed no overflow or console warnings/errors.
+
 ## 2026-06-28 Goal Board Workbench
 
 - Made `/goals` more usable as a daily board by adding a `Goal Board

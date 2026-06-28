@@ -37,15 +37,21 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 
 ## Pages
 
-- `/` - Goal-First Home dashboard. It starts with active, paused, and
-  completed goal lanes, recent activity, the operator inbox, open
-  recommendations, open incidents, saved workspace resume links, saved-goal
-  phase and next-action readbacks, a `Home Day Plan` readback for the current
-  goal, phase, one next action, waiting counts, and end-of-day resume
-  readiness plus a confirmed `save-workspace` Finish Today form for the lead
-  goal, a read-only `Home Live State` panel with five-second local page reload
-  polling that pauses while a form is focused or the tab is hidden and reports
-  zero provider/network/external-effect counters, a read-only `Home Attention Brief` that prioritizes approvals,
+- `/` - Goal-First Home dashboard. It renders the Home operating surface
+  before the shared route/focus diagnostics, keeps Home state and board
+  evidence collapsed by default, and starts with a read-only
+  `Home Operator Board` that turns the lead Goal or first-run step into
+  visible Do Now, Attention, Resume, and Proof cards with scoped approval
+  links, direct action-form targets, Finish Today resume routing, and local CI
+  proof surfaces. It also includes active, paused, and completed goal lanes,
+  recent activity, the operator inbox, open recommendations, open incidents,
+  saved workspace resume links, saved-goal phase and next-action readbacks, a
+  `Home Day Plan` readback for the current goal, phase, one next action,
+  waiting counts, and end-of-day resume readiness plus a confirmed
+  `save-workspace` Finish Today form for the lead goal, a read-only
+  `Home Live State` panel with five-second local page reload polling that
+  pauses while a form is focused or the tab is hidden and reports zero
+  provider/network/external-effect counters, a read-only `Home Attention Brief` that prioritizes approvals,
   incidents, recommendations, inbox review, and CI proof posture before deeper
   goal work, a `Home Focus Queue` for next actions across active and paused
   goals, a read-only `Home Activity Command Bar` that names the latest

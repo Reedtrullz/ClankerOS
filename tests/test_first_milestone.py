@@ -4156,6 +4156,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     root = render_local_app_route(tmp_path, "/")
     assert root.status == 200
     assert "ClankerOS Local Operator" in root.body
+    assert 'data-operator-shell="true"' in root.body
+    assert 'class="operator-main" data-operator-main="true"' in root.body
+    assert ".operator-main { order:1; } .operator-side { order:2; }" in root.body
     assert "Goal-First Home" in root.body
     assert "home_dashboard_goal_first</dt><dd>true" in root.body
     assert "home_active_goals</dt><dd>0" in root.body
@@ -4195,6 +4198,32 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "home_live_refresh_safety: local browser loopback reload only" in root.body
     assert "document.hidden" in root.body
     assert "window.location.reload()" in root.body
+    assert "Home Operator Board" in root.body
+    assert "data-home-operator-board='true'" in root.body
+    assert "data-home-operator-board-actions='true'" in root.body
+    assert "data-home-operator-board-evidence='true'" in root.body
+    assert "data-home-operator-board-primary='true'" in root.body
+    assert root.body.index("data-home-operator-board='true'") < root.body.index(
+        "data-route-context='true'"
+    )
+    assert "home_operator_board_status</dt><dd>first_run" in root.body
+    assert "home_operator_board_source</dt><dd>first_run_progress" in root.body
+    assert "home_operator_board_lead_goal</dt><dd>none" in root.body
+    assert "home_operator_board_phase</dt><dd>First run" in root.body
+    assert "home_operator_board_primary_action</dt><dd>Register ClankerOS project" in root.body
+    assert (
+        "home_operator_board_primary_surface</dt><dd><a href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
+    assert "home_operator_board_attention_reason</dt><dd>create_project" in root.body
+    assert "home_operator_board_action_form_available</dt><dd>true" in root.body
+    assert "home_operator_board_resume_status</dt><dd>not_started" in root.body
+    assert "home_operator_board_ci_status</dt><dd>success" in root.body
+    assert "home_operator_board_ci_source</dt><dd>publication_handoff" in root.body
+    assert "home_operator_board_write_on_get</dt><dd>false" in root.body
+    assert "home_operator_board_network_actions_taken</dt><dd>0" in root.body
+    assert "home_operator_board_external_effects_created</dt><dd>false" in root.body
+    assert "home_operator_board_click: <a href='#first-run-create-project'>Create Project</a>" in root.body
     assert "Start Here" in root.body
     assert "data-home-start-here='true'" in root.body
     assert "start_here_mode</dt><dd>first_run" in root.body
@@ -7458,6 +7487,35 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_dashboard_goal_first</dt><dd>true" in dashboard.body
     assert "Home Goal Board" in dashboard.body
     assert "home_active_goals</dt><dd>1" in dashboard.body
+    assert "Home Operator Board" in dashboard.body
+    assert "data-home-operator-board='true'" in dashboard.body
+    assert "data-home-operator-board-actions='true'" in dashboard.body
+    assert "data-home-operator-board-evidence='true'" in dashboard.body
+    assert dashboard.body.index("data-home-operator-board='true'") < dashboard.body.index(
+        "data-route-context='true'"
+    )
+    assert "home_operator_board_status</dt><dd>goal_ready" in dashboard.body
+    assert "home_operator_board_source</dt><dd>lead_goal" in dashboard.body
+    assert f"home_operator_board_lead_goal</dt><dd><a href='/goals/{result.goal_id}'" in dashboard.body
+    assert "home_operator_board_phase</dt><dd>Ready to commit" in dashboard.body
+    assert "home_operator_board_primary_action</dt><dd>Create commit request" in dashboard.body
+    assert (
+        f"home_operator_board_primary_surface</dt><dd><a href='/goals/{result.goal_id}#goal-next-action-form'>"
+        "Use Goal action form</a>"
+    ) in dashboard.body
+    assert "home_operator_board_action_form_available</dt><dd>true" in dashboard.body
+    assert "home_operator_board_attention_action</dt><dd>Review approvals" in dashboard.body
+    assert f"home_operator_board_attention_surface</dt><dd><a href='/approvals?goal_id={result.goal_id}'>Review approvals</a>" in dashboard.body
+    assert "home_operator_board_attention_reason</dt><dd>pending_approvals" in dashboard.body
+    assert "home_operator_board_resume_status</dt><dd>not_started" in dashboard.body
+    assert "home_operator_board_resume_surface</dt><dd><a href='#home-finish-today'>Save resume point</a>" in dashboard.body
+    assert "home_operator_board_ci_status</dt><dd>success" in dashboard.body
+    assert "home_operator_board_ci_source</dt><dd>direct_public_snapshot" in dashboard.body
+    assert "home_operator_board_waiting_items</dt><dd>1" in dashboard.body
+    assert "home_operator_board_write_on_get</dt><dd>false" in dashboard.body
+    assert "home_operator_board_network_actions_taken</dt><dd>0" in dashboard.body
+    assert "home_operator_board_external_effects_created</dt><dd>false" in dashboard.body
+    assert "id='home-finish-today'" in dashboard.body
     assert "Home Resume Workspace" in dashboard.body
     assert "workspace_status: no_saved_workspace" in dashboard.body
     assert "Remember Current Goal" in dashboard.body
@@ -9577,6 +9635,24 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "Home Resume Action Form</a>"
         in restored_home.body
     )
+    assert "Home Operator Board" in restored_home.body
+    assert "data-home-operator-board-evidence='true'" in restored_home.body
+    assert "home_operator_board_status</dt><dd>goal_ready" in restored_home.body
+    assert "home_operator_board_source</dt><dd>lead_goal" in restored_home.body
+    assert "home_operator_board_phase</dt><dd>Ready to commit" in restored_home.body
+    assert "home_operator_board_primary_action</dt><dd>Create commit request" in restored_home.body
+    assert (
+        "home_operator_board_primary_surface</dt><dd><a href='#home-resume-action-form'>"
+        "Use Home action form</a>"
+        in restored_home.body
+    )
+    assert "home_operator_board_action_form_available</dt><dd>true" in restored_home.body
+    assert f"home_operator_board_attention_surface</dt><dd><a href='/approvals?goal_id={result.goal_id}'>Review approvals</a>" in restored_home.body
+    assert "home_operator_board_resume_status</dt><dd>ready" in restored_home.body
+    assert "home_operator_board_resume_surface</dt><dd><a href='/resume'>/resume</a>" in restored_home.body
+    assert "home_operator_board_ci_status</dt><dd>success" in restored_home.body
+    assert "home_operator_board_waiting_items</dt><dd>1" in restored_home.body
+    assert "home_operator_board_click: <a href='#home-resume-action-form'>Use Home action form</a>" in restored_home.body
     assert "Home Resume Workspace" in restored_home.body
     assert f"resume_goal: <a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in restored_home.body
     assert f"resume_project: <a href='/projects/{result.project_id}'>{result.project_id}</a>" in restored_home.body

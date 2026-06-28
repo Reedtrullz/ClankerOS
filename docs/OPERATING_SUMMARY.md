@@ -636,12 +636,18 @@ Core layers for the bootstrap:
   matching commit or publication decision ahead of unrelated queue items, and
   commit/publication approval decisions return to the owning run page after
   confirmation.
-  The root `/` app page is now a Goal-First Home board with active, paused,
-  and completed goal lanes, recent activity, inbox counts, recommendations,
+  The root `/` app page is now an action-first Goal-First Home board: the
+  Home operating surface renders before the shared route/focus diagnostics,
+  while Home state and board evidence remain available in collapsed details.
+  It starts with a read-only `Home Operator Board` that condenses the lead
+  goal or first-run step into visible Do Now, Attention, Resume, and Proof
+  cards with action-form routing, scoped approval links, resume readiness,
+  waiting counts, and CI proof posture. Home also includes active, paused, and
+  completed goal lanes, recent activity, inbox counts, recommendations,
   incidents, saved workspace resume links, saved-goal phase and next-action
-  readbacks, a read-only `Start Here` cockpit that condenses the lead goal or
-  first-run step, one primary action, target surface, resume readiness,
-  waiting counts, and CI handoff posture into a single scan-friendly panel, a
+  readbacks, a read-only `Start Here` cockpit that condenses the
+  lead goal or first-run step, one primary action, target surface, resume
+  readiness, waiting counts, and CI handoff posture into a single scan-friendly panel, a
   form-backed `Home Day Plan` that names the current goal, current phase, one
   next action, waiting counts, end-of-day resume readiness from saved
   workspace state, and a confirmed local `save-workspace` Finish Today form

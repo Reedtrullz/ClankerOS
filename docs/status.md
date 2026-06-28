@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/` now leads with the Home operating surface before shared route/focus
+  diagnostics. Its `Home Operator Board` is visible in the first desktop and
+  mobile viewports, shows Do Now, Attention, Resume, and Proof cards for the
+  lead Goal or first-run step, keeps Home state and board evidence collapsed by
+  default, routes browser-available actions to existing confirmed forms, sends
+  lead-goal approval attention to `/approvals?goal_id=<goal_id>`, and points
+  unfinished resume state at the Home Finish Today anchor.
 - `/goals` now includes a `Goal Board Workbench` after the command bar, with
   visible Do Now, Selected Goal, Attention, and Start/Resume cards. It routes
   selected goals directly to their confirmed action form, sends approval

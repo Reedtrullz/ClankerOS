@@ -103,13 +103,19 @@ artifacts, the operator inbox, approvals, incidents, and demo state:
 python3 -m agent_os.cli app
 ```
 
-The root `/` page is the Goal-First Home board. It starts with active,
-paused, and completed goal lanes, recent activity, the operator inbox,
-recommendations, incidents, saved workspace resume links, saved-goal phase and
-next-action readbacks, a read-only `Home Live State` panel with five-second
-local page reload polling that pauses while a form is focused or the tab is
-hidden, a `Start Here` cockpit for the next click, resume
-posture, blockers, and CI handoff, a `Home Day Plan` that names the current goal, phase,
+The root `/` page is the Goal-First Home board. It now leads with the actual
+Home operating surface before the shared route/focus diagnostics, and keeps
+Home state plus board evidence collapsed by default. The `Home Operator Board`
+shows visible Do Now, Attention, Resume, and Proof cards for the lead Goal or
+first-run step, routing browser-available work to existing confirmed forms,
+lead-goal approval attention to `/approvals?goal_id=<goal_id>`, unfinished
+resume state to the Home Finish Today anchor, and proof review to the local CI
+evidence surfaces. Home also includes active, paused, and completed goal lanes,
+recent activity, the operator inbox, recommendations, incidents, saved
+workspace resume links, saved-goal phase and next-action readbacks, a read-only
+`Home Live State` panel with five-second local page reload polling that pauses
+while a form is focused or the tab is hidden, a `Start Here` cockpit for the
+next click, resume posture, blockers, and CI handoff, a `Home Day Plan` that names the current goal, phase,
 one next action, waiting counts, whether end-of-day resume is ready, and a
 confirmed `save-workspace` Finish Today form for the lead goal, the
 read-only `Home Attention Brief` for approvals, incidents, recommendations,

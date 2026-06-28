@@ -2506,9 +2506,19 @@ def _home_dashboard(
     sections = [
         "<section class='hero'><h1>Goal-First Home</h1>",
         "<p>Daily operating board for goals, activity, inbox, recommendations, and incidents.</p>",
+        "<details class='home-state-details' data-home-state-details='true'><summary>Home state</summary>",
         _kv(lead_lines),
         _non_claim_banner(),
+        "</details>",
         "</section>",
+        _home_operator_board(
+            root,
+            storage,
+            active=active,
+            paused=paused,
+            completed=completed,
+            lead_goal=lead_goal,
+        ),
         _home_live_state(
             root,
             storage,
@@ -2644,6 +2654,223 @@ def _home_live_state(
   window.setTimeout(tick, intervalMs);
 })();
 </script>""",
+            "</section>",
+        ]
+    )
+
+
+def _home_operator_board(
+    root: Path,
+    storage: Storage,
+    *,
+    active: list[sqlite3.Row],
+    paused: list[sqlite3.Row],
+    completed: list[sqlite3.Row],
+    lead_goal: sqlite3.Row | None,
+) -> str:
+    workspace = _load_workspace_state(root)
+    open_project = str(workspace.get("open_project") or "").strip()
+    open_goal = str(workspace.get("open_goal") or "").strip()
+    filters = str(workspace.get("filters") or "").strip()
+    expanded = str(workspace.get("expanded_panels") or "").strip()
+    last_artifact = str(workspace.get("last_viewed_artifact") or "").strip()
+    readiness = _workspace_resume_readiness(
+        root,
+        open_project=open_project,
+        open_goal=open_goal,
+        filters=filters,
+        expanded=expanded,
+        last_artifact=last_artifact,
+    )
+    ci_record = _latest_ci_evidence_record(root)
+    if ci_record is None:
+        ci_source = "none"
+        ci_status = "missing"
+    else:
+        ci_source, record = ci_record
+        ci_status = str(record.status)
+
+    if lead_goal is None:
+        first_run = _first_run_progress(root, storage)
+        primary_href, primary_label = _first_run_same_page_target(first_run)
+        status = "first_run"
+        source = "first_run_progress"
+        lead_goal_surface: str | SafeHtml = "none"
+        phase = "First run"
+        primary_action = str(first_run["next_action"])
+        primary_reason = str(first_run["next_reason"])
+        action_form_available = primary_href.startswith("#first-run-")
+        waiting_items = 0
+        pending_approvals = 0
+        open_incidents = 0
+        open_recommendations = 0
+        attention_action = primary_action
+        attention_href = primary_href
+        attention_label = primary_label
+        attention_reason = str(first_run["current_step"])
+        resume_action = "Open resume"
+        resume_href = "/resume"
+        resume_label = "/resume"
+    else:
+        goal_id = str(lead_goal["id"])
+        state = _goal_state(root, storage, goal_id)
+        goal = state["goal"]
+        next_action = _goal_next_action(root, state)
+        form_available = bool(_goal_next_action_form(state, next_action))
+        saved_goal_matches_lead = open_goal == goal_id
+        if form_available and saved_goal_matches_lead:
+            primary_href = "#home-resume-action-form"
+            primary_label = "Use Home action form"
+        elif form_available:
+            primary_href = f"/goals/{quote(goal_id)}#goal-next-action-form"
+            primary_label = "Use Goal action form"
+        else:
+            primary_href = next_action.href
+            primary_label = next_action.href
+        status = "goal_ready"
+        source = "lead_goal"
+        phase = _goal_current_phase(state)
+        label = str(lead_goal["title"] or lead_goal["description"] or goal_id)
+        lead_goal_surface = SafeHtml(
+            f"<a href='/goals/{quote(goal_id)}'>{_e(_compact_label(label, 72))}</a>"
+        )
+        primary_action = next_action.action
+        primary_reason = next_action.reason
+        action_form_available = form_available
+        open_incidents = len([item for item in state["incidents"] if item["status"] == "open"])
+        open_recommendations = len(
+            [item for item in state["recommendations"] if item["status"] == "open"]
+        )
+        pending_approvals = (
+            _count_status(state["worktree_approvals"], "pending_operator_approval")
+            + _count_status(state["commit_approvals"], "pending_operator_approval")
+            + _count_status(state["publications"], "pending_operator_approval")
+        )
+        waiting_items = open_incidents + open_recommendations + pending_approvals
+        if pending_approvals:
+            attention_action = "Review approvals"
+            attention_href = f"/approvals?goal_id={quote(goal_id)}"
+            attention_label = "Review approvals"
+            attention_reason = "pending_approvals"
+        elif open_incidents:
+            attention_action = "Inspect incidents"
+            attention_href = "/incidents"
+            attention_label = "/incidents"
+            attention_reason = "open_incidents"
+        elif open_recommendations:
+            attention_action = "Review recommendations"
+            attention_href = "/incidents"
+            attention_label = "/incidents"
+            attention_reason = "open_recommendations"
+        elif ci_status != "success":
+            attention_action = "Review verification"
+            attention_href = "/verification"
+            attention_label = "/verification"
+            attention_reason = "ci_proof_not_success"
+        else:
+            attention_action = "Continue goal"
+            attention_href = primary_href
+            attention_label = primary_label
+            attention_reason = "clear_to_continue_goal"
+        if bool(readiness["ready"]):
+            resume_action = "Resume saved workspace"
+            resume_href = "/resume"
+            resume_label = "/resume"
+        else:
+            resume_action = "Finish today"
+            resume_href = "#home-finish-today"
+            resume_label = "Save resume point"
+
+    proof_action = "Record CI proof" if ci_status != "success" else "Review CI proof"
+    proof_href = "/ci-evidence" if ci_status != "success" else "/verification"
+    proof_label = "/ci-evidence" if ci_status != "success" else "/verification"
+    primary_surface = SafeHtml(
+        f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"
+    )
+    attention_surface = SafeHtml(
+        f"<a href='{_e(attention_href)}'>{_e(attention_label)}</a>"
+    )
+    resume_surface = SafeHtml(
+        f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>"
+    )
+    proof_surface = SafeHtml(
+        f"<a href='{_e(proof_href)}'>{_e(proof_label)}</a>"
+    )
+    cards = "".join(
+        [
+            "<article class='home-operator-card home-operator-primary'>",
+            "<h3>Do Now</h3>",
+            f"<p>{_e(primary_action)}</p>",
+            f"<a class='home-operator-action' data-home-operator-board-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+            "</article>",
+            "<article class='home-operator-card'>",
+            "<h3>Attention</h3>",
+            f"<p>{_e(attention_action)}</p>",
+            f"<a class='home-operator-link' href='{_e(attention_href)}'>{_e(attention_label)}</a>",
+            "</article>",
+            "<article class='home-operator-card'>",
+            "<h3>Resume</h3>",
+            f"<p>{_e(resume_action)}</p>",
+            f"<a class='home-operator-link' href='{_e(resume_href)}'>{_e(resume_label)}</a>",
+            "</article>",
+            "<article class='home-operator-card'>",
+            "<h3>Proof</h3>",
+            f"<p>{_e(ci_status)}</p>",
+            f"<a class='home-operator-link' href='{_e(proof_href)}'>{_e(proof_label)}</a>",
+            "</article>",
+        ]
+    )
+    return "".join(
+        [
+            "<section id='home-operator-board' class='panel home-operator-board' data-home-operator-board='true'><h2>Home Operator Board</h2>",
+            "<p class='muted'>Four daily operating choices for the lead Goal: do now, attention, resume, and proof.</p>",
+            "<div class='home-operator-board-grid' data-home-operator-board-actions='true'>",
+            cards,
+            "</div>",
+            "<details class='home-operator-board-evidence' data-home-operator-board-evidence='true'><summary>Board evidence</summary>",
+            _kv(
+                [
+                    ("home_operator_board_status", status),
+                    ("home_operator_board_source", source),
+                    ("home_operator_board_active_goals", str(len(active))),
+                    ("home_operator_board_paused_goals", str(len(paused))),
+                    ("home_operator_board_completed_goals", str(len(completed))),
+                    ("home_operator_board_lead_goal", lead_goal_surface),
+                    ("home_operator_board_phase", phase),
+                    ("home_operator_board_primary_action", primary_action),
+                    ("home_operator_board_primary_surface", primary_surface),
+                    ("home_operator_board_primary_reason", primary_reason),
+                    ("home_operator_board_action_form_available", str(action_form_available).lower()),
+                    ("home_operator_board_attention_action", attention_action),
+                    ("home_operator_board_attention_surface", attention_surface),
+                    ("home_operator_board_attention_reason", attention_reason),
+                    ("home_operator_board_waiting_items", str(waiting_items)),
+                    ("home_operator_board_pending_approvals", str(pending_approvals)),
+                    ("home_operator_board_open_incidents", str(open_incidents)),
+                    ("home_operator_board_open_recommendations", str(open_recommendations)),
+                    ("home_operator_board_resume_status", str(readiness["status"])),
+                    ("home_operator_board_resume_ready", str(readiness["ready"]).lower()),
+                    ("home_operator_board_resume_surface", resume_surface),
+                    ("home_operator_board_ci_status", ci_status),
+                    ("home_operator_board_ci_source", ci_source),
+                    ("home_operator_board_ci_surface", proof_surface),
+                    ("home_operator_board_write_on_get", "false"),
+                    ("home_operator_board_provider_calls_taken", "0"),
+                    ("home_operator_board_network_actions_taken", "0"),
+                    ("home_operator_board_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"home_operator_board_now: {_e(primary_action)}",
+                    f"home_operator_board_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                    f"home_operator_board_attention: {_e(attention_reason)} -> <a href='{_e(attention_href)}'>{_e(attention_label)}</a>",
+                    f"home_operator_board_resume: {_e(str(readiness['status']))} -> <a href='{_e(resume_href)}'>{_e(resume_label)}</a>",
+                    f"home_operator_board_ci: status={_e(ci_status)} source={_e(ci_source)} surface=<a href='{_e(proof_href)}'>{_e(proof_label)}</a>",
+                    "home_operator_board_safety: read-only local routing; confirmed actions remain on existing forms",
+                ]
+            ),
+            "</details>",
             "</section>",
         ]
     )
@@ -2905,7 +3132,7 @@ def _home_day_plan(
         )
         finish_form = "".join(
             [
-                "<h3>Finish Today</h3>",
+                "<h3 id='home-finish-today'>Finish Today</h3>",
                 "<p class='muted'>Save the lead goal, current day-plan filters, expanded panels, and latest artifact as tomorrow's resume point. This writes only `.clanker/app/workspace.json` after confirmation.</p>",
                 _input_form(
                     "save-workspace",
@@ -23295,6 +23522,10 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
+    if current_path == "/":
+        article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
+    else:
+        article_body = f"{breadcrumbs}{focus_strip}{last_action_strip}{content}"
     body = f"""<!doctype html>
 <html lang="en">
 <head>
@@ -23316,6 +23547,7 @@ def _html_page(
     main {{ max-width:1280px; margin:0 auto; padding:24px; }}
     .operator-shell {{ display:grid; grid-template-columns:minmax(180px, 240px) minmax(0, 1fr); gap:24px; align-items:start; }}
     .operator-shell > *, article, aside, section, dl, dt, dd {{ min-width:0; max-width:100%; }}
+    .operator-main {{ min-width:0; max-width:100%; }}
     .operator-side {{ position:sticky; top:74px; border:1px solid var(--line); background:var(--panel); padding:12px; }}
     .operator-side h2 {{ font-size:14px; }}
     .operator-side ul, .command-palette ul {{ list-style:none; padding:0; margin:0; display:grid; gap:7px; }}
@@ -23611,6 +23843,24 @@ def _html_page(
     .today-current-action, .today-finish, .today-note, .today-pause, .goal-pause {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .today-current-action summary {{ cursor:pointer; font-weight:700; }}
     .today-current-action form, .today-finish form, .today-note form, .today-pause form, .goal-pause form {{ margin-top:10px; }}
+    .home-state-details {{ margin-top:10px; }}
+    .home-state-details summary {{ cursor:pointer; font-weight:700; }}
+    .home-state-details:not([open]) > :not(summary) {{ display:none; }}
+    .home-operator-board {{ border-left:4px solid var(--accent); }}
+    .home-operator-board-evidence {{ margin-top:10px; }}
+    .home-operator-board-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .home-operator-board-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .home-operator-board dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .home-operator-board ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .home-operator-board li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .home-operator-board-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .home-operator-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .home-operator-card h3 {{ margin-top:0; }}
+    .home-operator-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .home-operator-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .home-operator-action, .home-operator-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; margin:3px 3px 3px 0; }}
+    .home-operator-action {{ background:var(--accent); color:#fff; }}
+    .home-operator-link {{ background:var(--surface); color:var(--accent); }}
     .home-attention-brief {{ border-left:4px solid var(--warn); }}
     .home-attention-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .home-attention-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -23786,8 +24036,8 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
-    @media (max-width: 860px) {{ .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>
@@ -23804,11 +24054,8 @@ def _html_page(
   <main>
     <div class="operator-shell" data-operator-shell="true">
       {recent_panel}
-      <article>
-        {breadcrumbs}
-        {focus_strip}
-        {last_action_strip}
-        {content}
+      <article class="operator-main" data-operator-main="true">
+        {article_body}
       </article>
     </div>
   </main>
