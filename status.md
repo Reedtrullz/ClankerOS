@@ -1,5 +1,50 @@
 # Status
 
+## 2026-06-28 Compact Operator Focus
+
+- Made the shared `Operator Focus` strip compact and action-first across app
+  pages: it now opens with visible cards for primary action, phase, progress,
+  waiting counts, and `/resume` instead of a full diagnostic table.
+- Kept the existing confirmed local action form available when the current
+  next action is browser-available, but moved it after the focus cards and
+  before collapsed `Focus evidence`.
+- Moved the full focus readback, first-run routing rows, waiting counts,
+  confirmation posture, and zero-effect counters into collapsed
+  `Focus evidence` while preserving existing `operator_focus_*` strings for
+  auditability and tests.
+- Added stable `data-operator-focus-focus`, `data-operator-focus-primary`,
+  `data-operator-focus-*card`, `data-operator-focus-summary`, and
+  `data-operator-focus-details` assertions to first-run, dashboard, and Goal
+  route fixtures.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is read-only local navigation and browser rendering. It
+  does not write on GET, create action authority, approve work, run work, call
+  providers, fetch GitHub from ClankerOS, poll network services, commit, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 515 deselected`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-operator-focus-compact-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-operator-focus-compact-demo app-demo-smoke-test`
+    -> passed, fixture-backed Goal route matched expected snippets, provider/
+    network/external mutation counters remained `0`
+  - Rendered in-app Browser QA against
+    `http://127.0.0.1:8798/goals/goal_136c406a42d6`: desktop viewport
+    rendered a five-item Operator Focus card grid with primary
+    `Create commit request` to `/runs/run_d660d0fc59fb`, confirmed action form
+    after the cards, collapsed `Focus evidence`, hidden focus rows while
+    collapsed, a successful disclosure click, no horizontal overflow, no
+    framework overlay, and empty console warning/error logs. A scrolled desktop
+    check confirmed the focus cards and action form sit above the fixed Goal
+    Action Dock. Mobile viewport `390x844` rendered the same Operator Focus as
+    a one-column stack with no horizontal overflow (`scrollWidth=390`,
+    `viewportWidth=390`), collapsed evidence, no framework overlay, and empty
+    console warning/error logs.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Compact Route Context
 
 - Made the shared `Route Context` strip compact and action-first across app

@@ -400,11 +400,12 @@ Core layers for the bootstrap:
   so operators can jump
   through a long Goal workbench without leaving the page or triggering writes.
   Every app page also includes a shared read-only `Operator Focus` strip that
-  derives from the saved workspace goal or current lead goal and keeps phase,
-  one primary action, target local surface, progress, waiting counts, form
-  availability, `/resume`, an expandable confirmed local action form when the
-  current next action is browser-available, and no-write/no-provider/
-  no-network/no-external-effect boundaries visible outside the Goal page. When
+  derives from the saved workspace goal or current lead goal and now opens with
+  compact action cards for the primary action, phase, progress, waiting counts,
+  and `/resume`, followed by the expandable confirmed local action form when
+  the current next action is browser-available and collapsed `Focus evidence`
+  for the full readback and no-write/no-provider/no-network/no-external-effect
+  boundaries outside the Goal page. When
   no Goal exists yet, the shared shell now treats that as first-run progress:
   Home, Today, and Goals point `Route Context`, `Operator Focus`, and the
   command palette at their same-page `Create Project` or `Create First Goal`

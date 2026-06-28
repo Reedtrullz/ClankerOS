@@ -391,10 +391,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   counts, saved project/goal/artifact context, the last confirmed action, and
   write/provider/network/external-effect counters inside collapsed evidence,
   with the remaining recent shortcuts in a second collapsed disclosure. The focus strip is derived from the saved
-  workspace goal or current lead goal and shows phase, one primary action,
-  target surface, progress, waiting counts, form availability, `/resume`, and
-  an expandable confirmed local action form when the current next action is
-  browser-available before the page body. When no Goal exists yet, the shared
+  workspace goal or current lead goal and now opens with compact action cards
+  for primary action, phase, progress, waiting counts, and `/resume`, followed
+  by the expandable confirmed local action form when the current next action is
+  browser-available and collapsed `Focus evidence` for the full readback and
+  zero-effect counters. When no Goal exists yet, the shared
   shell treats that as first-run progress, so Home, Today, and Goals point the
   route context, command palette, and Operator Focus at their same-page
   `Create Project` or `Create First Goal` forms, and other pages link back to

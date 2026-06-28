@@ -518,9 +518,11 @@ Command Bar` that shows one compact reopen action plus `/resume`, then keeps
 workspace/goal/delegation/run counts, saved workspace context, last action, and
 zero-effect counters inside collapsed evidence and the remaining recent
 shortcuts in a second collapsed disclosure. The focus strip keeps the saved or lead
-goal's phase, one primary action, target surface, progress, waiting counts,
-and resume link visible outside the Goal page, and can expand the same
-confirmed local action form when the current next action is browser-available.
+goal's primary action, phase, progress, waiting counts, and resume link visible
+as compact action cards outside the Goal page. It can expand the same confirmed
+local action form when the current next action is browser-available, while the
+full focus readback and zero-effect counters stay inside collapsed
+`Focus evidence`.
 Before any Goal exists, the same shared shell follows first-run progress
 instead: Home, Today, and Goals point the route context, command palette, and
 Operator Focus at their same-page `Create Project` or `Create First Goal`

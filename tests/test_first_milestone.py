@@ -4568,6 +4568,24 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "palette_continue_external_effects_created</dt><dd>false" in root.body
     assert "Operator Focus" in root.body
     assert "data-operator-focus-strip='true'" in root.body
+    assert "data-operator-focus-focus='true'" in root.body
+    assert "data-operator-focus-now='true'" in root.body
+    assert (
+        "data-operator-focus-primary='true' href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
+    assert "data-operator-focus-step='true'" in root.body
+    assert "data-operator-focus-project='true' href='/projects'>clankeros</a>" in root.body
+    assert "data-operator-focus-boundary='true'" in root.body
+    assert "data-operator-focus-details='true'" in root.body
+    assert "<summary>Focus evidence</summary>" in root.body
+    assert "data-operator-focus-summary='true'" in root.body
+    assert root.body.index("data-operator-focus-focus='true'") < root.body.index(
+        "data-operator-focus-details='true'"
+    )
+    assert root.body.index("data-operator-focus-summary='true'") < root.body.index(
+        "operator_focus_status</dt><dd>first_run"
+    )
     assert "operator_focus_status</dt><dd>first_run" in root.body
     assert "operator_focus_source</dt><dd>first_run_progress" in root.body
     assert "operator_focus_current_step</dt><dd>create_project" in root.body
@@ -7502,6 +7520,25 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"name='run_id' value='{result.coder_worktree_run_id}'" in dashboard.body
     assert "Operator Focus" in dashboard.body
     assert "data-operator-focus-strip='true'" in dashboard.body
+    assert "data-operator-focus-focus='true'" in dashboard.body
+    assert "data-operator-focus-now='true'" in dashboard.body
+    assert (
+        f"data-operator-focus-primary='true' href='/runs/{result.coder_worktree_run_id}'>"
+        "Create commit request</a>"
+    ) in dashboard.body
+    assert "data-operator-focus-phase-card='true'" in dashboard.body
+    assert "data-operator-focus-progress-card='true'" in dashboard.body
+    assert "data-operator-focus-waiting-card='true'" in dashboard.body
+    assert "data-operator-focus-resume='true' href='/resume'>Resume workspace</a>" in dashboard.body
+    assert "data-operator-focus-details='true'" in dashboard.body
+    assert "<summary>Focus evidence</summary>" in dashboard.body
+    assert "data-operator-focus-summary='true'" in dashboard.body
+    assert dashboard.body.index("data-operator-focus-focus='true'") < dashboard.body.index(
+        "data-operator-focus-details='true'"
+    )
+    assert dashboard.body.index("data-operator-focus-summary='true'") < dashboard.body.index(
+        "operator_focus_status</dt><dd>available"
+    )
     assert "operator_focus_status</dt><dd>available" in dashboard.body
     assert "operator_focus_source</dt><dd>lead_goal" in dashboard.body
     assert f"operator_focus_goal</dt><dd><a href='/goals/{result.goal_id}'" in dashboard.body
@@ -7850,6 +7887,28 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Continue Action Form" in goal.body
     assert "id='command-palette-continue-form'" in goal.body
     assert "operator_focus_action_form_available</dt><dd>true" in goal.body
+    assert "data-operator-focus-focus='true'" in goal.body
+    assert "data-operator-focus-now='true'" in goal.body
+    assert (
+        f"data-operator-focus-primary='true' href='/runs/{result.coder_worktree_run_id}'>"
+        "Create commit request</a>"
+    ) in goal.body
+    assert "data-operator-focus-phase-card='true'" in goal.body
+    assert "data-operator-focus-progress-card='true'" in goal.body
+    assert "data-operator-focus-waiting-card='true'" in goal.body
+    assert "data-operator-focus-resume='true' href='/resume'>Resume workspace</a>" in goal.body
+    assert "data-operator-focus-details='true'" in goal.body
+    assert "<summary>Focus evidence</summary>" in goal.body
+    assert "data-operator-focus-summary='true'" in goal.body
+    assert goal.body.index("data-operator-focus-focus='true'") < goal.body.index(
+        "data-operator-focus-action='true'"
+    )
+    assert goal.body.index("data-operator-focus-action='true'") < goal.body.index(
+        "data-operator-focus-details='true'"
+    )
+    assert goal.body.index("data-operator-focus-summary='true'") < goal.body.index(
+        "operator_focus_status</dt><dd>available"
+    )
     assert "data-operator-focus-action='true'" in goal.body
     assert "data-recent-items='true'" in goal.body
     assert "Recent Items Command Bar" in goal.body

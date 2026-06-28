@@ -21709,6 +21709,55 @@ def _operator_focus_context(root: Path, current_path: str = "/") -> dict[str, An
     }
 
 
+def _operator_focus_card(
+    label: str,
+    value: str,
+    *,
+    action: str | SafeHtml | None = None,
+    marker: str = "",
+    primary: bool = False,
+) -> str:
+    action_html = ""
+    if action is not None:
+        action_html = str(action) if isinstance(action, SafeHtml) else _e(str(action))
+    classes = "operator-focus-item"
+    if primary:
+        classes += " operator-focus-item-primary"
+    marker_attr = f" {marker}" if marker else ""
+    return (
+        f"<div class='{classes}'{marker_attr}>"
+        f"<span class='operator-focus-label'>{_e(label)}</span>"
+        f"<strong>{_e(_compact_label(value, 88))}</strong>"
+        f"{action_html}"
+        "</div>"
+    )
+
+
+def _operator_focus_focus_grid(cards: list[str]) -> str:
+    return (
+        "<div class='operator-focus-focus' data-operator-focus-focus='true'>"
+        + "".join(cards)
+        + "</div>"
+    )
+
+
+def _operator_focus_evidence(
+    rows: list[tuple[str, str | SafeHtml]],
+    lines: list[str],
+) -> str:
+    return "".join(
+        [
+            "<details class='operator-focus-details' data-operator-focus-details='true'>",
+            "<summary>Focus evidence</summary>",
+            "<div class='operator-focus-summary' data-operator-focus-summary='true'>",
+            _kv(rows),
+            "</div>",
+            _ul(lines),
+            "</details>",
+        ]
+    )
+
+
 def _operator_focus_strip(context: dict[str, Any]) -> str:
     status = str(context.get("status", "state_unavailable"))
     if status == "first_run":
@@ -21716,57 +21765,86 @@ def _operator_focus_strip(context: dict[str, Any]) -> str:
         label = str(context.get("target_label") or href)
         action = str(context.get("next_action") or "Continue first run")
         form_available = bool(context.get("form_available"))
+        rows: list[tuple[str, str | SafeHtml]] = [
+            ("operator_focus_status", "first_run"),
+            ("operator_focus_source", str(context.get("source") or "first_run_progress")),
+            ("operator_focus_current_step", str(context.get("current_step") or "unknown")),
+            ("operator_focus_primary_action", action),
+            (
+                "operator_focus_target",
+                SafeHtml(f"<a href='{_e(href)}'>{_e(label)}</a>"),
+            ),
+            ("operator_focus_reason", str(context.get("next_reason") or "first_run")),
+            ("operator_focus_project", str(context.get("default_project") or "clankeros")),
+            (
+                "operator_focus_home_target",
+                SafeHtml(
+                    f"<a href='{_e(str(context.get('home_href') or '/'))}'>Home setup</a>"
+                ),
+            ),
+            (
+                "operator_focus_today_target",
+                SafeHtml(
+                    f"<a href='{_e(str(context.get('today_href') or '/today'))}'>Today setup</a>"
+                ),
+            ),
+            (
+                "operator_focus_goals_target",
+                SafeHtml(
+                    f"<a href='{_e(str(context.get('goals_href') or '/goals'))}'>Goal setup</a>"
+                ),
+            ),
+            ("operator_focus_action_form_available", str(form_available).lower()),
+            ("operator_focus_first_run_form_available", str(form_available).lower()),
+            ("operator_focus_confirmation_required", str(form_available).lower()),
+            ("operator_focus_safety_boundary", "confirmed_local_action_only"),
+            ("operator_focus_write_on_get", "false"),
+            ("operator_focus_provider_calls_taken", "0"),
+            ("operator_focus_network_actions_taken", "0"),
+            ("operator_focus_external_effects_created", "false"),
+        ]
+        lines = [
+            f"operator_focus_now: {_e(action)}",
+            f"operator_focus_click: <a href='{_e(href)}'>{_e(label)}</a>",
+            f"operator_focus_first_run: step={_e(str(context.get('current_step') or 'unknown'))}",
+            "operator_focus_safety: read-only local first-run routing",
+        ]
+        cards = [
+            _operator_focus_card(
+                "Now",
+                action,
+                action=SafeHtml(
+                    f"<a class='operator-focus-primary' data-operator-focus-primary='true' "
+                    f"href='{_e(href)}'>{_e(label)}</a>"
+                ),
+                marker="data-operator-focus-now='true'",
+                primary=True,
+            ),
+            _operator_focus_card(
+                "Step",
+                str(context.get("current_step") or "unknown"),
+                marker="data-operator-focus-step='true'",
+            ),
+            _operator_focus_card(
+                "Project",
+                str(context.get("default_project") or "clankeros"),
+                action=SafeHtml(
+                    f"<a class='operator-focus-secondary' data-operator-focus-project='true' "
+                    f"href='/projects'>{_e(str(context.get('default_project') or 'clankeros'))}</a>"
+                ),
+                marker="data-operator-focus-project-card='true'",
+            ),
+            _operator_focus_card(
+                "Boundary",
+                "confirmed local action only" if form_available else "read-only local routing",
+                marker="data-operator-focus-boundary='true'",
+            ),
+        ]
         return "".join(
             [
                 "<section class='operator-focus-strip' data-operator-focus-strip='true'><h2>Operator Focus</h2>",
-                _kv(
-                    [
-                        ("operator_focus_status", "first_run"),
-                        ("operator_focus_source", str(context.get("source") or "first_run_progress")),
-                        ("operator_focus_current_step", str(context.get("current_step") or "unknown")),
-                        ("operator_focus_primary_action", action),
-                        (
-                            "operator_focus_target",
-                            SafeHtml(f"<a href='{_e(href)}'>{_e(label)}</a>"),
-                        ),
-                        ("operator_focus_reason", str(context.get("next_reason") or "first_run")),
-                        ("operator_focus_project", str(context.get("default_project") or "clankeros")),
-                        (
-                            "operator_focus_home_target",
-                            SafeHtml(
-                                f"<a href='{_e(str(context.get('home_href') or '/'))}'>Home setup</a>"
-                            ),
-                        ),
-                        (
-                            "operator_focus_today_target",
-                            SafeHtml(
-                                f"<a href='{_e(str(context.get('today_href') or '/today'))}'>Today setup</a>"
-                            ),
-                        ),
-                        (
-                            "operator_focus_goals_target",
-                            SafeHtml(
-                                f"<a href='{_e(str(context.get('goals_href') or '/goals'))}'>Goal setup</a>"
-                            ),
-                        ),
-                        ("operator_focus_action_form_available", str(form_available).lower()),
-                        ("operator_focus_first_run_form_available", str(form_available).lower()),
-                        ("operator_focus_confirmation_required", str(form_available).lower()),
-                        ("operator_focus_safety_boundary", "confirmed_local_action_only"),
-                        ("operator_focus_write_on_get", "false"),
-                        ("operator_focus_provider_calls_taken", "0"),
-                        ("operator_focus_network_actions_taken", "0"),
-                        ("operator_focus_external_effects_created", "false"),
-                    ]
-                ),
-                _ul(
-                    [
-                        f"operator_focus_now: {_e(action)}",
-                        f"operator_focus_click: <a href='{_e(href)}'>{_e(label)}</a>",
-                        f"operator_focus_first_run: step={_e(str(context.get('current_step') or 'unknown'))}",
-                        "operator_focus_safety: read-only local first-run routing",
-                    ]
-                ),
+                _operator_focus_focus_grid(cards),
+                _operator_focus_evidence(rows, lines),
                 "</section>",
             ]
         )
@@ -21774,31 +21852,47 @@ def _operator_focus_strip(context: dict[str, Any]) -> str:
         href = str(context.get("target_href") or "/health")
         label = str(context.get("target_label") or href)
         action = "Open goals" if status == "no_goal" else "Open health"
+        rows = [
+            ("operator_focus_status", status),
+            ("operator_focus_primary_action", action),
+            (
+                "operator_focus_target",
+                SafeHtml(f"<a href='{_e(href)}'>{_e(label)}</a>"),
+            ),
+            ("operator_focus_action_form_available", "false"),
+            ("operator_focus_write_on_get", "false"),
+            ("operator_focus_provider_calls_taken", "0"),
+            ("operator_focus_network_actions_taken", "0"),
+            ("operator_focus_external_effects_created", "false"),
+        ]
+        lines = [
+            f"operator_focus_now: {_e(action)}",
+            f"operator_focus_click: <a href='{_e(href)}'>{_e(label)}</a>",
+            "operator_focus_safety: read-only local navigation",
+        ]
+        cards = [
+            _operator_focus_card(
+                "Now",
+                action,
+                action=SafeHtml(
+                    f"<a class='operator-focus-primary' data-operator-focus-primary='true' "
+                    f"href='{_e(href)}'>{_e(label)}</a>"
+                ),
+                marker="data-operator-focus-now='true'",
+                primary=True,
+            ),
+            _operator_focus_card("Status", status, marker="data-operator-focus-status-card='true'"),
+            _operator_focus_card(
+                "Boundary",
+                "read-only local navigation",
+                marker="data-operator-focus-boundary='true'",
+            ),
+        ]
         return "".join(
             [
                 "<section class='operator-focus-strip' data-operator-focus-strip='true'><h2>Operator Focus</h2>",
-                _kv(
-                    [
-                        ("operator_focus_status", status),
-                        ("operator_focus_primary_action", action),
-                        (
-                            "operator_focus_target",
-                            SafeHtml(f"<a href='{_e(href)}'>{_e(label)}</a>"),
-                        ),
-                        ("operator_focus_action_form_available", "false"),
-                        ("operator_focus_write_on_get", "false"),
-                        ("operator_focus_provider_calls_taken", "0"),
-                        ("operator_focus_network_actions_taken", "0"),
-                        ("operator_focus_external_effects_created", "false"),
-                    ]
-                ),
-                _ul(
-                    [
-                        f"operator_focus_now: {_e(action)}",
-                        f"operator_focus_click: <a href='{_e(href)}'>{_e(label)}</a>",
-                        "operator_focus_safety: read-only local navigation",
-                    ]
-                ),
+                _operator_focus_focus_grid(cards),
+                _operator_focus_evidence(rows, lines),
                 "</section>",
             ]
         )
@@ -21806,76 +21900,98 @@ def _operator_focus_strip(context: dict[str, Any]) -> str:
     goal = context["goal"]
     next_action = context["next_action"]
     action_form = str(context.get("action_form") or "")
+    rows = [
+        ("operator_focus_status", "available"),
+        ("operator_focus_source", str(context["source"])),
+        (
+            "operator_focus_goal",
+            SafeHtml(f"<a href='/goals/{quote(goal.id)}'>{_e(context['goal_label'])}</a>"),
+        ),
+        (
+            "operator_focus_project",
+            SafeHtml(f"<a href='/projects/{quote(goal.project_id)}'>{_e(goal.project_id)}</a>"),
+        ),
+        ("operator_focus_phase", str(context["phase"])),
+        ("operator_focus_attention", str(context["attention"])),
+        ("operator_focus_primary_action", next_action.action),
+        (
+            "operator_focus_target",
+            SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"),
+        ),
+        ("operator_focus_reason", next_action.reason),
+        ("operator_focus_progress", str(context["progress"])),
+        ("operator_focus_open_tasks", str(context["open_tasks"])),
+        ("operator_focus_waiting_items", str(context["waiting_items"])),
+        ("operator_focus_pending_approvals", str(context["pending_approvals"])),
+        ("operator_focus_open_incidents", str(context["open_incidents"])),
+        ("operator_focus_open_recommendations", str(context["open_recommendations"])),
+        ("operator_focus_form_available", "true" if context["form_available"] else "false"),
+        ("operator_focus_action_form_available", "true" if action_form else "false"),
+        ("operator_focus_confirmation_required", "true" if action_form else "false"),
+        ("operator_focus_safety_boundary", "confirmed_local_action_only"),
+        ("operator_focus_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+        ("operator_focus_write_on_get", "false"),
+        ("operator_focus_provider_calls_taken", "0"),
+        ("operator_focus_network_actions_taken", "0"),
+        ("operator_focus_external_effects_created", "false"),
+    ]
+    lines = [
+        f"operator_focus_now: {_e(context['attention'])}",
+        f"operator_focus_click: <a href='{_e(next_action.href)}'>{_e(next_action.action)}</a>",
+        f"operator_focus_progress: {_e(context['progress'])}",
+        (
+            "operator_focus_waiting: "
+            f"approvals={_e(context['pending_approvals'])} "
+            f"incidents={_e(context['open_incidents'])} "
+            f"recommendations={_e(context['open_recommendations'])}"
+        ),
+        "operator_focus_resume: <a href='/resume'>/resume</a>",
+        "operator_focus_safety: read-only local navigation",
+    ]
+    cards = [
+        _operator_focus_card(
+            "Now",
+            next_action.action,
+            action=SafeHtml(
+                f"<a class='operator-focus-primary' data-operator-focus-primary='true' "
+                f"href='{_e(next_action.href)}'>{_e(next_action.action)}</a>"
+            ),
+            marker="data-operator-focus-now='true'",
+            primary=True,
+        ),
+        _operator_focus_card(
+            "Phase",
+            str(context["phase"]),
+            marker="data-operator-focus-phase-card='true'",
+        ),
+        _operator_focus_card(
+            "Progress",
+            str(context["progress"]),
+            marker="data-operator-focus-progress-card='true'",
+        ),
+        _operator_focus_card(
+            "Waiting",
+            (
+                f"approvals={context['pending_approvals']} "
+                f"incidents={context['open_incidents']} "
+                f"recommendations={context['open_recommendations']}"
+            ),
+            marker="data-operator-focus-waiting-card='true'",
+        ),
+        _operator_focus_card(
+            "Resume",
+            "/resume",
+            action=SafeHtml(
+                "<a class='operator-focus-secondary' data-operator-focus-resume='true' "
+                "href='/resume'>Resume workspace</a>"
+            ),
+            marker="data-operator-focus-resume-card='true'",
+        ),
+    ]
     return "".join(
         [
             "<section class='operator-focus-strip' data-operator-focus-strip='true'><h2>Operator Focus</h2>",
-            _kv(
-                [
-                    ("operator_focus_status", "available"),
-                    ("operator_focus_source", str(context["source"])),
-                    (
-                        "operator_focus_goal",
-                        SafeHtml(
-                            f"<a href='/goals/{quote(goal.id)}'>{_e(context['goal_label'])}</a>"
-                        ),
-                    ),
-                    (
-                        "operator_focus_project",
-                        SafeHtml(
-                            f"<a href='/projects/{quote(goal.project_id)}'>{_e(goal.project_id)}</a>"
-                        ),
-                    ),
-                    ("operator_focus_phase", str(context["phase"])),
-                    ("operator_focus_attention", str(context["attention"])),
-                    ("operator_focus_primary_action", next_action.action),
-                    (
-                        "operator_focus_target",
-                        SafeHtml(
-                            f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
-                        ),
-                    ),
-                    ("operator_focus_reason", next_action.reason),
-                    ("operator_focus_progress", str(context["progress"])),
-                    ("operator_focus_open_tasks", str(context["open_tasks"])),
-                    ("operator_focus_waiting_items", str(context["waiting_items"])),
-                    ("operator_focus_pending_approvals", str(context["pending_approvals"])),
-                    ("operator_focus_open_incidents", str(context["open_incidents"])),
-                    ("operator_focus_open_recommendations", str(context["open_recommendations"])),
-                    (
-                        "operator_focus_form_available",
-                        "true" if context["form_available"] else "false",
-                    ),
-                    (
-                        "operator_focus_action_form_available",
-                        "true" if action_form else "false",
-                    ),
-                    (
-                        "operator_focus_confirmation_required",
-                        "true" if action_form else "false",
-                    ),
-                    ("operator_focus_safety_boundary", "confirmed_local_action_only"),
-                    ("operator_focus_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
-                    ("operator_focus_write_on_get", "false"),
-                    ("operator_focus_provider_calls_taken", "0"),
-                    ("operator_focus_network_actions_taken", "0"),
-                    ("operator_focus_external_effects_created", "false"),
-                ]
-            ),
-            _ul(
-                [
-                    f"operator_focus_now: {_e(context['attention'])}",
-                    f"operator_focus_click: <a href='{_e(next_action.href)}'>{_e(next_action.action)}</a>",
-                    f"operator_focus_progress: {_e(context['progress'])}",
-                    (
-                        "operator_focus_waiting: "
-                        f"approvals={_e(context['pending_approvals'])} "
-                        f"incidents={_e(context['open_incidents'])} "
-                        f"recommendations={_e(context['open_recommendations'])}"
-                    ),
-                    "operator_focus_resume: <a href='/resume'>/resume</a>",
-                    "operator_focus_safety: read-only local navigation",
-                ]
-            ),
+            _operator_focus_focus_grid(cards),
             (
                 "<details class='operator-focus-action' data-operator-focus-action='true'>"
                 "<summary>Run Current Action</summary>"
@@ -21885,6 +22001,7 @@ def _operator_focus_strip(context: dict[str, Any]) -> str:
                 if action_form
                 else ""
             ),
+            _operator_focus_evidence(rows, lines),
             "</section>",
         ]
     )
@@ -22425,12 +22542,23 @@ def _html_page(
     .breadcrumbs li + li::before {{ content:"/"; margin-right:6px; color:var(--line); }}
     .breadcrumbs a {{ color:var(--muted); }}
     .operator-focus-strip {{ border:1px solid var(--line); border-left:4px solid var(--accent); background:var(--panel); padding:12px; margin:0 0 16px; }}
+    .operator-focus-focus {{ display:grid; grid-template-columns:minmax(210px, 1.3fr) repeat(auto-fit, minmax(150px, 1fr)); gap:8px; align-items:stretch; margin:10px 0; }}
+    .operator-focus-item {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; display:grid; gap:5px; align-content:start; }}
+    .operator-focus-item-primary {{ background:var(--panel); }}
+    .operator-focus-label {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .operator-focus-item strong {{ overflow-wrap:anywhere; }}
+    .operator-focus-primary, .operator-focus-secondary {{ display:inline-flex; align-items:center; justify-content:center; min-height:32px; width:100%; max-width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
+    .operator-focus-primary {{ background:var(--accent); color:#fff; }}
+    .operator-focus-secondary {{ background:var(--surface); color:var(--accent); }}
     .operator-focus-strip dl {{ grid-template-columns:minmax(170px, 230px) 1fr; }}
     .operator-focus-strip ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
     .operator-focus-strip li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .operator-focus-action {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .operator-focus-action summary {{ cursor:pointer; font-weight:700; }}
     .operator-focus-action form {{ margin-top:10px; }}
+    .operator-focus-details {{ margin-top:10px; }}
+    .operator-focus-details summary {{ cursor:pointer; font-weight:700; }}
+    .operator-focus-details:not([open]) > :not(summary) {{ display:none; }}
     .last-action-strip {{ border-left:4px solid var(--accent); margin:0 0 16px; }}
     .last-action-strip dl {{ grid-template-columns:minmax(170px, 230px) 1fr; }}
     .last-action-strip ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
@@ -22806,7 +22934,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .route-context-focus, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .route-context-focus, .operator-focus-focus, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>

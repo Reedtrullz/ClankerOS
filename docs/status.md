@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The shared Operator Focus strip is now compact and action-first: it shows
+  the primary action, phase, progress, waiting counts, and `/resume` as visible
+  cards, keeps the confirmed local action form available when relevant, and
+  moves the full focus readback plus zero-effect counters into collapsed
+  `Focus evidence`.
 - The shared Route Context strip is now compact and action-first: it shows the
   current page, one primary next local action, back target, Goal, Project, and
   `/resume` before any diagnostic route rows, while the full route evidence and
