@@ -1,5 +1,40 @@
 # Status
 
+## 2026-06-28 Artifact Format Lens UX
+
+- Added a visible `Artifact Format Lens` to `/artifacts?path=...` between the
+  Artifact Operator Workbench and dense command/review evidence.
+- The lens makes Markdown, JSON, patch/diff, text, and log artifact rendering
+  explicit with format-specific read/review actions, structure and byte-count
+  cards, a review target, and a local inert-renderer safety boundary.
+- Updated README, operating summary, local status docs, and focused artifact
+  route assertions for Markdown, JSON, patch/diff, text, and log renderer
+  families.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'artifact_viewer' --tb=short`
+    -> passed, `1 passed, 515 deselected`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against scratch local app `127.0.0.1:8859` verified
+  `/artifacts?path=docs/sample.md` in the in-app browser. Desktop rendered
+  four Artifact Format Lens cards, kept format evidence collapsed, ordered the
+  lens between the workbench and command/content sections, had no horizontal
+  overflow, and reported no warning/error logs.
+- Mobile `390x844` in-app browser QA rendered the four format cards in one
+  column, kept evidence collapsed, had no horizontal overflow, reported no
+  warning/error logs, and the viewport was reset after the check.
+- The scratch local app server was stopped after browser QA, and no listener
+  remained on port `8859`.
+- Non-claims: this is a local readback/navigation UX change. It does not write
+  on GET, approve work, execute work, create commits, push, create PRs,
+  deploy, fetch GitHub status, call providers, or mutate external systems.
+
 ## 2026-06-28 Profile Routing Matrix UX
 
 - Added a read-only `Profile Routing Matrix` to `/profiles` after the

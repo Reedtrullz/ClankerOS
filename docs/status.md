@@ -93,9 +93,11 @@ Latest status focus:
 - `/artifacts?path=...` is now content-first and artifact-action-first: it
   opens with `Artifact Operator Workbench` cards for Read, Context, Resume,
   and Safety before shared diagnostics, command evidence, review evidence, or
-  inert content. Artifact workbench, command, and review evidence stay
-  collapsed by default while preserving bounded path, renderer, context,
-  workspace anchor, and zero-effect readbacks in the DOM.
+  inert content. It now follows with an `Artifact Format Lens` for
+  renderer-specific Markdown, JSON, patch/diff, text, and log review actions.
+  Artifact workbench, format, command, and review evidence stay collapsed by
+  default while preserving bounded path, renderer, context, workspace anchor,
+  no-content-execution, and zero-effect readbacks in the DOM.
 - `/ci-evidence` is now content-first and proof-action-first: it opens with
   the `CI Proof Workbench` cards for Check, Record Smoke, Record Full Suite,
   and Manual Record before shared diagnostics, summary rows, or command

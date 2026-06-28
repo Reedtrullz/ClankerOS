@@ -215,13 +215,16 @@ Core layers for the bootstrap:
   `Artifact Operator Workbench` before shared diagnostics or dense readbacks.
   It shows cards to open the inert content, return to the owning Goal or
   delegation context, remember or resume from the artifact, and inspect safety
-  proof. Detailed `Artifact Command Bar` and `Artifact Review Brief` evidence
-  stay collapsed by default while preserving bounded artifact path, render
-  type/family/renderer, size, rendered bytes, line count, truncation state,
-  inferred project/goal context, workspace anchor status, one next action, and
-  no-write/no-raw-filesystem/no-content-execution/no-network/
-  no-external-effect boundaries before the inert content renderer and
-  remember-artifact form;
+  proof. A visible `Artifact Format Lens` follows with renderer-specific
+  cards for Markdown, JSON, patch/diff, text, and log artifacts, including the
+  primary read/review action, structure summary, review target, and safety
+  boundary. Detailed `Artifact Command Bar`, `Artifact Review Brief`, and
+  format evidence stay collapsed by default while preserving bounded artifact
+  path, render type/family/renderer, size, rendered bytes, line count,
+  truncation state, inferred project/goal context, workspace anchor status,
+  one next action, and no-write/no-raw-filesystem/no-content-execution/
+  no-network/no-external-effect boundaries before the inert content renderer
+  and remember-artifact form;
   `/workspace` for persistent open project/goal/filter/panel/last-artifact
   state in `.clanker/app/workspace.json`. It now opens with the
   `Workspace Operator Workbench` before shared route/focus diagnostics or

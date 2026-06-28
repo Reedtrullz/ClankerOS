@@ -22753,6 +22753,16 @@ def _artifact_viewer(
                 truncated=truncated,
                 workspace=workspace,
             ),
+            _artifact_format_lens(
+                relative_path=repo_relative,
+                artifact_type=artifact_type,
+                render_family=render_family,
+                renderer=renderer,
+                size=size,
+                rendered_bytes=len(data),
+                line_count=line_count,
+                truncated=truncated,
+            ),
             _artifact_command_bar(
                 root,
                 relative_path=repo_relative,
@@ -22795,6 +22805,83 @@ def _artifact_viewer(
         ]
     )
     return _html_page(root, "Artifact", body, current_path=current_path)
+
+
+def _artifact_format_lens(
+    *,
+    relative_path: str,
+    artifact_type: str,
+    render_family: str,
+    renderer: str,
+    size: int,
+    rendered_bytes: int,
+    line_count: int,
+    truncated: bool,
+) -> str:
+    if render_family == "markdown":
+        format_action = "Read rendered Markdown"
+        format_summary = "Headings, paragraphs, and bullets are rendered as inert HTML."
+        inspect_summary = "Review the formatted document, then return to the owning workflow."
+    elif render_family == "json":
+        format_action = "Inspect formatted JSON"
+        format_summary = "JSON is parsed and pretty-printed when valid."
+        inspect_summary = "Scan keys, values, and evidence fields without executing content."
+    elif render_family == "patch":
+        format_action = "Review patch lines"
+        format_summary = "Diff and patch lines are grouped with add/remove/context styling."
+        inspect_summary = "Check changed hunks, then return to the relevant run or Goal."
+    else:
+        format_action = "Read inert text"
+        format_summary = "Plain text and logs render in a bounded preformatted reader."
+        inspect_summary = "Read the text as local evidence; it is never executed."
+    rows = [
+        ("artifact_format_lens_status", "available"),
+        ("artifact_format_lens_path", relative_path),
+        ("artifact_format_lens_type", artifact_type),
+        ("artifact_format_lens_render_family", render_family),
+        ("artifact_format_lens_renderer", renderer),
+        ("artifact_format_lens_primary_action", format_action),
+        (
+            "artifact_format_lens_primary_surface",
+            SafeHtml("<a href='#artifact-content'>#artifact-content</a>"),
+        ),
+        ("artifact_format_lens_size_bytes", str(size)),
+        ("artifact_format_lens_rendered_bytes", str(rendered_bytes)),
+        ("artifact_format_lens_line_count", str(line_count)),
+        ("artifact_format_lens_truncated", str(truncated).lower()),
+        ("artifact_format_lens_raw_filesystem_browsing", "false"),
+        ("artifact_format_lens_content_executed", "false"),
+        ("artifact_format_lens_network_actions_taken", "0"),
+        ("artifact_format_lens_external_effects_created", "false"),
+    ]
+    return "".join(
+        [
+            "<section id='artifact-format-lens' class='panel artifact-format-lens' data-artifact-format-lens='true'><h2>Artifact Format Lens</h2>",
+            "<p class='muted'>Renderer-specific guidance before the inert artifact body.</p>",
+            "<div class='artifact-format-grid' data-artifact-format-cards='true'>",
+            "<article class='artifact-format-card artifact-format-primary'><h3>Format</h3>",
+            f"<p>{_e(format_summary)}</p><a class='artifact-format-action' data-artifact-format-primary='true' href='#artifact-content'>{_e(format_action)}</a></article>",
+            "<article class='artifact-format-card'><h3>Structure</h3>",
+            f"<p>{_e(str(line_count))} lines · {_e(str(rendered_bytes))}/{_e(str(size))} bytes rendered.</p><a class='artifact-format-link' href='#artifact-content'>Open content</a></article>",
+            "<article class='artifact-format-card'><h3>Inspect</h3>",
+            f"<p>{_e(inspect_summary)}</p><a class='artifact-format-link' href='#artifact-review-brief'>Review brief</a></article>",
+            "<article class='artifact-format-card'><h3>Boundary</h3>",
+            "<p>Bounded local read; no raw filesystem browsing or content execution.</p><a class='artifact-format-link' href='#artifact-command-bar'>Safety proof</a></article>",
+            "</div>",
+            "<details class='artifact-format-evidence' data-artifact-format-evidence='true'><summary>Artifact format evidence</summary>",
+            _kv(rows),
+            _ul(
+                [
+                    f"artifact_format_now: {_e(format_action)}",
+                    "artifact_format_click: <a href='#artifact-content'>#artifact-content</a>",
+                    f"artifact_format_renderer: {_e(renderer)}",
+                    "artifact_format_safety: inert bounded renderer; no raw filesystem browsing",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
 
 
 def _artifact_operator_workbench(
@@ -29365,9 +29452,18 @@ def _html_page(
     .artifact-workbench-action, .artifact-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .artifact-workbench-action {{ background:var(--accent); color:#fff; }}
     .artifact-workbench-link {{ background:var(--surface); color:var(--accent); }}
-    .artifact-workbench-evidence, .artifact-command-evidence, .artifact-review-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .artifact-workbench-evidence summary, .artifact-command-evidence summary, .artifact-review-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .artifact-workbench-evidence:not([open]) > :not(summary), .artifact-command-evidence:not([open]) > :not(summary), .artifact-review-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .artifact-format-lens {{ border-left:4px solid var(--accent); }}
+    .artifact-format-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .artifact-format-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .artifact-format-card h3 {{ margin-top:0; }}
+    .artifact-format-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .artifact-format-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .artifact-format-action, .artifact-format-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .artifact-format-action {{ background:var(--accent); color:#fff; }}
+    .artifact-format-link {{ background:var(--surface); color:var(--accent); }}
+    .artifact-workbench-evidence, .artifact-command-evidence, .artifact-review-evidence, .artifact-format-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .artifact-workbench-evidence summary, .artifact-command-evidence summary, .artifact-review-evidence summary, .artifact-format-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .artifact-workbench-evidence:not([open]) > :not(summary), .artifact-command-evidence:not([open]) > :not(summary), .artifact-review-evidence:not([open]) > :not(summary), .artifact-format-evidence:not([open]) > :not(summary) {{ display:none; }}
     #artifact-content {{ min-width:0; overflow-wrap:anywhere; }}
     #artifact-content h1 {{ overflow-wrap:anywhere; }}
     .artifact-path code {{ display:block; max-width:100%; white-space:normal; overflow-wrap:anywhere; color:var(--muted); }}
@@ -29569,7 +29665,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

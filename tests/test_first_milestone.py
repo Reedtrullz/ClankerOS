@@ -7627,6 +7627,25 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "artifact_workbench_context_surface</dt><dd><a href='#remember-artifact'>Remember Artifact</a>" in markdown.body
     assert "artifact_workbench_resume_action</dt><dd>Remember artifact" in markdown.body
     assert "artifact_workbench_primary_action: Open content" in markdown.body
+    assert "Artifact Format Lens" in markdown.body
+    assert "data-artifact-format-lens='true'" in markdown.body
+    assert "data-artifact-format-cards='true'" in markdown.body
+    assert markdown.body.count("class='artifact-format-card") == 4
+    assert "data-artifact-format-primary='true' href='#artifact-content'>Read rendered Markdown</a>" in markdown.body
+    assert "data-artifact-format-evidence='true'" in markdown.body
+    assert "artifact_format_lens_status</dt><dd>available" in markdown.body
+    assert "artifact_format_lens_path</dt><dd>docs/sample.md" in markdown.body
+    assert "artifact_format_lens_type</dt><dd>markdown" in markdown.body
+    assert "artifact_format_lens_render_family</dt><dd>markdown" in markdown.body
+    assert "artifact_format_lens_renderer</dt><dd>markdown_safe_html" in markdown.body
+    assert "artifact_format_lens_primary_action</dt><dd>Read rendered Markdown" in markdown.body
+    assert "artifact_format_lens_primary_surface</dt><dd><a href='#artifact-content'>#artifact-content</a>" in markdown.body
+    assert "artifact_format_lens_raw_filesystem_browsing</dt><dd>false" in markdown.body
+    assert "artifact_format_lens_content_executed</dt><dd>false" in markdown.body
+    assert "artifact_format_lens_network_actions_taken</dt><dd>0" in markdown.body
+    assert "artifact_format_lens_external_effects_created</dt><dd>false" in markdown.body
+    assert "artifact_format_renderer: markdown_safe_html" in markdown.body
+    assert "artifact_format_safety: inert bounded renderer; no raw filesystem browsing" in markdown.body
     assert "Artifact Command Bar" in markdown.body
     assert "data-artifact-command-bar='true'" in markdown.body
     assert "data-artifact-command-evidence='true'" in markdown.body
@@ -7684,6 +7703,9 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "name='return_to' value='/artifacts?path=docs/sample.md'" in markdown.body
     assert "<h2 class='artifact-markdown-heading'>Sample</h2>" in markdown.body
     assert markdown.body.index("Artifact Operator Workbench") < markdown.body.index(
+        "Artifact Format Lens"
+    )
+    assert markdown.body.index("Artifact Format Lens") < markdown.body.index(
         "Artifact Command Bar"
     )
     assert markdown.body.index("Artifact Operator Workbench") < markdown.body.index(
@@ -7749,6 +7771,9 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "json" in json_response.body
     assert "artifact_render_family</dt><dd>json" in json_response.body
     assert "artifact_renderer</dt><dd>json_pretty_pre" in json_response.body
+    assert "artifact_format_lens_primary_action</dt><dd>Inspect formatted JSON" in json_response.body
+    assert "JSON is parsed and pretty-printed when valid." in json_response.body
+    assert "artifact_format_renderer: json_pretty_pre" in json_response.body
     assert "<pre class='artifact-json'>" in json_response.body
     assert "&quot;ok&quot;: true" in json_response.body
     text_response = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.txt")
@@ -7756,6 +7781,9 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "text" in text_response.body
     assert "artifact_render_family</dt><dd>text" in text_response.body
     assert "artifact_renderer</dt><dd>text_pre" in text_response.body
+    assert "artifact_format_lens_primary_action</dt><dd>Read inert text" in text_response.body
+    assert "Plain text and logs render in a bounded preformatted reader." in text_response.body
+    assert "artifact_format_renderer: text_pre" in text_response.body
     assert "<pre class='artifact-text'>" in text_response.body
     assert "plain text" in text_response.body
     patch_response = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.patch")
@@ -7763,6 +7791,9 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "patch" in patch_response.body
     assert "artifact_render_family</dt><dd>patch" in patch_response.body
     assert "artifact_renderer</dt><dd>patch_line_view" in patch_response.body
+    assert "artifact_format_lens_primary_action</dt><dd>Review patch lines" in patch_response.body
+    assert "Diff and patch lines are grouped with add/remove/context styling." in patch_response.body
+    assert "artifact_format_renderer: patch_line_view" in patch_response.body
     assert "artifact-patch-meta" in patch_response.body
     assert "--- a/demo.txt" in patch_response.body
     diff_response = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.diff")
@@ -7770,6 +7801,7 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "diff" in diff_response.body
     assert "artifact_render_family</dt><dd>patch" in diff_response.body
     assert "artifact_renderer</dt><dd>patch_line_view" in diff_response.body
+    assert "artifact_format_lens_primary_action</dt><dd>Review patch lines" in diff_response.body
     assert "artifact-patch-meta" in diff_response.body
     assert "diff --git" in diff_response.body
     log_response = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.log")
@@ -7777,6 +7809,8 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "log" in log_response.body
     assert "artifact_render_family</dt><dd>text" in log_response.body
     assert "artifact_renderer</dt><dd>text_pre" in log_response.body
+    assert "artifact_format_lens_type</dt><dd>log" in log_response.body
+    assert "artifact_format_lens_primary_action</dt><dd>Read inert text" in log_response.body
     assert "demo log line" in log_response.body
 
     goal_artifact = (

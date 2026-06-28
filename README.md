@@ -475,11 +475,15 @@ command evidence, the detailed artifact list, and typed explorer groups
 collapsed by default. Each artifact page starts with
 a visible `Artifact Operator Workbench` for opening the inert content,
 returning to the owning Goal/delegation context, remembering or resuming from
-the artifact, and checking the safety proof. The detailed `Artifact Command
-Bar` and `Artifact Review Brief` evidence stay collapsed by default while
-preserving path, type, renderer, size, line count, truncation state, inferred
-project/goal context, saved-resume-anchor posture, and zero-effect boundaries.
-The content view remains inert and bounded.
+the artifact, and checking the safety proof. It now follows with a visible
+`Artifact Format Lens` that names the active Markdown, JSON, patch/diff, text,
+or log renderer, gives the format-specific read/review action, and keeps
+structure, byte counts, and inert-renderer boundaries visible before the
+content body. The detailed `Artifact Command Bar`, `Artifact Review Brief`,
+and format evidence stay collapsed by default while preserving path, type,
+renderer, size, line count, truncation state, inferred project/goal context,
+saved-resume-anchor posture, and zero-effect boundaries. The content view
+remains inert and bounded.
 
 Use `/goals` on a fresh checkout for first-run browser actions. The page now
 renders a state-aware First Run Guide plus confirmed local forms for
