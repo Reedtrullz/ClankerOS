@@ -298,10 +298,10 @@ arrives quickly on mobile. The cockpit also includes a confirmed local
 so an operator can add the next goal for a registered project without
 switching to the CLI.
 Use `/goals/<goal_id>` as the
-goal-centered workbench: the page now opens with the large Current Phase
-banner immediately after the Goal summary, then shows an in-flow read-only
-Goal Jump Bar for phase, action, workflow, timeline, evidence, artifacts,
-notes, git, and remaining work. Its visible `1`-`9` key badges and
+goal-centered workbench: the page is now content-first, so the Goal summary,
+large Current Phase banner, jump bar, action dock, and progress meter appear
+before shared route/focus diagnostics. The Goal Jump Bar covers phase, action,
+workflow, timeline, evidence, artifacts, notes, git, and remaining work. Its visible `1`-`9` key badges and
 `aria-keyshortcuts` jump to those local anchors without submitting forms,
 while jump-state evidence stays collapsed by default,
 then an in-flow `Goal Action Dock` keeps the current action, gate, CI proof

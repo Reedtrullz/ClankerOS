@@ -10261,7 +10261,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "breadcrumb_back: <a href='/goals'>Goals</a>" in goal.body
     assert "breadcrumb_safety: read-only local route context" in goal.body
     goal_phase_position = goal.body.index("id='goal-current-phase'")
+    route_context_position = goal.body.index("data-route-context='true'")
+    operator_focus_position = goal.body.index("data-operator-focus-strip='true'")
     assert goal.body.index("id='goal-summary'") < goal_phase_position
+    assert goal.body.index("id='goal-summary'") < route_context_position
+    assert goal_phase_position < route_context_position
+    assert goal.body.index("id='goal-action-dock'") < route_context_position
+    assert goal.body.index("id='goal-progress-meter'") < route_context_position
+    assert route_context_position < operator_focus_position
     assert goal_phase_position < goal.body.index("id='goal-action-dock'")
     assert goal.body.index("id='goal-jump-bar'") < goal.body.index("id='goal-action-dock'")
     assert goal.body.index("id='goal-action-dock'") < goal.body.index("id='goal-progress-meter'")

@@ -1,5 +1,26 @@
 # Status
 
+## 2026-06-29 Goal Detail Content-First UX
+
+- Made `/goals/<goal_id>` content-first in the shared app shell.
+- Direct Goal detail links now render the Goal summary, Current Phase banner,
+  Goal Jump Bar, Goal Action Dock, and Goal Progress Meter before the shared
+  Route Context and Operator Focus diagnostics.
+- This keeps the Goal page aligned with the daily-usable product objective:
+  opening a Goal starts on the working cockpit instead of on generic route
+  readbacks.
+- Updated README, local app docs, operating summary, current status focus, and
+  fixture-backed Goal route assertions for the new ordering.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `python3 -m compileall -q agent_os tests`, focused
+  `tests/test_first_milestone.py` route/demo coverage
+  (`2 passed, 514 deselected in 60.33s`), bounded `app-smoke-test`, bounded
+  `app-demo-smoke-test`, and `git diff --check`.
+- Non-claims: no browser QA for this slice, no write on GET, no approval or
+  execution on GET, no app-side GitHub polling, no provider calls, no external
+  mutation, no PR creation, and no deploy from ClankerOS itself.
+
 ## 2026-06-29 Goal Progress Meter UX
 
 - Added a visible read-only `Goal Progress Meter` to `/goals/<goal_id>` after

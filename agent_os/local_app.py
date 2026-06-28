@@ -32648,7 +32648,11 @@ def _html_page(
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
     content_first_paths = {"/", "/actions", "/approvals", "/artifacts", "/ci-evidence", "/delegation-runs", "/demo", "/dogfooding", "/goals", "/health", "/inbox", "/incidents", "/memory", "/profiles", "/projects", "/resume", "/search", "/skills", "/today", "/verification", "/workflow", "/workspace"}
-    if current_route_path in content_first_paths or current_route_path.startswith("/projects/"):
+    if (
+        current_route_path in content_first_paths
+        or current_route_path.startswith("/projects/")
+        or current_route_path.startswith("/goals/")
+    ):
         article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
     else:
         article_body = f"{breadcrumbs}{focus_strip}{last_action_strip}{content}"

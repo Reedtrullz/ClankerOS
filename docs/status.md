@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/goals/<goal_id>` is now content-first in the shared app shell: the Goal
+  summary, Current Phase banner, jump bar, action dock, and progress meter
+  render before Route Context and Operator Focus diagnostics, so a direct Goal
+  link opens on the actual working cockpit.
 - `/goals/<goal_id>` now places a read-only `Goal Progress Meter` immediately
   after the Goal Action Dock and before deeper command surfaces. It shows task
   completion and workflow-gate progress bars, waiting operator items, latest CI

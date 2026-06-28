@@ -383,8 +383,9 @@ Core layers for the bootstrap:
   evidence and detailed overview/risk/criteria/progress rows stay collapsed by
   default while preserving no-write/no-provider/no-network/no-external-effect
   boundaries in the DOM.
-  Goal detail pages now place the large Current Phase banner immediately after
-  the Goal summary and before an in-flow read-only `Goal Jump Bar` for phase,
+  Goal detail pages are now content-first: the Goal summary, large Current
+  Phase banner, jump bar, action dock, and progress meter render before shared
+  route/focus diagnostics. The in-flow read-only `Goal Jump Bar` covers phase,
   action, workflow, timeline, evidence, artifacts, notes, git, and remaining
   work. Visible `1`-`9` key badges and `aria-keyshortcuts` jump to those local
   anchors without submitting forms while jump evidence stays collapsed by
