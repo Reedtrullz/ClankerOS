@@ -27315,14 +27315,18 @@ def _notice_banner(root: Path, notice: str | None, current_path: str) -> str:
     open_project = str(state.get("open_project") or "").strip() or "none"
     open_goal = str(state.get("open_goal") or "").strip() or "none"
     updated_at = str(state.get("last_action_updated_at") or "").strip() or "unknown"
+    recommendation = _action_notice_recommendation(root, current_path, state)
     return (
         "<section id='action-notice' class='panel action-notice' data-action-notice='true'>"
         "<h1>Action Notice</h1>"
         f"<p class='muted'>{_e(trimmed)}</p>"
         "<div class='action-notice-grid' data-action-notice-actions='true'>"
-        "<article class='action-notice-card action-notice-primary'><h3>Continue Here</h3>"
+        "<article class='action-notice-card action-notice-primary'><h3>Next Step</h3>"
+        f"<p>{_e(recommendation['action'])}</p>"
+        f"<a class='action-notice-action' data-action-notice-primary='true' data-action-notice-next-step='true' href='{_e(recommendation['href'])}'>{_e(recommendation['label'])}</a></article>"
+        "<article class='action-notice-card'><h3>Continue Here</h3>"
         f"<p>{_e(current_label)}</p>"
-        f"<a class='action-notice-action' data-action-notice-primary='true' href='{_e(current_surface)}'>Open clean surface</a></article>"
+        f"<a class='action-notice-link' data-action-notice-clean-surface='true' href='{_e(current_surface)}'>Open clean surface</a></article>"
         "<article class='action-notice-card'><h3>Last Action</h3>"
         f"<p>{_e(action)}</p>"
         f"<a class='action-notice-link' href='{_e(next_href)}'>Open saved result</a></article>"
@@ -27351,6 +27355,26 @@ def _notice_banner(root: Path, notice: str | None, current_path: str) -> str:
                 ("action_notice_last_updated_at", updated_at),
                 ("action_notice_source", "notice_query"),
                 ("action_notice_workspace_source", ".clanker/app/workspace.json"),
+                ("action_notice_recommended_status", recommendation["status"]),
+                ("action_notice_recommended_source", recommendation["source"]),
+                ("action_notice_recommended_action", recommendation["action"]),
+                (
+                    "action_notice_recommended_surface",
+                    SafeHtml(f"<a href='{_e(recommendation['href'])}'>{_e(recommendation['label'])}</a>"),
+                ),
+                ("action_notice_recommended_reason", recommendation["reason"]),
+                ("action_notice_recommended_phase", recommendation["phase"]),
+                ("action_notice_recommended_current_gate", recommendation["current_gate"]),
+                ("action_notice_recommended_current_step", recommendation["current_step"]),
+                (
+                    "action_notice_recommended_action_form_available",
+                    recommendation["form_available"],
+                ),
+                (
+                    "action_notice_recommended_confirmation_required",
+                    recommendation["confirmation_required"],
+                ),
+                ("action_notice_card_count", "6"),
                 ("action_notice_write_on_get", "false"),
                 ("action_notice_provider_calls_taken", "0"),
                 ("action_notice_network_actions_taken", "0"),
@@ -27362,6 +27386,10 @@ def _notice_banner(root: Path, notice: str | None, current_path: str) -> str:
         )
         + _ul(
             [
+                (
+                    f"action_notice_next_step: {_e(recommendation['action'])} -> "
+                    f"<a href='{_e(recommendation['href'])}'>{_e(recommendation['label'])}</a>"
+                ),
                 f"action_notice_now: Continue at <a href='{_e(current_surface)}'>{_e(current_label)}</a>",
                 f"action_notice_last_action: {_e(action)}",
                 f"action_notice_resume: <a href='/resume'>/resume</a>",
@@ -27371,6 +27399,128 @@ def _notice_banner(root: Path, notice: str | None, current_path: str) -> str:
         + "</details>"
         "</section>"
     )
+
+
+def _action_notice_recommendation(
+    root: Path,
+    current_path: str,
+    state: dict[str, str],
+) -> dict[str, str]:
+    try:
+        focus_context = _operator_focus_context(root, current_path)
+    except Exception:
+        return {
+            "status": "state_unavailable",
+            "source": "fallback",
+            "action": "Open health",
+            "href": "/health",
+            "label": "/health",
+            "reason": "state_unavailable",
+            "phase": "unknown",
+            "current_gate": "unknown",
+            "current_step": "unknown",
+            "form_available": "false",
+            "confirmation_required": "false",
+        }
+
+    status = str(focus_context.get("status") or "state_unavailable")
+    if status == "first_run":
+        href = str(focus_context.get("target_href") or "/")
+        label = str(focus_context.get("target_label") or href)
+        return {
+            "status": "first_run",
+            "source": str(focus_context.get("source") or "first_run_progress"),
+            "action": str(focus_context.get("next_action") or "Continue first run"),
+            "href": href,
+            "label": label,
+            "reason": str(focus_context.get("next_reason") or "first_run"),
+            "phase": "First run",
+            "current_gate": str(focus_context.get("current_step") or "unknown"),
+            "current_step": str(focus_context.get("current_step") or "unknown"),
+            "form_available": str(bool(focus_context.get("form_available"))).lower(),
+            "confirmation_required": str(bool(focus_context.get("form_available"))).lower(),
+        }
+
+    if status == "available":
+        goal = focus_context.get("goal")
+        next_action = focus_context.get("next_action")
+        goal_state = focus_context.get("goal_state")
+        phase = str(focus_context.get("phase") or "unknown")
+        form_available = bool(focus_context.get("action_form"))
+        current_gate = "unknown"
+        if isinstance(goal_state, dict) and isinstance(next_action, GoalNextAction):
+            try:
+                _, _, current_gate = _goal_workflow_gate_summary(
+                    root,
+                    goal_state,
+                    next_action,
+                )
+            except Exception:
+                current_gate = "unknown"
+        if goal is not None and isinstance(next_action, GoalNextAction):
+            if form_available:
+                href = f"/goals/{quote(goal.id)}#goal-next-action-form"
+                label = "Use Goal action form"
+            else:
+                href = next_action.href
+                label = next_action.action
+            return {
+                "status": "available",
+                "source": str(focus_context.get("source") or "goal_state"),
+                "action": next_action.action,
+                "href": href,
+                "label": label,
+                "reason": next_action.reason,
+                "phase": phase,
+                "current_gate": current_gate,
+                "current_step": current_gate,
+                "form_available": str(form_available).lower(),
+                "confirmation_required": str(form_available).lower(),
+            }
+
+    saved_goal = str(state.get("open_goal") or "").strip()
+    saved_project = str(state.get("open_project") or "").strip()
+    if saved_goal:
+        return {
+            "status": "saved_goal_only",
+            "source": "workspace",
+            "action": "Open saved goal",
+            "href": f"/goals/{quote(saved_goal)}",
+            "label": "Open saved goal",
+            "reason": "saved_goal_without_action_context",
+            "phase": "unknown",
+            "current_gate": "unknown",
+            "current_step": "unknown",
+            "form_available": "false",
+            "confirmation_required": "false",
+        }
+    if saved_project:
+        return {
+            "status": "saved_project_only",
+            "source": "workspace",
+            "action": "Open saved project",
+            "href": f"/projects/{quote(saved_project)}",
+            "label": "Open saved project",
+            "reason": "saved_project_without_goal_context",
+            "phase": "First run",
+            "current_gate": "create_first_goal",
+            "current_step": "create_first_goal",
+            "form_available": "false",
+            "confirmation_required": "false",
+        }
+    return {
+        "status": status,
+        "source": str(focus_context.get("source") or "fallback"),
+        "action": "Open resume",
+        "href": "/resume",
+        "label": "/resume",
+        "reason": "no_saved_context",
+        "phase": "unknown",
+        "current_gate": "unknown",
+        "current_step": "unknown",
+        "form_available": "false",
+        "confirmation_required": "false",
+    }
 
 
 def _notice_current_surface(current_path: str) -> str:
@@ -29575,7 +29725,7 @@ def _html_page(
     .last-action-strip li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     #action-notice, #action-notice-evidence {{ scroll-margin-top:128px; }}
     .action-notice {{ border-left:4px solid var(--accent); margin-bottom:16px; }}
-    .action-notice-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .action-notice-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(155px, 1fr)); gap:10px; margin:12px 0; }}
     .action-notice-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
     .action-notice-card h3 {{ margin-top:0; }}
     .action-notice-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}

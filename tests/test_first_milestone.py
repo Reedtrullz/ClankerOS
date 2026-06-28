@@ -7693,6 +7693,35 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "name='open_project' value='clankeros'" in register_project.body
     assert "name='open_goal' value=''" in register_project.body
     assert "name='updated_by' value='project-operator-workbench'" in register_project.body
+    register_notice = render_local_app_route(
+        tmp_path,
+        "/projects/clankeros?notice=project_registered%3A%20clankeros",
+    )
+    assert register_notice.status == 200
+    assert "Action Notice" in register_notice.body
+    assert "data-action-notice-next-step='true' href='/#first-run-create-goal'>Create First Goal</a>" in register_notice.body
+    assert "data-action-notice-clean-surface='true' href='/projects/clankeros'>Open clean surface</a>" in register_notice.body
+    assert "action_notice_recommended_status</dt><dd>first_run" in register_notice.body
+    assert "action_notice_recommended_source</dt><dd>first_run_progress" in register_notice.body
+    assert "action_notice_recommended_action</dt><dd>Create first goal" in register_notice.body
+    assert (
+        "action_notice_recommended_surface</dt><dd><a href='/#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in register_notice.body
+    assert "action_notice_recommended_reason</dt><dd>no_goal_created" in register_notice.body
+    assert "action_notice_recommended_phase</dt><dd>First run" in register_notice.body
+    assert "action_notice_recommended_current_gate</dt><dd>create_first_goal" in register_notice.body
+    assert "action_notice_recommended_current_step</dt><dd>create_first_goal" in register_notice.body
+    assert "action_notice_recommended_action_form_available</dt><dd>true" in register_notice.body
+    assert "action_notice_recommended_confirmation_required</dt><dd>true" in register_notice.body
+    assert "action_notice_card_count</dt><dd>6" in register_notice.body
+    assert (
+        "action_notice_next_step: Create first goal -> "
+        "<a href='/#first-run-create-goal'>Create First Goal</a>"
+    ) in register_notice.body
+    assert "action_notice_write_on_get</dt><dd>false" in register_notice.body
+    assert "action_notice_network_actions_taken</dt><dd>0" in register_notice.body
+    assert "action_notice_external_effects_created</dt><dd>false" in register_notice.body
 
     create_goal_result = render_local_app_route(
         tmp_path,

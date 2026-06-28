@@ -682,7 +682,10 @@ Core layers for the bootstrap:
   zero-effect readback visible before the page-specific workbench. The last
   action strip reads `.clanker/app/workspace.json` and exposes the latest
   completed local action, result, notice target, saved project/goal context,
-  timestamp, and zero-effect counters without writing on GET. The route
+  timestamp, and zero-effect counters without writing on GET. Action notice
+  pages now open with a Next Step card sourced from first-run or saved-Goal
+  state, so completed-action notices route directly to the next confirmed form
+  or workflow surface while keeping notice evidence read-only. The route
   context strip now starts with a compact action-first focus grid for the
   current page, next local action, back target, Goal, Project, and `/resume`,
   while route family/path, saved workspace anchors, focus target, and

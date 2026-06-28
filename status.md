@@ -1,5 +1,39 @@
 # Status
 
+## 2026-06-28 Action Notice Next Step UX
+
+- Completed-action notice pages now open with a primary `Next Step` card.
+- The card is sourced from the same first-run or saved-Goal state as the
+  shared operator shell, so a post-action notice points to the next confirmed
+  form or workflow surface instead of only echoing the previous action.
+- Notice evidence now reports recommendation status, source, action, surface,
+  reason, phase, current gate/step, action-form availability, confirmation
+  requirement, card count `6`, and no-write/no-provider/no-network/
+  no-external-effect counters.
+- The clean current-surface link, last-action link, resume link, details, and
+  safety evidence remain available; the notice grid now uses responsive
+  auto-fit columns for the additional card.
+- Updated README, operating summary, local status focus, and first-run
+  browser-flow assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k first_run_browser_actions_persist_resume_workspace --tb=short`
+    -> passed, `1 passed, 515 deselected in 11.13s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 46.57s`
+  - `git diff --check` -> passed
+- Full pytest/browser regression proof is intentionally left to GitHub Actions
+  for this GitHub-first testing loop.
+- Non-claims until remote proof: no browser QA for this slice, no write on GET,
+  no provider call, no app-side GitHub polling, no approval decision, no
+  execution, no commit, no push, no PR, and no deploy from ClankerOS itself.
+
 ## 2026-06-28 Command Palette Finish Today UX
 
 - Added a fifth `Finish` card to the global command palette `Quick Switch`

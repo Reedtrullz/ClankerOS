@@ -602,7 +602,10 @@ no-network evidence before the operator starts decoding the page. After a
 confirmed local action, the shell also shows a read-only `Last Action` strip
 from `.clanker/app/workspace.json`, with the action result, target notice
 surface, saved Goal/project context, and zero-effect counters so the operator
-can recover the last handoff after navigating away. The route
+can recover the last handoff after navigating away. Action notice pages now
+start with a Next Step card sourced from first-run or saved-Goal state, so
+following a completed-action notice points straight at the next confirmed form
+or workflow surface instead of only echoing the previous result. The route
 context strip now starts with a compact action-first focus grid: current page,
 next local action, back target, Goal, Project, and `/resume`. The full route
 family/path, saved workspace anchors, focus target, and zero-effect counters

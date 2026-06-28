@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Completed-action notice pages now open with a `Next Step` card that is
+  sourced from first-run progress or saved-Goal state. The notice points
+  directly at the next confirmed browser form or workflow surface, reports
+  recommendation status/source/action/gate/confirmation evidence, keeps the
+  clean-surface and last-action links, and preserves no-write/no-provider/
+  no-network/no-external-effect boundaries on GET.
 - The command palette `Quick Switch` now includes a fifth `Finish` card that
   opens `/workspace#save-workspace`, reports finish source/target/confirmation
   evidence, and keeps the launcher read-only until the existing confirmed
