@@ -643,6 +643,14 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-goal-ci-handoff-full='true'",
                 "data-goal-ci-handoff-finish='true'",
                 "data-goal-ci-handoff-evidence='true'",
+                "Goal Live State",
+                "data-goal-live-actions='true'",
+                "data-goal-live-now='true'",
+                "data-goal-live-phase='true'",
+                "data-goal-live-refresh='true'",
+                "data-goal-live-pause='true'",
+                "data-goal-live-safety='true'",
+                "data-goal-live-evidence='true'",
                 "Next Action",
                 "Activity Log",
                 "Memory",
@@ -7865,7 +7873,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_next_recommendation_section(state, next_action),
             _goal_workflow_map(root, state, next_action),
             _goal_ci_handoff(root, state),
-            _goal_live_state(),
+            _goal_live_state(root, state, phase, next_action),
             _goal_section_index(),
             _goal_resume_snapshot(root, state),
             _goal_overview(state, phase, next_action),
@@ -8069,11 +8077,70 @@ def _goal_action_dock(
     )
 
 
-def _goal_live_state() -> str:
+def _goal_live_state(
+    root: Path,
+    state: dict[str, Any],
+    phase: str,
+    next_action: GoalNextAction,
+) -> str:
+    goal = state["goal"]
+    form_available = bool(_goal_next_action_form(state, next_action))
+    primary_href = "#goal-next-action-form" if form_available else next_action.href
+    primary_label = "Use Goal action form" if form_available else "Open next surface"
+    gates, gate_counts, current_gate = _goal_workflow_gate_summary(root, state, next_action)
+    progress = _goal_progress_label(state)
+    open_incidents = sum(1 for row in state["incidents"] if row["status"] == "open")
+    open_recommendations = sum(
+        1 for row in state["recommendations"] if row["status"] == "open"
+    )
+    pending_approvals = (
+        _count_status(state["worktree_approvals"], "pending_operator_approval")
+        + _count_status(state["commit_approvals"], "pending_operator_approval")
+        + _count_status(state["publications"], "pending_operator_approval")
+    )
+    waiting_items = open_incidents + open_recommendations + pending_approvals
+    live_cards = "".join(
+        [
+            "<div class='goal-live-state-card goal-live-state-primary' data-goal-live-now='true'>",
+            "<h3>Now</h3>",
+            f"<strong>{_e(next_action.action)}</strong>",
+            f"<p>{_e(progress)}</p>",
+            f"<a class='goal-live-state-action' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+            "</div>",
+            "<div class='goal-live-state-card' data-goal-live-phase='true'>",
+            "<h3>Phase</h3>",
+            f"<strong>{_e(phase)}</strong>",
+            f"<p>gate: {_e(current_gate)}</p>",
+            "<a class='goal-live-state-link' href='#goal-current-phase'>Current phase</a>",
+            "</div>",
+            "<div class='goal-live-state-card' data-goal-live-refresh='true'>",
+            "<h3>Refresh</h3>",
+            "<strong>Every 5 seconds</strong>",
+            "<p>Local page reload only.</p>",
+            "<button class='goal-live-state-button' type='button' data-goal-live-refresh-now='true' onclick='window.location.reload()'>Refresh now</button>",
+            "</div>",
+            "<div class='goal-live-state-card' data-goal-live-pause='true'>",
+            "<h3>Pause Rules</h3>",
+            "<strong>Editing or hidden tab</strong>",
+            "<p>Refresh pauses while a form field is focused or the page is hidden.</p>",
+            f"<a class='goal-live-state-link' href='{_e(primary_href)}'>Go to action</a>",
+            "</div>",
+            "<div class='goal-live-state-card' data-goal-live-safety='true'>",
+            "<h3>Safety</h3>",
+            "<strong>loopback only</strong>",
+            f"<p>{waiting_items} waiting item(s); no providers, GitHub polling, or external effects.</p>",
+            "<a class='goal-live-state-link' href='#goal-ci-handoff'>CI handoff</a>",
+            "</div>",
+        ]
+    )
     return "".join(
         [
-            "<section id='goal-live-state' class='panel' data-live-refresh='goal'><h2>Goal Live State</h2>",
+            "<section id='goal-live-state' class='panel goal-live-state' data-live-refresh='goal' data-goal-live-state='true'><h2>Goal Live State</h2>",
             "<p class='muted'>Keeps this goal page current while preserving local form edits.</p>",
+            "<div class='goal-live-state-grid' data-goal-live-actions='true'>",
+            live_cards,
+            "</div>",
+            "<details class='goal-live-state-evidence' data-goal-live-evidence='true'><summary>Goal live state evidence</summary>",
             _kv(
                 [
                     ("goal_live_refresh_enabled", "true"),
@@ -8081,10 +8148,41 @@ def _goal_live_state() -> str:
                     ("goal_live_refresh_mode", "local_page_reload"),
                     ("goal_live_refresh_pause_when_editing", "true"),
                     ("goal_live_refresh_pause_when_hidden", "true"),
+                    ("goal_live_refresh_goal", goal.id),
+                    ("goal_live_refresh_project", goal.project_id),
+                    ("goal_live_refresh_phase", phase),
+                    ("goal_live_refresh_next_action", next_action.action),
+                    (
+                        "goal_live_refresh_target_surface",
+                        SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+                    ),
+                    ("goal_live_refresh_action_form_available", str(form_available).lower()),
+                    ("goal_live_refresh_progress", progress),
+                    ("goal_live_refresh_current_gate", current_gate),
+                    ("goal_live_refresh_done_gates", str(gate_counts.get("done", 0))),
+                    ("goal_live_refresh_pending_gates", str(gate_counts.get("pending", 0))),
+                    ("goal_live_refresh_waiting_gates", str(gate_counts.get("waiting", 0))),
+                    ("goal_live_refresh_gate_count", str(len(gates))),
+                    ("goal_live_refresh_waiting_items", str(waiting_items)),
+                    ("goal_live_refresh_pending_approvals", str(pending_approvals)),
+                    ("goal_live_refresh_open_incidents", str(open_incidents)),
+                    ("goal_live_refresh_open_recommendations", str(open_recommendations)),
                     ("goal_live_refresh_network_scope", "local_browser_loopback_only"),
+                    ("goal_live_refresh_write_on_get", "false"),
+                    ("goal_live_refresh_provider_calls_taken", "0"),
+                    ("goal_live_refresh_network_actions_taken", "0"),
                     ("goal_live_refresh_external_effects_created", "false"),
                 ]
             ),
+            _ul(
+                [
+                    f"goal_live_refresh_now: {_e(next_action.action)}",
+                    f"goal_live_refresh_target: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                    f"goal_live_refresh_phase: {_e(phase)} gate={_e(current_gate)}",
+                    "goal_live_refresh_safety: local browser loopback reload only; pauses while editing or hidden",
+                ]
+            ),
+            "</details>",
             """
 <script data-live-refresh-script='goal'>
 (function() {
@@ -26372,7 +26470,7 @@ def _html_page(
     .goal-continuation-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-continuation-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-continuation-evidence:not([open]) > :not(summary) {{ display:none; }}
-    .goal-workflow-map, #goal-ci-handoff, #goal-remaining-work {{ scroll-margin-top:128px; }}
+    .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-remaining-work {{ scroll-margin-top:128px; }}
     .goal-workflow-map {{ border-left:4px solid var(--accent); }}
     .goal-workflow-map dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .goal-workflow-map-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
@@ -26400,6 +26498,20 @@ def _html_page(
     .goal-ci-handoff-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-ci-handoff-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-ci-handoff-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .goal-live-state {{ border-left:4px solid var(--accent); }}
+    .goal-live-state dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .goal-live-state-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-live-state-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .goal-live-state-card h3 {{ margin-top:0; }}
+    .goal-live-state-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .goal-live-state-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .goal-live-state-action, .goal-live-state-link, .goal-live-state-button {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-live-state-action, .goal-live-state-button {{ background:var(--accent); color:#fff; }}
+    .goal-live-state-link {{ background:var(--surface); color:var(--accent); }}
+    .goal-live-state-button {{ margin:0; width:auto; }}
+    .goal-live-state-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-live-state-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .goal-live-state-evidence:not([open]) > :not(summary) {{ display:none; }}
     .workspace-daily-brief {{ border-left:4px solid var(--accent); }}
     .workspace-daily-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .workspace-daily-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -26912,7 +27024,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} .goal-workflow-map, #goal-ci-handoff, #goal-remaining-work {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-remaining-work {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

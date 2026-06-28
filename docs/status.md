@@ -14,12 +14,16 @@ Latest status focus:
   Resume cards, and Goal Continuation Rail now exposes Now, Next Gate, Then,
   Publish Boundary, and Finish Today cards. Goal Workflow Map now exposes Now,
   Progress, Approvals, Publish Boundary, and Finish Today cards before its
-  detailed lifecycle rail. Jump, command, workbench,
-  daily-loop, return-brief, continuation, workflow-map, and full section-index evidence are
+  detailed lifecycle rail. Goal CI Handoff exposes Check GitHub, Record Proof,
+  Current Proof, Full Suite, and Finish Today cards, and Goal Live State now
+  exposes Now, Phase, Refresh, Pause Rules, and Safety cards before its
+  detailed refresh evidence. Jump, command, workbench,
+  daily-loop, return-brief, continuation, workflow-map, CI handoff, live-state,
+  and full section-index evidence are
   collapsed by default while preserving phase, next action, current gate,
   project-scoped CI proof posture, full anchor map, daily resume-save state,
   latest activity/artifact, blocker routing, workflow gate surfaces, manual
-  publish boundary, and zero-effect counters in the DOM.
+  publish boundary, local reload posture, and zero-effect counters in the DOM.
 - `/goals` is now content-first and board-first instead of shared-diagnostic or
   command-readback-first: the `Goal Board Workbench` opens the page before
   Route Context, Operator Focus, and the `Goal Board Command Bar`, with visible

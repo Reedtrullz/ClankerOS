@@ -294,7 +294,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   latest operator-recorded GitHub Actions evidence, exact `gh run list` /
   `gh run view` command templates, and a same-page JSON paste target for
   recording proof while the detailed ledger stays collapsed and app-side GitHub
-  polling remains disabled. Remaining Work also starts with a read-only
+  polling remains disabled. Goal Live State now opens with visible Now, Phase,
+  Refresh, Pause Rules, and Safety cards, including a local `Refresh now`
+  control, while detailed refresh posture stays collapsed and the five-second
+  reload loop still pauses during edits or hidden tabs. Remaining Work also starts with a read-only
   `Goal Remaining Work Command Bar` that summarizes the
   current gate, done/pending/waiting gate counts, open task/incident/
   recommendation counts, pending approvals, one next local surface, and

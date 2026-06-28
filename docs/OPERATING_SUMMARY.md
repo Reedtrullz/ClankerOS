@@ -446,10 +446,13 @@ Core layers for the bootstrap:
   recommendation came from an open task recommendation or was derived from
   current phase and local goal records, points at the target local surface, and
   records write-on-GET and external-effect boundaries. They also include a
-  first-class `Goal Live State` readback and local page reload polling that
-  pauses while the operator is editing a form or the tab is hidden; it does not
-  fetch GitHub status, call providers, push, create PRs, deploy, or mutate
-  external systems. They also include a read-only `Goal Section Index` with
+  first-class `Goal Live State` surface that opens with visible Now, Phase,
+  Refresh, Pause Rules, and Safety cards, including a local `Refresh now`
+  control and collapsed detailed refresh evidence. Its five-second local page
+  reload polling pauses while the operator is editing a form or the tab is
+  hidden; it does not fetch GitHub status, call providers, push, create PRs,
+  deploy, or mutate external systems. They also include a read-only
+  `Goal Section Index` with
   stable in-page anchors including the command bar, workflow map, and the
   major Goal surfaces,
   so operators can jump

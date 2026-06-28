@@ -373,8 +373,11 @@ Proof, Current Proof, Full Suite, and Finish Today cards. The cards expose the
 project-scoped proof status, latest operator-recorded GitHub Actions evidence,
 exact `gh run list` / `gh run view` command templates, and a same-page JSON
 paste target for recording proof, while the detailed ledger remains collapsed
-and still does no GitHub polling or external mutation on GET. Goal Remaining
-Work starts with a read-only `Goal Remaining Work Command Bar`
+and still does no GitHub polling or external mutation on GET. Goal Live State
+now opens with visible Now, Phase, Refresh, Pause Rules, and Safety cards,
+including a local `Refresh now` control, while detailed refresh posture stays
+collapsed and the five-second loop still pauses during edits or hidden tabs.
+Goal Remaining Work starts with a read-only `Goal Remaining Work Command Bar`
 that summarizes current gate, done/pending/waiting gate counts, open
 task/incident/recommendation counts, pending approvals, one next local surface,
 and zero-effect boundaries before the detailed checklist. The Next Recommendation

@@ -10048,11 +10048,33 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "remaining_work_gate: manual_publish status=waiting" in goal.body
     assert "Goal Live State" in goal.body
     assert "data-live-refresh='goal'" in goal.body
+    assert "data-goal-live-state='true'" in goal.body
+    assert "data-goal-live-actions='true'" in goal.body
+    assert "data-goal-live-now='true'" in goal.body
+    assert "data-goal-live-phase='true'" in goal.body
+    assert "data-goal-live-refresh='true'" in goal.body
+    assert "data-goal-live-pause='true'" in goal.body
+    assert "data-goal-live-safety='true'" in goal.body
+    assert "data-goal-live-evidence='true'" in goal.body
+    assert "Goal live state evidence" in goal.body
+    assert "Refresh now" in goal.body
     assert "goal_live_refresh_enabled</dt><dd>true" in goal.body
     assert "goal_live_refresh_interval_seconds</dt><dd>5" in goal.body
+    assert "goal_live_refresh_phase</dt><dd>Ready to commit" in goal.body
+    assert "goal_live_refresh_next_action</dt><dd>Create commit request" in goal.body
+    assert "goal_live_refresh_target_surface</dt><dd><a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_live_refresh_action_form_available</dt><dd>true" in goal.body
+    assert "goal_live_refresh_current_gate</dt><dd>commit_request" in goal.body
+    assert "goal_live_refresh_waiting_items</dt><dd>1" in goal.body
     assert "goal_live_refresh_pause_when_editing</dt><dd>true" in goal.body
     assert "goal_live_refresh_pause_when_hidden</dt><dd>true" in goal.body
+    assert "goal_live_refresh_write_on_get</dt><dd>false" in goal.body
+    assert "goal_live_refresh_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_live_refresh_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_live_refresh_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_live_refresh_now: Create commit request" in goal.body
+    assert "goal_live_refresh_target: <a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_live_refresh_safety: local browser loopback reload only" in goal.body
     assert "document.hidden" in goal.body
     assert result.delegation_id in goal.body
     assert result.coder_worktree_run_id in goal.body

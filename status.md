@@ -1,5 +1,23 @@
 # Status
 
+## 2026-06-28 Goal Live State Action Cards
+
+- Made `/goals/<goal_id>#goal-live-state` action-first by adding visible Now,
+  Phase, Refresh, Pause Rules, and Safety cards after the Goal CI Handoff.
+- Kept the five-second local page reload script, edit/hidden-tab pause rules,
+  current phase, next action, target surface, workflow gate counts, waiting
+  item counts, and zero-effect counters in collapsed `Goal live state
+  evidence`.
+- Added a local `Refresh now` control that only reloads the current browser
+  page and does not add any provider, GitHub polling, push, PR, deploy, or
+  external-mutation authority.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused route assertions.
+- Non-claims: this is a local browser UX and documentation slice. It does not
+  fetch GitHub status, poll external network services, write workspace state
+  on GET, create CI evidence, call providers, push, create PRs, deploy, or
+  mutate external systems from ClankerOS.
+
 ## 2026-06-28 Goal CI Handoff Action Cards
 
 - Made `/goals/<goal_id>#goal-ci-handoff` action-first by adding visible Check
