@@ -226,6 +226,11 @@ Latest status focus:
   the gate map with visible Next Gate, Approval, Evidence, Goal, and Boundary
   cards, so the selected run can be continued from the browser before the
   dense workflow/evidence stack.
+- Delegation execution run detail pages now include a read-only
+  `Delegation Run Continuation` strip with visible Now, Workflow, Handoff,
+  Artifacts, and Goal cards before the detailed scout evidence. It links to
+  the owning delegation's `Safe Local Actions`, workflow map, artifact anchor,
+  and parent Goal while keeping continuation evidence collapsed by default.
 - Run-specific approval gates now link to `/approvals?run_id=<coder_run_id>`,
   where the approval command bar, workbench, and decision brief foreground the
   matching commit or publication approval ahead of unrelated global queue

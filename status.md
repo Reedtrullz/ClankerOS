@@ -1,5 +1,51 @@
 # Status
 
+## 2026-06-28 Delegation Run Continuation Strip
+
+- Made delegation execution run detail pages action-first with a visible
+  read-only `Delegation Run Continuation` strip before the detailed scout
+  evidence and artifact/workflow readbacks.
+- The strip shows Now, Workflow, Handoff, Artifacts, and Goal cards for the
+  selected delegation execution run, linking only to existing local surfaces:
+  the owning delegation's `#safe-local-actions`, `/workflow?delegation_id=...`,
+  the delegation artifact anchor, and the parent Goal.
+- Added a stable `#safe-local-actions` anchor on delegation detail pages and
+  expanded the deterministic demo smoke contract to cover delegation execution
+  run detail pages directly.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including
+    `/runs/<delegation_execution_run_id>`, provider calls 0, network actions
+    0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against
+  `http://127.0.0.1:8851/runs/run_2971a780daca#delegation-run-continuation`:
+  desktop `1280x900` rendered five continuation cards, kept continuation
+  evidence closed, had no horizontal overflow, and reported no warning/error
+  logs.
+- Browser interaction QA clicked the primary Now card, navigated to the
+  existing `/delegations/<id>#safe-local-actions` surface, kept the target
+  form anchor present, had no horizontal overflow, and reported no
+  warning/error logs.
+- Browser QA mobile `390x844` rendered the five continuation cards in one
+  column, kept continuation evidence closed, ordered the strip before
+  Delegation Run Evidence and Delegation Execution Artifacts, had no
+  horizontal overflow, and reported no warning/error logs.
+- Screenshots: `/tmp/clankeros-delegation-continuation-desktop.png` and
+  `/tmp/clankeros-delegation-continuation-mobile.png`.
+- The local app server was stopped after browser QA, and
+  `lsof -nP -iTCP:8851 -sTCP:LISTEN || true` showed no remaining listener. The
+  bounded scratch demo root was removed.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, approve work, execute work, create commits, push, create PRs, deploy,
+  fetch GitHub status, call providers, or mutate external systems.
+
 ## 2026-06-28 Run Continuation Strip
 
 - Made `/runs/<run_id>#run-continuation-strip` action-first with a visible

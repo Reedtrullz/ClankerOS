@@ -765,9 +765,12 @@ Core layers for the bootstrap:
   `/delegation-runs` index for scout/delegation execution evidence, context
   pack and implementation handoff links, zero-effect counters, retry signals,
   and next local operator actions; `/runs/<run_id>` now also recognizes
-  delegation execution run ids and renders scout evidence, result artifacts,
-  context-pack and handoff status, zero-effect counters, and next-action
-  readback; a read-only content-first `/actions` catalog that opens with the
+  delegation execution run ids and renders a read-only `Delegation Run
+  Continuation` strip before the detailed scout evidence, with visible Now,
+  Workflow, Handoff, Artifacts, and Goal cards linked only to existing local
+  surfaces plus context-pack/handoff status, retry/incident state,
+  zero-effect counters, and next-action readback; a read-only content-first
+  `/actions` catalog that opens with the
   safe action header and `Action Operator Workbench` before shared route/focus
   diagnostics, reading first-run or lead-Goal focus, naming the current local
   action, linking the owning surface for the confirmed form, routing blockers,

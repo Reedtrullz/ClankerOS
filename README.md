@@ -620,6 +620,13 @@ Continuation` block with the exact next local action, run detail surface,
 approvals queue, inbox, dogfooding checklist, and the explicit
 `external_effects_created: false` boundary.
 
+Use `/runs/<delegation_execution_run_id>` after scout/delegation execution to
+continue from the returned evidence. The read-only `Delegation Run
+Continuation` strip shows Now, Workflow, Handoff, Artifacts, and Goal cards
+before the detailed evidence, linking only to existing local surfaces such as
+the delegation page's `Safe Local Actions`, workflow map, artifact anchors,
+and parent Goal.
+
 Use `/runs/<coder_run_id>` to review the worktree evidence and gate state. The
 read-only `Run Command Bar` starts the page with the run status, review gate,
 commit/publication state, changed-file count, diff summary, next local action,

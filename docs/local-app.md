@@ -612,9 +612,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   and publication state, including a compact workflow-readiness summary and
   next recommended operator action.
 - `/runs/<run_id>` - run detail. For delegation execution run ids, the page
-  shows scout evidence, result artifacts, context-pack and
-  implementation-handoff links, zero-effect counters, retry signals, and next
-  local operator action. For coder worktree run ids, it includes a
+  opens with a read-only `Delegation Run Continuation` strip that turns scout
+  evidence into visible Now, Workflow, Handoff, Artifacts, and Goal cards
+  before the detailed evidence. It links only to existing local surfaces such
+  as `/delegations/<id>#safe-local-actions`, `/workflow?delegation_id=...`,
+  artifact anchors, and the parent Goal, while preserving context-pack and
+  implementation-handoff status, retry/incident state, and zero-effect
+  counters. For coder worktree run ids, it includes a
   read-only `Run Command Bar` that summarizes run status, review gate,
   commit/publication state, changed-file count, diff summary, next local
   action, target surface, and no-write/no-network/no-external-effect

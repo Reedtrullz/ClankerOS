@@ -10988,6 +10988,49 @@ def test_local_app_demo_scenario_populates_fixture_state(
 
     delegation_run_page = render_local_app_route(tmp_path, f"/runs/{result.run_id}")
     assert delegation_run_page.status == 200
+    assert "Delegation Run Continuation" in delegation_run_page.body
+    assert "data-delegation-run-continuation='true'" in delegation_run_page.body
+    assert "data-delegation-run-continuation-actions='true'" in delegation_run_page.body
+    assert "<summary>Delegation run continuation evidence</summary>" in delegation_run_page.body
+    assert delegation_run_page.body.index("data-delegation-run-continuation='true'") < delegation_run_page.body.index(
+        "Delegation Run Evidence"
+    )
+    assert delegation_run_page.body.index("data-delegation-run-continuation='true'") < delegation_run_page.body.index(
+        "id='delegation-execution-artifacts'"
+    )
+    assert "delegation_run_continuation_status</dt><dd>action_form_ready" in delegation_run_page.body
+    assert f"delegation_run_continuation_run_id</dt><dd>{result.run_id}" in delegation_run_page.body
+    assert f"delegation_run_continuation_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in delegation_run_page.body
+    assert f"delegation_run_continuation_goal</dt><dd>{result.goal_id}" in delegation_run_page.body
+    assert "delegation_run_continuation_project</dt><dd>local-app-demo" in delegation_run_page.body
+    assert "delegation_run_continuation_next_action</dt><dd>prepare_coder_from_handoff" in delegation_run_page.body
+    assert "delegation_run_continuation_action_label</dt><dd>Prepare coder from handoff" in delegation_run_page.body
+    assert (
+        f"delegation_run_continuation_primary_surface</dt><dd><a href='/delegations/{result.delegation_id}#safe-local-actions'>"
+        "Safe Local Actions</a>"
+    ) in delegation_run_page.body
+    assert "delegation_run_continuation_reason</dt><dd>prepare_coder_from_handoff" in delegation_run_page.body
+    assert f"delegation_run_continuation_workflow_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'>Workflow</a>" in delegation_run_page.body
+    assert (
+        f"delegation_run_continuation_safe_actions_surface</dt><dd><a href='/delegations/{result.delegation_id}#safe-local-actions'>"
+        "Safe Local Actions</a>"
+    ) in delegation_run_page.body
+    assert "delegation_run_continuation_action_form_available</dt><dd>true" in delegation_run_page.body
+    assert "delegation_run_continuation_confirmation_required</dt><dd>true" in delegation_run_page.body
+    assert "delegation_run_continuation_context_pack_status</dt><dd>available" in delegation_run_page.body
+    assert "delegation_run_continuation_implementation_handoff_status</dt><dd>available" in delegation_run_page.body
+    assert "delegation_run_continuation_artifacts_surface</dt><dd><a href='#delegation-execution-artifacts'>Delegation Execution Artifacts</a>" in delegation_run_page.body
+    assert f"delegation_run_continuation_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>/goals/{result.goal_id}</a>" in delegation_run_page.body
+    assert "delegation_run_continuation_incident</dt><dd>none" in delegation_run_page.body
+    assert "delegation_run_continuation_retry_candidate</dt><dd>false" in delegation_run_page.body
+    assert "delegation_run_continuation_write_on_get</dt><dd>false" in delegation_run_page.body
+    assert "delegation_run_continuation_provider_calls_taken</dt><dd>0" in delegation_run_page.body
+    assert "delegation_run_continuation_network_actions_taken</dt><dd>0" in delegation_run_page.body
+    assert "delegation_run_continuation_external_effects_created</dt><dd>false" in delegation_run_page.body
+    assert "delegation_run_continuation_now: Prepare coder from handoff" in delegation_run_page.body
+    assert f"delegation_run_continuation_click: <a href='/delegations/{result.delegation_id}#safe-local-actions'>Safe Local Actions</a>" in delegation_run_page.body
+    assert "delegation_run_continuation_artifacts: <a href='#delegation-execution-artifacts'>Delegation Execution Artifacts</a>" in delegation_run_page.body
+    assert "delegation_run_continuation_safety: read-only delegation run continuation; confirmed forms own writes" in delegation_run_page.body
     assert "Delegation Run Evidence" in delegation_run_page.body
     assert "Delegation Execution Artifacts" in delegation_run_page.body
     assert "Delegation Run Workflow State" in delegation_run_page.body
@@ -11009,6 +11052,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Coder Prep" in delegation.body
     assert "Coder Worktree Plan" in delegation.body
     assert "Safe Local Actions" in delegation.body
+    assert "id=\"safe-local-actions\"" in delegation.body
     assert "implementation-handoff" in delegation.body
     assert "coder-prep-from-handoff" in delegation.body
     assert "coder-worktree-approval" in delegation.body

@@ -547,6 +547,21 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             ],
         ),
         (
+            f"/runs/{quote(demo.run_id)}",
+            "Run",
+            [
+                "Delegation Run Continuation",
+                "data-delegation-run-continuation='true'",
+                "data-delegation-run-continuation-evidence='true'",
+                "delegation_run_continuation_status</dt><dd>action_form_ready",
+                "delegation_run_continuation_next_action</dt><dd>prepare_coder_from_handoff",
+                "delegation_run_continuation_action_label</dt><dd>Prepare coder from handoff",
+                "Delegation Run Evidence",
+                "Delegation Execution Artifacts",
+                "Delegation Run Workflow State",
+            ],
+        ),
+        (
             "/goals",
             "Goal Cockpit",
             [
@@ -21388,6 +21403,17 @@ def _delegation_execution_run_detail(
     ).lower()
     return "".join(
         [
+            _delegation_run_continuation_strip(
+                root,
+                delegation=delegation,
+                metadata=metadata,
+                run_id=run_id,
+                project_id=project_id,
+                next_action=next_action,
+                context_pack_status=context_pack_status,
+                implementation_handoff_status=implementation_handoff_status,
+                retry_candidate=retry_candidate,
+            ),
             "<section><h2>Delegation Run Evidence</h2>",
             _kv(
                 [
@@ -21412,6 +21438,7 @@ def _delegation_execution_run_detail(
             _list_section(
                 "Delegation Execution Artifacts",
                 _delegation_execution_artifact_lines(root, delegation, metadata),
+                anchor_id="delegation-execution-artifacts",
             ),
             "<section><h2>Delegation Run Workflow State</h2>",
             _kv(
@@ -21426,6 +21453,163 @@ def _delegation_execution_run_detail(
                     ("next_recommended_action", next_action),
                 ]
             ),
+            "</section>",
+        ]
+    )
+
+
+def _delegation_run_continuation_strip(
+    root: Path,
+    *,
+    delegation: Any,
+    metadata: dict[str, Any],
+    run_id: str,
+    project_id: str,
+    next_action: str,
+    context_pack_status: str,
+    implementation_handoff_status: str,
+    retry_candidate: str,
+) -> str:
+    goal_id = delegation.parent_goal_id or ""
+    action_label = _delegation_run_action_label(next_action)
+    delegation_href = f"/delegations/{quote(delegation.id)}"
+    safe_actions_href = f"{delegation_href}#safe-local-actions"
+    workflow_href = f"/workflow?delegation_id={quote(delegation.id)}"
+    goal_href = f"/goals/{quote(goal_id)}" if goal_id else "/goals"
+    goal_label = f"/goals/{goal_id}" if goal_id else "/goals"
+    result_artifact = _repo_relative_artifact_path(root, delegation.result_artifact_path)
+    evidence_dir = str(metadata.get("execution_evidence_dir") or metadata.get("evidence_dir") or "none")
+    incident_id = str(metadata.get("incident_id") or "none")
+    if incident_id != "none":
+        primary_href = "/incidents"
+        primary_label = "/incidents"
+        continuation_status = "needs_attention"
+        reason = f"incident={incident_id}"
+    elif next_action in {
+        "prepare_coder_from_handoff",
+        "create_implementation_handoff",
+        "run_delegation",
+    }:
+        primary_href = safe_actions_href
+        primary_label = "Safe Local Actions"
+        continuation_status = "action_form_ready"
+        reason = next_action
+    elif next_action == "review_delegation_result":
+        primary_href = "#delegation-execution-artifacts"
+        primary_label = "Delegation Execution Artifacts"
+        continuation_status = "review_ready"
+        reason = "delegation_result_available"
+    else:
+        primary_href = delegation_href
+        primary_label = "Delegation"
+        continuation_status = "navigation_ready"
+        reason = next_action
+    handoff_path = str(
+        metadata.get("implementation_handoff_md")
+        or metadata.get("implementation_handoff_json")
+        or "none"
+    )
+    context_pack_path = str(
+        metadata.get("context_pack_md")
+        or metadata.get("context_pack_json")
+        or "none"
+    )
+    action_form_available = primary_href == safe_actions_href
+    return "".join(
+        [
+            (
+                "<section id='delegation-run-continuation' "
+                "class='panel delegation-run-continuation' "
+                "data-delegation-run-continuation='true'>"
+                "<h2>Delegation Run Continuation</h2>"
+            ),
+            "<p class='muted'>One handoff for continuing scout evidence into context review, coder prep, workflow inspection, or incident triage.</p>",
+            "<div class='delegation-run-continuation-grid' data-delegation-run-continuation-actions='true'>",
+            "<article class='delegation-run-continuation-card delegation-run-continuation-primary'><h3>Now</h3>",
+            f"<p>{_e(action_label)}</p>",
+            f"<a class='delegation-run-continuation-action' href='{_e(primary_href)}'>{_e(primary_label)}</a></article>",
+            "<article class='delegation-run-continuation-card'><h3>Workflow</h3>",
+            "<p>See context, handoff, prep, and worktree gates.</p>",
+            f"<a class='delegation-run-continuation-link' href='{_e(workflow_href)}'>Workflow</a></article>",
+            "<article class='delegation-run-continuation-card'><h3>Handoff</h3>",
+            f"<p>Context {context_pack_status}; handoff {implementation_handoff_status}.</p>",
+            f"<a class='delegation-run-continuation-link' href='{_e(safe_actions_href)}'>Safe actions</a></article>",
+            "<article class='delegation-run-continuation-card'><h3>Artifacts</h3>",
+            f"<p>{_e(result_artifact)}</p>",
+            "<a class='delegation-run-continuation-link' href='#delegation-execution-artifacts'>Open artifacts</a></article>",
+            "<article class='delegation-run-continuation-card'><h3>Goal</h3>",
+            f"<p>{_e(goal_id or 'No parent Goal found')}</p>",
+            f"<a class='delegation-run-continuation-link' href='{_e(goal_href)}'>Return to Goal</a></article>",
+            "</div>",
+            "<details class='delegation-run-continuation-evidence' data-delegation-run-continuation-evidence='true'><summary>Delegation run continuation evidence</summary>",
+            _kv(
+                [
+                    ("delegation_run_continuation_status", continuation_status),
+                    ("delegation_run_continuation_run_id", run_id),
+                    ("delegation_run_continuation_delegation", SafeHtml(f"<a href='{_e(delegation_href)}'>{_e(delegation.id)}</a>")),
+                    ("delegation_run_continuation_goal", goal_id or "none"),
+                    ("delegation_run_continuation_project", project_id),
+                    ("delegation_run_continuation_profile", delegation.assigned_profile),
+                    ("delegation_run_continuation_category", delegation.category),
+                    ("delegation_run_continuation_delegation_status", delegation.status),
+                    ("delegation_run_continuation_next_action", next_action),
+                    ("delegation_run_continuation_action_label", action_label),
+                    (
+                        "delegation_run_continuation_primary_surface",
+                        SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+                    ),
+                    ("delegation_run_continuation_reason", reason),
+                    (
+                        "delegation_run_continuation_workflow_surface",
+                        SafeHtml(f"<a href='{_e(workflow_href)}'>Workflow</a>"),
+                    ),
+                    (
+                        "delegation_run_continuation_safe_actions_surface",
+                        SafeHtml(f"<a href='{_e(safe_actions_href)}'>Safe Local Actions</a>"),
+                    ),
+                    ("delegation_run_continuation_action_form_available", str(action_form_available).lower()),
+                    ("delegation_run_continuation_confirmation_required", str(action_form_available).lower()),
+                    ("delegation_run_continuation_context_pack_status", context_pack_status),
+                    ("delegation_run_continuation_context_pack", _artifact_link(context_pack_path)),
+                    (
+                        "delegation_run_continuation_implementation_handoff_status",
+                        implementation_handoff_status,
+                    ),
+                    ("delegation_run_continuation_implementation_handoff", _artifact_link(handoff_path)),
+                    (
+                        "delegation_run_continuation_artifacts_surface",
+                        SafeHtml("<a href='#delegation-execution-artifacts'>Delegation Execution Artifacts</a>"),
+                    ),
+                    ("delegation_run_continuation_result_artifact", _artifact_link(result_artifact)),
+                    ("delegation_run_continuation_evidence_dir", evidence_dir),
+                    (
+                        "delegation_run_continuation_goal_surface",
+                        SafeHtml(f"<a href='{_e(goal_href)}'>{_e(goal_label)}</a>"),
+                    ),
+                    ("delegation_run_continuation_incident", incident_id),
+                    ("delegation_run_continuation_retry_candidate", retry_candidate),
+                    ("delegation_run_continuation_source", "delegation_execution_run_metadata"),
+                    ("delegation_run_continuation_write_on_get", "false"),
+                    ("delegation_run_continuation_provider_calls_taken", "0"),
+                    ("delegation_run_continuation_network_actions_taken", "0"),
+                    ("delegation_run_continuation_external_effects_created", "false"),
+                    ("delegation_run_continuation_push_created", "false"),
+                    ("delegation_run_continuation_pr_created", "false"),
+                    ("delegation_run_continuation_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"delegation_run_continuation_now: {_e(action_label)}",
+                    f"delegation_run_continuation_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                    f"delegation_run_continuation_workflow: <a href='{_e(workflow_href)}'>Workflow</a>",
+                    f"delegation_run_continuation_safe_actions: <a href='{_e(safe_actions_href)}'>Safe Local Actions</a>",
+                    "delegation_run_continuation_artifacts: <a href='#delegation-execution-artifacts'>Delegation Execution Artifacts</a>",
+                    f"delegation_run_continuation_goal: <a href='{_e(goal_href)}'>{_e(goal_label)}</a>",
+                    "delegation_run_continuation_safety: read-only delegation run continuation; confirmed forms own writes",
+                ]
+            ),
+            "</details>",
             "</section>",
         ]
     )
@@ -24968,7 +25152,7 @@ def _append_goal_operator_note(
 
 def _safe_action_forms(*, delegation_id: str, handoff_md: str) -> str:
     return f"""
-    <section><h2>Safe Local Actions</h2>
+    <section id="safe-local-actions"><h2>Safe Local Actions</h2>
       <p class="muted">Delegation-scoped artifact, approval, read-only delegation run, and approved bounded worktree run actions require an explicit confirmation page. Local commit and publication handoff actions stay gate-specific; push, PR, deploy, provider, and arbitrary command actions are not exposed here.</p>
       {_form('implementation-handoff', {'delegation_id': delegation_id})}
       {_form('context-pack', {'delegation_id': delegation_id})}
@@ -28270,6 +28454,19 @@ def _html_page(
     .delegation-run-workbench-evidence, .delegation-run-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .delegation-run-workbench-evidence summary, .delegation-run-command-evidence summary {{ cursor:pointer; font-weight:700; }}
     .delegation-run-workbench-evidence:not([open]) > :not(summary), .delegation-run-command-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .delegation-run-continuation {{ border-left:4px solid var(--accent); }}
+    .delegation-run-continuation dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .delegation-run-continuation-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .delegation-run-continuation-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .delegation-run-continuation-card h3 {{ margin-top:0; }}
+    .delegation-run-continuation-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .delegation-run-continuation-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .delegation-run-continuation-action, .delegation-run-continuation-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .delegation-run-continuation-action {{ background:var(--accent); color:#fff; }}
+    .delegation-run-continuation-link {{ background:var(--surface); color:var(--accent); }}
+    .delegation-run-continuation-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .delegation-run-continuation-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .delegation-run-continuation-evidence:not([open]) > :not(summary) {{ display:none; }}
     .delegation-run-command-bar {{ border-left:4px solid var(--accent); }}
     .delegation-run-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .delegation-run-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -28555,8 +28752,8 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
-    @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>
