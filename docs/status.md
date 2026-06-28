@@ -52,12 +52,14 @@ Latest status focus:
   exposes Now, Current, Saved, Artifact, and Safety cards before collapsed
   resume evidence, restore state, and save form; Goal Operator Notes now
   exposes Now, Artifact, Resume, Capture, and Safety cards before collapsed
-  notes evidence and note details.
+  notes evidence and note details. Goal Section Index now exposes Operate,
+  Proof, Work, Knowledge, and Finish switchboard cards before the collapsed
+  full anchor map.
   Jump, command, workbench,
   daily-loop, return-brief, continuation, workflow-map, CI handoff, live-state,
   timeline, activity, delegations, runs, approvals, incidents, evidence,
   artifacts, memory, skills, git, verification, overview, risk, criteria, progress,
-  completion-readiness, resume-snapshot, operator-notes, remaining-work, and full
+  completion-readiness, resume-snapshot, operator-notes, section-index, remaining-work, and full
   section-index evidence are
   collapsed by default while preserving phase, next action, current gate,
   project-scoped CI proof posture, full anchor map, daily resume-save state,

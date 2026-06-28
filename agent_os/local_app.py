@@ -666,6 +666,13 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-goal-daily-loop-evidence='true'",
                 "data-goal-pause-details='true'",
                 "data-goal-finish-details='true'",
+                "data-goal-section-index-actions='true'",
+                "data-goal-section-index-operate='true'",
+                "data-goal-section-index-proof='true'",
+                "data-goal-section-index-work='true'",
+                "data-goal-section-index-knowledge='true'",
+                "data-goal-section-index-finish='true'",
+                "data-goal-section-index-primary='true'",
                 "data-goal-section-index-evidence='true'",
                 "Goal Return Brief",
                 "data-goal-return-brief='true'",
@@ -8440,17 +8447,100 @@ def _goal_section_index() -> str:
         f"<a href='#{_e(anchor)}'>{_e(label)}</a>"
         for label, anchor in sections
     ]
+    switchboard_cards = [
+        (
+            "operate",
+            "Operate",
+            "Phase, action, workflow",
+            "Open the current operating loop first.",
+            "goal-next-action",
+            "Next action",
+            True,
+        ),
+        (
+            "proof",
+            "Proof",
+            "CI, verification, evidence",
+            "Check whether this goal has current proof.",
+            "goal-verification-command-bar",
+            "Verification",
+            False,
+        ),
+        (
+            "work",
+            "Work",
+            "Delegations, runs, approvals",
+            "Move through execution and review surfaces.",
+            "goal-delegation-command-bar",
+            "Delegations",
+            False,
+        ),
+        (
+            "knowledge",
+            "Knowledge",
+            "Artifacts, memory, skills, notes",
+            "Inspect what the goal produced or learned.",
+            "goal-artifact-command-bar",
+            "Artifacts",
+            False,
+        ),
+        (
+            "finish",
+            "Finish",
+            "Completion, resume, remaining work",
+            "Close the loop or save the return point.",
+            "goal-completion-readiness",
+            "Completion",
+            False,
+        ),
+    ]
+    switchboard_items: list[str] = []
+    for key, title, summary, description, anchor, label, primary in switchboard_cards:
+        card_class = "goal-section-index-card"
+        if primary:
+            card_class += " goal-section-index-primary"
+        primary_attr = "data-goal-section-index-primary='true' " if primary else ""
+        switchboard_items.append(
+            f"<article class='{_e(card_class)}' data-goal-section-index-{_e(key)}='true'>"
+            f"<h3>{_e(title)}</h3>"
+            f"<strong>{_e(summary)}</strong>"
+            f"<p>{_e(description)}</p>"
+            f"<a class='goal-section-index-link' {primary_attr}"
+            f"href='#{_e(anchor)}'>{_e(label)}</a>"
+            "</article>"
+        )
+    switchboard = "".join(switchboard_items)
     return "".join(
         [
             "<section id='goal-section-index' class='panel goal-section-index' data-goal-section-index='true'><h2>Goal Section Index</h2>",
-            "<p class='muted'>Full anchor map for deep review, kept collapsed so the top of the Goal stays action-first.</p>",
+            "<p class='muted'>Use the switchboard for the main day-loop areas; open the full map only for deep review.</p>",
+            "<div class='goal-section-index-grid' data-goal-section-index-actions='true'>",
+            switchboard,
+            "</div>",
             f"<details class='goal-section-index-evidence' data-goal-section-index-evidence='true'><summary>Full Goal section index ({len(sections)})</summary>",
             _kv(
                 [
                     ("goal_section_index_status", "available"),
                     ("goal_section_count", str(len(sections))),
+                    ("goal_section_switchboard_status", "available"),
+                    ("goal_section_switchboard_card_count", str(len(switchboard_cards))),
+                    ("goal_section_switchboard_primary", "goal-next-action"),
+                    ("goal_section_switchboard_proof_surface", "goal-verification-command-bar"),
+                    ("goal_section_switchboard_work_surface", "goal-delegation-command-bar"),
+                    ("goal_section_switchboard_knowledge_surface", "goal-artifact-command-bar"),
+                    ("goal_section_switchboard_finish_surface", "goal-completion-readiness"),
                     ("goal_section_index_write_on_get", "false"),
                     ("goal_section_index_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    "goal_section_switchboard_operate: <a href='#goal-next-action'>Next action</a>",
+                    "goal_section_switchboard_proof: <a href='#goal-verification-command-bar'>Verification</a>",
+                    "goal_section_switchboard_work: <a href='#goal-delegation-command-bar'>Delegations</a>",
+                    "goal_section_switchboard_knowledge: <a href='#goal-artifact-command-bar'>Artifacts</a>",
+                    "goal_section_switchboard_finish: <a href='#goal-completion-readiness'>Completion</a>",
+                    "goal_section_switchboard_safety: read-only local anchor navigation",
                 ]
             ),
             "<nav aria-label='Full Goal section index'>",
@@ -27392,6 +27482,13 @@ def _html_page(
     .goal-jump-evidence, .goal-section-index-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-jump-evidence summary, .goal-section-index-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-jump-evidence:not([open]) > :not(summary), .goal-section-index-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .goal-section-index-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-section-index-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .goal-section-index-card h3 {{ margin-top:0; }}
+    .goal-section-index-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .goal-section-index-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .goal-section-index-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-section-index-primary .goal-section-index-link {{ background:var(--accent); color:#fff; }}
     .goal-section-index ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:8px; }}
     .goal-section-index li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     body:has(.goal-action-dock) main {{ padding-bottom:24px; }}
@@ -28269,7 +28366,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

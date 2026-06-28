@@ -389,7 +389,9 @@ confirmed form without adding a second action form. The Goal
 Next Action focus strip makes the selected action
 readable at the point of decision and keeps the confirmed form ahead of
 diagnostic evidence, while the Goal Section Index near the top links to the
-full stable anchor map for the major Goal surfaces.
+main day-loop areas through visible Operate, Proof, Work, Knowledge, and
+Finish cards, with the full stable anchor map still collapsed underneath for
+deep review.
 Goal Delegations starts with a read-only `Goal Delegation Command Bar` that
 opens with visible Now, Latest, Workflow, Handoff, and Safety cards. It still
 summarizes scout delegation counts, context-pack readiness, implementation

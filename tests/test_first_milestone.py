@@ -8939,6 +8939,26 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_action_dock_safety: reuses existing confirmed Goal action form" in goal.body
     assert "goal_section_index_status</dt><dd>available" in goal.body
     assert "goal_section_count</dt><dd>" in goal.body
+    assert "data-goal-section-index-actions='true'" in goal.body
+    assert "data-goal-section-index-operate='true'" in goal.body
+    assert "data-goal-section-index-proof='true'" in goal.body
+    assert "data-goal-section-index-work='true'" in goal.body
+    assert "data-goal-section-index-knowledge='true'" in goal.body
+    assert "data-goal-section-index-finish='true'" in goal.body
+    assert "data-goal-section-index-primary='true' href='#goal-next-action'>Next action</a>" in goal.body
+    assert "goal_section_switchboard_status</dt><dd>available" in goal.body
+    assert "goal_section_switchboard_card_count</dt><dd>5" in goal.body
+    assert "goal_section_switchboard_primary</dt><dd>goal-next-action" in goal.body
+    assert "goal_section_switchboard_proof_surface</dt><dd>goal-verification-command-bar" in goal.body
+    assert "goal_section_switchboard_work_surface</dt><dd>goal-delegation-command-bar" in goal.body
+    assert "goal_section_switchboard_knowledge_surface</dt><dd>goal-artifact-command-bar" in goal.body
+    assert "goal_section_switchboard_finish_surface</dt><dd>goal-completion-readiness" in goal.body
+    assert "goal_section_switchboard_proof: <a href='#goal-verification-command-bar'>Verification</a>" in goal.body
+    assert "goal_section_switchboard_finish: <a href='#goal-completion-readiness'>Completion</a>" in goal.body
+    assert "goal_section_switchboard_safety: read-only local anchor navigation" in goal.body
+    assert goal.body.index("data-goal-section-index-actions='true'") < goal.body.index(
+        "data-goal-section-index-evidence='true'"
+    )
     assert "goal_section_index_write_on_get</dt><dd>false" in goal.body
     assert "goal_section_index_external_effects_created</dt><dd>false" in goal.body
     assert "href='#goal-summary'" in goal.body

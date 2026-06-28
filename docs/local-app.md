@@ -234,11 +234,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   the in-flow Goal Action Dock keeps the current action, gate, proof, and
   resume route visible near the top of the Goal without covering later
   controls while jumping directly to the confirmed form without adding a
-  second action form. The Goal Section Index stays available as a collapsed full
-  anchor map and links directly to the Timeline, Activity, and Git command bars
-  as well as the detailed sections, so long Goal pages remain navigable from
-  their scan-first operator surfaces without showing the whole anchor list by
-  default. Goal
+  second action form. The Goal Section Index now opens with visible Operate,
+  Proof, Work, Knowledge, and Finish switchboard cards before the collapsed
+  full anchor map, so long Goal pages remain navigable from their scan-first
+  operator surfaces without showing the whole anchor list by default. Goal
   Overview starts with a read-only `Goal Overview Command Bar` with visible
   Now, Scope, Progress, Waiting, and Safety cards before collapsed command
   evidence and collapsed raw goal metadata. Goal Risk starts with visible Now,

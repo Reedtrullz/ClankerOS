@@ -393,10 +393,11 @@ Core layers for the bootstrap:
   confirmed form without adding a second action form. The Goal Next Action
   section starts
   with a human-first focus strip for Now, Gate, Target, and Boundary, then
-  renders the confirmed form before collapsed action evidence. The Goal Section Index now links
-  directly to the Timeline, Activity, and Git command bars in addition to the
-  longer detail sections, making the page navigable through scan-first
-  operator surfaces.
+  renders the confirmed form before collapsed action evidence. The Goal
+  Section Index now opens with visible Operate, Proof, Work, Knowledge, and
+  Finish switchboard cards before the collapsed full anchor map, making the
+  page navigable through scan-first operator surfaces without dumping every
+  anchor by default.
   Goal Overview starts with a read-only
   `Goal Overview Command Bar` so the operator sees goal identity, status,
   phase, risk, progress, local counts, next click, and no-effect boundaries
@@ -454,10 +455,9 @@ Core layers for the bootstrap:
   reload polling pauses while the operator is editing a form or the tab is
   hidden; it does not fetch GitHub status, call providers, push, create PRs,
   deploy, or mutate external systems. They also include a read-only
-  `Goal Section Index` with
-  stable in-page anchors including the command bar, workflow map, and the
-  major Goal surfaces,
-  so operators can jump
+  `Goal Section Index` with visible Operate, Proof, Work, Knowledge, and
+  Finish switchboard cards plus stable collapsed in-page anchors including the
+  command bar, workflow map, and major Goal surfaces, so operators can jump
   through a long Goal workbench without leaving the page or triggering writes.
   Every app page also includes a shared read-only `Operator Focus` strip that
   derives from the saved workspace goal or current lead goal and now opens with
