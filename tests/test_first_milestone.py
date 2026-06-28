@@ -5148,6 +5148,24 @@ def test_local_app_routes_render_modern_workflow_and_health(
 
     workflow = render_local_app_route(tmp_path, "/workflow")
     assert workflow.status == 200
+    assert "Workflow Operator Workbench" in workflow.body
+    assert "data-workflow-operator-workbench='true'" in workflow.body
+    assert "data-workflow-workbench-primary='true'" in workflow.body
+    assert "data-workflow-workbench-evidence='true'" in workflow.body
+    assert "data-workflow-command-evidence='true'" in workflow.body
+    assert workflow.body.index("data-workflow-operator-workbench") < workflow.body.index("data-workflow-command-bar")
+    assert workflow.body.index("data-workflow-operator-workbench") < workflow.body.index("data-route-context")
+    assert "workflow_workbench_status</dt><dd>no_selection" in workflow.body
+    assert "workflow_workbench_scope</dt><dd>all" in workflow.body
+    assert "workflow_workbench_next_action</dt><dd>Select delegation or run" in workflow.body
+    assert "workflow_workbench_action_label</dt><dd>Select delegation or run" in workflow.body
+    assert "workflow_workbench_next_surface</dt><dd><a href='/delegation-runs'>/delegation-runs</a>" in workflow.body
+    assert "workflow_workbench_state_surface</dt><dd><a href='#workflow-stepper'>Workflow Stepper</a>" in workflow.body
+    assert "workflow_workbench_selected_step_count</dt><dd>0" in workflow.body
+    assert "workflow_workbench_write_on_get</dt><dd>false" in workflow.body
+    assert "workflow_workbench_provider_calls_taken</dt><dd>0" in workflow.body
+    assert "workflow_workbench_network_actions_taken</dt><dd>0" in workflow.body
+    assert "workflow_workbench_external_effects_created</dt><dd>false" in workflow.body
     assert "Workflow Command Bar" in workflow.body
     assert "data-workflow-command-bar='true'" in workflow.body
     assert "workflow_command_status</dt><dd>no_selection" in workflow.body
@@ -10250,6 +10268,30 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"/workflow?delegation_id={result.delegation_id}",
     )
     assert workflow_for_delegation.status == 200
+    assert "Workflow Operator Workbench" in workflow_for_delegation.body
+    assert "data-workflow-operator-workbench='true'" in workflow_for_delegation.body
+    assert "data-workflow-workbench-primary='true'" in workflow_for_delegation.body
+    assert "data-workflow-workbench-evidence='true'" in workflow_for_delegation.body
+    assert "data-workflow-command-evidence='true'" in workflow_for_delegation.body
+    assert workflow_for_delegation.body.index("data-workflow-operator-workbench") < workflow_for_delegation.body.index("data-workflow-command-bar")
+    assert workflow_for_delegation.body.index("data-workflow-operator-workbench") < workflow_for_delegation.body.index("data-route-context")
+    assert "workflow_workbench_status</dt><dd>delegation_selected" in workflow_for_delegation.body
+    assert "workflow_workbench_scope</dt><dd>delegation" in workflow_for_delegation.body
+    assert f"workflow_workbench_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in workflow_for_delegation.body
+    assert f"workflow_workbench_run</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_delegation.body
+    assert f"workflow_workbench_goal</dt><dd><a href='/goals/{result.goal_id}'" in workflow_for_delegation.body
+    assert "workflow_workbench_current_stage</dt><dd>Commit request" in workflow_for_delegation.body
+    assert "workflow_workbench_next_action</dt><dd>request_commit_for_reviewed_run" in workflow_for_delegation.body
+    assert "workflow_workbench_action_label</dt><dd>Request commit for reviewed run" in workflow_for_delegation.body
+    assert f"workflow_workbench_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_delegation.body
+    assert "workflow_workbench_state_surface</dt><dd><a href='#workflow-stepper'>Workflow Stepper</a>" in workflow_for_delegation.body
+    assert "workflow_workbench_queue_surface</dt><dd><a href='/approvals'>/approvals</a>" in workflow_for_delegation.body
+    assert "workflow_workbench_resume_surface</dt><dd><a href='/resume'>/resume</a>" in workflow_for_delegation.body
+    assert "workflow_workbench_selected_step_count</dt><dd>17" in workflow_for_delegation.body
+    assert "workflow_workbench_write_on_get</dt><dd>false" in workflow_for_delegation.body
+    assert "workflow_workbench_provider_calls_taken</dt><dd>0" in workflow_for_delegation.body
+    assert "workflow_workbench_network_actions_taken</dt><dd>0" in workflow_for_delegation.body
+    assert "workflow_workbench_external_effects_created</dt><dd>false" in workflow_for_delegation.body
     assert "Workflow Command Bar" in workflow_for_delegation.body
     assert "data-workflow-command-bar='true'" in workflow_for_delegation.body
     assert "workflow_command_status</dt><dd>delegation_selected" in workflow_for_delegation.body
@@ -10297,6 +10339,26 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"/workflow?run_id={result.coder_worktree_run_id}",
     )
     assert workflow_for_run.status == 200
+    assert "Workflow Operator Workbench" in workflow_for_run.body
+    assert "data-workflow-operator-workbench='true'" in workflow_for_run.body
+    assert "data-workflow-workbench-primary='true'" in workflow_for_run.body
+    assert "data-workflow-workbench-evidence='true'" in workflow_for_run.body
+    assert "data-workflow-command-evidence='true'" in workflow_for_run.body
+    assert workflow_for_run.body.index("data-workflow-operator-workbench") < workflow_for_run.body.index("data-workflow-command-bar")
+    assert workflow_for_run.body.index("data-workflow-operator-workbench") < workflow_for_run.body.index("data-route-context")
+    assert "workflow_workbench_status</dt><dd>run_selected" in workflow_for_run.body
+    assert "workflow_workbench_scope</dt><dd>run" in workflow_for_run.body
+    assert f"workflow_workbench_run</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_run.body
+    assert f"workflow_workbench_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in workflow_for_run.body
+    assert "workflow_workbench_current_stage</dt><dd>Commit request" in workflow_for_run.body
+    assert "workflow_workbench_next_action</dt><dd>request_commit_for_reviewed_run" in workflow_for_run.body
+    assert "workflow_workbench_action_label</dt><dd>Request commit for reviewed run" in workflow_for_run.body
+    assert f"workflow_workbench_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_run.body
+    assert "workflow_workbench_selected_step_count</dt><dd>17" in workflow_for_run.body
+    assert "workflow_workbench_write_on_get</dt><dd>false" in workflow_for_run.body
+    assert "workflow_workbench_provider_calls_taken</dt><dd>0" in workflow_for_run.body
+    assert "workflow_workbench_network_actions_taken</dt><dd>0" in workflow_for_run.body
+    assert "workflow_workbench_external_effects_created</dt><dd>false" in workflow_for_run.body
     assert "Workflow Command Bar" in workflow_for_run.body
     assert "data-workflow-command-bar='true'" in workflow_for_run.body
     assert "workflow_command_status</dt><dd>run_selected" in workflow_for_run.body

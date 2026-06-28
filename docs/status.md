@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/workflow` is now action-first: it opens with the `Workflow Operator
+  Workbench` before shared route/focus diagnostics or command readback, shows
+  visible Now, State, Queue, and Resume cards, and keeps workflow command and
+  workbench evidence collapsed by default while preserving selected
+  delegation/run, parent Goal, project, current stage, next local action,
+  target surface, selected-step counts, and zero-effect proof in the DOM.
 - `/profiles` is now action-first: it opens with the `Profiles Operator
   Workbench` before shared route/focus diagnostics or command readback, shows
   visible Now, Lanes, Storage, and Resume cards, and keeps profiles state,

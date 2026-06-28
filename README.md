@@ -568,13 +568,17 @@ remain one keyboard open away. Those controls stay inside the local browser app
 and do not perform external effects.
 
 Use `/workflow?delegation_id=<id>` or `/workflow?run_id=<coder_run_id>` when
-you want the scoped operator map. The selected workflow page now includes a
-read-only `Workflow Command Bar` that summarizes the selected delegation or
-run, parent Goal, project, current stage, next local action, target surface,
-reason, and zero-effect counters before the detailed stepper. It also includes a
-read-only `Selected Workflow Continuation` block with the exact next local
-action, run detail surface, approvals queue, inbox, dogfooding checklist, and
-the explicit `external_effects_created: false` boundary.
+you want the scoped operator map. The workflow page is action-first: it opens
+with a visible `Workflow Operator Workbench` before shared route/focus
+diagnostics and command readback, with cards for the current workflow action,
+selected state, queue attention, and `/resume`. The selected workflow page
+still includes a read-only `Workflow Command Bar`, but its detailed
+delegation/run, parent Goal, project, current stage, next local action, target
+surface, reason, and zero-effect counters stay collapsed by default before the
+detailed stepper. It also includes a read-only `Selected Workflow
+Continuation` block with the exact next local action, run detail surface,
+approvals queue, inbox, dogfooding checklist, and the explicit
+`external_effects_created: false` boundary.
 
 Use `/runs/<coder_run_id>` to review the worktree evidence and gate state. The
 read-only `Run Command Bar` starts the page with the run status, review gate,

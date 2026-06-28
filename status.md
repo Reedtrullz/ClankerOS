@@ -1,5 +1,50 @@
 # Status
 
+## 2026-06-28 Workflow Action-First Operator Surface
+
+- Made `/workflow` usable as an operator workbench by rendering the
+  `Workflow Operator Workbench` before shared Route Context, Operator Focus,
+  Last Action, and workflow command diagnostics.
+- Added four visible cards for the current workflow action, selected workflow
+  state, local queue, and resume context, with a stable
+  `data-workflow-workbench-primary` marker for the primary action.
+- Humanized the visible primary action label while retaining the raw
+  `next_action` token in collapsed evidence for deterministic review and tests.
+- Kept workflow workbench evidence and command evidence collapsed by default
+  while preserving selected delegation/run, parent Goal, project, current
+  stage, target surface, selected-step counts, and zero-effect readbacks in the
+  DOM.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, create commit requests without confirmation, approve work, stage files,
+  commit, push, create PRs, deploy, call providers, fetch GitHub from ClankerOS,
+  poll network services, mutate external systems from ClankerOS, or expose
+  arbitrary raw filesystem browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-workflow-final-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-workflow-final-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/workflow` snippets matched,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8815/workflow?run_id=run_fa75f835293b`: desktop
+    `1280x900` rendered four Workflow Operator Workbench cards before Route
+    Context and the Workflow Command Bar, showed the primary action as
+    `Request commit for reviewed run`, retained raw next-action evidence,
+    kept workbench/command evidence collapsed, had no horizontal overflow, no
+    framework overlay, and empty browser warning/error logs.
+  - Interaction proof: clicking the marked primary action changed the URL to
+    `/runs/run_fa75f835293b` and rendered the Run Operator Workbench plus Run
+    Gate Map.
+  - Mobile Browser QA at `390x844` rendered four workflow workbench cards in
+    one column, kept workflow evidence collapsed, showed no horizontal
+    overflow, and had empty browser warning/error logs.
+  - `git diff --check` -> passed.
+
 ## 2026-06-28 Profiles Action-First Operator Surface
 
 - Made `/profiles` usable as an operator workbench by rendering the

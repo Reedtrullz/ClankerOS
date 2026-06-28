@@ -493,11 +493,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   including `coder-prep-from-handoff` as the artifact-first prep route. Add
   `?delegation_id=<id>` or `?run_id=<coder_worktree_run_id>` to show selected
   workflow state, artifact status, approval/run/commit/publication status, and
-  the next recommended local operator action. A read-only
-  `Workflow Command Bar` starts the page with the selected delegation/run,
-  parent Goal, project, current stage, next local action, target surface,
-  reason, and zero-effect counters before the detailed evidence map. When a
-  delegation or run is
+  the next recommended local operator action. The page opens with a visible
+  `Workflow Operator Workbench` before shared route/focus diagnostics or
+  command readback, with cards for the current workflow action, selected
+  state, queue attention, and `/resume`. The read-only `Workflow Command Bar`
+  keeps selected delegation/run, parent Goal, project, current stage, next
+  local action, target surface, reason, and zero-effect counters collapsed by
+  default before the detailed evidence map. When a delegation or run is
   selected, each related workflow step also shows a `selected_status` token so
   the stepper itself can be scanned as the operator state map. Scoped workflow
   pages also render `Selected Workflow Continuation`, a read-only set of

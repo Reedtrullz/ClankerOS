@@ -625,11 +625,17 @@ Core layers for the bootstrap:
   explicit confirmation. The workflow page
   can be
   scoped with a
-  delegation or coder run id, then annotates related stepper rows with
-  selected local artifact, approval, run, commit, publication, and next-action
-  status, plus a read-only `Selected Workflow Continuation` block linking the
-  exact run, approvals, inbox, and dogfooding surfaces without creating
-  external effects. Coder worktree
+  delegation or coder run id. It is action-first and opens with a visible
+  `Workflow Operator Workbench` before shared route/focus diagnostics or
+  command readback, with cards for the current workflow action, selected
+  state, queue attention, and `/resume`. Command evidence stays collapsed by
+  default while preserving selected delegation/run, parent Goal, project,
+  current stage, next local action, target surface, reason, selected-step
+  count, and zero-effect readbacks in the DOM. The page then annotates related
+  stepper rows with selected local artifact, approval, run, commit,
+  publication, and next-action status, plus a read-only `Selected Workflow
+  Continuation` block linking the exact run, approvals, inbox, and dogfooding
+  surfaces without creating external effects. Coder worktree
   run detail pages include a read-only `Run Command Bar` that summarizes run
   status, review gate, commit/publication state, changed-file count, diff
   summary, next local action, target surface, and no-write/no-network/

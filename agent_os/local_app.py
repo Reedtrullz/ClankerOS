@@ -691,6 +691,13 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             f"/workflow?delegation_id={quote(demo.delegation_id)}",
             "Modern Operator Workflow",
             [
+                "Workflow Operator Workbench",
+                "data-workflow-operator-workbench='true'",
+                "data-workflow-workbench-primary='true'",
+                "data-workflow-workbench-evidence='true'",
+                "data-workflow-command-evidence='true'",
+                "workflow_workbench_status</dt><dd>delegation_selected",
+                "workflow_workbench_next_action</dt><dd>request_commit_for_reviewed_run",
                 "Workflow Command Bar",
                 "data-workflow-command-bar='true'",
                 "workflow_command_status</dt><dd>delegation_selected",
@@ -704,6 +711,13 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             f"/workflow?run_id={quote(demo.coder_worktree_run_id)}",
             "Modern Operator Workflow",
             [
+                "Workflow Operator Workbench",
+                "data-workflow-operator-workbench='true'",
+                "data-workflow-workbench-primary='true'",
+                "data-workflow-workbench-evidence='true'",
+                "data-workflow-command-evidence='true'",
+                "workflow_workbench_status</dt><dd>run_selected",
+                "workflow_workbench_next_action</dt><dd>request_commit_for_reviewed_run",
                 "Workflow Command Bar",
                 "data-workflow-command-bar='true'",
                 "workflow_command_status</dt><dd>run_selected",
@@ -13843,6 +13857,11 @@ def _workflow(
         [
             "<section><h1>Modern Operator Workflow</h1>",
             _non_claim_banner(),
+            _workflow_operator_workbench(
+                root,
+                delegation_id=delegation_id,
+                run_id=run_id,
+            ),
             _workflow_command_bar(root, delegation_id=delegation_id, run_id=run_id),
             _selected_workflow_state(root, delegation_id=delegation_id, run_id=run_id),
             _selected_workflow_continuation(
@@ -13850,7 +13869,249 @@ def _workflow(
                 delegation_id=delegation_id,
                 run_id=run_id,
             ),
+            "<section id='workflow-stepper' data-workflow-stepper='true'><h2>Workflow Stepper</h2>",
             _workflow_list(compact=False, selected_statuses=selected_statuses),
+            "</section>",
+            "</section>",
+        ]
+    )
+
+
+def _workflow_operator_context(
+    root: Path,
+    *,
+    delegation_id: str | None = None,
+    run_id: str | None = None,
+) -> dict[str, Any]:
+    selected_statuses = _workflow_step_statuses(
+        root,
+        delegation_id=delegation_id,
+        run_id=run_id,
+    )
+    base: dict[str, Any] = {
+        "status": "no_selection",
+        "scope": "all",
+        "delegation_id": "none",
+        "delegation_surface": SafeHtml("<a href='/delegation-runs'>/delegation-runs</a>"),
+        "run_id": "none",
+        "run_surface": SafeHtml("<a href='/delegation-runs'>/delegation-runs</a>"),
+        "goal_id": "none",
+        "goal_surface": SafeHtml("<a href='/goals'>/goals</a>"),
+        "project": "none",
+        "current_stage": "overview",
+        "next_action": "Select delegation or run",
+        "target_href": "/delegation-runs",
+        "target_label": "/delegation-runs",
+        "reason": "select a workflow scope to continue",
+        "primary_summary": "Choose the delegation or coder run you want to continue.",
+        "state_href": "#workflow-stepper",
+        "state_label": "Workflow Stepper",
+        "queue_href": "/delegation-runs",
+        "queue_label": "Delegation Runs",
+        "resume_href": "/goals",
+        "resume_label": "/goals",
+        "selected_step_count": str(len(selected_statuses)),
+        "selected_status_count": str(len(selected_statuses)),
+    }
+    if not delegation_id and not run_id:
+        return base
+
+    storage = _storage(root)
+    selected_run = get_coder_worktree_run(storage, run_id) if run_id else None
+    if run_id and selected_run is None:
+        return {
+            **base,
+            "status": "run_not_found",
+            "scope": "run",
+            "run_id": run_id,
+            "run_surface": SafeHtml(f"<a href='/delegation-runs'>{_e(run_id)}</a>"),
+            "current_stage": "select_run",
+            "next_action": "Open delegation runs",
+            "reason": "selected run was not found",
+            "primary_summary": "The selected run is not available in local state.",
+            "selected_step_count": str(len(selected_statuses)),
+            "selected_status_count": str(len(selected_statuses)),
+        }
+
+    if selected_run is not None:
+        delegation_id = selected_run.delegation_id
+
+    delegation = storage.get_subagent_delegation(delegation_id or "")
+    if delegation_id and delegation is None:
+        return {
+            **base,
+            "status": "delegation_not_found",
+            "scope": "delegation",
+            "delegation_id": delegation_id,
+            "delegation_surface": SafeHtml(f"<a href='/delegation-runs'>{_e(delegation_id)}</a>"),
+            "run_id": run_id or "none",
+            "current_stage": "select_delegation",
+            "next_action": "Open delegation runs",
+            "reason": "selected delegation was not found",
+            "primary_summary": "The selected delegation is not available in local state.",
+            "selected_step_count": str(len(selected_statuses)),
+            "selected_status_count": str(len(selected_statuses)),
+        }
+
+    summary = summarize_implementation_handoff(root, delegation)
+    prep_packets = [
+        item
+        for item in list_coder_prep_packets(root)
+        if item.get("source", {}).get("delegation_id") == delegation.id
+    ]
+    plan_packets = [
+        item
+        for item in list_coder_worktree_plan_packets(root)
+        if item.get("source", {}).get("delegation_id") == delegation.id
+    ]
+    worktree_approvals = list_coder_worktree_approvals(
+        root,
+        delegation_id=delegation.id,
+        limit=50,
+    )
+    worktree_runs = list_coder_worktree_runs(root, delegation_id=delegation.id, limit=50)
+    commit_approvals = list_coder_worktree_commit_approvals(
+        root,
+        delegation_id=delegation.id,
+        limit=50,
+    )
+    publications = list_coder_publications(root, delegation_id=delegation.id, limit=50)
+    if selected_run is None:
+        selected_run = _workflow_command_selected_run(
+            root,
+            worktree_runs=worktree_runs,
+            commit_approvals=commit_approvals,
+            publications=publications,
+        )
+    next_action = _delegation_next_action(
+        root,
+        summary=summary,
+        prep_count=len(prep_packets),
+        plan_count=len(plan_packets),
+        worktree_approvals=worktree_approvals,
+        worktree_runs=worktree_runs,
+        commit_approvals=commit_approvals,
+        publications=publications,
+    )
+    target_href, target_label, reason = _workflow_command_target(
+        next_action,
+        delegation=delegation,
+        run=selected_run,
+    )
+    project = (
+        selected_run.project_id
+        if selected_run is not None
+        else _task_project(storage, delegation.parent_task_id)
+    )
+    stage = _workflow_stage_for_action(next_action)
+    return {
+        **base,
+        "status": "run_selected" if run_id else "delegation_selected",
+        "scope": "run" if run_id else "delegation",
+        "delegation_id": delegation.id,
+        "delegation_surface": SafeHtml(f"<a href='/delegations/{quote(delegation.id)}'>{_e(delegation.id)}</a>"),
+        "run_id": selected_run.id if selected_run is not None else run_id or "none",
+        "run_surface": SafeHtml(
+            f"<a href='/runs/{quote(selected_run.id)}'>{_e(selected_run.id)}</a>"
+            if selected_run is not None
+            else "<a href='/delegation-runs'>select run</a>"
+        ),
+        "goal_id": delegation.parent_goal_id,
+        "goal_surface": SafeHtml(f"<a href='/goals/{quote(delegation.parent_goal_id)}'>{_e(delegation.parent_goal_id)}</a>"),
+        "project": project,
+        "current_stage": stage,
+        "next_action": next_action,
+        "target_href": target_href,
+        "target_label": target_label,
+        "reason": reason,
+        "primary_summary": f"{stage} is the current workflow stage for this {('run' if run_id else 'delegation')}.",
+        "state_href": "#workflow-stepper",
+        "state_label": "Workflow Stepper",
+        "queue_href": "/approvals",
+        "queue_label": "/approvals",
+        "resume_href": "/resume",
+        "resume_label": "/resume",
+        "selected_step_count": str(len(selected_statuses)),
+        "selected_status_count": str(len(selected_statuses)),
+    }
+
+
+def _workflow_operator_workbench(
+    root: Path,
+    *,
+    delegation_id: str | None = None,
+    run_id: str | None = None,
+) -> str:
+    context = _workflow_operator_context(root, delegation_id=delegation_id, run_id=run_id)
+    target_href = str(context["target_href"])
+    target_label = str(context["target_label"])
+    state_href = str(context["state_href"])
+    state_label = str(context["state_label"])
+    queue_href = str(context["queue_href"])
+    queue_label = str(context["queue_label"])
+    resume_href = str(context["resume_href"])
+    resume_label = str(context["resume_label"])
+    action_label = _workflow_action_label(str(context["next_action"]))
+    rows = [
+        ("workflow_workbench_status", str(context["status"])),
+        ("workflow_workbench_scope", str(context["scope"])),
+        ("workflow_workbench_delegation", context["delegation_surface"]),
+        ("workflow_workbench_run", context["run_surface"]),
+        ("workflow_workbench_goal", context["goal_surface"]),
+        ("workflow_workbench_project", str(context["project"])),
+        ("workflow_workbench_current_stage", str(context["current_stage"])),
+        ("workflow_workbench_next_action", str(context["next_action"])),
+        ("workflow_workbench_action_label", action_label),
+        (
+            "workflow_workbench_next_surface",
+            SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"),
+        ),
+        ("workflow_workbench_reason", str(context["reason"])),
+        (
+            "workflow_workbench_state_surface",
+            SafeHtml(f"<a href='{_e(state_href)}'>{_e(state_label)}</a>"),
+        ),
+        (
+            "workflow_workbench_queue_surface",
+            SafeHtml(f"<a href='{_e(queue_href)}'>{_e(queue_label)}</a>"),
+        ),
+        (
+            "workflow_workbench_resume_surface",
+            SafeHtml(f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>"),
+        ),
+        ("workflow_workbench_selected_step_count", str(context["selected_step_count"])),
+        ("workflow_workbench_selected_status_count", str(context["selected_status_count"])),
+        ("workflow_workbench_write_on_get", "false"),
+        ("workflow_workbench_provider_calls_taken", "0"),
+        ("workflow_workbench_network_actions_taken", "0"),
+        ("workflow_workbench_external_effects_created", "false"),
+    ]
+    return "".join(
+        [
+            "<section class='panel workflow-operator-workbench' data-workflow-operator-workbench='true'><h2>Workflow Operator Workbench</h2>",
+            "<p class='muted'>Continue the selected delegation or coder run from one visible operator surface before reading the detailed workflow map.</p>",
+            "<div class='workflow-workbench-grid' data-workflow-workbench-actions='true'>",
+            "<article class='workflow-workbench-card workflow-workbench-primary'><h3>Now</h3>",
+            f"<p>{_e(str(context['primary_summary']))}</p><a class='workflow-workbench-action' data-workflow-workbench-primary='true' href='{_e(target_href)}'>{_e(action_label)}</a></article>",
+            "<article class='workflow-workbench-card'><h3>State</h3>",
+            f"<p>{_e(str(context['current_stage']))}; { _e(str(context['selected_step_count'])) } selected step signals.</p><a class='workflow-workbench-link' href='{_e(state_href)}'>{_e(state_label)}</a></article>",
+            "<article class='workflow-workbench-card'><h3>Queue</h3>",
+            f"<p>Approvals, inbox, or delegation-run attention stay local.</p><a class='workflow-workbench-link' href='{_e(queue_href)}'>{_e(queue_label)}</a></article>",
+            "<article class='workflow-workbench-card'><h3>Resume</h3>",
+            f"<p>Return through saved Goal context when available.</p><a class='workflow-workbench-link' href='{_e(resume_href)}'>{_e(resume_label)}</a></article>",
+            "</div>",
+            "<details class='workflow-workbench-evidence' data-workflow-workbench-evidence='true'><summary>Workflow workbench evidence</summary>",
+            _kv(rows),
+            _ul(
+                [
+                    f"workflow_workbench_now: <a href='{_e(target_href)}'>{_e(action_label)}</a>",
+                    f"workflow_workbench_state: <a href='{_e(state_href)}'>{_e(state_label)}</a>",
+                    f"workflow_workbench_queue: <a href='{_e(queue_href)}'>{_e(queue_label)}</a>",
+                    f"workflow_workbench_resume: <a href='{_e(resume_href)}'>{_e(resume_label)}</a>",
+                    "workflow_workbench_safety: read-only workflow routing; confirmed forms remain on owning surfaces",
+                ]
+            ),
+            "</details>",
             "</section>",
         ]
     )
@@ -14019,6 +14280,7 @@ def _workflow_command_bar_shell(
         [
             "<section id='workflow-command-bar' class='panel workflow-command-bar' data-workflow-command-bar='true'><h2>Workflow Command Bar</h2>",
             "<p class='muted'>One read-only workflow summary for the selected delegation or run before the detailed evidence map.</p>",
+            "<details class='workflow-command-evidence' data-workflow-command-evidence='true'><summary>Workflow command evidence</summary>",
             _kv(
                 [
                     ("workflow_command_status", status),
@@ -14037,6 +14299,7 @@ def _workflow_command_bar_shell(
                 ]
             ),
             _ul(lines),
+            "</details>",
             "</section>",
         ]
     )
@@ -14122,6 +14385,26 @@ def _workflow_stage_for_action(next_action: str) -> str:
         "review_delegation_state": "Workflow state",
     }
     return stages.get(next_action, "Workflow state")
+
+
+def _workflow_action_label(next_action: str) -> str:
+    labels = {
+        "generate_context_pack": "Generate context pack",
+        "run_delegation_or_review_implementation_handoff": "Review implementation handoff",
+        "prepare_coder_from_handoff": "Prepare coder from handoff",
+        "prepare_coder_worktree_plan": "Prepare worktree plan",
+        "decide_pending_worktree_approval": "Decide worktree approval",
+        "run_approved_worktree_from_cli": "Run approved worktree",
+        "request_commit_for_reviewed_run": "Request commit for reviewed run",
+        "approve_or_reject_commit_request": "Decide commit request",
+        "commit_approved_worktree": "Commit approved worktree",
+        "request_publication_handoff": "Request publication handoff",
+        "approve_or_reject_publication_request": "Decide publication request",
+        "prepare_publication_handoff": "Prepare publication handoff",
+        "manual_operator_push_pr_outside_clankeros": "Manual push or PR outside ClankerOS",
+        "review_delegation_state": "Review delegation state",
+    }
+    return labels.get(next_action, next_action.replace("_", " ").capitalize())
 
 
 def _action_catalog_command_bar() -> str:
@@ -24086,7 +24369,7 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
-    content_first_paths = {"/", "/actions", "/inbox", "/memory", "/profiles", "/resume", "/search", "/skills", "/today", "/workspace"}
+    content_first_paths = {"/", "/actions", "/inbox", "/memory", "/profiles", "/resume", "/search", "/skills", "/today", "/workflow", "/workspace"}
     if current_route_path in content_first_paths:
         article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
     else:
@@ -24626,6 +24909,21 @@ def _html_page(
     .profiles-command-bar {{ border-left:4px solid var(--warn); }}
     .profiles-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .profiles-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .workflow-operator-workbench {{ border-left:4px solid var(--accent); }}
+    .workflow-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .workflow-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .workflow-operator-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .workflow-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .workflow-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .workflow-workbench-card h3 {{ margin-top:0; }}
+    .workflow-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .workflow-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .workflow-workbench-action, .workflow-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .workflow-workbench-action {{ background:var(--accent); color:#fff; }}
+    .workflow-workbench-link {{ background:var(--surface); color:var(--accent); }}
+    .workflow-workbench-evidence, .workflow-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .workflow-workbench-evidence summary, .workflow-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .workflow-workbench-evidence:not([open]) > :not(summary), .workflow-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .inbox-command-bar {{ border-left:4px solid var(--accent); }}
     .inbox-command-evidence, .inbox-workbench-evidence {{ margin-top:10px; }}
     .inbox-finish-details {{ margin-top:12px; }}
@@ -24689,7 +24987,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
