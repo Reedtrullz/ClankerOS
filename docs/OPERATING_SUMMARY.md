@@ -849,7 +849,10 @@ Core layers for the bootstrap:
   do/inspect/Goal/finish cards, Goal/delegation/run/evidence routing, a
   continuation surface, and a confirmed `save-workspace` form in a collapsed
   Finish Today section that stores the queue as a future resume point without
-  writing on GET. A read-only
+  writing on GET. A visible read-only `Inbox Triage Board` follows with
+  Attention, Decisions, Work, Publication, and Finish Today lane cards so the
+  operator can see queue counts and first targets before the long category
+  lists. A read-only
   `Inbox Command Bar` follows with total local queue size, queue-type counts,
   the first attention item, target section, reason, and zero-effect boundary
   inside collapsed evidence while preserving read-only run links and

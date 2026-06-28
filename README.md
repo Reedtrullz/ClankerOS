@@ -765,7 +765,10 @@ route/focus diagnostics or command readback, so the first screen is the next
 queue action. Its do/inspect/Goal/finish cards resolve Goal, delegation, run,
 evidence, and continuation surfaces when available, and include a confirmed
 `save-workspace` form in a collapsed Finish Today section so the queue can
-become tomorrow's resume point without writing on GET. The read-only
+become tomorrow's resume point without writing on GET. A visible read-only
+`Inbox Triage Board` follows with Attention, Decisions, Work, Publication,
+and Finish Today lane cards, turning the long queue lists into count-backed
+first targets before dense evidence. The read-only
 `Inbox Command Bar` follows with total local queue size, counts by queue type,
 the first attention item, its target section, and the no-write/no-network
 boundary inside collapsed evidence.

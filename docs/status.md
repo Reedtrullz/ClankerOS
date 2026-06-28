@@ -193,10 +193,12 @@ Latest status focus:
   opens the collapsed save form client-side.
 - `/inbox` is now content-first and queue-action-first: it opens with the
   `Inbox Operator Workbench` before shared route/focus diagnostics or command
-  readback, while inbox command and workbench evidence stay collapsed by
-  default. The page still preserves queue counts, first attention item,
-  Goal/delegation/run/evidence routing, a collapsed finish-today workspace
-  save form, and zero-effect counters in the DOM.
+  readback, then follows with an `Inbox Triage Board` for Attention,
+  Decisions, Work, Publication, and Finish Today lane cards before command
+  evidence or long queue lists. Inbox command, triage, and workbench evidence
+  stay collapsed by default while preserving queue counts, first attention
+  item, Goal/delegation/run/evidence routing, a collapsed finish-today
+  workspace save form, and zero-effect counters in the DOM.
 - `/resume` is now content-first and return-to-work-first: it opens with a
   primary saved-context link and `Resume Operator Workbench` before shared
   route/focus diagnostics or command readback, while saved workspace state,

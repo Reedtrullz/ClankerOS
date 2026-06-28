@@ -5161,15 +5161,39 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-inbox-workbench-actions='true'" in empty_inbox.body
     assert "data-inbox-workbench-primary='true'" in empty_inbox.body
     assert "data-inbox-workbench-evidence='true'" in empty_inbox.body
+    assert "Inbox Triage Board" in empty_inbox.body
+    assert "data-inbox-triage-board='true'" in empty_inbox.body
+    assert "data-inbox-triage-cards='true'" in empty_inbox.body
+    assert empty_inbox.body.count("class='inbox-triage-card") == 5
+    assert "data-inbox-triage-lane='attention' data-inbox-triage-status='empty'" in empty_inbox.body
+    assert "data-inbox-triage-lane='finish' data-inbox-triage-status='empty'" in empty_inbox.body
+    assert "data-inbox-triage-evidence='true'" in empty_inbox.body
     assert "data-inbox-command-evidence='true'" in empty_inbox.body
     assert "data-inbox-finish-details='true'" in empty_inbox.body
     assert "data-open-details='true' href='#inbox-finish-today'" in empty_inbox.body
     assert empty_inbox.body.index("data-inbox-operator-workbench='true'") < empty_inbox.body.index(
+        "data-inbox-triage-board='true'"
+    )
+    assert empty_inbox.body.index("data-inbox-triage-board='true'") < empty_inbox.body.index(
         "data-inbox-command-bar='true'"
     )
     assert empty_inbox.body.index("data-inbox-operator-workbench='true'") < empty_inbox.body.index(
         "data-route-context='true'"
     )
+    assert "inbox_triage_status</dt><dd>available" in empty_inbox.body
+    assert "inbox_triage_total_items</dt><dd>0" in empty_inbox.body
+    assert "inbox_triage_attention_items</dt><dd>0" in empty_inbox.body
+    assert "inbox_triage_decision_items</dt><dd>0" in empty_inbox.body
+    assert "inbox_triage_work_items</dt><dd>0" in empty_inbox.body
+    assert "inbox_triage_publication_items</dt><dd>0" in empty_inbox.body
+    assert "inbox_triage_primary_lane</dt><dd>finish" in empty_inbox.body
+    assert "inbox_triage_primary_surface</dt><dd><a href='#inbox-finish-today'>Finish Today</a>" in empty_inbox.body
+    assert "inbox_triage_write_on_get</dt><dd>false" in empty_inbox.body
+    assert "inbox_triage_approves_on_get</dt><dd>false" in empty_inbox.body
+    assert "inbox_triage_executes_work_on_get</dt><dd>false" in empty_inbox.body
+    assert "inbox_triage_external_effects_created</dt><dd>false" in empty_inbox.body
+    assert "inbox_triage_now: Finish Today" in empty_inbox.body
+    assert "inbox_triage_safety: read-only lane summary; confirmed local actions elsewhere" in empty_inbox.body
     assert "inbox_workbench_status</dt><dd>empty_queue" in empty_inbox.body
     assert "inbox_workbench_total_items</dt><dd>0" in empty_inbox.body
     assert "inbox_workbench_first_kind</dt><dd>none" in empty_inbox.body
@@ -6908,15 +6932,37 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-inbox-workbench-actions='true'" in inbox.body
     assert "data-inbox-workbench-primary='true'" in inbox.body
     assert "data-inbox-workbench-evidence='true'" in inbox.body
+    assert "Inbox Triage Board" in inbox.body
+    assert "data-inbox-triage-board='true'" in inbox.body
+    assert "data-inbox-triage-cards='true'" in inbox.body
+    assert inbox.body.count("class='inbox-triage-card") == 5
+    assert "data-inbox-triage-lane='work' data-inbox-triage-status='ready'" in inbox.body
+    assert "data-inbox-triage-evidence='true'" in inbox.body
     assert "data-inbox-command-evidence='true'" in inbox.body
     assert "data-inbox-finish-details='true'" in inbox.body
     assert "data-open-details='true' href='#inbox-finish-today'" in inbox.body
     assert inbox.body.index("data-inbox-operator-workbench='true'") < inbox.body.index(
+        "data-inbox-triage-board='true'"
+    )
+    assert inbox.body.index("data-inbox-triage-board='true'") < inbox.body.index(
         "data-inbox-command-bar='true'"
     )
     assert inbox.body.index("data-inbox-operator-workbench='true'") < inbox.body.index(
         "data-route-context='true'"
     )
+    assert "inbox_triage_status</dt><dd>available" in inbox.body
+    assert "inbox_triage_total_items</dt><dd>1" in inbox.body
+    assert "inbox_triage_attention_items</dt><dd>0" in inbox.body
+    assert "inbox_triage_decision_items</dt><dd>0" in inbox.body
+    assert "inbox_triage_work_items</dt><dd>1" in inbox.body
+    assert "inbox_triage_publication_items</dt><dd>0" in inbox.body
+    assert "inbox_triage_primary_lane</dt><dd>work" in inbox.body
+    assert "inbox_triage_primary_surface</dt><dd><a href='#inbox-subagent-delegations'>Delegations</a>" in inbox.body
+    assert "inbox_triage_primary_reason</dt><dd>pending" in inbox.body
+    assert "inbox_triage_write_on_get</dt><dd>false" in inbox.body
+    assert "inbox_triage_approves_on_get</dt><dd>false" in inbox.body
+    assert "inbox_triage_executes_work_on_get</dt><dd>false" in inbox.body
+    assert "inbox_triage_now: Delegations" in inbox.body
     assert "inbox_workbench_status</dt><dd>attention_ready" in inbox.body
     assert "inbox_workbench_total_items</dt><dd>1" in inbox.body
     assert "inbox_workbench_first_kind</dt><dd>subagent_delegation" in inbox.body
@@ -11838,15 +11884,36 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-inbox-workbench-actions='true'" in inbox.body
     assert "data-inbox-workbench-primary='true'" in inbox.body
     assert "data-inbox-workbench-evidence='true'" in inbox.body
+    assert "Inbox Triage Board" in inbox.body
+    assert "data-inbox-triage-board='true'" in inbox.body
+    assert "data-inbox-triage-cards='true'" in inbox.body
+    assert inbox.body.count("class='inbox-triage-card") == 5
+    assert "data-inbox-triage-lane='decisions' data-inbox-triage-status='ready'" in inbox.body
+    assert "data-inbox-triage-lane='work' data-inbox-triage-status='ready'" in inbox.body
+    assert "data-inbox-triage-evidence='true'" in inbox.body
     assert "data-inbox-command-evidence='true'" in inbox.body
     assert "data-inbox-finish-details='true'" in inbox.body
     assert "data-open-details='true' href='#inbox-finish-today'" in inbox.body
     assert inbox.body.index("data-inbox-operator-workbench='true'") < inbox.body.index(
+        "data-inbox-triage-board='true'"
+    )
+    assert inbox.body.index("data-inbox-triage-board='true'") < inbox.body.index(
         "data-inbox-command-bar='true'"
     )
     assert inbox.body.index("data-inbox-operator-workbench='true'") < inbox.body.index(
         "data-route-context='true'"
     )
+    assert "inbox_triage_status</dt><dd>available" in inbox.body
+    assert "inbox_triage_total_items</dt><dd>3" in inbox.body
+    assert "inbox_triage_decision_items</dt><dd>1" in inbox.body
+    assert "inbox_triage_work_items</dt><dd>2" in inbox.body
+    assert "inbox_triage_primary_lane</dt><dd>decisions" in inbox.body
+    assert "inbox_triage_primary_surface</dt><dd><a href='#inbox-pending-worktree-approvals'>Worktree approvals</a>" in inbox.body
+    assert "inbox_triage_primary_reason</dt><dd>Bounded worktree plans are waiting for operator approval." in inbox.body
+    assert "inbox_triage_write_on_get</dt><dd>false" in inbox.body
+    assert "inbox_triage_approves_on_get</dt><dd>false" in inbox.body
+    assert "inbox_triage_executes_work_on_get</dt><dd>false" in inbox.body
+    assert "inbox_triage_now: Worktree approvals" in inbox.body
     assert "inbox_workbench_status</dt><dd>attention_ready" in inbox.body
     assert "inbox_workbench_worktree_approvals</dt><dd>1" in inbox.body
     assert "inbox_workbench_commit_approvals</dt><dd>0" in inbox.body

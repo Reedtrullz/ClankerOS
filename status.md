@@ -1,5 +1,42 @@
 # Status
 
+## 2026-06-28 Inbox Triage Board UX
+
+- Added a visible read-only `Inbox Triage Board` to `/inbox` between the
+  Inbox Operator Workbench and the dense command/queue sections.
+- The board turns the operator queue into five scan-first lanes: Attention,
+  Decisions, Work, Publication, and Finish Today, each with count-backed
+  links to the existing queue anchors and collapsed triage evidence.
+- Updated README, operating summary, local status docs, demo route markers,
+  and focused Inbox assertions for empty, delegation-only, and demo worktree
+  approval queues.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against fixture-backed scratch local app `127.0.0.1:8860`
+  verified `/inbox` in the in-app browser. Desktop rendered five triage
+  cards, selected Decisions as the primary lane, showed Work as ready, kept
+  triage evidence collapsed, ordered the board between the workbench and
+  command sections, had no horizontal overflow, and reported no warning/error
+  logs.
+- Mobile `390x844` in-app browser QA rendered the five triage cards in one
+  column, kept triage evidence collapsed, preserved the same primary target,
+  had no horizontal overflow, reported no warning/error logs, and the viewport
+  was reset after the check.
+- The scratch local app server was stopped after browser QA, and no listener
+  remained on port `8860`.
+- Non-claims: this is a local readback/navigation UX change. It does not write
+  on GET, approve work, execute work, create commits, push, create PRs,
+  deploy, fetch GitHub status, call providers, or mutate external systems.
+
 ## 2026-06-28 Artifact Format Lens UX
 
 - Added a visible `Artifact Format Lens` to `/artifacts?path=...` between the
