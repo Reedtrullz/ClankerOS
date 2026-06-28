@@ -834,8 +834,11 @@ adding provider, network, push, PR, or deploy authority. The workspace also
 remembers that completed local action as the shell's `Last Action` strip, so
 the next page and `/resume` can reopen the result notice without reading the
 original action result page. Following the
-next-page link renders an `Action Notice` banner on the target page so the
-operator keeps context. Action errors now open with an action-first
+next-page link now opens an action-first `Action Notice` surface on the
+target page, with visible Continue Here, Last Action, Resume, Details, and
+Boundary cards plus collapsed notice/workspace evidence so the operator can
+continue without reconstructing context from a plain banner. Action errors now
+open with an action-first
 `Action Needs Attention` recovery surface before the raw error details, with
 Fix Input, Retry Surface, Error, Catalog, and Boundary cards plus collapsed
 error evidence proving no result was recorded and no external effect was

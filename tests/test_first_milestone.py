@@ -5231,7 +5231,31 @@ def test_local_app_routes_render_modern_workflow_and_health(
     )
     assert dashboard_notice.status == 200
     assert "Action Notice" in dashboard_notice.body
+    assert "data-action-notice='true'" in dashboard_notice.body
+    assert "data-action-notice-actions='true'" in dashboard_notice.body
+    assert "data-action-notice-primary='true'" in dashboard_notice.body
+    assert "data-action-notice-evidence='true'" in dashboard_notice.body
+    assert "Continue Here" in dashboard_notice.body
+    assert "Last Action" in dashboard_notice.body
+    assert "Resume" in dashboard_notice.body
+    assert "Details" in dashboard_notice.body
+    assert "Boundary" in dashboard_notice.body
     assert "local_app_status: .clanker/app/local_app_status.json" in dashboard_notice.body
+    assert "action_notice_status</dt><dd>available" in dashboard_notice.body
+    assert (
+        "action_notice_message</dt><dd>"
+        "local_app_status: .clanker/app/local_app_status.json"
+    ) in dashboard_notice.body
+    assert "action_notice_current_surface</dt><dd><a href='/'>/</a>" in dashboard_notice.body
+    assert "action_notice_last_action</dt><dd>refresh-dashboard-state" in dashboard_notice.body
+    assert (
+        "action_notice_last_result</dt><dd>"
+        "local_app_status: .clanker/app/local_app_status.json"
+    ) in dashboard_notice.body
+    assert "action_notice_write_on_get</dt><dd>false" in dashboard_notice.body
+    assert "action_notice_provider_calls_taken</dt><dd>0" in dashboard_notice.body
+    assert "action_notice_network_actions_taken</dt><dd>0" in dashboard_notice.body
+    assert "action_notice_external_effects_created</dt><dd>false" in dashboard_notice.body
 
     action_error = render_local_app_route(
         tmp_path,
@@ -11980,7 +12004,25 @@ def test_local_app_demo_scenario_populates_fixture_state(
     )
     assert run_notice.status == 200
     assert "Action Notice" in run_notice.body
+    assert "data-action-notice='true'" in run_notice.body
+    assert "data-action-notice-actions='true'" in run_notice.body
+    assert "data-action-notice-primary='true'" in run_notice.body
+    assert "data-action-notice-evidence='true'" in run_notice.body
     assert f"coder_commit_request: {commit_approval.id}" in run_notice.body
+    assert "action_notice_last_action</dt><dd>coder-commit-request" in run_notice.body
+    assert (
+        f"action_notice_last_result</dt><dd>coder_commit_request: {commit_approval.id}"
+        in run_notice.body
+    )
+    assert (
+        "action_notice_last_surface</dt><dd>"
+        f"<a href='/runs/{result.coder_worktree_run_id}?notice=coder_commit_request%3A%20{commit_approval.id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+    ) in run_notice.body
+    assert f"action_notice_saved_goal</dt><dd>{result.goal_id}" in run_notice.body
+    assert "action_notice_write_on_get</dt><dd>false" in run_notice.body
+    assert "action_notice_network_actions_taken</dt><dd>0" in run_notice.body
+    assert "action_notice_external_effects_created</dt><dd>false" in run_notice.body
     assert "Last Action" in run_notice.body
     assert "data-last-action-strip='true'" in run_notice.body
     assert "last_action_kind</dt><dd>coder-commit-request" in run_notice.body

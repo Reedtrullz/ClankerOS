@@ -290,6 +290,11 @@ Latest status focus:
   Completed, Artifact, Workflow, and Boundary cards plus collapsed result
   command evidence preserving the target notice surface, result, primary
   artifact, confirmation source, and zero-effect counters.
+- Action notice target pages now open with an action-first `Action Notice`
+  surface before target content, with visible Continue Here, Last Action,
+  Resume, Details, and Boundary cards plus collapsed notice/workspace evidence
+  preserving the notice query, saved last action, resume context, and
+  no-write/no-external-effect counters.
 - Failed local action pages now open with an action-first
   `Action Needs Attention` recovery surface before error details, with visible
   Fix Input, Retry Surface, Error, Catalog, and Boundary cards plus collapsed

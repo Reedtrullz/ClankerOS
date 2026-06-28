@@ -899,8 +899,10 @@ Core layers for the bootstrap:
   no-push/no-PR/no-deploy boundary. Successful action results are recorded as
   last-action workspace fields so the global shell and `/resume` can reopen
   the target notice after navigation without granting new action authority.
-  GET pages render an escaped
-  `Action Notice` banner when reached through a notice link;
+  GET pages reached through a notice link now render an escaped action-first
+  `Action Notice` surface with Continue Here, Last Action, Resume, Details,
+  and Boundary cards plus collapsed notice/workspace evidence before the
+  target page content, without writing on GET or adding action authority;
   action error pages now open with an action-first `Action Needs Attention`
   recovery surface containing Fix Input, Retry Surface, Error, Catalog, and
   Boundary cards before preserving the attempted action, submitted payload,

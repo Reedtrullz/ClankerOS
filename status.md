@@ -1,5 +1,44 @@
 # Status
 
+## 2026-06-28 Action Notice Continuation Surface
+
+- Made GET notice targets action-first with an `Action Notice` surface before
+  the target page content instead of a plain banner.
+- The notice surface shows Continue Here, Last Action, Resume, Details, and
+  Boundary cards, plus collapsed notice/workspace evidence preserving the
+  notice query, saved last action, saved project/Goal context, and zero-effect
+  counters.
+- Updated README, operating summary, local status docs, and focused route
+  assertions so notice links stay a continuation surface after confirmed
+  local actions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against scratch local app `127.0.0.1:8855` used the in-app
+  browser for the desktop `/actions -> confirmation -> result -> notice`
+  path. Desktop rendered five notice cards, placed `Action Notice` first in
+  `.operator-main`, kept evidence collapsed, had no horizontal overflow, and
+  reported no warning/error logs.
+- The in-app browser viewport capability timed out during mobile resize and
+  reset attempts, so mobile proof used an isolated standalone Playwright CLI
+  session against the same scratch app. Mobile `390x844` rendered the notice
+  first, collapsed five cards into one column, kept evidence collapsed, had no
+  horizontal overflow, and reported zero console warnings/errors.
+- The standalone browser session was closed, the local app server was stopped,
+  and `lsof -nP -iTCP:8855 -sTCP:LISTEN` showed no remaining listener.
+- Non-claims: this is a local notice-target UX/readback change. It does not
+  write before confirmation, approve work, execute work, create commits, push,
+  create PRs, deploy, fetch GitHub status, call providers, or mutate external
+  systems.
+
 ## 2026-06-28 Action Error Recovery Surface
 
 - Made failed local action pages action-first with an `Action Needs Attention`
