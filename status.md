@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-28 Today Session Summary Cards UX
+
+- Promoted `Today Session Summary` on `/today` from a compact evidence block
+  into a visible return-to-work action surface with Continue, Latest, Proof,
+  and Resume cards before the detailed readback.
+- The Continue card points at the same current Goal or first-run target the
+  rest of `/today` already trusts; Latest points at the newest activity; Proof
+  points at the bounded CI evidence surface; Resume points at the workspace
+  resume surface.
+- Kept the detailed evidence table for source/proof/debuggability and added
+  card availability/count/surface readbacks so the browser UI remains
+  testable without adding write authority.
+- Updated README, operating summary, local status focus, and first-run plus
+  fixture-backed `/today` route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 53.91s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed, all local app route markers matched, provider/network/external
+    counters stayed at `0`
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed, fixture-backed `/today` snippets matched, provider, network,
+    and external counters stayed at `0`
+  - `git diff --check` -> passed
+- GitHub Actions proof is expected after pushing this slice; remote status will
+  be tracked by the branch run rather than by a longer local suite.
+- Non-claims until remote proof: no browser QA for this slice, no app-side
+  GitHub polling, no approval decision, no execution, no PR, and no deploy from
+  ClankerOS itself.
+
 ## 2026-06-28 Workflow Live State UX
 
 - Added a visible read-only `Workflow Live State` section to `/workflow`

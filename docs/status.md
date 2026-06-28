@@ -240,10 +240,12 @@ Latest status focus:
   the DOM.
 - `/today` is now content-first and command-center-first: it opens with the
   `Today Command Center` before shared route/focus diagnostics, keeps Today
-  state, command, and workbench evidence collapsed by default, and opens the
-  note, pause, and Finish Today forms only when the operator clicks their
-  visible cards or navigates to the matching hash. The page still preserves
-  goal/readiness/CI/zero-effect proof in the DOM.
+  state, command, and workbench evidence collapsed by default, and follows
+  live refresh with a `Today Session Summary` that now exposes Continue,
+  Latest, Proof, and Resume cards before the detailed readback. The note,
+  pause, and Finish Today forms still open only when the operator clicks their
+  visible cards or navigates to the matching hash, while goal/readiness/CI and
+  zero-effect proof stay preserved in the DOM.
 - `/workspace` is now content-first and finish/resume-action-first: it opens
   with the `Workspace Operator Workbench` before shared route/focus diagnostics,
   saved-state evidence, or restore-link readbacks. Browser-available saved

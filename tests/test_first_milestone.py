@@ -4526,6 +4526,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "window.location.reload()" in today.body
     assert "Today Session Summary" in today.body
     assert "data-today-session-summary='true'" in today.body
+    assert "data-today-session-actions='true'" in today.body
+    assert "data-today-session-continue='true'" in today.body
+    assert "data-today-session-latest='true'" in today.body
+    assert "data-today-session-proof='true'" in today.body
+    assert "data-today-session-resume='true'" in today.body
+    assert "data-today-session-primary='true' href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today-session-link' href='#first-run-create-project'>Open latest</a>" in today.body
     assert "today_session_status</dt><dd>first_run" in today.body
     assert "today_session_goal</dt><dd>none" in today.body
     assert "today_session_project</dt><dd>clankeros" in today.body
@@ -4539,6 +4546,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_session_latest_activity_message</dt><dd>Register ClankerOS project" in today.body
     assert "today_session_latest_activity_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
     assert "today_session_latest_artifact</dt><dd>none" in today.body
+    assert "today_session_cards_available</dt><dd>true" in today.body
+    assert "today_session_card_count</dt><dd>4" in today.body
+    assert "today_session_continue_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_session_latest_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_session_proof_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>" in today.body
+    assert "today_session_resume_card_surface</dt><dd><a href='/goals'>/goals</a>" in today.body
     assert "today_session_workspace_status</dt><dd>not_started" in today.body
     assert "today_session_resume_ready</dt><dd>false" in today.body
     assert "today_session_ci_status</dt><dd>success" in today.body
@@ -9222,6 +9235,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_live_refresh_target: <a href='#today-current-action'>Today Current Action</a>" in today.body
     assert "Today Session Summary" in today.body
     assert "data-today-session-summary='true'" in today.body
+    assert "data-today-session-actions='true'" in today.body
+    assert "data-today-session-continue='true'" in today.body
+    assert "data-today-session-latest='true'" in today.body
+    assert "data-today-session-proof='true'" in today.body
+    assert "data-today-session-resume='true'" in today.body
+    assert "data-today-session-primary='true' href='#today-current-action'>Today Current Action</a>" in today.body
     assert "today_session_status</dt><dd>available" in today.body
     assert f"today_session_goal</dt><dd><a href='/goals/{result.goal_id}'" in today.body
     assert f"today_session_project</dt><dd><a href='/projects/{result.project_id}'" in today.body
@@ -9235,6 +9254,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_session_latest_activity_message</dt><dd>" in today.body
     assert "today_session_latest_activity_surface</dt><dd><a href=" in today.body
     assert "today_session_latest_artifact</dt><dd><a href='/artifacts?path=" in today.body
+    assert "today_session_cards_available</dt><dd>true" in today.body
+    assert "today_session_card_count</dt><dd>4" in today.body
+    assert "today_session_continue_surface</dt><dd><a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "today_session_latest_surface</dt><dd><a href=" in today.body
+    assert "today_session_proof_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>" in today.body
+    assert "today_session_resume_card_surface</dt><dd><a href='/goals'>/goals</a>" in today.body
     assert "today_session_workspace_status</dt><dd>not_started" in today.body
     assert "today_session_resume_ready</dt><dd>false" in today.body
     assert "today_session_ci_status</dt><dd>success" in today.body

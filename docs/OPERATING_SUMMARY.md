@@ -107,9 +107,11 @@ Core layers for the bootstrap:
   `Today Live State` panel follows with five-second local
   page reload polling that pauses when the tab is hidden or a form field is
   focused and reports zero provider/network/external-effect counters. A
-  read-only `Today Session Summary` follows with current goal or first-run
-  step, current gate, next surface, latest activity, latest artifact,
-  workspace resume posture, and recorded CI proof in one browser return brief.
+  read-only `Today Session Summary` follows with visible Continue, Latest,
+  Proof, and Resume cards before the detailed readback. Those cards point at
+  the current goal or first-run step, latest activity, recorded CI proof, and
+  workspace resume posture so the operator can act from the browser return
+  brief without reading the whole evidence table.
   A read-only `Today Operator Workbench` follows with do/check/unblock/finish
   cards for the current action, timeline/evidence review, first blocker, and
   finish-today resume save target. A read-only `Today Workflow Map` follows
