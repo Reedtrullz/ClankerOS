@@ -781,11 +781,12 @@ Core layers for the bootstrap:
   surfaces; a read-only `/dogfooding` checklist and next-action panel for the
   first browser route walk, fixture refresh, scoped workflow/run links, local
   commit/publication gate sequence, and GitHub Actions handoff boundary
-  without fetching GitHub status; `/health` includes a `Health Command Bar`
-  that summarizes warning count, bind scope, branch/commit, storage/import
-  readiness, the refreshed local status artifact, explicit
+  without fetching GitHub status; `/health` opens with a `Health Operator
+  Workbench` that turns warning count, bind scope, branch/commit,
+  storage/import readiness, the refreshed local status artifact, explicit
   `status_artifact_write_on_get=true`, one next local surface, and zero
-  provider/network/external-effect counters before the detailed diagnostics; a read-only
+  provider/network/external-effect counters into visible cards before the
+  collapsed command/diagnostic evidence; a read-only
   operator inbox plus local approval and
   incident pages for pending worktree, commit, and publication decisions,
   with the inbox opening from an `Inbox Operator Workbench` before shared

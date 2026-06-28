@@ -6538,8 +6538,33 @@ def test_local_app_routes_render_modern_workflow_and_health(
     health = render_local_app_route(tmp_path, "/health")
     assert health.status == 200
     assert "System Health" in health.body
+    assert "Health Operator Workbench" in health.body
+    assert "data-health-operator-workbench='true'" in health.body
+    assert "data-health-workbench-primary='true'" in health.body
+    assert "data-health-workbench-evidence='true'" in health.body
+    assert "health_workbench_status</dt><dd>ready" in health.body
+    assert "health_workbench_warning_count</dt><dd>0" in health.body
+    assert "health_workbench_status_artifact_write_on_get</dt><dd>true" in health.body
+    assert "health_workbench_next_action</dt><dd>Open resume" in health.body
+    assert "health_workbench_target_surface</dt><dd><a href='/resume'>/resume</a>" in health.body
+    assert "health_workbench_safety: local status artifact write only" in health.body
     assert "Health Command Bar" in health.body
     assert "data-health-command-bar='true'" in health.body
+    assert "data-health-command-evidence='true'" in health.body
+    assert "data-health-diagnostics-evidence='true'" in health.body
+    assert "data-health-counts-evidence='true'" in health.body
+    assert "data-health-key-commands-evidence='true'" in health.body
+    assert "data-health-workflow-imports-evidence='true'" in health.body
+    assert health.body.index("data-health-operator-workbench='true'") < health.body.index(
+        "data-health-command-bar='true'"
+    )
+    assert health.body.index("data-health-operator-workbench='true'") < health.body.index(
+        "data-route-context='true'"
+    )
+    assert "<details class='health-workbench-evidence' data-health-workbench-evidence='true'><summary>Health workbench evidence</summary>" in health.body
+    assert "<details class='health-command-evidence' data-health-command-evidence='true'><summary>Health command evidence</summary>" in health.body
+    assert "<details id='health-diagnostics' class='health-diagnostics-evidence' data-health-diagnostics-evidence='true'><summary>Health diagnostics evidence</summary>" in health.body
+    assert "<details id='health-counts' class='health-counts-evidence' data-health-counts-evidence='true'><summary>Health counts evidence</summary>" in health.body
     assert "health_command_status</dt><dd>ready" in health.body
     assert "health_command_warning_count</dt><dd>0" in health.body
     assert "health_command_bind</dt><dd>127.0.0.1:8787" in health.body
@@ -6578,6 +6603,15 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert nonlocal_health.status == 200
     assert "Warnings" in nonlocal_health.body
     assert "App is bound to a non-localhost interface." in nonlocal_health.body
+    assert "data-health-status='warnings'" in nonlocal_health.body
+    assert "health_workbench_status</dt><dd>warnings" in nonlocal_health.body
+    assert "health_workbench_warning_count</dt><dd>1" in nonlocal_health.body
+    assert "health_workbench_next_action</dt><dd>Review warnings" in nonlocal_health.body
+    assert "health_workbench_target_surface</dt><dd><a href='#health-warnings'>Warnings</a>" in nonlocal_health.body
+    assert "data-health-operator-workbench='true'" in nonlocal_health.body
+    assert nonlocal_health.body.index("data-health-operator-workbench='true'") < nonlocal_health.body.index(
+        "id='health-warnings'"
+    )
     assert "health_command_status</dt><dd>warnings" in nonlocal_health.body
     assert "health_command_warning_count</dt><dd>1" in nonlocal_health.body
     assert "health_command_bind</dt><dd>0.0.0.0:8787" in nonlocal_health.body

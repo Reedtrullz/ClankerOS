@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/health` is now content-first and action-first: it opens with the
+  `Health Operator Workbench` cards for Status, Artifact, Diagnostics, and
+  Safety before shared route/focus diagnostics, command evidence, or dense
+  health readbacks. Health workbench, command, diagnostics, counts, key-command,
+  and workflow-import evidence stay collapsed by default while preserving the
+  refreshed local status artifact, explicit status-artifact write-on-GET
+  boundary, warning routing, and zero-effect counters in the DOM.
 - `/artifacts?path=...` is now content-first and artifact-action-first: it
   opens with `Artifact Operator Workbench` cards for Read, Context, Resume,
   and Safety before shared diagnostics, command evidence, review evidence, or

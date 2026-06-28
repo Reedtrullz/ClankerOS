@@ -649,10 +649,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/incidents` - recent local incidents and evidence links.
 - `/artifacts?path=<relative_path>` - safe read-only artifact viewer.
 - `/health` - Python, git, storage, command, import, route, and counter health.
-  A read-only `Health Command Bar` starts the page with local readiness,
-  warning count, bind scope, storage/import posture, the refreshed status
-  artifact link, explicit `status_artifact_write_on_get=true`, one next local
-  surface, and zero provider/network/external-effect counters.
+  It opens with a `Health Operator Workbench` before shared diagnostics, with
+  Status, Artifact, Diagnostics, and Safety cards for readiness, warning
+  review, the refreshed local status artifact, and zero-effect counters. The
+  command bar, diagnostics, counts, registered commands, and workflow imports
+  stay collapsed as evidence while preserving the explicit
+  `status_artifact_write_on_get=true` boundary.
 - `/demo` - demo scenario instructions plus a read-only `Demo Command Bar`
   that exposes fixture status, the preferred `python3 -m agent_os.cli demo`
   command, compatibility command, selected project/Goal/delegation/run, next
@@ -1009,10 +1011,11 @@ The status artifact records host, port, repo root, branch, commit,
 dirty/untracked summaries, warning readbacks, routes, supported workflow
 stages, non-claims, and known gaps. `/health` renders the same warnings for
 non-local binds, dirty tracked files, ahead-of-origin state, and known
-duplicate untracked files. The page now starts with a `Health Command Bar`
-that makes the local status-artifact write explicit, links the artifact through
-the bounded artifact viewer, and points either to warnings or `/resume` as the
-next operator surface. The artifact does not include secrets.
+duplicate untracked files. The page now starts with a `Health Operator
+Workbench` that makes the local status-artifact write explicit, links the
+artifact through the bounded artifact viewer, points either to warnings or
+`/resume` as the next operator surface, and keeps dense command/diagnostic
+readbacks collapsed as evidence. The artifact does not include secrets.
 
 ## Stop The App
 

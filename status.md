@@ -1,5 +1,50 @@
 # Status
 
+## 2026-06-28 Health Operator Workbench Surface
+
+- Made `/health` content-first and action-first by rendering a visible
+  `Health Operator Workbench` before shared Route Context, Operator Focus,
+  Last Action, `Health Command Bar`, and dense diagnostics.
+- Added four visible cards for Status, Artifact, Diagnostics, and Safety. The
+  primary Status card routes to warnings when warnings exist or `/resume` when
+  local health is ready; Artifact opens the refreshed
+  `.clanker/app/local_app_status.json` through the bounded artifact viewer;
+  Diagnostics jumps to the local Python/git/storage readback; Safety links to
+  the zero-effect counter evidence.
+- Collapsed health workbench evidence, command evidence, diagnostics, counts,
+  key command registrations, and workflow import readbacks by default while
+  preserving warning counts, bind scope, branch/commit, storage/import posture,
+  the explicit status-artifact write-on-GET boundary, and zero-effect counters
+  in the DOM.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. `/health` still
+  intentionally writes only `.clanker/app/local_app_status.json` on GET. It
+  does not call providers, fetch GitHub, approve work, execute work, create
+  commits, push, create PRs, deploy, mutate external systems, or expose
+  arbitrary raw filesystem browsing.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, route markers matched, artifact rejection checks matched,
+    provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - Browser QA against `http://127.0.0.1:8824/health`: desktop `1280x900`
+    rendered `Health Operator Workbench` before command evidence and Route
+    Context; four health cards rendered in one row; all health evidence
+    disclosures were closed by default; the primary card jumped to
+    `#health-warnings`; the Status artifact card opened
+    `/artifacts?path=.clanker/app/local_app_status.json`; no horizontal
+    overflow and no warning/error logs.
+  - Browser QA mobile `390x844`: workbench rendered in the first page flow,
+    four health cards stacked one column, all health evidence disclosures were
+    closed by default, no horizontal overflow, and no warning/error logs.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Artifact Workbench Operator Surface
 
 - Made `/artifacts?path=...` content-first and artifact-action-first by

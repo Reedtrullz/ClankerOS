@@ -784,10 +784,11 @@ next-page link renders an `Action Notice` banner on the target page so the
 operator keeps context. The dashboard and `/health`
 surface the same warning posture for non-local binds, dirty tracked files,
 ahead-of-origin state, and known duplicate untracked files. `/health` starts
-with a `Health Command Bar` that summarizes warning count, bind scope,
+with a `Health Operator Workbench` that turns warning count, bind scope,
 branch/commit, storage and workflow-import readiness, the refreshed local
 status artifact, the fact that the artifact is written on GET, one next local
-surface, and zero provider/network/external-effect counters. Stop it with
+surface, and zero provider/network/external-effect counters into visible
+operator cards before the collapsed command and diagnostic evidence. Stop it with
 `Ctrl-C`.
 
 The underlying CLI workflow remains the source of truth: scout a repo, inspect
