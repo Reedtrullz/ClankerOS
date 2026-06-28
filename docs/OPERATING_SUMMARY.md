@@ -160,11 +160,13 @@ Core layers for the bootstrap:
   current branch/commit GitHub Actions direct snapshot command templates,
   latest operator-supplied CI evidence when one exists, and zero app-side
   GitHub polling, provider, push, PR, deploy, or external-mutation effects;
-  `/verification` includes a read-only `Verification Command Bar` that
-  summarizes workflow configuration, current checkout commit when available,
-  latest local CI proof source/status/scope, current-proof posture, one next
-  proof action, target surface, and no-write/no-GitHub-polling/no-external-
-  effect boundaries before the longer testing map; `/ci-evidence` includes a
+  `/verification` includes a read-only `Verification Operator Workbench` that
+  opens the page with Now, Check GitHub, Proof, and Finish Today cards before
+  shared diagnostics or command readbacks. It routes missing or stale proof to
+  `/ci-evidence#record-ci-snapshot-json`, keeps workbench evidence, command
+  evidence, and the finish form collapsed by default, and preserves no-write,
+  no-GitHub-polling, and no-external-effect boundaries in the DOM;
+  `/ci-evidence` includes a
   read-only `CI Evidence Command Bar` that summarizes handoff/snapshot record
   counts, latest proof, current-proof posture, and same-page recording or
   review targets before the JSON paste form and evidence lists;

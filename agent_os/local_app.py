@@ -14981,6 +14981,7 @@ def _verification_page(root: Path) -> str:
     workflow_summary_lines = [
         f"{key}: {value}" for key, value in workflow_lines
     ]
+    verification_context = _verification_operator_context(root, workflow_status)
     compact_checks = [
         "python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py",
         "python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health",
@@ -14996,7 +14997,8 @@ def _verification_page(root: Path) -> str:
             "<p class='muted'>Read-only testing map for the local operator app. Use compact local checks while GitHub Actions runs the slow full suite after a pushed commit.</p>",
             _non_claim_banner(),
             "</section>",
-            _verification_command_bar(root, workflow_status),
+            _verification_operator_workbench(root, verification_context),
+            _verification_command_bar(verification_context),
             "<section id='github-actions-workflow'><h2>GitHub Actions Workflow</h2>",
             _kv(workflow_lines),
             "</section>",
@@ -15138,7 +15140,7 @@ def _ci_evidence_command_state(root: Path) -> dict[str, str]:
     }
 
 
-def _verification_command_bar(root: Path, workflow_status: str) -> str:
+def _verification_operator_context(root: Path, workflow_status: str) -> dict[str, Any]:
     state = _ci_evidence_command_state(root)
     if workflow_status != "configured":
         command_status = "workflow_incomplete"
@@ -15158,9 +15160,146 @@ def _verification_command_bar(root: Path, workflow_status: str) -> str:
         target_surface = "/ci-evidence#record-ci-snapshot-json"
         target_href = "/ci-evidence#record-ci-snapshot-json"
         reason = state["reason"]
+    return {
+        "state": state,
+        "workflow_status": workflow_status,
+        "command_status": command_status,
+        "next_action": next_action,
+        "target_surface": target_surface,
+        "target_href": target_href,
+        "reason": reason,
+    }
+
+
+def _verification_operator_workbench(root: Path, context: dict[str, Any]) -> str:
+    state = context["state"]
+    commands = _ci_snapshot_command_context(root)
+    target_href = str(context["target_href"])
+    target_surface = str(context["target_surface"])
+    next_action = str(context["next_action"])
+    reason = str(context["reason"])
+    workflow_status = str(context["workflow_status"])
+    command_status = str(context["command_status"])
+    status_command = commands["status_command"]
+    proof_href = "/ci-evidence#record-ci-snapshot-json"
+    proof_label = "Record CI proof"
+    if state["current_proof"] == "current_workflow_run_success":
+        proof_href = str(state["latest_target"])
+        proof_label = "Review proof"
+    finish_form = _input_form(
+        "save-workspace",
+        {
+            "open_project": "",
+            "open_goal": "",
+            "return_to": "/verification",
+        },
+        {
+            "filters": f"verification:{state['current_proof']}",
+            "expanded_panels": "verification-workbench,ci-handoff,ci-evidence",
+            "last_viewed_artifact": "",
+            "updated_by": "verification-operator-workbench",
+        },
+    )
+    lines = [
+        f"verification_workbench_now: {_e(next_action)}",
+        f"verification_workbench_click: <a href='{_e(target_href)}'>{_e(target_surface)}</a>",
+        f"verification_workbench_check: {_e(status_command)}",
+        f"verification_workbench_record: <a href='{_e(proof_href)}'>{_e(proof_label)}</a>",
+        "verification_workbench_finish: <a href='#verification-finish-today'>Finish Today</a>",
+        "verification_workbench_safety: read-only proof routing; GitHub checks are copy-only and recorder writes require confirmation on /ci-evidence",
+    ]
+    return "".join(
+        [
+            "<section id='verification-operator-workbench' class='panel verification-operator-workbench' data-verification-operator-workbench='true'><h2>Verification Operator Workbench</h2>",
+            "<div class='verification-workbench-grid' data-verification-workbench-actions='true'>",
+            "<article class='verification-workbench-card verification-workbench-primary'><h3>Now</h3>",
+            f"<p>{_e(next_action)}</p>",
+            (
+                "<a class='verification-workbench-action' "
+                "data-verification-workbench-primary='true' "
+                f"href='{_e(target_href)}'>{_e(target_surface)}</a>"
+            ),
+            "</article>",
+            "<article class='verification-workbench-card'><h3>Check GitHub</h3>",
+            "<p>Use the current checkout run snapshot</p>",
+            f"<code>{_e(status_command)}</code>",
+            "<a class='verification-workbench-link' href='#verification-ci-handoff'>CI Handoff</a>",
+            "</article>",
+            "<article class='verification-workbench-card'><h3>Proof</h3>",
+            f"<p>{_e(state['current_proof'])}</p>",
+            f"<a class='verification-workbench-link' href='{_e(proof_href)}'>{_e(proof_label)}</a>",
+            "</article>",
+            "<article class='verification-workbench-card'><h3>Finish Today</h3>",
+            "<p>Save verification context</p>",
+            "<a class='verification-workbench-link' data-open-details='true' href='#verification-finish-today'>Open save form</a>",
+            "</article>",
+            "</div>",
+            "<details class='verification-workbench-evidence' data-verification-workbench-evidence='true'><summary>Verification workbench evidence</summary>",
+            _kv(
+                [
+                    ("verification_workbench_status", command_status),
+                    ("verification_workbench_workflow_status", workflow_status),
+                    ("verification_workbench_branch", state["branch"]),
+                    ("verification_workbench_current_commit", state["current_commit"]),
+                    ("verification_workbench_current_proof", state["current_proof"]),
+                    ("verification_workbench_latest_ci_source", state["latest_source"]),
+                    ("verification_workbench_latest_ci_status", state["latest_status"]),
+                    ("verification_workbench_latest_ci_scope", state["latest_scope"]),
+                    ("verification_workbench_latest_ci_commit", state["latest_commit"]),
+                    ("verification_workbench_latest_ci_run_id", state["latest_external_run_id"]),
+                    ("verification_workbench_next_action", next_action),
+                    (
+                        "verification_workbench_primary_surface",
+                        SafeHtml(
+                            f"<a href='{_e(target_href)}'>{_e(target_surface)}</a>"
+                        ),
+                    ),
+                    (
+                        "verification_workbench_record_surface",
+                        SafeHtml(f"<a href='{_e(proof_href)}'>{_e(proof_label)}</a>"),
+                    ),
+                    ("verification_workbench_reason", reason),
+                    ("verification_workbench_status_command", status_command),
+                    ("verification_workbench_fast_smoke_record_command", commands["fast_smoke_record_command"]),
+                    ("verification_workbench_full_suite_record_command", commands["validated_record_command"]),
+                    ("verification_workbench_manual_record_command", commands["manual_record_command"]),
+                    ("verification_workbench_action_form_available", "false"),
+                    ("verification_workbench_record_form_surface", "/ci-evidence#record-ci-snapshot-json"),
+                    ("verification_workbench_finish_form_available", "true"),
+                    ("verification_workbench_write_on_get", "false"),
+                    ("verification_workbench_github_status_fetch", "none"),
+                    ("verification_workbench_provider_calls_taken", "0"),
+                    ("verification_workbench_network_actions_taken", "0"),
+                    ("verification_workbench_external_effects_created", "false"),
+                    ("verification_workbench_push_created", "false"),
+                    ("verification_workbench_pr_created", "false"),
+                    ("verification_workbench_deploy_created", "false"),
+                ]
+            ),
+            _ul(lines),
+            "</details>",
+            "<details id='verification-finish-today' class='verification-finish-details' data-verification-finish-details='true'><summary>Finish Today save form</summary>",
+            "<p class='muted'>Save the verification proof posture as tomorrow's resume point. This writes only `.clanker/app/workspace.json` after confirmation.</p>",
+            finish_form,
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _verification_command_bar(context: dict[str, Any]) -> str:
+    state = context["state"]
+    command_status = str(context["command_status"])
+    workflow_status = str(context["workflow_status"])
+    next_action = str(context["next_action"])
+    target_surface = str(context["target_surface"])
+    target_href = str(context["target_href"])
+    reason = str(context["reason"])
     return "".join(
         [
             "<section id='verification-command-bar' class='panel verification-command-bar' data-verification-command-bar='true'><h2>Verification Command Bar</h2>",
+            "<p class='muted'>Read-only command evidence for the current local-vs-GitHub proof posture.</p>",
+            "<details class='verification-command-evidence' data-verification-command-evidence='true'><summary>Verification command evidence</summary>",
             _kv(
                 [
                     ("verification_command_status", command_status),
@@ -15198,6 +15337,7 @@ def _verification_command_bar(root: Path, workflow_status: str) -> str:
                     "verification_command_safety: read-only verification guidance",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -24808,7 +24948,7 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
-    content_first_paths = {"/", "/actions", "/approvals", "/delegation-runs", "/inbox", "/incidents", "/memory", "/profiles", "/resume", "/search", "/skills", "/today", "/workflow", "/workspace"}
+    content_first_paths = {"/", "/actions", "/approvals", "/delegation-runs", "/inbox", "/incidents", "/memory", "/profiles", "/resume", "/search", "/skills", "/today", "/verification", "/workflow", "/workspace"}
     if current_route_path in content_first_paths:
         article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
     else:
@@ -25279,6 +25419,22 @@ def _html_page(
     .action-confirmation-command-bar {{ border-left:4px solid var(--warn); }}
     .action-confirmation-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .action-confirmation-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .verification-operator-workbench {{ border-left:4px solid var(--accent); }}
+    .verification-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .verification-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .verification-operator-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .verification-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .verification-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .verification-workbench-card h3 {{ margin-top:0; }}
+    .verification-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .verification-workbench-card code {{ display:block; margin:0 0 10px; max-width:100%; white-space:normal; overflow-wrap:anywhere; }}
+    .verification-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .verification-workbench-action, .verification-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .verification-workbench-action {{ background:var(--accent); color:#fff; }}
+    .verification-workbench-link {{ background:var(--surface); color:var(--accent); }}
+    .verification-workbench-evidence, .verification-command-evidence, .verification-finish-details {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .verification-workbench-evidence summary, .verification-command-evidence summary, .verification-finish-details summary {{ cursor:pointer; font-weight:700; }}
+    .verification-workbench-evidence:not([open]) > :not(summary), .verification-command-evidence:not([open]) > :not(summary), .verification-finish-details:not([open]) > :not(summary) {{ display:none; }}
     .verification-command-bar {{ border-left:4px solid var(--accent); }}
     .verification-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .verification-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -25462,7 +25618,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .verification-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

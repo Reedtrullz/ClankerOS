@@ -1,5 +1,48 @@
 # Status
 
+## 2026-06-28 Verification Action-First Operator Surface
+
+- Made `/verification` usable as an action-first proof handoff by rendering the
+  `Verification Operator Workbench` before shared Route Context, Operator
+  Focus, Last Action, and command evidence.
+- Added four visible cards for Now, Check GitHub, Proof, and Finish Today, with
+  a stable `data-verification-workbench-primary` marker for the current proof
+  target.
+- Kept verification workbench evidence, verification command evidence, and the
+  Finish Today save form collapsed by default while preserving workflow status,
+  current proof posture, latest local CI evidence, copy-only GitHub command
+  templates, proof-recording target, and zero-effect readbacks in the DOM.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, fetch GitHub status from ClankerOS, record CI proof, rerun the full
+  suite locally, approve work, execute work, create commits, push, create PRs,
+  deploy, call providers, mutate external systems from ClankerOS, or expose
+  arbitrary raw filesystem browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-verification-workbench-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-verification-workbench-demo app-demo-smoke-test`
+    -> passed, fixture-backed snippets matched, provider/network/external
+    mutation counters remained `0`
+  - `git diff --check` -> passed
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8819/verification` with a temporary root containing the
+    checked-in workflow file: desktop `1280x900` rendered four Verification
+    Operator Workbench cards before Route Context and the Verification Command
+    Bar, kept workbench, command, and Finish Today details collapsed, showed no
+    horizontal overflow, no framework overlay, and empty browser warning/error
+    logs.
+  - Interaction proof: clicking the marked primary action changed the URL to
+    `/ci-evidence#record-ci-snapshot-json` and rendered the CI Evidence Records
+    page with the JSON record target present.
+  - Mobile Browser QA at `390x844` rendered four verification workbench cards
+    in one column, kept verification details collapsed, showed no horizontal
+    overflow, and had empty browser warning/error logs.
+
 ## 2026-06-28 Incidents Action-First Operator Surface
 
 - Made `/incidents` usable as a triage-first operator surface by rendering the

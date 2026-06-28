@@ -733,13 +733,22 @@ also shows the workflow job timeout, summarizes the latest operator-supplied
 CI evidence record when one exists, and labels an in-progress GitHub run as
 pending proof rather than CI proof:
 
-A read-only `Verification Command Bar` appears before the workflow inventory.
-It summarizes whether the workflow is configured, the current local checkout
-commit when available, the latest recorded CI source/status/scope, whether
-that evidence proves the current commit, the next proof action, and the target
-surface. When proof is missing, stale, job-scoped, or the checkout commit is
-unknown, the bar points to `/ci-evidence#record-ci-snapshot-json` instead of
-asking the operator to rerun the full suite locally.
+A read-only `Verification Operator Workbench` appears before the workflow
+inventory and shared route diagnostics. Its visible Now, Check GitHub, Proof,
+and Finish Today cards point at the next proof surface, the copy-only GitHub
+status command handoff, the local proof recorder or latest proof, and a
+collapsed `save-workspace` form for tomorrow's resume point. Detailed
+workbench evidence, command evidence, and the finish form stay collapsed by
+default while still preserving proof posture, command templates, and zero app
+side effects in the DOM.
+
+The read-only `Verification Command Bar` now follows the workbench as command
+evidence. It summarizes whether the workflow is configured, the current local
+checkout commit when available, the latest recorded CI source/status/scope,
+whether that evidence proves the current commit, the next proof action, and
+the target surface. When proof is missing, stale, job-scoped, or the checkout
+commit is unknown, the bar points to `/ci-evidence#record-ci-snapshot-json`
+instead of asking the operator to rerun the full suite locally.
 
 - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
 - focused local app pytest slices
