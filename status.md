@@ -1,5 +1,46 @@
 # Status
 
+## 2026-06-28 CI Evidence Proof-First Operator Surface
+
+- Made `/ci-evidence` content-first and proof-action-first by rendering
+  `CI Proof Workbench` before shared Route Context, Operator Focus, Last
+  Action, summary rows, and command evidence.
+- Kept the four visible cards for Check, Record Smoke, Record Full Suite, and
+  Manual Record as the first operator path for the copy-only GitHub Actions
+  proof loop, with long `gh run view` and recorder commands tucked behind
+  per-card `Command` disclosures so the first viewport stays action-oriented.
+- Moved CI summary rows, proof workbench details, and CI Evidence Command Bar
+  details into collapsed evidence so the page foregrounds the proof workflow
+  before dense state readbacks.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. The page does not write
+  on GET, fetch GitHub from ClankerOS, record proof without confirmation, rerun
+  tests, approve work, execute work, create commits, push, create PRs, deploy,
+  call providers, mutate external systems, or expose arbitrary raw filesystem
+  browsing.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'ci_snapshot_evidence_from_gh_json or local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `5 passed, 511 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-ci-evidence-workbench-smoke-compact app-smoke-test`
+    -> passed, `/ci-evidence` marker matched, artifact traversal checks matched,
+    provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root /tmp/clankeros-ci-evidence-workbench-demo-compact app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network actions
+    0, external mutations 0
+  - Browser QA against `http://127.0.0.1:8822/ci-evidence`: desktop
+    `1280x900` rendered `CI Proof Workbench` before summary, command bar, and
+    Route Context; all four per-card `Command` disclosures were closed by
+    default; the scoped `Record Smoke` -> `Paste JSON` action jumped to
+    `#record-ci-snapshot-json` with form action
+    `/actions/ci-snapshot-evidence-from-gh-json`; no horizontal overflow and
+    no console logs.
+  - Browser QA mobile `390x844`: proof workbench started in the first viewport,
+    all four cards stacked one column, command disclosures were closed by
+    default, no horizontal overflow, and no console logs.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Dogfooding Action-First Operator Surface
 
 - Made `/dogfooding` content-first and action-first by rendering a visible

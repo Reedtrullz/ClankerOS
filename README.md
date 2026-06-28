@@ -745,16 +745,17 @@ in local ClankerOS state and links the inert evidence artifact. It also shows
 the latest local GitHub handoff id, branch, commit, handoff evidence, and a
 handoff-specific `ci-deploy-evidence` command template when a recordable
 handoff exists. When no handoff exists, it shows a direct snapshot evidence
-template instead. A read-only `CI Evidence Command Bar` now starts the page
-with handoff/snapshot record counts, latest proof source/status/scope, current
-proof posture, one next action, and same-page targets for the paste form or
-recent evidence lists. In both states it also shows the direct `ci-snapshot-handoff`
-template for the current checkout. A `CI Proof Workbench` follows with four
-scannable cards: check the pushed run, record fast-smoke proof, record
-full-suite proof, or fall back to manual record-after-success. The cards and
-rows show the exact `gh run view` / validated recorder commands, link back to
-the paste form, and keep fast-smoke proof labeled as early route/CLI proof
-only. It does not fetch GitHub status.
+template instead. The page now starts with a read-only `CI Proof Workbench`
+before shared diagnostics, with four scannable cards: check the pushed run,
+record fast-smoke proof, record full-suite proof, or fall back to manual
+record-after-success. Each long GitHub command is available through a compact
+per-card command disclosure. Summary rows, proof workbench evidence, and the
+`CI Evidence Command Bar` evidence stay collapsed by default while preserving
+handoff/snapshot counts, proof source/status/scope, current proof posture, one
+next action, same-page targets, the direct `ci-snapshot-handoff` template, and
+the exact `gh run view` / validated recorder commands in the DOM. Fast-smoke
+proof remains labeled as early route/CLI proof only. It does not fetch GitHub
+status.
 
 The app is local-only by default, binds to `127.0.0.1`, and refuses non-local
 binds unless `--allow-nonlocal-bind` is explicitly supplied. It does not push,

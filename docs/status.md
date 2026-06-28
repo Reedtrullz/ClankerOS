@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/ci-evidence` is now content-first and proof-action-first: it opens with
+  the `CI Proof Workbench` cards for Check, Record Smoke, Record Full Suite,
+  and Manual Record before shared diagnostics, summary rows, or command
+  evidence. CI evidence summary, proof workbench evidence, and command evidence
+  stay collapsed by default while preserving GitHub Actions copy-only command
+  templates in per-card disclosures, validated recorder targets, proof posture,
+  and zero-effect readbacks in the DOM.
 - `/dogfooding` is now content-first and action-first: it opens with
   `Dogfooding Operator Workbench` cards for Do Now, ClankerOS, Workflow, and
   Proof before shared diagnostics, command/evidence readback, or the longer

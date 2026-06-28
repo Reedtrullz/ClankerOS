@@ -2591,6 +2591,8 @@ def test_local_app_records_ci_snapshot_evidence_from_pasted_gh_json(
     ci_evidence = render_local_app_route(tmp_path, "/ci-evidence")
     assert ci_evidence.status == 200
     assert "CI Evidence Command Bar" in ci_evidence.body
+    assert "data-ci-evidence-command-evidence='true'" in ci_evidence.body
+    assert "data-ci-evidence-summary-evidence='true'" in ci_evidence.body
     assert "ci_evidence_command_status</dt><dd>no_records" in ci_evidence.body
     assert "ci_evidence_command_snapshot_record_count</dt><dd>0" in ci_evidence.body
     assert "ci_evidence_command_latest_status</dt><dd>missing" in ci_evidence.body
@@ -2599,7 +2601,10 @@ def test_local_app_records_ci_snapshot_evidence_from_pasted_gh_json(
     assert "ci_evidence_command_reason</dt><dd>no_local_ci_evidence_records" in ci_evidence.body
     assert "CI Proof Workbench" in ci_evidence.body
     assert "data-ci-proof-workbench='true'" in ci_evidence.body
+    assert "data-ci-proof-workbench-evidence='true'" in ci_evidence.body
     assert "data-ci-proof-workbench-cards='true'" in ci_evidence.body
+    assert ci_evidence.body.count("data-ci-proof-command='Command'") == 4
+    assert "<details class='ci-proof-command' data-ci-proof-command='Command'><summary>Command</summary><code>gh run view &lt;run_id&gt;" in ci_evidence.body
     assert "ci-proof-workbench-primary'><h3>Check</h3>" in ci_evidence.body
     assert "<h3>Record Smoke</h3>" in ci_evidence.body
     assert "<h3>Record Full Suite</h3>" in ci_evidence.body
@@ -2622,6 +2627,15 @@ def test_local_app_records_ci_snapshot_evidence_from_pasted_gh_json(
     assert "optional if JSON has databaseId or URL" in ci_evidence.body
     assert "network_actions_taken_by_app</dt><dd>0" in ci_evidence.body
     assert "github_status_fetch</dt><dd>none" in ci_evidence.body
+    assert ci_evidence.body.index("CI Proof Workbench") < ci_evidence.body.index(
+        "CI evidence summary"
+    )
+    assert ci_evidence.body.index("CI Proof Workbench") < ci_evidence.body.index(
+        "CI Evidence Command Bar"
+    )
+    assert ci_evidence.body.index("CI Proof Workbench") < ci_evidence.body.index(
+        "Route Context"
+    )
 
     confirmation = render_local_app_route(
         tmp_path,
@@ -6374,8 +6388,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     ci_evidence = render_local_app_route(tmp_path, "/ci-evidence")
     assert ci_evidence.status == 200
     assert "CI Evidence Records" in ci_evidence.body
+    assert "CI Proof Workbench" in ci_evidence.body
+    assert "data-ci-proof-workbench='true'" in ci_evidence.body
+    assert "data-ci-proof-workbench-evidence='true'" in ci_evidence.body
+    assert ci_evidence.body.count("data-ci-proof-command='Command'") == 4
+    assert "data-ci-evidence-summary-evidence='true'" in ci_evidence.body
     assert "CI Evidence Command Bar" in ci_evidence.body
     assert "data-ci-evidence-command-bar='true'" in ci_evidence.body
+    assert "data-ci-evidence-command-evidence='true'" in ci_evidence.body
     assert "ci_evidence_command_status</dt><dd>records_available_current_commit_unknown" in ci_evidence.body
     assert "ci_evidence_command_handoff_record_count</dt><dd>1" in ci_evidence.body
     assert "ci_evidence_command_snapshot_record_count</dt><dd>0" in ci_evidence.body
@@ -6390,6 +6410,15 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "ci_evidence_command_github_status_fetch</dt><dd>none" in ci_evidence.body
     assert "ci_evidence_command_write_on_get</dt><dd>false" in ci_evidence.body
     assert "ci_evidence_command_safety: local proof records only" in ci_evidence.body
+    assert ci_evidence.body.index("CI Proof Workbench") < ci_evidence.body.index(
+        "CI evidence summary"
+    )
+    assert ci_evidence.body.index("CI Proof Workbench") < ci_evidence.body.index(
+        "CI Evidence Command Bar"
+    )
+    assert ci_evidence.body.index("CI Proof Workbench") < ci_evidence.body.index(
+        "Route Context"
+    )
     assert "CI Evidence Recording Guide" in ci_evidence.body
     assert "id='ci-evidence-recording-guide'" in ci_evidence.body
     assert "id='record-ci-snapshot-json'" in ci_evidence.body

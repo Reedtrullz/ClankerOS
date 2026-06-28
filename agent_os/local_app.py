@@ -15514,23 +15514,22 @@ def _ci_evidence_page(root: Path) -> str:
     snapshot_items = [
         _ci_snapshot_evidence_line(root, record) for record in snapshot_records
     ]
+    summary_rows = [
+        ("handoff_record_count", str(len(records))),
+        ("snapshot_record_count", str(len(snapshot_records))),
+        ("app_network_actions_taken", "0"),
+        ("external_mutations_taken", "0"),
+        ("github_status_fetch", "none"),
+    ]
     return "".join(
         [
             "<section><h1>CI Evidence Records</h1>",
             "<p class='muted'>Read-only view of operator-supplied CI/deploy evidence already recorded in local ClankerOS state.</p>",
             _non_claim_banner(),
-            _kv(
-                [
-                    ("handoff_record_count", str(len(records))),
-                    ("snapshot_record_count", str(len(snapshot_records))),
-                    ("app_network_actions_taken", "0"),
-                    ("external_mutations_taken", "0"),
-                    ("github_status_fetch", "none"),
-                ]
-            ),
             "</section>",
-            _ci_evidence_command_bar(root, records, snapshot_records),
             _ci_proof_workbench(root),
+            _ci_evidence_summary_evidence(summary_rows),
+            _ci_evidence_command_bar(root, records, snapshot_records),
             _ci_evidence_recording_guide(root),
             _ci_snapshot_json_recording_form(root),
             _list_section("Recent CI Evidence", items, anchor_id="recent-ci-evidence"),
@@ -15553,6 +15552,27 @@ def _ci_evidence_page(root: Path) -> str:
     )
 
 
+def _ci_evidence_summary_evidence(rows: list[tuple[str, str]]) -> str:
+    return "".join(
+        [
+            "<details class='ci-evidence-summary-evidence' data-ci-evidence-summary-evidence='true'><summary>CI evidence summary</summary>",
+            _kv(rows),
+            "</details>",
+        ]
+    )
+
+
+def _ci_proof_command(label: str, command: str) -> str:
+    return "".join(
+        [
+            f"<details class='ci-proof-command' data-ci-proof-command='{_e(label)}'>",
+            f"<summary>{_e(label)}</summary>",
+            f"<code>{_e(command)}</code>",
+            "</details>",
+        ]
+    )
+
+
 def _ci_proof_workbench(root: Path) -> str:
     state = _ci_evidence_command_state(root)
     commands = _ci_snapshot_command_context(root)
@@ -15571,16 +15591,20 @@ def _ci_proof_workbench(root: Path) -> str:
             "<div class='ci-proof-workbench-grid' data-ci-proof-workbench-cards='true'>",
             "<article class='ci-proof-workbench-card ci-proof-workbench-primary'><h3>Check</h3>",
             "<p>Run this outside ClankerOS to inspect the pushed workflow.</p>",
-            f"<code>{_e(status_command)}</code></article>",
+            _ci_proof_command("Command", status_command),
+            "</article>",
             "<article class='ci-proof-workbench-card'><h3>Record Smoke</h3>",
             "<p>Use only when the fast smoke job passed and the full suite is still pending.</p>",
-            f"<code>{_e(fast_smoke_command)}</code><a class='ci-proof-workbench-link' href='{_e(record_href)}'>Paste JSON</a></article>",
+            _ci_proof_command("Command", fast_smoke_command),
+            f"<a class='ci-proof-workbench-link' href='{_e(record_href)}'>Paste JSON</a></article>",
             "<article class='ci-proof-workbench-card'><h3>Record Full Suite</h3>",
             "<p>Use after the completed GitHub workflow is green for this commit.</p>",
-            f"<code>{_e(full_suite_command)}</code><a class='ci-proof-workbench-link' href='{_e(record_href)}'>Paste JSON</a></article>",
+            _ci_proof_command("Command", full_suite_command),
+            f"<a class='ci-proof-workbench-link' href='{_e(record_href)}'>Paste JSON</a></article>",
             "<article class='ci-proof-workbench-card'><h3>Manual Record</h3>",
             "<p>Fallback for already-known successful run id and URL.</p>",
-            f"<code>{_e(manual_command)}</code></article>",
+            _ci_proof_command("Command", manual_command),
+            "</article>",
             "</div>",
         ]
     )
@@ -15589,6 +15613,7 @@ def _ci_proof_workbench(root: Path) -> str:
             "<section id='ci-proof-workbench' class='panel ci-proof-workbench' data-ci-proof-workbench='true'><h2>CI Proof Workbench</h2>",
             "<p class='muted'>Copy the GitHub command outside ClankerOS, then paste the JSON into the confirmed local recorder.</p>",
             cards,
+            "<details class='ci-proof-workbench-evidence' data-ci-proof-workbench-evidence='true'><summary>CI proof workbench evidence</summary>",
             _kv(
                 [
                     ("ci_proof_workbench_status", state["command_status"]),
@@ -15642,6 +15667,7 @@ def _ci_proof_workbench(root: Path) -> str:
                     "ci_proof_workbench_safety: copy-only GitHub command guidance; local recording still requires confirmation",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -15660,6 +15686,7 @@ def _ci_evidence_command_bar(
     return "".join(
         [
             "<section id='ci-evidence-command-bar' class='panel ci-evidence-command-bar' data-ci-evidence-command-bar='true'><h2>CI Evidence Command Bar</h2>",
+            "<details class='ci-evidence-command-evidence' data-ci-evidence-command-evidence='true'><summary>CI evidence command evidence</summary>",
             _kv(
                 [
                     ("ci_evidence_command_status", state["command_status"]),
@@ -15698,6 +15725,7 @@ def _ci_evidence_command_bar(
                     "ci_evidence_command_safety: local proof records only",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -25235,7 +25263,7 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
-    content_first_paths = {"/", "/actions", "/approvals", "/delegation-runs", "/dogfooding", "/inbox", "/incidents", "/memory", "/profiles", "/projects", "/resume", "/search", "/skills", "/today", "/verification", "/workflow", "/workspace"}
+    content_first_paths = {"/", "/actions", "/approvals", "/ci-evidence", "/delegation-runs", "/dogfooding", "/inbox", "/incidents", "/memory", "/profiles", "/projects", "/resume", "/search", "/skills", "/today", "/verification", "/workflow", "/workspace"}
     if current_route_path in content_first_paths or current_route_path.startswith("/projects/"):
         article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
     else:
@@ -25564,8 +25592,14 @@ def _html_page(
     .ci-proof-workbench-card h3 {{ margin-top:0; }}
     .ci-proof-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
     .ci-proof-workbench-card code {{ display:block; margin:0 0 10px; max-width:100%; white-space:normal; overflow-wrap:anywhere; }}
+    .ci-proof-command {{ margin:10px 0; border:1px solid var(--line); background:var(--panel); padding:8px; }}
+    .ci-proof-command summary {{ cursor:pointer; font-weight:700; }}
+    .ci-proof-command:not([open]) > :not(summary) {{ display:none; }}
     .ci-proof-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
     .ci-proof-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .ci-evidence-summary-evidence, .ci-proof-workbench-evidence, .ci-evidence-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .ci-evidence-summary-evidence summary, .ci-proof-workbench-evidence summary, .ci-evidence-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .ci-evidence-summary-evidence:not([open]) > :not(summary), .ci-proof-workbench-evidence:not([open]) > :not(summary), .ci-evidence-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .today-current-action, .today-finish, .today-note, .today-pause, .goal-pause {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .today-current-action summary, .today-finish summary, .today-note summary, .today-pause summary {{ cursor:pointer; font-weight:700; }}
     .today-current-action:not([open]) > :not(summary), .today-finish:not([open]) > :not(summary), .today-note:not([open]) > :not(summary), .today-pause:not([open]) > :not(summary) {{ display:none; }}

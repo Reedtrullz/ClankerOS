@@ -807,16 +807,18 @@ the provider, status, external run id, external URL, commit, recorded-by field,
 and evidence artifact link for recent CI/deploy evidence records. Handoff
 records keep the GitHub handoff id; direct snapshot records are labeled
 `direct_public_snapshot` so they do not pretend to come from a publication
-handoff. A read-only `CI Evidence Command Bar` starts the page with handoff and
-snapshot record counts, the latest local proof source/status/scope, whether it
-matches the current checkout, and the one next recording or review action. The
-bar links to stable same-page targets such as `#record-ci-snapshot-json`,
-`#recent-ci-evidence`, and `#recent-direct-snapshot-ci-evidence`. The `CI
-Proof Workbench` then presents the operator path as four scan-first cards:
-check the pushed GitHub run outside ClankerOS, record job-scoped fast-smoke
-proof, record full-suite proof, or use the manual record-after-success
-fallback. It repeats the exact copy-only `gh run view` and validated recorder
-templates, links back to the paste form, and labels fast-smoke proof as early
+handoff. A read-only `CI Proof Workbench` now starts the page before shared
+diagnostics with four scan-first cards: check the pushed GitHub run outside
+ClankerOS, record job-scoped fast-smoke proof, record full-suite proof, or use
+the manual record-after-success fallback. Long GitHub commands stay available
+behind compact per-card command disclosures. Summary rows, proof workbench
+evidence, and `CI Evidence Command Bar` evidence stay collapsed by default
+while preserving handoff and snapshot record counts, the latest local proof
+source/status/scope, whether it matches the current checkout, the one next
+recording or review action, stable same-page targets such as
+`#record-ci-snapshot-json`, `#recent-ci-evidence`, and
+`#recent-direct-snapshot-ci-evidence`, and the exact copy-only `gh run view`
+and validated recorder templates. Fast-smoke proof remains labeled as early
 route/CLI proof only. The `CI Evidence Recording Guide` shows a handoff-specific
 `ci-deploy-evidence` command when a local GitHub handoff exists, and a direct
 `ci-snapshot-handoff`, `ci-snapshot-evidence-from-gh-json`, and manual
