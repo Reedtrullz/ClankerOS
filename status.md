@@ -1,5 +1,48 @@
 # Status
 
+## 2026-06-28 Goal Timeline Activity Action Cards
+
+- Made `/goals/<goal_id>#goal-timeline-command-bar` action-first with visible
+  Now, Latest, Families, Flow, and Safety cards before collapsed command
+  evidence and collapsed timeline metadata.
+- Made `/goals/<goal_id>#goal-activity-command-bar` action-first with visible
+  Now, Latest, Signals, Window, and Safety cards before collapsed command
+  evidence and collapsed activity metadata.
+- Kept the chronological timeline and recent activity rows visible with their
+  existing event links, kind badges, target badges, artifact/delegation/run
+  routing, and zero-effect counters preserved in the DOM.
+- Updated README, local app docs, operating summary, the fixture-backed demo
+  smoke route contract, and focused route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including the new Goal Timeline
+    and Activity handles, provider calls 0, network actions 0, external
+    mutations 0
+  - Browser QA against
+    `http://127.0.0.1:8846/goals/goal_31994d404bd1#goal-timeline-command-bar`:
+    desktop `1280x900` rendered five Timeline cards and five Activity cards,
+    kept command evidence and metadata closed, kept 41 timeline events
+    visible, had no horizontal overflow, and reported no warning/error logs.
+  - Browser QA mobile `390x844` against
+    `#goal-activity-command-bar`: Timeline and Activity card grids each
+    stacked in one column, kept command evidence and metadata closed, kept 41
+    timeline events in the DOM, had no horizontal overflow, and reported no
+    warning/error logs.
+  - Browser interaction QA clicked the Activity `Open latest` card and
+    navigated to `/runs/run_53a3221e4c44` with the run workbench present, no
+    horizontal overflow, and no warning/error logs.
+  - Screenshots: `/tmp/clankeros-goal-timeline-activity-desktop.png` and
+    `/tmp/clankeros-goal-timeline-activity-mobile.png`.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, approve work, execute work, create commits, push, create PRs, deploy,
+  fetch GitHub status, call providers, or mutate external systems.
+
 ## 2026-06-28 Goal Overview Risk Criteria Progress Action Cards
 
 - Made `/goals/<goal_id>#goal-overview-command-bar` action-first with visible

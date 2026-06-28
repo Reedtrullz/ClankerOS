@@ -442,11 +442,12 @@ approval queue, or goal surface, and render as scan-first event rows with
 time, event-kind badge, clickable message, and target badge. The timeline also
 backfills generic `Artifact recorded` events from the same bounded artifact
 registry used by the Goal Artifact Explorer. The timeline starts with a
-read-only `Goal Timeline Command Bar` that summarizes event-family counts, the
-latest event, its target surface, and zero-effect boundaries before the full
-chronological list. The Activity Log now starts with a read-only Goal Activity Command Bar
-that names the latest human-readable event and target local surface before the
-longer chronological list. Progress starts with a read-only Goal Progress
+read-only `Goal Timeline Command Bar` that exposes visible Now, Latest,
+Families, Flow, and Safety cards before collapsed timeline command evidence
+and metadata, then the full chronological list. The Activity Log now starts
+with a read-only `Goal Activity Command Bar` that exposes visible Now, Latest,
+Signals, Window, and Safety cards before collapsed activity evidence and
+metadata, then the recent human-readable event list. Progress starts with a read-only Goal Progress
 Command Bar, then uses a real browser progress bar.
 Operator Notes starts with a read-only `Goal Operator Notes Command Bar` that
 shows whether the note artifact exists, timestamped entry count, artifact size,

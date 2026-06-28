@@ -365,10 +365,12 @@ Core layers for the bootstrap:
   with time, event-kind badge, clickable local message, and target badge, so
   artifacts, delegations, runs, approvals, tasks, and goal events are easier
   to distinguish at a glance. The Goal timeline starts with a read-only
-  `Goal Timeline Command Bar` that summarizes total events, the latest linked
-  event, event-family counts for artifacts, approvals, delegations, runs,
-  tasks, and operator notes, and zero-effect boundaries before the full
-  chronological list. Goal pages include a browser-native progress
+  `Goal Timeline Command Bar` that exposes visible Now, Latest, Families,
+  Flow, and Safety cards before collapsed total-event, latest-linked-event,
+  event-family, run/task/note, and zero-effect evidence plus timeline
+  metadata. The Activity Log likewise opens with visible Now, Latest, Signals,
+  Window, and Safety cards before collapsed recent-event evidence and
+  metadata. Goal pages include a browser-native progress
   bar and a large Current Phase banner that explains the phase reason,
   operator attention cue, next action surface, latest activity, and zero-effect
   boundary without requiring the CLI. Home and Goal activity sections now also

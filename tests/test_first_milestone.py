@@ -9533,6 +9533,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Timeline" in goal.body
     assert "Goal Timeline Command Bar" in goal.body
     assert "data-goal-timeline-command-bar='true'" in goal.body
+    assert "data-goal-timeline-actions='true'" in goal.body
+    assert "data-goal-timeline-now='true'" in goal.body
+    assert "data-goal-timeline-primary='true'" in goal.body
+    assert "data-goal-timeline-latest='true'" in goal.body
+    assert "data-goal-timeline-families='true'" in goal.body
+    assert "data-goal-timeline-flow='true'" in goal.body
+    assert "data-goal-timeline-safety='true'" in goal.body
+    assert "data-goal-timeline-evidence='true'" in goal.body
+    assert "data-goal-timeline-metadata='true'" in goal.body
+    assert "Goal timeline command evidence" in goal.body
+    assert "Timeline metadata" in goal.body
+    assert "Open latest" in goal.body
     assert "<a href='#goal-timeline-command-bar'>Timeline command</a>" in goal.body
     assert f"timeline_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert "timeline_command_status</dt><dd>available" in goal.body
@@ -9570,6 +9582,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Activity Log" in goal.body
     assert "Goal Activity Command Bar" in goal.body
     assert "data-goal-activity-command-bar='true'" in goal.body
+    assert "data-goal-activity-actions='true'" in goal.body
+    assert "data-goal-activity-now='true'" in goal.body
+    assert "data-goal-activity-primary='true'" in goal.body
+    assert "data-goal-activity-latest='true'" in goal.body
+    assert "data-goal-activity-signals='true'" in goal.body
+    assert "data-goal-activity-window='true'" in goal.body
+    assert "data-goal-activity-safety='true'" in goal.body
+    assert "data-goal-activity-evidence='true'" in goal.body
+    assert "data-goal-activity-metadata='true'" in goal.body
+    assert "Goal activity command evidence" in goal.body
+    assert "Activity metadata" in goal.body
     assert "<a href='#goal-activity-command-bar'>Activity command</a>" in goal.body
     assert f"goal_activity_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert "goal_activity_command_status</dt><dd>available" in goal.body

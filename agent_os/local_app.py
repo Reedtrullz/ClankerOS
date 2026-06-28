@@ -635,6 +635,24 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-goal-progress-safety='true'",
                 "data-goal-progress-evidence='true'",
                 "data-goal-progress-details='true'",
+                "data-goal-timeline-actions='true'",
+                "data-goal-timeline-now='true'",
+                "data-goal-timeline-primary='true'",
+                "data-goal-timeline-latest='true'",
+                "data-goal-timeline-families='true'",
+                "data-goal-timeline-flow='true'",
+                "data-goal-timeline-safety='true'",
+                "data-goal-timeline-evidence='true'",
+                "data-goal-timeline-metadata='true'",
+                "data-goal-activity-actions='true'",
+                "data-goal-activity-now='true'",
+                "data-goal-activity-primary='true'",
+                "data-goal-activity-latest='true'",
+                "data-goal-activity-signals='true'",
+                "data-goal-activity-window='true'",
+                "data-goal-activity-safety='true'",
+                "data-goal-activity-evidence='true'",
+                "data-goal-activity-metadata='true'",
                 "data-goal-daily-loop-actions='true'",
                 "data-goal-daily-loop-primary='true'",
                 "data-goal-daily-loop-evidence='true'",
@@ -11684,6 +11702,7 @@ def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
         [
             "<section id='goal-timeline'><h2>Timeline</h2>",
             _goal_timeline_command_bar(state, items),
+            "<details class='goal-timeline-metadata' data-goal-timeline-metadata='true'><summary>Timeline metadata</summary>",
             _kv(
                 [
                     ("timeline_links_enabled", "true"),
@@ -11693,6 +11712,7 @@ def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
                     ("operator_note_timeline_external_effects_created", "false"),
                 ]
             ),
+            "</details>",
             _ul([_timeline_line(item) for item in items]),
             "</section>",
         ]
@@ -11730,7 +11750,35 @@ def _goal_timeline_command_bar(
     return "".join(
         [
             "<div id='goal-timeline-command-bar' class='panel goal-timeline-command-bar' data-goal-timeline-command-bar='true'><h3>Goal Timeline Command Bar</h3>",
-            "<p class='muted'>One scan-friendly summary before the full chronological event list.</p>",
+            "<p class='muted'>Latest event, event mix, and local proof posture before the full chronological event list.</p>",
+            "<div class='goal-timeline-grid' data-goal-timeline-actions='true'>",
+            "<article class='goal-timeline-card goal-timeline-primary' data-goal-timeline-now='true'>"
+            "<h3>Now</h3>"
+            f"<p>{_e(latest_kind)} · {_e(latest_at)}</p>"
+            f"<a class='goal-timeline-action' data-goal-timeline-primary='true' href='{_e(latest_href)}'>Open latest</a>"
+            "</article>",
+            "<article class='goal-timeline-card' data-goal-timeline-latest='true'>"
+            "<h3>Latest</h3>"
+            f"<p>{_e(latest_message)}</p>"
+            "<a class='goal-timeline-link' href='#goal-timeline'>Event list</a>"
+            "</article>",
+            "<article class='goal-timeline-card' data-goal-timeline-families='true'>"
+            "<h3>Families</h3>"
+            f"<p>{family_counts['artifact']} artifacts · {family_counts['approval']} approvals · {family_counts['delegation']} delegations</p>"
+            "<a class='goal-timeline-link' href='#goal-artifacts'>Artifacts</a>"
+            "</article>",
+            "<article class='goal-timeline-card' data-goal-timeline-flow='true'>"
+            "<h3>Flow</h3>"
+            f"<p>{family_counts['run']} runs · {family_counts['task']} tasks · {family_counts['operator_note']} notes</p>"
+            "<a class='goal-timeline-link' href='#goal-activity-log'>Activity</a>"
+            "</article>",
+            "<article class='goal-timeline-card' data-goal-timeline-safety='true'>"
+            "<h3>Safety</h3>"
+            "<p>Read-only local chronology; no provider, network, or external effects.</p>"
+            "<a class='goal-timeline-link' href='#goal-timeline-command-bar'>Evidence</a>"
+            "</article>",
+            "</div>",
+            "<details class='goal-timeline-command-evidence' data-goal-timeline-evidence='true'><summary>Goal timeline command evidence</summary>",
             _kv(
                 [
                     ("timeline_command_status", "available" if items else "empty"),
@@ -11757,6 +11805,7 @@ def _goal_timeline_command_bar(
                 ]
             ),
             _ul(lines),
+            "</details>",
             "</div>",
         ]
     )
@@ -11786,6 +11835,8 @@ def _goal_activity_log(root: Path, state: dict[str, Any]) -> str:
     return "".join(
         [
             "<section id='goal-activity-log'><h2>Activity Log</h2>",
+            _goal_activity_command_bar(state, items),
+            "<details class='goal-activity-metadata' data-goal-activity-metadata='true'><summary>Activity metadata</summary>",
             _kv(
                 [
                     ("activity_log_format", "human_readable"),
@@ -11796,7 +11847,7 @@ def _goal_activity_log(root: Path, state: dict[str, Any]) -> str:
                     ("activity_log_items", str(len(items))),
                 ]
             ),
-            _goal_activity_command_bar(state, items),
+            "</details>",
             _ul([_timeline_line(item) for item in items]),
             "</section>",
         ]
@@ -11823,7 +11874,35 @@ def _goal_activity_command_bar(
     return "".join(
         [
             "<section id='goal-activity-command-bar' class='panel goal-activity-command-bar' data-goal-activity-command-bar='true'><h3>Goal Activity Command Bar</h3>",
-            "<p class='muted'>One read-only summary of the latest human-readable event for this goal.</p>",
+            "<p class='muted'>Recent human-readable movement for this goal, with the newest useful surface first.</p>",
+            "<div class='goal-activity-grid' data-goal-activity-actions='true'>",
+            "<article class='goal-activity-card goal-activity-primary' data-goal-activity-now='true'>"
+            "<h3>Now</h3>"
+            f"<p>{_e(latest_label)}</p>"
+            f"<a class='goal-activity-action' data-goal-activity-primary='true' href='{_e(latest_href)}'>Open latest</a>"
+            "</article>",
+            "<article class='goal-activity-card' data-goal-activity-latest='true'>"
+            "<h3>Latest</h3>"
+            f"<p>{_e(latest_kind)} · {_e(latest_at)}</p>"
+            f"<a class='goal-activity-link' href='{_e(latest_href)}'>Target</a>"
+            "</article>",
+            "<article class='goal-activity-card' data-goal-activity-signals='true'>"
+            "<h3>Signals</h3>"
+            f"<p>{operator_notes} notes · {artifacts} artifacts</p>"
+            "<a class='goal-activity-link' href='#goal-operator-notes'>Notes</a>"
+            "</article>",
+            "<article class='goal-activity-card' data-goal-activity-window='true'>"
+            "<h3>Window</h3>"
+            f"<p>{len(items)} recent event{'s' if len(items) != 1 else ''}</p>"
+            "<a class='goal-activity-link' href='#goal-timeline-command-bar'>Timeline</a>"
+            "</article>",
+            "<article class='goal-activity-card' data-goal-activity-safety='true'>"
+            "<h3>Safety</h3>"
+            "<p>Read-only local activity; no write-on-GET, network, or external effects.</p>"
+            "<a class='goal-activity-link' href='#goal-activity-command-bar'>Evidence</a>"
+            "</article>",
+            "</div>",
+            "<details class='goal-activity-command-evidence' data-goal-activity-evidence='true'><summary>Goal activity command evidence</summary>",
             _kv(
                 [
                     ("goal_activity_command_status", "available"),
@@ -11851,6 +11930,7 @@ def _goal_activity_command_bar(
                     "goal_activity_safety: read-only local timeline",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -27768,9 +27848,23 @@ def _html_page(
     .artifact-review-brief {{ border-left:4px solid var(--ok); }}
     .artifact-review-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .artifact-review-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
-    .goal-timeline-command-bar {{ border-left:4px solid var(--accent); margin:0 0 12px; }}
+    .goal-timeline-command-bar, .goal-activity-command-bar {{ border-left:4px solid var(--accent); margin:0 0 12px; }}
+    .goal-timeline-command-bar dl, .goal-activity-command-bar dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .goal-timeline-grid, .goal-activity-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-timeline-card, .goal-activity-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .goal-timeline-card h3, .goal-activity-card h3 {{ margin-top:0; }}
+    .goal-timeline-card p, .goal-activity-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .goal-timeline-primary, .goal-activity-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .goal-timeline-action, .goal-timeline-link, .goal-activity-action, .goal-activity-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-timeline-action, .goal-activity-action {{ background:var(--accent); color:#fff; }}
+    .goal-timeline-link, .goal-activity-link {{ background:var(--surface); color:var(--accent); }}
+    .goal-timeline-command-evidence, .goal-activity-command-evidence, .goal-timeline-metadata, .goal-activity-metadata {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-timeline-command-evidence summary, .goal-activity-command-evidence summary, .goal-timeline-metadata summary, .goal-activity-metadata summary {{ cursor:pointer; font-weight:700; }}
+    .goal-timeline-command-evidence:not([open]) > :not(summary), .goal-activity-command-evidence:not([open]) > :not(summary), .goal-timeline-metadata:not([open]) > :not(summary), .goal-activity-metadata:not([open]) > :not(summary) {{ display:none; }}
     .goal-timeline-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-timeline-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-activity-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-activity-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .timeline-event {{ display:grid; grid-template-columns:auto auto minmax(0, 1fr) auto; gap:8px; align-items:start; }}
     .timeline-event time {{ color:var(--muted); font-variant-numeric:tabular-nums; }}
     .timeline-kind, .timeline-target {{ display:inline-flex; min-height:22px; align-items:center; padding:2px 7px; border:1px solid var(--line); border-radius:999px; color:var(--muted); background:var(--panel); font-size:12px; line-height:1.2; white-space:nowrap; }}
@@ -27936,7 +28030,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-progress-command-bar, #goal-progress, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

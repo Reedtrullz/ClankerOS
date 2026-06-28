@@ -203,12 +203,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   progress, chronological timeline, activity log, delegations, runs, approvals,
   evidence, artifacts, memory, skills used, git status, operator notes, a
   goal-scoped resume snapshot, and remaining work. The timeline starts with a
-  read-only `Goal Timeline Command Bar` that shows total events, the latest
-  event, event-family counts, target surface, and zero-effect counters before
-  the full chronological list. Each timeline and Activity Log event renders
-  with a time, event-kind badge, clickable local message, and target badge so
-  artifacts, delegations, runs, approvals, and goal events are easier to scan
-  without reading raw logs. It uses local polling
+  read-only `Goal Timeline Command Bar` that shows visible Now, Latest,
+  Families, Flow, and Safety cards before collapsed event-family counts,
+  target-surface evidence, zero-effect counters, and timeline metadata. Each
+  timeline and Activity Log event renders with a time, event-kind badge,
+  clickable local message, and target badge so artifacts, delegations, runs,
+  approvals, and goal events are easier to scan without reading raw logs. It uses local polling
   refresh, pauses refresh while the
   operator is editing a form or the tab is hidden, and does not contact GitHub
   or providers. The Current Phase banner is the primary operator state readback:
@@ -322,9 +322,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `.clanker/projects/<project>/goals/<goal>/operator-notes.md`; it does not
   overwrite previous notes. Saved operator notes also appear as linked
   `Operator note saved` entries in the Goal timeline and recent Activity Log,
-  with a read-only `Goal Activity Command Bar` summarizing the latest event,
-  target surface, operator-note count, artifact count, and zero-effect
-  boundary so daily resume context is chronological instead of side-channel only. The
+  with a read-only `Goal Activity Command Bar` exposing visible Now, Latest,
+  Signals, Window, and Safety cards before collapsed latest-event,
+  operator-note, artifact, and zero-effect evidence so daily resume context is
+  chronological instead of side-channel only. The
   Goal Delegations section starts with a read-only
   `Goal Delegation Command Bar` that opens with visible Now, Latest, Workflow,
   Handoff, and Safety cards, while command evidence keeps scout delegation
@@ -647,8 +648,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   from the same bounded artifact registry after workflow-specific timeline
   events are added, so artifacts such as context-pack JSON, handoff JSON,
   diffs, changed-file lists, and git-status logs appear chronologically. The
-  `Goal Timeline Command Bar` keeps the latest linked event and event-family
-  counts visible before that longer list.
+  `Goal Timeline Command Bar` keeps the latest linked event, event-family
+  summary, run/task/note flow, and safety posture visible before collapsed
+  evidence and that longer list.
 - `/inbox` - read-only operator queue for steering reviews, approval requests,
   incidents, delegations, coder runs, commits, and publication handoffs.
   It opens with the `Inbox Operator Workbench` before shared route/focus

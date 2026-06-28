@@ -40,17 +40,24 @@ Latest status focus:
   Now/Counts/Boundary/First Task/Safety, Criteria cards for
   Now/Source/Progress/First/Safety, and Progress cards for
   Now/Tasks/Gates/Waiting/Safety before collapsed evidence and detailed rows.
+  Goal Timeline now exposes Now, Latest, Families, Flow, and Safety cards
+  before collapsed command evidence and metadata while keeping the
+  chronological event rows visible; Goal Activity now exposes Now, Latest,
+  Signals, Window, and Safety cards before collapsed activity evidence and
+  metadata while keeping the recent human-readable event rows visible.
   Jump, command, workbench,
   daily-loop, return-brief, continuation, workflow-map, CI handoff, live-state,
-  delegations, runs, approvals, incidents, evidence, artifacts, memory, skills,
-  git, overview, risk, criteria, progress, remaining-work, and full
+  timeline, activity, delegations, runs, approvals, incidents, evidence,
+  artifacts, memory, skills, git, overview, risk, criteria, progress,
+  remaining-work, and full
   section-index evidence are
   collapsed by default while preserving phase, next action, current gate,
   project-scoped CI proof posture, full anchor map, daily resume-save state,
   latest activity/artifact, blocker routing, workflow gate surfaces, manual
   publish boundary, local reload posture, delegation/run/approval/incident/
   evidence/artifact/memory/skills/git posture, overview/risk/criteria/progress
-  posture, remaining gate posture, and zero-effect counters in the DOM.
+  posture, timeline/activity posture, remaining gate posture, and zero-effect
+  counters in the DOM.
 - `/goals` is now content-first and board-first instead of shared-diagnostic or
   command-readback-first: the `Goal Board Workbench` opens the page before
   Route Context, Operator Focus, and the `Goal Board Command Bar`, with visible
