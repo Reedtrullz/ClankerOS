@@ -71,16 +71,21 @@ Core layers for the bootstrap:
   project -> goal/task -> scout -> context-pack -> implementation-handoff ->
   coder-prep -> worktree-plan -> approval -> bounded execution -> commit ->
   publication handoff path, plus project, delegation/run, artifact, health, and
-  demo pages. The `/projects` index now acts as a project workflow index with
-  a confirmed local `Register Local Project` form, local repo posture, default
-  test command, goal/task/delegation counts, next recommended operator action,
-  and selected delegation/run workflow links. Project detail pages separate
-  project goals from goal-linked project tasks, include a read-only
-  `Project Command Bar` that summarizes branch/commit, goal and queue counts,
-  next project action, target local surface, and no-write/no-network/
-  no-external-effect boundaries before the longer inventory, and now include a
-  `Project Operator Workbench` with Do Now, Goal, Unblock, and Finish Today
-  cards plus a confirmed `save-workspace` form for project-level resume. They
+  demo pages. The `/projects` index now acts as a content-first project
+  workflow index with a visible `Project Index Workbench` before shared
+  diagnostics, cards for opening the first registered project, registering a
+  local repo, jumping to goals, or resuming saved work, plus collapsed
+  project-index evidence. It still includes a confirmed local
+  `Register Local Project` form, local repo posture, default test command,
+  goal/task/delegation counts, next recommended operator action, and selected
+  delegation/run workflow links. Project detail pages separate project goals
+  from goal-linked project tasks, and now open with a `Project Operator
+  Workbench` before shared diagnostics or command evidence. The visible cards
+  cover Do Now, Goal, Unblock, and Finish Today; workbench evidence, command
+  evidence, and the confirmed `save-workspace` form stay collapsed by default
+  while preserving branch/commit, goal and queue counts, next project action,
+  target local surface, and no-write/no-network/no-external-effect boundaries.
+  They
   include a confirmed local `Start Goal For This Project` form and a project
   workflow launchpad with scoped delegation/run workflow links, safe actions,
   dogfooding, and verification links so the operator can start from the

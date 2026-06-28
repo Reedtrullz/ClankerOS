@@ -16204,6 +16204,7 @@ def _projects(root: Path) -> str:
             "<section><h1>Project Workflow Index</h1>",
             "<p class='muted'>Project entry points with local repo posture, goal/task counts, delegation links, workflow shortcuts, safe registration, and the next local operator action.</p>",
             "</section>",
+            _project_index_workbench(root, storage, projects),
             _project_registration_panel(root, projects),
             "<section><h2>Registered Projects</h2>",
             _ul([_project_index_line(root, storage, project) for project in projects]),
@@ -16213,11 +16214,127 @@ def _projects(root: Path) -> str:
     )
 
 
+def _project_index_workbench(root: Path, storage: Storage, projects: list[Any]) -> str:
+    project_count = len(projects)
+    goal_count = int(
+        _table_rows(storage.db_path, "select count(*) as count from goals", ())[0]["count"]
+    )
+    task_count = int(
+        _table_rows(storage.db_path, "select count(*) as count from tasks", ())[0]["count"]
+    )
+    delegation_count = len(storage.list_recent_subagent_delegations(limit=None))
+    first_project = projects[0] if projects else None
+    first_project_id = str(first_project.name) if first_project is not None else "none"
+    first_project_action = "register_project"
+    primary_href = "#register-local-project"
+    primary_label = "Register Local Project"
+    primary_summary = "Register the first project"
+    if first_project is not None:
+        project_id = str(first_project.name)
+        task_rows = _table_rows(
+            storage.db_path,
+            "select id from tasks where project_id = ?",
+            (project_id,),
+        )
+        state = _project_operator_state(
+            root,
+            storage,
+            project_id=project_id,
+            task_rows=task_rows,
+        )
+        first_project_action = _project_next_action(
+            root,
+            open_incidents=state["open_incidents"],
+            recommendations=state["recommendations"],
+            worktree_approvals=state["worktree_approvals"],
+            worktree_runs=state["worktree_runs"],
+            commit_approvals=state["commit_approvals"],
+            publications=state["publications"],
+        )
+        primary_href = f"/projects/{quote(project_id)}"
+        primary_label = f"/projects/{project_id}"
+        primary_summary = first_project_action
+    lines = [
+        f"project_index_workbench_now: {_e(primary_summary)}",
+        f"project_index_workbench_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+        "project_index_workbench_register: <a href='#register-local-project'>Register Local Project</a>",
+        "project_index_workbench_goals: <a href='/goals'>Goal Cockpit</a>",
+        "project_index_workbench_resume: <a href='/resume'>Resume Workspace</a>",
+        "project_index_workbench_safety: confirmed local project registration only; no write on GET",
+    ]
+    return "".join(
+        [
+            "<section id='project-index-workbench' class='panel project-index-workbench' data-project-index-workbench='true'><h2>Project Index Workbench</h2>",
+            "<p class='muted'>Pick the project to operate, register a local repo, jump to goals, or resume the saved workspace.</p>",
+            "<div class='project-index-workbench-grid' data-project-index-workbench-actions='true'>",
+            "<article class='project-index-workbench-card project-index-workbench-primary'><h3>Open</h3>",
+            f"<p>{_e(primary_summary)}</p>",
+            (
+                "<a class='project-index-workbench-action' "
+                "data-project-index-workbench-primary='true' "
+                f"href='{_e(primary_href)}'>{_e(primary_label)}</a>"
+            ),
+            "</article>",
+            "<article class='project-index-workbench-card'><h3>Register</h3>",
+            f"<p>{project_count} registered project(s)</p>",
+            "<a class='project-index-workbench-link' href='#register-local-project'>Register Local Project</a>",
+            "</article>",
+            "<article class='project-index-workbench-card'><h3>Goals</h3>",
+            f"<p>{goal_count} goal(s), {task_count} task(s)</p>",
+            "<a class='project-index-workbench-link' href='/goals'>Goal Cockpit</a>",
+            "</article>",
+            "<article class='project-index-workbench-card'><h3>Resume</h3>",
+            "<p>Return to saved work</p>",
+            "<a class='project-index-workbench-link' href='/resume'>Resume Workspace</a>",
+            "</article>",
+            "</div>",
+            "<details class='project-index-workbench-evidence' data-project-index-workbench-evidence='true'><summary>Project index evidence</summary>",
+            _kv(
+                [
+                    ("project_index_workbench_status", "available" if projects else "empty"),
+                    ("project_index_workbench_registered_projects", str(project_count)),
+                    ("project_index_workbench_goals", str(goal_count)),
+                    ("project_index_workbench_tasks", str(task_count)),
+                    ("project_index_workbench_delegations", str(delegation_count)),
+                    ("project_index_workbench_first_project", first_project_id),
+                    ("project_index_workbench_first_project_next_action", first_project_action),
+                    (
+                        "project_index_workbench_primary_surface",
+                        SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+                    ),
+                    (
+                        "project_index_workbench_register_surface",
+                        SafeHtml("<a href='#register-local-project'>Register Local Project</a>"),
+                    ),
+                    (
+                        "project_index_workbench_goals_surface",
+                        SafeHtml("<a href='/goals'>Goal Cockpit</a>"),
+                    ),
+                    (
+                        "project_index_workbench_resume_surface",
+                        SafeHtml("<a href='/resume'>Resume Workspace</a>"),
+                    ),
+                    ("project_index_workbench_write_on_get", "false"),
+                    ("project_index_workbench_provider_calls_taken", "0"),
+                    ("project_index_workbench_network_actions_taken", "0"),
+                    ("project_index_workbench_external_effects_created", "false"),
+                    ("project_index_workbench_push_created", "false"),
+                    ("project_index_workbench_pr_created", "false"),
+                    ("project_index_workbench_deploy_created", "false"),
+                ]
+            ),
+            _ul(lines),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
 def _project_registration_panel(root: Path, projects: list[Any]) -> str:
     next_index = len(projects) + 1
     return "".join(
         [
-            "<section><h2>Register Local Project</h2>",
+            "<section id='register-local-project'><h2>Register Local Project</h2>",
             "<p class='muted'>Add another local git repository to the operator cockpit without leaving the browser.</p>",
             _kv(
                 [
@@ -18277,7 +18394,7 @@ def _project_detail(root: Path, project_id: str) -> str:
                 ]
             ),
             "</section>",
-            _project_command_bar(
+            _project_operator_workbench(
                 root,
                 project_id=project_id,
                 repo=repo,
@@ -18286,7 +18403,7 @@ def _project_detail(root: Path, project_id: str) -> str:
                 delegations=delegations,
                 operator_state=operator_state,
             ),
-            _project_operator_workbench(
+            _project_command_bar(
                 root,
                 project_id=project_id,
                 repo=repo,
@@ -18473,7 +18590,11 @@ def _project_operator_workbench(
             "<div class='project-workbench-card project-workbench-primary'>",
             "<h3>Do Now</h3>",
             f"<p>{_e(next_action)}</p>",
-            f"<a class='project-workbench-action' href='{_e(target_href)}'>{_e(target_label)}</a>",
+            (
+                "<a class='project-workbench-action' "
+                "data-project-workbench-primary='true' "
+                f"href='{_e(target_href)}'>{_e(target_label)}</a>"
+            ),
             "</div>",
             "<div class='project-workbench-card'>",
             "<h3>Goal</h3>",
@@ -18491,6 +18612,7 @@ def _project_operator_workbench(
             "<a class='project-workbench-link' href='#project-finish-today'>Open save form</a>",
             "</div>",
             "</div>",
+            "<details class='project-workbench-evidence' data-project-workbench-evidence='true'><summary>Project workbench evidence</summary>",
             _kv(
                 [
                     ("project_workbench_status", status),
@@ -18556,7 +18678,8 @@ def _project_operator_workbench(
                     "project_workbench_safety: confirmed local actions only; no write on GET",
                 ]
             ),
-            "<section id='project-finish-today' class='project-finish-today'><h3>Project Finish Today</h3>",
+            "</details>",
+            "<details id='project-finish-today' class='project-finish-details' data-project-finish-details='true'><summary>Project Finish Today</summary>",
             _kv(
                 [
                     ("project_finish_status", "available"),
@@ -18570,7 +18693,7 @@ def _project_operator_workbench(
                 ]
             ),
             finish_form,
-            "</section>",
+            "</details>",
             "</section>",
         ]
     )
@@ -18636,6 +18759,7 @@ def _project_command_bar(
         [
             "<section class='panel project-command-bar' data-project-command-bar='true'><h2>Project Command Bar</h2>",
             "<p class='muted'>One read-only project summary for the next local operator action before the longer project inventory.</p>",
+            "<details class='project-command-evidence' data-project-command-evidence='true'><summary>Project command evidence</summary>",
             _kv(
                 [
                     ("project_command_status", "available"),
@@ -18662,6 +18786,7 @@ def _project_command_bar(
                 ]
             ),
             _ul(lines),
+            "</details>",
             "</section>",
         ]
     )
@@ -24948,8 +25073,8 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
-    content_first_paths = {"/", "/actions", "/approvals", "/delegation-runs", "/inbox", "/incidents", "/memory", "/profiles", "/resume", "/search", "/skills", "/today", "/verification", "/workflow", "/workspace"}
-    if current_route_path in content_first_paths:
+    content_first_paths = {"/", "/actions", "/approvals", "/delegation-runs", "/inbox", "/incidents", "/memory", "/profiles", "/projects", "/resume", "/search", "/skills", "/today", "/verification", "/workflow", "/workspace"}
+    if current_route_path in content_first_paths or current_route_path.startswith("/projects/"):
         article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
     else:
         article_body = f"{breadcrumbs}{focus_strip}{last_action_strip}{content}"
@@ -25304,6 +25429,21 @@ def _html_page(
     .home-attention-brief {{ border-left:4px solid var(--warn); }}
     .home-attention-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .home-attention-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .project-index-workbench {{ border-left:4px solid var(--accent); }}
+    .project-index-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .project-index-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .project-index-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .project-index-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .project-index-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .project-index-workbench-card h3 {{ margin-top:0; }}
+    .project-index-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .project-index-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .project-index-workbench-action, .project-index-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .project-index-workbench-action {{ background:var(--accent); color:#fff; }}
+    .project-index-workbench-link {{ background:var(--surface); color:var(--accent); }}
+    .project-index-workbench-evidence, .project-workbench-evidence, .project-command-evidence, .project-finish-details {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .project-index-workbench-evidence summary, .project-workbench-evidence summary, .project-command-evidence summary, .project-finish-details summary {{ cursor:pointer; font-weight:700; }}
+    .project-index-workbench-evidence:not([open]) > :not(summary), .project-workbench-evidence:not([open]) > :not(summary), .project-command-evidence:not([open]) > :not(summary), .project-finish-details:not([open]) > :not(summary) {{ display:none; }}
     .project-command-bar {{ border-left:4px solid var(--accent); }}
     .project-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .project-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -25319,7 +25459,6 @@ def _html_page(
     .project-workbench-action, .project-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .project-workbench-action {{ background:var(--accent); color:#fff; }}
     .project-workbench-link {{ background:var(--surface); color:var(--accent); }}
-    .project-finish-today {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .search-operator-workbench {{ border-left:4px solid var(--accent); }}
     .search-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .search-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
@@ -25618,7 +25757,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .verification-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .verification-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

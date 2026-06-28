@@ -548,15 +548,20 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `Register Local Project` form plus root path, default test command, current
   branch/commit, goal/task/delegation counts, next recommended local operator
   action, project detail links, and selected delegation/run workflow
-  shortcuts.
+  shortcuts. It is now content-first and opens with a visible
+  `Project Index Workbench` before shared route/focus diagnostics, with Open,
+  Register, Goals, and Resume cards plus collapsed project-index evidence.
 - `/projects/<project_id>` - project detail with first-class project goals and
   a read-only `Project Command Bar` that summarizes branch/commit, active/
   paused/completed goal counts, task/delegation/run counts, pending queue
   counts, the next project action, the target local surface, and no-write/
-  no-network/no-external-effect boundaries before the longer inventory. It
-  also includes a `Project Operator Workbench` with Do Now, Goal, Unblock, and
-  Finish Today cards, plus a confirmed `save-workspace` form that can make the
-  project detail page the next resume point. The rest of the page includes a
+  no-network/no-external-effect boundaries before the longer inventory. It is
+  now content-first and opens with a `Project Operator Workbench` before
+  shared route/focus diagnostics or command readback, with Do Now, Goal,
+  Unblock, and Finish Today cards. Project workbench evidence, command
+  evidence, and the confirmed `save-workspace` form stay collapsed by default
+  while preserving project counts, proof posture, resume fields, and
+  zero-effect readbacks in the DOM. The rest of the page includes a
   confirmed local `Start Goal For This Project` form, goal rows that link
   directly to `/goals/<goal_id>` with phase, next action, and task progress,
   goal-linked tasks, linked artifacts, project-scoped incidents/

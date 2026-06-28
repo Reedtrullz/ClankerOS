@@ -6529,6 +6529,27 @@ def test_local_app_routes_render_modern_workflow_and_health(
 
     projects = render_local_app_route(tmp_path, "/projects")
     assert projects.status == 200
+    assert "Project Workflow Index" in projects.body
+    assert "Project Index Workbench" in projects.body
+    assert projects.body.index("data-project-index-workbench='true'") < projects.body.index(
+        "data-route-context='true'"
+    )
+    assert "data-project-index-workbench='true'" in projects.body
+    assert "data-project-index-workbench-actions='true'" in projects.body
+    assert "data-project-index-workbench-primary='true'" in projects.body
+    assert "data-project-index-workbench-evidence='true'" in projects.body
+    assert "project_index_workbench_status</dt><dd>available" in projects.body
+    assert "project_index_workbench_registered_projects</dt><dd>1" in projects.body
+    assert "project_index_workbench_first_project</dt><dd>first-target" in projects.body
+    assert "project_index_workbench_primary_surface</dt><dd><a href='/projects/first-target'>/projects/first-target</a>" in projects.body
+    assert "project_index_workbench_register_surface</dt><dd><a href='#register-local-project'>Register Local Project</a>" in projects.body
+    assert "project_index_workbench_goals_surface</dt><dd><a href='/goals'>Goal Cockpit</a>" in projects.body
+    assert "project_index_workbench_resume_surface</dt><dd><a href='/resume'>Resume Workspace</a>" in projects.body
+    assert "project_index_workbench_write_on_get</dt><dd>false" in projects.body
+    assert "project_index_workbench_provider_calls_taken</dt><dd>0" in projects.body
+    assert "project_index_workbench_network_actions_taken</dt><dd>0" in projects.body
+    assert "project_index_workbench_external_effects_created</dt><dd>false" in projects.body
+    assert "id='register-local-project'" in projects.body
     delegation_runs = render_local_app_route(tmp_path, "/delegation-runs")
     assert delegation_runs.status == 200
     assert "Delegation Run Index" in delegation_runs.body
@@ -7055,6 +7076,16 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "Project Operator Workbench" in register_project.body
     assert "data-project-operator-workbench='true'" in register_project.body
     assert "data-project-workbench-actions='true'" in register_project.body
+    assert "data-project-workbench-primary='true'" in register_project.body
+    assert "data-project-workbench-evidence='true'" in register_project.body
+    assert "data-project-command-evidence='true'" in register_project.body
+    assert "data-project-finish-details='true'" in register_project.body
+    assert register_project.body.index("data-project-operator-workbench='true'") < register_project.body.index(
+        "data-project-command-bar='true'"
+    )
+    assert register_project.body.index("data-project-operator-workbench='true'") < register_project.body.index(
+        "data-route-context='true'"
+    )
     assert "project_workbench_status</dt><dd>needs_goal" in register_project.body
     assert "project_workbench_project</dt><dd>clankeros" in register_project.body
     assert "project_workbench_lead_goal</dt><dd>none" in register_project.body
@@ -10346,6 +10377,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Project Operator Workbench" in project.body
     assert "data-project-operator-workbench='true'" in project.body
     assert "data-project-workbench-actions='true'" in project.body
+    assert "data-project-workbench-primary='true'" in project.body
+    assert "data-project-workbench-evidence='true'" in project.body
+    assert "data-project-command-evidence='true'" in project.body
+    assert "data-project-finish-details='true'" in project.body
+    assert project.body.index("data-project-operator-workbench='true'") < project.body.index(
+        "data-project-command-bar='true'"
+    )
+    assert project.body.index("data-project-operator-workbench='true'") < project.body.index(
+        "data-route-context='true'"
+    )
     assert "project_workbench_status</dt><dd>attention_ready" in project.body
     assert "project_workbench_project</dt><dd>local-app-demo" in project.body
     assert f"project_workbench_lead_goal</dt><dd><a href='/goals/{result.goal_id}'" in project.body
@@ -10432,6 +10473,30 @@ def test_local_app_demo_scenario_populates_fixture_state(
     projects_index = render_local_app_route(tmp_path, "/projects")
     assert projects_index.status == 200
     assert "Project Workflow Index" in projects_index.body
+    assert "Project Index Workbench" in projects_index.body
+    assert projects_index.body.index("data-project-index-workbench='true'") < projects_index.body.index(
+        "data-route-context='true'"
+    )
+    assert "data-project-index-workbench='true'" in projects_index.body
+    assert "data-project-index-workbench-actions='true'" in projects_index.body
+    assert "data-project-index-workbench-primary='true'" in projects_index.body
+    assert "data-project-index-workbench-evidence='true'" in projects_index.body
+    assert "project_index_workbench_status</dt><dd>available" in projects_index.body
+    assert "project_index_workbench_registered_projects</dt><dd>1" in projects_index.body
+    assert "project_index_workbench_goals</dt><dd>1" in projects_index.body
+    assert "project_index_workbench_tasks</dt><dd>1" in projects_index.body
+    assert "project_index_workbench_delegations</dt><dd>1" in projects_index.body
+    assert "project_index_workbench_first_project</dt><dd>local-app-demo" in projects_index.body
+    assert "project_index_workbench_first_project_next_action</dt><dd>request_commit_for_reviewed_run" in projects_index.body
+    assert f"project_index_workbench_primary_surface</dt><dd><a href='/projects/{result.project_id}'>/projects/{result.project_id}</a>" in projects_index.body
+    assert "project_index_workbench_register_surface</dt><dd><a href='#register-local-project'>Register Local Project</a>" in projects_index.body
+    assert "project_index_workbench_goals_surface</dt><dd><a href='/goals'>Goal Cockpit</a>" in projects_index.body
+    assert "project_index_workbench_resume_surface</dt><dd><a href='/resume'>Resume Workspace</a>" in projects_index.body
+    assert "project_index_workbench_write_on_get</dt><dd>false" in projects_index.body
+    assert "project_index_workbench_provider_calls_taken</dt><dd>0" in projects_index.body
+    assert "project_index_workbench_network_actions_taken</dt><dd>0" in projects_index.body
+    assert "project_index_workbench_external_effects_created</dt><dd>false" in projects_index.body
+    assert "id='register-local-project'" in projects_index.body
     assert "Register Local Project" in projects_index.body
     assert "project_registration_form_available</dt><dd>true" in projects_index.body
     assert "project_registration_confirmation_required</dt><dd>true" in projects_index.body

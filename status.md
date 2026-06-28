@@ -1,5 +1,48 @@
 # Status
 
+## 2026-06-28 Projects Action-First Operator Surface
+
+- Made `/projects` usable as a project-selection and onboarding surface by
+  adding a visible `Project Index Workbench` before shared Route Context,
+  Operator Focus, Last Action, and route diagnostics.
+- Added four visible index cards for Open, Register, Goals, and Resume, with a
+  stable `data-project-index-workbench-primary` marker for the first registered
+  project or the registration anchor.
+- Made project detail pages fully action-first by rendering `Project Operator
+  Workbench` before the `Project Command Bar` and shared diagnostics, adding a
+  stable `data-project-workbench-primary` marker, and collapsing project
+  workbench evidence, project command evidence, and the Project Finish Today
+  save form by default.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, register projects on GET, create goals on GET, approve work, execute
+  work, create commits, push, create PRs, deploy, call providers, mutate
+  external systems from ClankerOS, or expose arbitrary raw filesystem browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-projects-workbench-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-projects-workbench-demo app-demo-smoke-test`
+    -> passed, fixture-backed project snippets matched, provider/network/
+    external mutation counters remained `0`
+  - `git diff --check` -> passed
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8820/projects` with fixture-backed demo state: desktop
+    `1280x900` rendered four Project Index Workbench cards before Route
+    Context, kept project-index evidence collapsed, showed no horizontal
+    overflow, no framework overlay, and empty browser warning/error logs.
+  - Interaction proof: clicking the marked project-index primary action
+    changed the URL to `/projects/local-app-demo` and rendered the project
+    detail page with Project Operator Workbench before Project Command Bar and
+    Route Context.
+  - Mobile Browser QA at `390x844` rendered four project-index cards and four
+    project-detail workbench cards in one column, kept project evidence/details
+    collapsed, showed no horizontal overflow, and had empty browser
+    warning/error logs.
+
 ## 2026-06-28 Verification Action-First Operator Surface
 
 - Made `/verification` usable as an action-first proof handoff by rendering the

@@ -638,16 +638,21 @@ delegation counts, next recommended local operator action, and direct project
 or selected workflow links. It also includes a confirmed local
 `Register Local Project` form backed by the existing `register-project`
 action, so daily project onboarding does not require switching back to the
-CLI.
+CLI. The page now opens with a `Project Index Workbench` before shared
+diagnostics, with Open, Register, Goals, and Resume cards plus collapsed
+project-index evidence, so first-run project onboarding and daily project
+selection have one visible next click.
 
 Use `/projects/<project_id>` as the project-level launchpad. It shows goals,
 tasks, delegations, artifacts, project guidance, and a read-only
 `Project Command Bar` that summarizes branch/commit, goal and queue counts,
 the next project action, the target local surface, and no-write/no-network
-boundaries before the longer inventory. The page also starts with a
-`Project Operator Workbench` with Do Now, Goal, Unblock, and Finish Today
-cards, including a confirmed `save-workspace` form so a project can become the
-next resume point without leaving the browser. It also includes a confirmed
+boundaries before the longer inventory. The page now starts with a
+`Project Operator Workbench` before command evidence or shared diagnostics,
+with Do Now, Goal, Unblock, and Finish Today cards. Workbench evidence,
+command evidence, and the confirmed `save-workspace` form stay collapsed by
+default while still preserving project state and zero-effect readbacks in the
+DOM. It also includes a confirmed
 local project-scoped `create-goal` form, goal rows that link directly to
 `/goals/<goal_id>` with phase, next action, and task progress, scoped workflow
 links for delegations and coder runs, and links back to safe actions,
