@@ -125,15 +125,17 @@ Core layers for the bootstrap:
   first-run panels without writing on GET or adding action authority. The
   local app also exposes `/resume` as a
   read-only return-to-work surface over saved `.clanker/app/workspace.json`
-  state, showing saved goal, project, artifact, filters, expanded panels,
-  zero-effect counters, a direct next resume link, a read-only
-  `Resume Command Bar` for readiness, current phase/gate, one next action,
-  target surface, action-form availability, last artifact, and zero-effect
-  counters, followed by a `Resume Operator Workbench` that turns the saved
-  context into do/check/unblock/finish cards with same-page action-form
-  routing when available, readiness repair, blocker routing, last-artifact
-  readback, and the existing `/workspace#save-workspace` finish surface. It
-  also includes a `Resume Readiness` checklist for the saved project, goal,
+  state, opening with a primary return link and `Resume Operator Workbench`
+  before shared route/focus diagnostics or command readback. It shows saved
+  goal, project, artifact, filters, expanded panels, and zero-effect counters
+  inside collapsed saved-state/command/workbench evidence, while the visible
+  workbench turns the saved context into do/check/unblock/finish cards with
+  same-page action-form routing when available, readiness repair, blocker
+  routing, last-artifact readback, and the existing `/workspace#save-workspace`
+  finish surface. A read-only `Resume Command Bar` follows with readiness,
+  current phase/gate, one next action, target surface, action-form
+  availability, last artifact, and zero-effect counters inside collapsed
+  evidence. It also includes a `Resume Readiness` checklist for the saved project, goal,
   filters, expanded panels, last artifact existence, and next local surface,
   and the saved goal's current phase plus one recommended next action and the
   same confirmed local action form as the Goal page when that action is

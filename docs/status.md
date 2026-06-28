@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/resume` is now content-first and return-to-work-first: it opens with a
+  primary saved-context link and `Resume Operator Workbench` before shared
+  route/focus diagnostics or command readback, while saved workspace state,
+  command evidence, and workbench evidence stay collapsed by default. The page
+  still preserves saved project/Goal/artifact/filter/panel readbacks,
+  first-run continuation, readiness checks, same-page action-form routing, and
+  zero-effect counters in the DOM.
 - `/actions` is now content-first and action-first: the page opens on the safe
   action header and `Action Operator Workbench` before shared route/focus
   diagnostics or catalog readback, while action safety, workbench evidence, and

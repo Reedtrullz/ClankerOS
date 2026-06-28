@@ -1,5 +1,49 @@
 # Status
 
+## 2026-06-28 Resume Return-To-Work First
+
+- Made `/resume` usable as the daily return surface by opening with a primary
+  saved-context link and `Resume Operator Workbench` before shared route/focus
+  diagnostics and before the command readback.
+- Moved saved workspace state, workbench evidence, and command evidence into
+  collapsed details so the first screen leads with the current action while
+  preserving saved project, Goal, artifact, filters, expanded panels, readiness,
+  and zero-effect counters in the DOM.
+- The workbench now uses semantic action cards with a stable
+  `data-resume-workbench-primary` marker and routes the primary action to the
+  same-page confirmed resume action form when one is available.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, create action authority, approve work, run work, call providers, fetch
+  GitHub from ClankerOS, poll network services, commit, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'first_run_browser_actions_persist_resume_workspace or local_app_daily_loop_restores_workspace_context or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-resume-first-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-resume-first-demo app-demo-smoke-test`
+    -> passed, fixture-backed routes matched expected snippets,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8805/resume`: desktop `1280x900` rendered the
+    `Resume Operator Workbench` at `y=334`, before the command bar, Route
+    Context, and Operator Focus, with four workbench cards, collapsed saved
+    state/workbench/command evidence, no horizontal overflow, and no console
+    warnings/errors.
+  - Mobile Browser QA at `390x844` rendered the workbench before the command
+    bar, Route Context, and Operator Focus, kept evidence collapsed, showed no
+    horizontal overflow or console warnings/errors, and clicking the marked
+    workbench primary link changed the URL to `/resume#resume-action-form`
+    with the form at the top of the viewport.
+  - Regression Browser QA against `/resume?notice=workspace_saved...` on the
+    restarted updated server kept the notice visible, rendered the workbench
+    before the command bar, Route Context, and Operator Focus, kept evidence
+    collapsed, and showed no horizontal overflow or console warnings/errors.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Action-First Actions Page
 
 - Made `/actions` usable as a direct operator surface by rendering the safe

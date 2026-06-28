@@ -586,7 +586,11 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             [
                 "Resume Command Bar",
                 "Resume Operator Workbench",
+                "data-resume-state-details='true'",
                 "data-resume-operator-workbench='true'",
+                "data-resume-workbench-primary='true'",
+                "data-resume-workbench-evidence='true'",
+                "data-resume-command-evidence='true'",
                 "resume_command_status</dt><dd>no_saved_workspace",
                 "resume_workbench_status</dt><dd>no_saved_workspace",
                 "resume_workspace_available",
@@ -4196,8 +4200,10 @@ def _resume_page(root: Path) -> str:
 
     return "".join(
         [
-            "<section><h1>Resume Workspace</h1>",
+            "<section class='hero'><h1>Resume Workspace</h1>",
             "<p class='muted'>One local landing page for returning to the last saved ClankerOS operator context.</p>",
+            f"<p><a class='resume-hero-action' data-resume-hero-primary='true' href='{_e(next_href)}'>{_e(next_label)}</a></p>",
+            "<details class='resume-state-details' data-resume-state-details='true'><summary>Saved workspace state</summary>",
             _kv(
                 [
                     ("resume_workspace_available", str(has_workspace).lower()),
@@ -4211,10 +4217,10 @@ def _resume_page(root: Path) -> str:
                     ("resume_external_effects_created", "false"),
                 ]
             ),
-            f"<p><a href='{_e(next_href)}'>{_e(next_label)}</a></p>",
+            "</details>",
             "</section>",
-            _resume_command_bar(root, state, open_project, open_goal, filters, expanded, last_artifact),
             _resume_operator_workbench(root, state, open_project, open_goal, filters, expanded, last_artifact),
+            _resume_command_bar(root, state, open_project, open_goal, filters, expanded, last_artifact),
             _resume_readiness_section(root, state, open_project, open_goal, filters, expanded, last_artifact),
             _resume_next_action_section(root, open_goal),
             _resume_workflow_map_section(root, open_goal),
@@ -4369,8 +4375,10 @@ def _resume_command_bar(
         [
             "<section id='resume-command-bar' class='panel resume-command-bar' data-resume-command-bar='true'><h2>Resume Command Bar</h2>",
             "<p class='muted'>A scan-first return-to-work summary for continuing the saved local operator context.</p>",
+            "<details class='resume-command-evidence' data-resume-command-evidence='true'><summary>Resume command evidence</summary>",
             _kv(rows),
             _ul(lines),
+            "</details>",
             "</section>",
         ]
     )
@@ -4536,26 +4544,26 @@ def _resume_operator_workbench(
 
     cards = "".join(
         [
-            "<div class='resume-workbench-card resume-workbench-primary'>",
+            "<article class='resume-workbench-card resume-workbench-primary'>",
             "<h3>Do Now</h3>",
             f"<p>{_e(next_action)}</p>",
-            f"<a class='resume-workbench-action' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
-            "</div>",
-            "<div class='resume-workbench-card'>",
+            f"<a class='resume-workbench-action' data-resume-workbench-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+            "</article>",
+            "<article class='resume-workbench-card'>",
             "<h3>Check</h3>",
             f"<p>Resume: {_e(str(readiness['status']))}</p>",
             "<a class='resume-workbench-link' href='#resume-readiness'>Open readiness</a>",
-            "</div>",
-            "<div class='resume-workbench-card'>",
+            "</article>",
+            "<article class='resume-workbench-card'>",
             "<h3>Unblock</h3>",
             f"<p>{_e(waiting_items)} waiting item(s)</p>",
             f"<a class='resume-workbench-link' href='{_e(unblock_href)}'>{_e(unblock_label)}</a>",
-            "</div>",
-            "<div class='resume-workbench-card'>",
+            "</article>",
+            "<article class='resume-workbench-card'>",
             "<h3>Finish Today</h3>",
             "<p>Update tomorrow's return point</p>",
             "<a class='resume-workbench-link' href='/workspace#save-workspace'>Open save form</a>",
-            "</div>",
+            "</article>",
         ]
     )
     return "".join(
@@ -4564,6 +4572,7 @@ def _resume_operator_workbench(
             "<div class='resume-workbench-grid' data-resume-workbench-actions='true'>",
             cards,
             "</div>",
+            "<details class='resume-workbench-evidence' data-resume-workbench-evidence='true'><summary>Resume workbench evidence</summary>",
             _kv(
                 [
                     ("resume_workbench_status", status),
@@ -4650,6 +4659,7 @@ def _resume_operator_workbench(
                     "resume_workbench_safety: confirmed local actions only; no write on GET",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -23549,6 +23559,7 @@ def _html_page(
     current_path: str = "",
 ) -> LocalAppResponse:
     current_path = current_path or "/"
+    current_route_path = urlparse(current_path).path or "/"
     nav = _nav_links(current_path)
     recent_panel = _recent_items_panel(root)
     focus_context = _operator_focus_context(root, current_path)
@@ -23556,8 +23567,8 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
-    content_first_paths = {"/", "/actions"}
-    if current_path in content_first_paths:
+    content_first_paths = {"/", "/actions", "/resume"}
+    if current_route_path in content_first_paths:
         article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
     else:
         article_body = f"{breadcrumbs}{focus_strip}{last_action_strip}{content}"
@@ -23816,6 +23827,10 @@ def _html_page(
     .workspace-workbench-action {{ background:var(--accent); color:#fff; }}
     .workspace-workbench-link {{ background:var(--surface); color:var(--accent); }}
     .resume-command-bar {{ border-left:4px solid var(--accent); }}
+    .resume-hero-action {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--accent); color:#fff; overflow-wrap:anywhere; text-decoration:none; }}
+    .resume-state-details, .resume-command-evidence, .resume-workbench-evidence {{ margin-top:10px; }}
+    .resume-state-details summary, .resume-command-evidence summary, .resume-workbench-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .resume-state-details:not([open]) > :not(summary), .resume-command-evidence:not([open]) > :not(summary), .resume-workbench-evidence:not([open]) > :not(summary) {{ display:none; }}
     .resume-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .resume-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .resume-operator-workbench {{ border-left:4px solid var(--accent); }}

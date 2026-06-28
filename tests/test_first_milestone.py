@@ -6693,6 +6693,16 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
         "Create First Goal</a>"
     ) in register_resume.body
     assert "resume_command_first_run_form_available</dt><dd>true" in register_resume.body
+    assert "data-resume-state-details='true'" in register_resume.body
+    assert "data-resume-workbench-primary='true'" in register_resume.body
+    assert "data-resume-workbench-evidence='true'" in register_resume.body
+    assert "data-resume-command-evidence='true'" in register_resume.body
+    assert register_resume.body.index("data-resume-operator-workbench='true'") < register_resume.body.index(
+        "data-resume-command-bar='true'"
+    )
+    assert register_resume.body.index("data-resume-operator-workbench='true'") < register_resume.body.index(
+        "data-route-context='true'"
+    )
     assert "resume_workbench_status</dt><dd>first_run" in register_resume.body
     assert "resume_workbench_project</dt><dd><a href='/projects/clankeros'>clankeros</a>" in register_resume.body
     assert "resume_workbench_goal</dt><dd>none" in register_resume.body
@@ -6905,6 +6915,16 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "resume_workspace_available</dt><dd>true" in resume.body
     assert f"resume_goal: <a href='/goals/{created_goal_id}'>{created_goal_id}</a>" in resume.body
     assert "Resume Operator Workbench" in resume.body
+    assert "data-resume-state-details='true'" in resume.body
+    assert "data-resume-workbench-primary='true'" in resume.body
+    assert "data-resume-workbench-evidence='true'" in resume.body
+    assert "data-resume-command-evidence='true'" in resume.body
+    assert resume.body.index("data-resume-operator-workbench='true'") < resume.body.index(
+        "data-resume-command-bar='true'"
+    )
+    assert resume.body.index("data-resume-operator-workbench='true'") < resume.body.index(
+        "data-route-context='true'"
+    )
     assert "resume_workbench_status</dt><dd>action_form_ready" in resume.body
     assert "resume_workbench_ready</dt><dd>false" in resume.body
     assert "resume_workbench_readiness_status</dt><dd>partial" in resume.body
@@ -9726,6 +9746,30 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert resume.status == 200
     assert "Resume Workspace" in resume.body
     assert "resume_workspace_available</dt><dd>true" in resume.body
+    assert "data-resume-state-details='true'" in resume.body
+    assert "data-resume-hero-primary='true'" in resume.body
+    assert "data-resume-operator-workbench='true'" in resume.body
+    assert "data-resume-workbench-primary='true'" in resume.body
+    assert "data-resume-workbench-evidence='true'" in resume.body
+    assert "data-resume-command-evidence='true'" in resume.body
+    assert resume.body.index("data-resume-operator-workbench='true'") < resume.body.index(
+        "data-resume-command-bar='true'"
+    )
+    assert resume.body.index("data-resume-operator-workbench='true'") < resume.body.index(
+        "data-route-context='true'"
+    )
+    notice_resume = render_local_app_route(
+        tmp_path,
+        "/resume?notice=workspace_saved%3A%20.clanker%2Fapp%2Fworkspace.json",
+    )
+    assert notice_resume.status == 200
+    assert "workspace_saved: .clanker/app/workspace.json" in notice_resume.body
+    assert notice_resume.body.index("data-resume-operator-workbench='true'") < notice_resume.body.index(
+        "data-resume-command-bar='true'"
+    )
+    assert notice_resume.body.index("data-resume-operator-workbench='true'") < notice_resume.body.index(
+        "data-route-context='true'"
+    )
     assert "Resume Command Bar" in resume.body
     assert "data-resume-command-bar='true'" in resume.body
     assert "resume_command_status</dt><dd>available" in resume.body

@@ -110,15 +110,17 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   incidents, and first-run panels without writing on GET or adding new action
   authority.
 - `/resume` - read-only return-to-work surface for the saved
-  `.clanker/app/workspace.json` state. It shows whether resume state exists,
-  links the saved goal, project, and last artifact, preserves filters and
-  expanded panel readbacks, starts with a read-only `Resume Command Bar` for
-  readiness, current phase/gate, one next action, target surface, action-form
-  availability, last artifact, and zero-effect counters, follows with a
-  `Resume Operator Workbench` that turns the saved context into
+  `.clanker/app/workspace.json` state. It opens with a primary return link and
+  `Resume Operator Workbench` before shared route/focus diagnostics or command
+  readback, links the saved goal, project, and last artifact, preserves filters
+  and expanded panel readbacks, and keeps saved-state, command, and workbench
+  evidence collapsed by default. The workbench turns the saved context into
   do/check/unblock/finish cards, same-page action-form routing, blocker
   routing, last-artifact readback, and a `/workspace#save-workspace` finish
-  surface, includes a `Resume Readiness` checklist for the saved project,
+  surface. A read-only `Resume Command Bar` follows with readiness, current
+  phase/gate, one next action, target surface, action-form availability, last
+  artifact, and zero-effect counters inside collapsed evidence. It includes a
+  `Resume Readiness` checklist for the saved project,
   goal, filters, expanded panels, last artifact existence, and next local
   surface, shows the saved goal's current phase and one next action in
   `Resume Next Action`, renders the same confirmed local action form as the

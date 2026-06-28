@@ -186,19 +186,23 @@ Goal, inbox, activity, and first-run surfaces below the command center, writes
 nothing on GET, and only exposes confirmed local forms already available
 elsewhere in the app.
 
-Use `/resume` when returning to ClankerOS after a break. It reads the saved
-workspace state, shows the exact saved goal/project/artifact links, preserves
-filters and expanded panel readbacks, and starts with a read-only
-`Resume Command Bar` that summarizes readiness, phase, current gate, next
-action, target surface, action-form availability, last artifact, and
-zero-effect counters. Before a saved Goal exists, `/resume` follows first-run
-progress instead of stopping at the project link: an empty checkout points to
-the Home `Create Project` anchor, and a registered-project/no-goal state points
-to the Home `Create First Goal` anchor while still showing the saved project.
-A `Resume Operator Workbench` follows it with
+Use `/resume` when returning to ClankerOS after a break. It now opens with a
+primary return link and a `Resume Operator Workbench` before shared
+route/focus diagnostics or the command readback, so the first screen is the
+current saved action. It reads the saved workspace state, shows the exact saved
+goal/project/artifact links, preserves filters and expanded panel readbacks,
+and keeps saved-state, command, and workbench evidence collapsed by default.
+Before a saved Goal exists, `/resume` follows first-run progress instead of
+stopping at the project link: an empty checkout points to the Home
+`Create Project` anchor, and a registered-project/no-goal state points to the
+Home `Create First Goal` anchor while still showing the saved project. The
+workbench shows
 do/check/unblock/finish cards for the saved Goal, the current action or
 same-page action form, readiness repair, blockers, last artifact, and the
-existing `/workspace#save-workspace` finish surface. It also adds a `Resume
+existing `/workspace#save-workspace` finish surface. The `Resume Command Bar`
+follows with readiness, phase, current gate, next action, target surface,
+action-form availability, last artifact, and zero-effect counters inside
+collapsed evidence. It also adds a `Resume
 Readiness` checklist for the saved project, goal, filters, expanded panels,
 last artifact existence, and next local surface, and shows a `Resume Next
 Action` section with the saved goal's current phase, one next action, operator
