@@ -367,12 +367,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   Safety cards before collapsed command evidence and the collapsed detailed
   evidence list. Goal
   Verification Evidence starts with a read-only `Goal Verification Command
-  Bar`, links to `/verification` and `/ci-evidence`, filters
-  operator-supplied CI records to the current goal project, compares the
-  recorded branch/commit to the current project checkout, distinguishes
-  missing, stale, job-scoped early proof, and current full workflow proof, and
-  reports `github_status_fetch: none` so missing or stale project proof stays
-  visible.
+  Bar` that opens with visible Now, Current, Latest, Record, and Safety cards
+  before collapsed command evidence and collapsed proof lines. It links to
+  `/verification` and `/ci-evidence`, filters operator-supplied CI records to
+  the current goal project, compares the recorded branch/commit to the current
+  project checkout, distinguishes missing, stale, job-scoped early proof, and
+  current full workflow proof, and reports `github_status_fetch: none` so
+  missing or stale project proof stays visible.
   If a goal is explicitly paused, the Current Phase banner shows `Paused` and
   the Next Action card exposes a confirmed `resume-goal` form. That action
   only changes local goal status from `paused` to `active`; it does not resume

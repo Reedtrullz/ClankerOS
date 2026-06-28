@@ -10041,6 +10041,32 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Verification Evidence" in goal.body
     assert "Goal Verification Command Bar" in goal.body
     assert "data-goal-verification-command-bar='true'" in goal.body
+    assert "data-goal-verification-actions='true'" in goal.body
+    assert "data-goal-verification-now='true'" in goal.body
+    assert "data-goal-verification-current='true'" in goal.body
+    assert "data-goal-verification-latest='true'" in goal.body
+    assert "data-goal-verification-record='true'" in goal.body
+    assert "data-goal-verification-safety='true'" in goal.body
+    assert "data-goal-verification-primary='true' href='/ci-evidence'>/ci-evidence</a>" in goal.body
+    assert (
+        "<details class='goal-verification-command-evidence' "
+        "data-goal-verification-evidence='true'><summary>Goal verification command evidence</summary>"
+        in goal.body
+    )
+    assert (
+        "<details class='goal-verification-proof' data-goal-verification-list='true'>"
+        "<summary>Goal verification evidence</summary>"
+        in goal.body
+    )
+    assert goal.body.index("data-goal-verification-actions='true'") < goal.body.index(
+        "data-goal-verification-evidence='true'"
+    )
+    assert goal.body.index("data-goal-verification-evidence='true'") < goal.body.index(
+        "data-goal-verification-list='true'"
+    )
+    assert goal.body.index("data-goal-verification-list='true'") < goal.body.index(
+        "id='record-goal-ci-proof'"
+    )
     assert "<a href='#goal-verification-command-bar'>Verification command</a>" in goal.body
     assert f"goal_verification_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_verification_command_project</dt><dd>{result.project_id}" in goal.body

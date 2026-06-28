@@ -622,19 +622,19 @@ Core layers for the bootstrap:
   Inventory, Attention, and Safety cards before collapsed command evidence, the
   collapsed detailed evidence list, and the typed artifact explorer.
   Goal `Verification Evidence` starts with a read-only
-  `Goal Verification Command Bar` that summarizes project-scoped proof status,
-  latest source/status/scope, branch and commit freshness, one proof action,
-  target surface, and zero-fetch/zero-effect boundaries before the detailed
-  proof lines. It links to `/verification` and `/ci-evidence`, filters local
-  operator-supplied CI proof records to the current goal project, compares the
-  recorded branch/commit to the current project checkout, distinguishes
-  missing, stale, job-scoped early proof, and current full workflow proof, and
-  reports missing or stale proof without fetching GitHub status. It also
-  exposes a confirmed Goal-scoped `ci-snapshot-evidence-from-gh-json` form
-  that accepts pasted GitHub Actions JSON, infers run identity from
-  `databaseId`/`url`, validates status, branch, commit, and optional job
-  status, then records local project CI proof and returns to the same Goal
-  page without app-side GitHub polling.
+  `Goal Verification Command Bar` that exposes visible Now, Current, Latest,
+  Record, and Safety cards for project-scoped proof status, checkout freshness,
+  one proof action, recording posture, and zero-fetch/zero-effect boundaries
+  before collapsed command evidence and collapsed proof lines. It links to
+  `/verification` and `/ci-evidence`, filters local operator-supplied CI proof
+  records to the current goal project, compares the recorded branch/commit to
+  the current project checkout, distinguishes missing, stale, job-scoped early
+  proof, and current full workflow proof, and reports missing or stale proof
+  without fetching GitHub status. It also exposes a confirmed Goal-scoped
+  `ci-snapshot-evidence-from-gh-json` form that accepts pasted GitHub Actions
+  JSON, infers run identity from `databaseId`/`url`, validates status, branch,
+  commit, and optional job status, then records local project CI proof and
+  returns to the same Goal page without app-side GitHub polling.
   They also include a typed
   `Goal Artifact Explorer` that groups goal-linked Markdown,
   JSON, Patch/Diff, and Text/Log artifacts and links them through the bounded

@@ -418,13 +418,14 @@ counts, points at the latest bounded artifact or highest-priority local evidence
 surface, and keeps provider/network/external-effect counters at zero inside
 collapsed command evidence before the collapsed detailed evidence list.
 Goal Verification Evidence starts with a read-only `Goal Verification Command
-Bar` that shows whether project-scoped proof is missing, stale, job-scoped
-early proof, or current full workflow success. It links to `/verification` and
-`/ci-evidence`, shows whether the latest operator-supplied CI proof matches
-the current checkout, and includes a confirmed Goal-scoped form for pasted
-GitHub Actions JSON. The form infers run identity from `databaseId`/`url`,
-validates the supplied JSON, and records local CI proof without app-side
-GitHub polling.
+Bar` that opens with visible Now, Current, Latest, Record, and Safety cards
+before collapsed command evidence and collapsed proof lines. It shows whether
+project-scoped proof is missing, stale, job-scoped early proof, or current
+full workflow success, links to `/verification` and `/ci-evidence`, shows
+whether the latest operator-supplied CI proof matches the current checkout,
+and includes a confirmed Goal-scoped form for pasted GitHub Actions JSON. The
+form infers run identity from `databaseId`/`url`, validates the supplied JSON,
+and records local CI proof without app-side GitHub polling.
 Goal Memory starts with a read-only `Goal Memory Command Bar` that summarizes
 project/global memory artifacts, project/active/proposed/global/generated entry
 counts, operator-note state, future-work count, pinning posture, one next local
