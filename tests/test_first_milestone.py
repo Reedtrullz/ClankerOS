@@ -5133,18 +5133,34 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "aria-keyshortcuts='r'" in root.body
     assert "aria-keyshortcuts='s'" in root.body
     assert "aria-keyshortcuts='w'" in root.body
+    assert 'id="next-action-open"' in root.body
+    assert 'aria-keyshortcuts="n"' in root.body
+    assert 'data-next-action-button="true"' in root.body
+    assert 'data-next-action-href="#first-run-create-project"' in root.body
+    assert 'data-next-action-label="Create Project"' in root.body
+    assert 'data-next-action-status="first_run"' in root.body
+    assert 'data-next-action-form-available="true"' in root.body
+    assert 'data-next-action-confirmation-required="true"' in root.body
+    assert 'data-next-action-write-on-get="false"' in root.body
+    assert 'data-next-action-provider-calls-taken="0"' in root.body
+    assert 'data-next-action-network-actions-taken="0"' in root.body
+    assert 'data-next-action-external-effects-created="false"' in root.body
     assert "Keyboard shortcuts: slash opens command palette" in root.body
+    assert "n opens next action" in root.body
     assert "w opens workspace; f opens Finish Today" in root.body
     assert "Keyboard Shortcuts" in root.body
     assert "data-shortcut-help='true'" in root.body
     assert "<kbd>/</kbd> <span>Open command palette</span>" in root.body
     assert "<kbd>Escape</kbd> <span>Close command palette</span>" in root.body
+    assert "<kbd>n</kbd> <span>Open next action</span>" in root.body
     assert "<kbd>r</kbd> <span>Open resume</span>" in root.body
     assert "<kbd>s</kbd> <span>Open search</span>" in root.body
     assert "<kbd>w</kbd> <span>Open workspace</span>" in root.body
     assert "<kbd>f</kbd> <span>Finish today</span>" in root.body
     assert "<kbd>t</kbd> <span>Toggle theme</span>" in root.body
     assert 'if (event.key === "Escape") { closePalette(); return; }' in root.body
+    assert 'if (nextActionOpen) { nextActionOpen.addEventListener("click", openNextAction); }' in root.body
+    assert 'if (event.key === "n") { event.preventDefault(); openNextAction(); }' in root.body
     assert 'if (event.key === "r") { event.preventDefault(); window.location.href = "/resume"; }' in root.body
     assert 'if (event.key === "s") { event.preventDefault(); window.location.href = "/search"; }' in root.body
     assert 'if (event.key === "w") { event.preventDefault(); window.location.href = "/workspace"; }' in root.body
@@ -9429,6 +9445,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-operator-focus-details='true'" in goal.body
     assert "<summary>Focus evidence</summary>" in goal.body
     assert "data-operator-focus-summary='true'" in goal.body
+    assert 'data-next-action-href="#operator-focus-current-action"' in goal.body
+    assert 'data-next-action-status="available"' in goal.body
+    assert 'data-next-action-form-available="true"' in goal.body
+    assert 'data-next-action-confirmation-required="true"' in goal.body
+    assert 'data-next-action-write-on-get="false"' in goal.body
+    assert "id='operator-focus-current-action' class='operator-focus-action' data-operator-focus-action='true'" in goal.body
     assert goal.body.index("data-operator-focus-focus='true'") < goal.body.index(
         "data-operator-focus-action='true'"
     )

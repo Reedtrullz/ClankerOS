@@ -591,9 +591,11 @@ Core layers for the bootstrap:
   artifact with zero provider, network, or external mutation effects.
   The shared browser shell now exposes accessible shortcut metadata for Home,
   Today, Resume, Goals, Search, Workspace, Finish Today, palette, and theme
-  controls. `w` opens `/workspace`, `f` opens `/workspace#save-workspace`,
-  and the palette can be closed with Escape even while the search input is
-  focused; the shortcut layer remains local-only and creates no server writes.
+  controls, plus a global next-action shortcut. `n` opens the current
+  recommended next-action target, `w` opens `/workspace`, `f` opens
+  `/workspace#save-workspace`, and the palette can be closed with Escape even
+  while the search input is focused; the shortcut layer remains local-only and
+  creates no server writes.
   The command palette also
   starts with a route-aware `Current Page` block that mirrors the current
   path, parent surface, resolved Goal/Project/run context, focus target,
@@ -717,6 +719,13 @@ Core layers for the bootstrap:
   first-run states, those shared surfaces point at the concrete setup form for
   the current route when possible, or at the Home/Today/Goals first-run anchors
   when the current page does not render the guide.
+  The shared shell also exposes `n` as a global next-action shortcut and a
+  matching header control. It resolves from the same saved-workspace or
+  lead-Goal focus context as the ribbon and palette; when a confirmed browser
+  action form is available, `n` opens the existing `Operator Focus` details
+  panel instead of submitting it. The shortcut remains local navigation only
+  and records no provider, network, write, approval, execution, push, PR, or
+  deploy effects on GET.
   They still write nothing on GET and only submit existing local forms after
   explicit confirmation. The workflow page
   can be

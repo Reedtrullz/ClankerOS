@@ -1,5 +1,38 @@
 # Status
 
+## 2026-06-28 Global Next Action Shortcut UX
+
+- Added a global keyboard-first `n` shortcut and visible header `Next` control
+  to the shared local app shell.
+- The target is derived from the same saved-workspace or lead-Goal focus
+  context as the Operator Ribbon, Operator Focus, route context, and command
+  palette.
+- In first-run states, `n` opens the current setup target such as the
+  same-page `Create Project` form.
+- When a browser-available confirmed action form exists, `n` opens the
+  existing `#operator-focus-current-action` details panel instead of submitting
+  it; otherwise it navigates to the recommended local target.
+- Header metadata records target, status, source, form availability,
+  confirmation requirement, and zero-effect counters for the shortcut.
+- Updated README, operating summary, local status focus, and rendered shell
+  assertions for first-run and populated Goal states.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 57.63s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `git diff --check` -> passed
+- Full pytest/browser regression proof is intentionally left to GitHub Actions
+  for this GitHub-first testing loop.
+- Non-claims until remote proof: no browser QA for this slice, no write on GET,
+  no provider call, no app-side GitHub polling, no approval decision, no
+  execution, no commit, no push, no PR, and no deploy from ClankerOS itself.
+
 ## 2026-06-28 Keyboard Finish Workspace UX
 
 - Added shared keyboard shortcuts for daily browser operation:

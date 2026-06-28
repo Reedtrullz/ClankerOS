@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The shared browser shell now has a global keyboard-first next-action control:
+  `n` opens the current recommended next-action target from the same
+  saved-workspace or lead-Goal focus context as the ribbon and palette. A
+  matching header `Next` control exposes the same safe target. When a
+  browser-confirmed action form is available, `n` opens the existing
+  `Operator Focus` details panel instead of submitting it, preserving the
+  no-write/no-provider/no-network/no-external-effect GET boundary.
 - The shared browser shell now has keyboard-first Workspace and Finish Today
   navigation: `w` opens `/workspace`, and `f` opens
   `/workspace#save-workspace`. Both shortcuts are discoverable in the command

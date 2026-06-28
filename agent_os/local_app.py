@@ -125,6 +125,7 @@ ROUTE_KEYBOARD_SHORTCUTS = {
 GLOBAL_KEYBOARD_SHORTCUTS = {
     "/": "Open command palette",
     "Escape": "Close command palette",
+    "n": "Open next action",
     "h": "Open home",
     "y": "Open today",
     "g": "Open goals",
@@ -28259,6 +28260,60 @@ def _operator_focus_evidence(
     )
 
 
+def _next_action_shortcut_context(focus_context: dict[str, Any]) -> dict[str, str]:
+    status = str(focus_context.get("status", "state_unavailable"))
+    source = str(focus_context.get("source") or status)
+    action = "Open health"
+    href = "/health"
+    label = "/health"
+    form_available = "false"
+    confirmation_required = "false"
+
+    if status == "available" and isinstance(
+        focus_context.get("next_action"), GoalNextAction
+    ):
+        next_action = focus_context["next_action"]
+        action = next_action.action
+        action_form = str(focus_context.get("action_form") or "")
+        form_available = str(bool(action_form)).lower()
+        confirmation_required = form_available
+        if action_form:
+            href = "#operator-focus-current-action"
+            label = "Open current action form"
+            source = f"{source}_action_form"
+        else:
+            href = next_action.href
+            label = next_action.action
+    elif status == "first_run":
+        action = str(focus_context.get("next_action") or "Continue first run")
+        href = str(focus_context.get("target_href") or "/goals")
+        label = str(focus_context.get("target_label") or href)
+        form_available = str(bool(focus_context.get("form_available"))).lower()
+        confirmation_required = form_available
+    elif status == "no_goal":
+        action = "Open goals"
+        href = "/goals"
+        label = "/goals"
+
+    if href.startswith("#"):
+        safe_href = href
+    else:
+        safe_href = _safe_local_return_path(href) or "/health"
+    return {
+        "status": status,
+        "source": source,
+        "action": action,
+        "href": safe_href,
+        "label": label,
+        "form_available": form_available,
+        "confirmation_required": confirmation_required,
+        "write_on_get": "false",
+        "provider_calls_taken": "0",
+        "network_actions_taken": "0",
+        "external_effects_created": "false",
+    }
+
+
 def _operator_ribbon_card(
     label: str,
     value: str,
@@ -28751,7 +28806,7 @@ def _operator_focus_strip(context: dict[str, Any]) -> str:
             "<section class='operator-focus-strip' data-operator-focus-strip='true'><h2>Operator Focus</h2>",
             _operator_focus_focus_grid(cards),
             (
-                "<details class='operator-focus-action' data-operator-focus-action='true'>"
+                "<details id='operator-focus-current-action' class='operator-focus-action' data-operator-focus-action='true'>"
                 "<summary>Run Current Action</summary>"
                 "<p class='muted'>Use the current goal's browser-available local next action from this page. Confirmation is required before any local write.</p>"
                 f"{action_form}"
@@ -29579,6 +29634,7 @@ def _html_page(
     nav = _nav_links(current_path)
     recent_panel = _recent_items_panel(root)
     focus_context = _operator_focus_context(root, current_path)
+    next_shortcut = _next_action_shortcut_context(focus_context)
     operator_ribbon = _operator_status_ribbon(root, focus_context, current_path, title)
     breadcrumbs = _breadcrumbs(root, current_path, title, focus_context)
     focus_strip = _operator_focus_strip(focus_context)
@@ -30764,9 +30820,10 @@ def _html_page(
   <header>
     <strong>ClankerOS Local Operator</strong>
     <nav>{nav}</nav>
-    <div class="header-actions" data-keyboard-shortcuts="true">
-      <span class="sr-only" id="keyboard-shortcuts-help">Keyboard shortcuts: slash opens command palette; Escape closes it; h opens home; y opens today; g opens goals; r opens resume; s opens search; w opens workspace; f opens Finish Today; t toggles theme.</span>
+    <div class="header-actions" data-keyboard-shortcuts="true" data-next-action-href="{_e(next_shortcut['href'])}" data-next-action-label="{_e(next_shortcut['label'])}" data-next-action-status="{_e(next_shortcut['status'])}" data-next-action-source="{_e(next_shortcut['source'])}" data-next-action-form-available="{_e(next_shortcut['form_available'])}" data-next-action-confirmation-required="{_e(next_shortcut['confirmation_required'])}" data-next-action-write-on-get="{_e(next_shortcut['write_on_get'])}" data-next-action-provider-calls-taken="{_e(next_shortcut['provider_calls_taken'])}" data-next-action-network-actions-taken="{_e(next_shortcut['network_actions_taken'])}" data-next-action-external-effects-created="{_e(next_shortcut['external_effects_created'])}">
+      <span class="sr-only" id="keyboard-shortcuts-help">Keyboard shortcuts: slash opens command palette; Escape closes it; n opens next action; h opens home; y opens today; g opens goals; r opens resume; s opens search; w opens workspace; f opens Finish Today; t toggles theme.</span>
       <button class="icon-button" id="palette-open" type="button" data-shortcut="/" aria-keyshortcuts="/" aria-describedby="keyboard-shortcuts-help" title="Open command palette (/)">Palette</button>
+      <button class="icon-button" id="next-action-open" type="button" data-shortcut="n" aria-keyshortcuts="n" aria-describedby="keyboard-shortcuts-help" data-next-action-button="true" data-next-action-href="{_e(next_shortcut['href'])}" title="Open next action (n)">Next</button>
       <button class="icon-button" id="theme-toggle" type="button" data-shortcut="t" aria-keyshortcuts="t" aria-describedby="keyboard-shortcuts-help" title="Toggle theme (t)">Theme</button>
     </div>
   </header>
@@ -30789,6 +30846,7 @@ def _html_page(
     var paletteOpen = document.getElementById("palette-open");
     var paletteSearch = document.getElementById("command-palette-search");
     var themeToggle = document.getElementById("theme-toggle");
+    var nextActionOpen = document.getElementById("next-action-open");
     function openPalette() {{
       if (!palette) {{ return; }}
       if (palette.showModal) {{ palette.showModal(); }} else {{ palette.removeAttribute("hidden"); }}
@@ -30803,7 +30861,13 @@ def _html_page(
       root.dataset.theme = next;
       if (window.localStorage) {{ localStorage.setItem("clankeros-theme", next); }}
     }}
+    function openNextAction() {{
+      var href = nextActionOpen ? nextActionOpen.getAttribute("data-next-action-href") : "";
+      if (!href) {{ return; }}
+      window.location.href = href;
+    }}
     if (paletteOpen) {{ paletteOpen.addEventListener("click", openPalette); }}
+    if (nextActionOpen) {{ nextActionOpen.addEventListener("click", openNextAction); }}
     if (themeToggle) {{ themeToggle.addEventListener("click", toggleTheme); }}
     document.addEventListener("click", function(event) {{
       var target = event.target || {{}};
@@ -30833,6 +30897,7 @@ def _html_page(
       if (event.key === "Escape") {{ closePalette(); return; }}
       if (tag === "input" || tag === "textarea" || tag === "select") {{ return; }}
       if (event.key === "/") {{ event.preventDefault(); openPalette(); }}
+      if (event.key === "n") {{ event.preventDefault(); openNextAction(); }}
       if (event.key === "g") {{ event.preventDefault(); window.location.href = "/goals"; }}
       if (event.key === "h") {{ event.preventDefault(); window.location.href = "/"; }}
       if (event.key === "r") {{ event.preventDefault(); window.location.href = "/resume"; }}
