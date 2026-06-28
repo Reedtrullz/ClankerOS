@@ -273,10 +273,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   after confirmation. The pause action only
   changes local goal status to `paused`; it does not approve work, run work,
   call providers, use the network, push, create PRs, deploy, or mutate external
-  systems. A read-only `Goal Return Brief` follows the daily loop and gathers
+  systems. A read-only `Goal Return Brief` follows the daily loop as a
+  five-card Continue, Latest, Blocker, Finish, and Resume board, then keeps
   the current gate, next local action, resume readiness, latest activity,
-  latest artifact, CI proof posture, blocker route, `/resume`, and finish
-  surface into one return-to-work snapshot without writing on GET. A read-only
+  latest artifact, CI proof posture, blocker route, `/resume`, finish surface,
+  and zero-effect counters in collapsed return evidence without writing on GET.
+  A read-only
   `Goal Continuation Rail` follows it with the current gate, the next few
   local gate actions, their operator surfaces, and the final manual publish
   boundary, so the Goal page can be followed as a short continuation path

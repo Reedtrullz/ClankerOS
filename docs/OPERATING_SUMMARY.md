@@ -411,9 +411,11 @@ Core layers for the bootstrap:
   artifact, and does not approve work, run work, call providers, use the
   network, push, create PRs, deploy, or mutate external systems.
   A read-only `Goal Return Brief` follows the daily loop near the top of the
-  Goal page and condenses current gate, next action, resume readiness, latest
-  activity, latest artifact, CI proof posture, blocker routing, `/resume`, and
-  finish surface into one return-to-work snapshot without writing on GET.
+  Goal page as visible Continue, Latest, Blocker, Finish, and Resume cards,
+  then keeps current gate, next action, resume readiness, latest activity,
+  latest artifact, CI proof posture, blocker routing, `/resume`, finish
+  surface, and zero-effect counters in collapsed return evidence without
+  writing on GET.
   A read-only `Goal Continuation Rail` follows it with the current gate, the
   next few local workflow gates, their operator surfaces, and the final manual
   publish boundary preserved as outside ClankerOS, so the Goal page can be

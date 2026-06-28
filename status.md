@@ -1,5 +1,50 @@
 # Status
 
+## 2026-06-28 Goal Return Brief Action Cards
+
+- Made `/goals/<goal_id>#goal-return-brief` action-first by adding visible
+  Continue, Latest, Blocker, Finish, and Resume cards after the Goal Daily
+  Loop.
+- Moved the detailed return-to-work readback into collapsed
+  `Goal return evidence` while preserving goal/project/phase, current gate,
+  gate progress, next action, resume readiness, saved workspace matches,
+  latest activity, latest artifact, CI proof posture, blocker routing,
+  finish/resume surfaces, and zero-effect counters in the DOM.
+- Kept Finish wired to the existing hash-opened `#goal-finish-today`
+  `save-workspace` form and Resume wired to `/resume`, so the new cards do not
+  introduce new write paths.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused route assertions.
+- Non-claims: this is local browser routing and layout. `/goals/<goal_id>` does
+  not write on GET, approve work, execute work, create commits, push, create
+  PRs, deploy, call providers, fetch GitHub, mutate external systems, or expose
+  arbitrary raw filesystem browsing. Existing confirmed forms still own writes.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, route markers matched, artifact rejection checks matched,
+    provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including new Goal Return Brief
+    action/evidence handles, provider calls 0, network actions 0, external
+    mutations 0
+  - Browser QA against
+    `http://127.0.0.1:8829/goals/goal_a1194bb6f5e4`: desktop `1280x900`
+    rendered five Return Brief cards, kept return/daily-loop evidence and
+    finish details closed on no-hash load, had no horizontal overflow, and
+    reported no warning/error logs.
+  - Browser interaction QA: clicking the new Finish card opened
+    `#goal-finish-today`, revealed the existing `save-workspace` form, kept
+    `updated_by=goal-daily-loop`, and had no horizontal overflow.
+  - Browser QA mobile `390x844`: five Return Brief cards stacked one column,
+    return evidence and finish details stayed closed on no-hash load, anchored
+    `#goal-return-brief` rendering showed the cards and closed evidence, no
+    horizontal overflow, and no warning/error logs.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Goal Daily Loop Action Cards
 
 - Made `/goals/<goal_id>#goal-daily-loop` card-first by adding visible

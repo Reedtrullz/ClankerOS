@@ -318,7 +318,12 @@ local state stays in collapsed daily-loop evidence, while the confirmed
 Today details so ending or shelving a goal is a direct click, not a hunt
 through proof rows. `pause-goal` moves any non-paused incomplete goal into
 paused lanes without approving work, running providers, using the network, or
-mutating external systems. The read-only `Goal Continuation Rail` follows the
+mutating external systems. Goal Return Brief now follows as its own five-card
+return board for Continue, Latest, Blocker, Finish, and Resume, with the
+same gate, activity, artifact, CI, resume-readiness, blocker, and zero-effect
+state preserved in collapsed return evidence instead of leading the operator
+through proof rows.
+The read-only `Goal Continuation Rail` follows the
 return brief and turns the current gate plus the next few local gates into a
 short path of operator actions and surfaces, while keeping the eventual manual
 publish boundary explicit. Goal

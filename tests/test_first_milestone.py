@@ -9122,8 +9122,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "daily-loop,next-action,timeline,evidence,artifacts,notes" in goal.body
     assert "Goal Return Brief" in goal.body
     assert "data-goal-return-brief='true'" in goal.body
+    assert "data-goal-return-actions='true'" in goal.body
+    assert "data-goal-return-primary='true'" in goal.body
+    assert "data-goal-return-latest='true'" in goal.body
+    assert "data-goal-return-blocker='true'" in goal.body
+    assert "data-goal-return-finish='true'" in goal.body
+    assert "data-goal-return-resume='true'" in goal.body
+    assert "data-goal-return-evidence='true'" in goal.body
     assert goal.body.index("id='goal-daily-loop'") < goal.body.index("id='goal-return-brief'")
     assert goal.body.index("id='goal-return-brief'") < goal.body.index("id='goal-next-action'")
+    assert "href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "data-goal-return-finish='true' data-open-details='true' href='#goal-finish-today'" in goal.body
+    assert "data-goal-return-resume='true' href='/resume'" in goal.body
     assert f"goal_return_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_return_project</dt><dd>{result.project_id}" in goal.body
     assert "goal_return_phase</dt><dd>Ready to commit" in goal.body

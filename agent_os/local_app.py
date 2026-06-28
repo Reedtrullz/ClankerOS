@@ -606,6 +606,13 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-goal-section-index-evidence='true'",
                 "Goal Return Brief",
                 "data-goal-return-brief='true'",
+                "data-goal-return-actions='true'",
+                "data-goal-return-primary='true'",
+                "data-goal-return-latest='true'",
+                "data-goal-return-blocker='true'",
+                "data-goal-return-finish='true'",
+                "data-goal-return-resume='true'",
+                "data-goal-return-evidence='true'",
                 "goal_return_current_gate</dt><dd>commit_request",
                 "Next Action",
                 "Activity Log",
@@ -8929,26 +8936,70 @@ def _goal_return_brief(
     )
     if open_incidents:
         blocker_status = "open_incidents"
+        blocker_href = "/incidents"
+        blocker_action = "Inspect incidents"
         blocker_surface = SafeHtml("<a href='/incidents'>/incidents</a>")
     elif pending_approvals:
         blocker_status = "pending_approvals"
+        blocker_href = "/approvals"
+        blocker_action = "Review approvals"
         blocker_surface = SafeHtml("<a href='/approvals'>/approvals</a>")
     elif open_recommendations:
         blocker_status = "open_recommendations"
+        blocker_href = "/incidents"
+        blocker_action = "Review recommendations"
         blocker_surface = SafeHtml("<a href='/incidents'>/incidents</a>")
     else:
         blocker_status = "none"
+        blocker_href = "#goal-remaining-work"
+        blocker_action = "Review remaining work"
         blocker_surface = SafeHtml("<a href='#goal-remaining-work'>Goal Remaining Work</a>")
     ci_state = _ci_evidence_command_state(root)
     action_form_available = bool(_goal_next_action_form(state, next_action))
+    primary_href = "#goal-next-action-form" if action_form_available else next_action.href
+    primary_label = "Use Goal action form" if action_form_available else "Open next surface"
     workspace_matches_goal = saved_goal == goal.id
     workspace_matches_project = saved_project == goal.project_id
     done = counts.get("done", 0)
     total = len(gates)
+    latest_label = "Open latest activity" if latest_item else "Open timeline"
+    return_cards = "".join(
+        [
+            "<div class='goal-return-card goal-return-primary'>",
+            "<h3>Continue</h3>",
+            f"<p>{_e(next_action.action)}</p>",
+            f"<a class='goal-return-action' data-goal-return-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+            "</div>",
+            "<div class='goal-return-card'>",
+            "<h3>Latest</h3>",
+            f"<p>{_e(latest_message)}</p>",
+            f"<a class='goal-return-link' data-goal-return-latest='true' href='{_e(latest_surface)}'>{_e(latest_label)}</a>",
+            "</div>",
+            "<div class='goal-return-card'>",
+            "<h3>Blocker</h3>",
+            f"<p>{_e(blocker_status.replace('_', ' '))}</p>",
+            f"<a class='goal-return-link' data-goal-return-blocker='true' href='{_e(blocker_href)}'>{_e(blocker_action)}</a>",
+            "</div>",
+            "<div class='goal-return-card'>",
+            "<h3>Finish</h3>",
+            f"<p>{_e('ready' if readiness['ready'] else 'needs workspace save')}</p>",
+            "<a class='goal-return-link' data-goal-return-finish='true' data-open-details='true' href='#goal-finish-today'>Save resume point</a>",
+            "</div>",
+            "<div class='goal-return-card'>",
+            "<h3>Resume</h3>",
+            f"<p>{_e(str(readiness['status']).replace('_', ' '))}</p>",
+            "<a class='goal-return-link' data-goal-return-resume='true' href='/resume'>Open resume</a>",
+            "</div>",
+        ]
+    )
     return "".join(
         [
             "<section id='goal-return-brief' class='panel goal-return-brief' data-goal-return-brief='true'><h2>Goal Return Brief</h2>",
             "<p class='muted'>A top-of-page resume brief for the current Goal: where to continue, what changed last, what proof exists, and what blocks the next move.</p>",
+            "<div class='goal-return-grid' data-goal-return-actions='true'>",
+            return_cards,
+            "</div>",
+            "<details class='goal-return-evidence' data-goal-return-evidence='true'><summary>Goal return evidence</summary>",
             _kv(
                 [
                     ("goal_return_status", "ready" if readiness["ready"] else "needs_workspace_save"),
@@ -8997,6 +9048,7 @@ def _goal_return_brief(
                     "goal_return_safety: read-only return-to-work brief",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -26070,6 +26122,17 @@ def _html_page(
     .goal-return-brief dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .goal-return-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-return-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-return-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-return-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .goal-return-card h3 {{ margin-top:0; }}
+    .goal-return-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .goal-return-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .goal-return-action, .goal-return-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-return-action {{ background:var(--accent); color:#fff; }}
+    .goal-return-link {{ background:var(--surface); color:var(--accent); }}
+    .goal-return-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-return-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .goal-return-evidence:not([open]) > :not(summary) {{ display:none; }}
     .workspace-daily-brief {{ border-left:4px solid var(--accent); }}
     .workspace-daily-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .workspace-daily-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -26582,7 +26645,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-daily-loop-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
