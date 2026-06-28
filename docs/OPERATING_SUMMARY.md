@@ -135,12 +135,15 @@ Core layers for the bootstrap:
   read-only return-to-work surface over saved `.clanker/app/workspace.json`
   state, opening with a primary return link and `Resume Operator Workbench`
   before shared route/focus diagnostics or command readback. It shows saved
-  goal, project, artifact, filters, expanded panels, and zero-effect counters
-  inside collapsed saved-state/command/workbench evidence, while the visible
-  workbench turns the saved context into do/check/unblock/finish cards with
-  same-page action-form routing when available, readiness repair, blocker
-  routing, last-artifact readback, and the existing `/workspace#save-workspace`
-  finish surface. A read-only `Resume Command Bar` follows with readiness,
+  `resume_surface`, goal, project, artifact, filters, expanded panels, and
+  zero-effect counters inside collapsed saved-state/command/workbench
+  evidence, while the visible workbench turns the saved context into
+  do/check/unblock/finish cards with same-page action-form routing when
+  available, readiness repair, blocker routing, last-artifact readback, and the
+  existing `/workspace#save-workspace` finish surface. When `resume_surface`
+  exists, `/resume` opens that exact local route as the primary return target
+  before falling back to the saved Goal or project. A read-only
+  `Resume Command Bar` follows with readiness,
   current phase/gate, one next action, target surface, action-form
   availability, last artifact, and zero-effect counters inside collapsed
   evidence. It also includes a `Resume Readiness` checklist for the saved project, goal,
@@ -227,16 +230,17 @@ Core layers for the bootstrap:
   one next action, and no-write/no-raw-filesystem/no-content-execution/
   no-network/no-external-effect boundaries before the inert content renderer
   and remember-artifact form;
-  `/workspace` for persistent open project/goal/filter/panel/last-artifact
-  state in `.clanker/app/workspace.json`. It now opens with the
+  `/workspace` for persistent open project/goal/filter/panel/last-artifact/
+  `resume_surface` state in `.clanker/app/workspace.json`. It now opens with the
   `Workspace Operator Workbench` before shared route/focus diagnostics or
   saved-state evidence, so the saved workspace first shows do/check/unblock/
   finish cards, same-page action-form routing when available, readiness and
   blocker routing, last-artifact readback, and a Finish Today link that opens
   the collapsed confirmed save form. The save form keeps saved workspace state
   authoritative, but when no workspace Goal is saved and a lead Goal exists it
-  pre-fills suggested project, Goal, goal-scoped filters, panels, and latest
-  artifact values while reporting `workspace_save_defaults_write_on_get=false`.
+  pre-fills suggested project, Goal, goal-scoped filters, panels, latest
+  artifact values, and exact `resume_surface` while reporting
+  `workspace_save_defaults_write_on_get=false`.
   The same Goal-page action form appears immediately below the workbench when
   browser-available, followed by the
   read-only `Workspace Daily Brief` and `Workspace Workflow Map` for the saved
@@ -245,7 +249,9 @@ Core layers for the bootstrap:
   evidence. Before a saved Goal exists, `/workspace` follows first-run
   progress instead: empty checkouts point those sections at Home's
   `Create Project` anchor and registered-project/no-goal workspaces point at
-  `Create First Goal` while preserving the saved project link; `/memory` for project/global/
+  `Create First Goal` while preserving the saved project link. Home, Recent
+  Items, and the command palette also prefer the exact saved `resume_surface`
+  when one exists, while retaining `/resume` as the hub; `/memory` for project/global/
   generated memories, proposed memories, operator notes, future work, and pin
   actions. It is action-first and opens with a visible
   `Memory Operator Workbench` before shared route/focus diagnostics and
@@ -293,8 +299,9 @@ Core layers for the bootstrap:
   context pack -> Run first delegation checklist plus confirmed local
   `register-project` and `create-goal` forms, explicitly defaults the first
   dogfood project to `clankeros` at the current repository path, persists
-  resume workspace state after confirmed browser project registration and
-  first goal creation, and now refreshes the same saved workspace anchor after
+  resume workspace state plus exact `resume_surface` routes after confirmed
+  browser project registration and first goal creation, and now refreshes the
+  same saved workspace anchor after
   confirmed first-run scout delegation, context-pack generation, and delegation
   run actions so `/resume`, Home, and `/workspace` return to the newest local
   workflow artifact without a separate manual save. Confirmed coder-prep,

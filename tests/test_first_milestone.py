@@ -5647,12 +5647,18 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_save_defaults_last_artifact</dt><dd>none" in workspace.body
     assert "workspace_save_defaults_lead_goal</dt><dd>none" in workspace.body
     assert "workspace_save_defaults_lead_project</dt><dd>none" in workspace.body
+    assert (
+        "workspace_save_defaults_resume_surface</dt><dd>"
+        "<a href='/#first-run-create-project'>/#first-run-create-project</a>"
+    ) in workspace.body
     assert "workspace_save_defaults_applied_to_form</dt><dd>true" in workspace.body
     assert "workspace_save_defaults_confirmation_required</dt><dd>true" in workspace.body
     assert "workspace_save_defaults_write_on_get</dt><dd>false" in workspace.body
     assert "workspace_save_defaults_external_effects_created</dt><dd>false" in workspace.body
     assert "name='open_project' value=''" in workspace.body
     assert "name='open_goal' value=''" in workspace.body
+    assert "name='resume_surface' value='/#first-run-create-project'" in workspace.body
+    assert "resume_surface</dt><dd>none" in workspace.body
     assert "Workspace Daily Brief" in workspace.body
     assert "data-workspace-daily-brief='true'" in workspace.body
     assert "workspace_daily_status</dt><dd>first_run" in workspace.body
@@ -5797,6 +5803,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
             "filters": ["active"],
             "expanded_panels": ["timeline,evidence"],
             "last_viewed_artifact": [".clanker/app/local_app_status.json"],
+            "resume_surface": ["/goals/goal_demo#goal-timeline-command-bar"],
             "updated_by": ["operator"],
             "confirm": ["yes"],
         },
@@ -5808,17 +5815,32 @@ def test_local_app_routes_render_modern_workflow_and_health(
     workspace_data = json.loads(workspace_json.read_text(encoding="utf-8"))
     assert workspace_data["open_project"] == "first-app"
     assert workspace_data["open_goal"] == "goal_demo"
+    assert workspace_data["resume_surface"] == "/goals/goal_demo#goal-timeline-command-bar"
     workspace_saved = render_local_app_route(tmp_path, "/workspace")
     assert "open_project</dt><dd>first-app" in workspace_saved.body
     assert "open_goal</dt><dd>goal_demo" in workspace_saved.body
+    assert (
+        "resume_surface</dt><dd><a href='/goals/goal_demo#goal-timeline-command-bar'>"
+        "/goals/goal_demo#goal-timeline-command-bar</a>"
+    ) in workspace_saved.body
     assert "Goal goal_demo" in workspace_saved.body
     assert "/goals/goal_demo" in workspace_saved.body
     assert "Project first-app" in workspace_saved.body
     assert "/projects/first-app" in workspace_saved.body
+    resume_saved = render_local_app_route(tmp_path, "/resume")
+    assert "Open saved surface /goals/goal_demo#goal-timeline-command-bar" in resume_saved.body
+    assert (
+        "resume_saved_surface</dt><dd><a href='/goals/goal_demo#goal-timeline-command-bar'>"
+        "/goals/goal_demo#goal-timeline-command-bar</a>"
+    ) in resume_saved.body
     home_with_workspace = render_local_app_route(tmp_path, "/")
     assert "Home Resume Workspace" in home_with_workspace.body
     assert "resume_goal: <a href='/goals/goal_demo'>goal_demo</a>" in home_with_workspace.body
     assert "resume_project: <a href='/projects/first-app'>first-app</a>" in home_with_workspace.body
+    assert (
+        "resume_surface: <a href='/goals/goal_demo#goal-timeline-command-bar'>"
+        "/goals/goal_demo#goal-timeline-command-bar</a>"
+    ) in home_with_workspace.body
     assert "resume_artifact" in home_with_workspace.body
     assert ".clanker/app/local_app_status.json" in home_with_workspace.body
 
@@ -7428,6 +7450,7 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     registered_workspace = json.loads(workspace_path.read_text(encoding="utf-8"))
     assert registered_workspace["open_project"] == "clankeros"
     assert registered_workspace["open_goal"] == ""
+    assert registered_workspace["resume_surface"] == "/projects/clankeros"
     assert registered_workspace["updated_by"] == "register-project"
     assert registered_workspace["last_action"] == "register-project"
     assert registered_workspace["last_action_result"] == "project_registered: clankeros"
@@ -7458,7 +7481,7 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "data-recent-items-cards='true'" in register_resume.body
     assert (
         "data-recent-items-workspace-card='true' href='/projects/clankeros'>"
-        "Open saved project</a>"
+        "Open saved surface</a>"
     ) in register_resume.body
     assert (
         "data-recent-items-action-card='true' "
@@ -7477,7 +7500,7 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "data-command-palette-quick-switch='true'" in register_resume.body
     assert (
         "data-command-palette-quick-workspace='true' href='/projects/clankeros'>"
-        "Open saved project</a>"
+        "Open saved surface</a>"
     ) in register_resume.body
     assert (
         "data-command-palette-quick-action='true' "
@@ -7485,7 +7508,11 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
         "Open last action</a>"
     ) in register_resume.body
     assert "palette_quick_switch_status</dt><dd>first_run" in register_resume.body
-    assert "palette_quick_switch_workspace_source</dt><dd>saved_project" in register_resume.body
+    assert "palette_quick_switch_workspace_source</dt><dd>saved_surface" in register_resume.body
+    assert (
+        "palette_quick_switch_saved_surface</dt><dd>"
+        "<a href='/projects/clankeros'>/projects/clankeros</a>"
+    ) in register_resume.body
     assert (
         "palette_quick_switch_workspace_surface</dt><dd>"
         "<a href='/projects/clankeros'>/projects/clankeros</a>"
@@ -7771,10 +7798,12 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     goal_workspace = json.loads(workspace_path.read_text(encoding="utf-8"))
     assert goal_workspace["open_project"] == "clankeros"
     assert goal_workspace["open_goal"] == created_goal_id
+    assert goal_workspace["resume_surface"] == f"/goals/{created_goal_id}"
     assert goal_workspace["updated_by"] == "create-goal"
     resume = render_local_app_route(tmp_path, "/resume")
     assert "resume_workspace_available</dt><dd>true" in resume.body
     assert f"resume_goal: <a href='/goals/{created_goal_id}'>{created_goal_id}</a>" in resume.body
+    assert f"Open saved surface /goals/{created_goal_id}" in resume.body
     assert "Resume Operator Workbench" in resume.body
     assert "data-resume-state-details='true'" in resume.body
     assert "data-resume-workbench-primary='true'" in resume.body
@@ -8484,12 +8513,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"workspace_save_defaults_lead_project</dt><dd>{result.project_id}"
         in workspace_with_demo.body
     )
+    assert (
+        f"workspace_save_defaults_resume_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"/goals/{result.goal_id}</a>"
+    ) in workspace_with_demo.body
     assert result.review_path.relative_to(tmp_path).as_posix() in workspace_with_demo.body
     assert "workspace_save_defaults_applied_to_form</dt><dd>true" in workspace_with_demo.body
     assert "workspace_save_defaults_confirmation_required</dt><dd>true" in workspace_with_demo.body
     assert "workspace_save_defaults_write_on_get</dt><dd>false" in workspace_with_demo.body
     assert f"name='open_project' value='{result.project_id}'" in workspace_with_demo.body
     assert f"name='open_goal' value='{result.goal_id}'" in workspace_with_demo.body
+    assert f"name='resume_surface' value='/goals/{result.goal_id}'" in workspace_with_demo.body
     assert f"name='filters' value='goal:{result.goal_id}'" in workspace_with_demo.body
     assert (
         "name='expanded_panels' value='overview,next-action,timeline,evidence,artifacts,notes'"
@@ -11336,6 +11370,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert daily_loop_workspace_json["filters"] == f"goal:{result.goal_id}"
     assert daily_loop_workspace_json["expanded_panels"] == "daily-loop,next-action,timeline,evidence,artifacts,notes"
     assert daily_loop_workspace_json["last_viewed_artifact"] == resume_artifact
+    assert daily_loop_workspace_json["resume_surface"] == f"/goals/{result.goal_id}"
     assert daily_loop_workspace_json["updated_by"] == "goal-daily-loop"
 
     workspace = render_local_app_route(
@@ -11375,8 +11410,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"workspace_save_defaults_open_goal</dt><dd>{result.goal_id}"
         in restored_workspace.body
     )
+    assert (
+        f"workspace_save_defaults_resume_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"/goals/{result.goal_id}</a>"
+    ) in restored_workspace.body
     assert f"name='open_project' value='{result.project_id}'" in restored_workspace.body
     assert f"name='open_goal' value='{result.goal_id}'" in restored_workspace.body
+    assert f"name='resume_surface' value='/goals/{result.goal_id}'" in restored_workspace.body
     assert "name='filters' value='active'" in restored_workspace.body
     assert "name='expanded_panels' value='timeline,evidence'" in restored_workspace.body
     assert "name='updated_by' value='operator'" in restored_workspace.body
@@ -11535,6 +11575,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Home Resume Workspace" in restored_home.body
     assert f"resume_goal: <a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in restored_home.body
     assert f"resume_project: <a href='/projects/{result.project_id}'>{result.project_id}</a>" in restored_home.body
+    assert (
+        f"resume_surface: <a href='/goals/{result.goal_id}'>/goals/{result.goal_id}</a>"
+        in restored_home.body
+    )
     assert "resume_artifact" in restored_home.body
     assert resume_artifact in restored_home.body
     assert "Home Day Plan" in restored_home.body
@@ -11639,6 +11683,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert resume_artifact in resume.body
     assert "resume_filters</dt><dd>active" in resume.body
     assert "resume_expanded_panels</dt><dd>timeline,evidence" in resume.body
+    assert (
+        f"resume_saved_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"/goals/{result.goal_id}</a>"
+    ) in resume.body
+    assert f"Open saved surface /goals/{result.goal_id}" in resume.body
     assert "Resume Next Action" in resume.body
     assert "resume_current_phase</dt><dd>Ready to commit" in resume.body
     assert "resume_next_action</dt><dd>Create commit request" in resume.body

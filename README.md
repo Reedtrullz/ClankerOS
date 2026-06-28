@@ -192,7 +192,8 @@ elsewhere in the app.
 Use `/resume` when returning to ClankerOS after a break. It now opens with a
 primary return link and a `Resume Operator Workbench` before shared
 route/focus diagnostics or the command readback, so the first screen is the
-current saved action. It reads the saved workspace state, shows the exact saved
+current saved action. It reads the saved workspace state, prefers the exact
+saved `resume_surface` local route when one exists, shows the saved
 goal/project/artifact links, preserves filters and expanded panel readbacks,
 and keeps saved-state, command, and workbench evidence collapsed by default.
 Before a saved Goal exists, `/resume` follows first-run progress instead of
@@ -224,8 +225,9 @@ finish cards, same-page action-form routing, blocker routing, last-artifact
 readback, and a Finish Today link that opens the collapsed `#save-workspace`
 form. When no workspace has been explicitly saved yet but a lead Goal exists,
 that form is prefilled from the current project, Goal, goal-scoped filters,
-and latest artifact, with a `Workspace save defaults` evidence block showing
-that the values are suggestions only and nothing was written on GET. The
+latest artifact, and exact `resume_surface` route, with a
+`Workspace save defaults` evidence block showing that the values are
+suggestions only and nothing was written on GET. The
 read-only `Workspace Daily Brief` and `Workspace Workflow Map` follow with the
 saved goal's current gate, gate counts, and finish posture, while saved-state
 and restore-link readbacks stay inside collapsed evidence.
@@ -528,9 +530,10 @@ Those steps write local artifacts, local approval rows, local approval
 decisions, bounded worktree run evidence, or one isolated local worktree
 commit only; they do not expose arbitrary commands, push, create PRs, deploy,
 call providers, or use the network. Use Home, `/resume`, or `/workspace` to
-save and restore open project, open goal, filters, expanded panels, and last
-viewed artifact in `.clanker/app/workspace.json`, with saved-goal phase and
-next-action readbacks on each return-to-work surface. `/workspace` now also
+save and restore open project, open goal, filters, expanded panels, last
+viewed artifact, and exact `resume_surface` route in
+`.clanker/app/workspace.json`, with saved-goal phase and next-action
+readbacks on each return-to-work surface. `/workspace` now also
 has a `Workspace Operator Workbench` beside the editable state form, and
 `/resume` and `/workspace` both expose the saved goal's workflow gate map, so changing saved
 context does not hide the current gate.
@@ -619,8 +622,9 @@ The recent-items sidebar now starts with a read-only `Recent Items
 Command Bar` plus a visible return dock for Recent, Workspace, Action, and
 Artifact, so the operator can reopen the latest surface, saved project/Goal,
 last action notice, or saved artifact without expanding the longer shortcut
-list. Workspace/goal/delegation/run counts, saved workspace context, last
-action, artifact targets, and zero-effect counters stay inside collapsed
+list. When an exact saved `resume_surface` exists, the Workspace card opens
+that route directly. Workspace/goal/delegation/run counts, saved workspace
+context, last action, artifact targets, and zero-effect counters stay inside collapsed
 evidence and the remaining recent shortcuts stay in a second collapsed
 disclosure. The focus strip keeps the saved or lead
 goal's primary action, phase, progress, waiting counts, and resume link visible
@@ -637,7 +641,7 @@ The command palette now opens with a `Palette Focus` launcher: continue the
 current Goal action, jump to search, resume the saved workspace, or stay on the
 current page. It also includes a visible `Quick Switch` dock for Continue,
 Workspace, Action, Artifact, and Finish so the palette can recover the current
-Goal, saved project/Goal, last action target, latest artifact, or
+Goal, exact saved workspace surface, last action target, latest artifact, or
 `/workspace#save-workspace` handoff without opening the sidebar. The
 route-aware `Current Page` readback, keyboard shortcuts, and long open list
 live in collapsed `Palette evidence and shortcuts`, while the

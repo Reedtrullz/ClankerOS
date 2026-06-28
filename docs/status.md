@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `.clanker/app/workspace.json` now treats `resume_surface` as a first-class
+  saved local route. Confirmed `save-workspace` accepts it directly or derives
+  it from `return_to`; `/resume` opens it as the primary return target; Home,
+  `/workspace`, Recent Items, and the command palette show or prefer the exact
+  saved surface while retaining `/resume` as the hub. GET routes remain
+  read-only.
 - The shared browser shell now has a global keyboard-first next-action control:
   `n` opens the current recommended next-action target from the same
   saved-workspace or lead-Goal focus context as the ribbon and palette. A

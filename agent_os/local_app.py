@@ -3867,6 +3867,7 @@ def _home_resume_workspace(root: Path, lead_goal: sqlite3.Row | None) -> str:
     filters = str(state.get("filters") or "").strip()
     expanded = str(state.get("expanded_panels") or "").strip()
     last_artifact = str(state.get("last_viewed_artifact") or "").strip()
+    resume_surface = _safe_local_return_path(state.get("resume_surface")) or ""
     workspace_path = ".clanker/app/workspace.json"
     workspace_path_readback = (
         _artifact_link(workspace_path) if _workspace_path(root).exists() else workspace_path
@@ -3884,9 +3885,12 @@ def _home_resume_workspace(root: Path, lead_goal: sqlite3.Row | None) -> str:
     if last_artifact:
         lines.append(f"resume_artifact: {_artifact_link(last_artifact)}")
     lines.extend(_home_resume_next_action_lines(root, open_goal))
-    if not any([open_goal, open_project, last_artifact]):
+    if not any([open_goal, open_project, last_artifact, resume_surface]):
         lines.append("workspace_status: no_saved_workspace")
-    lines.append("resume_surface: <a href='/resume'>/resume</a>")
+    resume_href = resume_surface or "/resume"
+    lines.append(f"resume_surface: <a href='{_e(resume_href)}'>{_e(resume_href)}</a>")
+    if resume_surface:
+        lines.append("resume_hub_surface: <a href='/resume'>/resume</a>")
     lines.append("workspace_surface: <a href='/workspace'>/workspace</a>")
 
     form = ""
@@ -3905,6 +3909,7 @@ def _home_resume_workspace(root: Path, lead_goal: sqlite3.Row | None) -> str:
                         "filters": filters or "active",
                         "expanded_panels": expanded or "timeline,evidence,approvals",
                         "last_viewed_artifact": last_artifact,
+                        "resume_surface": resume_surface or f"/goals/{quote(lead_goal_id)}",
                         "updated_by": "operator-home",
                     },
                 ),
@@ -4724,7 +4729,8 @@ def _resume_page(root: Path) -> str:
     filters = str(state.get("filters") or "").strip()
     expanded = str(state.get("expanded_panels") or "").strip()
     last_artifact = str(state.get("last_viewed_artifact") or "").strip()
-    has_workspace = any([open_project, open_goal, filters, expanded, last_artifact])
+    resume_surface = _safe_local_return_path(state.get("resume_surface")) or ""
+    has_workspace = any([open_project, open_goal, filters, expanded, last_artifact, resume_surface])
     first_run_context = (
         _resume_first_run_context(root)
         if _resume_should_use_first_run(root, open_goal)
@@ -4738,6 +4744,8 @@ def _resume_page(root: Path) -> str:
         targets.append(f"resume_project: <a href='/projects/{quote(open_project)}'>{_e(open_project)}</a>")
     if last_artifact:
         targets.append(f"resume_artifact: {_artifact_link(last_artifact)}")
+    if resume_surface:
+        targets.append(f"resume_surface: <a href='{_e(resume_surface)}'>{_e(resume_surface)}</a>")
     if first_run_context is not None:
         progress = first_run_context["progress"]
         targets.extend(
@@ -4761,7 +4769,10 @@ def _resume_page(root: Path) -> str:
 
     next_href = str(first_run_context["target_href"]) if first_run_context else "/goals"
     next_label = str(first_run_context["target_label"]) if first_run_context else "Open Goal Cockpit"
-    if open_goal:
+    if resume_surface:
+        next_href = resume_surface
+        next_label = f"Open saved surface {resume_surface}"
+    elif open_goal:
         next_href = f"/goals/{quote(open_goal)}"
         next_label = f"Open saved goal {open_goal}"
     elif first_run_context is None and open_project:
@@ -4784,6 +4795,12 @@ def _resume_page(root: Path) -> str:
                     ("resume_updated_at", state.get("updated_at", "never")),
                     ("resume_filters", filters or "none"),
                     ("resume_expanded_panels", expanded or "none"),
+                    (
+                        "resume_saved_surface",
+                        SafeHtml(f"<a href='{_e(resume_surface)}'>{_e(resume_surface)}</a>")
+                        if resume_surface
+                        else "none",
+                    ),
                     ("resume_workspace_write_on_get", "false"),
                     ("resume_provider_calls_taken_by_clankeros", "0"),
                     ("resume_network_actions_taken", "0"),
@@ -5564,6 +5581,7 @@ def _workspace_page(root: Path) -> str:
     open_project = state.get("open_project", "")
     open_goal = state.get("open_goal", "")
     last_artifact = state.get("last_viewed_artifact", "")
+    resume_surface = _safe_local_return_path(state.get("resume_surface")) or ""
     save_defaults = _workspace_save_defaults(root, state)
     restore_links = []
     if open_project:
@@ -5572,6 +5590,8 @@ def _workspace_page(root: Path) -> str:
         restore_links.append(f"open_goal: <a href='/goals/{quote(open_goal)}'>{_e(open_goal)}</a>")
     if last_artifact:
         restore_links.append(f"last_viewed_artifact: {_artifact_link(last_artifact)}")
+    if resume_surface:
+        restore_links.append(f"resume_surface: <a href='{_e(resume_surface)}'>{_e(resume_surface)}</a>")
     if _workspace_should_use_first_run(root, open_goal):
         first_run_context = _workspace_first_run_context(root)
         progress = first_run_context["progress"]
@@ -5594,6 +5614,12 @@ def _workspace_page(root: Path) -> str:
                     ("filters", state.get("filters", "") or "none"),
                     ("expanded_panels", state.get("expanded_panels", "") or "none"),
                     ("last_viewed_artifact", last_artifact or "none"),
+                    (
+                        "resume_surface",
+                        SafeHtml(f"<a href='{_e(resume_surface)}'>{_e(resume_surface)}</a>")
+                        if resume_surface
+                        else "none",
+                    ),
                     ("updated_at", state.get("updated_at", "never")),
                 ]
             ),
@@ -5628,6 +5654,14 @@ def _workspace_page(root: Path) -> str:
                     ),
                     ("workspace_save_defaults_lead_goal", save_defaults["lead_goal"] or "none"),
                     ("workspace_save_defaults_lead_project", save_defaults["lead_project"] or "none"),
+                    (
+                        "workspace_save_defaults_resume_surface",
+                        SafeHtml(
+                            f"<a href='{_e(save_defaults['resume_surface'])}'>{_e(save_defaults['resume_surface'])}</a>"
+                        )
+                        if save_defaults["resume_surface"]
+                        else "none",
+                    ),
                     ("workspace_save_defaults_applied_to_form", "true"),
                     ("workspace_save_defaults_confirmation_required", "true"),
                     ("workspace_save_defaults_write_on_get", "false"),
@@ -5645,6 +5679,7 @@ def _workspace_page(root: Path) -> str:
                     "filters": save_defaults["filters"],
                     "expanded_panels": save_defaults["expanded_panels"],
                     "last_viewed_artifact": save_defaults["last_viewed_artifact"],
+                    "resume_surface": save_defaults["resume_surface"],
                     "updated_by": save_defaults["updated_by"],
                 },
             ),
@@ -5675,6 +5710,7 @@ def _workspace_save_defaults(root: Path, state: dict[str, str]) -> dict[str, str
     saved_filters = str(state.get("filters") or "").strip()
     saved_panels = str(state.get("expanded_panels") or "").strip()
     saved_artifact = str(state.get("last_viewed_artifact") or "").strip()
+    saved_surface = _safe_local_return_path(state.get("resume_surface")) or ""
     updated_by = str(state.get("updated_by") or "operator").strip() or "operator"
     lead_goal = _workspace_lead_goal_row(root, saved_project=saved_project, saved_goal=saved_goal)
     lead_goal_id = str(lead_goal["id"]) if lead_goal is not None else ""
@@ -5686,7 +5722,9 @@ def _workspace_save_defaults(root: Path, state: dict[str, str]) -> dict[str, str
         if goal_state.get("goal") is not None:
             latest_artifact = _goal_latest_artifact_path(root, goal_state)
 
-    has_saved_context = any([saved_project, saved_goal, saved_filters, saved_panels, saved_artifact])
+    has_saved_context = any(
+        [saved_project, saved_goal, saved_filters, saved_panels, saved_artifact, saved_surface]
+    )
     if saved_goal:
         status = "saved_workspace"
         source = "saved_workspace_state"
@@ -5704,6 +5742,16 @@ def _workspace_save_defaults(root: Path, state: dict[str, str]) -> dict[str, str
         status = "empty"
         source = "no_workspace_or_goal"
 
+    resume_surface = saved_surface
+    if not resume_surface and saved_goal:
+        resume_surface = f"/goals/{quote(saved_goal)}"
+    elif not resume_surface and lead_goal_id:
+        resume_surface = f"/goals/{quote(lead_goal_id)}"
+    elif not resume_surface and source == "first_run_progress":
+        resume_surface = str(_workspace_first_run_context(root)["target_href"])
+    elif not resume_surface:
+        resume_surface = "/workspace"
+
     return {
         "status": status,
         "source": source,
@@ -5713,6 +5761,7 @@ def _workspace_save_defaults(root: Path, state: dict[str, str]) -> dict[str, str
         "expanded_panels": saved_panels
         or ("overview,next-action,timeline,evidence,artifacts,notes" if lead_goal_id else ""),
         "last_viewed_artifact": saved_artifact or latest_artifact,
+        "resume_surface": resume_surface,
         "updated_by": updated_by,
         "lead_goal": lead_goal_id,
         "lead_project": lead_project,
@@ -7918,6 +7967,7 @@ def _load_workspace_state(root: Path) -> dict[str, str]:
         "filters",
         "expanded_panels",
         "last_viewed_artifact",
+        "resume_surface",
         "updated_by",
         "updated_at",
         "last_action",
@@ -7945,6 +7995,7 @@ def _write_workspace_state(root: Path, state: dict[str, str]) -> dict[str, Any]:
         "filters": state.get("filters", "").strip(),
         "expanded_panels": state.get("expanded_panels", "").strip(),
         "last_viewed_artifact": state.get("last_viewed_artifact", "").strip(),
+        "resume_surface": _safe_local_return_path(state.get("resume_surface")) or "",
         "updated_by": state.get("updated_by", "operator").strip() or "operator",
         "updated_at": utc_now(),
         "last_action": state.get("last_action", "").strip(),
@@ -7990,6 +8041,7 @@ def _remember_delegation_workspace(
     *,
     artifact_path: str | Path | None,
     updated_by: str,
+    resume_surface: str | None = None,
 ) -> dict[str, Any] | None:
     delegation = storage.get_subagent_delegation(delegation_id)
     if delegation is None:
@@ -8005,6 +8057,8 @@ def _remember_delegation_workspace(
             "open_project": goal.project_id,
             "open_goal": goal.id,
             "last_viewed_artifact": _repo_relative_artifact_path(root, artifact_path),
+            "resume_surface": _safe_local_return_path(resume_surface)
+            or f"/delegations/{quote(delegation_id)}",
             "updated_by": updated_by,
         },
     )
@@ -25273,6 +25327,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                     "open_project": project.name,
                     "open_goal": "",
                     "last_viewed_artifact": f"projects/{project.name}/project.md",
+                    "resume_surface": f"/projects/{quote(project.name)}",
                     "updated_by": "register-project",
                 },
             )
@@ -25294,6 +25349,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                     "open_project": lifecycle.goal.project_id,
                     "open_goal": lifecycle.goal.id,
                     "last_viewed_artifact": str(lifecycle.goal_artifact_path.relative_to(root)),
+                    "resume_surface": f"/goals/{quote(lifecycle.goal.id)}",
                     "updated_by": "create-goal",
                 },
             )
@@ -25323,6 +25379,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                         root,
                         _goal_file_path(result["project_id"], result["goal_id"], "GOAL.md"),
                     ),
+                    "resume_surface": f"/goals/{quote(result['goal_id'])}",
                     "updated_by": "pause-goal",
                 },
             )
@@ -25340,6 +25397,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                         root,
                         _goal_file_path(result["project_id"], result["goal_id"], "GOAL.md"),
                     ),
+                    "resume_surface": f"/goals/{quote(result['goal_id'])}",
                     "updated_by": "resume-goal",
                 },
             )
@@ -25362,6 +25420,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                             else None
                         ),
                     ),
+                    "resume_surface": f"/goals/{quote(result['goal_id'])}",
                     "updated_by": "complete-goal",
                 },
             )
@@ -25376,10 +25435,16 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                     "open_project": result["project_id"],
                     "open_goal": result["goal_id"],
                     "last_viewed_artifact": result["note_path"],
+                    "resume_surface": f"/goals/{quote(result['goal_id'])}",
                     "updated_by": "save-goal-note",
                 },
             )
         elif action == "save-workspace":
+            resume_surface = (
+                _safe_local_return_path(_one(form, "resume_surface"))
+                or _safe_local_return_path(_one(form, "return_to"))
+                or "/workspace"
+            )
             result = _write_workspace_state(
                 root,
                 {
@@ -25388,6 +25453,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                     "filters": _one(form, "filters") or "",
                     "expanded_panels": _one(form, "expanded_panels") or "",
                     "last_viewed_artifact": _one(form, "last_viewed_artifact") or "",
+                    "resume_surface": resume_surface,
                     "updated_by": _one(form, "updated_by") or "operator",
                 },
             )
@@ -25424,6 +25490,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                         root,
                         result.artifact_path,
                     ),
+                    "resume_surface": "/memory",
                     "updated_by": "pin-memory",
                 },
             )
@@ -25622,6 +25689,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                     else coder_run.evidence_path
                 ),
                 updated_by="run-coder-worktree",
+                resume_surface=location,
             )
         elif action == "review-run":
             requested_run_id = _required(form, "run_id")
@@ -25650,6 +25718,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                     coder_run.delegation_id,
                     artifact_path=report_path,
                     updated_by="review-run",
+                    resume_surface=location,
                 )
         elif action == "coder-commit-request":
             run_id = _required(form, "run_id")
@@ -25669,6 +25738,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 result.approval.delegation_id,
                 artifact_path=Path(result.approval.request_artifact_path).with_suffix(".md"),
                 updated_by="coder-commit-request",
+                resume_surface=location,
             )
         elif action == "approve-coder-commit":
             approval_id = _required(form, "approval_id")
@@ -25691,6 +25761,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                     / "coder_commit_decision.md"
                 ),
                 updated_by="approve-coder-commit",
+                resume_surface=location,
             )
         elif action == "commit-coder-worktree":
             run_id = _required(form, "run_id")
@@ -25713,6 +25784,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                     else Path(result.evidence_path).with_suffix(".md")
                 ),
                 updated_by="commit-coder-worktree",
+                resume_surface=location,
             )
         elif action == "coder-publication-request":
             run_id = _required(form, "run_id")
@@ -25733,6 +25805,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 result.publication.delegation_id,
                 artifact_path=Path(result.publication.request_artifact_path).with_suffix(".md"),
                 updated_by="coder-publication-request",
+                resume_surface=location,
             )
         elif action == "approve-coder-publication":
             publication_id = _required(form, "publication_id")
@@ -25755,6 +25828,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                     else None
                 ),
                 updated_by="approve-coder-publication",
+                resume_surface=location,
             )
         elif action == "coder-publication-handoff":
             run_id = _required(form, "run_id")
@@ -25767,6 +25841,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 result.publication.delegation_id,
                 artifact_path=Path(result.artifact_path).with_suffix(".md"),
                 updated_by="coder-publication-handoff",
+                resume_surface=location,
             )
         elif action == "ci-snapshot-evidence-from-gh-json":
             result = record_ci_snapshot_evidence_from_gh_status_json(
@@ -28011,11 +28086,16 @@ def _recent_items_command_bar(
     open_project = str(state.get("open_project") or "").strip()
     open_goal = str(state.get("open_goal") or "").strip()
     last_artifact = str(state.get("last_viewed_artifact") or "").strip()
+    resume_surface = _safe_local_return_path(state.get("resume_surface")) or ""
     last_action = str(state.get("last_action") or "").strip()
     last_action_result = str(state.get("last_action_result") or "").strip()
     last_action_href = _safe_local_return_path(state.get("last_action_next_href"))
     primary_label, primary_href, primary_kind = items[0]
-    if open_goal:
+    if resume_surface:
+        workspace_label = resume_surface
+        workspace_href = resume_surface
+        workspace_action = "Open saved surface"
+    elif open_goal:
         workspace_label = open_goal
         workspace_href = f"/goals/{quote(open_goal)}"
         workspace_action = "Open saved goal"
@@ -28087,6 +28167,12 @@ def _recent_items_command_bar(
                     ),
                     ("recent_items_saved_project", open_project or "none"),
                     ("recent_items_saved_goal", open_goal or "none"),
+                    (
+                        "recent_items_saved_surface",
+                        SafeHtml(f"<a href='{_e(resume_surface)}'>{_e(resume_surface)}</a>")
+                        if resume_surface
+                        else "none",
+                    ),
                     ("recent_items_last_artifact", last_artifact or "none"),
                     (
                         "recent_items_last_artifact_surface",
@@ -28871,6 +28957,7 @@ def _command_palette_quick_switch(root: Path, focus_context: dict[str, Any]) -> 
     saved_project = str(state.get("open_project") or "").strip()
     saved_goal = str(state.get("open_goal") or "").strip()
     saved_artifact = str(state.get("last_viewed_artifact") or "").strip()
+    resume_surface = _safe_local_return_path(state.get("resume_surface")) or ""
     last_action = str(state.get("last_action") or "").strip()
     last_action_href = _safe_local_return_path(state.get("last_action_next_href"))
     status = str(focus_context.get("status", "state_unavailable"))
@@ -28904,7 +28991,12 @@ def _command_palette_quick_switch(root: Path, focus_context: dict[str, Any]) -> 
         primary_href = "/goals"
         primary_label = "Open goals"
 
-    if saved_goal:
+    if resume_surface:
+        workspace_label = resume_surface
+        workspace_href = resume_surface
+        workspace_action = "Open saved surface"
+        workspace_source = "saved_surface"
+    elif saved_goal:
         workspace_label = saved_goal
         workspace_href = f"/goals/{quote(saved_goal)}"
         workspace_action = "Open saved goal"
@@ -28972,6 +29064,12 @@ def _command_palette_quick_switch(root: Path, focus_context: dict[str, Any]) -> 
         ("palette_quick_switch_finish_confirmation_required", "true"),
         ("palette_quick_switch_saved_project", saved_project or "none"),
         ("palette_quick_switch_saved_goal", saved_goal or "none"),
+        (
+            "palette_quick_switch_saved_surface",
+            SafeHtml(f"<a href='{_e(resume_surface)}'>{_e(resume_surface)}</a>")
+            if resume_surface
+            else "none",
+        ),
         ("palette_quick_switch_recent_items", str(recent_count)),
         ("palette_quick_switch_card_count", "5"),
         ("palette_quick_switch_write_on_get", "false"),
@@ -29577,12 +29675,16 @@ def _recent_operator_links(root: Path, *, limit: int) -> list[tuple[str, str, st
     open_project = str(state.get("open_project") or "").strip()
     open_goal = str(state.get("open_goal") or "").strip()
     last_artifact = str(state.get("last_viewed_artifact") or "").strip()
+    resume_surface = _safe_local_return_path(state.get("resume_surface")) or ""
     last_action = str(state.get("last_action") or "").strip()
     last_action_href = _safe_local_return_path(state.get("last_action_next_href"))
     if last_action and last_action_href:
         links.append((f"Last action: {last_action}", last_action_href, "workspace action"))
-    if any([open_goal, open_project, last_artifact]):
-        links.append(("Resume workspace", "/resume", "workspace"))
+    if any([open_goal, open_project, last_artifact, resume_surface]):
+        if resume_surface:
+            links.append((f"Resume saved surface {resume_surface}", resume_surface, "workspace surface"))
+        else:
+            links.append(("Resume workspace", "/resume", "workspace"))
     if open_goal:
         links.append((f"Goal {open_goal}", f"/goals/{quote(open_goal)}", "workspace goal"))
     if open_project:

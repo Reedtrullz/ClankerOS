@@ -1,5 +1,42 @@
 # Status
 
+## 2026-06-28 Exact Workspace Resume Surface UX
+
+- Promoted `resume_surface` to a first-class saved workspace field in
+  `.clanker/app/workspace.json`.
+- Confirmed `save-workspace` now accepts `resume_surface` directly, or derives
+  it from safe local `return_to`, so artifact, goal, and action forms can save
+  the exact browser route the operator should return to tomorrow.
+- `/resume` now prefers the saved `resume_surface` as its primary return link
+  before falling back to the saved Goal or project, and exposes
+  `resume_saved_surface` evidence.
+- `/workspace` now renders saved and suggested `resume_surface` values in
+  restore state, save-default evidence, and the editable confirmed form.
+- Home's `Home Resume Workspace`, the Recent Items dock, the command palette
+  Quick Switch card, and shared recent operator links now prefer the exact
+  saved surface while retaining `/resume` as the hub route.
+- Project/Goal/delegation/coder browser actions that refresh workspace state
+  now also set an intentional safe local resume surface instead of preserving a
+  stale prior route.
+- Updated README, operating summary, local status focus, and focused local app
+  assertions for first-run, explicit workspace save, and demo workspace paths.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `3 passed, 513 deselected in 56.62s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `git diff --check` -> passed
+- Full pytest/browser regression proof is intentionally left to GitHub Actions
+  for this GitHub-first testing loop.
+- Non-claims until remote proof: no browser QA for this slice, no write on GET,
+  no provider call, no app-side GitHub polling, no approval decision, no
+  execution, no commit, no push, no PR, and no deploy from ClankerOS itself.
+
 ## 2026-06-28 Global Next Action Shortcut UX
 
 - Added a global keyboard-first `n` shortcut and visible header `Next` control
