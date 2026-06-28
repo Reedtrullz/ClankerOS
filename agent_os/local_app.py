@@ -865,6 +865,10 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-search-workbench-primary='true'",
                 "data-search-state-details='true'",
                 "data-search-workbench-evidence='true'",
+                "Search Result Map",
+                "data-search-result-map='true'",
+                "data-search-result-map-cards='true'",
+                "data-search-result-map-evidence='true'",
                 "data-search-command-evidence='true'",
                 demo.goal_id,
                 "artifact",
@@ -4252,6 +4256,7 @@ def _search_page(root: Path, *, query: str) -> str:
             "</details>",
             "</section>",
             _search_operator_workbench(term, results),
+            _search_result_map(term, results),
             _search_command_bar(term, results),
             _list_section(
                 "Search Results",
@@ -4340,6 +4345,112 @@ def _search_form(term: str) -> str:
         f"<label>q <input name='q' value='{_e(term)}'></label>"
         "<button type='submit'>search</button>"
         "</form>"
+    )
+
+
+def _search_result_map(term: str, results: list[dict[str, str]]) -> str:
+    lane_specs = [
+        ("goals", "Goals", {"goal"}, "Open goal"),
+        ("projects", "Projects", {"project"}, "Open project"),
+        ("work", "Work", {"task", "delegation", "run"}, "Open work"),
+        ("decisions", "Decisions", {"approval", "incident", "recommendation"}, "Open decision"),
+        ("knowledge", "Knowledge", {"memory", "skill"}, "Open knowledge"),
+        ("artifacts", "Artifacts", {"artifact"}, "Open artifact"),
+    ]
+    lanes: list[dict[str, str | int | bool]] = []
+    primary_lane = "goals"
+    primary_label = "Search form"
+    primary_href = "#search-form"
+    primary_reason = "enter a query to search indexed local state" if not term else "no matching local indexed records"
+    for key, label, categories, action in lane_specs:
+        lane_results = [item for item in results if item.get("category", "unknown") in categories]
+        first = lane_results[0] if lane_results else None
+        if first:
+            href = first["href"]
+            target = first["title"]
+            summary = f"{first['category']}: {first['summary']}"
+            card_action = action
+        else:
+            href = "#search-form" if not results else "#search-results"
+            target = "Search form" if not results else "Review results"
+            summary = "No matches in this lane."
+            card_action = "Refine search" if term else "Start search"
+        lanes.append(
+            {
+                "key": key,
+                "label": label,
+                "count": len(lane_results),
+                "href": href,
+                "target": target,
+                "summary": summary,
+                "action": card_action,
+                "ready": bool(lane_results),
+            }
+        )
+        if first and primary_href == "#search-form":
+            primary_lane = key
+            primary_label = str(target)
+            primary_href = str(href)
+            primary_reason = str(summary)
+    card_markup: list[str] = []
+    for lane in lanes:
+        is_primary = lane["key"] == primary_lane
+        status = "ready" if lane["ready"] else "empty"
+        card_class = "search-result-map-card search-result-map-primary" if is_primary else "search-result-map-card"
+        action_class = "search-result-map-action" if is_primary else "search-result-map-link"
+        card_markup.extend(
+            [
+                (
+                    f"<article class='{card_class}' data-search-result-lane='{_e(str(lane['key']))}' "
+                    f"data-search-result-status='{_e(status)}'>"
+                ),
+                f"<h3>{_e(str(lane['label']))}</h3>",
+                f"<p><strong>{_e(str(lane['count']))}</strong> results</p>",
+                f"<p>{_e(str(lane['summary']))}</p>",
+                f"<a class='{action_class}' href='{_e(str(lane['href']))}'>{_e(str(lane['action']))}</a>",
+                "</article>",
+            ]
+        )
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("search_result_map_status", "results_ready" if results else ("ready_for_query" if not term else "empty")),
+        ("search_result_map_query", term or "none"),
+        ("search_result_map_total_results", str(len(results))),
+        *[
+            (f"search_result_map_{lane['key']}_results", str(lane["count"]))
+            for lane in lanes
+        ],
+        ("search_result_map_primary_lane", primary_lane if results else "query"),
+        (
+            "search_result_map_primary_surface",
+            SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+        ),
+        ("search_result_map_primary_reason", primary_reason),
+        ("search_result_map_results_surface", SafeHtml("<a href='#search-results'>Search Results</a>")),
+        ("search_result_map_write_on_get", "false"),
+        ("search_result_map_network_actions_taken", "0"),
+        ("search_result_map_external_effects_created", "false"),
+        ("search_result_map_raw_filesystem_browsing", "false"),
+    ]
+    return "".join(
+        [
+            "<section id='search-result-map' class='panel search-result-map' data-search-result-map='true'><h2>Search Result Map</h2>",
+            "<p class='muted'>Category lanes before the flat local result list.</p>",
+            "<div class='search-result-map-grid' data-search-result-map-cards='true'>",
+            *card_markup,
+            "</div>",
+            "<details class='search-result-map-evidence' data-search-result-map-evidence='true'><summary>Search result map evidence</summary>",
+            _kv(rows),
+            _ul(
+                [
+                    f"search_result_map_now: {_e(primary_label)}",
+                    f"search_result_map_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                    f"search_result_map_reason: {_e(primary_reason)}",
+                    "search_result_map_safety: read-only indexed search; no raw filesystem browsing",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
     )
 
 
@@ -29467,9 +29578,18 @@ def _html_page(
     .search-workbench-action, .search-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .search-workbench-action {{ background:var(--accent); color:#fff; }}
     .search-workbench-link {{ background:var(--surface); color:var(--accent); }}
-    .search-state-details, .search-command-evidence, .search-workbench-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .search-state-details summary, .search-command-evidence summary, .search-workbench-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .search-state-details:not([open]) > :not(summary), .search-command-evidence:not([open]) > :not(summary), .search-workbench-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .search-result-map {{ border-left:4px solid var(--accent); }}
+    .search-result-map-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:10px; margin:12px 0; }}
+    .search-result-map-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .search-result-map-card h3 {{ margin-top:0; }}
+    .search-result-map-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .search-result-map-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .search-result-map-action, .search-result-map-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .search-result-map-action {{ background:var(--accent); color:#fff; }}
+    .search-result-map-link {{ background:var(--surface); color:var(--accent); }}
+    .search-state-details, .search-command-evidence, .search-workbench-evidence, .search-result-map-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .search-state-details summary, .search-command-evidence summary, .search-workbench-evidence summary, .search-result-map-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .search-state-details:not([open]) > :not(summary), .search-command-evidence:not([open]) > :not(summary), .search-workbench-evidence:not([open]) > :not(summary), .search-result-map-evidence:not([open]) > :not(summary) {{ display:none; }}
     .first-run-command-bar {{ border-left:4px solid var(--accent); margin:12px 0; }}
     .first-run-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .first-run-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -29900,7 +30020,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

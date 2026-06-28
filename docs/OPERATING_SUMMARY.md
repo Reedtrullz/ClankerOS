@@ -183,8 +183,10 @@ Core layers for the bootstrap:
   recommended next action, and remaining-work counts. It is content-first and
   opens with a visible `Search Operator Workbench` before shared route/focus
   diagnostics, with cards for query, first useful hit, result list, and
-  `/resume`. Search state, workbench evidence, and command evidence stay
-  collapsed by default while preserving result counts by category, first
+  `/resume`. A visible read-only `Search Result Map` follows with Goals,
+  Projects, Work, Decisions, Knowledge, and Artifacts lane cards before the
+  flat result list. Search state, result-map, workbench, and command evidence
+  stay collapsed by default while preserving result counts by category, first
   result, target link, summary, and no-write/no-network/no-raw-filesystem
   boundaries in the DOM;
   `/incidents` is action-first and includes a visible read-only

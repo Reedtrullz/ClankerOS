@@ -539,8 +539,11 @@ remaining-work counts, so action or phase searches can return the Goal to
 continue. `/search` is now content-first and opens with a visible
 `Search Operator Workbench` before shared route/focus diagnostics, turning the
 query, first useful hit, result list, and `/resume` into four browser cards.
-Search state, workbench evidence, and command evidence stay collapsed by
-default while preserving result counts, first-result target links, and the
+It now follows with a visible read-only `Search Result Map` for Goals,
+Projects, Work, Decisions, Knowledge, and Artifacts, so category counts and
+first targets are visible before the flat result list. Search state, result
+map, workbench evidence, and command evidence stay collapsed by default while
+preserving result counts, first-result target links, and the
 no-write/no-network/no-raw-filesystem boundary in the DOM. Use `/memory`, `/skills`, and
 `/profiles` for local readbacks of memory entries, generated skills/usage,
 and inactive future provider-routing lanes. `/memory` is now action-first and

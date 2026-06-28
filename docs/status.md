@@ -175,9 +175,12 @@ Latest status focus:
   resume, workspace, and zero-effect proof in the DOM.
 - `/search` is now content-first and search-action-first: it opens with the
   `Search Operator Workbench` before shared route/focus diagnostics, shows
-  visible Query, Open, Results, and Resume cards, and keeps search state,
-  workbench evidence, and command evidence collapsed by default while
-  preserving bounded indexed-search proof and zero-effect counters in the DOM.
+  visible Query, Open, Results, and Resume cards, then follows with a
+  `Search Result Map` for Goals, Projects, Work, Decisions, Knowledge, and
+  Artifacts lane cards before command evidence or the flat result list. Search
+  state, result-map, workbench, and command evidence stay collapsed by default
+  while preserving bounded indexed-search proof and zero-effect counters in
+  the DOM.
 - `/today` is now content-first and command-center-first: it opens with the
   `Today Command Center` before shared route/focus diagnostics, keeps Today
   state, command, and workbench evidence collapsed by default, and opens the

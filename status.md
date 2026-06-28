@@ -1,5 +1,36 @@
 # Status
 
+## 2026-06-28 Search Result Map UX
+
+- Added a visible read-only `Search Result Map` to `/search` between the
+  Search Operator Workbench and dense command/result sections.
+- The map turns global search results into six scan-first lanes: Goals,
+  Projects, Work, Decisions, Knowledge, and Artifacts, each with result
+  counts, first-target links, and collapsed result-map evidence.
+- Updated README, operating summary, local status docs, demo route markers,
+  and focused search assertions for empty and fixture-backed search states.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected in 39.79s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed; provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed; fixture-backed `/search?q=fixture-backed` matched, provider
+    calls `0`, network actions `0`, external mutations `0`
+  - `git diff --check` -> passed
+  - In-app browser QA against bounded demo data on `127.0.0.1:8861` -> passed:
+    desktop and 390px mobile showed 6 lane cards, collapsed evidence, correct
+    workbench/map/command ordering, goal primary target, no console warnings or
+    errors, and no horizontal overflow after the auto-fit grid fix
+  - `lsof -nP -iTCP:8861 -sTCP:LISTEN` after cleanup -> no listener
+- Non-claims until remote proof: GitHub Actions proof is not yet complete for
+  this slice. The change is intended to remain a local readback/navigation UX
+  improvement: no write on GET, no approval, no execution, no provider call, no
+  external network action beyond local browser/server loopback, no PR, and no
+  deploy from ClankerOS itself.
+
 ## 2026-06-28 Inbox Triage Board UX
 
 - Added a visible read-only `Inbox Triage Board` to `/inbox` between the
