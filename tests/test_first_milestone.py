@@ -5845,7 +5845,45 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-open-details='true' href='#save-workspace'" in workspace.body
     assert workspace.body.index("data-workspace-operator-workbench='true'") < workspace.body.index("data-workspace-daily-brief='true'")
     assert workspace.body.index("data-workspace-operator-workbench='true'") < workspace.body.index("data-route-context='true'")
+    assert workspace.body.index("data-workspace-operator-workbench='true'") < workspace.body.index("data-workspace-restore-map='true'")
+    assert workspace.body.index("data-workspace-restore-map='true'") < workspace.body.index("data-workspace-daily-brief='true'")
     assert workspace.body.index("data-workspace-state-details='true'") < workspace.body.index("id='save-workspace'")
+    assert "Workspace Restore Map" in workspace.body
+    assert "data-workspace-restore-map='true'" in workspace.body
+    assert "data-workspace-restore-actions='true'" in workspace.body
+    assert "data-workspace-restore-map-evidence='true'" in workspace.body
+    assert workspace.body.count("class='workspace-restore-card") == 5
+    assert "data-workspace-restore-card='restore'" in workspace.body
+    assert "data-workspace-restore-card='goal'" in workspace.body
+    assert "data-workspace-restore-card='artifact'" in workspace.body
+    assert "data-workspace-restore-card='preferences'" in workspace.body
+    assert "data-workspace-restore-card='tomorrow'" in workspace.body
+    assert "workspace_restore_map_status</dt><dd>first_run" in workspace.body
+    assert "workspace_restore_map_source</dt><dd>first_run_progress" in workspace.body
+    assert (
+        "workspace_restore_map_primary_surface</dt><dd><a href='/#first-run-create-project'>"
+        "Create Project</a>"
+    ) in workspace.body
+    assert "workspace_restore_map_saved_resume_surface</dt><dd>none" in workspace.body
+    assert (
+        "workspace_restore_map_suggested_resume_surface</dt><dd>"
+        "<a href='/#first-run-create-project'>/#first-run-create-project</a>"
+    ) in workspace.body
+    assert "workspace_restore_map_project</dt><dd>none" in workspace.body
+    assert "workspace_restore_map_goal</dt><dd>none" in workspace.body
+    assert "workspace_restore_map_last_artifact</dt><dd>none" in workspace.body
+    assert "workspace_restore_map_filters_status</dt><dd>missing" in workspace.body
+    assert "workspace_restore_map_panels_status</dt><dd>missing" in workspace.body
+    assert "workspace_restore_map_readiness_status</dt><dd>not_started" in workspace.body
+    assert "workspace_restore_map_restore_ready</dt><dd>false" in workspace.body
+    assert "workspace_restore_map_open_project_saved</dt><dd>false" in workspace.body
+    assert "workspace_restore_map_open_goal_saved</dt><dd>false" in workspace.body
+    assert "workspace_restore_map_card_count</dt><dd>5" in workspace.body
+    assert "workspace_restore_map_write_on_get</dt><dd>false" in workspace.body
+    assert "workspace_restore_map_network_actions_taken</dt><dd>0" in workspace.body
+    assert "workspace_restore_map_external_effects_created</dt><dd>false" in workspace.body
+    assert "workspace_restore_map_card: restore surface=<a href='/#first-run-create-project'>Create Project</a>" in workspace.body
+    assert "workspace_restore_map_safety: read-only restore guidance" in workspace.body
     assert "workspace_save_defaults_status</dt><dd>first_run" in workspace.body
     assert "workspace_save_defaults_source</dt><dd>first_run_progress" in workspace.body
     assert "workspace_save_defaults_open_project</dt><dd>none" in workspace.body
@@ -6033,6 +6071,24 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "/goals/goal_demo" in workspace_saved.body
     assert "Project first-app" in workspace_saved.body
     assert "/projects/first-app" in workspace_saved.body
+    assert "Workspace Restore Map" in workspace_saved.body
+    assert "workspace_restore_map_status</dt><dd>saved_surface" in workspace_saved.body
+    assert "workspace_restore_map_source</dt><dd>saved_workspace_state" in workspace_saved.body
+    assert (
+        "workspace_restore_map_primary_surface</dt><dd><a href='/goals/goal_demo#goal-timeline-command-bar'>"
+        "Open saved surface</a>"
+    ) in workspace_saved.body
+    assert (
+        "workspace_restore_map_saved_resume_surface</dt><dd><a href='/goals/goal_demo#goal-timeline-command-bar'>"
+        "/goals/goal_demo#goal-timeline-command-bar</a>"
+    ) in workspace_saved.body
+    assert "workspace_restore_map_project</dt><dd>first-app" in workspace_saved.body
+    assert "workspace_restore_map_goal</dt><dd>goal_demo" in workspace_saved.body
+    assert "workspace_restore_map_filters_status</dt><dd>saved" in workspace_saved.body
+    assert "workspace_restore_map_panels_status</dt><dd>saved" in workspace_saved.body
+    assert "workspace_restore_map_open_project_saved</dt><dd>true" in workspace_saved.body
+    assert "workspace_restore_map_open_goal_saved</dt><dd>true" in workspace_saved.body
+    assert "workspace_restore_map_resume_hub_surface</dt><dd><a href='/resume'>/resume</a>" in workspace_saved.body
     resume_saved = render_local_app_route(tmp_path, "/resume")
     assert "Open saved surface /goals/goal_demo#goal-timeline-command-bar" in resume_saved.body
     assert (
@@ -8938,6 +8994,31 @@ def test_local_app_demo_scenario_populates_fixture_state(
 
     workspace_with_demo = render_local_app_route(tmp_path, "/workspace")
     assert workspace_with_demo.status == 200
+    assert "Workspace Restore Map" in workspace_with_demo.body
+    assert "data-workspace-restore-map='true'" in workspace_with_demo.body
+    assert "data-workspace-restore-actions='true'" in workspace_with_demo.body
+    assert "data-workspace-restore-map-evidence='true'" in workspace_with_demo.body
+    assert workspace_with_demo.body.count("class='workspace-restore-card") == 5
+    assert "workspace_restore_map_status</dt><dd>suggested_from_lead_goal" in workspace_with_demo.body
+    assert "workspace_restore_map_source</dt><dd>lead_goal" in workspace_with_demo.body
+    assert (
+        f"workspace_restore_map_primary_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        "Open suggested Goal</a>"
+    ) in workspace_with_demo.body
+    assert "workspace_restore_map_saved_resume_surface</dt><dd>none" in workspace_with_demo.body
+    assert (
+        f"workspace_restore_map_suggested_resume_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"/goals/{result.goal_id}</a>"
+    ) in workspace_with_demo.body
+    assert "workspace_restore_map_project</dt><dd>local-app-demo" in workspace_with_demo.body
+    assert f"workspace_restore_map_goal</dt><dd>{result.goal_id}" in workspace_with_demo.body
+    assert result.review_path.relative_to(tmp_path).as_posix() in workspace_with_demo.body
+    assert "workspace_restore_map_filters_status</dt><dd>suggested" in workspace_with_demo.body
+    assert "workspace_restore_map_panels_status</dt><dd>suggested" in workspace_with_demo.body
+    assert "workspace_restore_map_readiness_status</dt><dd>not_started" in workspace_with_demo.body
+    assert "workspace_restore_map_restore_ready</dt><dd>false" in workspace_with_demo.body
+    assert "workspace_restore_map_save_surface</dt><dd><a href='#save-workspace'>#save-workspace</a>" in workspace_with_demo.body
+    assert "workspace_restore_map_card: tomorrow surface=<a href='#save-workspace'>Save return point</a>" in workspace_with_demo.body
     assert "data-workspace-save-defaults='true'" in workspace_with_demo.body
     assert (
         "workspace_save_defaults_status</dt><dd>suggested_from_lead_goal"

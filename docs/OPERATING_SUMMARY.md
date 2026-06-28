@@ -255,7 +255,9 @@ Core layers for the bootstrap:
   artifact values, and exact `resume_surface` while reporting
   `workspace_save_defaults_write_on_get=false`.
   The same Goal-page action form appears immediately below the workbench when
-  browser-available, followed by the
+  browser-available, followed by a read-only `Workspace Restore Map` with
+  Restore, Goal, Artifact, Filters + Panels, and Tomorrow cards that make saved
+  versus suggested return state explicit before the
   read-only `Workspace Daily Brief` and `Workspace Workflow Map` for the saved
   goal's phase, current gate, resume readiness, finish posture, and zero-effect
   counters. Saved-state and restore-link readbacks stay inside collapsed

@@ -1,5 +1,28 @@
 # Status
 
+## 2026-06-29 Workspace Restore Map UX
+
+- Added a visible read-only `Workspace Restore Map` to `/workspace` after the
+  operator workbench/action form and before the daily brief.
+- The map turns tomorrow's return state into five cards: Restore, Goal,
+  Artifact, Filters + Panels, and Tomorrow.
+- It distinguishes saved workspace state from suggested lead-goal or first-run
+  defaults, including the exact `resume_surface` when one is saved.
+- Collapsed restore-map evidence records saved versus suggested resume
+  surfaces, project/Goal/artifact/filter/panel readiness, restore readiness,
+  `/resume`, `#save-workspace`, card count, and zero-effect counters.
+- Updated README, operating summary, local status focus, focused workspace
+  route assertions, and fixture-backed demo workspace assertions.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `python3 -m compileall -q agent_os tests`, focused
+  `tests/test_first_milestone.py` route/demo coverage
+  (`2 passed, 514 deselected in 45.35s`), `app-smoke-test`,
+  `app-demo-smoke-test`, and `git diff --check`.
+- Non-claims: no browser QA for this slice, no write on GET, no workspace save
+  without confirmation, no approval or execution on GET, no app-side GitHub
+  polling, no PR, and no deploy from ClankerOS itself.
+
 ## 2026-06-29 Artifact Relationship Map UX
 
 - Added a visible read-only `Artifact Relationship Map` to

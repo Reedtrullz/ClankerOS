@@ -236,7 +236,10 @@ that form is prefilled from the current project, Goal, goal-scoped filters,
 latest artifact, and exact `resume_surface` route, with a
 `Workspace save defaults` evidence block showing that the values are
 suggestions only and nothing was written on GET. The
-read-only `Workspace Daily Brief` and `Workspace Workflow Map` follow with the
+read-only `Workspace Restore Map` follows with Restore, Goal, Artifact,
+Filters + Panels, and Tomorrow cards that distinguish saved workspace state
+from suggested defaults before the longer checklist. The read-only
+`Workspace Daily Brief` and `Workspace Workflow Map` then follow with the
 saved goal's current gate, gate counts, and finish posture, while saved-state
 and restore-link readbacks stay inside collapsed evidence.
 Before a saved Goal exists, `/workspace` now follows the
