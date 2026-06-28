@@ -8914,7 +8914,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-action-dock='true'" in goal.body
     assert "data-goal-action-dock-grid='true'" in goal.body
     assert "goal_action_dock_status</dt><dd>available" in goal.body
-    assert "goal_action_dock_position</dt><dd>fixed_bottom_desktop" in goal.body
+    assert "goal_action_dock_position</dt><dd>flow" in goal.body
     assert f"goal_action_dock_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_action_dock_project</dt><dd>{result.project_id}" in goal.body
     assert "goal_action_dock_phase</dt><dd>Ready to commit" in goal.body
@@ -9754,6 +9754,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Memory" in goal.body
     assert "Goal Memory Command Bar" in goal.body
     assert "data-goal-memory-command-bar='true'" in goal.body
+    assert "data-goal-memory-actions='true'" in goal.body
+    assert "data-goal-memory-now='true'" in goal.body
+    assert "data-goal-memory-primary='true'" in goal.body
+    assert "data-goal-memory-notes='true'" in goal.body
+    assert "data-goal-memory-bank='true'" in goal.body
+    assert "data-goal-memory-pin='true'" in goal.body
+    assert "data-goal-memory-safety='true'" in goal.body
+    assert "data-goal-memory-evidence='true'" in goal.body
+    assert "data-goal-memory-list='true'" in goal.body
+    assert "Goal memory command evidence" in goal.body
+    assert "Detailed memory readback (17)" in goal.body
     assert "<a href='#goal-memory-command-bar'>Memory command</a>" in goal.body
     assert f"goal_memory_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_memory_command_project</dt><dd>{result.project_id}" in goal.body
@@ -9803,6 +9814,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "pin_memory_action: planned_local_only" not in goal.body
     assert "Goal Skills Command Bar" in goal.body
     assert "data-goal-skills-command-bar='true'" in goal.body
+    assert "data-goal-skills-actions='true'" in goal.body
+    assert "data-goal-skills-now='true'" in goal.body
+    assert "data-goal-skills-primary='true'" in goal.body
+    assert "data-goal-skills-record='true'" in goal.body
+    assert "data-goal-skills-usage='true'" in goal.body
+    assert "data-goal-skills-profile='true'" in goal.body
+    assert "data-goal-skills-safety='true'" in goal.body
+    assert "data-goal-skills-evidence='true'" in goal.body
+    assert "data-goal-skills-list='true'" in goal.body
+    assert "Goal skills command evidence" in goal.body
+    assert "Detailed skill usage (5)" in goal.body
     assert "<a href='#goal-skills-command-bar'>Skills command</a>" in goal.body
     assert f"goal_skills_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_skills_command_project</dt><dd>{result.project_id}" in goal.body
@@ -9847,6 +9869,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Git Status" in goal.body
     assert "Goal Git Command Bar" in goal.body
     assert "data-goal-git-command-bar='true'" in goal.body
+    assert "data-goal-git-actions='true'" in goal.body
+    assert "data-goal-git-now='true'" in goal.body
+    assert "data-goal-git-primary='true'" in goal.body
+    assert "data-goal-git-branch='true'" in goal.body
+    assert "data-goal-git-changes='true'" in goal.body
+    assert "data-goal-git-proof='true'" in goal.body
+    assert "data-goal-git-safety='true'" in goal.body
+    assert "data-goal-git-evidence='true'" in goal.body
+    assert "data-goal-git-snapshot='true'" in goal.body
+    assert "Goal git command evidence" in goal.body
+    assert "Repository snapshot" in goal.body
     assert "<a href='#goal-git-command-bar'>Git command</a>" in goal.body
     assert f"goal_git_command_project</dt><dd>{result.project_id}" in goal.body
     assert "goal_git_command_posture</dt><dd>clean" in goal.body

@@ -285,10 +285,9 @@ Goal Jump Bar for phase, action, workflow, timeline, evidence, artifacts,
 notes, git, and remaining work. Its visible `1`-`9` key badges and
 `aria-keyshortcuts` jump to those local anchors without submitting forms,
 while jump-state evidence stays collapsed by default,
-then a compact fixed desktop `Goal Action Dock` keeps the current action, gate,
-CI proof target, and resume route visible while jumping directly to the
-existing confirmed Goal action form when one is available. The dock becomes
-static on narrow screens and
+then an in-flow `Goal Action Dock` keeps the current action, gate, CI proof
+target, and resume route near the top of the workbench while jumping directly
+to the existing confirmed Goal action form when one is available. The dock
 precedes the Goal Command Bar, Goal
 Operator Workbench, Goal Daily Loop, Goal Return Brief, Goal Continuation Rail,
 next action, next recommendation, Goal Workflow Map, Goal CI Handoff, live
@@ -351,9 +350,11 @@ current blocker or next safe action, links the relevant local surface, and only
 offers the confirmed `complete-goal` form after the manual publish handoff is
 ready. The Goal
 Git Status section now starts with a read-only `Goal Git Command Bar` that
+opens with visible Now, Branch, Changes, Proof, and Safety cards. It still
 summarizes the registered project root, branch, commit, clean/dirty posture,
 tracked and untracked counts, latest goal-linked `git_status.txt` evidence
-when available, and one next local surface without fetching GitHub status or
+when available, and one next local surface, but the detailed command evidence
+and repository snapshot stay collapsed without fetching GitHub status or
 mutating the repo. The Goal
 Daily Loop turns the same local state into start/continue/unblock/finish cues:
 `/resume`, the current next action, the first approval/incident/recommendation
@@ -386,9 +387,10 @@ section names whether the recommendation
 comes from an open task recommendation or from current phase plus local goal
 records, then points at the local target surface without writing on GET.
 The in-flow Goal Jump Bar keeps the most-used in-page anchors one click or
-one keypress away without covering later controls. The Goal Action Dock keeps
-the current action one click away from deep scroll positions by jumping
-directly to the confirmed form without adding a second action form. The Goal
+one keypress away without covering later controls. The in-flow Goal Action
+Dock keeps the current action, gate, proof, and resume route visible near the
+top of the Goal without covering later controls, and jumps directly to the
+confirmed form without adding a second action form. The Goal
 Next Action focus strip makes the selected action
 readable at the point of decision and keeps the confirmed form ahead of
 diagnostic evidence, while the Goal Section Index near the top links to the
@@ -426,12 +428,15 @@ GitHub polling.
 Goal Memory starts with a read-only `Goal Memory Command Bar` that summarizes
 project/global memory artifacts, project/active/proposed/global/generated entry
 counts, operator-note state, future-work count, pinning posture, one next local
-memory action, and zero-effect boundaries before the detailed memory readback.
+memory action, and zero-effect boundaries as visible Now, Notes, Memory Bank,
+Pin, and Safety cards before collapsed command evidence and detailed memory
+readback.
 Skills Used starts with a read-only `Goal Skills Command Bar` that summarizes
 task skill tags, matching generated or available skill records, usage and
 project counts, delegation profile usage, one `/skills` or `/profiles` review
-target, and no-execution/no-install/no-network boundaries before the detailed
-skill readback.
+target, and no-execution/no-install/no-network boundaries as visible Now,
+Record, Usage, Profile, and Safety cards before collapsed command evidence and
+detailed skill readback.
 Timeline entries link back to the relevant local artifact, delegation, run,
 approval queue, or goal surface, and render as scan-first event rows with
 time, event-kind badge, clickable message, and target badge. The timeline also

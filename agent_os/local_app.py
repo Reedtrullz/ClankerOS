@@ -669,6 +669,30 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-goal-artifact-list='true'",
                 "data-goal-artifact-explorer-evidence='true'",
                 "data-goal-artifact-groups='true'",
+                "data-goal-memory-actions='true'",
+                "data-goal-memory-now='true'",
+                "data-goal-memory-notes='true'",
+                "data-goal-memory-bank='true'",
+                "data-goal-memory-pin='true'",
+                "data-goal-memory-safety='true'",
+                "data-goal-memory-evidence='true'",
+                "data-goal-memory-list='true'",
+                "data-goal-skills-actions='true'",
+                "data-goal-skills-now='true'",
+                "data-goal-skills-record='true'",
+                "data-goal-skills-usage='true'",
+                "data-goal-skills-profile='true'",
+                "data-goal-skills-safety='true'",
+                "data-goal-skills-evidence='true'",
+                "data-goal-skills-list='true'",
+                "data-goal-git-actions='true'",
+                "data-goal-git-now='true'",
+                "data-goal-git-branch='true'",
+                "data-goal-git-changes='true'",
+                "data-goal-git-proof='true'",
+                "data-goal-git-safety='true'",
+                "data-goal-git-evidence='true'",
+                "data-goal-git-snapshot='true'",
                 "data-goal-remaining-work-actions='true'",
                 "data-goal-remaining-work-now='true'",
                 "data-goal-remaining-work-progress='true'",
@@ -8049,7 +8073,7 @@ def _goal_action_dock(
             _kv(
                 [
                     ("goal_action_dock_status", "available"),
-                    ("goal_action_dock_position", "fixed_bottom_desktop"),
+                    ("goal_action_dock_position", "flow"),
                     ("goal_action_dock_goal", goal.id),
                     ("goal_action_dock_project", goal.project_id),
                     ("goal_action_dock_phase", phase),
@@ -13239,10 +13263,13 @@ def _goal_memory_lines(root: Path, state: dict[str, Any]) -> list[str]:
 
 def _goal_memory_section(root: Path, state: dict[str, Any]) -> str:
     lines = _goal_memory_lines(root, state)
-    return _goal_memory_command_bar(root, state, lines) + _list_section(
+    return _goal_memory_command_bar(root, state, lines) + _collapsible_list_section(
         "Memory",
         lines,
         anchor_id="goal-memory",
+        details_class="goal-memory-list",
+        data_attr="goal-memory-list",
+        summary=f"Detailed memory readback ({len(lines)})",
     )
 
 
@@ -13346,10 +13373,54 @@ def _goal_memory_command_bar(
         status = "empty"
 
     target_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    notes_href = (
+        _artifact_href(root, operator_notes)
+        if operator_note_status == "available"
+        else "#goal-operator-notes"
+    )
+    notes_label = "Open notes" if operator_note_status == "available" else "Capture note"
+    memory_cards = "".join(
+        [
+            "<div class='goal-memory-card goal-memory-primary' data-goal-memory-now='true'>",
+            "<h3>Now</h3>",
+            f"<strong>{_e(next_action)}</strong>",
+            f"<p>{_e(reason)}</p>",
+            f"<a class='goal-memory-action' data-goal-memory-primary='true' href='{_e(target_href)}'>Open</a>",
+            "</div>",
+            "<div class='goal-memory-card' data-goal-memory-notes='true'>",
+            "<h3>Notes</h3>",
+            f"<strong>{_e(operator_note_status)}</strong>",
+            f"<p>Project memory {project_memory_status}; global memory {global_memory_status}.</p>",
+            f"<a class='goal-memory-link' href='{_e(notes_href)}'>{_e(notes_label)}</a>",
+            "</div>",
+            "<div class='goal-memory-card' data-goal-memory-bank='true'>",
+            "<h3>Memory Bank</h3>",
+            f"<strong>{len(project_entries)} project / {len(global_entries)} global</strong>",
+            f"<p>{len(active_entries)} active, {len(generated_entries)} generated.</p>",
+            "<a class='goal-memory-link' href='/memory'>Open memory</a>",
+            "</div>",
+            "<div class='goal-memory-card' data-goal-memory-pin='true'>",
+            "<h3>Pin</h3>",
+            f"<strong>{len(proposed_entries)} proposed</strong>",
+            f"<p>{len(future_work)} future-work item(s) linked to this goal.</p>",
+            "<a class='goal-memory-link' href='/memory#memory-proposed'>Review pins</a>",
+            "</div>",
+            "<div class='goal-memory-card' data-goal-memory-safety='true'>",
+            "<h3>Safety</h3>",
+            "<strong>read-only posture</strong>",
+            "<p>No raw filesystem browsing, providers, network actions, or writes on GET.</p>",
+            "<a class='goal-memory-link' href='#goal-operator-notes'>Operator notes</a>",
+            "</div>",
+        ]
+    )
     return "".join(
         [
             "<section id='goal-memory-command-bar' class='panel goal-memory-command-bar' data-goal-memory-command-bar='true'><h3>Goal Memory Command Bar</h3>",
             "<p class='muted'>Goal-scoped memory posture before the detailed memory readback.</p>",
+            "<div class='goal-memory-grid' data-goal-memory-actions='true'>",
+            memory_cards,
+            "</div>",
+            "<details class='goal-memory-command-evidence' data-goal-memory-evidence='true'><summary>Goal memory command evidence</summary>",
             _kv(
                 [
                     ("goal_memory_command_goal", goal.id),
@@ -13398,6 +13469,7 @@ def _goal_memory_command_bar(
                     "goal_memory_safety: read-only local memory posture",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -13415,10 +13487,13 @@ def _goal_memory_entry_summary(entry: Any | None) -> str:
 
 def _goal_skill_section(root: Path, state: dict[str, Any]) -> str:
     lines = _goal_skill_lines(root, state)
-    return _goal_skill_command_bar(root, state, lines) + _list_section(
+    return _goal_skill_command_bar(root, state, lines) + _collapsible_list_section(
         "Skills Used",
         lines,
         anchor_id="goal-skills-used",
+        details_class="goal-skills-list",
+        data_attr="goal-skills-list",
+        summary=f"Detailed skill usage ({len(lines)})",
     )
 
 
@@ -13524,10 +13599,56 @@ def _goal_skill_command_bar(
     else:
         status = "empty"
     target_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    first_artifact_href = (
+        _artifact_href(root, first_skill.path)
+        if first_skill is not None
+        else "/skills"
+    )
+    first_artifact_label = (
+        "Open skill artifact" if first_skill is not None else "Open skills"
+    )
+    skills_cards = "".join(
+        [
+            "<div class='goal-skills-card goal-skills-primary' data-goal-skills-now='true'>",
+            "<h3>Now</h3>",
+            f"<strong>{_e(next_action)}</strong>",
+            f"<p>{_e(reason)}</p>",
+            f"<a class='goal-skills-action' data-goal-skills-primary='true' href='{_e(target_href)}'>Open</a>",
+            "</div>",
+            "<div class='goal-skills-card' data-goal-skills-record='true'>",
+            "<h3>Record</h3>",
+            f"<strong>{_e(first_target)}</strong>",
+            f"<p>{len(matching_skills)} matching, {len(generated_skills)} generated.</p>",
+            f"<a class='goal-skills-link' href='{_e(first_artifact_href)}'>{_e(first_artifact_label)}</a>",
+            "</div>",
+            "<div class='goal-skills-card' data-goal-skills-usage='true'>",
+            "<h3>Usage</h3>",
+            f"<strong>{len(skill_tags)} tag(s)</strong>",
+            f"<p>{total_usage_count} recorded use(s); projects: {_e(project_label)}.</p>",
+            "<a class='goal-skills-link' href='/skills'>Skills inventory</a>",
+            "</div>",
+            "<div class='goal-skills-card' data-goal-skills-profile='true'>",
+            "<h3>Profile</h3>",
+            f"<strong>{len(profile_counts)} profile(s)</strong>",
+            f"<p>{_e(profile_usage)}</p>",
+            "<a class='goal-skills-link' href='/profiles'>Profiles</a>",
+            "</div>",
+            "<div class='goal-skills-card' data-goal-skills-safety='true'>",
+            "<h3>Safety</h3>",
+            "<strong>review only</strong>",
+            "<p>No skill execution, install, providers, network actions, or writes on GET.</p>",
+            "<a class='goal-skills-link' href='#goal-skills-used'>Detailed usage</a>",
+            "</div>",
+        ]
+    )
     return "".join(
         [
             "<section id='goal-skills-command-bar' class='panel goal-skills-command-bar' data-goal-skills-command-bar='true'><h3>Goal Skills Command Bar</h3>",
             "<p class='muted'>Goal-scoped skill posture before the detailed skill usage readback.</p>",
+            "<div class='goal-skills-grid' data-goal-skills-actions='true'>",
+            skills_cards,
+            "</div>",
+            "<details class='goal-skills-command-evidence' data-goal-skills-evidence='true'><summary>Goal skills command evidence</summary>",
             _kv(
                 [
                     ("goal_skills_command_goal", goal.id),
@@ -13567,6 +13688,7 @@ def _goal_skill_command_bar(
                     "goal_skills_safety: read-only local skill posture",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -13629,10 +13751,60 @@ def _goal_git_status(root: Path, state: dict[str, Any]) -> str:
     latest_git_status_link = (
         SafeHtml(_artifact_link(latest_git_status)) if latest_git_status else "none"
     )
+    git_target_action = SafeHtml(
+        str(next_target).replace(
+            "<a ",
+            "<a class='goal-git-action' data-goal-git-primary='true' ",
+            1,
+        )
+    )
+    git_proof_link = (
+        _artifact_link(latest_git_status)
+        if latest_git_status
+        else "<a href='#goal-verification-evidence'>Verification evidence</a>"
+    )
+    git_cards = "".join(
+        [
+            "<div class='goal-git-card goal-git-primary' data-goal-git-now='true'>",
+            "<h3>Now</h3>",
+            f"<strong>{_e(next_action)}</strong>",
+            f"<p>{_e(posture)}</p>",
+            str(git_target_action),
+            "</div>",
+            "<div class='goal-git-card' data-goal-git-branch='true'>",
+            "<h3>Branch</h3>",
+            f"<strong>{_e(repo['branch'])}</strong>",
+            f"<p>{_e(repo['commit'])}</p>",
+            f"<a class='goal-git-link' href='/projects/{quote(goal.project_id)}'>Project</a>",
+            "</div>",
+            "<div class='goal-git-card' data-goal-git-changes='true'>",
+            "<h3>Changes</h3>",
+            f"<strong>{len(tracked_files)} tracked / {len(untracked_files)} untracked</strong>",
+            f"<p>{_e(_goal_git_file_sample(tracked_files or untracked_files))}</p>",
+            "<a class='goal-git-link' href='#goal-git-status'>Snapshot</a>",
+            "</div>",
+            "<div class='goal-git-card' data-goal-git-proof='true'>",
+            "<h3>Proof</h3>",
+            "<strong>local status only</strong>",
+            f"<p>{git_proof_link}</p>",
+            "<a class='goal-git-link' href='#goal-verification-evidence'>Verification</a>",
+            "</div>",
+            "<div class='goal-git-card' data-goal-git-safety='true'>",
+            "<h3>Safety</h3>",
+            "<strong>no fetch</strong>",
+            "<p>Reads local git state only; no GitHub fetch, providers, writes, or external effects.</p>",
+            "<a class='goal-git-link' href='#goal-ci-handoff'>CI handoff</a>",
+            "</div>",
+        ]
+    )
     return "".join(
         [
             "<section id='goal-git-status'><h2>Git Status</h2>",
             "<section id='goal-git-command-bar' class='panel goal-git-command-bar' data-goal-git-command-bar='true'><h3>Goal Git Command Bar</h3>",
+            "<div class='goal-git-grid' data-goal-git-actions='true'>",
+            git_cards,
+            "</div>",
+            "<details class='goal-git-command-evidence' data-goal-git-evidence='true'><summary>Goal git command evidence</summary>",
             _kv(
                 [
                     ("goal_git_command_project", goal.project_id),
@@ -13659,8 +13831,9 @@ def _goal_git_status(root: Path, state: dict[str, Any]) -> str:
                     "goal_git_command_safety: local git readback only",
                 ]
             ),
+            "</details>",
             "</section>",
-            "<h3>Repository Snapshot</h3>",
+            "<details class='goal-git-snapshot' data-goal-git-snapshot='true'><summary>Repository snapshot</summary>",
             _kv(
                 [
                     ("project", goal.project_id),
@@ -13673,6 +13846,7 @@ def _goal_git_status(root: Path, state: dict[str, Any]) -> str:
                     ("ahead_of_origin_main", str(repo["ahead_of_origin_main"]).lower()),
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -26520,8 +26694,8 @@ def _html_page(
     .goal-jump-evidence:not([open]) > :not(summary), .goal-section-index-evidence:not([open]) > :not(summary) {{ display:none; }}
     .goal-section-index ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:8px; }}
     .goal-section-index li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
-    body:has(.goal-action-dock) main {{ padding-bottom:150px; }}
-    .goal-action-dock {{ position:fixed; left:max(304px, calc((100vw - 1280px) / 2 + 304px)); right:max(24px, calc((100vw - 1280px) / 2 + 24px)); bottom:16px; z-index:3; max-height:42vh; overflow:auto; border-left:4px solid var(--ok); margin:0; box-shadow:0 4px 16px rgba(15,20,25,.16); }}
+    body:has(.goal-action-dock) main {{ padding-bottom:24px; }}
+    .goal-action-dock {{ position:static; border-left:4px solid var(--ok); margin:0 0 16px; max-height:none; overflow:visible; box-shadow:0 2px 10px rgba(15,20,25,.08); }}
     .goal-action-dock h2 {{ font-size:14px; margin:0 0 8px; }}
     .goal-action-dock dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-action-dock-grid {{ display:grid; grid-template-columns:minmax(240px, 1.4fr) repeat(3, minmax(150px, 1fr)); gap:8px; margin:10px 0 12px; }}
@@ -26624,6 +26798,18 @@ def _html_page(
     .goal-git-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-git-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-git-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-git-command-bar dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .goal-git-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-git-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .goal-git-card h3 {{ margin-top:0; }}
+    .goal-git-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .goal-git-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .goal-git-action, .goal-git-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-git-action {{ background:var(--accent); color:#fff; }}
+    .goal-git-link {{ background:var(--surface); color:var(--accent); }}
+    .goal-git-command-evidence, .goal-git-snapshot {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-git-command-evidence summary, .goal-git-snapshot summary {{ cursor:pointer; font-weight:700; }}
+    .goal-git-command-evidence:not([open]) > :not(summary), .goal-git-snapshot:not([open]) > :not(summary) {{ display:none; }}
     .goal-evidence-command-bar {{ border-left:4px solid var(--ok); }}
     .goal-evidence-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-evidence-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -26658,9 +26844,33 @@ def _html_page(
     .goal-memory-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-memory-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-memory-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-memory-command-bar dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .goal-memory-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-memory-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .goal-memory-card h3 {{ margin-top:0; }}
+    .goal-memory-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .goal-memory-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .goal-memory-action, .goal-memory-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-memory-action {{ background:var(--accent); color:#fff; }}
+    .goal-memory-link {{ background:var(--surface); color:var(--accent); }}
+    .goal-memory-command-evidence, .goal-memory-list {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-memory-command-evidence summary, .goal-memory-list summary {{ cursor:pointer; font-weight:700; }}
+    .goal-memory-command-evidence:not([open]) > :not(summary), .goal-memory-list:not([open]) > :not(summary) {{ display:none; }}
     .goal-skills-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-skills-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-skills-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-skills-command-bar dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .goal-skills-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-skills-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .goal-skills-card h3 {{ margin-top:0; }}
+    .goal-skills-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .goal-skills-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .goal-skills-action, .goal-skills-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-skills-action {{ background:var(--accent); color:#fff; }}
+    .goal-skills-link {{ background:var(--surface); color:var(--accent); }}
+    .goal-skills-command-evidence, .goal-skills-list {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-skills-command-evidence summary, .goal-skills-list summary {{ cursor:pointer; font-weight:700; }}
+    .goal-skills-command-evidence:not([open]) > :not(summary), .goal-skills-list:not([open]) > :not(summary) {{ display:none; }}
     .goal-verification-command-bar {{ border-left:4px solid var(--ok); }}
     .goal-verification-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-verification-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -26731,7 +26941,7 @@ def _html_page(
     .goal-continuation-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-continuation-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-continuation-evidence:not([open]) > :not(summary) {{ display:none; }}
-    .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:128px; }}
+    .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:128px; }}
     .goal-workflow-map {{ border-left:4px solid var(--accent); }}
     .goal-workflow-map dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .goal-workflow-map-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
@@ -27285,7 +27495,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

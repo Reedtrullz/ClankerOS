@@ -1,5 +1,49 @@
 # Status
 
+## 2026-06-28 Goal Memory, Skills, Git Action Cards
+
+- Made `/goals/<goal_id>#goal-memory-command-bar` action-first with visible
+  Now, Notes, Memory Bank, Pin, and Safety cards before collapsed command
+  evidence and a collapsed detailed memory readback.
+- Made `/goals/<goal_id>#goal-skills-command-bar` action-first with visible
+  Now, Record, Usage, Profile, and Safety cards before collapsed command
+  evidence and a collapsed detailed skill readback.
+- Made `/goals/<goal_id>#goal-git-command-bar` action-first with visible Now,
+  Branch, Changes, Proof, and Safety cards before collapsed command evidence
+  and a collapsed repository snapshot.
+- Changed the Goal Action Dock from a fixed desktop overlay to an in-flow panel
+  so deep Goal anchors no longer render it over later sections.
+- Updated README, local app docs, operating summary, status focus, demo smoke
+  route markers, and focused route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including the new Goal
+    Memory/Skills/Git handles, provider calls 0, network actions 0, external
+    mutations 0
+  - Browser QA against
+    `http://127.0.0.1:8843/goals/goal_31994d404bd1#goal-memory-command-bar`:
+    desktop `1280x900` rendered five Memory cards, five Skills cards, and
+    five Git cards, kept command evidence/readback/snapshot details closed,
+    verified the Goal Action Dock is static and not covering the Skills
+    section, had no horizontal overflow, and reported no warning/error logs.
+  - Browser interaction QA clicked the Memory `Open` card and navigated to
+    `#goal-operator-notes` with the Memory disclosures still closed and no
+    warning/error logs.
+  - Browser QA mobile `390x844`: Memory, Skills, and Git cards each stacked in
+    one column, kept command evidence/readback/snapshot details closed, had no
+    horizontal overflow, and reported no warning/error logs.
+  - Screenshots: `/tmp/clankeros-memory-skills-git-desktop.png` and
+    `/tmp/clankeros-memory-skills-git-mobile.png`.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, approve work, execute work, create commits, push, create PRs, deploy,
+  fetch GitHub status, call providers, or mutate external systems.
+
 ## 2026-06-28 Goal Evidence And Artifact Action Cards
 
 - Made `/goals/<goal_id>#goal-evidence-command-bar` action-first by adding

@@ -24,14 +24,20 @@ Latest status focus:
   evidence and the collapsed detailed evidence list; Goal Artifacts now exposes
   Open, Latest, Types, Inventory, and Safety cards before collapsed command
   evidence, the collapsed detailed artifact list, and collapsed typed explorer
-  groups. Jump, command, workbench, daily-loop, return-brief, continuation,
-  workflow-map, CI handoff, live-state, evidence, artifacts, remaining-work,
-  and full section-index evidence are
+  groups. Goal Memory now exposes Now, Notes, Memory Bank, Pin, and Safety
+  cards before collapsed command evidence and detailed memory readback; Goal
+  Skills Used now exposes Now, Record, Usage, Profile, and Safety cards before
+  collapsed command evidence and detailed skill readback; Goal Git Status now
+  exposes Now, Branch, Changes, Proof, and Safety cards before collapsed
+  command evidence and repository snapshot. Jump, command, workbench,
+  daily-loop, return-brief, continuation, workflow-map, CI handoff, live-state,
+  evidence, artifacts, memory, skills, git, remaining-work, and full
+  section-index evidence are
   collapsed by default while preserving phase, next action, current gate,
   project-scoped CI proof posture, full anchor map, daily resume-save state,
   latest activity/artifact, blocker routing, workflow gate surfaces, manual
-  publish boundary, local reload posture, evidence/artifact posture, remaining
-  gate posture, and zero-effect counters in the DOM.
+  publish boundary, local reload posture, evidence/artifact/memory/skills/git
+  posture, remaining gate posture, and zero-effect counters in the DOM.
 - `/goals` is now content-first and board-first instead of shared-diagnostic or
   command-readback-first: the `Goal Board Workbench` opens the page before
   Route Context, Operator Focus, and the `Goal Board Command Bar`, with visible
@@ -212,18 +218,17 @@ Latest status focus:
   collapsed evidence/details.
 - Goal Action Dock and Goal Operator Workbench primary links now jump directly
   to `#goal-next-action-form` when the confirmed browser action form exists,
-  so persistent/top-of-page action controls land on the actionable form instead
-  of the broader Next Action readback.
+  so top-of-page action controls land on the actionable form instead of the
+  broader Next Action readback.
 - Goal Next Action sections now open with a human-first focus strip for Now,
   Gate, Target, and Boundary, giving the operator one readable primary link to
   the existing confirmed form or source surface, then placing the confirmed
   form before collapsed action evidence.
-- Goal pages include a compact fixed desktop `Goal Action Dock` after the
-  Current Phase banner and Goal Jump Bar, keeping the current action, workflow
-  gate, CI proof target, and `/resume` route visible during long scroll
-  sessions while jumping directly to the existing confirmed action form when
-  one is available without adding action authority; it becomes static on
-  narrow screens.
+- Goal pages include an in-flow `Goal Action Dock` after the Current Phase
+  banner and Goal Jump Bar, keeping the current action, workflow gate, CI proof
+  target, and `/resume` route visible near the top of the workbench while
+  jumping directly to the existing confirmed action form when one is available
+  without adding action authority or covering later Goal sections.
 - Goal pages include an in-flow, read-only `Goal Jump Bar` immediately after
   the Current Phase banner, keeping phase, action, workflow, timeline,
   evidence, artifacts, notes, git, and remaining work anchors one click or

@@ -342,11 +342,11 @@ Core layers for the bootstrap:
   action, workflow, timeline, evidence, artifacts, notes, git, and remaining
   work. Visible `1`-`9` key badges and `aria-keyshortcuts` jump to those local
   anchors without submitting forms while jump evidence stays collapsed by
-  default. A compact fixed desktop `Goal Action Dock`
+  default. An in-flow `Goal Action Dock`
   follows the jump bar and keeps the current action, workflow gate, CI proof
-  target, and `/resume` route visible while jumping directly to the existing
-  confirmed Goal action form when one is available instead of duplicating
-  action authority. It becomes static on narrow screens and precedes the Goal
+  target, and `/resume` route visible near the top of the workbench while
+  jumping directly to the existing confirmed Goal action form when one is
+  available instead of duplicating action authority. It precedes the Goal
   Command Bar, Goal Operator Workbench, Daily Loop, Goal Return Brief, Goal
   Continuation Rail, Next Action, Workflow Map, Goal CI Handoff, live refresh
   panel, and collapsed full section index, so the first
@@ -387,10 +387,11 @@ Core layers for the bootstrap:
   surface, current gate/progress, first unblock surface, and confirmed
   local-action counters in collapsed workbench evidence before the longer
   diagnostic sections. The in-flow Goal Jump Bar keeps the main daily anchors
-  one click or keypress away without covering later controls, the Goal Action
-  Dock keeps the current action one click away from deep scroll positions by
-  jumping directly to the confirmed form without adding a second action form,
-  and the Goal Next Action section starts
+  one click or keypress away without covering later controls, the in-flow Goal
+  Action Dock keeps the current action, gate, proof, and resume route visible
+  near the top without covering later controls, and jumps directly to the
+  confirmed form without adding a second action form. The Goal Next Action
+  section starts
   with a human-first focus strip for Now, Gate, Target, and Boundary, then
   renders the confirmed form before collapsed action evidence. The Goal Section Index now links
   directly to the Timeline, Activity, and Git command bars in addition to the
@@ -558,7 +559,8 @@ Core layers for the bootstrap:
   the read-only Goal page. It starts with a read-only `Goal Memory Command Bar`
   that summarizes memory entry counts, memory artifact posture, operator-note
   state, future-work count, one next local memory action, and zero-effect
-  counters before the detailed memory readback. The `/memory` surface now starts with a read-only
+  counters as visible Now, Notes, Memory Bank, Pin, and Safety cards before
+  collapsed command evidence and the detailed memory readback. The `/memory` surface now starts with a read-only
   `Memory Operator Workbench` so proposed-memory pins, operator-note review,
   future work, saved workspace resume, and empty-bank starts have one visible
   next click before shared diagnostics or inventory. Confirmed `/memory` pinning promotes only entries
@@ -581,12 +583,14 @@ Core layers for the bootstrap:
   Bar` that summarizes task skill tags, matching generated or available local
   skill records, usage and project counts, delegation profile usage, one
   `/skills` or `/profiles` review target, and no-execution/no-install/
-  no-network boundaries before the detailed skill readback.
+  no-network boundaries as visible Now, Record, Usage, Profile, and Safety
+  cards before collapsed command evidence and the detailed skill readback.
   Goal `Git Status` starts with a read-only `Goal Git Command Bar` that
   summarizes the registered project root, branch, commit, clean/dirty posture,
   tracked and untracked counts, latest goal-linked `git_status.txt` artifact,
   one next local surface, and no-fetch/no-write/no-network/no-external-effect
-  boundaries before the repository snapshot.
+  boundaries as visible Now, Branch, Changes, Proof, and Safety cards before
+  collapsed command evidence and the repository snapshot.
   Goal `Delegations` starts with a read-only `Goal Delegation Command Bar`
   that summarizes scout delegation counts, context-pack readiness,
   implementation handoff readiness, coder-prep packets, worktree plans, the

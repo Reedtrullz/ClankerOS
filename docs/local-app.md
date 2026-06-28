@@ -192,12 +192,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   read-only `Goal Jump Bar` for phase, action, workflow, timeline, evidence,
   artifacts, notes, git, and remaining work. Its visible `1`-`9` key badges
   and `aria-keyshortcuts` jump to those local anchors without submitting
-  forms while jump evidence stays collapsed by default, then a compact fixed
-  desktop `Goal Action Dock` keeps the current action,
-  gate, CI proof target, and resume route visible while jumping directly to the
-  existing confirmed Goal action form when one is available and becomes static on
-  narrow
-  screens. The dock appears before the Goal
+  forms while jump evidence stays collapsed by default, then an in-flow
+  `Goal Action Dock` keeps the current action, gate, CI proof target, and
+  resume route near the top of the workbench while jumping directly to the
+  existing confirmed Goal action form when one is available. The dock appears
+  before the Goal
   Command Bar, Goal Operator Workbench, Goal Daily Loop, Goal Return Brief,
   Goal Continuation Rail, next action, next recommendation, Goal Workflow Map,
   Goal CI Handoff, live state, and collapsed section index before the detailed overview, goal risk, completion criteria,
@@ -232,9 +231,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   surface, then renders the confirmed form before collapsed action evidence.
   The in-flow Goal Jump Bar keeps the main
   daily anchors one click or keypress away without covering later controls, and
-  the Goal Action Dock keeps the current action reachable from deep scroll
-  positions by jumping directly to the confirmed form without adding a second
-  action form. The Goal Section Index stays available as a collapsed full
+  the in-flow Goal Action Dock keeps the current action, gate, proof, and
+  resume route visible near the top of the Goal without covering later
+  controls while jumping directly to the confirmed form without adding a
+  second action form. The Goal Section Index stays available as a collapsed full
   anchor map and links directly to the Timeline, Activity, and Git command bars
   as well as the detailed sections, so long Goal pages remain navigable from
   their scan-first operator surfaces without showing the whole anchor list by
@@ -262,7 +262,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   read-only `Goal Git Command Bar` inside Git Status summarizes the registered
   project root, branch, commit, clean/dirty posture, tracked and untracked
   counts, latest goal-linked `git_status.txt` artifact, and one next local
-  surface without fetching GitHub status or mutating the repo. A
+  surface as visible Now, Branch, Changes, Proof, and Safety cards. Detailed
+  command evidence and the repository snapshot stay collapsed by default
+  without fetching GitHub status or mutating the repo. A
   `Goal Daily Loop` follows it as a visible five-card Continue, Start, Unblock,
   Pause, and Finish Today strip sourced from the Goal, workspace, approval,
   incident, and recommendation state. Detailed local proof stays in collapsed
@@ -310,8 +312,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   starts with a read-only `Goal Skills Command Bar` that summarizes task skill
   tags, matching generated or available skill records, usage and project
   counts, delegation profile usage, one `/skills` or `/profiles` review
-  target, and no-execution/no-install/no-network boundaries before the
-  detailed skill readback. Goal Resume Snapshot reads `.clanker/app/workspace.json`, shows
+  target, and no-execution/no-install/no-network boundaries as visible Now,
+  Record, Usage, Profile, and Safety cards before collapsed command evidence
+  and detailed skill readback. Goal Resume Snapshot reads `.clanker/app/workspace.json`, shows
   whether the saved workspace already points at the current goal, suggests the
   latest goal artifact as the resume anchor, renders saved filters, expanded
   panels, and last-viewed artifact as `Goal Workspace Restore State`, and
@@ -336,8 +339,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   project/global memory artifacts, goal-scoped memory entry counts, generated
   memory count, operator-note status, future-work count, and the current pin
   posture; it starts with a read-only `Goal Memory Command Bar` that chooses
-  one next local memory action and reports zero-effect boundaries before the
-  detailed readback. Pinning stays on the confirmed `/memory` action surface.
+  one next local memory action and reports zero-effect boundaries as visible
+  Now, Notes, Memory Bank, Pin, and Safety cards before collapsed command
+  evidence and detailed readback. Pinning stays on the confirmed `/memory`
+  action surface.
   Goal
   Runs starts with a read-only `Goal Run Command Bar` that summarizes task and
   worktree run counts, reviewed/blocked run gates, changed-file posture, the
