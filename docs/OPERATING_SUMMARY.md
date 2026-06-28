@@ -471,11 +471,12 @@ Core layers for the bootstrap:
   through a long Goal workbench without leaving the page or triggering writes.
   Every app page also includes a shared read-only `Operator Ribbon` above the
   sidebar/page shell. It derives from the saved workspace goal, current lead
-  goal, or first-run state and opens with compact Now, Goal, Attention, Resume,
-  and Search cards plus collapsed ribbon evidence for the current route,
-  phase, primary action, waiting counts, saved workspace context, command
-  palette availability, and no-write/no-provider/no-network/no-external-effect
-  boundaries. The shared read-only `Operator Focus` strip still derives from
+  goal, or first-run state and opens with compact Now, Goal, Attention,
+  Finish, Resume, and Search cards plus collapsed ribbon evidence for the
+  current route, phase, primary action, waiting counts, saved workspace
+  context, Finish Today confirmation surface, command palette availability,
+  and no-write/no-provider/no-network/no-external-effect boundaries. The
+  shared read-only `Operator Focus` strip still derives from
   the same saved workspace goal or current lead goal and opens with compact
   action cards for the primary action, phase, progress, waiting counts, and
   `/resume`, followed by the expandable confirmed local action form when the

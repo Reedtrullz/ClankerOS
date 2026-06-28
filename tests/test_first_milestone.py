@@ -4262,6 +4262,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-operator-ribbon-goal='true'" in root.body
     assert "data-operator-ribbon-attention='true'" in root.body
     assert "data-operator-ribbon-resume='true'" in root.body
+    assert "data-operator-ribbon-finish='true'" in root.body
     assert "data-operator-ribbon-search='true'" in root.body
     assert "data-operator-ribbon-evidence='true'" in root.body
     assert root.body.index("data-operator-ribbon='true'") < root.body.index(
@@ -4289,6 +4290,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "operator_ribbon_action_form_available</dt><dd>true" in root.body
     assert "operator_ribbon_confirmation_required</dt><dd>true" in root.body
     assert "operator_ribbon_resume_status</dt><dd>not_started" in root.body
+    assert (
+        "operator_ribbon_finish_surface</dt><dd><a href='/workspace#save-workspace'>"
+        "Finish Today</a>"
+    ) in root.body
+    assert "operator_ribbon_finish_confirmation_required</dt><dd>true" in root.body
     assert "operator_ribbon_command_palette_available</dt><dd>true" in root.body
     assert "operator_ribbon_write_on_get</dt><dd>false" in root.body
     assert "operator_ribbon_provider_calls_taken</dt><dd>0" in root.body
@@ -4297,6 +4303,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "operator_ribbon_now: Register ClankerOS project" in root.body
     assert (
         "operator_ribbon_click: <a href='#first-run-create-project'>Create Project</a>"
+        in root.body
+    )
+    assert (
+        "operator_ribbon_finish: <a href='/workspace#save-workspace'>Finish Today</a>"
         in root.body
     )
     assert "operator_ribbon_safety: read-only global operator orientation" in root.body
@@ -8504,6 +8514,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-operator-ribbon-goal='true'" in dashboard.body
     assert "data-operator-ribbon-attention='true'" in dashboard.body
     assert "data-operator-ribbon-resume='true'" in dashboard.body
+    assert "data-operator-ribbon-finish='true'" in dashboard.body
     assert "data-operator-ribbon-search='true'" in dashboard.body
     assert "data-operator-ribbon-evidence='true'" in dashboard.body
     assert dashboard.body.index("data-operator-ribbon='true'") < dashboard.body.index(
@@ -8534,6 +8545,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "operator_ribbon_action_form_available</dt><dd>true" in dashboard.body
     assert "operator_ribbon_confirmation_required</dt><dd>true" in dashboard.body
     assert "operator_ribbon_resume_status</dt><dd>not_started" in dashboard.body
+    assert (
+        "operator_ribbon_finish_surface</dt><dd><a href='/workspace#save-workspace'>"
+        "Finish Today</a>"
+    ) in dashboard.body
+    assert "operator_ribbon_finish_confirmation_required</dt><dd>true" in dashboard.body
     assert "operator_ribbon_command_palette_available</dt><dd>true" in dashboard.body
     assert "operator_ribbon_write_on_get</dt><dd>false" in dashboard.body
     assert "operator_ribbon_provider_calls_taken</dt><dd>0" in dashboard.body

@@ -28139,6 +28139,8 @@ def _operator_status_ribbon(
 
     resume_label = "Open resume"
     resume_href = "/resume"
+    finish_href = "/workspace#save-workspace"
+    finish_label = "Finish Today"
     search_href = "/search"
     route_label = title or route_path
     rows: list[tuple[str, str | SafeHtml]] = [
@@ -28180,6 +28182,12 @@ def _operator_status_ribbon(
         ("operator_ribbon_saved_goal", saved_goal or "none"),
         ("operator_ribbon_saved_artifact", saved_artifact or "none"),
         ("operator_ribbon_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+        (
+            "operator_ribbon_finish_surface",
+            SafeHtml("<a href='/workspace#save-workspace'>Finish Today</a>"),
+        ),
+        ("operator_ribbon_finish_action", "save workspace for tomorrow"),
+        ("operator_ribbon_finish_confirmation_required", "true"),
         ("operator_ribbon_search_surface", SafeHtml("<a href='/search'>/search</a>")),
         ("operator_ribbon_command_palette_available", "true"),
         ("operator_ribbon_write_on_get", "false"),
@@ -28192,6 +28200,7 @@ def _operator_status_ribbon(
         f"operator_ribbon_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
         f"operator_ribbon_attention: {_e(attention_status)} -> <a href='{_e(attention_href)}'>{_e(attention_href)}</a>",
         f"operator_ribbon_resume: status={_e(resume_status)} surface=<a href='/resume'>/resume</a>",
+        "operator_ribbon_finish: <a href='/workspace#save-workspace'>Finish Today</a>",
         "operator_ribbon_palette: <a href='#command-palette'>Command Palette</a>",
         "operator_ribbon_safety: read-only global operator orientation",
     ]
@@ -28224,6 +28233,13 @@ def _operator_status_ribbon(
             resume_href,
             resume_label,
             marker="data-operator-ribbon-resume='true'",
+        ),
+        _operator_ribbon_card(
+            "Finish",
+            "Save return point",
+            finish_href,
+            finish_label,
+            marker="data-operator-ribbon-finish='true'",
         ),
         _operator_ribbon_card(
             "Search",
@@ -29325,7 +29341,7 @@ def _html_page(
     .operator-shell > *, article, aside, section, dl, dt, dd {{ min-width:0; max-width:100%; }}
     .operator-main {{ min-width:0; max-width:100%; }}
     .operator-ribbon {{ border-left:4px solid var(--accent); margin:0 0 16px; padding:12px; }}
-    .operator-ribbon-grid {{ display:grid; grid-template-columns:minmax(230px, 1.35fr) repeat(4, minmax(145px, 1fr)); gap:8px; align-items:stretch; }}
+    .operator-ribbon-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(155px, 1fr)); gap:8px; align-items:stretch; }}
     .operator-ribbon-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:9px 10px; display:grid; gap:6px; align-content:start; }}
     .operator-ribbon-primary {{ background:var(--panel); border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
     .operator-ribbon-label {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}

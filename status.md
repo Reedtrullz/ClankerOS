@@ -1,5 +1,52 @@
 # Status
 
+## 2026-06-28 Operator Ribbon Finish Today UX
+
+- Added a shared read-only `Finish` card to the global `Operator Ribbon` on
+  every local app route.
+- The card links to the existing confirmed `/workspace#save-workspace`
+  surface and labels the action as `Finish Today`, making the
+  leave-and-resume loop visible without adding write authority to the ribbon.
+- Collapsed ribbon evidence now preserves the Finish Today target,
+  `save workspace for tomorrow` action, and confirmation-required boundary
+  alongside the existing route, Goal, attention, resume, command-palette, and
+  zero-effect readbacks.
+- Switched the ribbon grid to auto-fit columns so the sixth card remains
+  responsive instead of creating tablet-width overflow.
+- Updated README, operating summary, local status focus, and focused
+  first-run plus fixture-backed route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected in 47.39s`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `git diff --check` -> passed
+- Browser QA against fixture-backed scratch local app `127.0.0.1:8865`
+  verified desktop `/` with 6 ribbon cards, Finish target
+  `/workspace#save-workspace`, collapsed evidence, ribbon before shell, no
+  horizontal overflow, no framework overlay, and empty warning/error logs.
+- Browser interaction QA clicked the new Finish card and confirmed the app
+  landed on `/workspace#save-workspace`, rendered the Workspace page, opened
+  the existing `#save-workspace` details panel, and showed the confirmed save
+  form with no horizontal overflow or warning/error logs.
+- Mobile browser QA at `390x844` verified `/goals/<goal_id>` with 6 one-column
+  ribbon cards, Finish target `/workspace#save-workspace`, collapsed evidence,
+  no horizontal overflow, no framework overlay, and empty warning/error logs.
+- Cleanup evidence: local app server on port `8865` was stopped, no listener
+  remained, and the scratch app root was removed. Tooling note: the Browser
+  viewport reset call timed out repeatedly after mobile QA, so viewport reset
+  could not be proven from the Browser bridge in this run.
+- Non-claims until broader proof: GitHub Actions proof is not yet complete for
+  this slice. The Finish card is a navigation/readback UX improvement only:
+  no write on GET, no provider call, no external network action beyond local
+  browser/server loopback, no approval decision, no execution, no commit, no
+  push, no PR, and no deploy from ClankerOS itself.
+
 ## 2026-06-28 Global Operator Ribbon UX
 
 - Added a shared read-only `Operator Ribbon` above the sidebar/page shell on
