@@ -1,5 +1,42 @@
 # Status
 
+## 2026-06-28 Workflow Live State UX
+
+- Added a visible read-only `Workflow Live State` section to `/workflow`
+  between the `Workflow Journey` and `Workflow Finish Today`.
+- The panel gives selected workflow pages Now, Stage, Refresh, Pause, and
+  Safety cards so a delegation-scoped or coder-run-scoped workflow can remain
+  open during the day without manual refresh.
+- Refresh uses local page reload polling every five seconds and pauses when a
+  form field is focused, content is editable, or the tab is hidden.
+- Empty `/workflow`, `/workflow?delegation_id=<id>`, and
+  `/workflow?run_id=<coder_run_id>` expose live-state evidence for status,
+  scope, selected delegation/run, parent Goal, project, current stage,
+  journey stage key, stage position, next local target, exact resume surface,
+  selected-step counts, and zero-effect boundaries.
+- Existing confirmed local forms remain the only write paths; the live-state
+  panel does not write on GET, call providers, poll GitHub, push, deploy,
+  create PRs, approve work, execute work, or create external effects.
+- Updated README, operating summary, local status focus, and focused workflow
+  route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 54.51s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed, all local app route markers matched, provider/network/external
+    counters stayed at `0`
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed, demo workflow/delegation/run route markers matched,
+    provider/network/external counters stayed at `0`
+  - `git diff --check` -> passed
+- GitHub Actions proof is expected after pushing this slice; remote status will
+  be tracked by the branch run rather than by a longer local suite.
+- Non-claims until remote proof: no browser QA for this slice, no app-side
+  GitHub polling, no approval decision, no execution, no PR, and no deploy from
+  ClankerOS itself.
+
 ## 2026-06-28 Workflow Finish Today UX
 
 - Added a visible read-only `Workflow Finish Today` section to `/workflow`

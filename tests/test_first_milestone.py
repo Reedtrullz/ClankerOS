@@ -5499,6 +5499,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workflow-journey='true'" in workflow.body
     assert "data-workflow-journey-actions='true'" in workflow.body
     assert "data-workflow-journey-evidence='true'" in workflow.body
+    assert "Workflow Live State" in workflow.body
+    assert "data-live-refresh='workflow'" in workflow.body
+    assert "data-workflow-live-state='true'" in workflow.body
+    assert "data-workflow-live-actions='true'" in workflow.body
+    assert "data-workflow-live-evidence='true'" in workflow.body
+    assert "data-live-refresh-script='workflow'" in workflow.body
     assert "Workflow Finish Today" in workflow.body
     assert "data-workflow-finish-today='true'" in workflow.body
     assert "data-workflow-finish-actions='true'" in workflow.body
@@ -5506,7 +5512,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workflow-save-details='true'" in workflow.body
     assert "data-workflow-command-evidence='true'" in workflow.body
     assert workflow.body.index("data-workflow-operator-workbench") < workflow.body.index("data-workflow-journey")
-    assert workflow.body.index("data-workflow-journey") < workflow.body.index("data-workflow-finish-today")
+    assert workflow.body.index("data-workflow-journey") < workflow.body.index("data-workflow-live-state")
+    assert workflow.body.index("data-workflow-live-state") < workflow.body.index("data-workflow-finish-today")
     assert workflow.body.index("data-workflow-finish-today") < workflow.body.index("data-workflow-command-bar")
     assert workflow.body.index("data-workflow-journey") < workflow.body.index("data-workflow-command-bar")
     assert workflow.body.index("data-workflow-operator-workbench") < workflow.body.index("data-workflow-command-bar")
@@ -5544,6 +5551,28 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workflow-journey-stage='select_scope' data-stage-status='current'" in workflow.body
     assert "workflow_journey_stage: select_scope status=current" in workflow.body
     assert "workflow_journey_safety: read-only workflow orientation" in workflow.body
+    assert "workflow_live_refresh_enabled</dt><dd>true" in workflow.body
+    assert "workflow_live_refresh_interval_seconds</dt><dd>5" in workflow.body
+    assert "workflow_live_refresh_mode</dt><dd>local_page_reload" in workflow.body
+    assert "workflow_live_refresh_pause_when_editing</dt><dd>true" in workflow.body
+    assert "workflow_live_refresh_pause_when_hidden</dt><dd>true" in workflow.body
+    assert "workflow_live_refresh_status</dt><dd>no_selection" in workflow.body
+    assert "workflow_live_refresh_scope</dt><dd>all" in workflow.body
+    assert "workflow_live_refresh_project</dt><dd>none" in workflow.body
+    assert "workflow_live_refresh_current_stage</dt><dd>overview" in workflow.body
+    assert "workflow_live_refresh_current_stage_key</dt><dd>select_scope" in workflow.body
+    assert "workflow_live_refresh_current_position</dt><dd>1/9" in workflow.body
+    assert "workflow_live_refresh_next_action</dt><dd>Select delegation or run" in workflow.body
+    assert "workflow_live_refresh_action_label</dt><dd>Select delegation or run" in workflow.body
+    assert "workflow_live_refresh_target_surface</dt><dd><a href='/delegation-runs'>/delegation-runs</a>" in workflow.body
+    assert "workflow_live_refresh_resume_surface</dt><dd><a href='/workflow'>/workflow</a>" in workflow.body
+    assert "workflow_live_refresh_selected_step_count</dt><dd>0" in workflow.body
+    assert "workflow_live_refresh_network_scope</dt><dd>local_browser_loopback_only" in workflow.body
+    assert "workflow_live_refresh_write_on_get</dt><dd>false" in workflow.body
+    assert "workflow_live_refresh_provider_calls_taken</dt><dd>0" in workflow.body
+    assert "workflow_live_refresh_network_actions_taken</dt><dd>0" in workflow.body
+    assert "workflow_live_refresh_external_effects_created</dt><dd>false" in workflow.body
+    assert "workflow_live_refresh_safety: local browser loopback reload only; pauses while editing or hidden" in workflow.body
     assert "workflow_finish_status</dt><dd>no_selection" in workflow.body
     assert "workflow_finish_scope</dt><dd>all" in workflow.body
     assert "workflow_finish_project</dt><dd>none" in workflow.body
@@ -12129,6 +12158,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-workflow-journey='true'" in workflow_for_delegation.body
     assert "data-workflow-journey-actions='true'" in workflow_for_delegation.body
     assert "data-workflow-journey-evidence='true'" in workflow_for_delegation.body
+    assert "Workflow Live State" in workflow_for_delegation.body
+    assert "data-live-refresh='workflow'" in workflow_for_delegation.body
+    assert "data-workflow-live-state='true'" in workflow_for_delegation.body
+    assert "data-workflow-live-actions='true'" in workflow_for_delegation.body
+    assert "data-workflow-live-evidence='true'" in workflow_for_delegation.body
+    assert "data-live-refresh-script='workflow'" in workflow_for_delegation.body
     assert "Workflow Finish Today" in workflow_for_delegation.body
     assert "data-workflow-finish-today='true'" in workflow_for_delegation.body
     assert "data-workflow-finish-actions='true'" in workflow_for_delegation.body
@@ -12136,7 +12171,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-workflow-save-details='true'" in workflow_for_delegation.body
     assert "data-workflow-command-evidence='true'" in workflow_for_delegation.body
     assert workflow_for_delegation.body.index("data-workflow-operator-workbench") < workflow_for_delegation.body.index("data-workflow-journey")
-    assert workflow_for_delegation.body.index("data-workflow-journey") < workflow_for_delegation.body.index("data-workflow-finish-today")
+    assert workflow_for_delegation.body.index("data-workflow-journey") < workflow_for_delegation.body.index("data-workflow-live-state")
+    assert workflow_for_delegation.body.index("data-workflow-live-state") < workflow_for_delegation.body.index("data-workflow-finish-today")
     assert workflow_for_delegation.body.index("data-workflow-finish-today") < workflow_for_delegation.body.index("data-workflow-command-bar")
     assert workflow_for_delegation.body.index("data-workflow-journey") < workflow_for_delegation.body.index("data-workflow-command-bar")
     assert workflow_for_delegation.body.index("data-workflow-operator-workbench") < workflow_for_delegation.body.index("data-workflow-command-bar")
@@ -12183,6 +12219,24 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-workflow-journey-stage='commit' data-stage-status='current'" in workflow_for_delegation.body
     assert "data-workflow-journey-stage='publish' data-stage-status='waiting'" in workflow_for_delegation.body
     assert "workflow_journey_stage: commit status=current" in workflow_for_delegation.body
+    assert "workflow_live_refresh_status</dt><dd>scoped_workflow" in workflow_for_delegation.body
+    assert "workflow_live_refresh_scope</dt><dd>delegation" in workflow_for_delegation.body
+    assert f"workflow_live_refresh_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in workflow_for_delegation.body
+    assert f"workflow_live_refresh_run</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_delegation.body
+    assert f"workflow_live_refresh_goal</dt><dd><a href='/goals/{result.goal_id}'" in workflow_for_delegation.body
+    assert f"workflow_live_refresh_project</dt><dd>{result.project_id}" in workflow_for_delegation.body
+    assert "workflow_live_refresh_current_stage</dt><dd>Commit request" in workflow_for_delegation.body
+    assert "workflow_live_refresh_current_stage_key</dt><dd>commit" in workflow_for_delegation.body
+    assert "workflow_live_refresh_current_position</dt><dd>8/9" in workflow_for_delegation.body
+    assert "workflow_live_refresh_next_action</dt><dd>request_commit_for_reviewed_run" in workflow_for_delegation.body
+    assert "workflow_live_refresh_action_label</dt><dd>Request commit for reviewed run" in workflow_for_delegation.body
+    assert f"workflow_live_refresh_target_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_delegation.body
+    assert f"workflow_live_refresh_resume_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'" in workflow_for_delegation.body
+    assert "workflow_live_refresh_selected_step_count</dt><dd>17" in workflow_for_delegation.body
+    assert "workflow_live_refresh_write_on_get</dt><dd>false" in workflow_for_delegation.body
+    assert "workflow_live_refresh_provider_calls_taken</dt><dd>0" in workflow_for_delegation.body
+    assert "workflow_live_refresh_network_actions_taken</dt><dd>0" in workflow_for_delegation.body
+    assert "workflow_live_refresh_external_effects_created</dt><dd>false" in workflow_for_delegation.body
     assert "workflow_finish_status</dt><dd>scoped_workflow" in workflow_for_delegation.body
     assert "workflow_finish_scope</dt><dd>delegation" in workflow_for_delegation.body
     assert f"workflow_finish_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in workflow_for_delegation.body
@@ -12260,11 +12314,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-workflow-workbench-evidence='true'" in workflow_for_run.body
     assert "data-workflow-journey='true'" in workflow_for_run.body
     assert "data-workflow-journey-evidence='true'" in workflow_for_run.body
+    assert "data-workflow-live-state='true'" in workflow_for_run.body
+    assert "data-workflow-live-evidence='true'" in workflow_for_run.body
     assert "data-workflow-finish-today='true'" in workflow_for_run.body
     assert "data-workflow-finish-evidence='true'" in workflow_for_run.body
     assert "data-workflow-command-evidence='true'" in workflow_for_run.body
     assert workflow_for_run.body.index("data-workflow-operator-workbench") < workflow_for_run.body.index("data-workflow-journey")
-    assert workflow_for_run.body.index("data-workflow-journey") < workflow_for_run.body.index("data-workflow-finish-today")
+    assert workflow_for_run.body.index("data-workflow-journey") < workflow_for_run.body.index("data-workflow-live-state")
+    assert workflow_for_run.body.index("data-workflow-live-state") < workflow_for_run.body.index("data-workflow-finish-today")
     assert workflow_for_run.body.index("data-workflow-finish-today") < workflow_for_run.body.index("data-workflow-command-bar")
     assert workflow_for_run.body.index("data-workflow-journey") < workflow_for_run.body.index("data-workflow-command-bar")
     assert workflow_for_run.body.index("data-workflow-operator-workbench") < workflow_for_run.body.index("data-workflow-command-bar")
@@ -12290,6 +12347,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workflow_journey_selected_step_count</dt><dd>17" in workflow_for_run.body
     assert "data-workflow-journey-stage='commit' data-stage-status='current'" in workflow_for_run.body
     assert "workflow_journey_stage: commit status=current" in workflow_for_run.body
+    assert "workflow_live_refresh_status</dt><dd>scoped_workflow" in workflow_for_run.body
+    assert "workflow_live_refresh_scope</dt><dd>run" in workflow_for_run.body
+    assert "workflow_live_refresh_current_stage_key</dt><dd>commit" in workflow_for_run.body
+    assert "workflow_live_refresh_current_position</dt><dd>8/9" in workflow_for_run.body
+    assert "workflow_live_refresh_next_action</dt><dd>request_commit_for_reviewed_run" in workflow_for_run.body
+    assert "workflow_live_refresh_selected_step_count</dt><dd>17" in workflow_for_run.body
+    assert f"workflow_live_refresh_resume_surface</dt><dd><a href='/workflow?run_id={result.coder_worktree_run_id}'" in workflow_for_run.body
     assert "workflow_finish_status</dt><dd>scoped_workflow" in workflow_for_run.body
     assert "workflow_finish_scope</dt><dd>run" in workflow_for_run.body
     assert f"workflow_finish_resume_surface</dt><dd><a href='/workflow?run_id={result.coder_worktree_run_id}'" in workflow_for_run.body

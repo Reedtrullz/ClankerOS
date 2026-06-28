@@ -215,13 +215,15 @@ Core layers for the bootstrap:
   `/workflow` includes a visible read-only `Workflow Journey` between the
   `Workflow Operator Workbench` and `Workflow Command Bar`, with nine stage
   cards for Select, Goal + Scout, Context, Handoff, Coder Prep, Approval,
-  Execution, Commit, and Publish. A visible `Workflow Finish Today` handoff
-  follows with a confirmed `save-workspace` form that stores the exact scoped
-  workflow route as `resume_surface`. These summarize the selected delegation
-  or coder run, parent Goal, project, current workflow stage, journey position,
-  exact resume surface, next local action, target surface, reason, and
-  zero-effect counters before the detailed selected-state map and continuation
-  links;
+  Execution, Commit, and Publish. A visible `Workflow Live State` panel follows
+  with local page reload polling every five seconds, pause-while-editing and
+  pause-while-hidden rules, and zero provider/network/external-effect
+  counters. A visible `Workflow Finish Today` handoff follows with a confirmed
+  `save-workspace` form that stores the exact scoped workflow route as
+  `resume_surface`. These summarize the selected delegation or coder run,
+  parent Goal, project, current workflow stage, journey position, exact resume
+  surface, next local action, target surface, reason, and zero-effect counters
+  before the detailed selected-state map and continuation links;
   `/artifacts?path=...` is content-first and opens with a visible read-only
   `Artifact Operator Workbench` before shared diagnostics or dense readbacks.
   It shows cards to open the inert content, return to the owning Goal or
@@ -750,13 +752,17 @@ Core layers for the bootstrap:
   state, queue attention, and `/resume`. A visible read-only
   `Workflow Journey` follows with nine stage cards that mark the current stage
   and route each stage to the next safe local surface. A visible
+  `Workflow Live State` panel follows with local page reload polling every five
+  seconds, pause rules for focused form fields and hidden tabs, a manual
+  refresh button, current stage/position/target/resume readbacks, and
+  zero-effect evidence. A visible
   `Workflow Finish Today` handoff follows with a confirmed local workspace
   save form that persists the exact scoped workflow route for `/resume`.
-  Journey, finish, and command evidence stay collapsed by default while
-  preserving selected delegation/run, parent Goal, project, current stage,
-  journey position, exact resume surface, next local action, target surface,
-  reason, selected-step count, and zero-effect readbacks in the DOM. The page
-  then annotates related
+  Journey, live-state, finish, and command evidence stay collapsed by default
+  while preserving selected delegation/run, parent Goal, project, current
+  stage, journey position, exact resume surface, next local action, target
+  surface, reason, selected-step count, and zero-effect readbacks in the DOM.
+  The page then annotates related
   stepper rows with selected local artifact, approval, run, commit,
   publication, and next-action status, plus a read-only `Selected Workflow
   Continuation` block linking the exact run, approvals, inbox, and dogfooding

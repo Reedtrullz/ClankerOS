@@ -16302,6 +16302,7 @@ def _workflow(
                 run_id=run_id,
             ),
             _workflow_journey(root, delegation_id=delegation_id, run_id=run_id),
+            _workflow_live_state(root, delegation_id=delegation_id, run_id=run_id),
             _workflow_finish_today(root, delegation_id=delegation_id, run_id=run_id),
             _workflow_command_bar(root, delegation_id=delegation_id, run_id=run_id),
             _selected_workflow_state(root, delegation_id=delegation_id, run_id=run_id),
@@ -16679,6 +16680,119 @@ def _workflow_finish_today(
             "<p class='muted'>Confirming stores the selected project, Goal, workflow panels, latest artifact, and exact workflow return route in `.clanker/app/workspace.json`.</p>",
             finish_form,
             "</section></details>",
+            "</section>",
+        ]
+    )
+
+
+def _workflow_live_state(
+    root: Path,
+    *,
+    delegation_id: str | None = None,
+    run_id: str | None = None,
+) -> str:
+    context = _workflow_operator_context(root, delegation_id=delegation_id, run_id=run_id)
+    target_href = str(context["target_href"])
+    target_label = str(context["target_label"])
+    resume_surface = str(context["resume_surface"])
+    action_label = _workflow_action_label(str(context["next_action"]))
+    stage_key = _workflow_journey_stage_for_action(str(context["next_action"]))
+    if context["status"] in {"no_selection", "run_not_found", "delegation_not_found"}:
+        stage_key = "select_scope"
+    current_position = next(
+        (
+            index
+            for index, (key, _, _) in enumerate(WORKFLOW_JOURNEY_STAGES, start=1)
+            if key == stage_key
+        ),
+        1,
+    )
+    total = len(WORKFLOW_JOURNEY_STAGES)
+    status_label = (
+        "scoped_workflow"
+        if context["status"] in {"delegation_selected", "run_selected"}
+        else str(context["status"])
+    )
+    return "".join(
+        [
+            "<section id='workflow-live-state' class='panel workflow-live-state' data-live-refresh='workflow' data-workflow-live-state='true'><h2>Workflow Live State</h2>",
+            "<p class='muted'>Keeps the selected workflow surface current while preserving local form edits.</p>",
+            "<div class='workflow-live-grid' data-workflow-live-actions='true'>",
+            "<article class='workflow-live-card workflow-live-primary' data-workflow-live-now='true'><h3>Now</h3>",
+            f"<p>{_e(str(context['current_stage']))} · {_e(str(context['scope']))}</p><a class='workflow-live-action' data-workflow-live-primary='true' href='{_e(target_href)}'>{_e(action_label)}</a></article>",
+            "<article class='workflow-live-card' data-workflow-live-stage='true'><h3>Stage</h3>",
+            f"<p>{_e(stage_key)} · {current_position}/{total}</p><a class='workflow-live-link' href='#workflow-journey'>Journey</a></article>",
+            "<article class='workflow-live-card' data-workflow-live-refresh='true'><h3>Refresh</h3>",
+            "<p>Every 5 seconds by local page reload only.</p><button class='workflow-live-button' type='button' data-workflow-live-refresh-now='true' onclick='window.location.reload()'>Refresh now</button></article>",
+            "<article class='workflow-live-card' data-workflow-live-pause='true'><h3>Pause</h3>",
+            "<p>Refresh pauses while editing or when this tab is hidden.</p><a class='workflow-live-link' href='#workflow-finish-today'>Finish later</a></article>",
+            "<article class='workflow-live-card' data-workflow-live-safety='true'><h3>Safety</h3>",
+            "<p>No provider call, network mutation, approval, push, PR, or deploy.</p><a class='workflow-live-link' href='#workflow-live-state'>Evidence</a></article>",
+            "</div>",
+            "<details class='workflow-live-evidence' data-workflow-live-evidence='true'><summary>Workflow live state evidence</summary>",
+            _kv(
+                [
+                    ("workflow_live_refresh_enabled", "true"),
+                    ("workflow_live_refresh_interval_seconds", "5"),
+                    ("workflow_live_refresh_mode", "local_page_reload"),
+                    ("workflow_live_refresh_pause_when_editing", "true"),
+                    ("workflow_live_refresh_pause_when_hidden", "true"),
+                    ("workflow_live_refresh_status", status_label),
+                    ("workflow_live_refresh_scope", str(context["scope"])),
+                    ("workflow_live_refresh_delegation", context["delegation_surface"]),
+                    ("workflow_live_refresh_run", context["run_surface"]),
+                    ("workflow_live_refresh_goal", context["goal_surface"]),
+                    ("workflow_live_refresh_project", str(context["project"])),
+                    ("workflow_live_refresh_current_stage", str(context["current_stage"])),
+                    ("workflow_live_refresh_current_stage_key", stage_key),
+                    ("workflow_live_refresh_current_position", f"{current_position}/{total}"),
+                    ("workflow_live_refresh_next_action", str(context["next_action"])),
+                    ("workflow_live_refresh_action_label", action_label),
+                    (
+                        "workflow_live_refresh_target_surface",
+                        SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"),
+                    ),
+                    (
+                        "workflow_live_refresh_resume_surface",
+                        SafeHtml(f"<a href='{_e(resume_surface)}'>{_e(resume_surface)}</a>"),
+                    ),
+                    ("workflow_live_refresh_selected_step_count", str(context["selected_step_count"])),
+                    ("workflow_live_refresh_selected_status_count", str(context["selected_status_count"])),
+                    ("workflow_live_refresh_network_scope", "local_browser_loopback_only"),
+                    ("workflow_live_refresh_write_on_get", "false"),
+                    ("workflow_live_refresh_provider_calls_taken", "0"),
+                    ("workflow_live_refresh_network_actions_taken", "0"),
+                    ("workflow_live_refresh_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"workflow_live_refresh_now: {_e(action_label)}",
+                    f"workflow_live_refresh_target: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"workflow_live_refresh_resume: <a href='{_e(resume_surface)}'>{_e(resume_surface)}</a>",
+                    "workflow_live_refresh_safety: local browser loopback reload only; pauses while editing or hidden",
+                ]
+            ),
+            """
+<script data-live-refresh-script='workflow'>
+(function() {
+  var intervalMs = 5000;
+  function refreshPaused() {
+    var active = document.activeElement;
+    var tag = active && active.tagName ? active.tagName.toLowerCase() : "";
+    return document.hidden || tag === "input" || tag === "textarea" || tag === "select" || Boolean(active && active.isContentEditable);
+  }
+  function tick() {
+    if (!refreshPaused()) {
+      window.location.reload();
+      return;
+    }
+    window.setTimeout(tick, intervalMs);
+  }
+  window.setTimeout(tick, intervalMs);
+})();
+</script>""",
+            "</details>",
             "</section>",
         ]
     )
@@ -31244,6 +31358,16 @@ def _html_page(
     .workflow-journey-card[data-stage-status="waiting"] {{ opacity:.82; }}
     .workflow-journey-link {{ display:inline-flex; align-items:center; min-height:32px; max-width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--line); background:var(--panel); color:var(--fg); text-decoration:none; overflow-wrap:anywhere; }}
     .workflow-journey-card[data-stage-status="current"] .workflow-journey-link {{ border-color:var(--accent); background:var(--accent); color:#fff; }}
+    .workflow-live-state {{ border-left:4px solid var(--accent); }}
+    .workflow-live-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .workflow-live-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
+    .workflow-live-card h3 {{ margin-top:0; }}
+    .workflow-live-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .workflow-live-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .workflow-live-action, .workflow-live-link, .workflow-live-button {{ display:inline-flex; align-items:center; min-height:32px; max-width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
+    .workflow-live-action, .workflow-live-button {{ background:var(--accent); color:#fff; }}
+    .workflow-live-link {{ background:var(--surface); color:var(--accent); }}
+    .workflow-live-button {{ margin:0; width:auto; }}
     .workflow-finish-today {{ border-left:4px solid var(--accent); }}
     .workflow-finish-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
     .workflow-finish-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
@@ -31253,9 +31377,9 @@ def _html_page(
     .workflow-finish-action, .workflow-finish-link {{ display:inline-flex; align-items:center; min-height:32px; max-width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
     .workflow-finish-action {{ background:var(--accent); color:#fff; }}
     .workflow-finish-link {{ background:var(--surface); color:var(--accent); }}
-    .workflow-workbench-evidence, .workflow-journey-evidence, .workflow-finish-evidence, .workflow-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .workflow-workbench-evidence summary, .workflow-journey-evidence summary, .workflow-finish-evidence summary, .workflow-command-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .workflow-workbench-evidence:not([open]) > :not(summary), .workflow-journey-evidence:not([open]) > :not(summary), .workflow-finish-evidence:not([open]) > :not(summary), .workflow-command-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .workflow-workbench-evidence, .workflow-journey-evidence, .workflow-live-evidence, .workflow-finish-evidence, .workflow-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .workflow-workbench-evidence summary, .workflow-journey-evidence summary, .workflow-live-evidence summary, .workflow-finish-evidence summary, .workflow-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .workflow-workbench-evidence:not([open]) > :not(summary), .workflow-journey-evidence:not([open]) > :not(summary), .workflow-live-evidence:not([open]) > :not(summary), .workflow-finish-evidence:not([open]) > :not(summary), .workflow-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .inbox-command-bar {{ border-left:4px solid var(--accent); }}
     .inbox-command-evidence, .inbox-workbench-evidence {{ margin-top:10px; }}
     .inbox-finish-details {{ margin-top:12px; }}
@@ -31352,7 +31476,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

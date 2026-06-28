@@ -660,7 +660,12 @@ diagnostics and command readback, with cards for the current workflow action,
 selected state, queue attention, and `/resume`. A visible read-only
 `Workflow Journey` follows with nine stage cards for Select, Goal + Scout,
 Context, Handoff, Coder Prep, Approval, Execution, Commit, and Publish, marking
-the current stage and linking to the next safe local surface. A
+the current stage and linking to the next safe local surface. A visible
+`Workflow Live State` panel follows so a selected delegation or coder-run
+workflow can be left open during the day; it reloads the local page every five
+seconds, pauses while form fields are focused or the tab is hidden, and keeps
+refresh evidence collapsed with zero provider/network/external-effect
+counters. A
 `Workflow Finish Today` section then exposes a confirmed `save-workspace` form
 that stores the exact scoped workflow route as `resume_surface`, so `/resume`
 can reopen `/workflow?delegation_id=<id>` or `/workflow?run_id=<coder_run_id>`
