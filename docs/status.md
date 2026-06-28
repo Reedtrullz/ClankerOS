@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Home Recent Activity now opens with visible Latest, Goals, Artifacts, and
+  Notes cards before the chronological list. Empty checkouts use real local
+  fallback surfaces (`/goals`, `/search?q=artifact`, `/memory`), while
+  populated demo data links directly to the latest timeline/artifact/note
+  surfaces and keeps read-only/zero-effect evidence in the DOM.
 - The First Run Guide now includes a visible read-only `First Run Progress`
   strip with a progress bar and five step cards for Project, Goal, Delegation,
   Context, and Run. It is sourced from existing first-run state, keeps detailed

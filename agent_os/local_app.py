@@ -4023,6 +4023,19 @@ def _home_activity_command_bar(items: list[dict[str, str]]) -> str:
     latest_href = latest.get("href") or "/goals"
     latest_label = latest.get("message") or "No recent activity"
     latest_at = _format_time(latest.get("at") or "") if latest else "none"
+    latest_artifact = next(
+        (
+            item
+            for item in items
+            if item.get("kind") == "artifact"
+            or str(item.get("href") or "").startswith("/artifacts?path=")
+        ),
+        {},
+    )
+    latest_note = next(
+        (item for item in items if item.get("kind") == "operator_note"),
+        {},
+    )
     operator_notes = sum(1 for item in items if item.get("kind") == "operator_note")
     artifacts = sum(
         1
@@ -4030,22 +4043,42 @@ def _home_activity_command_bar(items: list[dict[str, str]]) -> str:
         if item.get("kind") == "artifact"
         or str(item.get("href") or "").startswith("/artifacts?path=")
     )
+    artifact_href = latest_artifact.get("href") or "/search?q=artifact"
+    artifact_label = "Open artifact" if latest_artifact else "Search artifacts"
+    note_href = latest_note.get("href") or "/memory"
+    note_label = "Open note" if latest_note else "Open memory"
+    latest_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>")
+    artifact_surface = SafeHtml(f"<a href='{_e(artifact_href)}'>{_e(artifact_label)}</a>")
+    note_surface = SafeHtml(f"<a href='{_e(note_href)}'>{_e(note_label)}</a>")
     return "".join(
         [
             "<section class='panel home-activity-command-bar' data-home-activity-command-bar='true'><h3>Home Activity Command Bar</h3>",
             "<p class='muted'>One read-only summary of the latest local activity across current goals.</p>",
+            "<div class='home-activity-grid' data-home-activity-actions='true'>",
+            "<article class='home-activity-card home-activity-primary' data-home-activity-latest='true'><h3>Latest</h3>",
+            f"<p>{_e(latest_label)}</p><a class='home-activity-action' data-home-activity-primary='true' href='{_e(latest_href)}'>Open latest</a></article>",
+            "<article class='home-activity-card' data-home-activity-goals='true'><h3>Goals</h3>",
+            f"<p>{len(items)} timeline events</p><a class='home-activity-link' href='/goals'>Open goals</a></article>",
+            "<article class='home-activity-card' data-home-activity-artifacts='true'><h3>Artifacts</h3>",
+            f"<p>{artifacts} artifact events</p><a class='home-activity-link' href='{_e(artifact_href)}'>{_e(artifact_label)}</a></article>",
+            "<article class='home-activity-card' data-home-activity-notes='true'><h3>Notes</h3>",
+            f"<p>{operator_notes} operator notes</p><a class='home-activity-link' href='{_e(note_href)}'>{_e(note_label)}</a></article>",
+            "</div>",
             _kv(
                 [
                     ("home_activity_command_status", "available"),
                     ("home_activity_command_items", str(len(items))),
                     ("home_activity_command_latest_at", latest_at),
                     ("home_activity_command_latest_message", latest_label),
-                    (
-                        "home_activity_command_latest_surface",
-                        SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>"),
-                    ),
+                    ("home_activity_command_latest_surface", latest_surface),
                     ("home_activity_command_operator_notes", str(operator_notes)),
                     ("home_activity_command_artifacts", str(artifacts)),
+                    ("home_activity_cards_available", "true"),
+                    ("home_activity_card_count", "4"),
+                    ("home_activity_latest_surface", latest_surface),
+                    ("home_activity_goals_surface", SafeHtml("<a href='/goals'>Open goals</a>")),
+                    ("home_activity_artifact_surface", artifact_surface),
+                    ("home_activity_note_surface", note_surface),
                     ("home_activity_command_source", "goal_timeline_items"),
                     ("home_activity_command_write_on_get", "false"),
                     ("home_activity_command_network_actions_taken", "0"),
@@ -30964,6 +30997,16 @@ def _html_page(
     .home-operator-action, .home-operator-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; margin:3px 3px 3px 0; }}
     .home-operator-action {{ background:var(--accent); color:#fff; }}
     .home-operator-link {{ background:var(--surface); color:var(--accent); }}
+    .home-activity-command-bar {{ border-left:4px solid var(--accent); }}
+    .home-activity-command-bar dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .home-activity-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(3, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .home-activity-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
+    .home-activity-card h3 {{ margin-top:0; }}
+    .home-activity-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .home-activity-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .home-activity-action, .home-activity-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .home-activity-action {{ background:var(--accent); color:#fff; }}
+    .home-activity-link {{ background:var(--surface); color:var(--accent); }}
     .home-attention-brief {{ border-left:4px solid var(--warn); }}
     .home-attention-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .home-attention-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -31506,6 +31549,7 @@ def _html_page(
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
     @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-session-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

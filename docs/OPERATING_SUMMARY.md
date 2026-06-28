@@ -405,10 +405,12 @@ Core layers for the bootstrap:
   metadata. Goal pages include a browser-native progress
   bar and a large Current Phase banner that explains the phase reason,
   operator attention cue, next action surface, latest activity, and zero-effect
-  boundary without requiring the CLI. Home and Goal activity sections now also
-  include read-only activity command bars that summarize the latest
-  human-readable event, target surface, operator-note/artifact counts, and
-  zero-effect boundaries before the longer activity lists. Goal detail pages also include a
+  boundary without requiring the CLI. Home activity now includes a read-only
+  activity command bar with visible Latest, Goals, Artifacts, and Notes cards
+  before the longer activity list, while preserving target surface,
+  operator-note/artifact counts, and zero-effect boundaries in the DOM. Goal
+  activity sections keep the matching command-bar pattern for latest
+  human-readable event, target surface, counts, and safety evidence. Goal detail pages also include a
   read-only `Goal Command Bar` near the top that opens with visible Now,
   Phase, Progress, Proof, and Resume cards while keeping phase, one primary
   action, target local surface, progress, waiting counts, `/resume`, latest

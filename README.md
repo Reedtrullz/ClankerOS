@@ -121,7 +121,8 @@ confirmed `save-workspace` Finish Today form for the lead goal, the
 read-only `Home Attention Brief` for approvals, incidents, recommendations,
 inbox load, and proof posture before deeper goal work, the
 `Home Focus Queue` for next actions across active and paused goals, the
-read-only `Home Activity Command Bar` for the latest human-readable event,
+read-only `Home Activity Command Bar` with visible Latest, Goals, Artifacts,
+and Notes cards for recent human-readable activity,
 `Home Verification Handoff` for current branch/commit GitHub Actions proof
 commands and the latest operator-supplied CI evidence, the
 saved-goal browser-available action form, and first-run project/goal/delegation

@@ -4675,10 +4675,22 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "activity_log_format</dt><dd>human_readable" in root.body
     assert "Home Activity Command Bar" in root.body
     assert "data-home-activity-command-bar='true'" in root.body
+    assert "data-home-activity-actions='true'" in root.body
+    assert "data-home-activity-latest='true'" in root.body
+    assert "data-home-activity-goals='true'" in root.body
+    assert "data-home-activity-artifacts='true'" in root.body
+    assert "data-home-activity-notes='true'" in root.body
+    assert "data-home-activity-primary='true' href='/goals'>Open latest</a>" in root.body
     assert "home_activity_command_items</dt><dd>0" in root.body
     assert "home_activity_command_latest_message</dt><dd>No recent activity" in root.body
     assert "home_activity_command_latest_surface</dt><dd><a href='/goals'>/goals</a>" in root.body
     assert "home_activity_command_source</dt><dd>goal_timeline_items" in root.body
+    assert "home_activity_cards_available</dt><dd>true" in root.body
+    assert "home_activity_card_count</dt><dd>4" in root.body
+    assert "home_activity_latest_surface</dt><dd><a href='/goals'>/goals</a>" in root.body
+    assert "home_activity_goals_surface</dt><dd><a href='/goals'>Open goals</a>" in root.body
+    assert "home_activity_artifact_surface</dt><dd><a href='/search?q=artifact'>Search artifacts</a>" in root.body
+    assert "home_activity_note_surface</dt><dd><a href='/memory'>Open memory</a>" in root.body
     assert "home_activity_command_write_on_get</dt><dd>false" in root.body
     assert "home_activity_command_network_actions_taken</dt><dd>0" in root.body
     assert "home_activity_command_external_effects_created</dt><dd>false" in root.body
@@ -8936,6 +8948,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home-day-plan" in home_day_plan_workspace_confirmation.body
     assert "home_ci_snapshot_fast_smoke_validated_record_command_template: gh run view" in dashboard.body
     assert "Home Recent Activity" in dashboard.body
+    assert "data-home-activity-actions='true'" in dashboard.body
+    assert "data-home-activity-primary='true' href='" in dashboard.body
+    assert "home_activity_cards_available</dt><dd>true" in dashboard.body
+    assert "home_activity_card_count</dt><dd>4" in dashboard.body
+    assert "home_activity_latest_surface</dt><dd><a href='" in dashboard.body
+    assert "home_activity_goals_surface</dt><dd><a href='/goals'>Open goals</a>" in dashboard.body
+    assert "home_activity_artifact_surface</dt><dd><a href='" in dashboard.body
+    assert "home_activity_note_surface</dt><dd><a href='" in dashboard.body
     assert "Execution completed" in dashboard.body
     assert "Home Inbox" in dashboard.body
     assert "Home Recommendations" in dashboard.body
