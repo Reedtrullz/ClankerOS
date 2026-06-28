@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Approval Decision Brief now opens with visible Decision, Inspect, Evidence,
+  After, and Safety cards before collapsed approval decision evidence. The
+  cards keep worktree/commit/publication decisions focused on the correct
+  queue anchor, workflow or run inspection surface, bounded artifact evidence,
+  post-decision local follow-up, and no-write/no-execute/no-network boundary.
 - Skills Inventory now follows the visible `Skills Operator Workbench` with a
   read-only `Skills Usage Map` for Now, Available, Generated, Usage, Projects,
   and Safety before the dense skill lists. The map surfaces usage counts,

@@ -21189,6 +21189,14 @@ def _approval_decision_brief(
     reason = "no_pending_local_approval_decisions"
     context_run = "none"
     context_delegation = "none"
+    decision_href = "/goals"
+    decision_label = "/goals"
+    inspect_href = "/goals"
+    inspect_label = "/goals"
+    evidence_href = "#approval-decision-brief"
+    evidence_label = "Evidence"
+    after_href = "/goals"
+    after_label = "/goals"
 
     focus_kind = str(focus.get("kind") or "none")
     if focus_kind == "worktree":
@@ -21202,6 +21210,8 @@ def _approval_decision_brief(
         decision_surface = SafeHtml(
             "<a href='#pending-worktree-approvals'>Pending Worktree Approvals</a>"
         )
+        decision_href = "#pending-worktree-approvals"
+        decision_label = "Pending Worktree Approvals"
         run_surface = "not_created_yet"
         source_run = item.source_run_id or "none"
         context_run = "not_created_yet"
@@ -21209,17 +21219,21 @@ def _approval_decision_brief(
         delegation_surface = _path_link(
             f"/delegations/{quote(item.delegation_id)}"
         )
+        inspect_href = f"/workflow?delegation_id={quote(item.delegation_id)}"
+        inspect_label = "Workflow"
         workflow_surface = _path_link(
-            f"/workflow?delegation_id={quote(item.delegation_id)}"
+            inspect_href
         )
-        request_artifact = _artifact_link(
-            _repo_relative_artifact_path(root, item.request_artifact_path)
-        )
-        evidence_artifact = _artifact_link(
-            _repo_relative_artifact_path(root, item.source_plan_path)
-        )
+        request_artifact_path = _repo_relative_artifact_path(root, item.request_artifact_path)
+        evidence_artifact_path = _repo_relative_artifact_path(root, item.source_plan_path)
+        request_artifact = _artifact_link(request_artifact_path)
+        evidence_artifact = _artifact_link(evidence_artifact_path)
+        evidence_href = f"/artifacts?path={quote(evidence_artifact_path)}"
+        evidence_label = "Plan evidence"
         after_decision = "run approved worktree from goal or run surface"
         after_surface = workflow_surface
+        after_href = inspect_href
+        after_label = "Workflow"
         reason = "bounded_worktree_plan_waiting_for_operator"
     elif focus_kind == "commit":
         item = focus["item"]
@@ -21232,7 +21246,11 @@ def _approval_decision_brief(
         decision_surface = SafeHtml(
             "<a href='#pending-commit-approvals'>Pending Commit Approvals</a>"
         )
-        run_surface = _path_link(f"/runs/{quote(item.run_id)}")
+        decision_href = "#pending-commit-approvals"
+        decision_label = "Pending Commit Approvals"
+        inspect_href = f"/runs/{quote(item.run_id)}"
+        inspect_label = "Run Detail"
+        run_surface = _path_link(inspect_href)
         source_run = item.source_run_id or "none"
         context_run = item.run_id
         context_delegation = item.delegation_id
@@ -21240,14 +21258,16 @@ def _approval_decision_brief(
             f"/delegations/{quote(item.delegation_id)}"
         )
         workflow_surface = _path_link(f"/workflow?run_id={quote(item.run_id)}")
-        request_artifact = _artifact_link(
-            _repo_relative_artifact_path(root, item.request_artifact_path)
-        )
-        evidence_artifact = _artifact_link(
-            _repo_relative_artifact_path(root, item.review_path)
-        )
+        request_artifact_path = _repo_relative_artifact_path(root, item.request_artifact_path)
+        evidence_artifact_path = _repo_relative_artifact_path(root, item.review_path)
+        request_artifact = _artifact_link(request_artifact_path)
+        evidence_artifact = _artifact_link(evidence_artifact_path)
+        evidence_href = f"/artifacts?path={quote(evidence_artifact_path)}"
+        evidence_label = "Review evidence"
         after_decision = "commit approved worktree with typed message"
         after_surface = run_surface
+        after_href = inspect_href
+        after_label = "Run Detail"
         typed_commit_message_required = "true"
         changed_files = str(len(item.changed_files))
         reason = "reviewed_worktree_commit_waiting_for_operator"
@@ -21262,7 +21282,11 @@ def _approval_decision_brief(
         decision_surface = SafeHtml(
             "<a href='#pending-publication-approvals'>Pending Publication Approvals</a>"
         )
-        run_surface = _path_link(f"/runs/{quote(item.run_id)}")
+        decision_href = "#pending-publication-approvals"
+        decision_label = "Pending Publication Approvals"
+        inspect_href = f"/runs/{quote(item.run_id)}"
+        inspect_label = "Run Detail"
+        run_surface = _path_link(inspect_href)
         source_run = item.source_run_id or "none"
         context_run = item.run_id
         context_delegation = item.delegation_id
@@ -21270,14 +21294,16 @@ def _approval_decision_brief(
             f"/delegations/{quote(item.delegation_id)}"
         )
         workflow_surface = _path_link(f"/workflow?run_id={quote(item.run_id)}")
-        request_artifact = _artifact_link(
-            _repo_relative_artifact_path(root, item.request_artifact_path)
-        )
-        evidence_artifact = _artifact_link(
-            _repo_relative_artifact_path(root, item.source_commit_artifact_path)
-        )
+        request_artifact_path = _repo_relative_artifact_path(root, item.request_artifact_path)
+        evidence_artifact_path = _repo_relative_artifact_path(root, item.source_commit_artifact_path)
+        request_artifact = _artifact_link(request_artifact_path)
+        evidence_artifact = _artifact_link(evidence_artifact_path)
+        evidence_href = f"/artifacts?path={quote(evidence_artifact_path)}"
+        evidence_label = "Commit evidence"
         after_decision = "prepare publication handoff for manual push/PR"
         after_surface = run_surface
+        after_href = inspect_href
+        after_label = "Run Detail"
         remote_target = f"{item.remote}/{item.target_branch}"
         reason = "committed_worktree_publication_waiting_for_operator"
 
@@ -21306,12 +21332,25 @@ def _approval_decision_brief(
     return "".join(
         [
             (
-                "<section class='panel approval-decision-brief' "
+                "<section id='approval-decision-brief' class='panel approval-decision-brief' "
                 "data-approval-decision-brief='true' "
                 f"data-approval-decision-status='{_e(status)}'>"
                 "<h2>Approval Decision Brief</h2>"
             ),
             "<p class='muted'>The next local approval decision with direct inspection links and post-decision routing.</p>",
+            "<div class='approval-decision-grid' data-approval-decision-actions='true'>",
+            "<article class='approval-decision-card approval-decision-primary' data-approval-decision-card='decision'><h3>Decision</h3>",
+            f"<p>{_e(action)} · {_e(kind)}</p><a class='approval-decision-action' data-approval-decision-primary='true' href='{_e(decision_href)}'>{_e(decision_label)}</a></article>",
+            "<article class='approval-decision-card' data-approval-decision-card='inspect'><h3>Inspect</h3>",
+            f"<p>{_e(reason)}</p><a class='approval-decision-link' href='{_e(inspect_href)}'>{_e(inspect_label)}</a></article>",
+            "<article class='approval-decision-card' data-approval-decision-card='evidence'><h3>Evidence</h3>",
+            f"<p>{_e(project)} · {changed_files} changed file{'s' if changed_files != '1' else ''}</p><a class='approval-decision-link' href='{_e(evidence_href)}'>{_e(evidence_label)}</a></article>",
+            "<article class='approval-decision-card' data-approval-decision-card='after'><h3>After</h3>",
+            f"<p>{_e(after_decision)}</p><a class='approval-decision-link' href='{_e(after_href)}'>{_e(after_label)}</a></article>",
+            "<article class='approval-decision-card' data-approval-decision-card='safety'><h3>Safety</h3>",
+            "<p>GET is read-only; approval forms create local decision artifacts only after confirmation.</p><a class='approval-decision-link' href='#approval-decision-brief'>Read-only</a></article>",
+            "</div>",
+            "<details class='approval-decision-evidence' data-approval-decision-evidence='true'><summary>Approval decision evidence</summary>",
             _kv(
                 [
                     ("approval_decision_status", status),
@@ -21346,6 +21385,7 @@ def _approval_decision_brief(
                 ]
             ),
             _ul(lines),
+            "</details>",
             "</section>",
         ]
     )
@@ -31659,12 +31699,21 @@ def _html_page(
     .approval-queue-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .approval-decision-brief {{ border-left:4px solid var(--warn); }}
     .approval-decision-brief[data-approval-decision-status="empty"] {{ border-left-color:var(--ok); }}
+    .approval-decision-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .approval-decision-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
+    .approval-decision-card h3 {{ margin-top:0; }}
+    .approval-decision-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .approval-decision-primary {{ border-color:var(--warn); box-shadow:inset 3px 0 0 var(--warn); }}
+    .approval-decision-brief[data-approval-decision-status="empty"] .approval-decision-primary {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
+    .approval-decision-action, .approval-decision-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .approval-decision-action {{ background:var(--accent); color:#fff; }}
+    .approval-decision-link {{ background:var(--surface); color:var(--accent); }}
     .approval-decision-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .approval-decision-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .approval-operator-workbench {{ border-left:4px solid var(--accent); }}
-    .approval-workbench-evidence, .approval-finish-details {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .approval-workbench-evidence summary, .approval-finish-details summary {{ cursor:pointer; font-weight:700; }}
-    .approval-workbench-evidence:not([open]) > :not(summary), .approval-finish-details:not([open]) > :not(summary) {{ display:none; }}
+    .approval-workbench-evidence, .approval-finish-details, .approval-decision-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .approval-workbench-evidence summary, .approval-finish-details summary, .approval-decision-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .approval-workbench-evidence:not([open]) > :not(summary), .approval-finish-details:not([open]) > :not(summary), .approval-decision-evidence:not([open]) > :not(summary) {{ display:none; }}
     .approval-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .approval-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .approval-operator-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -31720,6 +31769,7 @@ def _html_page(
     @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-attention-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .skills-usage-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ .approval-decision-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

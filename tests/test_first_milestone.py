@@ -7378,6 +7378,15 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Approval Decision Brief" in approvals.body
     assert "data-approval-decision-brief='true'" in approvals.body
     assert "data-approval-decision-status='empty'" in approvals.body
+    assert "data-approval-decision-actions='true'" in approvals.body
+    assert approvals.body.count("class='approval-decision-card") == 5
+    assert "data-approval-decision-card='decision'" in approvals.body
+    assert "data-approval-decision-card='inspect'" in approvals.body
+    assert "data-approval-decision-card='evidence'" in approvals.body
+    assert "data-approval-decision-card='after'" in approvals.body
+    assert "data-approval-decision-card='safety'" in approvals.body
+    assert "data-approval-decision-primary='true' href='/goals'>/goals</a>" in approvals.body
+    assert "data-approval-decision-evidence='true'" in approvals.body
     assert "approval_decision_status</dt><dd>empty" in approvals.body
     assert "approval_decision_action</dt><dd>No pending approvals" in approvals.body
     assert "approval_decision_action_name</dt><dd>none" in approvals.body
@@ -12618,6 +12627,21 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Approval Decision Brief" in approvals.body
     assert "data-approval-decision-brief='true'" in approvals.body
     assert "data-approval-decision-status='needs_worktree_decision'" in approvals.body
+    assert "data-approval-decision-actions='true'" in approvals.body
+    assert approvals.body.count("class='approval-decision-card") == 5
+    assert "data-approval-decision-card='decision'" in approvals.body
+    assert "data-approval-decision-card='inspect'" in approvals.body
+    assert "data-approval-decision-card='evidence'" in approvals.body
+    assert "data-approval-decision-card='after'" in approvals.body
+    assert "data-approval-decision-card='safety'" in approvals.body
+    assert (
+        "data-approval-decision-primary='true' href='#pending-worktree-approvals'>"
+        "Pending Worktree Approvals</a>"
+        in approvals.body
+    )
+    assert f"<a class='approval-decision-link' href='/workflow?delegation_id={result.delegation_id}'>Workflow</a>" in approvals.body
+    assert "<a class='approval-decision-link' href='/artifacts?path=" in approvals.body
+    assert "data-approval-decision-evidence='true'" in approvals.body
     assert "approval_decision_status</dt><dd>needs_worktree_decision" in approvals.body
     assert "approval_decision_kind</dt><dd>worktree" in approvals.body
     assert f"approval_decision_id</dt><dd>{result.approval_id}" in approvals.body

@@ -291,7 +291,10 @@ Core layers for the bootstrap:
   writing on GET. The read-only `Approval Queue Command Bar` follows with
   pending worktree/commit/publication counts, first recommended decision,
   target section, after-decision guidance, and zero-effect boundary inside
-  collapsed evidence;
+  collapsed evidence. The `Approval Decision Brief` then shows Decision,
+  Inspect, Evidence, After, and Safety cards before collapsed decision evidence
+  so the operator can inspect the right workflow/run/artifact and understand
+  the next local-only follow-up before using a confirmed approval form;
   and `/profiles`
   for inactive future provider-routing readback from `.clanker/profiles.yml`
   and SQLite profile storage rows, including profile labels, modes, cost

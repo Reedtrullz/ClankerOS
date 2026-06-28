@@ -796,11 +796,12 @@ can become tomorrow's resume point without writing on GET. The read-only
 publication decisions, the scoped or global first recommended decision, the
 same-page form target, the follow-up after approval, and the zero-effect
 boundary inside collapsed evidence. The read-only `Approval Decision Brief`
-then expands the first recommended decision into direct inspection links for
-the relevant delegation, workflow, run when one exists, request artifact,
-evidence artifact, form anchor, post-decision surface, and no-write/no-network/
-no-external-effect boundary. Pending commit and publication approvals link back
-to the relevant run and name the next local-only follow-up action after
+then turns the first recommended decision into visible Decision, Inspect,
+Evidence, After, and Safety cards before collapsed evidence for the relevant
+delegation, workflow, run when one exists, request artifact, evidence artifact,
+form anchor, post-decision surface, and no-write/no-network/no-external-effect
+boundary. Pending commit and publication approvals link back to the relevant
+run and name the next local-only follow-up action after
 approval, including the typed commit-message requirement and the manual
 push/PR boundary.
 
