@@ -4256,7 +4256,52 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "ClankerOS Local Operator" in root.body
     assert 'data-operator-shell="true"' in root.body
     assert 'class="operator-main" data-operator-main="true"' in root.body
+    assert "data-operator-ribbon='true'" in root.body
+    assert "data-operator-ribbon-cards='true'" in root.body
+    assert "data-operator-ribbon-now='true' data-operator-ribbon-primary='true'" in root.body
+    assert "data-operator-ribbon-goal='true'" in root.body
+    assert "data-operator-ribbon-attention='true'" in root.body
+    assert "data-operator-ribbon-resume='true'" in root.body
+    assert "data-operator-ribbon-search='true'" in root.body
+    assert "data-operator-ribbon-evidence='true'" in root.body
+    assert root.body.index("data-operator-ribbon='true'") < root.body.index(
+        'data-operator-shell="true"'
+    )
+    assert (
+        "<a class='operator-ribbon-action' href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
+    assert "operator_ribbon_status</dt><dd>first_run" in root.body
+    assert "operator_ribbon_source</dt><dd>first_run_progress" in root.body
+    assert "operator_ribbon_route</dt><dd>/" in root.body
+    assert "operator_ribbon_title</dt><dd>Dashboard" in root.body
+    assert "operator_ribbon_goal</dt><dd><a href='/goals'>No goal yet</a>" in root.body
+    assert "operator_ribbon_project</dt><dd><a href='/projects'>clankeros</a>" in root.body
+    assert "operator_ribbon_phase</dt><dd>First run" in root.body
+    assert "operator_ribbon_primary_action</dt><dd>Register ClankerOS project" in root.body
+    assert (
+        "operator_ribbon_primary_surface</dt><dd><a href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
+    assert "operator_ribbon_attention_status</dt><dd>first_run" in root.body
+    assert "operator_ribbon_progress</dt><dd>first_run_step=create_project" in root.body
+    assert "operator_ribbon_waiting_items</dt><dd>1" in root.body
+    assert "operator_ribbon_action_form_available</dt><dd>true" in root.body
+    assert "operator_ribbon_confirmation_required</dt><dd>true" in root.body
+    assert "operator_ribbon_resume_status</dt><dd>not_started" in root.body
+    assert "operator_ribbon_command_palette_available</dt><dd>true" in root.body
+    assert "operator_ribbon_write_on_get</dt><dd>false" in root.body
+    assert "operator_ribbon_provider_calls_taken</dt><dd>0" in root.body
+    assert "operator_ribbon_network_actions_taken</dt><dd>0" in root.body
+    assert "operator_ribbon_external_effects_created</dt><dd>false" in root.body
+    assert "operator_ribbon_now: Register ClankerOS project" in root.body
+    assert (
+        "operator_ribbon_click: <a href='#first-run-create-project'>Create Project</a>"
+        in root.body
+    )
+    assert "operator_ribbon_safety: read-only global operator orientation" in root.body
     assert ".operator-main { order:1; } .operator-side { order:2; }" in root.body
+    assert ".operator-ribbon-grid" in root.body
     assert "Goal-First Home" in root.body
     assert "home_dashboard_goal_first</dt><dd>true" in root.body
     assert "home_active_goals</dt><dd>0" in root.body
@@ -8453,6 +8498,53 @@ def test_local_app_demo_scenario_populates_fixture_state(
 
     dashboard = render_local_app_route(tmp_path, "/")
     assert dashboard.status == 200
+    assert "data-operator-ribbon='true'" in dashboard.body
+    assert "data-operator-ribbon-cards='true'" in dashboard.body
+    assert "data-operator-ribbon-now='true' data-operator-ribbon-primary='true'" in dashboard.body
+    assert "data-operator-ribbon-goal='true'" in dashboard.body
+    assert "data-operator-ribbon-attention='true'" in dashboard.body
+    assert "data-operator-ribbon-resume='true'" in dashboard.body
+    assert "data-operator-ribbon-search='true'" in dashboard.body
+    assert "data-operator-ribbon-evidence='true'" in dashboard.body
+    assert dashboard.body.index("data-operator-ribbon='true'") < dashboard.body.index(
+        'data-operator-shell="true"'
+    )
+    assert (
+        f"<a class='operator-ribbon-action' href='/runs/{result.coder_worktree_run_id}'>"
+        "Create commit request</a>"
+    ) in dashboard.body
+    assert "operator_ribbon_status</dt><dd>available" in dashboard.body
+    assert "operator_ribbon_source</dt><dd>lead_goal" in dashboard.body
+    assert f"operator_ribbon_goal</dt><dd><a href='/goals/{result.goal_id}'" in dashboard.body
+    assert f"operator_ribbon_project</dt><dd><a href='/projects/{result.project_id}'" in dashboard.body
+    assert "operator_ribbon_phase</dt><dd>Ready to commit" in dashboard.body
+    assert "operator_ribbon_primary_action</dt><dd>Create commit request" in dashboard.body
+    assert (
+        f"operator_ribbon_primary_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
+        "Create commit request</a>"
+    ) in dashboard.body
+    assert "operator_ribbon_attention_status</dt><dd>needs_approval_review" in dashboard.body
+    assert "operator_ribbon_attention_action</dt><dd>Review approvals" in dashboard.body
+    assert "operator_ribbon_attention_surface</dt><dd><a href='/approvals'>/approvals</a>" in dashboard.body
+    assert "operator_ribbon_progress</dt><dd>0/1 tasks completed" in dashboard.body
+    assert "operator_ribbon_waiting_items</dt><dd>1" in dashboard.body
+    assert "operator_ribbon_pending_approvals</dt><dd>1" in dashboard.body
+    assert "operator_ribbon_open_incidents</dt><dd>0" in dashboard.body
+    assert "operator_ribbon_open_recommendations</dt><dd>0" in dashboard.body
+    assert "operator_ribbon_action_form_available</dt><dd>true" in dashboard.body
+    assert "operator_ribbon_confirmation_required</dt><dd>true" in dashboard.body
+    assert "operator_ribbon_resume_status</dt><dd>not_started" in dashboard.body
+    assert "operator_ribbon_command_palette_available</dt><dd>true" in dashboard.body
+    assert "operator_ribbon_write_on_get</dt><dd>false" in dashboard.body
+    assert "operator_ribbon_provider_calls_taken</dt><dd>0" in dashboard.body
+    assert "operator_ribbon_network_actions_taken</dt><dd>0" in dashboard.body
+    assert "operator_ribbon_external_effects_created</dt><dd>false" in dashboard.body
+    assert "operator_ribbon_now: Create commit request" in dashboard.body
+    assert (
+        f"operator_ribbon_click: <a href='/runs/{result.coder_worktree_run_id}'>"
+        "Create commit request</a>"
+    ) in dashboard.body
+    assert "operator_ribbon_safety: read-only global operator orientation" in dashboard.body
     assert "Goal-First Home" in dashboard.body
     assert "home_dashboard_goal_first</dt><dd>true" in dashboard.body
     assert "Home Goal Board" in dashboard.body

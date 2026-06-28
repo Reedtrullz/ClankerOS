@@ -587,9 +587,14 @@ stay collapsed by default. The older `Incident Triage Command Bar` remains as
 read-only evidence with one local review target, incident and recommendation
 counts, evidence links, and no-resolution/no-retry/no-network boundaries.
 
-The app shell also includes a global `Operator Focus` strip, a read-only
-`Route Context` breadcrumb strip, recent local items, a command palette,
-keyboard shortcuts, and a dark/light theme toggle on every page. After a
+The app shell also includes a global `Operator Ribbon`, `Operator Focus`
+strip, a read-only `Route Context` breadcrumb strip, recent local items, a
+command palette, keyboard shortcuts, and a dark/light theme toggle on every
+page. The ribbon sits above the sidebar and page body with visible Now, Goal,
+Attention, Resume, and Search cards, so every route immediately shows the
+current or lead Goal, one recommended click, waiting-review posture, resume
+state, and collapsed no-write/no-provider/no-network evidence before the
+operator starts decoding the page. After a
 confirmed local action, the shell also shows a read-only `Last Action` strip
 from `.clanker/app/workspace.json`, with the action result, target notice
 surface, saved Goal/project context, and zero-effect counters so the operator

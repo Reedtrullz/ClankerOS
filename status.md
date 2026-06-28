@@ -1,5 +1,44 @@
 # Status
 
+## 2026-06-28 Global Operator Ribbon UX
+
+- Added a shared read-only `Operator Ribbon` above the sidebar/page shell on
+  every local app route.
+- The ribbon turns the saved workspace Goal, current lead Goal, or first-run
+  state into five scan-first cards: Now, Goal, Attention, Resume, and Search.
+- Collapsed ribbon evidence preserves the current route, source, phase,
+  primary action, attention target, progress/waiting counts, saved workspace
+  context, command-palette availability, and zero-effect counters.
+- Updated README, operating summary, local status docs, demo route markers,
+  and focused first-run plus fixture-backed route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected in 40.18s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `git diff --check` -> passed
+- Browser QA against fixture-backed scratch local app `127.0.0.1:8864`
+  verified the global ribbon on desktop `/` and mobile `/goals/<goal_id>`.
+  Desktop rendered 5 cards, linked Now to the current run, Goal to the demo
+  Goal, Attention to `/approvals`, kept evidence collapsed, ordered the ribbon
+  before the operator shell, had no horizontal overflow, and reported no
+  warning/error logs. Mobile `390x844` rendered the 5 cards in one column,
+  preserved the same action/attention readbacks, kept evidence collapsed, had
+  no horizontal overflow, reported no warning/error logs, and the viewport was
+  reset after the check.
+- The scratch local app server was stopped after browser QA, no listener
+  remained on port `8864`, and the scratch root was removed.
+- Non-claims until broader proof: GitHub Actions proof is not yet complete for
+  this slice. The ribbon is a local readback/navigation UX improvement only:
+  no write on GET, no provider call, no external network action beyond local
+  browser/server loopback, no approval decision, no execution, no commit, no
+  push, no PR, and no deploy from ClankerOS itself.
+
 ## 2026-06-28 Memory Pinboard UX
 
 - Added a visible read-only `Memory Pinboard` to `/memory` between the Memory

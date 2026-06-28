@@ -490,6 +490,8 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             "/demo",
             "Demo Scenario",
             [
+                "data-operator-ribbon='true'",
+                "data-operator-ribbon-cards='true'",
                 "Demo Operator Workbench",
                 "data-demo-operator-workbench='true'",
                 "data-demo-workbench-primary='true'",
@@ -608,6 +610,8 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             f"/goals/{quote(demo.goal_id)}",
             "Current Phase",
             [
+                "data-operator-ribbon='true'",
+                "operator_ribbon_status</dt><dd>available",
                 "Timeline",
                 "Goal Operator Workbench",
                 "data-goal-command-strip='true'",
@@ -28004,6 +28008,247 @@ def _operator_focus_evidence(
     )
 
 
+def _operator_ribbon_card(
+    label: str,
+    value: str,
+    href: str,
+    action_label: str,
+    *,
+    marker: str,
+    primary: bool = False,
+) -> str:
+    classes = "operator-ribbon-card"
+    if primary:
+        classes += " operator-ribbon-primary"
+    action_class = "operator-ribbon-action" if primary else "operator-ribbon-link"
+    return "".join(
+        [
+            f"<article class='{classes}' {marker}>",
+            f"<span class='operator-ribbon-label'>{_e(label)}</span>",
+            f"<strong>{_e(_compact_label(value, 88))}</strong>",
+            f"<a class='{action_class}' href='{_e(href)}'>{_e(action_label)}</a>",
+            "</article>",
+        ]
+    )
+
+
+def _operator_status_ribbon(
+    root: Path,
+    focus_context: dict[str, Any],
+    current_path: str,
+    title: str,
+) -> str:
+    status = str(focus_context.get("status", "state_unavailable"))
+    route_path = urlparse(current_path or "/").path or "/"
+    workspace = _load_workspace_state(root)
+    saved_project = str(workspace.get("open_project") or "").strip()
+    saved_goal = str(workspace.get("open_goal") or "").strip()
+    saved_artifact = str(workspace.get("last_viewed_artifact") or "").strip()
+    resume_status = (
+        "saved_goal" if saved_goal else ("saved_project" if saved_project else "not_started")
+    )
+
+    source = status
+    phase = "unknown"
+    progress = "unknown"
+    goal_label = "No goal yet"
+    goal_href = "/goals"
+    project_label = "No project"
+    project_href = "/projects"
+    primary_action = "Open health"
+    primary_href = "/health"
+    primary_label = "/health"
+    reason = status
+    attention_status = "state_unavailable"
+    attention_action = "Open health"
+    attention_href = "/health"
+    waiting_items = "0"
+    pending_approvals = "0"
+    open_incidents = "0"
+    open_recommendations = "0"
+    action_form_available = "false"
+
+    if status == "first_run":
+        source = str(focus_context.get("source") or "first_run_progress")
+        phase = "First run"
+        current_step = str(focus_context.get("current_step") or "unknown")
+        progress = f"first_run_step={current_step}"
+        project_label = str(focus_context.get("default_project") or "clankeros")
+        project_href = "/projects"
+        primary_action = str(focus_context.get("next_action") or "Continue first run")
+        primary_href = str(focus_context.get("target_href") or "/goals")
+        primary_label = str(focus_context.get("target_label") or primary_href)
+        reason = str(focus_context.get("next_reason") or "first_run")
+        attention_status = "first_run"
+        attention_action = primary_action
+        attention_href = primary_href
+        waiting_items = "1"
+        action_form_available = (
+            "true" if bool(focus_context.get("form_available")) else "false"
+        )
+    elif status == "available" and isinstance(
+        focus_context.get("next_action"), GoalNextAction
+    ):
+        goal = focus_context.get("goal")
+        next_action = focus_context["next_action"]
+        source = str(focus_context.get("source") or "goal_state")
+        phase = str(focus_context.get("phase") or "unknown")
+        progress = str(focus_context.get("progress") or "unknown")
+        if goal is not None:
+            goal_label = str(focus_context.get("goal_label") or goal.id)
+            goal_href = f"/goals/{quote(goal.id)}"
+            project_label = str(goal.project_id)
+            project_href = f"/projects/{quote(goal.project_id)}"
+        primary_action = next_action.action
+        primary_href = next_action.href
+        primary_label = next_action.action
+        reason = next_action.reason
+        pending_approvals = str(focus_context.get("pending_approvals") or 0)
+        open_incidents = str(focus_context.get("open_incidents") or 0)
+        open_recommendations = str(focus_context.get("open_recommendations") or 0)
+        waiting_items = str(focus_context.get("waiting_items") or 0)
+        action_form_available = (
+            "true" if bool(focus_context.get("action_form")) else "false"
+        )
+        if int(open_incidents):
+            attention_status = "needs_incident_review"
+            attention_action = "Review incidents"
+            attention_href = "/incidents"
+        elif int(pending_approvals):
+            attention_status = "needs_approval_review"
+            attention_action = "Review approvals"
+            attention_href = "/approvals"
+        elif int(open_recommendations):
+            attention_status = "needs_recommendation_review"
+            attention_action = "Review recommendations"
+            attention_href = "/incidents#incident-recommendations"
+        else:
+            attention_status = "clear"
+            attention_action = "Continue goal"
+            attention_href = primary_href
+    elif status == "no_goal":
+        source = "no_goal"
+        phase = "No active goal"
+        progress = "no_goal"
+        primary_action = "Open goals"
+        primary_href = "/goals"
+        primary_label = "/goals"
+        attention_status = "no_goal"
+        attention_action = "Open goals"
+        attention_href = "/goals"
+
+    resume_label = "Open resume"
+    resume_href = "/resume"
+    search_href = "/search"
+    route_label = title or route_path
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("operator_ribbon_status", status),
+        ("operator_ribbon_source", source),
+        ("operator_ribbon_route", route_path),
+        ("operator_ribbon_title", title),
+        ("operator_ribbon_current_page", SafeHtml(f"<a href='{_e(current_path)}'>{_e(route_label)}</a>")),
+        (
+            "operator_ribbon_goal",
+            SafeHtml(f"<a href='{_e(goal_href)}'>{_e(goal_label)}</a>"),
+        ),
+        (
+            "operator_ribbon_project",
+            SafeHtml(f"<a href='{_e(project_href)}'>{_e(project_label)}</a>"),
+        ),
+        ("operator_ribbon_phase", phase),
+        ("operator_ribbon_primary_action", primary_action),
+        (
+            "operator_ribbon_primary_surface",
+            SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+        ),
+        ("operator_ribbon_reason", reason),
+        ("operator_ribbon_attention_status", attention_status),
+        ("operator_ribbon_attention_action", attention_action),
+        (
+            "operator_ribbon_attention_surface",
+            SafeHtml(f"<a href='{_e(attention_href)}'>{_e(attention_href)}</a>"),
+        ),
+        ("operator_ribbon_progress", progress),
+        ("operator_ribbon_waiting_items", waiting_items),
+        ("operator_ribbon_pending_approvals", pending_approvals),
+        ("operator_ribbon_open_incidents", open_incidents),
+        ("operator_ribbon_open_recommendations", open_recommendations),
+        ("operator_ribbon_action_form_available", action_form_available),
+        ("operator_ribbon_confirmation_required", action_form_available),
+        ("operator_ribbon_resume_status", resume_status),
+        ("operator_ribbon_saved_project", saved_project or "none"),
+        ("operator_ribbon_saved_goal", saved_goal or "none"),
+        ("operator_ribbon_saved_artifact", saved_artifact or "none"),
+        ("operator_ribbon_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+        ("operator_ribbon_search_surface", SafeHtml("<a href='/search'>/search</a>")),
+        ("operator_ribbon_command_palette_available", "true"),
+        ("operator_ribbon_write_on_get", "false"),
+        ("operator_ribbon_provider_calls_taken", "0"),
+        ("operator_ribbon_network_actions_taken", "0"),
+        ("operator_ribbon_external_effects_created", "false"),
+    ]
+    lines = [
+        f"operator_ribbon_now: {_e(primary_action)}",
+        f"operator_ribbon_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+        f"operator_ribbon_attention: {_e(attention_status)} -> <a href='{_e(attention_href)}'>{_e(attention_href)}</a>",
+        f"operator_ribbon_resume: status={_e(resume_status)} surface=<a href='/resume'>/resume</a>",
+        "operator_ribbon_palette: <a href='#command-palette'>Command Palette</a>",
+        "operator_ribbon_safety: read-only global operator orientation",
+    ]
+    cards = [
+        _operator_ribbon_card(
+            "Now",
+            primary_action,
+            primary_href,
+            primary_label,
+            marker="data-operator-ribbon-now='true' data-operator-ribbon-primary='true'",
+            primary=True,
+        ),
+        _operator_ribbon_card(
+            "Goal",
+            goal_label,
+            goal_href,
+            "Open goal",
+            marker="data-operator-ribbon-goal='true'",
+        ),
+        _operator_ribbon_card(
+            "Attention",
+            f"{waiting_items} waiting",
+            attention_href,
+            attention_action,
+            marker="data-operator-ribbon-attention='true'",
+        ),
+        _operator_ribbon_card(
+            "Resume",
+            resume_status,
+            resume_href,
+            resume_label,
+            marker="data-operator-ribbon-resume='true'",
+        ),
+        _operator_ribbon_card(
+            "Search",
+            "Search local state",
+            search_href,
+            "/search",
+            marker="data-operator-ribbon-search='true'",
+        ),
+    ]
+    return "".join(
+        [
+            "<section class='operator-ribbon panel' data-operator-ribbon='true' aria-label='Operator status ribbon'>",
+            "<div class='operator-ribbon-grid' data-operator-ribbon-cards='true'>",
+            "".join(cards),
+            "</div>",
+            "<details class='operator-ribbon-evidence' data-operator-ribbon-evidence='true'>",
+            "<summary>Operator ribbon evidence</summary>",
+            _kv(rows),
+            _ul(lines),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
 def _operator_focus_strip(context: dict[str, Any]) -> str:
     status = str(context.get("status", "state_unavailable"))
     if status == "first_run":
@@ -29047,6 +29292,7 @@ def _html_page(
     nav = _nav_links(current_path)
     recent_panel = _recent_items_panel(root)
     focus_context = _operator_focus_context(root, current_path)
+    operator_ribbon = _operator_status_ribbon(root, focus_context, current_path, title)
     breadcrumbs = _breadcrumbs(root, current_path, title, focus_context)
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
@@ -29078,6 +29324,21 @@ def _html_page(
     .operator-shell {{ display:grid; grid-template-columns:minmax(180px, 240px) minmax(0, 1fr); gap:24px; align-items:start; }}
     .operator-shell > *, article, aside, section, dl, dt, dd {{ min-width:0; max-width:100%; }}
     .operator-main {{ min-width:0; max-width:100%; }}
+    .operator-ribbon {{ border-left:4px solid var(--accent); margin:0 0 16px; padding:12px; }}
+    .operator-ribbon-grid {{ display:grid; grid-template-columns:minmax(230px, 1.35fr) repeat(4, minmax(145px, 1fr)); gap:8px; align-items:stretch; }}
+    .operator-ribbon-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:9px 10px; display:grid; gap:6px; align-content:start; }}
+    .operator-ribbon-primary {{ background:var(--panel); border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .operator-ribbon-label {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .operator-ribbon-card strong {{ overflow-wrap:anywhere; }}
+    .operator-ribbon-action, .operator-ribbon-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:32px; max-width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
+    .operator-ribbon-action {{ background:var(--accent); color:#fff; }}
+    .operator-ribbon-link {{ background:var(--surface); color:var(--accent); }}
+    .operator-ribbon-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .operator-ribbon-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .operator-ribbon-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .operator-ribbon dl {{ grid-template-columns:minmax(170px, 230px) 1fr; }}
+    .operator-ribbon ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
+    .operator-ribbon li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .operator-side {{ position:sticky; top:74px; border:1px solid var(--line); background:var(--panel); padding:12px; }}
     .operator-side h2 {{ font-size:14px; }}
     .operator-side ul, .command-palette ul {{ list-style:none; padding:0; margin:0; display:grid; gap:7px; }}
@@ -30208,7 +30469,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
@@ -30224,6 +30485,7 @@ def _html_page(
   </header>
   {palette}
   <main>
+    {operator_ribbon}
     <div class="operator-shell" data-operator-shell="true">
       {recent_panel}
       <article class="operator-main" data-operator-main="true">

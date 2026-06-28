@@ -469,12 +469,18 @@ Core layers for the bootstrap:
   Finish switchboard cards plus stable collapsed in-page anchors including the
   command bar, workflow map, and major Goal surfaces, so operators can jump
   through a long Goal workbench without leaving the page or triggering writes.
-  Every app page also includes a shared read-only `Operator Focus` strip that
-  derives from the saved workspace goal or current lead goal and now opens with
-  compact action cards for the primary action, phase, progress, waiting counts,
-  and `/resume`, followed by the expandable confirmed local action form when
-  the current next action is browser-available and collapsed `Focus evidence`
-  for the full readback and no-write/no-provider/no-network/no-external-effect
+  Every app page also includes a shared read-only `Operator Ribbon` above the
+  sidebar/page shell. It derives from the saved workspace goal, current lead
+  goal, or first-run state and opens with compact Now, Goal, Attention, Resume,
+  and Search cards plus collapsed ribbon evidence for the current route,
+  phase, primary action, waiting counts, saved workspace context, command
+  palette availability, and no-write/no-provider/no-network/no-external-effect
+  boundaries. The shared read-only `Operator Focus` strip still derives from
+  the same saved workspace goal or current lead goal and opens with compact
+  action cards for the primary action, phase, progress, waiting counts, and
+  `/resume`, followed by the expandable confirmed local action form when the
+  current next action is browser-available and collapsed `Focus evidence` for
+  the full readback and no-write/no-provider/no-network/no-external-effect
   boundaries outside the Goal page. When
   no Goal exists yet, the shared shell now treats that as first-run progress:
   Home, Today, and Goals point `Route Context`, `Operator Focus`, and the
@@ -663,9 +669,12 @@ Core layers for the bootstrap:
   keeping content execution disabled. It also exposes a confirmed local
   `save-workspace` form so the operator can remember the current artifact as
   the next-session resume anchor without writing on GET. Every page shares
-  a browser operator shell with a read-only `Route Context` breadcrumb strip,
-  recent local items, a read-only `Last Action` strip after confirmed local
-  actions, a command palette, keyboard shortcuts, and a theme toggle. The last
+  a browser operator shell with a read-only `Operator Ribbon`, `Route Context`
+  breadcrumb strip, recent local items, a read-only `Last Action` strip after
+  confirmed local actions, a command palette, keyboard shortcuts, and a theme
+  toggle. The ribbon sits above the shell and keeps the current page's primary
+  action, Goal/project, attention count, `/resume`, `/search`, and collapsed
+  zero-effect readback visible before the page-specific workbench. The last
   action strip reads `.clanker/app/workspace.json` and exposes the latest
   completed local action, result, notice target, saved project/goal context,
   timestamp, and zero-effect counters without writing on GET. The route

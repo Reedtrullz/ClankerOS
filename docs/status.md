@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Every route now gets a global read-only `Operator Ribbon` above the
+  sidebar/page shell, with visible Now, Goal, Attention, Resume, and Search
+  cards before any route-specific workbench. The ribbon is sourced from the
+  saved workspace goal, current lead goal, or first-run state; it preserves the
+  current route, phase, primary action, waiting counts, saved workspace
+  context, command-palette availability, and no-write/no-provider/no-network/
+  no-external-effect counters inside collapsed evidence.
 - `/goals/<goal_id>` now keeps the top of the Goal detail page more
   action-first: the Goal Jump Bar still exposes the nine daily anchors, the
   Goal Command Bar opens with visible Now, Phase, Progress, Proof, and Resume
