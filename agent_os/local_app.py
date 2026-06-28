@@ -642,6 +642,13 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             "/skills",
             "Skills Inventory",
             [
+                "data-skills-operator-workbench='true'",
+                "data-skills-workbench-primary='true'",
+                "data-skills-state-details='true'",
+                "data-skills-workbench-evidence='true'",
+                "data-skills-command-evidence='true'",
+                "skills_workbench_status</dt><dd>generated_ready",
+                "skills_workbench_next_action</dt><dd>Review generated skill",
                 "Available Skills",
                 "generated_skill_storage",
                 "provider_actions_taken",
@@ -6217,6 +6224,7 @@ def _skills_page(root: Path) -> str:
         [
             "<section><h1>Skills Inventory</h1>",
             "<p class='muted'>Available and generated skills from local ClankerOS records. This page reads usage signals only; it does not install or execute skills.</p>",
+            "<details class='skills-state-details' data-skills-state-details='true'><summary>Skills state evidence</summary>",
             _kv(
                 [
                     ("available_skill_count", str(len(skills))),
@@ -6224,7 +6232,9 @@ def _skills_page(root: Path) -> str:
                     ("provider_actions_taken", "0"),
                 ]
             ),
+            "</details>",
             "</section>",
+            _skills_operator_workbench(root, skills=skills, usage=usage),
             _skills_command_bar(root, skills=skills, usage=usage),
             _list_section(
                 "Available Skills",
@@ -6237,6 +6247,122 @@ def _skills_page(root: Path) -> str:
                 anchor_id="skills-generated",
             ),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _skills_operator_workbench(
+    root: Path,
+    *,
+    skills: list[Any],
+    usage: dict[str, dict[str, Any]],
+) -> str:
+    generated = [skill for skill in skills if skill.source_run_id]
+    active = [skill for skill in skills if skill.status == "active"]
+    proposed = [skill for skill in skills if skill.status == "proposed"]
+    archived = [skill for skill in skills if skill.status == "archived"]
+    used_names = {name for name, data in usage.items() if int(data.get("count", 0)) > 0}
+    projects = {
+        str(project)
+        for data in usage.values()
+        for project in data.get("projects", set())
+        if project
+    }
+    projects.update(str(skill.project_id) for skill in skills if skill.project_id)
+    workspace = _load_workspace_state(root)
+    first_skill = (
+        generated[0]
+        if generated
+        else (active[0] if active else (proposed[0] if proposed else (skills[0] if skills else None)))
+    )
+    status = "empty"
+    first_target = "none"
+    first_artifact: str | SafeHtml = "none"
+    next_action = "Create goal context"
+    target_href = "/goals"
+    target_label = "/goals"
+    primary_summary = "No skill records yet. Start from a Goal so skills can be observed in real work."
+    if first_skill is not None:
+        first_target = first_skill.name
+        if first_skill.path:
+            first_artifact = _artifact_link(_repo_relative_artifact_path(root, first_skill.path))
+        if first_skill.source_run_id:
+            status = "generated_ready"
+            next_action = "Review generated skill"
+            target_href = "#skills-generated"
+            target_label = "Generated Skills"
+            primary_summary = f"{first_skill.name} has generated evidence ready to inspect."
+        elif first_skill.status == "proposed":
+            status = "proposed_ready"
+            next_action = "Review proposed skill"
+            target_href = "#skills-available"
+            target_label = "Available Skills"
+            primary_summary = f"{first_skill.name} is proposed and needs operator review."
+        else:
+            status = "available_ready"
+            next_action = "Review available skill"
+            target_href = "#skills-available"
+            target_label = "Available Skills"
+            primary_summary = f"{first_skill.name} is available for local review."
+    resume_href = "/resume" if workspace.get("open_goal") or workspace.get("open_project") else "/goals"
+    resume_label = "/resume" if resume_href == "/resume" else "/goals"
+    resume_summary = (
+        f"Saved context: {workspace.get('open_goal') or workspace.get('open_project') or 'none'}."
+        if resume_href == "/resume"
+        else "No saved context yet."
+    )
+    rows = [
+        ("skills_workbench_status", status),
+        ("skills_workbench_total_records", str(len(skills))),
+        ("skills_workbench_active_records", str(len(active))),
+        ("skills_workbench_proposed_records", str(len(proposed))),
+        ("skills_workbench_archived_records", str(len(archived))),
+        ("skills_workbench_generated_records", str(len(generated))),
+        ("skills_workbench_used_skill_names", str(len(used_names))),
+        ("skills_workbench_projects_using_skills", str(len(projects))),
+        ("skills_workbench_first_target", first_target),
+        ("skills_workbench_first_artifact", first_artifact),
+        ("skills_workbench_next_action", next_action),
+        ("skills_workbench_target_surface", SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")),
+        ("skills_workbench_resume_surface", SafeHtml(f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>")),
+        ("skills_workbench_workspace_project", workspace.get("open_project", "")),
+        ("skills_workbench_workspace_goal", workspace.get("open_goal", "")),
+        ("skills_workbench_workspace_artifact", workspace.get("last_viewed_artifact", "")),
+        ("skills_workbench_execution_available", "false"),
+        ("skills_workbench_install_available", "false"),
+        ("skills_workbench_write_on_get", "false"),
+        ("skills_workbench_raw_filesystem_browsing", "false"),
+        ("skills_workbench_provider_calls_taken", "0"),
+        ("skills_workbench_network_actions_taken", "0"),
+        ("skills_workbench_external_effects_created", "false"),
+    ]
+    return "".join(
+        [
+            "<section class='panel skills-operator-workbench' data-skills-operator-workbench='true'><h2>Skills Operator Workbench</h2>",
+            "<p class='muted'>Turn generated and available skills into a local review click without installing or executing anything.</p>",
+            "<div class='skills-workbench-grid' data-skills-workbench-actions='true'>",
+            "<article class='skills-workbench-card skills-workbench-primary'><h3>Now</h3>",
+            f"<p>{_e(primary_summary)}</p><a class='skills-workbench-action' data-skills-workbench-primary='true' href='{_e(target_href)}'>{_e(next_action)}</a></article>",
+            "<article class='skills-workbench-card'><h3>Generated</h3>",
+            f"<p>{len(generated)} generated skill record{'s' if len(generated) != 1 else ''}.</p><a class='skills-workbench-link' href='#skills-generated'>Review generated</a></article>",
+            "<article class='skills-workbench-card'><h3>Usage</h3>",
+            f"<p>{len(used_names)} used skill name{'s' if len(used_names) != 1 else ''} across {len(projects)} project{'s' if len(projects) != 1 else ''}.</p><a class='skills-workbench-link' href='#skills-available'>Review usage</a></article>",
+            "<article class='skills-workbench-card'><h3>Resume</h3>",
+            f"<p>{_e(resume_summary)}</p><a class='skills-workbench-link' href='{_e(resume_href)}'>{_e(resume_label)}</a></article>",
+            "</div>",
+            "<details class='skills-workbench-evidence' data-skills-workbench-evidence='true'><summary>Skills workbench evidence</summary>",
+            _kv(rows),
+            _ul(
+                [
+                    f"skills_workbench_now: <a href='{_e(target_href)}'>{_e(next_action)}</a>",
+                    f"skills_workbench_generated: <a href='#skills-generated'>Review generated</a>",
+                    f"skills_workbench_usage: <a href='#skills-available'>Review usage</a>",
+                    f"skills_workbench_resume: <a href='{_e(resume_href)}'>{_e(resume_label)}</a>",
+                    "skills_workbench_safety: read-only skill guidance; install and execution remain unavailable",
+                ]
+            ),
+            "</details>",
+            "</section>",
         ]
     )
 
@@ -6293,6 +6419,7 @@ def _skills_command_bar(
         [
             "<section class='panel skills-command-bar' data-skills-command-bar='true'><h2>Skills Command Bar</h2>",
             "<p class='muted'>One read-only summary of skill availability, generated records, usage, and the next local review target.</p>",
+            "<details class='skills-command-evidence' data-skills-command-evidence='true'><summary>Skills command evidence</summary>",
             _kv(
                 [
                     ("skills_command_status", "available"),
@@ -6328,6 +6455,7 @@ def _skills_command_bar(
                     "skills_command_safety: read-only skill guidance",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -23832,7 +23960,7 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
-    content_first_paths = {"/", "/actions", "/inbox", "/memory", "/resume", "/search", "/today", "/workspace"}
+    content_first_paths = {"/", "/actions", "/inbox", "/memory", "/resume", "/search", "/skills", "/today", "/workspace"}
     if current_route_path in content_first_paths:
         article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
     else:
@@ -24336,6 +24464,21 @@ def _html_page(
     .memory-state-details, .memory-workbench-evidence, .memory-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .memory-state-details summary, .memory-workbench-evidence summary, .memory-command-evidence summary {{ cursor:pointer; font-weight:700; }}
     .memory-state-details:not([open]) > :not(summary), .memory-workbench-evidence:not([open]) > :not(summary), .memory-command-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .skills-operator-workbench {{ border-left:4px solid var(--accent); }}
+    .skills-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .skills-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .skills-operator-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .skills-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .skills-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .skills-workbench-card h3 {{ margin-top:0; }}
+    .skills-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .skills-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .skills-workbench-action, .skills-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .skills-workbench-action {{ background:var(--accent); color:#fff; }}
+    .skills-workbench-link {{ background:var(--surface); color:var(--accent); }}
+    .skills-state-details, .skills-workbench-evidence, .skills-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .skills-state-details summary, .skills-workbench-evidence summary, .skills-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .skills-state-details:not([open]) > :not(summary), .skills-workbench-evidence:not([open]) > :not(summary), .skills-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .skills-command-bar {{ border-left:4px solid var(--accent); }}
     .skills-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .skills-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -24405,7 +24548,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

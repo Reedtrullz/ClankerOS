@@ -508,10 +508,14 @@ diagnostics and command readback, turning the next memory action, proposed
 pins, operator notes, and resume target into four browser cards. Memory state,
 workbench evidence, and command evidence stay collapsed by default while
 preserving entry counts, proposed-memory pin posture, saved workspace context,
-and no-write/provider/network/external-effect boundaries in the DOM. The read-only
-`Skills Command Bar` starts `/skills` with skill record counts, generated-skill
-posture, usage/project counts, the first generated or available skill artifact,
-one local review target, and no execution/install/provider/network effects.
+and no-write/provider/network/external-effect boundaries in the DOM. `/skills`
+is now action-first and opens with a visible `Skills Operator Workbench` before
+shared route/focus diagnostics or command readback, turning generated-skill
+review, usage review, and resume context into browser cards. Skills state,
+workbench evidence, and command evidence stay collapsed by default while
+preserving skill counts, generated-skill posture, usage/project counts, the
+first bounded skill artifact, and no execution/install/provider/network
+effects in the DOM.
 The read-only `Profiles Command Bar` starts `/profiles` with configured and
 storage profile counts, future-lane readiness, adapter/write/use-for posture,
 one local review target, and provider/model routing explicitly disabled.

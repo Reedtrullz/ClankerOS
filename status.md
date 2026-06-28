@@ -1,5 +1,46 @@
 # Status
 
+## 2026-06-28 Skills Action-First Operator Surface
+
+- Made `/skills` usable as an operator workbench by rendering the
+  `Skills Operator Workbench` before shared Route Context, Operator Focus,
+  Last Action, and skills command diagnostics.
+- Added four visible cards for the current skill review, generated skill
+  records, usage review, and resume/goal context, with a stable
+  `data-skills-workbench-primary` marker for the primary action.
+- Kept skills state evidence, workbench evidence, and command evidence
+  collapsed by default while preserving skill counts, generated-skill posture,
+  usage/project counts, first bounded skill artifact, saved workspace context,
+  and zero-effect readbacks in the DOM.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, install skills, execute skills, create action authority, approve work,
+  run work, call providers, fetch GitHub from ClankerOS, poll network
+  services, commit, push, create PRs, deploy, mutate external systems from
+  ClankerOS, or expose arbitrary raw filesystem browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or first_run_browser_actions_persist_resume_workspace' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-skills-first-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-skills-first-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/skills` snippets matched,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8813/skills`: desktop `1280x900` rendered four Skills
+    Operator Workbench cards before Route Context and the Skills Command Bar,
+    kept state/workbench/command evidence collapsed, had no horizontal
+    overflow, no framework overlay, and empty browser warning/error logs.
+  - Interaction proof: clicking the marked primary action changed the URL to
+    `/skills#skills-generated` and placed the generated skills section in view.
+  - Mobile Browser QA at `390x844` rendered four skills workbench cards in one
+    column, kept all skills evidence collapsed, placed shared Route Context
+    below the workbench, showed no horizontal overflow, and had empty browser
+    warning/error logs.
+  - `git diff --check` -> passed.
+
 ## 2026-06-28 Memory Action-First Operator Surface
 
 - Made `/memory` usable as an operator workbench by rendering the

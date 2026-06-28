@@ -9556,6 +9556,34 @@ def test_local_app_demo_scenario_populates_fixture_state(
     skills = render_local_app_route(tmp_path, "/skills")
     assert skills.status == 200
     assert "Skills Inventory" in skills.body
+    assert "Skills Operator Workbench" in skills.body
+    assert "data-skills-operator-workbench='true'" in skills.body
+    assert "data-skills-workbench-primary='true'" in skills.body
+    assert "data-skills-state-details='true'" in skills.body
+    assert "data-skills-workbench-evidence='true'" in skills.body
+    assert "data-skills-command-evidence='true'" in skills.body
+    assert skills.body.index("data-skills-operator-workbench") < skills.body.index("data-route-context")
+    assert skills.body.index("data-skills-operator-workbench") < skills.body.index("data-skills-command-bar")
+    assert "skills_workbench_status</dt><dd>generated_ready" in skills.body
+    assert "skills_workbench_total_records</dt><dd>1" in skills.body
+    assert "skills_workbench_active_records</dt><dd>1" in skills.body
+    assert "skills_workbench_generated_records</dt><dd>1" in skills.body
+    assert "skills_workbench_used_skill_names</dt><dd>1" in skills.body
+    assert "skills_workbench_projects_using_skills</dt><dd>1" in skills.body
+    assert "skills_workbench_first_target</dt><dd>local-files" in skills.body
+    assert (
+        "skills_workbench_first_artifact</dt><dd><a href='/artifacts?path=.clanker/skills/local-files/SKILL.md'>"
+        ".clanker/skills/local-files/SKILL.md</a>"
+        in skills.body
+    )
+    assert "skills_workbench_next_action</dt><dd>Review generated skill" in skills.body
+    assert "skills_workbench_target_surface</dt><dd><a href='#skills-generated'>Generated Skills</a>" in skills.body
+    assert "skills_workbench_execution_available</dt><dd>false" in skills.body
+    assert "skills_workbench_install_available</dt><dd>false" in skills.body
+    assert "skills_workbench_write_on_get</dt><dd>false" in skills.body
+    assert "skills_workbench_provider_calls_taken</dt><dd>0" in skills.body
+    assert "skills_workbench_network_actions_taken</dt><dd>0" in skills.body
+    assert "skills_workbench_external_effects_created</dt><dd>false" in skills.body
     assert "Skills Command Bar" in skills.body
     assert "data-skills-command-bar='true'" in skills.body
     assert "skills_command_total_records</dt><dd>1" in skills.body

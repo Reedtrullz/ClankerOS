@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/skills` is now action-first: it opens with the `Skills Operator
+  Workbench` before shared route/focus diagnostics or command readback, shows
+  visible Now, Generated, Usage, and Resume cards, and keeps skills state,
+  workbench evidence, and command evidence collapsed by default while
+  preserving generated-skill, usage, artifact, and zero-effect proof in the
+  DOM.
 - `/memory` is now action-first: it opens with the `Memory Operator Workbench`
   before shared route/focus diagnostics and command readback, shows visible
   Now, Pin, Notes, and Resume cards, and keeps memory state, workbench

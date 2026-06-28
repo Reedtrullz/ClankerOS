@@ -474,11 +474,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   memory or fallback resume target, saved workspace context, and
   write-on-GET/provider/network/external-effect boundaries in the DOM.
 - `/skills` - available/generated skill records with usage count, last-used
-  readback, and projects using them. A read-only `Skills Command Bar`
-  summarizes total, active, proposed, archived, generated, used-skill, and
-  project-usage counts, points at the first generated or available skill
-  artifact, and keeps skill execution/install/provider/network effects
-  disabled.
+  readback, and projects using them. It now opens with a visible
+  `Skills Operator Workbench` before shared route/focus diagnostics or
+  command readback, with cards for the next skill review, generated skills,
+  usage, and `/resume` or Goal context. Skills state, workbench evidence, and
+  command evidence stay collapsed by default while preserving total, active,
+  proposed, archived, generated, used-skill, project-usage, first-artifact,
+  and zero-effect readbacks in the DOM.
 - `/profiles` - inactive future provider-routing surface. It reads
   `.clanker/profiles.yml` when present, starts with a read-only
   `Profiles Command Bar`, and keeps provider calls and model routing at zero.

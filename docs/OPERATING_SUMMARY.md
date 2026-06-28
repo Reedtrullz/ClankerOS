@@ -226,11 +226,14 @@ Core layers for the bootstrap:
   entry counts, first proposed pin or fallback resume target, saved workspace
   context, and no-write/provider/network/external-effect boundaries in the
   DOM; `/skills`
-  for available/generated skill records with usage counts and a read-only
-  `Skills Command Bar` that summarizes record, generated, usage, and
-  project-usage counts, points at the first generated or available skill
-  artifact, names one local review target, and keeps execution/install/
-  provider/network effects disabled; `/approvals` as a
+  for available/generated skill records with usage counts. It is action-first
+  and opens with a visible `Skills Operator Workbench` before shared
+  route/focus diagnostics or command readback, with cards for the next skill
+  review, generated skills, usage, and `/resume` or Goal context. Skills
+  state, workbench evidence, and command evidence stay collapsed by default
+  while preserving record, generated, usage, project-usage, first-artifact,
+  no-execution/no-install/provider/network, and zero-effect readbacks in the
+  DOM; `/approvals` as a
   local decision queue with a read-only `Approval Queue Command Bar` that
   summarizes pending worktree/commit/publication counts, first recommended
   decision, target section, after-decision guidance, and zero-effect boundary,
