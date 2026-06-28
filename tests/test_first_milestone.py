@@ -4757,6 +4757,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "Create Project</a>"
     ) in root.body
     assert "data-command-palette-quick-artifact='true' href='/workspace'>Open workspace</a>" in root.body
+    assert (
+        "data-command-palette-quick-finish='true' href='/workspace#save-workspace'>"
+        "Finish Today</a>"
+    ) in root.body
     assert "data-command-palette-quick-evidence='true'" in root.body
     assert "palette_quick_switch_status</dt><dd>first_run" in root.body
     assert "palette_quick_switch_source</dt><dd>first_run_progress" in root.body
@@ -4767,10 +4771,21 @@ def test_local_app_routes_render_modern_workflow_and_health(
     ) in root.body
     assert "palette_quick_switch_workspace_source</dt><dd>none" in root.body
     assert "palette_quick_switch_artifact_source</dt><dd>none" in root.body
-    assert "palette_quick_switch_card_count</dt><dd>4" in root.body
+    assert "palette_quick_switch_finish_source</dt><dd>first_run_progress" in root.body
+    assert (
+        "palette_quick_switch_finish_surface</dt><dd><a href='/workspace#save-workspace'>"
+        "/workspace#save-workspace</a>"
+    ) in root.body
+    assert "palette_quick_switch_finish_target</dt><dd>No saved workspace" in root.body
+    assert "palette_quick_switch_finish_confirmation_required</dt><dd>true" in root.body
+    assert "palette_quick_switch_card_count</dt><dd>5" in root.body
     assert "palette_quick_switch_write_on_get</dt><dd>false" in root.body
     assert "palette_quick_switch_network_actions_taken</dt><dd>0" in root.body
     assert "palette_quick_switch_external_effects_created</dt><dd>false" in root.body
+    assert (
+        "palette_quick_switch_finish: <a href='/workspace#save-workspace'>"
+        "Finish Today</a>"
+    ) in root.body
     assert "palette_quick_switch_safety: read-only local launcher" in root.body
     assert "data-command-palette-evidence='true'" in root.body
     assert "<summary data-command-palette-evidence-summary='true'>Palette evidence and shortcuts</summary>" in root.body
@@ -8777,6 +8792,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "Run current action</a>"
     ) in dashboard.body
     assert "data-command-palette-quick-artifact='true' href='/artifacts?path=" in dashboard.body
+    assert (
+        "data-command-palette-quick-finish='true' href='/workspace#save-workspace'>"
+        "Finish Today</a>"
+    ) in dashboard.body
     assert "data-command-palette-quick-evidence='true'" in dashboard.body
     assert "palette_quick_switch_status</dt><dd>available" in dashboard.body
     assert "palette_quick_switch_source</dt><dd>lead_goal" in dashboard.body
@@ -8792,7 +8811,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in dashboard.body
     assert "palette_quick_switch_action_label</dt><dd>Create commit request" in dashboard.body
     assert "palette_quick_switch_artifact_source</dt><dd>current_goal_latest" in dashboard.body
-    assert "palette_quick_switch_card_count</dt><dd>4" in dashboard.body
+    assert "palette_quick_switch_finish_source</dt><dd>lead_goal" in dashboard.body
+    assert (
+        "palette_quick_switch_finish_surface</dt><dd><a href='/workspace#save-workspace'>"
+        "/workspace#save-workspace</a>"
+    ) in dashboard.body
+    assert f"palette_quick_switch_finish_target</dt><dd>{result.goal_id}" in dashboard.body
+    assert "palette_quick_switch_finish_confirmation_required</dt><dd>true" in dashboard.body
+    assert "palette_quick_switch_card_count</dt><dd>5" in dashboard.body
     assert "palette_quick_switch_write_on_get</dt><dd>false" in dashboard.body
     assert "palette_quick_switch_network_actions_taken</dt><dd>0" in dashboard.body
     assert "palette_quick_switch_external_effects_created</dt><dd>false" in dashboard.body
@@ -9287,6 +9313,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "Run current action</a>"
     ) in goal.body
     assert "data-command-palette-quick-artifact='true' href='/artifacts?path=" in goal.body
+    assert (
+        "data-command-palette-quick-finish='true' href='/workspace#save-workspace'>"
+        "Finish Today</a>"
+    ) in goal.body
     assert "palette_quick_switch_status</dt><dd>available" in goal.body
     assert "palette_quick_switch_source</dt><dd>lead_goal" in goal.body
     assert "palette_quick_switch_primary_action</dt><dd>Create commit request" in goal.body
@@ -9297,7 +9327,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in goal.body
     assert "palette_quick_switch_action_label</dt><dd>Create commit request" in goal.body
     assert "palette_quick_switch_artifact_source</dt><dd>current_goal_latest" in goal.body
-    assert "palette_quick_switch_card_count</dt><dd>4" in goal.body
+    assert "palette_quick_switch_finish_source</dt><dd>lead_goal" in goal.body
+    assert (
+        "palette_quick_switch_finish_surface</dt><dd><a href='/workspace#save-workspace'>"
+        "/workspace#save-workspace</a>"
+    ) in goal.body
+    assert f"palette_quick_switch_finish_target</dt><dd>{result.goal_id}" in goal.body
+    assert "palette_quick_switch_finish_confirmation_required</dt><dd>true" in goal.body
+    assert "palette_quick_switch_card_count</dt><dd>5" in goal.body
     assert "palette_quick_switch_write_on_get</dt><dd>false" in goal.body
     assert "data-command-palette-evidence='true'" in goal.body
     assert "<summary data-command-palette-evidence-summary='true'>Palette evidence and shortcuts</summary>" in goal.body

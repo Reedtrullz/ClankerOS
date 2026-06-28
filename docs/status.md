@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The command palette `Quick Switch` now includes a fifth `Finish` card that
+  opens `/workspace#save-workspace`, reports finish source/target/confirmation
+  evidence, and keeps the launcher read-only until the existing confirmed
+  workspace save form is submitted.
 - `/workspace#save-workspace` now exposes first-class `Workspace save defaults`
   evidence. Empty first-run checkouts stay blank and read-only, saved
   workspaces stay authoritative, and fixture/lead-goal states prefill the
@@ -266,9 +270,10 @@ Latest status focus:
   shortcuts, and the long open list are preserved inside collapsed palette
   evidence.
 - The command palette now also includes a visible `Quick Switch` dock for
-  Continue, Workspace, Action, and Artifact, using saved workspace state when
-  present and the current lead Goal/latest artifact as fallback, while keeping
-  quick-switch evidence and zero-effect counters collapsed.
+  Continue, Workspace, Action, Artifact, and Finish, using saved workspace
+  state when present and the current lead Goal/latest artifact as fallback,
+  while keeping the `/workspace#save-workspace` handoff, quick-switch
+  evidence, confirmation boundary, and zero-effect counters collapsed.
 - The shared Operator Focus strip is now compact and action-first: it shows
   the primary action, phase, progress, waiting counts, and `/resume` as visible
   cards, keeps the confirmed local action form available when relevant, and

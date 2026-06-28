@@ -1,5 +1,36 @@
 # Status
 
+## 2026-06-28 Command Palette Finish Today UX
+
+- Added a fifth `Finish` card to the global command palette `Quick Switch`
+  dock.
+- The card links to `/workspace#save-workspace`, so pressing `/` gives the
+  operator a keyboard-first route to the same confirmed Finish Today handoff
+  exposed by the global ribbon.
+- Quick-switch evidence now reports the finish source, target, confirmation
+  requirement, card count `5`, and no-write/no-provider/no-network/
+  no-external-effect counters.
+- Switched the quick-switch grid to responsive auto-fit columns so adding the
+  fifth card does not create fixed-width palette overflow.
+- Updated README, operating summary, local status focus, and focused
+  first-run plus fixture-backed route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state"`
+    -> passed, `2 passed, 514 deselected in 57.97s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `git diff --check` -> passed
+- Full pytest/browser regression proof is intentionally left to GitHub Actions
+  for this GitHub-first testing loop.
+- Non-claims until remote proof: no write on GET, no provider call, no app-side
+  GitHub polling, no approval decision, no execution, no commit, no push, no
+  PR, and no deploy from ClankerOS itself.
+
 ## 2026-06-28 Workspace Finish Defaults UX
 
 - Added first-class `Workspace save defaults` evidence inside

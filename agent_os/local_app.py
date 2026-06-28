@@ -28725,6 +28725,11 @@ def _command_palette_quick_switch(root: Path, focus_context: dict[str, Any]) -> 
     artifact_label = Path(artifact_path).name if artifact_path else "No saved artifact"
     artifact_href = f"/artifacts?path={quote(artifact_path)}" if artifact_path else "/workspace"
     artifact_action = "Open artifact" if artifact_path else "Open workspace"
+    finish_defaults = _workspace_save_defaults(root, state)
+    finish_source = finish_defaults["source"]
+    finish_target = finish_defaults["open_goal"] or finish_defaults["open_project"] or "No saved workspace"
+    finish_action = "Finish Today"
+    finish_href = "/workspace#save-workspace"
     recent_count = len(_recent_operator_links(root, limit=6))
     rows: list[tuple[str, str | SafeHtml]] = [
         ("palette_quick_switch_status", status),
@@ -28750,10 +28755,17 @@ def _command_palette_quick_switch(root: Path, focus_context: dict[str, Any]) -> 
             "palette_quick_switch_artifact_surface",
             SafeHtml(f"<a href='{_e(artifact_href)}'>{_e(artifact_href)}</a>"),
         ),
+        ("palette_quick_switch_finish_source", finish_source),
+        (
+            "palette_quick_switch_finish_surface",
+            SafeHtml(f"<a href='{_e(finish_href)}'>{_e(finish_href)}</a>"),
+        ),
+        ("palette_quick_switch_finish_target", finish_target),
+        ("palette_quick_switch_finish_confirmation_required", "true"),
         ("palette_quick_switch_saved_project", saved_project or "none"),
         ("palette_quick_switch_saved_goal", saved_goal or "none"),
         ("palette_quick_switch_recent_items", str(recent_count)),
-        ("palette_quick_switch_card_count", "4"),
+        ("palette_quick_switch_card_count", "5"),
         ("palette_quick_switch_write_on_get", "false"),
         ("palette_quick_switch_provider_calls_taken", "0"),
         ("palette_quick_switch_network_actions_taken", "0"),
@@ -28764,6 +28776,7 @@ def _command_palette_quick_switch(root: Path, focus_context: dict[str, Any]) -> 
         f"palette_quick_switch_workspace: <a href='{_e(workspace_href)}'>{_e(workspace_action)}</a>",
         f"palette_quick_switch_action: <a href='{_e(action_href)}'>{_e(action_action)}</a>",
         f"palette_quick_switch_artifact: <a href='{_e(artifact_href)}'>{_e(artifact_action)}</a>",
+        f"palette_quick_switch_finish: <a href='{_e(finish_href)}'>{_e(finish_action)}</a>",
         "palette_quick_switch_safety: read-only local launcher; confirmed actions still require forms",
     ]
     return "".join(
@@ -28800,6 +28813,13 @@ def _command_palette_quick_switch(root: Path, focus_context: dict[str, Any]) -> 
                 artifact_action,
                 artifact_href,
                 marker="data-command-palette-quick-artifact='true'",
+            ),
+            _command_palette_quick_card(
+                "Finish",
+                finish_target,
+                finish_action,
+                finish_href,
+                marker="data-command-palette-quick-finish='true'",
             ),
             "</div>",
             "<details class='palette-quick-evidence' data-command-palette-quick-evidence='true'>",
@@ -29499,7 +29519,7 @@ def _html_page(
     .palette-route-context li {{ min-width:0; padding:7px 9px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .palette-quick-switch {{ border:1px solid var(--line); background:var(--panel); padding:10px; margin:10px 0; }}
     .palette-quick-switch h3 {{ margin-top:0; }}
-    .palette-quick-grid {{ display:grid; grid-template-columns:minmax(220px, 1.25fr) repeat(3, minmax(140px, 1fr)); gap:8px; align-items:stretch; margin:10px 0; }}
+    .palette-quick-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px; align-items:stretch; margin:10px 0; }}
     .palette-quick-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; display:grid; gap:6px; align-content:start; }}
     .palette-quick-card-primary {{ background:var(--panel); border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
     .palette-quick-label {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}

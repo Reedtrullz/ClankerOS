@@ -697,9 +697,10 @@ Core layers for the bootstrap:
   boundaries stay inside collapsed evidence with the longer recent-link list
   in a second collapsed disclosure.
   The command palette now also includes a visible `Quick Switch` dock for
-  Continue, Workspace, Action, and Artifact, so the keyboard launcher can
-  reopen the current Goal, saved workspace, latest local action target, or
-  latest artifact without expanding the sidebar. It also starts with the same
+  Continue, Workspace, Action, Artifact, and Finish, so the keyboard launcher
+  can reopen the current Goal, saved workspace, latest local action target,
+  latest artifact, or `/workspace#save-workspace` handoff without expanding
+  the sidebar. It also starts with the same
   current-page route context, parent link, resolved Goal/Project/run context,
   focus target, `/resume`, and zero-effect readbacks inside the
   keyboard-driven surface. The shared focus strip and command palette include
