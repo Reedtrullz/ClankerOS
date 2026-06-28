@@ -1,5 +1,48 @@
 # Status
 
+## 2026-06-28 Today Command-First Operator Surface
+
+- Made `/today` usable as the daily cockpit by rendering the `Today Command
+  Center` before shared Route Context, Operator Focus, and Last Action
+  diagnostics.
+- Kept the six visible daily command cards first, added a stable
+  `data-today-command-primary` marker for the Do Now action, and kept Today
+  state, command, and workbench evidence collapsed by default.
+- Converted the Today note, pause, and Finish Today surfaces into collapsed
+  hash-opened details so clicking their command cards reveals the confirmed
+  local forms without crowding the first screen.
+- Added first-run and fixture-backed route assertions plus demo smoke snippets
+  for the new command-first ordering, collapsed evidence markers, and
+  hash-opened form targets.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, create action authority, approve work, run work, call providers, fetch
+  GitHub from ClankerOS, poll network services, commit, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-today-first-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-today-first-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/today` snippets matched,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8810/today`: desktop `1280x900` rendered six Today
+    command cards with the command center before live state and shared route
+    context, collapsed state/command/workbench/note/pause/finish details, no
+    horizontal overflow, and no console warnings/errors.
+  - Interaction proof: clicking the visible Note card opened
+    `/today#today-note` and revealed the confirmed `save-goal-note` form;
+    clicking the Finish card opened `/today#today-finish` and revealed the
+    confirmed `save-workspace` form, with no console warnings/errors.
+  - Mobile Browser QA at `390x844` rendered six Today command cards in one
+    column, kept all Today evidence/forms collapsed, placed shared Route
+    Context below the cockpit, and showed no horizontal overflow or console
+    warnings/errors.
+
 ## 2026-06-28 Workspace Action-First Operator Surface
 
 - Made `/workspace` usable as the leave/resume surface by rendering the

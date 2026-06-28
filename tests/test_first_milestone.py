@@ -4287,6 +4287,21 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Today Command Center" in today.body
     assert "data-today-command-center='true'" in today.body
     assert "data-today-command-actions='true'" in today.body
+    assert "data-today-command-primary='true'" in today.body
+    assert "data-today-state-details='true'" in today.body
+    assert "data-today-command-evidence='true'" in today.body
+    assert "data-today-note-details='true'" in today.body
+    assert "data-today-pause-details='true'" in today.body
+    assert "data-today-finish-details='true'" in today.body
+    assert "href='#today-note' data-open-details='true'" in today.body
+    assert "href='#today-pause' data-open-details='true'" in today.body
+    assert "href='#today-finish' data-open-details='true'" in today.body
+    assert today.body.index("data-today-command-center='true'") < today.body.index(
+        "data-live-refresh='today'"
+    )
+    assert today.body.index("data-today-command-center='true'") < today.body.index(
+        "data-route-context='true'"
+    )
     assert "Today Goal Queue" in today.body
     assert "data-today-goal-queue='true'" in today.body
     assert "today_goal_queue_status</dt><dd>first_run" in today.body
@@ -4323,6 +4338,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_command_first_run_form_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
     assert "today_command_finish_status</dt><dd>not_ready_until_goal_exists" in today.body
     assert "today_command_finish_form_available</dt><dd>false" in today.body
+    assert "today_finish_form_status: unavailable_until_goal_exists" in today.body
     assert "today_command_write_on_get</dt><dd>false" in today.body
     assert "today_command_network_actions_taken</dt><dd>0" in today.body
     assert "today_command_external_effects_created</dt><dd>false" in today.body
@@ -4384,6 +4400,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_session_safety: read-only local summary" in today.body
     assert "Today Operator Workbench" in today.body
     assert "data-today-operator-workbench='true'" in today.body
+    assert "data-today-workbench-evidence='true'" in today.body
     assert "today_workbench_status</dt><dd>first_run" in today.body
     assert "today_workbench_source</dt><dd>goal_state_workspace_attention" in today.body
     assert "today_workbench_goal</dt><dd>none" in today.body
@@ -7810,6 +7827,21 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Today Command Center" in today.body
     assert "data-today-command-center='true'" in today.body
     assert "data-today-command-actions='true'" in today.body
+    assert "data-today-command-primary='true'" in today.body
+    assert "data-today-state-details='true'" in today.body
+    assert "data-today-command-evidence='true'" in today.body
+    assert "data-today-note-details='true'" in today.body
+    assert "data-today-pause-details='true'" in today.body
+    assert "data-today-finish-details='true'" in today.body
+    assert "href='#today-note' data-open-details='true'" in today.body
+    assert "href='#today-pause' data-open-details='true'" in today.body
+    assert "href='#today-finish' data-open-details='true'" in today.body
+    assert today.body.index("data-today-command-center='true'") < today.body.index(
+        "data-live-refresh='today'"
+    )
+    assert today.body.index("data-today-command-center='true'") < today.body.index(
+        "data-route-context='true'"
+    )
     assert "Today Goal Queue" in today.body
     assert "data-today-goal-queue='true'" in today.body
     assert "today_goal_queue_status</dt><dd>goals_ready" in today.body
@@ -7930,6 +7962,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_session_safety: read-only local summary" in today.body
     assert "Today Operator Workbench" in today.body
     assert "data-today-operator-workbench='true'" in today.body
+    assert "data-today-workbench-evidence='true'" in today.body
     assert "today_workbench_status</dt><dd>goal_ready" in today.body
     assert f"today_workbench_goal</dt><dd><a href='/goals/{result.goal_id}'" in today.body
     assert f"today_workbench_project</dt><dd><a href='/projects/{result.project_id}'" in today.body

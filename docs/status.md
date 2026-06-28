@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/today` is now content-first and command-center-first: it opens with the
+  `Today Command Center` before shared route/focus diagnostics, keeps Today
+  state, command, and workbench evidence collapsed by default, and opens the
+  note, pause, and Finish Today forms only when the operator clicks their
+  visible cards or navigates to the matching hash. The page still preserves
+  goal/readiness/CI/zero-effect proof in the DOM.
 - `/workspace` is now content-first and finish/resume-action-first: it opens
   with the `Workspace Operator Workbench` before shared route/focus diagnostics,
   saved-state evidence, or restore-link readbacks. Browser-available saved

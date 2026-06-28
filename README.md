@@ -151,14 +151,17 @@ See [GitHub Testing](docs/github-testing.md) for the exact proof boundaries and
 status-recording commands.
 
 Use `/today` as the daily command center when you want one page for the
-current day instead of the full dashboard inventory. It starts with a
-`Today Command Center` that chooses the lead Goal or first-run step, shows the
-current phase, one primary action, the exact target or same-page action form,
+current day instead of the full dashboard inventory. It is content-first and
+command-center-first: the shared route/focus diagnostics are pushed below the
+daily cockpit, the visible opening is a six-card `Today Command Center`, and
+state/command/workbench evidence stays collapsed until explicitly opened. The
+command center chooses the lead Goal or first-run step, shows the current
+phase, one primary action, the exact target or same-page action form,
 attention routing for approvals/incidents/recommendations/inbox, resume
-readiness, CI proof posture, a confirmed `save-goal-note` capture form for
-goal-scoped operator context, a confirmed `pause-goal` form for shelving the
-lead goal into paused lanes, and a confirmed `Finish Today` workspace save
-form for tomorrow's resume point. A read-only `Today Live State` panel follows
+readiness, and CI proof posture. Note capture, pause, and `Finish Today`
+workspace save forms are also collapsed by default and open from the visible
+cards or direct hash links, preserving confirmed local writes without making
+the first screen feel like a report. A read-only `Today Live State` panel follows
 with five-second local page reload polling that pauses while the tab is hidden
 or a form field is focused, so the all-day cockpit can reflect changing local
 goal state without adding action authority. A read-only

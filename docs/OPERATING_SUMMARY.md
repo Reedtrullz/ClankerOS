@@ -89,14 +89,17 @@ Core layers for the bootstrap:
   `/goals/<goal_id>` and show phase, next action, and task progress so the
   project page can launch the same goal-centered workbench as `/goals`. The
   local app now also exposes `/today` as a daily command center for the
-  current operating day, starting with a read-only `Today Command Center`
-  that selects the lead Goal or first-run step, names current phase, one
-  primary action, target surface or same-page action form, attention routing
-  for approvals/incidents/recommendations/inbox, resume readiness, CI proof
-  posture, a confirmed `save-goal-note` capture form for goal-scoped operator
-  context, a confirmed `pause-goal` form for shelving the lead Goal locally,
-  and a confirmed `Finish Today` workspace save form for tomorrow's resume
-  point. A read-only `Today Live State` panel follows with five-second local
+  current operating day. It is content-first and command-center-first: shared
+  route/focus diagnostics render after the daily cockpit, while Today state,
+  command, and workbench evidence stay collapsed by default. It starts with a
+  read-only six-card `Today Command Center` that selects the lead Goal or
+  first-run step, names current phase, one primary action, target surface or
+  same-page action form, attention routing for
+  approvals/incidents/recommendations/inbox, resume readiness, and CI proof
+  posture. Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
+  workspace save forms are also collapsed by default and open from their
+  visible command cards or direct hash links. A read-only
+  `Today Live State` panel follows with five-second local
   page reload polling that pauses when the tab is hidden or a form field is
   focused and reports zero provider/network/external-effect counters. A
   read-only `Today Session Summary` follows with current goal or first-run

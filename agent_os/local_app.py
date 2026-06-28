@@ -530,8 +530,15 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             [
                 "data-today-command-center='true'",
                 "data-today-command-actions='true'",
+                "data-today-command-primary='true'",
+                "data-today-state-details='true'",
+                "data-today-command-evidence='true'",
+                "data-today-note-details='true'",
+                "data-today-pause-details='true'",
+                "data-today-finish-details='true'",
                 "data-today-session-summary='true'",
                 "data-today-operator-workbench='true'",
+                "data-today-workbench-evidence='true'",
                 "data-today-workflow-map='true'",
                 "data-today-ci-handoff='true'",
                 "data-today-goal-queue='true'",
@@ -1154,6 +1161,7 @@ def _today_page(root: Path) -> str:
     sections = [
         "<section class='hero'><h1>Today</h1>",
         "<p>Daily command center for the current goal, attention queue, resume state, and finish-today handoff.</p>",
+        "<details class='today-state-details' data-today-state-details='true'><summary>Today state evidence</summary>",
         _kv(
             [
                 ("today_goal_first", "true"),
@@ -1166,6 +1174,7 @@ def _today_page(root: Path) -> str:
                 ("today_external_effects_created", "false"),
             ]
         ),
+        "</details>",
         "</section>",
         _today_command_center(root, storage, lead_goal),
         _today_live_state(
@@ -1597,6 +1606,7 @@ def _today_operator_workbench(
             "<section id='today-operator-workbench' class='panel today-operator-workbench' data-today-operator-workbench='true'><h2>Today Operator Workbench</h2>",
             "<p class='muted'>Four daily moves: do the current action, check proof, clear blockers, and save the resume point.</p>",
             cards,
+            "<details class='today-workbench-evidence' data-today-workbench-evidence='true'><summary>Today workbench evidence</summary>",
             _kv(
                 [
                     ("today_workbench_status", status),
@@ -1640,6 +1650,7 @@ def _today_operator_workbench(
                     "today_workbench_safety: read-only daily routing; confirmed local forms remain on their target surfaces",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -2312,7 +2323,8 @@ def _today_command_center(
         )
         finish_form = "".join(
             [
-                "<section id='today-finish' class='today-finish'><h3>Finish Today</h3>",
+                "<details id='today-finish' class='today-finish today-finish-details' data-today-finish-details='true'><summary>Finish Today save form</summary>",
+                "<section><h3>Finish Today</h3>",
                 "<p class='muted'>Save today's lead goal, filters, expanded panels, and latest artifact as tomorrow's resume point. This writes only `.clanker/app/workspace.json` after confirmation.</p>",
                 _input_form(
                     "save-workspace",
@@ -2328,7 +2340,7 @@ def _today_command_center(
                         "updated_by": "today-command-center",
                     },
                 ),
-                "</section>",
+                "</section></details>",
             ]
         )
 
@@ -2403,17 +2415,17 @@ def _today_command_center(
         [
             "<div class='today-command-grid' data-today-command-actions='true'>",
             "<article class='today-command-card today-command-primary'><h3>Do Now</h3>",
-            f"<p>{_e(primary_action)}</p><a class='today-command-action' href='{_e(target_href)}'>{_e(target_label)}</a></article>",
+            f"<p>{_e(primary_action)}</p><a class='today-command-action' data-today-command-primary='true' href='{_e(target_href)}'>{_e(target_label)}</a></article>",
             "<article class='today-command-card'><h3>Attention</h3>",
             f"<p>{_e(attention_action)}</p><a class='today-command-link' href='{_e(attention_href)}'>{_e(attention_href)}</a></article>",
             "<article class='today-command-card'><h3>Resume</h3>",
             "<p>Restore saved workspace context.</p><a class='today-command-link' href='/resume'>/resume</a></article>",
             "<article class='today-command-card'><h3>Note</h3>",
-            f"<p>{'Available' if note_form else 'Not available'}</p><a class='today-command-link' href='#today-note'>Capture Note</a></article>",
+            f"<p>{'Available' if note_form else 'Not available'}</p><a class='today-command-link' href='#today-note' data-open-details='true'>Capture Note</a></article>",
             "<article class='today-command-card'><h3>Pause</h3>",
-            f"<p>{'Available' if pause_form else 'Not available'}</p><a class='today-command-link' href='#today-pause'>Pause Goal</a></article>",
+            f"<p>{'Available' if pause_form else 'Not available'}</p><a class='today-command-link' href='#today-pause' data-open-details='true'>Pause Goal</a></article>",
             "<article class='today-command-card'><h3>Finish</h3>",
-            f"<p>{_e(finish_status)}</p><a class='today-command-link' href='#today-finish'>Finish Today</a></article>",
+            f"<p>{_e(finish_status)}</p><a class='today-command-link' href='#today-finish' data-open-details='true'>Finish Today</a></article>",
             "</div>",
         ]
     )
@@ -2422,26 +2434,31 @@ def _today_command_center(
             "<section id='today-command-center' class='panel today-command-center' data-today-command-center='true'><h2>Today Command Center</h2>",
             "<p class='muted'>One daily cockpit for the lead goal, operator attention, saved resume state, and end-of-day handoff.</p>",
             cards,
+            "<details class='today-command-evidence' data-today-command-evidence='true'><summary>Today command evidence</summary>",
             _kv(rows),
             _ul(lines),
+            "</details>",
             action_details,
             (
-                "<section id='today-note' class='today-note'><h3>Capture Note</h3>"
+                "<details id='today-note' class='today-note today-note-details' data-today-note-details='true'><summary>Capture Note form</summary>"
+                "<section><h3>Capture Note</h3>"
                 "<p class='muted'>Append a goal-scoped local note from the daily cockpit. Confirmation is required.</p>"
                 f"{note_form}"
-                "</section>"
+                "</section></details>"
                 if note_form
-                else "<section id='today-note' class='today-note'><h3>Capture Note</h3><p class='muted'>today_note_form_status: unavailable_until_goal_exists</p></section>"
+                else "<details id='today-note' class='today-note today-note-details' data-today-note-details='true'><summary>Capture Note form</summary><section><h3>Capture Note</h3><p class='muted'>today_note_form_status: unavailable_until_goal_exists</p></section></details>"
             ),
             (
-                "<section id='today-pause' class='today-pause'><h3>Pause Goal</h3>"
+                "<details id='today-pause' class='today-pause today-pause-details' data-today-pause-details='true'><summary>Pause Goal form</summary>"
+                "<section><h3>Pause Goal</h3>"
                 "<p class='muted'>Pause the lead goal locally so it moves into paused lanes and can be resumed later. Confirmation is required.</p>"
                 f"{pause_form}"
-                "</section>"
+                "</section></details>"
                 if pause_form
-                else "<section id='today-pause' class='today-pause'><h3>Pause Goal</h3><p class='muted'>pause_goal_form_status: unavailable_for_current_goal_state</p></section>"
+                else "<details id='today-pause' class='today-pause today-pause-details' data-today-pause-details='true'><summary>Pause Goal form</summary><section><h3>Pause Goal</h3><p class='muted'>pause_goal_form_status: unavailable_for_current_goal_state</p></section></details>"
             ),
-            finish_form,
+            finish_form
+            or "<details id='today-finish' class='today-finish today-finish-details' data-today-finish-details='true'><summary>Finish Today save form</summary><section><h3>Finish Today</h3><p class='muted'>today_finish_form_status: unavailable_until_goal_exists</p></section></details>",
             "</section>",
         ]
     )
@@ -23607,7 +23624,7 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
-    content_first_paths = {"/", "/actions", "/inbox", "/resume", "/workspace"}
+    content_first_paths = {"/", "/actions", "/inbox", "/resume", "/today", "/workspace"}
     if current_route_path in content_first_paths:
         article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
     else:
@@ -23901,6 +23918,10 @@ def _html_page(
     .today-command-action, .today-command-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .today-command-action {{ background:var(--accent); color:#fff; }}
     .today-command-link {{ background:var(--surface); color:var(--accent); }}
+    .today-state-details, .today-command-evidence, .today-workbench-evidence, .today-note-details, .today-pause-details, .today-finish-details {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .today-state-details summary, .today-command-evidence summary, .today-workbench-evidence summary, .today-note-details summary, .today-pause-details summary, .today-finish-details summary {{ cursor:pointer; font-weight:700; }}
+    .today-state-details:not([open]) > :not(summary), .today-command-evidence:not([open]) > :not(summary), .today-workbench-evidence:not([open]) > :not(summary), .today-note-details:not([open]) > :not(summary), .today-pause-details:not([open]) > :not(summary), .today-finish-details:not([open]) > :not(summary) {{ display:none; }}
+    .today-note-details > section, .today-pause-details > section, .today-finish-details > section {{ margin:10px 0 0; padding:0; border-bottom:0; }}
     .today-session-summary {{ border-left:4px solid var(--ok); }}
     .today-session-summary dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .today-session-summary ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
@@ -23935,7 +23956,8 @@ def _html_page(
     .ci-proof-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
     .ci-proof-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .today-current-action, .today-finish, .today-note, .today-pause, .goal-pause {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
-    .today-current-action summary {{ cursor:pointer; font-weight:700; }}
+    .today-current-action summary, .today-finish summary, .today-note summary, .today-pause summary {{ cursor:pointer; font-weight:700; }}
+    .today-current-action:not([open]) > :not(summary), .today-finish:not([open]) > :not(summary), .today-note:not([open]) > :not(summary), .today-pause:not([open]) > :not(summary) {{ display:none; }}
     .today-current-action form, .today-finish form, .today-note form, .today-pause form, .goal-pause form {{ margin-top:10px; }}
     .home-state-details {{ margin-top:10px; }}
     .home-state-details summary {{ cursor:pointer; font-weight:700; }}
