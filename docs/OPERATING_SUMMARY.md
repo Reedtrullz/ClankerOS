@@ -175,8 +175,10 @@ Core layers for the bootstrap:
   `/verification` includes a read-only `Verification Operator Workbench` that
   opens the page with Now, Check GitHub, Proof, and Finish Today cards before
   shared diagnostics or command readbacks. It routes missing or stale proof to
-  `/ci-evidence#record-ci-snapshot-json`, keeps workbench evidence, command
-  evidence, and the finish form collapsed by default, and preserves no-write,
+  `/ci-evidence#record-ci-snapshot-json`, follows with a visible
+  `Verification Proof Map` for Current, Fast Smoke, Full Suite, Record, and
+  Boundary, keeps workbench evidence, proof-map evidence, command evidence,
+  and the finish form collapsed by default, and preserves no-write,
   no-GitHub-polling, and no-external-effect boundaries in the DOM;
   `/ci-evidence` is now content-first and opens with a read-only
   `CI Proof Workbench` before shared diagnostics or command evidence. It shows

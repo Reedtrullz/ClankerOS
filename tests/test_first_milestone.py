@@ -6999,8 +6999,23 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-verification-workbench-actions='true'" in verification.body
     assert "data-verification-workbench-primary='true'" in verification.body
     assert "data-verification-workbench-evidence='true'" in verification.body
+    assert "data-verification-proof-map='true'" in verification.body
+    assert "data-verification-proof-map-actions='true'" in verification.body
+    assert "data-verification-proof-map-evidence='true'" in verification.body
     assert "data-verification-command-evidence='true'" in verification.body
     assert "data-verification-finish-details='true'" in verification.body
+    assert verification.body.index("data-verification-operator-workbench") < verification.body.index(
+        "data-verification-proof-map='true'"
+    )
+    assert verification.body.index("data-verification-proof-map='true'") < verification.body.index(
+        "data-verification-command-bar='true'"
+    )
+    assert verification.body.count("class='verification-proof-card") == 5
+    assert "data-verification-proof-card='current'" in verification.body
+    assert "data-verification-proof-card='fast-smoke'" in verification.body
+    assert "data-verification-proof-card='full-suite'" in verification.body
+    assert "data-verification-proof-card='record'" in verification.body
+    assert "data-verification-proof-card='boundary'" in verification.body
     assert "verification_workbench_status</dt><dd>waiting_for_github_actions_proof" in verification.body
     assert "verification_workbench_workflow_status</dt><dd>configured" in verification.body
     assert "verification_workbench_current_proof</dt><dd>current_commit_unknown" in verification.body
@@ -7029,6 +7044,50 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "verification_workbench_record: <a href='/ci-evidence#record-ci-snapshot-json'>Record CI proof</a>" in verification.body
     assert "verification_workbench_finish: <a href='#verification-finish-today'>Finish Today</a>" in verification.body
     assert "verification_workbench_safety: read-only proof routing" in verification.body
+    assert "Verification Proof Map" in verification.body
+    assert "verification_proof_map_status</dt><dd>stale_or_unknown_proof" in verification.body
+    assert "verification_proof_map_workflow_status</dt><dd>configured" in verification.body
+    assert "verification_proof_map_current_proof</dt><dd>current_commit_unknown" in verification.body
+    assert "verification_proof_map_latest_source</dt><dd>publication_handoff" in verification.body
+    assert "verification_proof_map_latest_status</dt><dd>success" in verification.body
+    assert "verification_proof_map_latest_commit</dt><dd>abc123" in verification.body
+    assert "verification_proof_map_latest_run_id</dt><dd>123" in verification.body
+    assert (
+        "verification_proof_map_primary_surface</dt><dd>"
+        "<a href='/ci-evidence#record-ci-snapshot-json'>Record current proof</a>"
+    ) in verification.body
+    assert "verification_proof_map_latest_surface</dt><dd><a href='#recent-ci-evidence'>#recent-ci-evidence</a>" in verification.body
+    assert (
+        "verification_proof_map_record_surface</dt><dd>"
+        "<a href='/ci-evidence#record-ci-snapshot-json'>/ci-evidence#record-ci-snapshot-json</a>"
+    ) in verification.body
+    assert (
+        "verification_proof_map_handoff_surface</dt><dd>"
+        "<a href='#verification-ci-handoff'>Direct Snapshot CI Handoff</a>"
+    ) in verification.body
+    assert (
+        "verification_proof_map_workflow_surface</dt><dd>"
+        "<a href='#github-actions-workflow'>GitHub Actions Workflow</a>"
+    ) in verification.body
+    assert "verification_proof_map_status_command</dt><dd>gh run view" in verification.body
+    assert "verification_proof_map_fast_smoke_record_command</dt><dd>gh run view" in verification.body
+    assert "verification_proof_map_full_suite_record_command</dt><dd>gh run view" in verification.body
+    assert "verification_proof_map_fast_smoke_boundary</dt><dd>early_route_cli_proof_only" in verification.body
+    assert "verification_proof_map_full_suite_boundary</dt><dd>completed_workflow_run_success_required" in verification.body
+    assert "verification_proof_map_card_count</dt><dd>5" in verification.body
+    assert "verification_proof_map_write_on_get</dt><dd>false" in verification.body
+    assert "verification_proof_map_github_status_fetch</dt><dd>none" in verification.body
+    assert "verification_proof_map_network_actions_taken</dt><dd>0" in verification.body
+    assert "verification_proof_map_external_effects_created</dt><dd>false" in verification.body
+    assert (
+        "verification_proof_map_card: current surface="
+        "<a href='/ci-evidence#record-ci-snapshot-json'>Record current proof</a>"
+    ) in verification.body
+    assert (
+        "verification_proof_map_card: full-suite surface="
+        "<a href='#verification-ci-handoff'>Copy full-suite command</a>"
+    ) in verification.body
+    assert "verification_proof_map_safety: read-only proof guidance" in verification.body
     assert "id='verification-finish-today'" in verification.body
     assert "name='updated_by' value='verification-operator-workbench'" in verification.body
     assert "data-verification-command-bar='true'" in verification.body

@@ -217,10 +217,12 @@ Latest status focus:
 - `/verification` is now action-first: it opens with the `Verification
   Operator Workbench` before shared route/focus diagnostics or command
   evidence, shows visible Now, Check GitHub, Proof, and Finish Today cards,
-  and keeps verification workbench evidence, command evidence, and the
-  finish-today save form collapsed by default while preserving current proof
-  posture, CI handoff commands, proof-recording target, and zero-effect
-  readbacks in the DOM.
+  then follows with a visible read-only `Verification Proof Map` for Current,
+  Fast Smoke, Full Suite, Record, and Boundary. Verification workbench
+  evidence, proof-map evidence, command evidence, and the finish-today save
+  form stay collapsed by default while preserving current proof posture, CI
+  handoff commands, proof-recording target, fast-smoke/full-suite boundaries,
+  and zero-effect readbacks in the DOM.
 - `/incidents` is now action-first: it opens with the `Incident Operator
   Workbench` before shared route/focus diagnostics or command readback, shows
   visible Now, Evidence, Recover, and Finish Today cards, and keeps incident

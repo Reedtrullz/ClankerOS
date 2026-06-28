@@ -1,5 +1,30 @@
 # Status
 
+## 2026-06-29 Verification Proof Map UX
+
+- Added a visible read-only `Verification Proof Map` to `/verification` after
+  the operator workbench and before the command bar.
+- The map turns the local-vs-GitHub proof posture into five cards: Current,
+  Fast Smoke, Full Suite, Record, and Boundary.
+- It makes the fast-smoke early proof versus completed full workflow proof
+  boundary visible before the longer GitHub Actions workflow and command
+  templates.
+- Collapsed proof-map evidence records workflow status, branch/commit, current
+  proof state, latest operator-supplied CI evidence, current/record/handoff/
+  workflow surfaces, copy-only command templates, card count, and zero-effect
+  counters.
+- Updated README, operating summary, local status focus, and focused
+  verification route assertions.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `python3 -m compileall -q agent_os tests`, focused
+  `tests/test_first_milestone.py` route/demo coverage
+  (`2 passed, 514 deselected in 48.78s`), `app-smoke-test`,
+  `app-demo-smoke-test`, and `git diff --check`.
+- Non-claims: no browser QA for this slice, no app-side GitHub polling, no
+  write on GET, no proof record without confirmation, no PR, no deploy, and no
+  provider/network/external mutation from ClankerOS itself.
+
 ## 2026-06-29 Project Goal Map UX
 
 - Added a visible read-only `Project Goal Map` to `/projects/<project_id>`

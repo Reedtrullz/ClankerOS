@@ -857,11 +857,14 @@ watch a direct pushed-snapshot run and then record it after success. The page
 itself does not contact GitHub. A `Verification Operator Workbench` now leads
 the page with Now, Check GitHub, Proof, and Finish Today cards so the next
 operator action is visible before the workflow inventory. Detailed workbench
-evidence, command evidence, and the save form stay collapsed by default while
-still preserving the current proof posture, target action, and zero-effect
-readbacks in the DOM. The read-only `Verification Command Bar` follows as
-evidence and usually points to `/ci-evidence#record-ci-snapshot-json` when
-proof is missing, stale, or only job-scoped.
+evidence and the save form stay collapsed by default while still preserving
+the current proof posture, target action, and zero-effect readbacks in the
+DOM. A visible read-only `Verification Proof Map` follows with Current, Fast
+Smoke, Full Suite, Record, and Boundary cards, making the early-smoke versus
+full-workflow proof split explicit before the command details. The read-only
+`Verification Command Bar` follows as evidence and usually points to
+`/ci-evidence#record-ci-snapshot-json` when proof is missing, stale, or only
+job-scoped.
 
 The root dashboard includes the same proof boundary as a compact
 `Verification Snapshot`, with links to `/verification` and `/ci-evidence`, so
