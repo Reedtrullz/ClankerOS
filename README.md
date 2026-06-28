@@ -311,8 +311,12 @@ available in collapsed workbench evidence before the deeper diagnostic
 sections. The Goal Next Action section now starts
 with a human-first focus strip for Now, Gate, Target, and Boundary, with one
 primary link to the existing confirmed form or source surface, then renders the
-confirmed form before collapsed action evidence. Goal Daily Loop includes a confirmed
-local `pause-goal` form for any non-paused incomplete goal, moving it into
+confirmed form before collapsed action evidence. Goal Daily Loop now opens as a
+five-card Continue, Start, Unblock, Pause, and Finish Today strip. Detailed
+local state stays in collapsed daily-loop evidence, while the confirmed
+`pause-goal` and `save-workspace` forms live in hash-openable Pause and Finish
+Today details so ending or shelving a goal is a direct click, not a hunt
+through proof rows. `pause-goal` moves any non-paused incomplete goal into
 paused lanes without approving work, running providers, using the network, or
 mutating external systems. The read-only `Goal Continuation Rail` follows the
 return brief and turns the current gate plus the next few local gates into a

@@ -9053,7 +9053,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_workbench_pending_approvals</dt><dd>1" in goal.body
     assert "goal_workbench_unblock_action</dt><dd>Review approval" in goal.body
     assert "goal_workbench_unblock_surface</dt><dd><a href='/approvals'>Review approval</a>" in goal.body
-    assert "goal_workbench_finish_surface</dt><dd><a href='#goal-daily-loop'>Goal Daily Loop</a>" in goal.body
+    assert "goal_workbench_finish_surface</dt><dd><a href='#goal-finish-today'>Finish Today</a>" in goal.body
     assert "goal_workbench_source</dt><dd>goal_state_next_action_and_workflow_gates" in goal.body
     assert "goal_workbench_write_on_get</dt><dd>false" in goal.body
     assert "goal_workbench_provider_calls_taken</dt><dd>0" in goal.body
@@ -9063,10 +9063,20 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_workbench_click: <a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
     assert f"goal_workbench_source_surface: <a href='/runs/{result.coder_worktree_run_id}'" in goal.body
     assert "goal_workbench_unblock: <a href='/approvals'>Review approval</a>" in goal.body
-    assert "goal_workbench_finish: <a href='#goal-daily-loop'>Goal Daily Loop</a>" in goal.body
+    assert "goal_workbench_finish: <a href='#goal-finish-today'>Finish Today</a>" in goal.body
     assert "goal_workbench_safety: confirmed local actions only" in goal.body
     assert "Goal Daily Loop" in goal.body
     assert "data-goal-daily-loop='true'" in goal.body
+    assert "data-goal-daily-loop-actions='true'" in goal.body
+    assert "data-goal-daily-loop-primary='true'" in goal.body
+    assert "data-goal-daily-loop-start='true'" in goal.body
+    assert "data-goal-daily-loop-unblock='true'" in goal.body
+    assert "data-goal-daily-loop-pause='true'" in goal.body
+    assert "data-goal-daily-loop-finish='true'" in goal.body
+    assert "data-goal-daily-loop-evidence='true'" in goal.body
+    assert "data-goal-pause-details='true'" in goal.body
+    assert "data-goal-finish-details='true'" in goal.body
+    assert "href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
     assert f"goal_daily_loop_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_daily_loop_project</dt><dd>{result.project_id}" in goal.body
     assert "goal_daily_loop_phase</dt><dd>Ready to commit" in goal.body
@@ -9089,7 +9099,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_daily_loop_pause_form_available</dt><dd>true" in goal.body
     assert "goal_daily_loop_pause_confirmation_required</dt><dd>true" in goal.body
     assert "goal_daily_loop_pause_surface</dt><dd><a href='#goal-pause'>Pause Goal</a>" in goal.body
-    assert "goal_daily_loop_finish_surface</dt><dd><a href='#goal-resume-snapshot'>Goal Resume Snapshot</a>" in goal.body
+    assert "goal_daily_loop_finish_surface</dt><dd><a href='#goal-finish-today'>Finish Today</a>" in goal.body
     assert f"goal_daily_loop_finish_return_to</dt><dd><a href='/goals/{result.goal_id}'" in goal.body
     assert "goal_daily_loop_saved_goal_matches_current</dt><dd>false" in goal.body
     assert "goal_daily_loop_saved_project_matches_current</dt><dd>false" in goal.body
@@ -9101,9 +9111,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"goal_daily_loop_step: continue action=Create commit request surface=<a href='/runs/{result.coder_worktree_run_id}'" in goal.body
     assert "goal_daily_loop_step: unblock action=Review approval surface=<a href='/approvals'>/approvals</a> waiting=1" in goal.body
     assert "goal_daily_loop_step: pause available=true surface=<a href='#goal-pause'>Pause Goal</a>" in goal.body
-    assert "goal_daily_loop_step: finish status=needs_workspace_save surface=<a href='#goal-resume-snapshot'>Goal Resume Snapshot</a>" in goal.body
+    assert "goal_daily_loop_step: finish status=needs_workspace_save surface=<a href='#goal-finish-today'>Finish Today</a>" in goal.body
     assert "goal_daily_loop_safety: confirmed local pause or workspace save only" in goal.body
     assert "id='goal-pause'" in goal.body
+    assert "id='goal-finish-today'" in goal.body
     assert "action='/actions/pause-goal'" in goal.body
     assert f"name='goal_id' value='{result.goal_id}'" in goal.body
     assert "Finish Today" in goal.body
@@ -9130,7 +9141,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_return_ci_source</dt><dd>direct_public_snapshot" in goal.body
     assert "goal_return_blocker_status</dt><dd>pending_approvals" in goal.body
     assert "goal_return_blocker_surface</dt><dd><a href='/approvals'>/approvals</a>" in goal.body
-    assert "goal_return_finish_surface</dt><dd><a href='#goal-daily-loop'>Goal Daily Loop</a>" in goal.body
+    assert "goal_return_finish_surface</dt><dd><a href='#goal-finish-today'>Finish Today</a>" in goal.body
     assert "goal_return_resume_surface</dt><dd><a href='/resume'>/resume</a>" in goal.body
     assert "goal_return_write_on_get</dt><dd>false" in goal.body
     assert "goal_return_provider_calls_taken</dt><dd>0" in goal.body

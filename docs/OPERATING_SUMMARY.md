@@ -401,10 +401,11 @@ Core layers for the bootstrap:
   phase, risk, progress, local counts, next click, and no-effect boundaries
   before the raw overview metadata. Goal detail pages also include a
   `Goal Daily Loop` near the top that condenses start, continue,
-  unblock, and finish cues from the same local Goal/workspace/approval/
-  incident/recommendation state, including whether the saved workspace points
-  at the current goal and latest artifact before the operator ends the day,
-  and exposes confirmed local `pause-goal` and `save-workspace` forms. The
+  unblock, pause, and finish cues from the same local Goal/workspace/approval/
+  incident/recommendation state into visible cards. Detailed daily-loop proof
+  stays collapsed by default, while the confirmed local `pause-goal` and
+  `save-workspace` forms open from hash-linked Pause and Finish Today details
+  so the operator can shelve or save the goal without scanning state rows. The
   pause action is local status movement only: it accepts non-paused incomplete
   goals, sets status to `paused`, refreshes saved workspace context to the Goal
   artifact, and does not approve work, run work, call providers, use the

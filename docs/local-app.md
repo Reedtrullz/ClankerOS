@@ -263,12 +263,14 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   project root, branch, commit, clean/dirty posture, tracked and untracked
   counts, latest goal-linked `git_status.txt` artifact, and one next local
   surface without fetching GitHub status or mutating the repo. A
-  `Goal Daily Loop` follows it with start, continue, unblock, and finish cues
-  sourced from the Goal, workspace, approval, incident, and recommendation
-  state, including whether tomorrow's resume anchor still needs saving, plus a
-  confirmed local `pause-goal` form for non-paused incomplete goals and a
-  confirmed local `save-workspace` form that writes only
-  `.clanker/app/workspace.json` after confirmation. The pause action only
+  `Goal Daily Loop` follows it as a visible five-card Continue, Start, Unblock,
+  Pause, and Finish Today strip sourced from the Goal, workspace, approval,
+  incident, and recommendation state. Detailed local proof stays in collapsed
+  daily-loop evidence, and the confirmed local `pause-goal` and
+  `save-workspace` forms are hash-openable Pause and Finish Today details so
+  the operator can shelve or save the Goal from the panel without reading the
+  full state table. The save action writes only `.clanker/app/workspace.json`
+  after confirmation. The pause action only
   changes local goal status to `paused`; it does not approve work, run work,
   call providers, use the network, push, create PRs, deploy, or mutate external
   systems. A read-only `Goal Return Brief` follows the daily loop and gathers

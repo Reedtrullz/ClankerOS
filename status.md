@@ -1,5 +1,49 @@
 # Status
 
+## 2026-06-28 Goal Daily Loop Action Cards
+
+- Made `/goals/<goal_id>#goal-daily-loop` card-first by adding visible
+  Continue, Start, Unblock, Pause, and Finish Today cards before the detailed
+  daily-loop readback.
+- Moved detailed daily-loop state and step proof into collapsed
+  `Goal daily loop evidence` while preserving goal/project/phase, next action,
+  waiting counts, pause availability, resume-save readiness, latest artifact,
+  and zero-effect counters in the DOM.
+- Changed Goal Operator Workbench and Goal Return Brief finish routing to open
+  the direct `#goal-finish-today` save form instead of sending the operator to
+  the top of the daily loop.
+- Wrapped the confirmed `pause-goal` and `save-workspace` controls in
+  hash-openable `#goal-pause` and `#goal-finish-today` details, reusing the
+  existing client-side hash opener and preserving confirmation gates.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused route assertions.
+- Non-claims: this is local browser routing and layout. `/goals/<goal_id>` does
+  not write on GET, approve work, execute work, create commits, push, create
+  PRs, deploy, call providers, fetch GitHub, mutate external systems, or expose
+  arbitrary raw filesystem browsing. Existing confirmed forms still own writes.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, route markers matched, artifact rejection checks matched,
+    provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including new Goal Daily Loop
+    action/detail handles, provider calls 0, network actions 0, external
+    mutations 0
+  - Browser QA against
+    `http://127.0.0.1:8828/goals/goal_0a4e6fb053a8`: desktop `1280x900`
+    rendered five Goal Daily Loop cards, kept daily-loop evidence, pause, and
+    finish details closed on no-hash load, opened `#goal-finish-today` with
+    the `save-workspace` form, opened `#goal-pause` with the `pause-goal`
+    form, had no horizontal overflow, and reported no warning/error logs.
+  - Browser QA mobile `390x844`: five Goal Daily Loop cards stacked one
+    column, daily-loop evidence, pause, and finish details stayed closed on
+    no-hash load, the Finish Today card opened the save form, no horizontal
+    overflow, and no warning/error logs.
+
 ## 2026-06-28 Goal Detail Action-First Evidence Surface
 
 - Made `/goals/<goal_id>` more operator-first by keeping the Goal Jump Bar's

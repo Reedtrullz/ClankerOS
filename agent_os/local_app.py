@@ -598,6 +598,11 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-goal-command-evidence='true'",
                 "data-goal-jump-evidence='true'",
                 "data-goal-workbench-evidence='true'",
+                "data-goal-daily-loop-actions='true'",
+                "data-goal-daily-loop-primary='true'",
+                "data-goal-daily-loop-evidence='true'",
+                "data-goal-pause-details='true'",
+                "data-goal-finish-details='true'",
                 "data-goal-section-index-evidence='true'",
                 "Goal Return Brief",
                 "data-goal-return-brief='true'",
@@ -8228,7 +8233,7 @@ def _goal_operator_workbench(
             "<div class='goal-workbench-card'>",
             "<h3>Finish Today</h3>",
             "<p>Save resume state</p>",
-            "<a class='goal-workbench-link' data-goal-workbench-finish='true' href='#goal-daily-loop'>Open finish form</a>",
+            "<a class='goal-workbench-link' data-goal-workbench-finish='true' data-open-details='true' href='#goal-finish-today'>Open finish form</a>",
             "</div>",
         ]
     )
@@ -8271,7 +8276,7 @@ def _goal_operator_workbench(
                     ("goal_workbench_unblock_reason", unblock_reason),
                     (
                         "goal_workbench_finish_surface",
-                        SafeHtml("<a href='#goal-daily-loop'>Goal Daily Loop</a>"),
+                        SafeHtml("<a href='#goal-finish-today'>Finish Today</a>"),
                     ),
                     ("goal_workbench_source", "goal_state_next_action_and_workflow_gates"),
                     ("goal_workbench_write_on_get", "false"),
@@ -8286,7 +8291,7 @@ def _goal_operator_workbench(
                     f"goal_workbench_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
                     f"goal_workbench_source_surface: <a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
                     f"goal_workbench_unblock: <a href='{_e(unblock_href)}'>{_e(unblock_action)}</a>",
-                    "goal_workbench_finish: <a href='#goal-daily-loop'>Goal Daily Loop</a>",
+                    "goal_workbench_finish: <a href='#goal-finish-today'>Finish Today</a>",
                     "goal_workbench_safety: confirmed local actions only",
                 ]
             ),
@@ -8718,18 +8723,22 @@ def _goal_daily_loop(
     waiting_items = open_incidents + open_recommendations + pending_approvals
     form_available = bool(_goal_next_action_form(state, next_action))
     if open_incidents:
+        unblock_href = "/incidents"
         unblock_surface = SafeHtml("<a href='/incidents'>/incidents</a>")
         unblock_action = "Inspect incident"
         unblock_reason = "open_incidents"
     elif pending_approvals:
+        unblock_href = "/approvals"
         unblock_surface = SafeHtml("<a href='/approvals'>/approvals</a>")
         unblock_action = "Review approval"
         unblock_reason = "pending_approvals"
     elif open_recommendations:
+        unblock_href = "/incidents"
         unblock_surface = SafeHtml("<a href='/incidents'>/incidents</a>")
         unblock_action = "Review recommendation"
         unblock_reason = "open_recommendations"
     else:
+        unblock_href = "#goal-remaining-work"
         unblock_surface = SafeHtml("<a href='#goal-remaining-work'>Remaining Work</a>")
         unblock_action = "Inspect remaining work"
         unblock_reason = "no_blockers"
@@ -8756,10 +8765,47 @@ def _goal_daily_loop(
     )
     pause_form = _goal_pause_form(state)
     pause_available = "true" if pause_form else "false"
+    continue_href = "#goal-next-action-form" if form_available else next_action.href
+    continue_label = "Use Goal action form" if form_available else "Open next surface"
+    start_status = "ready" if workspace_matches_goal else "needs_saved_goal"
+    pause_label = "Pause Goal" if pause_form else "Pause unavailable"
+    daily_loop_cards = "".join(
+        [
+            "<div class='goal-daily-loop-card goal-daily-loop-primary'>",
+            "<h3>Continue</h3>",
+            f"<p>{_e(next_action.action)}</p>",
+            f"<a class='goal-daily-loop-action' data-goal-daily-loop-primary='true' href='{_e(continue_href)}'>{_e(continue_label)}</a>",
+            "</div>",
+            "<div class='goal-daily-loop-card'>",
+            "<h3>Start</h3>",
+            f"<p>{_e(start_status.replace('_', ' '))}</p>",
+            "<a class='goal-daily-loop-link' data-goal-daily-loop-start='true' href='/resume'>Open resume</a>",
+            "</div>",
+            "<div class='goal-daily-loop-card'>",
+            "<h3>Unblock</h3>",
+            f"<p>{_e(str(waiting_items))} waiting item(s)</p>",
+            f"<a class='goal-daily-loop-link' data-goal-daily-loop-unblock='true' href='{_e(unblock_href)}'>{_e(unblock_action)}</a>",
+            "</div>",
+            "<div class='goal-daily-loop-card'>",
+            "<h3>Pause</h3>",
+            f"<p>{'Available' if pause_form else 'Not available'}</p>",
+            f"<a class='goal-daily-loop-link' data-goal-daily-loop-pause='true' data-open-details='true' href='#goal-pause'>{_e(pause_label)}</a>",
+            "</div>",
+            "<div class='goal-daily-loop-card'>",
+            "<h3>Finish Today</h3>",
+            f"<p>{_e(finish_status.replace('_', ' '))}</p>",
+            "<a class='goal-daily-loop-link' data-goal-daily-loop-finish='true' data-open-details='true' href='#goal-finish-today'>Save resume point</a>",
+            "</div>",
+        ]
+    )
     return "".join(
         [
             "<section id='goal-daily-loop' class='panel goal-daily-loop' data-goal-daily-loop='true'><h2>Goal Daily Loop</h2>",
             "<p class='muted'>Start, continue, unblock, and finish this goal from local browser state with a confirmed local resume save.</p>",
+            "<div class='goal-daily-loop-grid' data-goal-daily-loop-actions='true'>",
+            daily_loop_cards,
+            "</div>",
+            "<details class='goal-daily-loop-evidence' data-goal-daily-loop-evidence='true'><summary>Goal daily loop evidence</summary>",
             _kv(
                 [
                     ("goal_daily_loop_status", "available"),
@@ -8795,7 +8841,7 @@ def _goal_daily_loop(
                     ),
                     (
                         "goal_daily_loop_finish_surface",
-                        SafeHtml("<a href='#goal-resume-snapshot'>Goal Resume Snapshot</a>"),
+                        SafeHtml("<a href='#goal-finish-today'>Finish Today</a>"),
                     ),
                     (
                         "goal_daily_loop_finish_return_to",
@@ -8818,21 +8864,25 @@ def _goal_daily_loop(
                     f"goal_daily_loop_step: continue action={_e(next_action.action)} surface=<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
                     f"goal_daily_loop_step: unblock action={_e(unblock_action)} surface={unblock_surface} waiting={waiting_items}",
                     f"goal_daily_loop_step: pause available={pause_available} surface=<a href='#goal-pause'>Pause Goal</a>",
-                    f"goal_daily_loop_step: finish status={_e(finish_status)} surface=<a href='#goal-resume-snapshot'>Goal Resume Snapshot</a>",
+                    f"goal_daily_loop_step: finish status={_e(finish_status)} surface=<a href='#goal-finish-today'>Finish Today</a>",
                     "goal_daily_loop_safety: confirmed local pause or workspace save only",
                 ]
             ),
+            "</details>",
             (
-                "<section id='goal-pause' class='goal-pause'><h3>Pause Goal</h3>"
+                "<details id='goal-pause' class='goal-pause goal-pause-details' data-goal-pause-details='true'><summary>Pause Goal form</summary>"
+                "<section><h3>Pause Goal</h3>"
                 "<p class='muted'>Pause this Goal locally when you want to shelve it for later. It remains visible in paused lanes and can be resumed from the Goal page.</p>"
                 f"{pause_form}"
-                "</section>"
+                "</section></details>"
                 if pause_form
-                else "<section id='goal-pause' class='goal-pause'><h3>Pause Goal</h3><p class='muted'>pause_goal_form_status: unavailable_for_current_goal_state</p></section>"
+                else "<details id='goal-pause' class='goal-pause goal-pause-details' data-goal-pause-details='true'><summary>Pause Goal form</summary><section><h3>Pause Goal</h3><p class='muted'>pause_goal_form_status: unavailable_for_current_goal_state</p></section></details>"
             ),
-            "<h3>Finish Today</h3>",
+            "<details id='goal-finish-today' class='goal-finish-details' data-goal-finish-details='true'><summary>Finish Today save form</summary>",
+            "<section><h3>Finish Today</h3>",
             "<p class='muted'>Save this goal, current filters, expanded panels, and latest artifact as tomorrow's resume point. This writes only `.clanker/app/workspace.json` after confirmation.</p>",
             finish_form,
+            "</section></details>",
             "</section>",
         ]
     )
@@ -8927,7 +8977,7 @@ def _goal_return_brief(
                     ("goal_return_ci_surface", SafeHtml("<a href='/verification'>/verification</a>")),
                     ("goal_return_blocker_status", blocker_status),
                     ("goal_return_blocker_surface", blocker_surface),
-                    ("goal_return_finish_surface", SafeHtml("<a href='#goal-daily-loop'>Goal Daily Loop</a>")),
+                    ("goal_return_finish_surface", SafeHtml("<a href='#goal-finish-today'>Finish Today</a>")),
                     ("goal_return_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
                     ("goal_return_source", "goal_workspace_timeline_ci_and_gate_state"),
                     ("goal_return_write_on_get", "false"),
@@ -8943,7 +8993,7 @@ def _goal_return_brief(
                     f"goal_return_latest: {_e(latest_message)}",
                     f"goal_return_artifact: {_artifact_link(latest_artifact) if latest_artifact else 'none'}",
                     f"goal_return_unblock: {_e(blocker_status)} -> {blocker_surface}",
-                    "goal_return_finish: <a href='#goal-daily-loop'>Goal Daily Loop</a>",
+                    "goal_return_finish: <a href='#goal-finish-today'>Finish Today</a>",
                     "goal_return_safety: read-only return-to-work brief",
                 ]
             ),
@@ -26004,6 +26054,18 @@ def _html_page(
     .goal-daily-loop dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-daily-loop ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-daily-loop li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-daily-loop-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-daily-loop-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .goal-daily-loop-card h3 {{ margin-top:0; }}
+    .goal-daily-loop-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .goal-daily-loop-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .goal-daily-loop-action, .goal-daily-loop-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-daily-loop-action {{ background:var(--accent); color:#fff; }}
+    .goal-daily-loop-link {{ background:var(--surface); color:var(--accent); }}
+    .goal-daily-loop-evidence, .goal-pause-details, .goal-finish-details {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-daily-loop-evidence summary, .goal-pause-details summary, .goal-finish-details summary {{ cursor:pointer; font-weight:700; }}
+    .goal-daily-loop-evidence:not([open]) > :not(summary), .goal-pause-details:not([open]) > :not(summary), .goal-finish-details:not([open]) > :not(summary) {{ display:none; }}
+    .goal-pause-details > section, .goal-finish-details > section {{ margin:10px 0 0; padding:0; border-bottom:0; }}
     .goal-return-brief {{ border-left:4px solid var(--accent); }}
     .goal-return-brief dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .goal-return-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
@@ -26101,10 +26163,10 @@ def _html_page(
     .ci-evidence-summary-evidence, .ci-proof-workbench-evidence, .ci-evidence-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .ci-evidence-summary-evidence summary, .ci-proof-workbench-evidence summary, .ci-evidence-command-evidence summary {{ cursor:pointer; font-weight:700; }}
     .ci-evidence-summary-evidence:not([open]) > :not(summary), .ci-proof-workbench-evidence:not([open]) > :not(summary), .ci-evidence-command-evidence:not([open]) > :not(summary) {{ display:none; }}
-    .today-current-action, .today-finish, .today-note, .today-pause, .goal-pause {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
+    .today-current-action, .today-finish, .today-note, .today-pause {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .today-current-action summary, .today-finish summary, .today-note summary, .today-pause summary {{ cursor:pointer; font-weight:700; }}
     .today-current-action:not([open]) > :not(summary), .today-finish:not([open]) > :not(summary), .today-note:not([open]) > :not(summary), .today-pause:not([open]) > :not(summary) {{ display:none; }}
-    .today-current-action form, .today-finish form, .today-note form, .today-pause form, .goal-pause form {{ margin-top:10px; }}
+    .today-current-action form, .today-finish form, .today-note form, .today-pause form, .goal-pause form, .goal-finish-details form {{ margin-top:10px; }}
     .home-state-details {{ margin-top:10px; }}
     .home-state-details summary {{ cursor:pointer; font-weight:700; }}
     .home-state-details:not([open]) > :not(summary) {{ display:none; }}
@@ -26520,7 +26582,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-daily-loop-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
