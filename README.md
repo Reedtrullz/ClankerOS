@@ -549,10 +549,13 @@ no-write/no-network/no-raw-filesystem boundary in the DOM. Use `/memory`, `/skil
 and inactive future provider-routing lanes. `/memory` is now action-first and
 opens with a visible `Memory Operator Workbench` before shared route/focus
 diagnostics and command readback, turning the next memory action, proposed
-pins, operator notes, and resume target into four browser cards. Memory state,
-workbench evidence, and command evidence stay collapsed by default while
-preserving entry counts, proposed-memory pin posture, saved workspace context,
-and no-write/provider/network/external-effect boundaries in the DOM. `/skills`
+pins, operator notes, and resume target into four browser cards. It now follows
+with a visible read-only `Memory Pinboard` for Active Pins, Proposed Pins,
+Project, Global, Generated, Operator Notes, and Future Work before the dense
+memory inventory. Memory state, pinboard, workbench evidence, and command
+evidence stay collapsed by default while preserving entry counts,
+proposed-memory pin posture, saved workspace context, and
+no-write/provider/network/external-effect boundaries in the DOM. `/skills`
 is now action-first and opens with a visible `Skills Operator Workbench` before
 shared route/focus diagnostics or command readback, turning generated-skill
 review, usage review, and resume context into browser cards. Skills state,

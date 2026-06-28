@@ -914,6 +914,10 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-memory-workbench-primary='true'",
                 "data-memory-state-details='true'",
                 "data-memory-workbench-evidence='true'",
+                "Memory Pinboard",
+                "data-memory-pinboard='true'",
+                "data-memory-pinboard-cards='true'",
+                "data-memory-pinboard-evidence='true'",
                 "data-memory-command-evidence='true'",
                 "Project Memories",
                 "Generated Memories",
@@ -6373,6 +6377,16 @@ def _memory_page(root: Path) -> str:
                 operator_notes=operator_notes,
                 future_work=future_work,
             ),
+            _memory_pinboard(
+                root,
+                entries=entries,
+                project_memories=project_memories,
+                global_memories=global_memories,
+                generated=generated,
+                proposed=proposed,
+                operator_notes=operator_notes,
+                future_work=future_work,
+            ),
             _memory_command_bar(
                 root,
                 entries=entries,
@@ -6524,6 +6538,171 @@ def _memory_operator_workbench(
             "</section>",
         ]
     )
+
+
+def _memory_pinboard(
+    root: Path,
+    *,
+    entries: list[Any],
+    project_memories: list[Any],
+    global_memories: list[Any],
+    generated: list[Any],
+    proposed: list[Any],
+    operator_notes: list[str],
+    future_work: list[Any],
+) -> str:
+    del root
+    active = [entry for entry in entries if entry.status == "active"]
+    lanes: list[dict[str, str | int | bool]] = [
+        {
+            "key": "active",
+            "label": "Active Pins",
+            "count": len(active),
+            "href": _memory_entry_anchor(active[0]) if active else "#memory-project",
+            "summary": _memory_entry_card_summary(active[0]) if active else "No pinned memories yet.",
+            "action": "Open pin" if active else "Review memory",
+            "ready": bool(active),
+        },
+        {
+            "key": "proposed",
+            "label": "Proposed Pins",
+            "count": len(proposed),
+            "href": "#memory-proposed",
+            "summary": _memory_entry_card_summary(proposed[0]) if proposed else "No proposed memories waiting.",
+            "action": "Pin memory" if proposed else "Review proposed",
+            "ready": bool(proposed),
+        },
+        {
+            "key": "project",
+            "label": "Project",
+            "count": len(project_memories),
+            "href": "#memory-project",
+            "summary": _memory_entry_card_summary(project_memories[0]) if project_memories else "No project memories yet.",
+            "action": "Review project",
+            "ready": bool(project_memories),
+        },
+        {
+            "key": "global",
+            "label": "Global",
+            "count": len(global_memories),
+            "href": "#memory-global",
+            "summary": _memory_entry_card_summary(global_memories[0]) if global_memories else "No global memories yet.",
+            "action": "Review global",
+            "ready": bool(global_memories),
+        },
+        {
+            "key": "generated",
+            "label": "Generated",
+            "count": len(generated),
+            "href": "#memory-generated",
+            "summary": _memory_entry_card_summary(generated[0]) if generated else "No generated memories yet.",
+            "action": "Review generated",
+            "ready": bool(generated),
+        },
+        {
+            "key": "notes",
+            "label": "Operator Notes",
+            "count": len(operator_notes),
+            "href": "#memory-operator-notes",
+            "summary": f"First note: {operator_notes[0]}" if operator_notes else "No operator notes yet.",
+            "action": "Review notes",
+            "ready": bool(operator_notes),
+        },
+        {
+            "key": "future",
+            "label": "Future Work",
+            "count": len(future_work),
+            "href": "#memory-future-work",
+            "summary": _task_recommendation_summary(future_work[0]) if future_work else "No future-work recommendations yet.",
+            "action": "Review future work",
+            "ready": bool(future_work),
+        },
+    ]
+    primary_lane = "goal_context"
+    primary_href = "/goals"
+    primary_label = "Create goal context"
+    primary_reason = "no_memory_records_yet"
+    for candidate in ("proposed", "active", "project", "global", "generated", "notes", "future"):
+        lane = next(item for item in lanes if item["key"] == candidate)
+        if lane["ready"]:
+            primary_lane = str(lane["key"])
+            primary_href = str(lane["href"])
+            primary_label = str(lane["action"])
+            primary_reason = str(lane["summary"])
+            break
+    card_markup: list[str] = []
+    for lane in lanes:
+        is_primary = lane["key"] == primary_lane
+        status = "ready" if lane["ready"] else "empty"
+        card_class = "memory-pinboard-card memory-pinboard-primary" if is_primary else "memory-pinboard-card"
+        action_class = "memory-pinboard-action" if is_primary else "memory-pinboard-link"
+        card_markup.extend(
+            [
+                (
+                    f"<article class='{card_class}' data-memory-pinboard-lane='{_e(str(lane['key']))}' "
+                    f"data-memory-pinboard-status='{_e(status)}'>"
+                ),
+                f"<h3>{_e(str(lane['label']))}</h3>",
+                f"<p><strong>{_e(str(lane['count']))}</strong> item{'s' if int(lane['count']) != 1 else ''}</p>",
+                f"<p>{_e(str(lane['summary']))}</p>",
+                f"<a class='{action_class}' href='{_e(str(lane['href']))}'>{_e(str(lane['action']))}</a>",
+                "</article>",
+            ]
+        )
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("memory_pinboard_status", "ready" if any(lane["ready"] for lane in lanes) else "empty"),
+        ("memory_pinboard_total_entries", str(len(entries))),
+        *[(f"memory_pinboard_{lane['key']}_items", str(lane["count"])) for lane in lanes],
+        ("memory_pinboard_primary_lane", primary_lane),
+        ("memory_pinboard_primary_surface", SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>")),
+        ("memory_pinboard_primary_reason", primary_reason),
+        ("memory_pinboard_pin_memory_available", str(bool(proposed)).lower()),
+        ("memory_pinboard_write_on_get", "false"),
+        ("memory_pinboard_raw_filesystem_browsing", "false"),
+        ("memory_pinboard_provider_calls_taken", "0"),
+        ("memory_pinboard_network_actions_taken", "0"),
+        ("memory_pinboard_external_effects_created", "false"),
+    ]
+    return "".join(
+        [
+            "<section id='memory-pinboard' class='panel memory-pinboard' data-memory-pinboard='true'><h2>Memory Pinboard</h2>",
+            "<p class='muted'>Pinned, proposed, generated, and note-backed memory lanes before the longer inventory.</p>",
+            "<div class='memory-pinboard-grid' data-memory-pinboard-cards='true'>",
+            *card_markup,
+            "</div>",
+            "<details class='memory-pinboard-evidence' data-memory-pinboard-evidence='true'><summary>Memory pinboard evidence</summary>",
+            _kv(rows),
+            _ul(
+                [
+                    f"memory_pinboard_now: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                    f"memory_pinboard_reason: {_e(primary_reason)}",
+                    "memory_pinboard_safety: read-only memory map; confirmed pin form only when submitted",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _memory_entry_anchor(entry: Any) -> str:
+    if entry.status == "proposed":
+        return "#memory-proposed"
+    if entry.scope == "global":
+        return "#memory-global"
+    if entry.source_type != "operator":
+        return "#memory-generated"
+    return "#memory-project"
+
+
+def _memory_entry_card_summary(entry: Any) -> str:
+    return f"{entry.key}: {entry.value}"
+
+
+def _task_recommendation_summary(item: Any) -> str:
+    task_id = getattr(item, "task_id", None) or getattr(item, "id", "future_work")
+    reason = getattr(item, "reason", None) or getattr(item, "recommended_action", "review")
+    return f"{task_id}: {reason}"
 
 
 def _memory_command_bar(
@@ -29862,9 +30041,18 @@ def _html_page(
     .memory-workbench-action, .memory-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .memory-workbench-action {{ background:var(--accent); color:#fff; }}
     .memory-workbench-link {{ background:var(--surface); color:var(--accent); }}
-    .memory-state-details, .memory-workbench-evidence, .memory-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .memory-state-details summary, .memory-workbench-evidence summary, .memory-command-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .memory-state-details:not([open]) > :not(summary), .memory-workbench-evidence:not([open]) > :not(summary), .memory-command-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .memory-pinboard {{ border-left:4px solid var(--accent); }}
+    .memory-pinboard-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:10px; margin:12px 0; }}
+    .memory-pinboard-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .memory-pinboard-card h3 {{ margin-top:0; }}
+    .memory-pinboard-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .memory-pinboard-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .memory-pinboard-action, .memory-pinboard-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .memory-pinboard-action {{ background:var(--accent); color:#fff; }}
+    .memory-pinboard-link {{ background:var(--surface); color:var(--accent); }}
+    .memory-state-details, .memory-workbench-evidence, .memory-command-evidence, .memory-pinboard-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .memory-state-details summary, .memory-workbench-evidence summary, .memory-command-evidence summary, .memory-pinboard-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .memory-state-details:not([open]) > :not(summary), .memory-workbench-evidence:not([open]) > :not(summary), .memory-command-evidence:not([open]) > :not(summary), .memory-pinboard-evidence:not([open]) > :not(summary) {{ display:none; }}
     .skills-operator-workbench {{ border-left:4px solid var(--accent); }}
     .skills-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .skills-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
@@ -30020,7 +30208,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

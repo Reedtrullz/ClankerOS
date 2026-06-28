@@ -6179,14 +6179,39 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-memory-workbench-primary='true'" in memory_before_pin.body
     assert "data-memory-state-details='true'" in memory_before_pin.body
     assert "data-memory-workbench-evidence='true'" in memory_before_pin.body
+    assert "Memory Pinboard" in memory_before_pin.body
+    assert "data-memory-pinboard='true'" in memory_before_pin.body
+    assert "data-memory-pinboard-cards='true'" in memory_before_pin.body
+    assert memory_before_pin.body.count("class='memory-pinboard-card") == 7
+    assert "data-memory-pinboard-lane='proposed' data-memory-pinboard-status='ready'" in memory_before_pin.body
+    assert "data-memory-pinboard-lane='active' data-memory-pinboard-status='empty'" in memory_before_pin.body
+    assert "data-memory-pinboard-evidence='true'" in memory_before_pin.body
     assert "data-memory-command-evidence='true'" in memory_before_pin.body
     assert memory_before_pin.body.index("data-memory-operator-workbench") < memory_before_pin.body.index("data-route-context")
+    assert memory_before_pin.body.index("data-memory-operator-workbench") < memory_before_pin.body.index(
+        "data-memory-pinboard='true'"
+    )
+    assert memory_before_pin.body.index("data-memory-pinboard='true'") < memory_before_pin.body.index(
+        "data-memory-command-bar"
+    )
     assert memory_before_pin.body.index("data-memory-operator-workbench") < memory_before_pin.body.index("data-memory-command-bar")
     assert "memory_workbench_status</dt><dd>pin_ready" in memory_before_pin.body
     assert "memory_workbench_next_action</dt><dd>Pin first proposed memory" in memory_before_pin.body
     assert "memory_workbench_target_surface</dt><dd><a href='#memory-proposed'>Proposed Memories</a>" in memory_before_pin.body
     assert "memory_workbench_pin_memory_available</dt><dd>true" in memory_before_pin.body
     assert "memory_workbench_write_on_get</dt><dd>false" in memory_before_pin.body
+    assert "memory_pinboard_status</dt><dd>ready" in memory_before_pin.body
+    assert "memory_pinboard_total_entries</dt><dd>1" in memory_before_pin.body
+    assert "memory_pinboard_active_items</dt><dd>0" in memory_before_pin.body
+    assert "memory_pinboard_proposed_items</dt><dd>1" in memory_before_pin.body
+    assert "memory_pinboard_project_items</dt><dd>1" in memory_before_pin.body
+    assert "memory_pinboard_primary_lane</dt><dd>proposed" in memory_before_pin.body
+    assert "memory_pinboard_primary_surface</dt><dd><a href='#memory-proposed'>Pin memory</a>" in memory_before_pin.body
+    assert "memory_pinboard_pin_memory_available</dt><dd>true" in memory_before_pin.body
+    assert "memory_pinboard_write_on_get</dt><dd>false" in memory_before_pin.body
+    assert "memory_pinboard_network_actions_taken</dt><dd>0" in memory_before_pin.body
+    assert "memory_pinboard_external_effects_created</dt><dd>false" in memory_before_pin.body
+    assert "memory_pinboard_safety: read-only memory map; confirmed pin form only when submitted" in memory_before_pin.body
     assert "Memory Command Bar" in memory_before_pin.body
     assert "data-memory-command-bar='true'" in memory_before_pin.body
     assert "memory_command_total_entries</dt><dd>1" in memory_before_pin.body
@@ -10852,8 +10877,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-memory-workbench-primary='true'" in memory.body
     assert "data-memory-state-details='true'" in memory.body
     assert "data-memory-workbench-evidence='true'" in memory.body
+    assert "Memory Pinboard" in memory.body
+    assert "data-memory-pinboard='true'" in memory.body
+    assert "data-memory-pinboard-cards='true'" in memory.body
+    assert memory.body.count("class='memory-pinboard-card") == 7
+    assert "data-memory-pinboard-lane='active' data-memory-pinboard-status='empty'" in memory.body
+    assert "data-memory-pinboard-lane='proposed' data-memory-pinboard-status='empty'" in memory.body
+    assert "data-memory-pinboard-evidence='true'" in memory.body
     assert "data-memory-command-evidence='true'" in memory.body
     assert memory.body.index("data-memory-operator-workbench") < memory.body.index("data-route-context")
+    assert memory.body.index("data-memory-operator-workbench") < memory.body.index("data-memory-pinboard='true'")
+    assert memory.body.index("data-memory-pinboard='true'") < memory.body.index("data-memory-command-bar")
     assert memory.body.index("data-memory-operator-workbench") < memory.body.index("data-memory-command-bar")
     assert "memory_workbench_status</dt><dd>empty" in memory.body
     assert "memory_workbench_next_action</dt><dd>Create goal context" in memory.body
@@ -10863,6 +10897,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "memory_workbench_provider_calls_taken</dt><dd>0" in memory.body
     assert "memory_workbench_network_actions_taken</dt><dd>0" in memory.body
     assert "memory_workbench_external_effects_created</dt><dd>false" in memory.body
+    assert "memory_pinboard_status</dt><dd>empty" in memory.body
+    assert "memory_pinboard_total_entries</dt><dd>0" in memory.body
+    assert "memory_pinboard_active_items</dt><dd>0" in memory.body
+    assert "memory_pinboard_proposed_items</dt><dd>0" in memory.body
+    assert "memory_pinboard_primary_lane</dt><dd>goal_context" in memory.body
+    assert "memory_pinboard_primary_surface</dt><dd><a href='/goals'>Create goal context</a>" in memory.body
+    assert "memory_pinboard_pin_memory_available</dt><dd>false" in memory.body
+    assert "memory_pinboard_write_on_get</dt><dd>false" in memory.body
+    assert "memory_pinboard_network_actions_taken</dt><dd>0" in memory.body
+    assert "memory_pinboard_external_effects_created</dt><dd>false" in memory.body
     assert "Memory Command Bar" in memory.body
     assert "data-memory-command-bar='true'" in memory.body
     assert "memory_command_total_entries</dt><dd>0" in memory.body

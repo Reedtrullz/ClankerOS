@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-28 Memory Pinboard UX
+
+- Added a visible read-only `Memory Pinboard` to `/memory` between the Memory
+  Operator Workbench and command/inventory sections.
+- The pinboard turns durable memory into seven scan-first lanes: Active Pins,
+  Proposed Pins, Project, Global, Generated, Operator Notes, and Future Work,
+  each with counts, first-target routing, and collapsed pinboard evidence.
+- Updated README, operating summary, local status docs, demo route markers,
+  and focused memory assertions for empty and proposed-pin states.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'first_run_browser_actions_persist_resume_workspace or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected in 32.48s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed; provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed; fixture-backed `/memory` matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `git diff --check` -> passed
+  - In-app browser QA against bounded seeded demo data on `127.0.0.1:8862`
+    -> passed: desktop and 390px mobile showed 7 lane cards, proposed pin as
+    primary, the existing confirmed pin form in Proposed Memories, collapsed
+    evidence, correct workbench/pinboard/command ordering, no console warnings
+    or errors, and no horizontal overflow
+  - `lsof -nP -iTCP:8862 -sTCP:LISTEN` after cleanup -> no listener
+- Non-claims until remote proof: GitHub Actions proof is not yet complete for
+  this slice. The change is intended to remain a local readback/navigation UX
+  improvement: no write on GET, no pin without the existing confirmed form, no
+  provider call, no external network action beyond local browser/server
+  loopback, no PR, and no deploy from ClankerOS itself.
+
 ## 2026-06-28 Search Result Map UX
 
 - Added a visible read-only `Search Result Map` to `/search` between the

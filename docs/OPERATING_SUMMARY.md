@@ -246,11 +246,13 @@ Core layers for the bootstrap:
   actions. It is action-first and opens with a visible
   `Memory Operator Workbench` before shared route/focus diagnostics and
   command readback, with cards for the next memory action, proposed pins,
-  operator notes, and `/resume` or goal context. Memory state, workbench
-  evidence, and command evidence stay collapsed by default while preserving
-  entry counts, first proposed pin or fallback resume target, saved workspace
-  context, and no-write/provider/network/external-effect boundaries in the
-  DOM; `/skills`
+  operator notes, and `/resume` or goal context. A visible read-only
+  `Memory Pinboard` follows with Active Pins, Proposed Pins, Project, Global,
+  Generated, Operator Notes, and Future Work lanes before the longer memory
+  inventory. Memory state, pinboard, workbench evidence, and command evidence
+  stay collapsed by default while preserving entry counts, first proposed pin
+  or fallback resume target, saved workspace context, and
+  no-write/provider/network/external-effect boundaries in the DOM; `/skills`
   for available/generated skill records with usage counts. It is action-first
   and opens with a visible `Skills Operator Workbench` before shared
   route/focus diagnostics or command readback, with cards for the next skill
