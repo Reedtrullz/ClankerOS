@@ -1,5 +1,36 @@
 # Status
 
+## 2026-06-28 Keyboard Finish Workspace UX
+
+- Added shared keyboard shortcuts for daily browser operation:
+  - `w` opens `/workspace`
+  - `f` opens `/workspace#save-workspace`
+- The shortcuts are exposed through the same accessible shortcut metadata and
+  command-palette help as the existing Home, Today, Goals, Resume, Search,
+  palette, Escape, and theme shortcuts.
+- `f` is navigation-only: it opens the existing Finish Today save surface, and
+  the actual `save-workspace` write still requires the confirmed local form.
+- Updated README, operating summary, local status focus, and rendered shell
+  assertions for shortcut metadata/help/JavaScript handlers.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health --tb=short`
+    -> passed, `1 passed, 515 deselected in 27.98s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 45.31s`
+  - `git diff --check` -> passed
+- Full pytest/browser regression proof is intentionally left to GitHub Actions
+  for this GitHub-first testing loop.
+- Non-claims until remote proof: no browser QA for this slice, no write on GET,
+  no provider call, no app-side GitHub polling, no approval decision, no
+  execution, no commit, no push, no PR, and no deploy from ClankerOS itself.
+
 ## 2026-06-28 Action Notice Next Step UX
 
 - Completed-action notice pages now open with a primary `Next Step` card.

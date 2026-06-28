@@ -5132,17 +5132,23 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "aria-keyshortcuts='g'" in root.body
     assert "aria-keyshortcuts='r'" in root.body
     assert "aria-keyshortcuts='s'" in root.body
+    assert "aria-keyshortcuts='w'" in root.body
     assert "Keyboard shortcuts: slash opens command palette" in root.body
+    assert "w opens workspace; f opens Finish Today" in root.body
     assert "Keyboard Shortcuts" in root.body
     assert "data-shortcut-help='true'" in root.body
     assert "<kbd>/</kbd> <span>Open command palette</span>" in root.body
     assert "<kbd>Escape</kbd> <span>Close command palette</span>" in root.body
     assert "<kbd>r</kbd> <span>Open resume</span>" in root.body
     assert "<kbd>s</kbd> <span>Open search</span>" in root.body
+    assert "<kbd>w</kbd> <span>Open workspace</span>" in root.body
+    assert "<kbd>f</kbd> <span>Finish today</span>" in root.body
     assert "<kbd>t</kbd> <span>Toggle theme</span>" in root.body
     assert 'if (event.key === "Escape") { closePalette(); return; }' in root.body
     assert 'if (event.key === "r") { event.preventDefault(); window.location.href = "/resume"; }' in root.body
     assert 'if (event.key === "s") { event.preventDefault(); window.location.href = "/search"; }' in root.body
+    assert 'if (event.key === "w") { event.preventDefault(); window.location.href = "/workspace"; }' in root.body
+    assert 'if (event.key === "f") { event.preventDefault(); window.location.href = "/workspace#save-workspace"; }' in root.body
     assert 'if (event.key === "y") { event.preventDefault(); window.location.href = "/today"; }' in root.body
     assert 'if (event.key === "t") { event.preventDefault(); toggleTheme(); }' in root.body
     assert "implementation-handoff" in root.body

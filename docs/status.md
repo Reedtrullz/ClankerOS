@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The shared browser shell now has keyboard-first Workspace and Finish Today
+  navigation: `w` opens `/workspace`, and `f` opens
+  `/workspace#save-workspace`. Both shortcuts are discoverable in the command
+  palette help and remain navigation-only; the actual workspace save still
+  requires the existing confirmed form.
 - Completed-action notice pages now open with a `Next Step` card that is
   sourced from first-run progress or saved-Goal state. The notice points
   directly at the next confirmed browser form or workflow surface, reports

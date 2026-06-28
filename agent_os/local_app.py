@@ -120,6 +120,7 @@ ROUTE_KEYBOARD_SHORTCUTS = {
     "/resume": "r",
     "/goals": "g",
     "/search": "s",
+    "/workspace": "w",
 }
 GLOBAL_KEYBOARD_SHORTCUTS = {
     "/": "Open command palette",
@@ -129,6 +130,8 @@ GLOBAL_KEYBOARD_SHORTCUTS = {
     "g": "Open goals",
     "r": "Open resume",
     "s": "Open search",
+    "w": "Open workspace",
+    "f": "Finish today",
     "t": "Toggle theme",
 }
 WORKFLOW_STEPS = [
@@ -30762,7 +30765,7 @@ def _html_page(
     <strong>ClankerOS Local Operator</strong>
     <nav>{nav}</nav>
     <div class="header-actions" data-keyboard-shortcuts="true">
-      <span class="sr-only" id="keyboard-shortcuts-help">Keyboard shortcuts: slash opens command palette; Escape closes it; h opens home; y opens today; g opens goals; r opens resume; s opens search; t toggles theme.</span>
+      <span class="sr-only" id="keyboard-shortcuts-help">Keyboard shortcuts: slash opens command palette; Escape closes it; h opens home; y opens today; g opens goals; r opens resume; s opens search; w opens workspace; f opens Finish Today; t toggles theme.</span>
       <button class="icon-button" id="palette-open" type="button" data-shortcut="/" aria-keyshortcuts="/" aria-describedby="keyboard-shortcuts-help" title="Open command palette (/)">Palette</button>
       <button class="icon-button" id="theme-toggle" type="button" data-shortcut="t" aria-keyshortcuts="t" aria-describedby="keyboard-shortcuts-help" title="Toggle theme (t)">Theme</button>
     </div>
@@ -30834,6 +30837,8 @@ def _html_page(
       if (event.key === "h") {{ event.preventDefault(); window.location.href = "/"; }}
       if (event.key === "r") {{ event.preventDefault(); window.location.href = "/resume"; }}
       if (event.key === "s") {{ event.preventDefault(); window.location.href = "/search"; }}
+      if (event.key === "w") {{ event.preventDefault(); window.location.href = "/workspace"; }}
+      if (event.key === "f") {{ event.preventDefault(); window.location.href = "/workspace#save-workspace"; }}
       if (event.key === "y") {{ event.preventDefault(); window.location.href = "/today"; }}
       if (event.key === "t") {{ event.preventDefault(); toggleTheme(); }}
       if (/^[1-9]$/.test(event.key)) {{

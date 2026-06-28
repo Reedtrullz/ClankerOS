@@ -594,7 +594,10 @@ counts, evidence links, and no-resolution/no-retry/no-network boundaries.
 The app shell also includes a global `Operator Ribbon`, `Operator Focus`
 strip, a read-only `Route Context` breadcrumb strip, recent local items, a
 command palette, keyboard shortcuts, and a dark/light theme toggle on every
-page. The ribbon sits above the sidebar and page body with visible Now, Goal,
+page. The shared shortcut layer now includes `w` for `/workspace` and `f` for
+`/workspace#save-workspace`, so return-to-work and Finish Today navigation are
+available without opening the palette while the actual save still requires the
+confirmed form. The ribbon sits above the sidebar and page body with visible Now, Goal,
 Attention, Finish, Resume, and Search cards, so every route immediately shows
 the current or lead Goal, one recommended click, waiting-review posture,
 end-of-day save routing, resume state, and collapsed no-write/no-provider/
