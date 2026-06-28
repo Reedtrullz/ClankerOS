@@ -367,6 +367,35 @@
   GitHub polling, no approval decision, no execution, no PR, and no deploy from
   ClankerOS itself.
 
+## 2026-06-29 First Run Launchpad UX
+
+- Added a visible read-only `First Run Launchpad` to the First Run Guide between
+  the command bar and progress strip.
+- The launchpad gives fresh operators five browser choices: continue guided
+  setup, open the populated demo, inspect workflow, review verification proof,
+  or check health/safety.
+- The guided setup card points at the same same-page first-run form as the
+  command bar, so the launchpad does not introduce another write path.
+- Collapsed evidence records the current first-run step, selected project, goal
+  and delegation ids, all card surfaces, card count, and zero-effect counters.
+- Updated README, operating summary, local status focus, and first-run route
+  assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> passed, `1 passed, 515 deselected in 27.49s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed, all route markers matched, provider/network/external counters
+    stayed at `0`
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider/network/external
+    counters stayed at `0`
+- Non-claims until remote proof: no browser QA for this slice, no write on GET,
+  no provider call, no app-side GitHub polling, no approval decision, no
+  execution, no commit, no push, no PR, and no deploy from ClankerOS itself.
+
 ## 2026-06-28 Workflow Journey UX
 
 - Added a visible read-only `Workflow Journey` section to `/workflow` between

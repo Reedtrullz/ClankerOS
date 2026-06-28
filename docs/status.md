@@ -38,12 +38,13 @@ Latest status focus:
   fallback surfaces (`/goals`, `/search?q=artifact`, `/memory`), while
   populated demo data links directly to the latest timeline/artifact/note
   surfaces and keeps read-only/zero-effect evidence in the DOM.
-- The First Run Guide now includes a visible read-only `First Run Progress`
-  strip with a progress bar and five step cards for Project, Goal, Delegation,
-  Context, and Run. It is sourced from existing first-run state, keeps detailed
-  status evidence collapsed, and preserves the no-write/no-provider/no-network/
-  no-external-effect GET boundary while the existing confirmed forms remain
-  the only write path.
+- The First Run Guide now includes a visible read-only `First Run Launchpad`
+  between the command bar and progress strip. Fresh operators can choose guided
+  setup, demo, workflow, verification, or health without reading docs first.
+  The launchpad is sourced from existing first-run state, keeps detailed status
+  evidence collapsed, and preserves the no-write/no-provider/no-network/
+  no-external-effect GET boundary while the existing confirmed forms remain the
+  only write path.
 - `.clanker/app/workspace.json` now treats `resume_surface` as a first-class
   saved local route. Confirmed `save-workspace` accepts it directly or derives
   it from `return_to`; `/resume` opens it as the primary return target; Home,

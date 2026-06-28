@@ -4759,6 +4759,45 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_command_network_actions_taken</dt><dd>0" in root.body
     assert "first_run_command_external_effects_created</dt><dd>false" in root.body
     assert "first_run_command_safety: confirmed local action only" in root.body
+    assert "First Run Launchpad" in root.body
+    assert "data-first-run-launchpad='true'" in root.body
+    assert "data-first-run-launchpad-cards='true'" in root.body
+    assert root.body.count("class='first-run-launchpad-card") == 5
+    assert (
+        "data-first-run-launchpad-primary='true' href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
+    assert "first_run_launchpad_status</dt><dd>active" in root.body
+    assert "first_run_launchpad_current_step</dt><dd>create_project" in root.body
+    assert "first_run_launchpad_primary_action</dt><dd>Register ClankerOS project" in root.body
+    assert (
+        "first_run_launchpad_primary_surface</dt><dd><a href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
+    assert "first_run_launchpad_primary_reason</dt><dd>no_project_registered" in root.body
+    assert "first_run_launchpad_form_available</dt><dd>true" in root.body
+    assert "first_run_launchpad_demo_surface</dt><dd><a href='/demo'>/demo</a>" in root.body
+    assert "first_run_launchpad_demo_command</dt><dd>python3 -m agent_os.cli demo" in root.body
+    assert "first_run_launchpad_workflow_surface</dt><dd><a href='/workflow'>/workflow</a>" in root.body
+    assert "first_run_launchpad_proof_surface</dt><dd><a href='/verification'>/verification</a>" in root.body
+    assert "first_run_launchpad_safety_surface</dt><dd><a href='/health'>/health</a>" in root.body
+    assert "first_run_launchpad_project</dt><dd>clankeros" in root.body
+    assert "first_run_launchpad_goal</dt><dd>none" in root.body
+    assert "first_run_launchpad_delegation</dt><dd>none" in root.body
+    assert "first_run_launchpad_card_count</dt><dd>5" in root.body
+    assert "first_run_launchpad_write_on_get</dt><dd>false" in root.body
+    assert "first_run_launchpad_provider_calls_taken</dt><dd>0" in root.body
+    assert "first_run_launchpad_network_actions_taken</dt><dd>0" in root.body
+    assert "first_run_launchpad_external_effects_created</dt><dd>false" in root.body
+    assert "first_run_launchpad_guided: <a href='#first-run-create-project'>Create Project</a>" in root.body
+    assert "first_run_launchpad_demo: <a href='/demo'>/demo</a>" in root.body
+    assert "first_run_launchpad_workflow: <a href='/workflow'>/workflow</a>" in root.body
+    assert "first_run_launchpad_proof: <a href='/verification'>/verification</a>" in root.body
+    assert (
+        "first_run_launchpad_safety: read-only first-run launchpad; confirmed forms own writes"
+    ) in root.body
+    assert root.body.index("First Run Command Bar") < root.body.index("First Run Launchpad")
+    assert root.body.index("First Run Launchpad") < root.body.index("First Run Progress")
     assert (
         "first_run_guided_path</dt><dd>Create project -&gt; Create first goal -&gt; "
         "Create first delegation -&gt; Generate context pack -&gt; Run first delegation"

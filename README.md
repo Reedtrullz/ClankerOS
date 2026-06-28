@@ -137,9 +137,12 @@ read-only `First Run Command Bar` that names the next first-run action, target
 surface, form surface, Goal/delegation context, and zero-effect counters; after
 a Goal exists it can render the same confirmed local next-action form inline,
 so scout delegation, context-pack generation, and first delegation execution
-can continue from the guide. A visible `First Run Progress` strip follows with
-a progress bar and five step cards for Project, Goal, Delegation, Context, and
-Run, while detailed status evidence stays collapsed and read-only. Confirmed browser
+can continue from the guide. The command bar is followed by a visible
+`First Run Launchpad` with five browser choices: continue guided setup, open a
+populated demo, inspect workflow, review verification proof, or check health
+and safety. A visible `First Run Progress` strip follows with a progress bar
+and five step cards for Project, Goal, Delegation, Context, and Run, while
+detailed status evidence stays collapsed and read-only. Confirmed browser
 project registration and goal creation also update the saved workspace, so
 `/resume` already knows the first project/goal after those actions. When a
 lead goal exists, Home also shows an explicit
