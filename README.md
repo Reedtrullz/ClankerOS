@@ -490,9 +490,12 @@ the artifact, and checking the safety proof. It now follows with a visible
 `Artifact Format Lens` that names the active Markdown, JSON, patch/diff, text,
 or log renderer, gives the format-specific read/review action, and keeps
 structure, byte counts, and inert-renderer boundaries visible before the
-content body. The detailed `Artifact Command Bar`, `Artifact Review Brief`,
-and format evidence stay collapsed by default while preserving path, type,
-renderer, size, line count, truncation state, inferred project/goal context,
+content body. A visible `Artifact Relationship Map` follows it with Workflow,
+Goal, Source, Resume, and Boundary cards so Goal/project/delegation/run return
+paths are visible before dense evidence. The detailed `Artifact Command Bar`,
+`Artifact Review Brief`, format evidence, and relationship evidence stay
+collapsed by default while preserving path, type, renderer, size, line count,
+truncation state, inferred project/goal/delegation/run context,
 saved-resume-anchor posture, and zero-effect boundaries. The content view
 remains inert and bounded.
 

@@ -233,13 +233,16 @@ Core layers for the bootstrap:
   proof. A visible `Artifact Format Lens` follows with renderer-specific
   cards for Markdown, JSON, patch/diff, text, and log artifacts, including the
   primary read/review action, structure summary, review target, and safety
-  boundary. Detailed `Artifact Command Bar`, `Artifact Review Brief`, and
-  format evidence stay collapsed by default while preserving bounded artifact
+  boundary. A visible `Artifact Relationship Map` then connects the artifact
+  back to inferred Goal, project, delegation, run, saved workspace, and safety
+  return paths before dense evidence. Detailed `Artifact Command Bar`,
+  `Artifact Review Brief`, format evidence, and relationship evidence stay
+  collapsed by default while preserving bounded artifact
   path, render type/family/renderer, size, rendered bytes, line count,
-  truncation state, inferred project/goal context, workspace anchor status,
-  one next action, and no-write/no-raw-filesystem/no-content-execution/
-  no-network/no-external-effect boundaries before the inert content renderer
-  and remember-artifact form;
+  truncation state, inferred project/goal/delegation/run context, workspace
+  anchor status, one next action, and no-write/no-raw-filesystem/
+  no-content-execution/no-network/no-external-effect boundaries before the
+  inert content renderer and remember-artifact form;
   `/workspace` for persistent open project/goal/filter/panel/last-artifact/
   `resume_surface` state in `.clanker/app/workspace.json`. It now opens with the
   `Workspace Operator Workbench` before shared route/focus diagnostics or
@@ -698,7 +701,9 @@ Core layers for the bootstrap:
   The artifact
   viewer now opens with an `Artifact Operator Workbench`, reports render
   family/renderer posture, and renders Markdown as escaped headings/lists/
-  paragraphs, JSON as pretty-printed text, patch/diff artifacts with
+  paragraphs, JSON as pretty-printed text, then shows an
+  `Artifact Relationship Map` for Goal/project/delegation/run/workspace
+  return paths before dense command evidence. Patch/diff artifacts render with
   scan-friendly line classes, and text/log artifacts as inert text while
   keeping content execution disabled. It also exposes a confirmed local
   `save-workspace` form so the operator can remember the current artifact as

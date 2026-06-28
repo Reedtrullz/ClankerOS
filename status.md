@@ -1,5 +1,40 @@
 # Status
 
+## 2026-06-29 Artifact Relationship Map UX
+
+- Added a visible read-only `Artifact Relationship Map` to
+  `/artifacts?path=...` after the `Artifact Format Lens` and before dense
+  command/review evidence.
+- The map gives each artifact Workflow, Goal, Source, Resume, and Boundary
+  cards so plain local docs, Goal artifacts, saved workspace anchors, and
+  delegation-run artifacts expose the next return path without raw filesystem
+  browsing.
+- Focused artifact coverage verifies unclassified docs, saved resume anchors,
+  Goal/project inference, delegation/run inference, collapsed relationship
+  evidence, zero-effect counters, and the render order
+  `Artifact Format Lens` -> `Artifact Relationship Map` ->
+  `Artifact Command Bar`.
+- Updated README, operating summary, local status focus, and focused artifact
+  route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'artifact_viewer' --tb=short`
+    -> passed, `1 passed, 515 deselected in 10.43s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed, all local app route markers matched, provider/network/external
+    counters stayed at `0`
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed, fixture-backed route snippets matched, provider/network/
+    external counters stayed at `0`
+  - `git diff --check` -> passed
+- GitHub Actions proof is expected after pushing this slice; remote status will
+  be tracked by the branch run rather than by a longer local suite.
+- Non-claims until remote proof: no browser QA for this slice, no new run
+  execution, no approval or commit action on GET, no raw filesystem browsing,
+  no app-side GitHub polling, no PR, and no deploy from ClankerOS itself.
+
 ## 2026-06-28 Run Evidence Map UX
 
 - Added a visible read-only `Run Evidence Map` to `/runs/<coder_run_id>` after

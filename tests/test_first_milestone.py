@@ -8183,6 +8183,27 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "artifact_format_lens_external_effects_created</dt><dd>false" in markdown.body
     assert "artifact_format_renderer: markdown_safe_html" in markdown.body
     assert "artifact_format_safety: inert bounded renderer; no raw filesystem browsing" in markdown.body
+    assert "Artifact Relationship Map" in markdown.body
+    assert "data-artifact-relationship-map='true'" in markdown.body
+    assert "data-artifact-relationship-cards='true'" in markdown.body
+    assert markdown.body.count("class='artifact-relationship-card") == 5
+    assert "data-artifact-relationship-primary='true' href='#remember-artifact'>Remember artifact</a>" in markdown.body
+    assert "artifact_relationship_status</dt><dd>unclassified_artifact" in markdown.body
+    assert "artifact_relationship_path</dt><dd>docs/sample.md" in markdown.body
+    assert "artifact_relationship_context_source</dt><dd>path_unclassified" in markdown.body
+    assert "artifact_relationship_source_family</dt><dd>local_artifact" in markdown.body
+    assert "artifact_relationship_goal</dt><dd>unknown" in markdown.body
+    assert "artifact_relationship_delegation</dt><dd>unknown" in markdown.body
+    assert "artifact_relationship_run</dt><dd>unknown" in markdown.body
+    assert "artifact_relationship_resume_status</dt><dd>not_saved" in markdown.body
+    assert "artifact_relationship_workflow_surface</dt><dd><a href='#remember-artifact'>Remember Artifact</a>" in markdown.body
+    assert "artifact_relationship_source_surface</dt><dd><a href='#artifact-content'>Artifact content</a>" in markdown.body
+    assert "artifact_relationship_resume_surface</dt><dd><a href='#remember-artifact'>Remember Artifact</a>" in markdown.body
+    assert "artifact_relationship_write_on_get</dt><dd>false" in markdown.body
+    assert "artifact_relationship_content_executed</dt><dd>false" in markdown.body
+    assert "artifact_relationship_network_actions_taken</dt><dd>0" in markdown.body
+    assert "artifact_relationship_external_effects_created</dt><dd>false" in markdown.body
+    assert "artifact_relationship_safety: read-only artifact relationship map" in markdown.body
     assert "Artifact Command Bar" in markdown.body
     assert "data-artifact-command-bar='true'" in markdown.body
     assert "data-artifact-command-evidence='true'" in markdown.body
@@ -8243,6 +8264,9 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
         "Artifact Format Lens"
     )
     assert markdown.body.index("Artifact Format Lens") < markdown.body.index(
+        "Artifact Relationship Map"
+    )
+    assert markdown.body.index("Artifact Relationship Map") < markdown.body.index(
         "Artifact Command Bar"
     )
     assert markdown.body.index("Artifact Operator Workbench") < markdown.body.index(
@@ -8298,6 +8322,10 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "artifact_command_next_action</dt><dd>Resume from artifact" in remembered_markdown.body
     assert "artifact_command_target_surface</dt><dd><a href='/resume'>/resume</a>" in remembered_markdown.body
     assert "artifact_command_reason</dt><dd>artifact_is_saved_workspace_anchor" in remembered_markdown.body
+    assert "artifact_relationship_status</dt><dd>saved_workspace_artifact" in remembered_markdown.body
+    assert "artifact_relationship_resume_status</dt><dd>saved_workspace_anchor" in remembered_markdown.body
+    assert "artifact_relationship_workflow_surface</dt><dd><a href='/resume'>/resume</a>" in remembered_markdown.body
+    assert "artifact_relationship_resume_surface</dt><dd><a href='/resume'>/resume</a>" in remembered_markdown.body
     assert "artifact_review_status</dt><dd>saved_resume_anchor" in remembered_markdown.body
     assert "artifact_review_already_remembered</dt><dd>true" in remembered_markdown.body
     assert "artifact_review_primary_action</dt><dd>Resume from artifact" in remembered_markdown.body
@@ -8373,6 +8401,14 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "artifact_workbench_context_source</dt><dd>project_goal_path" in goal_artifact_response.body
     assert "artifact_workbench_context_action</dt><dd>Return to goal" in goal_artifact_response.body
     assert "artifact_workbench_context_surface</dt><dd><a href='/goals/goal_demo'>/goals/goal_demo</a>" in goal_artifact_response.body
+    assert "artifact_relationship_status</dt><dd>goal_artifact" in goal_artifact_response.body
+    assert "artifact_relationship_source_family</dt><dd>goal_artifact" in goal_artifact_response.body
+    assert "artifact_relationship_project</dt><dd>subject" in goal_artifact_response.body
+    assert "artifact_relationship_goal</dt><dd>goal_demo" in goal_artifact_response.body
+    assert "artifact_relationship_workflow_surface</dt><dd><a href='/goals/goal_demo#goal-artifact-command-bar'>/goals/goal_demo#goal-artifact-command-bar</a>" in goal_artifact_response.body
+    assert "artifact_relationship_goal_surface</dt><dd><a href='/goals/goal_demo'>/goals/goal_demo</a>" in goal_artifact_response.body
+    assert "artifact_relationship_project_surface</dt><dd><a href='/projects/subject'>/projects/subject</a>" in goal_artifact_response.body
+    assert "artifact_relationship_reason</dt><dd>artifact_path_identifies_goal_context" in goal_artifact_response.body
     assert "artifact_review_status</dt><dd>goal_scoped" in goal_artifact_response.body
     assert "artifact_review_project</dt><dd><a href='/projects/subject'>subject</a>" in goal_artifact_response.body
     assert "artifact_review_goal</dt><dd><a href='/goals/goal_demo'>goal_demo</a>" in goal_artifact_response.body
@@ -8381,6 +8417,32 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "artifact_review_primary_surface</dt><dd><a href='/goals/goal_demo'>/goals/goal_demo</a>" in goal_artifact_response.body
     assert "artifact_review_secondary_surface</dt><dd><a href='/projects/subject'>/projects/subject</a>" in goal_artifact_response.body
     assert "artifact_review_reason</dt><dd>artifact_path_identifies_goal_context" in goal_artifact_response.body
+
+    delegation_artifact = (
+        tmp_path
+        / ".clanker"
+        / "delegations"
+        / "subagent_demo"
+        / "runs"
+        / "run_demo"
+        / "evidence"
+        / "summary.md"
+    )
+    delegation_artifact.parent.mkdir(parents=True, exist_ok=True)
+    delegation_artifact.write_text("# Delegation Evidence\n", encoding="utf-8")
+    delegation_artifact_response = render_local_app_route(
+        tmp_path,
+        "/artifacts?path=.clanker/delegations/subagent_demo/runs/run_demo/evidence/summary.md",
+    )
+    assert delegation_artifact_response.status == 200
+    assert "artifact_relationship_status</dt><dd>delegation_artifact" in delegation_artifact_response.body
+    assert "artifact_relationship_context_source</dt><dd>delegation_path" in delegation_artifact_response.body
+    assert "artifact_relationship_source_family</dt><dd>delegation_run_evidence" in delegation_artifact_response.body
+    assert "artifact_relationship_delegation</dt><dd>subagent_demo" in delegation_artifact_response.body
+    assert "artifact_relationship_run</dt><dd>run_demo" in delegation_artifact_response.body
+    assert "artifact_relationship_workflow_surface</dt><dd><a href='/delegations/subagent_demo#delegation-execution-artifacts'>/delegations/subagent_demo#delegation-execution-artifacts</a>" in delegation_artifact_response.body
+    assert "artifact_relationship_source_surface</dt><dd><a href='/runs/run_demo'>/runs/run_demo</a>" in delegation_artifact_response.body
+    assert "artifact_relationship_reason</dt><dd>artifact_path_identifies_delegation_context" in delegation_artifact_response.body
 
     absolute = render_local_app_route(
         tmp_path,

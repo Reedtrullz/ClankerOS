@@ -179,9 +179,11 @@ Latest status focus:
   opens with `Artifact Operator Workbench` cards for Read, Context, Resume,
   and Safety before shared diagnostics, command evidence, review evidence, or
   inert content. It now follows with an `Artifact Format Lens` for
-  renderer-specific Markdown, JSON, patch/diff, text, and log review actions.
-  Artifact workbench, format, command, and review evidence stay collapsed by
-  default while preserving bounded path, renderer, context, workspace anchor,
+  renderer-specific Markdown, JSON, patch/diff, text, and log review actions,
+  then an `Artifact Relationship Map` for Workflow, Goal, Source, Resume, and
+  Boundary return paths. Artifact workbench, format, relationship, command,
+  and review evidence stay collapsed by default while preserving bounded path,
+  renderer, context, inferred Goal/project/delegation/run, workspace anchor,
   no-content-execution, and zero-effect readbacks in the DOM.
 - `/ci-evidence` is now content-first and proof-action-first: it opens with
   the `CI Proof Workbench` cards for Check, Record Smoke, Record Full Suite,

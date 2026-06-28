@@ -24938,6 +24938,13 @@ def _artifact_viewer(
                 line_count=line_count,
                 truncated=truncated,
             ),
+            _artifact_relationship_map(
+                relative_path=repo_relative,
+                artifact_type=artifact_type,
+                render_family=render_family,
+                renderer=renderer,
+                workspace=workspace,
+            ),
             _artifact_command_bar(
                 root,
                 relative_path=repo_relative,
@@ -24980,6 +24987,164 @@ def _artifact_viewer(
         ]
     )
     return _html_page(root, "Artifact", body, current_path=current_path)
+
+
+def _artifact_relationship_map(
+    *,
+    relative_path: str,
+    artifact_type: str,
+    render_family: str,
+    renderer: str,
+    workspace: dict[str, str],
+) -> str:
+    context = _artifact_context_from_path(relative_path)
+    source = _artifact_source_details(relative_path)
+    project_id = context["project_id"]
+    goal_id = context["goal_id"]
+    delegation_id = source["delegation_id"]
+    run_id = source["run_id"]
+    remembered = workspace.get("last_viewed_artifact") == relative_path
+    if goal_id != "unknown":
+        workflow_status = "goal_artifact"
+        workflow_label = "Goal artifacts"
+        workflow_href = f"/goals/{quote(goal_id)}#goal-artifact-command-bar"
+        workflow_surface = f"/goals/{goal_id}#goal-artifact-command-bar"
+        goal_href = f"/goals/{quote(goal_id)}"
+        goal_label = f"/goals/{goal_id}"
+        project_href = f"/projects/{quote(project_id)}"
+        project_label = f"/projects/{project_id}"
+        source_href = f"/runs/{quote(run_id)}" if run_id != "unknown" else workflow_href
+        source_label = f"/runs/{run_id}" if run_id != "unknown" else workflow_label
+        relationship_reason = "artifact_path_identifies_goal_context"
+    elif delegation_id != "unknown":
+        workflow_status = "delegation_artifact"
+        workflow_label = "Delegation artifacts"
+        workflow_href = f"/delegations/{quote(delegation_id)}#delegation-execution-artifacts"
+        workflow_surface = f"/delegations/{delegation_id}#delegation-execution-artifacts"
+        goal_href = "/goals"
+        goal_label = "/goals"
+        project_href = "/projects"
+        project_label = "/projects"
+        source_href = f"/runs/{quote(run_id)}" if run_id != "unknown" else f"/delegations/{quote(delegation_id)}"
+        source_label = f"/runs/{run_id}" if run_id != "unknown" else f"/delegations/{delegation_id}"
+        relationship_reason = "artifact_path_identifies_delegation_context"
+    elif remembered:
+        workflow_status = "saved_workspace_artifact"
+        workflow_label = "Resume workspace"
+        workflow_href = "/resume"
+        workflow_surface = "/resume"
+        goal_href = "/workspace"
+        goal_label = "/workspace"
+        project_href = "/workspace"
+        project_label = "/workspace"
+        source_href = "/workspace"
+        source_label = "/workspace"
+        relationship_reason = "artifact_saved_as_workspace_anchor"
+    else:
+        workflow_status = "unclassified_artifact"
+        workflow_label = "Remember artifact"
+        workflow_href = "#remember-artifact"
+        workflow_surface = "Remember Artifact"
+        goal_href = "/workspace"
+        goal_label = "/workspace"
+        project_href = "/workspace"
+        project_label = "/workspace"
+        source_href = "#artifact-content"
+        source_label = "Artifact content"
+        relationship_reason = "artifact_path_unclassified"
+    resume_href = "/resume" if remembered else "#remember-artifact"
+    resume_label = "/resume" if remembered else "Remember Artifact"
+    resume_status = "saved_workspace_anchor" if remembered else "not_saved"
+    goal_card_text = (
+        f"Goal {goal_id}; project {project_id}."
+        if goal_id != "unknown"
+        else "No owning Goal inferred from this artifact path."
+    )
+    source_card_text = (
+        f"{source['source_family']} / run {run_id} / delegation {delegation_id}."
+        if run_id != "unknown" or delegation_id != "unknown"
+        else f"{source['source_family']} / no run or delegation id inferred."
+    )
+    return "".join(
+        [
+            "<section id='artifact-relationship-map' class='panel artifact-relationship-map' data-artifact-relationship-map='true'><h2>Artifact Relationship Map</h2>",
+            "<p class='muted'>Where this artifact fits in the local operator workflow before the dense evidence and inert content.</p>",
+            "<div class='artifact-relationship-grid' data-artifact-relationship-cards='true'>",
+            "<article class='artifact-relationship-card artifact-relationship-primary'><h3>Workflow</h3>",
+            f"<p>{_e(workflow_status.replace('_', ' '))}.</p>",
+            f"<a class='artifact-relationship-action' data-artifact-relationship-primary='true' href='{_e(workflow_href)}'>{_e(workflow_label)}</a></article>",
+            "<article class='artifact-relationship-card'><h3>Goal</h3>",
+            f"<p>{_e(goal_card_text)}</p>",
+            f"<a class='artifact-relationship-link' href='{_e(goal_href)}'>{_e(goal_label)}</a></article>",
+            "<article class='artifact-relationship-card'><h3>Source</h3>",
+            f"<p>{_e(source_card_text)}</p>",
+            f"<a class='artifact-relationship-link' href='{_e(source_href)}'>{_e(source_label)}</a></article>",
+            "<article class='artifact-relationship-card'><h3>Resume</h3>",
+            f"<p>{'Saved as the workspace anchor.' if remembered else 'Not saved as the workspace anchor.'}</p>",
+            f"<a class='artifact-relationship-link' href='{_e(resume_href)}'>{_e(resume_label)}</a></article>",
+            "<article class='artifact-relationship-card'><h3>Boundary</h3>",
+            "<p>Read-only local map; no provider, network, or external effects.</p>",
+            "<a class='artifact-relationship-link' href='#artifact-command-bar'>Safety proof</a></article>",
+            "</div>",
+            "<details class='artifact-relationship-evidence' data-artifact-relationship-evidence='true'><summary>Artifact relationship evidence</summary>",
+            _kv(
+                [
+                    ("artifact_relationship_status", workflow_status),
+                    ("artifact_relationship_path", relative_path),
+                    ("artifact_relationship_type", artifact_type),
+                    ("artifact_relationship_render_family", render_family),
+                    ("artifact_relationship_renderer", renderer),
+                    ("artifact_relationship_context_source", context["source"]),
+                    ("artifact_relationship_source_family", source["source_family"]),
+                    ("artifact_relationship_project", project_id),
+                    ("artifact_relationship_goal", goal_id),
+                    ("artifact_relationship_delegation", delegation_id),
+                    ("artifact_relationship_run", run_id),
+                    ("artifact_relationship_workspace_project", workspace.get("open_project", "")),
+                    ("artifact_relationship_workspace_goal", workspace.get("open_goal", "")),
+                    ("artifact_relationship_resume_status", resume_status),
+                    (
+                        "artifact_relationship_workflow_surface",
+                        SafeHtml(f"<a href='{_e(workflow_href)}'>{_e(workflow_surface)}</a>"),
+                    ),
+                    (
+                        "artifact_relationship_goal_surface",
+                        SafeHtml(f"<a href='{_e(goal_href)}'>{_e(goal_label)}</a>"),
+                    ),
+                    (
+                        "artifact_relationship_project_surface",
+                        SafeHtml(f"<a href='{_e(project_href)}'>{_e(project_label)}</a>"),
+                    ),
+                    (
+                        "artifact_relationship_source_surface",
+                        SafeHtml(f"<a href='{_e(source_href)}'>{_e(source_label)}</a>"),
+                    ),
+                    (
+                        "artifact_relationship_resume_surface",
+                        SafeHtml(f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>"),
+                    ),
+                    ("artifact_relationship_reason", relationship_reason),
+                    ("artifact_relationship_write_on_get", "false"),
+                    ("artifact_relationship_raw_filesystem_browsing", "false"),
+                    ("artifact_relationship_content_executed", "false"),
+                    ("artifact_relationship_provider_calls_taken_by_clankeros", "0"),
+                    ("artifact_relationship_network_actions_taken", "0"),
+                    ("artifact_relationship_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"artifact_relationship_now: {_e(workflow_label)}",
+                    f"artifact_relationship_click: <a href='{_e(workflow_href)}'>{_e(workflow_surface)}</a>",
+                    f"artifact_relationship_source: <a href='{_e(source_href)}'>{_e(source_label)}</a>",
+                    f"artifact_relationship_resume: <a href='{_e(resume_href)}'>{_e(resume_label)}</a>",
+                    "artifact_relationship_safety: read-only artifact relationship map",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
 
 
 def _artifact_format_lens(
@@ -25379,6 +25544,33 @@ def _artifact_context_from_path(relative_path: str) -> dict[str, str]:
         "project_id": "unknown",
         "goal_id": "unknown",
         "source": "path_unclassified",
+    }
+
+
+def _artifact_source_details(relative_path: str) -> dict[str, str]:
+    parts = Path(relative_path).parts
+    delegation_id = "unknown"
+    run_id = "unknown"
+    if len(parts) >= 3 and parts[0] == ".clanker" and parts[1] == "delegations":
+        delegation_id = parts[2]
+    for index, part in enumerate(parts):
+        if part == "runs" and index + 1 < len(parts):
+            run_id = parts[index + 1]
+            break
+    if delegation_id != "unknown" and run_id != "unknown":
+        source_family = "delegation_run_evidence"
+    elif delegation_id != "unknown":
+        source_family = "delegation_artifact"
+    elif run_id != "unknown":
+        source_family = "goal_run_evidence"
+    elif "goals" in parts:
+        source_family = "goal_artifact"
+    else:
+        source_family = "local_artifact"
+    return {
+        "delegation_id": delegation_id,
+        "run_id": run_id,
+        "source_family": source_family,
     }
 
 
@@ -32255,9 +32447,18 @@ def _html_page(
     .artifact-format-action, .artifact-format-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .artifact-format-action {{ background:var(--accent); color:#fff; }}
     .artifact-format-link {{ background:var(--surface); color:var(--accent); }}
-    .artifact-workbench-evidence, .artifact-command-evidence, .artifact-review-evidence, .artifact-format-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .artifact-workbench-evidence summary, .artifact-command-evidence summary, .artifact-review-evidence summary, .artifact-format-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .artifact-workbench-evidence:not([open]) > :not(summary), .artifact-command-evidence:not([open]) > :not(summary), .artifact-review-evidence:not([open]) > :not(summary), .artifact-format-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .artifact-relationship-map {{ border-left:4px solid var(--ok); }}
+    .artifact-relationship-grid {{ display:grid; grid-template-columns:minmax(240px, 1.2fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .artifact-relationship-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .artifact-relationship-card h3 {{ margin-top:0; }}
+    .artifact-relationship-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .artifact-relationship-primary {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
+    .artifact-relationship-action, .artifact-relationship-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .artifact-relationship-action {{ background:var(--accent); color:#fff; }}
+    .artifact-relationship-link {{ background:var(--surface); color:var(--accent); }}
+    .artifact-workbench-evidence, .artifact-command-evidence, .artifact-review-evidence, .artifact-format-evidence, .artifact-relationship-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .artifact-workbench-evidence summary, .artifact-command-evidence summary, .artifact-review-evidence summary, .artifact-format-evidence summary, .artifact-relationship-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .artifact-workbench-evidence:not([open]) > :not(summary), .artifact-command-evidence:not([open]) > :not(summary), .artifact-review-evidence:not([open]) > :not(summary), .artifact-format-evidence:not([open]) > :not(summary), .artifact-relationship-evidence:not([open]) > :not(summary) {{ display:none; }}
     #artifact-content {{ min-width:0; overflow-wrap:anywhere; }}
     #artifact-content h1 {{ overflow-wrap:anywhere; }}
     .artifact-path code {{ display:block; max-width:100%; white-space:normal; overflow-wrap:anywhere; color:var(--muted); }}
@@ -32541,7 +32742,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-session-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-session-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-attention-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .skills-usage-grid {{ grid-template-columns:1fr; }} }}
