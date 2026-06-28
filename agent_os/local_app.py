@@ -1061,6 +1061,10 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-inbox-triage-board='true'",
                 "data-inbox-triage-cards='true'",
                 "data-inbox-triage-evidence='true'",
+                "Inbox Next Item Brief",
+                "data-inbox-next-item-brief='true'",
+                "data-inbox-next-actions='true'",
+                "data-inbox-next-evidence='true'",
                 "data-inbox-command-evidence='true'",
                 "data-inbox-finish-details='true'",
                 "Pending Worktree Approvals",
@@ -20008,6 +20012,7 @@ def _inbox(root: Path) -> str:
             "</section>",
             _inbox_operator_workbench(root, inbox),
             _inbox_triage_board(inbox),
+            _inbox_next_item_brief(root, inbox),
             _inbox_command_bar(root, inbox),
             _list_section(
                 "Inbox Summary",
@@ -20082,6 +20087,338 @@ def _inbox(root: Path) -> str:
                 anchor_id="inbox-publication-handoffs",
             ),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _inbox_next_item_brief(root: Path, inbox: dict[str, object]) -> str:
+    storage = _storage(root)
+    steering_reviews = list(inbox["steering_reviews"])
+    pending_approvals = list(inbox["pending_approvals"])
+    open_incidents = list(inbox["open_incidents"])
+    subagent_delegations = list(inbox["subagent_delegations"])
+    coder_worktree_approvals = list(inbox["coder_worktree_approvals"])
+    coder_worktree_runs = list(inbox["coder_worktree_runs"])
+    coder_worktree_commit_approvals = list(inbox["coder_worktree_commit_approvals"])
+    coder_worktree_commits = list(inbox["coder_worktree_commits"])
+    coder_publication_requests = list(inbox["coder_publication_requests"])
+    coder_publication_handoffs = list(inbox["coder_publication_handoffs"])
+    total = int(inbox["count"])
+    status = "empty"
+    lane = "finish"
+    kind = "none"
+    item_id = "none"
+    project = "none"
+    goal = "none"
+    delegation = "none"
+    run_id = "none"
+    action = "No inbox items"
+    action_name = "none"
+    queue_href = "#inbox-finish-today"
+    queue_label = "Finish Today"
+    inspect_href = "/goals"
+    inspect_label = "/goals"
+    evidence_path = "none"
+    evidence_href = "#inbox-next-item-brief"
+    evidence_label = "No artifact"
+    after_action = "save or start from Goals"
+    after_href = "/goals"
+    after_label = "/goals"
+    reason = "no_local_operator_attention_items"
+
+    def set_evidence(path: str | Path | None, fallback_href: str, fallback_label: str) -> None:
+        nonlocal evidence_path, evidence_href, evidence_label
+        relative_path = _repo_relative_artifact_path(root, path)
+        evidence_path = relative_path
+        if relative_path != "none":
+            evidence_href = f"/artifacts?path={quote(relative_path)}"
+            evidence_label = "Evidence"
+        else:
+            evidence_href = fallback_href
+            evidence_label = fallback_label
+
+    if open_incidents:
+        item = open_incidents[0]
+        status = "ready"
+        lane = "attention"
+        kind = "incident"
+        item_id = item.id
+        project = item.project_id
+        goal = item.goal_id or "none"
+        run_id = item.run_id or "none"
+        action = "Inspect incident"
+        action_name = "inspect-incident"
+        queue_href = "#inbox-open-incidents"
+        queue_label = "Open Incidents"
+        inspect_href = "/incidents"
+        inspect_label = "Incidents"
+        reason = item.summary
+        set_evidence(item.evidence_path, queue_href, "Open Incidents")
+        after_action = "resolve incident or replan from Goal surface"
+        after_href = "/incidents"
+        after_label = "Incidents"
+    elif steering_reviews:
+        item = steering_reviews[0]
+        status = "ready"
+        lane = "attention"
+        kind = "steering_review"
+        item_id = item.id
+        project = item.project_id
+        goal = item.goal_id
+        run_id = item.run_id or "none"
+        action = "Review steering decision"
+        action_name = "review-steering"
+        queue_href = "#inbox-steering-reviews"
+        queue_label = "Steering Reviews"
+        inspect_href = f"/goals/{quote(item.goal_id)}"
+        inspect_label = "Goal"
+        reason = item.recommended_next_action
+        set_evidence(item.report_path, queue_href, "Steering Reviews")
+        after_action = "continue from Goal next action"
+        after_href = inspect_href
+        after_label = "Goal"
+    elif pending_approvals:
+        item = pending_approvals[0]
+        status = "ready"
+        lane = "decisions"
+        kind = "approval_request"
+        item_id = item.id
+        project = item.project_id
+        goal = item.goal_id
+        run_id = item.run_id or "none"
+        action = "Review approval request"
+        action_name = "review-approval-request"
+        queue_href = "#inbox-pending-approval-requests"
+        queue_label = "Pending Approval Requests"
+        inspect_href = f"/goals/{quote(item.goal_id)}"
+        inspect_label = "Goal"
+        reason = item.reason
+        set_evidence(None, queue_href, "Approval queue")
+        after_action = "decide approval from CLI-backed local gate"
+        after_href = inspect_href
+        after_label = "Goal"
+    elif coder_worktree_approvals:
+        item = coder_worktree_approvals[0]
+        status = "ready"
+        lane = "decisions"
+        kind = "worktree_approval"
+        item_id = item.id
+        project = item.project_id
+        delegation = item.delegation_id
+        action = "Approve worktree"
+        action_name = "approve-coder-worktree"
+        queue_href = "#inbox-pending-worktree-approvals"
+        queue_label = "Pending Worktree Approvals"
+        inspect_href = f"/workflow?delegation_id={quote(item.delegation_id)}"
+        inspect_label = "Workflow"
+        reason = "bounded_worktree_plan_waiting_for_operator"
+        set_evidence(item.source_plan_path, queue_href, "Worktree queue")
+        after_action = "run approved worktree from Goal or workflow surface"
+        after_href = inspect_href
+        after_label = "Workflow"
+    elif coder_worktree_commit_approvals:
+        item = coder_worktree_commit_approvals[0]
+        status = "ready"
+        lane = "decisions"
+        kind = "commit_approval"
+        item_id = item.id
+        project = item.project_id
+        delegation = item.delegation_id
+        run_id = item.run_id
+        action = "Approve commit"
+        action_name = "approve-coder-commit"
+        queue_href = "#inbox-pending-commit-approvals"
+        queue_label = "Pending Commit Approvals"
+        inspect_href = f"/runs/{quote(item.run_id)}"
+        inspect_label = "Run Detail"
+        reason = "reviewed_worktree_commit_waiting_for_operator"
+        set_evidence(item.review_path, queue_href, "Commit queue")
+        after_action = "commit approved worktree with typed message"
+        after_href = inspect_href
+        after_label = "Run Detail"
+    elif coder_publication_requests:
+        item = coder_publication_requests[0]
+        status = "ready"
+        lane = "decisions"
+        kind = "publication_request"
+        item_id = item.id
+        project = item.project_id
+        delegation = item.delegation_id
+        run_id = item.run_id
+        action = "Approve publication"
+        action_name = "approve-coder-publication"
+        queue_href = "#inbox-pending-publication-requests"
+        queue_label = "Pending Publication Requests"
+        inspect_href = f"/runs/{quote(item.run_id)}"
+        inspect_label = "Run Detail"
+        reason = "committed_worktree_publication_waiting_for_operator"
+        set_evidence(item.request_artifact_path, queue_href, "Publication queue")
+        after_action = "prepare publication handoff for manual push/PR"
+        after_href = inspect_href
+        after_label = "Run Detail"
+    elif coder_worktree_runs:
+        item = coder_worktree_runs[0]
+        status = "ready"
+        lane = "work"
+        kind = "coder_worktree_run"
+        item_id = item.id
+        project = item.project_id
+        delegation = item.delegation_id
+        run_id = item.id
+        action = "Open run"
+        action_name = "open-run"
+        queue_href = "#inbox-coder-worktree-runs"
+        queue_label = "Coder Worktree Runs"
+        inspect_href = f"/runs/{quote(item.id)}"
+        inspect_label = "Run Detail"
+        reason = item.status
+        set_evidence(Path(item.evidence_path) / "summary.md", queue_href, "Run queue")
+        after_action = "continue run gate from run surface"
+        after_href = inspect_href
+        after_label = "Run Detail"
+    elif coder_publication_handoffs:
+        item = coder_publication_handoffs[0]
+        status = "ready"
+        lane = "publication"
+        kind = "publication_handoff"
+        item_id = item.id
+        project = item.project_id
+        delegation = item.delegation_id
+        run_id = item.run_id
+        action = "Use publication handoff outside ClankerOS"
+        action_name = "manual-publication-handoff"
+        queue_href = "#inbox-publication-handoffs"
+        queue_label = "Publication Handoffs"
+        inspect_href = f"/runs/{quote(item.run_id)}"
+        inspect_label = "Run Detail"
+        reason = "manual_push_pr_boundary_ready"
+        set_evidence(item.handoff_artifact_path, queue_href, "Publication handoff")
+        after_action = "manual push/PR outside ClankerOS"
+        after_href = inspect_href
+        after_label = "Run Detail"
+    elif subagent_delegations:
+        item = subagent_delegations[0]
+        status = "ready"
+        lane = "work"
+        kind = "subagent_delegation"
+        item_id = item.id
+        project = _task_project(storage, item.parent_task_id) or "unknown"
+        goal = item.parent_goal_id
+        delegation = item.id
+        action = "Inspect delegation"
+        action_name = "inspect-delegation"
+        queue_href = "#inbox-subagent-delegations"
+        queue_label = "Subagent Delegations"
+        inspect_href = f"/delegations/{quote(item.id)}"
+        inspect_label = "Delegation"
+        reason = item.status
+        set_evidence(item.result_artifact_path, queue_href, "Delegation queue")
+        after_action = "continue delegation workflow"
+        after_href = f"/workflow?delegation_id={quote(item.id)}"
+        after_label = "Workflow"
+    elif coder_worktree_commits:
+        item = coder_worktree_commits[0]
+        status = "ready"
+        lane = "publication"
+        kind = "local_coder_commit"
+        item_id = item.id
+        project = item.project_id
+        delegation = item.delegation_id
+        run_id = item.run_id
+        action = "Review local commit evidence"
+        action_name = "review-local-commit"
+        queue_href = "#inbox-local-coder-commits"
+        queue_label = "Local Coder Commits"
+        inspect_href = f"/runs/{quote(item.run_id)}"
+        inspect_label = "Run Detail"
+        reason = item.status
+        set_evidence(item.commit_artifact_path, queue_href, "Commit evidence")
+        after_action = "request publication handoff from run surface"
+        after_href = inspect_href
+        after_label = "Run Detail"
+
+    if goal == "none" and delegation != "none":
+        delegation_row = storage.get_subagent_delegation(delegation)
+        if delegation_row is not None and delegation_row.parent_goal_id:
+            goal = delegation_row.parent_goal_id
+    goal_href = f"/goals/{quote(goal)}" if goal != "none" else "/goals"
+    goal_label = goal if goal != "none" else "/goals"
+    queue_surface = SafeHtml(f"<a href='{_e(queue_href)}'>{_e(queue_label)}</a>")
+    inspect_surface = SafeHtml(f"<a href='{_e(inspect_href)}'>{_e(inspect_label)}</a>")
+    goal_surface = SafeHtml(f"<a href='{_e(goal_href)}'>{_e(goal_label)}</a>")
+    evidence_artifact = SafeHtml(_artifact_link(evidence_path))
+    evidence_surface = SafeHtml(f"<a href='{_e(evidence_href)}'>{_e(evidence_label)}</a>")
+    after_surface = SafeHtml(f"<a href='{_e(after_href)}'>{_e(after_label)}</a>")
+    lines = [
+        f"inbox_next_now: {_e(action)}",
+        f"inbox_next_click: <a href='{_e(queue_href)}'>{_e(queue_label)}</a>",
+        f"inbox_next_inspect: <a href='{_e(inspect_href)}'>{_e(inspect_label)}</a>",
+        f"inbox_next_goal: <a href='{_e(goal_href)}'>{_e(goal_label)}</a>",
+        f"inbox_next_evidence: {evidence_surface}",
+        f"inbox_next_after: {_e(after_action)} at {after_surface}",
+        "inbox_next_safety: read-only next-item guidance; confirmed local actions elsewhere",
+    ]
+    if status == "empty":
+        lines.append("inbox_next_empty: no local operator queue items")
+    return "".join(
+        [
+            (
+                "<section id='inbox-next-item-brief' "
+                "class='panel inbox-next-item-brief' "
+                "data-inbox-next-item-brief='true' "
+                f"data-inbox-next-status='{_e(status)}'>"
+                "<h2>Inbox Next Item Brief</h2>"
+            ),
+            "<p class='muted'>The first queue item translated into one action, inspection target, evidence target, and follow-up.</p>",
+            "<div class='inbox-next-grid' data-inbox-next-actions='true'>",
+            "<article class='inbox-next-card inbox-next-primary' data-inbox-next-card='next'><h3>Next</h3>",
+            f"<p>{_e(action)} · {_e(kind)}</p><a class='inbox-next-action' data-inbox-next-primary='true' href='{_e(queue_href)}'>{_e(queue_label)}</a></article>",
+            "<article class='inbox-next-card' data-inbox-next-card='inspect'><h3>Inspect</h3>",
+            f"<p>{_e(reason)}</p><a class='inbox-next-link' href='{_e(inspect_href)}'>{_e(inspect_label)}</a></article>",
+            "<article class='inbox-next-card' data-inbox-next-card='evidence'><h3>Evidence</h3>",
+            f"<p>{_e(project)} · {_e(goal)}</p><a class='inbox-next-link' href='{_e(evidence_href)}'>{_e(evidence_label)}</a></article>",
+            "<article class='inbox-next-card' data-inbox-next-card='after'><h3>After</h3>",
+            f"<p>{_e(after_action)}</p><a class='inbox-next-link' href='{_e(after_href)}'>{_e(after_label)}</a></article>",
+            "<article class='inbox-next-card' data-inbox-next-card='safety'><h3>Safety</h3>",
+            "<p>GET is read-only; queue links inspect existing local state and confirmed forms own writes.</p><a class='inbox-next-link' href='#inbox-next-item-brief'>Read-only</a></article>",
+            "</div>",
+            "<details class='inbox-next-evidence' data-inbox-next-evidence='true'><summary>Inbox next-item evidence</summary>",
+            _kv(
+                [
+                    ("inbox_next_status", status),
+                    ("inbox_next_total_items", str(total)),
+                    ("inbox_next_lane", lane),
+                    ("inbox_next_kind", kind),
+                    ("inbox_next_id", item_id),
+                    ("inbox_next_project", project),
+                    ("inbox_next_goal", goal),
+                    ("inbox_next_goal_surface", goal_surface),
+                    ("inbox_next_delegation", delegation),
+                    ("inbox_next_run", run_id),
+                    ("inbox_next_action", action),
+                    ("inbox_next_action_name", action_name),
+                    ("inbox_next_queue_surface", queue_surface),
+                    ("inbox_next_inspection_surface", inspect_surface),
+                    ("inbox_next_evidence_artifact", evidence_artifact),
+                    ("inbox_next_evidence_surface", evidence_surface),
+                    ("inbox_next_after_action", after_action),
+                    ("inbox_next_after_surface", after_surface),
+                    ("inbox_next_reason", reason),
+                    ("inbox_next_source", "operator_inbox_queue_state"),
+                    ("inbox_next_write_on_get", "false"),
+                    ("inbox_next_approves_on_get", "false"),
+                    ("inbox_next_executes_work_on_get", "false"),
+                    ("inbox_next_provider_calls_taken", "0"),
+                    ("inbox_next_network_actions_taken", "0"),
+                    ("inbox_next_external_effects_created", "false"),
+                    ("inbox_next_push_created", "false"),
+                    ("inbox_next_pr_created", "false"),
+                    ("inbox_next_deploy_created", "false"),
+                ]
+            ),
+            _ul(lines),
+            "</details>",
+            "</section>",
         ]
     )
 
@@ -31679,6 +32016,20 @@ def _html_page(
     .inbox-triage-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .inbox-triage-evidence summary {{ cursor:pointer; font-weight:700; }}
     .inbox-triage-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .inbox-next-item-brief {{ border-left:4px solid var(--accent); }}
+    .inbox-next-item-brief[data-inbox-next-status="empty"] {{ border-left-color:var(--ok); }}
+    .inbox-next-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .inbox-next-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
+    .inbox-next-card h3 {{ margin-top:0; }}
+    .inbox-next-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .inbox-next-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .inbox-next-item-brief[data-inbox-next-status="empty"] .inbox-next-primary {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
+    .inbox-next-action, .inbox-next-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .inbox-next-action {{ background:var(--accent); color:#fff; }}
+    .inbox-next-link {{ background:var(--surface); color:var(--accent); }}
+    .inbox-next-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .inbox-next-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .inbox-next-evidence:not([open]) > :not(summary) {{ display:none; }}
     .inbox-operator-workbench {{ border-left:4px solid var(--accent); }}
     .inbox-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .inbox-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
@@ -31765,7 +32116,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-session-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-session-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-attention-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .skills-usage-grid {{ grid-template-columns:1fr; }} }}

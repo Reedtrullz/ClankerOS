@@ -5319,6 +5319,18 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-inbox-triage-lane='attention' data-inbox-triage-status='empty'" in empty_inbox.body
     assert "data-inbox-triage-lane='finish' data-inbox-triage-status='empty'" in empty_inbox.body
     assert "data-inbox-triage-evidence='true'" in empty_inbox.body
+    assert "Inbox Next Item Brief" in empty_inbox.body
+    assert "data-inbox-next-item-brief='true'" in empty_inbox.body
+    assert "data-inbox-next-status='empty'" in empty_inbox.body
+    assert "data-inbox-next-actions='true'" in empty_inbox.body
+    assert empty_inbox.body.count("class='inbox-next-card") == 5
+    assert "data-inbox-next-card='next'" in empty_inbox.body
+    assert "data-inbox-next-card='inspect'" in empty_inbox.body
+    assert "data-inbox-next-card='evidence'" in empty_inbox.body
+    assert "data-inbox-next-card='after'" in empty_inbox.body
+    assert "data-inbox-next-card='safety'" in empty_inbox.body
+    assert "data-inbox-next-primary='true' href='#inbox-finish-today'>Finish Today</a>" in empty_inbox.body
+    assert "data-inbox-next-evidence='true'" in empty_inbox.body
     assert "data-inbox-command-evidence='true'" in empty_inbox.body
     assert "data-inbox-finish-details='true'" in empty_inbox.body
     assert "data-open-details='true' href='#inbox-finish-today'" in empty_inbox.body
@@ -5326,6 +5338,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "data-inbox-triage-board='true'"
     )
     assert empty_inbox.body.index("data-inbox-triage-board='true'") < empty_inbox.body.index(
+        "data-inbox-next-item-brief='true'"
+    )
+    assert empty_inbox.body.index("data-inbox-next-item-brief='true'") < empty_inbox.body.index(
         "data-inbox-command-bar='true'"
     )
     assert empty_inbox.body.index("data-inbox-operator-workbench='true'") < empty_inbox.body.index(
@@ -5345,6 +5360,19 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "inbox_triage_external_effects_created</dt><dd>false" in empty_inbox.body
     assert "inbox_triage_now: Finish Today" in empty_inbox.body
     assert "inbox_triage_safety: read-only lane summary; confirmed local actions elsewhere" in empty_inbox.body
+    assert "inbox_next_status</dt><dd>empty" in empty_inbox.body
+    assert "inbox_next_total_items</dt><dd>0" in empty_inbox.body
+    assert "inbox_next_lane</dt><dd>finish" in empty_inbox.body
+    assert "inbox_next_kind</dt><dd>none" in empty_inbox.body
+    assert "inbox_next_action</dt><dd>No inbox items" in empty_inbox.body
+    assert "inbox_next_queue_surface</dt><dd><a href='#inbox-finish-today'>Finish Today</a>" in empty_inbox.body
+    assert "inbox_next_evidence_artifact</dt><dd>none" in empty_inbox.body
+    assert "inbox_next_write_on_get</dt><dd>false" in empty_inbox.body
+    assert "inbox_next_approves_on_get</dt><dd>false" in empty_inbox.body
+    assert "inbox_next_executes_work_on_get</dt><dd>false" in empty_inbox.body
+    assert "inbox_next_external_effects_created</dt><dd>false" in empty_inbox.body
+    assert "inbox_next_empty: no local operator queue items" in empty_inbox.body
+    assert "inbox_next_safety: read-only next-item guidance; confirmed local actions elsewhere" in empty_inbox.body
     assert "inbox_workbench_status</dt><dd>empty_queue" in empty_inbox.body
     assert "inbox_workbench_total_items</dt><dd>0" in empty_inbox.body
     assert "inbox_workbench_first_kind</dt><dd>none" in empty_inbox.body
@@ -7285,6 +7313,18 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert inbox.body.count("class='inbox-triage-card") == 5
     assert "data-inbox-triage-lane='work' data-inbox-triage-status='ready'" in inbox.body
     assert "data-inbox-triage-evidence='true'" in inbox.body
+    assert "Inbox Next Item Brief" in inbox.body
+    assert "data-inbox-next-item-brief='true'" in inbox.body
+    assert "data-inbox-next-status='ready'" in inbox.body
+    assert "data-inbox-next-actions='true'" in inbox.body
+    assert inbox.body.count("class='inbox-next-card") == 5
+    assert "data-inbox-next-card='next'" in inbox.body
+    assert "data-inbox-next-card='inspect'" in inbox.body
+    assert "data-inbox-next-card='evidence'" in inbox.body
+    assert "data-inbox-next-card='after'" in inbox.body
+    assert "data-inbox-next-card='safety'" in inbox.body
+    assert "data-inbox-next-primary='true' href='#inbox-subagent-delegations'>Subagent Delegations</a>" in inbox.body
+    assert "data-inbox-next-evidence='true'" in inbox.body
     assert "data-inbox-command-evidence='true'" in inbox.body
     assert "data-inbox-finish-details='true'" in inbox.body
     assert "data-open-details='true' href='#inbox-finish-today'" in inbox.body
@@ -7292,6 +7332,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "data-inbox-triage-board='true'"
     )
     assert inbox.body.index("data-inbox-triage-board='true'") < inbox.body.index(
+        "data-inbox-next-item-brief='true'"
+    )
+    assert inbox.body.index("data-inbox-next-item-brief='true'") < inbox.body.index(
         "data-inbox-command-bar='true'"
     )
     assert inbox.body.index("data-inbox-operator-workbench='true'") < inbox.body.index(
@@ -7310,6 +7353,27 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "inbox_triage_approves_on_get</dt><dd>false" in inbox.body
     assert "inbox_triage_executes_work_on_get</dt><dd>false" in inbox.body
     assert "inbox_triage_now: Delegations" in inbox.body
+    assert "inbox_next_status</dt><dd>ready" in inbox.body
+    assert "inbox_next_total_items</dt><dd>1" in inbox.body
+    assert "inbox_next_lane</dt><dd>work" in inbox.body
+    assert "inbox_next_kind</dt><dd>subagent_delegation" in inbox.body
+    assert f"inbox_next_id</dt><dd>{delegation.id}" in inbox.body
+    assert "inbox_next_project</dt><dd>first-target" in inbox.body
+    assert f"inbox_next_goal</dt><dd>{created_goal_id}" in inbox.body
+    assert f"inbox_next_goal_surface</dt><dd><a href='/goals/{created_goal_id}'>{created_goal_id}</a>" in inbox.body
+    assert f"inbox_next_delegation</dt><dd>{delegation.id}" in inbox.body
+    assert "inbox_next_action</dt><dd>Inspect delegation" in inbox.body
+    assert "inbox_next_action_name</dt><dd>inspect-delegation" in inbox.body
+    assert "inbox_next_queue_surface</dt><dd><a href='#inbox-subagent-delegations'>Subagent Delegations</a>" in inbox.body
+    assert f"inbox_next_inspection_surface</dt><dd><a href='/delegations/{delegation.id}'>Delegation</a>" in inbox.body
+    assert "inbox_next_evidence_surface</dt><dd><a href='/artifacts?path=" in inbox.body
+    assert "inbox_next_after_action</dt><dd>continue delegation workflow" in inbox.body
+    assert f"inbox_next_after_surface</dt><dd><a href='/workflow?delegation_id={delegation.id}'>Workflow</a>" in inbox.body
+    assert "inbox_next_write_on_get</dt><dd>false" in inbox.body
+    assert "inbox_next_approves_on_get</dt><dd>false" in inbox.body
+    assert "inbox_next_executes_work_on_get</dt><dd>false" in inbox.body
+    assert "inbox_next_now: Inspect delegation" in inbox.body
+    assert "inbox_next_safety: read-only next-item guidance; confirmed local actions elsewhere" in inbox.body
     assert "inbox_workbench_status</dt><dd>attention_ready" in inbox.body
     assert "inbox_workbench_total_items</dt><dd>1" in inbox.body
     assert "inbox_workbench_first_kind</dt><dd>subagent_delegation" in inbox.body

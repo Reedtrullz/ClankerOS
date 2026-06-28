@@ -925,7 +925,11 @@ Core layers for the bootstrap:
   writing on GET. A visible read-only `Inbox Triage Board` follows with
   Attention, Decisions, Work, Publication, and Finish Today lane cards so the
   operator can see queue counts and first targets before the long category
-  lists. A read-only
+  lists. A read-only `Inbox Next Item Brief` then promotes the first queue
+  item into Next, Inspect, Evidence, After, and Safety cards, preserving the
+  queue anchor, inspection route, bounded artifact target or queue fallback,
+  follow-up surface, and zero-effect proof before the dense lists. A
+  read-only
   `Inbox Command Bar` follows with total local queue size, queue-type counts,
   the first attention item, target section, reason, and zero-effect boundary
   inside collapsed evidence while preserving read-only run links and

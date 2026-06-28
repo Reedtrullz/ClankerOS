@@ -1,5 +1,38 @@
 # Status
 
+## 2026-06-28 Inbox Next Item Brief UX
+
+- Added a visible read-only `Inbox Next Item Brief` to `/inbox` between the
+  Inbox Triage Board and the dense command/queue evidence.
+- The brief turns the first queue item into Next, Inspect, Evidence, After,
+  and Safety cards, preserving the existing queue anchor, inspection route,
+  bounded `/artifacts?path=...` target or queue fallback, follow-up surface,
+  and no-write/no-approve/no-execute/no-network boundary.
+- Empty inboxes now point the primary card at the existing Finish Today save
+  form, while pending delegation inboxes point the primary card at the
+  subagent delegation queue, the Inspect card at the delegation detail page,
+  Evidence at the bounded artifact renderer when a result artifact exists, and
+  After at the scoped workflow route.
+- Updated README, operating summary, local status focus, app demo smoke
+  markers, and empty plus fixture-backed inbox route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 53.13s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed, all local app route markers matched, provider/network/external
+    counters stayed at `0`
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed, fixture-backed route snippets matched including `/inbox`,
+    provider, network, and external counters stayed at `0`
+  - `git diff --check` -> passed
+- GitHub Actions proof is expected after pushing this slice; remote status will
+  be tracked by the branch run rather than by a longer local suite.
+- Non-claims until remote proof: no browser QA for this slice, no inbox-side
+  approval or execution form, no app-side GitHub polling, no PR, and no deploy
+  from ClankerOS itself.
+
 ## 2026-06-28 Approval Decision Cards UX
 
 - Promoted `Approval Decision Brief` from an always-expanded evidence block

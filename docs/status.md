@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/inbox` now follows the lane-level Inbox Triage Board with a visible
+  read-only `Inbox Next Item Brief` for Next, Inspect, Evidence, After, and
+  Safety. The brief turns the first local queue item into a single immediate
+  click, inspection route, bounded artifact target or queue fallback, follow-up
+  surface, and no-write/no-approve/no-execute/no-network boundary before the
+  command evidence and long queue lists.
 - Approval Decision Brief now opens with visible Decision, Inspect, Evidence,
   After, and Safety cards before collapsed approval decision evidence. The
   cards keep worktree/commit/publication decisions focused on the correct
@@ -278,11 +284,13 @@ Latest status focus:
 - `/inbox` is now content-first and queue-action-first: it opens with the
   `Inbox Operator Workbench` before shared route/focus diagnostics or command
   readback, then follows with an `Inbox Triage Board` for Attention,
-  Decisions, Work, Publication, and Finish Today lane cards before command
-  evidence or long queue lists. Inbox command, triage, and workbench evidence
-  stay collapsed by default while preserving queue counts, first attention
-  item, Goal/delegation/run/evidence routing, a collapsed finish-today
-  workspace save form, and zero-effect counters in the DOM.
+  Decisions, Work, Publication, and Finish Today lane cards. A read-only
+  `Inbox Next Item Brief` then turns the first queue item into Next, Inspect,
+  Evidence, After, and Safety cards before command evidence or long queue
+  lists. Inbox command, triage, next-item, and workbench evidence stay
+  collapsed by default while preserving queue counts, first attention item,
+  Goal/delegation/run/evidence routing, a collapsed finish-today workspace save
+  form, and zero-effect counters in the DOM.
 - `/resume` is now content-first and return-to-work-first: it opens with a
   primary saved-context link and `Resume Operator Workbench` before shared
   route/focus diagnostics or command readback, while saved workspace state,
