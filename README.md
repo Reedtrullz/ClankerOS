@@ -450,15 +450,14 @@ Signals, Window, and Safety cards before collapsed activity evidence and
 metadata, then the recent human-readable event list. Progress starts with a read-only Goal Progress
 Command Bar, then uses a real browser progress bar.
 Operator Notes starts with a read-only `Goal Operator Notes Command Bar` that
-shows whether the note artifact exists, timestamped entry count, artifact size,
-workspace resume-anchor posture, one review or capture target, and zero-effect
-boundaries before the confirmed `save-goal-note` form. The form appends local
-resume context to the goal-scoped `operator-notes.md` artifact without
-overwriting earlier notes.
-The Goal Resume Snapshot reads `.clanker/app/workspace.json`, shows whether
-the saved workspace already points at the current goal, suggests the latest
-goal artifact as the resume anchor, renders saved filters, expanded panels,
-and last-viewed artifact as `Goal Workspace Restore State`, and provides a
+opens with visible Now, Artifact, Resume, Capture, and Safety cards before
+collapsed command evidence and collapsed note details. The confirmed
+`save-goal-note` form remains the local write path and appends resume context
+to the goal-scoped `operator-notes.md` artifact without overwriting earlier
+notes.
+The Goal Resume Snapshot reads `.clanker/app/workspace.json` and opens with
+visible Now, Current, Saved, Artifact, and Safety cards before collapsed
+resume evidence, collapsed `Goal Workspace Restore State`, and a collapsed
 confirmed `save-workspace` form that returns to the same goal page after
 saving. It does not write on page load, fetch GitHub status, call providers,
 push, create PRs, deploy, or mutate external systems.

@@ -9333,6 +9333,19 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "next_recommendation_write_on_get</dt><dd>false" in goal.body
     assert "next_recommendation_external_effects_created</dt><dd>false" in goal.body
     assert "Goal Resume Snapshot" in goal.body
+    assert "data-goal-resume-snapshot='true'" in goal.body
+    assert "data-goal-resume-actions='true'" in goal.body
+    assert "data-goal-resume-now='true'" in goal.body
+    assert "data-goal-resume-primary='true'" in goal.body
+    assert "data-goal-resume-current='true'" in goal.body
+    assert "data-goal-resume-saved='true'" in goal.body
+    assert "data-goal-resume-artifact='true'" in goal.body
+    assert "data-goal-resume-safety='true'" in goal.body
+    assert "data-goal-resume-evidence='true'" in goal.body
+    assert "data-goal-resume-restore='true'" in goal.body
+    assert "data-goal-resume-save='true'" in goal.body
+    assert "Goal resume evidence" in goal.body
+    assert "Goal Workspace Restore State" in goal.body
     assert "goal_resume_current_goal" in goal.body
     assert "goal_resume_current_project" in goal.body
     assert "suggested_last_artifact" in goal.body
@@ -9474,6 +9487,15 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "completion_progress: 0/1 tasks completed" in goal.body
     assert "Goal Completion Readiness" in goal.body
     assert "data-goal-completion-readiness='true'" in goal.body
+    assert "data-goal-completion-actions='true'" in goal.body
+    assert "data-goal-completion-now='true'" in goal.body
+    assert "data-goal-completion-primary='true'" in goal.body
+    assert "data-goal-completion-gates='true'" in goal.body
+    assert "data-goal-completion-waiting='true'" in goal.body
+    assert "data-goal-completion-publish='true'" in goal.body
+    assert "data-goal-completion-safety='true'" in goal.body
+    assert "data-goal-completion-evidence='true'" in goal.body
+    assert "Completion readiness evidence" in goal.body
     assert "completion_readiness_status</dt><dd>waiting_for_operator_approval" in goal.body
     assert "completion_readiness_current_gate</dt><dd>commit_request" in goal.body
     assert "completion_readiness_gate_progress</dt><dd>8/15 gates done" in goal.body
@@ -10144,6 +10166,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Operator Notes" in goal.body
     assert "Goal Operator Notes Command Bar" in goal.body
     assert "data-goal-operator-notes-command-bar='true'" in goal.body
+    assert "data-goal-operator-notes-actions='true'" in goal.body
+    assert "data-goal-operator-notes-now='true'" in goal.body
+    assert "data-goal-operator-notes-primary='true'" in goal.body
+    assert "data-goal-operator-notes-artifact='true'" in goal.body
+    assert "data-goal-operator-notes-resume='true'" in goal.body
+    assert "data-goal-operator-notes-form-card='true'" in goal.body
+    assert "data-goal-operator-notes-safety='true'" in goal.body
+    assert "data-goal-operator-notes-evidence='true'" in goal.body
+    assert "data-goal-operator-notes-list='true'" in goal.body
+    assert "data-goal-operator-notes-form='true'" in goal.body
+    assert "Goal operator notes evidence" in goal.body
+    assert "Operator notes details" in goal.body
     assert "<a href='#goal-operator-notes-command-bar'>Operator notes command</a>" in goal.body
     assert f"goal_operator_notes_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_operator_notes_command_project</dt><dd>{result.project_id}" in goal.body
@@ -12765,8 +12799,9 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "completion_readiness_publication_handoff_ready</dt><dd>true" in manual_publish_goal.body
     assert "completion_readiness_complete_goal_form_available</dt><dd>true" in manual_publish_goal.body
     assert "completion_readiness_next_action</dt><dd>Complete goal after manual publish" in manual_publish_goal.body
-    assert "completion_readiness_target_surface</dt><dd><a href='#goal-completion-readiness'>Goal Completion Readiness</a>" in manual_publish_goal.body
+    assert "completion_readiness_target_surface</dt><dd><a href='#goal-complete-goal-action'>Complete Goal</a>" in manual_publish_goal.body
     assert "data-completion-readiness-action='true'" in manual_publish_goal.body
+    assert "data-goal-completion-complete='true'" in manual_publish_goal.body
     assert "Complete Goal" in manual_publish_goal.body
     assert "action='/actions/complete-goal'" in manual_publish_goal.body
     assert f"name='goal_id' value='{goal_id}'" in manual_publish_goal.body

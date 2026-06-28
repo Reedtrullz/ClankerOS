@@ -635,6 +635,14 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-goal-progress-safety='true'",
                 "data-goal-progress-evidence='true'",
                 "data-goal-progress-details='true'",
+                "data-goal-completion-actions='true'",
+                "data-goal-completion-now='true'",
+                "data-goal-completion-primary='true'",
+                "data-goal-completion-gates='true'",
+                "data-goal-completion-waiting='true'",
+                "data-goal-completion-publish='true'",
+                "data-goal-completion-safety='true'",
+                "data-goal-completion-evidence='true'",
                 "data-goal-timeline-actions='true'",
                 "data-goal-timeline-now='true'",
                 "data-goal-timeline-primary='true'",
@@ -779,6 +787,27 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-goal-git-safety='true'",
                 "data-goal-git-evidence='true'",
                 "data-goal-git-snapshot='true'",
+                "data-goal-resume-snapshot='true'",
+                "data-goal-resume-actions='true'",
+                "data-goal-resume-now='true'",
+                "data-goal-resume-primary='true'",
+                "data-goal-resume-current='true'",
+                "data-goal-resume-saved='true'",
+                "data-goal-resume-artifact='true'",
+                "data-goal-resume-safety='true'",
+                "data-goal-resume-evidence='true'",
+                "data-goal-resume-restore='true'",
+                "data-goal-resume-save='true'",
+                "data-goal-operator-notes-actions='true'",
+                "data-goal-operator-notes-now='true'",
+                "data-goal-operator-notes-primary='true'",
+                "data-goal-operator-notes-artifact='true'",
+                "data-goal-operator-notes-resume='true'",
+                "data-goal-operator-notes-form-card='true'",
+                "data-goal-operator-notes-safety='true'",
+                "data-goal-operator-notes-evidence='true'",
+                "data-goal-operator-notes-list='true'",
+                "data-goal-operator-notes-form='true'",
                 "data-goal-remaining-work-actions='true'",
                 "data-goal-remaining-work-now='true'",
                 "data-goal-remaining-work-progress='true'",
@@ -11365,37 +11394,74 @@ def _goal_completion_readiness(
     if goal.status == "completed":
         readiness_status = "completed"
         readiness_action = "Review completed goal evidence"
-        readiness_target = f"<a href='/goals/{quote(goal.id)}'>/goals/{_e(goal.id)}</a>"
+        target_href = f"/goals/{quote(goal.id)}"
+        target_label = f"/goals/{goal.id}"
         reason = "goal_status_completed"
     elif open_incidents:
         readiness_status = "blocked_by_incidents"
         readiness_action = "Inspect incident"
-        readiness_target = "<a href='/incidents'>/incidents</a>"
+        target_href = "/incidents"
+        target_label = "/incidents"
         reason = "open_incidents"
     elif pending_approvals:
         readiness_status = "waiting_for_operator_approval"
         readiness_action = "Review approval"
-        readiness_target = "<a href='/approvals'>/approvals</a>"
+        target_href = "/approvals"
+        target_label = "/approvals"
         reason = "pending_approvals"
     elif ready_for_completion:
         readiness_status = "ready_for_manual_completion"
         readiness_action = "Complete goal after manual publish"
-        readiness_target = "<a href='#goal-completion-readiness'>Goal Completion Readiness</a>"
+        target_href = "#goal-complete-goal-action"
+        target_label = "Complete Goal"
         reason = "publication_handoff_ready_manual_publish_boundary"
     elif open_tasks or counts.get("pending", 0) or counts.get("waiting", 0):
         readiness_status = "workflow_incomplete"
         readiness_action = next_action.action
-        readiness_target = f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
+        target_href = next_action.href
+        target_label = next_action.href
         reason = f"current_gate={current_gate}"
     else:
         readiness_status = "needs_evidence_review"
         readiness_action = "Review timeline and evidence"
-        readiness_target = "<a href='#goal-timeline'>Timeline</a>"
+        target_href = "#goal-timeline"
+        target_label = "Timeline"
         reason = "no_open_rows_but_completion_not_recorded"
 
+    readiness_target = f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"
+    waiting_items = open_incidents + open_recommendations + pending_approvals
+    complete_link_attrs = " data-open-details='true'" if ready_for_completion else ""
     sections = [
         "<section id='goal-completion-readiness' class='panel goal-completion-readiness' data-goal-completion-readiness='true'><h2>Goal Completion Readiness</h2>",
         "<p class='muted'>Shows whether this Goal can be locally completed yet, based on the current workflow gates, approvals, incidents, and manual publication boundary.</p>",
+        "<div class='goal-completion-grid' data-goal-completion-actions='true'>",
+        "<article class='goal-completion-card goal-completion-primary' data-goal-completion-now='true'>"
+        "<h3>Now</h3>"
+        f"<p>{_e(readiness_status)} · {_e(current_gate)}</p>"
+        f"<a class='goal-completion-action' data-goal-completion-primary='true'{complete_link_attrs} href='{_e(target_href)}'>{_e(readiness_action)}</a>"
+        "</article>",
+        "<article class='goal-completion-card' data-goal-completion-gates='true'>"
+        "<h3>Gates</h3>"
+        f"<p>{done_gates}/{total_gates} done · {counts.get('waiting', 0)} waiting</p>"
+        "<a class='goal-completion-link' href='#goal-workflow-map'>Workflow</a>"
+        "</article>",
+        "<article class='goal-completion-card' data-goal-completion-waiting='true'>"
+        "<h3>Waiting</h3>"
+        f"<p>{waiting_items} item{'s' if waiting_items != 1 else ''} · approvals {pending_approvals}</p>"
+        "<a class='goal-completion-link' href='#goal-remaining-work-command-bar'>Remaining work</a>"
+        "</article>",
+        "<article class='goal-completion-card' data-goal-completion-publish='true'>"
+        "<h3>Publish</h3>"
+        f"<p>{'handoff ready' if publication is not None else 'manual boundary not ready'}</p>"
+        "<a class='goal-completion-link' href='#goal-ci-handoff'>CI handoff</a>"
+        "</article>",
+        "<article class='goal-completion-card' data-goal-completion-safety='true'>"
+        "<h3>Safety</h3>"
+        "<p>Read-only readiness; completion stays confirmed local-only after manual publish.</p>"
+        "<a class='goal-completion-link' href='#goal-completion-readiness'>Evidence</a>"
+        "</article>",
+        "</div>",
+        "<details class='completion-readiness-evidence' data-goal-completion-evidence='true'><summary>Completion readiness evidence</summary>",
         _kv(
             [
                 ("completion_readiness_status", readiness_status),
@@ -11436,11 +11502,12 @@ def _goal_completion_readiness(
                 "completion_readiness_safety: confirmed local completion only after manual publish",
             ]
         ),
+        "</details>",
     ]
     if ready_for_completion:
         sections.extend(
             [
-                "<details class='completion-readiness-action' data-completion-readiness-action='true'>",
+                "<details id='goal-complete-goal-action' class='completion-readiness-action' data-completion-readiness-action='true' data-goal-completion-complete='true'>",
                 "<summary>Complete Goal</summary>",
                 "<p class='muted'>Use this only after manual push/PR work has already happened outside ClankerOS. Confirmation is required and the action records local goal status only.</p>",
                 _input_form(
@@ -11644,10 +11711,53 @@ def _goal_resume_snapshot(root: Path, state: dict[str, Any]) -> str:
         if saved_project
         else "none"
     )
+    if goal_matches:
+        resume_status = "saved_current_goal"
+        resume_action = "Open saved workspace"
+        resume_href = "/resume"
+        resume_attrs = ""
+    elif workspace_available:
+        resume_status = "saved_other_context"
+        resume_action = "Save this goal"
+        resume_href = "#goal-resume-save-form"
+        resume_attrs = " data-open-details='true'"
+    else:
+        resume_status = "not_saved"
+        resume_action = "Save this goal"
+        resume_href = "#goal-resume-save-form"
+        resume_attrs = " data-open-details='true'"
     return "".join(
         [
-            "<section id='goal-resume-snapshot'><h2>Goal Resume Snapshot</h2>",
+            "<section id='goal-resume-snapshot' class='goal-resume-snapshot' data-goal-resume-snapshot='true'><h2>Goal Resume Snapshot</h2>",
             "<p class='muted'>Save and restore the current goal context for the next operator session. This reads saved workspace state on page load and only writes after confirmation.</p>",
+            "<div class='goal-resume-grid' data-goal-resume-actions='true'>",
+            "<article class='goal-resume-card goal-resume-primary' data-goal-resume-now='true'>"
+            "<h3>Now</h3>"
+            f"<p>{_e(resume_status)} · workspace {workspace.get('updated_at', 'never') or 'never'}</p>"
+            f"<a class='goal-resume-action' data-goal-resume-primary='true'{resume_attrs} href='{_e(resume_href)}'>{_e(resume_action)}</a>"
+            "</article>",
+            "<article class='goal-resume-card' data-goal-resume-current='true'>"
+            "<h3>Current</h3>"
+            f"<p>{_e(goal.project_id)} · {_e(goal.id)}</p>"
+            "<a class='goal-resume-link' href='#goal-current-phase'>Phase</a>"
+            "</article>",
+            "<article class='goal-resume-card' data-goal-resume-saved='true'>"
+            "<h3>Saved</h3>"
+            f"<p>{'goal match' if goal_matches else 'not current goal'} · {'project match' if project_matches else 'project not saved'}</p>"
+            "<a class='goal-resume-link' href='/resume'>Resume</a>"
+            "</article>",
+            "<article class='goal-resume-card' data-goal-resume-artifact='true'>"
+            "<h3>Artifact</h3>"
+            f"<p>{_e(latest_artifact or saved_artifact or 'none')}</p>"
+            "<a class='goal-resume-link' href='#goal-artifact-command-bar'>Artifacts</a>"
+            "</article>",
+            "<article class='goal-resume-card' data-goal-resume-safety='true'>"
+            "<h3>Safety</h3>"
+            "<p>Reads workspace on GET; writes only after confirmed save-workspace.</p>"
+            "<a class='goal-resume-link' href='#goal-resume-snapshot'>Evidence</a>"
+            "</article>",
+            "</div>",
+            "<details class='goal-resume-evidence' data-goal-resume-evidence='true'><summary>Goal resume evidence</summary>",
             _kv(
                 [
                     ("goal_resume_current_goal", SafeHtml(f"<a href='/goals/{quote(goal.id)}'>{_e(goal.id)}</a>")),
@@ -11663,7 +11773,8 @@ def _goal_resume_snapshot(root: Path, state: dict[str, Any]) -> str:
                     ("external_effects_created", "false"),
                 ]
             ),
-            "<h3>Goal Workspace Restore State</h3>",
+            "</details>",
+            "<details class='goal-resume-restore' data-goal-resume-restore='true'><summary>Goal Workspace Restore State</summary>",
             _kv(
                 [
                     ("workspace_restore_available", "true" if workspace_available else "false"),
@@ -11676,7 +11787,8 @@ def _goal_resume_snapshot(root: Path, state: dict[str, Any]) -> str:
                     ("workspace_restore_write_on_get", "false"),
                 ]
             ),
-            "<h3>Remember This Goal</h3>",
+            "</details>",
+            "<details id='goal-resume-save-form' class='goal-resume-save-details' data-goal-resume-save='true'><summary>Remember This Goal</summary>",
             _input_form(
                 "save-workspace",
                 {"return_to": f"/goals/{goal.id}"},
@@ -11689,6 +11801,7 @@ def _goal_resume_snapshot(root: Path, state: dict[str, Any]) -> str:
                     "updated_by": "operator-goal",
                 },
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -14690,8 +14803,10 @@ def _goal_operator_notes_section(root: Path, state: dict[str, Any]) -> str:
             "<section id='goal-operator-notes'><h2>Operator Notes</h2>",
             "<p class='muted'>Append a goal-scoped local note for tomorrow's resume context. This writes only the operator-notes artifact.</p>",
             _goal_operator_notes_command_bar(root, state),
+            "<details class='goal-operator-notes-list' data-goal-operator-notes-list='true'><summary>Operator notes details</summary>",
             _ul(_goal_operator_note_lines(root, state)),
-            "<div id='goal-operator-note-form'>",
+            "</details>",
+            "<div id='goal-operator-note-form' data-goal-operator-notes-form='true'>",
             _input_form(
                 "save-goal-note",
                 {"goal_id": goal.id, "author": "operator"},
@@ -14739,10 +14854,43 @@ def _goal_operator_notes_command_bar(root: Path, state: dict[str, Any]) -> str:
         first_target = "none"
     target_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
     form_surface = SafeHtml("<a href='#goal-operator-note-form'>Goal Operator Note Form</a>")
+    note_summary = (
+        f"{note_size} bytes · {updated_at or 'unknown'}"
+        if note_exists
+        else note_path.as_posix()
+    )
     return "".join(
         [
             "<section id='goal-operator-notes-command-bar' class='panel goal-operator-notes-command-bar' data-goal-operator-notes-command-bar='true'><h3>Goal Operator Notes Command Bar</h3>",
             "<p class='muted'>Goal-scoped note posture before the append form.</p>",
+            "<div class='goal-operator-notes-grid' data-goal-operator-notes-actions='true'>",
+            "<article class='goal-operator-notes-card goal-operator-notes-primary' data-goal-operator-notes-now='true'>"
+            "<h3>Now</h3>"
+            f"<p>{_e(status)} · {entry_count} entr{'y' if entry_count == 1 else 'ies'}</p>"
+            f"<a class='goal-operator-notes-action' data-goal-operator-notes-primary='true' href='{_e(target_href)}'>{_e(next_action)}</a>"
+            "</article>",
+            "<article class='goal-operator-notes-card' data-goal-operator-notes-artifact='true'>"
+            "<h3>Artifact</h3>"
+            f"<p>{_e(note_summary)}</p>"
+            f"<a class='goal-operator-notes-link' href='{_e(target_href)}'>{_e(target_label)}</a>"
+            "</article>",
+            "<article class='goal-operator-notes-card' data-goal-operator-notes-resume='true'>"
+            "<h3>Resume</h3>"
+            f"<p>{'workspace points here' if saved_goal == goal.id else 'workspace not saved here'}</p>"
+            "<a class='goal-operator-notes-link' href='#goal-resume-snapshot'>Resume snapshot</a>"
+            "</article>",
+            "<article class='goal-operator-notes-card' data-goal-operator-notes-form-card='true'>"
+            "<h3>Capture</h3>"
+            "<p>Append tomorrow-context without overwriting previous notes.</p>"
+            "<a class='goal-operator-notes-link' href='#goal-operator-note-form'>Note form</a>"
+            "</article>",
+            "<article class='goal-operator-notes-card' data-goal-operator-notes-safety='true'>"
+            "<h3>Safety</h3>"
+            "<p>Confirmed local append only; no provider, network, or external effects.</p>"
+            "<a class='goal-operator-notes-link' href='#goal-operator-notes-command-bar'>Evidence</a>"
+            "</article>",
+            "</div>",
+            "<details class='goal-operator-notes-evidence' data-goal-operator-notes-evidence='true'><summary>Goal operator notes evidence</summary>",
             _kv(
                 [
                     ("goal_operator_notes_command_goal", goal.id),
@@ -14784,6 +14932,7 @@ def _goal_operator_notes_command_bar(root: Path, state: dict[str, Any]) -> str:
                     "goal_operator_notes_safety: confirmed local append only",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -27396,6 +27545,18 @@ def _html_page(
     .goal-verification-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-verification-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-operator-notes-command-bar {{ border-left:4px solid var(--accent); }}
+    .goal-operator-notes-command-bar dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .goal-operator-notes-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-operator-notes-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .goal-operator-notes-card h3 {{ margin-top:0; }}
+    .goal-operator-notes-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .goal-operator-notes-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .goal-operator-notes-action, .goal-operator-notes-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-operator-notes-action {{ background:var(--accent); color:#fff; }}
+    .goal-operator-notes-link {{ background:var(--surface); color:var(--accent); }}
+    .goal-operator-notes-evidence, .goal-operator-notes-list {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-operator-notes-evidence summary, .goal-operator-notes-list summary {{ cursor:pointer; font-weight:700; }}
+    .goal-operator-notes-evidence:not([open]) > :not(summary), .goal-operator-notes-list:not([open]) > :not(summary) {{ display:none; }}
     .goal-operator-notes-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-operator-notes-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-remaining-work-command-bar {{ border-left:4px solid var(--warn); }}
@@ -27414,6 +27575,18 @@ def _html_page(
     .goal-remaining-work-evidence summary, .goal-remaining-work-list summary {{ cursor:pointer; font-weight:700; }}
     .goal-remaining-work-evidence:not([open]) > :not(summary), .goal-remaining-work-list:not([open]) > :not(summary) {{ display:none; }}
     .goal-completion-readiness {{ border-left:4px solid var(--ok); }}
+    .goal-completion-readiness dl, .goal-resume-snapshot dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .goal-completion-grid, .goal-resume-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-completion-card, .goal-resume-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .goal-completion-card h3, .goal-resume-card h3 {{ margin-top:0; }}
+    .goal-completion-card p, .goal-resume-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .goal-completion-primary, .goal-resume-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .goal-completion-action, .goal-completion-link, .goal-resume-action, .goal-resume-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-completion-action, .goal-resume-action {{ background:var(--accent); color:#fff; }}
+    .goal-completion-link, .goal-resume-link {{ background:var(--surface); color:var(--accent); }}
+    .completion-readiness-evidence, .goal-resume-evidence, .goal-resume-restore, .goal-resume-save-details {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .completion-readiness-evidence summary, .goal-resume-evidence summary, .goal-resume-restore summary, .goal-resume-save-details summary {{ cursor:pointer; font-weight:700; }}
+    .completion-readiness-evidence:not([open]) > :not(summary), .goal-resume-evidence:not([open]) > :not(summary), .goal-resume-restore:not([open]) > :not(summary), .goal-resume-save-details:not([open]) > :not(summary) {{ display:none; }}
     .goal-completion-readiness ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-completion-readiness li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .completion-readiness-action {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
@@ -28030,7 +28203,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

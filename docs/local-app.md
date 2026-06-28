@@ -251,8 +251,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `Goal Completion Readiness` follows the local gate, approval, incident, and
   publication-handoff state to say whether the goal is completed, blocked,
   waiting for operator approval, still missing evidence, or safe to complete
-  after manual publication. It links the next local surface and only renders
-  the confirmed `complete-goal` form when the manual publish handoff is ready.
+  after manual publication. It opens with visible Now, Gates, Waiting,
+  Publish, and Safety cards before collapsed readiness evidence, links the
+  next local surface, and only renders the confirmed `complete-goal` form when
+  the manual publish handoff is ready.
   A
   read-only `Goal Git Command Bar` inside Git Status summarizes the registered
   project root, branch, commit, clean/dirty posture, tracked and untracked
@@ -309,16 +311,15 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   counts, delegation profile usage, one `/skills` or `/profiles` review
   target, and no-execution/no-install/no-network boundaries as visible Now,
   Record, Usage, Profile, and Safety cards before collapsed command evidence
-  and detailed skill readback. Goal Resume Snapshot reads `.clanker/app/workspace.json`, shows
-  whether the saved workspace already points at the current goal, suggests the
-  latest goal artifact as the resume anchor, renders saved filters, expanded
-  panels, and last-viewed artifact as `Goal Workspace Restore State`, and
-  exposes a confirmed `save-workspace` form that returns to the same goal page
-  after saving without writing on GET. Operator Notes starts with a read-only
-  `Goal Operator Notes Command Bar` that reports whether the note artifact
-  exists, timestamped entry count, size, workspace resume-anchor posture, one
-  review or capture target, and zero-effect boundaries before the confirmed
-  `save-goal-note` form. The form appends local resume context to
+  and detailed skill readback. Goal Resume Snapshot reads
+  `.clanker/app/workspace.json` and opens with visible Now, Current, Saved,
+  Artifact, and Safety cards before collapsed resume evidence, collapsed
+  `Goal Workspace Restore State`, and a collapsed confirmed `save-workspace`
+  form that returns to the same goal page after saving without writing on GET.
+  Operator Notes starts with a read-only `Goal Operator Notes Command Bar`
+  that opens with visible Now, Artifact, Resume, Capture, and Safety cards
+  before collapsed command evidence and collapsed note details. The confirmed
+  `save-goal-note` form appends local resume context to
   `.clanker/projects/<project>/goals/<goal>/operator-notes.md`; it does not
   overwrite previous notes. Saved operator notes also appear as linked
   `Operator note saved` entries in the Goal timeline and recent Activity Log,

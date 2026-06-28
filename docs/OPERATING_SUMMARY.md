@@ -477,16 +477,17 @@ Core layers for the bootstrap:
   available inside collapsed `Palette evidence and shortcuts`, while the
   goal-aware `Continue Current Goal` form remains directly below search.
   They also include a read-only `Goal Operator Notes Command Bar` before the
-  confirmed `save-goal-note` form. The command bar reports whether the
-  goal-scoped `operator-notes.md` artifact exists, timestamped entry count,
-  artifact size, workspace resume-anchor posture, one review or capture target,
-  and no-write/no-provider/no-network/no-external-effect boundaries. The
-  confirmed note form appends local operator resume context to the artifact;
-  saved operator notes also become linked `Operator note saved` entries in the
-  Goal timeline and recent Activity Log with zero external effects, and the
-  confirmed note action now refreshes saved workspace state to the
-  operator-notes artifact so `/resume`, Home, and `/workspace` return to the
-  note context without a separate manual
+  confirmed `save-goal-note` form. It opens with visible Now, Artifact,
+  Resume, Capture, and Safety cards, while command evidence and note details
+  stay collapsed and preserve the goal-scoped `operator-notes.md` path,
+  timestamped entry count, artifact size, workspace resume-anchor posture, one
+  review or capture target, and no-write/no-provider/no-network/
+  no-external-effect boundaries. The confirmed note form appends local
+  operator resume context to the artifact; saved operator notes also become
+  linked `Operator note saved` entries in the Goal timeline and recent
+  Activity Log with zero external effects, and the confirmed note action now
+  refreshes saved workspace state to the operator-notes artifact so `/resume`,
+  Home, and `/workspace` return to the note context without a separate manual
   save. They also include a confirmed `delegate`
   next-action form when a goal has planned tasks but no delegation yet. If a
   goal needs to be shelved, the Goal Daily Loop and `/today` expose confirmed
@@ -526,15 +527,16 @@ Core layers for the bootstrap:
   one isolated local worktree commit, or a local goal-status update without
   exposing arbitrary commands, pushing, creating PRs, deploying,
   calling providers, or mutating external systems. Goal pages also
-  include a `Goal Resume Snapshot` that reads saved workspace state, links the
-  current goal/project, suggests the newest goal artifact as a resume anchor,
-  renders saved filters, expanded panels, and last-viewed artifact as
-  `Goal Workspace Restore State`, and exposes a confirmed `save-workspace`
-  form that returns to the same goal page after saving without writing on GET.
-  Goal `Completion Readiness` summarizes the same workflow gates, local
-  blockers, approvals, and publication handoff state used elsewhere on the Goal
-  page into one finish posture. It identifies the current blocker or next safe
-  action, links the relevant local surface, reports no-write, no-network, and
+  include a `Goal Resume Snapshot` that reads saved workspace state and opens
+  with visible Now, Current, Saved, Artifact, and Safety cards before collapsed
+  resume evidence, collapsed `Goal Workspace Restore State`, and a collapsed
+  confirmed `save-workspace` form that returns to the same goal page after
+  saving without writing on GET. Goal `Completion Readiness` summarizes the
+  same workflow gates, local blockers, approvals, and publication handoff state
+  used elsewhere on the Goal page into one finish posture. It opens with
+  visible Now, Gates, Waiting, Publish, and Safety cards before collapsed
+  readiness evidence, identifies the current blocker or next safe action,
+  links the relevant local surface, reports no-write, no-network, and
   no-external-effect boundaries, and only exposes the confirmed `complete-goal`
   form after the manual publish handoff is ready.
   Goal `Incidents` now starts with a read-only `Goal Incident Command Bar`
