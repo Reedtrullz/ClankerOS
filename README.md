@@ -657,8 +657,11 @@ Use `/workflow?delegation_id=<id>` or `/workflow?run_id=<coder_run_id>` when
 you want the scoped operator map. The workflow page is action-first: it opens
 with a visible `Workflow Operator Workbench` before shared route/focus
 diagnostics and command readback, with cards for the current workflow action,
-selected state, queue attention, and `/resume`. The selected workflow page
-still includes a read-only `Workflow Command Bar`, but its detailed
+selected state, queue attention, and `/resume`. A visible read-only
+`Workflow Journey` follows with nine stage cards for Select, Goal + Scout,
+Context, Handoff, Coder Prep, Approval, Execution, Commit, and Publish, marking
+the current stage and linking to the next safe local surface. The selected
+workflow page still includes a read-only `Workflow Command Bar`, but its detailed
 delegation/run, parent Goal, project, current stage, next local action, target
 surface, reason, and zero-effect counters stay collapsed by default before the
 detailed stepper. It also includes a read-only `Selected Workflow

@@ -1,5 +1,43 @@
 # Status
 
+## 2026-06-28 Workflow Journey UX
+
+- Added a visible read-only `Workflow Journey` section to `/workflow` between
+  the `Workflow Operator Workbench` and `Workflow Command Bar`.
+- The journey renders nine operator-readable stages: Select, Goal + Scout,
+  Context, Handoff, Coder Prep, Approval, Execution, Commit, and Publish.
+- Empty workflow pages now mark `select_scope` as current and point to
+  `/delegation-runs`; scoped delegation/run pages mark the current journey
+  stage from the same existing workflow next-action state used by the
+  workbench and command bar.
+- Fixture-backed commit-ready workflows now show Commit as current, Publish
+  as waiting, a `7/9 stages done` progress summary, and the selected run as
+  the next safe local surface.
+- Journey evidence stays collapsed and records scope, selected delegation/run,
+  parent Goal, project, current stage key, journey position, next action,
+  selected-step counts, source, and zero-effect boundaries.
+- Existing confirmed local forms remain the only write paths; the journey does
+  not write on GET, call providers, poll GitHub, push, deploy, create PRs, or
+  create external effects.
+- Updated README, operating summary, local status focus, and focused workflow
+  route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 60.68s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `git diff --check` -> passed
+- Full pytest/browser regression proof is intentionally left to GitHub Actions
+  for this GitHub-first testing loop.
+- Non-claims until remote proof: no browser QA for this slice, no write on
+  GET, no provider call, no app-side GitHub polling, no approval decision, no
+  execution, no commit, no push, no PR, and no deploy from ClankerOS itself.
+
 ## 2026-06-28 First Run Progress Strip UX
 
 - Added a visible read-only `First Run Progress` strip to the First Run Guide.

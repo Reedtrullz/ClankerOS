@@ -16301,6 +16301,7 @@ def _workflow(
                 delegation_id=delegation_id,
                 run_id=run_id,
             ),
+            _workflow_journey(root, delegation_id=delegation_id, run_id=run_id),
             _workflow_command_bar(root, delegation_id=delegation_id, run_id=run_id),
             _selected_workflow_state(root, delegation_id=delegation_id, run_id=run_id),
             _selected_workflow_continuation(
@@ -16554,6 +16555,184 @@ def _workflow_operator_workbench(
             "</section>",
         ]
     )
+
+
+WORKFLOW_JOURNEY_STAGES = [
+    ("select_scope", "Select", "Choose delegation or coder run"),
+    ("goal_scout", "Goal + Scout", "Goal task and scout delegation"),
+    ("context", "Context", "Context pack for implementation"),
+    ("handoff", "Handoff", "Implementation handoff readback"),
+    ("coder_prep", "Coder Prep", "Coder prep and worktree plan"),
+    ("approval", "Approval", "Operator approval gate"),
+    ("execution", "Execution", "Bounded worktree run and review"),
+    ("commit", "Commit", "Commit request, approval, and local commit"),
+    ("publish", "Publish", "Publication handoff and manual boundary"),
+]
+
+
+def _workflow_journey(
+    root: Path,
+    *,
+    delegation_id: str | None = None,
+    run_id: str | None = None,
+) -> str:
+    context = _workflow_operator_context(root, delegation_id=delegation_id, run_id=run_id)
+    selected_statuses = _workflow_step_statuses(
+        root,
+        delegation_id=delegation_id,
+        run_id=run_id,
+    )
+    current_key = _workflow_journey_stage_for_action(str(context["next_action"]))
+    if context["status"] in {"no_selection", "run_not_found", "delegation_not_found"}:
+        current_key = "select_scope"
+
+    current_position = next(
+        (
+            index
+            for index, (key, _, _) in enumerate(WORKFLOW_JOURNEY_STAGES, start=1)
+            if key == current_key
+        ),
+        1,
+    )
+    total = len(WORKFLOW_JOURNEY_STAGES)
+    done_count = max(current_position - 1, 0)
+    waiting_count = max(total - current_position, 0)
+    target_href = str(context["target_href"])
+    target_label = str(context["target_label"])
+    action_label = _workflow_action_label(str(context["next_action"]))
+    stage_cards: list[str] = []
+    journey_lines: list[str] = []
+    for index, (key, label, summary) in enumerate(WORKFLOW_JOURNEY_STAGES, start=1):
+        if key == current_key:
+            status = "current"
+            href = target_href
+            link_label = action_label
+        elif index < current_position:
+            status = "done"
+            href, link_label = _workflow_journey_done_target(key, context)
+        else:
+            status = "waiting"
+            href, link_label = _workflow_journey_waiting_target(key, context)
+        stage_cards.append(
+            "<article class='workflow-journey-card' "
+            f"data-workflow-journey-stage='{_e(key)}' "
+            f"data-stage-status='{_e(status)}'>"
+            f"<span class='workflow-map-index'>{index}</span>"
+            f"<h3>{_e(label)}</h3>"
+            f"<p>{_e(summary)}</p>"
+            f"<strong>{_e(status)}</strong>"
+            f"<a class='workflow-journey-link' href='{_e(href)}'>{_e(link_label)}</a>"
+            "</article>"
+        )
+        journey_lines.append(
+            f"workflow_journey_stage: {_e(key)} status={_e(status)} "
+            f"label={_e(label)} surface=<a href='{_e(href)}'>{_e(link_label)}</a>"
+        )
+
+    return "".join(
+        [
+            "<section id='workflow-journey' class='panel workflow-journey' data-workflow-journey='true'><h2>Workflow Journey</h2>",
+            "<p class='muted'>A browser-first path from selected delegation through context, handoff, bounded coding, review, commit, and publication handoff.</p>",
+            "<div class='workflow-journey-grid' data-workflow-journey-actions='true'>",
+            "".join(stage_cards),
+            "</div>",
+            "<details class='workflow-journey-evidence' data-workflow-journey-evidence='true'><summary>Workflow journey evidence</summary>",
+            _kv(
+                [
+                    ("workflow_journey_status", str(context["status"])),
+                    ("workflow_journey_scope", str(context["scope"])),
+                    ("workflow_journey_delegation", context["delegation_surface"]),
+                    ("workflow_journey_run", context["run_surface"]),
+                    ("workflow_journey_goal", context["goal_surface"]),
+                    ("workflow_journey_project", str(context["project"])),
+                    ("workflow_journey_current_stage", str(context["current_stage"])),
+                    ("workflow_journey_current_stage_key", current_key),
+                    ("workflow_journey_current_position", f"{current_position}/{total}"),
+                    ("workflow_journey_next_action", str(context["next_action"])),
+                    ("workflow_journey_action_label", action_label),
+                    (
+                        "workflow_journey_next_surface",
+                        SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"),
+                    ),
+                    ("workflow_journey_reason", str(context["reason"])),
+                    ("workflow_journey_progress", f"{done_count}/{total} stages done"),
+                    ("workflow_journey_done_count", str(done_count)),
+                    ("workflow_journey_current_count", "1"),
+                    ("workflow_journey_waiting_count", str(waiting_count)),
+                    ("workflow_journey_total_stages", str(total)),
+                    ("workflow_journey_selected_step_count", str(len(selected_statuses))),
+                    ("workflow_journey_selected_status_count", str(len(selected_statuses))),
+                    ("workflow_journey_source", "workflow_step_statuses_and_operator_context"),
+                    ("workflow_journey_write_on_get", "false"),
+                    ("workflow_journey_provider_calls_taken", "0"),
+                    ("workflow_journey_network_actions_taken", "0"),
+                    ("workflow_journey_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                journey_lines
+                + [
+                    "workflow_journey_safety: read-only workflow orientation; writes stay on confirmed owning surfaces",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _workflow_journey_stage_for_action(next_action: str) -> str:
+    stages = {
+        "Select delegation or run": "select_scope",
+        "Open delegation runs": "select_scope",
+        "generate_context_pack": "context",
+        "run_delegation_or_review_implementation_handoff": "handoff",
+        "prepare_coder_from_handoff": "coder_prep",
+        "prepare_coder_worktree_plan": "coder_prep",
+        "decide_pending_worktree_approval": "approval",
+        "run_approved_worktree_from_cli": "execution",
+        "review_delegation_state": "execution",
+        "request_commit_for_reviewed_run": "commit",
+        "approve_or_reject_commit_request": "commit",
+        "commit_approved_worktree": "commit",
+        "request_publication_handoff": "publish",
+        "approve_or_reject_publication_request": "publish",
+        "prepare_publication_handoff": "publish",
+        "manual_operator_push_pr_outside_clankeros": "publish",
+    }
+    return stages.get(next_action, "select_scope")
+
+
+def _workflow_journey_done_target(key: str, context: dict[str, Any]) -> tuple[str, str]:
+    if key == "select_scope":
+        return "/delegation-runs", "Review scope"
+    if key == "goal_scout" and context["goal_id"] != "none":
+        goal_id = str(context["goal_id"])
+        return f"/goals/{quote(goal_id)}", "Open Goal"
+    if key in {"context", "handoff", "coder_prep"} and context["delegation_id"] != "none":
+        delegation_id = str(context["delegation_id"])
+        return f"/delegations/{quote(delegation_id)}", "Open delegation"
+    if key == "approval":
+        return "/approvals", "Open approvals"
+    if key in {"execution", "commit", "publish"} and context["run_id"] != "none":
+        run_id = str(context["run_id"])
+        return f"/runs/{quote(run_id)}", "Open run"
+    return "#workflow-stepper", "Review details"
+
+
+def _workflow_journey_waiting_target(key: str, context: dict[str, Any]) -> tuple[str, str]:
+    if key in {"approval", "commit"}:
+        return "/approvals", "Approval queue"
+    if key in {"execution", "publish"} and context["run_id"] != "none":
+        run_id = str(context["run_id"])
+        return f"/runs/{quote(run_id)}", "Run surface"
+    if key in {"context", "handoff", "coder_prep"} and context["delegation_id"] != "none":
+        delegation_id = str(context["delegation_id"])
+        return f"/delegations/{quote(delegation_id)}", "Delegation surface"
+    if context["goal_id"] != "none":
+        goal_id = str(context["goal_id"])
+        return f"/goals/{quote(goal_id)}", "Goal surface"
+    return "/delegation-runs", "Select workflow"
 
 
 def _workflow_command_bar(
@@ -30928,9 +31107,19 @@ def _html_page(
     .workflow-workbench-action, .workflow-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .workflow-workbench-action {{ background:var(--accent); color:#fff; }}
     .workflow-workbench-link {{ background:var(--surface); color:var(--accent); }}
-    .workflow-workbench-evidence, .workflow-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .workflow-workbench-evidence summary, .workflow-command-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .workflow-workbench-evidence:not([open]) > :not(summary), .workflow-command-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .workflow-journey {{ border-left:4px solid var(--accent); }}
+    .workflow-journey-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .workflow-journey-card {{ min-width:0; display:flex; flex-direction:column; gap:8px; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
+    .workflow-journey-card h3 {{ margin:0; }}
+    .workflow-journey-card p {{ margin:0; color:var(--muted); }}
+    .workflow-journey-card[data-stage-status="current"] {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .workflow-journey-card[data-stage-status="done"] {{ border-color:rgba(22,163,74,.45); }}
+    .workflow-journey-card[data-stage-status="waiting"] {{ opacity:.82; }}
+    .workflow-journey-link {{ display:inline-flex; align-items:center; min-height:32px; max-width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--line); background:var(--panel); color:var(--fg); text-decoration:none; overflow-wrap:anywhere; }}
+    .workflow-journey-card[data-stage-status="current"] .workflow-journey-link {{ border-color:var(--accent); background:var(--accent); color:#fff; }}
+    .workflow-workbench-evidence, .workflow-journey-evidence, .workflow-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .workflow-workbench-evidence summary, .workflow-journey-evidence summary, .workflow-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .workflow-workbench-evidence:not([open]) > :not(summary), .workflow-journey-evidence:not([open]) > :not(summary), .workflow-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .inbox-command-bar {{ border-left:4px solid var(--accent); }}
     .inbox-command-evidence, .inbox-workbench-evidence {{ margin-top:10px; }}
     .inbox-finish-details {{ margin-top:12px; }}
@@ -31027,7 +31216,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

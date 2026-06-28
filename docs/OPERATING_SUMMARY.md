@@ -212,10 +212,13 @@ Core layers for the bootstrap:
   surface to inspect, stable attention/coder-prep/recent-run anchors, and
   no-write/no-provider/no-network/no-external-effect boundaries before the
   longer execution evidence index;
-  `/workflow` includes a read-only `Workflow Command Bar` that summarizes the
-  selected delegation or coder run, parent Goal, project, current workflow
-  stage, next local action, target surface, reason, and zero-effect counters
-  before the detailed selected-state map and continuation links;
+  `/workflow` includes a visible read-only `Workflow Journey` between the
+  `Workflow Operator Workbench` and `Workflow Command Bar`, with nine stage
+  cards for Select, Goal + Scout, Context, Handoff, Coder Prep, Approval,
+  Execution, Commit, and Publish. It summarizes the selected delegation or
+  coder run, parent Goal, project, current workflow stage, journey position,
+  next local action, target surface, reason, and zero-effect counters before
+  the detailed selected-state map and continuation links;
   `/artifacts?path=...` is content-first and opens with a visible read-only
   `Artifact Operator Workbench` before shared diagnostics or dense readbacks.
   It shows cards to open the inert content, return to the owning Goal or
@@ -741,10 +744,13 @@ Core layers for the bootstrap:
   delegation or coder run id. It is action-first and opens with a visible
   `Workflow Operator Workbench` before shared route/focus diagnostics or
   command readback, with cards for the current workflow action, selected
-  state, queue attention, and `/resume`. Command evidence stays collapsed by
-  default while preserving selected delegation/run, parent Goal, project,
-  current stage, next local action, target surface, reason, selected-step
-  count, and zero-effect readbacks in the DOM. The page then annotates related
+  state, queue attention, and `/resume`. A visible read-only
+  `Workflow Journey` follows with nine stage cards that mark the current stage
+  and route each stage to the next safe local surface. Journey and command
+  evidence stay collapsed by default while preserving selected delegation/run,
+  parent Goal, project, current stage, journey position, next local action,
+  target surface, reason, selected-step count, and zero-effect readbacks in the
+  DOM. The page then annotates related
   stepper rows with selected local artifact, approval, run, commit,
   publication, and next-action status, plus a read-only `Selected Workflow
   Continuation` block linking the exact run, approvals, inbox, and dogfooding

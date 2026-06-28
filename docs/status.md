@@ -197,10 +197,13 @@ Latest status focus:
   zero-effect proof in the DOM.
 - `/workflow` is now action-first: it opens with the `Workflow Operator
   Workbench` before shared route/focus diagnostics or command readback, shows
-  visible Now, State, Queue, and Resume cards, and keeps workflow command and
-  workbench evidence collapsed by default while preserving selected
-  delegation/run, parent Goal, project, current stage, next local action,
-  target surface, selected-step counts, and zero-effect proof in the DOM.
+  visible Now, State, Queue, and Resume cards, then follows with a visible
+  read-only `Workflow Journey` rail for Select, Goal + Scout, Context,
+  Handoff, Coder Prep, Approval, Execution, Commit, and Publish. Workflow
+  journey, command, and workbench evidence stay collapsed by default while
+  preserving selected delegation/run, parent Goal, project, current stage,
+  current journey position, next local action, target surface,
+  selected-step counts, and zero-effect proof in the DOM.
 - `/profiles` is now action-first: it opens with the `Profiles Operator
   Workbench` before shared route/focus diagnostics or command readback, shows
   visible Now, Lanes, Storage, and Resume cards, then follows with a read-only
