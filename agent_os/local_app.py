@@ -5560,6 +5560,7 @@ def _workspace_page(root: Path) -> str:
     open_project = state.get("open_project", "")
     open_goal = state.get("open_goal", "")
     last_artifact = state.get("last_viewed_artifact", "")
+    save_defaults = _workspace_save_defaults(root, state)
     restore_links = []
     if open_project:
         restore_links.append(f"open_project: <a href='/projects/{quote(open_project)}'>{_e(open_project)}</a>")
@@ -5608,17 +5609,39 @@ def _workspace_page(root: Path) -> str:
         [
             "<details id='save-workspace' class='workspace-save-details' data-workspace-save-details='true'>",
             "<summary>Save Workspace form</summary>",
+            "<div class='workspace-save-defaults' data-workspace-save-defaults='true'>",
+            _kv(
+                [
+                    ("workspace_save_defaults_status", save_defaults["status"]),
+                    ("workspace_save_defaults_source", save_defaults["source"]),
+                    ("workspace_save_defaults_open_project", save_defaults["open_project"] or "none"),
+                    ("workspace_save_defaults_open_goal", save_defaults["open_goal"] or "none"),
+                    (
+                        "workspace_save_defaults_last_artifact",
+                        SafeHtml(_artifact_link(save_defaults["last_viewed_artifact"]))
+                        if save_defaults["last_viewed_artifact"]
+                        else "none",
+                    ),
+                    ("workspace_save_defaults_lead_goal", save_defaults["lead_goal"] or "none"),
+                    ("workspace_save_defaults_lead_project", save_defaults["lead_project"] or "none"),
+                    ("workspace_save_defaults_applied_to_form", "true"),
+                    ("workspace_save_defaults_confirmation_required", "true"),
+                    ("workspace_save_defaults_write_on_get", "false"),
+                    ("workspace_save_defaults_external_effects_created", "false"),
+                ]
+            ),
+            "</div>",
             "<section><h2>Save Workspace</h2>",
             _input_form(
                 "save-workspace",
                 {},
                 {
-                    "open_project": open_project,
-                    "open_goal": open_goal,
-                    "filters": state.get("filters", ""),
-                    "expanded_panels": state.get("expanded_panels", ""),
-                    "last_viewed_artifact": last_artifact,
-                    "updated_by": state.get("updated_by", "operator"),
+                    "open_project": save_defaults["open_project"],
+                    "open_goal": save_defaults["open_goal"],
+                    "filters": save_defaults["filters"],
+                    "expanded_panels": save_defaults["expanded_panels"],
+                    "last_viewed_artifact": save_defaults["last_viewed_artifact"],
+                    "updated_by": save_defaults["updated_by"],
                 },
             ),
             "</section>",
@@ -5640,6 +5663,81 @@ def _workspace_page(root: Path) -> str:
             _non_claim_banner(),
         ]
     )
+
+
+def _workspace_save_defaults(root: Path, state: dict[str, str]) -> dict[str, str]:
+    saved_project = str(state.get("open_project") or "").strip()
+    saved_goal = str(state.get("open_goal") or "").strip()
+    saved_filters = str(state.get("filters") or "").strip()
+    saved_panels = str(state.get("expanded_panels") or "").strip()
+    saved_artifact = str(state.get("last_viewed_artifact") or "").strip()
+    updated_by = str(state.get("updated_by") or "operator").strip() or "operator"
+    lead_goal = _workspace_lead_goal_row(root, saved_project=saved_project, saved_goal=saved_goal)
+    lead_goal_id = str(lead_goal["id"]) if lead_goal is not None else ""
+    lead_project = str(lead_goal["project_id"] or "") if lead_goal is not None else ""
+    latest_artifact = ""
+    if lead_goal_id:
+        storage = _storage(root)
+        goal_state = _goal_state(root, storage, lead_goal_id)
+        if goal_state.get("goal") is not None:
+            latest_artifact = _goal_latest_artifact_path(root, goal_state)
+
+    has_saved_context = any([saved_project, saved_goal, saved_filters, saved_panels, saved_artifact])
+    if saved_goal:
+        status = "saved_workspace"
+        source = "saved_workspace_state"
+    elif lead_goal_id:
+        status = "suggested_from_lead_goal"
+        source = "lead_goal"
+        updated_by = "operator-workspace"
+    elif _workspace_should_use_first_run(root, saved_goal):
+        status = "first_run"
+        source = "first_run_progress"
+    elif has_saved_context:
+        status = "partial_saved_workspace"
+        source = "saved_workspace_state"
+    else:
+        status = "empty"
+        source = "no_workspace_or_goal"
+
+    return {
+        "status": status,
+        "source": source,
+        "open_project": saved_project or lead_project,
+        "open_goal": saved_goal or lead_goal_id,
+        "filters": saved_filters or (f"goal:{lead_goal_id}" if lead_goal_id else ""),
+        "expanded_panels": saved_panels
+        or ("overview,next-action,timeline,evidence,artifacts,notes" if lead_goal_id else ""),
+        "last_viewed_artifact": saved_artifact or latest_artifact,
+        "updated_by": updated_by,
+        "lead_goal": lead_goal_id,
+        "lead_project": lead_project,
+    }
+
+
+def _workspace_lead_goal_row(
+    root: Path,
+    *,
+    saved_project: str,
+    saved_goal: str,
+) -> sqlite3.Row | None:
+    storage = _storage(root)
+    rows = _goal_rows(storage, limit=100)
+    if not rows:
+        return None
+    if saved_goal:
+        for row in rows:
+            if str(row["id"]) == saved_goal:
+                return row
+    candidates = rows
+    if saved_project:
+        project_rows = [row for row in rows if str(row["project_id"] or "") == saved_project]
+        if project_rows:
+            candidates = project_rows
+    active = [row for row in candidates if _goal_bucket(row) == "active"]
+    paused = [row for row in candidates if _goal_bucket(row) == "paused"]
+    completed = [row for row in candidates if _goal_bucket(row) == "completed"]
+    return active[0] if active else paused[0] if paused else completed[0] if completed else candidates[0]
 
 
 def _workspace_daily_brief(

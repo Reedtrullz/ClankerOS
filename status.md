@@ -1,5 +1,36 @@
 # Status
 
+## 2026-06-28 Workspace Finish Defaults UX
+
+- Added first-class `Workspace save defaults` evidence inside
+  `/workspace#save-workspace`.
+- Empty first-run workspaces still render blank save fields and report
+  `workspace_save_defaults_status=first_run`.
+- When no workspace Goal is saved but a lead Goal exists, the confirmed
+  Finish Today form is prefilled from the lead project, Goal, goal-scoped
+  filters, default panels, and latest artifact, while saved-state evidence
+  remains unchanged until the operator confirms `save-workspace`.
+- Saved workspaces remain authoritative and report
+  `workspace_save_defaults_status=saved_workspace`.
+- Updated README, operating summary, local status focus, and focused first-run
+  plus fixture-backed route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state"`
+    -> passed, `2 passed, 514 deselected in 48.92s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `git diff --check` -> passed
+- Full pytest/browser regression proof is intentionally left to GitHub Actions
+  for this GitHub-first testing loop.
+- Non-claims until remote proof: no write on GET, no provider call, no app-side
+  GitHub polling, no approval decision, no execution, no commit, no push, no
+  PR, and no deploy from ClankerOS itself.
+
 ## 2026-06-28 Operator Ribbon Finish Today UX
 
 - Added a shared read-only `Finish` card to the global `Operator Ribbon` on

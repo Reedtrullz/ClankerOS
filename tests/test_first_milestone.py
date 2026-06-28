@@ -5598,10 +5598,24 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-state-details='true'" in workspace.body
     assert "data-workspace-restore-details='true'" in workspace.body
     assert "data-workspace-save-details='true'" in workspace.body
+    assert "data-workspace-save-defaults='true'" in workspace.body
     assert "data-open-details='true' href='#save-workspace'" in workspace.body
     assert workspace.body.index("data-workspace-operator-workbench='true'") < workspace.body.index("data-workspace-daily-brief='true'")
     assert workspace.body.index("data-workspace-operator-workbench='true'") < workspace.body.index("data-route-context='true'")
     assert workspace.body.index("data-workspace-state-details='true'") < workspace.body.index("id='save-workspace'")
+    assert "workspace_save_defaults_status</dt><dd>first_run" in workspace.body
+    assert "workspace_save_defaults_source</dt><dd>first_run_progress" in workspace.body
+    assert "workspace_save_defaults_open_project</dt><dd>none" in workspace.body
+    assert "workspace_save_defaults_open_goal</dt><dd>none" in workspace.body
+    assert "workspace_save_defaults_last_artifact</dt><dd>none" in workspace.body
+    assert "workspace_save_defaults_lead_goal</dt><dd>none" in workspace.body
+    assert "workspace_save_defaults_lead_project</dt><dd>none" in workspace.body
+    assert "workspace_save_defaults_applied_to_form</dt><dd>true" in workspace.body
+    assert "workspace_save_defaults_confirmation_required</dt><dd>true" in workspace.body
+    assert "workspace_save_defaults_write_on_get</dt><dd>false" in workspace.body
+    assert "workspace_save_defaults_external_effects_created</dt><dd>false" in workspace.body
+    assert "name='open_project' value=''" in workspace.body
+    assert "name='open_goal' value=''" in workspace.body
     assert "Workspace Daily Brief" in workspace.body
     assert "data-workspace-daily-brief='true'" in workspace.body
     assert "workspace_daily_status</dt><dd>first_run" in workspace.body
@@ -8382,6 +8396,40 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"/delegations/{result.delegation_id}" in actions_with_demo.body
     assert "approval_queue_surface" in actions_with_demo.body
     assert "external_effects_created: false" in actions_with_demo.body
+
+    workspace_with_demo = render_local_app_route(tmp_path, "/workspace")
+    assert workspace_with_demo.status == 200
+    assert "data-workspace-save-defaults='true'" in workspace_with_demo.body
+    assert (
+        "workspace_save_defaults_status</dt><dd>suggested_from_lead_goal"
+        in workspace_with_demo.body
+    )
+    assert "workspace_save_defaults_source</dt><dd>lead_goal" in workspace_with_demo.body
+    assert (
+        f"workspace_save_defaults_open_project</dt><dd>{result.project_id}"
+        in workspace_with_demo.body
+    )
+    assert (
+        f"workspace_save_defaults_open_goal</dt><dd>{result.goal_id}"
+        in workspace_with_demo.body
+    )
+    assert f"workspace_save_defaults_lead_goal</dt><dd>{result.goal_id}" in workspace_with_demo.body
+    assert (
+        f"workspace_save_defaults_lead_project</dt><dd>{result.project_id}"
+        in workspace_with_demo.body
+    )
+    assert result.review_path.relative_to(tmp_path).as_posix() in workspace_with_demo.body
+    assert "workspace_save_defaults_applied_to_form</dt><dd>true" in workspace_with_demo.body
+    assert "workspace_save_defaults_confirmation_required</dt><dd>true" in workspace_with_demo.body
+    assert "workspace_save_defaults_write_on_get</dt><dd>false" in workspace_with_demo.body
+    assert f"name='open_project' value='{result.project_id}'" in workspace_with_demo.body
+    assert f"name='open_goal' value='{result.goal_id}'" in workspace_with_demo.body
+    assert f"name='filters' value='goal:{result.goal_id}'" in workspace_with_demo.body
+    assert (
+        "name='expanded_panels' value='overview,next-action,timeline,evidence,artifacts,notes'"
+        in workspace_with_demo.body
+    )
+    assert "name='updated_by' value='operator-workspace'" in workspace_with_demo.body
 
     dogfooding_with_demo = render_local_app_route(tmp_path, "/dogfooding")
     assert dogfooding_with_demo.status == 200
@@ -11222,6 +11270,22 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-workspace-state-details='true'" in restored_workspace.body
     assert "data-workspace-restore-details='true'" in restored_workspace.body
     assert "data-workspace-save-details='true'" in restored_workspace.body
+    assert "data-workspace-save-defaults='true'" in restored_workspace.body
+    assert "workspace_save_defaults_status</dt><dd>saved_workspace" in restored_workspace.body
+    assert "workspace_save_defaults_source</dt><dd>saved_workspace_state" in restored_workspace.body
+    assert (
+        f"workspace_save_defaults_open_project</dt><dd>{result.project_id}"
+        in restored_workspace.body
+    )
+    assert (
+        f"workspace_save_defaults_open_goal</dt><dd>{result.goal_id}"
+        in restored_workspace.body
+    )
+    assert f"name='open_project' value='{result.project_id}'" in restored_workspace.body
+    assert f"name='open_goal' value='{result.goal_id}'" in restored_workspace.body
+    assert "name='filters' value='active'" in restored_workspace.body
+    assert "name='expanded_panels' value='timeline,evidence'" in restored_workspace.body
+    assert "name='updated_by' value='operator'" in restored_workspace.body
     assert restored_workspace.body.index("data-workspace-operator-workbench='true'") < restored_workspace.body.index("id='workspace-action-form'")
     assert restored_workspace.body.index("id='workspace-action-form'") < restored_workspace.body.index("data-workspace-daily-brief='true'")
     assert restored_workspace.body.index("data-workspace-operator-workbench='true'") < restored_workspace.body.index("data-route-context='true'")

@@ -233,8 +233,12 @@ Core layers for the bootstrap:
   saved-state evidence, so the saved workspace first shows do/check/unblock/
   finish cards, same-page action-form routing when available, readiness and
   blocker routing, last-artifact readback, and a Finish Today link that opens
-  the collapsed confirmed save form. The same Goal-page action form appears
-  immediately below the workbench when browser-available, followed by the
+  the collapsed confirmed save form. The save form keeps saved workspace state
+  authoritative, but when no workspace Goal is saved and a lead Goal exists it
+  pre-fills suggested project, Goal, goal-scoped filters, panels, and latest
+  artifact values while reporting `workspace_save_defaults_write_on_get=false`.
+  The same Goal-page action form appears immediately below the workbench when
+  browser-available, followed by the
   read-only `Workspace Daily Brief` and `Workspace Workflow Map` for the saved
   goal's phase, current gate, resume readiness, finish posture, and zero-effect
   counters. Saved-state and restore-link readbacks stay inside collapsed

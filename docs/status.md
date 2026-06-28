@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/workspace#save-workspace` now exposes first-class `Workspace save defaults`
+  evidence. Empty first-run checkouts stay blank and read-only, saved
+  workspaces stay authoritative, and fixture/lead-goal states prefill the
+  confirmed Finish Today form from the current project, Goal, goal-scoped
+  filters, panels, and latest artifact without writing on GET.
 - Every route now gets a global read-only `Operator Ribbon` above the
   sidebar/page shell, with visible Now, Goal, Attention, Finish, Resume, and
   Search cards before any route-specific workbench. The ribbon is sourced from

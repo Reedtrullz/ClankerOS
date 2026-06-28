@@ -222,9 +222,13 @@ action, and no-write/no-network boundaries before the operator leaves
 saved-state evidence. The workbench gives the saved workspace do/check/unblock/
 finish cards, same-page action-form routing, blocker routing, last-artifact
 readback, and a Finish Today link that opens the collapsed `#save-workspace`
-form. The read-only `Workspace Daily Brief` and `Workspace Workflow Map`
-follow with the saved goal's current gate, gate counts, and finish posture,
-while saved-state and restore-link readbacks stay inside collapsed evidence.
+form. When no workspace has been explicitly saved yet but a lead Goal exists,
+that form is prefilled from the current project, Goal, goal-scoped filters,
+and latest artifact, with a `Workspace save defaults` evidence block showing
+that the values are suggestions only and nothing was written on GET. The
+read-only `Workspace Daily Brief` and `Workspace Workflow Map` follow with the
+saved goal's current gate, gate counts, and finish posture, while saved-state
+and restore-link readbacks stay inside collapsed evidence.
 Before a saved Goal exists, `/workspace` now follows the
 same first-run progress as Home, Today, Goals, and `/resume`: an empty checkout
 points its daily brief, workbench, continuation readback, restore links, and
