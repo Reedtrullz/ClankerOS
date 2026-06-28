@@ -281,6 +281,10 @@ Latest status focus:
   fast-smoke proof, recording full-suite proof, or using the manual
   record-after-success fallback, while keeping all GitHub commands copy-only
   and all local proof writes confirmation-bound.
+- Confirmation pages now open with a read-only `Action Confirmation Review`
+  before payload details, with visible Confirm, Requires, Writes, Scope, and
+  Boundary cards, a stable `#action-confirm-local-action` form anchor, and
+  collapsed review/command evidence preserving zero-effect counters.
 - The shared operator shell now persists the latest confirmed local action in
   `.clanker/app/workspace.json` and renders a read-only `Last Action` strip on
   later pages, with the result, target notice surface, saved context, and

@@ -1,5 +1,50 @@
 # Status
 
+## 2026-06-28 Action Confirmation Review Cards
+
+- Made every local app confirmation page action-first with a read-only
+  `Action Confirmation Review` before the payload and command evidence.
+- The review shows Confirm, Requires, Writes, Scope, and Boundary cards for
+  the exact pending action, links the primary card to the stable
+  `#action-confirm-local-action` form, links payload/safety/evidence anchors,
+  and keeps review evidence collapsed by default.
+- The existing `Action Confirmation Command Bar` is still present but its
+  detailed rows now sit inside collapsed command evidence, preserving action
+  category, required input, output artifact, local mutation/execution posture,
+  and zero-effect counters in the DOM.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against a scratch local app on `127.0.0.1:8852` opened the
+  `/actions` refresh-dashboard confirmation page. Desktop `1280x720`
+  rendered five confirmation review cards, kept review and command evidence
+  collapsed, ordered the review before command evidence and payload, kept the
+  stable confirm form present, had no horizontal overflow, and reported no
+  warning/error logs.
+- Browser interaction QA clicked the primary Confirm card, navigated to
+  `#action-confirm-local-action`, kept the form in viewport, had no
+  horizontal overflow, and did not submit the confirmation.
+- Browser QA mobile `390x844` rendered the confirmation review cards in one
+  column, kept review and command evidence collapsed, had no horizontal
+  overflow, and reported no warning/error logs.
+- Screenshots: `/tmp/clankeros-confirmation-review-desktop.png` and
+  `/tmp/clankeros-confirmation-review-mobile.png`.
+- The local app server was stopped after browser QA, `lsof -nP -iTCP:8852
+  -sTCP:LISTEN` showed no remaining listener, the bounded scratch app root was
+  removed, and the browser viewport was reset.
+- Non-claims: this is a confirmation-page layout and reviewability change. It
+  does not write before confirmation, approve work, execute work, create
+  commits, push, create PRs, deploy, fetch GitHub status, call providers, or
+  mutate external systems.
+
 ## 2026-06-28 Delegation Run Continuation Strip
 
 - Made delegation execution run detail pages action-first with a visible

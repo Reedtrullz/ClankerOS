@@ -808,13 +808,15 @@ The app is local-only by default, binds to `127.0.0.1`, and refuses non-local
 binds unless `--allow-nonlocal-bind` is explicitly supplied. It does not push,
 create PRs, deploy, call providers, or perform network actions beyond local
 browser/server loopback. Confirmation pages show submitted payloads before
-local writes. They now start with a read-only
-`Action Confirmation Command Bar` that names the action kind, required input,
-output artifact, local mutation/execution posture, and no-provider/no-network/
-no-push boundaries before the final `confirm=yes` submit. Confirmed actions
-return an `Action Result Details` page with the payload, result fields,
-artifact links, next-page link, and safety boundary. Successful results also
-show an `Action Continuation` block from the
+local writes. They now start with a read-only `Action Confirmation Review`
+with visible Confirm, Requires, Writes, Scope, and Boundary cards before the
+payload. The existing `Action Confirmation Command Bar` remains as collapsed
+evidence, preserving the action kind, required input, output artifact, local
+mutation/execution posture, and no-provider/no-network/no-push boundaries
+before the final `confirm=yes` submit. Confirmed actions return an
+`Action Result Details` page with the payload, result fields, artifact links,
+next-page link, and safety boundary. Successful results also show an
+`Action Continuation` block from the
 refreshed saved goal, including current phase, one next action, target page,
 and the same confirmed local action form when available. Before a saved Goal
 exists, that block follows first-run progress instead and can render the

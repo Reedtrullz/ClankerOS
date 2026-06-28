@@ -982,10 +982,13 @@ Confirmation pages show the submitted action payload as visible read-only
 fields plus the safety boundary before resubmitting with `confirm=yes`, so the
 operator can review exactly what will be written before a local artifact,
 approval, or bounded execution action runs. They start with a read-only
-`Action Confirmation Command Bar` that summarizes the action category, source
-surface, required input, output artifact, whether confirmation will mutate
-local state or execute a safe local command, and the no-provider/no-network/
-no-push/no-PR/no-deploy boundary. Confirmed actions render
+`Action Confirmation Review` with visible Confirm, Requires, Writes, Scope,
+and Boundary cards, a stable `#action-confirm-local-action` target, and
+collapsed review evidence. The existing `Action Confirmation Command Bar`
+remains as collapsed evidence summarizing the action category, source surface,
+required input, output artifact, whether confirmation will mutate local state
+or execute a safe local command, and the no-provider/no-network/no-push/no-PR/
+no-deploy boundary. Confirmed actions render
 `Action Result Details` with the
 attempted action, submitted payload, result fields, artifact links when paths
 are returned, a next-page link, and the safety boundary. They also render an

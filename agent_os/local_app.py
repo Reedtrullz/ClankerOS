@@ -26084,18 +26084,25 @@ def _confirm_form(action: str, form: dict[str, list[str]]) -> str:
     return "".join(
         [
             f"<section><h1>Confirm {_e(action)}</h1>",
-            "<p>This action writes local ClankerOS artifacts only. It does not push, create PRs, deploy, call providers, or execute external mutations.</p>",
+            "<p>This action writes local ClankerOS artifacts only after explicit confirmation. It does not push, create PRs, deploy, call providers, or execute external mutations.</p>",
+            _action_confirmation_review(action, form),
+            "<div id='action-confirmation-safety'>",
             _non_claim_banner(),
+            "</div>",
             _action_confirmation_command_bar(action, form),
-            "<h2>Action Payload</h2>",
+            "<h2 id='action-confirmation-payload'>Action Payload</h2>",
             _kv(_submitted_form_rows(form)),
-            f"<form method='post' action='/actions/{_e(action)}'>{''.join(inputs)}<button type='submit'>Confirm local action</button></form>",
+            (
+                f"<form id='action-confirm-local-action' data-action-confirm-local-action='true' "
+                f"method='post' action='/actions/{_e(action)}'>"
+                f"{''.join(inputs)}<button type='submit'>Confirm local action</button></form>"
+            ),
             "</section>",
         ]
     )
 
 
-def _action_confirmation_command_bar(action: str, form: dict[str, list[str]]) -> str:
+def _action_confirmation_context(action: str, form: dict[str, list[str]]) -> dict[str, str]:
     entry = next((item for item in ACTION_CATALOG if item[0] == action), None)
     if entry is None:
         category = "unknown"
@@ -26118,27 +26125,114 @@ def _action_confirmation_command_bar(action: str, form: dict[str, list[str]]) ->
         or "git" in category
         else "false"
     )
+    return {
+        "action": action,
+        "category": category,
+        "surface": surface,
+        "mutates": mutates,
+        "confirmation": confirmation,
+        "requires": requires,
+        "output": output,
+        "submitted_fields": str(submitted_fields),
+        "executes_local_command": executes_local_command,
+    }
+
+
+def _action_confirmation_review(action: str, form: dict[str, list[str]]) -> str:
+    context = _action_confirmation_context(action, form)
+    requires = context["requires"]
+    output = context["output"]
+    category = context["category"]
+    surface = context["surface"]
+    mutates = context["mutates"]
+    executes_local_command = context["executes_local_command"]
+    return "".join(
+        [
+            (
+                "<section id='action-confirmation-review' "
+                "class='panel action-confirmation-review' "
+                "data-action-confirmation-review='true'>"
+                "<h2>Action Confirmation Review</h2>"
+            ),
+            "<p class='muted'>Confirm exactly one local action after checking the required input, expected artifact, and safety boundary.</p>",
+            "<div class='action-confirmation-grid' data-action-confirmation-review-actions='true'>",
+            "<article class='action-confirmation-card action-confirmation-primary' data-action-confirmation-primary='true'><h3>Confirm</h3>",
+            f"<p>{_e(action)}</p>",
+            "<a class='action-confirmation-action' href='#action-confirm-local-action'>Confirm local action</a></article>",
+            "<article class='action-confirmation-card'><h3>Requires</h3>",
+            f"<p>{_e(requires)}</p>",
+            "<a class='action-confirmation-link' href='#action-confirmation-payload'>Review payload</a></article>",
+            "<article class='action-confirmation-card'><h3>Writes</h3>",
+            f"<p>{_e(output)}</p>",
+            "<a class='action-confirmation-link' href='#action-confirmation-evidence'>Evidence</a></article>",
+            "<article class='action-confirmation-card'><h3>Scope</h3>",
+            f"<p>{_e(category)} on {_e(surface)}</p>",
+            "<a class='action-confirmation-link' href='/actions'>Action catalog</a></article>",
+            "<article class='action-confirmation-card'><h3>Boundary</h3>",
+            "<p>No push, PR, deploy, provider call, network action, or external mutation.</p>",
+            "<a class='action-confirmation-link' href='#action-confirmation-safety'>Safety</a></article>",
+            "</div>",
+            "<details class='action-confirmation-review-evidence' data-action-confirmation-review-evidence='true'><summary>Confirmation review evidence</summary>",
+            _kv(
+                [
+                    ("action_confirmation_review_status", "awaiting_operator_confirm"),
+                    ("action_confirmation_review_action", action),
+                    ("action_confirmation_review_category", category),
+                    ("action_confirmation_review_surface", surface),
+                    ("action_confirmation_review_required_input", requires),
+                    ("action_confirmation_review_output_artifact", output),
+                    ("action_confirmation_review_mutates_local_state_after_confirm", mutates),
+                    ("action_confirmation_review_confirmation_required", context["confirmation"]),
+                    ("action_confirmation_review_submitted_fields", context["submitted_fields"]),
+                    ("action_confirmation_review_executes_local_command_after_confirm", executes_local_command),
+                    ("action_confirmation_review_write_before_confirm", "false"),
+                    ("action_confirmation_review_provider_calls_taken", "0"),
+                    ("action_confirmation_review_network_actions_taken", "0"),
+                    ("action_confirmation_review_external_effects_created", "false"),
+                    ("action_confirmation_review_push_created", "false"),
+                    ("action_confirmation_review_pr_created", "false"),
+                    ("action_confirmation_review_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"action_confirmation_review_primary: confirm {_e(action)}",
+                    f"action_confirmation_review_requires: {_e(requires)}",
+                    f"action_confirmation_review_writes: {_e(output)}",
+                    f"action_confirmation_review_scope: {_e(category)} on {_e(surface)}",
+                    "action_confirmation_review_safety: confirmation required before any local write",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _action_confirmation_command_bar(action: str, form: dict[str, list[str]]) -> str:
+    context = _action_confirmation_context(action, form)
     lines = [
         f"action_confirmation_now: Review {_e(action)} payload",
-        f"action_confirmation_after_confirm: {_e(output)}",
+        f"action_confirmation_after_confirm: {_e(context['output'])}",
         "action_confirmation_safety: confirmation required before any local write",
     ]
     return "".join(
         [
-            "<section class='panel action-confirmation-command-bar' data-action-confirmation-command-bar='true'><h2>Action Confirmation Command Bar</h2>",
+            "<section id='action-confirmation-evidence' class='panel action-confirmation-command-bar' data-action-confirmation-command-bar='true'><h2>Action Confirmation Command Bar</h2>",
             "<p class='muted'>Read-only preflight for the local action waiting on explicit operator confirmation.</p>",
+            "<details class='action-confirmation-command-evidence' data-action-confirmation-command-evidence='true'><summary>Action confirmation evidence</summary>",
             _kv(
                 [
                     ("action_confirmation_status", "awaiting_operator_confirm"),
                     ("action_confirmation_action", action),
-                    ("action_confirmation_category", category),
-                    ("action_confirmation_surface", surface),
-                    ("action_confirmation_submitted_fields", str(submitted_fields)),
-                    ("action_confirmation_required_input", requires),
-                    ("action_confirmation_output_artifact", output),
-                    ("action_confirmation_mutates_local_state_after_confirm", mutates),
-                    ("action_confirmation_requires_confirmation", confirmation),
-                    ("action_confirmation_executes_local_command_after_confirm", executes_local_command),
+                    ("action_confirmation_category", context["category"]),
+                    ("action_confirmation_surface", context["surface"]),
+                    ("action_confirmation_submitted_fields", context["submitted_fields"]),
+                    ("action_confirmation_required_input", context["requires"]),
+                    ("action_confirmation_output_artifact", context["output"]),
+                    ("action_confirmation_mutates_local_state_after_confirm", context["mutates"]),
+                    ("action_confirmation_requires_confirmation", context["confirmation"]),
+                    ("action_confirmation_executes_local_command_after_confirm", context["executes_local_command"]),
                     ("action_confirmation_action_completed", "false"),
                     ("action_confirmation_write_before_confirm", "false"),
                     ("action_confirmation_provider_calls_taken", "0"),
@@ -26150,6 +26244,7 @@ def _action_confirmation_command_bar(action: str, form: dict[str, list[str]]) ->
                 ]
             ),
             _ul(lines),
+            "</details>",
             "</section>",
         ]
     )
@@ -28500,6 +28595,18 @@ def _html_page(
     .action-workbench-action {{ background:var(--accent); color:#fff; }}
     .action-workbench-link {{ background:var(--surface); color:var(--accent); }}
     .action-finish-today {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
+    .action-confirmation-review {{ border-left:4px solid var(--warn); }}
+    .action-confirmation-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .action-confirmation-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .action-confirmation-card h3 {{ margin-top:0; }}
+    .action-confirmation-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .action-confirmation-primary {{ border-color:var(--warn); box-shadow:inset 3px 0 0 var(--warn); }}
+    .action-confirmation-action, .action-confirmation-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .action-confirmation-action {{ background:var(--accent); color:#fff; }}
+    .action-confirmation-link {{ background:var(--surface); color:var(--accent); }}
+    .action-confirmation-review-evidence, .action-confirmation-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .action-confirmation-review-evidence summary, .action-confirmation-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .action-confirmation-review-evidence:not([open]) > :not(summary), .action-confirmation-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .action-confirmation-command-bar {{ border-left:4px solid var(--warn); }}
     .action-confirmation-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .action-confirmation-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -28752,7 +28859,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-confirmation-review, #action-confirm-local-action {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
