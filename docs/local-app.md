@@ -289,11 +289,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   approvals, CI handoff, and Finish Today save form, while the full lifecycle
   rail, every gate's eventual local operator surface, and zero-effect boundary
   stay available in collapsed workflow evidence. A read-only `Goal CI Handoff`
-  follows it with
-  project-scoped proof status, latest operator-recorded GitHub Actions
-  evidence, exact `gh run list` / `gh run view` command templates, and a
-  same-page JSON paste target for recording proof without app-side GitHub
-  polling. Remaining Work also starts with a read-only
+  follows it with visible Check GitHub, Record Proof, Current Proof, Full
+  Suite, and Finish Today cards. The cards show project-scoped proof status,
+  latest operator-recorded GitHub Actions evidence, exact `gh run list` /
+  `gh run view` command templates, and a same-page JSON paste target for
+  recording proof while the detailed ledger stays collapsed and app-side GitHub
+  polling remains disabled. Remaining Work also starts with a read-only
   `Goal Remaining Work Command Bar` that summarizes the
   current gate, done/pending/waiting gate counts, open task/incident/
   recommendation counts, pending approvals, one next local surface, and

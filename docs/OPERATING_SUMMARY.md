@@ -429,11 +429,13 @@ Core layers for the bootstrap:
   form, while the detailed lifecycle rail, each gate's eventual local operator
   surface, manual publish boundary, and zero-effect counters stay in collapsed
   workflow evidence. A read-only `Goal CI Handoff`
-  follows it with project-scoped proof status, latest operator-recorded
-  GitHub Actions evidence, exact `gh run list` / `gh run view` command
-  templates, and a same-page proof-recording target before the operator
-  reaches the long timeline and artifact sections, without app-side GitHub
-  polling or external mutations. Goal
+  follows it with visible Check GitHub, Record Proof, Current Proof, Full
+  Suite, and Finish Today cards, project-scoped proof status, latest
+  operator-recorded GitHub Actions evidence, exact `gh run list` /
+  `gh run view` command templates, and a same-page proof-recording target
+  before the operator reaches the long timeline and artifact sections. The
+  detailed ledger remains collapsed, and the app still does no GitHub polling
+  or external mutations on GET. Goal
   Remaining Work itself starts with a read-only `Goal Remaining Work Command
   Bar` that summarizes current gate, done/pending/waiting gate counts, open
   task/incident/recommendation counts, pending approvals, one next local

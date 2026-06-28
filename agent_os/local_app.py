@@ -635,6 +635,14 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-goal-workflow-map-finish='true'",
                 "data-goal-workflow-map-evidence='true'",
                 "workflow_map_current_gate</dt><dd>commit_request",
+                "Goal CI Handoff",
+                "data-goal-ci-handoff-actions='true'",
+                "data-goal-ci-handoff-check='true'",
+                "data-goal-ci-handoff-record='true'",
+                "data-goal-ci-handoff-proof='true'",
+                "data-goal-ci-handoff-full='true'",
+                "data-goal-ci-handoff-finish='true'",
+                "data-goal-ci-handoff-evidence='true'",
                 "Next Action",
                 "Activity Log",
                 "Memory",
@@ -8578,10 +8586,67 @@ def _goal_ci_handoff(root: Path, state: dict[str, Any]) -> str:
         f"gh run view <run_id> --repo {repo_arg} "
         "--json status,conclusion,headSha,headBranch,databaseId,url,jobs"
     )
+    proof_summary = latest_status
+    if latest_scope != "none":
+        proof_summary = f"{latest_status} / {latest_scope}"
+    if latest_run_id != "none":
+        proof_summary = f"{proof_summary} / {latest_run_id}"
+    checkout_summary = (
+        "matches current checkout"
+        if matches_current
+        else "needs current checkout proof"
+    )
+    full_suite_summary = (
+        "workflow run proof recorded"
+        if handoff_status == "current_success"
+        else "full-suite proof still needs recording"
+    )
+    record_button_label = (
+        "Review proof" if target_href == "#goal-verification-evidence" else "Record proof"
+    )
+    ci_cards = "".join(
+        [
+            "<div class='goal-ci-handoff-card' data-goal-ci-handoff-check='true'>",
+            "<h3>Check GitHub</h3>",
+            f"<strong>{_e(handoff_status)}</strong>",
+            f"<p>{_e(reason)}</p>",
+            f"<code class='goal-ci-command'>{_e(gh_list_command)}</code>",
+            "<a class='goal-ci-handoff-link' href='/verification'>Open verification</a>",
+            "</div>",
+            "<div class='goal-ci-handoff-card goal-ci-handoff-primary' data-goal-ci-handoff-record='true' data-goal-ci-handoff-primary='true'>",
+            "<h3>Record Proof</h3>",
+            f"<strong>{_e(next_action)}</strong>",
+            f"<p>{_e(target_label)}</p>",
+            f"<a class='goal-ci-handoff-action' href='{_e(target_href)}'>{_e(record_button_label)}</a>",
+            "</div>",
+            "<div class='goal-ci-handoff-card' data-goal-ci-handoff-proof='true'>",
+            "<h3>Current Proof</h3>",
+            f"<strong>{_e(proof_summary)}</strong>",
+            f"<p>{_e(checkout_summary)}</p>",
+            "<a class='goal-ci-handoff-link' href='#goal-verification-evidence'>Review evidence</a>",
+            "</div>",
+            "<div class='goal-ci-handoff-card' data-goal-ci-handoff-full='true'>",
+            "<h3>Full Suite</h3>",
+            f"<strong>{_e(full_suite_summary)}</strong>",
+            "<p>Fast smoke is early proof; full workflow success is the product proof.</p>",
+            f"<code class='goal-ci-command'>{_e(gh_view_command)}</code>",
+            "</div>",
+            "<div class='goal-ci-handoff-card' data-goal-ci-handoff-finish='true'>",
+            "<h3>Finish Today</h3>",
+            "<strong>Save the resume point</strong>",
+            "<p>When proof is recorded, finish the session with the Goal state preserved.</p>",
+            "<a class='goal-ci-handoff-link' href='#goal-finish-today'>Finish Today</a>",
+            "</div>",
+        ]
+    )
     return "".join(
         [
             "<section id='goal-ci-handoff' class='panel goal-ci-handoff' data-goal-ci-handoff='true'><h2>Goal CI Handoff</h2>",
             "<p class='muted'>Use GitHub Actions for the longer verification loop, then paste the result into this Goal's local evidence ledger.</p>",
+            "<div class='goal-ci-handoff-grid' data-goal-ci-handoff-actions='true'>",
+            ci_cards,
+            "</div>",
+            "<details class='goal-ci-handoff-evidence' data-goal-ci-handoff-evidence='true'><summary>Goal CI handoff evidence</summary>",
             _kv(
                 [
                     ("goal_ci_handoff_status", handoff_status),
@@ -8640,6 +8705,7 @@ def _goal_ci_handoff(root: Path, state: dict[str, Any]) -> str:
                     "goal_ci_handoff_safety: read-only local GitHub Actions handoff",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -26320,6 +26386,20 @@ def _html_page(
     .goal-workflow-map-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-workflow-map-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-workflow-map-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .goal-ci-handoff {{ border-left:4px solid var(--ok); }}
+    .goal-ci-handoff dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .goal-ci-handoff-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-ci-handoff-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .goal-ci-handoff-card h3 {{ margin-top:0; }}
+    .goal-ci-handoff-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .goal-ci-handoff-primary {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
+    .goal-ci-handoff-action, .goal-ci-handoff-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-ci-handoff-action {{ background:var(--accent); color:#fff; }}
+    .goal-ci-handoff-link {{ background:var(--surface); color:var(--accent); }}
+    .goal-ci-command {{ display:block; margin:8px 0; white-space:normal; word-break:break-word; overflow-wrap:anywhere; font-size:12px; line-height:1.35; }}
+    .goal-ci-handoff-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-ci-handoff-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .goal-ci-handoff-evidence:not([open]) > :not(summary) {{ display:none; }}
     .workspace-daily-brief {{ border-left:4px solid var(--accent); }}
     .workspace-daily-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .workspace-daily-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -26832,7 +26912,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} .goal-workflow-map, #goal-ci-handoff, #goal-remaining-work {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} .goal-workflow-map, #goal-ci-handoff, #goal-remaining-work {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

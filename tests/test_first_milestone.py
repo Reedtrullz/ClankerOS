@@ -9249,6 +9249,19 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert goal.body.index("id='goal-ci-handoff'") < goal.body.index("id='goal-live-state'")
     assert "Goal CI Handoff" in goal.body
     assert "data-goal-ci-handoff='true'" in goal.body
+    assert "data-goal-ci-handoff-actions='true'" in goal.body
+    assert "data-goal-ci-handoff-check='true'" in goal.body
+    assert "data-goal-ci-handoff-record='true'" in goal.body
+    assert "data-goal-ci-handoff-proof='true'" in goal.body
+    assert "data-goal-ci-handoff-full='true'" in goal.body
+    assert "data-goal-ci-handoff-finish='true'" in goal.body
+    assert "data-goal-ci-handoff-evidence='true'" in goal.body
+    assert "Goal CI handoff evidence" in goal.body
+    assert "Check GitHub" in goal.body
+    assert "Record Proof" in goal.body
+    assert "Current Proof" in goal.body
+    assert "Full Suite" in goal.body
+    assert "Finish Today" in goal.body
     assert f"goal_ci_handoff_goal</dt><dd>{result.goal_id}" in goal.body
     assert "goal_ci_handoff_project</dt><dd>local-app-demo" in goal.body
     assert "goal_ci_handoff_status</dt><dd>current_success" in goal.body

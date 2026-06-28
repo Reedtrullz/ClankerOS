@@ -1,5 +1,21 @@
 # Status
 
+## 2026-06-28 Goal CI Handoff Action Cards
+
+- Made `/goals/<goal_id>#goal-ci-handoff` action-first by adding visible Check
+  GitHub, Record Proof, Current Proof, Full Suite, and Finish Today cards after
+  the Goal Workflow Map.
+- Kept the exact `gh run list` / `gh run view` command templates, current
+  project proof status, checkout match status, same-page proof recording target,
+  global CI evidence target, and zero-effect counters in collapsed
+  `Goal CI handoff evidence`.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused route assertions.
+- Non-claims: this is a local browser UX and documentation slice. It does not
+  fetch GitHub status, poll network services, write workspace state on GET,
+  create CI evidence without confirmation, call providers, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+
 ## 2026-06-28 Goal Workflow Map Action Cards
 
 - Made `/goals/<goal_id>#goal-workflow-map` action-first by adding visible
