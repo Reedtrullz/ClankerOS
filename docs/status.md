@@ -4,6 +4,14 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/goals/<goal_id>` now keeps the top of the Goal detail page more
+  action-first: the Goal Jump Bar still exposes the nine daily anchors, the
+  Goal Command Bar opens with visible Now, Phase, Progress, Proof, and Resume
+  cards, and the Goal Operator Workbench keeps its do/check/unblock/finish
+  cards visible. Jump, command, workbench, and full section-index evidence are
+  collapsed by default while preserving phase, next action, current gate,
+  project-scoped CI proof posture, full anchor map, and zero-effect counters in
+  the DOM.
 - `/goals` is now content-first and board-first instead of shared-diagnostic or
   command-readback-first: the `Goal Board Workbench` opens the page before
   Route Context, Operator Focus, and the `Goal Board Command Bar`, with visible

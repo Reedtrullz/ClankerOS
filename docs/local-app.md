@@ -192,14 +192,15 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   read-only `Goal Jump Bar` for phase, action, workflow, timeline, evidence,
   artifacts, notes, git, and remaining work. Its visible `1`-`9` key badges
   and `aria-keyshortcuts` jump to those local anchors without submitting
-  forms, then a compact fixed desktop `Goal Action Dock` keeps the current action,
+  forms while jump evidence stays collapsed by default, then a compact fixed
+  desktop `Goal Action Dock` keeps the current action,
   gate, CI proof target, and resume route visible while jumping directly to the
   existing confirmed Goal action form when one is available and becomes static on
   narrow
   screens. The dock appears before the Goal
   Command Bar, Goal Operator Workbench, Goal Daily Loop, Goal Return Brief,
   Goal Continuation Rail, next action, next recommendation, Goal Workflow Map,
-  Goal CI Handoff, live state, and section index before the detailed overview, goal risk, completion criteria,
+  Goal CI Handoff, live state, and collapsed section index before the detailed overview, goal risk, completion criteria,
   progress, chronological timeline, activity log, delegations, runs, approvals,
   evidence, artifacts, memory, skills used, git status, operator notes, a
   goal-scoped resume snapshot, and remaining work. The timeline starts with a
@@ -215,14 +216,17 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   it shows the large phase label, reason, operator attention cue, next surface,
   latest activity, and zero-effect boundary so the operator knows what is
   happening without opening the CLI. A read-only `Goal Command Bar` appears
-  above the detailed cards with the current phase, one primary action, target
-  local surface, progress, open/waiting counts, resume route, project-scoped CI
-  proof state, and write-on-GET/network/external-effect boundaries. A
+  above the detailed cards with visible Now, Phase, Progress, Proof, and Resume
+  cards, while the current phase, one primary action, target local surface,
+  progress, open/waiting counts, resume route, project-scoped CI proof state,
+  and write-on-GET/network/external-effect boundaries remain in collapsed
+  command evidence. A
   `Goal Operator Workbench` follows with a human-readable do/check/unblock/
   finish strip, with its primary action jumping directly to the in-page
   action-form target when available, the
   source surface, current gate/progress, first unblock surface, and confirmed
-  local-action counters before the longer diagnostic sections. The Goal Next
+  local-action counters in collapsed workbench evidence before the longer
+  diagnostic sections. The Goal Next
   Action section starts with a human-first focus strip for Now, Gate, Target,
   and Boundary, with one primary link to the existing confirmed form or source
   surface, then renders the confirmed form before collapsed action evidence.
@@ -230,10 +234,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   daily anchors one click or keypress away without covering later controls, and
   the Goal Action Dock keeps the current action reachable from deep scroll
   positions by jumping directly to the confirmed form without adding a second
-  action form. The Goal Section Index links
-  directly to the Timeline, Activity, and Git command bars as well as the
-  detailed sections, so long Goal pages remain navigable from their scan-first
-  operator surfaces. Goal
+  action form. The Goal Section Index stays available as a collapsed full
+  anchor map and links directly to the Timeline, Activity, and Git command bars
+  as well as the detailed sections, so long Goal pages remain navigable from
+  their scan-first operator surfaces without showing the whole anchor list by
+  default. Goal
   Overview starts with a read-only `Goal Overview Command Bar` that condenses
   identity, status, phase, risk, progress, task/delegation/run/approval counts,
   the next click, and zero-effect boundaries before the raw goal metadata. Goal Risk

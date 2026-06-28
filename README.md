@@ -284,6 +284,7 @@ banner immediately after the Goal summary, then shows an in-flow read-only
 Goal Jump Bar for phase, action, workflow, timeline, evidence, artifacts,
 notes, git, and remaining work. Its visible `1`-`9` key badges and
 `aria-keyshortcuts` jump to those local anchors without submitting forms,
+while jump-state evidence stays collapsed by default,
 then a compact fixed desktop `Goal Action Dock` keeps the current action, gate,
 CI proof target, and resume route visible while jumping directly to the
 existing confirmed Goal action form when one is available. The dock becomes
@@ -291,21 +292,23 @@ static on narrow screens and
 precedes the Goal Command Bar, Goal
 Operator Workbench, Goal Daily Loop, Goal Return Brief, Goal Continuation Rail,
 next action, next recommendation, Goal Workflow Map, Goal CI Handoff, live
-state, and section index before the detailed progress, timeline, activity log, goal risk, completion
+state, and collapsed section index before the detailed progress, timeline, activity log, goal risk, completion
 criteria, completion readiness, evidence, delegations, runs, approvals,
 artifacts, a typed Goal Artifact Explorer, memory, skills used, git status,
 operator notes, a goal-scoped resume snapshot, and remaining work. The page
 auto-refreshes by local polling, pauses while the operator is editing a form or
-the tab is hidden, and stays local-only. The Goal Command Bar near the top condenses
-current phase, one primary action, target local surface, progress, waiting
+the tab is hidden, and stays local-only. The Goal Command Bar near the top now
+opens with visible Now, Phase, Progress, Proof, and Resume cards, while its
+full current phase, primary action, target local surface, progress, waiting
 counts, resume route, latest project-scoped CI proof state, and zero-effect
-boundary so the operator can choose the next click without scrolling. Goal
+boundary stay available in collapsed command evidence. Goal
 Operator Workbench follows it with a human-readable do/check/unblock/finish
 strip: its primary action points directly at the in-page Goal action form when
 one is available, links
 the source surface and first unblock surface, names the current gate/progress,
-and exposes confirmation/write/provider/network/external-effect counters
-before the deeper diagnostic sections. The Goal Next Action section now starts
+and keeps confirmation/write/provider/network/external-effect counters
+available in collapsed workbench evidence before the deeper diagnostic
+sections. The Goal Next Action section now starts
 with a human-first focus strip for Now, Gate, Target, and Boundary, with one
 primary link to the existing confirmed form or source surface, then renders the
 confirmed form before collapsed action evidence. Goal Daily Loop includes a confirmed
@@ -315,9 +318,10 @@ mutating external systems. The read-only `Goal Continuation Rail` follows the
 return brief and turns the current gate plus the next few local gates into a
 short path of operator actions and surfaces, while keeping the eventual manual
 publish boundary explicit. Goal
-Section Index now also links directly to the Timeline, Activity, and Git
-command bars, so the long Goal page can jump to the scan-first operational
-panels instead of only the longer detail sections. Goal
+Section Index remains available as a collapsed full anchor map and links
+directly to the Timeline, Activity, and Git command bars, so the long Goal page
+can jump to the scan-first operational panels without dropping a fifty-link
+readback into the top of the page. Goal
 Overview now starts with a read-only `Goal Overview Command Bar` that makes the
 goal identity, status, phase, risk, progress, task/delegation/run/approval
 counts, next click, and no-effect boundary visible before the raw metadata. Goal

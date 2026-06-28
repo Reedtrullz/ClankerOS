@@ -594,6 +594,11 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             [
                 "Timeline",
                 "Goal Operator Workbench",
+                "data-goal-command-strip='true'",
+                "data-goal-command-evidence='true'",
+                "data-goal-jump-evidence='true'",
+                "data-goal-workbench-evidence='true'",
+                "data-goal-section-index-evidence='true'",
                 "Goal Return Brief",
                 "data-goal-return-brief='true'",
                 "goal_return_current_gate</dt><dd>commit_request",
@@ -7874,6 +7879,13 @@ def _goal_jump_bar(phase: str, next_action: GoalNextAction) -> str:
     return "".join(
         [
             "<section id='goal-jump-bar' class='panel goal-jump-bar' data-goal-jump-bar='true'><h2>Goal Jump Bar</h2>",
+            "<p class='muted'>Jump to the nine surfaces an operator uses most on a long Goal page.</p>",
+            "<nav aria-label='Goal jump targets'>",
+            "<ul class='goal-jump-links' data-goal-jump-shortcuts='true'>",
+            "".join(f"<li>{item}</li>" for item in link_items),
+            "</ul>",
+            "</nav>",
+            "<details class='goal-jump-evidence' data-goal-jump-evidence='true'><summary>Goal jump evidence</summary>",
             _kv(
                 [
                     ("goal_jump_bar_status", "available"),
@@ -7887,11 +7899,6 @@ def _goal_jump_bar(phase: str, next_action: GoalNextAction) -> str:
                     ("goal_jump_bar_external_effects_created", "false"),
                 ]
             ),
-            "<nav aria-label='Goal jump targets'>",
-            "<ul class='goal-jump-links' data-goal-jump-shortcuts='true'>",
-            "".join(f"<li>{item}</li>" for item in link_items),
-            "</ul>",
-            "</nav>",
             _ul(
                 [
                     f"goal_jump_now: {phase} -> {next_action.action}",
@@ -7899,6 +7906,7 @@ def _goal_jump_bar(phase: str, next_action: GoalNextAction) -> str:
                     "goal_jump_safety: read-only local anchor navigation",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -8119,18 +8127,25 @@ def _goal_section_index() -> str:
         f"<a href='#{_e(anchor)}'>{_e(label)}</a>"
         for label, anchor in sections
     ]
-    return (
-        "<section id='goal-section-index'><h2>Goal Section Index</h2>"
-        + _kv(
-            [
-                ("goal_section_index_status", "available"),
-                ("goal_section_count", str(len(sections))),
-                ("goal_section_index_write_on_get", "false"),
-                ("goal_section_index_external_effects_created", "false"),
-            ]
-        )
-        + _ul(links)
-        + "</section>"
+    return "".join(
+        [
+            "<section id='goal-section-index' class='panel goal-section-index' data-goal-section-index='true'><h2>Goal Section Index</h2>",
+            "<p class='muted'>Full anchor map for deep review, kept collapsed so the top of the Goal stays action-first.</p>",
+            f"<details class='goal-section-index-evidence' data-goal-section-index-evidence='true'><summary>Full Goal section index ({len(sections)})</summary>",
+            _kv(
+                [
+                    ("goal_section_index_status", "available"),
+                    ("goal_section_count", str(len(sections))),
+                    ("goal_section_index_write_on_get", "false"),
+                    ("goal_section_index_external_effects_created", "false"),
+                ]
+            ),
+            "<nav aria-label='Full Goal section index'>",
+            _ul(links),
+            "</nav>",
+            "</details>",
+            "</section>",
+        ]
     )
 
 
@@ -8198,22 +8213,22 @@ def _goal_operator_workbench(
             "<div class='goal-workbench-card goal-workbench-primary'>",
             "<h3>Do Now</h3>",
             f"<p>{_e(_goal_operator_attention(phase, next_action))}</p>",
-            f"<a class='goal-workbench-action' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+            f"<a class='goal-workbench-action' data-goal-workbench-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
             "</div>",
             "<div class='goal-workbench-card'>",
             "<h3>Check</h3>",
             f"<p>Gate: {_e(current_gate.replace('_', ' '))}</p>",
-            f"<a class='goal-workbench-link' href='{_e(next_action.href)}'>Open source surface</a>",
+            f"<a class='goal-workbench-link' data-goal-workbench-check='true' href='{_e(next_action.href)}'>Open source surface</a>",
             "</div>",
             "<div class='goal-workbench-card'>",
             "<h3>Unblock</h3>",
             f"<p>{_e(waiting_items)} waiting item(s)</p>",
-            f"<a class='goal-workbench-link' href='{_e(unblock_href)}'>{_e(unblock_action)}</a>",
+            f"<a class='goal-workbench-link' data-goal-workbench-unblock='true' href='{_e(unblock_href)}'>{_e(unblock_action)}</a>",
             "</div>",
             "<div class='goal-workbench-card'>",
             "<h3>Finish Today</h3>",
             "<p>Save resume state</p>",
-            "<a class='goal-workbench-link' href='#goal-daily-loop'>Open finish form</a>",
+            "<a class='goal-workbench-link' data-goal-workbench-finish='true' href='#goal-daily-loop'>Open finish form</a>",
             "</div>",
         ]
     )
@@ -8223,6 +8238,7 @@ def _goal_operator_workbench(
             "<div class='goal-workbench-grid' data-goal-workbench-actions='true'>",
             action_cards,
             "</div>",
+            "<details class='goal-workbench-evidence' data-goal-workbench-evidence='true'><summary>Goal workbench evidence</summary>",
             _kv(
                 [
                     ("goal_workbench_status", workbench_status),
@@ -8274,6 +8290,7 @@ def _goal_operator_workbench(
                     "goal_workbench_safety: confirmed local actions only",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -8569,10 +8586,46 @@ def _goal_command_bar(
         ci_status = str(ci_record.status)
     attention = _goal_operator_attention(phase, next_action)
     progress = _goal_progress_label(state)
+    form_available = bool(_goal_next_action_form(state, next_action))
+    primary_href = "#goal-next-action-form" if form_available else next_action.href
+    primary_label = "Open action form" if form_available else next_action.action
+    command_cards = "".join(
+        [
+            "<div class='goal-command-card goal-command-card-primary'>",
+            "<span class='goal-command-label'>Now</span>",
+            f"<strong>{_e(next_action.action)}</strong>",
+            f"<a class='goal-command-action' data-goal-command-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+            "</div>",
+            "<div class='goal-command-card'>",
+            "<span class='goal-command-label'>Phase</span>",
+            f"<strong>{_e(phase)}</strong>",
+            "<a class='goal-command-link' data-goal-command-phase='true' href='#goal-current-phase'>Current phase</a>",
+            "</div>",
+            "<div class='goal-command-card'>",
+            "<span class='goal-command-label'>Progress</span>",
+            f"<strong>{_e(progress)}</strong>",
+            "<a class='goal-command-link' data-goal-command-progress='true' href='#goal-progress-command-bar'>Progress</a>",
+            "</div>",
+            "<div class='goal-command-card'>",
+            "<span class='goal-command-label'>Proof</span>",
+            f"<strong>{_e(ci_status)}</strong>",
+            "<a class='goal-command-link' data-goal-command-proof='true' href='#goal-ci-handoff'>CI handoff</a>",
+            "</div>",
+            "<div class='goal-command-card'>",
+            "<span class='goal-command-label'>Resume</span>",
+            "<strong>/resume</strong>",
+            "<a class='goal-command-link' data-goal-command-resume='true' href='/resume'>Resume workspace</a>",
+            "</div>",
+        ]
+    )
     return "".join(
         [
             "<section id='goal-command-bar' class='panel goal-command-bar' data-goal-command-bar='true'><h2>Goal Command Bar</h2>",
             "<p class='muted'>The shortest useful readback for this goal: state, click, waiting work, proof, and safety boundary.</p>",
+            "<div class='goal-command-strip' data-goal-command-strip='true'>",
+            command_cards,
+            "</div>",
+            "<details class='goal-command-evidence' data-goal-command-evidence='true'><summary>Goal command evidence</summary>",
             _kv(
                 [
                     ("goal_command_bar_mode", "goal"),
@@ -8624,6 +8677,7 @@ def _goal_command_bar(
                     ),
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -25810,6 +25864,11 @@ def _html_page(
     .goal-jump-link {{ display:inline-flex; align-items:center; min-height:32px; max-width:100%; padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:var(--surface); text-decoration:none; overflow-wrap:anywhere; }}
     .goal-jump-link kbd {{ display:inline-grid; place-items:center; min-width:22px; min-height:22px; margin-right:6px; border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; background:var(--panel); color:var(--ink); font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px; }}
     .goal-jump-link:focus, .goal-jump-link:hover {{ border-color:var(--accent); outline:0; }}
+    .goal-jump-evidence, .goal-section-index-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-jump-evidence summary, .goal-section-index-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .goal-jump-evidence:not([open]) > :not(summary), .goal-section-index-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .goal-section-index ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:8px; }}
+    .goal-section-index li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     body:has(.goal-action-dock) main {{ padding-bottom:150px; }}
     .goal-action-dock {{ position:fixed; left:max(304px, calc((100vw - 1280px) / 2 + 304px)); right:max(24px, calc((100vw - 1280px) / 2 + 24px)); bottom:16px; z-index:3; max-height:42vh; overflow:auto; border-left:4px solid var(--ok); margin:0; box-shadow:0 4px 16px rgba(15,20,25,.16); }}
     .goal-action-dock h2 {{ font-size:14px; margin:0 0 8px; }}
@@ -25823,6 +25882,17 @@ def _html_page(
     .goal-action-dock ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-action-dock li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-command-bar {{ border-left:4px solid var(--accent); }}
+    .goal-command-strip {{ display:grid; grid-template-columns:minmax(230px, 1.35fr) repeat(4, minmax(140px, 1fr)); gap:8px; margin:10px 0; }}
+    .goal-command-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:9px 10px; display:grid; gap:5px; align-content:start; }}
+    .goal-command-card-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .goal-command-label {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .goal-command-card strong {{ overflow-wrap:anywhere; }}
+    .goal-command-action, .goal-command-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:32px; max-width:100%; width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-command-action {{ background:var(--accent); color:#fff; }}
+    .goal-command-link {{ background:var(--surface); color:var(--accent); }}
+    .goal-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .goal-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .goal-command-bar dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:8px; }}
     .goal-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -25844,6 +25914,9 @@ def _html_page(
     .goal-operator-workbench dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-operator-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-workbench-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-workbench-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .goal-workbench-evidence:not([open]) > :not(summary) {{ display:none; }}
     .goal-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
     .goal-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
     .goal-workbench-card h3 {{ margin-top:0; }}
@@ -26447,7 +26520,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

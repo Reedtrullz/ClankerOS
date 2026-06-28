@@ -8888,6 +8888,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_jump_shortcuts</dt><dd>1-9" in goal.body
     assert "goal_jump_bar_write_on_get</dt><dd>false" in goal.body
     assert "goal_jump_bar_external_effects_created</dt><dd>false" in goal.body
+    assert (
+        "<details class='goal-jump-evidence' data-goal-jump-evidence='true'>"
+        "<summary>Goal jump evidence</summary>"
+        in goal.body
+    )
     assert "data-goal-jump-shortcuts='true'" in goal.body
     assert "data-goal-jump-target='phase' href='#goal-current-phase' data-goal-jump-shortcut='1' aria-keyshortcuts='1'" in goal.body
     assert "data-goal-jump-target='action' href='#goal-next-action' data-goal-jump-shortcut='2' aria-keyshortcuts='2'" in goal.body
@@ -8998,7 +9003,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
     assert "goal_section_count</dt><dd>52" in goal.body
+    assert "data-goal-section-index-evidence='true'" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
+    assert "data-goal-command-strip='true'" in goal.body
+    assert "data-goal-command-evidence='true'" in goal.body
+    assert "data-goal-command-primary='true'" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
     assert f"goal_command_bar_primary_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
@@ -9025,6 +9034,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Operator Workbench" in goal.body
     assert "data-goal-operator-workbench='true'" in goal.body
     assert "data-goal-workbench-actions='true'" in goal.body
+    assert "data-goal-workbench-evidence='true'" in goal.body
+    assert "data-goal-workbench-primary='true'" in goal.body
     assert "goal_workbench_status</dt><dd>action_form_ready" in goal.body
     assert f"goal_workbench_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_workbench_project</dt><dd>{result.project_id}" in goal.body

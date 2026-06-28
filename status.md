@@ -1,5 +1,47 @@
 # Status
 
+## 2026-06-28 Goal Detail Action-First Evidence Surface
+
+- Made `/goals/<goal_id>` more operator-first by keeping the Goal Jump Bar's
+  nine daily anchors visible while moving jump evidence into a collapsed
+  drawer.
+- Added a visible five-card Goal Command Strip for Now, Phase, Progress, Proof,
+  and Resume, then moved the detailed command readback into collapsed
+  `Goal command evidence`.
+- Kept the Goal Operator Workbench do/check/unblock/finish cards visible while
+  moving gate/progress/safety readbacks into collapsed `Goal workbench
+  evidence`.
+- Collapsed the full 52-link Goal Section Index by default while preserving the
+  entire anchor map, phase/action/proof/readiness state, and zero-effect
+  counters in the DOM.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused route assertions.
+- Non-claims: this is local browser routing and layout. `/goals/<goal_id>` does
+  not write on GET, approve work, execute work, create commits, push, create
+  PRs, deploy, call providers, fetch GitHub, mutate external systems, or expose
+  arbitrary raw filesystem browsing. Existing confirmed forms still own writes.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, route markers matched, artifact rejection checks matched,
+    provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including new Goal detail
+    evidence handles, provider calls 0, network actions 0, external mutations 0
+  - Browser QA against
+    `http://127.0.0.1:8827/goals/goal_ecbb4ebf1d50`: desktop `1280x900`
+    rendered five Goal Command Strip cards and four workbench cards, with jump,
+    command, workbench, and section-index evidence closed by default; clicking
+    the primary command card landed on `#goal-next-action-form`; no horizontal
+    overflow and no warning/error logs.
+  - Browser QA mobile `390x844`: five command cards stacked one column, four
+    workbench cards remained available, all four evidence drawers stayed closed
+    by default, no horizontal overflow, and no warning/error logs.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Goal Board Workbench-First Surface
 
 - Made `/goals` content-first and board-first by rendering `Goal Board
