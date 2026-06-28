@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/goals` now includes a `Goal Board Workbench` after the command bar, with
+  visible Do Now, Selected Goal, Attention, and Start/Resume cards. It routes
+  selected goals directly to their confirmed action form, sends approval
+  attention to `/approvals?goal_id=<goal_id>`, and anchors active, paused, and
+  completed lanes for faster board navigation.
 - Run detail pages now include a read-only `Run Gate Map` after the operator
   workbench, showing the eight local/manual gates from review through manual
   publish, the current gate, done/waiting/blocked counts, direct existing

@@ -1,5 +1,43 @@
 # Status
 
+## 2026-06-28 Goal Board Workbench
+
+- Made `/goals` more usable as a daily board by adding a `Goal Board
+  Workbench` immediately after the existing command bar. It shows four visible
+  cards for Do Now, Selected Goal, Attention, and Start/Resume before the
+  active/paused/completed lane lists.
+- The workbench follows the same saved-goal/active-goal selection logic as the
+  command bar, links directly to `/goals/<goal_id>#goal-next-action-form` when
+  the selected Goal has a confirmed browser action form, and routes pending
+  approval attention through `/approvals?goal_id=<goal_id>`.
+- Added stable `data-goal-board-workbench`,
+  `data-goal-board-workbench-actions`, and
+  `data-goal-board-workbench-primary` markers, plus explicit lane anchors for
+  `#active-goals`, `#paused-goals`, and `#completed-goals`.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is read-only board guidance and local browser navigation.
+  It does not write on GET, create action authority, approve work, run work,
+  call providers, fetch GitHub from ClankerOS, poll network services, commit,
+  push, create PRs, deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-board-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-board-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/goals` and Goal routes matched expected
+    snippets, provider/network/external mutation counters remained `0`
+  - Browser QA through Playwright using local Chrome against
+    `http://127.0.0.1:8802/goals`: desktop and mobile rendered the
+    `Goal Board Workbench`, showed four cards, linked the primary action to
+    `/goals/goal_acd338438029#goal-next-action-form`, routed Attention to
+    `/approvals?goal_id=goal_acd338438029`, exposed active/paused/completed
+    lane anchors, collapsed the workbench grid to one column on `390x844`, and
+    showed no visible overflow or console warning/error logs.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Run Gate Map And Scoped Approvals
 
 - Made run detail pages more usable for daily operation by adding a read-only

@@ -5111,6 +5111,22 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "goal_board_external_effects_created</dt><dd>false" in goals.body
     assert "goal_board_now: Register ClankerOS project" in goals.body
     assert "goal_board_first_run: step=create_project reason=no_project_registered" in goals.body
+    assert "Goal Board Workbench" in goals.body
+    assert "data-goal-board-workbench='true'" in goals.body
+    assert "data-goal-board-workbench-actions='true'" in goals.body
+    assert "data-goal-board-workbench-primary='true'" in goals.body
+    assert "goal_board_workbench_status</dt><dd>first_run" in goals.body
+    assert "goal_board_workbench_current_step</dt><dd>create_project" in goals.body
+    assert "goal_board_workbench_primary_action</dt><dd>Register ClankerOS project" in goals.body
+    assert (
+        "goal_board_workbench_primary_surface</dt><dd><a href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in goals.body
+    assert "goal_board_workbench_action_form_available</dt><dd>true" in goals.body
+    assert "goal_board_workbench_write_on_get</dt><dd>false" in goals.body
+    assert "goal_board_workbench_network_actions_taken</dt><dd>0" in goals.body
+    assert "goal_board_workbench_external_effects_created</dt><dd>false" in goals.body
+    assert "goal_board_workbench_click: <a href='#first-run-create-project'>Create Project</a>" in goals.body
     assert "id='first-run-guide'" in goals.body
     assert "First Run Guide" in goals.body
     assert "first_run_current_step</dt><dd>create_project" in goals.body
@@ -5354,6 +5370,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     ) in registered_goals.body
     assert "first_run_command_action_form_available</dt><dd>true" in registered_goals.body
     assert "first_run_command_inline_action_form_available</dt><dd>false" in registered_goals.body
+    assert "goal_board_workbench_status</dt><dd>first_run" in registered_goals.body
+    assert "goal_board_workbench_current_step</dt><dd>create_first_goal" in registered_goals.body
+    assert "goal_board_workbench_primary_action</dt><dd>Create first goal" in registered_goals.body
+    assert (
+        "goal_board_workbench_primary_surface</dt><dd><a href='#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in registered_goals.body
     registered_home = render_local_app_route(tmp_path, "/")
     assert registered_home.status == 200
     assert "home_live_refresh_next_action</dt><dd>Create first goal" in registered_home.body
@@ -5539,6 +5562,18 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-first-run-command-action='true'" in goals_after_first_goal.body
     assert "Run First-Run Action" in goals_after_first_goal.body
     assert "action='/actions/delegate'" in goals_after_first_goal.body
+    assert "Goal Board Workbench" in goals_after_first_goal.body
+    assert "goal_board_workbench_status</dt><dd>available" in goals_after_first_goal.body
+    assert "goal_board_workbench_source</dt><dd>saved_goal" in goals_after_first_goal.body
+    assert f"goal_board_workbench_selected_goal</dt><dd><a href='/goals/{created_goal_id}'" in goals_after_first_goal.body
+    assert "goal_board_workbench_primary_action</dt><dd>Create scout delegation" in goals_after_first_goal.body
+    assert (
+        f"goal_board_workbench_primary_surface</dt><dd><a href='/goals/{created_goal_id}#goal-next-action-form'>"
+        "Use Goal action form</a>"
+    ) in goals_after_first_goal.body
+    assert "goal_board_workbench_action_form_available</dt><dd>true" in goals_after_first_goal.body
+    assert "goal_board_workbench_attention_reason</dt><dd>no_waiting_items" in goals_after_first_goal.body
+    assert "id='active-goals'" in goals_after_first_goal.body
     assert f"/goals/{created_goal_id}" in goals_after_first_goal.body
     pause_confirmation = render_local_app_route(
         tmp_path,
@@ -7912,6 +7947,32 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_board_external_effects_created</dt><dd>false" in goals.body
     assert "goal_board_now: Create commit request" in goals.body
     assert "goal_board_waiting: approvals=1 incidents=0 recommendations=0" in goals.body
+    assert "Goal Board Workbench" in goals.body
+    assert "data-goal-board-workbench='true'" in goals.body
+    assert "data-goal-board-workbench-actions='true'" in goals.body
+    assert "goal_board_workbench_status</dt><dd>available" in goals.body
+    assert "goal_board_workbench_source</dt><dd>active_goal" in goals.body
+    assert "goal_board_workbench_total_goals</dt><dd>1" in goals.body
+    assert "goal_board_workbench_active_goals</dt><dd>1" in goals.body
+    assert f"goal_board_workbench_selected_goal</dt><dd><a href='/goals/{result.goal_id}'" in goals.body
+    assert "goal_board_workbench_phase</dt><dd>Ready to commit" in goals.body
+    assert "goal_board_workbench_primary_action</dt><dd>Create commit request" in goals.body
+    assert (
+        f"goal_board_workbench_primary_surface</dt><dd><a href='/goals/{result.goal_id}#goal-next-action-form'>"
+        "Use Goal action form</a>"
+    ) in goals.body
+    assert "goal_board_workbench_action_form_available</dt><dd>true" in goals.body
+    assert "goal_board_workbench_waiting_items</dt><dd>1" in goals.body
+    assert "goal_board_workbench_pending_approvals</dt><dd>1" in goals.body
+    assert "goal_board_workbench_attention_reason</dt><dd>pending_approvals" in goals.body
+    assert f"goal_board_workbench_attention_surface</dt><dd><a href='/approvals?goal_id={result.goal_id}'>Review approvals</a>" in goals.body
+    assert "goal_board_workbench_lane_surface</dt><dd><a href='#active-goals'>Active Goals</a>" in goals.body
+    assert "goal_board_workbench_write_on_get</dt><dd>false" in goals.body
+    assert "goal_board_workbench_network_actions_taken</dt><dd>0" in goals.body
+    assert "goal_board_workbench_external_effects_created</dt><dd>false" in goals.body
+    assert "id='active-goals'" in goals.body
+    assert "id='paused-goals'" in goals.body
+    assert "id='completed-goals'" in goals.body
     assert "id='goal-start-another'" in goals.body
     assert "Start Another Goal" in goals.body
     assert "goal_creation_form_available</dt><dd>true" in goals.body
@@ -11491,6 +11552,10 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert goals_after_completion.status == 200
     assert "Completed Goals" in goals_after_completion.body
     assert f"/goals/{goal_id}" in goals_after_completion.body
+    assert "goal_board_workbench_source</dt><dd>saved_goal" in goals_after_completion.body
+    assert "goal_board_workbench_phase</dt><dd>Completed" in goals_after_completion.body
+    assert "goal_board_workbench_primary_action</dt><dd>Review completed goal evidence" in goals_after_completion.body
+    assert "goal_board_workbench_lane_surface</dt><dd><a href='#completed-goals'>Completed Goals</a>" in goals_after_completion.body
 
     home_after_completion = render_local_app_route(tmp_path, "/")
     assert home_after_completion.status == 200

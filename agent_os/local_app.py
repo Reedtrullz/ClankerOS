@@ -6445,16 +6445,24 @@ def _goals(root: Path) -> str:
                 "</section>",
                 _goal_board_command_bar(
                     root,
-                    storage,
-                    rows=rows,
-                    active=[],
-                    paused=[],
-                    completed=[],
-                ),
-                _first_run_panel(root, storage),
-                _non_claim_banner(),
-            ]
-        )
+                storage,
+                rows=rows,
+                active=[],
+                paused=[],
+                completed=[],
+            ),
+            _goal_board_workbench(
+                root,
+                storage,
+                rows=rows,
+                active=[],
+                paused=[],
+                completed=[],
+            ),
+            _first_run_panel(root, storage),
+            _non_claim_banner(),
+        ]
+    )
     active = [row for row in rows if _goal_bucket(row) == "active"]
     paused = [row for row in rows if _goal_bucket(row) == "paused"]
     completed = [row for row in rows if _goal_bucket(row) == "completed"]
@@ -6480,10 +6488,30 @@ def _goals(root: Path) -> str:
                 paused=paused,
                 completed=completed,
             ),
+            _goal_board_workbench(
+                root,
+                storage,
+                rows=rows,
+                active=active,
+                paused=paused,
+                completed=completed,
+            ),
             _goal_creation_panel(storage, rows),
-            _list_section("Active Goals", [_goal_index_line(root, storage, row) for row in active]),
-            _list_section("Paused Goals", [_goal_index_line(root, storage, row) for row in paused]),
-            _list_section("Completed Goals", [_goal_index_line(root, storage, row) for row in completed]),
+            _list_section(
+                "Active Goals",
+                [_goal_index_line(root, storage, row) for row in active],
+                anchor_id="active-goals",
+            ),
+            _list_section(
+                "Paused Goals",
+                [_goal_index_line(root, storage, row) for row in paused],
+                anchor_id="paused-goals",
+            ),
+            _list_section(
+                "Completed Goals",
+                [_goal_index_line(root, storage, row) for row in completed],
+                anchor_id="completed-goals",
+            ),
             _first_run_panel(root, storage),
             _non_claim_banner(),
         ]
@@ -6690,6 +6718,241 @@ def _goal_board_selected_row(
     if completed:
         return completed[0], "completed_goal"
     return None, "first_run"
+
+
+def _goal_board_workbench(
+    root: Path,
+    storage: Storage,
+    *,
+    rows: list[sqlite3.Row],
+    active: list[sqlite3.Row],
+    paused: list[sqlite3.Row],
+    completed: list[sqlite3.Row],
+) -> str:
+    selected_row, source = _goal_board_selected_row(root, rows, active, paused, completed)
+    if selected_row is None:
+        first_run = _first_run_progress(root, storage)
+        current_step = str(first_run["current_step"])
+        if current_step == "create_project":
+            primary_href = "#first-run-create-project"
+            primary_label = "Create Project"
+        elif current_step == "create_first_goal":
+            primary_href = "#first-run-create-goal"
+            primary_label = "Create First Goal"
+        elif first_run["goal_id"]:
+            primary_href = f"/goals/{quote(str(first_run['goal_id']))}"
+            primary_label = first_run["next_action"]
+        else:
+            primary_href = "#first-run-guide"
+            primary_label = first_run["next_action"]
+        primary_surface = SafeHtml(
+            f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"
+        )
+        action_cards = "".join(
+            [
+                "<div class='goal-board-card goal-board-primary'>",
+                "<h3>Do Now</h3>",
+                f"<p>{_e(first_run['next_reason'])}</p>",
+                f"<a class='goal-board-action' data-goal-board-workbench-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                "</div>",
+                "<div class='goal-board-card'>",
+                "<h3>First Run</h3>",
+                f"<p>{_e(current_step.replace('_', ' '))}</p>",
+                "<a class='goal-board-link' href='#first-run-guide'>Open guide</a>",
+                "</div>",
+                "<div class='goal-board-card'>",
+                "<h3>Project</h3>",
+                f"<p>{_e(first_run['default_project'])}</p>",
+                "<a class='goal-board-link' href='#first-run-guide'>Setup forms</a>",
+                "</div>",
+                "<div class='goal-board-card'>",
+                "<h3>Resume</h3>",
+                "<p>Saved workspace</p>",
+                "<a class='goal-board-link' href='/resume'>Open resume</a>",
+                "</div>",
+            ]
+        )
+        lines = [
+            f"goal_board_workbench_now: {_e(first_run['next_action'])}",
+            f"goal_board_workbench_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+            f"goal_board_workbench_first_run: step={_e(current_step)} reason={_e(first_run['next_reason'])}",
+            "goal_board_workbench_safety: confirmed first-run forms remain below",
+        ]
+        return "".join(
+            [
+                "<section id='goal-board-workbench' class='panel goal-board-workbench' data-goal-board-workbench='true'><h2>Goal Board Workbench</h2>",
+                "<p class='muted'>A board-level action surface for starting or returning to Goal work without using the CLI.</p>",
+                "<div class='goal-board-workbench-grid' data-goal-board-workbench-actions='true'>",
+                action_cards,
+                "</div>",
+                _kv(
+                    [
+                        ("goal_board_workbench_status", "first_run"),
+                        ("goal_board_workbench_source", source),
+                        ("goal_board_workbench_total_goals", "0"),
+                        ("goal_board_workbench_current_step", current_step),
+                        ("goal_board_workbench_primary_action", first_run["next_action"]),
+                        ("goal_board_workbench_primary_surface", primary_surface),
+                        ("goal_board_workbench_action_form_available", "true"),
+                        ("goal_board_workbench_confirmation_required", "true"),
+                        ("goal_board_workbench_project", first_run["default_project"]),
+                        ("goal_board_workbench_goal", "none"),
+                        ("goal_board_workbench_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+                        ("goal_board_workbench_write_on_get", "false"),
+                        ("goal_board_workbench_provider_calls_taken", "0"),
+                        ("goal_board_workbench_network_actions_taken", "0"),
+                        ("goal_board_workbench_external_effects_created", "false"),
+                    ]
+                ),
+                _ul(lines),
+                "</section>",
+            ]
+        )
+
+    goal_id = str(selected_row["id"])
+    state = _goal_state(root, storage, goal_id)
+    goal = state["goal"]
+    phase = _goal_current_phase(state)
+    next_action = _goal_next_action(root, state)
+    form_available = bool(_goal_next_action_form(state, next_action))
+    primary_href = _goal_board_action_href(goal.id, next_action.href, form_available)
+    primary_label = "Use Goal action form" if form_available else next_action.action
+    primary_surface = SafeHtml(
+        f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"
+    )
+    goal_label = _compact_label(goal.title or goal.description or goal.id, 72)
+    goal_surface = SafeHtml(
+        f"<a href='/goals/{quote(goal.id)}'>{_e(goal_label)}</a>"
+    )
+    selected_bucket = _goal_bucket(selected_row)
+    lane_anchor = {
+        "active": "#active-goals",
+        "paused": "#paused-goals",
+        "completed": "#completed-goals",
+    }.get(selected_bucket, "#active-goals")
+    lane_surface = SafeHtml(f"<a href='{_e(lane_anchor)}'>{_e(lane_anchor[1:].replace('-', ' ').title())}</a>")
+    open_incidents = sum(1 for row in state["incidents"] if row["status"] == "open")
+    open_recommendations = sum(
+        1 for row in state["recommendations"] if row["status"] == "open"
+    )
+    pending_approvals = (
+        _count_status(state["worktree_approvals"], "pending_operator_approval")
+        + _count_status(state["commit_approvals"], "pending_operator_approval")
+        + _count_status(state["publications"], "pending_operator_approval")
+    )
+    waiting_items = open_incidents + open_recommendations + pending_approvals
+    if pending_approvals:
+        attention_action = "Review approvals"
+        attention_href = f"/approvals?goal_id={quote(goal.id)}"
+        attention_reason = "pending_approvals"
+    elif open_incidents:
+        attention_action = "Inspect incidents"
+        attention_href = "/incidents"
+        attention_reason = "open_incidents"
+    elif open_recommendations:
+        attention_action = "Review recommendations"
+        attention_href = "/incidents"
+        attention_reason = "open_recommendations"
+    else:
+        attention_action = "Switch goal lane"
+        attention_href = lane_anchor
+        attention_reason = "no_waiting_items"
+    attention_surface = SafeHtml(
+        f"<a href='{_e(attention_href)}'>{_e(attention_action)}</a>"
+    )
+    action_cards = "".join(
+        [
+            "<div class='goal-board-card goal-board-primary'>",
+            "<h3>Do Now</h3>",
+            f"<p>{_e(next_action.action)}</p>",
+            f"<a class='goal-board-action' data-goal-board-workbench-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+            "</div>",
+            "<div class='goal-board-card'>",
+            "<h3>Selected Goal</h3>",
+            f"<p>{_e(phase)} · {_e(_goal_progress_label(state))}</p>",
+            f"<a class='goal-board-link' href='/goals/{quote(goal.id)}'>Open goal</a>",
+            "</div>",
+            "<div class='goal-board-card'>",
+            "<h3>Attention</h3>",
+            f"<p>{_e(str(waiting_items))} waiting item(s)</p>",
+            f"<a class='goal-board-link' href='{_e(attention_href)}'>{_e(attention_action)}</a>",
+            "</div>",
+            "<div class='goal-board-card'>",
+            "<h3>Start / Resume</h3>",
+            "<p>Queue controls</p>",
+            "<a class='goal-board-link' href='#goal-start-another'>Start goal</a> ",
+            "<a class='goal-board-link' href='/resume'>Resume</a>",
+            "</div>",
+        ]
+    )
+    lines = [
+        f"goal_board_workbench_now: {_e(next_action.action)}",
+        f"goal_board_workbench_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+        f"goal_board_workbench_goal: <a href='/goals/{quote(goal.id)}'>{_e(goal.id)}</a>",
+        (
+            "goal_board_workbench_waiting: "
+            f"approvals={pending_approvals} incidents={open_incidents} "
+            f"recommendations={open_recommendations}"
+        ),
+        f"goal_board_workbench_attention: {attention_surface}",
+        "goal_board_workbench_safety: read-only board guidance; confirmed actions remain on goal or approval surfaces",
+    ]
+    return "".join(
+        [
+            "<section id='goal-board-workbench' class='panel goal-board-workbench' data-goal-board-workbench='true'><h2>Goal Board Workbench</h2>",
+            "<p class='muted'>Board-level action cards for the selected Goal, waiting work, and queue management.</p>",
+            "<div class='goal-board-workbench-grid' data-goal-board-workbench-actions='true'>",
+            action_cards,
+            "</div>",
+            _kv(
+                [
+                    ("goal_board_workbench_status", "available"),
+                    ("goal_board_workbench_source", source),
+                    ("goal_board_workbench_total_goals", str(len(rows))),
+                    ("goal_board_workbench_active_goals", str(len(active))),
+                    ("goal_board_workbench_paused_goals", str(len(paused))),
+                    ("goal_board_workbench_completed_goals", str(len(completed))),
+                    ("goal_board_workbench_selected_goal", goal_surface),
+                    ("goal_board_workbench_project", goal.project_id),
+                    ("goal_board_workbench_phase", phase),
+                    ("goal_board_workbench_progress", _goal_progress_label(state)),
+                    ("goal_board_workbench_primary_action", next_action.action),
+                    ("goal_board_workbench_primary_surface", primary_surface),
+                    ("goal_board_workbench_action_form_available", str(form_available).lower()),
+                    (
+                        "goal_board_workbench_confirmation_required",
+                        str(form_available).lower(),
+                    ),
+                    ("goal_board_workbench_waiting_items", str(waiting_items)),
+                    ("goal_board_workbench_pending_approvals", str(pending_approvals)),
+                    ("goal_board_workbench_open_incidents", str(open_incidents)),
+                    ("goal_board_workbench_open_recommendations", str(open_recommendations)),
+                    ("goal_board_workbench_attention_reason", attention_reason),
+                    ("goal_board_workbench_attention_surface", attention_surface),
+                    ("goal_board_workbench_lane_surface", lane_surface),
+                    (
+                        "goal_board_workbench_create_goal_surface",
+                        SafeHtml("<a href='#goal-start-another'>Start Another Goal</a>"),
+                    ),
+                    ("goal_board_workbench_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+                    ("goal_board_workbench_write_on_get", "false"),
+                    ("goal_board_workbench_provider_calls_taken", "0"),
+                    ("goal_board_workbench_network_actions_taken", "0"),
+                    ("goal_board_workbench_external_effects_created", "false"),
+                ]
+            ),
+            _ul(lines),
+            "</section>",
+        ]
+    )
+
+
+def _goal_board_action_href(goal_id: str, href: str, form_available: bool) -> str:
+    if form_available:
+        return f"/goals/{quote(goal_id)}#goal-next-action-form"
+    if href.startswith("#"):
+        return f"/goals/{quote(goal_id)}{href}"
+    return href
 
 
 def _goal_detail(root: Path, goal_id: str) -> str:
@@ -23199,6 +23462,18 @@ def _html_page(
     .goal-board-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-board-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-board-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-board-workbench {{ border-left:4px solid var(--accent); }}
+    .goal-board-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .goal-board-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-board-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-board-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-board-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .goal-board-card h3 {{ margin-top:0; }}
+    .goal-board-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .goal-board-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .goal-board-action, .goal-board-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; margin:3px 3px 3px 0; }}
+    .goal-board-action {{ background:var(--accent); color:#fff; }}
+    .goal-board-link {{ background:var(--surface); color:var(--accent); }}
     .goal-risk-command-bar {{ border-left:4px solid var(--warn); }}
     .goal-risk-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-risk-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -23511,8 +23786,8 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
-    @media (max-width: 860px) {{ .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>

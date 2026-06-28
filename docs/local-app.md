@@ -164,8 +164,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   actions visible. A read-only `Goal Board Command Bar` summarizes total goal
   counts, the prioritized saved or active Goal, its phase, one next action,
   target surface, waiting counts, resume route, action availability, and
-  write/network/external-effect counters. The page exposes a confirmed local
-  `Start Another Goal` form for registered projects, plus
+  write/network/external-effect counters. A `Goal Board Workbench` follows
+  with Do Now, Selected Goal, Attention, and Start/Resume cards, including
+  direct links to the selected Goal's confirmed action form, scoped
+  `/approvals?goal_id=<goal_id>` attention routing, lane anchors, and
+  `/resume`. The page exposes a confirmed local `Start Another Goal` form for
+  registered projects, plus
   confirmed local `register-project` and `create-goal` forms for a fresh
   checkout.
 - `/goals/<goal_id>` - goal-centered workbench that opens with the large
