@@ -489,7 +489,14 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             "/demo",
             "Demo Scenario",
             [
+                "Demo Operator Workbench",
+                "data-demo-operator-workbench='true'",
+                "data-demo-workbench-primary='true'",
+                "data-demo-workbench-evidence='true'",
+                "demo_workbench_fixture_status</dt><dd>available",
+                "demo_workbench_next_action</dt><dd>request_commit_for_reviewed_run",
                 "Demo Command Bar",
+                "data-demo-command-evidence='true'",
                 "demo_command_fixture_status</dt><dd>available",
                 "demo_command_primary_command</dt><dd>python3 -m agent_os.cli demo",
                 "Demo Dogfooding Links",
@@ -572,8 +579,6 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "today_workbench_status</dt><dd>goal_ready",
                 "today_workflow_map_status</dt><dd>available",
                 "today_workflow_map_current_gate</dt><dd>commit_request",
-                "today_ci_handoff_status</dt><dd>missing",
-                "today_ci_handoff_latest_source</dt><dd>none",
                 "today_ci_handoff_app_github_polling</dt><dd>false",
                 "today_goal_queue_status</dt><dd>goals_ready",
                 "today_command_primary_action</dt><dd>Create commit request",
@@ -686,8 +691,6 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-profiles-state-details='true'",
                 "data-profiles-workbench-evidence='true'",
                 "data-profiles-command-evidence='true'",
-                "profiles_workbench_status</dt><dd>future_ready",
-                "profiles_workbench_next_action</dt><dd>Review future profile lanes",
                 "provider_routing_active",
                 "provider_calls_taken",
             ],
@@ -21357,6 +21360,7 @@ def _demo_page(root: Path) -> str:
             "<p>The demo alias creates or reuses a demo project under <code>.clanker/demo/local-app-project</code>, writes context-pack and implementation-handoff fixture artifacts, prepares coder prep and worktree-plan packets, and leaves a pending worktree approval request. The longer <code>demo-app-scenario</code> command remains available for compatibility.</p>",
             _non_claim_banner(),
             "</section>",
+            _demo_operator_workbench(root),
             _demo_command_bar(root),
             _demo_dogfooding_state(root),
         ]
@@ -21387,6 +21391,170 @@ def _demo_selected_state(root: Path) -> tuple[Any | None, Any | None, Any | None
     return project, selected_delegation, selected_run
 
 
+def _demo_operator_workbench(root: Path) -> str:
+    project, selected_delegation, selected_run = _demo_selected_state(root)
+    run_id = selected_run.id if selected_run else ""
+    progress = _demo_progress_state(root, run_id)
+    goal_id = progress.get("goal_id") or (
+        selected_delegation.parent_goal_id if selected_delegation else ""
+    )
+    fixture_status = "available" if project is not None else "missing"
+    now_href, now_label, now_action, now_reason = _demo_primary_target(
+        fixture_status=fixture_status,
+        next_step=progress["next_step"],
+        run_id=run_id,
+        goal_id=goal_id,
+    )
+    project_href = f"/projects/{quote(project.name)}" if project is not None else "#demo-command-bar"
+    project_label = project.name if project is not None else "Create fixture"
+    workflow_href = (
+        f"/workflow?run_id={quote(run_id)}"
+        if run_id
+        else f"/workflow?delegation_id={quote(selected_delegation.id)}"
+        if selected_delegation is not None
+        else "#manual-browser-script"
+    )
+    workflow_label = (
+        "Run workflow"
+        if run_id
+        else "Delegation workflow"
+        if selected_delegation is not None
+        else "Manual browser script"
+    )
+    proof_href = "#manual-browser-checkpoints"
+    proof_label = "Browser checkpoints"
+    selected_surface = _demo_selected_surface(project, selected_delegation, selected_run)
+    return "".join(
+        [
+            "<section id='demo-operator-workbench' class='panel demo-operator-workbench' data-demo-operator-workbench='true'><h2>Demo Operator Workbench</h2>",
+            "<p class='muted'>Start or continue the fixture-backed walkthrough from the browser, then use the proof cards to verify the whole local workflow.</p>",
+            "<div class='demo-workbench-grid' data-demo-workbench-actions='true'>",
+            "<article class='demo-workbench-card demo-workbench-primary'><h3>Now</h3>",
+            f"<p>{_e(now_action)}</p>",
+            (
+                "<a class='demo-workbench-action' "
+                "data-demo-workbench-primary='true' "
+                f"href='{_e(now_href)}'>{_e(now_label)}</a>"
+            ),
+            "</article>",
+            "<article class='demo-workbench-card'><h3>Project</h3>",
+            f"<p>{_e(project_label)}</p><a class='demo-workbench-link' data-demo-workbench-project='true' href='{_e(project_href)}'>{_e(project_label)}</a></article>",
+            "<article class='demo-workbench-card'><h3>Workflow</h3>",
+            f"<p>{_e(progress['next_step'])}</p><a class='demo-workbench-link' data-demo-workbench-workflow='true' href='{_e(workflow_href)}'>{_e(workflow_label)}</a></article>",
+            "<article class='demo-workbench-card'><h3>Proof</h3>",
+            f"<p>Route walk and zero-effect checks.</p><a class='demo-workbench-link' data-demo-workbench-proof='true' href='{_e(proof_href)}'>{_e(proof_label)}</a></article>",
+            "</div>",
+            "<details class='demo-workbench-evidence' data-demo-workbench-evidence='true'><summary>Demo workbench evidence</summary>",
+            _kv(
+                [
+                    ("demo_workbench_status", "fixture_ready" if fixture_status == "available" else "fixture_missing"),
+                    ("demo_workbench_fixture_status", fixture_status),
+                    ("demo_workbench_project", SafeHtml(f"<a href='{_e(project_href)}'>{_e(project_label)}</a>")),
+                    (
+                        "demo_workbench_goal",
+                        SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(goal_id)}</a>")
+                        if goal_id
+                        else "none",
+                    ),
+                    (
+                        "demo_workbench_delegation",
+                        SafeHtml(
+                            f"<a href='/delegations/{quote(selected_delegation.id)}'>{_e(selected_delegation.id)}</a>"
+                        )
+                        if selected_delegation is not None
+                        else "none",
+                    ),
+                    (
+                        "demo_workbench_run",
+                        SafeHtml(f"<a href='/runs/{quote(run_id)}'>{_e(run_id)}</a>")
+                        if run_id
+                        else "none",
+                    ),
+                    ("demo_workbench_selected_surface", selected_surface),
+                    ("demo_workbench_next_action", progress["next_step"]),
+                    (
+                        "demo_workbench_next_surface",
+                        SafeHtml(f"<a href='{_e(now_href)}'>{_e(now_label)}</a>"),
+                    ),
+                    ("demo_workbench_next_reason", now_reason),
+                    (
+                        "demo_workbench_workflow_surface",
+                        SafeHtml(f"<a href='{_e(workflow_href)}'>{_e(workflow_label)}</a>"),
+                    ),
+                    (
+                        "demo_workbench_proof_surface",
+                        SafeHtml(f"<a href='{_e(proof_href)}'>{_e(proof_label)}</a>"),
+                    ),
+                    ("demo_workbench_primary_command", "python3 -m agent_os.cli demo"),
+                    ("demo_workbench_compat_command", "python3 -m agent_os.cli demo-app-scenario"),
+                    ("demo_workbench_write_on_get", "false"),
+                    ("demo_workbench_provider_calls_taken", "0"),
+                    ("demo_workbench_network_actions_taken", "0"),
+                    ("demo_workbench_external_effects_created", "false"),
+                    ("demo_workbench_push_created", "false"),
+                    ("demo_workbench_pr_created", "false"),
+                    ("demo_workbench_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"demo_workbench_now: <a href='{_e(now_href)}'>{_e(now_label)}</a>",
+                    f"demo_workbench_project: <a href='{_e(project_href)}'>{_e(project_label)}</a>",
+                    f"demo_workbench_workflow: <a href='{_e(workflow_href)}'>{_e(workflow_label)}</a>",
+                    "demo_workbench_safety: read-only launchpad; demo fixture creation still uses the explicit CLI command and gate forms still require confirmation",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _demo_primary_target(
+    *,
+    fixture_status: str,
+    next_step: str,
+    run_id: str,
+    goal_id: str,
+) -> tuple[str, str, str, str]:
+    if fixture_status != "available":
+        return "#demo-command-bar", "Copy demo command", "Create fixture-backed demo state", "fixture_missing"
+    if next_step in {
+        "approve_or_reject_commit_request",
+        "approve_or_reject_publication_request",
+    }:
+        return "/approvals", "/approvals", "Review pending approval", "demo_gate_waiting_for_approval"
+    if next_step in {
+        "manual_operator_push_pr_outside_clankeros",
+        "review_completed_goal_evidence",
+    } and goal_id:
+        return f"/goals/{quote(goal_id)}", f"/goals/{goal_id}", "Review Goal evidence", "demo_gate_goal_review"
+    if run_id:
+        return f"/runs/{quote(run_id)}", f"/runs/{run_id}", "Continue from selected run", "demo_gate_run_ready"
+    return "#manual-browser-script", "Manual browser script", "Follow demo browser route walk", "fixture_without_run"
+
+
+def _demo_selected_surface(
+    project: Any | None,
+    selected_delegation: Any | None,
+    selected_run: Any | None,
+) -> str | SafeHtml:
+    if selected_run is not None:
+        return SafeHtml(
+            f"<a href='/runs/{quote(selected_run.id)}'>/runs/{_e(selected_run.id)}</a>"
+        )
+    if selected_delegation is not None:
+        return SafeHtml(
+            f"<a href='/delegations/{quote(selected_delegation.id)}'>"
+            f"/delegations/{_e(selected_delegation.id)}</a>"
+        )
+    if project is not None:
+        return SafeHtml(
+            f"<a href='/projects/{quote(project.name)}'>/projects/{_e(project.name)}</a>"
+        )
+    return "none"
+
+
 def _demo_command_bar(root: Path) -> str:
     project, selected_delegation, selected_run = _demo_selected_state(root)
     run_id = selected_run.id if selected_run else ""
@@ -21396,20 +21564,7 @@ def _demo_command_bar(root: Path) -> str:
     )
     fixture_status = "available" if project is not None else "missing"
     next_surface = _demo_next_surface(progress["next_step"], run_id, goal_id)
-    selected_surface = next_surface
-    if run_id:
-        selected_surface = SafeHtml(
-            f"<a href='/runs/{quote(run_id)}'>/runs/{_e(run_id)}</a>"
-        )
-    elif selected_delegation is not None:
-        selected_surface = SafeHtml(
-            f"<a href='/delegations/{quote(selected_delegation.id)}'>"
-            f"/delegations/{_e(selected_delegation.id)}</a>"
-        )
-    elif project is not None:
-        selected_surface = SafeHtml(
-            f"<a href='/projects/{quote(project.name)}'>/projects/{_e(project.name)}</a>"
-        )
+    selected_surface = _demo_selected_surface(project, selected_delegation, selected_run)
 
     rows = [
         ("demo_command_fixture_status", fixture_status),
@@ -21468,8 +21623,10 @@ def _demo_command_bar(root: Path) -> str:
         [
             "<section id='demo-command-bar' class='panel demo-command-bar' data-demo-command-bar='true'><h2>Demo Command Bar</h2>",
             "<p class='muted'>One scan-first place to start or continue the fixture-backed product walkthrough.</p>",
+            "<details class='demo-command-evidence' data-demo-command-evidence='true'><summary>Demo command evidence</summary>",
             _kv(rows),
             _ul(lines),
+            "</details>",
             "</section>",
         ]
     )
@@ -22134,7 +22291,7 @@ def _manual_browser_script(state: dict[str, str] | None) -> str:
     rendered_steps = [f"{index}. {_e(step)}" for index, step in enumerate(steps, start=1)]
     return "".join(
         [
-            "<section><h2>Manual Browser Script</h2>",
+            "<section id='manual-browser-script'><h2>Manual Browser Script</h2>",
             "<p class='muted'>Use this as the first manual dogfooding pass after a pushed app change.</p>",
             _ul(rendered_steps),
             "</section>",
@@ -22183,7 +22340,11 @@ def _manual_browser_checkpoints(state: dict[str, str] | None) -> str:
             "external_mutations_taken: 0",
         ]
     )
-    return _list_section("Manual Browser Checkpoints", checkpoints)
+    return _list_section(
+        "Manual Browser Checkpoints",
+        checkpoints,
+        anchor_id="manual-browser-checkpoints",
+    )
 
 
 def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppResponse:
@@ -25513,7 +25674,7 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
-    content_first_paths = {"/", "/actions", "/approvals", "/artifacts", "/ci-evidence", "/delegation-runs", "/dogfooding", "/health", "/inbox", "/incidents", "/memory", "/profiles", "/projects", "/resume", "/search", "/skills", "/today", "/verification", "/workflow", "/workspace"}
+    content_first_paths = {"/", "/actions", "/approvals", "/artifacts", "/ci-evidence", "/delegation-runs", "/demo", "/dogfooding", "/health", "/inbox", "/incidents", "/memory", "/profiles", "/projects", "/resume", "/search", "/skills", "/today", "/verification", "/workflow", "/workspace"}
     if current_route_path in content_first_paths or current_route_path.startswith("/projects/"):
         article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
     else:
@@ -25927,6 +26088,21 @@ def _html_page(
     .first-run-command-action {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .first-run-command-action summary {{ cursor:pointer; font-weight:700; }}
     .first-run-command-action form {{ margin-top:10px; }}
+    .demo-operator-workbench {{ border-left:4px solid var(--accent); }}
+    .demo-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .demo-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .demo-operator-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .demo-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .demo-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .demo-workbench-card h3 {{ margin-top:0; }}
+    .demo-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .demo-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .demo-workbench-action, .demo-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .demo-workbench-action {{ background:var(--accent); color:#fff; }}
+    .demo-workbench-link {{ background:var(--surface); color:var(--accent); }}
+    .demo-workbench-evidence, .demo-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .demo-workbench-evidence summary, .demo-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .demo-workbench-evidence:not([open]) > :not(summary), .demo-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .demo-command-bar {{ border-left:4px solid var(--accent); }}
     .demo-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .demo-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -26255,7 +26431,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

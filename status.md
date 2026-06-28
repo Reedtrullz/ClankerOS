@@ -1,5 +1,53 @@
 # Status
 
+## 2026-06-28 Demo Operator Workbench Surface
+
+- Made `/demo` content-first and launchpad-first by rendering a visible
+  `Demo Operator Workbench` before shared Route Context, Operator Focus, Last
+  Action, `Demo Command Bar`, and the longer fixture walkthrough.
+- Added four visible cards for Now, Project, Workflow, and Proof. The primary
+  Now card routes missing fixture state to the demo command evidence and
+  fixture-backed state to the selected run, approval queue, or Goal evidence
+  depending on the current demo gate; Project opens the local demo project;
+  Workflow opens scoped run/delegation workflow or the manual browser script;
+  Proof jumps to route checkpoints.
+- Collapsed demo workbench evidence and command evidence by default while
+  preserving fixture status, selected project/Goal/delegation/run, next local
+  target, demo command templates, proof checkpoint target, and zero-effect
+  counters in the DOM.
+- Added stable visible-card handles for Project, Workflow, and Proof, and
+  hardened the fixture demo smoke contract so it checks durable route/safety
+  structure instead of volatile local Today/Profile state values.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. `/demo` does not write
+  on GET, create fixture data from the browser, call providers, fetch GitHub,
+  approve work, execute work, create commits, push, create PRs, deploy, mutate
+  external systems, or expose arbitrary raw filesystem browsing. Fixture
+  creation still uses the explicit `python3 -m agent_os.cli demo` command, and
+  gate forms still go through existing confirmation pages.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli app-smoke-test` -> passed, route markers
+    matched, artifact rejection checks matched, provider calls 0, network
+    actions 0, external mutations 0
+  - `python3 -m agent_os.cli app-demo-smoke-test` -> passed,
+    fixture-backed routes matched, provider calls 0, network actions 0,
+    external mutations 0
+  - Browser QA against `http://127.0.0.1:8825/demo`: desktop `1280x900`
+    rendered `Demo Operator Workbench` before the command bar and Route
+    Context; four visible cards rendered with stable Now/Project/Workflow/Proof
+    action handles; workbench and command evidence disclosures were closed by
+    default; the primary card opened the selected run workbench; the Proof card
+    jumped to `#manual-browser-checkpoints`; no horizontal overflow and no
+    warning/error logs.
+  - Browser QA mobile `390x844`: four demo cards stacked one column, evidence
+    disclosures stayed closed by default, no horizontal overflow, and no
+    warning/error logs.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Health Operator Workbench Surface
 
 - Made `/health` content-first and action-first by rendering a visible

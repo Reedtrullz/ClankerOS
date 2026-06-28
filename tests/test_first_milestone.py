@@ -6850,8 +6850,31 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "incident_triage_external_effects_created</dt><dd>false" in incidents.body
     demo = render_local_app_route(tmp_path, "/demo")
     assert demo.status == 200
+    assert "Demo Operator Workbench" in demo.body
+    assert "data-demo-operator-workbench='true'" in demo.body
+    assert "data-demo-workbench-primary='true'" in demo.body
+    assert "data-demo-workbench-project='true'" in demo.body
+    assert "data-demo-workbench-workflow='true'" in demo.body
+    assert "data-demo-workbench-proof='true'" in demo.body
+    assert "data-demo-workbench-evidence='true'" in demo.body
+    assert "demo_workbench_status</dt><dd>fixture_missing" in demo.body
+    assert "demo_workbench_fixture_status</dt><dd>missing" in demo.body
+    assert "demo_workbench_next_action</dt><dd>run demo scenario and select a coder worktree run" in demo.body
+    assert "demo_workbench_next_surface</dt><dd><a href='#demo-command-bar'>Copy demo command</a>" in demo.body
+    assert "demo_workbench_write_on_get</dt><dd>false" in demo.body
+    assert "demo_workbench_external_effects_created</dt><dd>false" in demo.body
+    assert "demo_workbench_safety: read-only launchpad" in demo.body
+    assert demo.body.index("data-demo-operator-workbench='true'") < demo.body.index(
+        "data-demo-command-bar='true'"
+    )
+    assert demo.body.index("data-demo-operator-workbench='true'") < demo.body.index(
+        "data-route-context='true'"
+    )
+    assert "<details class='demo-workbench-evidence' data-demo-workbench-evidence='true'><summary>Demo workbench evidence</summary>" in demo.body
+    assert "<details class='demo-command-evidence' data-demo-command-evidence='true'><summary>Demo command evidence</summary>" in demo.body
     assert "Demo Command Bar" in demo.body
     assert "data-demo-command-bar='true'" in demo.body
+    assert "data-demo-command-evidence='true'" in demo.body
     assert "demo_command_fixture_status</dt><dd>missing" in demo.body
     assert "demo_command_primary_command</dt><dd>python3 -m agent_os.cli demo" in demo.body
     assert (
@@ -7775,8 +7798,42 @@ def test_local_app_demo_scenario_populates_fixture_state(
 
     demo = render_local_app_route(tmp_path, "/demo")
     assert demo.status == 200
+    assert "Demo Operator Workbench" in demo.body
+    assert "data-demo-operator-workbench='true'" in demo.body
+    assert "data-demo-workbench-primary='true'" in demo.body
+    assert "data-demo-workbench-project='true'" in demo.body
+    assert "data-demo-workbench-workflow='true'" in demo.body
+    assert "data-demo-workbench-proof='true'" in demo.body
+    assert "data-demo-workbench-evidence='true'" in demo.body
+    assert "demo_workbench_status</dt><dd>fixture_ready" in demo.body
+    assert "demo_workbench_fixture_status</dt><dd>available" in demo.body
+    assert f"demo_workbench_project</dt><dd><a href='/projects/{result.project_id}'" in demo.body
+    assert f"demo_workbench_goal</dt><dd><a href='/goals/{result.goal_id}'" in demo.body
+    assert f"demo_workbench_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in demo.body
+    assert f"demo_workbench_run</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in demo.body
+    assert "demo_workbench_next_action</dt><dd>request_commit_for_reviewed_run" in demo.body
+    assert (
+        f"demo_workbench_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'"
+        in demo.body
+    )
+    assert (
+        f"demo_workbench_workflow_surface</dt><dd><a href='/workflow?run_id={result.coder_worktree_run_id}'"
+        in demo.body
+    )
+    assert "demo_workbench_proof_surface</dt><dd><a href='#manual-browser-checkpoints'>Browser checkpoints</a>" in demo.body
+    assert "demo_workbench_write_on_get</dt><dd>false" in demo.body
+    assert "demo_workbench_provider_calls_taken</dt><dd>0" in demo.body
+    assert "demo_workbench_external_effects_created</dt><dd>false" in demo.body
+    assert "demo_workbench_safety: read-only launchpad" in demo.body
+    assert demo.body.index("data-demo-operator-workbench='true'") < demo.body.index(
+        "data-demo-command-bar='true'"
+    )
+    assert demo.body.index("data-demo-operator-workbench='true'") < demo.body.index(
+        "data-route-context='true'"
+    )
     assert "Demo Command Bar" in demo.body
     assert "data-demo-command-bar='true'" in demo.body
+    assert "data-demo-command-evidence='true'" in demo.body
     assert "demo_command_fixture_status</dt><dd>available" in demo.body
     assert "demo_command_primary_command</dt><dd>python3 -m agent_os.cli demo" in demo.body
     assert (
@@ -7798,6 +7855,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Demo Dogfooding Links" in demo.body
     assert "Manual Browser Script" in demo.body
     assert "Manual Browser Checkpoints" in demo.body
+    assert "id='manual-browser-script'" in demo.body
+    assert "id='manual-browser-checkpoints'" in demo.body
     assert "marker=Demo Scenario" in demo.body
     assert "marker=Manual Dogfooding Checklist" in demo.body
     assert "marker=Project" in demo.body

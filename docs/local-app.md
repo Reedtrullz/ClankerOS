@@ -655,11 +655,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   command bar, diagnostics, counts, registered commands, and workflow imports
   stay collapsed as evidence while preserving the explicit
   `status_artifact_write_on_get=true` boundary.
-- `/demo` - demo scenario instructions plus a read-only `Demo Command Bar`
-  that exposes fixture status, the preferred `python3 -m agent_os.cli demo`
-  command, compatibility command, selected project/Goal/delegation/run, next
-  local surface, and zero-effect counters before the state-aware dogfooding
-  links and browser-progress checklist. The demo page also includes
+- `/demo` - demo scenario instructions plus a read-only `Demo Operator
+  Workbench` that opens the page with Now, Project, Workflow, and Proof cards
+  before shared diagnostics or command readback. Demo workbench and command
+  evidence stay collapsed by default while preserving fixture status, the
+  preferred `python3 -m agent_os.cli demo` command, compatibility command,
+  selected project/Goal/delegation/run, next local surface, and zero-effect
+  counters. The demo page also includes
   `Demo Gate Artifacts`, a read-only artifact map for the selected fixture
   run's commit request,
   commit decision, local commit, publication request, publication decision,
@@ -698,12 +700,13 @@ It is local-only. It does not call providers, push, create PRs, deploy, use the
 network, or modify external projects outside the repo demo area.
 
 After running the demo command, open `/goals`, then `/demo` in the local app.
-`/goals` shows the fixture goal phase and next action, while `/demo` reads the
-current fixture state and links directly to the demo project, selected
-workflow, delegation, coder worktree run, review artifact, inbox, approvals,
-and health page. The same page includes a manual browser script for the first
-dogfooding pass through commit request, commit approval, typed local commit,
-publication request, publication approval, and publication handoff. The
+`/goals` shows the fixture goal phase and next action, while `/demo` opens
+with the `Demo Operator Workbench` and links directly to the demo project,
+selected workflow, delegation, coder worktree run, route-walk proof, review
+artifact, inbox, approvals, and health page. The same page includes a manual
+browser script for the first dogfooding pass through commit request, commit
+approval, typed local commit, publication request, publication approval, and
+publication handoff. The
 `Demo Next Action` panel and `Demo Browser Progress` section read existing
 local commit/publication records for the selected fixture run. Together they
 show the current status for commit request, commit approval, local commit,

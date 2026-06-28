@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/demo` is now content-first and launchpad-first: it opens with the
+  `Demo Operator Workbench` cards for Now, Project, Workflow, and Proof before
+  shared route/focus diagnostics, command evidence, or the longer fixture
+  walkthrough. Demo workbench and command evidence stay collapsed by default
+  while preserving fixture status, selected project/Goal/delegation/run, next
+  local target, proof checkpoints, demo command templates, and zero-effect
+  counters in the DOM.
 - `/health` is now content-first and action-first: it opens with the
   `Health Operator Workbench` cards for Status, Artifact, Diagnostics, and
   Safety before shared route/focus diagnostics, command evidence, or dense
