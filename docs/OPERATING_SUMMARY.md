@@ -410,6 +410,12 @@ Core layers for the bootstrap:
   Home, Today, and Goals point `Route Context`, `Operator Focus`, and the
   command palette at their same-page `Create Project` or `Create First Goal`
   anchors, while other pages link back to Home/Today/Goals first-run anchors.
+  The command palette now opens with a compact `Palette Focus` launcher for
+  continuing the current Goal action, searching local state, resuming the saved
+  workspace, or staying on the current page. Its detailed route readback,
+  keyboard shortcuts, long open list, and zero-effect counters are still
+  available inside collapsed `Palette evidence and shortcuts`, while the
+  goal-aware `Continue Current Goal` form remains directly below search.
   They also include a read-only `Goal Operator Notes Command Bar` before the
   confirmed `save-goal-note` form. The command bar reports whether the
   goal-scoped `operator-notes.md` artifact exists, timestamped entry count,

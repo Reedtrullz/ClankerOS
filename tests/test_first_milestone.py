@@ -4524,6 +4524,43 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "register-project" in root.body
     assert "create-goal" in root.body
     assert "data-command-palette='true'" in root.body
+    assert "data-command-palette-focus='true'" in root.body
+    assert "data-command-palette-focus-grid='true'" in root.body
+    assert "data-command-palette-focus-continue='true'" in root.body
+    assert (
+        "data-command-palette-focus-primary='true' href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
+    assert "data-command-palette-focus-search='true' href='#command-palette-search'>Search</a>" in root.body
+    assert "data-command-palette-focus-resume='true' href='/resume'>Resume workspace</a>" in root.body
+    assert "data-command-palette-focus-current='true' href='/'>Stay here</a>" in root.body
+    assert "data-command-palette-focus-details='true'" in root.body
+    assert "<summary data-command-palette-focus-summary='true'>Palette focus evidence</summary>" in root.body
+    assert "palette_focus_status</dt><dd>first_run" in root.body
+    assert "palette_focus_primary_action</dt><dd>Register ClankerOS project" in root.body
+    assert (
+        "palette_focus_primary_surface</dt><dd><a href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
+    assert "palette_focus_action_form_available</dt><dd>true" in root.body
+    assert "palette_focus_write_on_get</dt><dd>false" in root.body
+    assert "palette_focus_network_actions_taken</dt><dd>0" in root.body
+    assert "palette_focus_external_effects_created</dt><dd>false" in root.body
+    assert "data-command-palette-evidence='true'" in root.body
+    assert "<summary data-command-palette-evidence-summary='true'>Palette evidence and shortcuts</summary>" in root.body
+    assert "data-command-palette-open-list='true'" in root.body
+    assert root.body.index("data-command-palette-focus='true'") < root.body.index(
+        "id='command-palette-search'"
+    )
+    assert root.body.index("id='command-palette-search'") < root.body.index(
+        "data-command-palette-continue='true'"
+    )
+    assert root.body.index("data-command-palette-continue='true'") < root.body.index(
+        "data-command-palette-evidence='true'"
+    )
+    assert root.body.index("data-command-palette-evidence-summary='true'") < root.body.index(
+        "data-command-palette-route-context='true'"
+    )
     assert "data-command-palette-route-context='true'" in root.body
     assert "palette_route_family</dt><dd>dashboard" in root.body
     assert "palette_route_current_path</dt><dd><a href='/'>/</a>" in root.body
@@ -7483,6 +7520,40 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_cockpit_status: populated" in dashboard.body
     assert "lead_goal_phase" in dashboard.body
     assert "remaining_work=open_tasks:1 open_incidents:0 open_recommendations:0" in dashboard.body
+    assert "data-command-palette-focus='true'" in dashboard.body
+    assert "data-command-palette-focus-grid='true'" in dashboard.body
+    assert "data-command-palette-focus-continue='true'" in dashboard.body
+    assert (
+        "data-command-palette-focus-primary='true' href='#command-palette-continue-form'>"
+        "Run current action</a>"
+    ) in dashboard.body
+    assert "data-command-palette-focus-search='true' href='#command-palette-search'>Search</a>" in dashboard.body
+    assert "data-command-palette-focus-resume='true' href='/resume'>Resume workspace</a>" in dashboard.body
+    assert "data-command-palette-focus-current='true' href='/'>Stay here</a>" in dashboard.body
+    assert "data-command-palette-focus-details='true'" in dashboard.body
+    assert "palette_focus_status</dt><dd>available" in dashboard.body
+    assert "palette_focus_source</dt><dd>lead_goal" in dashboard.body
+    assert "palette_focus_phase</dt><dd>Ready to commit" in dashboard.body
+    assert "palette_focus_primary_action</dt><dd>Create commit request" in dashboard.body
+    assert (
+        "palette_focus_primary_surface</dt><dd><a href='#command-palette-continue-form'>"
+        "Run current action</a>"
+    ) in dashboard.body
+    assert "palette_focus_action_form_available</dt><dd>true" in dashboard.body
+    assert "palette_focus_write_on_get</dt><dd>false" in dashboard.body
+    assert "palette_focus_network_actions_taken</dt><dd>0" in dashboard.body
+    assert "palette_focus_external_effects_created</dt><dd>false" in dashboard.body
+    assert "data-command-palette-evidence='true'" in dashboard.body
+    assert "<summary data-command-palette-evidence-summary='true'>Palette evidence and shortcuts</summary>" in dashboard.body
+    assert dashboard.body.index("data-command-palette-focus='true'") < dashboard.body.index(
+        "id='command-palette-search'"
+    )
+    assert dashboard.body.index("id='command-palette-search'") < dashboard.body.index(
+        "data-command-palette-continue='true'"
+    )
+    assert dashboard.body.index("data-command-palette-continue='true'") < dashboard.body.index(
+        "data-command-palette-evidence='true'"
+    )
     assert "data-command-palette-continue='true'" in dashboard.body
     assert "palette_continue_status</dt><dd>available" in dashboard.body
     assert "palette_continue_source</dt><dd>lead_goal" in dashboard.body
@@ -7856,6 +7927,47 @@ def test_local_app_demo_scenario_populates_fixture_state(
     goal = render_local_app_route(tmp_path, f"/goals/{result.goal_id}")
     assert goal.status == 200
     assert "data-command-palette='true'" in goal.body
+    assert "data-command-palette-focus='true'" in goal.body
+    assert "data-command-palette-focus-grid='true'" in goal.body
+    assert "data-command-palette-focus-continue='true'" in goal.body
+    assert (
+        "data-command-palette-focus-primary='true' href='#command-palette-continue-form'>"
+        "Run current action</a>"
+    ) in goal.body
+    assert "data-command-palette-focus-search='true' href='#command-palette-search'>Search</a>" in goal.body
+    assert "data-command-palette-focus-resume='true' href='/resume'>Resume workspace</a>" in goal.body
+    assert (
+        f"data-command-palette-focus-current='true' href='/goals/{result.goal_id}'>"
+        "Stay here</a>"
+    ) in goal.body
+    assert "data-command-palette-focus-details='true'" in goal.body
+    assert "palette_focus_status</dt><dd>available" in goal.body
+    assert "palette_focus_source</dt><dd>lead_goal" in goal.body
+    assert "palette_focus_phase</dt><dd>Ready to commit" in goal.body
+    assert "palette_focus_primary_action</dt><dd>Create commit request" in goal.body
+    assert (
+        "palette_focus_primary_surface</dt><dd><a href='#command-palette-continue-form'>"
+        "Run current action</a>"
+    ) in goal.body
+    assert (
+        f"palette_focus_current_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"Goal {result.goal_id}</a>"
+    ) in goal.body
+    assert "palette_focus_action_form_available</dt><dd>true" in goal.body
+    assert "palette_focus_write_on_get</dt><dd>false" in goal.body
+    assert "palette_focus_network_actions_taken</dt><dd>0" in goal.body
+    assert "palette_focus_external_effects_created</dt><dd>false" in goal.body
+    assert "data-command-palette-evidence='true'" in goal.body
+    assert "<summary data-command-palette-evidence-summary='true'>Palette evidence and shortcuts</summary>" in goal.body
+    assert goal.body.index("data-command-palette-focus='true'") < goal.body.index(
+        "id='command-palette-search'"
+    )
+    assert goal.body.index("id='command-palette-search'") < goal.body.index(
+        "data-command-palette-continue='true'"
+    )
+    assert goal.body.index("data-command-palette-continue='true'") < goal.body.index(
+        "data-command-palette-evidence='true'"
+    )
     assert "data-command-palette-route-context='true'" in goal.body
     assert "palette_route_family</dt><dd>goal" in goal.body
     assert (

@@ -22031,19 +22031,170 @@ def _command_palette(
             "<dialog id='command-palette' class='command-palette' data-command-palette='true'>",
             "<form method='dialog'><button class='icon-button' type='submit'>Close</button></form>",
             "<h2>Command Palette</h2>",
-            _command_palette_route_context(root, focus_context, current_path, title),
-            _command_palette_continue(focus_context),
+            _command_palette_focus(focus_context, current_path, title),
             "<form action='/search' method='get' class='command-grid'>",
             "<input id='command-palette-search' name='q' autocomplete='off' placeholder='Search local state'>",
             "<button type='submit'>Search</button>",
             "</form>",
+            _command_palette_continue(focus_context),
+            "<details class='palette-evidence' data-command-palette-evidence='true'>",
+            "<summary data-command-palette-evidence-summary='true'>Palette evidence and shortcuts</summary>",
+            _command_palette_route_context(root, focus_context, current_path, title),
             "<h3>Keyboard Shortcuts</h3>",
             _shortcut_help_list(),
             "<h3>Open</h3>",
-            "<ul>",
+            "<ul data-command-palette-open-list='true'>",
             "".join(rows),
             "</ul>",
+            "</details>",
             "</dialog>",
+        ]
+    )
+
+
+def _command_palette_focus(
+    focus_context: dict[str, Any],
+    current_path: str,
+    title: str,
+) -> str:
+    status = str(focus_context.get("status", "state_unavailable"))
+    action_form = str(focus_context.get("action_form") or "")
+    current_href = current_path or "/"
+    current_label = title or current_href
+    phase = "unknown"
+    primary_action = "Open health"
+    primary_href = "/health"
+    primary_label = "Open health"
+    source = status
+    action_form_available = False
+
+    if status == "available" and isinstance(focus_context.get("next_action"), GoalNextAction):
+        next_action = focus_context["next_action"]
+        phase = str(focus_context.get("phase") or "unknown")
+        primary_action = next_action.action
+        primary_href = "#command-palette-continue-form" if action_form else next_action.href
+        primary_label = "Run current action" if action_form else "Open action source"
+        source = str(focus_context.get("source") or "goal_state")
+        action_form_available = bool(action_form)
+    elif status == "first_run":
+        phase = str(focus_context.get("current_step") or "First run")
+        primary_action = str(focus_context.get("next_action") or "Continue first run")
+        primary_href = str(focus_context.get("target_href") or "/goals")
+        primary_label = str(focus_context.get("target_label") or primary_href)
+        source = str(focus_context.get("source") or "first_run_progress")
+        action_form_available = bool(focus_context.get("form_available"))
+    elif status == "no_goal":
+        phase = "No active goal"
+        primary_action = "Open goals"
+        primary_href = "/goals"
+        primary_label = "Open goals"
+    elif status == "state_unavailable":
+        phase = "State unavailable"
+
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("palette_focus_status", status),
+        ("palette_focus_source", source),
+        ("palette_focus_phase", phase),
+        ("palette_focus_primary_action", primary_action),
+        (
+            "palette_focus_primary_surface",
+            SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+        ),
+        (
+            "palette_focus_current_surface",
+            SafeHtml(f"<a href='{_e(current_href)}'>{_e(current_label)}</a>"),
+        ),
+        (
+            "palette_focus_search_surface",
+            SafeHtml("<a href='#command-palette-search'>Search local state</a>"),
+        ),
+        ("palette_focus_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+        ("palette_focus_action_form_available", str(action_form_available).lower()),
+        ("palette_focus_write_on_get", "false"),
+        ("palette_focus_provider_calls_taken", "0"),
+        ("palette_focus_network_actions_taken", "0"),
+        ("palette_focus_external_effects_created", "false"),
+    ]
+    lines = [
+        f"palette_focus_now: {_e(primary_action)}",
+        f"palette_focus_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+        "palette_focus_search: <a href='#command-palette-search'>Search local state</a>",
+        "palette_focus_resume: <a href='/resume'>/resume</a>",
+        "palette_focus_safety: read-only local launcher; confirmed actions still require forms",
+    ]
+    cards = [
+        _command_palette_focus_card(
+            "Continue",
+            primary_action,
+            action=SafeHtml(
+                f"<a class='palette-focus-primary' data-command-palette-focus-primary='true' "
+                f"href='{_e(primary_href)}'>{_e(primary_label)}</a>"
+            ),
+            marker="data-command-palette-focus-continue='true'",
+            primary=True,
+        ),
+        _command_palette_focus_card(
+            "Search",
+            "Search local state",
+            action=SafeHtml(
+                "<a class='palette-focus-secondary' data-command-palette-focus-search='true' "
+                "href='#command-palette-search'>Search</a>"
+            ),
+            marker="data-command-palette-focus-search-card='true'",
+        ),
+        _command_palette_focus_card(
+            "Resume",
+            "/resume",
+            action=SafeHtml(
+                "<a class='palette-focus-secondary' data-command-palette-focus-resume='true' "
+                "href='/resume'>Resume workspace</a>"
+            ),
+            marker="data-command-palette-focus-resume-card='true'",
+        ),
+        _command_palette_focus_card(
+            "Current Page",
+            current_label,
+            action=SafeHtml(
+                f"<a class='palette-focus-secondary' data-command-palette-focus-current='true' "
+                f"href='{_e(current_href)}'>Stay here</a>"
+            ),
+            marker="data-command-palette-focus-current-card='true'",
+        ),
+    ]
+    return "".join(
+        [
+            "<section class='palette-focus' data-command-palette-focus='true'>",
+            "<h3>Palette Focus</h3>",
+            "<p class='muted'>Open the current work, search local state, or return to the saved workspace without leaving the keyboard launcher.</p>",
+            "<div class='palette-focus-grid' data-command-palette-focus-grid='true'>",
+            "".join(cards),
+            "</div>",
+            "<details class='palette-focus-details' data-command-palette-focus-details='true'>",
+            "<summary data-command-palette-focus-summary='true'>Palette focus evidence</summary>",
+            _kv(rows),
+            _ul(lines),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _command_palette_focus_card(
+    label: str,
+    value: str,
+    *,
+    action: str | SafeHtml,
+    marker: str,
+    primary: bool = False,
+) -> str:
+    primary_class = " palette-focus-card-primary" if primary else ""
+    return "".join(
+        [
+            f"<div class='palette-focus-card{primary_class}' {marker}>",
+            f"<span class='palette-focus-label'>{_e(label)}</span>",
+            f"<strong>{_e(_compact_label(value, 96))}</strong>",
+            str(action),
+            "</div>",
         ]
     )
 
@@ -22515,8 +22666,18 @@ def _html_page(
     .recent-items-command-bar ul {{ margin-top:8px; }}
     .recent-items-command-bar li {{ border:1px solid var(--line); background:var(--panel); padding:6px 7px; overflow-wrap:anywhere; }}
     .recent-items-list {{ margin-top:10px; }}
-    .palette-route-context, .palette-continue {{ border:1px solid var(--line); background:var(--panel); padding:10px; margin:10px 0; }}
-    .palette-route-context h3, .palette-continue h3 {{ margin-top:0; }}
+    .palette-focus, .palette-route-context, .palette-continue {{ border:1px solid var(--line); background:var(--panel); padding:10px; margin:10px 0; }}
+    .palette-focus h3, .palette-route-context h3, .palette-continue h3 {{ margin-top:0; }}
+    .palette-focus-grid {{ display:grid; grid-template-columns:minmax(220px, 1.35fr) repeat(3, minmax(140px, 1fr)); gap:8px; align-items:stretch; margin:10px 0; }}
+    .palette-focus-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; display:grid; gap:6px; align-content:start; }}
+    .palette-focus-card-primary {{ background:var(--panel); border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .palette-focus-label {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .palette-focus-card strong {{ overflow-wrap:anywhere; }}
+    .palette-focus-primary, .palette-focus-secondary {{ display:inline-flex; align-items:center; justify-content:center; min-height:32px; width:100%; max-width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
+    .palette-focus-primary {{ background:var(--accent); color:#fff; }}
+    .palette-focus-secondary {{ background:var(--surface); color:var(--accent); }}
+    .palette-focus-details summary, .palette-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .palette-focus-details:not([open]) > :not(summary), .palette-evidence:not([open]) > :not(summary) {{ display:none; }}
     .palette-route-context dl {{ grid-template-columns:minmax(160px, 210px) 1fr; }}
     .palette-route-context ul {{ list-style:none; padding:0; margin:10px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
     .palette-route-context li {{ min-width:0; padding:7px 9px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -22926,7 +23087,7 @@ def _html_page(
     a {{ color:var(--accent); }}
     progress {{ width:100%; max-width:420px; height:14px; accent-color:var(--accent); }}
     .timeline-link {{ display:inline-block; }}
-    .command-palette {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); max-width:720px; width:min(720px, calc(100vw - 32px)); }}
+    .command-palette {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); max-width:860px; width:min(860px, calc(100vw - 32px)); }}
     .command-palette::backdrop {{ background:rgba(15,20,25,.45); }}
     .command-grid {{ display:grid; grid-template-columns:1fr auto; gap:8px; }}
     .shortcut-list kbd {{ display:inline-block; min-width:52px; border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; padding:2px 6px; background:var(--panel); color:var(--ink); font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px; }}
@@ -22934,7 +23095,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .route-context-focus, .operator-focus-focus, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>

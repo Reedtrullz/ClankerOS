@@ -400,13 +400,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   route context, command palette, and Operator Focus at their same-page
   `Create Project` or `Create First Goal` forms, and other pages link back to
   the Home/Today/Goals first-run anchors. The command palette starts with a
-  route-aware `Current Page` block that mirrors the current path, parent
-  surface, resolved Goal/Project/run context, focus target, `/resume`, and
-  zero-effect readbacks before the same goal-aware `Continue Current Goal`
-  block, a compact Goal continuation readback for the current gate plus the
-  next few local gates, and the confirmed local action form from the Goal
-  page. These controls only navigate local routes or submit existing local
-  forms after confirmation.
+  `Palette Focus` launcher for continuing the current Goal action, jumping to
+  search, resuming the saved workspace, or staying on the current page. The
+  route-aware `Current Page` readback, keyboard shortcuts, and long open list
+  stay available inside collapsed `Palette evidence and shortcuts`; the
+  goal-aware `Continue Current Goal` block, compact Goal continuation readback,
+  and confirmed local action form remain directly below search. These controls
+  only navigate local routes or submit existing local forms after confirmation.
 - `/profiles` reads both `.clanker/profiles.yml` and SQLite profile rows. It
   shows configured profile names, storage-backed profile labels, modes, cost
   tiers, model placeholders, write posture, adapter status, and `use_for`

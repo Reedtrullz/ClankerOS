@@ -528,13 +528,13 @@ instead: Home, Today, and Goals point the route context, command palette, and
 Operator Focus at their same-page `Create Project` or `Create First Goal`
 forms, while other pages link back to those Home/Today/Goals first-run
 anchors.
-The command palette also opens with a route-aware `Current Page` block that
-names the current path, parent surface, resolved Goal/Project/run context,
-focus target, and `/resume` link before the same goal-aware
-`Continue Current Goal` block, a compact Goal continuation readback for the
-current gate plus the next few local gates, and the confirmed local action
-form. Those controls stay inside the local browser app and do not perform
-external effects.
+The command palette now opens with a `Palette Focus` launcher: continue the
+current Goal action, jump to search, resume the saved workspace, or stay on the
+current page. The route-aware `Current Page` readback, keyboard shortcuts, and
+long open list live in collapsed `Palette evidence and shortcuts`, while the
+goal-aware `Continue Current Goal` block and its confirmed local action form
+remain one keyboard open away. Those controls stay inside the local browser app
+and do not perform external effects.
 
 Use `/workflow?delegation_id=<id>` or `/workflow?run_id=<coder_run_id>` when
 you want the scoped operator map. The selected workflow page now includes a

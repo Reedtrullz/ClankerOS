@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The command palette now opens with a compact `Palette Focus` launcher for
+  continuing the current Goal action, searching local state, resuming the saved
+  workspace, or staying on the current page; detailed route context, keyboard
+  shortcuts, and the long open list are preserved inside collapsed palette
+  evidence.
 - The shared Operator Focus strip is now compact and action-first: it shows
   the primary action, phase, progress, waiting counts, and `/resume` as visible
   cards, keeps the confirmed local action form available when relevant, and

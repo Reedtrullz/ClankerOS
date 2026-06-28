@@ -1,5 +1,54 @@
 # Status
 
+## 2026-06-28 Palette Focus Launcher
+
+- Made the global command palette action-first across app pages: it now opens
+  with a visible `Palette Focus` launcher for continuing the current Goal
+  action, searching local state, resuming the saved workspace, or staying on
+  the current page.
+- Kept the goal-aware `Continue Current Goal` block and its confirmed local
+  action form directly below search, so the palette can still run the current
+  browser-available local action only after confirmation.
+- Moved the route readback, keyboard shortcuts, and long open list into
+  collapsed `Palette evidence and shortcuts`, while preserving
+  `palette_route_*`, `palette_continue_*`, and keyboard shortcut strings for
+  auditability and tests.
+- Added stable `data-command-palette-focus`,
+  `data-command-palette-focus-*`, `data-command-palette-evidence`, and
+  `data-command-palette-open-list` assertions to first-run, dashboard, and
+  Goal route fixtures.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is read-only local navigation, search submission to the
+  local app, and existing confirmed local action-form exposure. It does not
+  write on GET, create action authority, approve work, run work, call
+  providers, fetch GitHub from ClankerOS, poll network services, commit, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 515 deselected`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-palette-focus-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-palette-focus-demo app-demo-smoke-test`
+    -> passed, fixture-backed Goal route matched expected snippets, provider/
+    network/external mutation counters remained `0`
+  - Rendered in-app Browser QA against
+    `http://127.0.0.1:8799/goals/goal_8946f3687a52`: desktop viewport
+    opened the palette from the Goal page, rendered four Palette Focus cards
+    for Continue/Search/Resume/Current Page, focused the search input, linked
+    Continue to `#command-palette-continue-form`, exposed the existing
+    `/actions/coder-commit-request` form, kept focus evidence collapsed until
+    clicked, and showed no horizontal overflow, no framework overlay, and
+    empty console warning/error logs. Submitting palette search via the scoped
+    Search button navigated to `/search?q=commit` with a visible Search
+    Command Bar, matching commit results, no horizontal overflow, no framework
+    overlay, and empty console warning/error logs. Mobile viewport `390x844`
+    rendered the same Palette Focus as a one-column four-card stack with
+    dialog width `358`, `scrollWidth=390`, the search input focused, no
+    horizontal overflow, and empty console warning/error logs.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Compact Operator Focus
 
 - Made the shared `Operator Focus` strip compact and action-first across app
