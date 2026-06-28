@@ -154,10 +154,12 @@ Latest status focus:
   target surface, selected-step counts, and zero-effect proof in the DOM.
 - `/profiles` is now action-first: it opens with the `Profiles Operator
   Workbench` before shared route/focus diagnostics or command readback, shows
-  visible Now, Lanes, Storage, and Resume cards, and keeps profiles state,
-  workbench evidence, and command evidence collapsed by default while
-  preserving future-lane, storage-profile, provider-disabled, model-routing-
-  disabled, and zero-effect proof in the DOM.
+  visible Now, Lanes, Storage, and Resume cards, then follows with a read-only
+  `Profile Routing Matrix` for Planning, Coding, Review, Docs, Cheap Model,
+  and Frontier Model lanes. Profiles state, matrix evidence, workbench
+  evidence, and command evidence stay collapsed by default while preserving
+  future-lane, storage-profile, cost-posture, provider-disabled,
+  model-routing-disabled, and zero-effect proof in the DOM.
 - `/skills` is now action-first: it opens with the `Skills Operator
   Workbench` before shared route/focus diagnostics or command readback, shows
   visible Now, Generated, Usage, and Resume cards, and keeps skills state,

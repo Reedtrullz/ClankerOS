@@ -270,10 +270,13 @@ Core layers for the bootstrap:
   labels. It is action-first and opens with a visible
   `Profiles Operator Workbench` before shared route/focus diagnostics or
   command readback, with cards for the next profile review, future lanes,
-  storage, and `/resume` or Goal context. Profiles state, workbench evidence,
-  and command evidence stay collapsed by default while preserving configured,
-  storage, enabled, disabled, future-lane, adapter, write-posture, use-for,
-  provider, model-routing, and zero-effect readbacks in the DOM.
+  storage, and `/resume` or Goal context. The read-only `Profile Routing
+  Matrix` maps Planning, Coding, Review, Docs, Cheap Model, and Frontier Model
+  lanes to stored local profiles, cost posture, `use_for` labels, and inactive
+  provider/model routing status. Profiles state, matrix evidence, workbench
+  evidence, and command evidence stay collapsed by default while preserving
+  configured, storage, enabled, disabled, future-lane, adapter, write-posture,
+  use-for, provider, model-routing, and zero-effect readbacks in the DOM.
   The `/goals` and Home first-run panel now exposes a state-aware
   Create project -> Create first goal -> Create first delegation -> Generate
   context pack -> Run first delegation checklist plus confirmed local

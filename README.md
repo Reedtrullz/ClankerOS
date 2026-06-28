@@ -557,10 +557,14 @@ effects in the DOM.
 `Profiles Operator Workbench` before shared route/focus diagnostics or command
 readback, turning storage-profile review, future-lane review, and resume
 context into browser cards while provider/model routing remains inactive.
-Profiles state, workbench evidence, and command evidence stay collapsed by
-default while preserving configured/storage profile counts, future-lane
-readiness, adapter/write/use-for posture, and provider/model routing disabled
-proof in the DOM.
+It now follows with a read-only `Profile Routing Matrix` that maps Planning,
+Coding, Review, Docs, Cheap Model, and Frontier Model lanes to stored local
+profile rows, cost posture, `use_for` labels, and inactive provider/model
+routing status. Profiles state, matrix evidence, workbench evidence, and
+command evidence stay collapsed by default while preserving
+configured/storage profile counts, future-lane readiness, adapter/write
+posture, `use_for` posture, and provider/model routing disabled proof in the
+DOM.
 `/profiles` also shows both `.clanker/profiles.yml` names and SQLite profile
 storage rows, including labels, modes, cost tiers, write posture, adapter
 status, and `use_for` labels without enabling providers.

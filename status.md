@@ -1,5 +1,39 @@
 # Status
 
+## 2026-06-28 Profile Routing Matrix UX
+
+- Added a read-only `Profile Routing Matrix` to `/profiles` after the
+  Profiles Operator Workbench and command bar.
+- The matrix makes Planning, Coding, Review, Docs, Cheap Model, and Frontier
+  Model lanes visible as six browser cards, mapping each lane to stored local
+  profile rows, cost posture, `use_for` labels, and inactive provider/model
+  routing status.
+- Updated README, operating summary, local status docs, and focused route
+  assertions for populated profile storage and empty first-run profile states.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'profiles_route_reads_storage_profiles_without_enabling_providers or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against fixture-backed scratch local app `127.0.0.1:8858`
+  verified `/profiles` in the in-app browser. Desktop rendered six
+  storage-ready matrix cards, kept matrix evidence collapsed, had no
+  horizontal overflow, and reported no warning/error logs.
+- Mobile `390x844` in-app browser QA rendered the six profile-lane cards in
+  one column, kept evidence collapsed, had no horizontal overflow, reported no
+  warning/error logs, and the viewport was reset after the check.
+- The scratch local app server was stopped after browser QA, and no listener
+  remained on port `8858`.
+- Non-claims: this is a local readback/navigation UX change. It does not write
+  on GET, approve work, execute work, create commits, push, create PRs,
+  deploy, fetch GitHub status, call providers, or mutate external systems.
+
 ## 2026-06-28 Command Palette Quick Switch
 
 - Added a visible `Quick Switch` dock inside the global command palette with

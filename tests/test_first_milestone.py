@@ -2950,6 +2950,25 @@ def test_profiles_route_reads_storage_profiles_without_enabling_providers(
     assert "profiles_workbench_write_on_get</dt><dd>false" in profiles.body
     assert "profiles_workbench_network_actions_taken</dt><dd>0" in profiles.body
     assert "profiles_workbench_external_effects_created</dt><dd>false" in profiles.body
+    assert "Profile Routing Matrix" in profiles.body
+    assert "data-profiles-routing-matrix='true'" in profiles.body
+    assert "data-profiles-matrix-grid='true'" in profiles.body
+    assert "data-profile-lane-key='planning' data-profile-lane-status='storage_ready'" in profiles.body
+    assert "data-profile-lane-key='coding' data-profile-lane-status='storage_ready'" in profiles.body
+    assert "data-profile-lane-key='review' data-profile-lane-status='storage_ready'" in profiles.body
+    assert "data-profile-lane-key='docs' data-profile-lane-status='storage_ready'" in profiles.body
+    assert "data-profile-lane-key='cheap-model' data-profile-lane-status='storage_ready'" in profiles.body
+    assert "data-profile-lane-key='frontier-model' data-profile-lane-status='storage_ready'" in profiles.body
+    assert "profiles_matrix_lane_count</dt><dd>6" in profiles.body
+    assert "profiles_matrix_storage_ready_lanes</dt><dd>6" in profiles.body
+    assert "profiles_matrix_placeholder_only_lanes</dt><dd>0" in profiles.body
+    assert "profiles_matrix_provider_routing_active</dt><dd>false" in profiles.body
+    assert "profiles_matrix_model_routing_enabled</dt><dd>false" in profiles.body
+    assert "profiles_matrix_provider_calls_taken</dt><dd>0" in profiles.body
+    assert "profiles_matrix_network_actions_taken</dt><dd>0" in profiles.body
+    assert "profiles_matrix_external_effects_created</dt><dd>false" in profiles.body
+    assert "Break ambiguous goals into milestones" in profiles.body
+    assert "Route repeatable search, triage, and failure-summary work" in profiles.body
     assert "Profiles Command Bar" in profiles.body
     assert "data-profiles-command-bar='true'" in profiles.body
     assert "profiles_command_profiles_file</dt><dd>present" in profiles.body
@@ -10818,6 +10837,24 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "profiles_workbench_write_on_get</dt><dd>false" in profiles.body
     assert "profiles_workbench_network_actions_taken</dt><dd>0" in profiles.body
     assert "profiles_workbench_external_effects_created</dt><dd>false" in profiles.body
+    assert "Profile Routing Matrix" in profiles.body
+    assert "data-profiles-routing-matrix='true'" in profiles.body
+    assert "data-profiles-matrix-grid='true'" in profiles.body
+    assert "data-profile-lane-key='planning' data-profile-lane-status='placeholder_only'" in profiles.body
+    assert "data-profile-lane-key='coding' data-profile-lane-status='placeholder_only'" in profiles.body
+    assert "data-profile-lane-key='review' data-profile-lane-status='placeholder_only'" in profiles.body
+    assert "data-profile-lane-key='docs' data-profile-lane-status='placeholder_only'" in profiles.body
+    assert "data-profile-lane-key='cheap-model' data-profile-lane-status='placeholder_only'" in profiles.body
+    assert "data-profile-lane-key='frontier-model' data-profile-lane-status='placeholder_only'" in profiles.body
+    assert "profiles_matrix_lane_count</dt><dd>6" in profiles.body
+    assert "profiles_matrix_storage_ready_lanes</dt><dd>0" in profiles.body
+    assert "profiles_matrix_placeholder_only_lanes</dt><dd>6" in profiles.body
+    assert "profiles_matrix_provider_routing_active</dt><dd>false" in profiles.body
+    assert "profiles_matrix_model_routing_enabled</dt><dd>false" in profiles.body
+    assert "profiles_matrix_provider_calls_taken</dt><dd>0" in profiles.body
+    assert "profiles_matrix_network_actions_taken</dt><dd>0" in profiles.body
+    assert "profiles_matrix_external_effects_created</dt><dd>false" in profiles.body
+    assert "Reserve expensive reasoning for architecture, risky coding, and hard reviews" in profiles.body
     assert "Profiles Command Bar" in profiles.body
     assert "data-profiles-command-bar='true'" in profiles.body
     assert "profiles_command_profiles_file</dt><dd>missing" in profiles.body

@@ -6817,13 +6817,10 @@ def _profiles_page(root: Path) -> str:
     profile_lines = profile_path.read_text(encoding="utf-8").splitlines() if profile_path.exists() else []
     configured_profiles = _profile_names(profile_lines)
     storage_profiles = storage.list_profiles(enabled_only=False)
+    lane_specs = _profile_future_lane_specs()
     prepared = [
-        "Planning: inactive provider-routing placeholder",
-        "Coding: inactive provider-routing placeholder",
-        "Review: inactive provider-routing placeholder",
-        "Docs: inactive provider-routing placeholder",
-        "Cheap model: inactive provider-routing placeholder",
-        "Frontier model: inactive provider-routing placeholder",
+        f"{spec['label']}: inactive provider-routing placeholder"
+        for spec in lane_specs
     ]
     return "".join(
         [
@@ -6855,6 +6852,11 @@ def _profiles_page(root: Path) -> str:
                 future_lanes=prepared,
                 profile_path_exists=profile_path.exists(),
             ),
+            _profiles_routing_matrix(
+                configured_profiles=configured_profiles,
+                storage_profiles=storage_profiles,
+                lane_specs=lane_specs,
+            ),
             _list_section(
                 "Configured Profiles",
                 [_profile_config_line(name) for name in configured_profiles],
@@ -6868,6 +6870,142 @@ def _profiles_page(root: Path) -> str:
             ),
             _list_section("Future Profile Lanes", prepared, anchor_id="profiles-future"),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _profile_future_lane_specs() -> list[dict[str, Any]]:
+    return [
+        {
+            "key": "planning",
+            "label": "Planning",
+            "summary": "Break ambiguous goals into milestones, task graphs, and risk posture.",
+            "use_for": ["ambiguous_goal", "architecture", "plan_creation", "replan"],
+            "profiles": ["planner"],
+            "cost": "high",
+        },
+        {
+            "key": "coding",
+            "label": "Coding",
+            "summary": "Carry bounded implementation work through worktree-safe execution gates.",
+            "use_for": ["implementation", "refactor", "bugfix"],
+            "profiles": ["coder"],
+            "cost": "high",
+        },
+        {
+            "key": "review",
+            "label": "Review",
+            "summary": "Inspect evidence, failures, alignment, and completion posture before promotion.",
+            "use_for": ["verification_review", "alignment_review", "evidence_review", "final_review"],
+            "profiles": ["tester", "evaluator"],
+            "cost": "medium",
+        },
+        {
+            "key": "docs",
+            "label": "Docs",
+            "summary": "Summarize local project knowledge, file maps, and reusable operator handoffs.",
+            "use_for": ["summarization", "file_mapping", "dependency_mapping"],
+            "profiles": ["scout", "planner"],
+            "cost": "low",
+        },
+        {
+            "key": "cheap-model",
+            "label": "Cheap Model",
+            "summary": "Route repeatable search, triage, and failure-summary work to low-cost lanes.",
+            "use_for": ["repo_search", "test_triage", "failure_summary"],
+            "profiles": ["scout", "tester"],
+            "cost": "low",
+        },
+        {
+            "key": "frontier-model",
+            "label": "Frontier Model",
+            "summary": "Reserve expensive reasoning for architecture, risky coding, and hard reviews.",
+            "use_for": ["architecture", "implementation", "final_review"],
+            "profiles": ["planner", "coder", "evaluator"],
+            "cost": "high",
+        },
+    ]
+
+
+def _profiles_routing_matrix(
+    *,
+    configured_profiles: list[str],
+    storage_profiles: list[Any],
+    lane_specs: list[dict[str, Any]],
+) -> str:
+    configured = set(configured_profiles)
+    storage_by_name = {str(profile.name): profile for profile in storage_profiles}
+    lane_cards = []
+    storage_ready = 0
+    configured_ready = 0
+    placeholder_only = 0
+    for spec in lane_specs:
+        profile_names = [str(name) for name in spec["profiles"]]
+        matched_storage = [storage_by_name[name] for name in profile_names if name in storage_by_name]
+        matched_config = [name for name in profile_names if name in configured]
+        if matched_storage:
+            readiness = "storage_ready"
+            storage_ready += 1
+            target_href = "#profiles-storage"
+            target_label = "Storage Profiles"
+            profile_summary = ", ".join(
+                f"{profile.name} ({profile.cost_tier})" for profile in matched_storage
+            )
+        elif matched_config:
+            readiness = "configured_ready"
+            configured_ready += 1
+            target_href = "#profiles-configured"
+            target_label = "Configured Profiles"
+            profile_summary = ", ".join(matched_config)
+        else:
+            readiness = "placeholder_only"
+            placeholder_only += 1
+            target_href = "#profiles-future"
+            target_label = "Future Profile Lanes"
+            profile_summary = "none stored yet"
+        use_for = ", ".join(str(item) for item in spec["use_for"])
+        lane_cards.append(
+            "".join(
+                [
+                    f"<article class='profiles-matrix-card' data-profile-lane-key='{_e(spec['key'])}' data-profile-lane-status='{_e(readiness)}' data-profile-lane-provider-active='false'>",
+                    f"<h3>{_e(spec['label'])}</h3>",
+                    f"<p>{_e(spec['summary'])}</p>",
+                    f"<p><strong>Status:</strong> inactive provider routing; {_e(readiness.replace('_', ' '))}.</p>",
+                    f"<p><strong>Profiles:</strong> {_e(profile_summary)}</p>",
+                    f"<p><strong>Use for:</strong> {_e(use_for)}</p>",
+                    f"<a class='profiles-matrix-link' href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    "</article>",
+                ]
+            )
+        )
+    rows = [
+        ("profiles_matrix_lane_count", str(len(lane_specs))),
+        ("profiles_matrix_storage_ready_lanes", str(storage_ready)),
+        ("profiles_matrix_configured_ready_lanes", str(configured_ready)),
+        ("profiles_matrix_placeholder_only_lanes", str(placeholder_only)),
+        ("profiles_matrix_provider_routing_active", "false"),
+        ("profiles_matrix_model_routing_enabled", "false"),
+        ("profiles_matrix_provider_calls_taken", "0"),
+        ("profiles_matrix_network_actions_taken", "0"),
+        ("profiles_matrix_external_effects_created", "false"),
+    ]
+    return "".join(
+        [
+            "<section id='profiles-routing-matrix' class='panel profiles-routing-matrix' data-profiles-routing-matrix='true'><h2>Profile Routing Matrix</h2>",
+            "<p class='muted'>A read-only map of future routing lanes, matched local profile records, cost posture, and inactive provider boundaries.</p>",
+            "<div class='profiles-matrix-grid' data-profiles-matrix-grid='true'>",
+            "".join(lane_cards),
+            "</div>",
+            "<details class='profiles-matrix-evidence' data-profiles-matrix-evidence='true'><summary>Profiles routing matrix evidence</summary>",
+            _kv(rows),
+            _ul(
+                [
+                    f"profiles_matrix_lane: {_e(str(spec['label']))} provider_routing_active=false model_routing_enabled=false"
+                    for spec in lane_specs
+                ]
+            ),
+            "</details>",
+            "</section>",
         ]
     )
 
@@ -29318,9 +29456,17 @@ def _html_page(
     .profiles-workbench-action, .profiles-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--warn); overflow-wrap:anywhere; text-decoration:none; }}
     .profiles-workbench-action {{ background:var(--warn); color:#211400; }}
     .profiles-workbench-link {{ background:var(--surface); color:var(--ink); }}
-    .profiles-state-details, .profiles-workbench-evidence, .profiles-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .profiles-state-details summary, .profiles-workbench-evidence summary, .profiles-command-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .profiles-state-details:not([open]) > :not(summary), .profiles-workbench-evidence:not([open]) > :not(summary), .profiles-command-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .profiles-routing-matrix {{ border-left:4px solid var(--warn); }}
+    .profiles-matrix-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:10px; margin:12px 0; }}
+    .profiles-matrix-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .profiles-matrix-card[data-profile-lane-status="storage_ready"] {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
+    .profiles-matrix-card[data-profile-lane-status="configured_ready"] {{ border-color:var(--warn); box-shadow:inset 3px 0 0 var(--warn); }}
+    .profiles-matrix-card h3 {{ margin-top:0; }}
+    .profiles-matrix-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .profiles-matrix-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--warn); overflow-wrap:anywhere; text-decoration:none; background:var(--surface); color:var(--ink); }}
+    .profiles-state-details, .profiles-workbench-evidence, .profiles-command-evidence, .profiles-matrix-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .profiles-state-details summary, .profiles-workbench-evidence summary, .profiles-command-evidence summary, .profiles-matrix-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .profiles-state-details:not([open]) > :not(summary), .profiles-workbench-evidence:not([open]) > :not(summary), .profiles-command-evidence:not([open]) > :not(summary), .profiles-matrix-evidence:not([open]) > :not(summary) {{ display:none; }}
     .profiles-command-bar {{ border-left:4px solid var(--warn); }}
     .profiles-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .profiles-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -29423,7 +29569,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
