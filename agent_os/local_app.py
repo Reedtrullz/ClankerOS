@@ -20557,6 +20557,15 @@ def _artifact_viewer(
     workspace = _load_workspace_state(root)
     body = "".join(
         [
+            _artifact_operator_workbench(
+                relative_path=repo_relative,
+                artifact_type=artifact_type,
+                render_family=render_family,
+                renderer=renderer,
+                line_count=line_count,
+                truncated=truncated,
+                workspace=workspace,
+            ),
             _artifact_command_bar(
                 root,
                 relative_path=repo_relative,
@@ -20578,7 +20587,7 @@ def _artifact_viewer(
                 truncated=truncated,
                 workspace=workspace,
             ),
-            f"<section id='artifact-content'><h1>Artifact {_e(repo_relative)}</h1>",
+            f"<section id='artifact-content'><h1>Artifact</h1><p class='artifact-path'><code>{_e(repo_relative)}</code></p>",
             _kv(
                 [
                     ("artifact_type", artifact_type),
@@ -20599,6 +20608,114 @@ def _artifact_viewer(
         ]
     )
     return _html_page(root, "Artifact", body, current_path=current_path)
+
+
+def _artifact_operator_workbench(
+    *,
+    relative_path: str,
+    artifact_type: str,
+    render_family: str,
+    renderer: str,
+    line_count: int,
+    truncated: bool,
+    workspace: dict[str, str],
+) -> str:
+    context = _artifact_context_from_path(relative_path)
+    project_id = context["project_id"]
+    goal_id = context["goal_id"]
+    remembered = workspace.get("last_viewed_artifact") == relative_path
+    if goal_id != "unknown":
+        context_label = "Goal artifact"
+        context_action = "Return to goal"
+        context_href = f"/goals/{quote(goal_id)}"
+        context_surface = f"/goals/{goal_id}"
+        context_reason = "artifact_path_identifies_goal_context"
+    elif context["source"] == "delegation_path":
+        context_label = "Delegation artifact"
+        context_action = "Review delegation runs"
+        context_href = "/delegation-runs"
+        context_surface = "/delegation-runs"
+        context_reason = "artifact_path_identifies_delegation_context"
+    elif remembered:
+        context_label = "Saved resume anchor"
+        context_action = "Resume from artifact"
+        context_href = "/resume"
+        context_surface = "/resume"
+        context_reason = "artifact_saved_as_workspace_anchor"
+    else:
+        context_label = "Unclassified artifact"
+        context_action = "Remember artifact"
+        context_href = "#remember-artifact"
+        context_surface = "Remember Artifact"
+        context_reason = "artifact_path_unclassified"
+    resume_action = "Resume from artifact" if remembered else "Remember artifact"
+    resume_href = "/resume" if remembered else "#remember-artifact"
+    resume_surface = "/resume" if remembered else "Remember Artifact"
+    cards = "".join(
+        [
+            "<div class='artifact-workbench-grid' data-artifact-workbench-cards='true'>",
+            "<article class='artifact-workbench-card artifact-workbench-primary'><h3>Read</h3>",
+            f"<p>{_e(artifact_type)} artifact, {_e(str(line_count))} lines.</p>",
+            "<a class='artifact-workbench-action' data-artifact-workbench-primary='true' href='#artifact-content'>Open content</a></article>",
+            "<article class='artifact-workbench-card'><h3>Context</h3>",
+            f"<p>{_e(context_label)}.</p>",
+            f"<a class='artifact-workbench-link' href='{_e(context_href)}'>{_e(context_action)}</a></article>",
+            "<article class='artifact-workbench-card'><h3>Resume</h3>",
+            f"<p>{'Saved as workspace anchor.' if remembered else 'Not saved as workspace anchor.'}</p>",
+            f"<a class='artifact-workbench-link' href='{_e(resume_href)}'>{_e(resume_action)}</a></article>",
+            "<article class='artifact-workbench-card'><h3>Safety</h3>",
+            "<p>Bounded inert read.</p>",
+            "<a class='artifact-workbench-link' href='#artifact-command-bar'>View proof</a></article>",
+            "</div>",
+        ]
+    )
+    return "".join(
+        [
+            "<section id='artifact-operator-workbench' class='panel artifact-operator-workbench' data-artifact-operator-workbench='true'><h2>Artifact Operator Workbench</h2>",
+            cards,
+            "<details class='artifact-workbench-evidence' data-artifact-workbench-evidence='true'><summary>Artifact workbench evidence</summary>",
+            _kv(
+                [
+                    ("artifact_workbench_path", relative_path),
+                    ("artifact_workbench_type", artifact_type),
+                    ("artifact_workbench_render_family", render_family),
+                    ("artifact_workbench_renderer", renderer),
+                    ("artifact_workbench_line_count", str(line_count)),
+                    ("artifact_workbench_truncated", str(truncated).lower()),
+                    ("artifact_workbench_context_source", context["source"]),
+                    ("artifact_workbench_project", project_id),
+                    ("artifact_workbench_goal", goal_id),
+                    ("artifact_workbench_saved_anchor", str(remembered).lower()),
+                    ("artifact_workbench_context_action", context_action),
+                    (
+                        "artifact_workbench_context_surface",
+                        SafeHtml(f"<a href='{_e(context_href)}'>{_e(context_surface)}</a>"),
+                    ),
+                    ("artifact_workbench_context_reason", context_reason),
+                    ("artifact_workbench_resume_action", resume_action),
+                    (
+                        "artifact_workbench_resume_surface",
+                        SafeHtml(f"<a href='{_e(resume_href)}'>{_e(resume_surface)}</a>"),
+                    ),
+                    ("artifact_workbench_write_on_get", "false"),
+                    ("artifact_workbench_raw_filesystem_browsing", "false"),
+                    ("artifact_workbench_content_executed", "false"),
+                    ("artifact_workbench_network_actions_taken", "0"),
+                    ("artifact_workbench_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    "artifact_workbench_primary_action: Open content",
+                    "artifact_workbench_primary_surface: <a href='#artifact-content'>#artifact-content</a>",
+                    f"artifact_workbench_context_click: <a href='{_e(context_href)}'>{_e(context_surface)}</a>",
+                    "artifact_workbench_safety: bounded inert artifact read",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
 
 
 def _artifact_review_brief(
@@ -20657,6 +20774,7 @@ def _artifact_review_brief(
         [
             "<section id='artifact-review-brief' class='panel artifact-review-brief' data-artifact-review-brief='true'><h2>Artifact Review Brief</h2>",
             "<p class='muted'>A read-only review card that connects this bounded artifact back to the local operator workflow before the inert content view.</p>",
+            "<details class='artifact-review-evidence' data-artifact-review-evidence='true'><summary>Artifact review evidence</summary>",
             _kv(
                 [
                     ("artifact_review_status", review_status),
@@ -20698,6 +20816,7 @@ def _artifact_review_brief(
                     "artifact_review_safety: bounded inert read-only review",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -20741,6 +20860,7 @@ def _artifact_command_bar(
     return "".join(
         [
             "<section id='artifact-command-bar' class='panel artifact-command-bar' data-artifact-command-bar='true'><h2>Artifact Command Bar</h2>",
+            "<details class='artifact-command-evidence' data-artifact-command-evidence='true'><summary>Artifact command evidence</summary>",
             _kv(
                 [
                     ("artifact_command_status", "ready"),
@@ -20781,6 +20901,7 @@ def _artifact_command_bar(
                     "artifact_command_safety: bounded inert artifact read",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -25263,7 +25384,7 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
-    content_first_paths = {"/", "/actions", "/approvals", "/ci-evidence", "/delegation-runs", "/dogfooding", "/inbox", "/incidents", "/memory", "/profiles", "/projects", "/resume", "/search", "/skills", "/today", "/verification", "/workflow", "/workspace"}
+    content_first_paths = {"/", "/actions", "/approvals", "/artifacts", "/ci-evidence", "/delegation-runs", "/dogfooding", "/inbox", "/incidents", "/memory", "/profiles", "/projects", "/resume", "/search", "/skills", "/today", "/verification", "/workflow", "/workspace"}
     if current_route_path in content_first_paths or current_route_path.startswith("/projects/"):
         article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
     else:
@@ -25333,6 +25454,7 @@ def _html_page(
     .route-context-current {{ background:var(--panel); }}
     .route-context-label {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
     .route-context-item strong {{ overflow-wrap:anywhere; }}
+    .route-context-item a {{ min-width:0; overflow-wrap:anywhere; word-break:break-word; }}
     .route-context-primary, .route-context-secondary {{ display:inline-flex; align-items:center; justify-content:center; min-height:32px; width:100%; max-width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
     .route-context-primary {{ background:var(--accent); color:#fff; }}
     .route-context-secondary {{ background:var(--panel); color:var(--accent); }}
@@ -25794,6 +25916,23 @@ def _html_page(
     .health-command-bar {{ border-left:4px solid var(--ok); }}
     .health-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .health-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .artifact-operator-workbench {{ border-left:4px solid var(--accent); }}
+    .artifact-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .artifact-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .artifact-workbench-card h3 {{ margin-top:0; }}
+    .artifact-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .artifact-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .artifact-workbench-action, .artifact-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .artifact-workbench-action {{ background:var(--accent); color:#fff; }}
+    .artifact-workbench-link {{ background:var(--surface); color:var(--accent); }}
+    .artifact-workbench-evidence, .artifact-command-evidence, .artifact-review-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .artifact-workbench-evidence summary, .artifact-command-evidence summary, .artifact-review-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .artifact-workbench-evidence:not([open]) > :not(summary), .artifact-command-evidence:not([open]) > :not(summary), .artifact-review-evidence:not([open]) > :not(summary) {{ display:none; }}
+    #artifact-content {{ min-width:0; overflow-wrap:anywhere; }}
+    #artifact-content h1 {{ overflow-wrap:anywhere; }}
+    .artifact-path code {{ display:block; max-width:100%; white-space:normal; overflow-wrap:anywhere; color:var(--muted); }}
+    .artifact-render-shell {{ max-width:100%; overflow-x:auto; }}
+    .artifact-markdown p, .artifact-markdown li {{ overflow-wrap:anywhere; }}
     .artifact-command-bar {{ border-left:4px solid var(--accent); }}
     .artifact-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .artifact-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -25968,7 +26107,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .verification-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

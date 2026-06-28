@@ -1,5 +1,55 @@
 # Status
 
+## 2026-06-28 Artifact Workbench Operator Surface
+
+- Made `/artifacts?path=...` content-first and artifact-action-first by
+  rendering `Artifact Operator Workbench` before shared Route Context,
+  Operator Focus, Last Action, command evidence, review evidence, and inert
+  content.
+- Added four visible cards for Read, Context, Resume, and Safety. The primary
+  Read card jumps to `#artifact-content`; Context returns delegation artifacts
+  to `/delegation-runs` or goal artifacts to their owning Goal; Resume links to
+  `#remember-artifact` until the artifact is saved as the workspace anchor;
+  Safety links to the command evidence.
+- Collapsed artifact workbench evidence, `Artifact Command Bar` evidence, and
+  `Artifact Review Brief` evidence by default while preserving bounded path,
+  renderer, inferred context, workspace-anchor posture, and zero-effect
+  readbacks in the DOM.
+- Split the artifact content heading from the long path so the page now shows a
+  clean `Artifact` heading plus a wrapped path code line instead of a giant
+  route-like heading.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. The page does not
+  write on GET, browse arbitrary raw filesystem paths, execute artifact
+  content, approve work, execute work, create commits, push, create PRs,
+  deploy, call providers, fetch GitHub, mutate external systems, or remember
+  an artifact without the existing confirmed `save-workspace` form.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_artifact_viewer_is_read_only_and_bounded or local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-artifact-workbench-smoke-final app-smoke-test`
+    -> passed, `/artifacts?path=.clanker/app/smoke-artifacts/sample.md`
+    marker matched, absolute/traversal/symlink escape checks matched, provider
+    calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root /tmp/clankeros-artifact-workbench-demo-final app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network actions
+    0, external mutations 0
+  - Browser QA against
+    `http://127.0.0.1:8823/artifacts?path=.clanker%2Fdelegations%2Fsubagent_delegation_52973d80d2b8%2Fruns%2Frun_75f5a4fcfc73%2Fevidence%2Fcontext_pack.md`:
+    desktop `1280x900` rendered `Artifact Operator Workbench` before command
+    evidence, review evidence, content, and Route Context; all three artifact
+    evidence disclosures were closed by default; the scoped `Open content`
+    action jumped to `#artifact-content`; the scoped Resume card action jumped
+    to `#remember-artifact` with form action `/actions/save-workspace`; the
+    artifact rendered with `markdown_safe_html`; no horizontal overflow and no
+    warning/error logs.
+  - Browser QA mobile `390x844`: workbench started in the first viewport, four
+    cards stacked one column, all artifact evidence disclosures were closed by
+    default, no horizontal overflow, and no warning/error logs.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 CI Evidence Proof-First Operator Surface
 
 - Made `/ci-evidence` content-first and proof-action-first by rendering

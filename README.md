@@ -436,13 +436,13 @@ area with a read-only `Goal Artifact Command Bar` that summarizes artifact
 record counts, available/missing posture, render-family counts, source-family
 counts, the latest artifact, and one next bounded artifact review click before
 the detailed artifact list and typed explorer. Each artifact page starts with
-a read-only `Artifact Command Bar` showing path, type, renderer, size, line
-count, truncation state, inferred project/goal context, whether it is already
-the saved resume anchor, and one next action: remember it or resume from it.
-Each artifact page also includes an `Artifact Review Brief` that links
-goal-scoped artifacts back to their Goal and Project, or points unclassified
-artifacts toward the remember/resume workspace path before the inert content
-view.
+a visible `Artifact Operator Workbench` for opening the inert content,
+returning to the owning Goal/delegation context, remembering or resuming from
+the artifact, and checking the safety proof. The detailed `Artifact Command
+Bar` and `Artifact Review Brief` evidence stay collapsed by default while
+preserving path, type, renderer, size, line count, truncation state, inferred
+project/goal context, saved-resume-anchor posture, and zero-effect boundaries.
+The content view remains inert and bounded.
 
 Use `/goals` on a fresh checkout for first-run browser actions. The page now
 renders a state-aware First Run Guide plus confirmed local forms for

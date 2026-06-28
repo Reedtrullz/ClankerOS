@@ -7321,8 +7321,22 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
 
     markdown = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.md")
     assert markdown.status == 200
+    assert "Artifact Operator Workbench" in markdown.body
+    assert "data-artifact-operator-workbench='true'" in markdown.body
+    assert "data-artifact-workbench-cards='true'" in markdown.body
+    assert markdown.body.count("class='artifact-workbench-card") == 4
+    assert "data-artifact-workbench-primary='true' href='#artifact-content'>Open content</a>" in markdown.body
+    assert "data-artifact-workbench-evidence='true'" in markdown.body
+    assert "artifact_workbench_path</dt><dd>docs/sample.md" in markdown.body
+    assert "artifact_workbench_type</dt><dd>markdown" in markdown.body
+    assert "artifact_workbench_context_source</dt><dd>path_unclassified" in markdown.body
+    assert "artifact_workbench_context_action</dt><dd>Remember artifact" in markdown.body
+    assert "artifact_workbench_context_surface</dt><dd><a href='#remember-artifact'>Remember Artifact</a>" in markdown.body
+    assert "artifact_workbench_resume_action</dt><dd>Remember artifact" in markdown.body
+    assert "artifact_workbench_primary_action: Open content" in markdown.body
     assert "Artifact Command Bar" in markdown.body
     assert "data-artifact-command-bar='true'" in markdown.body
+    assert "data-artifact-command-evidence='true'" in markdown.body
     assert "artifact_command_status</dt><dd>ready" in markdown.body
     assert "artifact_command_path</dt><dd>docs/sample.md" in markdown.body
     assert "artifact_command_type</dt><dd>markdown" in markdown.body
@@ -7347,6 +7361,7 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "artifact_command_safety: bounded inert artifact read" in markdown.body
     assert "Artifact Review Brief" in markdown.body
     assert "data-artifact-review-brief='true'" in markdown.body
+    assert "data-artifact-review-evidence='true'" in markdown.body
     assert "artifact_review_status</dt><dd>unclassified" in markdown.body
     assert "artifact_review_path</dt><dd>docs/sample.md" in markdown.body
     assert "artifact_review_context_source</dt><dd>path_unclassified" in markdown.body
@@ -7375,6 +7390,18 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "name='last_viewed_artifact' value='docs/sample.md'" in markdown.body
     assert "name='return_to' value='/artifacts?path=docs/sample.md'" in markdown.body
     assert "<h2 class='artifact-markdown-heading'>Sample</h2>" in markdown.body
+    assert markdown.body.index("Artifact Operator Workbench") < markdown.body.index(
+        "Artifact Command Bar"
+    )
+    assert markdown.body.index("Artifact Operator Workbench") < markdown.body.index(
+        "Artifact Review Brief"
+    )
+    assert markdown.body.index("Artifact Operator Workbench") < markdown.body.index(
+        "id='artifact-content'"
+    )
+    assert markdown.body.index("Artifact Operator Workbench") < markdown.body.index(
+        "Route Context"
+    )
     remember_artifact = render_local_app_route(
         tmp_path,
         "/actions/save-workspace",
@@ -7412,6 +7439,9 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "last_viewed_artifact</dt><dd>docs/sample.md" in workspace_after_artifact.body
     assert "operator-artifact" in workspace_after_artifact.body
     remembered_markdown = render_local_app_route(tmp_path, "/artifacts?path=docs/sample.md")
+    assert "artifact_workbench_saved_anchor</dt><dd>true" in remembered_markdown.body
+    assert "artifact_workbench_context_action</dt><dd>Resume from artifact" in remembered_markdown.body
+    assert "artifact_workbench_resume_surface</dt><dd><a href='/resume'>/resume</a>" in remembered_markdown.body
     assert "artifact_command_already_remembered</dt><dd>true" in remembered_markdown.body
     assert "artifact_command_next_action</dt><dd>Resume from artifact" in remembered_markdown.body
     assert "artifact_command_target_surface</dt><dd><a href='/resume'>/resume</a>" in remembered_markdown.body
@@ -7476,6 +7506,9 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "artifact_command_goal</dt><dd><a href='/goals/goal_demo'>goal_demo</a>" in goal_artifact_response.body
     assert "artifact_command_context_source</dt><dd>project_goal_path" in goal_artifact_response.body
     assert "Artifact Review Brief" in goal_artifact_response.body
+    assert "artifact_workbench_context_source</dt><dd>project_goal_path" in goal_artifact_response.body
+    assert "artifact_workbench_context_action</dt><dd>Return to goal" in goal_artifact_response.body
+    assert "artifact_workbench_context_surface</dt><dd><a href='/goals/goal_demo'>/goals/goal_demo</a>" in goal_artifact_response.body
     assert "artifact_review_status</dt><dd>goal_scoped" in goal_artifact_response.body
     assert "artifact_review_project</dt><dd><a href='/projects/subject'>subject</a>" in goal_artifact_response.body
     assert "artifact_review_goal</dt><dd><a href='/goals/goal_demo'>goal_demo</a>" in goal_artifact_response.body

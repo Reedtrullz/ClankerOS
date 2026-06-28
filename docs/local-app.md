@@ -876,18 +876,18 @@ raw-filesystem-browsing posture, and execution posture. Markdown artifacts are
 rendered through a small escaped heading/list/paragraph view, JSON artifacts
 are pretty-printed, patch/diff artifacts get line classes for meta/add/delete/
 hunk scanning, and text/log artifacts render as inert text. Artifact content
-is never executed. A read-only `Artifact Command Bar` now appears before the
-content with the artifact path, type, renderer, size, rendered byte count, line
-count, truncation state, inferred project/goal links when the path lives under
+is never executed. The page now starts with a visible `Artifact Operator
+Workbench` before shared diagnostics or dense readbacks. Its cards open the
+inert content, return to the owning Goal/delegation context when the path is
+classified, remember or resume from the artifact, and expose the local safety
+proof. The detailed `Artifact Command Bar` and `Artifact Review Brief`
+evidence stay collapsed by default while preserving the artifact path, type,
+renderer, size, rendered byte count, line count, truncation state, inferred
+project/goal links when the path lives under
 `.clanker/projects/<project>/goals/<goal>/`, workspace anchor status, one next
 action, and write-on-GET/raw-filesystem/content-execution/network/external-
-effect boundaries. The command bar links to `#remember-artifact` when the
-artifact is not yet the saved resume anchor and to `/resume` once it is.
-An `Artifact Review Brief` follows the command bar and summarizes whether the
-artifact is goal-scoped, delegation-scoped, saved as the resume anchor, or
-unclassified. It links goal-scoped artifacts back to the Goal and Project and
-points unclassified artifacts toward the remember/resume workspace path before
-the inert content renderer.
+effect boundaries. The command evidence links to `#remember-artifact` when
+the artifact is not yet the saved resume anchor and to `/resume` once it is.
 
 ## Safe Actions
 

@@ -211,15 +211,17 @@ Core layers for the bootstrap:
   selected delegation or coder run, parent Goal, project, current workflow
   stage, next local action, target surface, reason, and zero-effect counters
   before the detailed selected-state map and continuation links;
-  `/artifacts?path=...` includes a read-only `Artifact Command Bar` that
-  summarizes bounded artifact path, render type/family/renderer, size,
-  rendered bytes, line count, truncation state, inferred project/goal context,
-  workspace anchor status, one next action, and no-write/no-raw-filesystem/
-  no-content-execution/no-network/no-external-effect boundaries before the
-  inert content renderer and remember-artifact form. It also includes a
-  read-only `Artifact Review Brief` that links goal-scoped artifacts back to
-  their Goal and Project, identifies saved resume anchors, and points
-  unclassified artifacts toward the remember/resume workspace path;
+  `/artifacts?path=...` is content-first and opens with a visible read-only
+  `Artifact Operator Workbench` before shared diagnostics or dense readbacks.
+  It shows cards to open the inert content, return to the owning Goal or
+  delegation context, remember or resume from the artifact, and inspect safety
+  proof. Detailed `Artifact Command Bar` and `Artifact Review Brief` evidence
+  stay collapsed by default while preserving bounded artifact path, render
+  type/family/renderer, size, rendered bytes, line count, truncation state,
+  inferred project/goal context, workspace anchor status, one next action, and
+  no-write/no-raw-filesystem/no-content-execution/no-network/
+  no-external-effect boundaries before the inert content renderer and
+  remember-artifact form;
   `/workspace` for persistent open project/goal/filter/panel/last-artifact
   state in `.clanker/app/workspace.json`. It now opens with the
   `Workspace Operator Workbench` before shared route/focus diagnostics or
@@ -607,12 +609,13 @@ Core layers for the bootstrap:
   source-family counts, the latest artifact, one bounded review click, and
   zero-effect counters before the detailed artifact list and typed explorer.
   The artifact
-  viewer now reports render family/renderer posture and renders Markdown as
-  escaped headings/lists/paragraphs, JSON as pretty-printed text, patch/diff
-  artifacts with scan-friendly line classes, and text/log artifacts as inert
-  text while keeping content execution disabled. It also exposes a confirmed
-  local `save-workspace` form so the operator can remember the current artifact
-  as the next-session resume anchor without writing on GET. Every page shares
+  viewer now opens with an `Artifact Operator Workbench`, reports render
+  family/renderer posture, and renders Markdown as escaped headings/lists/
+  paragraphs, JSON as pretty-printed text, patch/diff artifacts with
+  scan-friendly line classes, and text/log artifacts as inert text while
+  keeping content execution disabled. It also exposes a confirmed local
+  `save-workspace` form so the operator can remember the current artifact as
+  the next-session resume anchor without writing on GET. Every page shares
   a browser operator shell with a read-only `Route Context` breadcrumb strip,
   recent local items, a read-only `Last Action` strip after confirmed local
   actions, a command palette, keyboard shortcuts, and a theme toggle. The last
