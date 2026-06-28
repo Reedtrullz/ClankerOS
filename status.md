@@ -1,5 +1,48 @@
 # Status
 
+## 2026-06-28 Goal Next Action Focus
+
+- Added a human-first focus strip at the top of the Goal Next Action section,
+  turning the main decision point into four readable cards: Now, Gate, Target,
+  and Boundary.
+- The primary link points to the existing confirmed Goal action form when one
+  is available, or to the current source surface otherwise. The existing
+  diagnostic rows and confirmed forms remain in place for evidence and
+  compatibility.
+- Added stable `data-goal-next-action-focus-*` markers and fixture-backed Goal
+  route assertions for action, phase, gate progress, primary/source surfaces,
+  form availability, confirmation posture, and zero-effect counters.
+- Moved the read-only Goal Jump Bar back into normal page flow so it keeps the
+  anchor buttons available without covering the Next Action focus strip or
+  intercepting clicks during long Goal-page scrolls.
+- Added a quiet `/favicon.ico` response so browser QA and operator sessions do
+  not carry a noisy missing-resource console error.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is browser rendering and local navigation to existing Goal
+  surfaces. It does not write on GET, create new action authority, approve
+  work, run work, call providers, fetch GitHub, poll network services, commit,
+  push, create PRs, deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_demo_scenario_populates_fixture_state or local_app_favicon_route_is_quiet_for_browser_qa' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-next-action-focus-smoke-final app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-next-action-focus-demo-smoke-final app-demo-smoke-test`
+    -> passed, fixture-backed Goal route matched expected snippets, provider/
+    network/external mutation counters remained `0`
+  - Rendered Chrome QA against
+    `http://127.0.0.1:8792/goals/goal_09038a8bd30a`: desktop viewport
+    rendered the Next Action focus strip with four columns, `Use confirmed
+    form` pointing to `#goal-next-action-form`, static Goal Jump Bar, no
+    horizontal overflow, the primary link as the topmost click target, empty
+    console warning/error logs, and a successful click landing the confirmed
+    form below the sticky header. Mobile viewport `390x844` rendered one
+    focus-grid column with the same topmost/click/anchor proof, no horizontal
+    overflow, and empty console warning/error logs.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Goal Action Dock
 
 - Added a compact fixed desktop `Goal Action Dock` immediately after the Goal

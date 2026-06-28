@@ -295,7 +295,7 @@ Core layers for the bootstrap:
   acceptance item, one next local review surface, and no-write/no-provider/
   no-network/no-external-effect boundaries before the detailed criteria list.
   Goal detail pages now place the large Current Phase banner immediately after
-  the Goal summary and before a sticky read-only `Goal Jump Bar` for phase,
+  the Goal summary and before an in-flow read-only `Goal Jump Bar` for phase,
   action, workflow, timeline, evidence, artifacts, notes, git, and remaining
   work. Visible `1`-`9` key badges and `aria-keyshortcuts` jump to those local
   anchors without submitting forms. A compact fixed desktop `Goal Action Dock`
@@ -339,12 +339,15 @@ Core layers for the bootstrap:
   with a human-readable do/check/unblock/finish strip, pointing at the in-page
   Goal action form when available, the source surface, current gate/progress,
   first unblock surface, and confirmed local-action counters before the longer
-  diagnostic sections. The sticky Goal Jump Bar keeps the main daily anchors
-  one click or keypress away while scrolling, the Goal Action Dock keeps the
-  current action one click away from deep scroll positions without adding a
-  second action form, and the Goal Section Index now links directly to the
-  Timeline, Activity, and Git command bars in addition to the longer detail
-  sections, making the page navigable through scan-first operator surfaces.
+  diagnostic sections. The in-flow Goal Jump Bar keeps the main daily anchors
+  one click or keypress away without covering later controls, the Goal Action
+  Dock keeps the current action one click away from deep scroll positions
+  without adding a second action form, and the Goal Next Action section starts with a
+  human-first focus strip for Now, Gate, Target, and Boundary before the
+  diagnostic rows and existing confirmed form. The Goal Section Index now links
+  directly to the Timeline, Activity, and Git command bars in addition to the
+  longer detail sections, making the page navigable through scan-first
+  operator surfaces.
   Goal Overview starts with a read-only
   `Goal Overview Command Bar` so the operator sees goal identity, status,
   phase, risk, progress, local counts, next click, and no-effect boundaries

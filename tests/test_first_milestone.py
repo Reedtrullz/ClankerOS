@@ -4047,6 +4047,16 @@ def test_github_actions_smoke_uses_temp_root_and_expected_order() -> None:
         assert expected_test in focused_pytest_line
 
 
+def test_local_app_favicon_route_is_quiet_for_browser_qa(tmp_path: Path) -> None:
+    response = render_local_app_route(tmp_path, "/favicon.ico")
+
+    assert response.status == 204
+    assert response.body == ""
+    assert response.content_type == "image/x-icon"
+    assert response.headers == {"cache-control": "max-age=86400"}
+    assert not (tmp_path / ".clanker").exists()
+
+
 def test_local_app_routes_render_modern_workflow_and_health(
     tmp_path: Path,
 ) -> None:
@@ -7850,7 +7860,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Jump Bar" in goal.body
     assert "data-goal-jump-bar='true'" in goal.body
     assert "goal_jump_bar_status</dt><dd>available" in goal.body
-    assert "goal_jump_bar_position</dt><dd>sticky" in goal.body
+    assert "goal_jump_bar_position</dt><dd>flow" in goal.body
     assert "goal_jump_primary_action</dt><dd>Create commit request" in goal.body
     assert "goal_jump_current_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_jump_link_count</dt><dd>9" in goal.body
@@ -8186,6 +8196,27 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "operator_always_knows_what_is_happening</dt><dd>true" in goal.body
     assert "phase_banner_external_effects_created</dt><dd>false" in goal.body
     assert "Next Action" in goal.body
+    assert "data-goal-next-action-focus='true'" in goal.body
+    assert "next_action_focus_status</dt><dd>available" in goal.body
+    assert f"next_action_focus_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"next_action_focus_project</dt><dd>{result.project_id}" in goal.body
+    assert "next_action_focus_phase</dt><dd>Ready to commit" in goal.body
+    assert "next_action_focus_current_gate</dt><dd>commit_request" in goal.body
+    assert "next_action_focus_gate_progress</dt><dd>8/15 gates done" in goal.body
+    assert "next_action_focus_primary_surface</dt><dd><a href='#goal-next-action-form'>Goal Next Action</a>" in goal.body
+    assert f"next_action_focus_source_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
+    assert "next_action_focus_form_available</dt><dd>true" in goal.body
+    assert "next_action_focus_confirmation_required</dt><dd>true" in goal.body
+    assert "next_action_focus_write_on_get</dt><dd>false" in goal.body
+    assert "next_action_focus_provider_calls_taken</dt><dd>0" in goal.body
+    assert "next_action_focus_network_actions_taken</dt><dd>0" in goal.body
+    assert "next_action_focus_external_effects_created</dt><dd>false" in goal.body
+    assert "data-goal-next-action-focus-primary='true' href='#goal-next-action-form'>Use confirmed form</a>" in goal.body
+    assert "id='goal-next-action-form' data-goal-next-action-form='true'" in goal.body
+    assert "next_action_focus_now: Create commit request" in goal.body
+    assert "next_action_focus_click: <a href='#goal-next-action-form'>Use confirmed form</a>" in goal.body
+    assert "next_action_focus_gate: commit_request" in goal.body
+    assert "next_action_focus_safety: confirmed local action only" in goal.body
     assert "recommended_action</dt><dd>Create commit request" in goal.body
     assert "Next Recommendation" in goal.body
     assert "next_recommendation_status</dt><dd>derived_from_goal_state" in goal.body

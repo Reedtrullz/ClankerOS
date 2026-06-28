@@ -169,7 +169,7 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   confirmed local `register-project` and `create-goal` forms for a fresh
   checkout.
 - `/goals/<goal_id>` - goal-centered workbench that opens with the large
-  Current Phase banner immediately after the Goal summary, then shows a sticky
+  Current Phase banner immediately after the Goal summary, then shows an in-flow
   read-only `Goal Jump Bar` for phase, action, workflow, timeline, evidence,
   artifacts, notes, git, and remaining work. Its visible `1`-`9` key badges
   and `aria-keyshortcuts` jump to those local anchors without submitting
@@ -201,12 +201,16 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `Goal Operator Workbench` follows with a human-readable do/check/unblock/
   finish strip, including the in-page action-form target when available, the
   source surface, current gate/progress, first unblock surface, and confirmed
-  local-action counters before the longer diagnostic sections. The sticky
-  Goal Jump Bar keeps the main daily anchors one click or keypress away while
-  scrolling, and the Goal Action Dock keeps the current action reachable from
-  deep scroll positions without adding a second action form. The Goal Section
-  Index links directly to the Timeline, Activity, and Git command bars as well
-  as the detailed sections, so long Goal pages remain navigable from their scan-first operator surfaces. Goal
+  local-action counters before the longer diagnostic sections. The Goal Next
+  Action section starts with a human-first focus strip for Now, Gate, Target,
+  and Boundary, with one primary link to the existing confirmed form or source
+  surface before the diagnostic rows. The in-flow Goal Jump Bar keeps the main
+  daily anchors one click or keypress away without covering later controls, and
+  the Goal Action Dock keeps the current action reachable from deep scroll
+  positions without adding a second action form. The Goal Section Index links
+  directly to the Timeline, Activity, and Git command bars as well as the
+  detailed sections, so long Goal pages remain navigable from their scan-first
+  operator surfaces. Goal
   Overview starts with a read-only `Goal Overview Command Bar` that condenses
   identity, status, phase, risk, progress, task/delegation/run/approval counts,
   the next click, and zero-effect boundaries before the raw goal metadata. Goal Risk

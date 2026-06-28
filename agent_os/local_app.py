@@ -295,9 +295,17 @@ def render_local_app_route(
     port: int = DEFAULT_PORT,
 ) -> LocalAppResponse:
     root = root.resolve()
-    AgentSystem(root).initialize()
     parsed = urlparse(raw_path)
     path = parsed.path
+    if method == "GET" and path == "/favicon.ico":
+        return LocalAppResponse(
+            204,
+            "",
+            content_type="image/x-icon",
+            headers={"cache-control": "max-age=86400"},
+        )
+
+    AgentSystem(root).initialize()
     query = parse_qs(parsed.query)
     notice = _one(query, "notice")
 
@@ -6768,7 +6776,7 @@ def _goal_jump_bar(phase: str, next_action: GoalNextAction) -> str:
             _kv(
                 [
                     ("goal_jump_bar_status", "available"),
-                    ("goal_jump_bar_position", "sticky"),
+                    ("goal_jump_bar_position", "flow"),
                     ("goal_jump_current_phase", phase),
                     ("goal_jump_primary_action", next_action.action),
                     ("goal_jump_link_count", str(len(links))),
@@ -8359,10 +8367,74 @@ def _goal_next_action_form(state: dict[str, Any], next_action: GoalNextAction) -
 
 def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -> str:
     form = _goal_next_action_form(state, next_action)
+    root = state["root"]
+    goal = state["goal"]
+    phase = _goal_current_phase(state)
+    gates, counts, current_gate = _goal_workflow_gate_summary(root, state, next_action)
+    total_gates = len(gates)
+    done_gates = counts.get("done", 0)
+    form_available = bool(form)
+    primary_href = "#goal-next-action-form" if form_available else next_action.href
+    primary_label = "Use confirmed form" if form_available else "Open source surface"
+    primary_surface = SafeHtml(
+        f"<a href='{_e(primary_href)}'>Goal Next Action</a>"
+    )
+    source_surface = SafeHtml(
+        f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
+    )
+    form_html = (
+        f"<div id='goal-next-action-form' data-goal-next-action-form='true'>{form}</div>"
+        if form
+        else ""
+    )
     return (
-        "<section id='goal-next-action'><h2>Next Action</h2>"
+        "<section id='goal-next-action' class='goal-next-action'><h2>Next Action</h2>"
+        "<div class='goal-next-action-focus' data-goal-next-action-focus='true'>"
+        "<div class='goal-next-action-focus-grid'>"
+        "<div class='goal-next-action-focus-card goal-next-action-focus-primary'>"
+        "<span class='goal-next-action-focus-label'>Now</span>"
+        f"<h3>{_e(next_action.action)}</h3>"
+        f"<p>{_e(_goal_operator_attention(phase, next_action))}</p>"
+        f"<a class='goal-next-action-focus-button' data-goal-next-action-focus-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a>"
+        "</div>"
+        "<div class='goal-next-action-focus-card'>"
+        "<span class='goal-next-action-focus-label'>Gate</span>"
+        f"<p>{_e(current_gate.replace('_', ' '))}</p>"
+        f"<strong>{_e(str(done_gates))}/{_e(str(total_gates))} done</strong>"
+        "</div>"
+        "<div class='goal-next-action-focus-card'>"
+        "<span class='goal-next-action-focus-label'>Target</span>"
+        f"<p><a href='{_e(next_action.href)}'>{_e(next_action.href)}</a></p>"
+        "</div>"
+        "<div class='goal-next-action-focus-card'>"
+        "<span class='goal-next-action-focus-label'>Boundary</span>"
+        "<p>Confirmed local action only</p>"
+        "<strong>No external effects</strong>"
+        "</div>"
+        "</div>"
+        "</div>"
         + _kv(
             [
+                ("next_action_focus_status", "available"),
+                ("next_action_focus_goal", goal.id),
+                ("next_action_focus_project", goal.project_id),
+                ("next_action_focus_phase", phase),
+                ("next_action_focus_current_gate", current_gate),
+                (
+                    "next_action_focus_gate_progress",
+                    f"{done_gates}/{total_gates} gates done",
+                ),
+                ("next_action_focus_primary_surface", primary_surface),
+                ("next_action_focus_source_surface", source_surface),
+                ("next_action_focus_form_available", str(form_available).lower()),
+                (
+                    "next_action_focus_confirmation_required",
+                    str(form_available).lower(),
+                ),
+                ("next_action_focus_write_on_get", "false"),
+                ("next_action_focus_provider_calls_taken", "0"),
+                ("next_action_focus_network_actions_taken", "0"),
+                ("next_action_focus_external_effects_created", "false"),
                 ("recommended_action", next_action.action),
                 ("reason", next_action.reason),
                 ("open_surface", SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>")),
@@ -8370,7 +8442,16 @@ def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -
                 ("external_effects_created", "false"),
             ]
         )
-        + form
+        + _ul(
+            [
+                f"next_action_focus_now: {_e(next_action.action)}",
+                f"next_action_focus_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                f"next_action_focus_source: <a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
+                f"next_action_focus_gate: {_e(current_gate)}",
+                "next_action_focus_safety: confirmed local action only",
+            ]
+        )
+        + form_html
         + "</section>"
     )
 
@@ -22240,7 +22321,7 @@ def _html_page(
     .hero p {{ color:var(--muted); max-width:760px; }}
     .banner, .warning {{ border:1px solid var(--line); background:var(--panel); padding:12px; margin:12px 0; }}
     .panel {{ border:1px solid var(--line); background:var(--panel); padding:12px; }}
-    .goal-jump-bar {{ position:sticky; top:72px; z-index:1; border-left:4px solid var(--accent); margin:0 0 12px; box-shadow:0 2px 10px rgba(15,20,25,.08); }}
+    .goal-jump-bar {{ position:static; border-left:4px solid var(--accent); margin:0 0 12px; box-shadow:0 2px 10px rgba(15,20,25,.08); }}
     .goal-jump-bar dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-jump-links {{ list-style:none; padding:0; margin:12px 0 0; display:flex; flex-wrap:wrap; gap:8px; }}
     .goal-jump-links li {{ min-width:0; }}
@@ -22263,6 +22344,16 @@ def _html_page(
     .goal-command-bar dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:8px; }}
     .goal-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-next-action {{ border-left:4px solid var(--ok); }}
+    .goal-next-action, #goal-next-action-form, .goal-next-action-focus-button {{ scroll-margin-top:260px; }}
+    .goal-next-action-focus {{ border:1px solid var(--line); background:var(--panel); padding:12px; margin:0 0 12px; }}
+    .goal-next-action-focus-grid {{ display:grid; grid-template-columns:minmax(260px, 1.35fr) repeat(3, minmax(160px, 1fr)); gap:10px; }}
+    .goal-next-action-focus-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; display:grid; gap:6px; align-content:start; }}
+    .goal-next-action-focus-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .goal-next-action-focus-label {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .goal-next-action-focus-card h3 {{ margin:0; font-size:18px; }}
+    .goal-next-action-focus-card p {{ margin:0; color:var(--muted); overflow-wrap:anywhere; }}
+    .goal-next-action-focus-button {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; width:max-content; max-width:100%; padding:7px 10px; border:1px solid var(--accent); border-radius:6px; background:var(--accent); color:#fff; text-decoration:none; overflow-wrap:anywhere; }}
     .goal-operator-workbench {{ border:1px solid var(--line); border-left:4px solid var(--accent); background:var(--panel); padding:14px; }}
     .goal-operator-workbench dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
@@ -22585,7 +22676,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .goal-action-dock-grid, .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>

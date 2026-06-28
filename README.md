@@ -259,7 +259,7 @@ operator can add the next goal for a registered project without switching to
 the CLI.
 Use `/goals/<goal_id>` as the
 goal-centered workbench: the page now opens with the large Current Phase
-banner immediately after the Goal summary, then shows a sticky read-only
+banner immediately after the Goal summary, then shows an in-flow read-only
 Goal Jump Bar for phase, action, workflow, timeline, evidence, artifacts,
 notes, git, and remaining work. Its visible `1`-`9` key badges and
 `aria-keyshortcuts` jump to those local anchors without submitting forms,
@@ -282,7 +282,10 @@ Operator Workbench follows it with a human-readable do/check/unblock/finish
 strip: it points at the in-page Goal action form when one is available, links
 the source surface and first unblock surface, names the current gate/progress,
 and exposes confirmation/write/provider/network/external-effect counters
-before the deeper diagnostic sections. Goal Daily Loop includes a confirmed
+before the deeper diagnostic sections. The Goal Next Action section now starts
+with a human-first focus strip for Now, Gate, Target, and Boundary, with one
+primary link to the existing confirmed form or source surface before the
+diagnostic rows. Goal Daily Loop includes a confirmed
 local `pause-goal` form for any non-paused incomplete goal, moving it into
 paused lanes without approving work, running providers, using the network, or
 mutating external systems. The read-only `Goal Continuation Rail` follows the
@@ -338,11 +341,12 @@ and zero-effect boundaries before the detailed checklist. The Next Recommendatio
 section names whether the recommendation
 comes from an open task recommendation or from current phase plus local goal
 records, then points at the local target surface without writing on GET.
-The sticky Goal Jump Bar keeps the most-used in-page anchors one click or
-one keypress away during long sessions. The Goal Action Dock keeps the current
-action one click away from deep scroll positions without adding a second action
-form, while the Goal Section Index near the top links to the full stable
-anchor map for the major Goal surfaces.
+The in-flow Goal Jump Bar keeps the most-used in-page anchors one click or
+one keypress away without covering later controls. The Goal Action Dock keeps
+the current action one click away from deep scroll positions without adding a
+second action form. The Goal Next Action focus strip makes the selected action
+readable at the point of decision, while the Goal Section Index near the top
+links to the full stable anchor map for the major Goal surfaces.
 Goal Delegations starts with a read-only `Goal Delegation Command Bar` that
 summarizes scout delegation counts, context-pack readiness, implementation
 handoff readiness, coder-prep packets, worktree plans, the latest delegation

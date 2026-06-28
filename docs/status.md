@@ -4,16 +4,19 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal Next Action sections now open with a human-first focus strip for Now,
+  Gate, Target, and Boundary, giving the operator one readable primary link to
+  the existing confirmed form or source surface before the diagnostic rows.
 - Goal pages now include a compact fixed desktop `Goal Action Dock` after the
   Current Phase banner and Goal Jump Bar, keeping the current action, workflow
   gate, CI proof target, and `/resume` route visible during long scroll
   sessions while linking back to the existing confirmed Next Action form
   without adding action authority; it becomes static on narrow screens.
-- Goal pages include a sticky, read-only `Goal Jump Bar` immediately after the
-  Current Phase banner, keeping phase, action, workflow, timeline, evidence,
-  artifacts, notes, git, and remaining work anchors one click or `1`-`9`
-  keypress away during long browser sessions without adding writes or action
-  authority.
+- Goal pages include an in-flow, read-only `Goal Jump Bar` immediately after
+  the Current Phase banner, keeping phase, action, workflow, timeline,
+  evidence, artifacts, notes, git, and remaining work anchors one click or
+  `1`-`9` keypress away without covering later controls or adding writes or
+  action authority.
 - Goal Timeline and Activity Log rows now render as scan-first event rows with
   time, event-kind badge, clickable local message, target badge, and stable
   `data-timeline-*` markers, making artifacts, delegations, runs, approvals,
