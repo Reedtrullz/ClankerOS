@@ -672,15 +672,18 @@ Core layers for the bootstrap:
   workspace project/goal/artifact context, last-action context, and zero-effect
   boundaries stay inside collapsed evidence with the longer recent-link list
   in a second collapsed disclosure.
-  The command palette now also
-  starts with the same current-page route context, parent link, resolved
-  Goal/Project/run context, focus target, `/resume`, and zero-effect readbacks
-  inside the keyboard-driven surface. The shared focus strip and command
-  palette include the same goal-aware current-action readback from the saved
-  workspace goal or current lead goal, showing phase, one recommended action,
-  target surface, a compact current-gate continuation readback, zero-effect
-  readbacks, and the same confirmed local action form as the Goal page when
-  the current next action is browser-available. In
+  The command palette now also includes a visible `Quick Switch` dock for
+  Continue, Workspace, Action, and Artifact, so the keyboard launcher can
+  reopen the current Goal, saved workspace, latest local action target, or
+  latest artifact without expanding the sidebar. It also starts with the same
+  current-page route context, parent link, resolved Goal/Project/run context,
+  focus target, `/resume`, and zero-effect readbacks inside the
+  keyboard-driven surface. The shared focus strip and command palette include
+  the same goal-aware current-action readback from the saved workspace goal or
+  current lead goal, showing phase, one recommended action, target surface, a
+  compact current-gate continuation readback, zero-effect readbacks, and the
+  same confirmed local action form as the Goal page when the current next
+  action is browser-available. In
   first-run states, those shared surfaces point at the concrete setup form for
   the current route when possible, or at the Home/Today/Goals first-run anchors
   when the current page does not render the guide.

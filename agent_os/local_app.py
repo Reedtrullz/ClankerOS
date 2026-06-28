@@ -27544,6 +27544,7 @@ def _command_palette(
             "<input id='command-palette-search' name='q' autocomplete='off' placeholder='Search local state'>",
             "<button type='submit'>Search</button>",
             "</form>",
+            _command_palette_quick_switch(root, focus_context),
             _command_palette_continue(focus_context),
             "<details class='palette-evidence' data-command-palette-evidence='true'>",
             "<summary data-command-palette-evidence-summary='true'>Palette evidence and shortcuts</summary>",
@@ -27556,6 +27557,184 @@ def _command_palette(
             "</ul>",
             "</details>",
             "</dialog>",
+        ]
+    )
+
+
+def _command_palette_quick_switch(root: Path, focus_context: dict[str, Any]) -> str:
+    state = _load_workspace_state(root)
+    saved_project = str(state.get("open_project") or "").strip()
+    saved_goal = str(state.get("open_goal") or "").strip()
+    saved_artifact = str(state.get("last_viewed_artifact") or "").strip()
+    last_action = str(state.get("last_action") or "").strip()
+    last_action_href = _safe_local_return_path(state.get("last_action_next_href"))
+    status = str(focus_context.get("status", "state_unavailable"))
+    source = str(focus_context.get("source") or status)
+    primary_action = "Open health"
+    primary_href = "/health"
+    primary_label = "Open health"
+    focus_goal_id = ""
+    focus_goal_label = ""
+    latest_artifact = ""
+
+    if status == "available" and isinstance(focus_context.get("next_action"), GoalNextAction):
+        next_action = focus_context["next_action"]
+        action_form = str(focus_context.get("action_form") or "")
+        primary_action = next_action.action
+        primary_href = "#command-palette-continue-form" if action_form else next_action.href
+        primary_label = "Run current action" if action_form else "Open action source"
+        goal = focus_context.get("goal")
+        if goal is not None:
+            focus_goal_id = str(goal.id)
+            focus_goal_label = str(focus_context.get("goal_label") or goal.id)
+        goal_state = focus_context.get("goal_state")
+        if isinstance(goal_state, dict):
+            latest_artifact = _goal_latest_artifact_path(root, goal_state)
+    elif status == "first_run":
+        primary_action = str(focus_context.get("next_action") or "Continue first run")
+        primary_href = str(focus_context.get("target_href") or "/goals")
+        primary_label = str(focus_context.get("target_label") or primary_href)
+    elif status == "no_goal":
+        primary_action = "Open goals"
+        primary_href = "/goals"
+        primary_label = "Open goals"
+
+    if saved_goal:
+        workspace_label = saved_goal
+        workspace_href = f"/goals/{quote(saved_goal)}"
+        workspace_action = "Open saved goal"
+        workspace_source = "saved_goal"
+    elif focus_goal_id:
+        workspace_label = focus_goal_label or focus_goal_id
+        workspace_href = f"/goals/{quote(focus_goal_id)}"
+        workspace_action = "Open current goal"
+        workspace_source = "current_goal"
+    elif saved_project:
+        workspace_label = saved_project
+        workspace_href = f"/projects/{quote(saved_project)}"
+        workspace_action = "Open saved project"
+        workspace_source = "saved_project"
+    else:
+        workspace_label = "No saved workspace"
+        workspace_href = "/resume"
+        workspace_action = "Open resume"
+        workspace_source = "none"
+
+    action_label = last_action or primary_action
+    action_href = last_action_href or primary_href
+    action_action = "Open last action" if last_action_href else primary_label
+    artifact_path = saved_artifact or latest_artifact
+    artifact_source = "saved_workspace" if saved_artifact else ("current_goal_latest" if latest_artifact else "none")
+    artifact_label = Path(artifact_path).name if artifact_path else "No saved artifact"
+    artifact_href = f"/artifacts?path={quote(artifact_path)}" if artifact_path else "/workspace"
+    artifact_action = "Open artifact" if artifact_path else "Open workspace"
+    recent_count = len(_recent_operator_links(root, limit=6))
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("palette_quick_switch_status", status),
+        ("palette_quick_switch_source", source),
+        ("palette_quick_switch_primary_action", primary_action),
+        (
+            "palette_quick_switch_primary_surface",
+            SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+        ),
+        ("palette_quick_switch_workspace_source", workspace_source),
+        (
+            "palette_quick_switch_workspace_surface",
+            SafeHtml(f"<a href='{_e(workspace_href)}'>{_e(workspace_href)}</a>"),
+        ),
+        ("palette_quick_switch_action_label", action_label),
+        (
+            "palette_quick_switch_action_surface",
+            SafeHtml(f"<a href='{_e(action_href)}'>{_e(action_href)}</a>"),
+        ),
+        ("palette_quick_switch_artifact_source", artifact_source),
+        ("palette_quick_switch_artifact", artifact_path or "none"),
+        (
+            "palette_quick_switch_artifact_surface",
+            SafeHtml(f"<a href='{_e(artifact_href)}'>{_e(artifact_href)}</a>"),
+        ),
+        ("palette_quick_switch_saved_project", saved_project or "none"),
+        ("palette_quick_switch_saved_goal", saved_goal or "none"),
+        ("palette_quick_switch_recent_items", str(recent_count)),
+        ("palette_quick_switch_card_count", "4"),
+        ("palette_quick_switch_write_on_get", "false"),
+        ("palette_quick_switch_provider_calls_taken", "0"),
+        ("palette_quick_switch_network_actions_taken", "0"),
+        ("palette_quick_switch_external_effects_created", "false"),
+    ]
+    lines = [
+        f"palette_quick_switch_continue: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+        f"palette_quick_switch_workspace: <a href='{_e(workspace_href)}'>{_e(workspace_action)}</a>",
+        f"palette_quick_switch_action: <a href='{_e(action_href)}'>{_e(action_action)}</a>",
+        f"palette_quick_switch_artifact: <a href='{_e(artifact_href)}'>{_e(artifact_action)}</a>",
+        "palette_quick_switch_safety: read-only local launcher; confirmed actions still require forms",
+    ]
+    return "".join(
+        [
+            "<section class='palette-quick-switch' data-command-palette-quick-switch='true'>",
+            "<h3>Quick Switch</h3>",
+            "<p class='muted'>Jump back to the work, the saved context, the next action, or the latest artifact from the palette.</p>",
+            "<div class='palette-quick-grid' data-command-palette-quick-switch-cards='true'>",
+            _command_palette_quick_card(
+                "Continue",
+                primary_action,
+                primary_label,
+                primary_href,
+                marker="data-command-palette-quick-primary='true'",
+                primary=True,
+            ),
+            _command_palette_quick_card(
+                "Workspace",
+                workspace_label,
+                workspace_action,
+                workspace_href,
+                marker="data-command-palette-quick-workspace='true'",
+            ),
+            _command_palette_quick_card(
+                "Action",
+                action_label,
+                action_action,
+                action_href,
+                marker="data-command-palette-quick-action='true'",
+            ),
+            _command_palette_quick_card(
+                "Artifact",
+                artifact_label,
+                artifact_action,
+                artifact_href,
+                marker="data-command-palette-quick-artifact='true'",
+            ),
+            "</div>",
+            "<details class='palette-quick-evidence' data-command-palette-quick-evidence='true'>",
+            "<summary>Quick switch evidence</summary>",
+            _kv(rows),
+            _ul(lines),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _command_palette_quick_card(
+    label: str,
+    value: str,
+    action_label: str,
+    href: str,
+    *,
+    marker: str,
+    primary: bool = False,
+) -> str:
+    classes = "palette-quick-card"
+    if primary:
+        classes += " palette-quick-card-primary"
+    action_class = "palette-quick-action" if primary else "palette-quick-link"
+    return "".join(
+        [
+            f"<article class='{classes}'>",
+            f"<span class='palette-quick-label'>{_e(label)}</span>",
+            f"<strong>{_e(_compact_label(value, 88))}</strong>",
+            f"<a class='{action_class}' {marker} href='{_e(href)}'>{_e(action_label)}</a>",
+            "</article>",
         ]
     )
 
@@ -28205,6 +28384,18 @@ def _html_page(
     .palette-route-context dl {{ grid-template-columns:minmax(160px, 210px) 1fr; }}
     .palette-route-context ul {{ list-style:none; padding:0; margin:10px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
     .palette-route-context li {{ min-width:0; padding:7px 9px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .palette-quick-switch {{ border:1px solid var(--line); background:var(--panel); padding:10px; margin:10px 0; }}
+    .palette-quick-switch h3 {{ margin-top:0; }}
+    .palette-quick-grid {{ display:grid; grid-template-columns:minmax(220px, 1.25fr) repeat(3, minmax(140px, 1fr)); gap:8px; align-items:stretch; margin:10px 0; }}
+    .palette-quick-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; display:grid; gap:6px; align-content:start; }}
+    .palette-quick-card-primary {{ background:var(--panel); border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .palette-quick-label {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .palette-quick-card strong {{ overflow-wrap:anywhere; }}
+    .palette-quick-action, .palette-quick-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:32px; width:100%; max-width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
+    .palette-quick-action {{ background:var(--accent); color:#fff; }}
+    .palette-quick-link {{ background:var(--surface); color:var(--accent); }}
+    .palette-quick-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .palette-quick-evidence:not([open]) > :not(summary) {{ display:none; }}
     .route-context-strip {{ border-left:4px solid var(--accent); margin:0 0 16px; }}
     .route-context-strip h2 {{ font-size:15px; }}
     .route-context-focus {{ display:grid; grid-template-columns:minmax(210px, 1.3fr) repeat(auto-fit, minmax(150px, 1fr)); gap:8px; align-items:stretch; margin:10px 0; }}
@@ -29232,7 +29423,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

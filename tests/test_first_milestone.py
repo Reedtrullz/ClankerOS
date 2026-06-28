@@ -4671,6 +4671,33 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "palette_focus_write_on_get</dt><dd>false" in root.body
     assert "palette_focus_network_actions_taken</dt><dd>0" in root.body
     assert "palette_focus_external_effects_created</dt><dd>false" in root.body
+    assert "data-command-palette-quick-switch='true'" in root.body
+    assert "data-command-palette-quick-switch-cards='true'" in root.body
+    assert (
+        "data-command-palette-quick-primary='true' href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
+    assert "data-command-palette-quick-workspace='true' href='/resume'>Open resume</a>" in root.body
+    assert (
+        "data-command-palette-quick-action='true' href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
+    assert "data-command-palette-quick-artifact='true' href='/workspace'>Open workspace</a>" in root.body
+    assert "data-command-palette-quick-evidence='true'" in root.body
+    assert "palette_quick_switch_status</dt><dd>first_run" in root.body
+    assert "palette_quick_switch_source</dt><dd>first_run_progress" in root.body
+    assert "palette_quick_switch_primary_action</dt><dd>Register ClankerOS project" in root.body
+    assert (
+        "palette_quick_switch_primary_surface</dt><dd><a href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
+    assert "palette_quick_switch_workspace_source</dt><dd>none" in root.body
+    assert "palette_quick_switch_artifact_source</dt><dd>none" in root.body
+    assert "palette_quick_switch_card_count</dt><dd>4" in root.body
+    assert "palette_quick_switch_write_on_get</dt><dd>false" in root.body
+    assert "palette_quick_switch_network_actions_taken</dt><dd>0" in root.body
+    assert "palette_quick_switch_external_effects_created</dt><dd>false" in root.body
+    assert "palette_quick_switch_safety: read-only local launcher" in root.body
     assert "data-command-palette-evidence='true'" in root.body
     assert "<summary data-command-palette-evidence-summary='true'>Palette evidence and shortcuts</summary>" in root.body
     assert "data-command-palette-open-list='true'" in root.body
@@ -4678,6 +4705,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "id='command-palette-search'"
     )
     assert root.body.index("id='command-palette-search'") < root.body.index(
+        "data-command-palette-quick-switch='true'"
+    )
+    assert root.body.index("data-command-palette-quick-switch='true'") < root.body.index(
         "data-command-palette-continue='true'"
     )
     assert root.body.index("data-command-palette-continue='true'") < root.body.index(
@@ -7223,6 +7253,29 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
         "<a href='/projects/clankeros?notice=project_registered%3A%20clankeros'>"
         "/projects/clankeros?notice=project_registered%3A%20clankeros</a>"
     ) in register_resume.body
+    assert "data-command-palette-quick-switch='true'" in register_resume.body
+    assert (
+        "data-command-palette-quick-workspace='true' href='/projects/clankeros'>"
+        "Open saved project</a>"
+    ) in register_resume.body
+    assert (
+        "data-command-palette-quick-action='true' "
+        "href='/projects/clankeros?notice=project_registered%3A%20clankeros'>"
+        "Open last action</a>"
+    ) in register_resume.body
+    assert "palette_quick_switch_status</dt><dd>first_run" in register_resume.body
+    assert "palette_quick_switch_workspace_source</dt><dd>saved_project" in register_resume.body
+    assert (
+        "palette_quick_switch_workspace_surface</dt><dd>"
+        "<a href='/projects/clankeros'>/projects/clankeros</a>"
+    ) in register_resume.body
+    assert "palette_quick_switch_action_label</dt><dd>register-project" in register_resume.body
+    assert (
+        "palette_quick_switch_action_surface</dt><dd>"
+        "<a href='/projects/clankeros?notice=project_registered%3A%20clankeros'>"
+        "/projects/clankeros?notice=project_registered%3A%20clankeros</a>"
+    ) in register_resume.body
+    assert "palette_quick_switch_write_on_get</dt><dd>false" in register_resume.body
     assert "resume_workspace_available</dt><dd>true" in register_resume.body
     assert "resume_project: <a href='/projects/clankeros'>clankeros</a>" in register_resume.body
     assert "resume_status: first_run" in register_resume.body
@@ -8404,12 +8457,49 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "palette_focus_write_on_get</dt><dd>false" in dashboard.body
     assert "palette_focus_network_actions_taken</dt><dd>0" in dashboard.body
     assert "palette_focus_external_effects_created</dt><dd>false" in dashboard.body
+    assert "data-command-palette-quick-switch='true'" in dashboard.body
+    assert "data-command-palette-quick-switch-cards='true'" in dashboard.body
+    assert (
+        "data-command-palette-quick-primary='true' href='#command-palette-continue-form'>"
+        "Run current action</a>"
+    ) in dashboard.body
+    assert (
+        f"data-command-palette-quick-workspace='true' href='/goals/{result.goal_id}'>"
+        "Open current goal</a>"
+    ) in dashboard.body
+    assert (
+        "data-command-palette-quick-action='true' href='#command-palette-continue-form'>"
+        "Run current action</a>"
+    ) in dashboard.body
+    assert "data-command-palette-quick-artifact='true' href='/artifacts?path=" in dashboard.body
+    assert "data-command-palette-quick-evidence='true'" in dashboard.body
+    assert "palette_quick_switch_status</dt><dd>available" in dashboard.body
+    assert "palette_quick_switch_source</dt><dd>lead_goal" in dashboard.body
+    assert "palette_quick_switch_primary_action</dt><dd>Create commit request" in dashboard.body
+    assert (
+        "palette_quick_switch_primary_surface</dt><dd><a href='#command-palette-continue-form'>"
+        "Run current action</a>"
+    ) in dashboard.body
+    assert "palette_quick_switch_workspace_source</dt><dd>current_goal" in dashboard.body
+    assert (
+        f"palette_quick_switch_workspace_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"/goals/{result.goal_id}</a>"
+    ) in dashboard.body
+    assert "palette_quick_switch_action_label</dt><dd>Create commit request" in dashboard.body
+    assert "palette_quick_switch_artifact_source</dt><dd>current_goal_latest" in dashboard.body
+    assert "palette_quick_switch_card_count</dt><dd>4" in dashboard.body
+    assert "palette_quick_switch_write_on_get</dt><dd>false" in dashboard.body
+    assert "palette_quick_switch_network_actions_taken</dt><dd>0" in dashboard.body
+    assert "palette_quick_switch_external_effects_created</dt><dd>false" in dashboard.body
     assert "data-command-palette-evidence='true'" in dashboard.body
     assert "<summary data-command-palette-evidence-summary='true'>Palette evidence and shortcuts</summary>" in dashboard.body
     assert dashboard.body.index("data-command-palette-focus='true'") < dashboard.body.index(
         "id='command-palette-search'"
     )
     assert dashboard.body.index("id='command-palette-search'") < dashboard.body.index(
+        "data-command-palette-quick-switch='true'"
+    )
+    assert dashboard.body.index("data-command-palette-quick-switch='true'") < dashboard.body.index(
         "data-command-palette-continue='true'"
     )
     assert dashboard.body.index("data-command-palette-continue='true'") < dashboard.body.index(
@@ -8877,12 +8967,42 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "palette_focus_write_on_get</dt><dd>false" in goal.body
     assert "palette_focus_network_actions_taken</dt><dd>0" in goal.body
     assert "palette_focus_external_effects_created</dt><dd>false" in goal.body
+    assert "data-command-palette-quick-switch='true'" in goal.body
+    assert "data-command-palette-quick-switch-cards='true'" in goal.body
+    assert (
+        "data-command-palette-quick-primary='true' href='#command-palette-continue-form'>"
+        "Run current action</a>"
+    ) in goal.body
+    assert (
+        f"data-command-palette-quick-workspace='true' href='/goals/{result.goal_id}'>"
+        "Open current goal</a>"
+    ) in goal.body
+    assert (
+        "data-command-palette-quick-action='true' href='#command-palette-continue-form'>"
+        "Run current action</a>"
+    ) in goal.body
+    assert "data-command-palette-quick-artifact='true' href='/artifacts?path=" in goal.body
+    assert "palette_quick_switch_status</dt><dd>available" in goal.body
+    assert "palette_quick_switch_source</dt><dd>lead_goal" in goal.body
+    assert "palette_quick_switch_primary_action</dt><dd>Create commit request" in goal.body
+    assert "palette_quick_switch_workspace_source</dt><dd>current_goal" in goal.body
+    assert (
+        f"palette_quick_switch_workspace_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"/goals/{result.goal_id}</a>"
+    ) in goal.body
+    assert "palette_quick_switch_action_label</dt><dd>Create commit request" in goal.body
+    assert "palette_quick_switch_artifact_source</dt><dd>current_goal_latest" in goal.body
+    assert "palette_quick_switch_card_count</dt><dd>4" in goal.body
+    assert "palette_quick_switch_write_on_get</dt><dd>false" in goal.body
     assert "data-command-palette-evidence='true'" in goal.body
     assert "<summary data-command-palette-evidence-summary='true'>Palette evidence and shortcuts</summary>" in goal.body
     assert goal.body.index("data-command-palette-focus='true'") < goal.body.index(
         "id='command-palette-search'"
     )
     assert goal.body.index("id='command-palette-search'") < goal.body.index(
+        "data-command-palette-quick-switch='true'"
+    )
+    assert goal.body.index("data-command-palette-quick-switch='true'") < goal.body.index(
         "data-command-palette-continue='true'"
     )
     assert goal.body.index("data-command-palette-continue='true'") < goal.body.index(

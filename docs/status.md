@@ -241,6 +241,10 @@ Latest status focus:
   workspace, or staying on the current page; detailed route context, keyboard
   shortcuts, and the long open list are preserved inside collapsed palette
   evidence.
+- The command palette now also includes a visible `Quick Switch` dock for
+  Continue, Workspace, Action, and Artifact, using saved workspace state when
+  present and the current lead Goal/latest artifact as fallback, while keeping
+  quick-switch evidence and zero-effect counters collapsed.
 - The shared Operator Focus strip is now compact and action-first: it shows
   the primary action, phase, progress, waiting counts, and `/resume` as visible
   cards, keeps the confirmed local action form available when relevant, and

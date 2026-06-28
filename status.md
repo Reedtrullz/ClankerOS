@@ -1,5 +1,43 @@
 # Status
 
+## 2026-06-28 Command Palette Quick Switch
+
+- Added a visible `Quick Switch` dock inside the global command palette with
+  Continue, Workspace, Action, and Artifact cards.
+- The dock prefers saved workspace Goal/project/action/artifact state when
+  available, falls back to the current lead Goal and latest Goal artifact when
+  workspace state is empty, and otherwise points at safe first-run/resume
+  surfaces.
+- Updated README, operating summary, local status docs, and focused route
+  assertions for empty first-run, saved-workspace resume, fixture-backed Home,
+  and fixture-backed Goal states.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against fixture-backed scratch local app `127.0.0.1:8857`
+  verified `/goals/goal_196b7638c69a` in the in-app browser. Desktop opened
+  the command palette, rendered four Quick Switch cards, linked Continue and
+  Action to the palette action form, linked Workspace to the current Goal, and
+  linked Artifact to the latest review artifact with quick-switch evidence
+  collapsed, no horizontal overflow, and no warning/error logs.
+- Mobile `390x844` in-app browser QA rendered the four Quick Switch cards in
+  one column inside the palette, kept evidence collapsed, had no horizontal
+  overflow, reported no warning/error logs, and the viewport was reset after
+  the check.
+- The scratch local app server was stopped after browser QA, and no listener
+  remained on port `8857`.
+- Non-claims: this is a local navigation/readback UX change. It does not write
+  on GET, approve work, execute work, create commits, push, create PRs,
+  deploy, fetch GitHub status, call providers, or mutate external systems.
+
 ## 2026-06-28 Recent Items Return Dock
 
 - Made the shared Recent Items sidebar a richer return-to-work surface with
