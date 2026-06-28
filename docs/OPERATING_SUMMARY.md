@@ -329,14 +329,14 @@ Core layers for the bootstrap:
   counts for open tasks, incidents, and recommendations. Goal detail pages now
   expose first-class Goal Risk and Goal Completion Criteria sections sourced
   from task risk metadata, sprint contracts, plan steps, or task verification
-  plans. Goal Risk starts with a read-only `Goal Risk Command Bar` that
-  summarizes risk level, task risk counts, approval-boundary posture, first
-  task risk/status, one next local surface, and no-write/no-provider/no-network/
-  no-external-effect boundaries before the detailed risk list. Goal Completion
-  Criteria starts with a read-only `Goal Criteria Command Bar` that summarizes
-  criteria source, item count, progress, plan/contract posture, first
-  acceptance item, one next local review surface, and no-write/no-provider/
-  no-network/no-external-effect boundaries before the detailed criteria list.
+  plans. Goal Overview, Goal Risk, Goal Completion Criteria, and Goal Progress
+  now start with visible action cards instead of raw readbacks: Overview shows
+  Now, Scope, Progress, Waiting, and Safety; Risk shows Now, Counts, Boundary,
+  First Task, and Safety; Criteria shows Now, Source, Progress, First, and
+  Safety; Progress shows Now, Tasks, Gates, Waiting, and Safety. Their command
+  evidence and detailed overview/risk/criteria/progress rows stay collapsed by
+  default while preserving no-write/no-provider/no-network/no-external-effect
+  boundaries in the DOM.
   Goal detail pages now place the large Current Phase banner immediately after
   the Goal summary and before an in-flow read-only `Goal Jump Bar` for phase,
   action, workflow, timeline, evidence, artifacts, notes, git, and remaining
@@ -351,11 +351,9 @@ Core layers for the bootstrap:
   Continuation Rail, Next Action, Workflow Map, Goal CI Handoff, live refresh
   panel, and collapsed full section index, so the first
   viewport names the current phase before
-  navigation and diagnostics. Goal Progress starts with a read-only `Goal Progress Command Bar` that
-  summarizes task completion, workflow gate progress, current gate, waiting
-  approvals/incidents/recommendations, one next local action, and no-write/
-  no-provider/no-network/no-external-effect boundaries before the browser
-  progress bar and detailed counts.
+  navigation and diagnostics. Goal Progress keeps the browser progress bar
+  visible after its card-first command bar, while detailed task/gate/waiting
+  counts stay collapsed until the operator asks for evidence.
   Goal pages also
   include clickable timeline entries with operator-facing lifecycle language
   for approval requested/granted, execution completed, review passed, commit

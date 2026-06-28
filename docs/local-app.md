@@ -239,20 +239,15 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   as well as the detailed sections, so long Goal pages remain navigable from
   their scan-first operator surfaces without showing the whole anchor list by
   default. Goal
-  Overview starts with a read-only `Goal Overview Command Bar` that condenses
-  identity, status, phase, risk, progress, task/delegation/run/approval counts,
-  the next click, and zero-effect boundaries before the raw goal metadata. Goal Risk
-  starts with a read-only `Goal Risk Command Bar` that summarizes risk
-  level, task risk counts, approval-boundary posture, first task risk/status,
-  one next local surface, and zero-effect counters before the detailed risk list.
-  Goal Completion Criteria starts with a read-only `Goal Criteria Command Bar`
-  that summarizes criteria source, item count, progress, plan/contract
-  posture, first acceptance item, one next local review surface, and
-  zero-effect counters before the detailed criteria list. Goal Progress starts
-  with a read-only `Goal Progress Command Bar` that summarizes task completion,
-  workflow gate progress, current gate, waiting approvals/incidents/
-  recommendations, one next local action, and zero-effect counters before the
-  browser progress bar and detailed counts.
+  Overview starts with a read-only `Goal Overview Command Bar` with visible
+  Now, Scope, Progress, Waiting, and Safety cards before collapsed command
+  evidence and collapsed raw goal metadata. Goal Risk starts with visible Now,
+  Counts, Boundary, First Task, and Safety cards before collapsed command
+  evidence and collapsed detailed risk rows. Goal Completion Criteria starts
+  with visible Now, Source, Progress, First, and Safety cards before collapsed
+  command evidence and collapsed criteria rows. Goal Progress starts with
+  visible Now, Tasks, Gates, Waiting, and Safety cards before collapsed command
+  evidence, the browser progress bar, and collapsed detailed progress counts.
   `Goal Completion Readiness` follows the local gate, approval, incident, and
   publication-handoff state to say whether the goal is completed, blocked,
   waiting for operator approval, still missing evidence, or safe to complete

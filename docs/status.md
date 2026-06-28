@@ -34,17 +34,23 @@ Latest status focus:
   Skills Used now exposes Now, Record, Usage, Profile, and Safety cards before
   collapsed command evidence and detailed skill readback; Goal Git Status now
   exposes Now, Branch, Changes, Proof, and Safety cards before collapsed
-  command evidence and repository snapshot. Jump, command, workbench,
+  command evidence and repository snapshot. The earlier Goal Overview, Risk,
+  Completion Criteria, and Progress sections now match the same pattern with
+  visible Overview cards for Now/Scope/Progress/Waiting/Safety, Risk cards for
+  Now/Counts/Boundary/First Task/Safety, Criteria cards for
+  Now/Source/Progress/First/Safety, and Progress cards for
+  Now/Tasks/Gates/Waiting/Safety before collapsed evidence and detailed rows.
+  Jump, command, workbench,
   daily-loop, return-brief, continuation, workflow-map, CI handoff, live-state,
   delegations, runs, approvals, incidents, evidence, artifacts, memory, skills,
-  git, remaining-work, and full
+  git, overview, risk, criteria, progress, remaining-work, and full
   section-index evidence are
   collapsed by default while preserving phase, next action, current gate,
   project-scoped CI proof posture, full anchor map, daily resume-save state,
   latest activity/artifact, blocker routing, workflow gate surfaces, manual
   publish boundary, local reload posture, delegation/run/approval/incident/
-  evidence/artifact/memory/skills/git posture, remaining gate posture, and
-  zero-effect counters in the DOM.
+  evidence/artifact/memory/skills/git posture, overview/risk/criteria/progress
+  posture, remaining gate posture, and zero-effect counters in the DOM.
 - `/goals` is now content-first and board-first instead of shared-diagnostic or
   command-readback-first: the `Goal Board Workbench` opens the page before
   Route Context, Operator Focus, and the `Goal Board Command Bar`, with visible

@@ -9346,6 +9346,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workspace_auto_write_on_get</dt><dd>false" in goal.body
     assert "Goal Overview Command Bar" in goal.body
     assert "data-goal-overview-command-bar='true'" in goal.body
+    assert "data-goal-overview-actions='true'" in goal.body
+    assert "data-goal-overview-now='true'" in goal.body
+    assert "data-goal-overview-primary='true'" in goal.body
+    assert "data-goal-overview-scope='true'" in goal.body
+    assert "data-goal-overview-progress='true'" in goal.body
+    assert "data-goal-overview-waiting='true'" in goal.body
+    assert "data-goal-overview-safety='true'" in goal.body
+    assert "data-goal-overview-evidence='true'" in goal.body
+    assert "data-goal-overview-details='true'" in goal.body
+    assert "Goal overview command evidence" in goal.body
+    assert "Detailed overview metadata" in goal.body
     assert "<a href='#goal-overview-command-bar'>Overview command</a>" in goal.body
     assert f"goal_overview_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_overview_command_project</dt><dd>{result.project_id}" in goal.body
@@ -9380,6 +9391,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Risk" in goal.body
     assert "Goal Risk Command Bar" in goal.body
     assert "data-goal-risk-command-bar='true'" in goal.body
+    assert "data-goal-risk-actions='true'" in goal.body
+    assert "data-goal-risk-now='true'" in goal.body
+    assert "data-goal-risk-primary='true'" in goal.body
+    assert "data-goal-risk-counts='true'" in goal.body
+    assert "data-goal-risk-boundary='true'" in goal.body
+    assert "data-goal-risk-first='true'" in goal.body
+    assert "data-goal-risk-safety='true'" in goal.body
+    assert "data-goal-risk-evidence='true'" in goal.body
+    assert "data-goal-risk-list='true'" in goal.body
+    assert "Goal risk command evidence" in goal.body
+    assert "Detailed risk rows (" in goal.body
     assert "<a href='#goal-risk-command-bar'>Risk command</a>" in goal.body
     assert f"goal_risk_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_risk_command_project</dt><dd>{result.project_id}" in goal.body
@@ -9410,6 +9432,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Completion Criteria" in goal.body
     assert "Goal Criteria Command Bar" in goal.body
     assert "data-goal-criteria-command-bar='true'" in goal.body
+    assert "data-goal-criteria-actions='true'" in goal.body
+    assert "data-goal-criteria-now='true'" in goal.body
+    assert "data-goal-criteria-primary='true'" in goal.body
+    assert "data-goal-criteria-source='true'" in goal.body
+    assert "data-goal-criteria-progress='true'" in goal.body
+    assert "data-goal-criteria-first='true'" in goal.body
+    assert "data-goal-criteria-safety='true'" in goal.body
+    assert "data-goal-criteria-evidence='true'" in goal.body
+    assert "data-goal-criteria-list='true'" in goal.body
+    assert "Goal criteria command evidence" in goal.body
+    assert "Detailed criteria rows (" in goal.body
     assert "<a href='#goal-criteria-command-bar'>Criteria command</a>" in goal.body
     assert f"goal_criteria_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_criteria_command_project</dt><dd>{result.project_id}" in goal.body
@@ -9454,6 +9487,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "completion_readiness_safety: confirmed local completion only after manual publish" in goal.body
     assert "Goal Progress Command Bar" in goal.body
     assert "data-goal-progress-command-bar='true'" in goal.body
+    assert "data-goal-progress-actions='true'" in goal.body
+    assert "data-goal-progress-now='true'" in goal.body
+    assert "data-goal-progress-primary='true'" in goal.body
+    assert "data-goal-progress-tasks='true'" in goal.body
+    assert "data-goal-progress-gates='true'" in goal.body
+    assert "data-goal-progress-waiting='true'" in goal.body
+    assert "data-goal-progress-safety='true'" in goal.body
+    assert "data-goal-progress-evidence='true'" in goal.body
+    assert "data-goal-progress-details='true'" in goal.body
+    assert "Goal progress command evidence" in goal.body
+    assert "Detailed progress counts" in goal.body
     assert "<a href='#goal-progress-command-bar'>Progress command</a>" in goal.body
     assert f"goal_progress_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_progress_command_project</dt><dd>{result.project_id}" in goal.body

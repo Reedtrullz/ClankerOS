@@ -599,6 +599,42 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-goal-command-evidence='true'",
                 "data-goal-jump-evidence='true'",
                 "data-goal-workbench-evidence='true'",
+                "data-goal-overview-actions='true'",
+                "data-goal-overview-now='true'",
+                "data-goal-overview-primary='true'",
+                "data-goal-overview-scope='true'",
+                "data-goal-overview-progress='true'",
+                "data-goal-overview-waiting='true'",
+                "data-goal-overview-safety='true'",
+                "data-goal-overview-evidence='true'",
+                "data-goal-overview-details='true'",
+                "data-goal-risk-actions='true'",
+                "data-goal-risk-now='true'",
+                "data-goal-risk-primary='true'",
+                "data-goal-risk-counts='true'",
+                "data-goal-risk-boundary='true'",
+                "data-goal-risk-first='true'",
+                "data-goal-risk-safety='true'",
+                "data-goal-risk-evidence='true'",
+                "data-goal-risk-list='true'",
+                "data-goal-criteria-actions='true'",
+                "data-goal-criteria-now='true'",
+                "data-goal-criteria-primary='true'",
+                "data-goal-criteria-source='true'",
+                "data-goal-criteria-progress='true'",
+                "data-goal-criteria-first='true'",
+                "data-goal-criteria-safety='true'",
+                "data-goal-criteria-evidence='true'",
+                "data-goal-criteria-list='true'",
+                "data-goal-progress-actions='true'",
+                "data-goal-progress-now='true'",
+                "data-goal-progress-primary='true'",
+                "data-goal-progress-tasks='true'",
+                "data-goal-progress-gates='true'",
+                "data-goal-progress-waiting='true'",
+                "data-goal-progress-safety='true'",
+                "data-goal-progress-evidence='true'",
+                "data-goal-progress-details='true'",
                 "data-goal-daily-loop-actions='true'",
                 "data-goal-daily-loop-primary='true'",
                 "data-goal-daily-loop-evidence='true'",
@@ -10755,6 +10791,7 @@ def _goal_overview(
     return (
         _goal_overview_command_bar(state, phase, next_action)
         + "<section id='goal-overview'><h2>Overview</h2>"
+        + "<details class='goal-overview-details' data-goal-overview-details='true'><summary>Detailed overview metadata</summary>"
         + _kv(
             [
                 ("intent", goal.description),
@@ -10766,6 +10803,7 @@ def _goal_overview(
                 ("operator_notes_status", "local_artifact_if_present"),
             ]
         )
+        + "</details>"
         + "</section>"
     )
 
@@ -10796,6 +10834,17 @@ def _goal_overview_command_bar(
     )
     status = "completed" if goal.completed_at else goal.status
     memory_status = "operator_notes_available"
+    waiting_href = "#goal-remaining-work-command-bar"
+    waiting_label = "Remaining Work"
+    if pending_approvals:
+        waiting_href = f"/approvals?goal_id={quote(goal.id)}"
+        waiting_label = "Approvals"
+    elif open_incidents:
+        waiting_href = "#goal-incidents"
+        waiting_label = "Incidents"
+    elif open_recommendations:
+        waiting_href = "#goal-next-recommendation"
+        waiting_label = "Recommendation"
     target_surface = SafeHtml(
         f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
     )
@@ -10803,6 +10852,34 @@ def _goal_overview_command_bar(
         [
             "<section id='goal-overview-command-bar' class='panel goal-overview-command-bar' data-goal-overview-command-bar='true'><h3>Goal Overview Command Bar</h3>",
             "<p class='muted'>One scan of the goal identity, current state, next click, and safety boundary before the detailed overview.</p>",
+            "<div class='goal-overview-grid' data-goal-overview-actions='true'>",
+            "<article class='goal-overview-card goal-overview-primary' data-goal-overview-now='true'>"
+            "<h3>Now</h3>"
+            f"<p>{_e(phase)} · {_e(status)}</p>"
+            f"<a class='goal-overview-action' data-goal-overview-primary='true' href='{_e(next_action.href)}'>{_e(next_action.action)}</a>"
+            "</article>",
+            "<article class='goal-overview-card' data-goal-overview-scope='true'>"
+            "<h3>Scope</h3>"
+            f"<p>{_e(goal.project_id)} · {len(tasks)} task{'s' if len(tasks) != 1 else ''}</p>"
+            "<a class='goal-overview-link' href='#goal-overview'>Overview</a>"
+            "</article>",
+            "<article class='goal-overview-card' data-goal-overview-progress='true'>"
+            "<h3>Progress</h3>"
+            f"<p>{_e(_goal_progress_label(state))} · risk {_e(state.get('risk_level') or 'unknown')}</p>"
+            "<a class='goal-overview-link' href='#goal-progress-command-bar'>Progress</a>"
+            "</article>",
+            "<article class='goal-overview-card' data-goal-overview-waiting='true'>"
+            "<h3>Waiting</h3>"
+            f"<p>Approvals {pending_approvals} · incidents {open_incidents} · recommendations {open_recommendations}</p>"
+            f"<a class='goal-overview-link' href='{_e(waiting_href)}'>{_e(waiting_label)}</a>"
+            "</article>",
+            "<article class='goal-overview-card' data-goal-overview-safety='true'>"
+            "<h3>Safety</h3>"
+            "<p>Read-only local overview with zero provider, network, or external effects.</p>"
+            "<a class='goal-overview-link' href='#goal-overview-command-bar'>Evidence</a>"
+            "</article>",
+            "</div>",
+            "<details class='goal-overview-command-evidence' data-goal-overview-evidence='true'><summary>Goal overview command evidence</summary>",
             _kv(
                 [
                     ("goal_overview_command_goal", goal.id),
@@ -10874,6 +10951,7 @@ def _goal_overview_command_bar(
                     "goal_overview_safety: read-only local goal overview",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -10898,10 +10976,15 @@ def _goal_risk_section(state: dict[str, Any]) -> str:
             f"{_e(task.id)}: risk={_e(task.risk_level)} status={_e(task.status)} "
             f"type={_e(task.task_type)}"
         )
-    return _goal_risk_command_bar(state, counts, contract) + _list_section(
+    return _goal_risk_command_bar(
+        state, counts, contract
+    ) + _collapsible_list_section(
         "Goal Risk",
         lines,
         anchor_id="goal-risk",
+        details_class="goal-risk-list",
+        data_attr="goal-risk-list",
+        summary=f"Detailed risk rows ({len(lines)})",
     )
 
 
@@ -10920,25 +11003,30 @@ def _goal_risk_command_bar(
     if not tasks:
         posture = "no_tasks"
         next_action = "Create scoped tasks"
-        target_surface = SafeHtml("<a href='#goal-next-action'>Goal Next Action</a>")
+        target_href = "#goal-next-action"
+        target_label = "Goal Next Action"
         reason = "no_goal_tasks"
     elif high_count or unknown_count:
         posture = "approval_required_before_dispatch"
         next_action = "Review approval boundary"
-        target_surface = SafeHtml("<a href='/approvals'>/approvals</a>")
+        target_href = "/approvals"
+        target_label = "/approvals"
         reason = "high_or_unknown_risk_tasks"
     elif medium_count:
         posture = "review_recommended"
         next_action = "Review completion readiness"
-        target_surface = SafeHtml(
-            "<a href='#goal-completion-readiness'>Goal Completion Readiness</a>"
-        )
+        target_href = "#goal-completion-readiness"
+        target_label = "Goal Completion Readiness"
         reason = "medium_risk_tasks"
     else:
         posture = "low_risk"
         next_action = "Continue workflow"
-        target_surface = SafeHtml("<a href='#goal-next-action'>Goal Next Action</a>")
+        target_href = "#goal-next-action"
+        target_label = "Goal Next Action"
         reason = "low_risk_tasks"
+    target_surface = SafeHtml(
+        f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"
+    )
     first_task_label = (
         f"{first_task.id} risk={first_task.risk_level} status={first_task.status}"
         if first_task is not None
@@ -10948,6 +11036,34 @@ def _goal_risk_command_bar(
         [
             "<section id='goal-risk-command-bar' class='panel goal-risk-command-bar' data-goal-risk-command-bar='true'><h3>Goal Risk Command Bar</h3>",
             "<p class='muted'>Risk posture before the detailed task-risk readback.</p>",
+            "<div class='goal-risk-grid' data-goal-risk-actions='true'>",
+            "<article class='goal-risk-card goal-risk-primary' data-goal-risk-now='true'>"
+            "<h3>Now</h3>"
+            f"<p>{_e(posture)} · level {_e(state.get('risk_level') or 'unknown')}</p>"
+            f"<a class='goal-risk-action' data-goal-risk-primary='true' href='{_e(target_href)}'>{_e(next_action)}</a>"
+            "</article>",
+            "<article class='goal-risk-card' data-goal-risk-counts='true'>"
+            "<h3>Counts</h3>"
+            f"<p>{_e(_risk_counts_label(counts))}</p>"
+            "<a class='goal-risk-link' href='#goal-risk'>Risk rows</a>"
+            "</article>",
+            "<article class='goal-risk-card' data-goal-risk-boundary='true'>"
+            "<h3>Boundary</h3>"
+            "<p>High or unknown risk requires operator approval before dispatch.</p>"
+            "<a class='goal-risk-link' href='/approvals'>Approvals</a>"
+            "</article>",
+            "<article class='goal-risk-card' data-goal-risk-first='true'>"
+            "<h3>First Task</h3>"
+            f"<p>{_e(first_task_label)}</p>"
+            "<a class='goal-risk-link' href='#goal-completion-readiness'>Readiness</a>"
+            "</article>",
+            "<article class='goal-risk-card' data-goal-risk-safety='true'>"
+            "<h3>Safety</h3>"
+            "<p>Review-only local risk posture with zero provider, network, or external effects.</p>"
+            "<a class='goal-risk-link' href='#goal-risk-command-bar'>Evidence</a>"
+            "</article>",
+            "</div>",
+            "<details class='goal-risk-command-evidence' data-goal-risk-evidence='true'><summary>Goal risk command evidence</summary>",
             _kv(
                 [
                     ("goal_risk_command_goal", goal.id),
@@ -10986,6 +11102,7 @@ def _goal_risk_command_bar(
                     "goal_risk_safety: review-only local risk posture",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -11051,10 +11168,13 @@ def _goal_completion_criteria(state: dict[str, Any]) -> str:
         tasks=tasks,
         contract_items=contract_items,
         task_items=task_items,
-    ) + _list_section(
+    ) + _collapsible_list_section(
         "Goal Completion Criteria",
         lines,
         anchor_id="goal-completion-criteria",
+        details_class="goal-criteria-list",
+        data_attr="goal-criteria-list",
+        summary=f"Detailed criteria rows ({len(lines)})",
     )
 
 
@@ -11076,37 +11196,66 @@ def _goal_criteria_command_bar(
     if source == "none":
         status = "missing_criteria"
         next_action = "Create completion criteria"
-        target_surface = SafeHtml("<a href='#goal-next-action'>Goal Next Action</a>")
+        target_href = "#goal-next-action"
+        target_label = "Goal Next Action"
         reason = "no_plan_contract_or_task_acceptance"
         first_item = "none"
     elif steps and completed_steps == len(steps):
         status = "criteria_complete"
         next_action = "Review completion readiness"
-        target_surface = SafeHtml(
-            "<a href='#goal-completion-readiness'>Goal Completion Readiness</a>"
-        )
+        target_href = "#goal-completion-readiness"
+        target_label = "Goal Completion Readiness"
         reason = "all_plan_steps_completed"
         first_item = f"step {steps[0].order_index}: {steps[0].title}" if steps else "none"
     elif tasks and completed_tasks == len(tasks):
         status = "criteria_complete"
         next_action = "Review completion readiness"
-        target_surface = SafeHtml(
-            "<a href='#goal-completion-readiness'>Goal Completion Readiness</a>"
-        )
+        target_href = "#goal-completion-readiness"
+        target_label = "Goal Completion Readiness"
         reason = "all_tasks_completed"
         first_item = _goal_first_criteria_item(steps, contract_items, task_items)
     else:
         status = "criteria_in_progress"
         next_action = "Review completion readiness"
-        target_surface = SafeHtml(
-            "<a href='#goal-completion-readiness'>Goal Completion Readiness</a>"
-        )
+        target_href = "#goal-completion-readiness"
+        target_label = "Goal Completion Readiness"
         reason = f"source={source}"
         first_item = _goal_first_criteria_item(steps, contract_items, task_items)
+    target_surface = SafeHtml(
+        f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"
+    )
     return "".join(
         [
             "<section id='goal-criteria-command-bar' class='panel goal-criteria-command-bar' data-goal-criteria-command-bar='true'><h3>Goal Criteria Command Bar</h3>",
             "<p class='muted'>Completion criteria posture before the detailed acceptance checklist.</p>",
+            "<div class='goal-criteria-grid' data-goal-criteria-actions='true'>",
+            "<article class='goal-criteria-card goal-criteria-primary' data-goal-criteria-now='true'>"
+            "<h3>Now</h3>"
+            f"<p>{_e(status)} · {criteria_count} item{'s' if criteria_count != 1 else ''}</p>"
+            f"<a class='goal-criteria-action' data-goal-criteria-primary='true' href='{_e(target_href)}'>{_e(next_action)}</a>"
+            "</article>",
+            "<article class='goal-criteria-card' data-goal-criteria-source='true'>"
+            "<h3>Source</h3>"
+            f"<p>{_e(source)}</p>"
+            "<a class='goal-criteria-link' href='#goal-completion-criteria'>Criteria</a>"
+            "</article>",
+            "<article class='goal-criteria-card' data-goal-criteria-progress='true'>"
+            "<h3>Progress</h3>"
+            f"<p>{_e(progress)}</p>"
+            "<a class='goal-criteria-link' href='#goal-progress-command-bar'>Progress</a>"
+            "</article>",
+            "<article class='goal-criteria-card' data-goal-criteria-first='true'>"
+            "<h3>First</h3>"
+            f"<p>{_e(first_item)}</p>"
+            "<a class='goal-criteria-link' href='#goal-completion-readiness'>Readiness</a>"
+            "</article>",
+            "<article class='goal-criteria-card' data-goal-criteria-safety='true'>"
+            "<h3>Safety</h3>"
+            "<p>Read-only local completion criteria; no provider, network, or external effects.</p>"
+            "<a class='goal-criteria-link' href='#goal-criteria-command-bar'>Evidence</a>"
+            "</article>",
+            "</div>",
+            "<details class='goal-criteria-command-evidence' data-goal-criteria-evidence='true'><summary>Goal criteria command evidence</summary>",
             _kv(
                 [
                     ("goal_criteria_command_goal", goal.id),
@@ -11153,6 +11302,7 @@ def _goal_criteria_command_bar(
                     "goal_criteria_safety: read-only local completion criteria",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -11310,6 +11460,7 @@ def _goal_progress(
         _goal_progress_command_bar(root, state, next_action, completed, total, len(blocked_tasks))
         + "<section id='goal-progress'><h2>Progress</h2>"
         + progress
+        + "<details class='goal-progress-details' data-goal-progress-details='true'><summary>Detailed progress counts</summary>"
         + _kv(
             [
                 ("progress_label", _goal_progress_label(state)),
@@ -11322,6 +11473,7 @@ def _goal_progress(
                 ("incidents", str(len(state["incidents"]))),
             ]
         )
+        + "</details>"
         + "</section>"
     )
 
@@ -11365,6 +11517,34 @@ def _goal_progress_command_bar(
         [
             "<section id='goal-progress-command-bar' class='panel goal-progress-command-bar' data-goal-progress-command-bar='true'><h3>Goal Progress Command Bar</h3>",
             "<p class='muted'>Progress posture before the task progress bar and counts.</p>",
+            "<div class='goal-progress-grid' data-goal-progress-actions='true'>",
+            "<article class='goal-progress-card goal-progress-primary' data-goal-progress-now='true'>"
+            "<h3>Now</h3>"
+            f"<p>{_e(progress_status)} · {_e(_goal_progress_label(state))}</p>"
+            f"<a class='goal-progress-action' data-goal-progress-primary='true' href='{_e(next_action.href)}'>{_e(next_action.action)}</a>"
+            "</article>",
+            "<article class='goal-progress-card' data-goal-progress-tasks='true'>"
+            "<h3>Tasks</h3>"
+            f"<p>{completed}/{total} completed · {percent}%</p>"
+            "<a class='goal-progress-link' href='#goal-progress'>Progress bar</a>"
+            "</article>",
+            "<article class='goal-progress-card' data-goal-progress-gates='true'>"
+            "<h3>Gates</h3>"
+            f"<p>{done_gates}/{total_gates} done · current { _e(current_gate) }</p>"
+            "<a class='goal-progress-link' href='#goal-workflow-map'>Workflow</a>"
+            "</article>",
+            "<article class='goal-progress-card' data-goal-progress-waiting='true'>"
+            "<h3>Waiting</h3>"
+            f"<p>{waiting_items} item{'s' if waiting_items != 1 else ''} · approvals {pending_approvals}</p>"
+            "<a class='goal-progress-link' href='#goal-remaining-work-command-bar'>Remaining work</a>"
+            "</article>",
+            "<article class='goal-progress-card' data-goal-progress-safety='true'>"
+            "<h3>Safety</h3>"
+            "<p>Read-only local progress posture with zero provider, network, or external effects.</p>"
+            "<a class='goal-progress-link' href='#goal-progress-command-bar'>Evidence</a>"
+            "</article>",
+            "</div>",
+            "<details class='goal-progress-command-evidence' data-goal-progress-evidence='true'><summary>Goal progress command evidence</summary>",
             _kv(
                 [
                     ("goal_progress_command_goal", goal.id),
@@ -11410,6 +11590,7 @@ def _goal_progress_command_bar(
                     "goal_progress_safety: read-only local progress posture",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -26987,6 +27168,18 @@ def _html_page(
     .goal-workbench-action {{ background:var(--accent); color:#fff; }}
     .goal-workbench-link {{ background:var(--surface); color:var(--accent); }}
     .goal-overview-command-bar {{ border-left:4px solid var(--accent); }}
+    .goal-overview-command-bar dl, .goal-risk-command-bar dl, .goal-criteria-command-bar dl, .goal-progress-command-bar dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-overview-card, .goal-risk-card, .goal-criteria-card, .goal-progress-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .goal-overview-card h3, .goal-risk-card h3, .goal-criteria-card h3, .goal-progress-card h3 {{ margin-top:0; }}
+    .goal-overview-card p, .goal-risk-card p, .goal-criteria-card p, .goal-progress-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .goal-overview-primary, .goal-risk-primary, .goal-criteria-primary, .goal-progress-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .goal-overview-action, .goal-overview-link, .goal-risk-action, .goal-risk-link, .goal-criteria-action, .goal-criteria-link, .goal-progress-action, .goal-progress-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-overview-action, .goal-risk-action, .goal-criteria-action, .goal-progress-action {{ background:var(--accent); color:#fff; }}
+    .goal-overview-link, .goal-risk-link, .goal-criteria-link, .goal-progress-link {{ background:var(--surface); color:var(--accent); }}
+    .goal-overview-command-evidence, .goal-risk-command-evidence, .goal-criteria-command-evidence, .goal-progress-command-evidence, .goal-overview-details, .goal-risk-list, .goal-criteria-list, .goal-progress-details {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-overview-command-evidence summary, .goal-risk-command-evidence summary, .goal-criteria-command-evidence summary, .goal-progress-command-evidence summary, .goal-overview-details summary, .goal-risk-list summary, .goal-criteria-list summary, .goal-progress-details summary {{ cursor:pointer; font-weight:700; }}
+    .goal-overview-command-evidence:not([open]) > :not(summary), .goal-risk-command-evidence:not([open]) > :not(summary), .goal-criteria-command-evidence:not([open]) > :not(summary), .goal-progress-command-evidence:not([open]) > :not(summary), .goal-overview-details:not([open]) > :not(summary), .goal-risk-list:not([open]) > :not(summary), .goal-criteria-list:not([open]) > :not(summary), .goal-progress-details:not([open]) > :not(summary) {{ display:none; }}
     .goal-overview-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-overview-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-board-command-bar {{ border-left:4px solid var(--accent); }}
@@ -27743,7 +27936,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-progress-command-bar, #goal-progress, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

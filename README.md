@@ -330,20 +330,15 @@ Section Index remains available as a collapsed full anchor map and links
 directly to the Timeline, Activity, and Git command bars, so the long Goal page
 can jump to the scan-first operational panels without dropping a fifty-link
 readback into the top of the page. Goal
-Overview now starts with a read-only `Goal Overview Command Bar` that makes the
-goal identity, status, phase, risk, progress, task/delegation/run/approval
-counts, next click, and no-effect boundary visible before the raw metadata. Goal
-Risk now starts with a read-only `Goal Risk Command Bar` that summarizes
-risk level, task risk counts, approval-boundary posture, first task risk/status,
-one next local surface, and zero-effect counters before the detailed risk
-list. Goal Completion Criteria now starts with a read-only `Goal Criteria
-Command Bar` that summarizes criteria source, item count, progress,
-plan/contract posture, first acceptance item, one next local review surface,
-and zero-effect counters before the detailed criteria list. Goal Progress now
-starts with a read-only `Goal Progress Command Bar` that summarizes task
-completion, workflow gate progress, current gate, waiting approvals/incidents/
-recommendations, one next local action, and zero-effect counters before the
-browser progress bar. Goal
+Overview now starts with a read-only `Goal Overview Command Bar` with visible
+Now, Scope, Progress, Waiting, and Safety cards before collapsed command
+evidence and collapsed raw metadata. Goal Risk now starts with visible Now,
+Counts, Boundary, First Task, and Safety cards before collapsed command
+evidence and collapsed detailed risk rows. Goal Completion Criteria now starts
+with visible Now, Source, Progress, First, and Safety cards before collapsed
+command evidence and collapsed criteria rows. Goal Progress now starts with
+visible Now, Tasks, Gates, Waiting, and Safety cards before collapsed command
+evidence, the browser progress bar, and collapsed detailed progress counts. Goal
 Completion Readiness turns the same local gate, approval, incident, and
 publication-handoff state into one explicit finish posture. It names the
 current blocker or next safe action, links the relevant local surface, and only
