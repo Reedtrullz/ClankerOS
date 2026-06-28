@@ -1,5 +1,45 @@
 # Status
 
+## 2026-06-28 Goal Action Dock
+
+- Added a compact fixed desktop `Goal Action Dock` immediately after the Goal
+  Jump Bar on `/goals/<goal_id>`, keeping the current action, current workflow
+  gate, CI handoff target, and `/resume` route visible while the operator
+  scrolls the long Goal workbench. The dock becomes static on narrow screens
+  to avoid covering mobile content.
+- The dock reuses the existing Goal Next Action surface: when a confirmed
+  browser action form is available, its primary link jumps to
+  `#goal-next-action`; otherwise it links to the current source surface from
+  the existing Goal recommendation.
+- Added the dock to the Goal Section Index and fixture-backed Goal route
+  assertions, including status, phase, gate progress, source surface, form
+  availability, confirmation posture, waiting counts, zero-effect counters,
+  and stable `data-goal-action-dock-*` markers.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is read-only local navigation to existing Goal surfaces. It
+  does not write on GET, duplicate action forms, create actions, approve work,
+  run work, call providers, fetch GitHub, poll network services, commit, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 514 deselected`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-action-dock-smoke-final app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-action-dock-demo-smoke-final app-demo-smoke-test`
+    -> passed, fixture-backed Goal route matched expected snippets, provider/
+    network/external mutation counters remained `0`
+  - Rendered browser QA against
+    `http://127.0.0.1:8791/goals/goal_7f2474d6cce3`: desktop viewport
+    found one fixed `data-goal-action-dock` with collapsed details,
+    `#goal-next-action` primary href, no horizontal overflow, no framework
+    overlay, and empty console warning/error logs; clicking the dock primary
+    link moved the page to `#goal-next-action` and the dock remained visible.
+    Mobile viewport `390x844` rendered the dock as `position: static` with one
+    grid column, no horizontal overflow, and empty console warning/error logs.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Goal Jump Shortcuts
 
 - Added visible `1`-`9` shortcut badges and `aria-keyshortcuts` to the sticky

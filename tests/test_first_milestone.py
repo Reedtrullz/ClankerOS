@@ -7837,6 +7837,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "breadcrumb_safety: read-only local route context" in goal.body
     goal_phase_position = goal.body.index("id='goal-current-phase'")
     assert goal.body.index("id='goal-summary'") < goal_phase_position
+    assert goal_phase_position < goal.body.index("id='goal-action-dock'")
+    assert goal.body.index("id='goal-jump-bar'") < goal.body.index("id='goal-action-dock'")
+    assert goal.body.index("id='goal-action-dock'") < goal.body.index("id='goal-command-bar'")
     assert goal_phase_position < goal.body.index("id='goal-command-bar'")
     assert goal_phase_position < goal.body.index("id='goal-operator-workbench'")
     assert goal_phase_position < goal.body.index("id='goal-next-action'")
@@ -7872,12 +7875,40 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_jump_shortcut: 9 remaining -> #goal-remaining-work-command-bar" in goal.body
     assert "goal_jump_safety: read-only local anchor navigation" in goal.body
     assert "querySelector(\"[data-goal-jump-shortcut='\" + event.key + \"']\")" in goal.body
+    assert "Goal Action Dock" in goal.body
+    assert "data-goal-action-dock='true'" in goal.body
+    assert "data-goal-action-dock-grid='true'" in goal.body
+    assert "goal_action_dock_status</dt><dd>available" in goal.body
+    assert "goal_action_dock_position</dt><dd>fixed_bottom_desktop" in goal.body
+    assert f"goal_action_dock_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_action_dock_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_action_dock_phase</dt><dd>Ready to commit" in goal.body
+    assert "goal_action_dock_current_gate</dt><dd>commit_request" in goal.body
+    assert "goal_action_dock_gate_progress</dt><dd>8/15 gates done" in goal.body
+    assert "goal_action_dock_next_action</dt><dd>Create commit request" in goal.body
+    assert "goal_action_dock_primary_surface</dt><dd><a href='#goal-next-action'>Goal Next Action</a>" in goal.body
+    assert f"goal_action_dock_source_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
+    assert "goal_action_dock_form_available</dt><dd>true" in goal.body
+    assert "goal_action_dock_confirmation_required</dt><dd>true" in goal.body
+    assert "goal_action_dock_pending_approvals</dt><dd>1" in goal.body
+    assert "goal_action_dock_ci_surface</dt><dd><a href='#goal-ci-handoff'>Goal CI Handoff</a>" in goal.body
+    assert "goal_action_dock_resume_surface</dt><dd><a href='/resume'>/resume</a>" in goal.body
+    assert "goal_action_dock_write_on_get</dt><dd>false" in goal.body
+    assert "goal_action_dock_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_action_dock_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_action_dock_external_effects_created</dt><dd>false" in goal.body
+    assert "data-goal-action-dock-primary='true' href='#goal-next-action'>Open action form</a>" in goal.body
+    assert "goal_action_dock_now: Create commit request" in goal.body
+    assert "goal_action_dock_click: <a href='#goal-next-action'>Open action form</a>" in goal.body
+    assert "goal_action_dock_gate: commit_request" in goal.body
+    assert "goal_action_dock_safety: reuses existing confirmed Goal action form" in goal.body
     assert "goal_section_index_status</dt><dd>available" in goal.body
     assert "goal_section_count</dt><dd>" in goal.body
     assert "goal_section_index_write_on_get</dt><dd>false" in goal.body
     assert "goal_section_index_external_effects_created</dt><dd>false" in goal.body
     assert "href='#goal-summary'" in goal.body
     assert "href='#goal-current-phase'" in goal.body
+    assert "href='#goal-action-dock'" in goal.body
     assert "href='#goal-command-bar'" in goal.body
     assert "href='#goal-operator-workbench'" in goal.body
     assert "href='#goal-return-brief'" in goal.body
@@ -7936,7 +7967,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>51" in goal.body
+    assert "goal_section_count</dt><dd>52" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body

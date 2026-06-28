@@ -6700,6 +6700,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             "</section>",
             _goal_phase_banner(root, state, phase, next_action),
             _goal_jump_bar(phase, next_action),
+            _goal_action_dock(root, state, phase, next_action),
             _goal_command_bar(root, state, phase, next_action),
             _goal_operator_workbench(root, state, phase, next_action),
             _goal_daily_loop(root, state, phase, next_action),
@@ -6794,6 +6795,119 @@ def _goal_jump_bar(phase: str, next_action: GoalNextAction) -> str:
     )
 
 
+def _goal_action_dock(
+    root: Path,
+    state: dict[str, Any],
+    phase: str,
+    next_action: GoalNextAction,
+) -> str:
+    goal = state["goal"]
+    gates, counts, current_gate = _goal_workflow_gate_summary(root, state, next_action)
+    total_gates = len(gates)
+    done_gates = counts.get("done", 0)
+    pending_gates = counts.get("pending", 0)
+    waiting_gates = counts.get("waiting", 0)
+    form_available = bool(_goal_next_action_form(state, next_action))
+    primary_href = "#goal-next-action" if form_available else next_action.href
+    primary_label = "Open action form" if form_available else next_action.action
+    primary_surface = SafeHtml(
+        f"<a href='{_e(primary_href)}'>Goal Next Action</a>"
+    )
+    target_surface = SafeHtml(
+        f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
+    )
+    progress = _goal_progress_label(state)
+    open_incidents = sum(1 for row in state["incidents"] if row["status"] == "open")
+    open_recommendations = sum(
+        1 for row in state["recommendations"] if row["status"] == "open"
+    )
+    pending_approvals = (
+        _count_status(state["worktree_approvals"], "pending_operator_approval")
+        + _count_status(state["commit_approvals"], "pending_operator_approval")
+        + _count_status(state["publications"], "pending_operator_approval")
+    )
+    waiting_items = open_incidents + open_recommendations + pending_approvals
+    return "".join(
+        [
+            "<section id='goal-action-dock' class='panel goal-action-dock' data-goal-action-dock='true'><h2>Goal Action Dock</h2>",
+            "<div class='goal-action-dock-grid' data-goal-action-dock-grid='true'>",
+            "<div class='goal-action-dock-item goal-action-dock-now'>",
+            "<span class='goal-action-dock-label'>Now</span>",
+            f"<strong>{_e(next_action.action)}</strong>",
+            f"<a class='goal-action-dock-primary' data-goal-action-dock-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+            "</div>",
+            "<div class='goal-action-dock-item'>",
+            "<span class='goal-action-dock-label'>Gate</span>",
+            f"<a href='#goal-workflow-map'>{_e(current_gate.replace('_', ' '))}</a>",
+            "</div>",
+            "<div class='goal-action-dock-item'>",
+            "<span class='goal-action-dock-label'>Proof</span>",
+            "<a href='#goal-ci-handoff'>CI handoff</a>",
+            "</div>",
+            "<div class='goal-action-dock-item'>",
+            "<span class='goal-action-dock-label'>Resume</span>",
+            "<a href='/resume'>Resume</a>",
+            "</div>",
+            "</div>",
+            "<details class='goal-action-dock-details'>",
+            "<summary>Dock details</summary>",
+            _kv(
+                [
+                    ("goal_action_dock_status", "available"),
+                    ("goal_action_dock_position", "fixed_bottom_desktop"),
+                    ("goal_action_dock_goal", goal.id),
+                    ("goal_action_dock_project", goal.project_id),
+                    ("goal_action_dock_phase", phase),
+                    ("goal_action_dock_current_gate", current_gate),
+                    (
+                        "goal_action_dock_gate_progress",
+                        f"{done_gates}/{total_gates} gates done",
+                    ),
+                    ("goal_action_dock_done_gates", str(done_gates)),
+                    ("goal_action_dock_pending_gates", str(pending_gates)),
+                    ("goal_action_dock_waiting_gates", str(waiting_gates)),
+                    ("goal_action_dock_progress", progress),
+                    ("goal_action_dock_next_action", next_action.action),
+                    ("goal_action_dock_primary_surface", primary_surface),
+                    ("goal_action_dock_source_surface", target_surface),
+                    ("goal_action_dock_reason", next_action.reason),
+                    ("goal_action_dock_form_available", str(form_available).lower()),
+                    (
+                        "goal_action_dock_confirmation_required",
+                        str(form_available).lower(),
+                    ),
+                    ("goal_action_dock_waiting_items", str(waiting_items)),
+                    ("goal_action_dock_pending_approvals", str(pending_approvals)),
+                    ("goal_action_dock_open_incidents", str(open_incidents)),
+                    ("goal_action_dock_open_recommendations", str(open_recommendations)),
+                    (
+                        "goal_action_dock_ci_surface",
+                        SafeHtml("<a href='#goal-ci-handoff'>Goal CI Handoff</a>"),
+                    ),
+                    ("goal_action_dock_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+                    ("goal_action_dock_source", "goal_state_next_action_and_workflow_gates"),
+                    ("goal_action_dock_write_on_get", "false"),
+                    ("goal_action_dock_provider_calls_taken", "0"),
+                    ("goal_action_dock_network_actions_taken", "0"),
+                    ("goal_action_dock_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_action_dock_now: {_e(next_action.action)}",
+                    f"goal_action_dock_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                    f"goal_action_dock_source_surface: <a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
+                    f"goal_action_dock_gate: {_e(current_gate)}",
+                    f"goal_action_dock_waiting: approvals={pending_approvals} incidents={open_incidents} recommendations={open_recommendations}",
+                    "goal_action_dock_safety: reuses existing confirmed Goal action form",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
 def _goal_live_state() -> str:
     return "".join(
         [
@@ -6838,6 +6952,7 @@ def _goal_section_index() -> str:
     sections = [
         ("Summary", "goal-summary"),
         ("Current phase", "goal-current-phase"),
+        ("Action dock", "goal-action-dock"),
         ("Command bar", "goal-command-bar"),
         ("Operator workbench", "goal-operator-workbench"),
         ("Daily loop", "goal-daily-loop"),
@@ -22068,12 +22183,14 @@ def _html_page(
     * {{ box-sizing: border-box; }}
     body {{ margin:0; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:var(--ink); background:var(--surface); line-height:1.45; }}
     header {{ display:flex; justify-content:space-between; align-items:center; gap:16px; padding:14px 24px; border-bottom:1px solid var(--line); background:var(--surface); position:sticky; top:0; z-index:2; }}
+    header nav {{ display:flex; flex-wrap:wrap; gap:0 14px; min-width:0; max-width:100%; }}
     header a {{ color:var(--ink); text-decoration:none; font-size:14px; margin-right:14px; }}
     header a[aria-current="page"] {{ color:var(--accent); font-weight:700; }}
     .header-actions {{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }}
     .icon-button {{ border:1px solid var(--line); background:var(--panel); color:var(--ink); padding:7px 9px; border-radius:6px; }}
     main {{ max-width:1280px; margin:0 auto; padding:24px; }}
     .operator-shell {{ display:grid; grid-template-columns:minmax(180px, 240px) minmax(0, 1fr); gap:24px; align-items:start; }}
+    .operator-shell > *, article, aside, section, dl, dt, dd {{ min-width:0; max-width:100%; }}
     .operator-side {{ position:sticky; top:74px; border:1px solid var(--line); background:var(--panel); padding:12px; }}
     .operator-side h2 {{ font-size:14px; }}
     .operator-side ul, .command-palette ul {{ list-style:none; padding:0; margin:0; display:grid; gap:7px; }}
@@ -22119,7 +22236,7 @@ def _html_page(
     h1 {{ font-size:30px; line-height:1.15; margin:0 0 10px; letter-spacing:0; }}
     h2 {{ font-size:18px; margin:0 0 12px; letter-spacing:0; }}
     h3 {{ font-size:15px; margin:16px 0 6px; }}
-    p, li, dd, dt, td, th, button, input {{ font-size:14px; }}
+    p, li, dd, dt, td, th, button, input {{ font-size:14px; overflow-wrap:anywhere; }}
     .hero p {{ color:var(--muted); max-width:760px; }}
     .banner, .warning {{ border:1px solid var(--line); background:var(--panel); padding:12px; margin:12px 0; }}
     .panel {{ border:1px solid var(--line); background:var(--panel); padding:12px; }}
@@ -22130,6 +22247,18 @@ def _html_page(
     .goal-jump-link {{ display:inline-flex; align-items:center; min-height:32px; max-width:100%; padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:var(--surface); text-decoration:none; overflow-wrap:anywhere; }}
     .goal-jump-link kbd {{ display:inline-grid; place-items:center; min-width:22px; min-height:22px; margin-right:6px; border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; background:var(--panel); color:var(--ink); font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px; }}
     .goal-jump-link:focus, .goal-jump-link:hover {{ border-color:var(--accent); outline:0; }}
+    body:has(.goal-action-dock) main {{ padding-bottom:150px; }}
+    .goal-action-dock {{ position:fixed; left:max(304px, calc((100vw - 1280px) / 2 + 304px)); right:max(24px, calc((100vw - 1280px) / 2 + 24px)); bottom:16px; z-index:3; max-height:42vh; overflow:auto; border-left:4px solid var(--ok); margin:0; box-shadow:0 4px 16px rgba(15,20,25,.16); }}
+    .goal-action-dock h2 {{ font-size:14px; margin:0 0 8px; }}
+    .goal-action-dock dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
+    .goal-action-dock-grid {{ display:grid; grid-template-columns:minmax(240px, 1.4fr) repeat(3, minmax(150px, 1fr)); gap:8px; margin:10px 0 12px; }}
+    .goal-action-dock-item {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:9px 10px; display:grid; gap:4px; align-content:start; }}
+    .goal-action-dock-label {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .goal-action-dock-item strong {{ overflow-wrap:anywhere; }}
+    .goal-action-dock-primary {{ display:inline-flex; align-items:center; justify-content:center; min-height:32px; max-width:100%; width:max-content; padding:6px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--accent); color:#fff; text-decoration:none; overflow-wrap:anywhere; }}
+    .goal-action-dock-details summary {{ cursor:pointer; font-weight:700; }}
+    .goal-action-dock ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-action-dock li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-command-bar dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:8px; }}
@@ -22456,7 +22585,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side, .goal-jump-bar {{ position:static; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .goal-action-dock-grid, .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>
