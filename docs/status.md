@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/actions` now follows the Action Operator Workbench with a visible
+  read-only `Action Workflow Map` for Setup, Scout, Context, Prep, Approval,
+  Execute, Commit, Publish, and Proof. The map marks the current stage from
+  the same first-run or lead-Goal focus context, links each stage to existing
+  safe browser surfaces, and keeps no-write/no-approve/no-execute/no-network
+  proof in collapsed evidence before the flat catalog.
 - `/inbox` now follows the lane-level Inbox Triage Board with a visible
   read-only `Inbox Next Item Brief` for Next, Inspect, Evidence, After, and
   Safety. The brief turns the first local queue item into a single immediate
@@ -300,10 +306,12 @@ Latest status focus:
   zero-effect counters in the DOM.
 - `/actions` is now content-first and action-first: the page opens on the safe
   action header and `Action Operator Workbench` before shared route/focus
-  diagnostics or catalog readback, while action safety, workbench evidence, and
-  catalog evidence stay collapsed by default. The catalog still exposes visible
-  Catalog, Forms, Approvals, and Boundary cards plus all prior zero-effect
-  counters in the DOM.
+  diagnostics or catalog readback, then follows with a read-only
+  `Action Workflow Map` for Setup, Scout, Context, Prep, Approval, Execute,
+  Commit, Publish, and Proof. Action safety, workbench, workflow-map, and
+  catalog evidence stay collapsed by default. The catalog still exposes
+  visible Catalog, Forms, Approvals, and Boundary cards plus all prior
+  zero-effect counters in the DOM.
 - `/` now leads with the Home operating surface before shared route/focus
   diagnostics. Its `Home Operator Board` is visible in the first desktop and
   mobile viewports, shows Do Now, Attention, Resume, and Proof cards for the

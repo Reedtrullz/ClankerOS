@@ -6772,12 +6772,23 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-action-workbench-actions='true'" in actions.body
     assert "data-action-workbench-primary='true'" in actions.body
     assert "data-action-workbench-evidence='true'" in actions.body
+    assert "Action Workflow Map" in actions.body
+    assert "data-action-workflow-map='true'" in actions.body
+    assert "data-action-workflow-actions='true'" in actions.body
+    assert "data-action-workflow-evidence='true'" in actions.body
+    assert actions.body.count("class='action-workflow-card") == 9
+    assert "data-action-workflow-stage='setup' data-action-workflow-status='done'" in actions.body
+    assert "data-action-workflow-stage='scout' data-action-workflow-status='current'" in actions.body
+    assert "data-action-workflow-stage='commit' data-action-workflow-status='waiting'" in actions.body
     assert "Action Catalog Command Bar" in actions.body
     assert "data-action-catalog-command-bar='true'" in actions.body
     assert "data-action-catalog-actions='true'" in actions.body
     assert "data-action-catalog-primary='true'" in actions.body
     assert "data-action-catalog-evidence='true'" in actions.body
     assert actions.body.index("data-action-operator-workbench='true'") < actions.body.index(
+        "data-action-workflow-map='true'"
+    )
+    assert actions.body.index("data-action-workflow-map='true'") < actions.body.index(
         "data-action-catalog-command-bar='true'"
     )
     assert actions.body.index("data-action-operator-workbench='true'") < actions.body.index(
@@ -6808,6 +6819,21 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "action_catalog_click: <a href='#action-catalog-workflow-actions'>Local Artifact And Approval Actions</a>" in actions.body
     assert "action_catalog_confirm: every local mutation requires confirm=yes" in actions.body
     assert "action_catalog_safety: read-only action catalog; confirmed forms remain on owning surfaces" in actions.body
+    assert "action_workflow_status</dt><dd>available" in actions.body
+    assert "action_workflow_source</dt><dd>saved_goal" in actions.body
+    assert "action_workflow_total_stages</dt><dd>9" in actions.body
+    assert "action_workflow_done_stages</dt><dd>1" in actions.body
+    assert "action_workflow_current_stage</dt><dd>scout" in actions.body
+    assert "action_workflow_current_action</dt><dd>run-delegation" in actions.body
+    assert "action_workflow_current_label</dt><dd>Run delegation" in actions.body
+    assert f"action_workflow_current_surface</dt><dd><a href='/goals/{created_goal_id}'" in actions.body
+    assert "action_workflow_write_on_get</dt><dd>false" in actions.body
+    assert "action_workflow_approves_on_get</dt><dd>false" in actions.body
+    assert "action_workflow_executes_work_on_get</dt><dd>false" in actions.body
+    assert "action_workflow_external_effects_created</dt><dd>false" in actions.body
+    assert "action_workflow_now: Run delegation" in actions.body
+    assert "action_workflow_current: stage=scout action=run-delegation" in actions.body
+    assert "action_workflow_safety: read-only browser action map; confirmed forms own writes" in actions.body
     assert "action_workbench_status</dt><dd>available" in actions.body
     assert "action_workbench_source</dt><dd>saved_goal" in actions.body
     assert "action_workbench_project</dt><dd><a href='/projects/first-target'>first-target</a>" in actions.body
@@ -8688,11 +8714,22 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-action-workbench-actions='true'" in actions_with_demo.body
     assert "data-action-workbench-primary='true'" in actions_with_demo.body
     assert "data-action-workbench-evidence='true'" in actions_with_demo.body
+    assert "Action Workflow Map" in actions_with_demo.body
+    assert "data-action-workflow-map='true'" in actions_with_demo.body
+    assert "data-action-workflow-actions='true'" in actions_with_demo.body
+    assert "data-action-workflow-evidence='true'" in actions_with_demo.body
+    assert actions_with_demo.body.count("class='action-workflow-card") == 9
+    assert "data-action-workflow-stage='execute' data-action-workflow-status='done'" in actions_with_demo.body
+    assert "data-action-workflow-stage='commit' data-action-workflow-status='current'" in actions_with_demo.body
+    assert "data-action-workflow-stage='publish' data-action-workflow-status='waiting'" in actions_with_demo.body
     assert "Action Catalog Command Bar" in actions_with_demo.body
     assert "data-action-catalog-command-bar='true'" in actions_with_demo.body
     assert "data-action-catalog-actions='true'" in actions_with_demo.body
     assert "data-action-catalog-evidence='true'" in actions_with_demo.body
     assert actions_with_demo.body.index("data-action-operator-workbench='true'") < actions_with_demo.body.index(
+        "data-action-workflow-map='true'"
+    )
+    assert actions_with_demo.body.index("data-action-workflow-map='true'") < actions_with_demo.body.index(
         "data-action-catalog-command-bar='true'"
     )
     assert actions_with_demo.body.index("data-action-operator-workbench='true'") < actions_with_demo.body.index(
@@ -8721,6 +8758,21 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "action_workbench_saved_project</dt><dd>local-app-demo" in actions_with_demo.body
     assert f"action_workbench_saved_goal</dt><dd>{result.goal_id}" in actions_with_demo.body
     assert f".clanker/projects/local-app-demo/goals/{result.goal_id}/GOAL.md" in actions_with_demo.body
+    assert "action_workflow_status</dt><dd>available" in actions_with_demo.body
+    assert "action_workflow_source</dt><dd>lead_goal" in actions_with_demo.body
+    assert "action_workflow_total_stages</dt><dd>9" in actions_with_demo.body
+    assert "action_workflow_done_stages</dt><dd>6" in actions_with_demo.body
+    assert "action_workflow_current_stage</dt><dd>commit" in actions_with_demo.body
+    assert "action_workflow_current_action</dt><dd>coder-commit-request" in actions_with_demo.body
+    assert "action_workflow_current_label</dt><dd>Create commit request" in actions_with_demo.body
+    assert f"action_workflow_current_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in actions_with_demo.body
+    assert "action_workflow_write_on_get</dt><dd>false" in actions_with_demo.body
+    assert "action_workflow_approves_on_get</dt><dd>false" in actions_with_demo.body
+    assert "action_workflow_executes_work_on_get</dt><dd>false" in actions_with_demo.body
+    assert "action_workflow_external_effects_created</dt><dd>false" in actions_with_demo.body
+    assert "action_workflow_now: Create commit request" in actions_with_demo.body
+    assert "action_workflow_current: stage=commit action=coder-commit-request" in actions_with_demo.body
+    assert "action_workflow_safety: read-only browser action map; confirmed forms own writes" in actions_with_demo.body
     assert "action_workbench_write_on_get</dt><dd>false" in actions_with_demo.body
     assert "action_workbench_provider_calls_taken</dt><dd>0" in actions_with_demo.body
     assert "action_workbench_network_actions_taken</dt><dd>0" in actions_with_demo.body

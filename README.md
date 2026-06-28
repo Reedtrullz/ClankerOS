@@ -776,9 +776,12 @@ first-run or lead-Goal focus as the rest of the app, names the current safe
 local action, links the owning surface where the confirmed form already lives,
 routes blockers to inbox/approvals/incidents, and exposes a confirmed
 `save-workspace` finish form for returning to action context later. The
-`Action Catalog Command Bar` follows with visible Catalog, Forms, Approvals,
-and Boundary cards, while detailed posture counters and zero-effect readbacks
-stay available inside collapsed evidence.
+read-only `Action Workflow Map` follows with Setup, Scout, Context, Prep,
+Approval, Execute, Commit, Publish, and Proof cards, marking the current stage
+from the same operator focus context and linking to the existing local browser
+surfaces. The `Action Catalog Command Bar` follows with visible Catalog,
+Forms, Approvals, and Boundary cards, while detailed posture counters and
+zero-effect readbacks stay available inside collapsed evidence.
 When the fixture exists, `/actions` also shows `Current Demo Action Surfaces`
 with links to the selected project, delegation, workflow, run, approvals, and
 inbox surfaces.

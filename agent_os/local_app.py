@@ -1095,6 +1095,10 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "Action Operator Workbench",
                 "data-action-operator-workbench='true'",
                 "action_workbench_action_name</dt><dd>coder-commit-request",
+                "Action Workflow Map",
+                "data-action-workflow-map='true'",
+                "data-action-workflow-actions='true'",
+                "data-action-workflow-evidence='true'",
                 "Current Demo Action Surfaces",
                 "next_demo_action: request_commit_for_reviewed_run",
                 "external_effects=none",
@@ -17806,6 +17810,195 @@ def _action_operator_workbench(root: Path) -> str:
     )
 
 
+def _action_workflow_stage_for_action(action_name: str) -> str:
+    if action_name in {"register-project", "create-goal", "save-workspace"}:
+        return "setup"
+    if action_name in {"delegate", "run-delegation"}:
+        return "scout"
+    if action_name in {"context-pack", "implementation-handoff"}:
+        return "context"
+    if action_name in {"coder-prep", "coder-prep-from-handoff", "coder-worktree-plan"}:
+        return "prep"
+    if action_name in {"coder-worktree-approval", "approve-coder-worktree"}:
+        return "approval"
+    if action_name in {"run-coder-worktree", "review-run"}:
+        return "execute"
+    if action_name in {"coder-commit-request", "approve-coder-commit", "commit-coder-worktree"}:
+        return "commit"
+    if action_name in {
+        "coder-publication-request",
+        "approve-coder-publication",
+        "coder-publication-handoff",
+        "manual_operator_push_pr_outside_clankeros",
+        "complete-goal",
+    }:
+        return "publish"
+    if action_name in {"ci-snapshot-evidence-from-gh-json", "save-goal-note", "pin-memory"}:
+        return "proof"
+    return "setup"
+
+
+def _action_workflow_map(root: Path) -> str:
+    focus = _operator_focus_context(root, "/actions")
+    status = str(focus.get("status", "state_unavailable"))
+    current_action = "inspect-health"
+    current_label = "Open health"
+    current_target = "/health"
+    source = str(focus.get("source") or "operator_focus_context")
+    if status == "first_run":
+        current_label = str(focus.get("next_action") or "Continue first run")
+        current_action = _action_name_for_first_run_step(str(focus.get("current_step") or "unknown"))
+        current_target = str(focus.get("target_href") or "/")
+    elif status == "available":
+        action = focus["next_action"]
+        current_label = action.action
+        current_action = _action_name_for_goal_action(action.action)
+        current_target = action.href
+    current_stage = _action_workflow_stage_for_action(current_action)
+    stages = [
+        (
+            "setup",
+            "Setup",
+            ["register-project", "create-goal"],
+            "/#first-run-guide",
+            "Create or select the project and Goal from browser forms.",
+        ),
+        (
+            "scout",
+            "Scout",
+            ["delegate", "run-delegation"],
+            "/delegation-runs",
+            "Create scout work and run the read-only delegation loop.",
+        ),
+        (
+            "context",
+            "Context",
+            ["context-pack", "implementation-handoff"],
+            "/workflow",
+            "Generate context and handoff artifacts before coding.",
+        ),
+        (
+            "prep",
+            "Prep",
+            ["coder-prep", "coder-worktree-plan"],
+            "/workflow",
+            "Turn implementation handoff into a bounded coder task and plan.",
+        ),
+        (
+            "approval",
+            "Approval",
+            ["coder-worktree-approval", "approve-coder-worktree"],
+            "/approvals",
+            "Ask for and record local execution approval before work runs.",
+        ),
+        (
+            "execute",
+            "Execute",
+            ["run-coder-worktree", "review-run"],
+            "/runs",
+            "Run approved bounded work and review local evidence.",
+        ),
+        (
+            "commit",
+            "Commit",
+            ["coder-commit-request", "approve-coder-commit", "commit-coder-worktree"],
+            "/approvals",
+            "Request, approve, and create the isolated local commit.",
+        ),
+        (
+            "publish",
+            "Publish",
+            ["coder-publication-request", "approve-coder-publication", "coder-publication-handoff"],
+            "/approvals",
+            "Prepare the manual push/PR handoff without app-side network effects.",
+        ),
+        (
+            "proof",
+            "Proof",
+            ["ci-snapshot-evidence-from-gh-json", "pin-memory", "save-goal-note"],
+            "/ci-evidence",
+            "Record proof, pin useful memory, and add goal notes for review.",
+        ),
+    ]
+    cards: list[str] = []
+    done_count = 0
+    current_index = next(
+        (index for index, item in enumerate(stages) if item[0] == current_stage),
+        0,
+    )
+    for index, (key, title, actions, href, summary) in enumerate(stages):
+        if index < current_index:
+            marker = "done"
+            done_count += 1
+        elif index == current_index:
+            marker = "current"
+        else:
+            marker = "waiting"
+        card_class = "action-workflow-card action-workflow-current" if marker == "current" else "action-workflow-card"
+        action_text = ", ".join(actions)
+        cards.extend(
+            [
+                (
+                    f"<article class='{card_class}' data-action-workflow-stage='{_e(key)}' "
+                    f"data-action-workflow-status='{_e(marker)}'>"
+                ),
+                f"<h3>{_e(title)}</h3>",
+                f"<p>{_e(summary)}</p>",
+                f"<p><strong>{len(actions)}</strong> action{'s' if len(actions) != 1 else ''}</p>",
+                f"<a class='action-workflow-link' href='{_e(href)}'>{_e(href)}</a>",
+                f"<small>{_e(action_text)}</small>",
+                "</article>",
+            ]
+        )
+    rows = [
+        ("action_workflow_status", "available"),
+        ("action_workflow_source", source),
+        ("action_workflow_total_stages", str(len(stages))),
+        ("action_workflow_done_stages", str(done_count)),
+        ("action_workflow_current_stage", current_stage),
+        ("action_workflow_current_action", current_action),
+        ("action_workflow_current_label", current_label),
+        (
+            "action_workflow_current_surface",
+            SafeHtml(f"<a href='{_e(current_target)}'>{_e(current_target)}</a>"),
+        ),
+        (
+            "action_workflow_catalog_surface",
+            SafeHtml("<a href='#action-catalog-workflow-actions'>Local Artifact And Approval Actions</a>"),
+        ),
+        (
+            "action_workflow_boundary_surface",
+            SafeHtml("<a href='#action-catalog-execution-boundary'>Execution Boundary</a>"),
+        ),
+        ("action_workflow_write_on_get", "false"),
+        ("action_workflow_approves_on_get", "false"),
+        ("action_workflow_executes_work_on_get", "false"),
+        ("action_workflow_provider_calls_taken", "0"),
+        ("action_workflow_network_actions_taken", "0"),
+        ("action_workflow_external_effects_created", "false"),
+    ]
+    lines = [
+        f"action_workflow_now: {_e(current_label)}",
+        f"action_workflow_current: stage={_e(current_stage)} action={_e(current_action)}",
+        f"action_workflow_click: <a href='{_e(current_target)}'>{_e(current_target)}</a>",
+        "action_workflow_safety: read-only browser action map; confirmed forms own writes",
+    ]
+    return "".join(
+        [
+            "<section id='action-workflow-map' class='panel action-workflow-map' data-action-workflow-map='true'><h2>Action Workflow Map</h2>",
+            "<p class='muted'>The safe browser actions arranged as the Goal workflow path instead of a flat command list.</p>",
+            "<div class='action-workflow-grid' data-action-workflow-actions='true'>",
+            *cards,
+            "</div>",
+            "<details class='action-workflow-evidence' data-action-workflow-evidence='true'><summary>Action workflow evidence</summary>",
+            _kv(rows),
+            _ul(lines),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
 def _actions_page(root: Path) -> str:
     return "".join(
         [
@@ -17816,6 +18009,7 @@ def _actions_page(root: Path) -> str:
             "</details>",
             "</section>",
             _action_operator_workbench(root),
+            _action_workflow_map(root),
             _action_catalog_command_bar(),
             _list_section(
                 "Navigation Actions",
@@ -31727,9 +31921,9 @@ def _html_page(
     .workflow-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .workflow-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .action-catalog-command-bar {{ border-left:4px solid var(--accent); }}
-    .action-safety-details, .action-catalog-evidence, .action-workbench-evidence {{ margin-top:10px; }}
-    .action-safety-details summary, .action-catalog-evidence summary, .action-workbench-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .action-safety-details:not([open]) > :not(summary), .action-catalog-evidence:not([open]) > :not(summary), .action-workbench-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .action-safety-details, .action-catalog-evidence, .action-workbench-evidence, .action-workflow-evidence {{ margin-top:10px; }}
+    .action-safety-details summary, .action-catalog-evidence summary, .action-workbench-evidence summary, .action-workflow-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .action-safety-details:not([open]) > :not(summary), .action-catalog-evidence:not([open]) > :not(summary), .action-workbench-evidence:not([open]) > :not(summary), .action-workflow-evidence:not([open]) > :not(summary) {{ display:none; }}
     .action-catalog-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .action-catalog-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .action-catalog-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
@@ -31740,6 +31934,16 @@ def _html_page(
     .action-catalog-action, .action-catalog-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .action-catalog-action {{ background:var(--accent); color:#fff; }}
     .action-catalog-link {{ background:var(--surface); color:var(--accent); }}
+    .action-workflow-map {{ border-left:4px solid var(--ok); }}
+    .action-workflow-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:10px; margin:12px 0; }}
+    .action-workflow-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
+    .action-workflow-card[data-action-workflow-status="done"] {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
+    .action-workflow-current {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .action-workflow-card h3 {{ margin-top:0; }}
+    .action-workflow-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .action-workflow-card small {{ display:block; color:var(--muted); overflow-wrap:anywhere; }}
+    .action-workflow-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; margin:0 0 10px; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); color:var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
+    .action-workflow-evidence {{ border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .action-operator-workbench {{ border-left:4px solid var(--accent); }}
     .action-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .action-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
@@ -32116,7 +32320,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-session-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-session-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-attention-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .skills-usage-grid {{ grid-template-columns:1fr; }} }}

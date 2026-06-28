@@ -860,7 +860,11 @@ Core layers for the bootstrap:
   diagnostics, reading first-run or lead-Goal focus, naming the current local
   action, linking the owning surface for the confirmed form, routing blockers,
   and providing a confirmed project/Goal resume save point without adding
-  action authority to the catalog page, followed by an
+  action authority to the catalog page. A visible read-only
+  `Action Workflow Map` then arranges browser actions into Setup, Scout,
+  Context, Prep, Approval, Execute, Commit, Publish, and Proof stages, marks
+  the current stage from the same first-run or lead-Goal focus, and links each
+  stage to its existing safe local surface, followed by an
   `Action Catalog Command Bar` with visible Catalog, Forms, Approvals, and
   Boundary cards while safe local action counts, target anchors, local
   execution/git/approval/artifact posture, confirmation posture, form
