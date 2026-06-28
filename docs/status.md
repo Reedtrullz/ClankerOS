@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/inbox` is now content-first and queue-action-first: it opens with the
+  `Inbox Operator Workbench` before shared route/focus diagnostics or command
+  readback, while inbox command and workbench evidence stay collapsed by
+  default. The page still preserves queue counts, first attention item,
+  Goal/delegation/run/evidence routing, a collapsed finish-today workspace
+  save form, and zero-effect counters in the DOM.
 - `/resume` is now content-first and return-to-work-first: it opens with a
   primary saved-context link and `Resume Operator Workbench` before shared
   route/focus diagnostics or command readback, while saved workspace state,

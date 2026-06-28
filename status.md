@@ -1,5 +1,49 @@
 # Status
 
+## 2026-06-28 Inbox Queue-First Operator Surface
+
+- Made `/inbox` usable as a direct operator queue by rendering the
+  `Inbox Operator Workbench` before the `Inbox Command Bar`, shared Route
+  Context, Operator Focus, and Last Action strips.
+- Converted inbox workbench cards to semantic action cards with a stable
+  `data-inbox-workbench-primary` marker, while keeping workbench evidence,
+  command evidence, and the Finish Today workspace-save form collapsed by
+  default.
+- Added a small same-page details opener so the Finish Today card expands its
+  confirmed `save-workspace` form when the operator asks for it, without
+  writing on GET or adding decision authority.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, expose inbox decision forms, approve work, run work, call providers,
+  fetch GitHub from ClankerOS, poll network services, commit, push, create
+  PRs, deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-inbox-first-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-inbox-first-demo app-demo-smoke-test`
+    -> passed, fixture-backed routes matched expected snippets,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8808/inbox`: desktop `1280x900` rendered the
+    `Inbox Operator Workbench` at `y=281`, before the command bar, Route
+    Context, and Operator Focus, with four workbench cards, collapsed
+    workbench/command/finish details, no horizontal overflow, and no console
+    warnings/errors.
+  - Interaction proof: clicking the marked workbench primary link changed the
+    URL to `/inbox#inbox-pending-worktree-approvals` with that section at the
+    top of the viewport; clicking the Finish Today card's save link changed
+    the URL to `/inbox#inbox-finish-today`, opened the collapsed details, and
+    revealed the confirmed local `save-workspace` form.
+  - Mobile Browser QA at `390x844` rendered the workbench before the command
+    bar and Route Context, stacked four workbench cards in one column, kept
+    details collapsed, and showed no horizontal overflow or console
+    warnings/errors.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Resume Return-To-Work First
 
 - Made `/resume` usable as the daily return surface by opening with a primary

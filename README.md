@@ -664,13 +664,15 @@ the typed commit-message requirement and the manual push/PR boundary.
 Use `/inbox` when you want the read-only operator queue. Pending commit and
 publication items include the same run links and next-action cues, but the
 actual decision forms stay on `/approvals` and the state-aware run detail
-pages. The read-only `Inbox Command Bar` starts the page with the total local
-queue size, counts by queue type, the first attention item, its target section,
-and the no-write/no-network boundary. The `Inbox Operator Workbench` follows
-it with do/inspect/Goal/finish cards for the first attention item, resolving
-Goal, delegation, run, evidence, and continuation surfaces when available, and
-includes a confirmed `save-workspace` form so the queue can become tomorrow's
-resume point without writing on GET.
+pages. The page now opens with the `Inbox Operator Workbench` before shared
+route/focus diagnostics or command readback, so the first screen is the next
+queue action. Its do/inspect/Goal/finish cards resolve Goal, delegation, run,
+evidence, and continuation surfaces when available, and include a confirmed
+`save-workspace` form in a collapsed Finish Today section so the queue can
+become tomorrow's resume point without writing on GET. The read-only
+`Inbox Command Bar` follows with total local queue size, counts by queue type,
+the first attention item, its target section, and the no-write/no-network
+boundary inside collapsed evidence.
 
 Use `/verification` when you want the local-vs-GitHub testing split in one
 place. It reads the checked-in GitHub Actions workflow, lists the compact local

@@ -594,15 +594,17 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   counts visible before that longer list.
 - `/inbox` - read-only operator queue for steering reviews, approval requests,
   incidents, delegations, coder runs, commits, and publication handoffs.
-  A read-only `Inbox Command Bar` summarizes total local queue size, counts by
-  queue type, the first attention item, target section, reason, and
-  write-on-GET/network/external-effect boundaries. An `Inbox Operator
-  Workbench` follows it with do/inspect/Goal/finish cards for the first
-  attention item, Goal/delegation/run/evidence routing when available, a
-  continuation surface, and a confirmed `save-workspace` form that can store
-  the queue as a resume point without writing on GET. Pending commit and
-  publication rows include run links, approval-queue links, and next-action
-  cues without exposing decision forms on the inbox page.
+  It opens with the `Inbox Operator Workbench` before shared route/focus
+  diagnostics or command readback, with do/inspect/Goal/finish cards for the
+  first attention item, Goal/delegation/run/evidence routing when available, a
+  continuation surface, and a confirmed `save-workspace` form in a collapsed
+  Finish Today section that can store the queue as a resume point without
+  writing on GET. The read-only
+  `Inbox Command Bar` follows with total local queue size, counts by queue
+  type, the first attention item, target section, reason, and
+  write-on-GET/network/external-effect boundaries inside collapsed evidence.
+  Pending commit and publication rows include run links, approval-queue links,
+  and next-action cues without exposing decision forms on the inbox page.
 - `/approvals` - pending worktree, commit, and publication approvals. A
   read-only `Approval Queue Command Bar` summarizes total pending decisions,
   pending counts by approval type, the first recommended decision, the

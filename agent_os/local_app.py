@@ -706,6 +706,10 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             [
                 "Inbox Operator Workbench",
                 "data-inbox-operator-workbench='true'",
+                "data-inbox-workbench-primary='true'",
+                "data-inbox-workbench-evidence='true'",
+                "data-inbox-command-evidence='true'",
+                "data-inbox-finish-details='true'",
                 "Pending Worktree Approvals",
                 "Coder Worktree Runs",
                 demo.coder_worktree_run_id,
@@ -15496,11 +15500,11 @@ def _inbox(root: Path) -> str:
     inbox = collect_inbox_items(root)
     return "".join(
         [
-            "<section><h1>Operator Inbox</h1>",
+            "<section class='hero'><h1>Operator Inbox</h1>",
             "<p class='muted'>Read-only local operator queue assembled from steering reviews, approvals, incidents, delegations, coder runs, commits, and publication handoffs.</p>",
             "</section>",
-            _inbox_command_bar(root, inbox),
             _inbox_operator_workbench(root, inbox),
+            _inbox_command_bar(root, inbox),
             _list_section(
                 "Inbox Summary",
                 _inbox_summary_lines(root)
@@ -15688,6 +15692,7 @@ def _inbox_command_bar(root: Path, inbox: dict[str, object]) -> str:
         [
             "<section class='panel inbox-command-bar' data-inbox-command-bar='true'><h2>Inbox Command Bar</h2>",
             "<p class='muted'>One read-only summary of the next operator attention item across the local queue.</p>",
+            "<details class='inbox-command-evidence' data-inbox-command-evidence='true'><summary>Inbox command evidence</summary>",
             _kv(
                 [
                     ("inbox_command_status", "available"),
@@ -15712,6 +15717,7 @@ def _inbox_command_bar(root: Path, inbox: dict[str, object]) -> str:
                 ]
             ),
             _ul(lines),
+            "</details>",
             "</section>",
         ]
     )
@@ -15973,27 +15979,28 @@ def _inbox_operator_workbench(root: Path, inbox: dict[str, object]) -> str:
                 "<h2>Inbox Operator Workbench</h2>"
             ),
             "<div class='inbox-workbench-grid' data-inbox-workbench-actions='true'>",
-            "<div class='inbox-workbench-card inbox-workbench-primary'>",
+            "<article class='inbox-workbench-card inbox-workbench-primary'>",
             "<h3>Do Now</h3>",
             f"<p>{_e(next_action)}</p>",
-            f"<a class='inbox-workbench-action' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
-            "</div>",
-            "<div class='inbox-workbench-card'>",
+            f"<a class='inbox-workbench-action' data-inbox-workbench-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+            "</article>",
+            "<article class='inbox-workbench-card'>",
             "<h3>Inspect</h3>",
             f"<p>{_e(reason)}</p>",
             f"<a class='inbox-workbench-link' href='{_e(inspect_href)}'>{_e(inspect_label)}</a>",
-            "</div>",
-            "<div class='inbox-workbench-card'>",
+            "</article>",
+            "<article class='inbox-workbench-card'>",
             "<h3>Goal</h3>",
             f"<p>{_e(first_goal)}</p>",
             f"<a class='inbox-workbench-link' href='{_e(goal_href)}'>{_e(goal_label)}</a>",
-            "</div>",
-            "<div class='inbox-workbench-card'>",
+            "</article>",
+            "<article class='inbox-workbench-card'>",
             "<h3>Finish Today</h3>",
             "<p>Save inbox resume state</p>",
-            "<a class='inbox-workbench-link' href='#inbox-finish-today'>Open save form</a>",
+            "<a class='inbox-workbench-link' data-open-details='true' href='#inbox-finish-today'>Open save form</a>",
+            "</article>",
             "</div>",
-            "</div>",
+            "<details class='inbox-workbench-evidence' data-inbox-workbench-evidence='true'><summary>Inbox workbench evidence</summary>",
             _kv(
                 [
                     ("inbox_workbench_status", status),
@@ -16039,9 +16046,11 @@ def _inbox_operator_workbench(root: Path, inbox: dict[str, object]) -> str:
                 ]
             ),
             _ul(lines),
-            "<h3 id='inbox-finish-today'>Finish Today</h3>",
+            "</details>",
+            "<details id='inbox-finish-today' class='inbox-finish-details' data-inbox-finish-details='true'><summary>Finish Today save form</summary>",
             "<p class='muted'>Save this inbox queue, expanded panels, and selected evidence artifact as tomorrow's resume point. This writes only `.clanker/app/workspace.json` after confirmation.</p>",
             finish_form,
+            "</details>",
             "</section>",
         ]
     )
@@ -23567,7 +23576,7 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
-    content_first_paths = {"/", "/actions", "/resume"}
+    content_first_paths = {"/", "/actions", "/inbox", "/resume"}
     if current_route_path in content_first_paths:
         article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
     else:
@@ -24039,6 +24048,10 @@ def _html_page(
     .profiles-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .profiles-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .inbox-command-bar {{ border-left:4px solid var(--accent); }}
+    .inbox-command-evidence, .inbox-workbench-evidence {{ margin-top:10px; }}
+    .inbox-finish-details {{ margin-top:12px; }}
+    .inbox-command-evidence summary, .inbox-workbench-evidence summary, .inbox-finish-details summary {{ cursor:pointer; font-weight:700; }}
+    .inbox-command-evidence:not([open]) > :not(summary), .inbox-workbench-evidence:not([open]) > :not(summary), .inbox-finish-details:not([open]) > :not(summary) {{ display:none; }}
     .inbox-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .inbox-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .inbox-operator-workbench {{ border-left:4px solid var(--accent); }}
@@ -24145,6 +24158,17 @@ def _html_page(
     }}
     if (paletteOpen) {{ paletteOpen.addEventListener("click", openPalette); }}
     if (themeToggle) {{ themeToggle.addEventListener("click", toggleTheme); }}
+    document.addEventListener("click", function(event) {{
+      var target = event.target || {{}};
+      var opener = target.closest ? target.closest("[data-open-details='true']") : null;
+      if (!opener) {{ return; }}
+      var href = opener.getAttribute("href") || "";
+      if (href.charAt(0) !== "#") {{ return; }}
+      var details = document.querySelector(href);
+      if (details && details.tagName && details.tagName.toLowerCase() === "details") {{
+        details.open = true;
+      }}
+    }});
     document.addEventListener("keydown", function(event) {{
       var target = event.target || {{}};
       var tag = String(target.tagName || "").toLowerCase();

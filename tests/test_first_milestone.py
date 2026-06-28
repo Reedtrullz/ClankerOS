@@ -4999,6 +4999,17 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Inbox Operator Workbench" in empty_inbox.body
     assert "data-inbox-operator-workbench='true'" in empty_inbox.body
     assert "data-inbox-workbench-actions='true'" in empty_inbox.body
+    assert "data-inbox-workbench-primary='true'" in empty_inbox.body
+    assert "data-inbox-workbench-evidence='true'" in empty_inbox.body
+    assert "data-inbox-command-evidence='true'" in empty_inbox.body
+    assert "data-inbox-finish-details='true'" in empty_inbox.body
+    assert "data-open-details='true' href='#inbox-finish-today'" in empty_inbox.body
+    assert empty_inbox.body.index("data-inbox-operator-workbench='true'") < empty_inbox.body.index(
+        "data-inbox-command-bar='true'"
+    )
+    assert empty_inbox.body.index("data-inbox-operator-workbench='true'") < empty_inbox.body.index(
+        "data-route-context='true'"
+    )
     assert "inbox_workbench_status</dt><dd>empty_queue" in empty_inbox.body
     assert "inbox_workbench_total_items</dt><dd>0" in empty_inbox.body
     assert "inbox_workbench_first_kind</dt><dd>none" in empty_inbox.body
@@ -6402,6 +6413,17 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Inbox Operator Workbench" in inbox.body
     assert "data-inbox-operator-workbench='true'" in inbox.body
     assert "data-inbox-workbench-actions='true'" in inbox.body
+    assert "data-inbox-workbench-primary='true'" in inbox.body
+    assert "data-inbox-workbench-evidence='true'" in inbox.body
+    assert "data-inbox-command-evidence='true'" in inbox.body
+    assert "data-inbox-finish-details='true'" in inbox.body
+    assert "data-open-details='true' href='#inbox-finish-today'" in inbox.body
+    assert inbox.body.index("data-inbox-operator-workbench='true'") < inbox.body.index(
+        "data-inbox-command-bar='true'"
+    )
+    assert inbox.body.index("data-inbox-operator-workbench='true'") < inbox.body.index(
+        "data-route-context='true'"
+    )
     assert "inbox_workbench_status</dt><dd>attention_ready" in inbox.body
     assert "inbox_workbench_total_items</dt><dd>1" in inbox.body
     assert "inbox_workbench_first_kind</dt><dd>subagent_delegation" in inbox.body
@@ -10244,6 +10266,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Inbox Operator Workbench" in inbox.body
     assert "data-inbox-operator-workbench='true'" in inbox.body
     assert "data-inbox-workbench-actions='true'" in inbox.body
+    assert "data-inbox-workbench-primary='true'" in inbox.body
+    assert "data-inbox-workbench-evidence='true'" in inbox.body
+    assert "data-inbox-command-evidence='true'" in inbox.body
+    assert "data-inbox-finish-details='true'" in inbox.body
+    assert "data-open-details='true' href='#inbox-finish-today'" in inbox.body
+    assert inbox.body.index("data-inbox-operator-workbench='true'") < inbox.body.index(
+        "data-inbox-command-bar='true'"
+    )
+    assert inbox.body.index("data-inbox-operator-workbench='true'") < inbox.body.index(
+        "data-route-context='true'"
+    )
     assert "inbox_workbench_status</dt><dd>attention_ready" in inbox.body
     assert "inbox_workbench_worktree_approvals</dt><dd>1" in inbox.body
     assert "inbox_workbench_commit_approvals</dt><dd>0" in inbox.body
