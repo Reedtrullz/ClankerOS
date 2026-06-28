@@ -573,10 +573,10 @@ no-write/provider/network/external-effect boundaries in the DOM. `/skills`
 is now action-first and opens with a visible `Skills Operator Workbench` before
 shared route/focus diagnostics or command readback, turning generated-skill
 review, usage review, and resume context into browser cards. Skills state,
-workbench evidence, and command evidence stay collapsed by default while
-preserving skill counts, generated-skill posture, usage/project counts, the
-first bounded skill artifact, and no execution/install/provider/network
-effects in the DOM.
+usage-map, workbench evidence, and command evidence stay collapsed by default
+while preserving skill counts, generated-skill posture, usage/project counts,
+last-used posture, the first bounded skill artifact, and no execution/install/
+provider/network effects in the DOM.
 `/profiles` is also action-first: it opens with a visible
 `Profiles Operator Workbench` before shared route/focus diagnostics or command
 readback, turning storage-profile review, future-lane review, and resume

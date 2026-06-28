@@ -276,9 +276,11 @@ Core layers for the bootstrap:
   for available/generated skill records with usage counts. It is action-first
   and opens with a visible `Skills Operator Workbench` before shared
   route/focus diagnostics or command readback, with cards for the next skill
-  review, generated skills, usage, and `/resume` or Goal context. Skills
-  state, workbench evidence, and command evidence stay collapsed by default
-  while preserving record, generated, usage, project-usage, first-artifact,
+  review, generated skills, usage, and `/resume` or Goal context. A visible
+  `Skills Usage Map` follows with Now, Available, Generated, Usage, Projects,
+  and Safety cards before the dense inventory. Skills state, usage-map,
+  workbench evidence, and command evidence stay collapsed by default while
+  preserving record, generated, usage, project-usage, last-used, first-artifact,
   no-execution/no-install/provider/network, and zero-effect readbacks in the
   DOM; `/approvals` as an action-first
   local decision queue with a visible `Approval Operator Workbench` before

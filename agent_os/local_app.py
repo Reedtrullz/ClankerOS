@@ -7095,6 +7095,7 @@ def _skills_page(root: Path) -> str:
             "</details>",
             "</section>",
             _skills_operator_workbench(root, skills=skills, usage=usage),
+            _skills_usage_map(root, skills=skills, usage=usage),
             _skills_command_bar(root, skills=skills, usage=usage),
             _list_section(
                 "Available Skills",
@@ -7107,6 +7108,126 @@ def _skills_page(root: Path) -> str:
                 anchor_id="skills-generated",
             ),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _skills_usage_map(
+    root: Path,
+    *,
+    skills: list[Any],
+    usage: dict[str, dict[str, Any]],
+) -> str:
+    generated = [skill for skill in skills if skill.source_run_id]
+    active = [skill for skill in skills if skill.status == "active"]
+    proposed = [skill for skill in skills if skill.status == "proposed"]
+    archived = [skill for skill in skills if skill.status == "archived"]
+    used_names = {name for name, data in usage.items() if int(data.get("count", 0)) > 0}
+    projects = {
+        str(project)
+        for data in usage.values()
+        for project in data.get("projects", set())
+        if project
+    }
+    projects.update(str(skill.project_id) for skill in skills if skill.project_id)
+    first_skill = (
+        generated[0]
+        if generated
+        else (active[0] if active else (proposed[0] if proposed else (skills[0] if skills else None)))
+    )
+    status = "ready" if first_skill is not None else "empty"
+    primary_name = "none"
+    primary_status = "none"
+    primary_usage_count = "0"
+    primary_last_used = "none"
+    primary_projects = "none"
+    primary_artifact: str | SafeHtml = "none"
+    primary_href = "/goals"
+    primary_label = "Create goal context"
+    primary_summary = "No skills recorded yet. Start from a Goal so skill usage can be observed."
+    if first_skill is not None:
+        primary_name = str(first_skill.name)
+        primary_status = str(first_skill.status)
+        primary_usage = usage.get(first_skill.name, {"count": 0, "projects": set()})
+        primary_usage_count = str(int(primary_usage.get("count", 0)))
+        primary_last_used = str(first_skill.last_used_at or first_skill.updated_at or "none")
+        primary_project_values = sorted(str(project) for project in primary_usage.get("projects", set()) if project)
+        if not primary_project_values and first_skill.project_id:
+            primary_project_values = [str(first_skill.project_id)]
+        primary_projects = ", ".join(primary_project_values) if primary_project_values else "none"
+        if first_skill.path:
+            primary_artifact_path = _repo_relative_artifact_path(root, first_skill.path)
+            primary_artifact = _artifact_link(primary_artifact_path)
+            primary_href = f"/artifacts?path={quote(primary_artifact_path)}"
+            primary_label = "Open artifact"
+        elif first_skill.source_run_id:
+            primary_href = "#skills-generated"
+            primary_label = "Review generated"
+        else:
+            primary_href = "#skills-available"
+            primary_label = "Review available"
+        primary_summary = (
+            f"{primary_name}: status {primary_status}, used {primary_usage_count} time"
+            f"{'' if primary_usage_count == '1' else 's'}, last used {primary_last_used}."
+        )
+    project_summary = ", ".join(sorted(projects)[:3]) if projects else "none yet"
+    rows = [
+        ("skills_usage_map_status", status),
+        ("skills_usage_map_card_count", "6"),
+        ("skills_usage_map_total_records", str(len(skills))),
+        ("skills_usage_map_active_records", str(len(active))),
+        ("skills_usage_map_proposed_records", str(len(proposed))),
+        ("skills_usage_map_archived_records", str(len(archived))),
+        ("skills_usage_map_generated_records", str(len(generated))),
+        ("skills_usage_map_used_skill_names", str(len(used_names))),
+        ("skills_usage_map_projects_using_skills", str(len(projects))),
+        ("skills_usage_map_primary_skill", primary_name),
+        ("skills_usage_map_primary_status", primary_status),
+        ("skills_usage_map_primary_usage_count", primary_usage_count),
+        ("skills_usage_map_primary_last_used", primary_last_used),
+        ("skills_usage_map_primary_projects", primary_projects),
+        ("skills_usage_map_primary_artifact", primary_artifact),
+        ("skills_usage_map_primary_surface", SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>")),
+        ("skills_usage_map_available_surface", SafeHtml("<a href='#skills-available'>Available Skills</a>")),
+        ("skills_usage_map_generated_surface", SafeHtml("<a href='#skills-generated'>Generated Skills</a>")),
+        ("skills_usage_map_install_available", "false"),
+        ("skills_usage_map_execution_available", "false"),
+        ("skills_usage_map_write_on_get", "false"),
+        ("skills_usage_map_raw_filesystem_browsing", "false"),
+        ("skills_usage_map_provider_calls_taken", "0"),
+        ("skills_usage_map_network_actions_taken", "0"),
+        ("skills_usage_map_external_effects_created", "false"),
+    ]
+    return "".join(
+        [
+            "<section id='skills-usage-map' class='panel skills-usage-map' data-skills-usage-map='true'><h2>Skills Usage Map</h2>",
+            "<p class='muted'>A read-only scan of available skills, generated skills, usage, projects, artifacts, and safety posture.</p>",
+            "<div class='skills-usage-grid' data-skills-usage-cards='true'>",
+            "<article class='skills-usage-card skills-usage-primary' data-skills-usage-card='primary'><h3>Now</h3>",
+            f"<p>{_e(primary_summary)}</p><a class='skills-usage-action' data-skills-usage-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a></article>",
+            "<article class='skills-usage-card' data-skills-usage-card='available'><h3>Available</h3>",
+            f"<p>{len(skills)} skill record{'s' if len(skills) != 1 else ''}.</p><a class='skills-usage-link' href='#skills-available'>Available Skills</a></article>",
+            "<article class='skills-usage-card' data-skills-usage-card='generated'><h3>Generated</h3>",
+            f"<p>{len(generated)} generated record{'s' if len(generated) != 1 else ''}.</p><a class='skills-usage-link' href='#skills-generated'>Generated Skills</a></article>",
+            "<article class='skills-usage-card' data-skills-usage-card='usage'><h3>Usage</h3>",
+            f"<p>{len(used_names)} used skill name{'s' if len(used_names) != 1 else ''}; primary usage {primary_usage_count}.</p><a class='skills-usage-link' href='#skills-available'>Review usage</a></article>",
+            "<article class='skills-usage-card' data-skills-usage-card='projects'><h3>Projects</h3>",
+            f"<p>{len(projects)} project{'s' if len(projects) != 1 else ''}: {_e(project_summary)}.</p><a class='skills-usage-link' href='#skills-available'>Project usage</a></article>",
+            "<article class='skills-usage-card' data-skills-usage-card='safety'><h3>Safety</h3>",
+            "<p>Install and execution remain unavailable from this page.</p><a class='skills-usage-link' href='#skills-usage-map'>Read-only</a></article>",
+            "</div>",
+            "<details class='skills-usage-evidence' data-skills-usage-evidence='true'><summary>Skills usage map evidence</summary>",
+            _kv(rows),
+            _ul(
+                [
+                    f"skills_usage_map_now: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                    "skills_usage_map_available: <a href='#skills-available'>Available Skills</a>",
+                    "skills_usage_map_generated: <a href='#skills-generated'>Generated Skills</a>",
+                    "skills_usage_map_safety: read-only usage map; install and execution remain unavailable",
+                ]
+            ),
+            "</details>",
+            "</section>",
         ]
     )
 
@@ -31414,9 +31535,18 @@ def _html_page(
     .skills-workbench-action, .skills-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .skills-workbench-action {{ background:var(--accent); color:#fff; }}
     .skills-workbench-link {{ background:var(--surface); color:var(--accent); }}
-    .skills-state-details, .skills-workbench-evidence, .skills-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .skills-state-details summary, .skills-workbench-evidence summary, .skills-command-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .skills-state-details:not([open]) > :not(summary), .skills-workbench-evidence:not([open]) > :not(summary), .skills-command-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .skills-usage-map {{ border-left:4px solid var(--accent); }}
+    .skills-usage-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(5, minmax(150px, 1fr)); gap:10px; margin:12px 0; }}
+    .skills-usage-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
+    .skills-usage-card h3 {{ margin-top:0; }}
+    .skills-usage-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .skills-usage-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .skills-usage-action, .skills-usage-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .skills-usage-action {{ background:var(--accent); color:#fff; }}
+    .skills-usage-link {{ background:var(--surface); color:var(--accent); }}
+    .skills-state-details, .skills-workbench-evidence, .skills-command-evidence, .skills-usage-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .skills-state-details summary, .skills-workbench-evidence summary, .skills-command-evidence summary, .skills-usage-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .skills-state-details:not([open]) > :not(summary), .skills-workbench-evidence:not([open]) > :not(summary), .skills-command-evidence:not([open]) > :not(summary), .skills-usage-evidence:not([open]) > :not(summary) {{ display:none; }}
     .skills-command-bar {{ border-left:4px solid var(--accent); }}
     .skills-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .skills-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -31589,6 +31719,7 @@ def _html_page(
     @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-session-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-attention-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ .skills-usage-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

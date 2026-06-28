@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Skills Inventory now follows the visible `Skills Operator Workbench` with a
+  read-only `Skills Usage Map` for Now, Available, Generated, Usage, Projects,
+  and Safety before the dense skill lists. The map surfaces usage counts,
+  project attribution, last-used posture, and the first bounded `/artifacts`
+  skill artifact while keeping install/execution/provider/network/external
+  effects unavailable.
 - Home Attention Brief now opens with visible Now, Inbox, Approvals,
   Incidents, Recommendations, and Proof cards before the evidence readback.
   The cards reuse existing local surfaces (`/inbox`, `/approvals`,

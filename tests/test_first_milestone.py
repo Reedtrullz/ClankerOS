@@ -5992,6 +5992,36 @@ def test_local_app_routes_render_modern_workflow_and_health(
         assert response.status == 200
         assert marker in response.body
 
+    skills_empty = render_local_app_route(tmp_path, "/skills")
+    assert "Skills Usage Map" in skills_empty.body
+    assert "data-skills-usage-map='true'" in skills_empty.body
+    assert "data-skills-usage-cards='true'" in skills_empty.body
+    assert skills_empty.body.count("class='skills-usage-card") == 6
+    assert "data-skills-usage-card='primary'" in skills_empty.body
+    assert "data-skills-usage-primary='true' href='/goals'>Create goal context</a>" in skills_empty.body
+    assert "data-skills-usage-evidence='true'" in skills_empty.body
+    assert skills_empty.body.index("data-skills-operator-workbench") < skills_empty.body.index(
+        "data-skills-usage-map='true'"
+    )
+    assert skills_empty.body.index("data-skills-usage-map='true'") < skills_empty.body.index(
+        "data-skills-command-bar"
+    )
+    assert "skills_usage_map_status</dt><dd>empty" in skills_empty.body
+    assert "skills_usage_map_card_count</dt><dd>6" in skills_empty.body
+    assert "skills_usage_map_total_records</dt><dd>0" in skills_empty.body
+    assert "skills_usage_map_generated_records</dt><dd>0" in skills_empty.body
+    assert "skills_usage_map_used_skill_names</dt><dd>0" in skills_empty.body
+    assert "skills_usage_map_projects_using_skills</dt><dd>0" in skills_empty.body
+    assert "skills_usage_map_primary_skill</dt><dd>none" in skills_empty.body
+    assert "skills_usage_map_primary_surface</dt><dd><a href='/goals'>Create goal context</a>" in skills_empty.body
+    assert "skills_usage_map_install_available</dt><dd>false" in skills_empty.body
+    assert "skills_usage_map_execution_available</dt><dd>false" in skills_empty.body
+    assert "skills_usage_map_write_on_get</dt><dd>false" in skills_empty.body
+    assert "skills_usage_map_raw_filesystem_browsing</dt><dd>false" in skills_empty.body
+    assert "skills_usage_map_provider_calls_taken</dt><dd>0" in skills_empty.body
+    assert "skills_usage_map_network_actions_taken</dt><dd>0" in skills_empty.body
+    assert "skills_usage_map_external_effects_created</dt><dd>false" in skills_empty.body
+
     target_repo = tmp_path / "first-target"
     target_repo.mkdir()
     subprocess.run(["git", "init"], cwd=target_repo, check=True, capture_output=True)
@@ -11399,8 +11429,26 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-skills-workbench-primary='true'" in skills.body
     assert "data-skills-state-details='true'" in skills.body
     assert "data-skills-workbench-evidence='true'" in skills.body
+    assert "Skills Usage Map" in skills.body
+    assert "data-skills-usage-map='true'" in skills.body
+    assert "data-skills-usage-cards='true'" in skills.body
+    assert skills.body.count("class='skills-usage-card") == 6
+    assert "data-skills-usage-card='primary'" in skills.body
+    assert "data-skills-usage-card='available'" in skills.body
+    assert "data-skills-usage-card='generated'" in skills.body
+    assert "data-skills-usage-card='usage'" in skills.body
+    assert "data-skills-usage-card='projects'" in skills.body
+    assert "data-skills-usage-card='safety'" in skills.body
+    assert (
+        "data-skills-usage-primary='true' href='/artifacts?path=.clanker/skills/local-files/SKILL.md'>"
+        "Open artifact</a>"
+        in skills.body
+    )
+    assert "data-skills-usage-evidence='true'" in skills.body
     assert "data-skills-command-evidence='true'" in skills.body
     assert skills.body.index("data-skills-operator-workbench") < skills.body.index("data-route-context")
+    assert skills.body.index("data-skills-operator-workbench") < skills.body.index("data-skills-usage-map='true'")
+    assert skills.body.index("data-skills-usage-map='true'") < skills.body.index("data-skills-command-bar")
     assert skills.body.index("data-skills-operator-workbench") < skills.body.index("data-skills-command-bar")
     assert "skills_workbench_status</dt><dd>generated_ready" in skills.body
     assert "skills_workbench_total_records</dt><dd>1" in skills.body
@@ -11422,6 +11470,37 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "skills_workbench_provider_calls_taken</dt><dd>0" in skills.body
     assert "skills_workbench_network_actions_taken</dt><dd>0" in skills.body
     assert "skills_workbench_external_effects_created</dt><dd>false" in skills.body
+    assert "skills_usage_map_status</dt><dd>ready" in skills.body
+    assert "skills_usage_map_card_count</dt><dd>6" in skills.body
+    assert "skills_usage_map_total_records</dt><dd>1" in skills.body
+    assert "skills_usage_map_active_records</dt><dd>1" in skills.body
+    assert "skills_usage_map_generated_records</dt><dd>1" in skills.body
+    assert "skills_usage_map_used_skill_names</dt><dd>1" in skills.body
+    assert "skills_usage_map_projects_using_skills</dt><dd>1" in skills.body
+    assert "skills_usage_map_primary_skill</dt><dd>local-files" in skills.body
+    assert "skills_usage_map_primary_status</dt><dd>active" in skills.body
+    assert "skills_usage_map_primary_usage_count</dt><dd>1" in skills.body
+    assert "skills_usage_map_primary_last_used</dt><dd>" in skills.body
+    assert "skills_usage_map_primary_projects</dt><dd>local-app-demo" in skills.body
+    assert (
+        "skills_usage_map_primary_artifact</dt><dd><a href='/artifacts?path=.clanker/skills/local-files/SKILL.md'>"
+        ".clanker/skills/local-files/SKILL.md</a>"
+        in skills.body
+    )
+    assert (
+        "skills_usage_map_primary_surface</dt><dd><a href='/artifacts?path=.clanker/skills/local-files/SKILL.md'>"
+        "Open artifact</a>"
+        in skills.body
+    )
+    assert "skills_usage_map_available_surface</dt><dd><a href='#skills-available'>Available Skills</a>" in skills.body
+    assert "skills_usage_map_generated_surface</dt><dd><a href='#skills-generated'>Generated Skills</a>" in skills.body
+    assert "skills_usage_map_install_available</dt><dd>false" in skills.body
+    assert "skills_usage_map_execution_available</dt><dd>false" in skills.body
+    assert "skills_usage_map_write_on_get</dt><dd>false" in skills.body
+    assert "skills_usage_map_raw_filesystem_browsing</dt><dd>false" in skills.body
+    assert "skills_usage_map_provider_calls_taken</dt><dd>0" in skills.body
+    assert "skills_usage_map_network_actions_taken</dt><dd>0" in skills.body
+    assert "skills_usage_map_external_effects_created</dt><dd>false" in skills.body
     assert "Skills Command Bar" in skills.body
     assert "data-skills-command-bar='true'" in skills.body
     assert "skills_command_total_records</dt><dd>1" in skills.body
