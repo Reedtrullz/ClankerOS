@@ -1,5 +1,47 @@
 # Status
 
+## 2026-06-28 Memory Action-First Operator Surface
+
+- Made `/memory` usable as an operator workbench by rendering the
+  `Memory Operator Workbench` before shared Route Context, Operator Focus,
+  Last Action, and memory command diagnostics.
+- Added four visible cards for the current memory action, proposed pin review,
+  operator-note review, and resume/goal context, with a stable
+  `data-memory-workbench-primary` marker for the primary action.
+- Kept memory state evidence, workbench evidence, and command evidence
+  collapsed by default while preserving memory counts, proposed pin posture,
+  saved workspace context, and zero-effect readbacks in the DOM.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, pin memory without the existing confirmed form, create action
+  authority, approve work, run work, call providers, fetch GitHub from
+  ClankerOS, poll network services, commit, push, create PRs, deploy, mutate
+  external systems from ClankerOS, or expose arbitrary raw filesystem
+  browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or first_run_browser_actions_persist_resume_workspace' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-memory-first-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-memory-first-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/memory` snippets matched,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8812/memory`: desktop `1280x900` rendered four Memory
+    Operator Workbench cards before Route Context and the Memory Command Bar,
+    kept state/workbench/command evidence collapsed, had no horizontal
+    overflow, and had empty browser logs.
+  - Interaction proof: in the empty demo memory state, clicking the marked
+    primary action opened `/goals`, which rendered the Goal board/cockpit
+    surface for creating or continuing goal context.
+  - Mobile Browser QA at `390x844` rendered four memory workbench cards in one
+    column, kept all memory evidence collapsed, placed shared Route Context
+    below the workbench, showed no horizontal overflow, and had empty browser
+    logs.
+  - `git diff --check` -> passed.
+
 ## 2026-06-28 Search Action-First Operator Surface
 
 - Made `/search` usable as an operator workbench by rendering the

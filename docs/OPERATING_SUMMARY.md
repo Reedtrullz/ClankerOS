@@ -218,10 +218,14 @@ Core layers for the bootstrap:
   `Create Project` anchor and registered-project/no-goal workspaces point at
   `Create First Goal` while preserving the saved project link; `/memory` for project/global/
   generated memories, proposed memories, operator notes, future work, and pin
-  actions, with a read-only `Memory Command Bar` that summarizes entry counts,
-  first proposed pin or fallback resume target, one next local action, saved
-  workspace context, and no-write/provider/network/external-effect boundaries
-  before the longer lists; `/skills`
+  actions. It is action-first and opens with a visible
+  `Memory Operator Workbench` before shared route/focus diagnostics and
+  command readback, with cards for the next memory action, proposed pins,
+  operator notes, and `/resume` or goal context. Memory state, workbench
+  evidence, and command evidence stay collapsed by default while preserving
+  entry counts, first proposed pin or fallback resume target, saved workspace
+  context, and no-write/provider/network/external-effect boundaries in the
+  DOM; `/skills`
   for available/generated skill records with usage counts and a read-only
   `Skills Command Bar` that summarizes record, generated, usage, and
   project-usage counts, points at the first generated or available skill
@@ -507,9 +511,9 @@ Core layers for the bootstrap:
   that summarizes memory entry counts, memory artifact posture, operator-note
   state, future-work count, one next local memory action, and zero-effect
   counters before the detailed memory readback. The `/memory` surface now starts with a read-only
-  `Memory Command Bar` so proposed-memory pins, operator-note review, future
-  work, saved workspace resume, and empty-bank starts have one visible next
-  click before the inventory. Confirmed `/memory` pinning promotes only entries
+  `Memory Operator Workbench` so proposed-memory pins, operator-note review,
+  future work, saved workspace resume, and empty-bank starts have one visible
+  next click before shared diagnostics or inventory. Confirmed `/memory` pinning promotes only entries
   with existing evidence artifacts and refreshes saved workspace state to that
   artifact with zero provider, network, or external mutation effects.
   The shared browser shell now exposes accessible shortcut metadata for Home,

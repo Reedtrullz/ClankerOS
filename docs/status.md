@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/memory` is now action-first: it opens with the `Memory Operator Workbench`
+  before shared route/focus diagnostics and command readback, shows visible
+  Now, Pin, Notes, and Resume cards, and keeps memory state, workbench
+  evidence, and command evidence collapsed by default while preserving pin,
+  resume, workspace, and zero-effect proof in the DOM.
 - `/search` is now content-first and search-action-first: it opens with the
   `Search Operator Workbench` before shared route/focus diagnostics, shows
   visible Query, Open, Results, and Resume cards, and keeps search state,

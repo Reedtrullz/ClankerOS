@@ -466,10 +466,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   write nothing.
 - `/memory` - project memories, global memories, generated memories, proposed
   memories, operator notes, future-work recommendations, and confirmed
-  `pin-memory` actions. A read-only `Memory Command Bar` summarizes memory
-  counts, the first proposed memory or fallback resume target, one next local
-  action, and write-on-GET/provider/network/external-effect boundaries before
-  the longer memory lists.
+  `pin-memory` actions. It opens with a visible `Memory Operator Workbench`
+  before shared route/focus diagnostics and command readback, with cards for
+  the next memory action, proposed pins, operator notes, and `/resume` or goal
+  context. Memory state, workbench evidence, and command evidence stay
+  collapsed by default while preserving memory counts, the first proposed
+  memory or fallback resume target, saved workspace context, and
+  write-on-GET/provider/network/external-effect boundaries in the DOM.
 - `/skills` - available/generated skill records with usage count, last-used
   readback, and projects using them. A read-only `Skills Command Bar`
   summarizes total, active, proposed, archived, generated, used-skill, and

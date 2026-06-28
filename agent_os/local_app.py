@@ -628,6 +628,11 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             "/memory",
             "Memory Bank",
             [
+                "data-memory-operator-workbench='true'",
+                "data-memory-workbench-primary='true'",
+                "data-memory-state-details='true'",
+                "data-memory-workbench-evidence='true'",
+                "data-memory-command-evidence='true'",
                 "Project Memories",
                 "Generated Memories",
                 "Future Work",
@@ -5894,8 +5899,9 @@ def _memory_page(root: Path) -> str:
     future_work = storage.list_recent_task_recommendations(limit=20)
     return "".join(
         [
-            "<section><h1>Memory Bank</h1>",
+            "<section class='hero memory-hero'><h1>Memory Bank</h1>",
             "<p class='muted'>Project memories, global memories, generated memories, operator notes, future work, and pin actions from local records.</p>",
+            "<details class='memory-state-details' data-memory-state-details='true'><summary>Memory state evidence</summary>",
             _kv(
                 [
                     ("project_memory_count", str(len(project_memories))),
@@ -5906,7 +5912,18 @@ def _memory_page(root: Path) -> str:
                     ("pin_memory_available", "true"),
                 ]
             ),
+            "</details>",
             "</section>",
+            _memory_operator_workbench(
+                root,
+                entries=entries,
+                project_memories=project_memories,
+                global_memories=global_memories,
+                generated=generated,
+                proposed=proposed,
+                operator_notes=operator_notes,
+                future_work=future_work,
+            ),
             _memory_command_bar(
                 root,
                 entries=entries,
@@ -5948,6 +5965,114 @@ def _memory_page(root: Path) -> str:
                 anchor_id="memory-future-work",
             ),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _memory_operator_workbench(
+    root: Path,
+    *,
+    entries: list[Any],
+    project_memories: list[Any],
+    global_memories: list[Any],
+    generated: list[Any],
+    proposed: list[Any],
+    operator_notes: list[str],
+    future_work: list[Any],
+) -> str:
+    workspace = _load_workspace_state(root)
+    if proposed:
+        next_action = "Pin first proposed memory"
+        target_href = "#memory-proposed"
+        target_label = "Proposed Memories"
+        status = "pin_ready"
+        primary_summary = f"{len(proposed)} proposed memor{'y' if len(proposed) == 1 else 'ies'} waiting"
+    elif operator_notes:
+        next_action = "Review operator notes"
+        target_href = "#memory-operator-notes"
+        target_label = "Operator Notes"
+        status = "notes_ready"
+        primary_summary = f"{len(operator_notes)} operator note{'s' if len(operator_notes) != 1 else ''}"
+    elif future_work:
+        next_action = "Review future work"
+        target_href = "#memory-future-work"
+        target_label = "Future Work"
+        status = "future_work_ready"
+        primary_summary = f"{len(future_work)} future-work item{'s' if len(future_work) != 1 else ''}"
+    elif entries:
+        next_action = "Review memory bank"
+        target_href = "#memory-project"
+        target_label = "Project Memories"
+        status = "records_ready"
+        primary_summary = f"{len(entries)} local memory entr{'y' if len(entries) == 1 else 'ies'}"
+    elif workspace.get("open_goal"):
+        next_action = "Resume saved goal"
+        target_href = "/resume"
+        target_label = "/resume"
+        status = "resume_ready"
+        primary_summary = f"Saved goal {workspace.get('open_goal', '')}"
+    else:
+        next_action = "Create goal context"
+        target_href = "/goals"
+        target_label = "/goals"
+        status = "empty"
+        primary_summary = "No memory records yet"
+    resume_href = "/resume" if workspace.get("open_goal") else "/goals"
+    resume_label = "/resume" if workspace.get("open_goal") else "/goals"
+    resume_summary = (
+        f"Saved goal {workspace.get('open_goal')}"
+        if workspace.get("open_goal")
+        else "Start from goal context first"
+    )
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("memory_workbench_status", status),
+        ("memory_workbench_total_entries", str(len(entries))),
+        ("memory_workbench_project_entries", str(len(project_memories))),
+        ("memory_workbench_global_entries", str(len(global_memories))),
+        ("memory_workbench_generated_entries", str(len(generated))),
+        ("memory_workbench_proposed_entries", str(len(proposed))),
+        ("memory_workbench_operator_notes", str(len(operator_notes))),
+        ("memory_workbench_future_work", str(len(future_work))),
+        ("memory_workbench_next_action", next_action),
+        ("memory_workbench_target_surface", SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")),
+        ("memory_workbench_resume_surface", SafeHtml(f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>")),
+        ("memory_workbench_workspace_project", workspace.get("open_project", "")),
+        ("memory_workbench_workspace_goal", workspace.get("open_goal", "")),
+        ("memory_workbench_workspace_artifact", workspace.get("last_viewed_artifact", "")),
+        ("memory_workbench_pin_memory_available", str(bool(proposed)).lower()),
+        ("memory_workbench_write_on_get", "false"),
+        ("memory_workbench_raw_filesystem_browsing", "false"),
+        ("memory_workbench_provider_calls_taken", "0"),
+        ("memory_workbench_network_actions_taken", "0"),
+        ("memory_workbench_external_effects_created", "false"),
+    ]
+    return "".join(
+        [
+            "<section class='panel memory-operator-workbench' data-memory-operator-workbench='true'><h2>Memory Operator Workbench</h2>",
+            "<p class='muted'>Turn durable memory, operator notes, and future-work hints into the next local review click.</p>",
+            "<div class='memory-workbench-grid' data-memory-workbench-actions='true'>",
+            "<article class='memory-workbench-card memory-workbench-primary'><h3>Now</h3>",
+            f"<p>{_e(primary_summary)}</p><a class='memory-workbench-action' data-memory-workbench-primary='true' href='{_e(target_href)}'>{_e(next_action)}</a></article>",
+            "<article class='memory-workbench-card'><h3>Pin</h3>",
+            f"<p>{len(proposed)} proposed memor{'y' if len(proposed) == 1 else 'ies'}.</p><a class='memory-workbench-link' href='#memory-proposed'>Review proposed</a></article>",
+            "<article class='memory-workbench-card'><h3>Notes</h3>",
+            f"<p>{len(operator_notes)} operator note{'s' if len(operator_notes) != 1 else ''}.</p><a class='memory-workbench-link' href='#memory-operator-notes'>Review notes</a></article>",
+            "<article class='memory-workbench-card'><h3>Resume</h3>",
+            f"<p>{_e(resume_summary)}</p><a class='memory-workbench-link' href='{_e(resume_href)}'>{_e(resume_label)}</a></article>",
+            "</div>",
+            "<details class='memory-workbench-evidence' data-memory-workbench-evidence='true'><summary>Memory workbench evidence</summary>",
+            _kv(rows),
+            _ul(
+                [
+                    f"memory_workbench_now: <a href='{_e(target_href)}'>{_e(next_action)}</a>",
+                    f"memory_workbench_pin: <a href='#memory-proposed'>Review proposed</a>",
+                    f"memory_workbench_notes: <a href='#memory-operator-notes'>Review notes</a>",
+                    f"memory_workbench_resume: <a href='{_e(resume_href)}'>{_e(resume_label)}</a>",
+                    "memory_workbench_safety: read-only memory guidance; confirmed pin form only when submitted",
+                ]
+            ),
+            "</details>",
+            "</section>",
         ]
     )
 
@@ -6019,6 +6144,7 @@ def _memory_command_bar(
         [
             "<section class='panel memory-command-bar' data-memory-command-bar='true'><h2>Memory Command Bar</h2>",
             "<p class='muted'>One read-only summary of durable memory state and the next local memory action.</p>",
+            "<details class='memory-command-evidence' data-memory-command-evidence='true'><summary>Memory command evidence</summary>",
             _kv(
                 [
                     ("memory_command_status", "available"),
@@ -6054,6 +6180,7 @@ def _memory_command_bar(
                     "memory_command_safety: read-only memory guidance",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -23705,7 +23832,7 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
-    content_first_paths = {"/", "/actions", "/inbox", "/resume", "/search", "/today", "/workspace"}
+    content_first_paths = {"/", "/actions", "/inbox", "/memory", "/resume", "/search", "/today", "/workspace"}
     if current_route_path in content_first_paths:
         article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
     else:
@@ -24194,6 +24321,21 @@ def _html_page(
     .memory-command-bar {{ border-left:4px solid var(--ok); }}
     .memory-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .memory-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .memory-operator-workbench {{ border-left:4px solid var(--accent); }}
+    .memory-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .memory-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .memory-operator-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .memory-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .memory-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .memory-workbench-card h3 {{ margin-top:0; }}
+    .memory-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .memory-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .memory-workbench-action, .memory-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .memory-workbench-action {{ background:var(--accent); color:#fff; }}
+    .memory-workbench-link {{ background:var(--surface); color:var(--accent); }}
+    .memory-state-details, .memory-workbench-evidence, .memory-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .memory-state-details summary, .memory-workbench-evidence summary, .memory-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .memory-state-details:not([open]) > :not(summary), .memory-workbench-evidence:not([open]) > :not(summary), .memory-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .skills-command-bar {{ border-left:4px solid var(--accent); }}
     .skills-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .skills-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -24263,7 +24405,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

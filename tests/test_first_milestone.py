@@ -5861,6 +5861,20 @@ def test_local_app_routes_render_modern_workflow_and_health(
         artifact_path=str(note_path),
     )
     memory_before_pin = render_local_app_route(tmp_path, "/memory")
+    assert "Memory Operator Workbench" in memory_before_pin.body
+    assert "data-memory-operator-workbench='true'" in memory_before_pin.body
+    assert "data-memory-workbench-actions='true'" in memory_before_pin.body
+    assert "data-memory-workbench-primary='true'" in memory_before_pin.body
+    assert "data-memory-state-details='true'" in memory_before_pin.body
+    assert "data-memory-workbench-evidence='true'" in memory_before_pin.body
+    assert "data-memory-command-evidence='true'" in memory_before_pin.body
+    assert memory_before_pin.body.index("data-memory-operator-workbench") < memory_before_pin.body.index("data-route-context")
+    assert memory_before_pin.body.index("data-memory-operator-workbench") < memory_before_pin.body.index("data-memory-command-bar")
+    assert "memory_workbench_status</dt><dd>pin_ready" in memory_before_pin.body
+    assert "memory_workbench_next_action</dt><dd>Pin first proposed memory" in memory_before_pin.body
+    assert "memory_workbench_target_surface</dt><dd><a href='#memory-proposed'>Proposed Memories</a>" in memory_before_pin.body
+    assert "memory_workbench_pin_memory_available</dt><dd>true" in memory_before_pin.body
+    assert "memory_workbench_write_on_get</dt><dd>false" in memory_before_pin.body
     assert "Memory Command Bar" in memory_before_pin.body
     assert "data-memory-command-bar='true'" in memory_before_pin.body
     assert "memory_command_total_entries</dt><dd>1" in memory_before_pin.body
@@ -9506,6 +9520,23 @@ def test_local_app_demo_scenario_populates_fixture_state(
     memory = render_local_app_route(tmp_path, "/memory")
     assert memory.status == 200
     assert "Memory Bank" in memory.body
+    assert "Memory Operator Workbench" in memory.body
+    assert "data-memory-operator-workbench='true'" in memory.body
+    assert "data-memory-workbench-actions='true'" in memory.body
+    assert "data-memory-workbench-primary='true'" in memory.body
+    assert "data-memory-state-details='true'" in memory.body
+    assert "data-memory-workbench-evidence='true'" in memory.body
+    assert "data-memory-command-evidence='true'" in memory.body
+    assert memory.body.index("data-memory-operator-workbench") < memory.body.index("data-route-context")
+    assert memory.body.index("data-memory-operator-workbench") < memory.body.index("data-memory-command-bar")
+    assert "memory_workbench_status</dt><dd>empty" in memory.body
+    assert "memory_workbench_next_action</dt><dd>Create goal context" in memory.body
+    assert "memory_workbench_target_surface</dt><dd><a href='/goals'>/goals</a>" in memory.body
+    assert "memory_workbench_pin_memory_available</dt><dd>false" in memory.body
+    assert "memory_workbench_write_on_get</dt><dd>false" in memory.body
+    assert "memory_workbench_provider_calls_taken</dt><dd>0" in memory.body
+    assert "memory_workbench_network_actions_taken</dt><dd>0" in memory.body
+    assert "memory_workbench_external_effects_created</dt><dd>false" in memory.body
     assert "Memory Command Bar" in memory.body
     assert "data-memory-command-bar='true'" in memory.body
     assert "memory_command_total_entries</dt><dd>0" in memory.body

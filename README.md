@@ -502,10 +502,13 @@ Search state, workbench evidence, and command evidence stay collapsed by
 default while preserving result counts, first-result target links, and the
 no-write/no-network/no-raw-filesystem boundary in the DOM. Use `/memory`, `/skills`, and
 `/profiles` for local readbacks of memory entries, generated skills/usage,
-and inactive future provider-routing lanes. The read-only `Memory Command Bar`
-starts `/memory` with entry counts, proposed-memory pin posture, first target,
-one next local action, saved workspace context, and no-write/provider/network/
-external-effect boundaries before the longer memory lists. The read-only
+and inactive future provider-routing lanes. `/memory` is now action-first and
+opens with a visible `Memory Operator Workbench` before shared route/focus
+diagnostics and command readback, turning the next memory action, proposed
+pins, operator notes, and resume target into four browser cards. Memory state,
+workbench evidence, and command evidence stay collapsed by default while
+preserving entry counts, proposed-memory pin posture, saved workspace context,
+and no-write/provider/network/external-effect boundaries in the DOM. The read-only
 `Skills Command Bar` starts `/skills` with skill record counts, generated-skill
 posture, usage/project counts, the first generated or available skill artifact,
 one local review target, and no execution/install/provider/network effects.
