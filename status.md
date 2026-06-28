@@ -1,5 +1,51 @@
 # Status
 
+## 2026-06-28 Goal Evidence And Artifact Action Cards
+
+- Made `/goals/<goal_id>#goal-evidence-command-bar` action-first by adding
+  visible Now, Latest, Inventory, Attention, and Safety cards before the
+  detailed evidence readback.
+- Made `/goals/<goal_id>#goal-artifact-command-bar` action-first by adding
+  visible Open, Latest, Types, Inventory, and Safety cards before the artifact
+  inventory.
+- Kept all `goal_evidence_command_*`, `goal_artifact_command_*`, artifact
+  explorer counts, bounded artifact links, raw-filesystem guards, and
+  zero-effect counters in collapsed command evidence.
+- Moved the detailed evidence list, detailed artifact list, and typed artifact
+  explorer groups into collapsed disclosures while preserving the rows in the
+  DOM for review, search, and automated route checks.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including the new Evidence and
+    Artifact handles, provider calls 0, network actions 0, external mutations 0
+  - Browser QA against
+    `http://127.0.0.1:8842/goals/goal_31994d404bd1#goal-evidence-command-bar`:
+    desktop `1280x900` rendered five Evidence cards and five Artifact cards,
+    kept evidence/artifact command evidence and detailed lists closed, kept
+    artifact explorer groups closed, had no horizontal overflow, and reported
+    no warning/error logs.
+  - Browser interaction QA clicked the Artifact `Open` card and navigated to
+    `/artifacts?path=runs/run_5a14dc27124a/review.md`, where the inert artifact
+    workbench and content rendered with no warning/error logs and no horizontal
+    overflow.
+  - Browser QA mobile `390x844`: `#goal-artifact-command-bar` rendered five
+    Artifact cards in one column, kept command evidence, the detailed artifact
+    list, and all typed explorer groups closed, had no horizontal overflow, and
+    reported no warning/error logs.
+  - Screenshots: `/tmp/clankeros-evidence-artifact-desktop.png` and
+    `/tmp/clankeros-evidence-artifact-mobile.png`.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, approve work, execute work, create commits, push, create PRs, deploy,
+  fetch GitHub status, call providers, or mutate external systems.
+
 ## 2026-06-28 Goal Remaining Work Action Cards
 
 - Made `/goals/<goal_id>#goal-remaining-work-command-bar` action-first by

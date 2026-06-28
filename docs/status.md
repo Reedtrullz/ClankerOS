@@ -19,14 +19,19 @@ Latest status focus:
   exposes Now, Phase, Refresh, Pause Rules, and Safety cards before its
   detailed refresh evidence. Goal Remaining Work now exposes Now, Gate
   Progress, Waiting, Open Work, and Finish cards before collapsed command
-  evidence and the collapsed gate checklist. Jump, command, workbench,
-  daily-loop, return-brief, continuation, workflow-map, CI handoff, live-state,
-  remaining-work, and full section-index evidence are
+  evidence and the collapsed gate checklist. Goal Evidence now exposes Now,
+  Latest, Inventory, Attention, and Safety cards before collapsed command
+  evidence and the collapsed detailed evidence list; Goal Artifacts now exposes
+  Open, Latest, Types, Inventory, and Safety cards before collapsed command
+  evidence, the collapsed detailed artifact list, and collapsed typed explorer
+  groups. Jump, command, workbench, daily-loop, return-brief, continuation,
+  workflow-map, CI handoff, live-state, evidence, artifacts, remaining-work,
+  and full section-index evidence are
   collapsed by default while preserving phase, next action, current gate,
   project-scoped CI proof posture, full anchor map, daily resume-save state,
   latest activity/artifact, blocker routing, workflow gate surfaces, manual
-  publish boundary, local reload posture, remaining gate posture, and
-  zero-effect counters in the DOM.
+  publish boundary, local reload posture, evidence/artifact posture, remaining
+  gate posture, and zero-effect counters in the DOM.
 - `/goals` is now content-first and board-first instead of shared-diagnostic or
   command-readback-first: the `Goal Board Workbench` opens the page before
   Route Context, Operator Focus, and the `Goal Board Command Bar`, with visible

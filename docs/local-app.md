@@ -355,7 +355,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   Evidence starts with a read-only `Goal Evidence Command Bar` that summarizes
   run evidence, worktree evidence, incident evidence, recommendation evidence,
   typed artifact counts, latest artifact, one local review target, and
-  zero-effect boundaries before the detailed evidence list. Goal
+  zero-effect boundaries through visible Now, Latest, Inventory, Attention, and
+  Safety cards before collapsed command evidence and the collapsed detailed
+  evidence list. Goal
   Verification Evidence starts with a read-only `Goal Verification Command
   Bar`, links to `/verification` and `/ci-evidence`, filters
   operator-supplied CI records to the current goal project, compares the
@@ -630,10 +632,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   goal-linked Markdown, JSON, Patch/Diff, and Text/Log artifacts and links each
   item through `/artifacts?path=...`; it does not expose raw filesystem
   browsing. The artifact area starts with a read-only
-  `Goal Artifact Command Bar` that summarizes artifact record counts,
-  available/missing posture, render-family counts, source-family counts, the
-  latest artifact, one bounded review click, and zero-effect counters before
-  the detailed artifact list and typed explorer. The Goal timeline backfills
+  `Goal Artifact Command Bar` that exposes Open, Latest, Types, Inventory, and
+  Safety cards, summarizes artifact record counts, available/missing posture,
+  render-family counts, source-family counts, the latest artifact, one bounded
+  review click, and zero-effect counters, and keeps command evidence, the
+  detailed artifact list, and typed explorer groups collapsed by default. The Goal timeline backfills
   generic `Artifact recorded` entries
   from the same bounded artifact registry after workflow-specific timeline
   events are added, so artifacts such as context-pack JSON, handoff JSON,

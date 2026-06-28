@@ -651,6 +651,24 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-goal-live-pause='true'",
                 "data-goal-live-safety='true'",
                 "data-goal-live-evidence='true'",
+                "data-goal-evidence-actions='true'",
+                "data-goal-evidence-now='true'",
+                "data-goal-evidence-latest='true'",
+                "data-goal-evidence-inventory='true'",
+                "data-goal-evidence-attention='true'",
+                "data-goal-evidence-safety='true'",
+                "data-goal-evidence-evidence='true'",
+                "data-goal-evidence-list='true'",
+                "data-goal-artifact-actions='true'",
+                "data-goal-artifact-open='true'",
+                "data-goal-artifact-latest='true'",
+                "data-goal-artifact-types='true'",
+                "data-goal-artifact-inventory='true'",
+                "data-goal-artifact-safety='true'",
+                "data-goal-artifact-evidence='true'",
+                "data-goal-artifact-list='true'",
+                "data-goal-artifact-explorer-evidence='true'",
+                "data-goal-artifact-groups='true'",
                 "data-goal-remaining-work-actions='true'",
                 "data-goal-remaining-work-now='true'",
                 "data-goal-remaining-work-progress='true'",
@@ -12637,10 +12655,13 @@ def _goal_evidence_lines(root: Path, state: dict[str, Any]) -> list[str]:
 
 def _goal_evidence_section(root: Path, state: dict[str, Any]) -> str:
     lines = _goal_evidence_lines(root, state)
-    return _goal_evidence_command_bar(root, state, lines) + _list_section(
+    return _goal_evidence_command_bar(root, state, lines) + _collapsible_list_section(
         "Evidence",
         lines,
         anchor_id="goal-evidence",
+        details_class="goal-evidence-list",
+        data_attr="goal-evidence-list",
+        summary=f"Detailed evidence list ({len(lines)})",
     )
 
 
@@ -12693,15 +12714,71 @@ def _goal_evidence_command_bar(
 
     status = "available" if evidence_lines or artifact_records else "empty"
     latest_label = latest_record["label"] if latest_record is not None else "none"
+    latest_href = (
+        _artifact_href(root, latest_record["path"])
+        if latest_record is not None
+        else "#goal-artifact-explorer"
+    )
+    latest_button_label = (
+        "Open latest artifact" if latest_record is not None else "Open artifact explorer"
+    )
     latest_surface = (
         _artifact_link(latest_record["path"])
         if latest_record is not None
         else "none"
     )
+    target = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    attention_href = "#goal-incidents" if incident_evidence_items else "/incidents"
+    attention_label = "Goal Incidents" if incident_evidence_items else "/incidents"
+    attention_total = incident_evidence_items + recommendation_evidence_items
+    evidence_cards = "".join(
+        [
+            "<div class='goal-evidence-card goal-evidence-primary' data-goal-evidence-now='true'>",
+            "<h3>Now</h3>",
+            f"<strong>{_e(next_action)}</strong>",
+            f"<p>{_e(reason)}</p>",
+            f"<a class='goal-evidence-action' data-goal-evidence-primary='true' href='{_e(target_href)}'>Open</a>",
+            "</div>",
+            "<div class='goal-evidence-card' data-goal-evidence-latest='true'>",
+            "<h3>Latest</h3>",
+            f"<strong>{_e(latest_label)}</strong>",
+            f"<p>{len(artifact_records)} bounded artifact record(s).</p>",
+            f"<a class='goal-evidence-link' href='{_e(latest_href)}'>{_e(latest_button_label)}</a>",
+            "</div>",
+            "<div class='goal-evidence-card' data-goal-evidence-inventory='true'>",
+            "<h3>Inventory</h3>",
+            f"<strong>{len(evidence_lines)} evidence item(s)</strong>",
+            (
+                f"<p>{run_evidence_items} run, {worktree_evidence_items} worktree, "
+                f"{len(artifact_records)} artifact.</p>"
+            ),
+            "<a class='goal-evidence-link' href='#goal-evidence'>Detailed list</a>",
+            "</div>",
+            "<div class='goal-evidence-card' data-goal-evidence-attention='true'>",
+            "<h3>Attention</h3>",
+            f"<strong>{attention_total} item(s)</strong>",
+            (
+                f"<p>{incident_evidence_items} incident, "
+                f"{recommendation_evidence_items} recommendation.</p>"
+            ),
+            f"<a class='goal-evidence-link' href='{_e(attention_href)}'>{_e(attention_label)}</a>",
+            "</div>",
+            "<div class='goal-evidence-card' data-goal-evidence-safety='true'>",
+            "<h3>Safety</h3>",
+            "<strong>read-only local proof</strong>",
+            "<p>No providers, network actions, writes on GET, or external effects.</p>",
+            "<a class='goal-evidence-link' href='#goal-artifact-command-bar'>Artifacts</a>",
+            "</div>",
+        ]
+    )
     return "".join(
         [
             "<section id='goal-evidence-command-bar' class='panel goal-evidence-command-bar' data-goal-evidence-command-bar='true'><h3>Goal Evidence Command Bar</h3>",
             "<p class='muted'>Goal-scoped evidence posture before the detailed evidence list and typed artifact explorer.</p>",
+            "<div class='goal-evidence-grid' data-goal-evidence-actions='true'>",
+            evidence_cards,
+            "</div>",
+            "<details class='goal-evidence-command-evidence' data-goal-evidence-evidence='true'><summary>Goal evidence command evidence</summary>",
             _kv(
                 [
                     ("goal_evidence_command_goal", goal.id),
@@ -12722,7 +12799,7 @@ def _goal_evidence_command_bar(
                     ("goal_evidence_command_next_action", next_action),
                     (
                         "goal_evidence_command_target_surface",
-                        SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"),
+                        target,
                     ),
                     ("goal_evidence_command_reason", reason),
                     ("goal_evidence_command_source", "goal_evidence_lines_and_artifact_registry"),
@@ -12740,6 +12817,7 @@ def _goal_evidence_command_bar(
                     "goal_evidence_safety: read-only local evidence inventory",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -12758,10 +12836,13 @@ def _goal_artifact_section(root: Path, state: dict[str, Any]) -> str:
         f"{_e(record['label'])}: {_artifact_link(record['path'])}"
         for record in records
     ]
-    return _goal_artifact_command_bar(root, state, records, lines) + _list_section(
+    return _goal_artifact_command_bar(root, state, records, lines) + _collapsible_list_section(
         "Artifacts",
         lines,
         anchor_id="goal-artifacts",
+        details_class="goal-artifact-list",
+        data_attr="goal-artifact-list",
+        summary=f"Detailed artifact list ({len(lines)})",
     ) + _goal_artifact_explorer(root, state, records=records)
 
 
@@ -12826,10 +12907,58 @@ def _goal_artifact_command_bar(
     if available and missing:
         status = "partial"
     target = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    latest_href = (
+        _artifact_href(root, latest_record["path"])
+        if latest_record is not None
+        else "#goal-artifact-explorer"
+    )
+    latest_button_label = (
+        "Open latest artifact" if latest_record is not None else "Open explorer"
+    )
+    artifact_cards = "".join(
+        [
+            "<div class='goal-artifact-card goal-artifact-primary' data-goal-artifact-open='true'>",
+            "<h3>Open</h3>",
+            f"<strong>{_e(next_action)}</strong>",
+            f"<p>{_e(reason)}</p>",
+            f"<a class='goal-artifact-action' data-goal-artifact-primary='true' href='{_e(target_href)}'>Open</a>",
+            "</div>",
+            "<div class='goal-artifact-card' data-goal-artifact-latest='true'>",
+            "<h3>Latest</h3>",
+            f"<strong>{_e(latest_label)}</strong>",
+            f"<p>{_e(latest_kind)} from {_e(latest_source)}; {_e(latest_status)}.</p>",
+            f"<a class='goal-artifact-link' href='{_e(latest_href)}'>{_e(latest_button_label)}</a>",
+            "</div>",
+            "<div class='goal-artifact-card' data-goal-artifact-types='true'>",
+            "<h3>Types</h3>",
+            (
+                f"<strong>{counts['markdown']} md / {counts['json']} json</strong>"
+            ),
+            f"<p>{counts['patch']} patch, {counts['text']} text/log.</p>",
+            "<a class='goal-artifact-link' href='#goal-artifact-explorer'>Explorer</a>",
+            "</div>",
+            "<div class='goal-artifact-card' data-goal-artifact-inventory='true'>",
+            "<h3>Inventory</h3>",
+            f"<strong>{available} available / {missing} missing</strong>",
+            f"<p>{_e(source_summary)}</p>",
+            "<a class='goal-artifact-link' href='#goal-artifacts'>Detailed list</a>",
+            "</div>",
+            "<div class='goal-artifact-card' data-goal-artifact-safety='true'>",
+            "<h3>Safety</h3>",
+            "<strong>bounded viewer only</strong>",
+            "<p>No raw filesystem browsing, writes on GET, providers, or network actions.</p>",
+            "<a class='goal-artifact-link' href='#goal-evidence-command-bar'>Evidence</a>",
+            "</div>",
+        ]
+    )
     return "".join(
         [
             "<section id='goal-artifact-command-bar' class='panel goal-artifact-command-bar' data-goal-artifact-command-bar='true'><h3>Goal Artifact Command Bar</h3>",
             "<p class='muted'>Goal-scoped artifact posture before the detailed artifact list and typed explorer.</p>",
+            "<div class='goal-artifact-grid' data-goal-artifact-actions='true'>",
+            artifact_cards,
+            "</div>",
+            "<details class='goal-artifact-command-evidence' data-goal-artifact-evidence='true'><summary>Goal artifact command evidence</summary>",
             _kv(
                 [
                     ("goal_artifact_command_goal", goal.id),
@@ -12872,6 +13001,7 @@ def _goal_artifact_command_bar(
                     "goal_artifact_safety: read-only bounded artifact inventory",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -12889,7 +13019,8 @@ def _goal_artifact_explorer(
     for record in records:
         groups[record["kind"]].append(record)
     sections = [
-        "<section id='goal-artifact-explorer'><h2>Goal Artifact Explorer</h2>",
+        "<section id='goal-artifact-explorer' class='goal-artifact-explorer' data-goal-artifact-explorer='true'><h2>Goal Artifact Explorer</h2>",
+        "<details class='goal-artifact-explorer-evidence' data-goal-artifact-explorer-evidence='true'><summary>Artifact explorer evidence</summary>",
         _kv(
             [
                 ("artifact_explorer_raw_filesystem_browsing", "false"),
@@ -12901,6 +13032,8 @@ def _goal_artifact_explorer(
                 ("text_artifacts", str(len(groups["text"]))),
             ]
         ),
+        "</details>",
+        "<div class='goal-artifact-groups' data-goal-artifact-groups='true'>",
     ]
     if not records:
         sections.append(_ul(["artifact_explorer_status: no_supported_goal_artifacts"]))
@@ -12919,8 +13052,12 @@ def _goal_artifact_explorer(
             )
             for record in groups[kind]
         ]
-        sections.append(f"<h3>{heading}</h3>")
+        sections.append(
+            f"<details class='goal-artifact-group' data-goal-artifact-group='{_e(kind)}'><summary>{_e(heading)} ({len(groups[kind])})</summary>"
+        )
         sections.append(_ul(items or [f"{kind}_artifacts_status: none"]))
+        sections.append("</details>")
+    sections.append("</div>")
     sections.append("</section>")
     return "".join(sections)
 
@@ -26490,9 +26627,34 @@ def _html_page(
     .goal-evidence-command-bar {{ border-left:4px solid var(--ok); }}
     .goal-evidence-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-evidence-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-evidence-command-bar dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .goal-evidence-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-evidence-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .goal-evidence-card h3 {{ margin-top:0; }}
+    .goal-evidence-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .goal-evidence-primary {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
+    .goal-evidence-action, .goal-evidence-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-evidence-action {{ background:var(--accent); color:#fff; }}
+    .goal-evidence-link {{ background:var(--surface); color:var(--accent); }}
+    .goal-evidence-command-evidence, .goal-evidence-list {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-evidence-command-evidence summary, .goal-evidence-list summary {{ cursor:pointer; font-weight:700; }}
+    .goal-evidence-command-evidence:not([open]) > :not(summary), .goal-evidence-list:not([open]) > :not(summary) {{ display:none; }}
     .goal-artifact-command-bar {{ border-left:4px solid var(--ok); }}
     .goal-artifact-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-artifact-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-artifact-command-bar dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .goal-artifact-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-artifact-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .goal-artifact-card h3 {{ margin-top:0; }}
+    .goal-artifact-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .goal-artifact-primary {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
+    .goal-artifact-action, .goal-artifact-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-artifact-action {{ background:var(--accent); color:#fff; }}
+    .goal-artifact-link {{ background:var(--surface); color:var(--accent); }}
+    .goal-artifact-command-evidence, .goal-artifact-list, .goal-artifact-explorer-evidence, .goal-artifact-group {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-artifact-command-evidence summary, .goal-artifact-list summary, .goal-artifact-explorer-evidence summary, .goal-artifact-group summary {{ cursor:pointer; font-weight:700; }}
+    .goal-artifact-command-evidence:not([open]) > :not(summary), .goal-artifact-list:not([open]) > :not(summary), .goal-artifact-explorer-evidence:not([open]) > :not(summary), .goal-artifact-group:not([open]) > :not(summary) {{ display:none; }}
+    .goal-artifact-groups {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin:12px 0; }}
     .goal-memory-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-memory-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-memory-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -26569,7 +26731,7 @@ def _html_page(
     .goal-continuation-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-continuation-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-continuation-evidence:not([open]) > :not(summary) {{ display:none; }}
-    .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:128px; }}
+    .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:128px; }}
     .goal-workflow-map {{ border-left:4px solid var(--accent); }}
     .goal-workflow-map dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .goal-workflow-map-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
@@ -27123,7 +27285,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
@@ -28237,6 +28399,26 @@ def _list_section(
         heading += f"<p><a href='{_e(link)}'>Open</a></p>"
     id_attr = f" id='{_e(anchor_id)}'" if anchor_id else ""
     return f"<section{id_attr}>{heading}{_ul(items)}</section>"
+
+
+def _collapsible_list_section(
+    title: str,
+    items: list[str],
+    *,
+    anchor_id: str,
+    details_class: str,
+    data_attr: str,
+    summary: str,
+) -> str:
+    return "".join(
+        [
+            f"<section id='{_e(anchor_id)}'><h2>{_e(title)}</h2>",
+            f"<details class='{_e(details_class)}' data-{_e(data_attr)}='true'><summary>{_e(summary)}</summary>",
+            _ul(items),
+            "</details>",
+            "</section>",
+        ]
+    )
 
 
 def _artifact_links(packets: list[dict[str, Any]], *, delegation_id: str | None = None) -> list[str]:

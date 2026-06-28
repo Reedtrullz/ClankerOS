@@ -410,10 +410,11 @@ summarizes open/resolved incidents, open recommendations, the first incident's
 severity, run, task, evidence, one triage surface, and zero-effect boundaries
 before the detailed incident list.
 Goal Evidence starts with a read-only `Goal Evidence Command Bar` that
-summarizes run, worktree, incident, recommendation, and typed artifact
-evidence counts, points at the latest bounded artifact or highest-priority
-local evidence surface, and keeps provider/network/external-effect counters at
-zero before the detailed evidence list.
+opens with visible Now, Latest, Inventory, Attention, and Safety cards. It
+summarizes run, worktree, incident, recommendation, and typed artifact evidence
+counts, points at the latest bounded artifact or highest-priority local evidence
+surface, and keeps provider/network/external-effect counters at zero inside
+collapsed command evidence before the collapsed detailed evidence list.
 Goal Verification Evidence starts with a read-only `Goal Verification Command
 Bar` that shows whether project-scoped proof is missing, stale, job-scoped
 early proof, or current full workflow success. It links to `/verification` and
@@ -458,10 +459,12 @@ push, create PRs, deploy, or mutate external systems.
 The Goal Artifact Explorer groups goal-linked artifacts as Markdown, JSON,
 Patch, or Text and links them through the bounded `/artifacts` viewer instead
 of exposing raw filesystem browsing. The Goal page now starts the artifact
-area with a read-only `Goal Artifact Command Bar` that summarizes artifact
-record counts, available/missing posture, render-family counts, source-family
-counts, the latest artifact, and one next bounded artifact review click before
-the detailed artifact list and typed explorer. Each artifact page starts with
+area with a read-only `Goal Artifact Command Bar` that opens with visible Open,
+Latest, Types, Inventory, and Safety cards. It summarizes artifact record
+counts, available/missing posture, render-family counts, source-family counts,
+the latest artifact, and one next bounded artifact review click while keeping
+command evidence, the detailed artifact list, and typed explorer groups
+collapsed by default. Each artifact page starts with
 a visible `Artifact Operator Workbench` for opening the inert content,
 returning to the owning Goal/delegation context, remembering or resuming from
 the artifact, and checking the safety proof. The detailed `Artifact Command

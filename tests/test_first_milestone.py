@@ -9649,7 +9649,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Evidence" in goal.body
     assert "Goal Evidence Command Bar" in goal.body
     assert "data-goal-evidence-command-bar='true'" in goal.body
+    assert "data-goal-evidence-actions='true'" in goal.body
+    assert "data-goal-evidence-now='true'" in goal.body
+    assert "data-goal-evidence-latest='true'" in goal.body
+    assert "data-goal-evidence-inventory='true'" in goal.body
+    assert "data-goal-evidence-attention='true'" in goal.body
+    assert "data-goal-evidence-safety='true'" in goal.body
+    assert "data-goal-evidence-evidence='true'" in goal.body
+    assert "data-goal-evidence-list='true'" in goal.body
     assert "<a href='#goal-evidence-command-bar'>Evidence command</a>" in goal.body
+    assert "Goal evidence command evidence" in goal.body
+    assert "Detailed evidence list (" in goal.body
     assert f"goal_evidence_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_evidence_command_project</dt><dd>{result.project_id}" in goal.body
     assert "goal_evidence_command_status</dt><dd>available" in goal.body
@@ -9675,7 +9685,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Artifacts" in goal.body
     assert "Goal Artifact Command Bar" in goal.body
     assert "data-goal-artifact-command-bar='true'" in goal.body
+    assert "data-goal-artifact-actions='true'" in goal.body
+    assert "data-goal-artifact-open='true'" in goal.body
+    assert "data-goal-artifact-latest='true'" in goal.body
+    assert "data-goal-artifact-types='true'" in goal.body
+    assert "data-goal-artifact-inventory='true'" in goal.body
+    assert "data-goal-artifact-safety='true'" in goal.body
+    assert "data-goal-artifact-evidence='true'" in goal.body
+    assert "data-goal-artifact-list='true'" in goal.body
     assert "<a href='#goal-artifact-command-bar'>Artifact command</a>" in goal.body
+    assert "Goal artifact command evidence" in goal.body
+    assert "Detailed artifact list (21)" in goal.body
     assert f"goal_artifact_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_artifact_command_project</dt><dd>{result.project_id}" in goal.body
     assert "goal_artifact_command_status</dt><dd>available" in goal.body
@@ -9708,6 +9728,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"goal_artifact_latest: coder run {result.coder_worktree_run_id} review kind=markdown source=coder_run status=available" in goal.body
     assert "goal_artifact_safety: read-only bounded artifact inventory" in goal.body
     assert "Goal Artifact Explorer" in goal.body
+    assert "data-goal-artifact-explorer='true'" in goal.body
+    assert "data-goal-artifact-explorer-evidence='true'" in goal.body
+    assert "data-goal-artifact-groups='true'" in goal.body
+    assert "data-goal-artifact-group='markdown'" in goal.body
+    assert "data-goal-artifact-group='json'" in goal.body
+    assert "data-goal-artifact-group='patch'" in goal.body
+    assert "data-goal-artifact-group='text'" in goal.body
     assert "artifact_explorer_raw_filesystem_browsing</dt><dd>false" in goal.body
     assert "artifact_render_types</dt><dd>Markdown, JSON, Patch, Text" in goal.body
     assert "markdown_artifacts</dt><dd>" in goal.body

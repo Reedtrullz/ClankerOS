@@ -604,8 +604,9 @@ Core layers for the bootstrap:
   Goal `Evidence` starts with a read-only `Goal Evidence Command Bar` that
   summarizes run evidence, worktree evidence, incident evidence,
   recommendation evidence, typed artifact counts, latest artifact, one local
-  review target, and zero-effect boundaries before the detailed evidence list
-  and typed artifact explorer.
+  review target, and zero-effect boundaries through visible Now, Latest,
+  Inventory, Attention, and Safety cards before collapsed command evidence, the
+  collapsed detailed evidence list, and the typed artifact explorer.
   Goal `Verification Evidence` starts with a read-only
   `Goal Verification Command Bar` that summarizes project-scoped proof status,
   latest source/status/scope, branch and commit freshness, one proof action,
@@ -627,7 +628,9 @@ Core layers for the bootstrap:
   starts with a read-only `Goal Artifact Command Bar` that summarizes artifact
   record counts, available/missing posture, render-family counts,
   source-family counts, the latest artifact, one bounded review click, and
-  zero-effect counters before the detailed artifact list and typed explorer.
+  zero-effect counters through visible Open, Latest, Types, Inventory, and
+  Safety cards before collapsed command evidence, the collapsed detailed
+  artifact list, and collapsed typed explorer groups.
   The artifact
   viewer now opens with an `Artifact Operator Workbench`, reports render
   family/renderer posture, and renders Markdown as escaped headings/lists/
