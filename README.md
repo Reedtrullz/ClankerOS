@@ -704,7 +704,10 @@ read-only `Run Continuation Strip` then condenses the current gate, scoped
 approval queue, evidence, parent Goal, and manual publication boundary into
 five visible cards before the dense workflow/evidence sections. The `Run
 Review Gate` panel shows whether `runs/<source_run_id>/review.md` exists and
-mentions the coder worktree run id. The app only exposes the
+mentions the coder worktree run id. A read-only `Run Evidence Map` follows it
+with Review, Diff, Changed Files, Validation, Logs, and Verification cards
+that link to the bounded artifact viewer before the full evidence inventory.
+The app only exposes the
 `coder-commit-request` form when that gate passes. The Goal Next Action card
 can now create that local review artifact with a confirmed `review-run` form
 when the goal is waiting on review.

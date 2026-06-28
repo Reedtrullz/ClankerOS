@@ -794,7 +794,10 @@ Core layers for the bootstrap:
   upstream and downstream workflow posture as a `Run Workflow State` readback,
   plus a `Run Review Gate` readback that mirrors the backend requirement that
   `runs/<source_run_id>/review.md` exists and mentions the coder worktree run
-  id before `coder-commit-request` is offered; once publication handoff is
+  id before `coder-commit-request` is offered. A read-only `Run Evidence Map`
+  then turns review, diff, changed files, bounded validation, logs, and
+  verification output into visible cards backed only by bounded artifact
+  viewer links before the full evidence list. Once publication handoff is
   ready they show copy-only suggested push and draft-PR commands plus the PR
   body path with zero-effect counters. Run-scoped approval links use
   `/approvals?run_id=<coder_run_id>` so the approval page foregrounds the

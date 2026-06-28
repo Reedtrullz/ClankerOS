@@ -1026,6 +1026,8 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "Run Operator Workbench",
                 "Run Workflow State",
                 "Run Review Gate",
+                "Run Evidence Map",
+                "data-run-evidence-map='true'",
                 "review_gate_status</dt><dd>reviewed",
                 "Run Approval Actions",
                 "Coder Worktree Evidence",
@@ -23454,6 +23456,7 @@ def _run_detail(root: Path, run_id: str) -> str:
         parts.append(_run_continuation_strip(root, coder_run))
         parts.append(_run_workflow_state(root, coder_run))
         parts.append(_run_review_gate(root, coder_run))
+        parts.append(_run_evidence_map(root, coder_run))
         parts.append(
             _list_section(
                 "Coder Worktree Evidence",
@@ -24639,6 +24642,212 @@ def _run_review_gate(root: Path, coder_run: Any) -> str:
             "<section id='run-review-gate'><h2>Run Review Gate</h2>",
             "<p class='muted'>This readback mirrors the existing commit-request backend gate before the app offers a local commit request form.</p>",
             _kv(rows),
+            "</section>",
+        ]
+    )
+
+
+def _run_evidence_map(root: Path, coder_run: Any) -> str:
+    review_gate = _run_review_gate_state(root, coder_run)
+    evidence_path = Path(coder_run.evidence_path)
+    review_path = Path(str(review_gate["review_path"]))
+    artifacts = {
+        "run_json": evidence_path / "run.json",
+        "review": review_path,
+        "diff": evidence_path / "diff.patch",
+        "changed_files": evidence_path / "changed_files.json",
+        "bounded_validation": evidence_path / "bounded_file_validation.json",
+        "git_status": evidence_path / "git_status.txt",
+        "stdout": evidence_path / "stdout.txt",
+        "stderr": evidence_path / "stderr.txt",
+        "verification_stdout": evidence_path / "verification_stdout.txt",
+        "verification_stderr": evidence_path / "verification_stderr.txt",
+    }
+    statuses = {
+        key: _artifact_status(root, path)
+        for key, path in artifacts.items()
+    }
+    available_count = sum(1 for status in statuses.values() if status == "available")
+    verification_status = (
+        "passed"
+        if coder_run.verification_exit_code == 0
+        else "failed"
+        if coder_run.verification_exit_code is not None
+        else "not_run"
+    )
+    changed_files_count = len(coder_run.changed_files)
+    outside_allowed_count = len(coder_run.outside_allowed_files)
+
+    def artifact_href(key: str, fallback: str) -> str:
+        path = artifacts[key].as_posix()
+        if statuses[key] == "available":
+            return _artifact_href(root, path)
+        return fallback
+
+    def card(
+        key: str,
+        title: str,
+        status: str,
+        summary: str,
+        href: str,
+        action: str,
+    ) -> str:
+        class_name = "run-evidence-card run-evidence-primary" if key == "review" else "run-evidence-card"
+        return "".join(
+            [
+                (
+                    f"<article class='{class_name}' data-run-evidence-card='{_e(key)}' "
+                    f"data-run-evidence-status='{_e(status)}'>"
+                ),
+                f"<h3>{_e(title)}</h3>",
+                f"<strong>{_e(status)}</strong>",
+                f"<p>{_e(summary)}</p>",
+                f"<a class='run-evidence-link' href='{_e(href)}'>{_e(action)}</a>",
+                "</article>",
+            ]
+        )
+
+    cards = [
+        card(
+            "review",
+            "Review",
+            str(review_gate["status"]),
+            (
+                "Review mentions this run and unlocks commit request."
+                if review_gate["commit_request_form_available"]
+                else str(review_gate["blocked_reason"])
+            ),
+            artifact_href("review", "#run-review-gate"),
+            "Open review",
+        ),
+        card(
+            "diff",
+            "Diff",
+            statuses["diff"],
+            f"{changed_files_count} changed file{'s' if changed_files_count != 1 else ''}.",
+            artifact_href("diff", "#coder-worktree-evidence"),
+            "Open diff",
+        ),
+        card(
+            "changed-files",
+            "Changed Files",
+            statuses["changed_files"],
+            f"{outside_allowed_count} outside allowed file{'s' if outside_allowed_count != 1 else ''}.",
+            artifact_href("changed_files", "#coder-worktree-evidence"),
+            "Open files",
+        ),
+        card(
+            "validation",
+            "Validation",
+            statuses["bounded_validation"],
+            "Bounded file validation evidence for the run.",
+            artifact_href("bounded_validation", "#coder-worktree-evidence"),
+            "Open validation",
+        ),
+        card(
+            "logs",
+            "Logs",
+            (
+                "available"
+                if statuses["stdout"] == "available" or statuses["stderr"] == "available"
+                else "missing"
+            ),
+            f"stdout {statuses['stdout']}; stderr {statuses['stderr']}.",
+            artifact_href("stdout", artifact_href("stderr", "#coder-worktree-evidence")),
+            "Open logs",
+        ),
+        card(
+            "verification",
+            "Verification",
+            verification_status,
+            f"exit code {coder_run.verification_exit_code}.",
+            artifact_href("verification_stdout", artifact_href("verification_stderr", "#coder-worktree-evidence")),
+            "Open verification",
+        ),
+    ]
+    return "".join(
+        [
+            "<section id='run-evidence-map' class='panel run-evidence-map' data-run-evidence-map='true'><h2>Run Evidence Map</h2>",
+            "<p class='muted'>A scan-first map of the artifacts an operator should inspect before approving commit or publication work.</p>",
+            "<div class='run-evidence-grid' data-run-evidence-cards='true'>",
+            *cards,
+            "</div>",
+            "<details class='run-evidence-map-evidence' data-run-evidence-map-evidence='true'><summary>Run evidence map evidence</summary>",
+            _kv(
+                [
+                    ("run_evidence_map_status", "available"),
+                    ("run_evidence_map_run_id", coder_run.id),
+                    ("run_evidence_map_project", coder_run.project_id),
+                    (
+                        "run_evidence_map_delegation",
+                        SafeHtml(
+                            f"<a href='/delegations/{quote(coder_run.delegation_id)}'>{_e(coder_run.delegation_id)}</a>"
+                        ),
+                    ),
+                    ("run_evidence_map_review_status", str(review_gate["status"])),
+                    (
+                        "run_evidence_map_review_path",
+                        _artifact_link(str(review_gate["review_path"]))
+                        if review_gate["exists"]
+                        else str(review_gate["review_path"]),
+                    ),
+                    (
+                        "run_evidence_map_review_mentions_run",
+                        str(review_gate["mentions_run"]).lower(),
+                    ),
+                    (
+                        "run_evidence_map_commit_request_form_available",
+                        str(review_gate["commit_request_form_available"]).lower(),
+                    ),
+                    ("run_evidence_map_diff_status", statuses["diff"]),
+                    ("run_evidence_map_changed_files_status", statuses["changed_files"]),
+                    ("run_evidence_map_changed_files_count", str(changed_files_count)),
+                    (
+                        "run_evidence_map_outside_allowed_files_count",
+                        str(outside_allowed_count),
+                    ),
+                    (
+                        "run_evidence_map_bounded_validation_status",
+                        statuses["bounded_validation"],
+                    ),
+                    ("run_evidence_map_git_status_artifact_status", statuses["git_status"]),
+                    ("run_evidence_map_stdout_status", statuses["stdout"]),
+                    ("run_evidence_map_stderr_status", statuses["stderr"]),
+                    ("run_evidence_map_verification_status", verification_status),
+                    (
+                        "run_evidence_map_verification_exit_code",
+                        str(coder_run.verification_exit_code),
+                    ),
+                    (
+                        "run_evidence_map_verification_stdout_status",
+                        statuses["verification_stdout"],
+                    ),
+                    (
+                        "run_evidence_map_verification_stderr_status",
+                        statuses["verification_stderr"],
+                    ),
+                    (
+                        "run_evidence_map_available_artifacts",
+                        str(available_count),
+                    ),
+                    ("run_evidence_map_total_artifacts", str(len(artifacts))),
+                    ("run_evidence_map_raw_filesystem_browsing", "false"),
+                    ("run_evidence_map_write_on_get", "false"),
+                    ("run_evidence_map_provider_calls_taken", "0"),
+                    ("run_evidence_map_network_actions_taken", "0"),
+                    ("run_evidence_map_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"run_evidence_map_now: review={_e(str(review_gate['status']))} verification={_e(verification_status)}",
+                    f"run_evidence_map_review: <a href='{_e(artifact_href('review', '#run-review-gate'))}'>Review</a>",
+                    f"run_evidence_map_diff: <a href='{_e(artifact_href('diff', '#coder-worktree-evidence'))}'>Diff</a>",
+                    f"run_evidence_map_validation: <a href='{_e(artifact_href('bounded_validation', '#coder-worktree-evidence'))}'>Validation</a>",
+                    "run_evidence_map_safety: read-only bounded artifact links; no raw filesystem browsing or execution",
+                ]
+            ),
+            "</details>",
             "</section>",
         ]
     )
@@ -31886,6 +32095,18 @@ def _html_page(
     .run-continuation-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .run-continuation-evidence summary {{ cursor:pointer; font-weight:700; }}
     .run-continuation-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .run-evidence-map {{ border-left:4px solid var(--accent); }}
+    .run-evidence-map dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .run-evidence-grid {{ display:grid; grid-template-columns:minmax(230px, 1.2fr) repeat(5, minmax(150px, 1fr)); gap:10px; margin:12px 0; }}
+    .run-evidence-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .run-evidence-card h3 {{ margin-top:0; }}
+    .run-evidence-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .run-evidence-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .run-evidence-card[data-run-evidence-status="missing"], .run-evidence-card[data-run-evidence-status="failed"] {{ border-color:var(--warn); box-shadow:inset 3px 0 0 var(--warn); }}
+    .run-evidence-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .run-evidence-map-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .run-evidence-map-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .run-evidence-map-evidence:not([open]) > :not(summary) {{ display:none; }}
     .delegation-run-operator-workbench {{ border-left:4px solid var(--accent); }}
     .delegation-run-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .delegation-run-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
@@ -32320,12 +32541,12 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-session-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-session-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-attention-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .skills-usage-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .approval-decision-grid {{ grid-template-columns:1fr; }} }}
-    @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .run-evidence-map dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>

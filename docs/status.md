@@ -149,6 +149,10 @@ Latest status focus:
   evidence/artifact/memory/skills/git/verification posture, overview/risk/criteria/progress
   posture, timeline/activity posture, completion/resume/notes posture,
   remaining gate posture, and zero-effect counters in the DOM.
+- `/runs/<coder_run_id>` now adds a read-only `Run Evidence Map` after the
+  review gate, with Review, Diff, Changed Files, Validation, Logs, and
+  Verification cards backed by bounded artifact links before the dense
+  evidence inventory.
 - `/goals` is now content-first and board-first instead of shared-diagnostic or
   command-readback-first: the `Goal Board Workbench` opens the page before
   Route Context, Operator Focus, and the `Goal Board Command Bar`, with visible

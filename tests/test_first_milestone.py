@@ -13059,15 +13059,50 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "run_continuation_safety: read-only run continuation; confirmed forms own writes" in run_page.body
     assert "id='run-workflow-state'" in run_page.body
     assert "id='run-review-gate'" in run_page.body
+    assert "id='run-evidence-map'" in run_page.body
     assert "id='run-approval-actions'" in run_page.body
     assert "id='coder-worktree-evidence'" in run_page.body
     assert "Run Workflow State" in run_page.body
     assert "Run Review Gate" in run_page.body
+    assert "Run Evidence Map" in run_page.body
+    assert "data-run-evidence-map='true'" in run_page.body
+    assert "data-run-evidence-cards='true'" in run_page.body
+    assert "data-run-evidence-map-evidence='true'" in run_page.body
+    assert run_page.body.index("id='run-review-gate'") < run_page.body.index(
+        "data-run-evidence-map='true'"
+    )
+    assert run_page.body.index("data-run-evidence-map='true'") < run_page.body.index(
+        "id='coder-worktree-evidence'"
+    )
     assert "review_gate_status" in run_page.body
     assert "review_gate_status</dt><dd>reviewed" in run_page.body
     assert "review_file_exists</dt><dd>true" in run_page.body
     assert "review_mentions_run</dt><dd>true" in run_page.body
     assert "commit_request_form_available</dt><dd>true" in run_page.body
+    assert "data-run-evidence-card='review' data-run-evidence-status='reviewed'" in run_page.body
+    assert "data-run-evidence-card='diff' data-run-evidence-status='available'" in run_page.body
+    assert "data-run-evidence-card='changed-files' data-run-evidence-status='available'" in run_page.body
+    assert "data-run-evidence-card='validation' data-run-evidence-status='available'" in run_page.body
+    assert "data-run-evidence-card='logs' data-run-evidence-status='available'" in run_page.body
+    assert "data-run-evidence-card='verification' data-run-evidence-status='passed'" in run_page.body
+    assert "run_evidence_map_status</dt><dd>available" in run_page.body
+    assert f"run_evidence_map_run_id</dt><dd>{result.coder_worktree_run_id}" in run_page.body
+    assert "run_evidence_map_review_status</dt><dd>reviewed" in run_page.body
+    assert "run_evidence_map_review_mentions_run</dt><dd>true" in run_page.body
+    assert "run_evidence_map_commit_request_form_available</dt><dd>true" in run_page.body
+    assert "run_evidence_map_diff_status</dt><dd>available" in run_page.body
+    assert "run_evidence_map_changed_files_status</dt><dd>available" in run_page.body
+    assert "run_evidence_map_changed_files_count</dt><dd>1" in run_page.body
+    assert "run_evidence_map_outside_allowed_files_count</dt><dd>0" in run_page.body
+    assert "run_evidence_map_bounded_validation_status</dt><dd>available" in run_page.body
+    assert "run_evidence_map_verification_status</dt><dd>passed" in run_page.body
+    assert "run_evidence_map_verification_exit_code</dt><dd>0" in run_page.body
+    assert "run_evidence_map_raw_filesystem_browsing</dt><dd>false" in run_page.body
+    assert "run_evidence_map_write_on_get</dt><dd>false" in run_page.body
+    assert "run_evidence_map_network_actions_taken</dt><dd>0" in run_page.body
+    assert "run_evidence_map_external_effects_created</dt><dd>false" in run_page.body
+    assert "run_evidence_map_now: review=reviewed verification=passed" in run_page.body
+    assert "run_evidence_map_safety: read-only bounded artifact links; no raw filesystem browsing or execution" in run_page.body
     for expected_run_state in [
         "context_pack_status",
         "implementation_handoff_status",
@@ -13108,11 +13143,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     )
     assert run_page_without_review.status == 200
     assert "Run Review Gate" in run_page_without_review.body
+    assert "Run Evidence Map" in run_page_without_review.body
     assert "review_gate_status</dt><dd>missing" in run_page_without_review.body
     assert "review_file_exists</dt><dd>false" in run_page_without_review.body
     assert "review_mentions_run</dt><dd>false" in run_page_without_review.body
     assert "commit_request_form_available</dt><dd>false" in run_page_without_review.body
     assert "blocked_reason</dt><dd>review_artifact_missing" in run_page_without_review.body
+    assert "data-run-evidence-card='review' data-run-evidence-status='missing'" in run_page_without_review.body
+    assert "run_evidence_map_review_status</dt><dd>missing" in run_page_without_review.body
+    assert "run_evidence_map_review_mentions_run</dt><dd>false" in run_page_without_review.body
+    assert "run_evidence_map_commit_request_form_available</dt><dd>false" in run_page_without_review.body
+    assert "run_evidence_map_now: review=missing verification=passed" in run_page_without_review.body
     assert "Run Command Bar" in run_page_without_review.body
     assert "run_command_review_status</dt><dd>missing" in run_page_without_review.body
     assert "run_command_next_action</dt><dd>Review run" in run_page_without_review.body

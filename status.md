@@ -1,5 +1,35 @@
 # Status
 
+## 2026-06-28 Run Evidence Map UX
+
+- Added a visible read-only `Run Evidence Map` to `/runs/<coder_run_id>` after
+  the `Run Review Gate` and before the dense `Coder Worktree Evidence` list.
+- The map turns review, diff, changed files, bounded validation, logs, and
+  verification output into scan-first cards backed only by existing bounded
+  `/artifacts?path=...` links or same-page fallback anchors.
+- Fixture-backed run detail coverage verifies the reviewed/commit-ready state
+  exposes reviewed Review, available Diff/Changed Files/Validation/Logs, and
+  passed Verification cards; missing-review coverage verifies the Review card
+  switches to `missing` while the map keeps the verification proof visible.
+- Updated README, operating summary, local status focus, app demo smoke
+  markers, and run detail route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 51.69s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli app-smoke-test` -> passed, all local app route
+    markers matched, provider/network/external counters stayed at `0`
+  - `python3 -m agent_os.cli app-demo-smoke-test` -> passed,
+    fixture-backed route snippets matched including `/runs/<coder_run_id>`,
+    provider, network, and external counters stayed at `0`
+  - `git diff --check` -> passed
+- GitHub Actions proof is expected after pushing this slice; remote status will
+  be tracked by the branch run rather than by a longer local suite.
+- Non-claims until remote proof: no browser QA for this slice, no new run
+  execution, no approval or commit action on GET, no raw filesystem browsing,
+  no app-side GitHub polling, no PR, and no deploy from ClankerOS itself.
+
 ## 2026-06-28 Action Workflow Map UX
 
 - Added a visible read-only `Action Workflow Map` to `/actions` between the
