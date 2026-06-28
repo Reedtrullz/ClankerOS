@@ -1,5 +1,39 @@
 # Status
 
+## 2026-06-28 Recent Items Return Dock
+
+- Made the shared Recent Items sidebar a richer return-to-work surface with
+  visible Recent, Workspace, Action, and Artifact cards before collapsed
+  evidence or the longer shortcut list.
+- The dock opens the primary recent local surface, saved project/Goal when one
+  exists, last action notice when one exists, saved artifact when one exists,
+  and safe fallback surfaces otherwise.
+- Updated README, operating summary, local status docs, and focused route
+  assertions for empty first-run, fixture-backed Goal, and first-run resume
+  states.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against fixture-backed scratch local app `127.0.0.1:8856`
+  verified `/goals/<fixture-goal>` in the in-app browser. Desktop rendered
+  four return dock cards, kept recent evidence and shortcut details collapsed,
+  had no horizontal overflow, and reported no warning/error logs.
+- Mobile `390x844` in-app browser QA rendered the four cards in one side-rail
+  column below the main content, kept evidence/details collapsed, had no
+  horizontal overflow, reported no warning/error logs, and the viewport was
+  reset after the check.
+- Non-claims: this is a local navigation/readback UX change. It does not write
+  on GET, approve work, execute work, create commits, push, create PRs,
+  deploy, fetch GitHub status, call providers, or mutate external systems.
+
 ## 2026-06-28 Action Notice Continuation Surface
 
 - Made GET notice targets action-first with an `Action Notice` surface before

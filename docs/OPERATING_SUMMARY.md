@@ -665,10 +665,13 @@ Core layers for the bootstrap:
   zero-effect boundaries stay available inside collapsed `Route evidence`
   before the page body. The
   recent-items sidebar now starts with a read-only `Recent Items Command Bar`
-  that shows one compact reopen action plus `/resume`, then keeps
-  workspace/goal/delegation/run counts, saved workspace project/goal/artifact
-  context, last-action context, and zero-effect boundaries inside collapsed
-  evidence, with the longer recent-link list in a second collapsed disclosure.
+  and a visible return dock for Recent, Workspace, Action, and Artifact. It
+  links the primary recent surface, saved project/Goal when present, last
+  action notice when present, saved artifact when present, and safe fallback
+  surfaces otherwise, while workspace/goal/delegation/run counts, saved
+  workspace project/goal/artifact context, last-action context, and zero-effect
+  boundaries stay inside collapsed evidence with the longer recent-link list
+  in a second collapsed disclosure.
   The command palette now also
   starts with the same current-page route context, parent link, resolved
   Goal/Project/run context, focus target, `/resume`, and zero-effect readbacks

@@ -585,10 +585,13 @@ next local action, back target, Goal, Project, and `/resume`. The full route
 family/path, saved workspace anchors, focus target, and zero-effect counters
 remain available inside collapsed `Route evidence` before the page content.
 The recent-items sidebar now starts with a read-only `Recent Items
-Command Bar` that shows one compact reopen action plus `/resume`, then keeps
-workspace/goal/delegation/run counts, saved workspace context, last action, and
-zero-effect counters inside collapsed evidence and the remaining recent
-shortcuts in a second collapsed disclosure. The focus strip keeps the saved or lead
+Command Bar` plus a visible return dock for Recent, Workspace, Action, and
+Artifact, so the operator can reopen the latest surface, saved project/Goal,
+last action notice, or saved artifact without expanding the longer shortcut
+list. Workspace/goal/delegation/run counts, saved workspace context, last
+action, artifact targets, and zero-effect counters stay inside collapsed
+evidence and the remaining recent shortcuts stay in a second collapsed
+disclosure. The focus strip keeps the saved or lead
 goal's primary action, phase, progress, waiting counts, and resume link visible
 as compact action cards outside the Goal page. It can expand the same confirmed
 local action form when the current next action is browser-available, while the

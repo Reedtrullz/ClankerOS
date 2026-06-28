@@ -250,10 +250,10 @@ Latest status focus:
   current page, one primary next local action, back target, Goal, Project, and
   `/resume` before any diagnostic route rows, while the full route evidence and
   zero-effect counters remain available inside collapsed `Route evidence`.
-- The shared Recent Items sidebar is now compact and action-first: it shows one
-  primary reopen link plus `/resume`, while counts, saved context, last action,
-  zero-effect counters, and the longer shortcut list stay available inside
-  collapsed evidence/details.
+- The shared Recent Items sidebar is now compact and action-first: it shows a
+  visible Recent/Workspace/Action/Artifact return dock, while counts, saved
+  context, last action, artifact targets, zero-effect counters, and the longer
+  shortcut list stay available inside collapsed evidence/details.
 - Goal Action Dock and Goal Operator Workbench primary links now jump directly
   to `#goal-next-action-form` when the confirmed browser action form exists,
   so top-of-page action controls land on the actionable form instead of the

@@ -27021,6 +27021,24 @@ def _recent_items_command_bar(
     last_action_result = str(state.get("last_action_result") or "").strip()
     last_action_href = _safe_local_return_path(state.get("last_action_next_href"))
     primary_label, primary_href, primary_kind = items[0]
+    if open_goal:
+        workspace_label = open_goal
+        workspace_href = f"/goals/{quote(open_goal)}"
+        workspace_action = "Open saved goal"
+    elif open_project:
+        workspace_label = open_project
+        workspace_href = f"/projects/{quote(open_project)}"
+        workspace_action = "Open saved project"
+    else:
+        workspace_label = "No saved goal yet"
+        workspace_href = "/resume"
+        workspace_action = "Open resume"
+    action_label = last_action or "No saved action"
+    action_href = last_action_href or "/actions"
+    action_action = "Open last action" if last_action_href else "Open actions"
+    artifact_label = Path(last_artifact).name if last_artifact else "No saved artifact"
+    artifact_href = f"/artifacts?path={quote(last_artifact)}" if last_artifact else "/workspace"
+    artifact_action = "Open artifact" if last_artifact else "Open workspace"
     workspace_count = sum(1 for _, _, kind in items if kind.startswith("workspace"))
     goal_count = sum(1 for _, _, kind in items if "goal" in kind)
     delegation_count = sum(1 for _, _, kind in items if kind == "delegation")
@@ -27028,6 +27046,9 @@ def _recent_items_command_bar(
     lines = [
         f"recent_items_now: Open {_e(primary_label)}",
         f"recent_items_click: <a href='{_e(primary_href)}'>{_e(primary_href)}</a>",
+        f"recent_items_workspace_click: <a href='{_e(workspace_href)}'>{_e(workspace_href)}</a>",
+        f"recent_items_last_action_click: <a href='{_e(action_href)}'>{_e(action_href)}</a>",
+        f"recent_items_last_artifact_click: <a href='{_e(artifact_href)}'>{_e(artifact_href)}</a>",
         "recent_items_resume: <a href='/resume'>/resume</a>",
         "recent_items_safety: read-only local navigation",
     ]
@@ -27039,6 +27060,20 @@ def _recent_items_command_bar(
             f"<strong>{_e(primary_label)}</strong>",
             f"<a class='recent-items-primary' data-recent-items-primary='true' href='{_e(primary_href)}'>Open recent item</a>",
             "<a class='recent-items-resume' data-recent-items-resume='true' href='/resume'>Resume workspace</a>",
+            "</div>",
+            "<div class='recent-items-cards' data-recent-items-cards='true'>",
+            "<article class='recent-items-card recent-items-card-primary'><h4>Recent</h4>",
+            f"<p>{_e(primary_label)}</p>",
+            f"<a class='recent-items-card-action' data-recent-items-card-primary='true' href='{_e(primary_href)}'>Open recent</a></article>",
+            "<article class='recent-items-card'><h4>Workspace</h4>",
+            f"<p>{_e(workspace_label)}</p>",
+            f"<a class='recent-items-card-link' data-recent-items-workspace-card='true' href='{_e(workspace_href)}'>{_e(workspace_action)}</a></article>",
+            "<article class='recent-items-card'><h4>Action</h4>",
+            f"<p>{_e(action_label)}</p>",
+            f"<a class='recent-items-card-link' data-recent-items-action-card='true' href='{_e(action_href)}'>{_e(action_action)}</a></article>",
+            "<article class='recent-items-card'><h4>Artifact</h4>",
+            f"<p>{_e(artifact_label)}</p>",
+            f"<a class='recent-items-card-link' data-recent-items-artifact-card='true' href='{_e(artifact_href)}'>{_e(artifact_action)}</a></article>",
             "</div>",
             "<details class='recent-items-details' data-recent-items-details='true'>",
             "<summary>Recent item evidence</summary>",
@@ -27059,6 +27094,14 @@ def _recent_items_command_bar(
                     ("recent_items_saved_project", open_project or "none"),
                     ("recent_items_saved_goal", open_goal or "none"),
                     ("recent_items_last_artifact", last_artifact or "none"),
+                    (
+                        "recent_items_last_artifact_surface",
+                        (
+                            SafeHtml(f"<a href='{_e(artifact_href)}'>{_e(last_artifact)}</a>")
+                            if last_artifact
+                            else "none"
+                        ),
+                    ),
                     ("recent_items_last_action", last_action or "none"),
                     ("recent_items_last_action_result", last_action_result or "none"),
                     (
@@ -27069,6 +27112,12 @@ def _recent_items_command_bar(
                             else "none"
                         ),
                     ),
+                    (
+                        "recent_items_workspace_surface",
+                        SafeHtml(f"<a href='{_e(workspace_href)}'>{_e(workspace_href)}</a>"),
+                    ),
+                    ("recent_items_cards_available", "true"),
+                    ("recent_items_card_count", "4"),
                     ("recent_items_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
                     ("recent_items_write_on_get", "false"),
                     ("recent_items_provider_calls_taken", "0"),
@@ -28125,6 +28174,14 @@ def _html_page(
     .recent-items-primary, .recent-items-resume {{ display:inline-flex; align-items:center; justify-content:center; min-height:32px; width:100%; max-width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
     .recent-items-primary {{ background:var(--accent); color:#fff; }}
     .recent-items-resume {{ background:var(--surface); color:var(--accent); }}
+    .recent-items-cards {{ display:grid; grid-template-columns:1fr; gap:8px; }}
+    .recent-items-card {{ min-width:0; border:1px solid var(--line); background:var(--panel); padding:8px; }}
+    .recent-items-card h4 {{ margin:0 0 4px; font-size:12px; text-transform:uppercase; letter-spacing:0; color:var(--muted); }}
+    .recent-items-card p {{ margin:0 0 7px; overflow-wrap:anywhere; }}
+    .recent-items-card-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .recent-items-card-action, .recent-items-card-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:30px; width:100%; max-width:100%; padding:6px 8px; border-radius:6px; border:1px solid var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
+    .recent-items-card-action {{ background:var(--accent); color:#fff; }}
+    .recent-items-card-link {{ background:var(--surface); color:var(--accent); }}
     .recent-items-details summary {{ cursor:pointer; font-weight:700; }}
     .recent-items-details:not([open]) > :not(summary) {{ display:none; }}
     .recent-items-list-details summary {{ cursor:pointer; font-weight:700; }}
