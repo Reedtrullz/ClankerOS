@@ -290,6 +290,10 @@ Latest status focus:
   Completed, Artifact, Workflow, and Boundary cards plus collapsed result
   command evidence preserving the target notice surface, result, primary
   artifact, confirmation source, and zero-effect counters.
+- Failed local action pages now open with an action-first
+  `Action Needs Attention` recovery surface before error details, with visible
+  Fix Input, Retry Surface, Error, Catalog, and Boundary cards plus collapsed
+  error evidence preserving no-result/no-write/no-external-effect counters.
 - The shared operator shell now persists the latest confirmed local action in
   `.clanker/app/workspace.json` and renders a read-only `Last Action` strip on
   later pages, with the result, target notice surface, saved context, and

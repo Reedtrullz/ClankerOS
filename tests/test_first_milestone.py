@@ -2800,6 +2800,22 @@ def test_local_app_rejects_pending_ci_snapshot_status_json_without_record(
     )
 
     assert response.status == 400
+    assert "Action Needs Attention" in response.body
+    assert "data-action-error-recovery='true'" in response.body
+    assert response.body.index("Action Needs Attention") < response.body.index(
+        "Action Error Details"
+    )
+    assert "data-action-error-recovery-actions='true'" in response.body
+    assert "data-action-error-recovery-primary='true'" in response.body
+    assert "data-action-error-recovery-evidence='true'" in response.body
+    assert "action_error_recovery_status</dt><dd>stopped_before_completion" in response.body
+    assert (
+        "action_error_recovery_retry_surface</dt><dd>"
+        "<a href='/ci-evidence#record-ci-snapshot-json'>CI evidence form</a>"
+    ) in response.body
+    assert "action_error_recovery_action_completed</dt><dd>false" in response.body
+    assert "action_error_recovery_network_actions_taken</dt><dd>0" in response.body
+    assert "action_error_recovery_external_effects_created</dt><dd>false" in response.body
     assert "Action Error Details" in response.body
     assert "ci-snapshot-evidence-from-gh-json" in response.body
     assert "GitHub run is not successful" in response.body
@@ -5224,6 +5240,24 @@ def test_local_app_routes_render_modern_workflow_and_health(
         form={"requested_by": ["operator"], "confirm": ["yes"]},
     )
     assert action_error.status == 400
+    assert "Action Needs Attention" in action_error.body
+    assert "data-action-error-recovery='true'" in action_error.body
+    assert action_error.body.index("Action Needs Attention") < action_error.body.index(
+        "Action Error Details"
+    )
+    assert "data-action-error-recovery-actions='true'" in action_error.body
+    assert "data-action-error-recovery-primary='true'" in action_error.body
+    assert "data-action-error-recovery-evidence='true'" in action_error.body
+    assert "action_error_recovery_status</dt><dd>stopped_before_completion" in action_error.body
+    assert "action_error_recovery_action</dt><dd>context-pack" in action_error.body
+    assert (
+        "action_error_recovery_retry_surface</dt><dd>"
+        "<a href='/actions'>Action catalog</a>"
+    ) in action_error.body
+    assert "action_error_recovery_result_recorded</dt><dd>false" in action_error.body
+    assert "action_error_recovery_write_completed</dt><dd>false" in action_error.body
+    assert "action_error_recovery_network_actions_taken</dt><dd>0" in action_error.body
+    assert "action_error_recovery_external_effects_created</dt><dd>false" in action_error.body
     assert "Action Error Details" in action_error.body
     assert "action" in action_error.body
     assert "context-pack" in action_error.body

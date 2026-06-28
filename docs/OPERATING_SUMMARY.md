@@ -901,8 +901,11 @@ Core layers for the bootstrap:
   the target notice after navigation without granting new action authority.
   GET pages render an escaped
   `Action Notice` banner when reached through a notice link;
-  action error pages render the attempted action, submitted payload, error
-  details, and a no-action-completed non-claim. It does not push, create PRs,
+  action error pages now open with an action-first `Action Needs Attention`
+  recovery surface containing Fix Input, Retry Surface, Error, Catalog, and
+  Boundary cards before preserving the attempted action, submitted payload,
+  error details, and a no-action-completed non-claim in collapsed/anchored
+  evidence. It does not push, create PRs,
   deploy, call providers, execute arbitrary commands, or use the network
   beyond local browser/server loopback.
 - Local app smoke testing: `app-smoke-test` renders the core local app routes

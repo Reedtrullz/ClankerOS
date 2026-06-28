@@ -1,5 +1,49 @@
 # Status
 
+## 2026-06-28 Action Error Recovery Surface
+
+- Made failed local action pages action-first with an `Action Needs Attention`
+  recovery surface before `Action Error Details`.
+- The recovery surface shows Fix Input, Retry Surface, Error, Catalog, and
+  Boundary cards, linking to the payload, inferred retry surface, diagnostic
+  details, action catalog, and collapsed safety evidence without adding action
+  authority.
+- Detailed attempted action, error type/message, submitted payload, and
+  no-action-completed boundary remain below the recovery surface with stable
+  anchors and zero-effect counters preserved in the DOM.
+- Updated README, operating summary, status entry point, and focused local app
+  route/error assertions for missing form input and rejected GitHub status JSON
+  paths.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or ci_snapshot and status_json' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against scratch local app `127.0.0.1:8854` submitted the
+  first-run `register-project` form with an invalid path and confirmed the
+  local action to trigger a validation failure.
+- Desktop `1280x720` rendered five recovery cards, ordered recovery before
+  details, linked primary Fix Input to `#action-error-payload`, linked Retry
+  Surface to `/#first-run-create-project`, kept evidence collapsed, had no
+  horizontal overflow, and reported no warning/error logs.
+- Mobile `390x844` rendered the five recovery cards in one column, kept
+  evidence collapsed, had no horizontal overflow, and reported no
+  warning/error logs.
+- The browser viewport was reset, the browser tab was closed, the local app
+  server was stopped, `lsof -nP -iTCP:8854 -sTCP:LISTEN` showed no remaining
+  listener, and the bounded scratch app root was removed by the server
+  command's cleanup trap.
+- Non-claims: this is a local error-page UX/routing change. It does not write
+  before confirmation, complete failed actions, approve work, execute work,
+  create commits, push, create PRs, deploy, fetch GitHub status, call
+  providers, or mutate external systems.
+
 ## 2026-06-28 Action Result Complete Surface
 
 - Made confirmed local action result pages action-first with an `Action

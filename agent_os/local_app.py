@@ -25172,7 +25172,8 @@ def _action_error_page(
 ) -> str:
     return "".join(
         [
-            "<section><h1>Action Error Details</h1>",
+            _action_error_recovery(action, form, error),
+            "<section id='action-error-details'><h2>Action Error Details</h2>",
             "<p class='error'>No action was completed.</p>",
             _non_claim_banner(),
             _kv(
@@ -25182,12 +25183,114 @@ def _action_error_page(
                     ("error", str(error)),
                 ]
             ),
-            "<h2>Action Payload</h2>",
+            "<h2 id='action-error-payload'>Action Payload</h2>",
             _kv(_submitted_form_rows(form)),
             "<p class='muted'>Review the submitted fields, fix the missing or invalid value, then retry from the relevant local app page.</p>",
             "</section>",
         ]
     )
+
+
+def _action_error_recovery(
+    action: str,
+    form: dict[str, list[str]],
+    error: Exception,
+) -> str:
+    context = _action_confirmation_context(action, form)
+    retry_href, retry_label, retry_reason = _action_error_retry_target(action, form)
+    error_text = _compact_label(str(error) or type(error).__name__, 110)
+    return "".join(
+        [
+            "<section id='action-error-recovery' class='panel action-error-recovery' data-action-error-recovery='true'><h1>Action Needs Attention</h1>",
+            "<p class='muted'>The local action stopped before completion. Fix the submitted input or return to the owning surface; no local action result was recorded.</p>",
+            "<div class='action-error-grid' data-action-error-recovery-actions='true'>",
+            "<article class='action-error-card action-error-primary'><h3>Fix Input</h3>",
+            f"<p>{_e(context['requires'])}</p>",
+            "<a class='action-error-action' data-action-error-recovery-primary='true' href='#action-error-payload'>Review payload</a></article>",
+            "<article class='action-error-card'><h3>Retry Surface</h3>",
+            f"<p>{_e(retry_label)}</p>",
+            f"<a class='action-error-link' href='{_e(retry_href)}'>{_e(retry_label)}</a></article>",
+            "<article class='action-error-card'><h3>Error</h3>",
+            f"<p>{_e(error_text)}</p>",
+            "<a class='action-error-link' href='#action-error-details'>Error details</a></article>",
+            "<article class='action-error-card'><h3>Catalog</h3>",
+            f"<p>{_e(action)}</p>",
+            "<a class='action-error-link' href='/actions'>Action catalog</a></article>",
+            "<article class='action-error-card'><h3>Boundary</h3>",
+            "<p>No result, push, PR, deploy, provider call, network action, or external mutation.</p>",
+            "<a class='action-error-link' href='#action-error-evidence'>Safety evidence</a></article>",
+            "</div>",
+            "<details id='action-error-evidence' class='action-error-evidence' data-action-error-recovery-evidence='true'><summary>Action error evidence</summary>",
+            _kv(
+                [
+                    ("action_error_recovery_status", "stopped_before_completion"),
+                    ("action_error_recovery_action", action),
+                    ("action_error_recovery_error_type", type(error).__name__),
+                    ("action_error_recovery_error", str(error)),
+                    ("action_error_recovery_retry_surface", SafeHtml(f"<a href='{_e(retry_href)}'>{_e(retry_label)}</a>")),
+                    ("action_error_recovery_retry_reason", retry_reason),
+                    ("action_error_recovery_category", context["category"]),
+                    ("action_error_recovery_surface", context["surface"]),
+                    ("action_error_recovery_required_input", context["requires"]),
+                    ("action_error_recovery_submitted_fields", context["submitted_fields"]),
+                    ("action_error_recovery_action_completed", "false"),
+                    ("action_error_recovery_result_recorded", "false"),
+                    ("action_error_recovery_write_completed", "false"),
+                    ("action_error_recovery_provider_calls_taken", "0"),
+                    ("action_error_recovery_network_actions_taken", "0"),
+                    ("action_error_recovery_external_effects_created", "false"),
+                    ("action_error_recovery_push_created", "false"),
+                    ("action_error_recovery_pr_created", "false"),
+                    ("action_error_recovery_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"action_error_recovery_fix: <a href='#action-error-payload'>Review payload for {_e(action)}</a>",
+                    f"action_error_recovery_retry: <a href='{_e(retry_href)}'>{_e(retry_label)}</a>",
+                    f"action_error_recovery_error: {_e(error_text)}",
+                    "action_error_recovery_safety: no completed local action result",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _action_error_retry_target(
+    action: str,
+    form: dict[str, list[str]],
+) -> tuple[str, str, str]:
+    return_to = _safe_local_return_path(_one(form, "return_to"))
+    if return_to:
+        return return_to, "Submitted return target", "submitted_return_to"
+    goal_id = _one(form, "goal_id")
+    if goal_id:
+        return f"/goals/{quote(goal_id)}#goal-next-action", "Goal action form", "goal_id"
+    delegation_id = _one(form, "delegation_id")
+    if delegation_id:
+        return f"/delegations/{quote(delegation_id)}#safe-local-actions", "Delegation actions", "delegation_id"
+    run_id = _one(form, "run_id")
+    if run_id:
+        return f"/runs/{quote(run_id)}", "Run page", "run_id"
+    approval_id = _one(form, "approval_id")
+    if approval_id:
+        return "/approvals", "Approvals", "approval_id"
+    publication_id = _one(form, "publication_id")
+    if publication_id:
+        return "/approvals", "Approvals", "publication_id"
+    if action == "ci-snapshot-evidence-from-gh-json":
+        return "/ci-evidence#record-ci-snapshot-json", "CI evidence form", "ci_snapshot_action"
+    if action == "register-project":
+        return "/#first-run-create-project", "Create Project", "register_project_action"
+    if action == "create-goal":
+        return "/#first-run-create-goal", "Create First Goal", "create_goal_action"
+    if action == "save-workspace":
+        return "/workspace#save-workspace", "Workspace save form", "save_workspace_action"
+    if action == "pin-memory":
+        return "/memory", "Memory page", "pin_memory_action"
+    return "/actions", "Action catalog", "fallback_action_catalog"
 
 
 def _action_result_page(
@@ -28009,6 +28112,19 @@ def _html_page(
     .last-action-strip dl {{ grid-template-columns:minmax(170px, 230px) 1fr; }}
     .last-action-strip ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
     .last-action-strip li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence {{ scroll-margin-top:128px; }}
+    .action-error-recovery {{ border-left:4px solid var(--error); margin-bottom:16px; }}
+    .action-error-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .action-error-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .action-error-card h3 {{ margin-top:0; }}
+    .action-error-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .action-error-primary {{ border-color:var(--error); box-shadow:inset 3px 0 0 var(--error); }}
+    .action-error-action, .action-error-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .action-error-action {{ background:var(--error); border-color:var(--error); color:#fff; }}
+    .action-error-link {{ background:var(--surface); color:var(--accent); }}
+    .action-error-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .action-error-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .action-error-evidence:not([open]) > :not(summary) {{ display:none; }}
     #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:128px; }}
     .action-result-command-bar {{ border-left:4px solid var(--ok); margin-bottom:16px; }}
     .action-result-command-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
@@ -28966,7 +29082,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-confirmation-review, #action-confirm-local-action, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-result-command-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
