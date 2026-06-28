@@ -21282,6 +21282,88 @@ def _breadcrumbs(
         ),
         ("route_resume", SafeHtml("<a href='/resume'>/resume</a>")),
     ]
+    primary_focus_label = focus_target_label
+    if focus_status == "available":
+        next_action = focus_context["next_action"]
+        primary_focus_label = str(getattr(next_action, "action", "") or focus_target_label)
+    goal_label = current_goal or saved_goal or "No goal yet"
+    goal_href = (
+        f"/goals/{quote(current_goal)}"
+        if current_goal
+        else f"/goals/{quote(saved_goal)}"
+        if saved_goal
+        else "/goals"
+    )
+    project_label = current_project or saved_project or "No project"
+    project_href = (
+        f"/projects/{quote(current_project)}"
+        if current_project
+        else f"/projects/{quote(saved_project)}"
+        if saved_project
+        else "/projects"
+    )
+    focus_cards = [
+        (
+            "Next",
+            primary_focus_label,
+            SafeHtml(
+                f"<a class='route-context-primary' data-route-context-primary='true' "
+                f"href='{_e(focus_target)}'>{_e(primary_focus_label)}</a>"
+            ),
+            "data-route-context-next='true'",
+        ),
+        (
+            "Back",
+            parent_label,
+            SafeHtml(
+                f"<a class='route-context-secondary' data-route-context-back='true' "
+                f"href='{_e(parent_href)}'>{_e(parent_label)}</a>"
+            ),
+            "data-route-context-back-card='true'",
+        ),
+        (
+            "Goal / Project",
+            goal_label if goal_label != "No goal yet" else project_label,
+            SafeHtml(
+                "<div class='route-context-duo'>"
+                f"<a class='route-context-secondary' data-route-context-goal='true' "
+                f"href='{_e(goal_href)}'>{_e(goal_label)}</a>"
+                f"<a class='route-context-secondary' data-route-context-project='true' "
+                f"href='{_e(project_href)}'>{_e(project_label)}</a>"
+                "</div>"
+            ),
+            "data-route-context-goal-card='true' data-route-context-project-card='true'",
+        ),
+        (
+            "Resume",
+            "/resume",
+            SafeHtml(
+                "<a class='route-context-secondary' data-route-context-resume='true' "
+                "href='/resume'>Resume workspace</a>"
+            ),
+            "data-route-context-resume-card='true'",
+        ),
+    ]
+    focus_html = [
+        "<div class='route-context-focus' data-route-context-focus='true'>",
+        (
+            "<div class='route-context-item route-context-current' "
+            "data-route-context-current='true'>"
+            "<span class='route-context-label'>Current</span>"
+            f"<strong>{_e(_compact_label(title, 96))}</strong>"
+            f"<a href='{_e(current_href)}'>{_e(current_href)}</a>"
+            "</div>"
+        ),
+    ]
+    for label, value, action, marker in focus_cards:
+        focus_html.append(
+            f"<div class='route-context-item' {marker}>"
+            f"<span class='route-context-label'>{_e(label)}</span>"
+            f"<strong>{_e(_compact_label(value, 88))}</strong>"
+            f"{action}"
+            "</div>"
+        )
+    focus_html.append("</div>")
     return "".join(
         [
             "<section class='panel route-context-strip' data-breadcrumbs='true' data-route-context='true'>",
@@ -21289,9 +21371,12 @@ def _breadcrumbs(
             "<nav class='breadcrumbs' aria-label='Breadcrumbs'><ol>",
             "".join(rendered),
             "</ol></nav>",
-            _kv(summary_rows),
+            "".join(focus_html),
             "<details class='route-context-details' data-route-context-details='true'>",
-            "<summary>Route Details</summary>",
+            "<summary>Route evidence</summary>",
+            "<div class='route-context-summary' data-route-context-summary='true'>",
+            _kv(summary_rows),
+            "</div>",
             _kv(rows),
             _ul(lines),
             "</details>",
@@ -22320,11 +22405,21 @@ def _html_page(
     .palette-route-context li {{ min-width:0; padding:7px 9px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .route-context-strip {{ border-left:4px solid var(--accent); margin:0 0 16px; }}
     .route-context-strip h2 {{ font-size:15px; }}
+    .route-context-focus {{ display:grid; grid-template-columns:minmax(210px, 1.3fr) repeat(auto-fit, minmax(150px, 1fr)); gap:8px; align-items:stretch; margin:10px 0; }}
+    .route-context-item {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; display:grid; gap:5px; align-content:start; }}
+    .route-context-current {{ background:var(--panel); }}
+    .route-context-label {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .route-context-item strong {{ overflow-wrap:anywhere; }}
+    .route-context-primary, .route-context-secondary {{ display:inline-flex; align-items:center; justify-content:center; min-height:32px; width:100%; max-width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
+    .route-context-primary {{ background:var(--accent); color:#fff; }}
+    .route-context-secondary {{ background:var(--panel); color:var(--accent); }}
+    .route-context-duo {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(92px, 1fr)); gap:6px; }}
     .route-context-strip dl {{ grid-template-columns:minmax(170px, 230px) 1fr; }}
     .route-context-strip ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
     .route-context-strip li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .route-context-details {{ margin-top:10px; }}
     .route-context-details summary {{ cursor:pointer; font-weight:700; }}
+    .route-context-details:not([open]) > :not(summary) {{ display:none; }}
     .breadcrumbs ol {{ list-style:none; display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:0; margin:0 0 12px; color:var(--muted); font-size:13px; }}
     .breadcrumbs li {{ border:0; background:transparent; padding:0; }}
     .breadcrumbs li + li::before {{ content:"/"; margin-right:6px; color:var(--line); }}
@@ -22711,7 +22806,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .route-context-focus, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>

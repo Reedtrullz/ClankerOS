@@ -4770,6 +4770,25 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-breadcrumbs='true'" in root.body
     assert "data-route-context='true'" in root.body
     assert "Route Context" in root.body
+    assert "data-route-context-focus='true'" in root.body
+    assert "data-route-context-current='true'" in root.body
+    assert (
+        "data-route-context-primary='true' href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
+    assert "data-route-context-back='true' href='/'>Dashboard</a>" in root.body
+    assert "data-route-context-goal='true' href='/goals'>No goal yet</a>" in root.body
+    assert "data-route-context-project='true' href='/projects'>No project</a>" in root.body
+    assert "data-route-context-resume='true' href='/resume'>Resume workspace</a>" in root.body
+    assert "data-route-context-details='true'" in root.body
+    assert "<summary>Route evidence</summary>" in root.body
+    assert "data-route-context-summary='true'" in root.body
+    assert root.body.index("data-route-context-focus='true'") < root.body.index(
+        "data-route-context-details='true'"
+    )
+    assert root.body.index("data-route-context-summary='true'") < root.body.index(
+        "breadcrumb_status</dt><dd>current_route"
+    )
     assert "breadcrumb_status</dt><dd>current_route" in root.body
     assert "breadcrumb_family</dt><dd>dashboard" in root.body
     assert "breadcrumb_title</dt><dd>Dashboard" in root.body
@@ -7872,6 +7891,31 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "recent_items_resume: <a href='/resume'>/resume</a>" in goal.body
     assert "data-breadcrumbs='true'" in goal.body
     assert "data-route-context='true'" in goal.body
+    assert "data-route-context-focus='true'" in goal.body
+    assert "data-route-context-current='true'" in goal.body
+    assert (
+        f"data-route-context-primary='true' href='/runs/{result.coder_worktree_run_id}'>"
+        "Create commit request</a>"
+    ) in goal.body
+    assert "data-route-context-back='true' href='/goals'>Goals</a>" in goal.body
+    assert (
+        f"data-route-context-goal='true' href='/goals/{result.goal_id}'>"
+        f"{result.goal_id}</a>"
+    ) in goal.body
+    assert (
+        f"data-route-context-project='true' href='/projects/{result.project_id}'>"
+        f"{result.project_id}</a>"
+    ) in goal.body
+    assert "data-route-context-resume='true' href='/resume'>Resume workspace</a>" in goal.body
+    assert "data-route-context-details='true'" in goal.body
+    assert "<summary>Route evidence</summary>" in goal.body
+    assert "data-route-context-summary='true'" in goal.body
+    assert goal.body.index("data-route-context-focus='true'") < goal.body.index(
+        "data-route-context-details='true'"
+    )
+    assert goal.body.index("data-route-context-summary='true'") < goal.body.index(
+        "breadcrumb_family</dt><dd>goal"
+    )
     assert "breadcrumb_family</dt><dd>goal" in goal.body
     assert f"breadcrumb_current_goal</dt><dd><a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in goal.body
     assert f"breadcrumb_current_project</dt><dd><a href='/projects/{result.project_id}'>{result.project_id}</a>" in goal.body
@@ -9878,6 +9922,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     run_page = render_local_app_route(tmp_path, f"/runs/{result.coder_worktree_run_id}")
     assert run_page.status == 200
     assert "data-route-context='true'" in run_page.body
+    assert "data-route-context-focus='true'" in run_page.body
+    assert "data-route-context-primary='true'" in run_page.body
+    assert "data-route-context-details='true'" in run_page.body
+    assert "<summary>Route evidence</summary>" in run_page.body
+    assert "data-route-context-summary='true'" in run_page.body
+    assert run_page.body.index("data-route-context-focus='true'") < run_page.body.index(
+        "data-route-context-details='true'"
+    )
     assert "breadcrumb_family</dt><dd>run" in run_page.body
     assert f"breadcrumb_current_goal</dt><dd><a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in run_page.body
     assert f"breadcrumb_current_project</dt><dd><a href='/projects/{result.project_id}'>{result.project_id}</a>" in run_page.body

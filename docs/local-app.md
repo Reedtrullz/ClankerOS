@@ -381,10 +381,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   action, the shell renders a read-only `Last Action` strip from
   `.clanker/app/workspace.json` with the action kind, result, target notice
   surface, saved project/goal context, timestamp, and no-write/provider/
-  network/external-effect counters. The route context strip shows
-  current route family/path, parent surface, current Goal/Project/run context
-  when available, saved workspace anchors, `/resume`, focus target, and
-  expandable zero-effect counters before the page body. The recent-items sidebar
+  network/external-effect counters. The route context strip now opens with a
+  compact action-first focus grid for the current page, next local action, back
+  target, Goal, Project, and `/resume`; route family/path, saved workspace
+  anchors, focus target, and zero-effect counters stay available inside
+  collapsed `Route evidence` before the page body. The recent-items sidebar
   starts with a read-only `Recent Items Command Bar` that shows one compact
   reopen action plus `/resume`, then keeps workspace/goal/delegation/run
   counts, saved project/goal/artifact context, the last confirmed action, and

@@ -573,10 +573,11 @@ Core layers for the bootstrap:
   action strip reads `.clanker/app/workspace.json` and exposes the latest
   completed local action, result, notice target, saved project/goal context,
   timestamp, and zero-effect counters without writing on GET. The route
-  context strip reports current route family/path, parent
-  surface, current Goal/Project/run context when it can be resolved, saved
-  workspace anchors, `/resume`, current focus target, and zero-effect
-  boundaries in an expandable details block before the page body. The
+  context strip now starts with a compact action-first focus grid for the
+  current page, next local action, back target, Goal, Project, and `/resume`,
+  while route family/path, saved workspace anchors, focus target, and
+  zero-effect boundaries stay available inside collapsed `Route evidence`
+  before the page body. The
   recent-items sidebar now starts with a read-only `Recent Items Command Bar`
   that shows one compact reopen action plus `/resume`, then keeps
   workspace/goal/delegation/run counts, saved workspace project/goal/artifact

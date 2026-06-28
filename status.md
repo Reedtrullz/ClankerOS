@@ -1,5 +1,47 @@
 # Status
 
+## 2026-06-28 Compact Route Context
+
+- Made the shared `Route Context` strip compact and action-first across app
+  pages: it now shows current page, one primary next local action, back target,
+  Goal/Project context, and `/resume` before any diagnostic route rows.
+- Moved the route summary rows, breadcrumb readbacks, saved workspace anchors,
+  focus target readback, and zero-effect counters into collapsed
+  `Route evidence`.
+- Combined Goal and Project into one compact context cell and added a mobile
+  breakpoint so the strip stacks cleanly on narrow screens without horizontal
+  overflow.
+- Added stable `data-route-context-focus`, `data-route-context-primary`,
+  `data-route-context-goal`, `data-route-context-project`,
+  `data-route-context-summary`, and existing `data-route-context-details`
+  assertions to fixture-backed route tests.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is read-only local navigation and browser rendering. It
+  does not write on GET, create action authority, approve work, run work, call
+  providers, fetch GitHub from ClankerOS, poll network services, commit, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 515 deselected`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-route-context-compact-smoke-final app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-route-context-compact-demo-final app-demo-smoke-test`
+    -> passed, fixture-backed Goal route matched expected snippets, provider/
+    network/external mutation counters remained `0`
+  - Rendered in-app Browser QA against
+    `http://127.0.0.1:8797/goals/goal_30f30aa197ec`: desktop viewport
+    rendered a five-item Route Context focus strip with primary
+    `Create commit request` to `/runs/run_3780f2fbded1`, collapsed
+    `Route evidence`, hidden route rows while collapsed, a successful
+    disclosure click, no horizontal overflow, no framework overlay, and empty
+    console warning/error logs. Mobile viewport `390x844` rendered the same
+    Route Context as a one-column stack with no horizontal overflow
+    (`scrollWidth=390`, `viewportWidth=390`), collapsed evidence, no framework
+    overlay, and empty console warning/error logs.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Recent Items Compact Rail
 
 - Made the shared Recent Items sidebar compact and action-first across app

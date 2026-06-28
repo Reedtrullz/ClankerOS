@@ -509,10 +509,11 @@ confirmed local action, the shell also shows a read-only `Last Action` strip
 from `.clanker/app/workspace.json`, with the action result, target notice
 surface, saved Goal/project context, and zero-effect counters so the operator
 can recover the last handoff after navigating away. The route
-context strip shows the current route family/path, parent surface, current
-Goal/Project/run context when it can be resolved, saved workspace anchors,
-resume link, current focus target, and expandable zero-effect counters before
-the page content. The recent-items sidebar now starts with a read-only `Recent Items
+context strip now starts with a compact action-first focus grid: current page,
+next local action, back target, Goal, Project, and `/resume`. The full route
+family/path, saved workspace anchors, focus target, and zero-effect counters
+remain available inside collapsed `Route evidence` before the page content.
+The recent-items sidebar now starts with a read-only `Recent Items
 Command Bar` that shows one compact reopen action plus `/resume`, then keeps
 workspace/goal/delegation/run counts, saved workspace context, last action, and
 zero-effect counters inside collapsed evidence and the remaining recent
