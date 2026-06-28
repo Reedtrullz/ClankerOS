@@ -4,15 +4,20 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal Action Dock and Goal Operator Workbench primary links now jump directly
+  to `#goal-next-action-form` when the confirmed browser action form exists,
+  so persistent/top-of-page action controls land on the actionable form instead
+  of the broader Next Action readback.
 - Goal Next Action sections now open with a human-first focus strip for Now,
   Gate, Target, and Boundary, giving the operator one readable primary link to
   the existing confirmed form or source surface, then placing the confirmed
   form before collapsed action evidence.
-- Goal pages now include a compact fixed desktop `Goal Action Dock` after the
+- Goal pages include a compact fixed desktop `Goal Action Dock` after the
   Current Phase banner and Goal Jump Bar, keeping the current action, workflow
   gate, CI proof target, and `/resume` route visible during long scroll
-  sessions while linking back to the existing confirmed Next Action form
-  without adding action authority; it becomes static on narrow screens.
+  sessions while jumping directly to the existing confirmed action form when
+  one is available without adding action authority; it becomes static on
+  narrow screens.
 - Goal pages include an in-flow, read-only `Goal Jump Bar` immediately after
   the Current Phase banner, keeping phase, action, workflow, timeline,
   evidence, artifacts, notes, git, and remaining work anchors one click or

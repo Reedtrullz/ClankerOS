@@ -174,8 +174,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   artifacts, notes, git, and remaining work. Its visible `1`-`9` key badges
   and `aria-keyshortcuts` jump to those local anchors without submitting
   forms, then a compact fixed desktop `Goal Action Dock` keeps the current action,
-  gate, CI proof target, and resume route visible while linking back to the
-  existing confirmed Goal Next Action form and becomes static on narrow
+  gate, CI proof target, and resume route visible while jumping directly to the
+  existing confirmed Goal action form when one is available and becomes static on
+  narrow
   screens. The dock appears before the Goal
   Command Bar, Goal Operator Workbench, Goal Daily Loop, Goal Return Brief,
   Goal Continuation Rail, next action, next recommendation, Goal Workflow Map,
@@ -199,7 +200,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   local surface, progress, open/waiting counts, resume route, project-scoped CI
   proof state, and write-on-GET/network/external-effect boundaries. A
   `Goal Operator Workbench` follows with a human-readable do/check/unblock/
-  finish strip, including the in-page action-form target when available, the
+  finish strip, with its primary action jumping directly to the in-page
+  action-form target when available, the
   source surface, current gate/progress, first unblock surface, and confirmed
   local-action counters before the longer diagnostic sections. The Goal Next
   Action section starts with a human-first focus strip for Now, Gate, Target,
@@ -208,7 +210,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   The in-flow Goal Jump Bar keeps the main
   daily anchors one click or keypress away without covering later controls, and
   the Goal Action Dock keeps the current action reachable from deep scroll
-  positions without adding a second action form. The Goal Section Index links
+  positions by jumping directly to the confirmed form without adding a second
+  action form. The Goal Section Index links
   directly to the Timeline, Activity, and Git command bars as well as the
   detailed sections, so long Goal pages remain navigable from their scan-first
   operator surfaces. Goal

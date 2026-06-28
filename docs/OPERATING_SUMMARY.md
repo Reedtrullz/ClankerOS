@@ -300,11 +300,12 @@ Core layers for the bootstrap:
   work. Visible `1`-`9` key badges and `aria-keyshortcuts` jump to those local
   anchors without submitting forms. A compact fixed desktop `Goal Action Dock`
   follows the jump bar and keeps the current action, workflow gate, CI proof
-  target, and `/resume` route visible while linking back to the existing
-  confirmed Goal Next Action form instead of duplicating action authority. It
-  becomes static on narrow screens and precedes the Goal Command Bar, Goal Operator Workbench, Daily Loop,
-  Goal Return Brief, Goal Continuation Rail, Next Action, Workflow Map, Goal
-  CI Handoff, live refresh panel, and long section index, so the first
+  target, and `/resume` route visible while jumping directly to the existing
+  confirmed Goal action form when one is available instead of duplicating
+  action authority. It becomes static on narrow screens and precedes the Goal
+  Command Bar, Goal Operator Workbench, Daily Loop, Goal Return Brief, Goal
+  Continuation Rail, Next Action, Workflow Map, Goal CI Handoff, live refresh
+  panel, and long section index, so the first
   viewport names the current phase before
   navigation and diagnostics. Goal Progress starts with a read-only `Goal Progress Command Bar` that
   summarizes task completion, workflow gate progress, current gate, waiting
@@ -336,13 +337,14 @@ Core layers for the bootstrap:
   action, target local surface, progress, waiting counts, `/resume`, latest
   project-scoped CI proof status, and write-on-GET/network/external-effect
   boundaries into one operator scan. A `Goal Operator Workbench` follows it
-  with a human-readable do/check/unblock/finish strip, pointing at the in-page
-  Goal action form when available, the source surface, current gate/progress,
-  first unblock surface, and confirmed local-action counters before the longer
-  diagnostic sections. The in-flow Goal Jump Bar keeps the main daily anchors
+  with a human-readable do/check/unblock/finish strip, pointing its primary
+  action directly at the in-page Goal action form when available, the source
+  surface, current gate/progress, first unblock surface, and confirmed
+  local-action counters before the longer diagnostic sections. The in-flow Goal Jump Bar keeps the main daily anchors
   one click or keypress away without covering later controls, the Goal Action
-  Dock keeps the current action one click away from deep scroll positions
-  without adding a second action form, and the Goal Next Action section starts
+  Dock keeps the current action one click away from deep scroll positions by
+  jumping directly to the confirmed form without adding a second action form,
+  and the Goal Next Action section starts
   with a human-first focus strip for Now, Gate, Target, and Boundary, then
   renders the confirmed form before collapsed action evidence. The Goal Section Index now links
   directly to the Timeline, Activity, and Git command bars in addition to the

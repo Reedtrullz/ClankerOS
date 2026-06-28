@@ -7896,7 +7896,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_action_dock_current_gate</dt><dd>commit_request" in goal.body
     assert "goal_action_dock_gate_progress</dt><dd>8/15 gates done" in goal.body
     assert "goal_action_dock_next_action</dt><dd>Create commit request" in goal.body
-    assert "goal_action_dock_primary_surface</dt><dd><a href='#goal-next-action'>Goal Next Action</a>" in goal.body
+    assert "goal_action_dock_primary_surface</dt><dd><a href='#goal-next-action-form'>Goal action form</a>" in goal.body
     assert f"goal_action_dock_source_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
     assert "goal_action_dock_form_available</dt><dd>true" in goal.body
     assert "goal_action_dock_confirmation_required</dt><dd>true" in goal.body
@@ -7907,9 +7907,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_action_dock_provider_calls_taken</dt><dd>0" in goal.body
     assert "goal_action_dock_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_action_dock_external_effects_created</dt><dd>false" in goal.body
-    assert "data-goal-action-dock-primary='true' href='#goal-next-action'>Open action form</a>" in goal.body
+    assert "data-goal-action-dock-primary='true' href='#goal-next-action-form'>Open action form</a>" in goal.body
     assert "goal_action_dock_now: Create commit request" in goal.body
-    assert "goal_action_dock_click: <a href='#goal-next-action'>Open action form</a>" in goal.body
+    assert "goal_action_dock_click: <a href='#goal-next-action-form'>Open action form</a>" in goal.body
     assert "goal_action_dock_gate: commit_request" in goal.body
     assert "goal_action_dock_safety: reuses existing confirmed Goal action form" in goal.body
     assert "goal_section_index_status</dt><dd>available" in goal.body
@@ -8014,7 +8014,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_workbench_pending_gates</dt><dd>1" in goal.body
     assert "goal_workbench_waiting_gates</dt><dd>6" in goal.body
     assert "goal_workbench_next_action</dt><dd>Create commit request" in goal.body
-    assert "goal_workbench_primary_surface</dt><dd><a href='#goal-next-action'>Use Goal action form</a>" in goal.body
+    assert "goal_workbench_primary_surface</dt><dd><a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
     assert f"goal_workbench_target_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
     assert "goal_workbench_action_form_available</dt><dd>true" in goal.body
     assert "goal_workbench_confirmation_required</dt><dd>true" in goal.body
@@ -8029,7 +8029,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_workbench_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_workbench_external_effects_created</dt><dd>false" in goal.body
     assert "goal_workbench_now: Act: Create commit request" in goal.body
-    assert "goal_workbench_click: <a href='#goal-next-action'>Use Goal action form</a>" in goal.body
+    assert "goal_workbench_click: <a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
     assert f"goal_workbench_source_surface: <a href='/runs/{result.coder_worktree_run_id}'" in goal.body
     assert "goal_workbench_unblock: <a href='/approvals'>Review approval</a>" in goal.body
     assert "goal_workbench_finish: <a href='#goal-daily-loop'>Goal Daily Loop</a>" in goal.body

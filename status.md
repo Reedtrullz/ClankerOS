@@ -1,5 +1,43 @@
 # Status
 
+## 2026-06-28 Goal Form Anchors
+
+- Updated the Goal Action Dock so its primary `Open action form` link jumps
+  directly to `#goal-next-action-form` when the confirmed browser action form
+  exists, instead of landing on the broader Next Action section.
+- Updated the Goal Operator Workbench primary action to use the same direct
+  confirmed-form anchor, keeping the top-of-page and persistent action
+  controls aligned with the Goal Next Action focus strip.
+- Updated fixture-backed Goal route assertions plus README, local app docs,
+  operating summary, and status focus.
+- Non-claims: this is browser rendering and local anchor navigation to an
+  existing confirmed form. It does not write on GET, create action authority,
+  approve work, run work, call providers, fetch GitHub from ClankerOS, poll
+  network services, commit, push, create PRs, deploy, or mutate external
+  systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 515 deselected`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-form-anchor-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-form-anchor-demo app-demo-smoke-test`
+    -> passed, fixture-backed Goal route matched expected snippets, provider/
+    network/external mutation counters remained `0`
+  - Rendered in-app Browser QA against
+    `http://127.0.0.1:8794/goals/goal_f6f16f173554`: desktop viewport
+    rendered one fixed Goal Action Dock with `Open action form` pointing to
+    `#goal-next-action-form`, the Goal Operator Workbench primary action also
+    pointing to `#goal-next-action-form`, collapsed Action Evidence, no
+    horizontal overflow, no framework overlay, empty console warning/error
+    logs, and successful dock/workbench clicks landing the confirmed form below
+    the sticky header. Mobile viewport `390x844` rendered the dock as
+    `position: static` with one grid column, the same direct form anchors, no
+    horizontal overflow, no framework overlay, and empty console warning/error
+    logs.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Goal Next Action Focus
 
 - Added a human-first focus strip at the top of the Goal Next Action section,

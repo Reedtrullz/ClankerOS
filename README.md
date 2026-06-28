@@ -264,8 +264,9 @@ Goal Jump Bar for phase, action, workflow, timeline, evidence, artifacts,
 notes, git, and remaining work. Its visible `1`-`9` key badges and
 `aria-keyshortcuts` jump to those local anchors without submitting forms,
 then a compact fixed desktop `Goal Action Dock` keeps the current action, gate,
-CI proof target, and resume route visible while linking back to the existing
-confirmed Goal Next Action form. The dock becomes static on narrow screens and
+CI proof target, and resume route visible while jumping directly to the
+existing confirmed Goal action form when one is available. The dock becomes
+static on narrow screens and
 precedes the Goal Command Bar, Goal
 Operator Workbench, Goal Daily Loop, Goal Return Brief, Goal Continuation Rail,
 next action, next recommendation, Goal Workflow Map, Goal CI Handoff, live
@@ -279,7 +280,8 @@ current phase, one primary action, target local surface, progress, waiting
 counts, resume route, latest project-scoped CI proof state, and zero-effect
 boundary so the operator can choose the next click without scrolling. Goal
 Operator Workbench follows it with a human-readable do/check/unblock/finish
-strip: it points at the in-page Goal action form when one is available, links
+strip: its primary action points directly at the in-page Goal action form when
+one is available, links
 the source surface and first unblock surface, names the current gate/progress,
 and exposes confirmation/write/provider/network/external-effect counters
 before the deeper diagnostic sections. The Goal Next Action section now starts
@@ -343,8 +345,9 @@ comes from an open task recommendation or from current phase plus local goal
 records, then points at the local target surface without writing on GET.
 The in-flow Goal Jump Bar keeps the most-used in-page anchors one click or
 one keypress away without covering later controls. The Goal Action Dock keeps
-the current action one click away from deep scroll positions without adding a
-second action form. The Goal Next Action focus strip makes the selected action
+the current action one click away from deep scroll positions by jumping
+directly to the confirmed form without adding a second action form. The Goal
+Next Action focus strip makes the selected action
 readable at the point of decision and keeps the confirmed form ahead of
 diagnostic evidence, while the Goal Section Index near the top links to the
 full stable anchor map for the major Goal surfaces.

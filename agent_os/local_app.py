@@ -6816,10 +6816,13 @@ def _goal_action_dock(
     pending_gates = counts.get("pending", 0)
     waiting_gates = counts.get("waiting", 0)
     form_available = bool(_goal_next_action_form(state, next_action))
-    primary_href = "#goal-next-action" if form_available else next_action.href
+    primary_href = "#goal-next-action-form" if form_available else next_action.href
     primary_label = "Open action form" if form_available else next_action.action
+    primary_surface_label = (
+        "Goal action form" if form_available else next_action.action
+    )
     primary_surface = SafeHtml(
-        f"<a href='{_e(primary_href)}'>Goal Next Action</a>"
+        f"<a href='{_e(primary_href)}'>{_e(primary_surface_label)}</a>"
     )
     target_surface = SafeHtml(
         f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
@@ -7053,7 +7056,7 @@ def _goal_operator_workbench(
     )
     waiting_items = open_incidents + open_recommendations + pending_approvals
     form_available = bool(_goal_next_action_form(state, next_action))
-    primary_href = "#goal-next-action" if form_available else next_action.href
+    primary_href = "#goal-next-action-form" if form_available else next_action.href
     primary_label = (
         "Use Goal action form" if form_available else next_action.action
     )
