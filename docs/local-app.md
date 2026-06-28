@@ -622,15 +622,16 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   write-on-GET/network/external-effect boundaries inside collapsed evidence.
   Pending commit and publication rows include run links, approval-queue links,
   and next-action cues without exposing decision forms on the inbox page.
-- `/approvals` - pending worktree, commit, and publication approvals. A
-  read-only `Approval Queue Command Bar` summarizes total pending decisions,
-  pending counts by approval type, the first recommended decision, the
-  same-page form target, the follow-up after approval, and the zero-effect
-  boundary. An `Approval Operator Workbench` follows it with
-  do/inspect/Goal/finish cards, the first pending decision, parent Goal,
-  request/evidence artifacts, confirmation posture, and a confirmed
-  `save-workspace` form that can store the queue as a resume point without
-  writing on GET. A read-only `Approval Decision Brief` expands the first
+- `/approvals` - pending worktree, commit, and publication approvals. The page
+  is now action-first: `Approval Operator Workbench` renders before shared
+  route/focus diagnostics or command readback, with do/inspect/Goal/finish
+  cards, the first pending decision, parent Goal, request/evidence artifacts,
+  confirmation posture, and a collapsed confirmed `save-workspace` form that
+  can store the queue as a resume point without writing on GET. A read-only
+  `Approval Queue Command Bar` follows with total pending decisions, pending
+  counts by approval type, the first recommended decision, the same-page form
+  target, the follow-up after approval, and the zero-effect boundary inside
+  collapsed evidence. A read-only `Approval Decision Brief` expands the first
   decision into direct delegation/workflow/run links, request and evidence
   artifacts, the exact form anchor, the post-decision surface, and explicit
   write/network/external-effect counters. Commit and publication rows link
@@ -899,10 +900,11 @@ Goal when possible. Pending commit approvals show the relevant run link, the
 Pending publication approvals show the relevant run link and the
 `coder-publication-handoff` follow-up while preserving the explicit
 `push_created=false`, `pr_created=false`, and `deploy_created=false` boundary.
-The page starts with `Approval Queue Command Bar`, a read-only summary of total
-pending decisions,
-the first queue action, target section, after-decision guidance, and the
-write-on-GET/network/external-effect boundary.
+The page starts with `Approval Operator Workbench`, so the first screen names
+the pending decision and inspection target before the queue evidence. The
+`Approval Queue Command Bar` still records total pending decisions, the first
+queue action, target section, after-decision guidance, and the
+write-on-GET/network/external-effect boundary inside collapsed evidence.
 The `/inbox` page keeps the same commit/publication continuation cues in a
 read-only queue form: it links to the run and approval queue and names the next
 action after approval, but it does not render the approval decision forms.

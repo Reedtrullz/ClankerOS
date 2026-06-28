@@ -670,21 +670,23 @@ inbox surfaces.
 Use `/approvals` when you want to keep driving the gate sequence from one
 queue, and use `/approvals?run_id=<coder_run_id>` when you arrived from a run
 gate and want that run's pending commit or publication decision foregrounded
-even if unrelated approvals also exist. The read-only `Approval Queue Command
-Bar` starts the page with total pending worktree, commit, and publication
-decisions, the scoped or global first recommended decision, the same-page form
-target, the follow-up after approval, and the zero-effect boundary. The
-`Approval Operator Workbench` follows it with
-do/inspect/Goal/finish cards, the first pending decision, the parent Goal when
-known, request and evidence artifacts, confirmation posture, and a confirmed
-`save-workspace` form so an approval queue can become tomorrow's resume point
-without writing on GET. The read-only `Approval Decision Brief` then expands
-the first recommended decision into direct inspection links for the relevant
-delegation, workflow, run when one exists, request artifact, evidence artifact,
-form anchor, post-decision surface, and no-write/no-network/no-external-effect
-boundary. Pending commit and publication approvals link back to the relevant
-run and name the next local-only follow-up action after approval, including
-the typed commit-message requirement and the manual push/PR boundary.
+even if unrelated approvals also exist. The page now opens with the
+`Approval Operator Workbench` before shared route/focus diagnostics or command
+readback, showing do/inspect/Goal/finish cards, the first pending decision, the
+parent Goal when known, request and evidence artifact links, confirmation
+posture, and a collapsed confirmed `save-workspace` form so an approval queue
+can become tomorrow's resume point without writing on GET. The read-only
+`Approval Queue Command Bar` follows with total pending worktree, commit, and
+publication decisions, the scoped or global first recommended decision, the
+same-page form target, the follow-up after approval, and the zero-effect
+boundary inside collapsed evidence. The read-only `Approval Decision Brief`
+then expands the first recommended decision into direct inspection links for
+the relevant delegation, workflow, run when one exists, request artifact,
+evidence artifact, form anchor, post-decision surface, and no-write/no-network/
+no-external-effect boundary. Pending commit and publication approvals link back
+to the relevant run and name the next local-only follow-up action after
+approval, including the typed commit-message requirement and the manual
+push/PR boundary.
 
 Use `/inbox` when you want the read-only operator queue. Pending commit and
 publication items include the same run links and next-action cues, but the

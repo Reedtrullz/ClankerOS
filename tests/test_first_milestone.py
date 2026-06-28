@@ -6585,7 +6585,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     approvals = render_local_app_route(tmp_path, "/approvals")
     assert approvals.status == 200
     assert "Approvals" in approvals.body
+    assert approvals.body.index("Approval Operator Workbench") < approvals.body.index("Approval Queue Command Bar")
+    assert approvals.body.index("Approval Operator Workbench") < approvals.body.index("data-route-context='true'")
     assert "Approval Queue Command Bar" in approvals.body
+    assert "data-approval-command-evidence='true'" in approvals.body
     assert "approval_queue_total_pending</dt><dd>0" in approvals.body
     assert "approval_queue_first_action</dt><dd>No pending approvals" in approvals.body
     assert "approval_queue_empty: no pending local approval decisions" in approvals.body
@@ -6594,6 +6597,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Approval Operator Workbench" in approvals.body
     assert "data-approval-operator-workbench='true'" in approvals.body
     assert "data-approval-workbench-actions='true'" in approvals.body
+    assert "data-approval-workbench-primary='true'" in approvals.body
+    assert "data-approval-workbench-evidence='true'" in approvals.body
+    assert "data-approval-finish-details='true'" in approvals.body
     assert "approval_workbench_status</dt><dd>empty_queue" in approvals.body
     assert "approval_workbench_total_pending</dt><dd>0" in approvals.body
     assert "approval_workbench_first_kind</dt><dd>none" in approvals.body
@@ -10451,8 +10457,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
 
     approvals = render_local_app_route(tmp_path, "/approvals")
     assert approvals.status == 200
+    assert approvals.body.index("Approval Operator Workbench") < approvals.body.index("Approval Queue Command Bar")
+    assert approvals.body.index("Approval Operator Workbench") < approvals.body.index("data-route-context='true'")
     assert "Approval Queue Command Bar" in approvals.body
     assert "data-approval-queue-command-bar='true'" in approvals.body
+    assert "data-approval-command-evidence='true'" in approvals.body
     assert "approval_queue_status</dt><dd>available" in approvals.body
     assert "approval_queue_total_pending</dt><dd>1" in approvals.body
     assert "approval_queue_worktree_pending</dt><dd>1" in approvals.body
@@ -10473,6 +10482,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Approval Operator Workbench" in approvals.body
     assert "data-approval-operator-workbench='true'" in approvals.body
     assert "data-approval-workbench-actions='true'" in approvals.body
+    assert "data-approval-workbench-primary='true'" in approvals.body
+    assert "data-approval-workbench-evidence='true'" in approvals.body
+    assert "data-approval-finish-details='true'" in approvals.body
     assert "approval_workbench_status</dt><dd>decision_form_ready" in approvals.body
     assert "approval_workbench_total_pending</dt><dd>1" in approvals.body
     assert "approval_workbench_worktree_pending</dt><dd>1" in approvals.body

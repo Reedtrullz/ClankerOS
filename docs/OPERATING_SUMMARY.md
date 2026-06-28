@@ -237,14 +237,16 @@ Core layers for the bootstrap:
   state, workbench evidence, and command evidence stay collapsed by default
   while preserving record, generated, usage, project-usage, first-artifact,
   no-execution/no-install/provider/network, and zero-effect readbacks in the
-  DOM; `/approvals` as a
-  local decision queue with a read-only `Approval Queue Command Bar` that
-  summarizes pending worktree/commit/publication counts, first recommended
-  decision, target section, after-decision guidance, and zero-effect boundary,
-  followed by an `Approval Operator Workbench` with do/inspect/Goal/finish
-  cards, parent Goal routing, request/evidence artifacts, confirmation
-  posture, and a confirmed `save-workspace` form that stores the queue as a
-  future resume point without writing on GET;
+  DOM; `/approvals` as an action-first
+  local decision queue with a visible `Approval Operator Workbench` before
+  shared route/focus diagnostics or command readback. It shows
+  do/inspect/Goal/finish cards, parent Goal routing, request/evidence
+  artifacts, confirmation posture, and a collapsed confirmed
+  `save-workspace` form that stores the queue as a future resume point without
+  writing on GET. The read-only `Approval Queue Command Bar` follows with
+  pending worktree/commit/publication counts, first recommended decision,
+  target section, after-decision guidance, and zero-effect boundary inside
+  collapsed evidence;
   and `/profiles`
   for inactive future provider-routing readback from `.clanker/profiles.yml`
   and SQLite profile storage rows, including profile labels, modes, cost

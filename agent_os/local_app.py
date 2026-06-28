@@ -761,6 +761,13 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             "Approvals",
             [
                 "Approval Operator Workbench",
+                "data-approval-operator-workbench='true'",
+                "data-approval-workbench-primary='true'",
+                "data-approval-workbench-evidence='true'",
+                "data-approval-command-evidence='true'",
+                "data-approval-finish-details='true'",
+                "approval_workbench_status</dt><dd>decision_form_ready",
+                "approval_queue_status</dt><dd>available",
                 demo.approval_id,
                 "approve-coder-worktree",
                 "Pending Worktree Approvals",
@@ -17100,14 +17107,14 @@ def _approvals(root: Path, *, run_id: str | None = None, goal_id: str | None = N
             "<section><h1>Approvals</h1>",
             "<p class='muted'>Approval forms write local decision artifacts only. They do not execute work, commit, push, create PRs, deploy, call providers, or use the network.</p>",
             "</section>",
-            _approval_queue_command_bar(
+            _approval_operator_workbench(
+                root,
                 worktree_approvals,
                 commit_approvals,
                 publication_approvals,
                 focus,
             ),
-            _approval_operator_workbench(
-                root,
+            _approval_queue_command_bar(
                 worktree_approvals,
                 commit_approvals,
                 publication_approvals,
@@ -17375,7 +17382,11 @@ def _approval_operator_workbench(
             "<div class='approval-workbench-card approval-workbench-primary'>",
             "<h3>Do Now</h3>",
             f"<p>{_e(action)}</p>",
-            f"<a class='approval-workbench-action' href='{_e(target_href)}'>{_e(target_label)}</a>",
+            (
+                f"<a class='approval-workbench-action' "
+                "data-approval-workbench-primary='true' "
+                f"href='{_e(target_href)}'>{_e(target_label)}</a>"
+            ),
             "</div>",
             "<div class='approval-workbench-card'>",
             "<h3>Inspect</h3>",
@@ -17390,9 +17401,10 @@ def _approval_operator_workbench(
             "<div class='approval-workbench-card'>",
             "<h3>Finish Today</h3>",
             "<p>Save approval resume state</p>",
-            "<a class='approval-workbench-link' href='#approval-finish-today'>Open save form</a>",
+            "<a class='approval-workbench-link' data-open-details='true' href='#approval-finish-today'>Open save form</a>",
             "</div>",
             "</div>",
+            "<details class='approval-workbench-evidence' data-approval-workbench-evidence='true'><summary>Approval workbench evidence</summary>",
             _kv(
                 [
                     ("approval_workbench_status", status),
@@ -17439,9 +17451,11 @@ def _approval_operator_workbench(
                 ]
             ),
             _ul(lines),
-            "<h3 id='approval-finish-today'>Finish Today</h3>",
+            "</details>",
+            "<details id='approval-finish-today' class='approval-finish-details' data-approval-finish-details='true'><summary>Finish Today save form</summary>",
             "<p class='muted'>Save this approval queue, expanded panels, and request artifact as tomorrow's resume point. This writes only `.clanker/app/workspace.json` after confirmation.</p>",
             finish_form,
+            "</details>",
             "</section>",
         ]
     )
@@ -17693,6 +17707,7 @@ def _approval_queue_command_bar(
         [
             "<section class='panel approval-queue-command-bar' data-approval-queue-command-bar='true'><h2>Approval Queue Command Bar</h2>",
             "<p class='muted'>One read-only summary of the local decisions waiting for the operator.</p>",
+            "<details class='approval-command-evidence' data-approval-command-evidence='true'><summary>Approval command evidence</summary>",
             _kv(
                 [
                     ("approval_queue_status", "available"),
@@ -17715,6 +17730,7 @@ def _approval_queue_command_bar(
                 ]
             ),
             _ul(lines),
+            "</details>",
             "</section>",
         ]
     )
@@ -24591,7 +24607,7 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
-    content_first_paths = {"/", "/actions", "/delegation-runs", "/inbox", "/memory", "/profiles", "/resume", "/search", "/skills", "/today", "/workflow", "/workspace"}
+    content_first_paths = {"/", "/actions", "/approvals", "/delegation-runs", "/inbox", "/memory", "/profiles", "/resume", "/search", "/skills", "/today", "/workflow", "/workspace"}
     if current_route_path in content_first_paths:
         article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
     else:
@@ -25181,6 +25197,9 @@ def _html_page(
     .inbox-workbench-action {{ background:var(--accent); color:#fff; }}
     .inbox-workbench-link {{ background:var(--surface); color:var(--accent); }}
     .approval-queue-command-bar {{ border-left:4px solid var(--warn); }}
+    .approval-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .approval-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .approval-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .approval-queue-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .approval-queue-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .approval-decision-brief {{ border-left:4px solid var(--warn); }}
@@ -25188,6 +25207,9 @@ def _html_page(
     .approval-decision-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .approval-decision-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .approval-operator-workbench {{ border-left:4px solid var(--accent); }}
+    .approval-workbench-evidence, .approval-finish-details {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .approval-workbench-evidence summary, .approval-finish-details summary {{ cursor:pointer; font-weight:700; }}
+    .approval-workbench-evidence:not([open]) > :not(summary), .approval-finish-details:not([open]) > :not(summary) {{ display:none; }}
     .approval-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .approval-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .approval-operator-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

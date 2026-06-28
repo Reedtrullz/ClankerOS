@@ -1,5 +1,46 @@
 # Status
 
+## 2026-06-28 Approvals Action-First Operator Surface
+
+- Made `/approvals` usable as a decision-first operator surface by rendering
+  the `Approval Operator Workbench` before shared Route Context, Operator
+  Focus, Last Action, and approval queue diagnostics.
+- Added a stable `data-approval-workbench-primary` marker for the current
+  decision target and kept the visible cards focused on Do Now, Inspect, Goal,
+  and Finish Today.
+- Kept approval workbench evidence, approval command evidence, and the Finish
+  Today save form collapsed by default while preserving scoped run/Goal
+  matching, pending approval counts, request/evidence artifacts, confirmation
+  posture, and zero-effect readbacks in the DOM.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, approve work, execute work, create commits, push, create PRs, deploy,
+  call providers, fetch GitHub from ClankerOS, poll network services, mutate
+  external systems from ClankerOS, or expose arbitrary raw filesystem browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-approvals-first-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-approvals-first-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/approvals` snippets matched,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8817/approvals`: desktop `1280x900` rendered four
+    Approval Operator Workbench cards before Route Context and the Approval
+    Queue Command Bar, kept approval workbench/command evidence and the Finish
+    Today form collapsed, showed no horizontal overflow, no framework overlay,
+    and empty browser warning/error logs.
+  - Interaction proof: clicking the marked primary action changed the URL to
+    `/approvals#pending-worktree-approvals` and placed Pending Worktree
+    Approvals in view.
+  - Mobile Browser QA at `390x844` rendered four approval workbench cards in
+    one column, kept evidence/details collapsed, showed no horizontal
+    overflow, and had empty browser warning/error logs.
+  - `git diff --check` -> passed.
+
 ## 2026-06-28 Delegation Runs Action-First Operator Surface
 
 - Made `/delegation-runs` usable as an operator workbench by rendering the
