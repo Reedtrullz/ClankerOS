@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/dogfooding` is now content-first and action-first: it opens with
+  `Dogfooding Operator Workbench` cards for Do Now, ClankerOS, Workflow, and
+  Proof before shared diagnostics, command/evidence readback, or the longer
+  checklist. Dogfooding workbench, fixture, and command evidence stay collapsed
+  by default while preserving fixture status, selected
+  project/Goal/delegation/run, next local target, route/CI/action/health links,
+  and zero-effect proof in the DOM.
 - `/projects` and `/projects/<project_id>` are now action-first: the project
   index opens with `Project Index Workbench` cards for Open, Register, Goals,
   and Resume before shared diagnostics, while project detail pages open with

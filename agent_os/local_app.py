@@ -507,8 +507,15 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             "/dogfooding",
             "Manual Dogfooding Checklist",
             [
+                "Dogfooding Operator Workbench",
+                "data-dogfooding-operator-workbench='true'",
+                "data-dogfooding-workbench-primary='true'",
+                "data-dogfooding-workbench-evidence='true'",
                 "Dogfooding Command Bar",
                 "data-dogfooding-command-bar='true'",
+                "data-dogfooding-command-evidence='true'",
+                "data-dogfooding-fixture-evidence='true'",
+                "dogfooding_workbench_fixture_status</dt><dd>available",
                 "dogfooding_command_fixture_status</dt><dd>available",
                 "demo_fixture_status: available",
                 "next_dogfooding_action: request_commit_for_reviewed_run",
@@ -15838,8 +15845,9 @@ def _dogfooding_page(root: Path) -> str:
             "<section><h1>Manual Dogfooding Checklist</h1>",
             "<p class='muted'>A read-only route map for the first browser pass through the local operator app. Use it before pushing, then let GitHub Actions run the slow suite.</p>",
             _non_claim_banner(),
-            _kv(fixture_lines),
             "</section>",
+            _dogfooding_operator_workbench(root),
+            _dogfooding_fixture_evidence(fixture_lines),
             _dogfooding_command_bar(root),
             _dogfooding_next_action_panel(root),
             _list_section(
@@ -15896,6 +15904,158 @@ def _dogfooding_page(root: Path) -> str:
                 anchor_id="dogfooding-safety-boundary",
             ),
             _demo_dogfooding_state(root),
+        ]
+    )
+
+
+def _dogfooding_fixture_evidence(lines: list[tuple[str, str]]) -> str:
+    return "".join(
+        [
+            "<details class='dogfooding-fixture-evidence' data-dogfooding-fixture-evidence='true'><summary>Dogfooding fixture evidence</summary>",
+            _kv(lines),
+            "</details>",
+        ]
+    )
+
+
+def _dogfooding_operator_workbench(root: Path) -> str:
+    project, selected_delegation, selected_run = _demo_selected_state(root)
+    run_id = selected_run.id if selected_run else ""
+    progress = _demo_progress_state(root, run_id)
+    goal_id = progress.get("goal_id") or (
+        selected_delegation.parent_goal_id if selected_delegation else ""
+    )
+    fixture_status = "available" if project is not None else "missing"
+    next_action = progress["next_step"] if project is not None else "Run demo fixture"
+    target_surface = _dogfooding_target_surface(next_action, run_id, goal_id)
+    if project is None:
+        target_surface = SafeHtml("<a href='/demo'>/demo</a>")
+    primary_href = "/demo"
+    primary_label = "Open demo"
+    if project is not None:
+        if selected_run is not None:
+            primary_href = f"/runs/{quote(selected_run.id)}"
+            primary_label = "Open run"
+            if next_action in {
+                "approve_or_reject_commit_request",
+                "approve_or_reject_publication_request",
+            }:
+                primary_href = "/approvals"
+                primary_label = "Open approvals"
+            elif next_action in {
+                "manual_operator_push_pr_outside_clankeros",
+                "review_completed_goal_evidence",
+            } and goal_id:
+                primary_href = f"/goals/{quote(goal_id)}"
+                primary_label = "Open goal"
+        elif selected_delegation is not None:
+            primary_href = f"/delegations/{quote(selected_delegation.id)}"
+            primary_label = "Open delegation"
+
+    project_href = "/demo"
+    project_label = "Refresh demo fixture"
+    project_summary = "Create fixture-backed ClankerOS state before the route walk."
+    if project is not None:
+        project_href = f"/projects/{quote(project.name)}"
+        project_label = f"Open {project.name}"
+        project_summary = "Use the local ClankerOS project page as the starting point."
+
+    workflow_href = "/workflow"
+    workflow_label = "Open workflow"
+    workflow_summary = "Review the fixture-backed workflow route when no specific run is selected."
+    if selected_delegation is not None:
+        workflow_href = f"/workflow?delegation_id={quote(selected_delegation.id)}"
+        workflow_summary = "Inspect the selected delegation workflow and handoff chain."
+    if selected_run is not None:
+        workflow_href = f"/workflow?run_id={quote(selected_run.id)}"
+        workflow_summary = "Inspect the selected run's local workflow gates."
+
+    proof_href = "/verification"
+    proof_label = "Check proof handoff"
+    proof_summary = "Use GitHub Actions outside ClankerOS for full-suite proof after push."
+    if next_action in {
+        "approve_or_reject_commit_request",
+        "approve_or_reject_publication_request",
+    }:
+        proof_href = "/approvals"
+        proof_label = "Open approvals"
+        proof_summary = "Review the pending local approval gate before continuing."
+
+    rows = [
+        (
+            "dogfooding_workbench_status",
+            "fixture_available" if project is not None else "fixture_missing",
+        ),
+        ("dogfooding_workbench_fixture_status", fixture_status),
+        (
+            "dogfooding_workbench_selected_project",
+            SafeHtml(
+                f"<a href='/projects/{quote(project.name)}'>{_e(project.name)}</a>"
+            )
+            if project is not None
+            else "none",
+        ),
+        (
+            "dogfooding_workbench_selected_goal",
+            SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(goal_id)}</a>")
+            if goal_id
+            else "none",
+        ),
+        (
+            "dogfooding_workbench_selected_delegation",
+            SafeHtml(
+                f"<a href='/delegations/{quote(selected_delegation.id)}'>"
+                f"{_e(selected_delegation.id)}</a>"
+            )
+            if selected_delegation is not None
+            else "none",
+        ),
+        (
+            "dogfooding_workbench_selected_run",
+            SafeHtml(f"<a href='/runs/{quote(run_id)}'>{_e(run_id)}</a>")
+            if run_id
+            else "none",
+        ),
+        ("dogfooding_workbench_next_action", next_action),
+        ("dogfooding_workbench_target_surface", target_surface),
+        ("dogfooding_workbench_project_surface", SafeHtml(f"<a href='{_e(project_href)}'>{_e(project_label)}</a>")),
+        ("dogfooding_workbench_workflow_surface", SafeHtml(f"<a href='{_e(workflow_href)}'>{_e(workflow_label)}</a>")),
+        ("dogfooding_workbench_proof_surface", SafeHtml(f"<a href='{_e(proof_href)}'>{_e(proof_label)}</a>")),
+        ("dogfooding_workbench_demo_command", "python3 -m agent_os.cli demo"),
+        ("dogfooding_workbench_write_on_get", "false"),
+        ("dogfooding_workbench_github_status_fetch", "none"),
+        ("dogfooding_workbench_provider_calls_taken", "0"),
+        ("dogfooding_workbench_network_actions_taken", "0"),
+        ("dogfooding_workbench_external_effects_created", "false"),
+        ("dogfooding_workbench_push_created", "false"),
+        ("dogfooding_workbench_pr_created", "false"),
+        ("dogfooding_workbench_deploy_created", "false"),
+    ]
+    lines = [
+        f"dogfooding_workbench_now: {_e(next_action)}",
+        f"dogfooding_workbench_click: {target_surface}",
+        "dogfooding_workbench_boundary: read-only local route map; manual push and PR stay outside ClankerOS",
+        "dogfooding_workbench_safety: no provider, network, push, PR, deploy, GitHub fetch, or external mutation",
+    ]
+    return "".join(
+        [
+            "<section id='dogfooding-operator-workbench' class='panel dogfooding-operator-workbench' data-dogfooding-operator-workbench='true'><h2>Dogfooding Operator Workbench</h2>",
+            "<p class='muted'>A product-first pass for making ClankerOS manage itself from the browser.</p>",
+            "<div class='dogfooding-workbench-grid' data-dogfooding-workbench-actions='true'>",
+            "<article class='dogfooding-workbench-card dogfooding-workbench-primary'><h3>Do Now</h3>",
+            f"<p>{_e(next_action)}</p><a class='dogfooding-workbench-action' data-dogfooding-workbench-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a></article>",
+            "<article class='dogfooding-workbench-card'><h3>ClankerOS</h3>",
+            f"<p>{_e(project_summary)}</p><a class='dogfooding-workbench-link' href='{_e(project_href)}'>{_e(project_label)}</a></article>",
+            "<article class='dogfooding-workbench-card'><h3>Workflow</h3>",
+            f"<p>{_e(workflow_summary)}</p><a class='dogfooding-workbench-link' href='{_e(workflow_href)}'>{_e(workflow_label)}</a></article>",
+            "<article class='dogfooding-workbench-card'><h3>Proof</h3>",
+            f"<p>{_e(proof_summary)}</p><a class='dogfooding-workbench-link' href='{_e(proof_href)}'>{_e(proof_label)}</a></article>",
+            "</div>",
+            "<details class='dogfooding-workbench-evidence' data-dogfooding-workbench-evidence='true'><summary>Dogfooding workbench evidence</summary>",
+            _kv(rows),
+            _ul(lines),
+            "</details>",
+            "</section>",
         ]
     )
 
@@ -16027,8 +16187,10 @@ def _dogfooding_command_bar(root: Path) -> str:
             "<section id='dogfooding-command-bar' class='panel dogfooding-command-bar' "
             "data-dogfooding-command-bar='true'><h2>Dogfooding Command Bar</h2>",
             "<p class='muted'>One scan-first place to start or continue the local product walkthrough.</p>",
+            "<details class='dogfooding-command-evidence' data-dogfooding-command-evidence='true'><summary>Dogfooding command evidence</summary>",
             _kv(rows),
             _ul(lines),
+            "</details>",
             "</section>",
         ]
     )
@@ -25073,7 +25235,7 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
-    content_first_paths = {"/", "/actions", "/approvals", "/delegation-runs", "/inbox", "/incidents", "/memory", "/profiles", "/projects", "/resume", "/search", "/skills", "/today", "/verification", "/workflow", "/workspace"}
+    content_first_paths = {"/", "/actions", "/approvals", "/delegation-runs", "/dogfooding", "/inbox", "/incidents", "/memory", "/profiles", "/projects", "/resume", "/search", "/skills", "/today", "/verification", "/workflow", "/workspace"}
     if current_route_path in content_first_paths or current_route_path.startswith("/projects/"):
         article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
     else:
@@ -25483,6 +25645,21 @@ def _html_page(
     .demo-command-bar {{ border-left:4px solid var(--accent); }}
     .demo-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .demo-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .dogfooding-operator-workbench {{ border-left:4px solid var(--accent); }}
+    .dogfooding-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .dogfooding-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .dogfooding-operator-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .dogfooding-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .dogfooding-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .dogfooding-workbench-card h3 {{ margin-top:0; }}
+    .dogfooding-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .dogfooding-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .dogfooding-workbench-action, .dogfooding-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .dogfooding-workbench-action {{ background:var(--accent); color:#fff; }}
+    .dogfooding-workbench-link {{ background:var(--surface); color:var(--accent); }}
+    .dogfooding-workbench-evidence, .dogfooding-fixture-evidence, .dogfooding-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .dogfooding-workbench-evidence summary, .dogfooding-fixture-evidence summary, .dogfooding-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .dogfooding-workbench-evidence:not([open]) > :not(summary), .dogfooding-fixture-evidence:not([open]) > :not(summary), .dogfooding-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .dogfooding-command-bar {{ border-left:4px solid var(--accent); }}
     .dogfooding-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .dogfooding-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -25757,7 +25934,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .verification-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .verification-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

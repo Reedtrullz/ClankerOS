@@ -764,9 +764,10 @@ Core layers for the bootstrap:
   contacting GitHub; a read-only root dashboard
   `Dashboard Dogfooding Snapshot` for fixture availability, next dogfooding
   action, selected workflow/run links, and the `/demo` manual browser script
-  surface; a read-only `/dogfooding` command bar for fixture status, selected
-  project/Goal/delegation/run, the next local target surface, route/CI/action/
-  health links, and zero-effect counters; a read-only `/dogfooding` GitHub
+  surface; a read-only `/dogfooding` operator workbench that now opens the
+  page before shared diagnostics with Do Now, ClankerOS, Workflow, and Proof
+  cards before the longer checklist, while keeping dogfooding workbench and
+  fixture/command evidence collapsed by default; a read-only `/dogfooding` GitHub
   Actions follow-up section with direct pushed-snapshot `ci-snapshot-handoff`,
   `gh run view`, JSON-validated record, and manual record-after-success
   templates for the current checkout; a

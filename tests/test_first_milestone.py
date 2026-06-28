@@ -6419,8 +6419,43 @@ def test_local_app_routes_render_modern_workflow_and_health(
     dogfooding = render_local_app_route(tmp_path, "/dogfooding")
     assert dogfooding.status == 200
     assert "Manual Dogfooding Checklist" in dogfooding.body
+    assert "Dogfooding Operator Workbench" in dogfooding.body
+    assert "data-dogfooding-operator-workbench='true'" in dogfooding.body
+    assert "data-dogfooding-workbench-primary='true'" in dogfooding.body
+    assert "data-dogfooding-workbench-evidence='true'" in dogfooding.body
+    assert "data-dogfooding-fixture-evidence='true'" in dogfooding.body
+    assert "data-dogfooding-workbench-actions='true'" in dogfooding.body
+    assert "dogfooding_workbench_status</dt><dd>fixture_missing" in dogfooding.body
+    assert "dogfooding_workbench_fixture_status</dt><dd>missing" in dogfooding.body
+    assert "dogfooding_workbench_selected_project</dt><dd>none" in dogfooding.body
+    assert "dogfooding_workbench_next_action</dt><dd>Run demo fixture" in dogfooding.body
+    assert "dogfooding_workbench_target_surface</dt><dd><a href='/demo'>/demo</a>" in dogfooding.body
+    assert "dogfooding_workbench_project_surface</dt><dd><a href='/demo'>Refresh demo fixture</a>" in dogfooding.body
+    assert "dogfooding_workbench_workflow_surface</dt><dd><a href='/workflow'>Open workflow</a>" in dogfooding.body
+    assert "dogfooding_workbench_proof_surface</dt><dd><a href='/verification'>Check proof handoff</a>" in dogfooding.body
+    assert "dogfooding_workbench_write_on_get</dt><dd>false" in dogfooding.body
+    assert "dogfooding_workbench_github_status_fetch</dt><dd>none" in dogfooding.body
+    assert "dogfooding_workbench_provider_calls_taken</dt><dd>0" in dogfooding.body
+    assert "dogfooding_workbench_network_actions_taken</dt><dd>0" in dogfooding.body
+    assert "dogfooding_workbench_external_effects_created</dt><dd>false" in dogfooding.body
+    assert "dogfooding_workbench_push_created</dt><dd>false" in dogfooding.body
+    assert "dogfooding_workbench_pr_created</dt><dd>false" in dogfooding.body
+    assert "dogfooding_workbench_deploy_created</dt><dd>false" in dogfooding.body
+    assert "dogfooding_workbench_now: Run demo fixture" in dogfooding.body
+    assert "dogfooding_workbench_click: <a href='/demo'>/demo</a>" in dogfooding.body
+    assert "dogfooding_workbench_safety: no provider, network, push, PR, deploy" in dogfooding.body
+    assert dogfooding.body.index("Dogfooding Operator Workbench") < dogfooding.body.index(
+        "Dogfooding Command Bar"
+    )
+    assert dogfooding.body.index("Dogfooding Operator Workbench") < dogfooding.body.index(
+        "Route Context"
+    )
+    assert dogfooding.body.index("Dogfooding Operator Workbench") < dogfooding.body.index(
+        "Dogfooding fixture evidence"
+    )
     assert "Dogfooding Command Bar" in dogfooding.body
     assert "data-dogfooding-command-bar='true'" in dogfooding.body
+    assert "data-dogfooding-command-evidence='true'" in dogfooding.body
     assert "dogfooding_command_status</dt><dd>fixture_missing" in dogfooding.body
     assert "dogfooding_command_fixture_status</dt><dd>missing" in dogfooding.body
     assert "dogfooding_command_selected_project</dt><dd>none" in dogfooding.body
@@ -7774,8 +7809,77 @@ def test_local_app_demo_scenario_populates_fixture_state(
 
     dogfooding_with_demo = render_local_app_route(tmp_path, "/dogfooding")
     assert dogfooding_with_demo.status == 200
+    assert "Dogfooding Operator Workbench" in dogfooding_with_demo.body
+    assert "data-dogfooding-operator-workbench='true'" in dogfooding_with_demo.body
+    assert "data-dogfooding-workbench-primary='true'" in dogfooding_with_demo.body
+    assert "data-dogfooding-workbench-evidence='true'" in dogfooding_with_demo.body
+    assert "data-dogfooding-fixture-evidence='true'" in dogfooding_with_demo.body
+    assert (
+        "dogfooding_workbench_status</dt><dd>fixture_available"
+        in dogfooding_with_demo.body
+    )
+    assert (
+        "dogfooding_workbench_fixture_status</dt><dd>available"
+        in dogfooding_with_demo.body
+    )
+    assert (
+        f"dogfooding_workbench_selected_project</dt><dd><a href='/projects/{result.project_id}'>{result.project_id}</a>"
+        in dogfooding_with_demo.body
+    )
+    assert (
+        "dogfooding_workbench_selected_goal</dt><dd><a href='/goals/"
+        in dogfooding_with_demo.body
+    )
+    assert (
+        f"dogfooding_workbench_selected_delegation</dt><dd><a href='/delegations/{result.delegation_id}'>{result.delegation_id}</a>"
+        in dogfooding_with_demo.body
+    )
+    assert (
+        f"dogfooding_workbench_selected_run</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>{result.coder_worktree_run_id}</a>"
+        in dogfooding_with_demo.body
+    )
+    assert (
+        "dogfooding_workbench_next_action</dt><dd>request_commit_for_reviewed_run"
+        in dogfooding_with_demo.body
+    )
+    assert (
+        f"dogfooding_workbench_target_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>/runs/{result.coder_worktree_run_id}</a>"
+        in dogfooding_with_demo.body
+    )
+    assert (
+        f"dogfooding_workbench_project_surface</dt><dd><a href='/projects/{result.project_id}'>Open {result.project_id}</a>"
+        in dogfooding_with_demo.body
+    )
+    assert (
+        f"dogfooding_workbench_workflow_surface</dt><dd><a href='/workflow?run_id={result.coder_worktree_run_id}'>Open workflow</a>"
+        in dogfooding_with_demo.body
+    )
+    assert "dogfooding_workbench_write_on_get</dt><dd>false" in dogfooding_with_demo.body
+    assert "dogfooding_workbench_github_status_fetch</dt><dd>none" in dogfooding_with_demo.body
+    assert (
+        "dogfooding_workbench_external_effects_created</dt><dd>false"
+        in dogfooding_with_demo.body
+    )
+    assert (
+        "dogfooding_workbench_now: request_commit_for_reviewed_run"
+        in dogfooding_with_demo.body
+    )
+    assert (
+        f"dogfooding_workbench_click: <a href='/runs/{result.coder_worktree_run_id}'>/runs/{result.coder_worktree_run_id}</a>"
+        in dogfooding_with_demo.body
+    )
+    assert dogfooding_with_demo.body.index("Dogfooding Operator Workbench") < dogfooding_with_demo.body.index(
+        "Dogfooding Command Bar"
+    )
+    assert dogfooding_with_demo.body.index("Dogfooding Operator Workbench") < dogfooding_with_demo.body.index(
+        "Route Context"
+    )
+    assert dogfooding_with_demo.body.index("Dogfooding Operator Workbench") < dogfooding_with_demo.body.index(
+        "Dogfooding fixture evidence"
+    )
     assert "Dogfooding Command Bar" in dogfooding_with_demo.body
     assert "data-dogfooding-command-bar='true'" in dogfooding_with_demo.body
+    assert "data-dogfooding-command-evidence='true'" in dogfooding_with_demo.body
     assert "dogfooding_command_status</dt><dd>fixture_available" in dogfooding_with_demo.body
     assert "dogfooding_command_fixture_status</dt><dd>available" in dogfooding_with_demo.body
     assert (

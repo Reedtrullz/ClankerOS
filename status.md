@@ -1,5 +1,46 @@
 # Status
 
+## 2026-06-28 Dogfooding Action-First Operator Surface
+
+- Made `/dogfooding` content-first and action-first by rendering a visible
+  `Dogfooding Operator Workbench` before shared Route Context, Operator Focus,
+  Last Action, command evidence, and the longer checklist.
+- Added four visible cards for Do Now, ClankerOS, Workflow, and Proof, with a
+  stable `data-dogfooding-workbench-primary` marker for the current local
+  fixture-backed next action.
+- Moved fixture readback, dogfooding workbench evidence, and command evidence
+  into collapsed details so mobile opens on the actual operator path instead
+  of a status table.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, refresh the fixture on GET, approve work, execute work, create commits,
+  push, create PRs, deploy, call providers, fetch GitHub from ClankerOS, mutate
+  external systems, or expose arbitrary raw filesystem browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-dogfooding-workbench-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-dogfooding-workbench-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/dogfooding` snippets matched,
+    provider/network/external mutation counters remained `0`
+  - `git diff --check` -> passed
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8821/dogfooding` with fixture-backed demo state: desktop
+    `1280x900` rendered the Dogfooding Operator Workbench in the first
+    viewport before Route Context and Dogfooding Command Bar, kept workbench,
+    fixture, and command evidence collapsed, showed no horizontal overflow, no
+    framework overlay, and empty browser warning/error logs.
+  - Interaction proof: clicking the marked primary action changed the URL to
+    `/runs/run_df26375bff9e` and rendered Run Operator Workbench plus Run Gate
+    Map.
+  - Mobile Browser QA at `390x844` rendered the Dogfooding Operator Workbench
+    in the first viewport, stacked four workbench cards in one column, kept
+    dogfooding evidence/details collapsed, showed no horizontal overflow, and
+    had empty browser warning/error logs.
+
 ## 2026-06-28 Projects Action-First Operator Surface
 
 - Made `/projects` usable as a project-selection and onboarding surface by

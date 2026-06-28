@@ -609,14 +609,14 @@ it does not run them.
 Use `/dogfooding` when you want one checklist for the first browser route walk:
 refresh the fixture, inspect demo/workflow/project/delegation/run surfaces,
 walk the local commit and publication gates, then hand verification to GitHub
-Actions after a push. The page starts with a read-only `Dogfooding Command
-Bar` that shows fixture status, selected project/Goal/delegation/run, the one
-recommended next surface, route-walk/CI/action/health links, and zero-effect
-counters before the longer checklist. The existing `Dogfooding Next Action`
-panel then expands the fixture-backed next action and links the project,
-delegation, workflow, run, approval queue, inbox, action catalog, and
-verification surfaces. It also shows a copy-only `GitHub Actions Follow-up`
-section with the direct snapshot handoff, `gh run view`, and
+Actions after a push. The page starts with a read-only `Dogfooding Operator
+Workbench` before shared diagnostics, with Do Now, ClankerOS, Workflow, and
+Proof cards, then keeps dogfooding workbench evidence, fixture evidence, and
+the lower `Dogfooding Command Bar` evidence collapsed by default. The existing
+`Dogfooding Next Action` panel still expands the fixture-backed next action and
+links the project, delegation, workflow, run, approval queue, inbox, action
+catalog, and verification surfaces. It also shows a copy-only `GitHub Actions
+Follow-up` section with the direct snapshot handoff, `gh run view`, and
 record-after-success command templates for the current checkout. The page is
 read-only and does not fetch GitHub status.
 
