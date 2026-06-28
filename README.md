@@ -323,10 +323,10 @@ return board for Continue, Latest, Blocker, Finish, and Resume, with the
 same gate, activity, artifact, CI, resume-readiness, blocker, and zero-effect
 state preserved in collapsed return evidence instead of leading the operator
 through proof rows.
-The read-only `Goal Continuation Rail` follows the
-return brief and turns the current gate plus the next few local gates into a
-short path of operator actions and surfaces, while keeping the eventual manual
-publish boundary explicit. Goal
+The read-only `Goal Continuation Rail` follows the return brief as visible
+Now, Next Gate, Then, Publish Boundary, and Finish Today cards, while detailed
+gate rows, exact surfaces, manual publish boundary, and zero-effect counters
+stay in collapsed continuation evidence. Goal
 Section Index remains available as a collapsed full anchor map and links
 directly to the Timeline, Activity, and Git command bars, so the long Goal page
 can jump to the scan-first operational panels without dropping a fifty-link

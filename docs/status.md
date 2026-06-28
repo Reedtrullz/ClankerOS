@@ -11,11 +11,13 @@ Latest status focus:
   visible, and the Goal Daily Loop now exposes Continue, Start, Unblock, Pause,
   and Finish Today cards with direct hash-opened pause/save details. Goal
   Return Brief now follows with visible Continue, Latest, Blocker, Finish, and
-  Resume cards. Jump, command, workbench, daily-loop, return-brief, and full
-  section-index evidence are collapsed by default while preserving phase, next
-  action, current gate, project-scoped CI proof posture, full anchor map,
-  daily resume-save state, latest activity/artifact, blocker routing, and
-  zero-effect counters in the DOM.
+  Resume cards, and Goal Continuation Rail now exposes Now, Next Gate, Then,
+  Publish Boundary, and Finish Today cards. Jump, command, workbench,
+  daily-loop, return-brief, continuation, and full section-index evidence are
+  collapsed by default while preserving phase, next action, current gate,
+  project-scoped CI proof posture, full anchor map, daily resume-save state,
+  latest activity/artifact, blocker routing, workflow gate surfaces, manual
+  publish boundary, and zero-effect counters in the DOM.
 - `/goals` is now content-first and board-first instead of shared-diagnostic or
   command-readback-first: the `Goal Board Workbench` opens the page before
   Route Context, Operator Focus, and the `Goal Board Command Bar`, with visible

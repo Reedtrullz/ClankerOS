@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import html
 import json
+import re
 import shlex
 import sqlite3
 import subprocess
@@ -614,6 +615,16 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-goal-return-resume='true'",
                 "data-goal-return-evidence='true'",
                 "goal_return_current_gate</dt><dd>commit_request",
+                "Goal Continuation Rail",
+                "data-goal-continuation-rail='true'",
+                "data-goal-continuation-actions='true'",
+                "data-goal-continuation-primary='true'",
+                "data-goal-continuation-next='true'",
+                "data-goal-continuation-then='true'",
+                "data-goal-continuation-publish='true'",
+                "data-goal-continuation-finish='true'",
+                "data-goal-continuation-evidence='true'",
+                "goal_continuation_current_gate</dt><dd>commit_request",
                 "Next Action",
                 "Activity Log",
                 "Memory",
@@ -9109,15 +9120,59 @@ def _goal_continuation_rail(
         if step_values
         else _goal_continuation_link(next_action.href, next_action.href)
     )
+    then_gate = upcoming[2][0] if len(upcoming) > 2 else "complete"
+    then_action = step_values[2][0] if len(step_values) > 2 else "none"
+    then_surface = step_values[2][1] if len(step_values) > 2 else "none"
+    primary_href = "#goal-next-action-form" if action_form_available else next_action.href
+    primary_label = "Use Goal action form" if action_form_available else "Open current surface"
+    next_href, next_label = _goal_continuation_surface_href_label(next_surface)
+    then_href, then_label = _goal_continuation_surface_href_label(then_surface)
+    publish_href = "#goal-workflow-map"
+    publish_label = "Review boundary"
     manual_boundary = (
         "manual_publish_outside_clankeros"
         if any(name == "manual_publish" for name, _ in gates)
         else "none"
     )
+    if manual_boundary == "none":
+        publish_label = "Review workflow"
+    continuation_cards = "".join(
+        [
+            "<div class='goal-continuation-card goal-continuation-primary'>",
+            "<h3>Now</h3>",
+            f"<p>{_e(now_action)}</p>",
+            f"<a class='goal-continuation-action' data-goal-continuation-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+            "</div>",
+            "<div class='goal-continuation-card'>",
+            "<h3>Next Gate</h3>",
+            f"<p>{_e(next_gate.replace('_', ' '))}: {_e(next_action_label)}</p>",
+            f"<a class='goal-continuation-link' data-goal-continuation-next='true' href='{_e(next_href)}'>{_e(next_label)}</a>",
+            "</div>",
+            "<div class='goal-continuation-card'>",
+            "<h3>Then</h3>",
+            f"<p>{_e(then_gate.replace('_', ' '))}: {_e(then_action)}</p>",
+            f"<a class='goal-continuation-link' data-goal-continuation-then='true' href='{_e(then_href)}'>{_e(then_label)}</a>",
+            "</div>",
+            "<div class='goal-continuation-card'>",
+            "<h3>Publish Boundary</h3>",
+            f"<p>{_e(manual_boundary.replace('_', ' '))}</p>",
+            f"<a class='goal-continuation-link' data-goal-continuation-publish='true' href='{_e(publish_href)}'>{_e(publish_label)}</a>",
+            "</div>",
+            "<div class='goal-continuation-card'>",
+            "<h3>Finish Today</h3>",
+            f"<p>{_e(current_position)}/{_e(total)} gates</p>",
+            "<a class='goal-continuation-link' data-goal-continuation-finish='true' data-open-details='true' href='#goal-finish-today'>Save resume point</a>",
+            "</div>",
+        ]
+    )
     return "".join(
         [
             "<section id='goal-continuation-rail' class='panel goal-continuation-rail' data-goal-continuation-rail='true'><h2>Goal Continuation Rail</h2>",
             "<p class='muted'>A compact operator path from the current click through the next local gates and the final manual boundary.</p>",
+            "<div class='goal-continuation-grid' data-goal-continuation-actions='true'>",
+            continuation_cards,
+            "</div>",
+            "<details class='goal-continuation-evidence' data-goal-continuation-evidence='true'><summary>Goal continuation evidence</summary>",
             _kv(
                 [
                     ("goal_continuation_status", "available" if gates else "empty"),
@@ -9149,6 +9204,7 @@ def _goal_continuation_rail(
                     "goal_continuation_safety: local browser guidance only; publication remains manual"
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -9183,6 +9239,17 @@ def _goal_continuation_gate_action(
 
 def _goal_continuation_link(href: str, label: str) -> SafeHtml:
     return SafeHtml(f"<a href='{_e(href)}'>{_e(label)}</a>")
+
+
+def _goal_continuation_surface_href_label(surface: str | SafeHtml) -> tuple[str, str]:
+    text = str(surface)
+    if "outside_clankeros" in text:
+        return "#goal-workflow-map", "Review manual boundary"
+    href_match = re.search(r"href='([^']+)'", text)
+    label_match = re.search(r">([^<]+)</a>", text)
+    href = href_match.group(1) if href_match else "#goal-workflow-map"
+    label = label_match.group(1) if label_match else href
+    return href, label
 
 
 _GOAL_CONTINUATION_GATE_ACTIONS: dict[str, tuple[str, str, str]] = {
@@ -26133,6 +26200,18 @@ def _html_page(
     .goal-return-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-return-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-return-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .goal-continuation-rail {{ border-left:4px solid var(--accent); }}
+    .goal-continuation-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-continuation-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .goal-continuation-card h3 {{ margin-top:0; }}
+    .goal-continuation-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .goal-continuation-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .goal-continuation-action, .goal-continuation-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-continuation-action {{ background:var(--accent); color:#fff; }}
+    .goal-continuation-link {{ background:var(--surface); color:var(--accent); }}
+    .goal-continuation-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-continuation-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .goal-continuation-evidence:not([open]) > :not(summary) {{ display:none; }}
     .workspace-daily-brief {{ border-left:4px solid var(--accent); }}
     .workspace-daily-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .workspace-daily-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -26645,7 +26724,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

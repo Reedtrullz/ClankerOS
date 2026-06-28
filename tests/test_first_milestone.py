@@ -9162,8 +9162,20 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_return_safety: read-only return-to-work brief" in goal.body
     assert "Goal Continuation Rail" in goal.body
     assert "data-goal-continuation-rail='true'" in goal.body
+    assert "data-goal-continuation-actions='true'" in goal.body
+    assert "data-goal-continuation-primary='true'" in goal.body
+    assert "data-goal-continuation-next='true'" in goal.body
+    assert "data-goal-continuation-then='true'" in goal.body
+    assert "data-goal-continuation-publish='true'" in goal.body
+    assert "data-goal-continuation-finish='true'" in goal.body
+    assert "data-goal-continuation-evidence='true'" in goal.body
     assert goal.body.index("id='goal-return-brief'") < goal.body.index("id='goal-continuation-rail'")
     assert goal.body.index("id='goal-continuation-rail'") < goal.body.index("id='goal-next-action'")
+    assert "data-goal-continuation-primary='true' href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "data-goal-continuation-next='true' href='/approvals'>/approvals</a>" in goal.body
+    assert "data-goal-continuation-then='true' href='#goal-next-action'>Goal action form</a>" in goal.body
+    assert "data-goal-continuation-publish='true' href='#goal-workflow-map'>Review boundary</a>" in goal.body
+    assert "data-goal-continuation-finish='true' data-open-details='true' href='#goal-finish-today'" in goal.body
     assert "goal_continuation_status</dt><dd>available" in goal.body
     assert f"goal_continuation_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_continuation_project</dt><dd>{result.project_id}" in goal.body

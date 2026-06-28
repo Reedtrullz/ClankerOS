@@ -416,10 +416,11 @@ Core layers for the bootstrap:
   latest artifact, CI proof posture, blocker routing, `/resume`, finish
   surface, and zero-effect counters in collapsed return evidence without
   writing on GET.
-  A read-only `Goal Continuation Rail` follows it with the current gate, the
-  next few local workflow gates, their operator surfaces, and the final manual
-  publish boundary preserved as outside ClankerOS, so the Goal page can be
-  followed without jumping straight to longer diagnostics.
+  A read-only `Goal Continuation Rail` follows it as visible Now, Next Gate,
+  Then, Publish Boundary, and Finish Today cards, with detailed gate rows,
+  exact surfaces, the manual publish boundary, and zero-effect counters kept
+  in collapsed continuation evidence so the Goal page can be followed without
+  jumping straight to longer diagnostics.
   Goal detail pages also include a
   read-only `Goal Workflow Map` near the top that renders the same
   Remaining Work gate state as a lifecycle rail, highlighting the current

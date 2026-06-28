@@ -278,11 +278,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   the current gate, next local action, resume readiness, latest activity,
   latest artifact, CI proof posture, blocker route, `/resume`, finish surface,
   and zero-effect counters in collapsed return evidence without writing on GET.
-  A read-only
-  `Goal Continuation Rail` follows it with the current gate, the next few
-  local gate actions, their operator surfaces, and the final manual publish
-  boundary, so the Goal page can be followed as a short continuation path
-  before the deeper diagnostics. The next
+  A read-only `Goal Continuation Rail` follows it as a five-card Now, Next
+  Gate, Then, Publish Boundary, and Finish Today path. Detailed gate rows,
+  exact surfaces, the manual publish boundary, and zero-effect counters stay
+  in collapsed continuation evidence, so the Goal page can be followed as a
+  short continuation path before the deeper diagnostics. The next
   detailed surface is a read-only `Goal Workflow Map` that turns the same
   Remaining Work gate state into a lifecycle rail from scout delegation through
   manual publish, with the current gate, next action, gate counts, every
