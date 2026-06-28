@@ -85,8 +85,10 @@ Core layers for the bootstrap:
   evidence, and the confirmed `save-workspace` form stay collapsed by default
   while preserving branch/commit, goal and queue counts, next project action,
   target local surface, and no-write/no-network/no-external-effect boundaries.
-  They
-  include a confirmed local `Start Goal For This Project` form and a project
+  They include a confirmed local `Start Goal For This Project` form, followed
+  by a visible read-only `Project Goal Map` with Lead Goal, Phase, Work,
+  Waiting, and Finish cards so the project page exposes the Goal to resume
+  before the dense inventory. They also include a project
   workflow launchpad with scoped delegation/run workflow links, safe actions,
   dogfooding, and verification links so the operator can start from the
   product path rather than infer goals from task rows. Project goal rows link

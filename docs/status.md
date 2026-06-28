@@ -208,10 +208,12 @@ Latest status focus:
   index opens with `Project Index Workbench` cards for Open, Register, Goals,
   and Resume before shared diagnostics, while project detail pages open with
   the `Project Operator Workbench` before command evidence or shared
-  diagnostics. Project-index evidence, project workbench evidence, command
-  evidence, and project finish forms stay collapsed by default while
-  preserving project counts, first project action, resume state, proof
-  posture, and zero-effect readbacks in the DOM.
+  diagnostics. Project detail pages now also show a visible read-only
+  `Project Goal Map` for Lead Goal, Phase, Work, Waiting, and Finish before
+  the dense Goal list. Project-index evidence, project workbench evidence,
+  goal-map evidence, command evidence, and project finish forms stay collapsed
+  by default while preserving project counts, first project action, lead Goal
+  phase, resume state, proof posture, and zero-effect readbacks in the DOM.
 - `/verification` is now action-first: it opens with the `Verification
   Operator Workbench` before shared route/focus diagnostics or command
   evidence, shows visible Now, Check GitHub, Proof, and Finish Today cards,

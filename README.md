@@ -774,7 +774,10 @@ boundaries before the longer inventory. The page now starts with a
 with Do Now, Goal, Unblock, and Finish Today cards. Workbench evidence,
 command evidence, and the confirmed `save-workspace` form stay collapsed by
 default while still preserving project state and zero-effect readbacks in the
-DOM. It also includes a confirmed
+DOM. A visible read-only `Project Goal Map` now follows the project-scoped
+Goal form with Lead Goal, Phase, Work, Waiting, and Finish cards, so the
+project page shows the Goal to resume before the dense inventory. It also
+includes a confirmed
 local project-scoped `create-goal` form, goal rows that link directly to
 `/goals/<goal_id>` with phase, next action, and task progress, scoped workflow
 links for delegations and coder runs, and links back to safe actions,

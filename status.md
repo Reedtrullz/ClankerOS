@@ -1,5 +1,29 @@
 # Status
 
+## 2026-06-29 Project Goal Map UX
+
+- Added a visible read-only `Project Goal Map` to `/projects/<project_id>`
+  after the project-scoped Goal creation form and before the dense Goal list.
+- The map turns the project-to-Goal bridge into five cards: Lead Goal, Phase,
+  Work, Waiting, and Finish.
+- Empty registered projects point the map back to `Start Goal For This
+  Project`; fixture-backed project pages point at the lead Goal, current phase,
+  latest run workflow, approvals, and Finish Today.
+- Collapsed map evidence records lead Goal label/phase/next action, active/
+  paused/completed/total Goal counts, tasks, delegations, coder runs, latest
+  delegation/run, waiting counts, card count, and zero-effect counters.
+- Updated README, operating summary, local status focus, empty-project route
+  assertions, and fixture-backed project route assertions.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `python3 -m compileall -q agent_os tests`, focused
+  `tests/test_first_milestone.py` route/demo coverage
+  (`2 passed, 514 deselected in 45.94s`), `app-smoke-test`,
+  `app-demo-smoke-test`, and `git diff --check`.
+- Non-claims: no browser QA for this slice, no write on GET, no project/Goal
+  creation without confirmation, no approval or execution on GET, no app-side
+  GitHub polling, no PR, and no deploy from ClankerOS itself.
+
 ## 2026-06-29 Workspace Restore Map UX
 
 - Added a visible read-only `Workspace Restore Map` to `/workspace` after the

@@ -8037,6 +8037,9 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "data-project-workbench-primary='true'" in register_project.body
     assert "data-project-workbench-evidence='true'" in register_project.body
     assert "data-project-command-evidence='true'" in register_project.body
+    assert "data-project-goal-map='true'" in register_project.body
+    assert "data-project-goal-map-actions='true'" in register_project.body
+    assert "data-project-goal-map-evidence='true'" in register_project.body
     assert "data-project-finish-details='true'" in register_project.body
     assert register_project.body.index("data-project-operator-workbench='true'") < register_project.body.index(
         "data-project-command-bar='true'"
@@ -8044,6 +8047,18 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert register_project.body.index("data-project-operator-workbench='true'") < register_project.body.index(
         "data-route-context='true'"
     )
+    assert register_project.body.index("id='start-goal-for-this-project'") < register_project.body.index(
+        "data-project-goal-map='true'"
+    )
+    assert register_project.body.index("data-project-goal-map='true'") < register_project.body.index(
+        "Project Goals"
+    )
+    assert register_project.body.count("class='project-goal-map-card") == 5
+    assert "data-project-goal-card='lead'" in register_project.body
+    assert "data-project-goal-card='phase'" in register_project.body
+    assert "data-project-goal-card='work'" in register_project.body
+    assert "data-project-goal-card='waiting'" in register_project.body
+    assert "data-project-goal-card='finish'" in register_project.body
     assert "project_workbench_status</dt><dd>needs_goal" in register_project.body
     assert "project_workbench_project</dt><dd>clankeros" in register_project.body
     assert "project_workbench_lead_goal</dt><dd>none" in register_project.body
@@ -8104,6 +8119,45 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
         "Start Goal</a>"
     ) in register_project.body
     assert "project_workbench_finish: <a href='#project-finish-today'>Finish Today</a>" in register_project.body
+    assert "Project Goal Map" in register_project.body
+    assert "project_goal_map_status</dt><dd>needs_goal" in register_project.body
+    assert "project_goal_map_project</dt><dd>clankeros" in register_project.body
+    assert "project_goal_map_lead_goal</dt><dd>none" in register_project.body
+    assert "project_goal_map_lead_goal_label</dt><dd>No Goal yet" in register_project.body
+    assert "project_goal_map_lead_goal_phase</dt><dd>No Goal" in register_project.body
+    assert "project_goal_map_lead_goal_next_action</dt><dd>Create first project Goal" in register_project.body
+    assert "project_goal_map_active_goals</dt><dd>0" in register_project.body
+    assert "project_goal_map_paused_goals</dt><dd>0" in register_project.body
+    assert "project_goal_map_completed_goals</dt><dd>0" in register_project.body
+    assert "project_goal_map_total_goals</dt><dd>0" in register_project.body
+    assert "project_goal_map_tasks</dt><dd>0" in register_project.body
+    assert "project_goal_map_delegations</dt><dd>0" in register_project.body
+    assert "project_goal_map_coder_runs</dt><dd>0" in register_project.body
+    assert "project_goal_map_pending_approvals</dt><dd>0" in register_project.body
+    assert "project_goal_map_waiting_items</dt><dd>0" in register_project.body
+    assert (
+        "project_goal_map_goal_surface</dt><dd>"
+        "<a href='/projects/clankeros#start-goal-for-this-project'>Start Goal</a>"
+    ) in register_project.body
+    assert "project_goal_map_workflow_surface</dt><dd><a href='/workflow'>Open workflow</a>" in register_project.body
+    assert (
+        "project_goal_map_waiting_surface</dt><dd>"
+        "<a href='/projects/clankeros#start-goal-for-this-project'>Start Goal</a>"
+    ) in register_project.body
+    assert "project_goal_map_finish_surface</dt><dd><a href='#project-finish-today'>Finish Today</a>" in register_project.body
+    assert (
+        "project_goal_map_start_surface</dt><dd>"
+        "<a href='/projects/clankeros#start-goal-for-this-project'>Start Goal For This Project</a>"
+    ) in register_project.body
+    assert "project_goal_map_card_count</dt><dd>5" in register_project.body
+    assert "project_goal_map_write_on_get</dt><dd>false" in register_project.body
+    assert "project_goal_map_network_actions_taken</dt><dd>0" in register_project.body
+    assert "project_goal_map_external_effects_created</dt><dd>false" in register_project.body
+    assert (
+        "project_goal_map_card: lead surface="
+        "<a href='/projects/clankeros#start-goal-for-this-project'>Start Goal</a>"
+    ) in register_project.body
+    assert "project_goal_map_safety: read-only project-to-goal guidance" in register_project.body
     assert "project_finish_status</dt><dd>available" in register_project.body
     assert "project_finish_action</dt><dd>save-workspace" in register_project.body
     assert "project_finish_project</dt><dd>clankeros" in register_project.body
@@ -12511,6 +12565,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-project-workbench-primary='true'" in project.body
     assert "data-project-workbench-evidence='true'" in project.body
     assert "data-project-command-evidence='true'" in project.body
+    assert "data-project-goal-map='true'" in project.body
+    assert "data-project-goal-map-actions='true'" in project.body
+    assert "data-project-goal-map-evidence='true'" in project.body
     assert "data-project-finish-details='true'" in project.body
     assert project.body.index("data-project-operator-workbench='true'") < project.body.index(
         "data-project-command-bar='true'"
@@ -12518,6 +12575,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert project.body.index("data-project-operator-workbench='true'") < project.body.index(
         "data-route-context='true'"
     )
+    assert project.body.index("id='start-goal-for-this-project'") < project.body.index(
+        "data-project-goal-map='true'"
+    )
+    assert project.body.index("data-project-goal-map='true'") < project.body.index("Project Goals")
+    assert project.body.count("class='project-goal-map-card") == 5
+    assert "data-project-goal-card='lead'" in project.body
+    assert "data-project-goal-card='phase'" in project.body
+    assert "data-project-goal-card='work'" in project.body
+    assert "data-project-goal-card='waiting'" in project.body
+    assert "data-project-goal-card='finish'" in project.body
     assert "project_workbench_status</dt><dd>attention_ready" in project.body
     assert "project_workbench_project</dt><dd>local-app-demo" in project.body
     assert f"project_workbench_lead_goal</dt><dd><a href='/goals/{result.goal_id}'" in project.body
@@ -12562,6 +12629,43 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "project_workbench_unblock: <a href='/approvals'>Review approvals</a>" in project.body
     assert "project_workbench_finish: <a href='#project-finish-today'>Finish Today</a>" in project.body
     assert "project_workbench_safety: confirmed local actions only; no write on GET" in project.body
+    assert "Project Goal Map" in project.body
+    assert "project_goal_map_status</dt><dd>attention_ready" in project.body
+    assert "project_goal_map_project</dt><dd>local-app-demo" in project.body
+    assert f"project_goal_map_lead_goal</dt><dd><a href='/goals/{result.goal_id}'" in project.body
+    assert (
+        "project_goal_map_lead_goal_label</dt><dd>"
+        "Demo the ClankerOS local operator app with fixture-backed state"
+    ) in project.body
+    assert "project_goal_map_lead_goal_phase</dt><dd>Ready to commit" in project.body
+    assert "project_goal_map_lead_goal_next_action</dt><dd>Create commit request" in project.body
+    assert "project_goal_map_active_goals</dt><dd>1" in project.body
+    assert "project_goal_map_paused_goals</dt><dd>0" in project.body
+    assert "project_goal_map_completed_goals</dt><dd>0" in project.body
+    assert "project_goal_map_total_goals</dt><dd>1" in project.body
+    assert "project_goal_map_tasks</dt><dd>1" in project.body
+    assert "project_goal_map_delegations</dt><dd>1" in project.body
+    assert "project_goal_map_coder_runs</dt><dd>1" in project.body
+    assert f"project_goal_map_latest_delegation</dt><dd>{result.delegation_id}" in project.body
+    assert f"project_goal_map_latest_run</dt><dd>{result.coder_worktree_run_id}" in project.body
+    assert "project_goal_map_pending_approvals</dt><dd>1" in project.body
+    assert "project_goal_map_waiting_items</dt><dd>1" in project.body
+    assert f"project_goal_map_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>Open Goal</a>" in project.body
+    assert (
+        f"project_goal_map_workflow_surface</dt><dd><a href='/workflow?run_id={result.coder_worktree_run_id}'>"
+        "Open latest run workflow</a>"
+    ) in project.body
+    assert "project_goal_map_waiting_surface</dt><dd><a href='/approvals'>Review approvals</a>" in project.body
+    assert "project_goal_map_finish_surface</dt><dd><a href='#project-finish-today'>Finish Today</a>" in project.body
+    assert "project_goal_map_card_count</dt><dd>5" in project.body
+    assert "project_goal_map_source</dt><dd>project_goal_rows_and_operator_state" in project.body
+    assert "project_goal_map_write_on_get</dt><dd>false" in project.body
+    assert "project_goal_map_provider_calls_taken</dt><dd>0" in project.body
+    assert "project_goal_map_network_actions_taken</dt><dd>0" in project.body
+    assert "project_goal_map_external_effects_created</dt><dd>false" in project.body
+    assert f"project_goal_map_card: lead surface=<a href='/goals/{result.goal_id}'>Open Goal</a>" in project.body
+    assert "project_goal_map_card: waiting surface=<a href='/approvals'>Review approvals</a>" in project.body
+    assert "project_goal_map_safety: read-only project-to-goal guidance" in project.body
     assert "project_finish_status</dt><dd>available" in project.body
     assert "project_finish_action</dt><dd>save-workspace" in project.body
     assert "project_finish_project</dt><dd>local-app-demo" in project.body
