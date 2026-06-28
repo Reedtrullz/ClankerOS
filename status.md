@@ -1,5 +1,29 @@
 # Status
 
+## 2026-06-29 Goal Session Digest UX
+
+- Added a visible read-only `Goal Session Digest` to `/goals/<goal_id>` after
+  the Goal Return Brief and before the Goal Continuation Rail.
+- The digest turns the immediate return-to-work state into five cards:
+  Continue, Since Save, Latest Artifact, Waiting, and Finish Today.
+- It is sourced from existing Goal state, saved workspace timestamp, latest
+  local timeline item, latest artifact, and waiting queue counts. No new
+  storage or action authority was added.
+- Collapsed digest evidence records current gate, next action/surface,
+  workspace save match, latest activity/artifact, waiting counts, last action
+  readback, card count, and zero-effect counters.
+- Updated README, local app docs, operating summary, current status focus,
+  app-demo smoke markers, and fixture-backed Goal route assertions.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `python3 -m compileall -q agent_os tests`, focused
+  `tests/test_first_milestone.py` route/demo coverage
+  (`2 passed, 514 deselected in 50.81s`), bounded `app-smoke-test`, bounded
+  `app-demo-smoke-test`, and `git diff --check`.
+- Non-claims: no browser QA for this slice, no write on GET, no workspace save
+  without confirmation, no approval or execution on GET, no app-side GitHub
+  polling, no PR, and no deploy from ClankerOS itself.
+
 ## 2026-06-29 Verification Proof Map UX
 
 - Added a visible read-only `Verification Proof Map` to `/verification` after

@@ -276,7 +276,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   the current gate, next local action, resume readiness, latest activity,
   latest artifact, CI proof posture, blocker route, `/resume`, finish surface,
   and zero-effect counters in collapsed return evidence without writing on GET.
-  A read-only `Goal Continuation Rail` follows it as a five-card Now, Next
+  A read-only `Goal Session Digest` follows it as a five-card Continue, Since
+  Save, Latest Artifact, Waiting, and Finish Today digest. It is sourced from
+  existing Goal state, saved workspace timestamp, latest local timeline item,
+  latest artifact, and waiting queue counts, and keeps its source and
+  zero-effect counters in collapsed digest evidence. A read-only
+  `Goal Continuation Rail` follows the digest as a five-card Now, Next
   Gate, Then, Publish Boundary, and Finish Today path. Detailed gate rows,
   exact surfaces, the manual publish boundary, and zero-effect counters stay
   in collapsed continuation evidence, so the Goal page can be followed as a

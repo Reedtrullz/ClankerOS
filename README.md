@@ -308,7 +308,8 @@ then an in-flow `Goal Action Dock` keeps the current action, gate, CI proof
 target, and resume route near the top of the workbench while jumping directly
 to the existing confirmed Goal action form when one is available. The dock
 precedes the Goal Command Bar, Goal
-Operator Workbench, Goal Daily Loop, Goal Return Brief, Goal Continuation Rail,
+Operator Workbench, Goal Daily Loop, Goal Return Brief, Goal Session Digest,
+Goal Continuation Rail,
 next action, next recommendation, Goal Workflow Map, Goal CI Handoff, live
 state, and collapsed section index before the detailed progress, timeline, activity log, goal risk, completion
 criteria, completion readiness, evidence, delegations, runs, approvals,
@@ -341,7 +342,12 @@ return board for Continue, Latest, Blocker, Finish, and Resume, with the
 same gate, activity, artifact, CI, resume-readiness, blocker, and zero-effect
 state preserved in collapsed return evidence instead of leading the operator
 through proof rows.
-The read-only `Goal Continuation Rail` follows the return brief as visible
+The read-only `Goal Session Digest` follows the return brief and condenses the
+current continuation into Continue, Since Save, Latest Artifact, Waiting, and
+Finish Today cards. It uses existing Goal state, saved workspace timestamp,
+latest local timeline item, latest artifact, and waiting queue counts, then
+keeps the exact sources and zero-effect boundary in collapsed digest evidence.
+The read-only `Goal Continuation Rail` follows the digest as visible
 Now, Next Gate, Then, Publish Boundary, and Finish Today cards, while detailed
 gate rows, exact surfaces, manual publish boundary, and zero-effect counters
 stay in collapsed continuation evidence. Goal

@@ -10362,6 +10362,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-command-bar'" in goal.body
     assert "href='#goal-operator-workbench'" in goal.body
     assert "href='#goal-return-brief'" in goal.body
+    assert "href='#goal-session-digest'" in goal.body
     assert "href='#goal-continuation-rail'" in goal.body
     assert "href='#goal-workflow-map'" in goal.body
     assert "href='#goal-next-action'" in goal.body
@@ -10391,6 +10392,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-command-bar'" in goal.body
     assert "id='goal-operator-workbench'" in goal.body
     assert "id='goal-daily-loop'" in goal.body
+    assert "id='goal-session-digest'" in goal.body
     assert "id='goal-workflow-map'" in goal.body
     assert "id='goal-ci-handoff'" in goal.body
     assert "id='goal-current-phase'" in goal.body
@@ -10417,7 +10419,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>52" in goal.body
+    assert "goal_section_count</dt><dd>53" in goal.body
     assert "data-goal-section-index-evidence='true'" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "data-goal-command-strip='true'" in goal.body
@@ -10545,7 +10547,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-return-resume='true'" in goal.body
     assert "data-goal-return-evidence='true'" in goal.body
     assert goal.body.index("id='goal-daily-loop'") < goal.body.index("id='goal-return-brief'")
-    assert goal.body.index("id='goal-return-brief'") < goal.body.index("id='goal-next-action'")
+    assert goal.body.index("id='goal-return-brief'") < goal.body.index("id='goal-session-digest'")
+    assert goal.body.index("id='goal-session-digest'") < goal.body.index("id='goal-next-action'")
     assert "href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
     assert "data-goal-return-finish='true' data-open-details='true' href='#goal-finish-today'" in goal.body
     assert "data-goal-return-resume='true' href='/resume'" in goal.body
@@ -10575,6 +10578,50 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_return_now: Create commit request" in goal.body
     assert "goal_return_unblock: pending_approvals -> <a href='/approvals'>/approvals</a>" in goal.body
     assert "goal_return_safety: read-only return-to-work brief" in goal.body
+    assert "Goal Session Digest" in goal.body
+    assert "data-goal-session-digest='true'" in goal.body
+    assert "data-goal-session-actions='true'" in goal.body
+    assert "data-goal-session-primary='true'" in goal.body
+    assert "data-goal-session-since-save='true'" in goal.body
+    assert "data-goal-session-artifact='true'" in goal.body
+    assert "data-goal-session-waiting='true'" in goal.body
+    assert "data-goal-session-finish='true'" in goal.body
+    assert "data-goal-session-evidence='true'" in goal.body
+    assert goal.body.index("id='goal-return-brief'") < goal.body.index("id='goal-session-digest'")
+    assert goal.body.index("id='goal-session-digest'") < goal.body.index("id='goal-continuation-rail'")
+    assert "goal_session_digest_status</dt><dd>not_saved" in goal.body
+    assert f"goal_session_digest_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_session_digest_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_session_digest_phase</dt><dd>Ready to commit" in goal.body
+    assert "goal_session_digest_current_gate</dt><dd>commit_request" in goal.body
+    assert "goal_session_digest_next_action</dt><dd>Create commit request" in goal.body
+    assert f"goal_session_digest_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
+    assert "goal_session_digest_action_form_available</dt><dd>true" in goal.body
+    assert "goal_session_digest_workspace_updated_at</dt><dd>never" in goal.body
+    assert "goal_session_digest_workspace_goal_matches_current</dt><dd>false" in goal.body
+    assert "goal_session_digest_workspace_project_matches_current</dt><dd>false" in goal.body
+    assert "goal_session_digest_latest_after_save</dt><dd>false" in goal.body
+    assert "goal_session_digest_latest_kind</dt><dd>" in goal.body
+    assert "goal_session_digest_latest_message</dt><dd>" in goal.body
+    assert "goal_session_digest_latest_surface</dt><dd><a href='" in goal.body
+    assert "goal_session_digest_latest_artifact</dt><dd><a href='/artifacts?path=" in goal.body
+    assert "goal_session_digest_waiting_items</dt><dd>1" in goal.body
+    assert "goal_session_digest_pending_approvals</dt><dd>1" in goal.body
+    assert "goal_session_digest_open_incidents</dt><dd>0" in goal.body
+    assert "goal_session_digest_open_recommendations</dt><dd>0" in goal.body
+    assert "goal_session_digest_waiting_surface</dt><dd><a href='/approvals'>Review approvals</a>" in goal.body
+    assert "goal_session_digest_card_count</dt><dd>5" in goal.body
+    assert "goal_session_digest_source</dt><dd>goal_state_workspace_timeline_artifact_and_waiting_queues" in goal.body
+    assert "goal_session_digest_write_on_get</dt><dd>false" in goal.body
+    assert "goal_session_digest_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_session_digest_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_session_digest_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_session_digest_continue: <a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_session_digest_since_save: not_saved latest_after_save=false" in goal.body
+    assert "goal_session_digest_artifact: <a href='/artifacts?path=" in goal.body
+    assert "goal_session_digest_waiting: approvals=1 incidents=0 recommendations=0 -> <a href='/approvals'>Review approvals</a>" in goal.body
+    assert "goal_session_digest_finish: <a href='#goal-finish-today'>Finish Today</a>" in goal.body
+    assert "goal_session_digest_safety: read-only local session digest; confirmed forms own writes" in goal.body
     assert "Goal Continuation Rail" in goal.body
     assert "data-goal-continuation-rail='true'" in goal.body
     assert "data-goal-continuation-actions='true'" in goal.body
@@ -10584,7 +10631,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-continuation-publish='true'" in goal.body
     assert "data-goal-continuation-finish='true'" in goal.body
     assert "data-goal-continuation-evidence='true'" in goal.body
-    assert goal.body.index("id='goal-return-brief'") < goal.body.index("id='goal-continuation-rail'")
+    assert goal.body.index("id='goal-return-brief'") < goal.body.index("id='goal-session-digest'")
+    assert goal.body.index("id='goal-session-digest'") < goal.body.index("id='goal-continuation-rail'")
     assert goal.body.index("id='goal-continuation-rail'") < goal.body.index("id='goal-next-action'")
     assert "data-goal-continuation-primary='true' href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
     assert "data-goal-continuation-next='true' href='/approvals'>/approvals</a>" in goal.body

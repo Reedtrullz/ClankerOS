@@ -95,8 +95,11 @@ Latest status focus:
   visible, and the Goal Daily Loop now exposes Continue, Start, Unblock, Pause,
   and Finish Today cards with direct hash-opened pause/save details. Goal
   Return Brief now follows with visible Continue, Latest, Blocker, Finish, and
-  Resume cards, and Goal Continuation Rail now exposes Now, Next Gate, Then,
-  Publish Boundary, and Finish Today cards. Goal Workflow Map now exposes Now,
+  Resume cards, Goal Session Digest now follows with Continue, Since Save,
+  Latest Artifact, Waiting, and Finish Today cards sourced from workspace,
+  timeline, artifact, and waiting-queue state, and Goal Continuation Rail now
+  exposes Now, Next Gate, Then, Publish Boundary, and Finish Today cards. Goal
+  Workflow Map now exposes Now,
   Progress, Approvals, Publish Boundary, and Finish Today cards before its
   detailed lifecycle rail. Goal CI Handoff exposes Check GitHub, Record Proof,
   Current Proof, Full Suite, and Finish Today cards, and Goal Live State now

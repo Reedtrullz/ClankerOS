@@ -466,7 +466,12 @@ Core layers for the bootstrap:
   latest artifact, CI proof posture, blocker routing, `/resume`, finish
   surface, and zero-effect counters in collapsed return evidence without
   writing on GET.
-  A read-only `Goal Continuation Rail` follows it as visible Now, Next Gate,
+  A read-only `Goal Session Digest` follows it as visible Continue, Since
+  Save, Latest Artifact, Waiting, and Finish Today cards. The digest is sourced
+  from existing Goal state, saved workspace timestamp, latest local timeline
+  item, latest artifact, and waiting queue counts, with source and zero-effect
+  counters kept in collapsed digest evidence.
+  A read-only `Goal Continuation Rail` follows the digest as visible Now, Next Gate,
   Then, Publish Boundary, and Finish Today cards, with detailed gate rows,
   exact surfaces, the manual publish boundary, and zero-effect counters kept
   in collapsed continuation evidence so the Goal page can be followed without
