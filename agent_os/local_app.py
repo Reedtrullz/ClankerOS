@@ -502,6 +502,14 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-demo-workbench-evidence='true'",
                 "demo_workbench_fixture_status</dt><dd>available",
                 "demo_workbench_next_action</dt><dd>request_commit_for_reviewed_run",
+                "Demo Walkthrough Map",
+                "data-demo-walkthrough-map='true'",
+                "data-demo-walkthrough-actions='true'",
+                "data-demo-walkthrough-evidence='true'",
+                "demo_walkthrough_current_stage</dt><dd>run",
+                "demo_walkthrough_current_position</dt><dd>4/7",
+                "demo_walkthrough_next_action</dt><dd>request_commit_for_reviewed_run",
+                "demo_walkthrough_total_stages</dt><dd>7",
                 "Demo Command Bar",
                 "data-demo-command-evidence='true'",
                 "demo_command_fixture_status</dt><dd>available",
@@ -26081,6 +26089,7 @@ def _demo_page(root: Path) -> str:
             _non_claim_banner(),
             "</section>",
             _demo_operator_workbench(root),
+            _demo_walkthrough_map(root),
             _demo_command_bar(root),
             _demo_dogfooding_state(root),
         ]
@@ -26273,6 +26282,198 @@ def _demo_selected_surface(
             f"<a href='/projects/{quote(project.name)}'>/projects/{_e(project.name)}</a>"
         )
     return "none"
+
+
+DEMO_WALKTHROUGH_STAGES = [
+    ("fixture", "Fixture", "Create or refresh deterministic demo state."),
+    ("goal", "Project + Goal", "Open the demo project and Goal cockpit."),
+    ("workflow", "Workflow", "Inspect delegation and run flow."),
+    ("run", "Run", "Review bounded worktree evidence."),
+    ("approval", "Approval", "Decide local commit/publication gates."),
+    ("publish", "Publish Boundary", "Prepare handoff and stop before external push or PR."),
+    ("resume", "Resume + Proof", "Return through resume and verification surfaces."),
+]
+
+
+def _demo_walkthrough_stage(next_step: str, fixture_status: str, run_id: str) -> str:
+    if fixture_status != "available":
+        return "fixture"
+    if not run_id:
+        return "goal"
+    if next_step in {"request_commit_for_reviewed_run", "review_demo_state"}:
+        return "run"
+    if next_step in {
+        "approve_or_reject_commit_request",
+        "commit_approved_worktree",
+        "approve_or_reject_publication_request",
+    }:
+        return "approval"
+    if next_step in {
+        "request_publication_handoff",
+        "prepare_publication_handoff",
+        "manual_operator_push_pr_outside_clankeros",
+    }:
+        return "publish"
+    if next_step == "review_completed_goal_evidence":
+        return "resume"
+    return "workflow"
+
+
+def _demo_walkthrough_target(
+    key: str,
+    *,
+    project: Any | None,
+    selected_delegation: Any | None,
+    run_id: str,
+    goal_id: str,
+) -> tuple[str, str]:
+    if key == "fixture":
+        return "/demo" if project is not None else "#demo-command-bar", (
+            "Refresh demo" if project is not None else "Copy demo command"
+        )
+    if key == "goal":
+        if goal_id:
+            return f"/goals/{quote(goal_id)}", "Open Goal"
+        if project is not None:
+            return f"/projects/{quote(project.name)}", "Open project"
+        return "#demo-command-bar", "Fixture first"
+    if key == "workflow":
+        if run_id:
+            return f"/workflow?run_id={quote(run_id)}", "Run workflow"
+        if selected_delegation is not None:
+            return f"/workflow?delegation_id={quote(selected_delegation.id)}", "Delegation workflow"
+        return "#manual-browser-script", "Route walk"
+    if key == "run":
+        if run_id:
+            return f"/runs/{quote(run_id)}", "Open run"
+        return "#manual-browser-script", "Run pending"
+    if key == "approval":
+        return "/approvals", "Open approvals"
+    if key == "publish":
+        if run_id:
+            return f"/runs/{quote(run_id)}", "Publication handoff"
+        return "#manual-browser-script", "Publish boundary"
+    if key == "resume":
+        return "/resume", "Resume workspace"
+    return "/demo", "Open demo"
+
+
+def _demo_walkthrough_map(root: Path) -> str:
+    project, selected_delegation, selected_run = _demo_selected_state(root)
+    run_id = selected_run.id if selected_run else ""
+    progress = _demo_progress_state(root, run_id)
+    goal_id = progress.get("goal_id") or (
+        selected_delegation.parent_goal_id if selected_delegation else ""
+    )
+    fixture_status = "available" if project is not None else "missing"
+    current_key = _demo_walkthrough_stage(progress["next_step"], fixture_status, run_id)
+    current_position = next(
+        (
+            index
+            for index, (key, _label, _summary) in enumerate(DEMO_WALKTHROUGH_STAGES, start=1)
+            if key == current_key
+        ),
+        1,
+    )
+    total = len(DEMO_WALKTHROUGH_STAGES)
+    done_count = max(current_position - 1, 0)
+    waiting_count = max(total - current_position, 0)
+    cards: list[str] = []
+    lines: list[str] = []
+    primary_href, primary_label = _demo_walkthrough_target(
+        current_key,
+        project=project,
+        selected_delegation=selected_delegation,
+        run_id=run_id,
+        goal_id=goal_id,
+    )
+    for index, (key, label, summary) in enumerate(DEMO_WALKTHROUGH_STAGES, start=1):
+        if key == current_key:
+            status = "current"
+        elif index < current_position:
+            status = "done"
+        else:
+            status = "waiting"
+        href, link_label = _demo_walkthrough_target(
+            key,
+            project=project,
+            selected_delegation=selected_delegation,
+            run_id=run_id,
+            goal_id=goal_id,
+        )
+        cards.append(
+            "<article class='demo-walkthrough-card' "
+            f"data-demo-walkthrough-stage='{_e(key)}' "
+            f"data-demo-walkthrough-status='{_e(status)}'>"
+            f"<span class='demo-walkthrough-index'>{index}</span>"
+            f"<h3>{_e(label)}</h3>"
+            f"<p>{_e(summary)}</p>"
+            f"<strong>{_e(status)}</strong>"
+            f"<a class='demo-walkthrough-link' href='{_e(href)}'>{_e(link_label)}</a>"
+            "</article>"
+        )
+        lines.append(
+            f"demo_walkthrough_stage: {_e(key)} status={_e(status)} "
+            f"surface=<a href='{_e(href)}'>{_e(link_label)}</a>"
+        )
+
+    return "".join(
+        [
+            "<section id='demo-walkthrough-map' class='panel demo-walkthrough-map' data-demo-walkthrough-map='true'><h2>Demo Walkthrough Map</h2>",
+            "<p class='muted'>A scan-first route through the fixture-backed product loop, from demo setup to workflow, local gates, publication handoff, resume, and proof.</p>",
+            "<div class='demo-walkthrough-grid' data-demo-walkthrough-actions='true'>",
+            "".join(cards),
+            "</div>",
+            "<details class='demo-walkthrough-evidence' data-demo-walkthrough-evidence='true'><summary>Demo walkthrough evidence</summary>",
+            _kv(
+                [
+                    ("demo_walkthrough_status", "fixture_ready" if fixture_status == "available" else "fixture_missing"),
+                    ("demo_walkthrough_fixture_status", fixture_status),
+                    ("demo_walkthrough_current_stage", current_key),
+                    ("demo_walkthrough_current_position", f"{current_position}/{total}"),
+                    ("demo_walkthrough_next_action", progress["next_step"]),
+                    (
+                        "demo_walkthrough_primary_surface",
+                        SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+                    ),
+                    ("demo_walkthrough_project", project.name if project is not None else "none"),
+                    (
+                        "demo_walkthrough_goal",
+                        SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(goal_id)}</a>") if goal_id else "none",
+                    ),
+                    (
+                        "demo_walkthrough_delegation",
+                        SafeHtml(
+                            f"<a href='/delegations/{quote(selected_delegation.id)}'>{_e(selected_delegation.id)}</a>"
+                        )
+                        if selected_delegation is not None
+                        else "none",
+                    ),
+                    (
+                        "demo_walkthrough_run",
+                        SafeHtml(f"<a href='/runs/{quote(run_id)}'>{_e(run_id)}</a>") if run_id else "none",
+                    ),
+                    ("demo_walkthrough_done_count", str(done_count)),
+                    ("demo_walkthrough_current_count", "1"),
+                    ("demo_walkthrough_waiting_count", str(waiting_count)),
+                    ("demo_walkthrough_total_stages", str(total)),
+                    ("demo_walkthrough_manual_boundary", "outside_clankeros"),
+                    ("demo_walkthrough_write_on_get", "false"),
+                    ("demo_walkthrough_provider_calls_taken", "0"),
+                    ("demo_walkthrough_network_actions_taken", "0"),
+                    ("demo_walkthrough_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                lines
+                + [
+                    "demo_walkthrough_safety: read-only browser route map; confirmed gate forms own local writes",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
 
 
 def _demo_command_bar(root: Path) -> str:
@@ -32330,9 +32531,19 @@ def _html_page(
     .demo-workbench-action, .demo-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .demo-workbench-action {{ background:var(--accent); color:#fff; }}
     .demo-workbench-link {{ background:var(--surface); color:var(--accent); }}
-    .demo-workbench-evidence, .demo-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .demo-workbench-evidence summary, .demo-command-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .demo-workbench-evidence:not([open]) > :not(summary), .demo-command-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .demo-walkthrough-map {{ border-left:4px solid var(--accent); }}
+    .demo-walkthrough-grid {{ display:grid; grid-template-columns:repeat(7, minmax(150px, 1fr)); gap:10px; margin:12px 0; }}
+    .demo-walkthrough-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .demo-walkthrough-card h3 {{ margin:4px 0 8px; }}
+    .demo-walkthrough-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .demo-walkthrough-card strong {{ display:block; margin-bottom:8px; text-transform:capitalize; }}
+    .demo-walkthrough-index {{ display:inline-flex; align-items:center; justify-content:center; min-width:24px; height:24px; border-radius:999px; border:1px solid var(--line); color:var(--muted); font-size:12px; }}
+    .demo-walkthrough-link {{ display:inline-flex; align-items:center; min-height:32px; max-width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--accent); color:var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
+    .demo-walkthrough-card[data-demo-walkthrough-status='current'] {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .demo-walkthrough-card[data-demo-walkthrough-status='done'] {{ opacity:.86; }}
+    .demo-workbench-evidence, .demo-walkthrough-evidence, .demo-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .demo-workbench-evidence summary, .demo-walkthrough-evidence summary, .demo-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .demo-workbench-evidence:not([open]) > :not(summary), .demo-walkthrough-evidence:not([open]) > :not(summary), .demo-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .demo-command-bar {{ border-left:4px solid var(--accent); }}
     .demo-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .demo-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -32843,7 +33054,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-session-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-session-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-attention-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .skills-usage-grid {{ grid-template-columns:1fr; }} }}

@@ -35,6 +35,36 @@
   execution, no approval or commit action on GET, no raw filesystem browsing,
   no app-side GitHub polling, no PR, and no deploy from ClankerOS itself.
 
+## 2026-06-29 Demo Walkthrough Map UX
+
+- Added a visible read-only `Demo Walkthrough Map` to `/demo` between the
+  `Demo Operator Workbench` and `Demo Command Bar`.
+- The map turns the demo route walk into seven cards: Fixture, Project + Goal,
+  Workflow, Run, Approval, Publish Boundary, and Resume + Proof.
+- The current card is derived from existing demo fixture/progress state. In the
+  fixture-backed demo, the map lands on Run because the next gate is
+  `request_commit_for_reviewed_run`.
+- Collapsed walkthrough evidence records fixture status, current stage,
+  selected project/Goal/delegation/run, card counts, manual publish boundary,
+  and zero-effect counters.
+- Updated README, operating summary, local status focus, fixture demo smoke
+  snippets, and focused demo route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `1 passed, 515 deselected in 34.47s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed, all route markers matched, provider/network/external counters
+    stayed at `0`
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed, fixture-backed route snippets matched, provider/network/
+    external counters stayed at `0`
+- Non-claims until remote proof: no browser QA for this slice, no write on GET,
+  no fixture creation from the browser, no approval or execution on GET, no
+  app-side GitHub polling, no PR, and no deploy from ClankerOS itself.
+
 ## 2026-06-28 Run Evidence Map UX
 
 - Added a visible read-only `Run Evidence Map` to `/runs/<coder_run_id>` after

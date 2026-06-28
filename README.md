@@ -252,7 +252,9 @@ and follow the state-aware dogfooding links
 into the demo project, selected workflow, delegation, coder worktree run,
 review artifact, approvals, and inbox. The `/demo` page starts with a
 read-only `Demo Operator Workbench` for Now, Project, Workflow, and Proof,
-then keeps the fixture command/readback details in collapsed evidence. It
+then shows a read-only `Demo Walkthrough Map` with Fixture, Project + Goal,
+Workflow, Run, Approval, Publish Boundary, and Resume + Proof cards before the
+fixture command/readback details. It
 still shows whether fixture state exists, the preferred `demo` command,
 compatibility command, selected project, Goal, delegation, run, next local
 surface, and zero-effect counters before the longer walkthrough. It also shows

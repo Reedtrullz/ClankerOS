@@ -8734,6 +8734,46 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "demo_workbench_external_effects_created</dt><dd>false" in demo.body
     assert "demo_workbench_safety: read-only launchpad" in demo.body
     assert demo.body.index("data-demo-operator-workbench='true'") < demo.body.index(
+        "data-demo-walkthrough-map='true'"
+    )
+    assert "Demo Walkthrough Map" in demo.body
+    assert "data-demo-walkthrough-map='true'" in demo.body
+    assert "data-demo-walkthrough-actions='true'" in demo.body
+    assert "data-demo-walkthrough-evidence='true'" in demo.body
+    assert demo.body.count("class='demo-walkthrough-card") == 7
+    assert "data-demo-walkthrough-stage='fixture' data-demo-walkthrough-status='done'" in demo.body
+    assert "data-demo-walkthrough-stage='goal' data-demo-walkthrough-status='done'" in demo.body
+    assert "data-demo-walkthrough-stage='workflow' data-demo-walkthrough-status='done'" in demo.body
+    assert "data-demo-walkthrough-stage='run' data-demo-walkthrough-status='current'" in demo.body
+    assert "data-demo-walkthrough-stage='approval' data-demo-walkthrough-status='waiting'" in demo.body
+    assert "data-demo-walkthrough-stage='publish' data-demo-walkthrough-status='waiting'" in demo.body
+    assert "data-demo-walkthrough-stage='resume' data-demo-walkthrough-status='waiting'" in demo.body
+    assert "demo_walkthrough_status</dt><dd>fixture_ready" in demo.body
+    assert "demo_walkthrough_fixture_status</dt><dd>available" in demo.body
+    assert "demo_walkthrough_current_stage</dt><dd>run" in demo.body
+    assert "demo_walkthrough_current_position</dt><dd>4/7" in demo.body
+    assert "demo_walkthrough_next_action</dt><dd>request_commit_for_reviewed_run" in demo.body
+    assert (
+        f"demo_walkthrough_primary_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
+        "Open run</a>"
+    ) in demo.body
+    assert "demo_walkthrough_project</dt><dd>local-app-demo" in demo.body
+    assert f"demo_walkthrough_goal</dt><dd><a href='/goals/{result.goal_id}'" in demo.body
+    assert f"demo_walkthrough_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in demo.body
+    assert f"demo_walkthrough_run</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in demo.body
+    assert "demo_walkthrough_done_count</dt><dd>3" in demo.body
+    assert "demo_walkthrough_current_count</dt><dd>1" in demo.body
+    assert "demo_walkthrough_waiting_count</dt><dd>3" in demo.body
+    assert "demo_walkthrough_total_stages</dt><dd>7" in demo.body
+    assert "demo_walkthrough_manual_boundary</dt><dd>outside_clankeros" in demo.body
+    assert "demo_walkthrough_write_on_get</dt><dd>false" in demo.body
+    assert "demo_walkthrough_provider_calls_taken</dt><dd>0" in demo.body
+    assert "demo_walkthrough_network_actions_taken</dt><dd>0" in demo.body
+    assert "demo_walkthrough_external_effects_created</dt><dd>false" in demo.body
+    assert "demo_walkthrough_stage: run status=current" in demo.body
+    assert "demo_walkthrough_stage: publish status=waiting" in demo.body
+    assert "demo_walkthrough_safety: read-only browser route map" in demo.body
+    assert demo.body.index("data-demo-walkthrough-map='true'") < demo.body.index(
         "data-demo-command-bar='true'"
     )
     assert demo.body.index("data-demo-operator-workbench='true'") < demo.body.index(

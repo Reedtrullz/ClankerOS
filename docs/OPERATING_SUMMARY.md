@@ -961,10 +961,14 @@ Core layers for the bootstrap:
   recommendation that points to the next operator surface, and a state-aware
   `/demo` launchpad that opens with a read-only `Demo Operator Workbench` for
   Now, Project, Workflow, and Proof before shared diagnostics or command
-  readback. Demo workbench and command evidence stay collapsed by default
-  while preserving fixture availability, preferred demo command, compatibility
-  command, selected project/Goal/delegation/run, next local surface, and
-  zero-effect counters; it then links the fixture project, selected workflow,
+  readback. A read-only `Demo Walkthrough Map` follows with Fixture,
+  Project + Goal, Workflow, Run, Approval, Publish Boundary, and Resume + Proof
+  cards before the command readback, making the full product tour visible
+  without reading the manual browser script first. Demo workbench,
+  walkthrough, and command evidence stay collapsed by default while preserving
+  fixture availability, preferred demo command, compatibility command,
+  selected project/Goal/delegation/run, next local surface, and zero-effect
+  counters; it then links the fixture project, selected workflow,
   delegation, coder worktree run, review artifact, inbox, approvals, first
   manual browser dogfooding script, a read-only next-action panel, and a
   browser-progress checklist for commit/publication handoff status, plus a
