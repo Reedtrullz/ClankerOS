@@ -482,8 +482,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   proposed, archived, generated, used-skill, project-usage, first-artifact,
   and zero-effect readbacks in the DOM.
 - `/profiles` - inactive future provider-routing surface. It reads
-  `.clanker/profiles.yml` when present, starts with a read-only
-  `Profiles Command Bar`, and keeps provider calls and model routing at zero.
+  `.clanker/profiles.yml` when present and opens with a visible
+  `Profiles Operator Workbench` before shared route/focus diagnostics or
+  command readback, with cards for the next profile review, future lanes,
+  storage, and `/resume` or Goal context. Profiles state, workbench evidence,
+  and command evidence stay collapsed by default while preserving configured,
+  storage, enabled, disabled, future-lane, adapter, write-posture, use-for,
+  provider, model-routing, and zero-effect readbacks in the DOM.
 - `/workflow` - modern handoff/worktree/commit/publication workflow stepper,
   including `coder-prep-from-handoff` as the artifact-first prep route. Add
   `?delegation_id=<id>` or `?run_id=<coder_worktree_run_id>` to show selected

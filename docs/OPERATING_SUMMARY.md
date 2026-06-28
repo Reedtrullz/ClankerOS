@@ -245,10 +245,13 @@ Core layers for the bootstrap:
   for inactive future provider-routing readback from `.clanker/profiles.yml`
   and SQLite profile storage rows, including profile labels, modes, cost
   tiers, model placeholders, write posture, adapter status, and `use_for`
-  labels plus a read-only `Profiles Command Bar` that summarizes configured,
-  storage, enabled, disabled, future-lane, adapter, write-posture, and
-  use-for counts, names one local review target, and keeps provider/model
-  routing disabled.
+  labels. It is action-first and opens with a visible
+  `Profiles Operator Workbench` before shared route/focus diagnostics or
+  command readback, with cards for the next profile review, future lanes,
+  storage, and `/resume` or Goal context. Profiles state, workbench evidence,
+  and command evidence stay collapsed by default while preserving configured,
+  storage, enabled, disabled, future-lane, adapter, write-posture, use-for,
+  provider, model-routing, and zero-effect readbacks in the DOM.
   The `/goals` and Home first-run panel now exposes a state-aware
   Create project -> Create first goal -> Create first delegation -> Generate
   context pack -> Run first delegation checklist plus confirmed local

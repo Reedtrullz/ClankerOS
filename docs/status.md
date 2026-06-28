@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/profiles` is now action-first: it opens with the `Profiles Operator
+  Workbench` before shared route/focus diagnostics or command readback, shows
+  visible Now, Lanes, Storage, and Resume cards, and keeps profiles state,
+  workbench evidence, and command evidence collapsed by default while
+  preserving future-lane, storage-profile, provider-disabled, model-routing-
+  disabled, and zero-effect proof in the DOM.
 - `/skills` is now action-first: it opens with the `Skills Operator
   Workbench` before shared route/focus diagnostics or command readback, shows
   visible Now, Generated, Usage, and Resume cards, and keeps skills state,

@@ -516,9 +516,14 @@ workbench evidence, and command evidence stay collapsed by default while
 preserving skill counts, generated-skill posture, usage/project counts, the
 first bounded skill artifact, and no execution/install/provider/network
 effects in the DOM.
-The read-only `Profiles Command Bar` starts `/profiles` with configured and
-storage profile counts, future-lane readiness, adapter/write/use-for posture,
-one local review target, and provider/model routing explicitly disabled.
+`/profiles` is also action-first: it opens with a visible
+`Profiles Operator Workbench` before shared route/focus diagnostics or command
+readback, turning storage-profile review, future-lane review, and resume
+context into browser cards while provider/model routing remains inactive.
+Profiles state, workbench evidence, and command evidence stay collapsed by
+default while preserving configured/storage profile counts, future-lane
+readiness, adapter/write/use-for posture, and provider/model routing disabled
+proof in the DOM.
 `/profiles` also shows both `.clanker/profiles.yml` names and SQLite profile
 storage rows, including labels, modes, cost tiers, write posture, adapter
 status, and `use_for` labels without enabling providers.

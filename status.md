@@ -1,5 +1,49 @@
 # Status
 
+## 2026-06-28 Profiles Action-First Operator Surface
+
+- Made `/profiles` usable as an operator workbench by rendering the
+  `Profiles Operator Workbench` before shared Route Context, Operator Focus,
+  Last Action, and profiles command diagnostics.
+- Added four visible cards for the current profile review, future profile
+  lanes, storage/configured profile review, and resume/goal context, with a
+  stable `data-profiles-workbench-primary` marker for the primary action.
+- Kept profiles state evidence, workbench evidence, and command evidence
+  collapsed by default while preserving configured/storage/enabled/disabled
+  profile counts, future-lane posture, adapter/write/use-for posture, saved
+  workspace context, provider-disabled proof, model-routing-disabled proof,
+  and zero-effect readbacks in the DOM.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, activate providers, enable model routing, install profiles, execute
+  work, create action authority, approve work, call providers, fetch GitHub
+  from ClankerOS, poll network services, commit, push, create PRs, deploy,
+  mutate external systems from ClankerOS, or expose arbitrary raw filesystem
+  browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'profiles_route_reads_storage_profiles_without_enabling_providers or local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-profiles-first-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-profiles-first-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/profiles` snippets matched,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8814/profiles`: desktop `1280x900` rendered four
+    Profiles Operator Workbench cards before Route Context and the Profiles
+    Command Bar, kept state/workbench/command evidence collapsed, had no
+    horizontal overflow, no framework overlay, and empty browser warning/error
+    logs.
+  - Interaction proof: clicking the marked primary action changed the URL to
+    `/profiles#profiles-future` and placed the future profile lanes section in
+    view.
+  - Mobile Browser QA at `390x844` rendered four profiles workbench cards in
+    one column, kept profiles evidence collapsed, showed no horizontal
+    overflow, and had empty browser warning/error logs.
+  - `git diff --check` -> passed.
+
 ## 2026-06-28 Skills Action-First Operator Surface
 
 - Made `/skills` usable as an operator workbench by rendering the

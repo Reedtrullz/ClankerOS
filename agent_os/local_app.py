@@ -658,6 +658,13 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             "/profiles",
             "Profiles And Routing",
             [
+                "data-profiles-operator-workbench='true'",
+                "data-profiles-workbench-primary='true'",
+                "data-profiles-state-details='true'",
+                "data-profiles-workbench-evidence='true'",
+                "data-profiles-command-evidence='true'",
+                "profiles_workbench_status</dt><dd>future_ready",
+                "profiles_workbench_next_action</dt><dd>Review future profile lanes",
                 "provider_routing_active",
                 "provider_calls_taken",
             ],
@@ -6502,6 +6509,7 @@ def _profiles_page(root: Path) -> str:
         [
             "<section><h1>Profiles And Routing</h1>",
             "<p class='muted'>Prepared UI and storage readback for future provider routing. Providers remain inactive.</p>",
+            "<details class='profiles-state-details' data-profiles-state-details='true'><summary>Profiles state evidence</summary>",
             _kv(
                 [
                     ("profiles_path", ".clanker/profiles.yml" if profile_path.exists() else "missing"),
@@ -6512,7 +6520,15 @@ def _profiles_page(root: Path) -> str:
                     ("provider_calls_taken", "0"),
                 ]
             ),
+            "</details>",
             "</section>",
+            _profiles_operator_workbench(
+                root,
+                configured_profiles=configured_profiles,
+                storage_profiles=storage_profiles,
+                future_lanes=prepared,
+                profile_path_exists=profile_path.exists(),
+            ),
             _profiles_command_bar(
                 configured_profiles=configured_profiles,
                 storage_profiles=storage_profiles,
@@ -6532,6 +6548,114 @@ def _profiles_page(root: Path) -> str:
             ),
             _list_section("Future Profile Lanes", prepared, anchor_id="profiles-future"),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _profiles_operator_workbench(
+    root: Path,
+    *,
+    configured_profiles: list[str],
+    storage_profiles: list[Any],
+    future_lanes: list[str],
+    profile_path_exists: bool,
+) -> str:
+    enabled_profiles = [profile for profile in storage_profiles if profile.enabled]
+    disabled_profiles = [profile for profile in storage_profiles if not profile.enabled]
+    adapter_configured = [
+        profile for profile in storage_profiles if profile.adapter_config_json
+    ]
+    write_allowed = [
+        profile
+        for profile in storage_profiles
+        if str(profile.permissions_json.get("write", "deny")) not in {"deny", "false", "0"}
+    ]
+    use_for_values = {
+        str(item)
+        for profile in storage_profiles
+        for item in profile.use_for_json
+        if item
+    }
+    workspace = _load_workspace_state(root)
+    status = "future_ready"
+    first_target = "Planning"
+    next_action = "Review future profile lanes"
+    target_href = "#profiles-future"
+    target_label = "Future Profile Lanes"
+    primary_summary = "Future lanes are prepared, but provider routing remains inactive."
+    if storage_profiles:
+        status = "storage_ready"
+        first_target = storage_profiles[0].name
+        next_action = "Review storage profile"
+        target_href = "#profiles-storage"
+        target_label = "Storage Profiles"
+        primary_summary = f"{storage_profiles[0].name} is stored locally for future routing review."
+    elif configured_profiles:
+        status = "configured_ready"
+        first_target = configured_profiles[0]
+        next_action = "Review configured profile"
+        target_href = "#profiles-configured"
+        target_label = "Configured Profiles"
+        primary_summary = f"{configured_profiles[0]} is present in .clanker/profiles.yml."
+    resume_href = "/resume" if workspace.get("open_goal") or workspace.get("open_project") else "/goals"
+    resume_label = "/resume" if resume_href == "/resume" else "/goals"
+    resume_summary = (
+        f"Saved context: {workspace.get('open_goal') or workspace.get('open_project') or 'none'}."
+        if resume_href == "/resume"
+        else "No saved context yet."
+    )
+    rows = [
+        ("profiles_workbench_status", status),
+        ("profiles_workbench_profiles_file", "present" if profile_path_exists else "missing"),
+        ("profiles_workbench_configured_profiles", str(len(configured_profiles))),
+        ("profiles_workbench_storage_profiles", str(len(storage_profiles))),
+        ("profiles_workbench_enabled_profiles", str(len(enabled_profiles))),
+        ("profiles_workbench_disabled_profiles", str(len(disabled_profiles))),
+        ("profiles_workbench_future_lanes", str(len(future_lanes))),
+        ("profiles_workbench_adapter_configured", str(len(adapter_configured))),
+        ("profiles_workbench_write_allowed_profiles", str(len(write_allowed))),
+        ("profiles_workbench_use_for_labels", str(len(use_for_values))),
+        ("profiles_workbench_first_target", first_target),
+        ("profiles_workbench_next_action", next_action),
+        ("profiles_workbench_target_surface", SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")),
+        ("profiles_workbench_resume_surface", SafeHtml(f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>")),
+        ("profiles_workbench_workspace_project", workspace.get("open_project", "")),
+        ("profiles_workbench_workspace_goal", workspace.get("open_goal", "")),
+        ("profiles_workbench_workspace_artifact", workspace.get("last_viewed_artifact", "")),
+        ("profiles_workbench_provider_routing_active", "false"),
+        ("profiles_workbench_provider_calls_taken", "0"),
+        ("profiles_workbench_model_routing_enabled", "false"),
+        ("profiles_workbench_write_on_get", "false"),
+        ("profiles_workbench_network_actions_taken", "0"),
+        ("profiles_workbench_external_effects_created", "false"),
+    ]
+    return "".join(
+        [
+            "<section class='panel profiles-operator-workbench' data-profiles-operator-workbench='true'><h2>Profiles Operator Workbench</h2>",
+            "<p class='muted'>Review future planning, coding, review, docs, cheap-model, and frontier-model lanes without activating providers.</p>",
+            "<div class='profiles-workbench-grid' data-profiles-workbench-actions='true'>",
+            "<article class='profiles-workbench-card profiles-workbench-primary'><h3>Now</h3>",
+            f"<p>{_e(primary_summary)}</p><a class='profiles-workbench-action' data-profiles-workbench-primary='true' href='{_e(target_href)}'>{_e(next_action)}</a></article>",
+            "<article class='profiles-workbench-card'><h3>Lanes</h3>",
+            f"<p>{len(future_lanes)} inactive future lane{'s' if len(future_lanes) != 1 else ''}.</p><a class='profiles-workbench-link' href='#profiles-future'>Review lanes</a></article>",
+            "<article class='profiles-workbench-card'><h3>Storage</h3>",
+            f"<p>{len(storage_profiles)} storage profile{'s' if len(storage_profiles) != 1 else ''}; {len(configured_profiles)} configured.</p><a class='profiles-workbench-link' href='#profiles-storage'>Review storage</a></article>",
+            "<article class='profiles-workbench-card'><h3>Resume</h3>",
+            f"<p>{_e(resume_summary)}</p><a class='profiles-workbench-link' href='{_e(resume_href)}'>{_e(resume_label)}</a></article>",
+            "</div>",
+            "<details class='profiles-workbench-evidence' data-profiles-workbench-evidence='true'><summary>Profiles workbench evidence</summary>",
+            _kv(rows),
+            _ul(
+                [
+                    f"profiles_workbench_now: <a href='{_e(target_href)}'>{_e(next_action)}</a>",
+                    f"profiles_workbench_lanes: <a href='#profiles-future'>Review lanes</a>",
+                    f"profiles_workbench_storage: <a href='#profiles-storage'>Review storage</a>",
+                    f"profiles_workbench_resume: <a href='{_e(resume_href)}'>{_e(resume_label)}</a>",
+                    "profiles_workbench_safety: read-only future provider-routing guidance; providers remain inactive",
+                ]
+            ),
+            "</details>",
+            "</section>",
         ]
     )
 
@@ -6580,6 +6704,7 @@ def _profiles_command_bar(
         [
             "<section class='panel profiles-command-bar' data-profiles-command-bar='true'><h2>Profiles Command Bar</h2>",
             "<p class='muted'>One read-only summary of inactive provider-routing preparation and the next local profile review target.</p>",
+            "<details class='profiles-command-evidence' data-profiles-command-evidence='true'><summary>Profiles command evidence</summary>",
             _kv(
                 [
                     ("profiles_command_status", "available"),
@@ -6615,6 +6740,7 @@ def _profiles_command_bar(
                     "profiles_command_safety: read-only inactive provider-routing guidance",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -23960,7 +24086,7 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
-    content_first_paths = {"/", "/actions", "/inbox", "/memory", "/resume", "/search", "/skills", "/today", "/workspace"}
+    content_first_paths = {"/", "/actions", "/inbox", "/memory", "/profiles", "/resume", "/search", "/skills", "/today", "/workspace"}
     if current_route_path in content_first_paths:
         article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
     else:
@@ -24482,6 +24608,21 @@ def _html_page(
     .skills-command-bar {{ border-left:4px solid var(--accent); }}
     .skills-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .skills-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .profiles-operator-workbench {{ border-left:4px solid var(--warn); }}
+    .profiles-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .profiles-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .profiles-operator-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .profiles-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .profiles-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .profiles-workbench-card h3 {{ margin-top:0; }}
+    .profiles-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .profiles-workbench-primary {{ border-color:var(--warn); box-shadow:inset 3px 0 0 var(--warn); }}
+    .profiles-workbench-action, .profiles-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--warn); overflow-wrap:anywhere; text-decoration:none; }}
+    .profiles-workbench-action {{ background:var(--warn); color:#211400; }}
+    .profiles-workbench-link {{ background:var(--surface); color:var(--ink); }}
+    .profiles-state-details, .profiles-workbench-evidence, .profiles-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .profiles-state-details summary, .profiles-workbench-evidence summary, .profiles-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .profiles-state-details:not([open]) > :not(summary), .profiles-workbench-evidence:not([open]) > :not(summary), .profiles-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .profiles-command-bar {{ border-left:4px solid var(--warn); }}
     .profiles-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .profiles-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -24548,7 +24689,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

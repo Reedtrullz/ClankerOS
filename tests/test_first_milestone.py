@@ -2871,6 +2871,29 @@ def test_profiles_route_reads_storage_profiles_without_enabling_providers(
 
     assert profiles.status == 200
     assert "Profiles And Routing" in profiles.body
+    assert "Profiles Operator Workbench" in profiles.body
+    assert "data-profiles-operator-workbench='true'" in profiles.body
+    assert "data-profiles-workbench-primary='true'" in profiles.body
+    assert "data-profiles-state-details='true'" in profiles.body
+    assert "data-profiles-workbench-evidence='true'" in profiles.body
+    assert "data-profiles-command-evidence='true'" in profiles.body
+    assert profiles.body.index("data-profiles-operator-workbench") < profiles.body.index("data-route-context")
+    assert profiles.body.index("data-profiles-operator-workbench") < profiles.body.index("data-profiles-command-bar")
+    assert "profiles_workbench_status</dt><dd>storage_ready" in profiles.body
+    assert "profiles_workbench_profiles_file</dt><dd>present" in profiles.body
+    assert "profiles_workbench_configured_profiles</dt><dd>5" in profiles.body
+    assert "profiles_workbench_storage_profiles</dt><dd>5" in profiles.body
+    assert "profiles_workbench_enabled_profiles</dt><dd>5" in profiles.body
+    assert "profiles_workbench_future_lanes</dt><dd>6" in profiles.body
+    assert "profiles_workbench_first_target</dt><dd>coder" in profiles.body
+    assert "profiles_workbench_next_action</dt><dd>Review storage profile" in profiles.body
+    assert "profiles_workbench_target_surface</dt><dd><a href='#profiles-storage'>Storage Profiles</a>" in profiles.body
+    assert "profiles_workbench_provider_routing_active</dt><dd>false" in profiles.body
+    assert "profiles_workbench_provider_calls_taken</dt><dd>0" in profiles.body
+    assert "profiles_workbench_model_routing_enabled</dt><dd>false" in profiles.body
+    assert "profiles_workbench_write_on_get</dt><dd>false" in profiles.body
+    assert "profiles_workbench_network_actions_taken</dt><dd>0" in profiles.body
+    assert "profiles_workbench_external_effects_created</dt><dd>false" in profiles.body
     assert "Profiles Command Bar" in profiles.body
     assert "data-profiles-command-bar='true'" in profiles.body
     assert "profiles_command_profiles_file</dt><dd>present" in profiles.body
@@ -9618,6 +9641,28 @@ def test_local_app_demo_scenario_populates_fixture_state(
     profiles = render_local_app_route(tmp_path, "/profiles")
     assert profiles.status == 200
     assert "Profiles And Routing" in profiles.body
+    assert "Profiles Operator Workbench" in profiles.body
+    assert "data-profiles-operator-workbench='true'" in profiles.body
+    assert "data-profiles-workbench-primary='true'" in profiles.body
+    assert "data-profiles-state-details='true'" in profiles.body
+    assert "data-profiles-workbench-evidence='true'" in profiles.body
+    assert "data-profiles-command-evidence='true'" in profiles.body
+    assert profiles.body.index("data-profiles-operator-workbench") < profiles.body.index("data-route-context")
+    assert profiles.body.index("data-profiles-operator-workbench") < profiles.body.index("data-profiles-command-bar")
+    assert "profiles_workbench_status</dt><dd>future_ready" in profiles.body
+    assert "profiles_workbench_profiles_file</dt><dd>missing" in profiles.body
+    assert "profiles_workbench_configured_profiles</dt><dd>0" in profiles.body
+    assert "profiles_workbench_storage_profiles</dt><dd>0" in profiles.body
+    assert "profiles_workbench_future_lanes</dt><dd>6" in profiles.body
+    assert "profiles_workbench_first_target</dt><dd>Planning" in profiles.body
+    assert "profiles_workbench_next_action</dt><dd>Review future profile lanes" in profiles.body
+    assert "profiles_workbench_target_surface</dt><dd><a href='#profiles-future'>Future Profile Lanes</a>" in profiles.body
+    assert "profiles_workbench_provider_routing_active</dt><dd>false" in profiles.body
+    assert "profiles_workbench_provider_calls_taken</dt><dd>0" in profiles.body
+    assert "profiles_workbench_model_routing_enabled</dt><dd>false" in profiles.body
+    assert "profiles_workbench_write_on_get</dt><dd>false" in profiles.body
+    assert "profiles_workbench_network_actions_taken</dt><dd>0" in profiles.body
+    assert "profiles_workbench_external_effects_created</dt><dd>false" in profiles.body
     assert "Profiles Command Bar" in profiles.body
     assert "data-profiles-command-bar='true'" in profiles.body
     assert "profiles_command_profiles_file</dt><dd>missing" in profiles.body
