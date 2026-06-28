@@ -178,11 +178,16 @@ Core layers for the bootstrap:
   collapsed by default while preserving result counts by category, first
   result, target link, summary, and no-write/no-network/no-raw-filesystem
   boundaries in the DOM;
-  `/incidents` includes a read-only `Incident Triage Command Bar` that
-  summarizes open/resolved incident counts, open task-recommendation counts,
-  the first local incident or recovery recommendation to review, evidence
-  links, stable open/resolved/recommendation anchors, and no-write/
-  no-resolution-on-GET/no-network/no-external-effect boundaries;
+  `/incidents` is action-first and includes a visible read-only
+  `Incident Operator Workbench` before shared route/focus diagnostics or
+  command readback, with cards for the next triage action, evidence artifact,
+  recovery surface, and Finish Today handoff. Incident workbench
+  evidence, incident command evidence, and the Finish Today save form stay
+  collapsed by default while preserving open/resolved incident counts, open
+  task-recommendation counts, the first local incident or recovery
+  recommendation to review, evidence links, stable open/resolved/
+  recommendation anchors, and no-write/no-resolution-on-GET/no-retry-on-GET/
+  no-network/no-external-effect boundaries;
   `/delegation-runs` is action-first and includes a visible `Delegation Run
   Operator Workbench` before shared route/focus diagnostics or command
   readback, with cards for the next delegation/run action, scoped workflow,

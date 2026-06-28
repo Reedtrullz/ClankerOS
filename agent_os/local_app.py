@@ -789,6 +789,22 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             ],
         ),
         (
+            "/incidents",
+            "Incidents",
+            [
+                "Incident Operator Workbench",
+                "data-incident-operator-workbench='true'",
+                "data-incident-workbench-primary='true'",
+                "data-incident-workbench-evidence='true'",
+                "data-incident-command-evidence='true'",
+                "data-incident-finish-details='true'",
+                "incident_workbench_status</dt><dd>empty",
+                "incident_triage_status</dt><dd>available",
+                "incident_workbench_write_on_get</dt><dd>false",
+                "incident_workbench_external_effects_created</dt><dd>false",
+            ],
+        ),
+        (
             "/actions",
             "Safe Action Catalog",
             [
@@ -17743,17 +17759,28 @@ def _incidents(root: Path) -> str:
     open_incidents = [item for item in incidents if item.status == "open"]
     resolved_incidents = [item for item in incidents if item.status != "open"]
     open_recommendations = [item for item in recommendations if item.status == "open"]
+    context = _incident_triage_context(
+        incidents=incidents,
+        open_incidents=open_incidents,
+        resolved_incidents=resolved_incidents,
+        recommendations=recommendations,
+        open_recommendations=open_recommendations,
+    )
     return "".join(
         [
             "<section><h1>Incidents</h1>",
             "<p class='muted'>Read-only triage board for local incidents and recovery recommendations. Resolution still happens through explicit operator commands, not page load.</p>",
             "</section>",
-            _incident_triage_command_bar(
+            _incident_operator_workbench(
+                context=context,
                 incidents=incidents,
                 open_incidents=open_incidents,
                 resolved_incidents=resolved_incidents,
                 recommendations=recommendations,
                 open_recommendations=open_recommendations,
+            ),
+            _incident_triage_command_bar(
+                context=context,
             ),
             _list_section(
                 "Open Incidents",
@@ -17775,14 +17802,15 @@ def _incidents(root: Path) -> str:
     )
 
 
-def _incident_triage_command_bar(
+def _incident_triage_context(
     *,
     incidents: list[Any],
     open_incidents: list[Any],
     resolved_incidents: list[Any],
     recommendations: list[Any],
     open_recommendations: list[Any],
-) -> str:
+) -> dict[str, Any]:
+    status = "empty"
     first_kind = "none"
     first_id = "none"
     first_project = "none"
@@ -17791,12 +17819,13 @@ def _incident_triage_command_bar(
     first_run = "none"
     first_severity = "none"
     first_reason = "no local incidents or recommendations"
-    first_evidence = SafeHtml("none")
+    first_evidence_path = "none"
     next_action = "No incident triage needed"
     target_href = "/goals"
     target_label = "/goals"
     if open_incidents:
         item = open_incidents[0]
+        status = "open_incident"
         first_kind = "incident"
         first_id = item.id
         first_project = item.project_id
@@ -17805,12 +17834,13 @@ def _incident_triage_command_bar(
         first_run = item.run_id or "none"
         first_severity = item.severity
         first_reason = item.summary
-        first_evidence = SafeHtml(_artifact_link(item.evidence_path or "none"))
+        first_evidence_path = item.evidence_path or "none"
         next_action = "Inspect open incident"
         target_href = "#incident-open"
         target_label = "Open Incidents"
     elif open_recommendations:
         item = open_recommendations[0]
+        status = "open_recommendation"
         first_kind = "recommendation"
         first_id = item.id
         first_project = item.project_id
@@ -17819,12 +17849,13 @@ def _incident_triage_command_bar(
         first_run = item.run_id or "none"
         first_severity = item.source_status
         first_reason = item.reason
-        first_evidence = SafeHtml(_artifact_link(item.evidence_path))
+        first_evidence_path = item.evidence_path
         next_action = "Review recovery recommendation"
         target_href = "#incident-recommendations"
         target_label = "Task Recommendations"
     elif resolved_incidents:
         item = resolved_incidents[0]
+        status = "resolved_history"
         first_kind = "resolved_incident"
         first_id = item.id
         first_project = item.project_id
@@ -17833,12 +17864,13 @@ def _incident_triage_command_bar(
         first_run = item.run_id or "none"
         first_severity = item.severity
         first_reason = item.summary
-        first_evidence = SafeHtml(_artifact_link(item.evidence_path or "none"))
+        first_evidence_path = item.evidence_path or "none"
         next_action = "Review resolved incident history"
         target_href = "#incident-resolved"
         target_label = "Resolved Incidents"
     elif recommendations:
         item = recommendations[0]
+        status = "recommendation_history"
         first_kind = "recommendation_history"
         first_id = item.id
         first_project = item.project_id
@@ -17847,42 +17879,210 @@ def _incident_triage_command_bar(
         first_run = item.run_id or "none"
         first_severity = item.source_status
         first_reason = item.reason
-        first_evidence = SafeHtml(_artifact_link(item.evidence_path))
+        first_evidence_path = item.evidence_path
         next_action = "Review recommendation history"
         target_href = "#incident-recommendations"
         target_label = "Task Recommendations"
-    target_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    return {
+        "status": status,
+        "first_kind": first_kind,
+        "first_id": first_id,
+        "first_project": first_project,
+        "first_goal": first_goal,
+        "first_task": first_task,
+        "first_run": first_run,
+        "first_severity": first_severity,
+        "first_reason": first_reason,
+        "first_evidence_path": first_evidence_path,
+        "first_evidence": _artifact_link(first_evidence_path),
+        "next_action": next_action,
+        "target_href": target_href,
+        "target_label": target_label,
+        "target_surface": SafeHtml(
+            f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"
+        ),
+        "total_incidents": len(incidents),
+        "open_incidents": len(open_incidents),
+        "resolved_incidents": len(resolved_incidents),
+        "total_recommendations": len(recommendations),
+        "open_recommendations": len(open_recommendations),
+    }
+
+
+def _incident_operator_workbench(
+    *,
+    context: dict[str, Any],
+    incidents: list[Any],
+    open_incidents: list[Any],
+    resolved_incidents: list[Any],
+    recommendations: list[Any],
+    open_recommendations: list[Any],
+) -> str:
+    evidence_path = str(context["first_evidence_path"])
+    if evidence_path != "none":
+        evidence_href = f"/artifacts?path={quote(evidence_path)}"
+        evidence_label = "Evidence Artifact"
+    else:
+        evidence_href = str(context["target_href"])
+        evidence_label = str(context["target_label"])
+
+    recovery_href = "/goals"
+    recovery_label = "/goals"
+    recovery_text = "No local incident recovery is queued"
+    if open_recommendations:
+        recovery_href = "#incident-recommendations"
+        recovery_label = "Task Recommendations"
+        recovery_text = f"{len(open_recommendations)} open recovery recommendation(s)"
+    elif open_incidents:
+        first_goal = str(context["first_goal"])
+        if first_goal != "none":
+            recovery_href = f"/goals/{quote(first_goal)}"
+            recovery_label = "Owning Goal"
+            recovery_text = "Open the owning Goal after reviewing evidence"
+        else:
+            recovery_href = "#incident-open"
+            recovery_label = "Open Incidents"
+            recovery_text = f"{len(open_incidents)} open local incident(s)"
+    elif resolved_incidents:
+        recovery_href = "#incident-resolved"
+        recovery_label = "Resolved Incidents"
+        recovery_text = "Review resolved incident history"
+    elif recommendations:
+        recovery_href = "#incident-recommendations"
+        recovery_label = "Task Recommendations"
+        recovery_text = "Review recommendation history"
+
+    recovery_surface = SafeHtml(
+        f"<a href='{_e(recovery_href)}'>{_e(recovery_label)}</a>"
+    )
+    finish_form = _input_form(
+        "save-workspace",
+        {
+            "open_project": "" if context["first_project"] == "none" else str(context["first_project"]),
+            "open_goal": "" if context["first_goal"] == "none" else str(context["first_goal"]),
+            "return_to": "/incidents",
+        },
+        {
+            "filters": f"incident:{context['first_kind']}:{context['first_id']}",
+            "expanded_panels": "incident-workbench,open,recommendations",
+            "last_viewed_artifact": "" if evidence_path == "none" else evidence_path,
+            "updated_by": "incident-operator-workbench",
+        },
+    )
     lines = [
-        f"incident_triage_now: {_e(next_action)}",
-        f"incident_triage_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
-        f"incident_triage_reason: {_e(first_reason)}",
-        "incident_triage_safety: read-only local triage guidance",
+        f"incident_workbench_now: {_e(context['next_action'])}",
+        f"incident_workbench_click: <a href='{_e(context['target_href'])}'>{_e(context['target_label'])}</a>",
+        f"incident_workbench_evidence: {_artifact_link(evidence_path)}",
+        f"incident_workbench_recover: <a href='{_e(recovery_href)}'>{_e(recovery_label)}</a>",
+        "incident_workbench_finish: <a href='#incident-finish-today'>Finish Today</a>",
+        "incident_workbench_safety: read-only local triage; no resolution, retry, provider, network, or external effect on GET",
     ]
     if not incidents and not recommendations:
+        lines.append("incident_workbench_empty: no local incident or recommendation records")
+    return "".join(
+        [
+            "<section id='incident-operator-workbench' class='panel incident-operator-workbench' data-incident-operator-workbench='true'><h2>Incident Operator Workbench</h2>",
+            "<div class='incident-workbench-grid' data-incident-workbench-actions='true'>",
+            "<article class='incident-workbench-card incident-workbench-primary'><h3>Now</h3>",
+            f"<p>{_e(context['next_action'])}</p>",
+            (
+                "<a class='incident-workbench-action' "
+                "data-incident-workbench-primary='true' "
+                f"href='{_e(context['target_href'])}'>{_e(context['target_label'])}</a>"
+            ),
+            "</article>",
+            "<article class='incident-workbench-card'><h3>Evidence</h3>",
+            f"<p>{_e(context['first_reason'])}</p>",
+            f"<a class='incident-workbench-link' href='{_e(evidence_href)}'>{_e(evidence_label)}</a>",
+            "</article>",
+            "<article class='incident-workbench-card'><h3>Recover</h3>",
+            f"<p>{_e(recovery_text)}</p>",
+            f"<a class='incident-workbench-link' href='{_e(recovery_href)}'>{_e(recovery_label)}</a>",
+            "</article>",
+            "<article class='incident-workbench-card'><h3>Finish Today</h3>",
+            "<p>Save this triage context</p>",
+            "<a class='incident-workbench-link' data-open-details='true' href='#incident-finish-today'>Open save form</a>",
+            "</article>",
+            "</div>",
+            "<details class='incident-workbench-evidence' data-incident-workbench-evidence='true'><summary>Incident workbench evidence</summary>",
+            _kv(
+                [
+                    ("incident_workbench_status", context["status"]),
+                    ("incident_workbench_total_incidents", str(context["total_incidents"])),
+                    ("incident_workbench_open_incidents", str(context["open_incidents"])),
+                    ("incident_workbench_resolved_incidents", str(context["resolved_incidents"])),
+                    ("incident_workbench_total_recommendations", str(context["total_recommendations"])),
+                    ("incident_workbench_open_recommendations", str(context["open_recommendations"])),
+                    ("incident_workbench_first_kind", context["first_kind"]),
+                    ("incident_workbench_first_id", context["first_id"]),
+                    ("incident_workbench_first_project", context["first_project"]),
+                    ("incident_workbench_first_goal", context["first_goal"]),
+                    ("incident_workbench_first_task", context["first_task"]),
+                    ("incident_workbench_first_run", context["first_run"]),
+                    ("incident_workbench_first_severity_or_source", context["first_severity"]),
+                    ("incident_workbench_next_action", context["next_action"]),
+                    ("incident_workbench_primary_surface", context["target_surface"]),
+                    ("incident_workbench_recovery_surface", recovery_surface),
+                    ("incident_workbench_reason", context["first_reason"]),
+                    ("incident_workbench_evidence_artifact", context["first_evidence"]),
+                    ("incident_workbench_action_form_available", "false"),
+                    ("incident_workbench_resolution_form_available", "false"),
+                    ("incident_workbench_finish_form_available", "true"),
+                    ("incident_workbench_write_on_get", "false"),
+                    ("incident_workbench_resolution_on_get", "false"),
+                    ("incident_workbench_retry_on_get", "false"),
+                    ("incident_workbench_provider_calls_taken", "0"),
+                    ("incident_workbench_network_actions_taken", "0"),
+                    ("incident_workbench_external_effects_created", "false"),
+                ]
+            ),
+            _ul(lines),
+            "</details>",
+            "<details id='incident-finish-today' class='incident-finish-details' data-incident-finish-details='true'><summary>Finish Today save form</summary>",
+            "<p class='muted'>Save this incident/recommendation context as the next resume point. This writes only `.clanker/app/workspace.json` after confirmation.</p>",
+            finish_form,
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _incident_triage_command_bar(
+    *,
+    context: dict[str, Any],
+) -> str:
+    lines = [
+        f"incident_triage_now: {_e(context['next_action'])}",
+        f"incident_triage_click: <a href='{_e(context['target_href'])}'>{_e(context['target_label'])}</a>",
+        f"incident_triage_reason: {_e(context['first_reason'])}",
+        "incident_triage_safety: read-only local triage guidance",
+    ]
+    if context["total_incidents"] == 0 and context["total_recommendations"] == 0:
         lines.append("incident_triage_empty: no local incident or recommendation records")
     return "".join(
         [
             "<section class='panel incident-command-bar' data-incident-command-bar='true'><h2>Incident Triage Command Bar</h2>",
             "<p class='muted'>One read-only triage summary for local incidents and task recovery recommendations.</p>",
+            "<details class='incident-command-evidence' data-incident-command-evidence='true'><summary>Incident command evidence</summary>",
             _kv(
                 [
                     ("incident_triage_status", "available"),
-                    ("incident_triage_total_incidents", str(len(incidents))),
-                    ("incident_triage_open_incidents", str(len(open_incidents))),
-                    ("incident_triage_resolved_incidents", str(len(resolved_incidents))),
-                    ("incident_triage_total_recommendations", str(len(recommendations))),
-                    ("incident_triage_open_recommendations", str(len(open_recommendations))),
-                    ("incident_triage_first_kind", first_kind),
-                    ("incident_triage_first_id", first_id),
-                    ("incident_triage_first_project", first_project),
-                    ("incident_triage_first_goal", first_goal),
-                    ("incident_triage_first_task", first_task),
-                    ("incident_triage_first_run", first_run),
-                    ("incident_triage_first_severity_or_source", first_severity),
-                    ("incident_triage_next_action", next_action),
-                    ("incident_triage_target_surface", target_surface),
-                    ("incident_triage_reason", first_reason),
-                    ("incident_triage_evidence", first_evidence),
+                    ("incident_triage_total_incidents", str(context["total_incidents"])),
+                    ("incident_triage_open_incidents", str(context["open_incidents"])),
+                    ("incident_triage_resolved_incidents", str(context["resolved_incidents"])),
+                    ("incident_triage_total_recommendations", str(context["total_recommendations"])),
+                    ("incident_triage_open_recommendations", str(context["open_recommendations"])),
+                    ("incident_triage_first_kind", context["first_kind"]),
+                    ("incident_triage_first_id", context["first_id"]),
+                    ("incident_triage_first_project", context["first_project"]),
+                    ("incident_triage_first_goal", context["first_goal"]),
+                    ("incident_triage_first_task", context["first_task"]),
+                    ("incident_triage_first_run", context["first_run"]),
+                    ("incident_triage_first_severity_or_source", context["first_severity"]),
+                    ("incident_triage_next_action", context["next_action"]),
+                    ("incident_triage_target_surface", context["target_surface"]),
+                    ("incident_triage_reason", context["first_reason"]),
+                    ("incident_triage_evidence", context["first_evidence"]),
                     ("incident_triage_write_on_get", "false"),
                     ("incident_triage_resolution_on_get", "false"),
                     ("incident_triage_provider_calls_taken", "0"),
@@ -17891,6 +18091,7 @@ def _incident_triage_command_bar(
                 ]
             ),
             _ul(lines),
+            "</details>",
             "</section>",
         ]
     )
@@ -24607,7 +24808,7 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
-    content_first_paths = {"/", "/actions", "/approvals", "/delegation-runs", "/inbox", "/memory", "/profiles", "/resume", "/search", "/skills", "/today", "/workflow", "/workspace"}
+    content_first_paths = {"/", "/actions", "/approvals", "/delegation-runs", "/inbox", "/incidents", "/memory", "/profiles", "/resume", "/search", "/skills", "/today", "/workflow", "/workspace"}
     if current_route_path in content_first_paths:
         article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
     else:
@@ -25221,6 +25422,21 @@ def _html_page(
     .approval-workbench-action, .approval-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .approval-workbench-action {{ background:var(--accent); color:#fff; }}
     .approval-workbench-link {{ background:var(--surface); color:var(--accent); }}
+    .incident-operator-workbench {{ border-left:4px solid var(--accent); }}
+    .incident-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .incident-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .incident-operator-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .incident-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .incident-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .incident-workbench-card h3 {{ margin-top:0; }}
+    .incident-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .incident-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .incident-workbench-action, .incident-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .incident-workbench-action {{ background:var(--accent); color:#fff; }}
+    .incident-workbench-link {{ background:var(--surface); color:var(--accent); }}
+    .incident-workbench-evidence, .incident-command-evidence, .incident-finish-details {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .incident-workbench-evidence summary, .incident-command-evidence summary, .incident-finish-details summary {{ cursor:pointer; font-weight:700; }}
+    .incident-workbench-evidence:not([open]) > :not(summary), .incident-command-evidence:not([open]) > :not(summary), .incident-finish-details:not([open]) > :not(summary) {{ display:none; }}
     .incident-command-bar {{ border-left:4px solid var(--error); }}
     .incident-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .incident-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -25246,7 +25462,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

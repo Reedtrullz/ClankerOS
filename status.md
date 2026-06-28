@@ -1,5 +1,49 @@
 # Status
 
+## 2026-06-28 Incidents Action-First Operator Surface
+
+- Made `/incidents` usable as a triage-first operator surface by rendering the
+  `Incident Operator Workbench` before shared Route Context, Operator Focus,
+  Last Action, and incident command diagnostics.
+- Added four visible cards for Now, Evidence, Recover, and Finish Today, with a
+  stable `data-incident-workbench-primary` marker for the current local review
+  target.
+- Kept incident workbench evidence, incident command evidence, and the Finish
+  Today save form collapsed by default while preserving open/resolved incident
+  counts, open recommendation counts, first incident/recommendation routing,
+  evidence artifacts, no-resolution/no-retry posture, and zero-effect readbacks
+  in the DOM.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, resolve incidents, retry tasks, reset tasks, approve work, execute work,
+  create commits, push, create PRs, deploy, call providers, fetch GitHub from
+  ClankerOS, poll network services, mutate external systems from ClankerOS, or
+  expose arbitrary raw filesystem browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'task_recommendations_surfaces_blocked_planned_task or goal_page_promotes_goal_incidents or local_app_routes_render_modern_workflow_and_health' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'task_recommendations_surfaces_blocked_planned_task or goal_page_promotes_goal_incidents or local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `4 passed, 512 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-incidents-workbench-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-incidents-workbench-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/incidents` snippets matched,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8818/incidents` with a fixture-backed open incident:
+    desktop `1280x900` rendered four Incident Operator Workbench cards before
+    Route Context and the Incident Triage Command Bar, kept incident workbench,
+    command, and Finish Today details collapsed, showed no horizontal
+    overflow, no framework overlay, and empty browser warning/error logs.
+  - Interaction proof: clicking the marked primary action changed the URL to
+    `/incidents#incident-open` and placed Open Incidents in view.
+  - Mobile Browser QA at `390x844` rendered four incident workbench cards in
+    one column, kept incident details collapsed, showed no horizontal overflow,
+    and had empty browser warning/error logs.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Approvals Action-First Operator Surface
 
 - Made `/approvals` usable as a decision-first operator surface by rendering

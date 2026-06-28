@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/incidents` is now action-first: it opens with the `Incident Operator
+  Workbench` before shared route/focus diagnostics or command readback, shows
+  visible Now, Evidence, Recover, and Finish Today cards, and keeps incident
+  workbench evidence, command evidence, and the finish-today save form
+  collapsed by default while preserving incident/recommendation counts, first
+  local review target, evidence artifact, and no-resolution/no-retry/
+  zero-effect proof in the DOM.
 - `/approvals` is now action-first: it opens with the `Approval Operator
   Workbench` before shared route/focus diagnostics or command readback, shows
   visible Do Now, Inspect, Goal, and Finish Today cards, and keeps approval

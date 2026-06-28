@@ -1160,6 +1160,32 @@ def test_task_recommendations_surfaces_blocked_planned_task(
 
     incidents_page = render_local_app_route(tmp_path, "/incidents")
     assert incidents_page.status == 200
+    assert incidents_page.body.index("Incident Operator Workbench") < incidents_page.body.index("Incident Triage Command Bar")
+    assert incidents_page.body.index("data-incident-operator-workbench") < incidents_page.body.index("data-route-context")
+    assert "data-incident-operator-workbench='true'" in incidents_page.body
+    assert "data-incident-workbench-primary='true'" in incidents_page.body
+    assert "data-incident-workbench-evidence='true'" in incidents_page.body
+    assert "data-incident-command-evidence='true'" in incidents_page.body
+    assert "data-incident-finish-details='true'" in incidents_page.body
+    assert "incident_workbench_status</dt><dd>open_recommendation" in incidents_page.body
+    assert "incident_workbench_total_incidents</dt><dd>0" in incidents_page.body
+    assert "incident_workbench_total_recommendations</dt><dd>1" in incidents_page.body
+    assert "incident_workbench_open_recommendations</dt><dd>1" in incidents_page.body
+    assert "incident_workbench_first_kind</dt><dd>recommendation" in incidents_page.body
+    assert f"incident_workbench_first_id</dt><dd>{recommendation.id}" in incidents_page.body
+    assert "incident_workbench_next_action</dt><dd>Review recovery recommendation" in incidents_page.body
+    assert (
+        "incident_workbench_primary_surface</dt><dd><a href='#incident-recommendations'>"
+        "Task Recommendations</a>"
+    ) in incidents_page.body
+    assert "incident_workbench_action_form_available</dt><dd>false" in incidents_page.body
+    assert "incident_workbench_resolution_form_available</dt><dd>false" in incidents_page.body
+    assert "incident_workbench_finish_form_available</dt><dd>true" in incidents_page.body
+    assert "incident_workbench_write_on_get</dt><dd>false" in incidents_page.body
+    assert "incident_workbench_retry_on_get</dt><dd>false" in incidents_page.body
+    assert "incident_workbench_external_effects_created</dt><dd>false" in incidents_page.body
+    assert "id='incident-finish-today'" in incidents_page.body
+    assert "name='updated_by' value='incident-operator-workbench'" in incidents_page.body
     assert "Incident Triage Command Bar" in incidents_page.body
     assert "incident_triage_total_incidents</dt><dd>0" in incidents_page.body
     assert "incident_triage_total_recommendations</dt><dd>1" in incidents_page.body
@@ -6631,6 +6657,28 @@ def test_local_app_routes_render_modern_workflow_and_health(
     incidents = render_local_app_route(tmp_path, "/incidents")
     assert incidents.status == 200
     assert "Incidents" in incidents.body
+    assert incidents.body.index("Incident Operator Workbench") < incidents.body.index("Incident Triage Command Bar")
+    assert incidents.body.index("data-incident-operator-workbench") < incidents.body.index("data-route-context")
+    assert "data-incident-operator-workbench='true'" in incidents.body
+    assert "data-incident-workbench-primary='true'" in incidents.body
+    assert "data-incident-workbench-evidence='true'" in incidents.body
+    assert "data-incident-command-evidence='true'" in incidents.body
+    assert "data-incident-finish-details='true'" in incidents.body
+    assert "incident_workbench_status</dt><dd>empty" in incidents.body
+    assert "incident_workbench_total_incidents</dt><dd>0" in incidents.body
+    assert "incident_workbench_total_recommendations</dt><dd>0" in incidents.body
+    assert "incident_workbench_first_kind</dt><dd>none" in incidents.body
+    assert "incident_workbench_next_action</dt><dd>No incident triage needed" in incidents.body
+    assert "incident_workbench_primary_surface</dt><dd><a href='/goals'>/goals</a>" in incidents.body
+    assert "incident_workbench_action_form_available</dt><dd>false" in incidents.body
+    assert "incident_workbench_resolution_form_available</dt><dd>false" in incidents.body
+    assert "incident_workbench_finish_form_available</dt><dd>true" in incidents.body
+    assert "incident_workbench_empty: no local incident or recommendation records" in incidents.body
+    assert "incident_workbench_write_on_get</dt><dd>false" in incidents.body
+    assert "incident_workbench_retry_on_get</dt><dd>false" in incidents.body
+    assert "incident_workbench_external_effects_created</dt><dd>false" in incidents.body
+    assert "id='incident-finish-today'" in incidents.body
+    assert "name='updated_by' value='incident-operator-workbench'" in incidents.body
     assert "Incident Triage Command Bar" in incidents.body
     assert "data-incident-command-bar='true'" in incidents.body
     assert "incident_triage_total_incidents</dt><dd>0" in incidents.body
@@ -7409,6 +7457,33 @@ def test_goal_page_promotes_goal_incidents(tmp_path: Path) -> None:
 
     incidents = render_local_app_route(tmp_path, "/incidents")
     assert incidents.status == 200
+    assert incidents.body.index("Incident Operator Workbench") < incidents.body.index("Incident Triage Command Bar")
+    assert incidents.body.index("data-incident-operator-workbench") < incidents.body.index("data-route-context")
+    assert "data-incident-operator-workbench='true'" in incidents.body
+    assert "data-incident-workbench-primary='true'" in incidents.body
+    assert "data-incident-workbench-evidence='true'" in incidents.body
+    assert "data-incident-command-evidence='true'" in incidents.body
+    assert "data-incident-finish-details='true'" in incidents.body
+    assert "incident_workbench_status</dt><dd>open_incident" in incidents.body
+    assert "incident_workbench_total_incidents</dt><dd>1" in incidents.body
+    assert "incident_workbench_open_incidents</dt><dd>1" in incidents.body
+    assert "incident_workbench_first_kind</dt><dd>incident" in incidents.body
+    assert f"incident_workbench_first_id</dt><dd>{incident_id}" in incidents.body
+    assert f"incident_workbench_first_project</dt><dd>{result.project_id}" in incidents.body
+    assert f"incident_workbench_first_goal</dt><dd>{result.goal_id}" in incidents.body
+    assert f"incident_workbench_first_task</dt><dd>{result.task_id}" in incidents.body
+    assert f"incident_workbench_first_run</dt><dd>{result.coder_worktree_run_id}" in incidents.body
+    assert "incident_workbench_next_action</dt><dd>Inspect open incident" in incidents.body
+    assert "incident_workbench_primary_surface</dt><dd><a href='#incident-open'>Open Incidents</a>" in incidents.body
+    assert "incident_workbench_recovery_surface</dt><dd><a href='/goals/" in incidents.body
+    assert "incident_workbench_action_form_available</dt><dd>false" in incidents.body
+    assert "incident_workbench_resolution_form_available</dt><dd>false" in incidents.body
+    assert "incident_workbench_finish_form_available</dt><dd>true" in incidents.body
+    assert "incident_workbench_write_on_get</dt><dd>false" in incidents.body
+    assert "incident_workbench_retry_on_get</dt><dd>false" in incidents.body
+    assert "incident_workbench_external_effects_created</dt><dd>false" in incidents.body
+    assert "id='incident-finish-today'" in incidents.body
+    assert "name='updated_by' value='incident-operator-workbench'" in incidents.body
     assert "Incident Triage Command Bar" in incidents.body
     assert "data-incident-command-bar='true'" in incidents.body
     assert "incident_triage_total_incidents</dt><dd>1" in incidents.body

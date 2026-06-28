@@ -528,10 +528,13 @@ proof in the DOM.
 storage rows, including labels, modes, cost tiers, write posture, adapter
 status, and `use_for` labels without enabling providers.
 Use `/incidents` as a read-only triage board for open incidents, resolved
-incident history, and task recovery recommendations. The `Incident Triage
-Command Bar` starts the page with one local review target, incident and
-recommendation counts, evidence links, and no-resolution/no-retry/no-network
-boundaries.
+incident history, and task recovery recommendations. The page now opens with
+an `Incident Operator Workbench` before shared route/focus diagnostics or
+command readback, showing Now, Evidence, Recover, and Finish Today cards while
+incident workbench evidence, command evidence, and the Finish Today save form
+stay collapsed by default. The older `Incident Triage Command Bar` remains as
+read-only evidence with one local review target, incident and recommendation
+counts, evidence links, and no-resolution/no-retry/no-network boundaries.
 
 The app shell also includes a global `Operator Focus` strip, a read-only
 `Route Context` breadcrumb strip, recent local items, a command palette,

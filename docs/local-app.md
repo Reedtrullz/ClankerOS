@@ -443,10 +443,14 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   filesystem boundaries in the DOM. It does not expose arbitrary filesystem
   browsing.
 - `/incidents` - read-only incident and recommendation triage. It starts with
-  an `Incident Triage Command Bar` that summarizes open/resolved incident
+  an `Incident Operator Workbench` before shared route/focus diagnostics or
+  command readback, with visible Now, Evidence, Recover, and Finish Today
+  cards. Incident workbench evidence, command evidence, and the Finish Today
+  save form stay collapsed by default while preserving open/resolved incident
   counts, open recommendation counts, the first local review target, evidence
-  link, and write-on-GET/resolution/network/external-effect boundaries before
-  anchored open incident, resolved incident, and task recommendation sections.
+  link, and write-on-GET/resolution/retry/network/external-effect boundaries
+  before anchored open incident, resolved incident, and task recommendation
+  sections.
 - `/workspace` - persistent local workspace state for open project, open goal,
   filters, expanded panels, and last viewed artifact. It now opens with the
   `Workspace Operator Workbench` before shared route/focus diagnostics or
