@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The shared Recent Items sidebar is now compact and action-first: it shows one
+  primary reopen link plus `/resume`, while counts, saved context, last action,
+  zero-effect counters, and the longer shortcut list stay available inside
+  collapsed evidence/details.
 - Goal Action Dock and Goal Operator Workbench primary links now jump directly
   to `#goal-next-action-form` when the confirmed browser action form exists,
   so persistent/top-of-page action controls land on the actionable form instead

@@ -513,10 +513,10 @@ context strip shows the current route family/path, parent surface, current
 Goal/Project/run context when it can be resolved, saved workspace anchors,
 resume link, current focus target, and expandable zero-effect counters before
 the page content. The recent-items sidebar now starts with a read-only `Recent Items
-Command Bar` that names the first reopen target, counts workspace/goal/
-delegation/run shortcuts, shows saved workspace context and last action,
-links `/resume`, and
-keeps zero-effect counters visible. The focus strip keeps the saved or lead
+Command Bar` that shows one compact reopen action plus `/resume`, then keeps
+workspace/goal/delegation/run counts, saved workspace context, last action, and
+zero-effect counters inside collapsed evidence and the remaining recent
+shortcuts in a second collapsed disclosure. The focus strip keeps the saved or lead
 goal's phase, one primary action, target surface, progress, waiting counts,
 and resume link visible outside the Goal page, and can expand the same
 confirmed local action form when the current next action is browser-available.

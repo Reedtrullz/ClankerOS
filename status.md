@@ -1,5 +1,46 @@
 # Status
 
+## 2026-06-28 Recent Items Compact Rail
+
+- Made the shared Recent Items sidebar compact and action-first across app
+  pages: it now shows one primary `Open recent item` link plus a `/resume`
+  button before any diagnostic readback.
+- Moved recent-item counters, saved workspace context, last-action context, and
+  zero-effect counters into collapsed `Recent item evidence`.
+- Moved the longer recent shortcuts list into a second collapsed `Recent
+  shortcuts` disclosure, keeping the full navigation list available without
+  letting it dominate the first viewport.
+- Added stable `data-recent-items-focus`, `data-recent-items-primary`,
+  `data-recent-items-details`, and `data-recent-items-list-details` markers and
+  fixture-backed route assertions.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is read-only local navigation and browser rendering. It
+  does not write on GET, create action authority, approve work, run work, call
+  providers, fetch GitHub from ClankerOS, poll network services, commit, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 515 deselected`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-recent-items-compact-smoke-2 app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-recent-items-compact-demo-2 app-demo-smoke-test`
+    -> passed, fixture-backed Goal route matched expected snippets, provider/
+    network/external mutation counters remained `0`
+  - Rendered in-app Browser QA against
+    `http://127.0.0.1:8796/goals/goal_7411da502564`: desktop viewport
+    rendered one sticky Recent Items rail with primary `/goals/<goal_id>`
+    reopen link, `/resume`, collapsed evidence, collapsed shortcut list, no
+    horizontal overflow, no framework overlay, and empty console warning/error
+    logs. Mobile viewport `390x844` rendered the rail as `position: static`
+    with the same primary links, collapsed evidence, collapsed shortcuts,
+    article content starting within the first viewport, no horizontal overflow,
+    no framework overlay, and empty console warning/error logs. Clicking both
+    disclosures revealed the diagnostic status rows and all three recent
+    shortcuts without overflow.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Goal Form Anchors
 
 - Updated the Goal Action Dock so its primary `Open action form` link jumps

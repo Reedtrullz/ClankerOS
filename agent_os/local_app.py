@@ -21407,9 +21407,11 @@ def _recent_items_panel(root: Path) -> str:
             "<aside class='operator-side' data-recent-items='true'>",
             "<h2>Recent Items</h2>",
             _recent_items_command_bar(root, items, used_defaults=used_defaults),
-            "<ul>",
+            f"<details class='recent-items-list-details' data-recent-items-list-details='true'><summary>Recent shortcuts ({len(items)})</summary>",
+            "<ul class='recent-items-list' data-recent-items-list='true'>",
             "".join(rows),
             "</ul>",
+            "</details>",
             "</aside>",
         ]
     )
@@ -21488,6 +21490,14 @@ def _recent_items_command_bar(
     return "".join(
         [
             "<section class='recent-items-command-bar' data-recent-items-command-bar='true'><h3>Recent Items Command Bar</h3>",
+            "<div class='recent-items-focus' data-recent-items-focus='true'>",
+            "<span class='recent-items-label'>Reopen</span>",
+            f"<strong>{_e(primary_label)}</strong>",
+            f"<a class='recent-items-primary' data-recent-items-primary='true' href='{_e(primary_href)}'>Open recent item</a>",
+            "<a class='recent-items-resume' data-recent-items-resume='true' href='/resume'>Resume workspace</a>",
+            "</div>",
+            "<details class='recent-items-details' data-recent-items-details='true'>",
+            "<summary>Recent item evidence</summary>",
             _kv(
                 [
                     ("recent_items_status", "first_run" if used_defaults else "available"),
@@ -21523,6 +21533,7 @@ def _recent_items_command_bar(
                 ]
             ),
             _ul(lines),
+            "</details>",
             "</section>",
         ]
     )
@@ -22286,11 +22297,22 @@ def _html_page(
     .operator-side ul, .command-palette ul {{ list-style:none; padding:0; margin:0; display:grid; gap:7px; }}
     .operator-side li, .command-palette li {{ min-width:0; }}
     .operator-side a, .command-palette a {{ overflow-wrap:anywhere; }}
-    .recent-items-command-bar {{ border:1px solid var(--line); border-left:4px solid var(--accent); background:var(--surface); padding:9px; margin:10px 0; }}
+    .recent-items-command-bar {{ border:1px solid var(--line); border-left:4px solid var(--accent); background:var(--surface); padding:9px; margin:10px 0; display:grid; gap:8px; }}
     .recent-items-command-bar h3 {{ margin-top:0; }}
+    .recent-items-focus {{ border:1px solid var(--line); background:var(--panel); padding:9px; display:grid; gap:6px; }}
+    .recent-items-label {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .recent-items-focus strong {{ overflow-wrap:anywhere; }}
+    .recent-items-primary, .recent-items-resume {{ display:inline-flex; align-items:center; justify-content:center; min-height:32px; width:100%; max-width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
+    .recent-items-primary {{ background:var(--accent); color:#fff; }}
+    .recent-items-resume {{ background:var(--surface); color:var(--accent); }}
+    .recent-items-details summary {{ cursor:pointer; font-weight:700; }}
+    .recent-items-details:not([open]) > :not(summary) {{ display:none; }}
+    .recent-items-list-details summary {{ cursor:pointer; font-weight:700; }}
+    .recent-items-list-details:not([open]) > :not(summary) {{ display:none; }}
     .recent-items-command-bar dl {{ grid-template-columns:1fr; gap:4px; }}
     .recent-items-command-bar ul {{ margin-top:8px; }}
     .recent-items-command-bar li {{ border:1px solid var(--line); background:var(--panel); padding:6px 7px; overflow-wrap:anywhere; }}
+    .recent-items-list {{ margin-top:10px; }}
     .palette-route-context, .palette-continue {{ border:1px solid var(--line); background:var(--panel); padding:10px; margin:10px 0; }}
     .palette-route-context h3, .palette-continue h3 {{ margin-top:0; }}
     .palette-route-context dl {{ grid-template-columns:minmax(160px, 210px) 1fr; }}

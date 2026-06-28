@@ -578,10 +578,11 @@ Core layers for the bootstrap:
   workspace anchors, `/resume`, current focus target, and zero-effect
   boundaries in an expandable details block before the page body. The
   recent-items sidebar now starts with a read-only `Recent Items Command Bar`
-  that names one reopen target, counts
-  workspace/goal/delegation/run shortcuts, shows saved workspace
-  project/goal/artifact context, links `/resume`, and reports zero-effect
-  boundaries before the longer recent-link list. The command palette now also
+  that shows one compact reopen action plus `/resume`, then keeps
+  workspace/goal/delegation/run counts, saved workspace project/goal/artifact
+  context, last-action context, and zero-effect boundaries inside collapsed
+  evidence, with the longer recent-link list in a second collapsed disclosure.
+  The command palette now also
   starts with the same current-page route context, parent link, resolved
   Goal/Project/run context, focus target, `/resume`, and zero-effect readbacks
   inside the keyboard-driven surface. The shared focus strip and command

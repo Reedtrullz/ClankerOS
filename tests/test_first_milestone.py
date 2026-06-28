@@ -4733,6 +4733,23 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-recent-items='true'" in root.body
     assert "Recent Items Command Bar" in root.body
     assert "data-recent-items-command-bar='true'" in root.body
+    assert "data-recent-items-focus='true'" in root.body
+    assert "data-recent-items-primary='true' href='/goals'>Open recent item</a>" in root.body
+    assert "data-recent-items-resume='true' href='/resume'>Resume workspace</a>" in root.body
+    assert "data-recent-items-details='true'" in root.body
+    assert "<summary>Recent item evidence</summary>" in root.body
+    assert "data-recent-items-list-details='true'" in root.body
+    assert "<summary>Recent shortcuts (3)</summary>" in root.body
+    assert "data-recent-items-list='true'" in root.body
+    assert root.body.index("data-recent-items-focus='true'") < root.body.index(
+        "data-recent-items-details='true'"
+    )
+    assert root.body.index("data-recent-items-details='true'") < root.body.index(
+        "data-recent-items-list-details='true'"
+    )
+    assert root.body.index("data-recent-items-list-details='true'") < root.body.index(
+        "data-recent-items-list='true'"
+    )
     assert "recent_items_status</dt><dd>first_run" in root.body
     assert "recent_items_total</dt><dd>3" in root.body
     assert "recent_items_workspace_items</dt><dd>0" in root.body
@@ -7818,6 +7835,25 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-recent-items='true'" in goal.body
     assert "Recent Items Command Bar" in goal.body
     assert "data-recent-items-command-bar='true'" in goal.body
+    assert "data-recent-items-focus='true'" in goal.body
+    assert (
+        f"data-recent-items-primary='true' href='/goals/{result.goal_id}'>Open recent item</a>"
+    ) in goal.body
+    assert "data-recent-items-resume='true' href='/resume'>Resume workspace</a>" in goal.body
+    assert "data-recent-items-details='true'" in goal.body
+    assert "<summary>Recent item evidence</summary>" in goal.body
+    assert "data-recent-items-list-details='true'" in goal.body
+    assert "<summary>Recent shortcuts (3)</summary>" in goal.body
+    assert "data-recent-items-list='true'" in goal.body
+    assert goal.body.index("data-recent-items-focus='true'") < goal.body.index(
+        "data-recent-items-details='true'"
+    )
+    assert goal.body.index("data-recent-items-details='true'") < goal.body.index(
+        "data-recent-items-list-details='true'"
+    )
+    assert goal.body.index("data-recent-items-list-details='true'") < goal.body.index(
+        "data-recent-items-list='true'"
+    )
     assert "recent_items_status</dt><dd>available" in goal.body
     assert "recent_items_total</dt><dd>3" in goal.body
     assert "recent_items_workspace_items</dt><dd>0" in goal.body
