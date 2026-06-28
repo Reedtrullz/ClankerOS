@@ -171,10 +171,13 @@ Core layers for the bootstrap:
   `/search` for bounded global search across indexed goals, projects,
   delegations, known artifacts, incidents, recommendations, memory, runs,
   approvals, and skills, with goal results including live local phase, one
-  recommended next action, and remaining-work counts, plus a read-only
-  `Search Command Bar` that summarizes result counts by category, first
+  recommended next action, and remaining-work counts. It is content-first and
+  opens with a visible `Search Operator Workbench` before shared route/focus
+  diagnostics, with cards for query, first useful hit, result list, and
+  `/resume`. Search state, workbench evidence, and command evidence stay
+  collapsed by default while preserving result counts by category, first
   result, target link, summary, and no-write/no-network/no-raw-filesystem
-  boundaries;
+  boundaries in the DOM;
   `/incidents` includes a read-only `Incident Triage Command Bar` that
   summarizes open/resolved incident counts, open task-recommendation counts,
   the first local incident or recovery recommendation to review, evidence

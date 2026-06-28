@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/search` is now content-first and search-action-first: it opens with the
+  `Search Operator Workbench` before shared route/focus diagnostics, shows
+  visible Query, Open, Results, and Resume cards, and keeps search state,
+  workbench evidence, and command evidence collapsed by default while
+  preserving bounded indexed-search proof and zero-effect counters in the DOM.
 - `/today` is now content-first and command-center-first: it opens with the
   `Today Command Center` before shared route/focus diagnostics, keeps Today
   state, command, and workbench evidence collapsed by default, and opens the

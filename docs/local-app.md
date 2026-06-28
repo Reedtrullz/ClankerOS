@@ -434,10 +434,14 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   known artifacts, incidents, recommendations, memory, runs, approvals, and
   skill records. Goal results include live local phase, one next action, and
   remaining-work counts, so searches like `Ready to commit` or
-  `Create commit request` return the relevant Goal. A read-only
-  `Search Command Bar` summarizes result counts by category, the first result
-  to open, target link, summary, and write-on-GET/network/external-effect/raw
-  filesystem boundaries. It does not expose arbitrary filesystem browsing.
+  `Create commit request` return the relevant Goal. It is content-first and
+  opens with a visible `Search Operator Workbench` before shared route/focus
+  diagnostics, with cards for the current query, first useful hit, result
+  list, and `/resume`. Search state, workbench evidence, and command evidence
+  stay collapsed by default while preserving result counts by category, first
+  result target, summary, and write-on-GET/network/external-effect/raw
+  filesystem boundaries in the DOM. It does not expose arbitrary filesystem
+  browsing.
 - `/incidents` - read-only incident and recommendation triage. It starts with
   an `Incident Triage Command Bar` that summarizes open/resolved incident
   counts, open recommendation counts, the first local review target, evidence

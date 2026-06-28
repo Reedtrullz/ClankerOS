@@ -5197,8 +5197,21 @@ def test_local_app_routes_render_modern_workflow_and_health(
     search = render_local_app_route(tmp_path, "/search")
     assert search.status == 200
     assert "Global Search" in search.body
+    assert "data-search-operator-workbench='true'" in search.body
+    assert "data-search-workbench-actions='true'" in search.body
+    assert "data-search-workbench-primary='true'" in search.body
+    assert "data-search-state-details='true'" in search.body
+    assert "data-search-workbench-evidence='true'" in search.body
+    assert "data-search-command-evidence='true'" in search.body
+    assert search.body.index("data-search-operator-workbench='true'") < search.body.index(
+        "data-route-context='true'"
+    )
     assert "Search Command Bar" in search.body
     assert "data-search-command-bar='true'" in search.body
+    assert "search_workbench_status</dt><dd>ready_for_query" in search.body
+    assert "search_workbench_query</dt><dd>none" in search.body
+    assert "search_workbench_first_surface</dt><dd><a href='#search-form'>Search form</a>" in search.body
+    assert "search_workbench_open: <a href='#search-form'>Start search</a>" in search.body
     assert "search_command_query</dt><dd>none" in search.body
     assert "search_command_total_results</dt><dd>0" in search.body
     assert "search_command_first_action</dt><dd>Type a search query" in search.body
@@ -9441,8 +9454,23 @@ def test_local_app_demo_scenario_populates_fixture_state(
     search = render_local_app_route(tmp_path, "/search?q=fixture-backed")
     assert search.status == 200
     assert "Global Search" in search.body
+    assert "data-search-operator-workbench='true'" in search.body
+    assert "data-search-workbench-actions='true'" in search.body
+    assert "data-search-workbench-primary='true'" in search.body
+    assert "data-search-state-details='true'" in search.body
+    assert "data-search-workbench-evidence='true'" in search.body
+    assert "data-search-command-evidence='true'" in search.body
+    assert search.body.index("data-search-operator-workbench='true'") < search.body.index(
+        "data-route-context='true'"
+    )
     assert "Search Command Bar" in search.body
     assert "data-search-command-bar='true'" in search.body
+    assert "search_workbench_status</dt><dd>results_ready" in search.body
+    assert "search_workbench_query</dt><dd>fixture-backed" in search.body
+    assert "search_workbench_total_results</dt><dd>" in search.body
+    assert "search_workbench_first_kind</dt><dd>goal" in search.body
+    assert f"search_workbench_first_surface</dt><dd><a href='/goals/{result.goal_id}'" in search.body
+    assert "search_workbench_open: <a href='/goals/" in search.body
     assert "search_command_query</dt><dd>fixture-backed" in search.body
     assert "search_command_goal_results</dt><dd>" in search.body
     assert "search_command_artifact_results</dt><dd>" in search.body

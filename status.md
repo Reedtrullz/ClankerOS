@@ -1,5 +1,47 @@
 # Status
 
+## 2026-06-28 Search Action-First Operator Surface
+
+- Made `/search` usable as an operator workbench by rendering the
+  `Search Operator Workbench` before shared Route Context, Operator Focus,
+  Last Action, and search command diagnostics.
+- Added four visible cards for the current query, first useful local hit,
+  result list, and `/resume`, with a stable `data-search-workbench-primary`
+  marker for the primary query action.
+- Kept search state evidence, workbench evidence, and command evidence
+  collapsed by default while preserving result counts, category summaries,
+  first-result target links, and zero-effect/search-boundary readbacks in the
+  DOM.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, create action authority, approve work, run work, call providers, fetch
+  GitHub from ClankerOS, poll network services, commit, push, create PRs,
+  deploy, mutate external systems from ClankerOS, or expose arbitrary raw
+  filesystem browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-search-first-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-search-first-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/search?q=fixture-backed` snippets matched,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8811/search?q=fixture-backed`: desktop `1280x900`
+    rendered four Search Operator Workbench cards before Route Context and the
+    Search Command Bar, kept state/workbench/command evidence collapsed, had
+    no horizontal overflow, and had empty browser logs.
+  - Interaction proof: clicking the marked first-result link opened
+    `/goals/goal_5991f16f7617`, which rendered the goal jump bar, action
+    dock, operator workbench, and daily loop markers.
+  - Mobile Browser QA at `390x844` rendered four search workbench cards in one
+    column, kept all search evidence collapsed, placed shared Route Context
+    below the workbench, showed no horizontal overflow, and had empty browser
+    logs.
+  - `git diff --check` -> passed.
+
 ## 2026-06-28 Today Command-First Operator Surface
 
 - Made `/today` usable as the daily cockpit by rendering the `Today Command

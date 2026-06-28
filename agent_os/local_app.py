@@ -583,6 +583,11 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             "Global Search",
             [
                 "search_scope",
+                "data-search-operator-workbench='true'",
+                "data-search-workbench-primary='true'",
+                "data-search-state-details='true'",
+                "data-search-workbench-evidence='true'",
+                "data-search-command-evidence='true'",
                 demo.goal_id,
                 "artifact",
             ],
@@ -3889,9 +3894,10 @@ def _search_page(root: Path, *, query: str) -> str:
     results = _search_results(root, storage, term) if term else []
     return "".join(
         [
-            "<section><h1>Global Search</h1>",
+            "<section class='hero search-hero'><h1>Global Search</h1>",
             "<p class='muted'>Search goals, projects, delegations, artifacts, incidents, recommendations, memory, runs, and approvals from indexed local state.</p>",
             _search_form(term),
+            "<details class='search-state-details' data-search-state-details='true'><summary>Search state evidence</summary>",
             _kv(
                 [
                     ("search_query", term or "none"),
@@ -3900,7 +3906,9 @@ def _search_page(root: Path, *, query: str) -> str:
                     ("results", str(len(results))),
                 ]
             ),
+            "</details>",
             "</section>",
+            _search_operator_workbench(term, results),
             _search_command_bar(term, results),
             _list_section(
                 "Search Results",
@@ -3908,6 +3916,77 @@ def _search_page(root: Path, *, query: str) -> str:
                 anchor_id="search-results",
             ),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _search_operator_workbench(term: str, results: list[dict[str, str]]) -> str:
+    counts: dict[str, int] = {}
+    for item in results:
+        category = item.get("category", "unknown")
+        counts[category] = counts.get(category, 0) + 1
+    first = results[0] if results else None
+    first_href = first["href"] if first else "#search-form"
+    first_title = first["title"] if first else "Search form"
+    first_kind = first["category"] if first else "none"
+    query_action = "Refine query" if term else "Type a search query"
+    query_summary = term or "No query entered yet"
+    result_summary = f"{len(results)} local result{'s' if len(results) != 1 else ''}"
+    category_summary = ", ".join(
+        f"{category}:{count}" for category, count in sorted(counts.items())
+    ) or "none"
+    results_href = "#search-results" if results else "#search-form"
+    open_action = "Open first result" if results else "Start search"
+    open_summary = (
+        f"{first_kind}: {first_title}"
+        if first
+        else "Enter a query to search indexed local state"
+    )
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("search_workbench_status", "results_ready" if results else ("ready_for_query" if not term else "empty")),
+        ("search_workbench_query", term or "none"),
+        ("search_workbench_total_results", str(len(results))),
+        ("search_workbench_category_summary", category_summary),
+        ("search_workbench_first_kind", first_kind),
+        ("search_workbench_first_surface", SafeHtml(f"<a href='{_e(first_href)}'>{_e(first_title)}</a>")),
+        ("search_workbench_results_surface", SafeHtml(f"<a href='{_e(results_href)}'>Search Results</a>")),
+        ("search_workbench_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+        ("search_workbench_write_on_get", "false"),
+        ("search_workbench_network_actions_taken", "0"),
+        ("search_workbench_external_effects_created", "false"),
+        ("search_workbench_raw_filesystem_browsing", "false"),
+    ]
+    cards = "".join(
+        [
+            "<div class='search-workbench-grid' data-search-workbench-actions='true'>",
+            "<article class='search-workbench-card search-workbench-primary'><h3>Query</h3>",
+            f"<p>{_e(query_summary)}</p><a class='search-workbench-action' data-search-workbench-primary='true' href='#search-form'>{_e(query_action)}</a></article>",
+            "<article class='search-workbench-card'><h3>Open</h3>",
+            f"<p>{_e(open_summary)}</p><a class='search-workbench-link' href='{_e(first_href)}'>{_e(open_action)}</a></article>",
+            "<article class='search-workbench-card'><h3>Results</h3>",
+            f"<p>{_e(result_summary)}</p><a class='search-workbench-link' href='{_e(results_href)}'>Review results</a></article>",
+            "<article class='search-workbench-card'><h3>Resume</h3>",
+            "<p>Return to saved workspace context.</p><a class='search-workbench-link' href='/resume'>/resume</a></article>",
+            "</div>",
+        ]
+    )
+    return "".join(
+        [
+            "<section class='panel search-operator-workbench' data-search-operator-workbench='true'><h2>Search Operator Workbench</h2>",
+            "<p class='muted'>Find the local object, open the first useful hit, or return to the saved workspace without reaching for the CLI.</p>",
+            cards,
+            "<details class='search-workbench-evidence' data-search-workbench-evidence='true'><summary>Search workbench evidence</summary>",
+            _kv(rows),
+            _ul(
+                [
+                    f"search_workbench_query: <a href='#search-form'>{_e(query_action)}</a>",
+                    f"search_workbench_open: <a href='{_e(first_href)}'>{_e(open_action)}</a>",
+                    f"search_workbench_results: <a href='{_e(results_href)}'>Review results</a>",
+                    "search_workbench_safety: read-only indexed search; no raw filesystem browsing",
+                ]
+            ),
+            "</details>",
+            "</section>",
         ]
     )
 
@@ -3969,6 +4048,7 @@ def _search_command_bar(term: str, results: list[dict[str, str]]) -> str:
         [
             "<section class='panel search-command-bar' data-search-command-bar='true'><h2>Search Command Bar</h2>",
             "<p class='muted'>One read-only summary of the current local search and the first result to open.</p>",
+            "<details class='search-command-evidence' data-search-command-evidence='true'><summary>Search command evidence</summary>",
             _kv(
                 [
                     ("search_command_status", "available"),
@@ -3991,6 +4071,7 @@ def _search_command_bar(term: str, results: list[dict[str, str]]) -> str:
                 ]
             ),
             _ul(lines),
+            "</details>",
             "</section>",
         ]
     )
@@ -23624,7 +23705,7 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
-    content_first_paths = {"/", "/actions", "/inbox", "/resume", "/today", "/workspace"}
+    content_first_paths = {"/", "/actions", "/inbox", "/resume", "/search", "/today", "/workspace"}
     if current_route_path in content_first_paths:
         article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
     else:
@@ -23996,6 +24077,21 @@ def _html_page(
     .project-workbench-action {{ background:var(--accent); color:#fff; }}
     .project-workbench-link {{ background:var(--surface); color:var(--accent); }}
     .project-finish-today {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
+    .search-operator-workbench {{ border-left:4px solid var(--accent); }}
+    .search-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .search-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .search-operator-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .search-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .search-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .search-workbench-card h3 {{ margin-top:0; }}
+    .search-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .search-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .search-workbench-action, .search-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .search-workbench-action {{ background:var(--accent); color:#fff; }}
+    .search-workbench-link {{ background:var(--surface); color:var(--accent); }}
+    .search-state-details, .search-command-evidence, .search-workbench-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .search-state-details summary, .search-command-evidence summary, .search-workbench-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .search-state-details:not([open]) > :not(summary), .search-command-evidence:not([open]) > :not(summary), .search-workbench-evidence:not([open]) > :not(summary) {{ display:none; }}
     .first-run-command-bar {{ border-left:4px solid var(--accent); margin:12px 0; }}
     .first-run-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .first-run-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -24167,7 +24263,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

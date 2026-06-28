@@ -495,9 +495,12 @@ Use `/search` for bounded global search across indexed goals, projects,
 delegations, known artifacts, incidents, recommendations, memory, runs, and
 approvals. Goal search results include live local phase, one next action, and
 remaining-work counts, so action or phase searches can return the Goal to
-continue. The read-only `Search Command Bar` starts each search with result
-counts by category, the first result to open, its target link, and the
-no-write/no-network/no-raw-filesystem boundary. Use `/memory`, `/skills`, and
+continue. `/search` is now content-first and opens with a visible
+`Search Operator Workbench` before shared route/focus diagnostics, turning the
+query, first useful hit, result list, and `/resume` into four browser cards.
+Search state, workbench evidence, and command evidence stay collapsed by
+default while preserving result counts, first-result target links, and the
+no-write/no-network/no-raw-filesystem boundary in the DOM. Use `/memory`, `/skills`, and
 `/profiles` for local readbacks of memory entries, generated skills/usage,
 and inactive future provider-routing lanes. The read-only `Memory Command Bar`
 starts `/memory` with entry counts, proposed-memory pin posture, first target,
