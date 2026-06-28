@@ -172,15 +172,19 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/goals` - daily goal cockpit. It separates active, paused, and completed
   goals, links to each goal detail page, and keeps phase, next action, task
   progress, open task/incident/recommendation counts, and first-run browser
-  actions visible. A read-only `Goal Board Command Bar` summarizes total goal
-  counts, the prioritized saved or active Goal, its phase, one next action,
-  target surface, waiting counts, resume route, action availability, and
-  write/network/external-effect counters. A `Goal Board Workbench` follows
-  with Do Now, Selected Goal, Attention, and Start/Resume cards, including
-  direct links to the selected Goal's confirmed action form, scoped
+  actions visible. A `Goal Board Workbench` now starts the page before shared
+  route/focus diagnostics, with Do Now, Selected Goal, Attention, and
+  Start/Resume cards, including direct links to the selected Goal's confirmed
+  action form, scoped
   `/approvals?goal_id=<goal_id>` attention routing, lane anchors, and
-  `/resume`. The page exposes a confirmed local `Start Another Goal` form for
-  registered projects, plus
+  `/resume`. The read-only `Goal Board Command Bar` follows as collapsed
+  command evidence with total goal counts, the prioritized saved or active
+  Goal, its phase, one next action, target surface, waiting counts, resume
+  route, action availability, and write/network/external-effect counters.
+  Populated cockpit counts are collapsed as evidence so the visible board
+  appears sooner on mobile. The page exposes a confirmed local `Start Another
+  Goal` form for registered
+  projects, plus
   confirmed local `register-project` and `create-goal` forms for a fresh
   checkout.
 - `/goals/<goal_id>` - goal-centered workbench that opens with the large

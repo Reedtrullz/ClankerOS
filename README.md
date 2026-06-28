@@ -264,15 +264,18 @@ local surface.
 Use `/goals` as the daily cockpit. It separates active, paused, and completed
 goals, links each goal to its detail page, and shows phase, next action, and
 task progress plus open task, incident, and recommendation counts from
-existing local state. A read-only `Goal Board Command Bar` starts the page
-with total goal counts, the prioritized saved or active Goal, its current
-phase, one next action, the target surface, waiting counts, resume link, and
-zero-effect counters. A `Goal Board Workbench` follows with visible Do Now,
-Selected Goal, Attention, and Start/Resume cards; it links the selected Goal
-straight to its confirmed action form when one exists, routes pending approval
-attention through `/approvals?goal_id=<goal_id>`, and anchors active, paused,
-and completed lanes for fast switching. The cockpit also includes a confirmed
-local `Start Another Goal` form backed by the existing `create-goal` action,
+existing local state. A `Goal Board Workbench` starts the page before shared
+route/focus diagnostics, with visible Do Now, Selected Goal, Attention, and
+Start/Resume cards; it links the selected Goal straight to its confirmed
+action form when one exists, routes pending approval attention through
+`/approvals?goal_id=<goal_id>`, and anchors active, paused, and completed
+lanes for fast switching. The read-only
+`Goal Board Command Bar` follows as collapsed command evidence with total goal
+counts, the prioritized saved or active Goal, its current phase, one next
+action, the target surface, waiting counts, resume link, and zero-effect
+counters. Populated cockpit counts are also collapsed as evidence so the board
+arrives quickly on mobile. The cockpit also includes a confirmed local
+`Start Another Goal` form backed by the existing `create-goal` action,
 so an operator can add the next goal for a registered project without
 switching to the CLI.
 Use `/goals/<goal_id>` as the

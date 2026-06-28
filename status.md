@@ -1,5 +1,47 @@
 # Status
 
+## 2026-06-28 Goal Board Workbench-First Surface
+
+- Made `/goals` content-first and board-first by rendering `Goal Board
+  Workbench` before shared Route Context, Operator Focus, and the
+  `Goal Board Command Bar` in both first-run and populated states.
+- Collapsed goal board workbench evidence and command evidence by default
+  while preserving first-run state, selected Goal, phase, next action, waiting
+  counts, scoped approval routing, lane anchors, resume route, and zero-effect
+  counters in the DOM. In populated states, the Goal Cockpit count readback is
+  collapsed as evidence so the mobile page reaches the board sooner.
+- Added stable visible-card handles for first-run/project/resume and populated
+  selected/attention/start/resume board actions so the actual operator controls
+  are easy to test and target.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. `/goals` does not write
+  on GET, approve work, execute work, create commits, push, create PRs, deploy,
+  call providers, fetch GitHub, mutate external systems, or expose arbitrary
+  raw filesystem browsing. Existing confirmed first-run and create-goal forms
+  still handle writes through their existing confirmation paths.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, route markers matched, artifact rejection checks matched,
+    provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - Browser QA against `http://127.0.0.1:8826/goals`: desktop `1280x900`
+    rendered `Goal Board Workbench` before Route Context and
+    `Goal Board Command Bar`; four visible board cards rendered with stable
+    action handles; Goal cockpit, workbench, and command evidence disclosures
+    were closed by default; the primary card opened the selected Goal action
+    form; the Attention card opened the goal-scoped approvals view; no
+    horizontal overflow and no warning/error logs.
+  - Browser QA mobile `390x844`: Goal cockpit evidence stayed collapsed, four
+    board cards stacked one column, board evidence and command evidence stayed
+    closed by default, no horizontal overflow, and no warning/error logs.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Demo Operator Workbench Surface
 
 - Made `/demo` content-first and launchpad-first by rendering a visible

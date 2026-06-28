@@ -4,6 +4,14 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/goals` is now content-first and board-first instead of shared-diagnostic or
+  command-readback-first: the `Goal Board Workbench` opens the page before
+  Route Context, Operator Focus, and the `Goal Board Command Bar`, with visible
+  Do Now, Selected Goal, Attention, and Start/Resume cards plus stable
+  visible-card handles. Goal cockpit counts, goal board workbench evidence, and
+  command evidence stay collapsed by default while preserving selected Goal,
+  phase, next action, waiting counts, lane routing, resume route, first-run
+  state, and zero-effect counters in the DOM.
 - `/demo` is now content-first and launchpad-first: it opens with the
   `Demo Operator Workbench` cards for Now, Project, Workflow, and Proof before
   shared route/focus diagnostics, command evidence, or the longer fixture

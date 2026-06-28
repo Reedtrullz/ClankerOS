@@ -7264,26 +7264,26 @@ def _goals(root: Path) -> str:
                 "<section><h1>Goal Cockpit</h1>",
                 "<p class='muted'>Everything in ClankerOS revolves around a Goal. No goals exist yet in this local state.</p>",
                 "</section>",
+                _goal_board_workbench(
+                    root,
+                    storage,
+                    rows=rows,
+                    active=[],
+                    paused=[],
+                    completed=[],
+                ),
                 _goal_board_command_bar(
                     root,
-                storage,
-                rows=rows,
-                active=[],
-                paused=[],
-                completed=[],
-            ),
-            _goal_board_workbench(
-                root,
-                storage,
-                rows=rows,
-                active=[],
-                paused=[],
-                completed=[],
-            ),
-            _first_run_panel(root, storage),
-            _non_claim_banner(),
-        ]
-    )
+                    storage,
+                    rows=rows,
+                    active=[],
+                    paused=[],
+                    completed=[],
+                ),
+                _first_run_panel(root, storage),
+                _non_claim_banner(),
+            ]
+        )
     active = [row for row in rows if _goal_bucket(row) == "active"]
     paused = [row for row in rows if _goal_bucket(row) == "paused"]
     completed = [row for row in rows if _goal_bucket(row) == "completed"]
@@ -7291,6 +7291,7 @@ def _goals(root: Path) -> str:
         [
             "<section><h1>Goal Cockpit</h1>",
             "<p class='muted'>Daily operator home for active, paused, and completed goals. Each goal owns project intent, phase, evidence, approvals, incidents, memory, and remaining work.</p>",
+            "<details class='goal-cockpit-evidence' data-goal-cockpit-evidence='true'><summary>Goal cockpit evidence</summary>",
             _kv(
                 [
                     ("active_goals", str(len(active))),
@@ -7300,8 +7301,9 @@ def _goals(root: Path) -> str:
                     ("external_effects_created", "false"),
                 ]
             ),
+            "</details>",
             "</section>",
-            _goal_board_command_bar(
+            _goal_board_workbench(
                 root,
                 storage,
                 rows=rows,
@@ -7309,7 +7311,7 @@ def _goals(root: Path) -> str:
                 paused=paused,
                 completed=completed,
             ),
-            _goal_board_workbench(
+            _goal_board_command_bar(
                 root,
                 storage,
                 rows=rows,
@@ -7409,6 +7411,7 @@ def _goal_board_command_bar(
             [
                 "<section class='panel goal-board-command-bar' data-goal-board-command-bar='true'><h2>Goal Board Command Bar</h2>",
                 "<p class='muted'>One board-level pointer for a fresh or empty Goal cockpit.</p>",
+                "<details class='goal-board-command-evidence' data-goal-board-command-evidence='true'><summary>Goal board command evidence</summary>",
                 _kv(
                     [
                         ("goal_board_status", "first_run"),
@@ -7434,6 +7437,7 @@ def _goal_board_command_bar(
                     ]
                 ),
                 _ul(lines),
+                "</details>",
                 "</section>",
             ]
         )
@@ -7481,6 +7485,7 @@ def _goal_board_command_bar(
         [
             "<section class='panel goal-board-command-bar' data-goal-board-command-bar='true'><h2>Goal Board Command Bar</h2>",
             "<p class='muted'>One board-level recommendation before the active, paused, and completed lanes.</p>",
+            "<details class='goal-board-command-evidence' data-goal-board-command-evidence='true'><summary>Goal board command evidence</summary>",
             _kv(
                 [
                     ("goal_board_status", "available"),
@@ -7515,6 +7520,7 @@ def _goal_board_command_bar(
                 ]
             ),
             _ul(lines),
+            "</details>",
             "</section>",
         ]
     )
@@ -7579,17 +7585,17 @@ def _goal_board_workbench(
                 "<div class='goal-board-card'>",
                 "<h3>First Run</h3>",
                 f"<p>{_e(current_step.replace('_', ' '))}</p>",
-                "<a class='goal-board-link' href='#first-run-guide'>Open guide</a>",
+                "<a class='goal-board-link' data-goal-board-workbench-first-run='true' href='#first-run-guide'>Open guide</a>",
                 "</div>",
                 "<div class='goal-board-card'>",
                 "<h3>Project</h3>",
                 f"<p>{_e(first_run['default_project'])}</p>",
-                "<a class='goal-board-link' href='#first-run-guide'>Setup forms</a>",
+                "<a class='goal-board-link' data-goal-board-workbench-project='true' href='#first-run-guide'>Setup forms</a>",
                 "</div>",
                 "<div class='goal-board-card'>",
                 "<h3>Resume</h3>",
                 "<p>Saved workspace</p>",
-                "<a class='goal-board-link' href='/resume'>Open resume</a>",
+                "<a class='goal-board-link' data-goal-board-workbench-resume='true' href='/resume'>Open resume</a>",
                 "</div>",
             ]
         )
@@ -7606,6 +7612,7 @@ def _goal_board_workbench(
                 "<div class='goal-board-workbench-grid' data-goal-board-workbench-actions='true'>",
                 action_cards,
                 "</div>",
+                "<details class='goal-board-workbench-evidence' data-goal-board-workbench-evidence='true'><summary>Goal board workbench evidence</summary>",
                 _kv(
                     [
                         ("goal_board_workbench_status", "first_run"),
@@ -7626,6 +7633,7 @@ def _goal_board_workbench(
                     ]
                 ),
                 _ul(lines),
+                "</details>",
                 "</section>",
             ]
         )
@@ -7691,18 +7699,18 @@ def _goal_board_workbench(
             "<div class='goal-board-card'>",
             "<h3>Selected Goal</h3>",
             f"<p>{_e(phase)} · {_e(_goal_progress_label(state))}</p>",
-            f"<a class='goal-board-link' href='/goals/{quote(goal.id)}'>Open goal</a>",
+            f"<a class='goal-board-link' data-goal-board-workbench-selected='true' href='/goals/{quote(goal.id)}'>Open goal</a>",
             "</div>",
             "<div class='goal-board-card'>",
             "<h3>Attention</h3>",
             f"<p>{_e(str(waiting_items))} waiting item(s)</p>",
-            f"<a class='goal-board-link' href='{_e(attention_href)}'>{_e(attention_action)}</a>",
+            f"<a class='goal-board-link' data-goal-board-workbench-attention='true' href='{_e(attention_href)}'>{_e(attention_action)}</a>",
             "</div>",
             "<div class='goal-board-card'>",
             "<h3>Start / Resume</h3>",
             "<p>Queue controls</p>",
-            "<a class='goal-board-link' href='#goal-start-another'>Start goal</a> ",
-            "<a class='goal-board-link' href='/resume'>Resume</a>",
+            "<a class='goal-board-link' data-goal-board-workbench-start='true' href='#goal-start-another'>Start goal</a> ",
+            "<a class='goal-board-link' data-goal-board-workbench-resume='true' href='/resume'>Resume</a>",
             "</div>",
         ]
     )
@@ -7725,6 +7733,7 @@ def _goal_board_workbench(
             "<div class='goal-board-workbench-grid' data-goal-board-workbench-actions='true'>",
             action_cards,
             "</div>",
+            "<details class='goal-board-workbench-evidence' data-goal-board-workbench-evidence='true'><summary>Goal board workbench evidence</summary>",
             _kv(
                 [
                     ("goal_board_workbench_status", "available"),
@@ -7763,6 +7772,7 @@ def _goal_board_workbench(
                 ]
             ),
             _ul(lines),
+            "</details>",
             "</section>",
         ]
     )
@@ -25674,7 +25684,7 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
-    content_first_paths = {"/", "/actions", "/approvals", "/artifacts", "/ci-evidence", "/delegation-runs", "/demo", "/dogfooding", "/health", "/inbox", "/incidents", "/memory", "/profiles", "/projects", "/resume", "/search", "/skills", "/today", "/verification", "/workflow", "/workspace"}
+    content_first_paths = {"/", "/actions", "/approvals", "/artifacts", "/ci-evidence", "/delegation-runs", "/demo", "/dogfooding", "/goals", "/health", "/inbox", "/incidents", "/memory", "/profiles", "/projects", "/resume", "/search", "/skills", "/today", "/verification", "/workflow", "/workspace"}
     if current_route_path in content_first_paths or current_route_path.startswith("/projects/"):
         article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
     else:
@@ -25846,12 +25856,18 @@ def _html_page(
     .goal-overview-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-overview-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-board-command-bar {{ border-left:4px solid var(--accent); }}
+    .goal-cockpit-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-cockpit-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .goal-cockpit-evidence:not([open]) > :not(summary) {{ display:none; }}
     .goal-board-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-board-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-board-workbench {{ border-left:4px solid var(--accent); }}
     .goal-board-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .goal-board-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-board-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-board-workbench-evidence, .goal-board-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-board-workbench-evidence summary, .goal-board-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .goal-board-workbench-evidence:not([open]) > :not(summary), .goal-board-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .goal-board-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
     .goal-board-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
     .goal-board-card h3 {{ margin-top:0; }}

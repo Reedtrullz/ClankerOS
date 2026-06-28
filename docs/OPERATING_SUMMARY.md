@@ -309,15 +309,17 @@ Core layers for the bootstrap:
   project, so memory decisions can become tomorrow's resume surface without a
   separate manual workspace save. The
   populated `/goals`
-  cockpit starts with a read-only `Goal Board Command Bar` that prioritizes
-  the saved or active Goal, phase, one next action, target local surface,
-  waiting counts, resume route, action availability, and zero-effect counters
-  before the active/paused/completed lanes. It then renders a `Goal Board
-  Workbench` with Do Now, Selected Goal, Attention, and Start/Resume cards,
-  including selected-Goal action-form links, scoped approval attention via
-  `/approvals?goal_id=<goal_id>`, lane anchors, and `/resume`. It also exposes
-  a confirmed local `Start Another Goal` form for registered projects, so daily
-  goal creation does not require the CLI. The checklist reports the current step,
+  cockpit now starts with a `Goal Board Workbench` with Do Now, Selected Goal,
+  Attention, and Start/Resume cards, including selected-Goal action-form links,
+  scoped approval attention via `/approvals?goal_id=<goal_id>`, lane anchors,
+  and `/resume`, before shared route/focus diagnostics, the command readback,
+  or active/paused/completed lanes.
+  The read-only `Goal Board Command Bar` follows as collapsed command evidence
+  that preserves the saved or active Goal, phase, one next action, target local
+  surface, waiting counts, resume route, action availability, and zero-effect
+  counters. It also exposes a confirmed local `Start Another Goal` form for
+  registered projects, so daily goal creation does not require the CLI. The
+  checklist reports the current step,
   one `first_run_next_action` with a reason, project/goal/delegation/
   context-pack state, next local surface, a confirmed local `run-delegation`
   action once context is ready, and a copyable CLI fallback while keeping

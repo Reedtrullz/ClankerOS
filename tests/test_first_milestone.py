@@ -5253,6 +5253,19 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-goal-board-workbench='true'" in goals.body
     assert "data-goal-board-workbench-actions='true'" in goals.body
     assert "data-goal-board-workbench-primary='true'" in goals.body
+    assert "data-goal-board-workbench-first-run='true'" in goals.body
+    assert "data-goal-board-workbench-project='true'" in goals.body
+    assert "data-goal-board-workbench-resume='true'" in goals.body
+    assert "data-goal-board-workbench-evidence='true'" in goals.body
+    assert "data-goal-board-command-evidence='true'" in goals.body
+    assert goals.body.index("data-goal-board-workbench='true'") < goals.body.index(
+        "data-goal-board-command-bar='true'"
+    )
+    assert goals.body.index("data-goal-board-workbench='true'") < goals.body.index(
+        "data-route-context='true'"
+    )
+    assert "<details class='goal-board-workbench-evidence' data-goal-board-workbench-evidence='true'><summary>Goal board workbench evidence</summary>" in goals.body
+    assert "<details class='goal-board-command-evidence' data-goal-board-command-evidence='true'><summary>Goal board command evidence</summary>" in goals.body
     assert "goal_board_workbench_status</dt><dd>first_run" in goals.body
     assert "goal_board_workbench_current_step</dt><dd>create_project" in goals.body
     assert "goal_board_workbench_primary_action</dt><dd>Register ClankerOS project" in goals.body
@@ -8598,6 +8611,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Cockpit" in goals.body
     assert "Active Goals" in goals.body
     assert "goal_first_navigation" in goals.body
+    assert "data-goal-cockpit-evidence='true'" in goals.body
+    assert "<details class='goal-cockpit-evidence' data-goal-cockpit-evidence='true'><summary>Goal cockpit evidence</summary>" in goals.body
     assert "Goal Board Command Bar" in goals.body
     assert "data-goal-board-command-bar='true'" in goals.body
     assert "goal_board_status</dt><dd>available" in goals.body
@@ -8628,6 +8643,21 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Board Workbench" in goals.body
     assert "data-goal-board-workbench='true'" in goals.body
     assert "data-goal-board-workbench-actions='true'" in goals.body
+    assert "data-goal-board-workbench-primary='true'" in goals.body
+    assert "data-goal-board-workbench-selected='true'" in goals.body
+    assert "data-goal-board-workbench-attention='true'" in goals.body
+    assert "data-goal-board-workbench-start='true'" in goals.body
+    assert "data-goal-board-workbench-resume='true'" in goals.body
+    assert "data-goal-board-workbench-evidence='true'" in goals.body
+    assert "data-goal-board-command-evidence='true'" in goals.body
+    assert goals.body.index("data-goal-board-workbench='true'") < goals.body.index(
+        "data-goal-board-command-bar='true'"
+    )
+    assert goals.body.index("data-goal-board-workbench='true'") < goals.body.index(
+        "data-route-context='true'"
+    )
+    assert "<details class='goal-board-workbench-evidence' data-goal-board-workbench-evidence='true'><summary>Goal board workbench evidence</summary>" in goals.body
+    assert "<details class='goal-board-command-evidence' data-goal-board-command-evidence='true'><summary>Goal board command evidence</summary>" in goals.body
     assert "goal_board_workbench_status</dt><dd>available" in goals.body
     assert "goal_board_workbench_source</dt><dd>active_goal" in goals.body
     assert "goal_board_workbench_total_goals</dt><dd>1" in goals.body
