@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/workspace` is now content-first and finish/resume-action-first: it opens
+  with the `Workspace Operator Workbench` before shared route/focus diagnostics,
+  saved-state evidence, or restore-link readbacks. Browser-available saved
+  actions render immediately below the workbench, the daily brief and workflow
+  map follow, and saved-state/restore/save-form details stay collapsed until
+  the operator opens them. Direct `/workspace#save-workspace` navigation now
+  opens the collapsed save form client-side.
 - `/inbox` is now content-first and queue-action-first: it opens with the
   `Inbox Operator Workbench` before shared route/focus diagnostics or command
   readback, while inbox command and workbench evidence stay collapsed by

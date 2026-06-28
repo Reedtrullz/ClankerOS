@@ -214,16 +214,15 @@ Home/Today/Goals setup targets. It also
 includes a read-only `Resume Workflow Map` that mirrors the Goal page
 lifecycle rail, showing the saved goal's current gate, gate progress, next
 action, and no-write/no-network boundaries before the operator leaves
-`/resume`. `/workspace` shows the same
-saved-goal continuation next to the editable saved-state form, adds a
-read-only `Workspace Daily Brief` for morning start, continue, and finish
-cues, follows with a `Workspace Operator Workbench` that gives the saved
-workspace its own do/check/unblock/finish cards, same-page action-form routing,
-blocker routing, last-artifact readback, and save-form target, adds a read-only
-`Workspace Workflow Map` with the saved goal's current gate and gate counts,
-and anchors the save form as `#save-workspace`, so operators can inspect,
-update, and act from tomorrow's resume point in one place when the next action
-is browser-available. Before a saved Goal exists, `/workspace` now follows the
+`/resume`. `/workspace` now opens with the
+`Workspace Operator Workbench` before shared route/focus diagnostics or
+saved-state evidence. The workbench gives the saved workspace do/check/unblock/
+finish cards, same-page action-form routing, blocker routing, last-artifact
+readback, and a Finish Today link that opens the collapsed `#save-workspace`
+form. The read-only `Workspace Daily Brief` and `Workspace Workflow Map`
+follow with the saved goal's current gate, gate counts, and finish posture,
+while saved-state and restore-link readbacks stay inside collapsed evidence.
+Before a saved Goal exists, `/workspace` now follows the
 same first-run progress as Home, Today, Goals, and `/resume`: an empty checkout
 points its daily brief, workbench, continuation readback, restore links, and
 workflow map at Home's `Create Project` anchor, while a registered-project/

@@ -5195,6 +5195,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert workspace.status == 200
     assert "Workspace State" in workspace.body
     assert "save-workspace" in workspace.body
+    assert "data-workspace-operator-workbench='true'" in workspace.body
+    assert "data-workspace-workbench-primary='true'" in workspace.body
+    assert "data-workspace-workbench-evidence='true'" in workspace.body
+    assert "data-workspace-state-details='true'" in workspace.body
+    assert "data-workspace-restore-details='true'" in workspace.body
+    assert "data-workspace-save-details='true'" in workspace.body
+    assert "data-open-details='true' href='#save-workspace'" in workspace.body
+    assert workspace.body.index("data-workspace-operator-workbench='true'") < workspace.body.index("data-workspace-daily-brief='true'")
+    assert workspace.body.index("data-workspace-operator-workbench='true'") < workspace.body.index("data-route-context='true'")
+    assert workspace.body.index("data-workspace-state-details='true'") < workspace.body.index("id='save-workspace'")
     assert "Workspace Daily Brief" in workspace.body
     assert "data-workspace-daily-brief='true'" in workspace.body
     assert "workspace_daily_status</dt><dd>first_run" in workspace.body
@@ -5229,8 +5239,6 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_daily_safety: read-only until confirmed save-workspace or local action form" in workspace.body
     assert "workspace_daily_start: Register ClankerOS project" in workspace.body
     assert "workspace_daily_continue: <a href='/#first-run-create-project'>Create Project</a>" in workspace.body
-    assert "Workspace Operator Workbench" in workspace.body
-    assert "data-workspace-operator-workbench='true'" in workspace.body
     assert "data-workspace-workbench-actions='true'" in workspace.body
     assert "workspace_workbench_status</dt><dd>first_run" in workspace.body
     assert "workspace_workbench_ready</dt><dd>false" in workspace.body
@@ -5296,7 +5304,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "workspace_workbench_click: <a href='/#first-run-create-project'>"
         "Register ClankerOS project</a>"
     ) in workspace.body
-    assert "workspace_workbench_finish: <a href='#save-workspace'>Save Workspace</a>" in workspace.body
+    assert "workspace_workbench_finish: <a data-open-details='true' href='#save-workspace'>Save Workspace</a>" in workspace.body
     assert "workspace_workbench_safety: confirmed local actions only; no write on GET" in workspace.body
     assert "workspace_first_run_action: Register ClankerOS project" in workspace.body
     assert "workspace_first_run_step: create_project" in workspace.body
@@ -9571,6 +9579,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     restored_workspace = render_local_app_route(tmp_path, "/workspace")
     assert result.project_id in restored_workspace.body
     assert result.goal_id in restored_workspace.body
+    assert "data-workspace-workbench-primary='true'" in restored_workspace.body
+    assert "data-workspace-workbench-evidence='true'" in restored_workspace.body
+    assert "data-workspace-state-details='true'" in restored_workspace.body
+    assert "data-workspace-restore-details='true'" in restored_workspace.body
+    assert "data-workspace-save-details='true'" in restored_workspace.body
+    assert restored_workspace.body.index("data-workspace-operator-workbench='true'") < restored_workspace.body.index("id='workspace-action-form'")
+    assert restored_workspace.body.index("id='workspace-action-form'") < restored_workspace.body.index("data-workspace-daily-brief='true'")
+    assert restored_workspace.body.index("data-workspace-operator-workbench='true'") < restored_workspace.body.index("data-route-context='true'")
     assert "Workspace Daily Brief" in restored_workspace.body
     assert "data-workspace-daily-brief='true'" in restored_workspace.body
     assert "workspace_daily_status</dt><dd>available" in restored_workspace.body
@@ -9633,7 +9649,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workspace_workbench_now: Create commit request" in restored_workspace.body
     assert "workspace_workbench_click: <a href='#workspace-action-form'>Use workspace action form</a>" in restored_workspace.body
     assert "workspace_workbench_unblock: <a href='/approvals'>Review approvals</a>" in restored_workspace.body
-    assert "workspace_workbench_finish: <a href='#save-workspace'>Save Workspace</a>" in restored_workspace.body
+    assert "workspace_workbench_finish: <a data-open-details='true' href='#save-workspace'>Save Workspace</a>" in restored_workspace.body
     assert "Workspace Continuation" in restored_workspace.body
     assert "workspace_current_phase: Ready to commit" in restored_workspace.body
     assert "workspace_next_action: Create commit request" in restored_workspace.body

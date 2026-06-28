@@ -441,23 +441,20 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   link, and write-on-GET/resolution/network/external-effect boundaries before
   anchored open incident, resolved incident, and task recommendation sections.
 - `/workspace` - persistent local workspace state for open project, open goal,
-  filters, expanded panels, and last viewed artifact. It also shows the saved
-  goal's current phase, one next action, operator attention cue, and target
-  surface beside the editable saved-state form, plus a read-only
-  `Workspace Daily Brief` that turns the saved project, goal, artifact,
-  next action, current gate, and finish readiness into morning and end-of-day
-  cues. A `Workspace Operator Workbench` then turns the editable saved context
-  into do/check/unblock/finish cards with same-page action-form routing,
-  blocker routing, last-artifact readback, and the confirmed `save-workspace`
-  target. A read-only `Workspace Workflow Map` shows the saved goal's current
-  gate, lifecycle progress, next surface, and zero-effect counters. It also
-  renders the same confirmed local action form as the Goal page when that
-  action is browser-available. Before a saved Goal exists, the same daily
-  brief, workbench, continuation readback, restore links, and workflow map
-  follow first-run progress: empty checkouts point to Home's `Create Project`
-  anchor and registered-project/no-goal workspaces point to `Create First
-  Goal` while preserving the saved project link. Home and `/resume` read the
-  same saved state for daily resume links and continuation readbacks. The confirmed
+  filters, expanded panels, and last viewed artifact. It now opens with the
+  `Workspace Operator Workbench` before shared route/focus diagnostics or
+  saved-state evidence, so saved workspace pages lead with do/check/unblock/
+  finish cards, same-page action-form routing, blocker routing, last-artifact
+  readback, and a Finish Today link that opens the collapsed `save-workspace`
+  form. The read-only `Workspace Daily Brief` and `Workspace Workflow Map`
+  follow with the saved goal's current gate, lifecycle progress, next surface,
+  and zero-effect counters, while saved-state and restore-link readbacks stay
+  inside collapsed evidence. Before a saved Goal exists, the same daily brief,
+  workbench, continuation readback, restore links, and workflow map follow
+  first-run progress: empty checkouts point to Home's `Create Project` anchor
+  and registered-project/no-goal workspaces point to `Create First Goal` while
+  preserving the saved project link. Home and `/resume` read the same saved
+  state for daily resume links and continuation readbacks. The confirmed
   `save-workspace` form writes `.clanker/app/workspace.json`; GET requests
   write nothing.
 - `/memory` - project memories, global memories, generated memories, proposed

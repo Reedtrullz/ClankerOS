@@ -603,6 +603,11 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             [
                 "Workspace Operator Workbench",
                 "data-workspace-operator-workbench='true'",
+                "data-workspace-workbench-primary='true'",
+                "data-workspace-workbench-evidence='true'",
+                "data-workspace-state-details='true'",
+                "data-workspace-restore-details='true'",
+                "data-workspace-save-details='true'",
                 "save-workspace",
                 "workspace_path",
             ],
@@ -5012,10 +5017,10 @@ def _workspace_page(root: Path) -> str:
                 f"workspace_first_run_surface: <a href='{_e(str(first_run_context['target_href']))}'>{_e(str(first_run_context['target_label']))}</a>",
             ]
         )
-    return "".join(
+    state_evidence = "".join(
         [
-            "<section><h1>Workspace State</h1>",
-            "<p class='muted'>Persistent local browser context for leaving and resuming ClankerOS work.</p>",
+            "<details class='workspace-state-details' data-workspace-state-details='true'>",
+            "<summary>Workspace state evidence</summary>",
             _kv(
                 [
                     ("workspace_path", ".clanker/app/workspace.json"),
@@ -5027,14 +5032,23 @@ def _workspace_page(root: Path) -> str:
                     ("updated_at", state.get("updated_at", "never")),
                 ]
             ),
-            "</section>",
-            _workspace_daily_brief(root, state, open_project, open_goal, last_artifact),
-            _workspace_operator_workbench(root, state, open_project, open_goal, last_artifact),
+            "</details>",
+        ]
+    )
+    restore_evidence = "".join(
+        [
+            "<details class='workspace-restore-details' data-workspace-restore-details='true'>",
+            "<summary>Workspace restore evidence</summary>",
             _list_section("Restore Links", restore_links),
             _list_section("Workspace Continuation", _workspace_next_action_lines(root, open_goal)),
-            _workspace_workflow_map_section(root, open_goal),
-            _workspace_action_form_section(root, open_goal),
-            "<section id='save-workspace'><h2>Save Workspace</h2>",
+            "</details>",
+        ]
+    )
+    save_form = "".join(
+        [
+            "<details id='save-workspace' class='workspace-save-details' data-workspace-save-details='true'>",
+            "<summary>Save Workspace form</summary>",
+            "<section><h2>Save Workspace</h2>",
             _input_form(
                 "save-workspace",
                 {},
@@ -5048,6 +5062,21 @@ def _workspace_page(root: Path) -> str:
                 },
             ),
             "</section>",
+            "</details>",
+        ]
+    )
+    return "".join(
+        [
+            "<section class='hero workspace-hero'><h1>Workspace State</h1>",
+            "<p class='muted'>Persistent local browser context for leaving and resuming ClankerOS work.</p>",
+            "</section>",
+            _workspace_operator_workbench(root, state, open_project, open_goal, last_artifact),
+            _workspace_action_form_section(root, open_goal),
+            _workspace_daily_brief(root, state, open_project, open_goal, last_artifact),
+            _workspace_workflow_map_section(root, open_goal),
+            state_evidence,
+            restore_evidence,
+            save_form,
             _non_claim_banner(),
         ]
     )
@@ -5396,7 +5425,7 @@ def _workspace_operator_workbench(
             "<div class='workspace-workbench-card workspace-workbench-primary'>",
             "<h3>Do Now</h3>",
             f"<p>{_e(next_action)}</p>",
-            f"<a class='workspace-workbench-action' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+            f"<a class='workspace-workbench-action' data-workspace-workbench-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
             "</div>",
             "<div class='workspace-workbench-card'>",
             "<h3>Check</h3>",
@@ -5411,7 +5440,7 @@ def _workspace_operator_workbench(
             "<div class='workspace-workbench-card'>",
             "<h3>Finish Today</h3>",
             "<p>Save tomorrow's return point</p>",
-            "<a class='workspace-workbench-link' href='#save-workspace'>Open save form</a>",
+            "<a class='workspace-workbench-link' data-open-details='true' href='#save-workspace'>Open save form</a>",
             "</div>",
         ]
     )
@@ -5421,6 +5450,7 @@ def _workspace_operator_workbench(
             "<div class='workspace-workbench-grid' data-workspace-workbench-actions='true'>",
             cards,
             "</div>",
+            "<details class='workspace-workbench-evidence' data-workspace-workbench-evidence='true'><summary>Workspace workbench evidence</summary>",
             _kv(
                 [
                     ("workspace_workbench_status", status),
@@ -5504,10 +5534,11 @@ def _workspace_operator_workbench(
                     f"workspace_workbench_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
                     "workspace_workbench_check: <a href='#workspace-workflow-map'>Workspace Workflow Map</a>",
                     f"workspace_workbench_unblock: <a href='{_e(unblock_href)}'>{_e(unblock_label)}</a>",
-                    "workspace_workbench_finish: <a href='#save-workspace'>Save Workspace</a>",
+                    "workspace_workbench_finish: <a data-open-details='true' href='#save-workspace'>Save Workspace</a>",
                     "workspace_workbench_safety: confirmed local actions only; no write on GET",
                 ]
             ),
+            "</details>",
             "</section>",
         ]
     )
@@ -23576,7 +23607,7 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
-    content_first_paths = {"/", "/actions", "/inbox", "/resume"}
+    content_first_paths = {"/", "/actions", "/inbox", "/resume", "/workspace"}
     if current_route_path in content_first_paths:
         article_body = f"{content}{breadcrumbs}{focus_strip}{last_action_strip}"
     else:
@@ -23835,6 +23866,10 @@ def _html_page(
     .workspace-workbench-action, .workspace-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .workspace-workbench-action {{ background:var(--accent); color:#fff; }}
     .workspace-workbench-link {{ background:var(--surface); color:var(--accent); }}
+    .workspace-workbench-evidence, .workspace-state-details, .workspace-restore-details, .workspace-save-details {{ margin:12px 0; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .workspace-workbench-evidence summary, .workspace-state-details summary, .workspace-restore-details summary, .workspace-save-details summary {{ cursor:pointer; font-weight:700; }}
+    .workspace-workbench-evidence:not([open]) > :not(summary), .workspace-state-details:not([open]) > :not(summary), .workspace-restore-details:not([open]) > :not(summary), .workspace-save-details:not([open]) > :not(summary) {{ display:none; }}
+    .workspace-save-details > section {{ margin:10px 0 0; }}
     .resume-command-bar {{ border-left:4px solid var(--accent); }}
     .resume-hero-action {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--accent); color:#fff; overflow-wrap:anywhere; text-decoration:none; }}
     .resume-state-details, .resume-command-evidence, .resume-workbench-evidence {{ margin-top:10px; }}
@@ -24169,6 +24204,16 @@ def _html_page(
         details.open = true;
       }}
     }});
+    function openCurrentHashDetails() {{
+      var hash = window.location.hash || "";
+      if (hash.length < 2) {{ return; }}
+      var target = document.querySelector(hash);
+      if (target && target.tagName && target.tagName.toLowerCase() === "details") {{
+        target.open = true;
+      }}
+    }}
+    openCurrentHashDetails();
+    window.addEventListener("hashchange", openCurrentHashDetails);
     document.addEventListener("keydown", function(event) {{
       var target = event.target || {{}};
       var tag = String(target.tagName || "").toLowerCase();

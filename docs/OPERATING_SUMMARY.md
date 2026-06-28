@@ -197,20 +197,18 @@ Core layers for the bootstrap:
   their Goal and Project, identifies saved resume anchors, and points
   unclassified artifacts toward the remember/resume workspace path;
   `/workspace` for persistent open project/goal/filter/panel/last-artifact
-  state in `.clanker/app/workspace.json` plus the saved goal's current phase,
-  one next action, operator attention cue, target surface, and the same
-  confirmed local action form as the Goal page when that action is
-  browser-available beside the editable saved-state form, plus a read-only
-  `Workspace Daily Brief` that summarizes the saved project, goal, artifact,
-  next local action, current gate, resume readiness, and finish-today save
-  status before any editable fields. It also includes a `Workspace Operator
-  Workbench` that turns the saved state into do/check/unblock/finish cards
-  with same-page action-form routing when available, readiness and blocker
-  routing, last-artifact readback, and the confirmed save form as the finish
-  target, followed by a read-only `Workspace Workflow Map` sourced from the
-  same Goal remaining-work gates so the current saved gate stays visible while
-  editing resume context. Before a saved Goal exists, `/workspace` follows
-  first-run progress instead: empty checkouts point those sections at Home's
+  state in `.clanker/app/workspace.json`. It now opens with the
+  `Workspace Operator Workbench` before shared route/focus diagnostics or
+  saved-state evidence, so the saved workspace first shows do/check/unblock/
+  finish cards, same-page action-form routing when available, readiness and
+  blocker routing, last-artifact readback, and a Finish Today link that opens
+  the collapsed confirmed save form. The same Goal-page action form appears
+  immediately below the workbench when browser-available, followed by the
+  read-only `Workspace Daily Brief` and `Workspace Workflow Map` for the saved
+  goal's phase, current gate, resume readiness, finish posture, and zero-effect
+  counters. Saved-state and restore-link readbacks stay inside collapsed
+  evidence. Before a saved Goal exists, `/workspace` follows first-run
+  progress instead: empty checkouts point those sections at Home's
   `Create Project` anchor and registered-project/no-goal workspaces point at
   `Create First Goal` while preserving the saved project link; `/memory` for project/global/
   generated memories, proposed memories, operator notes, future work, and pin

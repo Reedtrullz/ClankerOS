@@ -1,5 +1,51 @@
 # Status
 
+## 2026-06-28 Workspace Action-First Operator Surface
+
+- Made `/workspace` usable as the leave/resume surface by rendering the
+  `Workspace Operator Workbench` before shared Route Context, Operator Focus,
+  Last Action, saved-state evidence, restore links, and the confirmed
+  `save-workspace` form.
+- Moved browser-available saved-goal action forms directly below the workbench
+  so a saved workspace can resume action before the daily brief, workflow map,
+  or evidence readbacks.
+- Kept saved workspace state, restore links, workbench evidence, and the
+  `save-workspace` form collapsed by default, while adding hash-aware details
+  opening so `/workspace#save-workspace` and same-page Finish Today links
+  reveal the form instead of hiding it behind a collapsed disclosure.
+- Added stable regression markers for workspace primary action, evidence,
+  saved-state details, restore evidence, and save details.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, create action authority, approve work, run work, call providers, fetch
+  GitHub from ClankerOS, poll network services, commit, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-workspace-first-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-workspace-first-demo app-demo-smoke-test`
+    -> passed, fixture-backed routes matched expected snippets,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8809/workspace`: desktop `1280x900` rendered the
+    `Workspace Operator Workbench` at `y=260`, before the daily brief, Route
+    Context, and Operator Focus, with four workbench cards, collapsed
+    workbench/state/restore/save details, no horizontal overflow, and no
+    console warnings/errors.
+  - Interaction proof: clicking the visible Finish Today save link changed the
+    URL to `/workspace#save-workspace`, opened the collapsed save details, and
+    revealed the confirmed local `save-workspace` form; direct navigation to
+    `/workspace#save-workspace` also opened the details on load.
+  - Mobile Browser QA at `390x844` rendered the workbench before the daily
+    brief and Route Context, stacked four workbench cards in one column, kept
+    details collapsed, and showed no horizontal overflow or console
+    warnings/errors.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Inbox Queue-First Operator Surface
 
 - Made `/inbox` usable as a direct operator queue by rendering the
