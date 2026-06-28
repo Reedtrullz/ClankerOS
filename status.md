@@ -1,5 +1,49 @@
 # Status
 
+## 2026-06-28 Run Continuation Strip
+
+- Made `/runs/<run_id>#run-continuation-strip` action-first with a visible
+  read-only `Run Continuation Strip` after the `Run Gate Map` and before the
+  dense workflow/evidence stack.
+- The strip shows Next Gate, Approval, Evidence, Goal, and Boundary cards for
+  the selected coder worktree run, using the existing run gate state, scoped
+  `/approvals?run_id=<run_id>` route, evidence anchors, parent Goal link, and
+  manual publication boundary. Detailed continuation evidence stays collapsed
+  by default and preserves zero-effect counters in the DOM.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed run route contract, and focused route assertions for normal,
+  missing-review, pending-approval, and publication-handoff-ready states.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including the run detail route,
+    provider calls 0, network actions 0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against
+  `http://127.0.0.1:8850/runs/run_82ad28b78d77#run-continuation-strip`:
+  desktop `1280x900` rendered five continuation cards, kept continuation
+  evidence closed, ordered the strip between the gate map and workflow state,
+  had no horizontal overflow, and reported no warning/error logs.
+- Browser interaction QA clicked the primary Next Gate card, navigated to
+  `#run-approval-actions`, kept continuation evidence closed, had no
+  horizontal overflow, and reported no warning/error logs.
+- Browser QA mobile `390x844` rendered the five continuation cards in one
+  column, kept continuation evidence closed, had no horizontal overflow, and
+  reported no warning/error logs.
+- Screenshots: `/tmp/clankeros-run-continuation-desktop.png` and
+  `/tmp/clankeros-run-continuation-mobile.png`.
+- The local app server was stopped after browser QA, and
+  `lsof -nP -iTCP:8850 -sTCP:LISTEN || true` showed no remaining listener. The
+  bounded scratch demo root was removed.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, approve work, execute work, create commits, push, create PRs, deploy,
+  fetch GitHub status, call providers, or mutate external systems.
+
 ## 2026-06-28 Goal Section Switchboard Cards
 
 - Made `/goals/<goal_id>#goal-section-index` action-first with visible

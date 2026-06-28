@@ -222,7 +222,10 @@ Latest status focus:
   workbench, showing the eight local/manual gates from review through manual
   publish, the current gate, done/waiting/blocked counts, direct existing
   surfaces, and zero-effect counters before the dense workflow/evidence
-  sections.
+  sections. They now also include a read-only `Run Continuation Strip` after
+  the gate map with visible Next Gate, Approval, Evidence, Goal, and Boundary
+  cards, so the selected run can be continued from the browser before the
+  dense workflow/evidence stack.
 - Run-specific approval gates now link to `/approvals?run_id=<coder_run_id>`,
   where the approval command bar, workbench, and decision brief foreground the
   matching commit or publication approval ahead of unrelated global queue

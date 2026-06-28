@@ -21332,6 +21332,7 @@ def _run_detail(root: Path, run_id: str) -> str:
         parts.append(_run_command_bar(root, coder_run))
         parts.append(_run_operator_workbench(root, coder_run))
         parts.append(_run_gate_map(root, coder_run))
+        parts.append(_run_continuation_strip(root, coder_run))
         parts.append(_run_workflow_state(root, coder_run))
         parts.append(_run_review_gate(root, coder_run))
         parts.append(
@@ -21831,6 +21832,181 @@ def _run_gate_map(root: Path, coder_run: Any) -> str:
                     "run_gate_safety: read-only run guidance; confirmed local forms remain on existing gate surfaces",
                 ]
             ),
+            "</section>",
+        ]
+    )
+
+
+def _run_continuation_strip(root: Path, coder_run: Any) -> str:
+    storage = _storage(root)
+    delegation = storage.get_subagent_delegation(coder_run.delegation_id)
+    goal_id = delegation.parent_goal_id if delegation is not None else ""
+    goal_href = f"/goals/{quote(goal_id)}" if goal_id else "/goals"
+    goal_label = f"/goals/{goal_id}" if goal_id else "/goals"
+    commit_approvals = [
+        item
+        for item in list_coder_worktree_commit_approvals(root, limit=50)
+        if item.run_id == coder_run.id
+    ]
+    publications = [
+        item
+        for item in list_coder_publications(root, limit=50)
+        if item.run_id == coder_run.id
+    ]
+    review_gate = _run_review_gate_state(root, coder_run)
+    change_summary = coder_worktree_change_summary(root, coder_run)
+    next_action, target_href, target_label, reason = _run_command_next_action(
+        coder_run,
+        review_gate=review_gate,
+        commit_approvals=commit_approvals,
+        publications=publications,
+    )
+    statuses = _run_gate_statuses(
+        review_gate=review_gate,
+        commit_approvals=commit_approvals,
+        publications=publications,
+    )
+    current_gate = next(
+        (
+            name
+            for name, status in statuses.items()
+            if status in {"current", "blocked", "attention"}
+        ),
+        "complete",
+    )
+    action_form_available = target_href in {
+        "#run-approval-actions",
+        "#confirmed-local-commit-action",
+        "#publication-handoff-action",
+    }
+    approval_href = f"/approvals?run_id={quote(coder_run.id)}"
+    pending_approval_count = sum(
+        1 for item in commit_approvals + publications if item.status == "pending_operator_approval"
+    )
+    approval_summary = (
+        f"{pending_approval_count} pending"
+        if pending_approval_count
+        else f"commit={_status_counts(commit_approvals)} publication={_status_counts(publications)}"
+    )
+    ready_publication = next(
+        (item for item in publications if item.status == "ready_for_operator"),
+        None,
+    )
+    manual_boundary_status = (
+        "ready_outside_clankeros" if ready_publication is not None else "not_ready"
+    )
+    manual_href = (
+        "#publication-handoff-commands" if ready_publication is not None else "#run-gate-map"
+    )
+    manual_label = (
+        "Publication Handoff Commands"
+        if ready_publication is not None
+        else "Run Gate Map"
+    )
+    review_artifact = (
+        str(review_gate["review_path"])
+        if review_gate["exists"]
+        else str(Path(coder_run.evidence_path) / "run.json")
+    )
+    if action_form_available:
+        continuation_status = "action_form_ready"
+    elif target_href.startswith("/approvals"):
+        continuation_status = "approval_queue_ready"
+    elif manual_boundary_status == "ready_outside_clankeros":
+        continuation_status = "manual_boundary_ready"
+    elif target_href.startswith("#"):
+        continuation_status = "same_page_review"
+    else:
+        continuation_status = "navigation_ready"
+    return "".join(
+        [
+            (
+                "<section id='run-continuation-strip' "
+                "class='panel run-continuation-strip' "
+                "data-run-continuation-strip='true'>"
+                "<h2>Run Continuation Strip</h2>"
+            ),
+            "<p class='muted'>One run handoff for the next gate, scoped approval queue, evidence, parent Goal, and the manual publication boundary.</p>",
+            "<div class='run-continuation-grid' data-run-continuation-actions='true'>",
+            "<article class='run-continuation-card run-continuation-primary'><h3>Next Gate</h3>",
+            f"<p>{_e(current_gate)}: {_e(next_action)}</p>",
+            f"<a class='run-continuation-action' href='{_e(target_href)}'>{_e(target_label)}</a></article>",
+            "<article class='run-continuation-card'><h3>Approval</h3>",
+            f"<p>{_e(approval_summary)}</p>",
+            f"<a class='run-continuation-link' href='{_e(approval_href)}'>Scoped approvals</a></article>",
+            "<article class='run-continuation-card'><h3>Evidence</h3>",
+            f"<p>{_e(change_summary['changed_files_count'])} files, {_e(change_summary['diff_summary'])}</p>",
+            "<a class='run-continuation-link' href='#coder-worktree-evidence'>Open evidence</a></article>",
+            "<article class='run-continuation-card'><h3>Goal</h3>",
+            f"<p>{_e(goal_id or 'No parent Goal found')}</p>",
+            f"<a class='run-continuation-link' href='{_e(goal_href)}'>Return to Goal</a></article>",
+            "<article class='run-continuation-card'><h3>Boundary</h3>",
+            f"<p>{_e(manual_boundary_status)}</p>",
+            f"<a class='run-continuation-link' href='{_e(manual_href)}'>{_e(manual_label)}</a></article>",
+            "</div>",
+            "<details class='run-continuation-evidence' data-run-continuation-evidence='true'><summary>Run continuation evidence</summary>",
+            _kv(
+                [
+                    ("run_continuation_status", continuation_status),
+                    ("run_continuation_run_id", coder_run.id),
+                    ("run_continuation_goal", goal_id or "none"),
+                    ("run_continuation_project", coder_run.project_id),
+                    ("run_continuation_delegation", SafeHtml(f"<a href='/delegations/{quote(coder_run.delegation_id)}'>{_e(coder_run.delegation_id)}</a>")),
+                    ("run_continuation_current_gate", current_gate),
+                    ("run_continuation_next_action", next_action),
+                    (
+                        "run_continuation_primary_surface",
+                        SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"),
+                    ),
+                    ("run_continuation_reason", reason),
+                    ("run_continuation_action_form_available", str(action_form_available).lower()),
+                    ("run_continuation_confirmation_required", str(action_form_available).lower()),
+                    (
+                        "run_continuation_approval_surface",
+                        SafeHtml(f"<a href='{_e(approval_href)}'>/approvals</a>"),
+                    ),
+                    ("run_continuation_pending_approvals", str(pending_approval_count)),
+                    ("run_continuation_commit_request_status", _status_counts(commit_approvals)),
+                    ("run_continuation_publication_status", _status_counts(publications)),
+                    (
+                        "run_continuation_evidence_surface",
+                        SafeHtml("<a href='#coder-worktree-evidence'>Coder Worktree Evidence</a>"),
+                    ),
+                    ("run_continuation_review_artifact", SafeHtml(_artifact_link(review_artifact))),
+                    ("run_continuation_changed_files_count", change_summary["changed_files_count"]),
+                    ("run_continuation_diff_summary", change_summary["diff_summary"]),
+                    (
+                        "run_continuation_goal_surface",
+                        SafeHtml(f"<a href='{_e(goal_href)}'>{_e(goal_label)}</a>"),
+                    ),
+                    ("run_continuation_manual_boundary", "outside_clankeros"),
+                    ("run_continuation_manual_boundary_status", manual_boundary_status),
+                    (
+                        "run_continuation_manual_boundary_surface",
+                        SafeHtml(f"<a href='{_e(manual_href)}'>{_e(manual_label)}</a>"),
+                    ),
+                    ("run_continuation_source", "coder_worktree_run_gate_state"),
+                    ("run_continuation_write_on_get", "false"),
+                    ("run_continuation_provider_calls_taken", "0"),
+                    ("run_continuation_network_actions_taken", "0"),
+                    ("run_continuation_external_effects_created", "false"),
+                    ("run_continuation_push_created", "false"),
+                    ("run_continuation_pr_created", "false"),
+                    ("run_continuation_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"run_continuation_now: {_e(next_action)}",
+                    f"run_continuation_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"run_continuation_approval: <a href='{_e(approval_href)}'>/approvals</a>",
+                    "run_continuation_evidence: <a href='#coder-worktree-evidence'>Coder Worktree Evidence</a>",
+                    f"run_continuation_goal: <a href='{_e(goal_href)}'>{_e(goal_label)}</a>",
+                    f"run_continuation_boundary: <a href='{_e(manual_href)}'>{_e(manual_label)}</a>",
+                    "run_continuation_safety: read-only run continuation; confirmed forms own writes",
+                ]
+            ),
+            "</details>",
             "</section>",
         ]
     )
@@ -28066,6 +28242,19 @@ def _html_page(
     .run-gate-map li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .run-gate-rail li[data-run-gate-marker="current"] {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
     .run-gate-rail li[data-run-gate-status="blocked"], .run-gate-rail li[data-run-gate-status="attention"] {{ border-color:var(--warn); box-shadow:inset 3px 0 0 var(--warn); }}
+    .run-continuation-strip {{ border-left:4px solid var(--accent); }}
+    .run-continuation-strip dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .run-continuation-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .run-continuation-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .run-continuation-card h3 {{ margin-top:0; }}
+    .run-continuation-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .run-continuation-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .run-continuation-action, .run-continuation-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .run-continuation-action {{ background:var(--accent); color:#fff; }}
+    .run-continuation-link {{ background:var(--surface); color:var(--accent); }}
+    .run-continuation-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .run-continuation-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .run-continuation-evidence:not([open]) > :not(summary) {{ display:none; }}
     .delegation-run-operator-workbench {{ border-left:4px solid var(--accent); }}
     .delegation-run-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .delegation-run-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
@@ -28366,8 +28555,8 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
-    @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>

@@ -631,7 +631,10 @@ evidence artifact as tomorrow's resume point without writing on GET. A
 read-only `Run Gate Map` then lays out the run-scoped path from review through
 commit request, commit approval, local commit, publication request,
 publication approval, publication handoff, and the manual publish boundary,
-marking the current gate and linking only to existing local surfaces. The `Run
+marking the current gate and linking only to existing local surfaces. A
+read-only `Run Continuation Strip` then condenses the current gate, scoped
+approval queue, evidence, parent Goal, and manual publication boundary into
+five visible cards before the dense workflow/evidence sections. The `Run
 Review Gate` panel shows whether `runs/<source_run_id>/review.md` exists and
 mentions the coder worktree run id. The app only exposes the
 `coder-commit-request` form when that gate passes. The Goal Next Action card

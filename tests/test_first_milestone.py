@@ -11586,6 +11586,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "data-run-gate-map='true'"
     )
     assert run_page.body.index("data-run-gate-map='true'") < run_page.body.index(
+        "data-run-continuation-strip='true'"
+    )
+    assert run_page.body.index("data-run-continuation-strip='true'") < run_page.body.index(
         "id='run-workflow-state'"
     )
     assert "run_gate_status</dt><dd>available" in run_page.body
@@ -11618,6 +11621,41 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "run_gate_step: manual_publish status=waiting marker=waiting action=Manual publish outside ClankerOS surface=outside_clankeros" in run_page.body
     assert "run_gate_now: Create commit request at <a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
     assert "run_gate_safety: read-only run guidance; confirmed local forms remain on existing gate surfaces" in run_page.body
+    assert "Run Continuation Strip" in run_page.body
+    assert "data-run-continuation-strip='true'" in run_page.body
+    assert "data-run-continuation-actions='true'" in run_page.body
+    assert "<summary>Run continuation evidence</summary>" in run_page.body
+    assert "run_continuation_status</dt><dd>action_form_ready" in run_page.body
+    assert f"run_continuation_run_id</dt><dd>{result.coder_worktree_run_id}" in run_page.body
+    assert "run_continuation_current_gate</dt><dd>commit_request" in run_page.body
+    assert "run_continuation_next_action</dt><dd>Create commit request" in run_page.body
+    assert "run_continuation_primary_surface</dt><dd><a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
+    assert "run_continuation_action_form_available</dt><dd>true" in run_page.body
+    assert "run_continuation_confirmation_required</dt><dd>true" in run_page.body
+    assert (
+        "run_continuation_approval_surface</dt><dd>"
+        f"<a href='/approvals?run_id={result.coder_worktree_run_id}'>/approvals</a>"
+    ) in run_page.body
+    assert "run_continuation_pending_approvals</dt><dd>0" in run_page.body
+    assert "run_continuation_commit_request_status</dt><dd>none" in run_page.body
+    assert "run_continuation_publication_status</dt><dd>none" in run_page.body
+    assert "run_continuation_evidence_surface</dt><dd><a href='#coder-worktree-evidence'>Coder Worktree Evidence</a>" in run_page.body
+    assert "run_continuation_changed_files_count</dt><dd>1" in run_page.body
+    assert "run_continuation_diff_summary</dt><dd>files:1," in run_page.body
+    assert f"run_continuation_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>/goals/{result.goal_id}</a>" in run_page.body
+    assert "run_continuation_manual_boundary</dt><dd>outside_clankeros" in run_page.body
+    assert "run_continuation_manual_boundary_status</dt><dd>not_ready" in run_page.body
+    assert "run_continuation_manual_boundary_surface</dt><dd><a href='#run-gate-map'>Run Gate Map</a>" in run_page.body
+    assert "run_continuation_write_on_get</dt><dd>false" in run_page.body
+    assert "run_continuation_provider_calls_taken</dt><dd>0" in run_page.body
+    assert "run_continuation_network_actions_taken</dt><dd>0" in run_page.body
+    assert "run_continuation_external_effects_created</dt><dd>false" in run_page.body
+    assert "run_continuation_now: Create commit request" in run_page.body
+    assert "run_continuation_click: <a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
+    assert f"run_continuation_approval: <a href='/approvals?run_id={result.coder_worktree_run_id}'>/approvals</a>" in run_page.body
+    assert f"run_continuation_goal: <a href='/goals/{result.goal_id}'>/goals/{result.goal_id}</a>" in run_page.body
+    assert "run_continuation_boundary: <a href='#run-gate-map'>Run Gate Map</a>" in run_page.body
+    assert "run_continuation_safety: read-only run continuation; confirmed forms own writes" in run_page.body
     assert "id='run-workflow-state'" in run_page.body
     assert "id='run-review-gate'" in run_page.body
     assert "id='run-approval-actions'" in run_page.body
@@ -11698,6 +11736,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "run_gate_commit_request_status</dt><dd>waiting" in run_page_without_review.body
     assert "run_gate_step: review status=current marker=current action=Review run surface=<a href='#run-review-gate'>Run Review Gate</a>" in run_page_without_review.body
     assert "run_gate_now: Review run at <a href='#run-review-gate'>Run Review Gate</a>" in run_page_without_review.body
+    assert "Run Continuation Strip" in run_page_without_review.body
+    assert "run_continuation_status</dt><dd>same_page_review" in run_page_without_review.body
+    assert "run_continuation_current_gate</dt><dd>review" in run_page_without_review.body
+    assert "run_continuation_next_action</dt><dd>Review run" in run_page_without_review.body
+    assert "run_continuation_action_form_available</dt><dd>false" in run_page_without_review.body
+    assert "run_continuation_reason</dt><dd>review_artifact_missing" in run_page_without_review.body
     assert "action='/actions/coder-commit-request'" not in run_page_without_review.body
     assert "commit_request_form_available: false review_gate_status: missing" in run_page_without_review.body
     result.review_path.write_text(review_text, encoding="utf-8")
@@ -11827,6 +11871,15 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "run_gate_step: commit_approval status=current marker=current "
         "action=Approve commit request "
         f"surface=<a href='/approvals?run_id={result.coder_worktree_run_id}'>/approvals</a>"
+    ) in run_notice.body
+    assert "Run Continuation Strip" in run_notice.body
+    assert "run_continuation_status</dt><dd>approval_queue_ready" in run_notice.body
+    assert "run_continuation_current_gate</dt><dd>commit_approval" in run_notice.body
+    assert "run_continuation_next_action</dt><dd>Review commit approval" in run_notice.body
+    assert "run_continuation_pending_approvals</dt><dd>1" in run_notice.body
+    assert (
+        "run_continuation_primary_surface</dt><dd>"
+        f"<a href='/approvals?run_id={result.coder_worktree_run_id}'>/approvals</a>"
     ) in run_notice.body
     demo_after_commit_request = render_local_app_route(tmp_path, "/demo")
     assert demo_after_commit_request.status == 200
@@ -12166,6 +12219,15 @@ def test_local_app_demo_scenario_populates_fixture_state(
     )
     assert run_page_after_handoff.status == 200
     assert "Publication Handoff Commands" in run_page_after_handoff.body
+    assert "Run Continuation Strip" in run_page_after_handoff.body
+    assert "run_continuation_status</dt><dd>manual_boundary_ready" in run_page_after_handoff.body
+    assert "run_continuation_current_gate</dt><dd>manual_publish" in run_page_after_handoff.body
+    assert "run_continuation_next_action</dt><dd>Use publication handoff manually" in run_page_after_handoff.body
+    assert "run_continuation_manual_boundary_status</dt><dd>ready_outside_clankeros" in run_page_after_handoff.body
+    assert (
+        "run_continuation_manual_boundary_surface</dt><dd>"
+        "<a href='#publication-handoff-commands'>Publication Handoff Commands</a>"
+    ) in run_page_after_handoff.body
     assert "handoff_status: ready_for_operator" in run_page_after_handoff.body
     assert "suggested_push_command: git push origin" in run_page_after_handoff.body
     assert "suggested_draft_pr_command: gh pr create --draft" in run_page_after_handoff.body

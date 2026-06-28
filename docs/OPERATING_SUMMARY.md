@@ -707,9 +707,12 @@ Core layers for the bootstrap:
   the current eight-step run path from review through local commit,
   publication handoff, and manual publish outside ClankerOS. The map links
   only to existing local anchors or `/approvals`, counts done/waiting/blocked
-  gates, and adds no action authority. The page then shows the same upstream
-  and downstream workflow posture as a `Run Workflow State` readback, plus a
-  `Run Review Gate` readback that mirrors the backend requirement that
+  gates, and adds no action authority. A read-only `Run Continuation Strip`
+  follows the map and gives the operator five visible cards for the current
+  gate, scoped approvals, evidence, parent Goal, and manual publication
+  boundary before the dense workflow state. The page then shows the same
+  upstream and downstream workflow posture as a `Run Workflow State` readback,
+  plus a `Run Review Gate` readback that mirrors the backend requirement that
   `runs/<source_run_id>/review.md` exists and mentions the coder worktree run
   id before `coder-commit-request` is offered; once publication handoff is
   ready they show copy-only suggested push and draft-PR commands plus the PR

@@ -628,8 +628,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   publication handoff, and manual publish outside ClankerOS. The map marks the
   current gate, counts done/waiting/blocked gates, links only to existing app
   anchors or `/approvals`, and keeps all write authority in the existing
-  confirmed forms. It also includes a `Run Workflow State` block for upstream
-  context-pack, handoff, prep, plan, approval/run, bounded validation, commit,
+  confirmed forms. A read-only `Run Continuation Strip` follows with visible
+  Next Gate, Approval, Evidence, Goal, and Boundary cards so a returned
+  operator can continue the run without decoding the full evidence stack. It
+  also includes a `Run Workflow State` block for upstream context-pack,
+  handoff, prep, plan, approval/run, bounded validation, commit,
   publication, and next-action status. Once a publication handoff is ready, the
   page also shows display-only suggested push and draft-PR commands plus the PR
   body path; those commands remain manual actions outside ClankerOS.
