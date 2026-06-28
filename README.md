@@ -813,9 +813,14 @@ with visible Confirm, Requires, Writes, Scope, and Boundary cards before the
 payload. The existing `Action Confirmation Command Bar` remains as collapsed
 evidence, preserving the action kind, required input, output artifact, local
 mutation/execution posture, and no-provider/no-network/no-push boundaries
-before the final `confirm=yes` submit. Confirmed actions return an
-`Action Result Details` page with the payload, result fields, artifact links,
-next-page link, and safety boundary. Successful results also show an
+before the final `confirm=yes` submit. Confirmed actions now return an
+action-first `Action Complete` surface before the raw details, with visible
+Continue, Completed, Artifact, Workflow, and Boundary cards plus collapsed
+result-command evidence preserving the target notice surface, result, primary
+artifact, confirmation source, and zero-effect counters. The existing
+`Action Result Details` section remains below it with the payload, result
+fields, artifact links, next-page link, and safety boundary. Successful
+results also show an
 `Action Continuation` block from the
 refreshed saved goal, including current phase, one next action, target page,
 and the same confirmed local action form when available. Before a saved Goal

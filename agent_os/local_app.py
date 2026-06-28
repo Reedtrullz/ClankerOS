@@ -25199,29 +25199,123 @@ def _action_result_page(
     location: str,
     result: Any,
 ) -> str:
-    next_href = f"{location}?notice={quote(message)}"
+    safe_location = _safe_local_return_path(location) or "/"
+    next_href = f"{safe_location}?notice={quote(message)}"
+    result_rows = _action_result_rows(root, result)
     return "".join(
         [
-            "<section><h1>Action Result Details</h1>",
+            _action_result_command_bar(
+                root,
+                action=action,
+                form=form,
+                message=message,
+                location=safe_location,
+                next_href=next_href,
+                result_rows=result_rows,
+            ),
+            "<section id='action-result-details'><h2>Action Result Details</h2>",
             "<p>Action completed. Review the local result before continuing.</p>",
             _non_claim_banner(),
             _kv(
                 [
                     ("action", action),
                     ("result", message),
-                    ("next_page", SafeHtml(f"<a href='{_e(next_href)}'>{_e(location)}</a>")),
+                    ("next_page", SafeHtml(f"<a href='{_e(next_href)}'>{_e(safe_location)}</a>")),
                 ]
             ),
-            "<h2>Action Payload</h2>",
+            "<h2 id='action-result-payload'>Action Payload</h2>",
             _kv(_submitted_form_rows(form)),
-            "<h2>Result Fields</h2>",
-            _kv(_action_result_rows(root, result)),
-            _action_result_continuation_section(root, location, message),
+            "<h2 id='action-result-fields'>Result Fields</h2>",
+            _kv(result_rows),
+            _action_result_continuation_section(root, safe_location, message),
             _action_result_workflow_map_section(root),
             "<p class='muted'>This page is a local readback only. Follow the next-page link after checking the payload, artifacts, and safety boundary.</p>",
             "</section>",
         ]
     )
+
+
+def _action_result_command_bar(
+    root: Path,
+    *,
+    action: str,
+    form: dict[str, list[str]],
+    message: str,
+    location: str,
+    next_href: str,
+    result_rows: list[tuple[str, str | SafeHtml]],
+) -> str:
+    context = _action_confirmation_context(action, form)
+    artifact_surface = _action_result_primary_artifact_surface(root, result_rows)
+    return "".join(
+        [
+            "<section id='action-result-command-bar' class='panel action-result-command-bar' data-action-result-command-bar='true'><h1>Action Complete</h1>",
+            "<p class='muted'>The confirmed local action finished. Continue from the next operator surface or inspect the evidence below.</p>",
+            "<div class='action-result-command-grid' data-action-result-command-actions='true'>",
+            "<article class='action-result-command-card action-result-command-primary'><h3>Continue</h3>",
+            f"<p>{_e(location)}</p>",
+            f"<a class='action-result-command-action' data-action-result-command-primary='true' href='{_e(next_href)}'>Open next surface</a></article>",
+            "<article class='action-result-command-card'><h3>Completed</h3>",
+            f"<p>{_e(action)}</p>",
+            "<a class='action-result-command-link' href='#action-result-details'>Result details</a></article>",
+            "<article class='action-result-command-card'><h3>Artifact</h3>",
+            f"<p>{artifact_surface}</p>",
+            "<a class='action-result-command-link' href='#action-result-fields'>Result fields</a></article>",
+            "<article class='action-result-command-card'><h3>Workflow</h3>",
+            "<p>Saved continuation after this action.</p>",
+            "<a class='action-result-command-link' href='#action-continuation'>Continue workflow</a></article>",
+            "<article class='action-result-command-card'><h3>Boundary</h3>",
+            "<p>No push, PR, deploy, provider call, network action, or external mutation.</p>",
+            "<a class='action-result-command-link' href='#action-result-command-evidence'>Safety evidence</a></article>",
+            "</div>",
+            "<details id='action-result-command-evidence' class='action-result-command-evidence' data-action-result-command-evidence='true'><summary>Action result evidence</summary>",
+            _kv(
+                [
+                    ("action_result_command_status", "completed"),
+                    ("action_result_command_action", action),
+                    ("action_result_command_result", message),
+                    ("action_result_command_next_surface", SafeHtml(f"<a href='{_e(next_href)}'>{_e(location)}</a>")),
+                    ("action_result_command_artifact_surface", artifact_surface),
+                    ("action_result_command_expected_output", context["output"]),
+                    ("action_result_command_submitted_fields", context["submitted_fields"]),
+                    ("action_result_command_confirmation_source", "confirmed_local_action"),
+                    ("action_result_command_safety_boundary", "confirmed_local_action_only"),
+                    ("action_result_command_write_on_get", "false"),
+                    ("action_result_command_provider_calls_taken", "0"),
+                    ("action_result_command_network_actions_taken", "0"),
+                    ("action_result_command_external_effects_created", "false"),
+                    ("action_result_command_push_created", "false"),
+                    ("action_result_command_pr_created", "false"),
+                    ("action_result_command_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"action_result_command_completed: {_e(action)}",
+                    f"action_result_command_continue: <a href='{_e(next_href)}'>{_e(location)}</a>",
+                    f"action_result_command_result: {_e(message)}",
+                    f"action_result_command_artifact: {artifact_surface}",
+                    "action_result_command_safety: confirmed local action only",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _action_result_primary_artifact_surface(
+    root: Path,
+    result_rows: list[tuple[str, str | SafeHtml]],
+) -> str | SafeHtml:
+    for _key, value in result_rows:
+        if isinstance(value, SafeHtml) and "href='" in str(value):
+            return value
+    for key, value in result_rows:
+        normalized_key = key.lower()
+        if normalized_key.endswith("_path") or normalized_key.endswith("_artifact_path"):
+            return _artifact_link(_repo_relative_artifact_path(root, str(value)))
+    return _goal_continuation_link("#action-result-fields", "Result fields")
 
 
 def _action_result_continuation_section(root: Path, location: str, message: str) -> str:
@@ -25232,7 +25326,7 @@ def _action_result_continuation_section(root: Path, location: str, message: str)
     except Exception:
         return "".join(
             [
-                "<section class='action-continuation' data-action-continuation='true'><h2>Action Continuation</h2>",
+                "<section id='action-continuation' class='action-continuation' data-action-continuation='true'><h2>Action Continuation</h2>",
                 _kv(
                     [
                         ("action_continuation_status", "state_unavailable"),
@@ -25255,7 +25349,7 @@ def _action_result_continuation_section(root: Path, location: str, message: str)
     if goal is None:
         return "".join(
             [
-                "<section class='action-continuation' data-action-continuation='true'><h2>Action Continuation</h2>",
+                "<section id='action-continuation' class='action-continuation' data-action-continuation='true'><h2>Action Continuation</h2>",
                 _kv(
                     [
                         ("action_continuation_status", "missing_goal"),
@@ -25277,7 +25371,7 @@ def _action_result_continuation_section(root: Path, location: str, message: str)
     action_form = _goal_next_action_form(state, next_action)
     return "".join(
         [
-            "<section class='action-continuation' data-action-continuation='true'><h2>Action Continuation</h2>",
+            "<section id='action-continuation' class='action-continuation' data-action-continuation='true'><h2>Action Continuation</h2>",
             "<p class='muted'>Continue from the refreshed saved goal state after this local action.</p>",
             _kv(
                 [
@@ -25382,7 +25476,7 @@ def _action_result_first_run_continuation(
         )
     return "".join(
         [
-            "<section class='action-continuation' data-action-continuation='true'><h2>Action Continuation</h2>",
+            "<section id='action-continuation' class='action-continuation' data-action-continuation='true'><h2>Action Continuation</h2>",
             "<p class='muted'>Continue the first-run path after this local action without returning to the CLI.</p>",
             _kv(
                 [
@@ -25442,7 +25536,7 @@ def _action_result_workflow_map_section(root: Path) -> str:
     except Exception:
         return "".join(
             [
-                "<section class='action-result-workflow-map' data-action-result-workflow-map='true'><h2>Action Result Workflow Map</h2>",
+                "<section id='action-result-workflow-map' class='action-result-workflow-map' data-action-result-workflow-map='true'><h2>Action Result Workflow Map</h2>",
                 _kv(
                     [
                         ("action_result_workflow_status", "state_unavailable"),
@@ -25463,7 +25557,7 @@ def _action_result_workflow_map_section(root: Path) -> str:
     if goal is None:
         return "".join(
             [
-                "<section class='action-result-workflow-map' data-action-result-workflow-map='true'><h2>Action Result Workflow Map</h2>",
+                "<section id='action-result-workflow-map' class='action-result-workflow-map' data-action-result-workflow-map='true'><h2>Action Result Workflow Map</h2>",
                 _kv(
                     [
                         ("action_result_workflow_status", "missing_goal"),
@@ -25527,7 +25621,7 @@ def _action_result_workflow_map_section(root: Path) -> str:
     )
     return "".join(
         [
-            "<section class='action-result-workflow-map panel' data-action-result-workflow-map='true'><h2>Action Result Workflow Map</h2>",
+            "<section id='action-result-workflow-map' class='action-result-workflow-map panel' data-action-result-workflow-map='true'><h2>Action Result Workflow Map</h2>",
             "<p class='muted'>Where this confirmed local action leaves the saved Goal workflow.</p>",
             _kv(
                 [
@@ -25639,7 +25733,7 @@ def _action_result_first_run_workflow_map(
         next_surface = SafeHtml("<a href='/goals'>/goals</a>")
     return "".join(
         [
-            "<section class='action-result-workflow-map panel' data-action-result-workflow-map='true'><h2>Action Result Workflow Map</h2>",
+            "<section id='action-result-workflow-map' class='action-result-workflow-map panel' data-action-result-workflow-map='true'><h2>Action Result Workflow Map</h2>",
             "<p class='muted'>Where this confirmed local action leaves first-run setup.</p>",
             _kv(
                 [
@@ -27915,6 +28009,19 @@ def _html_page(
     .last-action-strip dl {{ grid-template-columns:minmax(170px, 230px) 1fr; }}
     .last-action-strip ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
     .last-action-strip li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:128px; }}
+    .action-result-command-bar {{ border-left:4px solid var(--ok); margin-bottom:16px; }}
+    .action-result-command-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .action-result-command-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .action-result-command-card h3 {{ margin-top:0; }}
+    .action-result-command-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .action-result-command-primary {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
+    .action-result-command-action, .action-result-command-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .action-result-command-action {{ background:var(--ok); border-color:var(--ok); color:#fff; }}
+    .action-result-command-link {{ background:var(--surface); color:var(--accent); }}
+    .action-result-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .action-result-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .action-result-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .action-continuation {{ border:1px solid var(--line); background:var(--panel); padding:14px; margin:16px 0; }}
     .action-continuation-action {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .action-continuation-action summary {{ cursor:pointer; font-weight:700; }}
@@ -28859,7 +28966,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-confirmation-review, #action-confirm-local-action {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #delegation-run-continuation, #action-confirmation-review, #action-confirm-local-action, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .search-workbench-grid, .memory-workbench-grid, .skills-workbench-grid, .profiles-workbench-grid, .workflow-workbench-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .project-index-workbench-grid, .project-workbench-grid, .run-workbench-grid, .run-continuation-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .action-catalog-grid, .action-workbench-grid, .action-confirmation-grid, .action-result-command-grid, .artifact-workbench-grid, .verification-workbench-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>

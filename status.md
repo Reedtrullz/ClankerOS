@@ -1,5 +1,49 @@
 # Status
 
+## 2026-06-28 Action Result Complete Surface
+
+- Made confirmed local action result pages action-first with an `Action
+  Complete` surface before `Action Result Details`.
+- The new result surface shows Continue, Completed, Artifact, Workflow, and
+  Boundary cards, linking to the next notice surface, local artifact,
+  continuation block, and collapsed safety evidence without adding new action
+  authority.
+- Detailed payload/result fields, `Action Continuation`, and `Action Result
+  Workflow Map` remain below the new surface with stable anchors and
+  zero-effect counters preserved in the DOM.
+- Updated README, operating summary, status entry point, and focused local app
+  route assertions for first-run and dashboard-refresh result pages.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `4 passed, 512 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against scratch local app `127.0.0.1:8853` clicked
+  `/actions` refresh-dashboard-state, confirmed the local scratch write, and
+  verified the result page opened with `Action Complete` before
+  `Action Result Details`.
+- Desktop `1280x720` rendered five result cards, linked the primary Continue
+  card to the next notice surface, exposed the status artifact link, kept
+  command evidence collapsed, had no horizontal overflow, and reported no
+  warning/error logs.
+- Mobile `390x844` rendered the five result cards in one column, kept command
+  evidence collapsed, had no horizontal overflow, and reported no
+  warning/error logs.
+- The browser viewport was reset, the browser tab was closed, the local app
+  server was stopped, `lsof -nP -iTCP:8853 -sTCP:LISTEN` showed no remaining
+  listener, and the bounded scratch app root was removed by the server
+  command's cleanup trap.
+- Non-claims: this is a local result-page UX/routing change. It does not
+  write before confirmation, approve work, execute work, create commits, push,
+  create PRs, deploy, fetch GitHub status, call providers, or mutate external
+  systems.
+
 ## 2026-06-28 Action Confirmation Review Cards
 
 - Made every local app confirmation page action-first with a read-only

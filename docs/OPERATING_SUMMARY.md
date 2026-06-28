@@ -884,7 +884,9 @@ Core layers for the bootstrap:
   the existing `Action Confirmation Command Bar`, submitted action payload,
   and safety boundary remain available before a confirmed local write, local
   approval decision, or bounded local execution; confirmed action result pages
-  render the submitted payload, local
+  now open with an action-first `Action Complete` surface containing Continue,
+  Completed, Artifact, Workflow, and Boundary cards plus collapsed
+  result-command evidence, before preserving the submitted payload, local
   result fields, artifact links, next-page link, safety boundary, and an
   `Action Continuation` block from the refreshed saved goal state with phase,
   one next action, target surface, and the same confirmed local action form

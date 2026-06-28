@@ -5168,6 +5168,25 @@ def test_local_app_routes_render_modern_workflow_and_health(
         form={"requested_by": ["operator"], "confirm": ["yes"]},
     )
     assert refresh_response.status == 200
+    assert "Action Complete" in refresh_response.body
+    assert "data-action-result-command-bar='true'" in refresh_response.body
+    assert refresh_response.body.index("Action Complete") < refresh_response.body.index(
+        "Action Result Details"
+    )
+    assert "data-action-result-command-actions='true'" in refresh_response.body
+    assert "data-action-result-command-primary='true'" in refresh_response.body
+    assert "action_result_command_status</dt><dd>completed" in refresh_response.body
+    assert "action_result_command_action</dt><dd>refresh-dashboard-state" in refresh_response.body
+    assert "action_result_command_result</dt><dd>local_app_status" in refresh_response.body
+    assert "action_result_command_next_surface</dt><dd><a href='/?notice=local_app_status" in refresh_response.body
+    assert (
+        "action_result_command_artifact_surface</dt><dd>"
+        "<a href='/artifacts?path=.clanker/app/local_app_status.json'>"
+        ".clanker/app/local_app_status.json</a>"
+    ) in refresh_response.body
+    assert "action_result_command_write_on_get</dt><dd>false" in refresh_response.body
+    assert "action_result_command_network_actions_taken</dt><dd>0" in refresh_response.body
+    assert "action_result_command_external_effects_created</dt><dd>false" in refresh_response.body
     assert "Action Result Details" in refresh_response.body
     assert "local_app_status" in refresh_response.body
     assert "Action Payload" in refresh_response.body
@@ -7026,6 +7045,18 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     )
 
     assert register_result.status == 200
+    assert "Action Complete" in register_result.body
+    assert "data-action-result-command-bar='true'" in register_result.body
+    assert register_result.body.index("Action Complete") < register_result.body.index(
+        "Action Result Details"
+    )
+    assert "action_result_command_action</dt><dd>register-project" in register_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/projects/clankeros?notice=project_registered%3A%20clankeros'>"
+        "/projects/clankeros</a>"
+    ) in register_result.body
+    assert "action_result_command_confirmation_source</dt><dd>confirmed_local_action" in register_result.body
     assert "Action Continuation" in register_result.body
     assert "action_continuation_status</dt><dd>first_run_ready" in register_result.body
     assert "action_continuation_source</dt><dd>first_run_progress_after_action" in register_result.body

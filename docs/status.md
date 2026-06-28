@@ -285,6 +285,11 @@ Latest status focus:
   before payload details, with visible Confirm, Requires, Writes, Scope, and
   Boundary cards, a stable `#action-confirm-local-action` form anchor, and
   collapsed review/command evidence preserving zero-effect counters.
+- Confirmed local action result pages now open with an action-first
+  `Action Complete` surface before payload details, with visible Continue,
+  Completed, Artifact, Workflow, and Boundary cards plus collapsed result
+  command evidence preserving the target notice surface, result, primary
+  artifact, confirmation source, and zero-effect counters.
 - The shared operator shell now persists the latest confirmed local action in
   `.clanker/app/workspace.json` and renders a read-only `Last Action` strip on
   later pages, with the result, target notice surface, saved context, and
