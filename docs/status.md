@@ -6,7 +6,8 @@ Latest status focus:
 
 - Goal Next Action sections now open with a human-first focus strip for Now,
   Gate, Target, and Boundary, giving the operator one readable primary link to
-  the existing confirmed form or source surface before the diagnostic rows.
+  the existing confirmed form or source surface, then placing the confirmed
+  form before collapsed action evidence.
 - Goal pages now include a compact fixed desktop `Goal Action Dock` after the
   Current Phase banner and Goal Jump Bar, keeping the current action, workflow
   gate, CI proof target, and `/resume` route visible during long scroll

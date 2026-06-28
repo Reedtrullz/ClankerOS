@@ -8387,32 +8387,9 @@ def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -
         if form
         else ""
     )
-    return (
-        "<section id='goal-next-action' class='goal-next-action'><h2>Next Action</h2>"
-        "<div class='goal-next-action-focus' data-goal-next-action-focus='true'>"
-        "<div class='goal-next-action-focus-grid'>"
-        "<div class='goal-next-action-focus-card goal-next-action-focus-primary'>"
-        "<span class='goal-next-action-focus-label'>Now</span>"
-        f"<h3>{_e(next_action.action)}</h3>"
-        f"<p>{_e(_goal_operator_attention(phase, next_action))}</p>"
-        f"<a class='goal-next-action-focus-button' data-goal-next-action-focus-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a>"
-        "</div>"
-        "<div class='goal-next-action-focus-card'>"
-        "<span class='goal-next-action-focus-label'>Gate</span>"
-        f"<p>{_e(current_gate.replace('_', ' '))}</p>"
-        f"<strong>{_e(str(done_gates))}/{_e(str(total_gates))} done</strong>"
-        "</div>"
-        "<div class='goal-next-action-focus-card'>"
-        "<span class='goal-next-action-focus-label'>Target</span>"
-        f"<p><a href='{_e(next_action.href)}'>{_e(next_action.href)}</a></p>"
-        "</div>"
-        "<div class='goal-next-action-focus-card'>"
-        "<span class='goal-next-action-focus-label'>Boundary</span>"
-        "<p>Confirmed local action only</p>"
-        "<strong>No external effects</strong>"
-        "</div>"
-        "</div>"
-        "</div>"
+    details_html = (
+        "<details class='goal-next-action-details' data-goal-next-action-details='true'>"
+        "<summary>Action Evidence</summary>"
         + _kv(
             [
                 ("next_action_focus_status", "available"),
@@ -8451,7 +8428,36 @@ def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -
                 "next_action_focus_safety: confirmed local action only",
             ]
         )
+        + "</details>"
+    )
+    return (
+        "<section id='goal-next-action' class='goal-next-action'><h2>Next Action</h2>"
+        "<div class='goal-next-action-focus' data-goal-next-action-focus='true'>"
+        "<div class='goal-next-action-focus-grid'>"
+        "<div class='goal-next-action-focus-card goal-next-action-focus-primary'>"
+        "<span class='goal-next-action-focus-label'>Now</span>"
+        f"<h3>{_e(next_action.action)}</h3>"
+        f"<p>{_e(_goal_operator_attention(phase, next_action))}</p>"
+        f"<a class='goal-next-action-focus-button' data-goal-next-action-focus-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a>"
+        "</div>"
+        "<div class='goal-next-action-focus-card'>"
+        "<span class='goal-next-action-focus-label'>Gate</span>"
+        f"<p>{_e(current_gate.replace('_', ' '))}</p>"
+        f"<strong>{_e(str(done_gates))}/{_e(str(total_gates))} done</strong>"
+        "</div>"
+        "<div class='goal-next-action-focus-card'>"
+        "<span class='goal-next-action-focus-label'>Target</span>"
+        f"<p><a href='{_e(next_action.href)}'>{_e(next_action.href)}</a></p>"
+        "</div>"
+        "<div class='goal-next-action-focus-card'>"
+        "<span class='goal-next-action-focus-label'>Boundary</span>"
+        "<p>Confirmed local action only</p>"
+        "<strong>No external effects</strong>"
+        "</div>"
+        "</div>"
+        "</div>"
         + form_html
+        + details_html
         + "</section>"
     )
 
@@ -22354,6 +22360,10 @@ def _html_page(
     .goal-next-action-focus-card h3 {{ margin:0; font-size:18px; }}
     .goal-next-action-focus-card p {{ margin:0; color:var(--muted); overflow-wrap:anywhere; }}
     .goal-next-action-focus-button {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; width:max-content; max-width:100%; padding:7px 10px; border:1px solid var(--accent); border-radius:6px; background:var(--accent); color:#fff; text-decoration:none; overflow-wrap:anywhere; }}
+    .goal-next-action-details {{ margin-top:12px; border:1px solid var(--line); background:var(--panel); padding:10px 12px; }}
+    .goal-next-action-details summary {{ cursor:pointer; font-weight:700; }}
+    .goal-next-action-details:not([open]) > :not(summary) {{ display:none; }}
+    .goal-next-action-details dl {{ margin-top:10px; }}
     .goal-operator-workbench {{ border:1px solid var(--line); border-left:4px solid var(--accent); background:var(--panel); padding:14px; }}
     .goal-operator-workbench dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}

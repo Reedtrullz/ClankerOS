@@ -204,7 +204,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   local-action counters before the longer diagnostic sections. The Goal Next
   Action section starts with a human-first focus strip for Now, Gate, Target,
   and Boundary, with one primary link to the existing confirmed form or source
-  surface before the diagnostic rows. The in-flow Goal Jump Bar keeps the main
+  surface, then renders the confirmed form before collapsed action evidence.
+  The in-flow Goal Jump Bar keeps the main
   daily anchors one click or keypress away without covering later controls, and
   the Goal Action Dock keeps the current action reachable from deep scroll
   positions without adding a second action form. The Goal Section Index links

@@ -342,9 +342,9 @@ Core layers for the bootstrap:
   diagnostic sections. The in-flow Goal Jump Bar keeps the main daily anchors
   one click or keypress away without covering later controls, the Goal Action
   Dock keeps the current action one click away from deep scroll positions
-  without adding a second action form, and the Goal Next Action section starts with a
-  human-first focus strip for Now, Gate, Target, and Boundary before the
-  diagnostic rows and existing confirmed form. The Goal Section Index now links
+  without adding a second action form, and the Goal Next Action section starts
+  with a human-first focus strip for Now, Gate, Target, and Boundary, then
+  renders the confirmed form before collapsed action evidence. The Goal Section Index now links
   directly to the Timeline, Activity, and Git command bars in addition to the
   longer detail sections, making the page navigable through scan-first
   operator surfaces.

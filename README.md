@@ -284,8 +284,8 @@ the source surface and first unblock surface, names the current gate/progress,
 and exposes confirmation/write/provider/network/external-effect counters
 before the deeper diagnostic sections. The Goal Next Action section now starts
 with a human-first focus strip for Now, Gate, Target, and Boundary, with one
-primary link to the existing confirmed form or source surface before the
-diagnostic rows. Goal Daily Loop includes a confirmed
+primary link to the existing confirmed form or source surface, then renders the
+confirmed form before collapsed action evidence. Goal Daily Loop includes a confirmed
 local `pause-goal` form for any non-paused incomplete goal, moving it into
 paused lanes without approving work, running providers, using the network, or
 mutating external systems. The read-only `Goal Continuation Rail` follows the
@@ -345,8 +345,9 @@ The in-flow Goal Jump Bar keeps the most-used in-page anchors one click or
 one keypress away without covering later controls. The Goal Action Dock keeps
 the current action one click away from deep scroll positions without adding a
 second action form. The Goal Next Action focus strip makes the selected action
-readable at the point of decision, while the Goal Section Index near the top
-links to the full stable anchor map for the major Goal surfaces.
+readable at the point of decision and keeps the confirmed form ahead of
+diagnostic evidence, while the Goal Section Index near the top links to the
+full stable anchor map for the major Goal surfaces.
 Goal Delegations starts with a read-only `Goal Delegation Command Bar` that
 summarizes scout delegation counts, context-pack readiness, implementation
 handoff readiness, coder-prep packets, worktree plans, the latest delegation

@@ -8213,6 +8213,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "next_action_focus_external_effects_created</dt><dd>false" in goal.body
     assert "data-goal-next-action-focus-primary='true' href='#goal-next-action-form'>Use confirmed form</a>" in goal.body
     assert "id='goal-next-action-form' data-goal-next-action-form='true'" in goal.body
+    assert "data-goal-next-action-details='true'" in goal.body
+    assert "Action Evidence" in goal.body
+    assert goal.body.index("id='goal-next-action-form'") < goal.body.index(
+        "data-goal-next-action-details='true'"
+    )
+    assert goal.body.index("data-goal-next-action-details='true'") < goal.body.index(
+        "next_action_focus_status</dt><dd>available"
+    )
     assert "next_action_focus_now: Create commit request" in goal.body
     assert "next_action_focus_click: <a href='#goal-next-action-form'>Use confirmed form</a>" in goal.body
     assert "next_action_focus_gate: commit_request" in goal.body
