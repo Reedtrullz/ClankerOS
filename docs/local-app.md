@@ -550,12 +550,17 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   Workbench` follows it with do/check/unblock/finish cards, same-page action
   anchors, review/evidence links, approvals, parent Goal, and a confirmed
   `save-workspace` form that stores the run plus review/evidence artifact as a
-  future resume point without writing on GET. It also includes a
-  `Run Workflow State` block for upstream context-pack, handoff, prep, plan,
-  approval/run, bounded validation, commit, publication, and next-action
-  status. Once a publication handoff is ready, the page also shows display-only
-  suggested push and draft-PR commands plus the PR body path; those commands
-  remain manual actions outside ClankerOS.
+  future resume point without writing on GET. It also includes a read-only
+  `Run Gate Map` with eight scan-first gates: review, commit request, commit
+  approval, local commit, publication request, publication approval,
+  publication handoff, and manual publish outside ClankerOS. The map marks the
+  current gate, counts done/waiting/blocked gates, links only to existing app
+  anchors or `/approvals`, and keeps all write authority in the existing
+  confirmed forms. It also includes a `Run Workflow State` block for upstream
+  context-pack, handoff, prep, plan, approval/run, bounded validation, commit,
+  publication, and next-action status. Once a publication handoff is ready, the
+  page also shows display-only suggested push and draft-PR commands plus the PR
+  body path; those commands remain manual actions outside ClankerOS.
 - Coder worktree run rows in the app include `changed_files_count` and a
   compact `diff_summary` read from existing `diff.patch` evidence, so the
   operator can scan change size without opening the artifact first.
@@ -852,13 +857,17 @@ implementation handoff readback and link the handoff Markdown through the safe
 artifact viewer. When fixture state exists, `/actions` includes
 `Current Demo Action Surfaces`, a read-only map from the selected demo project
 and run to the current workflow, action form, approvals, and inbox surfaces.
-The `/approvals` page is the gate queue for pending local decisions. Pending
-commit approvals now show the relevant run link, the `commit-coder-worktree`
-follow-up, and the typed commit-message requirement. Pending publication
-approvals show the relevant run link and the `coder-publication-handoff`
-follow-up while preserving the explicit `push_created=false`,
-`pr_created=false`, and `deploy_created=false` boundary. The page starts with
-`Approval Queue Command Bar`, a read-only summary of total pending decisions,
+The `/approvals` page is the gate queue for pending local decisions. Use
+`/approvals?run_id=<coder_run_id>` from a run gate to foreground that run's
+pending commit or publication approval before unrelated global queue items;
+`/approvals?goal_id=<goal_id>` similarly scopes the first decision to a saved
+Goal when possible. Pending commit approvals show the relevant run link, the
+`commit-coder-worktree` follow-up, and the typed commit-message requirement.
+Pending publication approvals show the relevant run link and the
+`coder-publication-handoff` follow-up while preserving the explicit
+`push_created=false`, `pr_created=false`, and `deploy_created=false` boundary.
+The page starts with `Approval Queue Command Bar`, a read-only summary of total
+pending decisions,
 the first queue action, target section, after-decision guidance, and the
 write-on-GET/network/external-effect boundary.
 The `/inbox` page keeps the same commit/publication continuation cues in a

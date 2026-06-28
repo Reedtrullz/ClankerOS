@@ -1,5 +1,46 @@
 # Status
 
+## 2026-06-28 Run Gate Map And Scoped Approvals
+
+- Made run detail pages more usable for daily operation by adding a read-only
+  `Run Gate Map` directly after the run operator workbench. It shows the
+  current gate, eight ordered gates from review through manual publish, the
+  right existing surface for the next decision, progress counts, and zero-effect
+  counters without writing on GET.
+- Made approval focus first-class from run and Goal surfaces. Run-specific
+  gates now link to `/approvals?run_id=<coder_run_id>`, Goal worktree gates can
+  link to `/approvals?goal_id=<goal_id>`, and the approval queue/workbench/
+  decision brief foreground matching commit, publication, or worktree approval
+  items before falling back to the global queue.
+- Kept the global `/approvals` queue behavior intact while making scoped
+  approvals return to the run after local commit/publication approval decisions.
+- Added responsive form/control sizing and one-column mobile key-value grids for
+  the new run/approval operator surfaces.
+- Updated README, local app docs, operating summary, and status focus with the
+  new run-gate and scoped-approval workflow.
+- Non-claims: this is local browser UI, local routing, and local decision
+  artifact flow. It does not approve on GET, run work, call providers, fetch
+  GitHub from ClankerOS, commit without an explicit approval POST, push, create
+  PRs, deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 515 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-run-gate-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-run-gate-demo app-demo-smoke-test`
+    -> passed, fixture-backed run and approval routes matched expected snippets,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through Playwright using local Chrome against
+    `http://127.0.0.1:8801/runs/run_5d0168b63696`: desktop and mobile rendered
+    the `Run Gate Map`, showed eight gates, marked `commit_approval` current,
+    followed the scoped `/approvals?run_id=run_5d0168b63696` link, foregrounded
+    a run-matching commit approval with a decision brief and approval form,
+    collapsed key-value grids to one column on `390x844`, and showed no visible
+    overflow or console warning/error logs.
+  - `git diff --check` -> passed
+
 ## 2026-06-28 Palette Focus Launcher
 
 - Made the global command palette action-first across app pages: it now opens

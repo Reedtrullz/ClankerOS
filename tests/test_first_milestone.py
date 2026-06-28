@@ -10174,6 +10174,44 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "name='filters' value='run:" in run_page.body
     assert "run-workbench,workflow,review,evidence,actions" in run_page.body
     assert "name='updated_by' value='run-operator-workbench'" in run_page.body
+    assert "Run Gate Map" in run_page.body
+    assert "data-run-gate-map='true'" in run_page.body
+    assert run_page.body.index("data-run-operator-workbench='true'") < run_page.body.index(
+        "data-run-gate-map='true'"
+    )
+    assert run_page.body.index("data-run-gate-map='true'") < run_page.body.index(
+        "id='run-workflow-state'"
+    )
+    assert "run_gate_status</dt><dd>available" in run_page.body
+    assert f"run_gate_run_id</dt><dd>{result.coder_worktree_run_id}" in run_page.body
+    assert "run_gate_current_gate</dt><dd>commit_request" in run_page.body
+    assert "run_gate_current_step</dt><dd>commit_request" in run_page.body
+    assert "run_gate_current_action</dt><dd>Create commit request" in run_page.body
+    assert "run_gate_current_surface</dt><dd><a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
+    assert "run_gate_reason</dt><dd>reviewed coder run is ready for a local commit request" in run_page.body
+    assert "run_gate_progress</dt><dd>1/8 gates done" in run_page.body
+    assert "run_gate_step_count</dt><dd>8" in run_page.body
+    assert "run_gate_done_count</dt><dd>1" in run_page.body
+    assert "run_gate_waiting_count</dt><dd>6" in run_page.body
+    assert "run_gate_blocked_count</dt><dd>0" in run_page.body
+    assert "run_gate_review_status</dt><dd>done" in run_page.body
+    assert "run_gate_commit_request_status</dt><dd>current" in run_page.body
+    assert "run_gate_commit_approval_status</dt><dd>waiting" in run_page.body
+    assert "run_gate_local_commit_status</dt><dd>waiting" in run_page.body
+    assert "run_gate_publication_request_status</dt><dd>waiting" in run_page.body
+    assert "run_gate_publication_approval_status</dt><dd>waiting" in run_page.body
+    assert "run_gate_publication_handoff_status</dt><dd>waiting" in run_page.body
+    assert "run_gate_manual_publish_status</dt><dd>waiting" in run_page.body
+    assert "run_gate_manual_boundary</dt><dd>outside_clankeros" in run_page.body
+    assert "run_gate_write_on_get</dt><dd>false" in run_page.body
+    assert "run_gate_network_actions_taken</dt><dd>0" in run_page.body
+    assert "run_gate_external_effects_created</dt><dd>false" in run_page.body
+    assert "data-run-gate='commit_request'" in run_page.body
+    assert "data-run-gate-marker='current'" in run_page.body
+    assert "run_gate_step: commit_request status=current marker=current action=Create commit request surface=<a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
+    assert "run_gate_step: manual_publish status=waiting marker=waiting action=Manual publish outside ClankerOS surface=outside_clankeros" in run_page.body
+    assert "run_gate_now: Create commit request at <a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
+    assert "run_gate_safety: read-only run guidance; confirmed local forms remain on existing gate surfaces" in run_page.body
     assert "id='run-workflow-state'" in run_page.body
     assert "id='run-review-gate'" in run_page.body
     assert "id='run-approval-actions'" in run_page.body
@@ -10242,6 +10280,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "run_workbench_primary_surface</dt><dd><a href='#run-review-gate'>Run Review Gate</a>" in run_page_without_review.body
     assert "run_workbench_action_form_available</dt><dd>false" in run_page_without_review.body
     assert "run_workbench_confirmation_required</dt><dd>false" in run_page_without_review.body
+    assert "Run Gate Map" in run_page_without_review.body
+    assert "run_gate_current_gate</dt><dd>review" in run_page_without_review.body
+    assert "run_gate_current_action</dt><dd>Review run" in run_page_without_review.body
+    assert "run_gate_current_surface</dt><dd><a href='#run-review-gate'>Run Review Gate</a>" in run_page_without_review.body
+    assert "run_gate_reason</dt><dd>review_artifact_missing" in run_page_without_review.body
+    assert "run_gate_progress</dt><dd>0/8 gates done" in run_page_without_review.body
+    assert "run_gate_done_count</dt><dd>0" in run_page_without_review.body
+    assert "run_gate_waiting_count</dt><dd>7" in run_page_without_review.body
+    assert "run_gate_review_status</dt><dd>current" in run_page_without_review.body
+    assert "run_gate_commit_request_status</dt><dd>waiting" in run_page_without_review.body
+    assert "run_gate_step: review status=current marker=current action=Review run surface=<a href='#run-review-gate'>Run Review Gate</a>" in run_page_without_review.body
+    assert "run_gate_now: Review run at <a href='#run-review-gate'>Run Review Gate</a>" in run_page_without_review.body
     assert "action='/actions/coder-commit-request'" not in run_page_without_review.body
     assert "commit_request_form_available: false review_gate_status: missing" in run_page_without_review.body
     result.review_path.write_text(review_text, encoding="utf-8")
@@ -10280,7 +10330,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Action Continuation" in commit_request.body
     assert "action_continuation_status</dt><dd>available" in commit_request.body
     assert "action_continuation_next_action</dt><dd>Approve commit" in commit_request.body
-    assert "action_continuation_target</dt><dd><a href='/approvals'>/approvals</a>" in commit_request.body
+    assert (
+        "action_continuation_target</dt><dd>"
+        f"<a href='/approvals?run_id={result.coder_worktree_run_id}'>"
+        f"/approvals?run_id={result.coder_worktree_run_id}</a>"
+    ) in commit_request.body
     assert (
         f"action_continuation_next_page</dt><dd><a href='/runs/{result.coder_worktree_run_id}"
         in commit_request.body
@@ -10354,6 +10408,20 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "last_action_network_actions_taken</dt><dd>0" in run_notice.body
     assert "last_action_external_effects_created</dt><dd>false" in run_notice.body
     assert "recent_items_last_action</dt><dd>coder-commit-request" in run_notice.body
+    assert "Run Gate Map" in run_notice.body
+    assert "run_gate_current_gate</dt><dd>commit_approval" in run_notice.body
+    assert "run_gate_current_action</dt><dd>Review commit approval" in run_notice.body
+    assert (
+        "run_gate_current_surface</dt><dd>"
+        f"<a href='/approvals?run_id={result.coder_worktree_run_id}'>/approvals</a>"
+    ) in run_notice.body
+    assert "run_gate_progress</dt><dd>2/8 gates done" in run_notice.body
+    assert "run_gate_commit_approval_status</dt><dd>current" in run_notice.body
+    assert (
+        "run_gate_step: commit_approval status=current marker=current "
+        "action=Approve commit request "
+        f"surface=<a href='/approvals?run_id={result.coder_worktree_run_id}'>/approvals</a>"
+    ) in run_notice.body
     demo_after_commit_request = render_local_app_route(tmp_path, "/demo")
     assert demo_after_commit_request.status == 200
     assert "current_gate: approve_or_reject_commit_request" in demo_after_commit_request.body
@@ -10383,6 +10451,28 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"/runs/{result.coder_worktree_run_id}" in approvals.body
     assert "follow_up_action_after_approval: commit-coder-worktree" in approvals.body
     assert "typed_commit_message_required: true" in approvals.body
+    scoped_approvals = render_local_app_route(
+        tmp_path,
+        f"/approvals?run_id={result.coder_worktree_run_id}",
+    )
+    assert scoped_approvals.status == 200
+    assert "approval_queue_scope_status</dt><dd>run_match" in scoped_approvals.body
+    assert f"approval_queue_scope_run</dt><dd>{result.coder_worktree_run_id}" in scoped_approvals.body
+    assert "approval_queue_total_pending</dt><dd>2" in scoped_approvals.body
+    assert "approval_queue_first_kind</dt><dd>commit" in scoped_approvals.body
+    assert f"approval_queue_first_id</dt><dd>{commit_approval.id}" in scoped_approvals.body
+    assert "approval_queue_first_action</dt><dd>Approve commit" in scoped_approvals.body
+    assert "approval_workbench_scope_status</dt><dd>run_match" in scoped_approvals.body
+    assert "approval_workbench_first_kind</dt><dd>commit" in scoped_approvals.body
+    assert "approval_workbench_next_action</dt><dd>Approve commit" in scoped_approvals.body
+    assert "approval_workbench_typed_commit_message_required</dt><dd>true" in scoped_approvals.body
+    assert "approval_decision_scope_status</dt><dd>run_match" in scoped_approvals.body
+    assert "approval_decision_status</dt><dd>needs_commit_decision" in scoped_approvals.body
+    assert "approval_decision_kind</dt><dd>commit" in scoped_approvals.body
+    assert f"approval_decision_id</dt><dd>{commit_approval.id}" in scoped_approvals.body
+    assert "approval_decision_action_name</dt><dd>approve-coder-commit" in scoped_approvals.body
+    assert f"approval_decision_run</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in scoped_approvals.body
+    assert "approval_decision_typed_commit_message_required</dt><dd>true" in scoped_approvals.body
     inbox_after_commit_request = render_local_app_route(tmp_path, "/inbox")
     assert inbox_after_commit_request.status == 200
     assert commit_approval.id in inbox_after_commit_request.body
@@ -10416,6 +10506,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Action Result Details" in commit_approval_response.body
     assert "approved_coder_commit" in commit_approval_response.body
     assert "approval.id" in commit_approval_response.body
+    assert f"href='/runs/{result.coder_worktree_run_id}?notice=approved_coder_commit" in commit_approval_response.body
     run_page_after_commit_approval = render_local_app_route(
         tmp_path,
         f"/runs/{result.coder_worktree_run_id}",
@@ -10423,6 +10514,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert run_page_after_commit_approval.status == 200
     assert "Confirmed Local Commit Action" in run_page_after_commit_approval.body
     assert "commit-coder-worktree" in run_page_after_commit_approval.body
+    assert "run_gate_current_gate</dt><dd>local_commit" in run_page_after_commit_approval.body
+    assert "run_gate_current_action</dt><dd>Commit approved worktree" in run_page_after_commit_approval.body
+    assert "run_gate_local_commit_status</dt><dd>current" in run_page_after_commit_approval.body
     assert (
         "creates one local commit only inside the isolated coder worktree"
         in run_page_after_commit_approval.body
@@ -10539,6 +10633,34 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in approvals_after_publication_request.body
     )
     assert "push_created=false pr_created=false deploy_created=false" in approvals_after_publication_request.body
+    scoped_publication_approvals = render_local_app_route(
+        tmp_path,
+        f"/approvals?run_id={result.coder_worktree_run_id}",
+    )
+    assert scoped_publication_approvals.status == 200
+    assert "approval_queue_scope_status</dt><dd>run_match" in scoped_publication_approvals.body
+    assert "approval_queue_first_kind</dt><dd>publication" in scoped_publication_approvals.body
+    assert f"approval_queue_first_id</dt><dd>{publication.id}" in scoped_publication_approvals.body
+    assert "approval_queue_first_action</dt><dd>Approve publication" in scoped_publication_approvals.body
+    assert "approval_workbench_first_kind</dt><dd>publication" in scoped_publication_approvals.body
+    assert "approval_workbench_next_action</dt><dd>Approve publication" in scoped_publication_approvals.body
+    assert "approval_decision_status</dt><dd>needs_publication_decision" in scoped_publication_approvals.body
+    assert "approval_decision_kind</dt><dd>publication" in scoped_publication_approvals.body
+    assert f"approval_decision_id</dt><dd>{publication.id}" in scoped_publication_approvals.body
+    assert "approval_decision_action_name</dt><dd>approve-coder-publication" in scoped_publication_approvals.body
+    assert "approval_decision_remote_target</dt><dd>origin/main" in scoped_publication_approvals.body
+    run_page_after_publication_request = render_local_app_route(
+        tmp_path,
+        f"/runs/{result.coder_worktree_run_id}",
+    )
+    assert run_page_after_publication_request.status == 200
+    assert "run_gate_current_gate</dt><dd>publication_approval" in run_page_after_publication_request.body
+    assert "run_gate_current_action</dt><dd>Review publication approval" in run_page_after_publication_request.body
+    assert (
+        "run_gate_current_surface</dt><dd>"
+        f"<a href='/approvals?run_id={result.coder_worktree_run_id}'>/approvals</a>"
+    ) in run_page_after_publication_request.body
+    assert "run_gate_publication_approval_status</dt><dd>current" in run_page_after_publication_request.body
     inbox_after_publication_request = render_local_app_route(tmp_path, "/inbox")
     assert inbox_after_publication_request.status == 200
     assert publication.id in inbox_after_publication_request.body
@@ -10582,6 +10704,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Action Result Details" in publication_approval.body
     assert "approved_coder_publication" in publication_approval.body
     assert "publication.id" in publication_approval.body
+    assert f"href='/runs/{result.coder_worktree_run_id}?notice=approved_coder_publication" in publication_approval.body
     run_page_after_publication_approval = render_local_app_route(
         tmp_path,
         f"/runs/{result.coder_worktree_run_id}",
@@ -10589,6 +10712,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert run_page_after_publication_approval.status == 200
     assert "Publication Handoff Action" in run_page_after_publication_approval.body
     assert "coder-publication-handoff" in run_page_after_publication_approval.body
+    assert "run_gate_current_gate</dt><dd>publication_handoff" in run_page_after_publication_approval.body
+    assert "run_gate_current_action</dt><dd>Create publication handoff" in run_page_after_publication_approval.body
+    assert "run_gate_publication_handoff_status</dt><dd>current" in run_page_after_publication_approval.body
     demo_after_publication_approval = render_local_app_route(tmp_path, "/demo")
     assert demo_after_publication_approval.status == 200
     assert "current_gate: prepare_publication_handoff" in demo_after_publication_approval.body

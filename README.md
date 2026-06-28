@@ -552,12 +552,16 @@ target surface, and no-write/no-network/no-push boundary. A `Run Operator
 Workbench` follows it with do/check/unblock/finish cards for the same run gate,
 including same-page action anchors, review/evidence links, approvals, parent
 Goal, and a confirmed `save-workspace` form that stores the run and review or
-evidence artifact as tomorrow's resume point without writing on GET. The `Run Review
-Gate` panel shows whether `runs/<source_run_id>/review.md` exists and mentions
-the coder worktree run id. The app only exposes the `coder-commit-request`
-form when that gate passes. The Goal Next Action card can now create that
-local review artifact with a confirmed `review-run` form when the goal is
-waiting on review.
+evidence artifact as tomorrow's resume point without writing on GET. A
+read-only `Run Gate Map` then lays out the run-scoped path from review through
+commit request, commit approval, local commit, publication request,
+publication approval, publication handoff, and the manual publish boundary,
+marking the current gate and linking only to existing local surfaces. The `Run
+Review Gate` panel shows whether `runs/<source_run_id>/review.md` exists and
+mentions the coder worktree run id. The app only exposes the
+`coder-commit-request` form when that gate passes. The Goal Next Action card
+can now create that local review artifact with a confirmed `review-run` form
+when the goal is waiting on review.
 
 Use `/runs/<coder_run_id>` after publication handoff preparation when you want
 the display-only manual publication commands. The app shows
@@ -624,10 +628,13 @@ with links to the selected project, delegation, workflow, run, approvals, and
 inbox surfaces.
 
 Use `/approvals` when you want to keep driving the gate sequence from one
-queue. The read-only `Approval Queue Command Bar` starts the page with total
-pending worktree, commit, and publication decisions, the first recommended
-decision, the same-page form target, the follow-up after approval, and the
-zero-effect boundary. The `Approval Operator Workbench` follows it with
+queue, and use `/approvals?run_id=<coder_run_id>` when you arrived from a run
+gate and want that run's pending commit or publication decision foregrounded
+even if unrelated approvals also exist. The read-only `Approval Queue Command
+Bar` starts the page with total pending worktree, commit, and publication
+decisions, the scoped or global first recommended decision, the same-page form
+target, the follow-up after approval, and the zero-effect boundary. The
+`Approval Operator Workbench` follows it with
 do/inspect/Goal/finish cards, the first pending decision, the parent Goal when
 known, request and evidence artifacts, confirmation posture, and a confirmed
 `save-workspace` form so an approval queue can become tomorrow's resume point

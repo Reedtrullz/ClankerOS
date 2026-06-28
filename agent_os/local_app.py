@@ -363,7 +363,14 @@ def render_local_app_route(
         if path == "/inbox":
             return page("Inbox", _inbox(root))
         if path == "/approvals":
-            return page("Approvals", _approvals(root))
+            return page(
+                "Approvals",
+                _approvals(
+                    root,
+                    run_id=_one(query, "run_id"),
+                    goal_id=_one(query, "goal_id"),
+                ),
+            )
         if path == "/incidents":
             return page("Incidents", _incidents(root))
         if path.startswith("/goals/"):
@@ -8290,7 +8297,13 @@ def _goal_next_action(root: Path, state: dict[str, Any]) -> GoalNextAction:
     ]:
         publication = next((item for item in state["publications"] if item.status == status), None)
         if publication is not None:
-            return GoalNextAction(action, href or f"/runs/{quote(publication.run_id)}", f"publication={publication.id}")
+            if href == "/approvals":
+                href = f"/approvals?run_id={quote(publication.run_id)}"
+            return GoalNextAction(
+                action,
+                href or f"/runs/{quote(publication.run_id)}",
+                f"publication={publication.id}",
+            )
     committed = next((item for item in state["commit_approvals"] if item.status == "committed"), None)
     if committed is not None:
         return GoalNextAction("Create publication request", f"/runs/{quote(committed.run_id)}", f"commit={committed.commit_sha or 'recorded'}")
@@ -8299,7 +8312,7 @@ def _goal_next_action(root: Path, state: dict[str, Any]) -> GoalNextAction:
         return GoalNextAction("Commit approved worktree", f"/runs/{quote(approved_commit.run_id)}", f"approval={approved_commit.id}")
     pending_commit = next((item for item in state["commit_approvals"] if item.status == "pending_operator_approval"), None)
     if pending_commit is not None:
-        return GoalNextAction("Approve commit", "/approvals", f"approval={pending_commit.id}")
+        return GoalNextAction("Approve commit", f"/approvals?run_id={quote(pending_commit.run_id)}", f"approval={pending_commit.id}")
     completed_run = next((item for item in state["worktree_runs"] if item.status == "completed"), None)
     if completed_run is not None:
         gate = _run_review_gate_state(root, completed_run)
@@ -8308,7 +8321,7 @@ def _goal_next_action(root: Path, state: dict[str, Any]) -> GoalNextAction:
         return GoalNextAction("Open review", f"/runs/{quote(completed_run.id)}", str(gate["blocked_reason"]))
     pending_worktree = next((item for item in state["worktree_approvals"] if item.status == "pending_operator_approval"), None)
     if pending_worktree is not None:
-        return GoalNextAction("Approve worktree", "/approvals", f"approval={pending_worktree.id}")
+        return GoalNextAction("Approve worktree", f"/approvals?goal_id={quote(goal.id)}", f"approval={pending_worktree.id}")
     approved_worktree = next((item for item in state["worktree_approvals"] if item.status == "approved"), None)
     if approved_worktree is not None:
         return GoalNextAction("Run approved worktree", f"/goals/{quote(goal.id)}", f"approval={approved_worktree.id}")
@@ -15500,7 +15513,7 @@ def _inbox_operator_workbench(root: Path, inbox: dict[str, object]) -> str:
     )
 
 
-def _approvals(root: Path) -> str:
+def _approvals(root: Path, *, run_id: str | None = None, goal_id: str | None = None) -> str:
     worktree_approvals = list_coder_worktree_approvals(
         root,
         status="pending_operator_approval",
@@ -15516,6 +15529,14 @@ def _approvals(root: Path) -> str:
         status="pending_operator_approval",
         limit=50,
     )
+    focus = _approval_focus(
+        root,
+        worktree_approvals,
+        commit_approvals,
+        publication_approvals,
+        scope_run_id=run_id,
+        scope_goal_id=goal_id,
+    )
     return "".join(
         [
             "<section><h1>Approvals</h1>",
@@ -15525,18 +15546,21 @@ def _approvals(root: Path) -> str:
                 worktree_approvals,
                 commit_approvals,
                 publication_approvals,
+                focus,
             ),
             _approval_operator_workbench(
                 root,
                 worktree_approvals,
                 commit_approvals,
                 publication_approvals,
+                focus,
             ),
             _approval_decision_brief(
                 root,
                 worktree_approvals,
                 commit_approvals,
                 publication_approvals,
+                focus,
             ),
             _list_section(
                 "Pending Worktree Approvals",
@@ -15558,11 +15582,100 @@ def _approvals(root: Path) -> str:
     )
 
 
+def _approval_focus(
+    root: Path,
+    worktree_approvals: list[Any],
+    commit_approvals: list[Any],
+    publication_approvals: list[Any],
+    *,
+    scope_run_id: str | None,
+    scope_goal_id: str | None,
+) -> dict[str, Any]:
+    storage = _storage(root)
+    requested_run = (scope_run_id or "").strip()
+    requested_goal = (scope_goal_id or "").strip()
+
+    def fallback() -> tuple[str, Any | None]:
+        if worktree_approvals:
+            return "worktree", worktree_approvals[0]
+        if commit_approvals:
+            return "commit", commit_approvals[0]
+        if publication_approvals:
+            return "publication", publication_approvals[0]
+        return "none", None
+
+    if requested_run:
+        for kind, items in [
+            ("commit", commit_approvals),
+            ("publication", publication_approvals),
+            ("worktree", worktree_approvals),
+        ]:
+            for item in items:
+                if getattr(item, "run_id", "") == requested_run or getattr(item, "source_run_id", "") == requested_run:
+                    return {
+                        "kind": kind,
+                        "item": item,
+                        "scope_status": "run_match",
+                        "scope_run_id": requested_run,
+                        "scope_goal_id": requested_goal or "none",
+                    }
+        kind, item = fallback()
+        return {
+            "kind": kind,
+            "item": item,
+            "scope_status": "scope_miss",
+            "scope_run_id": requested_run,
+            "scope_goal_id": requested_goal or "none",
+        }
+
+    if requested_goal:
+        for kind, items in [
+            ("worktree", worktree_approvals),
+            ("commit", commit_approvals),
+            ("publication", publication_approvals),
+        ]:
+            for item in items:
+                if _approval_item_goal_id(storage, item) == requested_goal:
+                    return {
+                        "kind": kind,
+                        "item": item,
+                        "scope_status": "goal_match",
+                        "scope_run_id": "none",
+                        "scope_goal_id": requested_goal,
+                    }
+        kind, item = fallback()
+        return {
+            "kind": kind,
+            "item": item,
+            "scope_status": "scope_miss",
+            "scope_run_id": "none",
+            "scope_goal_id": requested_goal,
+        }
+
+    kind, item = fallback()
+    return {
+        "kind": kind,
+        "item": item,
+        "scope_status": "global",
+        "scope_run_id": "none",
+        "scope_goal_id": "none",
+    }
+
+
+def _approval_item_goal_id(storage: Storage, item: Any) -> str:
+    delegation_id = str(getattr(item, "delegation_id", "") or "")
+    if not delegation_id:
+        return ""
+    delegation = storage.get_subagent_delegation(delegation_id)
+    return delegation.parent_goal_id if delegation is not None else ""
+
+
 def _approval_operator_workbench(
     root: Path,
     worktree_approvals: list[Any],
     commit_approvals: list[Any],
     publication_approvals: list[Any],
+    focus: dict[str, Any],
 ) -> str:
     storage = _storage(root)
     total = len(worktree_approvals) + len(commit_approvals) + len(publication_approvals)
@@ -15587,8 +15700,9 @@ def _approval_operator_workbench(
     typed_commit_message_required = "false"
     remote_target = "none"
 
-    if worktree_approvals:
-        item = worktree_approvals[0]
+    focus_kind = str(focus.get("kind") or "none")
+    if focus_kind == "worktree":
+        item = focus["item"]
         status = "decision_form_ready"
         first_kind = "worktree"
         first_id = item.id
@@ -15606,8 +15720,8 @@ def _approval_operator_workbench(
         reason = "bounded_worktree_plan_waiting_for_operator"
         request_artifact_path = _repo_relative_artifact_path(root, item.request_artifact_path)
         evidence_artifact_path = _repo_relative_artifact_path(root, item.source_plan_path)
-    elif commit_approvals:
-        item = commit_approvals[0]
+    elif focus_kind == "commit":
+        item = focus["item"]
         status = "decision_form_ready"
         first_kind = "commit"
         first_id = item.id
@@ -15626,8 +15740,8 @@ def _approval_operator_workbench(
         request_artifact_path = _repo_relative_artifact_path(root, item.request_artifact_path)
         evidence_artifact_path = _repo_relative_artifact_path(root, item.review_path)
         typed_commit_message_required = "true"
-    elif publication_approvals:
-        item = publication_approvals[0]
+    elif focus_kind == "publication":
+        item = focus["item"]
         status = "decision_form_ready"
         first_kind = "publication"
         first_id = item.id
@@ -15680,6 +15794,12 @@ def _approval_operator_workbench(
         f"approval_workbench_inspect: <a href='{_e(inspect_href)}'>{_e(inspect_label)}</a>",
         f"approval_workbench_goal: <a href='{_e(goal_href)}'>{_e(goal_label)}</a>",
         f"approval_workbench_after: {_e(after_decision)}",
+        (
+            "approval_workbench_scope: "
+            f"status={_e(focus['scope_status'])} "
+            f"run={_e(focus['scope_run_id'])} "
+            f"goal={_e(focus['scope_goal_id'])}"
+        ),
         "approval_workbench_finish: <a href='#approval-finish-today'>Finish Today</a>",
         "approval_workbench_safety: confirmed local decision artifact only",
     ]
@@ -15718,6 +15838,9 @@ def _approval_operator_workbench(
             _kv(
                 [
                     ("approval_workbench_status", status),
+                    ("approval_workbench_scope_status", focus["scope_status"]),
+                    ("approval_workbench_scope_run", focus["scope_run_id"]),
+                    ("approval_workbench_scope_goal", focus["scope_goal_id"]),
                     ("approval_workbench_total_pending", str(total)),
                     ("approval_workbench_worktree_pending", str(len(worktree_approvals))),
                     ("approval_workbench_commit_pending", str(len(commit_approvals))),
@@ -15771,6 +15894,7 @@ def _approval_decision_brief(
     worktree_approvals: list[Any],
     commit_approvals: list[Any],
     publication_approvals: list[Any],
+    focus: dict[str, Any],
 ) -> str:
     status = "empty"
     kind = "none"
@@ -15794,8 +15918,9 @@ def _approval_decision_brief(
     context_run = "none"
     context_delegation = "none"
 
-    if worktree_approvals:
-        item = worktree_approvals[0]
+    focus_kind = str(focus.get("kind") or "none")
+    if focus_kind == "worktree":
+        item = focus["item"]
         status = "needs_worktree_decision"
         kind = "worktree"
         decision_id = item.id
@@ -15824,8 +15949,8 @@ def _approval_decision_brief(
         after_decision = "run approved worktree from goal or run surface"
         after_surface = workflow_surface
         reason = "bounded_worktree_plan_waiting_for_operator"
-    elif commit_approvals:
-        item = commit_approvals[0]
+    elif focus_kind == "commit":
+        item = focus["item"]
         status = "needs_commit_decision"
         kind = "commit"
         decision_id = item.id
@@ -15854,8 +15979,8 @@ def _approval_decision_brief(
         typed_commit_message_required = "true"
         changed_files = str(len(item.changed_files))
         reason = "reviewed_worktree_commit_waiting_for_operator"
-    elif publication_approvals:
-        item = publication_approvals[0]
+    elif focus_kind == "publication":
+        item = focus["item"]
         status = "needs_publication_decision"
         kind = "publication"
         decision_id = item.id
@@ -15893,6 +16018,12 @@ def _approval_decision_brief(
             f"delegation={_e(context_delegation)}"
         ),
         f"approval_decision_reason: {_e(reason)}",
+        (
+            "approval_decision_scope: "
+            f"status={_e(focus['scope_status'])} "
+            f"run={_e(focus['scope_run_id'])} "
+            f"goal={_e(focus['scope_goal_id'])}"
+        ),
         f"approval_decision_evidence: {evidence_artifact}",
         f"approval_decision_after: {_e(after_decision)} at {after_surface}",
         "approval_decision_safety: confirmed local decision artifact only",
@@ -15912,6 +16043,9 @@ def _approval_decision_brief(
             _kv(
                 [
                     ("approval_decision_status", status),
+                    ("approval_decision_scope_status", focus["scope_status"]),
+                    ("approval_decision_scope_run", focus["scope_run_id"]),
+                    ("approval_decision_scope_goal", focus["scope_goal_id"]),
                     ("approval_decision_kind", kind),
                     ("approval_decision_id", decision_id),
                     ("approval_decision_project", project),
@@ -15949,6 +16083,7 @@ def _approval_queue_command_bar(
     worktree_approvals: list[Any],
     commit_approvals: list[Any],
     publication_approvals: list[Any],
+    focus: dict[str, Any],
 ) -> str:
     total = len(worktree_approvals) + len(commit_approvals) + len(publication_approvals)
     first_kind = "none"
@@ -15957,24 +16092,25 @@ def _approval_queue_command_bar(
     first_action = "No pending approvals"
     first_surface = SafeHtml("<a href='/goals'>/goals</a>")
     after_decision = "none"
-    if worktree_approvals:
-        item = worktree_approvals[0]
+    focus_kind = str(focus.get("kind") or "none")
+    if focus_kind == "worktree":
+        item = focus["item"]
         first_kind = "worktree"
         first_id = item.id
         first_project = item.project_id
         first_action = "Approve worktree"
         first_surface = SafeHtml("<a href='#pending-worktree-approvals'>Pending Worktree Approvals</a>")
         after_decision = "run approved worktree from goal or run surface"
-    elif commit_approvals:
-        item = commit_approvals[0]
+    elif focus_kind == "commit":
+        item = focus["item"]
         first_kind = "commit"
         first_id = item.id
         first_project = item.project_id
         first_action = "Approve commit"
         first_surface = SafeHtml("<a href='#pending-commit-approvals'>Pending Commit Approvals</a>")
         after_decision = "commit approved worktree with typed message"
-    elif publication_approvals:
-        item = publication_approvals[0]
+    elif focus_kind == "publication":
+        item = focus["item"]
         first_kind = "publication"
         first_id = item.id
         first_project = item.project_id
@@ -15984,6 +16120,12 @@ def _approval_queue_command_bar(
     lines = [
         f"approval_queue_now: {_e(first_action)}",
         f"approval_queue_click: {first_surface}",
+        (
+            "approval_queue_scope: "
+            f"status={_e(focus['scope_status'])} "
+            f"run={_e(focus['scope_run_id'])} "
+            f"goal={_e(focus['scope_goal_id'])}"
+        ),
         f"approval_queue_after_decision: {_e(after_decision)}",
         "approval_queue_safety: local decision artifact only",
     ]
@@ -15996,6 +16138,9 @@ def _approval_queue_command_bar(
             _kv(
                 [
                     ("approval_queue_status", "available"),
+                    ("approval_queue_scope_status", focus["scope_status"]),
+                    ("approval_queue_scope_run", focus["scope_run_id"]),
+                    ("approval_queue_scope_goal", focus["scope_goal_id"]),
                     ("approval_queue_total_pending", str(total)),
                     ("approval_queue_worktree_pending", str(len(worktree_approvals))),
                     ("approval_queue_commit_pending", str(len(commit_approvals))),
@@ -17267,6 +17412,7 @@ def _run_detail(root: Path, run_id: str) -> str:
         )
         parts.append(_run_command_bar(root, coder_run))
         parts.append(_run_operator_workbench(root, coder_run))
+        parts.append(_run_gate_map(root, coder_run))
         parts.append(_run_workflow_state(root, coder_run))
         parts.append(_run_review_gate(root, coder_run))
         parts.append(
@@ -17507,7 +17653,7 @@ def _run_operator_workbench(root: Path, coder_run: Any) -> str:
     manual_boundary = target_href == "#publication-handoff-commands"
     if action_form_available:
         status = "action_form_ready"
-    elif target_href == "/approvals":
+    elif target_href.startswith("/approvals"):
         status = "approval_queue_ready"
     elif manual_boundary:
         status = "manual_boundary_ready"
@@ -17638,6 +17784,267 @@ def _run_operator_workbench(root: Path, coder_run: Any) -> str:
     )
 
 
+def _run_gate_map(root: Path, coder_run: Any) -> str:
+    commit_approvals = [
+        item
+        for item in list_coder_worktree_commit_approvals(root, limit=50)
+        if item.run_id == coder_run.id
+    ]
+    publications = [
+        item
+        for item in list_coder_publications(root, limit=50)
+        if item.run_id == coder_run.id
+    ]
+    review_gate = _run_review_gate_state(root, coder_run)
+    next_action, target_href, target_label, reason = _run_command_next_action(
+        coder_run,
+        review_gate=review_gate,
+        commit_approvals=commit_approvals,
+        publications=publications,
+    )
+    statuses = _run_gate_statuses(
+        review_gate=review_gate,
+        commit_approvals=commit_approvals,
+        publications=publications,
+    )
+    current_gate = next(
+        (
+            name
+            for name, status in statuses.items()
+            if status in {"current", "blocked", "attention"}
+        ),
+        "complete",
+    )
+    counts: dict[str, int] = {}
+    for status in statuses.values():
+        counts[status] = counts.get(status, 0) + 1
+    total = len(RUN_GATE_STEPS)
+    done = counts.get("done", 0)
+    waiting = counts.get("waiting", 0)
+    blocked = counts.get("blocked", 0) + counts.get("attention", 0)
+    target_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+
+    items: list[str] = []
+    lines: list[str] = []
+    for index, (gate, label, action, href, surface_label) in enumerate(
+        RUN_GATE_STEPS,
+        start=1,
+    ):
+        status = statuses.get(gate, "waiting")
+        marker = "current" if gate == current_gate else status
+        surface = _run_gate_surface(href, surface_label, run_id=coder_run.id)
+        lines.append(
+            f"run_gate_step: {_e(gate)} status={_e(status)} "
+            f"marker={_e(marker)} action={_e(action)} surface={surface}"
+        )
+        items.append(
+            "<li "
+            f"data-run-gate='{_e(gate)}' "
+            f"data-run-gate-status='{_e(status)}' "
+            f"data-run-gate-marker='{_e(marker)}' "
+            f"data-run-gate-action='{_e(action)}'>"
+            f"<span class='workflow-map-index'>{index}</span> "
+            f"<strong>{_e(label)}</strong> "
+            f"status={_e(status)} marker={_e(marker)} "
+            f"action={_e(action)} surface={surface}</li>"
+        )
+
+    return "".join(
+        [
+            "<section id='run-gate-map' class='panel run-gate-map' data-run-gate-map='true'><h2>Run Gate Map</h2>",
+            "<p class='muted'>A run-scoped rail from review through local commit, publication handoff, and the manual publish boundary.</p>",
+            _kv(
+                [
+                    ("run_gate_status", "available"),
+                    ("run_gate_run_id", coder_run.id),
+                    ("run_gate_project", coder_run.project_id),
+                    (
+                        "run_gate_delegation",
+                        SafeHtml(
+                            f"<a href='/delegations/{quote(coder_run.delegation_id)}'>{_e(coder_run.delegation_id)}</a>"
+                        ),
+                    ),
+                    ("run_gate_current_gate", current_gate),
+                    ("run_gate_current_step", current_gate),
+                    ("run_gate_current_action", next_action),
+                    ("run_gate_current_surface", target_surface),
+                    ("run_gate_reason", reason),
+                    ("run_gate_progress", f"{done}/{total} gates done"),
+                    ("run_gate_step_count", str(total)),
+                    ("run_gate_done_count", str(done)),
+                    ("run_gate_waiting_count", str(waiting)),
+                    ("run_gate_blocked_count", str(blocked)),
+                    ("run_gate_review_status", statuses["review"]),
+                    ("run_gate_commit_request_status", statuses["commit_request"]),
+                    ("run_gate_commit_approval_status", statuses["commit_approval"]),
+                    ("run_gate_local_commit_status", statuses["local_commit"]),
+                    (
+                        "run_gate_publication_request_status",
+                        statuses["publication_request"],
+                    ),
+                    (
+                        "run_gate_publication_approval_status",
+                        statuses["publication_approval"],
+                    ),
+                    (
+                        "run_gate_publication_handoff_status",
+                        statuses["publication_handoff"],
+                    ),
+                    ("run_gate_manual_publish_status", statuses["manual_publish"]),
+                    ("run_gate_manual_boundary", "outside_clankeros"),
+                    ("run_gate_source", "coder_worktree_run_gate_state"),
+                    ("run_gate_write_on_get", "false"),
+                    ("run_gate_provider_calls_taken", "0"),
+                    ("run_gate_network_actions_taken", "0"),
+                    ("run_gate_external_effects_created", "false"),
+                    ("run_gate_push_created", "false"),
+                    ("run_gate_pr_created", "false"),
+                    ("run_gate_deploy_created", "false"),
+                ]
+            ),
+            "<ol class='workflow-map-rail run-gate-rail'>",
+            "".join(items),
+            "</ol>",
+            _ul(
+                lines
+                + [
+                    f"run_gate_now: {_e(next_action)} at <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    "run_gate_safety: read-only run guidance; confirmed local forms remain on existing gate surfaces",
+                ]
+            ),
+            "</section>",
+        ]
+    )
+
+
+def _run_gate_statuses(
+    *,
+    review_gate: dict[str, Any],
+    commit_approvals: list[Any],
+    publications: list[Any],
+) -> dict[str, str]:
+    statuses = {gate: "waiting" for gate, *_ in RUN_GATE_STEPS}
+    if not commit_approvals:
+        if review_gate["commit_request_form_available"]:
+            statuses["review"] = "done"
+            statuses["commit_request"] = "current"
+        else:
+            statuses["review"] = "current"
+            statuses["commit_request"] = "waiting"
+        return statuses
+
+    statuses["review"] = "done"
+    statuses["commit_request"] = "done"
+    commit_status = _preferred_status(
+        commit_approvals,
+        ["committed", "approved", "pending_operator_approval", "rejected"],
+        "unknown",
+    )
+    if commit_status == "pending_operator_approval":
+        statuses["commit_approval"] = "current"
+        return statuses
+    if commit_status == "rejected":
+        statuses["commit_approval"] = "blocked"
+        return statuses
+    statuses["commit_approval"] = "done"
+    if commit_status == "approved":
+        statuses["local_commit"] = "current"
+        return statuses
+    if commit_status != "committed":
+        statuses["local_commit"] = "attention"
+        return statuses
+
+    statuses["local_commit"] = "done"
+    if not publications:
+        statuses["publication_request"] = "current"
+        return statuses
+
+    statuses["publication_request"] = "done"
+    publication_status = _preferred_status(
+        publications,
+        ["ready_for_operator", "approved", "pending_operator_approval", "rejected"],
+        "unknown",
+    )
+    if publication_status == "pending_operator_approval":
+        statuses["publication_approval"] = "current"
+        return statuses
+    if publication_status == "rejected":
+        statuses["publication_approval"] = "blocked"
+        return statuses
+    statuses["publication_approval"] = "done"
+    if publication_status == "approved":
+        statuses["publication_handoff"] = "current"
+        return statuses
+    if publication_status == "ready_for_operator":
+        statuses["publication_handoff"] = "done"
+        statuses["manual_publish"] = "current"
+        return statuses
+    statuses["publication_handoff"] = "attention"
+    return statuses
+
+
+def _run_gate_surface(href: str, label: str, *, run_id: str | None = None) -> SafeHtml | str:
+    if href == "outside_clankeros":
+        return "outside_clankeros"
+    if href == "/approvals" and run_id:
+        href = f"/approvals?run_id={quote(run_id)}"
+    return SafeHtml(f"<a href='{_e(href)}'>{_e(label)}</a>")
+
+
+RUN_GATE_STEPS: list[tuple[str, str, str, str, str]] = [
+    ("review", "Review", "Review run", "#run-review-gate", "Run Review Gate"),
+    (
+        "commit_request",
+        "Commit Request",
+        "Create commit request",
+        "#run-approval-actions",
+        "Run approval actions",
+    ),
+    (
+        "commit_approval",
+        "Commit Approval",
+        "Approve commit request",
+        "/approvals",
+        "/approvals",
+    ),
+    (
+        "local_commit",
+        "Local Commit",
+        "Commit approved worktree",
+        "#confirmed-local-commit-action",
+        "Confirmed Local Commit Action",
+    ),
+    (
+        "publication_request",
+        "Publication Request",
+        "Create publication request",
+        "#run-approval-actions",
+        "Run approval actions",
+    ),
+    (
+        "publication_approval",
+        "Publication Approval",
+        "Approve publication request",
+        "/approvals",
+        "/approvals",
+    ),
+    (
+        "publication_handoff",
+        "Publication Handoff",
+        "Create publication handoff",
+        "#publication-handoff-action",
+        "Publication Handoff Action",
+    ),
+    (
+        "manual_publish",
+        "Manual Publish",
+        "Manual publish outside ClankerOS",
+        "outside_clankeros",
+        "outside_clankeros",
+    ),
+]
+
+
 def _run_command_next_action(
     coder_run: Any,
     *,
@@ -17686,7 +18093,7 @@ def _run_command_next_action(
     if pending_commit is not None:
         return (
             "Review commit approval",
-            "/approvals",
+            f"/approvals?run_id={quote(coder_run.id)}",
             "/approvals",
             f"commit approval {pending_commit.id} is pending",
         )
@@ -17707,7 +18114,7 @@ def _run_command_next_action(
     if pending_publication is not None:
         return (
             "Review publication approval",
-            "/approvals",
+            f"/approvals?run_id={quote(coder_run.id)}",
             "/approvals",
             f"publication approval {pending_publication.id} is pending",
         )
@@ -19283,7 +19690,7 @@ def _manual_browser_checkpoints(state: dict[str, str] | None) -> str:
         checkpoints.extend(
             [
                 f"<a href='/workflow?run_id={quote(run_id)}'>/workflow?run_id={_e(run_id)}</a> marker=Modern Operator Workflow expected=Selected Workflow Continuation",
-                f"<a href='/runs/{quote(run_id)}'>/runs/{_e(run_id)}</a> marker=Run expected=Run Operator Workbench,Run Workflow State,Run Approval Actions,Coder Worktree Evidence",
+                f"<a href='/runs/{quote(run_id)}'>/runs/{_e(run_id)}</a> marker=Run expected=Run Operator Workbench,Run Gate Map,Run Workflow State,Run Approval Actions,Coder Worktree Evidence",
             ]
         )
     else:
@@ -19749,7 +20156,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 note=_one(form, "note") or "Approved from local app.",
             )
             message = f"approved_coder_commit: {result.approval.id}"
-            location = "/"
+            location = f"/runs/{quote(result.approval.run_id)}"
             _remember_delegation_workspace(
                 root,
                 storage,
@@ -19813,7 +20220,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 note=_one(form, "note") or "Approved from local app.",
             )
             message = f"approved_coder_publication: {result.publication.id}"
-            location = "/approvals"
+            location = f"/runs/{quote(result.publication.run_id)}"
             _remember_delegation_workspace(
                 root,
                 storage,
@@ -22635,6 +23042,7 @@ def _html_page(
     :root {{ color-scheme: light; --ink:#15171a; --muted:#5d6672; --line:#d9dee5; --panel:#f7f8fa; --surface:#ffffff; --accent:#176b87; --ok:#2e7d32; --warn:#8a4b00; --error:#9c1d24; }}
     :root[data-theme="dark"] {{ color-scheme: dark; --ink:#eef4f8; --muted:#a6b0bd; --line:#303842; --panel:#161b22; --surface:#0f1419; --accent:#62b6cb; --ok:#7bd88f; --warn:#f0bd59; --error:#ff8a94; }}
     * {{ box-sizing: border-box; }}
+    *, *::before, *::after {{ box-sizing:border-box; }}
     body {{ margin:0; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:var(--ink); background:var(--surface); line-height:1.45; }}
     header {{ display:flex; justify-content:space-between; align-items:center; gap:16px; padding:14px 24px; border-bottom:1px solid var(--line); background:var(--surface); position:sticky; top:0; z-index:2; }}
     header nav {{ display:flex; flex-wrap:wrap; gap:0 14px; min-width:0; max-width:100%; }}
@@ -22974,6 +23382,12 @@ def _html_page(
     .run-workbench-action, .run-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .run-workbench-action {{ background:var(--accent); color:#fff; }}
     .run-workbench-link {{ background:var(--surface); color:var(--accent); }}
+    .run-gate-map {{ border-left:4px solid var(--ok); }}
+    .run-gate-map dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .run-gate-map ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .run-gate-map li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .run-gate-rail li[data-run-gate-marker="current"] {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .run-gate-rail li[data-run-gate-status="blocked"], .run-gate-rail li[data-run-gate-status="attention"] {{ border-color:var(--warn); box-shadow:inset 3px 0 0 var(--warn); }}
     .delegation-run-command-bar {{ border-left:4px solid var(--accent); }}
     .delegation-run-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .delegation-run-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -23092,10 +23506,13 @@ def _html_page(
     .command-grid {{ display:grid; grid-template-columns:1fr auto; gap:8px; }}
     .shortcut-list kbd {{ display:inline-block; min-width:52px; border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; padding:2px 6px; background:var(--panel); color:var(--ink); font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px; }}
     .sr-only {{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }}
+    label {{ display:block; min-width:0; }}
+    input, textarea, select {{ min-width:0; max-width:100%; }}
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
     @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .palette-focus-grid, .route-context-focus, .operator-focus-focus, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .today-command-grid, .today-workbench-grid, .ci-proof-workbench-grid, .project-workbench-grid, .run-workbench-grid, .approval-workbench-grid, .inbox-workbench-grid, .action-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>

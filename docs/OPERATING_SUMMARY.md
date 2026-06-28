@@ -618,13 +618,21 @@ Core layers for the bootstrap:
   do/check/unblock/finish cards, same-page action anchors, review/evidence
   links, approvals, parent Goal, and a confirmed `save-workspace` form that
   stores the run plus review/evidence artifact as a future resume point
-  without writing on GET, followed by the same upstream and downstream workflow
-  posture as a `Run Workflow State` readback, plus a `Run Review Gate`
-  readback that mirrors the backend requirement that
+  without writing on GET, followed by a read-only `Run Gate Map` that marks
+  the current eight-step run path from review through local commit,
+  publication handoff, and manual publish outside ClankerOS. The map links
+  only to existing local anchors or `/approvals`, counts done/waiting/blocked
+  gates, and adds no action authority. The page then shows the same upstream
+  and downstream workflow posture as a `Run Workflow State` readback, plus a
+  `Run Review Gate` readback that mirrors the backend requirement that
   `runs/<source_run_id>/review.md` exists and mentions the coder worktree run
   id before `coder-commit-request` is offered; once publication handoff is
   ready they show copy-only suggested push and draft-PR commands plus the PR
-  body path with zero-effect counters.
+  body path with zero-effect counters. Run-scoped approval links use
+  `/approvals?run_id=<coder_run_id>` so the approval page foregrounds the
+  matching commit or publication decision ahead of unrelated queue items, and
+  commit/publication approval decisions return to the owning run page after
+  confirmation.
   The root `/` app page is now a Goal-First Home board with active, paused,
   and completed goal lanes, recent activity, inbox counts, recommendations,
   incidents, saved workspace resume links, saved-goal phase and next-action
