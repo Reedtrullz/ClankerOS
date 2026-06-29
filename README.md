@@ -269,8 +269,8 @@ title-first when possible, while still retaining exact saved Goal id and route
 evidence for restoration. A read-only `Workspace View Memory` panel follows to
 inspect and clear browser-local view state such as theme, focus mode, Goal
 board filters, open panels, scroll position, search lanes, timeline lanes,
-artifact filters, and notes filters, Memory Bank filters, and Skills
-Inventory filters from `localStorage` without changing
+artifact filters, notes filters, note drafts, setup form drafts, Memory Bank
+filters, and Skills Inventory filters from `localStorage` without changing
 `.clanker/app/workspace.json`.
 The read-only
 `Workspace Daily Brief` and `Workspace Workflow Map` then follow with the
@@ -342,7 +342,9 @@ Reset view control for returning to the default board. The
 cockpit also includes a confirmed local
 `Start Another Goal` form backed by the existing `create-goal` action,
 so an operator can add the next goal for a registered project without
-switching to the CLI.
+switching to the CLI. Setup and Goal creation forms keep unsent edits in
+browser-local `localStorage:clankeros-action-form-draft:<action>:<scope>`
+until the operator clears them or the confirmed local action succeeds.
 Use `/goals/<goal_id>` as the
 goal-centered workbench: the page is now content-first, so the Goal summary,
 large Current Phase banner, jump bar, action dock, progress meter, and
@@ -617,8 +619,9 @@ remains inert and bounded.
 
 Use `/goals` on a fresh checkout for first-run browser actions. The page now
 renders a state-aware First Run Guide plus confirmed local forms for
-`register-project` and `create-goal`, so a new operator can create a project
-and first goal without switching to CLI commands. The guide tracks whether
+`register-project` and `create-goal`, with browser-local draft memory for
+those setup fields, so a new operator can create a project and first goal
+without switching to CLI commands. The guide tracks whether
 the project, goal, first delegation, and context pack exist, then points to
 the current surface, the confirmed local `run-delegation` action, or its exact
 CLI fallback command. It also renders `First Run Next Step` plus the

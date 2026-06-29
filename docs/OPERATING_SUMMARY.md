@@ -294,7 +294,7 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   read-only `Workspace View Memory` panel. That panel inventories browser
   `localStorage` view state for theme, focus mode, Goal board, Recent Items
   filters, open panels, scroll position, search lanes, timeline lanes, artifact
-  filters, notes filters, Memory Bank filters, Skills Inventory filters,
+  filters, notes filters, note drafts, setup form drafts, Memory Bank filters, Skills Inventory filters,
   Approval Queue filters, Inbox Queue filters, and Profile Routing filters, and can clear those
   browser-local values after explicit operator clicks without writing
   `.clanker/app/workspace.json`, calling providers, using the network, or
@@ -377,7 +377,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   `register-project` and `create-goal` forms, explicitly defaults the first
   dogfood project to `clankeros` at the current repository path, persists
   resume workspace state plus exact `resume_surface` routes after confirmed
-  browser project registration and first goal creation, and now refreshes the
+  browser project registration and first goal creation, keeps unsent setup and
+  Goal creation edits in browser-local
+  `localStorage:clankeros-action-form-draft:<action>:<scope>` until cleared or
+  confirmed-success cleanup, and now refreshes the
   same saved workspace anchor after
   confirmed first-run scout delegation, context-pack generation, and delegation
   run actions so `/resume`, Home, and `/workspace` return to the newest local

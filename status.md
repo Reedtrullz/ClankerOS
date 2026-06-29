@@ -1,5 +1,46 @@
 # Status
 
+## 2026-06-29 Browser-Local Setup Form Drafts
+
+- Added browser-local draft memory for confirmed `register-project` and
+  `create-goal` setup forms, backed by scoped
+  `localStorage:clankeros-action-form-draft:<action>:<scope>` entries.
+- First-run project registration, first Goal creation, Resume/Workspace
+  first-run continuation forms, project-scoped Goal creation, and the
+  `/goals` Start Another Goal form now share the same draft behavior: unsent
+  edits save after typing, restore after local reloads, report draft status in
+  the DOM, and expose a `Clear draft` button. `create-goal` prompts now render
+  as multiline textareas.
+- Confirmed successful `register-project` and `create-goal` action-result
+  pages now clear the submitted browser-local form draft key. The
+  confirmation/review payload hides draft bookkeeping fields from the visible
+  operator payload.
+- `/workspace#workspace-view-memory` now includes a `Form Drafts` prefix card
+  and reset scope, so unsent setup and Goal creation drafts can be inspected
+  or cleared with the other browser-local view state.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused local app pytest passed with
+  `3 passed in 71.59s`; `python3 -m compileall -q agent_os tests` passed;
+  `git diff --check` passed; bounded scratch-root `app-smoke-test` passed
+  across core routes with provider/network/external mutation counters at zero;
+  bounded scratch-root `app-demo-smoke-test` passed across fixture-backed
+  routes with the same zero-effect counters.
+- Browser verification: Chrome Playwright against throwaway local app
+  `http://127.0.0.1:61906` confirmed `register-project` draft save to
+  `clankeros-action-form-draft:register-project:clankeros`, reload restore,
+  Workspace View Memory reset clearing that draft, confirmed
+  `register-project` cleanup after success, `create-goal` draft save to
+  `clankeros-action-form-draft:create-goal:draft-project`, multiline reload
+  restore, confirmed `create-goal` cleanup after success, mobile viewport
+  `390x844` with no horizontal overflow, and cleanup of the scratch server and
+  root. The only browser console errors were the expected `409 Conflict`
+  confirmation responses.
+- Non-claims: setup form draft memory is browser-local unsent text only. It
+  does not write `.clanker/app/workspace.json`, register projects or create
+  goals without explicit confirmation, bypass the confirmed action review
+  page, approve or execute work, call providers, fetch GitHub, push, create
+  PRs, deploy, or mutate external systems.
+
 ## 2026-06-29 Browser-Local Note Drafts
 
 - Added browser-local draft memory for confirmed Goal and Today

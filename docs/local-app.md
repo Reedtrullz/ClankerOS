@@ -77,7 +77,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   Confirmed
   `register-project` and `create-goal` browser actions also update
   `.clanker/app/workspace.json`, so `/resume` can restore the new project or
-  goal without a separate manual save step. After `register-project`, the
+  goal without a separate manual save step. Those setup forms keep unsent
+  edits in browser-local `localStorage:clankeros-action-form-draft:<action>:<scope>`
+  until cleared or until the confirmed local action succeeds. After
+  `register-project`, the
   local `Action Result Details` page also reads first-run progress and renders
   an inline confirmed `create-goal` continuation, plus Home and Today fallback
   links, so the operator can continue before a saved Goal exists.
@@ -155,6 +158,7 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   exists, `/resume` follows first-run progress instead: an empty checkout
   renders a same-page `Resume First-Run Action` `register-project` form, a
   registered-project/no-goal workspace renders a same-page `create-goal` form
+  with the same browser-local draft memory
   while still linking the saved project, and the command bar, workbench,
   readiness, next-action, and workflow-map sections all show that same first-run
   gate and setup target while retaining Home/Today/Goals fallback links in
@@ -217,7 +221,7 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   lane mode, and sort in browser-local storage across reloads until Reset view
   is used. Fresh checkouts still expose
   confirmed local `register-project` and `create-goal` forms for a fresh
-  checkout.
+  checkout, and those forms restore unsent browser-local drafts after reloads.
 - `/goals/<goal_id>` - goal-centered workbench that is content-first: the Goal
   summary, large Current Phase banner, jump bar, action dock, and progress meter
   appear before shared route/focus diagnostics. The summary is now title-first:
@@ -630,8 +634,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   id, label source, and route evidence. A read-only `Workspace View Memory`
   panel follows, showing browser-local `localStorage` view state for theme,
   focus mode, Goal board view, open panels, scroll position, search lanes,
-  timeline lanes, artifact filters, notes filters, Memory Bank filters, and
-  Skills Inventory filters with
+  timeline lanes, artifact filters, notes filters, note drafts, setup form
+  drafts, Memory Bank filters, and Skills Inventory filters with
   Refresh plus reset controls. It only clears
   browser-local view memory after explicit clicks and does not write
   `.clanker/app/workspace.json`. The read-only `Workspace Daily Brief` and `Workspace Workflow Map`

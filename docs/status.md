@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- First-run setup and daily Goal creation forms now keep unsent
+  `register-project` and `create-goal` edits in browser-local
+  `localStorage:clankeros-action-form-draft:<action>:<scope>` entries. The
+  form drafts restore after reloads, can be cleared from the form or
+  `/workspace#workspace-view-memory`, and are cleared after the confirmed local
+  action succeeds.
 - Goal and Today operator note capture now uses a multiline confirmed
   `save-goal-note` form with browser-local draft memory in
   `localStorage:clankeros-goal-note-draft:<goal_id>`, so unsent notes survive
@@ -85,9 +91,9 @@ Latest status focus:
   network actions, raw filesystem browsing, or external effects.
 - `/workspace#workspace-view-memory` now exposes browser-local view memory
   for theme, focus mode, Goal board view, open panels, scroll position, search
-  lanes, timeline lanes, artifact filters, notes filters, note drafts, Memory
-  Bank filters, Skills Inventory filters, Approval Queue filters, Inbox Queue
-  filters, and Profile Routing filters. It can refresh or clear those
+  lanes, timeline lanes, artifact filters, notes filters, note drafts, setup
+  form drafts, Memory Bank filters, Skills Inventory filters, Approval Queue
+  filters, Inbox Queue filters, and Profile Routing filters. It can refresh or clear those
   `localStorage` values after explicit clicks while preserving read-only GET
   behavior, `.clanker/app/workspace.json`, no raw filesystem browsing, and
   no-provider/no-network/no-external-effect boundaries.

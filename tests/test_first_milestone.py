@@ -5517,6 +5517,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "window.localStorage.setItem(scrollPositionMemoryStorageKey(), JSON.stringify({" in root.body
     assert 'window.addEventListener("scroll", scheduleSaveScrollPositionMemoryState' in root.body
     assert 'updateScrollPositionMemoryAttributes("hash-skip"' in root.body
+    assert "function initializeActionFormDraftState()" in root.body
+    assert "function actionDraftStorageKey(form)" in root.body
+    assert "window.localStorage.setItem(key, JSON.stringify(state))" in root.body
     assert "function initializeGoalNoteDraftState()" in root.body
     assert "window.localStorage.setItem(key, JSON.stringify(state))" in root.body
     assert "window.localStorage.removeItem(key)" in root.body
@@ -6462,7 +6465,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-refresh='true'>Refresh" in workspace.body
     assert "data-workspace-view-memory-reset-all='true'>Reset all view memory" in workspace.body
     assert "data-workspace-view-memory-grid='true'" in workspace.body
-    assert workspace.body.count("class='workspace-view-memory-card") == 17
+    assert workspace.body.count("class='workspace-view-memory-card") == 18
     assert "data-workspace-view-memory-card='theme'" in workspace.body
     assert "data-workspace-view-memory-card='focus'" in workspace.body
     assert "data-workspace-view-memory-card='goal-board'" in workspace.body
@@ -6475,6 +6478,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-card='artifacts'" in workspace.body
     assert "data-workspace-view-memory-card='notes'" in workspace.body
     assert "data-workspace-view-memory-card='note-drafts'" in workspace.body
+    assert "data-workspace-view-memory-card='form-drafts'" in workspace.body
     assert "data-workspace-view-memory-card='memory'" in workspace.body
     assert "data-workspace-view-memory-card='skills'" in workspace.body
     assert "data-workspace-view-memory-card='approvals'" in workspace.body
@@ -6497,13 +6501,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-artifact-filter:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-notes-filter:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-note-draft:'" in workspace.body
+    assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-action-form-draft:'" in workspace.body
     assert "data-workspace-view-memory-reset='true'>Reset" in workspace.body
     assert "data-workspace-view-memory-evidence='true'" in workspace.body
     assert "workspace_view_memory_status</dt><dd>available" in workspace.body
     assert "workspace_view_memory_source</dt><dd>browser localStorage" in workspace.body
-    assert "workspace_view_memory_card_count</dt><dd>17" in workspace.body
+    assert "workspace_view_memory_card_count</dt><dd>18" in workspace.body
     assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-recent-items-filter, clankeros-route-history, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
-    assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-open-panels:, clankeros-scroll-position:, clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-artifact-filter:, clankeros-goal-notes-filter:, clankeros-goal-note-draft:" in workspace.body
+    assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-open-panels:, clankeros-scroll-position:, clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-artifact-filter:, clankeros-goal-notes-filter:, clankeros-goal-note-draft:, clankeros-action-form-draft:" in workspace.body
     assert "workspace_view_memory_reset_all_supported</dt><dd>true" in workspace.body
     assert "workspace_view_memory_reset_requires_click</dt><dd>true" in workspace.body
     assert "workspace_view_memory_workspace_json_write</dt><dd>false" in workspace.body
@@ -6519,12 +6524,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: scroll-position mode=prefix key=clankeros-scroll-position:" in workspace.body
     assert "workspace_view_memory_card: search mode=prefix key=clankeros-search-result-lane:" in workspace.body
     assert "workspace_view_memory_card: note-drafts mode=prefix key=clankeros-goal-note-draft:" in workspace.body
+    assert "workspace_view_memory_card: form-drafts mode=prefix key=clankeros-action-form-draft:" in workspace.body
     assert "workspace_view_memory_card: memory mode=exact key=clankeros-memory-inventory-filter" in workspace.body
     assert "workspace_view_memory_card: skills mode=exact key=clankeros-skills-inventory-filter" in workspace.body
     assert "workspace_view_memory_card: approvals mode=exact key=clankeros-approval-queue-filter" in workspace.body
     assert "workspace_view_memory_card: inbox mode=exact key=clankeros-inbox-queue-filter" in workspace.body
     assert "workspace_view_memory_card: profiles mode=exact key=clankeros-profile-routing-filter" in workspace.body
-    assert "workspace_view_memory_reset_scope: theme focus board recent route-history open-panels scroll-position search timeline artifacts notes note-drafts memory skills approvals inbox profiles" in workspace.body
+    assert "workspace_view_memory_reset_scope: theme focus board recent route-history open-panels scroll-position search timeline artifacts notes note-drafts form-drafts memory skills approvals inbox profiles" in workspace.body
     assert "window.localStorage.removeItem(key)" in workspace.body
     assert "candidate.indexOf(key) === 0" in workspace.body
     assert "delete document.documentElement.dataset.theme" in workspace.body
@@ -6893,6 +6899,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     )
     assert register_result.status == 200
     assert "project_registered: first-target" in register_result.body
+    assert "data-action-result-form-draft-cleanup='true'" in register_result.body
+    assert "data-action-result-form-draft-action='register-project'" in register_result.body
+    assert "data-action-result-form-draft-key='clankeros-action-form-draft:register-project:first-target'" in register_result.body
+    assert "action_result_form_draft_storage</dt><dd>localStorage:clankeros-action-form-draft:register-project:first-target" in register_result.body
+    assert "action_result_form_draft_write_on_get</dt><dd>false" in register_result.body
     assert (tmp_path / "projects" / "first-target" / "project.md").exists()
     registered_goals = render_local_app_route(tmp_path, "/goals")
     assert "first_run_current_step</dt><dd>create_first_goal" in registered_goals.body
@@ -6926,6 +6937,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "goal_board_workbench_primary_surface</dt><dd><a href='#first-run-create-goal'>"
         "Create First Goal</a>"
     ) in registered_goals.body
+    assert "data-action-draft-form='true'" in registered_goals.body
+    assert "data-action-draft-action='create-goal'" in registered_goals.body
+    assert "data-action-draft-storage-key='clankeros-action-form-draft:create-goal:first-target'" in registered_goals.body
+    assert "data-action-draft-input='true'" in registered_goals.body
+    assert "<textarea name='prompt' rows='4' spellcheck='true' data-action-draft-input='true'" in registered_goals.body
+    assert "data-action-draft-status='true'>Draft: default" in registered_goals.body
+    assert "data-action-draft-reset='true'>Clear draft" in registered_goals.body
+    assert "data-action-draft-evidence='true'" in registered_goals.body
+    assert "action_form_draft_memory_storage</dt><dd>localStorage:clankeros-action-form-draft:create-goal:first-target" in registered_goals.body
+    assert "action_form_draft_cleared_after_confirmed_success</dt><dd>true" in registered_goals.body
     registered_home = render_local_app_route(tmp_path, "/")
     assert registered_home.status == 200
     assert "home_live_refresh_next_action</dt><dd>Create first goal" in registered_home.body
@@ -7036,6 +7057,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert create_goal_result.status == 200
     assert "goal_created:" in create_goal_result.body
     assert "GOAL.md" in create_goal_result.body
+    assert "data-action-result-form-draft-cleanup='true'" in create_goal_result.body
+    assert "data-action-result-form-draft-action='create-goal'" in create_goal_result.body
+    assert "data-action-result-form-draft-key='clankeros-action-form-draft:create-goal:first-target'" in create_goal_result.body
+    assert "action_result_form_draft_storage</dt><dd>localStorage:clankeros-action-form-draft:create-goal:first-target" in create_goal_result.body
     with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
         created_goal_id = connection.execute(
             """
@@ -8864,6 +8889,16 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "id='action-continuation-first-run-form'" in register_result.body
     assert "action='/actions/create-goal'" in register_result.body
     assert "name='project_id' value='clankeros'" in register_result.body
+    assert "data-action-result-form-draft-cleanup='true'" in register_result.body
+    assert "data-action-result-form-draft-action='register-project'" in register_result.body
+    assert "data-action-result-form-draft-key='clankeros-action-form-draft:register-project:clankeros'" in register_result.body
+    assert "action_result_form_draft_storage</dt><dd>localStorage:clankeros-action-form-draft:register-project:clankeros" in register_result.body
+    assert "data-action-draft-form='true'" in register_result.body
+    assert "data-action-draft-action='create-goal'" in register_result.body
+    assert "data-action-draft-storage-key='clankeros-action-form-draft:create-goal:clankeros'" in register_result.body
+    assert "data-action-draft-status='true'>Draft: default" in register_result.body
+    assert "data-action-draft-reset='true'>Clear draft" in register_result.body
+    assert "action_form_draft_memory_storage</dt><dd>localStorage:clankeros-action-form-draft:create-goal:clankeros" in register_result.body
     assert "Action Result Workflow Map" in register_result.body
     assert "data-action-result-workflow-map='true'" in register_result.body
     assert "action_result_workflow_status</dt><dd>first_run" in register_result.body
@@ -8998,6 +9033,8 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "resume_first_run_action_external_effects_created</dt><dd>false" in register_resume.body
     assert "action='/actions/create-goal'" in register_resume.body
     assert "name='project_id' value='clankeros'" in register_resume.body
+    assert "data-action-draft-storage-key='clankeros-action-form-draft:create-goal:clankeros'" in register_resume.body
+    assert "<textarea name='prompt' rows='4' spellcheck='true' data-action-draft-input='true'" in register_resume.body
     assert "data-resume-state-details='true'" in register_resume.body
     assert "data-resume-workbench-primary='true'" in register_resume.body
     assert "data-resume-workbench-evidence='true'" in register_resume.body
@@ -9350,6 +9387,10 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     )
 
     assert create_goal_result.status == 200
+    assert "data-action-result-form-draft-cleanup='true'" in create_goal_result.body
+    assert "data-action-result-form-draft-action='create-goal'" in create_goal_result.body
+    assert "data-action-result-form-draft-key='clankeros-action-form-draft:create-goal:clankeros'" in create_goal_result.body
+    assert "action_result_form_draft_storage</dt><dd>localStorage:clankeros-action-form-draft:create-goal:clankeros" in create_goal_result.body
     with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
         created_goal_id = connection.execute(
             """
@@ -11334,6 +11375,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_creation_external_effects_created</dt><dd>false" in goals.body
     assert "action='/actions/create-goal'" in goals.body
     assert "name='project_id' value='local-app-demo'" in goals.body
+    assert "data-action-draft-form='true'" in goals.body
+    assert "data-action-draft-action='create-goal'" in goals.body
+    assert "data-action-draft-storage-key='clankeros-action-form-draft:create-goal:local-app-demo'" in goals.body
+    assert "data-action-draft-status='true'>Draft: default" in goals.body
+    assert "data-action-draft-reset='true'>Clear draft" in goals.body
+    assert "action_form_draft_memory_storage</dt><dd>localStorage:clankeros-action-form-draft:create-goal:local-app-demo" in goals.body
     assert "Goal Board Filter" in goals.body
     assert "data-goal-board-filter='true'" in goals.body
     assert "data-goal-board-filter-input='true'" in goals.body
@@ -15062,6 +15109,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "action='/actions/create-goal'" in project.body
     assert "name='project_id' value='local-app-demo'" in project.body
     assert "name='prompt'" in project.body
+    assert "data-action-draft-action='create-goal'" in project.body
+    assert "data-action-draft-storage-key='clankeros-action-form-draft:create-goal:local-app-demo'" in project.body
+    assert "action_form_draft_memory_storage</dt><dd>localStorage:clankeros-action-form-draft:create-goal:local-app-demo" in project.body
     assert f"/workflow?delegation_id={result.delegation_id}" in project.body
     assert f"/workflow?run_id={result.coder_worktree_run_id}" in project.body
     assert f"/delegations/{result.delegation_id}" in project.body
@@ -15107,6 +15157,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "action='/actions/register-project'" in projects_index.body
     assert "name='path'" in projects_index.body
     assert "name='test_command' value='python3 -m pytest -q'" in projects_index.body
+    assert "data-action-draft-action='register-project'" in projects_index.body
+    assert "data-action-draft-storage-key='clankeros-action-form-draft:register-project:local-project-2'" in projects_index.body
+    assert "action_form_draft_memory_storage</dt><dd>localStorage:clankeros-action-form-draft:register-project:local-project-2" in projects_index.body
     assert "local-app-demo" in projects_index.body
     assert f"/projects/{result.project_id}" in projects_index.body
     assert "default_test_command" in projects_index.body

@@ -547,6 +547,7 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-scroll-position-memory='true'",
                 "data-scroll-position-memory-storage-prefix='clankeros-scroll-position:'",
                 "function initializeScrollPositionMemoryState()",
+                "function initializeActionFormDraftState()",
                 "function initializeGoalNoteDraftState()",
                 "data-command-palette-route-history='true'",
                 "data-command-palette-route-history-storage-key='clankeros-route-history'",
@@ -6932,6 +6933,13 @@ def _workspace_view_memory_panel() -> str:
             "Per-Goal unsent operator note drafts",
         ),
         (
+            "form-drafts",
+            "Form Drafts",
+            "prefix",
+            "clankeros-action-form-draft:",
+            "Setup and Goal creation form drafts",
+        ),
+        (
             "memory",
             "Memory Filters",
             "exact",
@@ -7031,7 +7039,7 @@ def _workspace_view_memory_panel() -> str:
                 evidence_lines
                 + [
                     "workspace_view_memory_safety: browser-local view state only",
-                    "workspace_view_memory_reset_scope: theme focus board recent route-history open-panels scroll-position search timeline artifacts notes note-drafts memory skills approvals inbox profiles",
+                    "workspace_view_memory_reset_scope: theme focus board recent route-history open-panels scroll-position search timeline artifacts notes note-drafts form-drafts memory skills approvals inbox profiles",
                 ]
             ),
             "</details>",
@@ -34819,6 +34827,7 @@ def _action_result_page(
                 location=safe_location,
                 next_href=next_href,
             ),
+            _action_result_action_form_draft_cleanup(action, form),
             _action_result_goal_note_draft_cleanup(action, result),
             "<section id='action-result-details'><h2>Action Result Details</h2>",
             "<p>Action completed. Review the local result before continuing.</p>",
@@ -34837,6 +34846,66 @@ def _action_result_page(
             _action_result_continuation_section(root, safe_location, message),
             _action_result_workflow_map_section(root),
             "<p class='muted'>This page is a local readback only. Follow the next-page link after checking the payload, artifacts, and safety boundary.</p>",
+            "</section>",
+        ]
+    )
+
+
+def _action_result_action_form_draft_cleanup(action: str, form: dict[str, list[str]]) -> str:
+    if action not in ACTION_FORM_DRAFT_ACTIONS:
+        return ""
+    storage_key = str(_one(form, "_action_draft_storage_key") or "").strip()
+    if not _is_safe_action_form_draft_key(storage_key):
+        submitted = {
+            key: _one(form, key) or ""
+            for key, values in form.items()
+            if values and key != "confirm" and not key.startswith("_action_draft_")
+        }
+        storage_key = _action_form_draft_storage_key(action, submitted)
+    return "".join(
+        [
+            (
+                "<section id='action-result-form-draft-cleanup' "
+                "class='panel action-result-form-draft-cleanup' "
+                "data-action-result-form-draft-cleanup='true' "
+                f"data-action-result-form-draft-action='{_e(action)}' "
+                f"data-action-result-form-draft-key='{_e(storage_key)}'>"
+            ),
+            "<h2>Form Draft Cleared</h2>",
+            "<p class='muted' data-action-result-form-draft-status='true'>Clearing submitted browser-local form draft.</p>",
+            "<details data-action-result-form-draft-evidence='true'><summary>Form draft cleanup evidence</summary>",
+            _kv(
+                [
+                    ("action_result_form_draft_status", "ready_to_clear"),
+                    ("action_result_form_draft_action", action),
+                    ("action_result_form_draft_storage", f"localStorage:{storage_key}"),
+                    ("action_result_form_draft_write_on_get", "false"),
+                    ("action_result_form_draft_provider_calls_taken", "0"),
+                    ("action_result_form_draft_network_actions_taken", "0"),
+                    ("action_result_form_draft_external_effects_created", "false"),
+                ]
+            ),
+            "</details>",
+            """<script>
+(function () {
+  var root = document.querySelector("[data-action-result-form-draft-cleanup='true']");
+  if (!root) return;
+  var key = root.getAttribute("data-action-result-form-draft-key") || "";
+  var status = root.querySelector("[data-action-result-form-draft-status='true']");
+  if (!window.localStorage || !key) {
+    if (status) status.textContent = "Form draft cleanup unavailable in this browser.";
+    return;
+  }
+  try {
+    window.localStorage.removeItem(key);
+    root.setAttribute("data-action-result-form-draft-status-value", "cleared");
+    if (status) status.textContent = "Submitted browser-local form draft cleared.";
+  } catch (error) {
+    root.setAttribute("data-action-result-form-draft-status-value", "local-only");
+    if (status) status.textContent = "Form draft cleanup was blocked by this browser.";
+  }
+})();
+</script>""",
             "</section>",
         ]
     )
@@ -35926,23 +35995,118 @@ def _form(action: str, fields: dict[str, str]) -> str:
     )
 
 
+ACTION_FORM_DRAFT_ACTIONS = {"register-project", "create-goal"}
+ACTION_FORM_DRAFT_STORAGE_PREFIX = "clankeros-action-form-draft:"
+
+
+def _action_form_draft_scope(action: str, values: dict[str, str]) -> str:
+    if action == "create-goal":
+        raw = values.get("project_id") or "project"
+    elif action == "register-project":
+        raw = values.get("name") or "project"
+    else:
+        raw = action
+    scope = re.sub(r"[^A-Za-z0-9_.-]+", "-", str(raw).strip()).strip("-").lower()
+    if not scope:
+        scope = hashlib.sha256(str(raw).encode("utf-8")).hexdigest()[:12]
+    return scope[:80]
+
+
+def _action_form_draft_storage_key(action: str, values: dict[str, str]) -> str:
+    return f"{ACTION_FORM_DRAFT_STORAGE_PREFIX}{action}:{_action_form_draft_scope(action, values)}"
+
+
+def _is_safe_action_form_draft_key(value: str) -> bool:
+    return value.startswith(ACTION_FORM_DRAFT_STORAGE_PREFIX) and len(value) <= 240
+
+
 def _input_form(
     action: str,
     hidden_fields: dict[str, str],
     text_fields: dict[str, str],
 ) -> str:
+    draft_enabled = action in ACTION_FORM_DRAFT_ACTIONS
+    draft_values = {**hidden_fields, **text_fields}
+    draft_storage_key = (
+        _action_form_draft_storage_key(action, draft_values)
+        if draft_enabled
+        else ""
+    )
     inputs = "".join(
         f"<input type='hidden' name='{_e(key)}' value='{_e(value)}'>"
         for key, value in hidden_fields.items()
     )
-    for key, value in text_fields.items():
+    if draft_enabled:
         inputs += (
-            f"<label>{_e(key)} "
-            f"<input name='{_e(key)}' value='{_e(value)}'></label>"
+            "<input type='hidden' name='_action_draft_storage_key' "
+            f"value='{_e(draft_storage_key)}'>"
         )
-    return (
-        f"<form method='post' action='/actions/{_e(action)}'>"
-        f"{inputs}<button type='submit'>{_e(action)}</button></form>"
+    for key, value in text_fields.items():
+        draft_attrs = (
+            " data-action-draft-input='true'"
+            f" data-action-draft-default-value='{_e(value)}'"
+            if draft_enabled
+            else ""
+        )
+        if action == "create-goal" and key == "prompt":
+            field = (
+                f"<textarea name='{_e(key)}' rows='4' spellcheck='true'"
+                f"{draft_attrs}>{_e(value)}</textarea>"
+            )
+        else:
+            field = f"<input name='{_e(key)}' value='{_e(value)}'{draft_attrs}>"
+        inputs += f"<label>{_e(key)} {field}</label>"
+    if not draft_enabled:
+        return (
+            f"<form method='post' action='/actions/{_e(action)}'>"
+            f"{inputs}<button type='submit'>{_e(action)}</button></form>"
+        )
+    return "".join(
+        [
+            (
+                f"<form method='post' action='/actions/{_e(action)}' "
+                "class='action-draft-form' data-action-draft-form='true' "
+                f"data-action-draft-action='{_e(action)}' "
+                f"data-action-draft-storage-key='{_e(draft_storage_key)}' "
+                f"data-action-draft-fields='{_e(','.join(text_fields.keys()))}' "
+                "data-action-draft-write-on-get='false' "
+                "data-action-draft-provider-calls-taken='0' "
+                "data-action-draft-network-actions-taken='0' "
+                "data-action-draft-external-effects-created='false'>"
+            ),
+            inputs,
+            "<div class='action-draft-toolbar' data-action-draft-toolbar='true'>",
+            "<span class='action-draft-status' data-action-draft-status='true'>Draft: default</span>",
+            "<button type='button' class='action-draft-reset' data-action-draft-reset='true'>Clear draft</button>",
+            "</div>",
+            "<details class='action-draft-evidence' data-action-draft-evidence='true'><summary>Form draft evidence</summary>",
+            _kv(
+                [
+                    ("action_form_draft_status", "browser_local_ready"),
+                    ("action_form_draft_action", action),
+                    ("action_form_draft_memory_storage", f"localStorage:{draft_storage_key}"),
+                    ("action_form_draft_memory_prefix", ACTION_FORM_DRAFT_STORAGE_PREFIX),
+                    ("action_form_draft_memory_fields", "values, updatedAt, submittedAt"),
+                    ("action_form_draft_field_names", ", ".join(text_fields.keys())),
+                    ("action_form_draft_confirmation_required", "true"),
+                    ("action_form_draft_cleared_after_confirmed_success", "true"),
+                    ("action_form_draft_write_on_get", "false"),
+                    ("action_form_draft_provider_calls_taken", "0"),
+                    ("action_form_draft_network_actions_taken", "0"),
+                    ("action_form_draft_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    "action_form_draft_persistence: browser-local setup and Goal creation forms",
+                    "action_form_draft_reset: clear draft button or Workspace View Memory",
+                    "action_form_draft_safety: unsent form text stays in browser localStorage",
+                ]
+            ),
+            "</details>",
+            f"<button type='submit'>{_e(action)}</button>",
+            "</form>",
+        ]
     )
 
 
@@ -36000,7 +36164,7 @@ def _action_confirmation_preflight(action: str, form: dict[str, list[str]]) -> s
     field_names = [
         key
         for key, values in form.items()
-        if key != "confirm" and values
+        if key != "confirm" and not key.startswith("_action_draft_") and values
     ]
     return_value: str | SafeHtml = (
         SafeHtml(f"<a href='{_e(return_surface)}'>{_e(return_surface)}</a>")
@@ -36086,7 +36250,7 @@ def _action_confirmation_context(action: str, form: dict[str, list[str]]) -> dic
     submitted_fields = sum(
         len(values)
         for key, values in form.items()
-        if key != "confirm"
+        if key != "confirm" and not key.startswith("_action_draft_")
     )
     executes_local_command = (
         "true"
@@ -36224,7 +36388,7 @@ def _submitted_form_rows(form: dict[str, list[str]]) -> list[tuple[str, str]]:
     rows = [
         (key, ", ".join(values) if values else "")
         for key, values in form.items()
-        if key != "confirm"
+        if key != "confirm" and not key.startswith("_action_draft_")
     ]
     return rows or [("submitted_fields", "none")]
 
@@ -39586,12 +39750,22 @@ def _html_page(
     .goal-note-draft-evidence {{ margin-top:0; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-note-draft-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-note-draft-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .action-draft-form {{ display:grid; gap:10px; margin:10px 0; }}
+    .action-draft-form label {{ display:grid; gap:6px; color:var(--muted); }}
+    .action-draft-form input, .action-draft-form textarea {{ width:100%; min-height:36px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:7px 9px; }}
+    .action-draft-form textarea {{ min-height:110px; resize:vertical; }}
+    .action-draft-toolbar {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }}
+    .action-draft-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
+    .action-draft-reset {{ min-height:32px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:6px 10px; }}
+    .action-draft-evidence, .action-result-form-draft-cleanup {{ margin-top:0; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .action-draft-evidence summary, .action-result-form-draft-cleanup summary {{ cursor:pointer; font-weight:700; }}
+    .action-draft-evidence:not([open]) > :not(summary), .action-result-form-draft-cleanup details:not([open]) > :not(summary) {{ display:none; }}
     .goal-operator-notes-evidence, .goal-operator-notes-filter-evidence, .goal-operator-notes-list {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-operator-notes-evidence summary, .goal-operator-notes-filter-evidence summary, .goal-operator-notes-list summary {{ cursor:pointer; font-weight:700; }}
     .goal-operator-notes-evidence:not([open]) > :not(summary), .goal-operator-notes-filter-evidence:not([open]) > :not(summary), .goal-operator-notes-list:not([open]) > :not(summary) {{ display:none; }}
     .goal-operator-notes-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-operator-notes-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
-    @media (max-width: 640px) {{ .goal-operator-notes-filter-row {{ grid-template-columns:1fr; }} .goal-operator-notes-filter-count {{ white-space:normal; }} .goal-operator-notes-filter-reset, .goal-note-draft-reset {{ width:100%; }} .goal-operator-notes-filter-memory, .goal-note-draft-toolbar {{ align-items:stretch; }} .goal-operator-notes-filter-memory-status, .goal-note-draft-status {{ width:100%; }} }}
+    @media (max-width: 640px) {{ .goal-operator-notes-filter-row {{ grid-template-columns:1fr; }} .goal-operator-notes-filter-count {{ white-space:normal; }} .goal-operator-notes-filter-reset, .goal-note-draft-reset, .action-draft-reset {{ width:100%; }} .goal-operator-notes-filter-memory, .goal-note-draft-toolbar, .action-draft-toolbar {{ align-items:stretch; }} .goal-operator-notes-filter-memory-status, .goal-note-draft-status, .action-draft-status {{ width:100%; }} }}
     .goal-remaining-work-command-bar {{ border-left:4px solid var(--warn); }}
     .goal-remaining-work-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-remaining-work-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -42207,6 +42381,132 @@ def _html_page(
       window.addEventListener("scroll", scheduleSaveScrollPositionMemoryState, {{ passive: true }});
       window.addEventListener("beforeunload", saveScrollPositionMemoryState);
     }}
+    function actionDraftForms() {{
+      return Array.prototype.slice.call(document.querySelectorAll("[data-action-draft-form='true']"));
+    }}
+    function actionDraftStorageKey(form) {{
+      return form ? (form.getAttribute("data-action-draft-storage-key") || "") : "";
+    }}
+    function actionDraftInputs(form) {{
+      if (!form) {{ return []; }}
+      return Array.prototype.slice.call(form.querySelectorAll("[data-action-draft-input='true']"));
+    }}
+    function setActionDraftStatus(form, status, message) {{
+      if (!form) {{ return; }}
+      var values = actionDraftInputs(form).map(function(input) {{ return input.value || ""; }}).join("");
+      form.setAttribute("data-action-draft-status-value", status);
+      form.setAttribute("data-action-draft-char-count", String(values.length));
+      var statusNode = form.querySelector("[data-action-draft-status='true']");
+      if (statusNode) {{ statusNode.textContent = message || ("Draft: " + status); }}
+    }}
+    function loadActionDraftState(form) {{
+      var key = actionDraftStorageKey(form);
+      if (!window.localStorage || !key) {{ return null; }}
+      try {{
+        var raw = window.localStorage.getItem(key);
+        if (!raw) {{ return null; }}
+        var state = JSON.parse(raw);
+        if (!state || typeof state !== "object" || !state.values || typeof state.values !== "object") {{ return null; }}
+        return state;
+      }} catch (error) {{
+        return null;
+      }}
+    }}
+    function removeActionDraftState(form, status, message) {{
+      var key = actionDraftStorageKey(form);
+      if (window.localStorage && key) {{
+        try {{ window.localStorage.removeItem(key); }} catch (error) {{}}
+      }}
+      setActionDraftStatus(form, status || "reset", message || "Draft: reset");
+    }}
+    function resetActionDraftInputs(form) {{
+      actionDraftInputs(form).forEach(function(input) {{
+        input.value = input.getAttribute("data-action-draft-default-value") || "";
+      }});
+    }}
+    function saveActionDraftState(form, options) {{
+      options = options || {{}};
+      var inputs = actionDraftInputs(form);
+      if (!inputs.length) {{ return; }}
+      var values = {{}};
+      var hasChange = false;
+      inputs.forEach(function(input) {{
+        var name = input.getAttribute("name") || "";
+        if (!name) {{ return; }}
+        var value = input.value || "";
+        values[name] = value;
+        if (value !== (input.getAttribute("data-action-draft-default-value") || "")) {{
+          hasChange = true;
+        }}
+      }});
+      if (!hasChange && !options.submitted) {{
+        removeActionDraftState(form, "default", "Draft: default");
+        return;
+      }}
+      var key = actionDraftStorageKey(form);
+      setActionDraftStatus(form, window.localStorage ? (options.submitted ? "submitted" : "saved") : "unavailable", options.submitted ? "Draft: submitted for confirmation" : "Draft: saved");
+      if (!window.localStorage || !key) {{ return; }}
+      try {{
+        var now = new Date().toISOString();
+        var state = {{
+          action: form.getAttribute("data-action-draft-action") || "",
+          fields: form.getAttribute("data-action-draft-fields") || "",
+          values: values,
+          updatedAt: now
+        }};
+        if (options.submitted) {{ state.submittedAt = now; }}
+        window.localStorage.setItem(key, JSON.stringify(state));
+      }} catch (error) {{
+        setActionDraftStatus(form, "local-only", "Draft: local only");
+      }}
+    }}
+    function scheduleActionDraftSave(form) {{
+      if (!form) {{ return; }}
+      if (form._actionDraftTimer) {{
+        window.clearTimeout(form._actionDraftTimer);
+      }}
+      form._actionDraftTimer = window.setTimeout(function() {{
+        form._actionDraftTimer = null;
+        saveActionDraftState(form);
+      }}, 180);
+    }}
+    function restoreActionDraftState(form) {{
+      if (!window.localStorage) {{
+        setActionDraftStatus(form, "unavailable", "Draft: unavailable");
+        return;
+      }}
+      var state = loadActionDraftState(form);
+      if (!state) {{
+        setActionDraftStatus(form, "default", "Draft: default");
+        return;
+      }}
+      actionDraftInputs(form).forEach(function(input) {{
+        var name = input.getAttribute("name") || "";
+        if (Object.prototype.hasOwnProperty.call(state.values, name) && typeof state.values[name] === "string") {{
+          input.value = state.values[name];
+        }}
+      }});
+      setActionDraftStatus(form, state.submittedAt ? "submitted" : "restored", state.submittedAt ? "Draft: submitted for confirmation" : "Draft: restored");
+    }}
+    function initializeActionFormDraftState() {{
+      actionDraftForms().forEach(function(form) {{
+        restoreActionDraftState(form);
+        actionDraftInputs(form).forEach(function(input) {{
+          input.addEventListener("input", function() {{ scheduleActionDraftSave(form); }});
+        }});
+        var reset = form.querySelector("[data-action-draft-reset='true']");
+        if (reset) {{
+          reset.addEventListener("click", function(event) {{
+            event.preventDefault();
+            resetActionDraftInputs(form);
+            removeActionDraftState(form, "reset", "Draft: reset");
+          }});
+        }}
+        form.addEventListener("submit", function() {{
+          saveActionDraftState(form, {{ submitted: true }});
+        }});
+      }});
+    }}
     function goalNoteDraftForms() {{
       return Array.prototype.slice.call(document.querySelectorAll("[data-goal-note-draft-form='true']"));
     }}
@@ -42567,6 +42867,7 @@ def _html_page(
     restoreWorkspacePanels();
     initializeOpenPanelMemoryState();
     initializeScrollPositionMemoryState();
+    initializeActionFormDraftState();
     initializeGoalNoteDraftState();
     window.addEventListener("hashchange", function() {{
       openCurrentHashDetails();
