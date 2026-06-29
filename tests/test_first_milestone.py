@@ -6516,10 +6516,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-refresh='true'>Refresh" in workspace.body
     assert "data-workspace-view-memory-reset-all='true'>Reset all view memory" in workspace.body
     assert "data-workspace-view-memory-grid='true'" in workspace.body
-    assert workspace.body.count("class='workspace-view-memory-card") == 20
+    assert workspace.body.count("class='workspace-view-memory-card") == 21
     assert "data-workspace-view-memory-card='theme'" in workspace.body
     assert "data-workspace-view-memory-card='focus'" in workspace.body
     assert "data-workspace-view-memory-card='goal-board'" in workspace.body
+    assert "data-workspace-view-memory-card='home-goal-board'" in workspace.body
     assert "data-workspace-view-memory-card='recent-items'" in workspace.body
     assert "data-workspace-view-memory-card='route-history'" in workspace.body
     assert "data-workspace-view-memory-card='open-panels'" in workspace.body
@@ -6540,6 +6541,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-theme'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-focus-mode'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-goal-board-view'" in workspace.body
+    assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-home-goal-board-view'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-recent-items-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-route-history'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-today-decision-filter'" in workspace.body
@@ -6561,8 +6563,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-evidence='true'" in workspace.body
     assert "workspace_view_memory_status</dt><dd>available" in workspace.body
     assert "workspace_view_memory_source</dt><dd>browser localStorage" in workspace.body
-    assert "workspace_view_memory_card_count</dt><dd>20" in workspace.body
-    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-recent-items-filter, clankeros-route-history, clankeros-today-decision-filter, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
+    assert "workspace_view_memory_card_count</dt><dd>21" in workspace.body
+    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-home-goal-board-view, clankeros-recent-items-filter, clankeros-route-history, clankeros-today-decision-filter, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
     assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-open-panels:, clankeros-scroll-position:, clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-decision-filter:, clankeros-goal-artifact-filter:, clankeros-goal-notes-filter:, clankeros-goal-note-draft:, clankeros-action-form-draft:" in workspace.body
     assert "workspace_view_memory_reset_all_supported</dt><dd>true" in workspace.body
     assert "workspace_view_memory_reset_requires_click</dt><dd>true" in workspace.body
@@ -6573,6 +6575,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_external_effects_created</dt><dd>false" in workspace.body
     assert "workspace_view_memory_raw_filesystem_browsing</dt><dd>false" in workspace.body
     assert "workspace_view_memory_card: theme mode=exact key=clankeros-theme" in workspace.body
+    assert "workspace_view_memory_card: home-goal-board mode=exact key=clankeros-home-goal-board-view" in workspace.body
     assert "workspace_view_memory_card: recent-items mode=exact key=clankeros-recent-items-filter" in workspace.body
     assert "workspace_view_memory_card: route-history mode=exact key=clankeros-route-history" in workspace.body
     assert "workspace_view_memory_card: today-decisions mode=exact key=clankeros-today-decision-filter" in workspace.body
@@ -6587,7 +6590,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: approvals mode=exact key=clankeros-approval-queue-filter" in workspace.body
     assert "workspace_view_memory_card: inbox mode=exact key=clankeros-inbox-queue-filter" in workspace.body
     assert "workspace_view_memory_card: profiles mode=exact key=clankeros-profile-routing-filter" in workspace.body
-    assert "workspace_view_memory_reset_scope: theme focus board recent route-history today-decisions open-panels scroll-position search timeline decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles" in workspace.body
+    assert "workspace_view_memory_reset_scope: theme focus board home-goal-board recent route-history today-decisions open-panels scroll-position search timeline decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles" in workspace.body
     assert "window.localStorage.removeItem(key)" in workspace.body
     assert "candidate.indexOf(key) === 0" in workspace.body
     assert "delete document.documentElement.dataset.theme" in workspace.body
@@ -10649,7 +10652,48 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal-First Home" in dashboard.body
     assert "home_dashboard_goal_first</dt><dd>true" in dashboard.body
     assert "Home Goal Board" in dashboard.body
+    assert "id='home-goal-board'" in dashboard.body
+    assert "data-home-goal-board='true'" in dashboard.body
     assert "home_active_goals</dt><dd>1" in dashboard.body
+    assert "data-home-goal-board-filter='true'" in dashboard.body
+    assert "data-home-goal-board-filter-storage-key='clankeros-home-goal-board-view'" in dashboard.body
+    assert "data-home-goal-board-filter-input='true'" in dashboard.body
+    assert "data-home-goal-board-filter-count='true'>1 goals" in dashboard.body
+    assert "data-home-goal-board-filter-first='true' href='#home-active-goals'>First match</a>" in dashboard.body
+    assert "data-home-goal-board-filter-mode='all' aria-pressed='true'" in dashboard.body
+    assert "data-home-goal-board-filter-mode='active' aria-pressed='false'" in dashboard.body
+    assert "data-home-goal-board-filter-mode='paused' aria-pressed='false'" in dashboard.body
+    assert "data-home-goal-board-filter-mode='completed' aria-pressed='false'" in dashboard.body
+    assert "data-home-goal-board-filter-reset='true'>Reset view</button>" in dashboard.body
+    assert "data-home-goal-board-view-status='true'>View: default</span>" in dashboard.body
+    assert "data-home-goal-board-filter-empty='true' hidden" in dashboard.body
+    assert "data-home-goal-board-evidence='true'" in dashboard.body
+    assert "home_goal_board_status</dt><dd>available" in dashboard.body
+    assert "home_goal_board_total_goals</dt><dd>1" in dashboard.body
+    assert "home_goal_board_active_goals</dt><dd>1" in dashboard.body
+    assert "home_goal_board_paused_goals</dt><dd>0" in dashboard.body
+    assert "home_goal_board_completed_goals</dt><dd>0" in dashboard.body
+    assert "home_goal_board_filter_storage</dt><dd>localStorage:clankeros-home-goal-board-view" in dashboard.body
+    assert "home_goal_board_filter_fields</dt><dd>query mode" in dashboard.body
+    assert "home_goal_board_write_on_get</dt><dd>false" in dashboard.body
+    assert "home_goal_board_provider_calls_taken</dt><dd>0" in dashboard.body
+    assert "home_goal_board_network_actions_taken</dt><dd>0" in dashboard.body
+    assert "home_goal_board_external_effects_created</dt><dd>false" in dashboard.body
+    assert "home_goal_board_filter_default: all -> 1 goals" in dashboard.body
+    assert "home_goal_board_filter_mode: active -> 1 goals" in dashboard.body
+    assert "home_goal_board_view_memory: restores query and lane from browser storage" in dashboard.body
+    assert "home_goal_board_safety: browser-local filtering only" in dashboard.body
+    assert "id='home-active-goals'" in dashboard.body
+    assert "id='home-paused-goals'" in dashboard.body
+    assert "id='home-completed-goals'" in dashboard.body
+    assert "data-home-goal-lane='active'" in dashboard.body
+    assert "data-home-goal-lane='paused'" in dashboard.body
+    assert "data-home-goal-lane='completed'" in dashboard.body
+    assert "data-home-goal-board-row='true'" in dashboard.body
+    assert "data-home-goal-card='true'" in dashboard.body
+    assert "function updateHomeGoalBoardFilter(options)" in dashboard.body
+    assert "window.localStorage.setItem(homeGoalBoardFilterStorageKey(board)" in dashboard.body
+    assert "window.localStorage.removeItem(homeGoalBoardFilterStorageKey(board))" in dashboard.body
     assert "Home Operator Board" in dashboard.body
     assert "data-home-operator-board='true'" in dashboard.body
     assert "data-home-operator-board-actions='true'" in dashboard.body

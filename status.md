@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-29 Home Goal Board Filter UX
+
+- Reworked the root `/` `Home Goal Board` from a static active/paused/completed
+  lane inventory into a scan-first board with a browser-local Find box, All /
+  Active / Paused / Completed mode buttons, live match count, first-match link,
+  no-match empty state, and visible View status.
+- The Home board now persists only its browser-local query/lane state in
+  `localStorage:clankeros-home-goal-board-view`, restores that state after
+  reload, and exposes Reset view without writing server state.
+- `/workspace#workspace-view-memory` now includes a `Home Goal Board` exact-key
+  card for `clankeros-home-goal-board-view`, so stale Home filters can be
+  inspected or cleared next to the rest of the app's browser-local view memory.
+- Safety: read-only GET rendering and client-side filtering only; no approval,
+  execution, push, PR, deploy, provider call, network action, server write,
+  GitHub polling, or external mutation authority added.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused Home demo pytest passed with
+  `1 passed in 43.79s`; focused local-app route pytest passed with
+  `1 passed in 36.26s`.
+- Browser verification: Playwright against throwaway demo `/` at
+  `http://127.0.0.1:62091` confirmed Active mode and query `demo` saved
+  `{"query":"demo","mode":"active"}`, reload restored the query and Active
+  mode with `View: restored`, Reset view cleared storage and returned to All,
+  no-match search showed `0 of 1 goals` with the empty state visible,
+  `/workspace#workspace-view-memory` showed the Home Goal Board exact key and
+  21 total view-memory cards, mobile `390x844` had document width 390 with
+  Home board width 358 and filter width 342, and console warnings/errors were
+  zero. The scratch root, browser, and server were cleaned up.
+- Non-claims: this does not make Home execute work, approve decisions, call
+  providers, fetch GitHub, push, create PRs, deploy, or mutate external
+  systems. The local full suite was left to GitHub Actions for this slice.
+
 ## 2026-06-29 Today Palette Section Shortcuts
 
 - Added route-aware Today section commands to the command palette when the

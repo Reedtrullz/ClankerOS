@@ -116,7 +116,11 @@ shows visible Do Now, Attention, Resume, and Proof cards for the lead Goal or
 first-run step, routing browser-available work to existing confirmed forms,
 lead-goal approval attention to `/approvals?goal_id=<goal_id>`, unfinished
 resume state to the Home Finish Today anchor, and proof review to the local CI
-evidence surfaces. Home also includes active, paused, and completed goal lanes,
+evidence surfaces. Home also includes a scan-first `Home Goal Board` with
+active, paused, and completed lanes, a browser-local Find box, lane buttons,
+live match count, first-match jump, no-match empty state, visible View status,
+reload persistence in `localStorage:clankeros-home-goal-board-view`, and reset
+coverage in `/workspace#workspace-view-memory`. It also includes
 recent activity, the operator inbox, recommendations, incidents, saved
 workspace resume links, saved-goal phase and next-action readbacks, a read-only
 `Home Live State` panel with five-second local page reload polling that pauses

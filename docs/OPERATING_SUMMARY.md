@@ -301,8 +301,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   Restore, Goal, Artifact, Filters + Panels, and Tomorrow cards that make saved
   versus suggested return state explicit before the
   read-only `Workspace View Memory` panel. That panel inventories browser
-  `localStorage` view state for theme, focus mode, Goal board, Recent Items
-  filters, open panels, scroll position, search lanes, timeline lanes, artifact
+  `localStorage` view state for theme, focus mode, Goal board, Home Goal
+  Board, Recent Items filters, open panels, scroll position, search lanes,
+  timeline lanes, artifact
   filters, Today and Goal decision filters, notes filters, note drafts, setup
   and workflow form drafts, Memory Bank filters, Skills Inventory filters,
   Approval Queue filters, Inbox Queue filters, and Profile Routing filters, and
@@ -1014,7 +1015,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   goal or first-run step into visible Do Now, Attention, Resume, and Proof
   cards with action-form routing, scoped approval links, resume readiness,
   waiting counts, and CI proof posture. Home also includes active, paused, and
-  completed goal lanes, recent activity, inbox counts, recommendations,
+  completed goal lanes through a scan-first `Home Goal Board` with a
+  browser-local Find box, lane mode buttons, live match count, first-match
+  jump, no-match empty state, visible View status, reload persistence in
+  `localStorage:clankeros-home-goal-board-view`, and reset coverage in
+  `/workspace#workspace-view-memory`. It continues with recent activity,
+  inbox counts, recommendations,
   incidents, saved workspace resume links, saved-goal phase and next-action
   readbacks, a read-only `Start Here` cockpit that condenses the
   lead goal or first-run step, one primary action, target surface, resume

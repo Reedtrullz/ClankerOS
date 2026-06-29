@@ -43,7 +43,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `Home Operator Board` that turns the lead Goal or first-run step into
   visible Do Now, Attention, Resume, and Proof cards with scoped approval
   links, direct action-form targets, Finish Today resume routing, and local CI
-  proof surfaces. It also includes active, paused, and completed goal lanes,
+  proof surfaces. It also includes a scan-first `Home Goal Board` with active,
+  paused, and completed lanes, a browser-local Find box, lane mode buttons,
+  live match count, first-match jump, no-match empty state, visible View
+  status, reload persistence in
+  `localStorage:clankeros-home-goal-board-view`, and reset coverage in
+  `/workspace#workspace-view-memory`. It continues with
   recent activity, the operator inbox, open recommendations, open incidents,
   saved workspace resume links, saved-goal phase and next-action readbacks, a
   `Home Day Plan` readback for the current goal, phase, one next action,
@@ -207,9 +212,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   GitHub status.
 - `/` also includes a read-only `Goal Snapshot` that links to `/goals`, counts
   active/paused/completed goals, and names the lead goal phase plus next
-  action when goal state exists. Home goal lanes use the shared goal row
-  summary with task progress plus open task, incident, and recommendation
-  counts.
+  action when goal state exists. The `Home Goal Board` lanes use the shared
+  goal row summary with task progress plus open task, incident, and
+  recommendation counts, and its browser-local filter state can be cleared
+  from `/workspace#workspace-view-memory`.
 - `/goals` - daily goal cockpit. It separates active, paused, and completed
   goals into scan-first Goal cards, links each card to the Goal detail page,
   project page, and next action surface, and keeps phase, next action, task

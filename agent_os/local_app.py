@@ -4794,22 +4794,60 @@ def _home_goal_board(
     paused: list[sqlite3.Row],
     completed: list[sqlite3.Row],
 ) -> str:
+    total = len(active) + len(paused) + len(completed)
     return "".join(
         [
-            "<section><h2>Home Goal Board</h2>",
+            "<section id='home-goal-board' class='home-goal-board' data-home-goal-board='true'><h2>Home Goal Board</h2>",
+            "<section class='home-goal-board-filter' data-home-goal-board-filter='true' "
+            "data-home-goal-board-filter-storage-key='clankeros-home-goal-board-view'>",
+            "<label class='home-goal-board-filter-search'>Find "
+            "<input type='search' data-home-goal-board-filter-input='true' placeholder='goal, project, phase, next action...'></label>",
+            "<div class='home-goal-board-filter-controls' data-home-goal-board-filter-controls='true'>",
+            "<button type='button' data-home-goal-board-filter-mode='all' aria-pressed='true'>All</button>",
+            f"<button type='button' data-home-goal-board-filter-mode='active' aria-pressed='false'>Active <span>{len(active)}</span></button>",
+            f"<button type='button' data-home-goal-board-filter-mode='paused' aria-pressed='false'>Paused <span>{len(paused)}</span></button>",
+            f"<button type='button' data-home-goal-board-filter-mode='completed' aria-pressed='false'>Completed <span>{len(completed)}</span></button>",
+            "<button type='button' data-home-goal-board-filter-reset='true'>Reset view</button>",
+            "<span class='home-goal-board-view-status' data-home-goal-board-view-status='true'>View: default</span>",
+            "</div>",
+            f"<p class='muted' data-home-goal-board-filter-count='true'>{total} goals</p>",
+            "<a class='home-goal-board-filter-first' data-home-goal-board-filter-first='true' href='#home-active-goals'>First match</a>",
+            "<p class='muted' data-home-goal-board-filter-empty='true' hidden>No Home goals match this view.</p>",
+            "</section>",
+            "<div class='home-goal-board-grid'>",
+            _home_goal_lane(root, storage, "Active Goals", "active", active),
+            _home_goal_lane(root, storage, "Paused Goals", "paused", paused),
+            _home_goal_lane(root, storage, "Completed Goals", "completed", completed),
+            "</div>",
+            "<details class='home-goal-board-evidence' data-home-goal-board-evidence='true'><summary>Home goal board evidence</summary>",
             _kv(
                 [
-                    ("active_goals", str(len(active))),
-                    ("paused_goals", str(len(paused))),
-                    ("completed_goals", str(len(completed))),
-                    ("goal_board_surface", SafeHtml("<a href='/goals'>/goals</a>")),
+                    ("home_goal_board_status", "available"),
+                    ("home_goal_board_total_goals", str(total)),
+                    ("home_goal_board_active_goals", str(len(active))),
+                    ("home_goal_board_paused_goals", str(len(paused))),
+                    ("home_goal_board_completed_goals", str(len(completed))),
+                    ("home_goal_board_surface", SafeHtml("<a href='/goals'>/goals</a>")),
+                    ("home_goal_board_filter_storage", "localStorage:clankeros-home-goal-board-view"),
+                    ("home_goal_board_filter_fields", "query mode"),
+                    ("home_goal_board_write_on_get", "false"),
+                    ("home_goal_board_provider_calls_taken", "0"),
+                    ("home_goal_board_network_actions_taken", "0"),
+                    ("home_goal_board_external_effects_created", "false"),
                 ]
             ),
-            "<div class='grid'>",
-            _home_goal_lane(root, storage, "Active Goals", active),
-            _home_goal_lane(root, storage, "Paused Goals", paused),
-            _home_goal_lane(root, storage, "Completed Goals", completed),
-            "</div>",
+            _ul(
+                [
+                    f"home_goal_board_filter_default: all -> {total} goals",
+                    f"home_goal_board_filter_mode: active -> {len(active)} goals",
+                    f"home_goal_board_filter_mode: paused -> {len(paused)} goals",
+                    f"home_goal_board_filter_mode: completed -> {len(completed)} goals",
+                    "home_goal_board_view_memory: restores query and lane from browser storage",
+                    "home_goal_board_safety: browser-local filtering only",
+                ]
+            ),
+            "</details>",
+            _home_goal_board_script(),
             "</section>",
         ]
     )
@@ -4819,16 +4857,137 @@ def _home_goal_lane(
     root: Path,
     storage: Storage,
     title: str,
+    bucket: str,
     rows: list[sqlite3.Row],
 ) -> str:
     return "".join(
         [
-            "<div class='panel'>",
+            f"<div id='home-{_e(bucket)}-goals' class='panel home-goal-lane' data-home-goal-lane='{_e(bucket)}'>",
             f"<h3>{_e(title)}</h3>",
-            _ul([_goal_index_line(root, storage, row) for row in rows[:6]]),
+            _ul(
+                [
+                    _goal_index_line(
+                        root,
+                        storage,
+                        row,
+                        extra_attrs="data-home-goal-card='true' data-home-goal-board-row='true'",
+                    )
+                    for row in rows[:6]
+                ]
+            ),
             "</div>",
         ]
     )
+
+
+def _home_goal_board_script() -> str:
+    return """<script>
+(function () {
+  var board = document.querySelector("[data-home-goal-board='true']");
+  if (!board) return;
+  var input = board.querySelector("[data-home-goal-board-filter-input='true']");
+  var buttons = Array.prototype.slice.call(board.querySelectorAll("[data-home-goal-board-filter-mode]"));
+  var reset = board.querySelector("[data-home-goal-board-filter-reset='true']");
+  var count = board.querySelector("[data-home-goal-board-filter-count='true']");
+  var first = board.querySelector("[data-home-goal-board-filter-first='true']");
+  var empty = board.querySelector("[data-home-goal-board-filter-empty='true']");
+  var status = board.querySelector("[data-home-goal-board-view-status='true']");
+  var mode = "all";
+  function homeGoalBoardFilterStorageKey(boardNode) {
+    return boardNode.getAttribute("data-home-goal-board-filter-storage-key") || "clankeros-home-goal-board-view";
+  }
+  function setStatus(message) {
+    if (status) status.textContent = message;
+  }
+  function setMode(nextMode) {
+    mode = nextMode || "all";
+    if (!buttons.some(function (button) { return button.getAttribute("data-home-goal-board-filter-mode") === mode; })) {
+      mode = "all";
+    }
+    buttons.forEach(function (button) {
+      button.setAttribute("aria-pressed", (button.getAttribute("data-home-goal-board-filter-mode") || "all") === mode ? "true" : "false");
+    });
+  }
+  function saveHomeGoalBoardFilterState() {
+    if (!window.localStorage) return;
+    try {
+      window.localStorage.setItem(homeGoalBoardFilterStorageKey(board), JSON.stringify({
+        query: input && input.value ? input.value : "",
+        mode: mode
+      }));
+      setStatus("View: saved");
+    } catch (error) {
+      setStatus("View: local only");
+    }
+  }
+  function restoreHomeGoalBoardFilterState() {
+    if (!window.localStorage) return false;
+    try {
+      var raw = window.localStorage.getItem(homeGoalBoardFilterStorageKey(board));
+      if (!raw) return false;
+      var saved = JSON.parse(raw);
+      if (input && typeof saved.query === "string") input.value = saved.query.slice(0, 200);
+      setMode(saved.mode || "all");
+      setStatus("View: restored");
+      return true;
+    } catch (error) {
+      setStatus("View: default");
+      return false;
+    }
+  }
+  function clearHomeGoalBoardFilterState() {
+    if (input) input.value = "";
+    setMode("all");
+    if (window.localStorage) {
+      try { window.localStorage.removeItem(homeGoalBoardFilterStorageKey(board)); } catch (error) {}
+    }
+    setStatus("View: reset");
+    updateHomeGoalBoardFilter({ save: false });
+  }
+  function updateHomeGoalBoardFilter(options) {
+    var rows = Array.prototype.slice.call(board.querySelectorAll("[data-home-goal-board-row='true']"));
+    var query = input && input.value ? input.value.trim().toLowerCase() : "";
+    rows.forEach(function (row) {
+      var bucket = row.getAttribute("data-goal-board-bucket") || "";
+      var text = row.getAttribute("data-goal-board-search") || row.textContent.toLowerCase();
+      var matched = (mode === "all" || bucket === mode) && (!query || text.indexOf(query) !== -1);
+      var item = row.closest("li");
+      if (item) item.hidden = !matched;
+      row.hidden = !matched;
+    });
+    var visible = rows.filter(function (row) { return !row.hidden; });
+    if (count) count.textContent = visible.length + " of " + rows.length + " goals";
+    if (empty) empty.hidden = visible.length !== 0;
+    if (first) {
+      var firstRow = visible[0];
+      var link = firstRow ? firstRow.querySelector("[data-goal-card-open='true']") || firstRow.querySelector("a") : null;
+      if (link) {
+        first.hidden = false;
+        first.href = link.getAttribute("href") || link.href;
+        first.textContent = "Open first match";
+      } else {
+        first.hidden = true;
+        first.removeAttribute("href");
+        first.textContent = "No match";
+      }
+    }
+    if (!options || options.save !== false) saveHomeGoalBoardFilterState();
+  }
+  buttons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      setMode(button.getAttribute("data-home-goal-board-filter-mode") || "all");
+      updateHomeGoalBoardFilter();
+    });
+  });
+  if (input) input.addEventListener("input", updateHomeGoalBoardFilter);
+  if (reset) reset.addEventListener("click", clearHomeGoalBoardFilterState);
+  if (!restoreHomeGoalBoardFilterState()) {
+    setMode("all");
+    setStatus("View: default");
+  }
+  updateHomeGoalBoardFilter({ save: false });
+})();
+</script>"""
 
 
 def _home_resume_workspace(root: Path, lead_goal: sqlite3.Row | None) -> str:
@@ -7056,6 +7215,13 @@ def _workspace_view_memory_panel() -> str:
             "Saved Goal board query, lane, and sort",
         ),
         (
+            "home-goal-board",
+            "Home Goal Board",
+            "exact",
+            "clankeros-home-goal-board-view",
+            "Saved Home goal board query and lane",
+        ),
+        (
             "recent-items",
             "Recent Items",
             "exact",
@@ -7239,7 +7405,7 @@ def _workspace_view_memory_panel() -> str:
                 evidence_lines
                 + [
                     "workspace_view_memory_safety: browser-local view state only",
-                    "workspace_view_memory_reset_scope: theme focus board recent route-history today-decisions open-panels scroll-position search timeline decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles",
+                    "workspace_view_memory_reset_scope: theme focus board home-goal-board recent route-history today-decisions open-panels scroll-position search timeline decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles",
                 ]
             ),
             "</details>",
@@ -15167,7 +15333,13 @@ def _goal_bucket(row: sqlite3.Row) -> str:
     return "active"
 
 
-def _goal_index_line(root: Path, storage: Storage, row: sqlite3.Row) -> str:
+def _goal_index_line(
+    root: Path,
+    storage: Storage,
+    row: sqlite3.Row,
+    *,
+    extra_attrs: str = "",
+) -> str:
     state = _goal_state(root, storage, str(row["id"]))
     next_action = _goal_next_action(root, state)
     phase = _goal_current_phase(state)
@@ -15233,6 +15405,7 @@ def _goal_index_line(root: Path, storage: Storage, row: sqlite3.Row) -> str:
     return "".join(
         [
             "<article class='goal-index-row goal-index-card' data-goal-card='true' data-goal-board-row='true' ",
+            f"{extra_attrs} " if extra_attrs else "",
             f"data-goal-board-bucket='{_e(bucket)}' ",
             f"data-goal-board-updated='{_e(updated_at)}' ",
             f"data-goal-board-waiting='{waiting_items}' ",
@@ -40481,6 +40654,24 @@ def _html_page(
     .home-state-details {{ margin-top:10px; }}
     .home-state-details summary {{ cursor:pointer; font-weight:700; }}
     .home-state-details:not([open]) > :not(summary) {{ display:none; }}
+    .home-goal-board {{ border-left:4px solid var(--accent); padding-left:12px; }}
+    .home-goal-board-filter {{ border:1px solid var(--line); background:var(--panel); padding:12px; margin:10px 0 12px; }}
+    .home-goal-board-filter-search {{ display:grid; grid-template-columns:auto minmax(190px, 1fr); gap:8px; align-items:center; color:var(--muted); font-weight:700; }}
+    .home-goal-board-filter-search input {{ min-height:36px; }}
+    .home-goal-board-filter-controls {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:10px; }}
+    .home-goal-board-filter-controls button {{ margin:0; min-height:34px; }}
+    .home-goal-board-filter-controls button[aria-pressed='true'] {{ background:var(--accent); color:#fff; border-color:var(--accent); }}
+    .home-goal-board-view-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
+    .home-goal-board-filter-count, .home-goal-board-filter-empty {{ margin:10px 0 0; }}
+    .home-goal-board-filter-first {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; margin-top:10px; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .home-goal-board-filter-first[hidden] {{ display:none; }}
+    .home-goal-board-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px; margin:12px 0; }}
+    .home-goal-lane ul {{ list-style:none; padding:0; margin:10px 0 0; display:grid; gap:8px; }}
+    .home-goal-lane li {{ min-width:0; }}
+    .home-goal-lane .goal-index-row {{ grid-template-columns:1fr; }}
+    .home-goal-board-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .home-goal-board-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .home-goal-board-evidence:not([open]) > :not(summary) {{ display:none; }}
     .home-operator-board {{ border-left:4px solid var(--accent); }}
     .home-operator-board-evidence {{ margin-top:10px; }}
     .home-operator-board-evidence summary {{ cursor:pointer; font-weight:700; }}

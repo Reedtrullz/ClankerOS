@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The root `/` `Home Goal Board` now has a browser-local Find box, lane mode
+  buttons for all/active/paused/completed goals, live match count, first-match
+  jump, no-match empty state, visible View status, and reload persistence via
+  `localStorage:clankeros-home-goal-board-view`. It is resettable from
+  `/workspace#workspace-view-memory` and keeps GET rendering read-only with no
+  approval, execution, push, PR, deploy, provider call, network action, server
+  write, GitHub polling, or external mutation.
 - The command palette now adds `/today` section jump commands when the current
   route is `/today`, so typing for current action, goal queue, live state,
   session summary, activity digest, operator workbench, decision queue,
@@ -124,7 +131,8 @@ Latest status focus:
   and keeps GET rendering read-only with no memory writes, provider calls,
   network actions, raw filesystem browsing, or external effects.
 - `/workspace#workspace-view-memory` now exposes browser-local view memory
-  for theme, focus mode, Goal board view, open panels, scroll position, search
+  for theme, focus mode, Goal board view, Home Goal Board view, open panels,
+  scroll position, search
   lanes, timeline lanes, decision filters, artifact filters, notes filters,
   note drafts, setup form drafts, Memory Bank filters, Skills Inventory
   filters, Approval Queue filters, Inbox Queue filters, and Profile Routing
