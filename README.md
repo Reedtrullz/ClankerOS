@@ -319,7 +319,10 @@ counters. Populated cockpit counts are also collapsed as evidence so the board
 arrives quickly on mobile. A browser-local `Goal Board Filter` follows the
 goal creation form and filters active, paused, and completed lanes by title,
 project, phase, status, next action, progress, or remaining work, with a live
-count, mode buttons, first-match jump, and no-write/no-network evidence. The
+count, mode buttons, first-match jump, and no-write/no-network evidence. It
+also sorts the already-rendered Goal cards locally by updated time, waiting
+items, open work, progress, or title, so a busy day can be re-prioritized
+without running commands or changing state. The
 cockpit also includes a confirmed local
 `Start Another Goal` form backed by the existing `create-goal` action,
 so an operator can add the next goal for a registered project without

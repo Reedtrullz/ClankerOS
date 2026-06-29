@@ -389,7 +389,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   paused, and completed lanes by title, project, phase, status, next action,
   progress, or remaining work with a live count, mode buttons, first-match
   jump, and explicit no-write/no-provider/no-network/no-external-effect
-  evidence before the longer lane lists. Goal rows in those lanes render as
+  evidence before the longer lane lists. The same browser-local helper sorts
+  already-rendered Goal cards within each lane by updated time, waiting items,
+  open work, progress, or title without changing state or running commands.
+  Goal rows in those lanes render as
   scan-first cards with direct Goal, project, and next-action links plus phase,
   progress, waiting, and open-work readbacks while preserving the legacy
   project/status/phase/next-action/progress/remaining-work text for automation

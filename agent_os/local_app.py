@@ -9647,6 +9647,14 @@ def _goal_board_filter(
             "<button type='button' class='goal-board-filter-mode' data-goal-board-filter-mode='paused' aria-pressed='false'>Paused</button>",
             "<button type='button' class='goal-board-filter-mode' data-goal-board-filter-mode='completed' aria-pressed='false'>Completed</button>",
             "</div>",
+            "<div class='goal-board-filter-sort' data-goal-board-sort-controls='true' aria-label='Sort goals'>",
+            "<span class='goal-board-filter-label'>Sort</span>",
+            "<button type='button' class='goal-board-filter-sort-button' data-goal-board-sort='updated' aria-pressed='true'>Updated</button>",
+            "<button type='button' class='goal-board-filter-sort-button' data-goal-board-sort='waiting' aria-pressed='false'>Waiting</button>",
+            "<button type='button' class='goal-board-filter-sort-button' data-goal-board-sort='open_work' aria-pressed='false'>Open Work</button>",
+            "<button type='button' class='goal-board-filter-sort-button' data-goal-board-sort='progress' aria-pressed='false'>Progress</button>",
+            "<button type='button' class='goal-board-filter-sort-button' data-goal-board-sort='title' aria-pressed='false'>Title</button>",
+            "</div>",
             "<p class='muted goal-board-filter-empty' data-goal-board-filter-empty='true' hidden>No matching goals.</p>",
             "<details class='goal-board-filter-evidence' data-goal-board-filter-evidence='true'><summary>Goal board filter evidence</summary>",
             _kv(
@@ -9659,6 +9667,10 @@ def _goal_board_filter(
                     ("goal_board_filter_scope", "active paused completed goal rows"),
                     ("goal_board_filter_fields", "title description project status phase next_action progress remaining_work"),
                     ("goal_board_filter_default_mode", "all"),
+                    ("goal_board_sort_status", "available"),
+                    ("goal_board_sort_modes", "updated waiting open_work progress title"),
+                    ("goal_board_sort_default", "updated"),
+                    ("goal_board_sort_scope", "browser-local card reorder within existing lanes"),
                     ("goal_board_filter_write_on_get", "false"),
                     ("goal_board_filter_provider_calls_taken", "0"),
                     ("goal_board_filter_network_actions_taken", "0"),
@@ -9671,6 +9683,8 @@ def _goal_board_filter(
                     f"goal_board_filter_mode: active -> {len(active)} goals",
                     f"goal_board_filter_mode: paused -> {len(paused)} goals",
                     f"goal_board_filter_mode: completed -> {len(completed)} goals",
+                    "goal_board_sort_default: updated -> newest Goal cards first",
+                    "goal_board_sort: waiting open_work progress title are browser-local only",
                     "goal_board_filter_safety: browser-local row filtering only",
                 ]
             ),
@@ -9684,11 +9698,61 @@ def _goal_board_filter(
   var first = root.querySelector("[data-goal-board-filter-first='true']");
   var empty = root.querySelector("[data-goal-board-filter-empty='true']");
   var modes = Array.prototype.slice.call(root.querySelectorAll("[data-goal-board-filter-mode]"));
+  var sortButtons = Array.prototype.slice.call(root.querySelectorAll("[data-goal-board-sort]"));
   var mode = "all";
+  var sortMode = "updated";
+  function numberValue(row, name) {
+    var value = Number(row.getAttribute("data-goal-board-" + name) || "0");
+    return Number.isFinite(value) ? value : 0;
+  }
+  function textValue(row, name) {
+    return (row.getAttribute("data-goal-board-" + name) || "").toLowerCase();
+  }
+  function updatedValue(row) {
+    var parsed = Date.parse(row.getAttribute("data-goal-board-updated") || "");
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  function compareRows(a, b) {
+    if (sortMode === "title") {
+      var title = textValue(a, "title").localeCompare(textValue(b, "title"));
+      if (title !== 0) return title;
+    } else if (sortMode === "waiting") {
+      var waiting = numberValue(b, "waiting") - numberValue(a, "waiting");
+      if (waiting !== 0) return waiting;
+    } else if (sortMode === "open_work") {
+      var openWork = numberValue(b, "open-work") - numberValue(a, "open-work");
+      if (openWork !== 0) return openWork;
+    } else if (sortMode === "progress") {
+      var progress = numberValue(b, "progress-ratio") - numberValue(a, "progress-ratio");
+      if (progress !== 0) return progress;
+    }
+    var updated = updatedValue(b) - updatedValue(a);
+    if (updated !== 0) return updated;
+    return textValue(a, "title").localeCompare(textValue(b, "title"));
+  }
+  function applySort(rows) {
+    var parents = [];
+    rows.forEach(function (row) {
+      var item = row.closest("li");
+      var parent = item ? item.parentElement : null;
+      if (parent && parents.indexOf(parent) === -1) parents.push(parent);
+    });
+    parents.forEach(function (parent) {
+      rows
+        .filter(function (row) {
+          var item = row.closest("li");
+          return item && item.parentElement === parent;
+        })
+        .sort(compareRows)
+        .forEach(function (row) {
+          var item = row.closest("li");
+          if (item) parent.appendChild(item);
+        });
+    });
+  }
   function update() {
     var rows = Array.prototype.slice.call(document.querySelectorAll("[data-goal-board-row='true']"));
     var query = input && input.value ? input.value.trim().toLowerCase() : "";
-    var visible = [];
     rows.forEach(function (row) {
       var bucket = row.getAttribute("data-goal-board-bucket") || "";
       var text = row.getAttribute("data-goal-board-search") || "";
@@ -9696,8 +9760,10 @@ def _goal_board_filter(
       var item = row.closest("li");
       if (item) item.hidden = !matched;
       row.hidden = !matched;
-      if (matched) visible.push(row);
     });
+    applySort(rows);
+    var orderedRows = Array.prototype.slice.call(document.querySelectorAll("[data-goal-board-row='true']"));
+    var visible = orderedRows.filter(function (row) { return !row.hidden; });
     if (count) count.textContent = visible.length + " of " + rows.length + " goals";
     if (empty) empty.hidden = visible.length !== 0;
     if (first) {
@@ -9718,6 +9784,15 @@ def _goal_board_filter(
     button.addEventListener("click", function () {
       mode = button.getAttribute("data-goal-board-filter-mode") || "all";
       modes.forEach(function (candidate) {
+        candidate.setAttribute("aria-pressed", candidate === button ? "true" : "false");
+      });
+      update();
+    });
+  });
+  sortButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      sortMode = button.getAttribute("data-goal-board-sort") || "updated";
+      sortButtons.forEach(function (candidate) {
         candidate.setAttribute("aria-pressed", candidate === button ? "true" : "false");
       });
       update();
@@ -13007,6 +13082,12 @@ def _goal_index_line(root: Path, storage: Storage, row: sqlite3.Row) -> str:
         + _count_status(state.get("publications", []), "pending_operator_approval")
     )
     waiting_items = pending_approvals + open_incidents + open_recommendations
+    completed_tasks = len(
+        [task for task in state.get("tasks", []) if task.status == "completed"]
+    )
+    total_tasks = len(state.get("tasks", []))
+    progress_ratio = int((completed_tasks / total_tasks) * 10000) if total_tasks else 0
+    updated_at = str(row["updated_at"] or row["created_at"] or "")
     form_available = (
         bool(_goal_next_action_form(state, next_action)) if state.get("goal") else False
     )
@@ -13030,6 +13111,14 @@ def _goal_index_line(root: Path, storage: Storage, row: sqlite3.Row) -> str:
         [
             "<article class='goal-index-row goal-index-card' data-goal-card='true' data-goal-board-row='true' ",
             f"data-goal-board-bucket='{_e(bucket)}' ",
+            f"data-goal-board-updated='{_e(updated_at)}' ",
+            f"data-goal-board-waiting='{waiting_items}' ",
+            f"data-goal-board-open-work='{open_tasks}' ",
+            f"data-goal-board-progress-done='{completed_tasks}' ",
+            f"data-goal-board-progress-total='{total_tasks}' ",
+            f"data-goal-board-progress-ratio='{progress_ratio}' ",
+            f"data-goal-board-title='{_e(title.lower())}' ",
+            f"data-goal-board-phase='{_e(phase.lower())}' ",
             f"data-goal-board-search='{_e(searchable)}'>",
             "<div class='goal-index-main'>",
             f"<span class='goal-index-kicker'>{_e(bucket.title())} Goal</span>",
@@ -36309,9 +36398,10 @@ def _html_page(
     .goal-board-filter-input {{ min-height:36px; min-width:0; width:100%; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:7px 10px; }}
     .goal-board-filter-count {{ color:var(--muted); white-space:nowrap; }}
     .goal-board-filter-first {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--accent); color:#fff; overflow-wrap:anywhere; text-decoration:none; }}
-    .goal-board-filter-modes {{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 0; }}
-    .goal-board-filter-mode {{ min-height:32px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:6px 10px; }}
-    .goal-board-filter-mode[aria-pressed='true'] {{ border-color:var(--accent); background:var(--accent); color:#fff; }}
+    .goal-board-filter-modes, .goal-board-filter-sort {{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 0; align-items:center; }}
+    .goal-board-filter-sort {{ padding-top:10px; border-top:1px solid var(--line); }}
+    .goal-board-filter-mode, .goal-board-filter-sort-button {{ min-height:32px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:6px 10px; }}
+    .goal-board-filter-mode[aria-pressed='true'], .goal-board-filter-sort-button[aria-pressed='true'] {{ border-color:var(--accent); background:var(--accent); color:#fff; }}
     .goal-board-filter-empty {{ margin:10px 0 0; }}
     .goal-board-filter-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-board-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
@@ -36331,7 +36421,7 @@ def _html_page(
     .goal-index-metrics {{ display:grid; grid-template-columns:minmax(70px, auto) minmax(0, 1fr); gap:4px 8px; margin:0; border:0; background:transparent; }}
     .goal-index-metrics dt {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
     .goal-index-metrics dd {{ margin:0; overflow-wrap:anywhere; }}
-    @media (max-width: 640px) {{ .goal-board-filter-row, .goal-index-row {{ grid-template-columns:1fr; }} .goal-board-filter-label, .goal-board-filter-count {{ white-space:normal; }} .goal-board-filter-first, .goal-index-action, .goal-index-link {{ width:100%; }} }}
+    @media (max-width: 640px) {{ .goal-board-filter-row, .goal-index-row {{ grid-template-columns:1fr; }} .goal-board-filter-label, .goal-board-filter-count {{ white-space:normal; }} .goal-board-filter-first, .goal-board-filter-sort-button, .goal-index-action, .goal-index-link {{ width:100%; }} }}
     .goal-board-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-cockpit-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-cockpit-evidence summary {{ cursor:pointer; font-weight:700; }}

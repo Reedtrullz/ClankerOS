@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-29 Goal Board Sort UX
+
+- Added browser-local sort controls to `/goals#goal-board-filter` so the
+  already-rendered active, paused, and completed Goal cards can be reordered
+  within each lane by updated time, waiting items, open work, progress, or
+  title.
+- Goal cards now expose stable local sort metadata for updated time, waiting
+  count, open-work count, task progress, title, and phase while preserving the
+  existing filter/search metadata and legacy row text.
+- The sort helper composes with the existing Goal Board Filter: filtering still
+  hides non-matching cards, sort buttons update `aria-pressed`, first-match
+  routing follows the sorted visible card order, and hidden cards stay hidden.
+- The behavior is browser-local card reordering only: no write on GET, no
+  provider calls, no network actions, no execution, no approval, no push, no
+  PR, no deploy, and no external mutation.
+- Updated README, local app docs, operating summary, docs status, and the
+  fixture-backed Goal board regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state --tb=short` passed with
+  `1 passed, 515 deselected in 40.50s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55612` showed `/goals#goal-board-filter` with sort
+  controls present, `Updated` pressed after cycling Waiting/Open Work/Title,
+  `commit` filtering still at `1 of 1 goals`, first-match link
+  `/goals/goal_13d46a6fb3a9`, one visible card with waiting `1`, open work
+  `1`, progress ratio `0`, no desktop overflow at `1280x900`, mobile
+  `390x844` sort buttons stacked at `329px` wide and `32px` tall, card width
+  `358px`, and no console warnings/errors.
+
 ## 2026-06-29 Goal Board Cards UX
 
 - Reworked shared Goal rows on `/goals` and Home goal lanes into scan-first

@@ -10721,6 +10721,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-board-filter-mode='active' aria-pressed='false'" in goals.body
     assert "data-goal-board-filter-mode='paused' aria-pressed='false'" in goals.body
     assert "data-goal-board-filter-mode='completed' aria-pressed='false'" in goals.body
+    assert "data-goal-board-sort-controls='true'" in goals.body
+    assert "data-goal-board-sort='updated' aria-pressed='true'" in goals.body
+    assert "data-goal-board-sort='waiting' aria-pressed='false'" in goals.body
+    assert "data-goal-board-sort='open_work' aria-pressed='false'" in goals.body
+    assert "data-goal-board-sort='progress' aria-pressed='false'" in goals.body
+    assert "data-goal-board-sort='title' aria-pressed='false'" in goals.body
     assert "data-goal-board-filter-empty='true' hidden" in goals.body
     assert "goal_board_filter_status</dt><dd>available" in goals.body
     assert "goal_board_filter_total_goals</dt><dd>1" in goals.body
@@ -10728,11 +10734,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_board_filter_paused_goals</dt><dd>0" in goals.body
     assert "goal_board_filter_completed_goals</dt><dd>0" in goals.body
     assert "goal_board_filter_fields</dt><dd>title description project status phase next_action progress remaining_work" in goals.body
+    assert "goal_board_sort_status</dt><dd>available" in goals.body
+    assert "goal_board_sort_modes</dt><dd>updated waiting open_work progress title" in goals.body
+    assert "goal_board_sort_default</dt><dd>updated" in goals.body
+    assert "goal_board_sort_scope</dt><dd>browser-local card reorder within existing lanes" in goals.body
     assert "goal_board_filter_write_on_get</dt><dd>false" in goals.body
     assert "goal_board_filter_network_actions_taken</dt><dd>0" in goals.body
     assert "goal_board_filter_external_effects_created</dt><dd>false" in goals.body
     assert "goal_board_filter_default: all -> 1 goals" in goals.body
     assert "goal_board_filter_mode: active -> 1 goals" in goals.body
+    assert "goal_board_sort_default: updated -> newest Goal cards first" in goals.body
+    assert "goal_board_sort: waiting open_work progress title are browser-local only" in goals.body
     assert "goal_board_filter_safety: browser-local row filtering only" in goals.body
     assert goals.body.index("id='goal-start-another'") < goals.body.index(
         "id='goal-board-filter'"
@@ -10751,11 +10763,22 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "<dt>Open Work</dt><dd>1 task(s)</dd>" in goals.body
     assert "local-app-demo / Ready to commit / 0/1 tasks completed" in goals.body
     assert "data-goal-board-bucket='active'" in goals.body
+    assert "data-goal-board-updated='" in goals.body
+    assert "data-goal-board-waiting='1'" in goals.body
+    assert "data-goal-board-open-work='1'" in goals.body
+    assert "data-goal-board-progress-done='0'" in goals.body
+    assert "data-goal-board-progress-total='1'" in goals.body
+    assert "data-goal-board-progress-ratio='0'" in goals.body
+    assert "data-goal-board-title='demo the clankeros local operator app with fixture-backed state'" in goals.body
+    assert "data-goal-board-phase='ready to commit'" in goals.body
     assert "data-goal-board-search='" in goals.body
     assert "demo the clankeros local operator app with fixture-backed state" in goals.body
     assert "ready to commit" in goals.body
     assert "document.addEventListener(\"DOMContentLoaded\", update" in goals.body
     assert "rows.forEach(function (row)" in goals.body
+    assert "var sortMode = \"updated\"" in goals.body
+    assert "function applySort(rows)" in goals.body
+    assert "data-goal-board-sort" in goals.body
     assert "visible.length + \" of \" + rows.length + \" goals\"" in goals.body
     assert result.goal_id in goals.body
     assert "phase=Ready to commit" in goals.body

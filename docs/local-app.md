@@ -204,7 +204,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   projects, plus a browser-local `Goal Board Filter` for narrowing active,
   paused, and completed lanes by title, project, phase, status, next action,
   progress, or remaining work with a live count, first-match jump, and
-  no-write/no-network evidence. Fresh checkouts still expose
+  no-write/no-network evidence. The same browser-local helper can sort the
+  already-rendered cards by updated time, waiting items, open work, progress,
+  or title without writing state or running commands. Fresh checkouts still expose
   confirmed local `register-project` and `create-goal` forms for a fresh
   checkout.
 - `/goals/<goal_id>` - goal-centered workbench that is content-first: the Goal
