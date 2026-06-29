@@ -1,5 +1,48 @@
 # Status
 
+## 2026-06-29 First Run Action Ladder UX
+
+- Added a visible read-only `First Run Action Ladder` to the First Run Guide
+  after `First Run Next Step` and before the empty-state map. It renders five
+  action cards for Project, Goal, Delegation, Context, and Run, highlights the
+  current card, and records the concrete action name (`register-project`,
+  `create-goal`, `delegate`, `context-pack`, or `run-delegation`), browser
+  target, proof surface, form availability, confirmation requirement, and
+  zero-effect counters.
+- The ladder reuses existing first-run state and confirmed forms only. Empty
+  checkout points at `#first-run-create-project`; registered-project/no-goal
+  points at `#first-run-create-goal`; goal-created/no-delegation points at
+  `#first-run-command-action` and the existing `/actions/delegate` form.
+- Updated focused route assertions for empty checkout, registered-project
+  without a goal, and goal-created without a delegation so the fast GitHub
+  smoke path proves the ladder advances from `register-project` to
+  `create-goal` to `delegate`.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed;
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  local_app_routes_render_modern_workflow_and_health` passed with `1 passed,
+  515 deselected in 37.48s`; `python3 -m agent_os.cli app-smoke-test` passed
+  with all required route markers matched and zero provider/network/external
+  mutation counters.
+- Browser verification: Playwright against throwaway root
+  `http://127.0.0.1:62110/` confirmed the ladder on empty Home with five
+  cards, current step `create_project`, current action `register-project`,
+  correct ordering after Next Step and before Empty State, and no horizontal
+  overflow at `1280px`. Mobile `390x844` kept the ladder at `358px` and the
+  grid at `329px` with no horizontal overflow.
+- Browser verification after seeding local project `first-target` and Goal
+  `goal_06259033d59b`: Playwright opened
+  `http://127.0.0.1:62110/goals` and confirmed five ladder cards, current step
+  `create_first_delegation`, current action `delegate`, current status
+  `current`, inline form action `/actions/delegate`, target text
+  `Run First-Run Action`, proof text `Goal workflow`, no desktop or mobile
+  horizontal overflow, and zero console warnings/errors. Screenshot:
+  `.playwright-cli/page-2026-06-29T22-03-23-759Z.png`. Browser, server, and
+  scratch root were cleaned up.
+- Non-claims: this does not create projects, goals, delegations, context
+  packs, runs, approvals, execution, pushes, PRs, deploys, provider calls,
+  non-loopback network actions, server writes on GET, or external mutations.
+
 ## 2026-06-29 Guide Command Panel UX
 
 - Added a visible `Guide Command Panel` to `/guide` before the daily loop. It

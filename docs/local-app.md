@@ -75,7 +75,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   guide also renders `First Run Next Step` between the launchpad and progress
   strip, turning the current setup or delegation gate into one primary
   same-page browser action with setup, handoff, resume, and safety cards.
-  A visible `First Run Empty State Map` follows with a text-only
+  A visible `First Run Action Ladder` follows with five cards for Project,
+  Goal, Delegation, Context, and Run, highlighting the current action and
+  exposing the exact browser target, action name, confirmation posture, and
+  no-effect counters. A visible `First Run Empty State Map` follows with a text-only
   `Project -> Goal -> Delegation -> Context -> Run` illustration and step
   cards, so empty local state still has a scan-friendly path. A browser-local
   `First Run Checklist` follows the map so an

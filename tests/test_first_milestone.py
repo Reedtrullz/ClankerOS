@@ -5169,6 +5169,50 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "<a href='#first-run-create-project'>Create Project</a>"
     ) in root.body
     assert "first_run_next_step_safety: same-page guidance only" in root.body
+    assert "First Run Action Ladder" in root.body
+    assert "data-first-run-action-ladder='true'" in root.body
+    assert "data-first-run-action-ladder-grid='true'" in root.body
+    assert root.body.count("data-first-run-action-ladder-step='true'") == 5
+    assert "data-first-run-action-ladder-step-key='create_project'" in root.body
+    assert "data-first-run-action-ladder-step-status='current'" in root.body
+    assert "data-first-run-action-ladder-action='register-project'" in root.body
+    assert "data-first-run-action-ladder-current='true'" in root.body
+    assert "data-first-run-action-ladder-step-key='run_first_delegation'" in root.body
+    assert "data-first-run-action-ladder-step-status='waiting_for_goal'" in root.body
+    assert "data-first-run-action-ladder-evidence='true'" in root.body
+    assert "first_run_action_ladder_status</dt><dd>active" in root.body
+    assert "first_run_action_ladder_current_step</dt><dd>create_project" in root.body
+    assert "first_run_action_ladder_current_action_name</dt><dd>register-project" in root.body
+    assert "first_run_action_ladder_next_action</dt><dd>Register ClankerOS project" in root.body
+    assert (
+        "first_run_action_ladder_target_surface</dt><dd><a href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
+    assert "first_run_action_ladder_route_surface</dt><dd><a href='/goals'>/goals</a>" in root.body
+    assert "first_run_action_ladder_proof_surface</dt><dd><a href='/guide'>Guide</a>" in root.body
+    assert "first_run_action_ladder_project</dt><dd>clankeros" in root.body
+    assert "first_run_action_ladder_goal</dt><dd>none" in root.body
+    assert "first_run_action_ladder_delegation</dt><dd>none" in root.body
+    assert "first_run_action_ladder_context_pack_ready</dt><dd>false" in root.body
+    assert "first_run_action_ladder_delegation_completed</dt><dd>false" in root.body
+    assert "first_run_action_ladder_form_available</dt><dd>true" in root.body
+    assert "first_run_action_ladder_confirmation_required</dt><dd>true" in root.body
+    assert "first_run_action_ladder_card_count</dt><dd>5" in root.body
+    assert "first_run_action_ladder_write_on_get</dt><dd>false" in root.body
+    assert "first_run_action_ladder_provider_calls_taken</dt><dd>0" in root.body
+    assert "first_run_action_ladder_network_actions_taken</dt><dd>0" in root.body
+    assert "first_run_action_ladder_external_effects_created</dt><dd>false" in root.body
+    assert "first_run_action_ladder_step: create_project status=current action=register-project" in root.body
+    assert "first_run_action_ladder_step: run_first_delegation status=waiting_for_goal action=run-delegation" in root.body
+    assert (
+        "first_run_action_ladder_now: Register ClankerOS project -&gt; "
+        "<a href='#first-run-create-project'>Create Project</a>"
+    ) in root.body
+    assert "first_run_action_ladder_proof: <a href='/guide'>Guide</a>" in root.body
+    assert (
+        "first_run_action_ladder_safety: read-only ladder; existing confirmed forms own writes "
+        "and local execution"
+    ) in root.body
     assert "First Run Empty State Map" in root.body
     assert "id='first-run-empty-state-illustration'" in root.body
     assert "data-first-run-empty-state='true'" in root.body
@@ -5248,7 +5292,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "window.localStorage.removeItem(firstRunChecklistStorageKey(root))" in root.body
     assert root.body.index("First Run Command Bar") < root.body.index("First Run Launchpad")
     assert root.body.index("First Run Launchpad") < root.body.index("First Run Next Step")
-    assert root.body.index("First Run Next Step") < root.body.index("First Run Empty State Map")
+    assert root.body.index("First Run Next Step") < root.body.index("First Run Action Ladder")
+    assert root.body.index("First Run Action Ladder") < root.body.index("First Run Empty State Map")
     assert root.body.index("First Run Empty State Map") < root.body.index("First Run Checklist")
     assert root.body.index("First Run Checklist") < root.body.index("First Run Progress")
     assert (
@@ -7216,6 +7261,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     ) in registered_goals.body
     assert "first_run_next_step_setup_status</dt><dd>project_registered" in registered_goals.body
     assert "first_run_next_step_form_available</dt><dd>true" in registered_goals.body
+    assert "First Run Action Ladder" in registered_goals.body
+    assert "first_run_action_ladder_current_step</dt><dd>create_first_goal" in registered_goals.body
+    assert "first_run_action_ladder_current_action_name</dt><dd>create-goal" in registered_goals.body
+    assert "first_run_action_ladder_step: create_project status=done action=register-project" in registered_goals.body
+    assert "first_run_action_ladder_step: create_first_goal status=current action=create-goal" in registered_goals.body
+    assert "first_run_action_ladder_form_available</dt><dd>true" in registered_goals.body
+    assert "first_run_action_ladder_confirmation_required</dt><dd>true" in registered_goals.body
     assert "goal_board_workbench_status</dt><dd>first_run" in registered_goals.body
     assert "goal_board_workbench_current_step</dt><dd>create_first_goal" in registered_goals.body
     assert "goal_board_workbench_primary_action</dt><dd>Create first goal" in registered_goals.body
@@ -7472,6 +7524,24 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_next_step_setup_status</dt><dd>goal_created" in goals_after_first_goal.body
     assert "first_run_next_step_handoff_status</dt><dd>goal_ready" in goals_after_first_goal.body
     assert "first_run_next_step_form_available</dt><dd>true" in goals_after_first_goal.body
+    assert "First Run Action Ladder" in goals_after_first_goal.body
+    assert "first_run_action_ladder_current_step</dt><dd>create_first_delegation" in goals_after_first_goal.body
+    assert "first_run_action_ladder_current_action_name</dt><dd>delegate" in goals_after_first_goal.body
+    assert (
+        "first_run_action_ladder_target_surface</dt><dd><a href='#first-run-command-action'>"
+        "Run First-Run Action</a>"
+    ) in goals_after_first_goal.body
+    assert (
+        f"first_run_action_ladder_proof_surface</dt><dd><a href='/goals/{created_goal_id}#goal-workflow-map'>"
+        "Goal workflow</a>"
+    ) in goals_after_first_goal.body
+    assert f"first_run_action_ladder_goal</dt><dd>{created_goal_id}" in goals_after_first_goal.body
+    assert "first_run_action_ladder_delegation</dt><dd>none" in goals_after_first_goal.body
+    assert "first_run_action_ladder_form_available</dt><dd>true" in goals_after_first_goal.body
+    assert "first_run_action_ladder_confirmation_required</dt><dd>true" in goals_after_first_goal.body
+    assert "first_run_action_ladder_step: create_first_goal status=done action=create-goal" in goals_after_first_goal.body
+    assert "first_run_action_ladder_step: create_first_delegation status=current action=delegate" in goals_after_first_goal.body
+    assert "first_run_action_ladder_step: run_first_delegation status=waiting_for_delegation action=run-delegation" in goals_after_first_goal.body
     assert "Goal Board Workbench" in goals_after_first_goal.body
     assert "goal_board_workbench_status</dt><dd>available" in goals_after_first_goal.body
     assert "goal_board_workbench_source</dt><dd>saved_goal" in goals_after_first_goal.body

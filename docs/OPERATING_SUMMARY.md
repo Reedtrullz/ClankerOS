@@ -1075,6 +1075,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   `First Run Next Step` panel with one primary same-page action plus setup,
   handoff, resume, and safety cards, so the current click is obvious before the
   operator reads the full checklist. It then shows a visible read-only
+  `First Run Action Ladder` with five Project, Goal, Delegation, Context, and
+  Run cards, highlighting the current action and recording the exact browser
+  target, action name, confirmation posture, and zero-effect counters before
+  the checklist. It then shows a visible read-only
   `First Run Empty State Map` with a text-only
   `Project -> Goal -> Delegation -> Context -> Run` illustration and step
   cards, so a blank checkout still has a concrete path. It then shows a browser-local

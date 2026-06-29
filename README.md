@@ -153,8 +153,11 @@ can continue from the guide. The command bar is followed by a visible
 populated demo, inspect workflow, review verification proof, or check health
 and safety. A visible `First Run Next Step` panel follows with one primary
 same-page action, setup/handoff/resume/safety cards, confirmation posture, and
-zero-effect counters, making the current click obvious before the checklist. A
-visible `First Run Empty State Map` now renders a text-only
+zero-effect counters, making the current click obvious before the checklist.
+A visible `First Run Action Ladder` then turns Project, Goal, Delegation,
+Context, and Run into five action cards with the current action highlighted,
+the exact browser target, the CLI/action name evidence, and the same
+zero-effect safety counters. A visible `First Run Empty State Map` now renders a text-only
 `Project -> Goal -> Delegation -> Context -> Run` illustration with step cards,
 so a blank checkout shows a path instead of just empty inventories. A
 browser-local `First Run Checklist` then lets the operator mark setup checks

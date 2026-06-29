@@ -17,6 +17,11 @@ Latest status focus:
   plus step cards between Next Step and Checklist, keeping empty checkouts
   scan-friendly with no state write, provider call, network action,
   approval/execution/push/PR/deploy, or external effect on GET.
+- The First Run Guide now includes a visible `First Run Action Ladder` between
+  Next Step and the empty-state map. It highlights the current Project, Goal,
+  Delegation, Context, or Run card, exposes the exact browser target and action
+  name, and preserves no-write/provider/network/external-effect counters on
+  GET while reusing existing confirmed forms.
 - The shared browser shell now has first-class shortcut discovery: a visible
   `Keys` header control and `?` shortcut open a browser-local Keyboard
   Shortcuts dialog with the same shortcut list, no state write, no provider
